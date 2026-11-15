@@ -6,6 +6,7 @@ import { inject } from 'vitest';
 import { datasetPostRoutes } from '../electron/library/datasetRoutes.mjs';
 import { DatasetStore } from '../electron/library/datasetStore.mjs';
 import { tryPostRoutes } from '../electron/library/tryRoutes.mjs';
+import { tryVideoRequest } from '../electron/library/tryVideo.mjs';
 import { TryStore } from '../electron/library/tryStore.mjs';
 import { RoboflowAccount } from '../electron/roboflow/index.mjs';
 import { roboflowPostRoutes } from '../electron/roboflow/routes.mjs';
@@ -98,6 +99,29 @@ function purchasesReply(saved: SavedPurchases, body: { key?: string; record?: un
 }
 
 async function stubBackend(page: Page, { posts, lists, live, libraryDir, roboflowUrl }: Backend): Promise<void> {
+  const videos = new TryStore({
+    triesDir: path.join(libraryDir, 'tries'),
+    cacheFile: path.join(libraryDir, '.try-summaries.json'),
+  });
+
+  await page.route('**/api/tries/video/**', async (route) => {
+    const request = route.request();
+    const response = await tryVideoRequest(
+      new Request(request.url(), {
+        method: request.method(),
+        headers: request.headers(),
+        ...(request.method() === 'PUT' ? { body: new Uint8Array(request.postDataBuffer() ?? []) } : {}),
+      }),
+      videos,
+    );
+
+    await route.fulfill({
+      status: response.status,
+      headers: Object.fromEntries(response.headers),
+      body: Buffer.from(await response.arrayBuffer()),
+    });
+  });
+
   const purchases: SavedPurchases = { ...((lists.purchases as SavedPurchases | undefined) ?? {}) };
   const replies: Record<string, Reply> = {
     ...libraryReplies(libraryDir),
@@ -126,8 +150,11 @@ async function stubBackend(page: Page, { posts, lists, live, libraryDir, roboflo
   });
 }
 
-export const exposeTestHooks = (page: Page) =>
-  page.addInitScript((flag) => Object.assign(window, { [flag]: true }), TEST_HOOKS_FLAG);
+export const exposeTestHooks = async (page: Page) => {
+  await page.context().route(/^https:\/\/huggingface\.co\/.*\/resolve\/.*\.onnx(?:\?.*)?$/, (route) => route.abort());
+
+  return page.addInitScript((flag) => Object.assign(window, { [flag]: true }), TEST_HOOKS_FLAG);
+};
 
 const SOFTWARE_GL = ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'];
 
@@ -138,7 +165,7 @@ export const launchChrome = (args = SOFTWARE_GL) => chromium.launch({ channel: '
 export async function openApp(
   lists: Record<string, unknown> = {},
   live: string[] = [],
-  options: { args?: string[]; roboflowUrl?: string } = {},
+  options: { args?: string[]; roboflowUrl?: string; web?: boolean } = {},
 ): Promise<App> {
   const started = Date.now();
   const browser: Browser = await launchChrome([...SOFTWARE_GL, ...(options.args ?? [])]);
@@ -159,7 +186,7 @@ export async function openApp(
   });
   await exposeTestHooks(page);
   await stubBackend(page, { posts, lists, live, libraryDir, roboflowUrl: options.roboflowUrl });
-  await page.goto(inject('appUrl'));
+  await page.goto(inject(options.web ? 'webUrl' : 'appUrl'));
   await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
     timeout: 60000,
   });

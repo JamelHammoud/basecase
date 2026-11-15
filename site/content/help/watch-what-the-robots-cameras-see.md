@@ -14,6 +14,10 @@ keywords:
   - lens
   - depth camera
   - /operate
+hub_run_a_case: |
+  Cards can read detection counts, scores and box positions from the cameras. During playback, these values come from detection at the playhead. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see) for the camera boxes and their limits.
+hub_the_design_agent: |
+  With `/operate`, the agent also receives each available camera detection's class, score and box after a step. The camera reads belong to the scene it is operating. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
 related:
   - add-a-camera-view
   - lerobot-dataset-contents
@@ -27,6 +31,9 @@ covers:
   - src/cameras/optics.ts
   - src/workspace/viewCommands.tsx
   - src/agent/agentOperate.ts
+  - src/components/cameras/DetectionOverlay.tsx
+  - src/cameras/visionSession.ts
+  - src/cameras/recordedCameras.ts
 ---
 
 You can put a camera part on your robot and watch its live view beside the canvas while the simulation runs. The view is drawn through the camera's real lens.
@@ -69,6 +76,14 @@ The right-click menu on a camera view also has these options:
 ## Let the agent look
 
 In the agent's box, type `/operate` followed by a task, such as "drive up to the box and stop." The agent drives the robot in the simulation, one short step at a time. Before each step, it looks at the scene view and every camera view, the same way you would at the controls.
+
+Camera tiles draw boxes around detected objects, with their class and score. The first use downloads the model, then keeps a checked local copy. The agent receives detections with each camera read.
+
+![A wrist camera with a fixture detector's block box and score](/help/watch-what-the-robots-cameras-see/detections.png)
+
+Boxes also appear on live camera tiles and recorded camera videos at the playhead. Captures and exported camera images contain the camera image alone.
+
+Detectors recognize their model's classes. The CPU fallback can take seconds per image, and Routines ignore images older than their freshness limit.
 
 Trained policies can't see camera images, but they can sense depth through a camera as a grid of distances. The agent sets this up when a skill needs it.
 

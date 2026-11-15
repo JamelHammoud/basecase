@@ -1,3 +1,4 @@
+import { subscribeLiveSceneVision } from '../cameras/sceneVision';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { offerSimTargets } from '../robot/intentMirror';
@@ -13,6 +14,7 @@ import type { SimStatus } from './useSimulation';
 import { useRecordingLink } from './useRecordingLink';
 import type { WorldLooks } from '../cases/worldSet';
 import { SimLoads } from './simLoads';
+import { useVisionScope } from '../cameras/visionScope';
 
 interface LatestFrame {
   at: number;
@@ -134,13 +136,23 @@ export function useSimWorker(
     w.onerror = (e) => {
       setError(e.message || 'The simulator stopped.');
       setStatus('error');
+      setPlaying(false);
+      loading.cancel();
     };
     workerRef.current = w;
 
     return w;
-  }, [handle, attachCameras]);
+  }, [handle, attachCameras, loading]);
 
-  useEffect(() => () => workerRef.current?.terminate(), []);
+  useEffect(
+    () => () => {
+      loading.cancel();
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    },
+    [loading],
+  );
+  useVisionLink(workerRef);
 
   return {
     stopRecording: recordingLink.stopRecording,
@@ -170,6 +182,20 @@ export function useSimWorker(
     subscribePoses: poseListeners.subscribe,
     connectCameras,
   };
+}
+
+function useVisionLink(workerRef: React.RefObject<Worker | null>) {
+  const scope = useVisionScope();
+
+  useEffect(() => {
+    const forward = (result: import('../vision/types').VisionResult) => {
+      const ageMs = Math.max(0, performance.now() - result.timestamp);
+
+      workerRef.current?.postMessage({ type: 'vision', result, ageMs } satisfies SimRequest);
+    };
+
+    return subscribeLiveSceneVision(scope, forward);
+  }, [workerRef, scope]);
 }
 
 function useRoutineLink(workerRef: React.RefObject<Worker | null>, modelRef: React.RefObject<SimModel | null>) {

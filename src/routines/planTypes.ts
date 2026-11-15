@@ -53,6 +53,7 @@ export interface PlanOp {
   needs?: number[];
   fact?: number;
   model?: string;
+  label?: string;
   input?: string;
   prompt?: string;
   answers?: number[];
@@ -77,6 +78,7 @@ export interface PlanReaction {
 export interface PlanWatcher {
   id: string;
   model: string;
+  label?: string;
   rateHz: number;
   maxAgeMs: number;
   fact: number;

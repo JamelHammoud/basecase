@@ -18,6 +18,7 @@ import type { CommitParts, ShowToast } from './types';
 import { useRoutineEditor } from './useRoutineEditor';
 import { useRoutineMounts } from './useRoutineMounts';
 import { useRoutineStore } from './useRoutineStore';
+import { routineVisionCompilation } from './routineVisionState';
 
 interface RoutineOptions {
   parts: ScenePart[];
@@ -47,7 +48,7 @@ export const plainRun = (routine: Routine): Scenario => ({
 export function useRoutines(options: RoutineOptions) {
   const { parts, project, sim, commitParts, updateProjectNow, showToast } = options;
   const [view, setView] = useState<RoutineView>(EMPTY_VIEW);
-  const sceneRef = useLatestRef({ parts, joints: project.joints ?? [] });
+  const sceneRef = useLatestRef({ parts, joints: project.joints ?? [], cameras: project.cameras ?? [] });
   const capabilities = () => sceneCapabilities(sceneRef.current);
   const { commitRoutines, undo } = options;
   const store = useRoutineStore({ project, projectRef: options.projectRef, commitRoutines, capabilities });
@@ -151,10 +152,12 @@ export function useRoutines(options: RoutineOptions) {
   };
 
   const { runLive, runHeadless } = useRoutineRuns({
+    scope: active,
     pending,
     sim,
     sceneRef,
     setRun: (run) => setView((v) => ({ ...v, run: run(v.run) })),
+    onVisionPrepared: (plan, errors) => setView((v) => ({ ...v, compiled: routineVisionCompilation(plan, errors) })),
   });
   const { addCapability, missing } = useRoutineMounts({
     active,

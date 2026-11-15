@@ -1,3 +1,4 @@
+import { useVisionScope } from '../cameras/visionScope';
 import { useScenePrinting } from './usePrinting';
 import { useTriesWork } from './useDatasets';
 import { useRef, useState } from 'react';
@@ -63,6 +64,7 @@ const seedLoader = (to: SeedTargets) => (next: WorkspaceSeed, message?: string) 
 };
 
 export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWorkspaceProps) {
+  const vision = useVisionScope();
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const scene = useSceneMeta(seed);
   const docs = useSceneDocument(seed);
@@ -151,6 +153,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   return {
     workspaceId,
+    vision,
     studio,
     printer,
     readiness,

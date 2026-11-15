@@ -52,6 +52,8 @@ If none of the tries fit, the toast says "Export and training take only passed t
 
 Each selected recording range becomes one episode, recorded at 25 frames a second. An episode holds the joint positions, the joint targets, and a 640 × 480 video from each camera. A try's segments go in as subtasks, each with its instruction or label. A segment selection includes only its selected frames and overlapping subtasks. There's always a **scene** camera at the front three-quarters, plus one camera for each camera part on the robot. Camera views you add to the scene aren't part of the dataset.
 
+The videos are rendered from the recorded motion. Imported camera clips stay with the try and aren't copied into this export. Detection boxes aren't drawn into exported videos.
+
 The export keeps the version's training, validation and test assignments. Segments, variations and camera frames from one source stay together. Missing saved content stops the export with an error.
 
 The zip holds two copies of the dataset. The top folder is LeRobot v3.0, which LeRobot 0.4 and later can load as is. The `v2.1` folder inside it is LeRobot v2.1, for GR00T, which only reads v2. For a list of every file and column, see [LeRobot dataset contents](/help/lerobot-dataset-contents).

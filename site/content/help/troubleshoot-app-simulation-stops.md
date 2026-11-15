@@ -36,6 +36,12 @@ The tab appears only when the scene has a movable joint. If your parts are joine
 
 When the fix works, **Simulate** appears beside **Inspect**.
 
+## The simulation stops after an edit
+
+Editing a part, a joint or a stationary camera stops the simulation and returns the robot to its posed model. An edit also cancels a try or Routine that's still preparing to start.
+
+After the edit, click **Simulate** to start again, or **Try It** to start a new try.
+
 ## “The simulator stopped.”
 
 The simulation crashed in the background, but your scene is safe.

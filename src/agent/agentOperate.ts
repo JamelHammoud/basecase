@@ -1,3 +1,4 @@
+import type { CameraVision } from '../cameras/scopedVision';
 import * as THREE from 'three';
 import { cameraShots, type CameraShot } from '../cameras/cameraShots';
 import type { FixedCamera } from '../cameras/fixed';
@@ -29,6 +30,7 @@ export interface OperatePayload {
 }
 
 export interface OperateContext {
+  cameraVision?: CameraVision;
   sim: Simulation;
   rig: Rig;
   parts: ScenePart[];
@@ -143,6 +145,7 @@ export async function operateRequest(ctx: OperateContext, p: OperatePayload): Pr
 
   const names = (p.cameras?.length ? p.cameras : defaultCameras(ctx.parts, ctx.fixedCameras)).slice(0, MAX_CAMERAS);
   const seen = await (ctx.shoot ?? cameraShots)({
+    vision: ctx.cameraVision,
     parts: ctx.parts,
     world: ctx.sim.worldParts,
     model: ctx.sim.model,
@@ -154,10 +157,20 @@ export async function operateRequest(ctx: OperateContext, p: OperatePayload): Pr
     ? ` No camera ${seen.missing.join(', ')}; cameras: ${seen.available.join(', ')}.`
     : '';
 
+  const vision = seen.shots
+    .filter((shot) => shot.detections !== undefined)
+    .map((shot) => ({
+      camera: shot.view,
+      detections: shot.detections,
+      ...(shot.visionError ? { error: shot.visionError } : {}),
+    }));
+  const detections = vision.length ? `Detections: ${JSON.stringify(vision)}.` : '';
   const calibration = (await ctx.calibrationErrors?.().catch(() => '')) ?? '';
 
   return {
-    text: [`Ran ${duration(seconds)}.`, stateLine(ctx, poses), missing.trim(), calibration].filter(Boolean).join(' '),
+    text: [`Ran ${duration(seconds)}.`, stateLine(ctx, poses), missing.trim(), detections, calibration]
+      .filter(Boolean)
+      .join(' '),
     images: seen.shots,
   };
 }

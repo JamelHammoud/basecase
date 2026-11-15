@@ -22,6 +22,7 @@ export type ImportSource =
 export interface ReadSource {
   data: SourceData;
   images?: FrameSet;
+  files: SourceFile[];
   hash: string;
 }
 
@@ -129,7 +130,7 @@ export async function readImportSource(source: ImportSource): Promise<ReadSource
   const data = await readers[kind as keyof typeof readers]();
   const images = await readImageSource(hashed.folder);
 
-  if (data) return { data, ...(images ? { images } : {}), hash: await hashed.hash() };
+  if (data) return { data, ...(images ? { images } : {}), hash: await hashed.hash(), files };
 
   return images && { images, hash: await hashed.hash() };
 }

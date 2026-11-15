@@ -1,3 +1,4 @@
+import type { RoutineVisionFacts } from './visionFacts';
 import type { CoordinatorRun, RawEvent } from './coordinator';
 import type { Plan, PlanOp, PlanWatcher } from './planTypes';
 import type { Motion } from './schema';
@@ -34,7 +35,9 @@ export class ScenarioHost {
   skillLatency: (skill: string) => number = () => SKILL_MS;
   motion: MotionHost | null = null;
   feed: FactFeed | null = null;
+  vision: RoutineVisionFacts | null = null;
   private readonly decoder: TraceDecoder;
+  private readonly visionWaits = new Map<number, () => void>();
   private readonly cancelled = new Set<number>();
   private readonly doNodes = new Map<number, string>();
   private readonly doMoves = new Map<number, Motion>();
@@ -105,6 +108,8 @@ export class ScenarioHost {
 
     if (!enabled || fault?.kind === 'hang' || fault?.kind === 'fail') return;
 
+    if (this.vision?.handles(watcher.model)) return this.sampleVision(watcher, t);
+
     const { value: raw, at } = this.reading(watcher.id, t);
     const value = { num: worldNum(raw), sym: typeof raw === 'string' ? this.intern(raw) : -1 };
 
@@ -115,6 +120,15 @@ export class ScenarioHost {
     }
   }
 
+  private sampleVision(watcher: PlanWatcher, t: number) {
+    const reading = this.vision?.read(watcher, t);
+
+    if (!reading) return;
+
+    this.run.publish(watcher.fact, { num: reading.num, sym: -1 }, Math.floor(reading.at));
+    this.values.set(watcher.fact, reading);
+  }
+
   handle(events: RawEvent[]) {
     for (const raw of events) {
       const event = this.decoder.decode(raw);
@@ -123,8 +137,15 @@ export class ScenarioHost {
 
       if (raw.k === 'run') this.onRun(event, raw.t);
       else if (raw.k === 'opStart') this.onOpStart(this.plan.ops[raw.a], event, raw.t);
-      else if (raw.k === 'opCancel' || raw.k === 'release') this.cancelled.add(raw.b);
+      else if (['opCancel', 'opTimeout', 'opFail', 'opDone', 'release'].includes(raw.k))
+        this.cancel(event.token ?? raw.b);
     }
+  }
+
+  private cancel(token: number) {
+    this.cancelled.add(token);
+    this.visionWaits.get(token)?.();
+    this.visionWaits.delete(token);
   }
 
   private schedule(token: number, atMs: number, reply: Reply, ok = true) {
@@ -215,6 +236,8 @@ export class ScenarioHost {
   }
 
   private infer(op: PlanOp, token: number, t: number) {
+    if (this.vision?.handles(op.model ?? '')) return this.inferVision(op, token, t);
+
     const mock = this.scenario.mocks[op.node] ?? this.scenario.mocks[op.model ?? ''];
     const result = inferResult(this.plan, op, mock);
     const finish = Object.assign(
@@ -231,6 +254,39 @@ export class ScenarioHost {
     );
 
     this.settle([op.node, op.model ?? ''], t, mockLatency(mock, INFER_MS), finish);
+  }
+
+  private inferVision(op: PlanOp, token: number, t: number) {
+    const reply = () => {
+      if (!this.visionWaits.has(token)) return;
+
+      const result = this.vision?.read(op, this.clock.now, t);
+
+      if (!result || this.cancelled.has(token)) return;
+
+      this.visionWaits.get(token)?.();
+      this.visionWaits.delete(token);
+
+      const finish = Object.assign(
+        (ok: boolean) => {
+          if (!ok) return this.run.complete(token, false);
+
+          this.run.complete(token, true, { num: result.num, sym: -1 });
+          this.values.set(op.fact ?? 0, result);
+          this.record({ t: this.clock.now, kind: 'result', node: op.node, value: result.num });
+        },
+        { token },
+      );
+
+      this.settle([op.node, op.model ?? ''], this.clock.now, 0, finish);
+    };
+
+    if (!this.vision) return;
+
+    const wake = (captureAt: number) => this.clock.at(Math.max(this.clock.now, captureAt), ORDER.reply, reply);
+
+    this.visionWaits.set(token, this.vision.subscribe(wake));
+    this.clock.at(t, ORDER.reply, reply);
   }
 
   private ask(op: PlanOp, token: number, t: number) {

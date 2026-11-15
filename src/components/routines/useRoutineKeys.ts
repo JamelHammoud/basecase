@@ -3,6 +3,7 @@ import { useEffect, useEffectEvent, useRef } from 'react';
 import { hasPrimaryModifier } from '../../utils/os';
 import { isTextEntry } from '../../workspace/helpers';
 import type { Routines } from '../../workspace/useRoutines';
+import { routineCanRun } from '../../workspace/routineVisionState';
 
 type KeyAction = 'delete' | 'run' | 'deselect';
 
@@ -32,7 +33,7 @@ export function useRoutineKeys(routines: Routines, rootRef: React.RefObject<HTML
     const actions: Record<KeyAction, () => unknown> = {
       delete: editor.removeSelected,
       run: () => {
-        if (view.compiled?.ok) void routines.run();
+        if (routineCanRun(view)) void routines.run();
       },
       deselect: () => editor.select(null),
     };

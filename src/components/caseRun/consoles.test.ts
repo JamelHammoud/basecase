@@ -1,3 +1,4 @@
+import { createVisionScope } from '../../cameras/visionScope';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
@@ -34,6 +35,7 @@ const runnable = (raw: Record<string, unknown>) => {
 function context(caseConsole: CaseConsole): PanelContext {
   const bus = createSignalBus(caseConsole.signals);
   const views = cameraViews(arm.parts, []);
+  const vision = createVisionScope('console-fixture').simulated;
 
   bus.push({
     time: 1,
@@ -76,6 +78,7 @@ function context(caseConsole: CaseConsole): PanelContext {
         views,
         tile: (view) => ({
           view,
+          vision,
           large: false,
           renaming: false,
           onRename: () => undefined,

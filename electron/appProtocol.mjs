@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { net, protocol } from 'electron';
+import { MODEL_PREFIX, modelResponse } from './hub/modelRoute.mjs';
+import { TRY_VIDEO_PREFIX, tryVideoRequest } from './library/tryVideo.mjs';
 import { KERNEL_SCHEME } from './cad-kernel/sandbox/policy.mjs';
 
 export const APP_ORIGIN = 'app://basecase';
@@ -118,5 +120,15 @@ async function fromDevServer(request, { devServer, transformHtml }) {
 export function serveApp(options) {
   const handle = options.devServer ? fromDevServer : fromDist;
 
-  protocol.handle('app', (request) => handle(request, options));
+  protocol.handle('app', async (request) => {
+    const { pathname } = new URL(request.url);
+
+    if (pathname.startsWith(TRY_VIDEO_PREFIX) && options.tries)
+      return respond(await tryVideoRequest(request, options.tries));
+
+    if (pathname.startsWith(MODEL_PREFIX) && options.libraryDir)
+      return respond(await modelResponse(request, options.libraryDir));
+
+    return handle(request, options);
+  });
 }

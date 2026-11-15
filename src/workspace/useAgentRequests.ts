@@ -129,6 +129,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       restoreCanvas: () => viewportRef.current?.setPose(posing.deltas),
       parts: partsRef.current,
       fixedCameras: projectRef.current.cameras ?? [],
+      cameraVision: core.vision.simulated,
       velocity: simTraining.skills.velocity,
       calibrationErrors: () => calibrationErrorsText(projectRef.current, unit),
       fleet: simTraining.fleet.tools,

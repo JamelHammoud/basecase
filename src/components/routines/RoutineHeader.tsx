@@ -15,6 +15,7 @@ import {
 } from '../../design-system';
 import type { Routines } from '../../workspace/useRoutines';
 import { keyFor } from '../../app/shortcuts';
+import { routineCanRun } from '../../workspace/routineVisionState';
 
 export function RoutineHeader({ routines }: { routines: Routines }) {
   const { store, editor, view, showToast, undo } = routines;
@@ -44,7 +45,7 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
 
     if (name) store.rename(routine.id, name);
   };
-  const runnable = !!view.compiled?.ok && !(view.run && !view.run.done);
+  const runnable = routineCanRun(view);
 
   return (
     <div className="px-[12px] pb-1 flex items-center gap-1">

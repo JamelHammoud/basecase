@@ -1,14 +1,11 @@
 import type { Recording } from '../../sim/recorder';
 import { indexedDbStore } from '../../utils/keyValueStore';
 import { encodeRecording } from '../recordingFile';
-import { readStoredTry, summaryOf, type StoredTry } from '../tryFile';
+import { readStoredTry, summaryOf } from '../tryFile';
 import { TRIES_LABEL, type TryBackend } from './types';
+import { saveTryCameraVideo, saveTryVideos } from './videoUploadClient';
+import { deleteWebTryVideos, webTryManifests as manifests, withWebVideoLock } from './webTryVideos';
 
-const manifests = indexedDbStore<StoredTry>({
-  database: 'basecase-try-manifests',
-  store: 'manifests',
-  label: TRIES_LABEL,
-});
 const recordings = indexedDbStore<Recording>({
   database: 'basecase-try-recordings',
   store: 'recordings',
@@ -32,18 +29,20 @@ export const webTries: TryBackend = {
       return s ? [summaryOf(s, { recording: hasRecording.has(s.id), strip: hasStrip.has(s.id) })] : [];
     });
   },
-  save: async (stored, recording) => {
-    if (recording) await recordings.put(stored.id, recording);
+  save: (stored, recording) =>
+    withWebVideoLock(async () => {
+      if (recording) await recordings.put(stored.id, recording);
 
-    await manifests.put(stored.id, stored);
-  },
-  update: async (stored) => {
-    if (!(await manifests.get(stored.id))) return false;
+      await manifests.put(stored.id, stored);
+    }),
+  update: (stored) =>
+    withWebVideoLock(async () => {
+      if (!(await manifests.get(stored.id))) return false;
 
-    await manifests.put(stored.id, stored);
+      await manifests.put(stored.id, stored);
 
-    return true;
-  },
+      return true;
+    }),
   recording: async (id) => (await recordings.get(id)) ?? null,
   recordingBytes: async (id) => {
     const recording = await recordings.get(id);
@@ -54,9 +53,12 @@ export const webTries: TryBackend = {
   saveStrip: async (id, strip) => {
     if (await manifests.get(id)) await strips.put(id, strip);
   },
-  delete: async (ids) => {
-    await Promise.all(ids.flatMap((id) => [manifests.delete(id), recordings.delete(id), strips.delete(id)]));
-  },
+  delete: (ids) =>
+    withWebVideoLock(async () => {
+      await Promise.all(
+        ids.flatMap((id) => [manifests.delete(id), recordings.delete(id), strips.delete(id), deleteWebTryVideos(id)]),
+      );
+    }),
   manifests: async (ids) => {
     const found = await Promise.all(ids.map((id) => manifests.get(id)));
 
@@ -67,8 +69,10 @@ export const webTries: TryBackend = {
     await indexes.put(SEARCH_INDEX, bytes);
   },
   session: async () => null,
-  saveSession: async (stored) => {
-    await manifests.put(stored.id, stored);
-  },
-  saveVideo: async () => {},
+  saveSession: (stored) =>
+    withWebVideoLock(async () => {
+      await manifests.put(stored.id, stored);
+    }),
+  saveVideo: saveTryCameraVideo,
+  saveVideos: saveTryVideos,
 };

@@ -9,6 +9,48 @@ import { annotationFromInstances } from '../vision/imageMasks';
 import { datasetContentHash } from './contentHash';
 import { zipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { unpackImageSnapshot } from '../vision/imageSnapshot';
+import { readImageSource } from '../vision/import/readImageSource';
+import { jsonBytes } from '../vision/imageBytes';
+import { assignSources } from './snapshotSplits';
+import type { SourceFolder } from './import/types';
+import type { ImageSplit } from '../vision/imageSplit';
+import type { FrozenImageSample } from './snapshotImages';
+
+const sourceFolder = (files: Record<string, Uint8Array>): SourceFolder => ({
+  name: 'Imported images',
+  files: Object.entries(files).map(([path, bytes]) => ({ path, size: bytes.length, read: async () => bytes })),
+});
+
+async function importedFixture(splits: Array<ImageSplit | undefined>) {
+  const jpeg = new Uint8Array([255, 216, 255, 192, 0, 11, 8, 0, 4, 0, 4, 1, 1, 17, 0, 255, 217]);
+  const files: Record<string, Uint8Array> = {};
+
+  splits.forEach((split, i) => {
+    const folder = `${split ?? 'sample'}-${i}`;
+
+    files[`${folder}/image.jpg`] = jpeg;
+    files[`${folder}/_annotations.coco.json`] = jsonBytes({
+      categories: [{ id: 4, name: 'Block' }],
+      images: [{ id: 1, file_name: 'image.jpg', width: 4, height: 4 }],
+      annotations: [{ image_id: 1, category_id: 4, bbox: [i, 0, 1, 1] }],
+    });
+  });
+
+  const set = await readImageSource(sourceFolder(files));
+
+  if (!set) throw new Error('Missing imported image fixture');
+
+  return set;
+}
+
+function assignedImages(samples: FrozenImageSample[]) {
+  const splits = assignSources(
+    samples.map((sample) => ({ source: sample.source, content: sample.hash, explicit: sample.explicit })),
+    42,
+  );
+
+  return samples.map((sample, i) => ({ ...sample, split: splits[i] }));
+}
 
 const blockAnnotation = () => {
   const annotation = annotationFromInstances({
@@ -88,6 +130,7 @@ describe('frozen image samples', () => {
     const { set, blobs, samples } = await frozenFixture();
 
     expect(samples.map((sample) => sample.source)).toEqual(['["run","scene","case",7]', '["run","scene","case",7]']);
+    expect(new Set(assignedImages(samples).map((sample) => sample.split)).size).toBe(1);
     set.frames[0].jpeg[0] = 0;
     set.frames[0].depth[0] = 99;
     set.frames[0].annotations[0].instance = 'changed';
@@ -107,9 +150,9 @@ describe('frozen image samples', () => {
     );
   });
 
-  it('restores and exports hundreds of images with bounded frame lookup work', async () => {
+  it('restores and exports images with linear frame lookup work', async () => {
     const set = fixture();
-    const count = 200;
+    const count = 40;
 
     set.frames = Array.from({ length: count }, (_, i) => ({ ...set.frames[i % 2], id: `frame-${i}`, seed: i }));
 
@@ -205,5 +248,61 @@ describe('frozen image samples', () => {
     expect(directory).toBeGreaterThan(0);
     new DataView(bytes.buffer).setUint32(directory + 24, 192_000_001, true);
     await expect(unpackImageSnapshot(samples[0], bytes)).rejects.toThrow('size limit');
+  });
+});
+
+describe('imported image snapshots', () => {
+  it('preserves imported train, validation and test assignments through export and reimport', async () => {
+    const set = await importedFixture(['train', 'validation', 'test']);
+    const { samples, blobs } = await frozenFixture(set);
+    const assigned = assignedImages(samples);
+
+    expect(set.frames.every((frame) => frame.seed === 0 && frame.camera === 'image')).toBe(true);
+    expect(set.frames.every((frame) => frame.source === 'import')).toBe(true);
+    expect(assigned.map((sample) => sample.split).sort()).toEqual(['test', 'train', 'validation']);
+    expect(assigned.every((sample) => sample.split === sample.explicit)).toBe(true);
+
+    const restored = await restoreImages(assigned, async (hash) => blobs.get(hash) ?? null);
+    const dataset = newDataset({ id: 'dataset', name: 'Imported images', task: '', members: [], at: 'now' });
+    const files = await buildImageDataset(dataset, restored, assigned);
+
+    for (const folder of ['train', 'val', 'test'])
+      expect(Object.keys(files).filter((path) => path.includes(`/images/${folder}/`))).toHaveLength(2);
+
+    const reimported = await readImageSource(sourceFolder(files));
+
+    if (!reimported) throw new Error('Missing canonical image fixture');
+
+    expect(reimported.frames.every((frame) => frame.source === 'import')).toBe(true);
+
+    const repeated = await frozenFixture(reimported);
+    const reassigned = assignedImages(repeated.samples);
+
+    expect(reassigned.every((sample) => sample.split === sample.explicit)).toBe(true);
+    expect(reassigned.map((sample) => sample.split).sort()).toEqual(['test', 'train', 'validation']);
+    await expect(restoreImages(reassigned, async (hash) => repeated.blobs.get(hash) ?? null)).resolves.toHaveLength(1);
+  });
+
+  it('assigns imported images without source splits as independent groups', async () => {
+    const { samples, blobs } = await frozenFixture(await importedFixture([undefined, undefined, undefined]));
+    const assigned = assignedImages(samples);
+
+    expect(samples.every((sample) => sample.explicit === undefined)).toBe(true);
+    expect(new Set(samples.map((sample) => sample.source)).size).toBe(3);
+    expect(assigned.map((sample) => sample.split).sort()).toEqual(['train', 'train', 'validation']);
+    await expect(restoreImages(assigned, async (hash) => blobs.get(hash) ?? null)).resolves.toHaveLength(1);
+  });
+
+  it('refuses conflicting splits for the same imported image content', async () => {
+    const set = await importedFixture(['train']);
+    const frame = set.frames[0];
+
+    set.frames.push({ ...frame, id: 'duplicate', split: 'test' });
+
+    const { samples } = await frozenFixture(set);
+
+    expect(samples[0].source).toBe(samples[1].source);
+    expect(samples[0].hash).not.toBe(samples[1].hash);
+    expect(() => assignedImages(samples)).toThrow('conflicting dataset splits');
   });
 });

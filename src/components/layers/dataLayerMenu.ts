@@ -4,6 +4,7 @@ import type { DataLayerRow, DataLayerStore } from '../../dataLayers/store';
 export function dataLayerMenu(layer: DataLayerRow, store: DataLayerStore | undefined): ContextMenuEntry[] {
   if (layer.matching !== undefined)
     return [
+      ...(layer.makeWorld ? [{ label: 'Make World', onSelect: layer.makeWorld }] : []),
       {
         label: 'Scan Matching',
         checked: layer.matching,

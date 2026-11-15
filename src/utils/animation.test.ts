@@ -109,6 +109,71 @@ describe('sampleAnimation', () => {
     expect(sampleAnimation(smooth, 0.5).values.a).toBeGreaterThan(45);
     expect(sampleAnimation(smooth, 2.5).values.a).toBeCloseTo(sampleAnimation(smooth, 0.5).values.a);
   });
+
+  it.each(['linear', 'smooth'] as const)(
+    'samples sparse joints and root channels with %s interpolation',
+    (interpolation) => {
+      const animation: RobotAnimation = {
+        ...wave,
+        duration: 3,
+        interpolation,
+        keyframes: [
+          { t: 0, values: { a: 0 }, root: { position: [0, 0, 0] } },
+          { t: 1, values: { a: 10, b: 8 }, root: { position: [10, 20, 30] } },
+          { t: 2, values: { a: 30, later: 99 }, root: { position: [30, 60, 90], rotation: [0, 60, 0] } },
+          { t: 3, values: { a: 20, b: 24 }, root: { position: [20, 40, 60] } },
+        ],
+      };
+      const before = structuredClone(animation);
+      const sampled = sampleAnimation(animation, 1.5);
+      const a = interpolation === 'linear' ? 20 : 21.25;
+
+      expect(sampled.values).toEqual({ a, b: interpolation === 'linear' ? 8 : 7 });
+      expect(sampled.root?.position).toEqual([a, a * 2, a * 3]);
+      expect(sampled.root?.rotation?.[0]).toBeCloseTo(0);
+      expect(sampled.root?.rotation?.[1]).toBeCloseTo(30);
+      expect(sampled.root?.rotation?.[2]).toBeCloseTo(0);
+      expect(animation).toEqual(before);
+    },
+  );
+
+  it.each(['linear', 'smooth'] as const)(
+    'samples the loop seam and missing root offsets with %s interpolation',
+    (interpolation) => {
+      const animation: RobotAnimation = {
+        ...wave,
+        loop: true,
+        duration: 4,
+        interpolation,
+        keyframes: [
+          { t: 1, values: { a: 10 }, root: { position: [10, 0, 0] } },
+          { t: 2, values: { a: 30 } },
+          { t: 3, values: { a: 20 } },
+        ],
+      };
+      const seam = sampleAnimation(animation, 0);
+
+      expect(seam.values.a).toBe(interpolation === 'linear' ? 15 : 13.125);
+      expect(seam.root?.position).toEqual([interpolation === 'linear' ? 5 : 5.625, 0, 0]);
+      expect(sampleAnimation(animation, -4)).toEqual(seam);
+      expect(sampleAnimation(animation, 4)).toEqual(seam);
+      expect(sampleAnimation(animation, 2).root?.position).toEqual([0, 0, 0]);
+      expect(
+        sampleAnimation({ ...animation, keyframes: animation.keyframes.map(({ t, values }) => ({ t, values })) }, 0)
+          .root,
+      ).toBeUndefined();
+    },
+  );
+
+  it('samples empty and single-keyframe animations', () => {
+    expect(sampleAnimation({ ...wave, keyframes: [] }, 1)).toEqual({ values: {} });
+
+    const keyframe = wave.keyframes[1];
+    const sampled = sampleAnimation({ ...wave, keyframes: [keyframe] }, 50);
+
+    expect(sampled).toEqual({ values: keyframe.values, root: keyframe.root });
+    expect(sampled.values).not.toBe(keyframe.values);
+  });
 });
 
 describe('buildGait', () => {

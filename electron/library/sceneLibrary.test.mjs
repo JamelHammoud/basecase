@@ -17,6 +17,19 @@ beforeEach(() => {
 afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
 describe('SceneLibrary', () => {
+  it('keeps scene world assets in full records and leaves them out of summaries', () => {
+    const worldAssets = { ['a'.repeat(64)]: { world: { name: 'Room' }, pieces: [] } };
+
+    library.save({ id: 'world', name: 'World', parts: [], worldAssets });
+
+    expect(library.get('world').worldAssets).toEqual(worldAssets);
+    expect(library.list()[0]).not.toHaveProperty('worldAssets');
+
+    library.savePreview({ id: 'world', previewDataUrl: 'data:x' });
+
+    expect(library.get('world').worldAssets).toEqual(worldAssets);
+  });
+
   it('lists light summaries and loads the full record on demand', () => {
     library.save({
       id: 'robot',

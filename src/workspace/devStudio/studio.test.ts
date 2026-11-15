@@ -48,6 +48,8 @@ const NAMES_BEFORE_THE_SPLIT = [
   'lastDownload',
   'load',
   'mapMatching',
+  'mapWorldState',
+  'mapWorldVerdict',
   'markPlatePrinted',
   'matTrack',
   'mates',
@@ -113,6 +115,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'tryLanes',
   'tryWorld',
   'worldAt',
+  'worldState',
 ];
 
 const unused: Studio = () => {

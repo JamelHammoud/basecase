@@ -33,6 +33,17 @@ Imports, exports and services Basecase connects to, and how far each goes. Entry
 - **Worse than Basecase:** v2.1 datasets need converting first, with `python -m lerobot.scripts.convert_dataset_v21_to_v30` ([LeRobotDataset v3](https://huggingface.co/docs/lerobot/lerobot-dataset-v3)). Basecase's datasets keep only the tries the Case's contract passed ([Cases](../guide/cases.md)).
 - **Basecase should:** let a person play a Case's tries in Foxglove ([Foxglove](competitors.md#foxglove)).
 
+## Image datasets
+
+### Roboflow
+
+- **Link:** https://docs.roboflow.com/datasets/versions/dataset-versions/exporting-data
+- **Checked:** 2026-11-14
+- **Basecase today:** Import Robot accepts Roboflow project and dataset version links on desktop, using the API key saved in Settings ▸ Accounts. It downloads a COCO export and stores the images, classes, annotations and source splits as a dataset. Import also reads local COCO, YOLO and Pascal VOC folders and zips ([Cases](../guide/cases.md#imported-image-datasets), [help](../../site/content/help/import-an-image-dataset.md)).
+- **Better than Basecase:** Roboflow exports a chosen dataset version in many annotation formats through the web app, Python SDK, REST API and CLI. Its source-image export preserves original image bytes, while training-version exports compress images ([dataset exports](https://docs.roboflow.com/datasets/versions/dataset-versions/exporting-data)).
+- **Worse than Basecase:** Roboflow's export is a snapshot built for training ([export behavior](https://docs.roboflow.com/datasets/versions/dataset-versions/exporting-data#export-behavior)). Basecase can combine those imported frames with labeled images generated from a Case, then export COCO and YOLO together or publish them to Hugging Face under a frozen dataset version ([Cases](../guide/cases.md#datasets)).
+- **Basecase should:** keep the source version and split assignments when importing, and let the same versioned dataset hold real images and generated Case views, as the current image-member format does ([Cases](../guide/cases.md#imported-image-datasets)).
+
 ## Supplier carts
 
 ### To check

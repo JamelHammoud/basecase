@@ -1,7 +1,7 @@
 ---
 title: Mirror parts to the other side
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: design
 type: task
 order: 13
@@ -67,7 +67,7 @@ A joint to a part you didn't mirror, such as the body, stays attached to that pa
 
 ## Ask the agent
 
-The agent mirrors parts with its `mirror_parts` tool, using the same placement across the middle of the scene. Its copies stay linked to their source. When either side changes, the agent gets a reminder to mirror again. The agent's copies don't take joints or mates with them.
+The agent mirrors parts with its `mirror_parts` tool across a plane through the scene's origin. Its copies stay linked to their source. When either side changes, the agent gets a reminder to mirror again. The agent's copies don't take joints or mates with them.
 
 To ask the agent to mirror something, right-click a part, choose **Quote Part**, then say what to mirror and where.
 

@@ -1,10 +1,12 @@
+import { reconstructionScan, reconstructionCloud, reconstructionDepth } from './mapWorldSamples';
+import type { Matrix4 } from 'three';
 import { messageAt } from '../topics/messageTree';
 import { schemaKey } from '../topics/schemas';
 import type { TopicIndex } from '../topics/topicIndex';
 import type { RecordedTopic } from '../topics/topicLog';
 import type { MapOptions } from './map';
 import type { LaserScan, MapCloud, Odometry, PointCloud2, TFMessage } from './messages';
-import { MapSession, bareFrame, type PlacedSweep } from './mapSession';
+import { MapSession, bareFrame, type PlacedSweep, type SensorSweep } from './mapSession';
 import {
   cloudSweep,
   depthSweep,
@@ -18,7 +20,9 @@ import {
 interface Sensor {
   topic: RecordedTopic;
   optical: boolean;
-  read: (i: number) => { frame: string; points: Float32Array };
+  planar: boolean;
+  rays: boolean;
+  read: (i: number, complete: boolean) => { frame: string; points: Float32Array };
 }
 
 const bare = bareFrame;
@@ -52,10 +56,15 @@ function depthSensor(index: TopicIndex, topic: RecordedTopic): Sensor | null {
   return {
     topic,
     optical: true,
-    read: (i) => {
+    planar: false,
+    rays: true,
+    read: (i, complete) => {
       const image = decoded<DepthImage & { header: { frame_id: string } }>(topic, i);
 
-      return { frame: bare(image.header?.frame_id), points: depthSweep(image, lens) };
+      return {
+        frame: bare(image.header?.frame_id),
+        points: complete ? reconstructionDepth(image, lens) : depthSweep(image, lens),
+      };
     },
   };
 }
@@ -64,19 +73,23 @@ function sensorsOf(index: TopicIndex): Sensor[] {
   const scans = topicsOf(index, 'sensor_msgs/LaserScan').map((topic) => ({
     topic,
     optical: false,
-    read: (i: number) => {
+    planar: true,
+    rays: true,
+    read: (i: number, complete: boolean) => {
       const scan = decoded<LaserScan>(topic, i);
 
-      return { frame: bare(scan.header?.frame_id), points: scanSweep(scan) };
+      return { frame: bare(scan.header?.frame_id), points: complete ? reconstructionScan(scan) : scanSweep(scan) };
     },
   }));
   const clouds = topicsOf(index, 'sensor_msgs/PointCloud2').map((topic) => ({
     topic,
     optical: false,
-    read: (i: number) => {
+    planar: false,
+    rays: false,
+    read: (i: number, complete: boolean) => {
       const cloud = decoded<PointCloud2>(topic, i);
 
-      return { frame: bare(cloud.header?.frame_id), points: cloudSweep(cloud) };
+      return { frame: bare(cloud.header?.frame_id), points: complete ? reconstructionCloud(cloud) : cloudSweep(cloud) };
     },
   }));
   const depths = topicsOf(index, 'sensor_msgs/Image').flatMap((t) => depthSensor(index, t) ?? []);
@@ -113,16 +126,27 @@ export interface BuiltMap {
   placed: PlacedSweep[];
 }
 
-export function topicMap(index: TopicIndex, options: MapOptions = {}): BuiltMap | null {
+export function topicMap(
+  index: TopicIndex,
+  options: MapOptions = {},
+  observe?: (sweep: SensorSweep & { pose: Matrix4 }) => void,
+): BuiltMap | null {
   const sensors = sensorsOf(index);
 
   if (!sensors.length) return null;
 
-  const session = new MapSession(options, true);
+  const session = new MapSession(options, true, observe);
 
   feedFrames(index, session);
 
-  for (const { at, sensor, i } of readings(sensors)) session.sweep({ at, optical: sensor.optical, ...sensor.read(i) });
+  for (const { at, sensor, i } of readings(sensors))
+    session.sweep({
+      at,
+      optical: sensor.optical,
+      planar: sensor.planar,
+      rays: sensor.rays,
+      ...sensor.read(i, !!observe),
+    });
 
   return { cloud: session.cloud(), placed: session.placed };
 }

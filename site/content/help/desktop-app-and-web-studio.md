@@ -1,7 +1,7 @@
 ---
 title: The desktop app and the web studio
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: get-started
 type: concept
 order: 2
@@ -47,6 +47,7 @@ Some features work only in the desktop app. In the web studio, you see this inst
 | **Play** ▸ **Operate** | Not shown |
 | STEP and IGES import | Meshes only: STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE |
 | Publishing a dataset to Hugging Face | Export only |
+| Roboflow imports | Download the dataset and import its folder or zip |
 | **Place on Map** | Not shown |
 
 In the web studio, Settings doesn't have the **Agent**, **Printers** or **Accounts** panes. There's no menu bar either. Press [[⌘K]] to run any command you'd find in the menus.

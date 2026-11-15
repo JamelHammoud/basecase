@@ -56,6 +56,8 @@ In the desktop app, you can also import a dataset from Hugging Face. Press [[⌘
 
 To import a LeRobot or rosbag2 folder, drop it on the canvas or click **Choose Folder** in the Import Robot sheet.
 
+A dataset with image annotations adds labeled images to the Library. If it also holds LeRobot episodes, Basecase imports both, with tries on the matching robot. See [Import an image dataset](/help/import-an-image-dataset).
+
 ## What comes in
 
 - **LeRobot** datasets in v2.0, v2.1 and v3.0. Each try takes the name of its episode's task, and a v3 file with many episodes gives you one try per episode. Training, validation and test assignments in `meta/info.json` stay with their episodes when you export or train a dataset.

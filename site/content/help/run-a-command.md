@@ -1,7 +1,7 @@
 ---
 title: Run any command from the keyboard
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: get-started
 type: task
 order: 3
@@ -36,5 +36,7 @@ Every word you type must match. Results whose names start with your words appear
 The command menu includes the commands from every menu, each catalog part and hardware size, your Library models, and your other open scenes. Saved scenes aren't listed. To open one, use **Show Scenes** ([[⌘O]]).
 
 A command appears only when it can run. For example, **Copy** and **Delete** need a selected part. **Hide** and **Lock** need exactly one, **Group** and **Union** need two, and **Spread Along X** needs three. While the simulation is on, **Simulate** changes to **Stop Simulation**.
+
+With an imported ROS recording's **Map** layer available, **Make World** opens **New Case** with the reconstructed world selected. See [Map a robot run](/help/map-a-robot-run) for the steps and limits.
 
 To close the command menu, press [[Esc]]. You can also open it from **View** ▸ **Command Menu**. For a list of the keys themselves, see [Keyboard shortcuts](/help/keyboard-shortcuts).

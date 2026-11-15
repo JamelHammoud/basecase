@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, DownloadIcon, MetaLine, RefreshIcon, Select, ShareIcon, TrainIcon } from '../../design-system';
 import type { TrySummary } from '../../cases/tryFile';
 import type { Dataset } from '../../datasets/datasetFile';
-import { imageCount, totalSeconds } from '../../datasets/datasetView';
+import { classCount, imageCount, totalSeconds } from '../../datasets/datasetView';
 import { duration } from '../../utils/duration';
 import type { TriesResult } from '../../workspace/useTriesTraining';
 import { PendingRow } from '../simulate/PendingRow';
@@ -25,8 +25,13 @@ export interface DatasetActions {
 
 function statItems(dataset: Dataset, members: TrySummary[]): React.ReactNode[] {
   const images = imageCount(dataset);
+  const classes = classCount(dataset);
 
-  return [members.length > 0 && duration(totalSeconds(members)), images > 0 && plural(images, 'image')];
+  return [
+    members.length > 0 && duration(totalSeconds(members)),
+    images > 0 && plural(images, 'image'),
+    images > 0 && classes !== null && plural(classes, 'class', 'classes'),
+  ];
 }
 
 interface DatasetPaneProps {

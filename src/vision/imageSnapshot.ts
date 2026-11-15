@@ -1,8 +1,14 @@
 import { unzipSync, zipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import type { FrozenImageSample } from '../datasets/snapshotImages';
-import { frameHash, frameSetHash, type FrameSet } from './frameSet';
+import { frameHash, frameSetHash, type FrameSet, type TrainingFrame } from './frameSet';
 import { imagePackage, readImagePackage } from './imagePackage';
 import type { ImageMembers } from '../datasets/datasetFile';
+import { sourceRun } from '../datasets/snapshotSplits';
+
+const sourceOf = async (set: FrameSet, frame: TrainingFrame) =>
+  frame.source === 'import'
+    ? `image:${await frameHash({ ...frame, split: undefined })}`
+    : sourceRun(set.sceneId, set.caseId, frame.seed);
 
 export async function packImageSnapshots(set: FrameSet, member: ImageMembers) {
   if (set.id !== member.frameSetId || (await frameSetHash(set)) !== member.hash)
@@ -18,11 +24,11 @@ export async function packImageSnapshots(set: FrameSet, member: ImageMembers) {
 
     const selected = { ...set, frames: [frame], splits: undefined };
     const bytes = zipSync(imagePackage(selected), { level: 0, mtime: new Date(1980, 0, 1) });
-    const explicit = set.splits?.[frame.id];
+    const explicit = set.splits?.[frame.id] ?? frame.split;
     const sample = {
       frameSetId: set.id,
       frameId: frame.id,
-      source: JSON.stringify(['run', set.sceneId, set.caseId, frame.seed]),
+      source: await sourceOf(set, frame),
       hash: await frameHash(frame),
       split: explicit ?? ('train' as const),
       ...(explicit ? { explicit } : {}),
@@ -55,7 +61,7 @@ export async function unpackImageSnapshot(sample: FrozenImageSample, bytes: Uint
     set.frames.length !== 1 ||
     frame.id !== sample.frameId ||
     (await frameHash(frame)) !== sample.hash ||
-    JSON.stringify(['run', set.sceneId, set.caseId, frame.seed]) !== sample.source
+    (await sourceOf(set, frame)) !== sample.source
   )
     throw new Error('The frozen image content changed.');
 

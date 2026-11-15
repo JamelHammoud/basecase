@@ -29,6 +29,7 @@ export interface ImageMembers {
   frameSetId: string;
   frameIds: string[];
   hash: string;
+  classes?: string[];
 }
 
 export interface Dataset {
@@ -168,7 +169,11 @@ const isImages = (v: unknown): v is ImageMembers[] =>
       isId(member.frameSetId) &&
       isIds(member.frameIds) &&
       typeof member.hash === 'string' &&
-      /^[a-f0-9]{64}$/.test(member.hash),
+      /^[a-f0-9]{64}$/.test(member.hash) &&
+      (member.classes === undefined ||
+        (Array.isArray(member.classes) &&
+          member.classes.length <= 1000 &&
+          member.classes.every((name) => isText(name, 200) && name.trim().length > 0))),
   );
 
 const imageFields = (v: Raw) => v.imageMembers === undefined || isImages(v.imageMembers);

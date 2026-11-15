@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 import { CommandPalette, type Command } from '../components/CommandPalette';
 import { ErrorBoundary } from '../design-system';
 import { STAYS_IN_RUN } from './caseCommands';
@@ -27,7 +28,10 @@ const leavingFirst = (commands: Command[], running: CaseRun): Command[] =>
   );
 
 function OpenPalette({ inputs, onClose }: Omit<WorkspacePaletteProps, 'open'>) {
-  const { selection, parts } = inputs.core;
+  const { selection, parts, dataLayers } = inputs.core;
+
+  useSyncExternalStore(dataLayers.subscribe, dataLayers.rows);
+
   const facts = selectionFacts(selection.selectedParts, parts);
   const all = [...sceneCommands(inputs), ...editCommands(inputs), ...viewCommands(inputs)].filter((c) =>
     canRunOnSelection(c.id, facts),

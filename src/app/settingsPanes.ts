@@ -2,7 +2,7 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 
 export type SettingsPane = 'canvas' | 'agent' | 'build' | 'printers' | 'accounts' | 'shortcuts';
 
-export type SettingsField = 'map-tiles';
+export type SettingsField = 'map-tiles' | 'roboflow';
 
 export interface SettingsFocus {
   field: SettingsField;
@@ -21,7 +21,7 @@ const PANES: Array<{ id: SettingsPane; label: string; keywords: string }> = [
   {
     id: 'accounts',
     label: 'Accounts',
-    keywords: 'hugging face onshape google maps tiles slant 3d print service token key login',
+    keywords: 'hugging face onshape roboflow google maps tiles slant 3d print service token key login',
   },
   { id: 'shortcuts', label: 'Shortcuts', keywords: 'keys keyboard hotkeys' },
 ];

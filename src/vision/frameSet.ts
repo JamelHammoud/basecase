@@ -1,4 +1,5 @@
 import { decodeMask, maskBox, maskPolygons } from './imageMasks';
+import { MB } from '../../electron/fileSize.mjs';
 import { sha256 } from '../cases/tries';
 import { depthBytes } from './imageBytes';
 import type { ImageSplit } from './imageSplit';
@@ -7,6 +8,7 @@ export interface ImageClass {
   id: number;
   name: string;
   keypoints?: string[];
+  objectId?: string;
 }
 
 export interface ImageKeypoint {
@@ -39,6 +41,8 @@ export interface TrainingFrame {
   jpeg: Uint8Array;
   annotations: ImageAnnotation[];
   depth: Float32Array;
+  split?: 'train' | 'validation' | 'test';
+  source?: 'import';
 }
 
 export interface FrameSet {
@@ -67,6 +71,8 @@ const refuse = () => {
 
 function validClass(value: unknown): value is ImageClass {
   if (!object(value) || !uint(value.id) || !text(value.name)) return false;
+
+  if (value.objectId !== undefined && !id(value.objectId)) return false;
 
   if (value.keypoints === undefined) return true;
 
@@ -138,7 +144,16 @@ function frameDimensions(value: Record<string, unknown>): boolean {
 }
 
 function frameFields(value: unknown): boolean {
-  return object(value) && id(value.id) && uint(value.seed) && text(value.camera) && frameDimensions(value);
+  return (
+    object(value) &&
+    id(value.id) &&
+    uint(value.seed) &&
+    text(value.camera) &&
+    frameDimensions(value) &&
+    (value.source === undefined || value.source === 'import') &&
+    (value.split === undefined ||
+      (typeof value.split === 'string' && ['train', 'validation', 'test'].includes(value.split)))
+  );
 }
 
 export function validateTrainingFrameHeader(value: unknown): asserts value is Omit<TrainingFrame, 'jpeg' | 'depth'> {
@@ -157,7 +172,7 @@ export function validateTrainingFrame(value: unknown, classes: ImageClass[]): as
   if (
     !(frame.jpeg instanceof Uint8Array) ||
     frame.jpeg.length < 4 ||
-    frame.jpeg.length > 64_000_000 ||
+    frame.jpeg.length > 64 * MB ||
     !(frame.depth instanceof Float32Array) ||
     frame.depth.length !== frame.width * frame.height
   )
@@ -247,6 +262,8 @@ export async function frameHash(frame: Omit<TrainingFrame, 'id'> | TrainingFrame
       annotations,
       jpeg: await byteHash(frame.jpeg),
       depth: await byteHash(depthBytes(frame.depth)),
+      ...(frame.split ? { split: frame.split } : {}),
+      ...(frame.source ? { source: frame.source } : {}),
     }),
   );
 }
@@ -261,7 +278,12 @@ export async function frameSetManifestHash(set: Omit<FrameSet, 'frames'>, frames
       caseId: set.caseId,
       sceneId: set.sceneId,
       seed: set.seed,
-      classes: set.classes.map((category) => ({ id: category.id, name: category.name, keypoints: category.keypoints })),
+      classes: set.classes.map((category) => ({
+        id: category.id,
+        name: category.name,
+        keypoints: category.keypoints,
+        ...(category.objectId ? { objectId: category.objectId } : {}),
+      })),
       frames,
     }),
   );

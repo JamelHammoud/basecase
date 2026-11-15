@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { errorMessage } from '../../utils/errorMessage';
 import { AgentFrames } from './agentFrames';
 import { CameraGlyphs } from './cameraGlyphs';
 import { CheckDots } from './checkDots';
@@ -8,6 +9,7 @@ import { MatTrack } from './matTrack';
 import { DataLayers } from './dataLayers';
 import { FrameLabel } from './frameLabel';
 import { EarthLayer } from './earthLayer';
+import { ImportedWorldLayer } from './importedWorld';
 import type { Viewport3DHandle, ViewportProps } from './types';
 
 type OverlayHandle = Pick<
@@ -20,6 +22,7 @@ type OverlayHandle = Pick<
   | 'ghostState'
   | 'checkDotCount'
   | 'earthState'
+  | 'importedWorldState'
 >;
 
 export interface OverlayLabels {
@@ -51,6 +54,7 @@ export class StageOverlays {
   private readonly checkDots: CheckDots;
 
   private readonly earth: EarthLayer;
+  private readonly importedWorld: ImportedWorldLayer;
 
   constructor(ctx: ViewportContext, props: ViewportProps, labels: OverlayLabels) {
     const { overlays, camera, renderer } = ctx.stage;
@@ -70,6 +74,8 @@ export class StageOverlays {
       redraw: ctx.loop.redraw,
       attribution: (text) => showAttribution(labels.attribution(), text),
     });
+    this.importedWorld = new ImportedWorldLayer(ctx.stage.worldRoot, renderer, ctx.loop.redraw);
+    this.setWorld(props);
     void this.earth.set(props.earth ?? null);
     ctx.loop.beforeRender.add(() => {
       renderer.getDrawingBufferSize(size);
@@ -85,6 +91,8 @@ export class StageOverlays {
     if (previous.checkDots !== props.checkDots) this.checkDots.sync(props.checkDots);
 
     if (previous.earth !== props.earth) void this.earth.set(props.earth ?? null);
+
+    if (previous.importedWorld !== props.importedWorld) this.setWorld(props);
   }
 
   handle(redraw: () => void): OverlayHandle {
@@ -107,6 +115,7 @@ export class StageOverlays {
       ghostState: () => this.ghost.state(),
       checkDotCount: () => this.checkDots.count,
       earthState: () => this.earth.state(),
+      importedWorldState: () => this.importedWorld.state(),
     };
   }
 
@@ -119,5 +128,12 @@ export class StageOverlays {
     this.ghost.dispose();
     this.agentFrames.dispose();
     this.earth.dispose();
+    this.importedWorld.dispose();
+  }
+
+  private setWorld(props: ViewportProps): void {
+    void this.importedWorld.set(props.importedWorld ?? null).catch((error: unknown) => {
+      props.onWorldError?.(errorMessage(error));
+    });
   }
 }

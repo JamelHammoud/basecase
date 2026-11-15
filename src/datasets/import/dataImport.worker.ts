@@ -4,11 +4,18 @@ import { reply, serve } from '../../utils/workerRpc';
 import { importHandlers, type BuildJob } from './dataImportJobs';
 import type { ReplayJob } from './importedTries';
 import type { ImportSource } from './readSource';
+import type { ImageImportContext } from './imageImportSession';
 
 const handlers = importHandlers();
 
 serve({
   read: async (source: ImportSource) => reply(await handlers.read(source)),
+  prepareImages: async (context: ImageImportContext) => reply(await handlers.prepareImages(context)),
+  nextImage: () => {
+    const frame = handlers.nextImage();
+
+    return reply(frame, [frame.jpeg.buffer, frame.depth.buffer] as ArrayBuffer[]);
+  },
   build: async (job: BuildJob) => {
     const built = await handlers.build(job);
 

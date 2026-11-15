@@ -5,6 +5,25 @@ import { exportYolo } from './yoloExport';
 import type { FrozenImageSample } from '../datasets/snapshotImages';
 import type { ImageSplit } from './imageSplit';
 
+const imageDatasetCard = new TextEncoder().encode(
+  [
+    '---',
+    'tags:',
+    '  - basecase-image-dataset',
+    'task_categories:',
+    '  - object-detection',
+    '  - image-segmentation',
+    '---',
+    '# Basecase image dataset',
+    '',
+    'Training images and labels in [COCO](coco/) and [YOLO](yolo/) format.',
+    '',
+    'Each layout includes `basecase/frames.json` for Basecase labels and image splits.',
+    'Depth files use little-endian float32 radial distances in millimeters.',
+    '',
+  ].join('\n'),
+);
+
 function mergedClasses(sets: FrameSet[]): ImageClass[] {
   const categories = new Map<string, ImageClass>();
 
@@ -16,6 +35,7 @@ function mergedClasses(sets: FrameSet[]): ImageClass[] {
       categories.set(category.name, {
         id: existing?.id ?? categories.size,
         name: category.name,
+        ...(category.objectId ? { objectId: category.objectId } : {}),
         ...(keypoints.length ? { keypoints } : {}),
       });
     }
@@ -107,7 +127,11 @@ async function memberFrames(dataset: Dataset, sets: FrameSet[], classes: ImageCl
   return { frames: [...frames.values()] };
 }
 
-export async function buildImageDataset(dataset: Dataset, sets: FrameSet[], samples?: FrozenImageSample[]) {
+export async function buildImageDataset(
+  dataset: Dataset,
+  sets: FrameSet[],
+  samples?: FrozenImageSample[],
+): Promise<Record<string, Uint8Array>> {
   const classes = mergedClasses(sets);
   const selected = samples ? await frozenFrames(samples, sets, classes) : await memberFrames(dataset, sets, classes);
   const set: FrameSet = {
@@ -124,5 +148,9 @@ export async function buildImageDataset(dataset: Dataset, sets: FrameSet[], samp
   const prefix = (folder: string, files: Record<string, Uint8Array>) =>
     Object.fromEntries(Object.entries(files).map(([path, bytes]) => [`${folder}/${path}`, bytes]));
 
-  return { ...prefix('coco', exportCoco(set)), ...prefix('yolo', exportYolo(set)) };
+  return {
+    ...prefix('coco', exportCoco(set)),
+    ...prefix('yolo', exportYolo(set)),
+    'README.md': imageDatasetCard.slice(),
+  };
 }

@@ -1,7 +1,8 @@
 import React, { useEffect, useEffectEvent, useRef } from 'react';
 import { scaledToReach } from '../cases/scale';
 import { robotFacts } from '../cases/robotFit';
-import { worldItem } from '../cases/schema';
+import { caseWorldItems } from '../cases/importedWorldItems';
+import { caseWorldView } from '../cases/worldView';
 import { DriveOverlay } from '../components/simulate/DriveOverlay';
 import { Viewport3D, type Viewport3DHandle } from '../components/Viewport3D';
 import { forgeHook } from '../forge/forgeHook';
@@ -30,7 +31,7 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle; Console: GalleryCon
   const kase = bundle.case;
   const facts = robotFacts(rig, parts);
   const training = useGalleryTraining({ slug: bundle.slug, morphology: facts.morphology, sim });
-  const world = scaledToReach(kase, facts.reachMm, facts.anchor).world.objects.map(worldItem);
+  const world = caseWorldItems(scaledToReach(kase, facts.reachMm, facts.anchor));
   const begin = useEffectEvent(() => {
     sim.setWorld(world);
     void sim.start();
@@ -64,6 +65,7 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle; Console: GalleryCon
         ref={viewportRef}
         parts={parts}
         worldParts={sim.worldParts}
+        importedWorld={caseWorldView(kase)}
         selectedPartIds={[]}
         transformMode="translate"
         sculptSettings={SCULPT}

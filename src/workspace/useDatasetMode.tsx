@@ -11,7 +11,7 @@ import {
   type ContextMenuEntry,
 } from '../design-system';
 import type { Dataset } from '../datasets/datasetFile';
-import { memberGroups, membersOf } from '../datasets/datasetView';
+import { datasetVersionGroups, datasetVersionMembers } from './datasetVersionView';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { DatasetActions } from '../components/tries/DatasetPane';
 import { showNewCase } from './caseCommands';
@@ -102,11 +102,14 @@ export function useDatasetMode(core: WorkspaceCore): DatasetMode {
   const { cases, sim } = simTraining;
   const dataset = view.open ? view.dataset : null;
   const modelHash = useModelHash(sim.buildModel, {
-    id: dataset?.members.length ? `${dataset.id}:${cases.active?.id ?? ''}` : null,
+    id:
+      dataset?.members.length && dataset.selectedVersion === undefined
+        ? `${dataset.id}:${cases.active?.id ?? ''}`
+        : null,
     robot: core.posing.rig,
   });
-  const members = dataset ? membersOf(dataset, view.all) : [];
-  const { fitting, earlier, elsewhere } = memberGroups(members, {
+  const members = dataset ? datasetVersionMembers(dataset, view.all) : [];
+  const { fitting, earlier, elsewhere } = datasetVersionGroups(dataset, members, {
     modelHash,
     sceneId: cases.sceneId,
     caseId: cases.active?.id ?? null,
@@ -130,6 +133,7 @@ export function useDatasetMode(core: WorkspaceCore): DatasetMode {
       publishDataset: () => datasets.publishDataset(dataset),
       train: () => datasets.train(dataset, () => showNewCase(core)),
       update: () => datasets.update(dataset),
+      selectVersion: view.selectVersion,
     },
     menu: (id) => tileMenu(core, id),
   };

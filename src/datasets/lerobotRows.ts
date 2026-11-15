@@ -15,6 +15,7 @@ export interface DatasetEpisode extends EpisodeData {
   videos: Record<string, Uint8Array>;
   imageStats: Record<string, FeatureStats>;
   source: Record<string, unknown>;
+  split?: 'train' | 'validation' | 'test';
 }
 
 export interface ScanSensor {
@@ -239,5 +240,5 @@ export const basecaseFile = (spec: DatasetSpec) =>
   json({
     ...spec.source,
     ...(spec.scans?.length ? { scans: spec.scans } : {}),
-    episodes: spec.episodes.map((e, i) => ({ episode_index: i, ...e.source })),
+    episodes: spec.episodes.map((e, i) => ({ episode_index: i, ...e.source, ...(e.split ? { split: e.split } : {}) })),
   });

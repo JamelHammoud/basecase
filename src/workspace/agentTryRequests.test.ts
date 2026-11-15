@@ -11,7 +11,15 @@ vi.mock('../cases/tryStore', async () => {
   const { storedTry } = await import('../cases/trySearch/fixtures/searchFixtures');
   const stored = [
     storedTry({ id: 'pick-1', robot: 'SO-101', verdict: 'failed', input: 'leader-arm' }),
-    storedTry({ id: 'pick-2', robot: 'SO-101', verdict: 'passed', input: 'leader-arm' }),
+    {
+      ...storedTry({ id: 'pick-2', robot: 'SO-101', verdict: 'passed', input: 'leader-arm' }),
+      labels: {
+        segments: [{ from: 20, to: 40, label: 'grasp silver bolt' }],
+        tags: [],
+        flags: [],
+        by: 'person' as const,
+      },
+    },
     storedTry({ id: 'walk-1', robot: 'Hexapod', caseName: 'Walk', verdict: 'failed', seconds: 40 }),
   ];
 
@@ -98,6 +106,13 @@ describe('read_try', () => {
 });
 
 describe('search_tries', () => {
+  it('returns the exact frame range of a matching segment', async () => {
+    expect(await TRY_HANDLERS.search_tries({ query: 'silver bolt' })).toMatchObject({
+      ok: true,
+      hits: [{ try: 'pick-2', from: 20, to: 40 }],
+    });
+  });
+
   it('answers with each hit’s try and facts', async () => {
     const reply = await TRY_HANDLERS.search_tries({ query: 'failed grasp red block leader-arm' });
 

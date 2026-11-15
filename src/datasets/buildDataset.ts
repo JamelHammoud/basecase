@@ -14,6 +14,7 @@ export interface DatasetJobEpisode {
   task: string;
   source: Record<string, unknown>;
   segments?: DatasetSegment[];
+  split?: DatasetEpisode['split'];
 }
 
 export interface DatasetJob {
@@ -59,7 +60,13 @@ export async function buildDataset(job: DatasetJob): Promise<DatasetFiles> {
 
       const segments = segmentRows(e.segments ?? [], data.frames);
 
-      episodes.push({ ...data, ...rendered, source: e.source, ...(segments.length ? { segments } : {}) });
+      episodes.push({
+        ...data,
+        ...rendered,
+        source: e.source,
+        ...(e.split ? { split: e.split } : {}),
+        ...(segments.length ? { segments } : {}),
+      });
     }
   } finally {
     disposeRenderStage(stage);

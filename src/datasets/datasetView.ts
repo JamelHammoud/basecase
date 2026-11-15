@@ -24,7 +24,7 @@ export interface MemberGroups {
 
 export interface OpenModel {
   modelHash: string | null;
-  sceneId: string;
+  sceneId: string | null;
   caseId: string | null;
 }
 

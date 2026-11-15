@@ -6,12 +6,14 @@ import { loadManifests } from '../cases/tryStore';
 import type { DatasetJobEpisode } from '../datasets/buildDataset';
 import { datasetCameras, snakeKey } from '../datasets/cameras';
 import type { DatasetSpec } from '../datasets/datasetClient';
+import type { DatasetSnapshot } from '../datasets/snapshotTypes';
 import { labelSegments } from '../datasets/segmentRows';
 import { usableTries } from '../datasets/usableTries';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 import type { ScenePart } from '../types/robotics';
 import { fileSafe } from './helpers';
+import { frozenDatasetEpisodes } from './frozenDatasetEpisodes';
 
 export interface DatasetScene {
   model: SimModel;
@@ -19,6 +21,7 @@ export interface DatasetScene {
   parts: ScenePart[];
   world: ScenePart[];
   guests: ScenePart[];
+  kase?: Case | null;
 }
 
 export interface DatasetJobInput {
@@ -27,6 +30,7 @@ export interface DatasetJobInput {
   name: string;
   task: string;
   records: TryRecord[];
+  snapshot?: DatasetSnapshot;
   load?: (id: string) => Promise<Recording | null | undefined>;
   labels?: (ids: string[]) => Promise<Map<string, TryLabels | undefined>>;
 }
@@ -39,8 +43,7 @@ export interface PreparedDataset {
   modelHash: string;
 }
 
-export const datasetLeftOut = (made: PreparedDataset) =>
-  made.left ? `, left out ${made.left} from another Case or design` : '';
+export const datasetLeftOut = (made: Pick<PreparedDataset, 'left'>) => (made.left ? `, left out ${made.left}` : '');
 
 const REPO_STEM_MAX = 80;
 const MANIFEST_BATCH = 500;
@@ -82,8 +85,8 @@ function slotsOf(kase: Case | null, model: SimModel) {
   return slots.flatMap((s, i) => (keys[i] ? [{ id: s.id, robot: keys[i] }] : []));
 }
 
-export async function prepareDataset(input: DatasetJobInput): Promise<PreparedDataset | null> {
-  const { scene, kase, task } = input;
+async function liveEpisodes(input: DatasetJobInput) {
+  const { scene, task } = input;
   const passed = input.records.filter((t) => t.passed);
   const { usable, modelHash } = await usableTries(passed, scene.model, input.load ? { load: input.load } : {});
   const labels = await (input.labels ?? labelsById)(usable.map((u) => u.record.id));
@@ -99,6 +102,24 @@ export async function prepareDataset(input: DatasetJobInput): Promise<PreparedDa
       source: record.manifest.source ?? null,
     },
   }));
+
+  return { episodes, modelHash, left: passed.length - episodes.length };
+}
+
+async function frozenEpisodes(input: DatasetJobInput, snapshot: DatasetSnapshot) {
+  if ((await sha256(input.scene.model.xml)) !== snapshot.modelHash)
+    throw new Error('The frozen dataset model changed.');
+
+  const episodes = await frozenDatasetEpisodes(snapshot);
+
+  return { episodes, modelHash: snapshot.modelHash, left: snapshot.samples.length - episodes.length };
+}
+
+export async function prepareDataset(input: DatasetJobInput): Promise<PreparedDataset | null> {
+  const { scene, kase } = input;
+  const { episodes, modelHash, left } = input.snapshot
+    ? await frozenEpisodes(input, input.snapshot)
+    : await liveEpisodes(input);
 
   if (!episodes.length) return null;
 
@@ -117,5 +138,5 @@ export async function prepareDataset(input: DatasetJobInput): Promise<PreparedDa
     source: sourceOf(kase, modelHash),
   };
 
-  return { job, name, used: episodes.length, left: passed.length - episodes.length, modelHash };
+  return { job, name, used: episodes.length, left, modelHash };
 }

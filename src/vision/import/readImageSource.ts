@@ -67,9 +67,10 @@ async function identifiedSet(data: Pick<FrameSet, 'frames' | 'classes'>, folder:
   const frames = new Map<string, FrameSet['frames'][number]>();
 
   for (const frame of data.frames) {
-    const id = await frameHash(frame);
+    const imported = { ...frame, source: 'import' as const };
+    const id = await frameHash(imported);
 
-    frames.set(id, { ...frame, id });
+    frames.set(id, { ...imported, id });
   }
 
   const set: FrameSet = {

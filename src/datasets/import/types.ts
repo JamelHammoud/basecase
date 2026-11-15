@@ -1,3 +1,5 @@
+import type { TrySplit } from '../../cases/tryFile';
+
 export const IMPORT_LIMITS = {
   fileBytes: 512 * 1024 * 1024,
   metaBytes: 8 * 1024 * 1024,
@@ -35,6 +37,7 @@ export interface SourceEpisode {
   action: Float64Array | null;
   videos: SourceVideo[];
   topics?: Uint8Array | null;
+  split?: TrySplit;
 }
 
 export type SourceFormat = 'lerobot-v2.1' | 'lerobot-v3.0' | 'mcap';

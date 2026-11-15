@@ -52,7 +52,7 @@ async function openTouchAPoint() {
 async function driveTries() {
   for (let n = 1; n <= TRIES; n++) {
     await button('Try It').click();
-    await endTryAt(app.page, SHORT_TRY_SECONDS);
+    await endTryAt(app.page, (SHORT_TRY_SECONDS * 10 + n - 1) / 10);
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(n);
     await expect.poll(async () => (await simState()).drive, { timeout: 30000 }).toBe('off');
   }

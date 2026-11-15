@@ -1,6 +1,7 @@
-import type { SavedSceneRecord, SavedSceneSummary, ScenePart } from '../../../types/robotics';
+import type { SavedSceneRecord, SavedSceneSummary } from '../../../types/robotics';
 import type { ScenePreviewPayload } from '../types';
-import { idbAll, idbDelete, idbGet, idbPut } from './idb';
+import { idbAll, idbGet, idbWrite } from './idb';
+import { summarizeScene } from './sceneSummary';
 
 type ScenePayload = Partial<SavedSceneRecord> & { keepUpdatedAt?: boolean; autosave?: boolean };
 
@@ -12,27 +13,20 @@ const slug = (name?: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
-const isCatalogPart = (p: ScenePart) => p.kind === 'component' || Boolean(p.hardware);
-
 const newest = (a: SavedSceneSummary, b: SavedSceneSummary) => (b.updatedAt || '').localeCompare(a.updatedAt || '');
 
-export function summarizeScene(record: SavedSceneRecord): SavedSceneSummary {
-  const parts = Array.isArray(record.parts) ? record.parts : [];
+async function writeScene(record: SavedSceneRecord): Promise<SavedSceneSummary> {
+  const summary = summarizeScene(record);
 
-  return {
-    id: record.id,
-    name: record.name,
-    globalGoal: record.globalGoal || '',
-    updatedAt: record.updatedAt,
-    previewDataUrl: record.previewDataUrl,
-    sizeMm: record.sizeMm,
-    partCount: parts.length || record.partCount || 0,
-    catalogCount: parts.filter(isCatalogPart).length,
-    commentCount: Array.isArray(record.annotations) ? record.annotations.length : 0,
-  };
+  await idbWrite([
+    { kind: 'put', store: 'scenes', key: record.id, value: record },
+    { kind: 'put', store: 'sceneSummaries', key: record.id, value: summary },
+  ]);
+
+  return summary;
 }
 
-function sceneRecord(id: string, payload: ScenePayload, previous?: SavedSceneRecord): SavedSceneRecord {
+function sceneRecord(id: string, payload: ScenePayload, previous?: SavedSceneSummary): SavedSceneRecord {
   const parts = Array.isArray(payload.parts) ? payload.parts : [];
   const keepTime = payload.keepUpdatedAt && payload.updatedAt;
 
@@ -48,11 +42,12 @@ function sceneRecord(id: string, payload: ScenePayload, previous?: SavedSceneRec
     parts,
     annotations: payload.annotations || [],
     project: payload.project,
+    worldAssets: payload.worldAssets,
   };
 }
 
 export async function listScenes(): Promise<SavedSceneSummary[]> {
-  return (await idbAll<SavedSceneRecord>('scenes')).map(summarizeScene).sort(newest);
+  return (await idbAll<SavedSceneSummary>('sceneSummaries')).sort(newest);
 }
 
 export async function getScene(id: string): Promise<SavedSceneRecord | null> {
@@ -66,11 +61,9 @@ export async function saveScene(payload: ScenePayload): Promise<SavedSceneSummar
 
   deleted.delete(id);
 
-  const record = sceneRecord(id, payload, await idbGet<SavedSceneRecord>('scenes', id));
+  const record = sceneRecord(id, payload, await idbGet<SavedSceneSummary>('sceneSummaries', id));
 
-  await idbPut('scenes', id, record);
-
-  return summarizeScene(record);
+  return writeScene(record);
 }
 
 export async function saveScenePreview({ id, previewDataUrl, sizeMm }: ScenePreviewPayload) {
@@ -78,16 +71,15 @@ export async function saveScenePreview({ id, previewDataUrl, sizeMm }: ScenePrev
 
   if (!record) return null;
 
-  const next = { ...record, previewDataUrl, sizeMm };
-
-  await idbPut('scenes', id, next);
-
-  return summarizeScene(next);
+  return writeScene({ ...record, previewDataUrl, sizeMm });
 }
 
 export async function deleteScene(id: string): Promise<SavedSceneSummary[]> {
   deleted.add(id);
-  await idbDelete('scenes', id);
+  await idbWrite([
+    { kind: 'delete', store: 'scenes', key: id },
+    { kind: 'delete', store: 'sceneSummaries', key: id },
+  ]);
 
   return listScenes();
 }

@@ -4,6 +4,7 @@ import type { RobotJoint, ScenePart } from '../types/robotics';
 import { GALLERY_FORMAT_VERSION, type GalleryBundle } from './galleryBundle';
 import type { GalleryTrained } from './galleryTrained';
 import { bakedSheet } from './bakedSheet';
+import { sceneWorldAssets, serializeWorldAssets } from '../cases/worldAssets';
 
 export interface BundleSource {
   slug: string;
@@ -85,6 +86,7 @@ export function requireCase(kase: Case | null): Case {
 export function galleryBundleOf(source: BundleSource): GalleryBundle {
   const { trained } = source;
   const kase = requireCase(source.kase);
+  const worldAssets = serializeWorldAssets(sceneWorldAssets({ cases: [kase] }));
 
   return {
     formatVersion: GALLERY_FORMAT_VERSION,
@@ -96,6 +98,7 @@ export function galleryBundleOf(source: BundleSource): GalleryBundle {
       joints: source.joints,
     },
     case: kase,
+    ...(Object.keys(worldAssets).length ? { worldAssets } : {}),
     ...(trained ? { trained } : {}),
   };
 }

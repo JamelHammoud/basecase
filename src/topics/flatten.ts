@@ -37,6 +37,7 @@ class Walk {
 
     if (typeof value === 'number') this.visit(path, { kind: 'number', value });
     else if (typeof value === 'boolean') this.visit(path, { kind: 'number', value: value ? 1 : 0 });
+    else if (typeof value === 'bigint') this.visit(path, { kind: 'label', value: String(value) });
     else if (typeof value === 'string') this.visit(path, { kind: 'label', value });
     else if (value instanceof Float64Array) this.visit(path, { kind: 'list', value });
     else if (value instanceof Uint8Array) this.visit(path, { kind: 'blob', value });

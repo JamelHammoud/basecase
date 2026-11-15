@@ -1,3 +1,11 @@
 # src/vision/
 
-The ONNX vision manifests, model cache, preprocessing, adapters and inference worker. Read [Cameras](../../docs/guide/cameras.md) (§8l), [Routines](../../docs/guide/routines.md) (§8j), [Security](../../docs/guide/security.md) (§0h) and [Performance](../../docs/guide/performance.md) (§0f) before editing. Root [AGENTS.md](../../AGENTS.md) applies here.
+Labelled images from Cases, frame labels, COCO and YOLO packages, ONNX model manifests, the model cache, preprocessing, adapters and inference workers. Before editing here, read:
+
+- [Cases](../../docs/guide/cases.md) (§8h, Training images and Datasets)
+- [Cameras](../../docs/guide/cameras.md) (§8l, label passes and inference)
+- [Routines](../../docs/guide/routines.md) (§8j)
+- [Performance](../../docs/guide/performance.md) (§0f)
+- [Security](../../docs/guide/security.md) (§0h), for model assets, stored image files and imported package validation
+
+The root [AGENTS.md](../../AGENTS.md) applies here too. Update the area's guide when its behavior changes.

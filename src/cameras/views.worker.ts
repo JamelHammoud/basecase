@@ -2,7 +2,14 @@
 import { visionBitmapCopier, type VisionAssignment } from './visionFrames';
 import { createShotVision } from './shotVision';
 import { reply, serve } from '../utils/workerRpc';
-import { renderCameraFrame, loadCameraStage, type CameraFrameRequest, type CameraStageJob } from './cameraStage';
+import {
+  renderCameraFrame,
+  renderTrainingFrame,
+  loadCameraStage,
+  type CameraFrameRequest,
+  type CameraStageJob,
+} from './cameraStage';
+import type { CameraTrainingRequest } from './trainingTypes';
 
 const vision = createShotVision(visionBitmapCopier());
 
@@ -18,6 +25,11 @@ serve({
     return reply(true);
   },
   load: async (job: CameraStageJob) => reply(await loadCameraStage(job)),
+  training: async (request: CameraTrainingRequest) => {
+    const frame = await renderTrainingFrame(request);
+
+    return reply(frame, [frame.jpeg.buffer, frame.instanceIds.buffer, frame.depth.buffer]);
+  },
   frame: async (request: CameraFrameRequest) => {
     const bitmaps = renderCameraFrame(request);
     const results = await Promise.all(

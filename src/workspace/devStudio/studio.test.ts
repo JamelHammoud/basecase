@@ -105,11 +105,16 @@ const NAMES_BEFORE_THE_SPLIT = [
   'stubHandoffs',
   'stubTabEngine',
   'stubTrainer',
+  'trainingImageFiles',
+  'trainingImages',
+  'trainingLabelBenchmark',
+  'trainingLabelFixture',
   'triangleCount',
   'tryLabels',
   'tryLanes',
   'tryWorld',
   'worldAt',
+  'worldState',
 ];
 
 const unused: Studio = () => {

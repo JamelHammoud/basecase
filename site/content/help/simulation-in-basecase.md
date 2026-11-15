@@ -38,6 +38,8 @@ You don't write a model file. Each time you start a simulation, Basecase writes 
 - **Shape.** Each part collides as the convex hull of its mesh, the shape you'd get by stretching plastic wrap around the part.
 - **Start.** The robot starts in the pose shown on the canvas, raised until it clears the floor.
 
+An [imported world](/help/import-a-world) collides as up to 64 separate convex pieces, keeping gaps such as doorways and the space under a table. Its collider supplies the floor too, so holes stay open. The world's visible mesh or splat is separate from those hidden colliders.
+
 If the robot misbehaves in the simulation, fix the design. Basecase writes your changes into the model on your next run.
 
 ## Servos, measured or estimated

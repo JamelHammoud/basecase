@@ -19,6 +19,7 @@ import { prettyJointName, type Rig } from '../../utils/kinematics';
 import type { Cases } from '../../workspace/useCases';
 import type { CaseCompare } from '../../workspace/useCaseCompare';
 import type { CaseExplore } from '../../workspace/useCaseExplore';
+import { TrainingImagesButton } from './TrainingImagesButton';
 import { CompareRows } from './CompareRows';
 import { ExploreRows } from './ExploreRows';
 import { FAULT_LABEL } from './faultMenu';
@@ -136,7 +137,15 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
 
   const comparing = comparesCase(cases, compare);
   const exploring = cases.active && explore?.rows.shown ? explore : null;
-  const shows = [tries.length > 0, showRun, !!share?.canShare, !!comparing, !!exploring];
+  const shows = [
+    cases.images.canMake,
+    !!cases.images.running,
+    tries.length > 0,
+    showRun,
+    !!share?.canShare,
+    !!comparing,
+    !!exploring,
+  ];
 
   if (!shows.some(Boolean)) return null;
 
@@ -177,6 +186,7 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
         </div>
       )}
       {cases.active && <MakeDataset cases={cases} />}
+      <TrainingImagesButton images={cases.images} />
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
       <TagTriesField target={tagging.target} onDone={tagging.done} />
     </Section>

@@ -61,11 +61,11 @@ To make a dataset from only some of the tries, hold [[⌘]] or [[⇧]] as you se
 
 ## The dataset
 
-Above its tries, the dataset shows their total running time and its newest version.
+Above its tries, the dataset shows their total running time and its newest version. If it also holds images, it shows their count and an **Images** section.
 
 ![Touch a Point open as a dataset, with its total time, Export Dataset, Publish to Hugging Face and Train from Tries](/help/make-a-dataset-from-tries/dataset.png)
 
-- **Export Dataset** saves a LeRobot zip. See [Export a LeRobot dataset](/help/export-a-lerobot-dataset).
+- **Export Dataset** saves a LeRobot zip for tries, with COCO and YOLO folders for any images. See [Export a LeRobot dataset](/help/export-a-lerobot-dataset).
 - **Publish to Hugging Face** puts the dataset on the Hub. See [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
 - **Train from Tries** appears once five of its tries have passed. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 
@@ -75,11 +75,13 @@ Missed tries stay in the dataset, but export, publishing and training leave them
 
 Each try keeps its segments and tags, and export writes the segments as subtasks. To step through one try, see [Open a try from any scene](/help/open-a-try-from-any-scene).
 
-The Library lists each dataset under **Datasets** with its number of tries. Click one to open it.
+The Library lists each dataset under **Datasets** with its number of tries, images or both. Click one to open it.
 
 ![Two datasets named Touch a Point under Datasets in the Library](/help/make-a-dataset-from-tries/library.png)
 
 To delete a dataset, right-click it in the Library, choose **Delete**, then click **Delete** to confirm. You keep its tries.
+
+To render an image dataset from a Case without recording tries, see [Make training images from a Case](/help/make-training-images).
 
 ## Update and Add to Dataset
 
@@ -93,7 +95,7 @@ To add tries to another dataset, right-click a try, choose **Add to Dataset** an
 
 ## Versions
 
-Each time you export, publish or train, Basecase saves the dataset's tries as a version. If you haven't changed the tries, they keep their version. Any change to them starts the next version.
+Each time you export, publish or train, Basecase saves the dataset's tries and image references as a version. If the task, members, image content and robot model stay the same, they keep their version. A change to any of these starts the next version.
 
 The newest version shows above the tries, for example Version 2. If you publish Version 2, the Hub tags it `dataset-v2`.
 

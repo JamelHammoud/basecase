@@ -14,6 +14,12 @@ const CONTACT: Record<WorldBehavior, string> = {
 
 const DEFAULT_DYNAMIC_GRAMS = 100;
 
+export function worldFloor(input: MjcfInput): string {
+  if (input.world?.some((item) => item.behavior === 'static' && item.convexVertices)) return '';
+
+  return '    <geom name="floor" type="plane" size="0 0 0.05" contype="0" conaffinity="1"/>';
+}
+
 export interface WorldEmit {
   lines: string[];
   assets: string[];
@@ -34,7 +40,7 @@ const boxSize = ({ dimensions: d }: WorldItem) => vec([d.width / 2000, d.depth /
 function primitiveShape(item: WorldItem): string | null {
   const d = item.dimensions;
 
-  if (partEdges(item) || item.sheetTransform) return null;
+  if (item.convexVertices || partEdges(item) || item.sheetTransform) return null;
 
   if (item.kind === 'sphere') return `type="sphere" size="${f(d.width / 2000)}"`;
 
@@ -43,9 +49,27 @@ function primitiveShape(item: WorldItem): string | null {
   return item.kind === 'box' || item.kind === 'cube' ? `type="box" size="${boxSize(item)}"` : null;
 }
 
-function hullShape(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffset: number): string | null {
+function suppliedHull(vertices: Float32Array): number[] {
+  if (vertices.length < 12 || vertices.length > 96 * 3 || vertices.length % 3 || !vertices.every(Number.isFinite))
+    throw new Error('World collision hull needs 4 to 96 finite vertices.');
+
+  const result: number[] = [];
+
+  for (let i = 0; i < vertices.length; i += 3) result.push(...toMj([vertices[i], vertices[i + 1], vertices[i + 2]]));
+
+  return result;
+}
+
+function worldHull(item: WorldItem, input: MjcfInput): number[] | null {
+  if (item.convexVertices) return suppliedHull(item.convexVertices);
+
   const tris = input.worldTriangles?.(item.id);
-  const verts = tris && tris.length >= 9 ? cachedHull(item, tris, item.position) : null;
+
+  return tris && tris.length >= 9 ? cachedHull(item, tris, item.position) : null;
+}
+
+function hullShape(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffset: number): string | null {
+  const verts = worldHull(item, input);
 
   if (!verts) return null;
 

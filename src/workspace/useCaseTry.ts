@@ -1,7 +1,8 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { castOf, stageCase, stagedEffectors, type StagedCase } from '../cases/caseCast';
 import { driveFor, slotIndexOf, toCommand } from '../cases/caseDrives';
-import { worldItem, type Case } from '../cases/schema';
+import type { Case } from '../cases/schema';
+import { caseWorldItems } from '../cases/importedWorldItems';
 import type { SlotRobot } from '../cases/slots';
 import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
 import type { RobotDrive } from '../sim/drive';
@@ -161,7 +162,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
     const staged = stageCase(active, { rig, parts }, partners());
     const kase = staged.kase;
     const ticket = lease.claimAfter(() => {
-      if (staged.slots.length > 1) sim.setWorld(kase.world.objects.map(worldItem), staged.joined);
+      if (staged.slots.length > 1) sim.setWorld(caseWorldItems(kase), staged.joined);
     });
 
     setPhase('starting');

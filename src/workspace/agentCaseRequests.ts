@@ -1,10 +1,9 @@
-import { sceneObjects, type AgentObject } from '../agent/agentDrive';
+import { sceneImageRandomization, sceneObjects, type AgentObject } from '../agent/agentDrive';
 import { isBuiltinGesture } from '../cameras/gestures/builtinGestures';
 import type { CaseSpec } from '../cases/caseBuilder';
 import { untaught } from '../cases/gestures';
 import { CASE_GOALS, goalParam, type GoalKind, type GoalValues, type ParamKey } from '../cases/caseGoals';
 import type { WorldKind } from '../cases/caseWorlds';
-import type { WorldObject } from '../cases/schema';
 import type { CompileResult } from '../routines/compile';
 import { comparable, type Comparison } from '../cases/caseCompare';
 import { designLabel, designServos, EXPLORE_RUNS, sameDesign } from '../cases/explore';
@@ -72,9 +71,11 @@ function targetCountProblem(goal: unknown, targets: string[] | undefined): strin
   return targets.length < min || targets.length > max ? `Name ${min} to ${max} spots for ${named.name}.` : null;
 }
 
-function extraObjects(payload: Payload): WorldObject[] | string {
+function extraObjects(payload: Payload): Pick<CaseSpec, 'objects' | 'imageRandomization'> | string {
   try {
-    return sceneObjects(Array.isArray(payload.objects) ? (payload.objects as AgentObject[]) : []);
+    const objects = sceneObjects(Array.isArray(payload.objects) ? (payload.objects as AgentObject[]) : []);
+
+    return { objects, imageRandomization: sceneImageRandomization(payload.imageRandomization, objects) };
   } catch (e) {
     return errorMessage(e);
   }
@@ -111,14 +112,18 @@ async function createCase(payload: Payload, ctx: CaseContext) {
 
   ctx.setAction('Making a Case');
 
+  const defaultWorld = targets ? 'room' : 'floor';
+  const chosenWorld = text(payload.world_hash) ? 'imported' : defaultWorld;
+
   const spec: CaseSpec = {
     goal: String(payload.goal) as GoalKind,
-    world: (text(payload.world) ?? (targets ? 'room' : 'floor')) as WorldKind,
+    world: (text(payload.world) ?? chosenWorld) as WorldKind,
+    worldHash: text(payload.world_hash),
     values: { ...caseValues(payload), ...(targets && payload.goal === 'path' ? { stops: targets.length } : {}) },
     ...(targets ? { targets } : {}),
     name: text(payload.name),
     brief: text(payload.brief),
-    objects,
+    ...objects,
     logic: payload.logic,
     score: payload.score,
     console: payload.console,

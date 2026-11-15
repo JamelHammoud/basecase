@@ -1,3 +1,4 @@
+import { TrainingImagesSheet } from '../components/cases/TrainingImagesSheet';
 import { ArmSizingSheet } from '../components/ArmSizingSheet';
 import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
@@ -11,6 +12,7 @@ import { TeachGestureHost } from './TeachGestureHost';
 import type { DataImport } from './useDataImport';
 import type { EarthPlace } from './useEarthPlace';
 import type { WorkspaceActions } from './useWorkspaceActions';
+import type { TrainingImages } from './useTrainingImages';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 interface WorkspaceSheetsProps {
@@ -35,6 +37,16 @@ function MatchJointsHost({ active, data }: { active: boolean; data: DataImport }
   return (
     <ErrorBoundary key={data.sheet.source} region="Match Joints" onClose={() => data.settle(null)}>
       <MatchJointsSheet sheet={data.sheet} onDone={data.settle} />
+    </ErrorBoundary>
+  );
+}
+
+function TrainingImagesHost({ active, images }: { active: boolean; images: TrainingImages }) {
+  if (!active || !images.open) return null;
+
+  return (
+    <ErrorBoundary region="Training images" onClose={images.close}>
+      <TrainingImagesSheet images={images} />
     </ErrorBoundary>
   );
 }
@@ -98,6 +110,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           />
         </ErrorBoundary>
       )}
+      <TrainingImagesHost active={active} images={core.simTraining.cases.images} />
       <TeachGestureHost active={active} cases={core.simTraining.cases} project={core.project} />
       <input
         ref={motionInputRef}

@@ -56,6 +56,7 @@ import { rollBack, rollOut } from './cad-mcp/fleetTools.mjs';
 import { compareCase, createCase, exploreCase, readTry, runCase } from './cad-mcp/caseTools.mjs';
 import { deleteCaseCode, readCaseCode, writeCaseCode } from './cad-mcp/caseCodeTools.mjs';
 import { makeDataset } from './cad-mcp/datasetTools.mjs';
+import { makeImages } from './cad-mcp/imageTools.mjs';
 import { coachSkill, draftSkill, listSkills, stressSkill, trainSkill } from './cad-mcp/skillTools.mjs';
 import { labelTries, searchTries } from './cad-mcp/tryTools.mjs';
 import { editRoutine, makeRoutine, readRoutine, runRoutine, testRoutine } from './cad-mcp/routineTools.mjs';
@@ -125,6 +126,7 @@ const TOOLS = [
   compareCase,
   exploreCase,
   makeDataset,
+  makeImages,
   writeCaseCode,
   readCaseCode,
   deleteCaseCode,

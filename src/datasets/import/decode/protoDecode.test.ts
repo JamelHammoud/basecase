@@ -165,7 +165,7 @@ describe('decoderFor', () => {
   it('skips encodings it can’t decode', () => {
     const data = new Uint8Array([1]);
 
-    expect(decoderFor('flatbuffer', { name: 'T', encoding: 'flatbuffer', data })).toBeNull();
+    expect(decoderFor('flatbuffer', { name: 'T', encoding: 'jsonschema', data })).toBeNull();
     expect(decoderFor('cdr', { name: 'T', encoding: 'ros2idl', data })).toBeNull();
     expect(decoderFor('cdr', null)).toBeNull();
     expect(decoderFor('json', { name: 'T', encoding: 'protobuf', data })).toBeNull();

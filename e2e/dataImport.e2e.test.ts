@@ -1,5 +1,6 @@
 import { zipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import { flatRecording } from '../src/datasets/import/flatRecordingFixtures';
 import { lerobotDataset } from '../src/datasets/import/fixtures';
 import { JOINT_STATE_SCHEMA, writeMcap } from '../src/datasets/import/mcapFixtures';
 import { encodeJointState } from '../src/datasets/import/ros2Cdr';
@@ -199,4 +200,69 @@ describe('Importing robot data as tries', () => {
     await app.page.keyboard.press('Escape');
     expect(app.errors).toEqual([]);
   });
+});
+
+it('imports FlatBuffers through Import and reads its nested message, plot and states from Library', async () => {
+  const own = await openApp();
+
+  try {
+    const robot = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+    const bytes = await flatRecording(JOINTS);
+
+    await own.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
+      name: 'FlatBuffers arm',
+      parts: robot.parts,
+      project: { ...DEFAULT_PROJECT, joints: robot.joints },
+    });
+    await expect.poll(() => partCount(own.page)).toBe(robot.parts.length);
+    await own.page.evaluate(
+      (picked) => (window as unknown as { __studio: Studio }).__studio.pickFiles(picked),
+      [{ name: 'telemetry.mcap', base64: base64(bytes) }],
+    );
+    await own.page.keyboard.press('ControlOrMeta+k');
+    await own.page.keyboard.type('Import');
+    await own.page
+      .locator(shown('button[data-idx]'))
+      .filter({ hasText: 'Import' })
+      .filter({ hasNotText: 'Robot' })
+      .click();
+    await expect.poll(() => own.page.getByText('Imported 1 try', { exact: true }).count()).toBeGreaterThan(0);
+    await own.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
+    await own.page.locator(shown('[data-testid="library-tries"] button')).first().click();
+    await own.page.locator(shown('[data-testid="try-tile"]')).filter({ hasText: 'telemetry.mcap' }).click();
+
+    const message = own.page.locator(shown('[data-testid="message-tree"][data-topic="/telemetry"]'));
+
+    await expect.poll(() => message.count()).toBe(1);
+    await own.page.keyboard.press('End');
+    await expect.poll(() => message.textContent()).toContain('wrist-2');
+    expect(await message.textContent()).toContain('18446744073709551615');
+    expect(await own.page.locator(shown('[data-panel="plot"] [data-testid="plot"]')).getAttribute('data-samples')).toBe(
+      '3',
+    );
+    expect(
+      await own.page
+        .locator(shown('[data-testid="state-span"]'))
+        .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-value'))),
+    ).toEqual(['Idle', 'Moving', 'Idle']);
+    await own.page.keyboard.press('Home');
+    await expect.poll(() => message.textContent()).toContain('wrist-0');
+    await own.page.keyboard.press('Escape');
+    await own.page.evaluate(
+      (picked) => (window as unknown as { __studio: Studio }).__studio.pickFiles(picked),
+      [{ name: 'telemetry.mcap', base64: base64(bytes) }],
+    );
+    await own.page.keyboard.press('ControlOrMeta+k');
+    await own.page.keyboard.type('Import');
+    await own.page
+      .locator(shown('button[data-idx]'))
+      .filter({ hasText: 'Import' })
+      .filter({ hasNotText: 'Robot' })
+      .click();
+    await expect.poll(() => own.page.getByText('Imported 0 tries', { exact: true }).count()).toBeGreaterThan(0);
+    expect(await own.page.locator(shown('[data-testid="try-tile"]')).count()).toBe(1);
+    expect(own.errors).toEqual([]);
+  } finally {
+    await own.close();
+  }
 });

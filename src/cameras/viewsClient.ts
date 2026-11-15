@@ -4,6 +4,7 @@ import { workerClient } from '../utils/workerRpc';
 import { connectVisionFrames, ensureVisionCamera, visionAssignments } from './visionSession';
 import type { VisionAssignment } from './visionFrames';
 import type { CameraFrameRequest, CameraFrameOutput, CameraStageJob } from './cameraStage';
+import type { CameraTrainingFrame, CameraTrainingRequest } from './trainingTypes';
 
 type ViewHandlers = {
   vision: (input: {
@@ -14,6 +15,7 @@ type ViewHandlers = {
   close: (input: null) => Promise<{ result: boolean }>;
   load: (job: CameraStageJob) => Promise<{ result: boolean }>;
   frame: (request: CameraFrameRequest) => Promise<{ result: CameraFrameOutput }>;
+  training: (request: CameraTrainingRequest) => Promise<{ result: CameraTrainingFrame }>;
 };
 
 const localHandlers = async (): Promise<ViewHandlers> => {
@@ -28,12 +30,14 @@ const localHandlers = async (): Promise<ViewHandlers> => {
     close: async () => ({ result: true }),
     load: async (job) => ({ result: await stage.loadCameraStage(job) }),
     frame: async (request) => ({ result: { bitmaps: stage.renderCameraFrame(request), vision: {} } }),
+    training: async (request) => ({ result: await stage.renderTrainingFrame(request) }),
   };
 };
 
 export interface CameraFeed {
   load: (job: Omit<CameraStageJob, 'meshes'>) => Promise<void>;
   frame: (request: CameraFrameRequest) => Promise<CameraFrameOutput>;
+  training: (request: CameraTrainingRequest) => Promise<CameraTrainingFrame>;
   dispose: () => void;
 }
 
@@ -68,6 +72,7 @@ export function cameraFeed(): CameraFeed {
       });
     },
     frame: (request) => client.call('frame', request, request.poses ? [request.poses.buffer] : []),
+    training: (request) => client.call('training', request, request.poses ? [request.poses.buffer] : []),
     dispose: () => {
       void client.call('close', null).then(
         () => client.dispose(),

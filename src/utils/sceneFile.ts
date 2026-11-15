@@ -2,6 +2,12 @@ import type { Skill } from '../skills/artifacts';
 import { readSkillBundle } from '../skills/bundle';
 import type { ProjectSettings, SavedSceneRecord, SceneAnnotation, ScenePart } from '../types/robotics';
 import { validSheetFields } from '../sheet/validation';
+import {
+  restoreWorldAssets,
+  sceneWorldAssets,
+  serializeWorldAssets,
+  type SerializedWorldAssets,
+} from '../cases/worldAssets';
 
 export const SCENE_FILE_EXTENSION = 'basecase';
 
@@ -18,6 +24,7 @@ export interface SharedScene {
   previewDataUrl?: string;
   sizeMm?: [number, number, number];
   skills?: Skill[];
+  worldAssets?: SerializedWorldAssets;
 }
 
 interface SceneFile {
@@ -77,6 +84,7 @@ export function sharedScene(record: Omit<SavedSceneRecord, 'id' | 'updatedAt' | 
     project: localProject(record.project),
     previewDataUrl: record.previewDataUrl,
     sizeMm: record.sizeMm,
+    worldAssets: record.worldAssets ?? serializeWorldAssets(sceneWorldAssets(record.project)),
   };
 }
 
@@ -122,12 +130,19 @@ export async function decodeSceneFile(bytes: Uint8Array): Promise<SharedScene> {
     throw new Error('The scene’s parts are damaged.');
   }
 
+  const assets = await restoreWorldAssets(scene.worldAssets);
+
+  const project = localProject(scene.project as ProjectSettings | undefined);
+
+  sceneWorldAssets(project, assets);
+
   return {
     name: typeof scene.name === 'string' && scene.name.trim() ? scene.name.trim() : 'Untitled',
     globalGoal: typeof scene.globalGoal === 'string' ? scene.globalGoal : '',
     parts: scene.parts.map(cleanPart),
     annotations: Array.isArray(scene.annotations) ? (scene.annotations as SceneAnnotation[]) : [],
-    project: localProject(scene.project as ProjectSettings | undefined),
+    project,
+    ...(scene.worldAssets === undefined ? {} : { worldAssets: scene.worldAssets as SerializedWorldAssets }),
     previewDataUrl: isImageData(scene.previewDataUrl) ? (scene.previewDataUrl as string) : undefined,
     sizeMm: isVec3(scene.sizeMm) ? (scene.sizeMm as [number, number, number]) : undefined,
     ...(Array.isArray(scene.skills) ? { skills: readSkillBundle(scene.skills) } : {}),

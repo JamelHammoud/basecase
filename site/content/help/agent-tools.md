@@ -114,7 +114,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_world` | Places objects that exist only in the simulation |
 | `start_drive` | Drives the robot in the simulation |
 | `operate` | Steps the simulation and returns the robot's camera views |
-| `create_case` | Adds a Case, with the inputs, panels and gestures it runs with, and marks which objects its code can move. In a scanned room, it aims at a door or furniture by name |
+| `create_case` | Adds a Case, with the inputs, panels and gestures it runs with, and marks which objects its code can move. In a scanned room, it aims at a door or furniture by name. `world_hash` selects a dropped 3D world |
 | `write_case_code` | Writes or replaces one of a Case's code panels, and replies with its errors, its console lines, its refused calls and a picture of the window |
 | `read_case_code` | Reads a code panel's source, or lists a Case's code panels |
 | `delete_case_code` | Takes a code panel out of a Case |
@@ -125,6 +125,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `search_tries` | Searches the tries from every scene with the same words and facts as the Library's search, or by motion |
 | `label_tries` | Reads tries' filmstrips, segments and quality flags, and writes an instruction for each try and segment, and tags |
 | `make_dataset` | Gathers tries from any scene into a dataset, by search or by id, and opens it |
+| `make_images` | Renders labeled images from a Case with a repeatable seed, saves and opens the dataset, and returns its frame set ID and visible instance counts by class |
 | `make_routine`, `read_routine`, `edit_routine` | Writes, reads and edits a Routine, and proves each new switch between skills in it |
 | `test_routine`, `run_routine` | Tests and runs a Routine |
 | `draft_skill` | Writes a skill's contract |

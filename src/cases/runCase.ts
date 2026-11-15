@@ -4,7 +4,7 @@ import { policyCommand, type VelocityDrive } from '../sim/driveAccess';
 import { roverForward } from '../sim/driveSetup';
 import { SimEngine, type Controller } from '../sim/engine';
 import { buildMjcf } from '../sim/mjcf';
-import type { MjcfInput, SimModel } from '../sim/mjcfTypes';
+import type { MjcfInput, SimModel, WorldItem } from '../sim/mjcfTypes';
 import type { PolicySpec } from '../sim/policy';
 import { Recorder, type Recording } from '../sim/recorder';
 import { torqueShare } from '../sim/torqueShare';
@@ -26,7 +26,8 @@ import { robotFacts, type EndEffector, type RobotFacts } from './robotFit';
 import { bodyFor, factSampler, logicPlan, startLogic, type LogicOptions, type Signals } from './runCaseLogic';
 import { scaledToReach } from './scale';
 import { reseededGround } from './terrain';
-import { caseSlots, worldItem, type Case, type ReferenceCommand } from './schema';
+import { caseSlots, type Case, type ReferenceCommand } from './schema';
+import { caseWorldItems } from './importedWorldItems';
 import { slotRefusals } from './slots';
 import { WorldMoves } from '../sim/worldMoves';
 import type { WorldEvent } from './worldSet';
@@ -70,6 +71,7 @@ export interface RunOptions extends LogicOptions {
   partners?: CaseRobot[];
   limp?: string[];
   world?: WorldEvent[];
+  worldColliders?: WorldItem[];
 }
 
 const JUDGE_EVERY_TICKS = 12;
@@ -320,7 +322,7 @@ function fitted(authored: Case, robot: CaseRobot, options: RunOptions): Fitted |
 async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Promise<CaseResult> {
   const jitter = options.seed === undefined ? null : worldRandom(options.seed);
   const kase = jitter ? reseededGround(jitteredWorld(fit.scaled, jitter), jitter) : fit.scaled;
-  const world = kase.world.objects.map(worldItem);
+  const world = caseWorldItems(kase, options.worldColliders);
   const model = buildMjcf({ ...fit.input, world, fixedBase: fixedBaseFor(fit.cast) });
   const { plan, refusal: logicRefusal } = logicPlan(kase, options);
 

@@ -2,6 +2,7 @@ import { TOPIC_LIMITS, type Ragged, type RaggedBytes, type RecordedTopic, type T
 
 const MAGIC = 0x4c544342;
 const VERSION = 1;
+const PRESENCE_VERSION = 2;
 const PREAMBLE = 12;
 const MAX_HEADER = 16 * 1024 * 1024;
 
@@ -10,6 +11,7 @@ interface TopicHeader {
   schema: string;
   count: number;
   clipped: boolean;
+  presence?: string[];
   numbers: string[];
   labels: Array<[string, number]>;
   lists: Array<[string, number]>;
@@ -47,6 +49,7 @@ function topicSections(topic: RecordedTopic) {
     labels: labels.map(([path, l]) => [path, l.bytes.length]),
     lists: [...topic.lists].map(([path, l]) => [path, l.v.length]),
     blobs: [...topic.blobs].map(([path, b]) => [path, b.bytes.length]),
+    ...(topic.presence ? { presence: [...topic.presence.keys()] } : {}),
   };
   const chunks: ArrayBufferView[] = [
     topic.t,
@@ -54,6 +57,7 @@ function topicSections(topic: RecordedTopic) {
     ...labels.flatMap(([, l]) => [l.at, l.bytes]),
     ...[...topic.lists.values()].flatMap((l) => [l.at, l.v]),
     ...[...topic.blobs.values()].flatMap((b) => [b.at, b.bytes]),
+    ...(topic.presence?.values() ?? []),
   ];
 
   return { header, chunks };
@@ -69,7 +73,7 @@ export function encodeTopicLog(log: TopicLog): Uint8Array {
   const view = new DataView(out.buffer);
 
   view.setUint32(0, MAGIC, true);
-  view.setUint32(4, VERSION, true);
+  view.setUint32(4, log.topics.some((t) => t.presence) ? PRESENCE_VERSION : VERSION, true);
   view.setUint32(8, header.length, true);
   out.set(header, PREAMBLE);
 
@@ -127,6 +131,13 @@ const isCount = (v: unknown, max = Number.MAX_SAFE_INTEGER): v is number =>
 
 const isSized = (v: unknown): v is [string, number] => Array.isArray(v) && isText(v[0]) && isCount(v[1]);
 
+function validPresence(value: unknown): value is string[] | undefined {
+  return (
+    value === undefined ||
+    (Array.isArray(value) && value.length <= TOPIC_LIMITS.columns && value.every((p) => isText(p)))
+  );
+}
+
 function isHeader(v: unknown): v is TopicHeader {
   if (typeof v !== 'object' || v === null) return false;
 
@@ -138,10 +149,31 @@ function isHeader(v: unknown): v is TopicHeader {
     isText(h.schema, 1024) &&
     isCount(h.count, TOPIC_LIMITS.messages) &&
     typeof h.clipped === 'boolean' &&
+    validPresence(h.presence) &&
     Array.isArray(h.numbers) &&
     h.numbers.every((p) => isText(p)) &&
     lists.every((l) => Array.isArray(l) && l.every(isSized))
   );
+}
+
+function readPresence(h: TopicHeader, cursor: Cursor): Map<string, Uint8Array> | null {
+  if (!h.presence) return null;
+
+  const expected = new Set([
+    ...h.numbers.map((p) => `number:${p}`),
+    ...h.labels.map(([p]) => `label:${p}`),
+    ...h.lists.map(([p]) => `list:${p}`),
+    ...h.blobs.map(([p]) => `blob:${p}`),
+  ]);
+
+  if (
+    h.presence.length !== expected.size ||
+    new Set(h.presence).size !== expected.size ||
+    h.presence.some((p) => !expected.has(p))
+  )
+    throw new RangeError();
+
+  return new Map(h.presence.map((path) => [path, cursor.take(Math.ceil(h.count / 8))]));
 }
 
 function readTopic(h: TopicHeader, cursor: Cursor): RecordedTopic {
@@ -163,14 +195,28 @@ function readTopic(h: TopicHeader, cursor: Cursor): RecordedTopic {
     h.blobs.map(([path, size]) => [path, { at: cursor.offsets(h.count, size), bytes: cursor.take(size) }]),
   );
 
-  return { topic: h.topic, schema: h.schema, t, numbers, labels, lists, blobs, clipped: h.clipped };
+  const presence = readPresence(h, cursor);
+
+  return {
+    topic: h.topic,
+    schema: h.schema,
+    t,
+    numbers,
+    labels,
+    lists,
+    blobs,
+    clipped: h.clipped,
+    ...(presence ? { presence } : {}),
+  };
 }
 
 function readHeader(bytes: Uint8Array): unknown {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const length = view.getUint32(8, true);
 
-  if (view.getUint32(0, true) !== MAGIC || view.getUint32(4, true) !== VERSION) return null;
+  const version = view.getUint32(4, true);
+
+  if (view.getUint32(0, true) !== MAGIC || ![VERSION, PRESENCE_VERSION].includes(version)) return null;
 
   if (length > MAX_HEADER || PREAMBLE + length > bytes.byteLength) return null;
 

@@ -3,7 +3,8 @@ import { uniqueCaseId } from '../cases/caseBuilder';
 import { stageCase } from '../cases/caseCast';
 import { robotFacts } from '../cases/robotFit';
 import { withGesture, type CaseGesture } from '../cases/gestures';
-import { readCases, worldItem, type Case } from '../cases/schema';
+import { readCases, type Case } from '../cases/schema';
+import { caseWorldItems } from '../cases/importedWorldItems';
 import type { SlotRobot } from '../cases/slots';
 import { generatedFrom, goingWith, simTries, sourceTryOf, worstFirst, type TryRecord } from '../cases/tries';
 import { CASE_STORES, caseStoreKey } from '../cases/console/codeStore';
@@ -27,6 +28,7 @@ import { useTryTimeline, type TryTimeline } from './useTryTimeline';
 import { useTriesTraining, type TriesTraining } from './useTriesTraining';
 import { useStoredTries } from './useStoredTries';
 import { useCaseDataset } from './useCaseDataset';
+import { useTrainingImages } from './useTrainingImages';
 import { plural } from '../../electron/plural.mjs';
 import type { SkillsRuntime } from '../skills/skillsRuntime';
 import type { CaseRobotInput } from './caseChecks';
@@ -104,7 +106,7 @@ export function useCases(options: CasesOptions) {
   const stage = (kase: Case | null) => {
     const staged = kase && stageCase(kase, { rig, parts }, partners());
 
-    sim.setWorld(staged?.kase.world.objects.map(worldItem) ?? [], staged?.joined);
+    sim.setWorld(staged ? caseWorldItems(staged.kase) : [], staged?.joined);
   };
 
   const open = (id: string | null) => {
@@ -184,6 +186,7 @@ export function useCases(options: CasesOptions) {
     records: dataset.records,
     skills: skillTraining,
   });
+  const images = useTrainingImages({ ...options, active });
   const caseDataset = useCaseDataset({ active, tries: fromSim, sceneId, showDataset: options.showDataset, showToast });
   const attempt = useCaseTry({
     skills: options.skills,
@@ -199,9 +202,8 @@ export function useCases(options: CasesOptions) {
 
   const addAndTry = useAddAndTry({ add, active, attempt });
   const real = useRealRobotTries({
-    ...{ sim, rig, parts, active, tries, partners, attempt, timeline },
+    ...{ sim, rig, parts, active, tries, partners, attempt, timeline, onTry },
     viewportRef: options.viewportRef,
-    onTry,
   });
 
   return {
@@ -211,6 +213,7 @@ export function useCases(options: CasesOptions) {
     builder,
     dataset,
     caseDataset,
+    images,
     fromTries,
     tries,
     hasRobot,

@@ -14,6 +14,7 @@ import {
   StopIcon,
   SwapIcon,
 } from '../design-system';
+import type { WorldAsset } from '../cases/worldAssets';
 import type { Room } from '../cases/roomPlan';
 import { INPUT_COMMANDS } from './inputCommands';
 import { showLeftTab } from './showView';
@@ -43,6 +44,11 @@ export const STAYS_IN_RUN = new Set([
 export const showRoomCase = (core: WorkspaceCore, room: Room) => {
   showCases(core);
   core.simTraining.cases.builder.startInRoom(room);
+};
+
+export const showWorldCase = (core: WorkspaceCore, hash: string, asset: WorldAsset) => {
+  showCases(core);
+  core.simTraining.cases.builder.startInWorld(hash, asset);
 };
 
 const runCaseCommand = (core: WorkspaceCore): Command => ({
@@ -189,7 +195,21 @@ export function caseCommands({ core }: CommandInputs): Command[] {
   const { simTraining, posing, tool } = core;
   const { sim, cases } = simTraining;
 
-  if (!posing.hasRig) return [];
+  const images: Command[] =
+    cases.images.canMake && !cases.images.running
+      ? [
+          {
+            id: 'case-make-images',
+            group: 'Simulate',
+            label: 'Make Training Images',
+            icon: <CameraIcon />,
+            keywords: 'dataset labelled labeled synthetic vision coco yolo cameras classes',
+            run: cases.images.start,
+          },
+        ]
+      : [];
+
+  if (!posing.hasRig) return images;
 
   const drive: Command = sim.drive.active
     ? {
@@ -266,6 +286,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
       run: () => showCases(core),
     },
     ...newCase,
+    ...images,
     drive,
     ...respawn,
     ...tryIt,

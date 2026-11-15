@@ -39,17 +39,21 @@ Watching a robot stand in the simulation won't tell you whether it can reach a s
 - **A slot.** The kind of robot the Case needs: an arm, wheels or legs.
 - **A world.** The objects around the robot. Objects can be solid or pushable, and markers show a spot without getting in the robot's way. During a run, the Case's code can move, light or hide any object tagged movable.
   The world can include the ground. As you make the Case, you can add [rough ground, a step or a slope](/help/test-a-robot-on-rough-ground-steps-or-a-slope), sized to the robot's legs or wheels.
+  You can also [import a captured world](/help/import-a-world) from a collider mesh, with an optional splat for its appearance.
 - **Controls.** The commands you steer with during a try, such as Move and Turn, or Move and Raise and Lower for an arm.
 - **A contract.** The rules for a try: what it takes to pass, and what fails it, such as a fall.
 - **A time limit.** How long a try can last.
 - **A console**, if the Case has one: the inputs that drive the Case and the panels around the canvas when you [run it](/help/run-a-case).
 - **Gestures**, if you taught it any: movements you make at the camera that the Case reacts to. See [Teach a robot a gesture](/help/teach-a-robot-a-gesture).
+- **Image variation**, if declared: named object points, color classes, camera mount tolerance and distractors for rendered training images.
 
 Each Case comes with a reference route that passes it, so you know a pass is possible. To see each goal and how the contract judges it, read [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts).
 
 ## One Case, many robots
 
 You write a Case once, then run it on any robot that fits its slot. For an arm, Basecase measures how far the arm reaches from its shoulder and scales the whole world to match. Write Touch the Dots on one arm, and the next arm can reach the same dots.
+
+Imported rooms and captured worlds keep their true size for every robot.
 
 ## Tries
 
@@ -66,6 +70,8 @@ Basecase keeps your tries on this computer, along with any value the Case's code
 ## A Case is the test, a skill is the answer
 
 When you train a skill in the **Train** section, Basecase judges it in [Arena](/help/arena) with the same contract code. Passed tries also work as demonstration data. [Export a LeRobot dataset](/help/export-a-lerobot-dataset) turns them into a dataset you can train other models on.
+
+A Case can also supply labeled images without a recorded try. **Make Training Images** renders its camera views with boxes, masks, keypoints and depth, then opens the saved dataset. See [Make training images from a Case](/help/make-training-images).
 
 ## Where Cases come from
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TrySummary } from '../cases/tryFile';
 import { addMembers, freezeVersion, newDataset, readDataset, versionHash, withMembers } from './datasetFile';
 import { heldOut, splitOf } from './datasetSplit';
-import { memberGroups, memberRecord, membersOf, totalSeconds } from './datasetView';
+import { imageCount, memberGroups, memberRecord, membersOf, totalSeconds } from './datasetView';
 
 const summary = (id: string, over: Partial<TrySummary> = {}): TrySummary => ({
   id,
@@ -32,6 +32,26 @@ const made = (members: string[], over: { query?: string } = {}) =>
   newDataset({ id: 'dataset-1', name: 'Grasp the Block', task: 'Grasp the block.', members, at: 'now', ...over });
 
 describe('a dataset file', () => {
+  it('keeps image members in files and version snapshots without changing older datasets', async () => {
+    const old = made([]);
+    const imageMembers = [{ frameSetId: 'frames-1', frameIds: ['f1', 'f2'], hash: 'a'.repeat(64) }];
+    const dataset = { ...old, imageMembers };
+    const hash = await versionHash(dataset, [], 'model');
+    const frozen = freezeVersion(dataset, hash, 'now');
+
+    expect(readDataset(old)).toEqual(old);
+    expect(readDataset(dataset)).toEqual(dataset);
+    expect(imageCount(dataset)).toBe(2);
+    expect(imageCount(old)).toBe(0);
+    expect(frozen.version.imageMembers).toEqual(imageMembers);
+    expect(
+      await versionHash({ ...dataset, imageMembers: [{ ...imageMembers[0], hash: 'b'.repeat(64) }] }, [], 'model'),
+    ).not.toBe(hash);
+    expect(readDataset({ ...dataset, imageMembers: [{ ...imageMembers[0], frameSetId: '../auth' }] })).toBeNull();
+    expect(readDataset({ ...dataset, imageMembers: [{ ...imageMembers[0], frameIds: ['../auth'] }] })).toBeNull();
+    expect(readDataset({ ...dataset, imageMembers: [{ ...imageMembers[0], hash: '' }] })).toBeNull();
+  });
+
   it('clamps a long name, task and query to what it reads back', () => {
     const dataset = newDataset({
       id: 'dataset-2',

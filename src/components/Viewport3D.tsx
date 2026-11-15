@@ -45,6 +45,9 @@ const DETACHED: Viewport3DHandle = {
   meshesReady: async () => [],
   sweepClashes: async () => [],
   strength: async () => [],
+  lightenPart: async () => {
+    throw new Error('Open the canvas to lighten this part.');
+  },
   frameAll: () => {},
   animateSpawn: () => {},
   setPose: () => {},

@@ -26,6 +26,8 @@ import type { JointAxisQuery } from './jointAxis';
 import type { ArmModel, PayloadMap } from '../../utils/payload';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
 import { errorMessage } from '../../utils/errorMessage';
+import type { LightenResult } from '../../strength/lighten';
+import type { LightenTask } from './lightenFrame';
 import { workerIndices } from '../../../electron/workerIndices.mjs';
 
 interface Client {
@@ -220,6 +222,10 @@ export async function strengthIn(scene: SceneShapes, jobs: StrengthJob[]): Promi
   chunks.forEach((chunk, w) => chunk.forEach((i, k) => (out[i] = results[w][k])));
 
   return out;
+}
+
+export function lightenIn(scene: SceneShapes, task: LightenTask): Promise<LightenResult> {
+  return analyze(leastBusy(), scene, { ...task, kind: 'lighten', instances: scene.instances });
 }
 
 export function fastenersIn(scene: SceneShapes, input: FastenerInput): Promise<ChainResult> {

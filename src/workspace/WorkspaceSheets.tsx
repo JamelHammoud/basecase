@@ -1,4 +1,5 @@
 import { TrainingImagesSheet } from '../components/cases/TrainingImagesSheet';
+import { LightenSheet } from '../components/LightenSheet';
 import { ArmSizingSheet } from '../components/ArmSizingSheet';
 import { MotionDesignSheet } from '../components/MotionDesignSheet';
 import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
@@ -71,6 +72,18 @@ function MotionDesignHost({ active, pose }: { active: boolean; pose: PoseActions
   );
 }
 
+function LightenHost({ active, actions }: Pick<WorkspaceSheetsProps, 'active' | 'actions'>) {
+  const { lighten } = actions;
+
+  if (!active || !lighten.partId) return null;
+
+  return (
+    <ErrorBoundary region="Lighten" onClose={lighten.close}>
+      <LightenSheet busy={lighten.busy} problem={lighten.problem} onClose={lighten.close} onLighten={lighten.run} />
+    </ErrorBoundary>
+  );
+}
+
 export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps) {
   const { posing, guide } = core;
   const desktop = platformBridge.isElectron();
@@ -114,6 +127,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
         />
       </ErrorBoundary>
       <PlaceOnMapHost active={active} earth={actions.earth} />
+      <LightenHost active={active} actions={actions} />
       {arm.targets && (
         <ErrorBoundary region="Size Arm to Targets" onClose={arm.close}>
           <ArmSizingSheet

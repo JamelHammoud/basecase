@@ -1,25 +1,15 @@
-import type { ChainResult, FastenerChain } from '../assembly/assemblyTypes';
-import { LAYERED } from '../strength/material';
+import type { FastenerChain } from '../assembly/assemblyTypes';
 import { FACTOR_PASS, FACTOR_WARN, type ScrewLine, type StrengthJob, type StrengthReading } from '../strength/types';
-import type { ScenePart } from '../types/robotics';
-import { isPrinted, printMaterialOf } from './bom';
+import { printMaterialOf } from './bom';
 import { jointLabel } from './engineeringFormat';
 import { torque } from './torque';
-import { dot, norm, sub, type V3 } from './engineeringMath';
-import type { CheckContext, CheckRow, JointLoad, ServoLine } from './engineeringTypes';
+import { norm, type V3 } from './engineeringMath';
+import { StrengthPaths } from './strengthPaths';
+import type { CheckContext, CheckRow, JointLoad } from './engineeringTypes';
 
 export const STRENGTH_CHECK = 'Strength';
 
-const HORN_REACH_MM = 12;
-const PARALLEL = 0.9;
-const MAX_HOPS = 3;
 const BETTER_BY = 1.1;
-
-interface PathPart {
-  part: ScenePart;
-  inScrews: FastenerChain[];
-  outScrews: FastenerChain[];
-}
 
 export interface StrengthPlan {
   job: StrengthJob;
@@ -27,77 +17,11 @@ export interface StrengthPlan {
   torqueNm: number;
 }
 
-const touching = (c: FastenerChain) => new Set([...c.stack, ...(c.endsIn.id ? [c.endsIn.id] : [])]);
-
-function offAxis(point: V3, line: ServoLine): number {
-  const rel = sub(point, line.point);
-  const a = norm(line.axis);
-  const along = dot(rel, a);
-
-  return Math.hypot(rel[0] - along * a[0], rel[1] - along * a[1], rel[2] - along * a[2]);
-}
-
-const isHornScrew = (c: FastenerChain, servo: string, out: ServoLine) =>
-  touching(c).has(servo) &&
-  Math.abs(dot(norm(c.axis as V3), norm(out.axis))) > PARALLEL &&
-  offAxis(c.tip as V3, out) <= HORN_REACH_MM;
-
 const lineOf = (c: FastenerChain): ScrewLine => ({
   from: c.tip as V3,
   to: c.top as V3,
   radius: Math.max(c.headR, c.d),
 });
-
-function bearsLoad(ctx: CheckContext, p: ScenePart | undefined): p is ScenePart {
-  return !!p && isPrinted(p) && !!LAYERED[printMaterialOf(p, ctx.project)];
-}
-
-const joinsOthers = (ctx: CheckContext, c: FastenerChain, id: string) =>
-  [...touching(c)].some((other) => other !== id && ctx.byPart.get(other)?.kind !== 'hardware');
-
-function nextHops(ctx: CheckContext, from: PathPart, seen: Set<string>): Map<string, FastenerChain[]> {
-  const out = new Map<string, FastenerChain[]>();
-
-  for (const c of from.outScrews)
-    for (const id of touching(c)) {
-      if (seen.has(id) || !bearsLoad(ctx, ctx.byPart.get(id))) continue;
-
-      out.set(id, [...(out.get(id) ?? []), c]);
-    }
-
-  return out;
-}
-
-function loadPath(ctx: CheckContext, chains: FastenerChain[], horn: FastenerChain[]): PathPart[] {
-  const seen = new Set<string>();
-  const path: PathPart[] = [];
-  let frontier = new Map<string, FastenerChain[]>();
-
-  for (const c of horn)
-    for (const id of touching(c))
-      if (bearsLoad(ctx, ctx.byPart.get(id))) frontier.set(id, [...(frontier.get(id) ?? []), c]);
-
-  for (let hop = 0; hop < MAX_HOPS && frontier.size; hop++) {
-    const next = new Map<string, FastenerChain[]>();
-
-    for (const [id, inScrews] of frontier) {
-      seen.add(id);
-
-      const outScrews = chains.filter((c) => !inScrews.includes(c) && touching(c).has(id) && joinsOthers(ctx, c, id));
-
-      if (!outScrews.length) continue;
-
-      const step = { part: ctx.byPart.get(id)!, inScrews, outScrews };
-
-      path.push(step);
-      nextHops(ctx, step, seen).forEach((screws, to) => next.set(to, [...(next.get(to) ?? []), ...screws]));
-    }
-
-    frontier = next;
-  }
-
-  return path;
-}
 
 function torqueOf(ctx: CheckContext, load: JointLoad): number {
   const walk = ctx.input.walk;
@@ -106,7 +30,7 @@ function torqueOf(ctx: CheckContext, load: JointLoad): number {
   return Math.max(load.loadNm, p99);
 }
 
-function jobsFor(ctx: CheckContext, chains: ChainResult, load: JointLoad): StrengthPlan[] {
+function jobsFor(ctx: CheckContext, paths: StrengthPaths, load: JointLoad): StrengthPlan[] {
   const servos = load.joint.actuators ?? [];
   const torqueNm = torqueOf(ctx, load) / Math.max(1, servos.length);
 
@@ -114,9 +38,8 @@ function jobsFor(ctx: CheckContext, chains: ChainResult, load: JointLoad): Stren
 
   return servos.flatMap((servo) => {
     const out = ctx.input.servoOutputs[servo];
-    const horn = out ? chains.screws.filter((c) => isHornScrew(c, servo, out)) : [];
 
-    return loadPath(ctx, chains.screws, horn).map(({ part, inScrews, outScrews }) => ({
+    return (out ? paths.from(servo, out) : []).map(({ part, inScrews, outScrews }) => ({
       load,
       torqueNm,
       job: {
@@ -135,9 +58,11 @@ function jobsFor(ctx: CheckContext, chains: ChainResult, load: JointLoad): Stren
 export function strengthPlans(ctx: CheckContext, loads: JointLoad[]): StrengthPlan[] {
   const chains = ctx.input.chains;
 
-  if (!chains?.screws.length) return [];
+  if (!chains?.screws.length || !loads.length) return [];
 
-  return loads.flatMap((load) => jobsFor(ctx, chains, load));
+  const paths = new StrengthPaths(ctx, chains.screws);
+
+  return loads.flatMap((load) => jobsFor(ctx, paths, load));
 }
 
 export const fmtFactor = (f: number) =>

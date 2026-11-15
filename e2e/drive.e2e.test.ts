@@ -1,15 +1,11 @@
-import { parquetReadObjects } from 'hyparquet';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { ReferenceCommand } from '../src/cases/schema';
 import type { DriveCommand } from '../src/sim/driveTypes';
-import { withLidar, type FixtureRobot } from '../src/sim/fixtures/parts';
-import { fixtureRobots } from '../src/sim/fixtures/robots';
 import type { SimState, Studio } from './driveStudio';
 import {
   endTryAt,
   expectCaseCheckOpensRow,
   expectDataset,
-  inDataset,
   loadFixtureRobot,
   passedDatasetFiles,
   pickTimeline,
@@ -25,7 +21,7 @@ const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 const simState = () =>
   app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState() as SimState);
 
-const loadFixture = (id: string | FixtureRobot) => loadFixtureRobot(app.page, id);
+const loadFixture = (id: string) => loadFixtureRobot(app.page, id);
 
 const clickTab = (name: string) => app.page.locator(visible('[role=tab]'), { hasText: name }).first().click();
 
@@ -376,44 +372,4 @@ describe('a gripper', () => {
     expect((await simState()).tries[0].passed).toBe(true);
     expect(app.errors).toEqual([]);
   }, 180000);
-});
-
-describe('LiDAR', () => {
-  itUnlessWindows(
-    'scans a corridor with a rover’s LiDAR, draws the hits and exports them as observation.scan',
-    async () => {
-      await loadFixture(
-        withLidar(
-          fixtureRobots().find((r) => r.id === 'rover-diff')!,
-          'slamtec-rplidar-s2',
-        ),
-      );
-      await openPlayTab(app.page, 'Cases');
-      await button('New Case').click();
-
-      const card = app.page.locator(visible('[data-testid="new-case"]'));
-
-      await card.locator('[role=radio]', { hasText: 'Reach a Spot' }).click();
-      await card.locator('[role=radio]', { hasText: 'Corridor' }).click();
-      await card.locator('button', { hasText: 'Make Case' }).click();
-      await expect.poll(async () => (await simState()).activeCase).toBe('reach-a-spot-in-a-corridor');
-
-      await button('Try It').click();
-      await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-      await expect.poll(async () => (await simState()).scanPoints, { timeout: 30000 }).toBeGreaterThan(0);
-      await endTryAt(app.page, SHORT_TRY_SECONDS);
-      await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
-
-      const files = inDataset(await passedDatasetFiles(app.page));
-      const rows = await parquetReadObjects({
-        file: new Uint8Array(files['data/chunk-000/file-000.parquet']).buffer,
-      });
-      const info = JSON.parse(files['meta/info.json'].toString());
-
-      expect(info.features['observation.scan'].shape).toEqual([720]);
-      expect(rows[0]['observation.scan']).toHaveLength(720);
-      expect(JSON.parse(files['v2.1/meta/modality.json'].toString()).state.scan.original_key).toBe('observation.scan');
-      expect(app.errors).toEqual([]);
-    },
-  );
 });

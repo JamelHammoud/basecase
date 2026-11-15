@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { shapeKey } from '../src/print/shapeKey';
-import { DEFAULT_PROJECT, type ScenePart } from '../src/types/robotics';
+import { DEFAULT_PROJECT, type PrintRecord, type ScenePart } from '../src/types/robotics';
 import { openApp, partCount, shown, type App } from './harness';
 
 interface RepairStep {
@@ -12,6 +12,7 @@ interface Studio {
   load: (record: unknown) => void;
   buildAlongSteps: () => RepairStep[];
   printPlates: () => { open: boolean; fitTest: boolean; plates: string[][] };
+  sceneRecord: () => { project: { prints: PrintRecord[] } };
 }
 
 let app: App;
@@ -101,6 +102,17 @@ describe('Repair', () => {
         .filter({ hasText: /^Don’t print$/ })
         .count(),
     ).toBe(0);
+    await app.page.getByRole('button', { name: 'Mark Printed', exact: true }).click();
+    await expect
+      .poll(() =>
+        app.page.evaluate(() =>
+          (window as unknown as { __studio: Studio }).__studio
+            .sceneRecord()
+            .project.prints.filter((print) => print.id !== 'original-print' && print.state === 'printed')
+            .flatMap((print) => print.parts.map((part) => part.id)),
+        ),
+      )
+      .toEqual(['bracket']);
     await app.page.keyboard.press('Escape');
     await expect.poll(async () => (await plates()).open).toBe(false);
     await expect.poll(() => toolbar().getAttribute('data-step')).toBe(String(swap + 1));

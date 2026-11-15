@@ -1,5 +1,5 @@
 import { zipSync } from 'three/examples/jsm/libs/fflate.module.js';
-import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, inject, it } from 'vitest';
 import { flatRecording } from '../src/datasets/import/flatRecordingFixtures';
 import { lerobotDataset } from '../src/datasets/import/fixtures';
 import { JOINT_STATE_SCHEMA, writeMcap } from '../src/datasets/import/mcapFixtures';
@@ -7,8 +7,11 @@ import { encodeJointState } from '../src/datasets/import/ros2Cdr';
 import { imuAt, ROS2_LEVEL, rosoutAt } from '../src/datasets/import/topicFixtures';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
+import type { VisionManifest } from '../src/vision/manifest';
+import { inputSensitiveDetectionOnnx } from '../src/vision/onnxFixture';
 import { startFakeHub, type FakeHub } from './fakeHub';
 import { openApp, partCount, shown, type App } from './harness';
+import { visionManifest } from './visionFixtures';
 
 let app: App;
 let hub: FakeHub;
@@ -21,6 +24,7 @@ type PanelReport = { id: string; kind: string; samples?: number[]; entries?: Arr
 
 type Studio = {
   load: (r: unknown) => void;
+  configureVision: (manifest: VisionManifest, bytes: number[], cameras: string[]) => Promise<unknown>;
   pickFiles: (f: Array<{ name: string; base64: string }>) => void;
   recordingPanels: () => PanelReport[] | null;
 };
@@ -106,11 +110,24 @@ async function matchMotors() {
 beforeAll(async () => {
   hub = await startFakeHub({ token: 'hf_fake', port: inject('hubPort') });
   hub.seed(HUB_REPO, armDataset([20], 40));
-  app = await openApp({}, ['hub-']);
 }, 120000);
 
-afterAll(async () => {
+beforeEach(async () => {
+  app = await openApp({}, ['hub-']);
+
+  const bytes = inputSensitiveDetectionOnnx();
+
+  await app.page.evaluate(
+    ({ manifest, data }) => (window as unknown as { __studio: Studio }).__studio.configureVision(manifest, data, []),
+    { manifest: visionManifest(bytes), data: [...bytes] },
+  );
+});
+
+afterEach(async () => {
   await app?.close();
+});
+
+afterAll(async () => {
   await hub?.close();
 });
 
@@ -169,6 +186,7 @@ describe('Importing robot data as tries', () => {
       await tiles().filter({ hasText: HUB_REPO }).click();
       await expect.poll(() => app.page.getByTestId('timeline-lane').count(), { timeout: 30000 }).toBe(JOINTS.length);
       await app.page.keyboard.press('Escape');
+      expect(app.requests.filter((url) => url.includes('/api/bridge/hub-model-file'))).toEqual([]);
       expect(app.errors).toEqual([]);
     },
   );
@@ -178,6 +196,7 @@ describe('Importing robot data as tries', () => {
     await importFromPalette('robot.mcap', await robotMcap());
     await expect.poll(() => toast('Imported 1 try'), { timeout: 60000 }).toBeGreaterThan(0);
     await showTries();
+    await expect.poll(() => tiles().count()).toBe(1);
     await tiles().filter({ hasText: 'robot.mcap' }).click();
     await expect.poll(() => recordingPanels(), { timeout: 30000 }).not.toBeNull();
 
@@ -198,71 +217,67 @@ describe('Importing robot data as tries', () => {
       String(3 * IMU_SAMPLES),
     );
     await app.page.keyboard.press('Escape');
+    expect(app.requests.filter((url) => url.includes('/api/bridge/hub-model-file'))).toEqual([]);
     expect(app.errors).toEqual([]);
   });
 });
 
 it('imports FlatBuffers through Import and reads its nested message, plot and states from Library', async () => {
-  const own = await openApp();
+  const robot = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+  const bytes = await flatRecording(JOINTS);
 
-  try {
-    const robot = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
-    const bytes = await flatRecording(JOINTS);
+  await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
+    name: 'FlatBuffers arm',
+    parts: robot.parts,
+    project: { ...DEFAULT_PROJECT, joints: robot.joints },
+  });
+  await expect.poll(() => partCount(app.page)).toBe(robot.parts.length);
+  await app.page.evaluate(
+    (picked) => (window as unknown as { __studio: Studio }).__studio.pickFiles(picked),
+    [{ name: 'telemetry.mcap', base64: base64(bytes) }],
+  );
+  await app.page.keyboard.press('ControlOrMeta+k');
+  await app.page.keyboard.type('Import');
+  await app.page
+    .locator(shown('button[data-idx]'))
+    .filter({ hasText: 'Import' })
+    .filter({ hasNotText: 'Robot' })
+    .click();
+  await expect.poll(() => app.page.getByText('Imported 1 try', { exact: true }).count()).toBeGreaterThan(0);
+  await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
+  await app.page.locator(shown('[data-testid="library-tries"] button')).first().click();
+  await app.page.locator(shown('[data-testid="try-tile"]')).filter({ hasText: 'telemetry.mcap' }).click();
 
-    await own.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
-      name: 'FlatBuffers arm',
-      parts: robot.parts,
-      project: { ...DEFAULT_PROJECT, joints: robot.joints },
-    });
-    await expect.poll(() => partCount(own.page)).toBe(robot.parts.length);
-    await own.page.evaluate(
-      (picked) => (window as unknown as { __studio: Studio }).__studio.pickFiles(picked),
-      [{ name: 'telemetry.mcap', base64: base64(bytes) }],
-    );
-    await own.page.keyboard.press('ControlOrMeta+k');
-    await own.page.keyboard.type('Import');
-    await own.page
-      .locator(shown('button[data-idx]'))
-      .filter({ hasText: 'Import' })
-      .filter({ hasNotText: 'Robot' })
-      .click();
-    await expect.poll(() => own.page.getByText('Imported 1 try', { exact: true }).count()).toBeGreaterThan(0);
-    await own.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
-    await own.page.locator(shown('[data-testid="library-tries"] button')).first().click();
-    await own.page.locator(shown('[data-testid="try-tile"]')).filter({ hasText: 'telemetry.mcap' }).click();
+  const message = app.page.locator(shown('[data-testid="message-tree"][data-topic="/telemetry"]'));
 
-    const message = own.page.locator(shown('[data-testid="message-tree"][data-topic="/telemetry"]'));
-
-    await expect.poll(() => message.count()).toBe(1);
-    await own.page.keyboard.press('End');
-    await expect.poll(() => message.textContent()).toContain('wrist-2');
-    expect(await message.textContent()).toContain('18446744073709551615');
-    expect(await own.page.locator(shown('[data-panel="plot"] [data-testid="plot"]')).getAttribute('data-samples')).toBe(
-      '3',
-    );
-    expect(
-      await own.page
-        .locator(shown('[data-testid="state-span"]'))
-        .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-value'))),
-    ).toEqual(['Idle', 'Moving', 'Idle']);
-    await own.page.keyboard.press('Home');
-    await expect.poll(() => message.textContent()).toContain('wrist-0');
-    await own.page.keyboard.press('Escape');
-    await own.page.evaluate(
-      (picked) => (window as unknown as { __studio: Studio }).__studio.pickFiles(picked),
-      [{ name: 'telemetry.mcap', base64: base64(bytes) }],
-    );
-    await own.page.keyboard.press('ControlOrMeta+k');
-    await own.page.keyboard.type('Import');
-    await own.page
-      .locator(shown('button[data-idx]'))
-      .filter({ hasText: 'Import' })
-      .filter({ hasNotText: 'Robot' })
-      .click();
-    await expect.poll(() => own.page.getByText('Imported 0 tries', { exact: true }).count()).toBeGreaterThan(0);
-    expect(await own.page.locator(shown('[data-testid="try-tile"]')).count()).toBe(1);
-    expect(own.errors).toEqual([]);
-  } finally {
-    await own.close();
-  }
+  await expect.poll(() => message.count()).toBe(1);
+  await app.page.keyboard.press('End');
+  await expect.poll(() => message.textContent()).toContain('wrist-2');
+  expect(await message.textContent()).toContain('18446744073709551615');
+  expect(await app.page.locator(shown('[data-panel="plot"] [data-testid="plot"]')).getAttribute('data-samples')).toBe(
+    '3',
+  );
+  expect(
+    await app.page
+      .locator(shown('[data-testid="state-span"]'))
+      .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-value'))),
+  ).toEqual(['Idle', 'Moving', 'Idle']);
+  await app.page.keyboard.press('Home');
+  await expect.poll(() => message.textContent()).toContain('wrist-0');
+  await app.page.keyboard.press('Escape');
+  await app.page.evaluate(
+    (picked) => (window as unknown as { __studio: Studio }).__studio.pickFiles(picked),
+    [{ name: 'telemetry.mcap', base64: base64(bytes) }],
+  );
+  await app.page.keyboard.press('ControlOrMeta+k');
+  await app.page.keyboard.type('Import');
+  await app.page
+    .locator(shown('button[data-idx]'))
+    .filter({ hasText: 'Import' })
+    .filter({ hasNotText: 'Robot' })
+    .click();
+  await expect.poll(() => app.page.getByText('Imported 0 tries', { exact: true }).count()).toBeGreaterThan(0);
+  expect(await app.page.locator(shown('[data-testid="try-tile"]')).count()).toBe(1);
+  expect(app.requests.filter((url) => url.includes('/api/bridge/hub-model-file'))).toEqual([]);
+  expect(app.errors).toEqual([]);
 });

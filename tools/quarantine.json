@@ -16,22 +16,6 @@
   },
   {
     "file": "e2e/dataImport.e2e.test.ts",
-    "test": "imports a LeRobot zip, an MCAP file through Match Joints and a Hub link, and opens one on the timeline",
-    "issue": 993,
-    "until": "2026-11-28",
-    "reason": "Run 43687018679 reached imported playback but recorded HTTP 500 from hub-model-file on Linux. Subsequent attempts reused imported tries and produced duplicate tiles. The first model-file failure is not established.",
-    "platform": "linux"
-  },
-  {
-    "file": "e2e/dataImport.e2e.test.ts",
-    "test": "opens an MCAP with every topic and shows its log and IMU plot in the console",
-    "issue": 993,
-    "until": "2026-11-28",
-    "reason": "Run 43687018679 reached imported playback but recorded HTTP 500 from hub-model-file on Linux. Subsequent attempts reused imported tries and produced duplicate tiles. The first model-file failure is not established.",
-    "platform": "linux"
-  },
-  {
-    "file": "e2e/dataImport.e2e.test.ts",
     "test": "imports FlatBuffers through Import and reads its nested message, plot and states from Library",
     "issue": 995,
     "until": "2026-11-28",

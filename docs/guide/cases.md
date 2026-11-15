@@ -378,6 +378,8 @@ The browser acceptance tests cover visible bounds, occlusion, fisheye projection
 
 ### Datasets
 
+Dataset episode rows and training demonstrations resolve recorded joint columns through `datasets/jointIndices.ts`. Each extraction builds a fresh object-identity index of the model's joints, preserving first occurrences, selected order and repeated slot columns without a linear model search for each column. Joint ids do not replace object identity.
+
 Captured Cases carry their asset and placement into `DatasetJob` and the training-image worker job. The existing video stage attaches `CapturedWorld`, which shares `ImportedWorldLayer` with the canvas. A capture without a splat keeps its mesh materials and textures. Box and RoomPlan worlds keep the existing part rendering and floor. Exports retain the existing 25 fps sampling and 640 × 480 frames.
 
 Image members extend the same `Dataset` file with `imageMembers: [{ frameSetId, frameIds, hash, classes? }]`. The optional class names are snapshots for the image and class totals in Library and the dataset pane. Older image datasets without every class snapshot show their image total alone. Frozen versions snapshot those references and include them in their content hash. Old try-only files still read unchanged. The dataset view shows images beside its tries, and Export Dataset and Publish to Hugging Face retain both image packages and fitting try files for a mixed dataset. When no tries fit, those actions still export the saved images. Mixed exports report excluded tries with the same message as try-only exports. Image-only datasets need no simulator model. Publishing uses the existing `dataset-v<n>` tag and Hub client.

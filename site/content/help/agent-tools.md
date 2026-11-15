@@ -93,6 +93,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | Tool | What it does |
 |---|---|
 | `define_skeleton` | Places the joints before any geometry |
+| `skeleton_from_motion` | Fits a skeleton to an attached BVH clip or public URL at a chosen height and path tolerance, places one catalog servo per joint and opens Edit Skeleton |
 | `set_interfaces` | Sets what each part designer must connect to |
 | `check_interfaces` | Checks a subassembly against those connections |
 | `define_joints` | Declares the robot's joints |

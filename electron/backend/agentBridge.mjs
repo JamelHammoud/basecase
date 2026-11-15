@@ -21,6 +21,7 @@ const RENDERER_TIMEOUTS_MS = new Map([
   ['wrap_robot', 300000],
   ['insert_object', 300000],
   ['retarget', 300000],
+  ['skeleton_from_motion', 120000],
   ['fit_view', 180000],
   ['make_routine', 180000],
   ['edit_routine', 180000],

@@ -24,6 +24,7 @@ export const GROUP_LABELS: Record<string, [ing: string, ed: string]> = {
   check_interfaces: ['Checking interfaces # times', 'Checked interfaces # times'],
   set_interfaces: ['Writing interface contracts # times', 'Wrote interface contracts # times'],
   define_skeleton: ['Laying out the skeleton # times', 'Laid out the skeleton # times'],
+  skeleton_from_motion: ['Fitting # skeletons to motion', 'Fitted # skeletons to motion'],
   check_printability: ['Running # checks', 'Ran # checks'],
   verify_design: ['Running # checks', 'Ran # checks'],
   get_bom: ['Reading the parts list # times', 'Read the parts list # times'],

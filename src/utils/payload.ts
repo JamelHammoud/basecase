@@ -8,6 +8,7 @@ export const CLOSE_IN_SHARE = 0.5;
 
 const SEED = 'a11f7ed0a11f7ed0a11f7ed0a11f7ed0';
 const MM = 0.001;
+const PER_KG: V3 = [0, -G, 0];
 
 export interface ArmLink {
   anchor: V3;
@@ -73,13 +74,14 @@ export function poseArm(arm: ArmModel, values: number[]): Posed {
   return { joints, coms, tip };
 }
 
-function holdingKg(arm: ArmModel, posed: Posed): number {
+function holdingKg(arm: ArmModel, posed: Posed, gravity: V3[]): number {
   return posed.joints.reduce((least, joint, i) => {
     const unit = joint.revolute ? MM : 1;
-    const own = posed.coms
-      .slice(i)
-      .reduce((s, com, k) => s + holdTorque(joint, com, [0, -arm.links[i + k].massKg * G, 0]), 0);
-    const perKg = holdTorque(joint, posed.tip, [0, -G, 0]);
+    let own = 0;
+
+    for (let k = i; k < posed.coms.length; k++) own += holdTorque(joint, posed.coms[k], gravity[k]);
+
+    const perKg = holdTorque(joint, posed.tip, PER_KG);
 
     return Math.min(least, liftableKg(own * unit, perKg * unit, HOLD_LIMIT * arm.links[i].stallNm));
   }, Infinity);
@@ -92,6 +94,7 @@ const least = (samples: PayloadSample[]) => samples.reduce((m, s) => Math.min(m,
 export function payloadMap(arm: ArmModel, count = PAYLOAD_SAMPLES): PayloadMap | null {
   const random = seededRandom(SEED);
   const samples: Array<PayloadSample & { reach: number }> = [];
+  const gravity: V3[] = arm.links.map((link) => [0, -link.massKg * G, 0]);
 
   for (let n = 0; n < count; n++) {
     const values = arm.links.map((l) => l.range[0] + (l.range[1] - l.range[0]) * random());
@@ -99,7 +102,7 @@ export function payloadMap(arm: ArmModel, count = PAYLOAD_SAMPLES): PayloadMap |
 
     if (posed.tip[1] < arm.floorY) continue;
 
-    samples.push({ at: posed.tip, kg: holdingKg(arm, posed), reach: reachOf(arm, posed.tip) });
+    samples.push({ at: posed.tip, kg: holdingKg(arm, posed, gravity), reach: reachOf(arm, posed.tip) });
   }
 
   const reachMm = samples.reduce((m, s) => Math.max(m, s.reach), 0);

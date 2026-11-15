@@ -165,7 +165,9 @@ describe('prepared payload rotations', () => {
       cosine.mockRestore();
     }
   });
+});
 
+describe('prepared payload gravity', () => {
   it('does no trigonometry for prismatic chains', () => {
     const arm = armOf(5);
 
@@ -185,5 +187,74 @@ describe('prepared payload rotations', () => {
       sine.mockRestore();
       cosine.mockRestore();
     }
+  });
+
+  it('rebuilds gravity loads after mass edits without changing retained samples or source data', () => {
+    for (let trial = 0; trial < 40; trial++) {
+      const arm = armOf(1 + (trial % 8), trial + 300);
+      const before = structuredClone(arm);
+      const result = payloadMap(arm, 24);
+      const saved = structuredClone(result);
+
+      expect(result).toEqual(formerMap(arm, 24));
+      expect(arm).toEqual(before);
+      arm.links.forEach((link, i) => {
+        link.massKg = [0, -0, 0.4, -0.2, 100][(trial + i) % 5];
+      });
+      expect(payloadMap(arm, 24)).toEqual(formerMap(arm, 24));
+      expect(result).toEqual(saved);
+    }
+  });
+
+  it.each([NaN, Infinity, -Infinity])('preserves nonfinite mass propagation for %s', (massKg) => {
+    const arm = armOf(4);
+
+    arm.links[2].massKg = massKg;
+    expect(payloadMap(arm, 24)).toEqual(formerMap(arm, 24));
+    arm.floorY = Infinity;
+    expect(payloadMap(arm, 24)).toBeNull();
+  });
+
+  it.each([
+    [6, 300],
+    [12, 600],
+  ])('prepares %i link loads once across %i samples without copying link tails', (links, samples) => {
+    const arm = armOf(links);
+    let massReads = 0;
+
+    arm.floorY = -Infinity;
+    arm.links.forEach((link) => {
+      const massKg = link.massKg;
+
+      Object.defineProperty(link, 'massKg', {
+        get: () => {
+          massReads++;
+
+          return massKg;
+        },
+      });
+    });
+
+    const slice = vi.spyOn(Array.prototype, 'slice');
+    let formerSlices: number;
+    let currentSlices: number;
+    let formerReads: number;
+
+    try {
+      formerMap(arm, samples);
+      formerSlices = slice.mock.calls.length;
+      formerReads = massReads;
+      massReads = 0;
+      slice.mockClear();
+      payloadMap(arm, samples);
+      currentSlices = slice.mock.calls.length;
+    } finally {
+      slice.mockRestore();
+    }
+
+    expect(formerReads).toBe((samples * links * (links + 1)) / 2);
+    expect(massReads).toBe(links);
+    expect(formerSlices).toBe(samples * links);
+    expect(currentSlices).toBe(0);
   });
 });

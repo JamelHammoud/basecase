@@ -171,27 +171,35 @@ function robotKind(name: string): string | null {
 
 export function autoMapRobot(rig: Rig): Partial<Record<Keypoint, string>> {
   const out: Partial<Record<Keypoint, string>> = {};
-  const movable = rig.joints.filter(isMovable);
+  const depths: Partial<Record<Keypoint, number>> = {};
+  let neck: string | undefined;
+  let chest: string | undefined;
+  const shallower = (key: Keypoint, depth: number) => {
+    if (depths[key] !== undefined && depth >= depths[key]) return false;
 
-  for (const j of movable) {
+    depths[key] = depth;
+
+    return true;
+  };
+
+  for (const j of rig.joints) {
+    if (!isMovable(j)) continue;
+
+    const depth = rig.depth.get(j.id) ?? 0;
+    const name = j.name.toLowerCase();
     const kind = robotKind(j.name) ?? robotKind(j.id);
     const side = sideOf(j.name) ?? sideOf(j.id);
+    const key = kind && side ? (`${side}${kind}` as Keypoint) : undefined;
 
-    if (!kind || !side) continue;
+    if (key && shallower(key, depth)) out[key] = j.id;
 
-    const key = `${side}${kind}` as Keypoint;
-    const cur = out[key] ? rig.byId.get(out[key]!) : undefined;
+    if (/neck|head/.test(name) && shallower('neck', depth)) neck = j.id;
 
-    if (!cur || (rig.depth.get(j.id) ?? 0) < (rig.depth.get(cur.id) ?? 0)) out[key] = j.id;
+    if (/waist|torso|spine|trunk|chest/.test(name) && shallower('chest', depth)) chest = j.id;
   }
 
-  const first = (re: RegExp) =>
-    movable
-      .filter((j) => re.test(j.name.toLowerCase()))
-      .sort((a, b) => (rig.depth.get(a.id) ?? 0) - (rig.depth.get(b.id) ?? 0))[0]?.id;
-
-  out.neck = first(/neck|head/);
-  out.chest = first(/waist|torso|spine|trunk|chest/);
+  out.neck = neck;
+  out.chest = chest;
 
   return out;
 }

@@ -34,17 +34,41 @@ const LIMB_ENDS: LimbEnd[] = [
   ['right', 'Toe', 'rightAnkle'],
 ];
 
-const deeperFirst = (rig: Rig) => (a: RobotJoint, b: RobotJoint) =>
-  (rig.depth.get(b.id) ?? 0) - (rig.depth.get(a.id) ?? 0);
-
 export function deepestBelow(rig: Rig, base: string | undefined): RobotJoint | undefined {
   if (!base) return undefined;
 
-  return rig.joints.filter((j) => isMovable(j) && rig.chain.get(j.id)?.has(base)).sort(deeperFirst(rig))[0];
+  let best: RobotJoint | undefined;
+  let bestDepth = -Infinity;
+
+  for (const joint of rig.joints) {
+    if (!isMovable(joint) || !rig.chain.get(joint.id)?.has(base)) continue;
+
+    const depth = rig.depth.get(joint.id) ?? 0;
+
+    if (best && depth <= bestDepth) continue;
+
+    best = joint;
+    bestDepth = depth;
+  }
+
+  return best;
 }
 
-const deepestId = (rig: Rig, ids: string[]) =>
-  [...ids].sort((a, b) => (rig.depth.get(b) ?? 0) - (rig.depth.get(a) ?? 0))[0];
+function deepestId(rig: Rig, ids: string[]): string {
+  let best = ids[0];
+  let bestDepth = -Infinity;
+
+  for (const id of ids) {
+    const depth = rig.depth.get(id) ?? 0;
+
+    if (depth <= bestDepth) continue;
+
+    best = id;
+    bestDepth = depth;
+  }
+
+  return best;
+}
 
 const movableNamed = (rig: Rig, re: RegExp) =>
   rig.joints.filter((j) => isMovable(j) && re.test(j.name.toLowerCase())).map((j) => j.id);

@@ -51,7 +51,6 @@ function scoringFor(kase: Case) {
   return {
     kase: staged.kase,
     model: touch.model,
-    rig: touch.rig,
     recording: touch.recording,
     ...stagedEffectors(staged, scene),
   };

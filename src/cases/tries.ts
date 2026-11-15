@@ -1,13 +1,14 @@
 import type { RecordedFault } from '../sim/faults';
 import type { Recording } from '../sim/recorder';
-import { framePoses } from '../sim/recorder';
+import { frameContacts, framePoses } from '../sim/recorder';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Rig, V3 } from '../utils/kinematics';
 import { evaluateContract, type Trace } from '../skills/contract';
 import { caseFactReader, caseSignalNames, sampleSignals } from './caseFacts';
 import { probeReader, type ProbeWorld } from './probes';
-import type { EndEffector } from './robotFit';
-import { CASE_FORMAT_VERSION, type Case } from './schema';
+import { robotFacts, type EndEffector } from './robotFit';
+import { CASE_FORMAT_VERSION, caseSlots, type Case } from './schema';
+import { slotKeys } from './slots';
 
 export interface TryManifest {
   formatVersion: typeof CASE_FORMAT_VERSION;
@@ -48,6 +49,7 @@ export interface TryScoring {
   recording: Recording;
   effector: EndEffector | null;
   effectors?: Record<string, EndEffector | null>;
+  grippers?: Record<string, string[]>;
   rig: Rig;
 }
 
@@ -56,14 +58,23 @@ export const caseProbeWorld = ({
   model,
   effector,
   effectors,
+  grippers,
   rig,
 }: Omit<TryScoring, 'recording'>): ProbeWorld => ({
   model,
   effector,
-  effectors,
+  effectors: effectors ?? { [caseSlots(kase)[0].id]: effector },
   basePart: [...(rig.robots[0]?.parts ?? [])].find((id) => !rig.ownerOf.has(id)) ?? null,
   basePoint: rig.robots[0]?.pivot ?? ([0, 0, 0] as V3),
   objectAt: new Map(kase.world.objects.map((o) => [o.id, o.position])),
+  grippers:
+    grippers ??
+    Object.fromEntries(
+      slotKeys(rig.robots, caseSlots(kase)).map((key, i) => [
+        caseSlots(kase)[i].id,
+        key ? (robotFacts(rig, rig.parts, key).gripper?.jaws.map((jaw) => jaw.joint) ?? []) : [],
+      ]),
+    ),
 });
 
 export const caseProbeReader = (scoring: Omit<TryScoring, 'recording'>) =>
@@ -79,7 +90,7 @@ export function trySignals({ recording, ...scoring }: TryScoring): Trace {
   for (let i = 0; i < recording.frames; i++) {
     const poses = framePoses(recording, i);
 
-    reader.sample(poses, signals);
+    reader.sample(poses, signals, frameContacts(recording, i));
     sampleSignals(facts.read(poses, i * recording.dt, recording.torque?.[i]), names, signals);
   }
 

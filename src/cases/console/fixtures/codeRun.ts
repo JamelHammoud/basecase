@@ -64,7 +64,7 @@ function modelFor(robot: FixtureRobot, kase: Case) {
     model,
     staged,
     movable: movableWorld(kase, robotFacts(rig, robot.parts)),
-    scoring: { kase: staged.kase, model, rig, ...stagedEffectors(staged, { rig, parts: robot.parts }) },
+    scoring: { kase: staged.kase, model, ...stagedEffectors(staged, { rig, parts: robot.parts }) },
   };
 }
 

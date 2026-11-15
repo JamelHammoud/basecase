@@ -3,6 +3,8 @@ import { box, joint } from '../sim/fixtures/parts';
 import { fixtureRobots } from '../sim/fixtures/robots';
 import { buildRig } from '../utils/kinematics';
 import { boundEffector, robotFacts } from './robotFit';
+import { placedRobot, placementOf, robotPivot } from './slots';
+import { castSlots } from './caseCast';
 
 function turretArm() {
   const parts = [
@@ -42,5 +44,32 @@ describe('robot fit', () => {
     expect(boundEffector({ endEffector: own }, facts, rig)).toEqual(own);
     expect(boundEffector({ endEffector: { part: own.part, point: [0, 900, 0] } }, facts, rig)).toEqual(own);
     expect(boundEffector({ endEffector: { part: 'link2', point: [0, 260, 0] } }, facts, rig)).toEqual(own);
+  });
+
+  it.each(['arm-3dof', 'arm-6dof'])('keeps a joined %s guest bound to its own hand', (id) => {
+    const arm = fixtureRobots().find((r) => r.id === id)!;
+    const original = robotFacts(buildRig(arm.joints, arm.parts), arm.parts);
+    const guest = placedRobot(
+      arm,
+      placementOf({ id: 'b', pose: { position: [500, 0, 0], yawDeg: 90 } }, robotPivot(arm)),
+    );
+    const parts = [...arm.parts, ...guest.parts];
+    const rig = buildRig([...arm.joints, ...guest.joints], parts);
+    const facts = robotFacts(rig, parts, rig.robots.find((r) => r.key.startsWith('b.'))!.key);
+    const customPart = guest.parts.find((p) => p.id === facts.endEffector!.part)!;
+    const custom = { part: customPart.id, point: customPart.position };
+    const slot = { needs: ['arm' as const], binding: { endEffector: original.endEffector! } };
+    const cast = castSlots(
+      [
+        { ...slot, id: 'a' },
+        { ...slot, id: 'b' },
+      ],
+      { rig, parts, guests: [] },
+    );
+
+    expect(cast[1].effector).toEqual(facts.endEffector);
+    expect(boundEffector({ endEffector: original.endEffector! }, facts, rig)).toEqual(facts.endEffector);
+    expect(boundEffector({ endEffector: custom }, facts, rig)).toEqual(custom);
+    expect(boundEffector({ endEffector: facts.endEffector! }, original, rig)).toEqual(original.endEffector);
   });
 });

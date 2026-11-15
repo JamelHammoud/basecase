@@ -15,6 +15,7 @@ export interface Gripper {
   approach: V3;
   across: V3;
   openingMm: number;
+  closedOpeningMm: number;
   depthMm: number;
   palmMm: number;
 }
@@ -39,10 +40,37 @@ function motionOf({ joint, at }: Jaw): THREE.Vector3 {
   return axis.cross(at.clone().sub(vec(joint.origin))).normalize();
 }
 
-const extentAlong = (part: ScenePart, dir: THREE.Vector3) =>
-  Math.abs(dir.x) * part.dimensions.width +
-  Math.abs(dir.y) * part.dimensions.height +
-  Math.abs(dir.z) * part.dimensions.depth;
+function extentAlong(part: ScenePart, dir: THREE.Vector3): number {
+  const rotation = new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(...part.rotation.map((n) => THREE.MathUtils.degToRad(n))),
+  );
+  const local = dir.clone().applyQuaternion(rotation.invert());
+
+  return (
+    Math.abs(local.x) * part.dimensions.width +
+    Math.abs(local.y) * part.dimensions.height +
+    Math.abs(local.z) * part.dimensions.depth
+  );
+}
+
+function closedAt(jaw: Jaw, limit: number): THREE.Vector3 {
+  const axis = vec(jaw.joint.axis).normalize();
+
+  if (jaw.joint.type === 'prismatic') return jaw.at.clone().addScaledVector(axis, limit);
+
+  const origin = vec(jaw.joint.origin);
+
+  return jaw.at.clone().sub(origin).applyAxisAngle(axis, THREE.MathUtils.degToRad(limit)).add(origin);
+}
+
+function closedExtent(jaw: Jaw, limit: number, across: THREE.Vector3): number {
+  const direction = across.clone();
+
+  if (jaw.joint.type !== 'prismatic')
+    direction.applyAxisAngle(vec(jaw.joint.axis).normalize(), -THREE.MathUtils.degToRad(limit));
+
+  return extentAlong(jaw.part, direction);
+}
 
 function closingLimit(jaw: Jaw, toward: THREE.Vector3): number | null {
   const along = motionOf(jaw).dot(toward);
@@ -107,6 +135,11 @@ export function findGripper(rig: Rig, joints: RobotJoint[], byId: Map<string, Sc
       approach: toV3(approach),
       across: toV3(across),
       openingMm: a.at.distanceTo(b.at) - (extentAlong(a.part, across) + extentAlong(b.part, across)) / 2,
+      closedOpeningMm: Math.max(
+        0,
+        closedAt(b, closeB).sub(closedAt(a, closeA)).dot(across) -
+          (closedExtent(a, closeA, across) + closedExtent(b, closeB, across)) / 2,
+      ),
       depthMm: Math.max(extentAlong(a.part, approach), extentAlong(b.part, approach)) / 2,
       palmMm: fromPalm.length(),
     };

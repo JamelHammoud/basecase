@@ -49,7 +49,7 @@ function sceneOf(options: TimelineOptions, record: TryRecord, recording: Recordi
   if (!kase || !model) return null;
 
   const staged = stageCase(kase, { rig, parts }, partners());
-  const scoring = { kase: staged.kase, model, rig, ...stagedEffectors(staged, { rig, parts }) };
+  const scoring = { kase: staged.kase, model, ...stagedEffectors(staged, { rig, parts }) };
 
   return { kase, scoring, trace: trySignals({ ...scoring, recording }) };
 }

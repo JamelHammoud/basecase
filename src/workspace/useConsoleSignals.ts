@@ -6,14 +6,16 @@ import { liveSample } from '../cases/console/liveSample';
 import { createSignalBus, type SignalBus, type SignalSample } from '../cases/console/signalBus';
 import { workerJudge, type GoalJudge } from '../cases/goalJudge';
 import { liveGoal, type LiveGoal } from '../cases/liveGoal';
-import { boundEffector, robotFacts } from '../cases/robotFit';
+import { robotFacts } from '../cases/robotFit';
+import { castSlots } from '../cases/caseCast';
 import { scaledToReach } from '../cases/scale';
 import { caseSlots, type Case } from '../cases/schema';
 import { caseProbeReader, caseProbeWorld } from '../cases/tries';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
-import type { Rig } from '../utils/kinematics';
+import { buildRig, type Rig } from '../utils/kinematics';
+import type { SimGuests } from '../sim/simGuests';
 
 const PUSH_EVERY_S = 0.05;
 const PULSE_MS = 500;
@@ -39,10 +41,31 @@ interface ConsoleSignalsInput {
   cameras: string[];
 }
 
-function caseWorld({ kase, model, rig, parts }: { kase: Case; model: SimModel; rig: Rig; parts: ScenePart[] }) {
+function caseWorld({
+  kase,
+  model,
+  rig,
+  parts,
+  guests,
+}: {
+  kase: Case;
+  model: SimModel;
+  rig: Rig;
+  parts: ScenePart[];
+  guests: SimGuests;
+}) {
   const facts = robotFacts(rig, parts);
   const scaled = scaledToReach(kase, facts.reachMm, facts.anchor);
-  const scoring = { kase: scaled, model, effector: boundEffector(caseSlots(scaled)[0].binding, facts, rig), rig };
+  const joined = [...parts, ...guests.parts];
+  const joinedRig = guests.joints.length ? buildRig([...rig.joints, ...guests.joints], joined) : rig;
+  const cast = castSlots(caseSlots(scaled), { rig: joinedRig, parts: joined, guests: [] });
+  const scoring = {
+    kase: scaled,
+    model,
+    effector: cast[0].effector,
+    effectors: Object.fromEntries(cast.map((slot) => [slot.id, slot.effector])),
+    rig: joinedRig,
+  };
 
   return { contract: scaled.task.contract, reader: caseProbeReader(scoring), world: caseProbeWorld(scoring) };
 }
@@ -68,7 +91,13 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
 
     if (!theCase) return () => {};
 
-    const { contract, reader, world } = caseWorld({ kase: theCase, model, rig: input.rig, parts: input.parts });
+    const { contract, reader, world } = caseWorld({
+      kase: theCase,
+      model,
+      rig: input.rig,
+      parts: input.parts,
+      guests: sim.worldNow().guests,
+    });
     let goal: LiveGoal | null = null;
     let judge: GoalJudge | null = null;
     let judging = false;
@@ -95,7 +124,7 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
 
       if (!now.running && goal) endGoal();
 
-      goal?.add(now.time, poses);
+      goal?.add(now.time, poses, frame.contacts);
 
       if (now.time - lastPush < PUSH_EVERY_S && now.time >= lastPush) return;
 
@@ -107,6 +136,7 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
           model,
           joints: frame.joints,
           poses,
+          contacts: frame.contacts,
           robot: frame.stats.robots[0],
           world,
           reader,

@@ -35,6 +35,8 @@ You can make a Case for the robot in your scene. Choose a goal and a world, set 
 
 Before you start, make sure the scene has a robot with joints. To learn what a Case is for, see [Cases](/help/cases).
 
+For Hand Off to a Spot, both arms must have grippers and be open in separate scene tabs. Basecase refuses combinations that can’t grasp the same block or reach the transfer. See [Put two robots in one Case](/help/put-two-robots-in-one-case).
+
 1. Click **Play** in the view rail on the left.
 2. Click **Cases** at the top of the panel.
 

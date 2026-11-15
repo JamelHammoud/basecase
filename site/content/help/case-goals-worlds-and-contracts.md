@@ -32,6 +32,11 @@ covers:
   - src/cases/dotSpots.ts
   - src/cases/pickGoal.ts
   - src/cases/handoffGoal.ts
+  - src/cases/handoffLayout.ts
+  - src/cases/handoffReference.ts
+  - src/cases/handoffReach.ts
+  - src/cases/probes.ts
+  - src/sim/contacts.ts
   - src/cases/roomWorld.ts
   - src/cases/roomTargets.ts
   - src/cases/roomJitter.ts
@@ -55,7 +60,7 @@ Every goal and world the Case builder offers, the numbers each goal takes, and e
 | **Walk Without Falling** | Legs | **Distance**, **Time** | The base gets more than **Distance** from where it started |
 | **Touch a Point** | An arm | **Dots**, **Distance**, **Height**, **Radius**, **Time** | The end effector stays within **Radius** of the point for 0.2 s |
 | **Pick Up a Block** | An arm with a gripper | **Distance**, **Spacing**, **Radius**, **Time** | The block lifts by half its size, then ends within **Radius** of the spot for 0.3 s |
-| **Hand Off to a Spot** | Two arms | **Distance**, **Height**, **Radius**, **Time** | One arm holds the point for 0.2 s, then the other holds it alone for 0.2 s |
+| **Hand Off to a Spot** | Two arms with grippers | **Distance**, **Height**, **Radius**, **Time** | The donor grips the raised block alone for 0.2 s, both grip it for 0.2 s, then the recipient grips alone for 0.2 s. The block ends placed and released within **Radius** for the final 0.3 s |
 
 On a robot with legs, these goals also fail when the robot falls: its base drops below half its starting height.
 
@@ -105,10 +110,14 @@ A Case is named after its goal and world, such as "Push a Box in a Corridor", an
 
 ## How a try is judged
 
-1. Each Case measures distances, called probes, such as from the base to the spot, in millimeters.
+1. Each Case reads probes, such as a distance in millimeters from the base to the spot, or whether a gripper touches a block.
 2. Basecase reads every probe at every frame of the recorded try, 50 times a second.
 3. The contract's success rule and failure rules read those readings.
 4. The try passes when the success rule holds and no failure rule fires.
+
+Hand Off to a Spot also reads physical contact. A contact probe is 1 while any part of the named arm touches the block, and 0 otherwise. A grip probe is 1 only while both jaws touch that block in the same frame. Moving a hand near the block or sending a close command alone never counts as a grasp.
+
+The block must rise by more than its height before transfer and stay in at least one gripper until placement. The donor must withdraw farther from the block's center than the gap between the 2 grasp points. In the final 0.3 s, neither arm can touch the block, its center must be within **Radius** of the spot, and its lift reading must be less than 4 mm above its initial reading.
 
 A Case made by **Replay in Sim** reads torque instead: each frame's highest joint torque, as a share of the most its servo can push.
 
@@ -134,7 +143,7 @@ The contract never passes by default. A reading that isn't a number counts again
 
 ## Scaling to another arm
 
-A Case written on one arm runs on another by scaling its world to the new arm's reach, measured from its shoulder. Every distance in the contract scales with it. Angles don't. A position the Case's code gives a movable object scales the same way, so a lit spot lands on the scaled spot. Skills are judged by the same contract code, in [Arena](/help/arena).
+A Case written on one arm runs on another by scaling its world to the new arm's reach, measured from its shoulder. Every distance in the contract scales with it. Angles and 0-or-1 contact readings don't. A position the Case's code gives a movable object scales the same way, so a lit spot lands on the scaled spot. Skills are judged by the same contract code, in [Arena](/help/arena).
 
 For [training images](/help/make-training-images), named object points, object pose variation, distractors and camera mount tolerance in millimeters scale too. Color classes and angular tolerances stay the same.
 

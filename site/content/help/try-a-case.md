@@ -78,7 +78,9 @@ If the robot lacks what the Case needs, hold your pointer over the row's note an
 
 ## Results
 
-After a run, **Results** shows whether the robot stayed up and which joints worked hardest. Below that, the tries are listed worst first, so misses appear at the top. A replay includes anything the Case's code moved, lit or hid during the try.
+After a run, **Results** shows whether the robot stayed up and which joints worked hardest. Below that, the tries are listed worst first, so misses appear at the top. A replay includes anything the Case's code moved, lit or hid during the try, along with loose objects' recorded motion.
+
+A [Hand Off try](/help/put-two-robots-in-one-case) also keeps the recorded contacts that prove the transfer. Scrubbing reads those contacts and the block's pose from the recording, so the verdict uses the same evidence as the run.
 
 To delete a try, right-click it, choose **Delete**, then confirm. To tag it, choose **Tag** in the same menu, as in [Label a try](/help/label-a-try).
 

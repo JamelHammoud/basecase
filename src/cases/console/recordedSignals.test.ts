@@ -59,7 +59,7 @@ function touchTry() {
   const kase = touchTheDots(arm);
   const staged = stageCase(kase, { rig, parts: arm.parts }, []);
   const model = modelFor(staged.kase.world.objects);
-  const scoring = { kase: staged.kase, model, rig, ...stagedEffectors(staged, { rig, parts: arm.parts }) };
+  const scoring = { kase: staged.kase, model, ...stagedEffectors(staged, { rig, parts: arm.parts }) };
   const reader = caseProbeReader(scoring);
   const world = caseProbeWorld(scoring);
   const engine = new SimEngine(mj, model);

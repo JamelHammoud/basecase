@@ -19,6 +19,7 @@ export interface LiveMoment {
   goal: SignalSample['goal'];
   cameras: string[];
   gestures?: Record<string, number>;
+  contacts?: ArrayLike<number>;
 }
 
 export const liveJoints = (model: SimModel, joints: ArrayLike<number>): SignalSample['joints'] =>
@@ -31,7 +32,7 @@ export const liveJoints = (model: SimModel, joints: ArrayLike<number>): SignalSa
 export function liveSample(m: LiveMoment): SignalSample {
   const probes: Record<string, number[]> = {};
 
-  m.reader.sample(m.poses, probes);
+  m.reader.sample(m.poses, probes, m.contacts);
 
   const base = endPoint('base', m.world, m.poses);
   const { robot } = m;

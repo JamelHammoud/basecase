@@ -98,7 +98,8 @@ describe('Case slots', () => {
   it('offers Hand Off to a Spot only when a second arm is open', () => {
     expect(goalsFor(builder('arm-6dof')).map((g) => g.kind)).toEqual(['touch', 'pick']);
     expect(goalsFor(builder('arm-6dof', 'rover-diff')).map((g) => g.kind)).toEqual(['touch', 'pick']);
-    expect(goalsFor(builder('arm-6dof', 'arm-3dof')).map((g) => g.kind)).toEqual(['touch', 'pick', 'handoff']);
+    expect(goalsFor(builder('arm-6dof', 'arm-3dof')).map((g) => g.kind)).toEqual(['touch', 'pick']);
+    expect(goalsFor(builder('arm-6dof', 'arm-6dof')).map((g) => g.kind)).toEqual(['touch', 'pick', 'handoff']);
   });
 });
 

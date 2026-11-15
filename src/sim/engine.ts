@@ -15,8 +15,9 @@ import { ActuatorFaults, type FaultKind } from './faults';
 import { policyObsSize, type PolicySpec } from './policy';
 import { stepPolicy, type PolicyState } from './policyStep';
 import { routePolicy, RouteRunner, type RouteController } from './route';
-import { readJointAngles, readJointStates } from './jointReadout';
+import { readHoldValues, readJointAngles, readJointStates } from './jointReadout';
 import { Scanner } from './scanner';
+import { BodyContacts } from './contacts';
 
 export type Controller =
   | { kind: 'hold'; values?: Record<string, number> }
@@ -29,7 +30,6 @@ export type Controller =
 export type { JointStat, RobotStat, SimStats } from './engineStats';
 
 const D2R = Math.PI / 180;
-const GAIN_SLOTS = 10;
 
 const jointQposOf = (type: 'revolute' | 'prismatic', v: number) => (type === 'revolute' ? v * D2R : v / 1000);
 
@@ -37,6 +37,7 @@ export class SimEngine {
   readonly model: MjModel;
   readonly data: MjData;
   private bodyIds: number[];
+  private contacts: BodyContacts;
   private jointQpos: number[];
   private jointDof: number[];
   private robots: Array<{
@@ -83,6 +84,7 @@ export class SimEngine {
     const [BODY, JOINT] = [mj.mjtObj.mjOBJ_BODY.value, mj.mjtObj.mjOBJ_JOINT.value];
 
     this.bodyIds = sim.bodies.map((b) => id(BODY, b.name));
+    this.contacts = new BodyContacts(this.model, this.bodyIds);
 
     const jids = sim.joints.map((j) => id(JOINT, j.name));
 
@@ -435,16 +437,7 @@ export class SimEngine {
   }
 
   private holdValues(): Record<string, number> {
-    const { data, model } = this;
-
-    return Object.fromEntries(
-      this.sim.joints.map((j, i) => {
-        const kp = j.actuator >= 0 ? model.actuator_gainprm[j.actuator * GAIN_SLOTS] : 0;
-        const bias = kp > 0 ? data.qfrc_bias[this.jointDof[i]] / kp : 0;
-
-        return [j.id, (data.qpos[this.jointQpos[i]] + bias) / (j.type === 'revolute' ? D2R : 0.001)];
-      }),
-    );
+    return readHoldValues(this.sim, this.model, this.data, { qpos: this.jointQpos, dof: this.jointDof });
   }
 
   private handAt({ part, point }: DriveHand): [number, number, number] {
@@ -470,6 +463,10 @@ export class SimEngine {
 
   refreshKinematics() {
     this.mj.mj_kinematics(this.model, this.data);
+  }
+
+  contactPairs(): Int32Array {
+    return this.contacts.sample(this.data);
   }
 
   setState(qpos: ArrayLike<number>) {

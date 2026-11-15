@@ -70,6 +70,7 @@ export type SimResponse =
       type: 'frame';
       poses: Float64Array;
       joints: Float64Array;
+      contacts?: Int32Array;
       stats: ReturnType<SimEngine['stats']>;
       playing: boolean;
       facts?: CaseFacts;
@@ -122,12 +123,22 @@ const frame = (force = false) => {
   scanShown = scanner?.version ?? -1;
 
   const physics = livePhysics.applied();
+  const contacts = engine.contactPairs();
 
-  post({ type: 'frame', poses, joints, stats: engine.stats(rtf), playing, facts, physics, ...(scan ? { scan } : {}) }, [
-    poses.buffer,
-    joints.buffer,
-    ...(scan ? [scan.values.buffer, scan.points.buffer] : []),
-  ]);
+  post(
+    {
+      type: 'frame',
+      poses,
+      joints,
+      contacts,
+      stats: engine.stats(rtf),
+      playing,
+      facts,
+      physics,
+      ...(scan ? { scan } : {}),
+    },
+    [poses.buffer, joints.buffer, contacts.buffer, ...(scan ? [scan.values.buffer, scan.points.buffer] : [])],
+  );
 };
 
 function postLooks() {

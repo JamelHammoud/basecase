@@ -65,22 +65,35 @@ function blurred(filled: Uint8Array, grid: Grid): Float32Array {
   return out;
 }
 
-function interpolate(values: Float32Array, grid: Grid, p: Vec3): number {
-  const { origin, step, size } = grid;
-  const f = [0, 1, 2].map((a) => (p[a] - origin[a]) / step);
-  const base = f.map(Math.floor);
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-  if (base.some((b, a) => b < 0 || b >= size[a] - 1)) return -1;
+function interpolator(values: Float32Array, { origin, step, size }: Grid): (p: Vec3) => number {
+  const [ox, oy, oz] = origin;
+  const [nx, ny, nz] = size;
+  const layer = nx * ny;
 
-  const [tx, ty, tz] = f.map((v, a) => v - base[a]);
-  const at = (a: number, b: number, c: number) => values[indexOf(grid, base[0] + a, base[1] + b, base[2] + c)];
-  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-  const x00 = lerp(at(0, 0, 0), at(1, 0, 0), tx);
-  const x10 = lerp(at(0, 1, 0), at(1, 1, 0), tx);
-  const x01 = lerp(at(0, 0, 1), at(1, 0, 1), tx);
-  const x11 = lerp(at(0, 1, 1), at(1, 1, 1), tx);
+  return (p) => {
+    const x = (p[0] - ox) / step;
+    const y = (p[1] - oy) / step;
+    const z = (p[2] - oz) / step;
+    const i = Math.floor(x);
+    const j = Math.floor(y);
+    const k = Math.floor(z);
 
-  return lerp(lerp(x00, x10, ty), lerp(x01, x11, ty), tz);
+    if (i < 0 || i >= nx - 1 || j < 0 || j >= ny - 1 || k < 0 || k >= nz - 1) return -1;
+
+    const tx = x - i;
+    const ty = y - j;
+    const tz = z - k;
+    const at = (k * ny + j) * nx + i;
+    const above = at + layer;
+    const x00 = lerp(values[at], values[at + 1], tx);
+    const x10 = lerp(values[at + nx], values[at + nx + 1], tx);
+    const x01 = lerp(values[above], values[above + 1], tx);
+    const x11 = lerp(values[above + nx], values[above + nx + 1], tx);
+
+    return lerp(lerp(x00, x10, ty), lerp(x01, x11, ty), tz);
+  };
 }
 
 export function smoothField(test: PointTest, box: Box, step: number): ((p: Vec3) => number) | null {
@@ -93,5 +106,5 @@ export function smoothField(test: PointTest, box: Box, step: number): ((p: Vec3)
 
   const values = blurred(dilated(filled, grid), grid);
 
-  return (p) => interpolate(values, grid, p);
+  return interpolator(values, grid);
 }

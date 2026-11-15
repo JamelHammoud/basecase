@@ -1,5 +1,6 @@
 import type { V3 } from '../utils/kinematics';
 import type { WorldHull } from './worldDecomposition';
+import { coversFloorPoint, prepareFloorTriangle, type FloorTriangle } from './floorTriangle';
 
 export interface SurfaceBounds {
   min: V3;
@@ -71,13 +72,6 @@ function topFaces(piece: WorldHull): Triangle[] {
 
 const flatFloor = (triangle: Triangle) => triangle.every((p) => Math.abs(p[1]) <= FLOOR_TOLERANCE_MM);
 
-function covered(point: V3, [a, b, c]: Triangle): boolean {
-  const cross = (p: V3, q: V3) => (q[0] - p[0]) * (point[2] - p[2]) - (q[2] - p[2]) * (point[0] - p[0]);
-  const sides = [cross(a, b), cross(b, c), cross(c, a)];
-
-  return sides.every((v) => v >= -1e-6) || sides.every((v) => v <= 1e-6);
-}
-
 function cellsOf(triangle: Triangle): string[] {
   const { min, max } = hullBounds(triangle.flat());
   const low = [Math.floor(min[0] / CELL_MM), Math.floor(min[2] / CELL_MM)];
@@ -93,21 +87,25 @@ function cellsOf(triangle: Triangle): string[] {
 }
 
 export function floorSupport(pieces: WorldHull[]): (point: V3) => boolean {
-  const large: Triangle[] = [];
-  const cells = new Map<string, Triangle[]>();
+  const large: FloorTriangle[] = [];
+  const cells = new Map<string, FloorTriangle[]>();
 
   for (const triangle of pieces.flatMap(topFaces).filter(flatFloor)) {
     const keys = cellsOf(triangle);
+    const floor = prepareFloorTriangle(triangle);
 
-    if (!keys.length) large.push(triangle);
+    if (!keys.length) large.push(floor);
 
-    for (const key of keys) cells.set(key, [...(cells.get(key) ?? []), triangle]);
+    for (const key of keys) cells.set(key, [...(cells.get(key) ?? []), floor]);
   }
 
   return (point) => {
-    const nearby = cells.get(`${Math.floor(point[0] / CELL_MM)}|${Math.floor(point[2] / CELL_MM)}`) ?? [];
+    const nearby = cells.get(`${Math.floor(point[0] / CELL_MM)}|${Math.floor(point[2] / CELL_MM)}`);
 
-    return large.some((triangle) => covered(point, triangle)) || nearby.some((triangle) => covered(point, triangle));
+    return (
+      large.some((triangle) => coversFloorPoint(point, triangle)) ||
+      (nearby?.some((triangle) => coversFloorPoint(point, triangle)) ?? false)
+    );
   };
 }
 

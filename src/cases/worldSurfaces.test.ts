@@ -35,6 +35,36 @@ const box = (min: V3, max: V3) => ({
 const floor = box([-2000, -20, -2000], [2000, 0, 2000]);
 
 describe('world support surfaces', () => {
+  it('keeps cell boundaries, the 64-cell cutoff and large floor fallbacks equivalent', () => {
+    for (const extent of [100, 1400, 1600, 3000]) {
+      const supported = floorSupport([box([0, -20, 0], [extent, 0, 1400])]);
+
+      for (const x of [-200, 0, 100, 200, extent, extent + 200])
+        for (const z of [-200, 0, 200, 1400, 1600])
+          expect(supported([x, 0, z])).toBe(x >= 0 && x <= extent && z >= 0 && z <= 1400);
+    }
+
+    expect(floorSupport([])([0, 0, 0])).toBe(false);
+  });
+
+  it('combines local and large floors without filling gaps or accepting raised surfaces', () => {
+    const supported = floorSupport([
+      box([-3000, -20, -3000], [-200, 0, 3000]),
+      box([0, -20, 0], [100, 0, 100]),
+      box([200, -20, 0], [300, 1, 100]),
+      box([400, -20, 0], [500, 1.01, 100]),
+    ]);
+
+    expect([-400, -100, 50, 150, 250, 450].map((x) => supported([x, 0, 50]))).toEqual([
+      true,
+      false,
+      true,
+      false,
+      true,
+      false,
+    ]);
+  });
+
   it('supports only the floor triangles, preserving gaps between separate floor sections', () => {
     const supported = floorSupport([
       box([-2000, -20, -2000], [-200, 0, 2000]),

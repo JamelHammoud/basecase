@@ -3,6 +3,11 @@ import type { ImageTransform } from './preprocess';
 import type { VisionDetection, VisionOutputs } from './types';
 import { tensorShape } from './tensorShape';
 
+interface FaceDetection extends VisionDetection {
+  stride: number;
+  index: number;
+}
+
 function validateFaceOutputs(outputs: VisionOutputs, count: number, stride: number) {
   for (const [name, channels] of [
     ['cls', 1],
@@ -21,7 +26,7 @@ function faceAt(
   transform: ImageTransform,
   stride: number,
   index: number,
-): VisionDetection | null {
+): FaceDetection | null {
   const cls = outputs[`cls_${stride}`];
   const obj = outputs[`obj_${stride}`];
   const bbox = outputs[`bbox_${stride}`];
@@ -42,16 +47,24 @@ function faceAt(
 
   if (![cx, cy, w, h].every(Number.isFinite)) throw new Error('The face detector returned unsupported tensors.');
 
+  return { label: 'face', score, box: imageBox([cx - w / 2, cy - h / 2, w, h], transform), stride, index };
+}
+
+function withFaceKeypoints(face: FaceDetection, outputs: VisionOutputs, transform: ImageTransform): VisionDetection {
+  const { stride, index, label, score, box } = face;
+  const kps = outputs[`kps_${stride}`];
+  const x = index % (transform.width / stride);
+  const y = Math.floor(index / (transform.width / stride));
   const keypoints: [number, number][] = Array.from({ length: 5 }, (_, p) => [
     clamp01(((x + Number(kps.data[index * 10 + p * 2])) * stride - transform.left) / transform.scaledWidth),
     clamp01(((y + Number(kps.data[index * 10 + p * 2 + 1])) * stride - transform.top) / transform.scaledHeight),
   ]);
 
-  return { label: 'face', score, box: imageBox([cx - w / 2, cy - h / 2, w, h], transform), keypoints };
+  return { label, score, box, keypoints };
 }
 
 export function decodeFace(outputs: VisionOutputs, transform: ImageTransform) {
-  const result: VisionDetection[] = [];
+  const result: FaceDetection[] = [];
 
   for (const stride of [8, 16, 32]) {
     const count = (transform.width / stride) * (transform.height / stride);
@@ -65,5 +78,5 @@ export function decodeFace(outputs: VisionOutputs, transform: ImageTransform) {
     }
   }
 
-  return suppress(result, 0.3);
+  return suppress(result, 0.3).map((face) => withFaceKeypoints(face, outputs, transform));
 }

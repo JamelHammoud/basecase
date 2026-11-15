@@ -69,17 +69,22 @@ export class Scanner {
 
     this.last = time;
 
-    const due = this.slots.filter((s) => time + 1e-9 >= s.next);
+    let scanned = false;
 
-    if (!due.length) return false;
+    for (const slot of this.slots) {
+      const due = time + 1e-9 >= slot.next;
 
-    this.run.mj.mj_kinematics(this.run.model, this.run.data);
+      if (!due) continue;
 
-    for (const slot of due) this.cast(slot, time);
+      if (!scanned) this.run.mj.mj_kinematics(this.run.model, this.run.data);
 
-    this.version++;
+      this.cast(slot, time);
+      scanned = true;
+    }
 
-    return true;
+    if (scanned) this.version++;
+
+    return scanned;
   }
 
   latest(): Scan {

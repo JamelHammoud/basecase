@@ -1,6 +1,6 @@
 import loadMujoco, { type MainModule, type MjData } from '@mujoco/mujoco';
 import * as THREE from 'three';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { castEye, compactEye, eyeCaster, rayCast, type Eye, type WorldRays } from './eyes';
 import { Scanner } from './scanner';
 
@@ -191,6 +191,71 @@ describe('shared sensor ray workspaces', () => {
 });
 
 describe('LiDAR hit buffers', () => {
+  it.each([300, 600])(
+    'schedules %i regular ticks and clock boundaries without due lists or extra kinematics',
+    (steps) => {
+      const { model, data } = open();
+      const rates = [5, 10, 40];
+      const sensors = rates.map((rateHz, i) => eye([1, 0, 0], { rangeM: 4 + i, scan: { rateHz, fovDeg: 360 } }));
+      const scanner = Scanner.create(mj, model, data, sensors)!;
+      const next = rates.map(() => -Infinity);
+      const times = [
+        0,
+        0,
+        0.025 - 2e-9,
+        0.025 - 0.5e-9,
+        0.025,
+        ...Array.from({ length: steps }, (_, i) => i * 0.002),
+        NaN,
+        2,
+        Infinity,
+        0,
+        0,
+        0.2,
+      ];
+      const filtering = vi.spyOn(Array.prototype, 'filter');
+      const kinematics = vi.spyOn(mj, 'mj_kinematics');
+      const casts = vi.spyOn(mj, 'mj_multiRay');
+      let last = -Infinity;
+      let versions = 0;
+
+      try {
+        for (const time of times) {
+          if (time < last) next.fill(-Infinity);
+
+          last = time;
+
+          const due = rates.map((_, i) => i).filter((i) => time + 1e-9 >= next[i]);
+
+          for (const i of due) next[i] = time + 1 / rates[i];
+
+          data.time = time;
+          filtering.mockClear();
+          kinematics.mockClear();
+          casts.mockClear();
+
+          const scanned = scanner.tick();
+          const lists = filtering.mock.calls.length;
+
+          if (due.length) versions++;
+
+          expect(scanned).toBe(due.length > 0);
+          expect(lists).toBe(0);
+          expect(kinematics).toHaveBeenCalledTimes(Number(due.length > 0));
+          expect(casts.mock.calls.map((call) => call[11])).toEqual(due.map((i) => 4 + i));
+          expect(scanner.version).toBe(versions);
+        }
+      } finally {
+        filtering.mockRestore();
+        kinematics.mockRestore();
+        casts.mockRestore();
+        scanner.dispose();
+        data.delete();
+        model.delete();
+      }
+    },
+  );
+
   it('keeps scan order, per-sensor rates, reset behavior and independent published copies', () => {
     const { model, data, body } = open();
     const sensors = [

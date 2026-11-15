@@ -1,5 +1,6 @@
-import { rank, type Matrix } from './linalg';
+import { rank } from './linalg';
 import { prepareLeastNorm } from './leastNorm';
+import { numericJacobian, prepareResidualPlan } from './residualPlan';
 import { allResiduals, type Geometry } from './residuals';
 import type { Sketch, SketchArc, SketchCircle, SketchEntity, Vec2 } from './types';
 
@@ -14,7 +15,6 @@ const TOLERANCE = 1e-10;
 const MAX_ITERATIONS = 80;
 const MAX_DAMPING_TRIES = 12;
 const DRAG_WEIGHT = 1e-12;
-const STEP = 1e-7;
 
 interface Layout {
   index: Map<string, number>;
@@ -23,6 +23,7 @@ interface Layout {
   fixed: Map<string, Vec2>;
   entities: Map<string, SketchEntity>;
   arcs: SketchArc[];
+  residualPlan: ReturnType<typeof prepareResidualPlan>;
 }
 
 const round = (v: number) => Math.round(v * 1e9) / 1e9 + 0;
@@ -67,11 +68,19 @@ function layout(sketch: Sketch, drag?: Drag): Layout {
   }
 
   const { entities, arcs } = entityLayout(sketch, { index, start, weights });
+  const lay = { index, start, weights, fixed, entities, arcs };
+  const residualPlan = prepareResidualPlan({
+    geometry: geometryAt(lay, start),
+    arcs,
+    constraints: sketch.constraints,
+    index,
+    size: start.length,
+  });
 
-  return { index, start, weights, fixed, entities, arcs };
+  return { ...lay, residualPlan };
 }
 
-function geometryAt(lay: Layout, x: number[]): Geometry {
+function geometryAt(lay: Pick<Layout, 'index' | 'fixed' | 'entities'>, x: number[]): Geometry {
   return {
     point: (id) => {
       const i = lay.index.get(id);
@@ -94,32 +103,11 @@ const sumSquares = (r: number[]) => r.reduce((s, v) => s + v * v, 0);
 
 const worst = (r: number[]) => r.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
 
-function jacobian(sketch: Sketch, lay: Layout, x: number[], rows: number): Matrix {
-  const j: Matrix = Array.from({ length: rows }, () => new Array<number>(x.length).fill(0));
-  const probe = [...x];
-
-  for (let c = 0; c < x.length; c++) {
-    const h = STEP * Math.max(1, Math.abs(x[c]));
-
-    probe[c] = x[c] + h;
-
-    const up = residualsAt(sketch, lay, probe);
-
-    probe[c] = x[c] - h;
-
-    const down = residualsAt(sketch, lay, probe);
-
-    probe[c] = x[c];
-
-    for (let r = 0; r < rows; r++) j[r][c] = (up[r] - down[r]) / (2 * h);
-  }
-
-  return j;
-}
+const jacobian = (lay: Layout, x: number[]) => numericJacobian(lay.residualPlan, (probe) => geometryAt(lay, probe), x);
 
 function improve(sketch: Sketch, lay: Layout, x: number[], state: { damping: number }): number[] | null {
   const r = residualsAt(sketch, lay, x);
-  const j = jacobian(sketch, lay, x, r.length);
+  const j = jacobian(lay, x);
   const before = sumSquares(r);
   const step = prepareLeastNorm(j, lay.weights, r);
 
@@ -174,7 +162,7 @@ function written(sketch: Sketch, lay: Layout, x: number[]): Sketch {
 
 export function solveSketch(sketch: Sketch, drag?: Drag): SolveResult {
   const lay = layout(sketch, drag);
-  const rows = residualsAt(sketch, lay, lay.start).length;
+  const rows = lay.residualPlan.rows;
 
   if (rows === 0) return { status: 'ok', sketch: written(sketch, lay, lay.start), dof: lay.start.length };
 
@@ -184,7 +172,7 @@ export function solveSketch(sketch: Sketch, drag?: Drag): SolveResult {
 
   if (!x) return { status: 'over' };
 
-  const independent = rank(jacobian(sketch, lay, x, rows));
+  const independent = rank(jacobian(lay, x));
 
   if (independent < rows) return { status: 'over' };
 

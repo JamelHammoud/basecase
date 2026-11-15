@@ -66,8 +66,18 @@ function jacobian(problem: LeastSquaresProblem, x: number[], r: Float64Array): F
 }
 
 function normalEquations(columns: Float64Array[], r: Float64Array) {
-  const a = columns.map((ci) => columns.map((cj) => ci.reduce((s, v, k) => s + v * cj[k], 0)));
+  const a = columns.map(() => new Array<number>(columns.length).fill(0));
   const g = columns.map((ci) => ci.reduce((s, v, k) => s + v * r[k], 0));
+
+  columns.forEach((ci, i) => {
+    for (let j = i; j < columns.length; j++) {
+      const cj = columns[j];
+      const value = ci.reduce((sum, v, k) => sum + v * cj[k], 0);
+
+      a[i][j] = value;
+      a[j][i] = value;
+    }
+  });
 
   return { a, g };
 }

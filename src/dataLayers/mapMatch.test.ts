@@ -44,7 +44,16 @@ describe('scan matching workspaces', () => {
     const source = points.slice();
     const guess = new THREE.Matrix4().makeRotationZ(0.015).setPosition(0.02, -0.015, 0.025);
     const original = guess.clone();
+    const solve6 = math.solve6;
     const solve = vi.spyOn(math, 'solve6');
+    const systems: number[][] = [];
+
+    solve.mockImplementation((h, g) => {
+      systems.push(Array.from(h));
+
+      return solve6(h, g);
+    });
+
     const slices = vi.spyOn(Array.prototype, 'slice');
     const matched = matchSweep(voxels, points, guess);
     const copiedNormals = slices.mock.calls.filter(([start, end]) => end === start! + 3).length;
@@ -52,6 +61,13 @@ describe('scan matching workspaces', () => {
     slices.mockRestore();
     expect(copiedNormals).toBe(0);
     expect(solve.mock.calls.length).toBeGreaterThan(1);
+
+    for (const h of systems) {
+      for (let row = 0; row < 6; row++) {
+        for (let col = 0; col < row; col++) expect(h[row * 6 + col]).toBe(h[col * 6 + row]);
+      }
+    }
+
     expect(new Set(solve.mock.calls.map(([h]) => h)).size).toBe(1);
     expect(math.poseGap(new THREE.Matrix4(), matched).metres).toBeLessThan(0.02);
     expect(math.poseGap(new THREE.Matrix4(), matched).radians).toBeLessThan(0.02);

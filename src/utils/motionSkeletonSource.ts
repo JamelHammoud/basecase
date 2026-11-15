@@ -6,7 +6,7 @@ import type { MotionFrames } from './motionSkeletonValidation';
 
 export interface MotionAxis {
   joint: SkeletonJoint;
-  values: number[];
+  values: readonly number[];
 }
 
 export interface MotionChain {
@@ -105,31 +105,49 @@ function continuousAngles(angles: number[]): number[] {
   });
 }
 
+function channelSamples(rotations: MotionFrames['rotations']) {
+  const byBone = new Map<string, Array<MocapRotation & { values: number[]; span: number }>>();
+
+  return (bone: string) => {
+    const cached = byBone.get(bone);
+
+    if (cached) return cached;
+
+    const channels = (rotations[0].get(bone) ?? []).map((channel, index) => {
+      const values = continuousAngles(rotations.map((frame) => frame.get(bone)?.[index]?.degrees ?? Number.NaN));
+
+      return { ...channel, values, span: Math.max(...values) - Math.min(...values) };
+    });
+
+    byBone.set(bone, channels);
+
+    return channels;
+  };
+}
+
 function axisEntries(options: {
   motion: Mocap;
   leaf: string;
-  rotations: Map<string, MocapRotation[]>[];
+  channelsOf: ReturnType<typeof channelSamples>;
   first: Map<string, THREE.Vector3>;
   scale: number;
 }): MotionAxis[] {
-  const { motion, leaf, rotations, first, scale } = options;
+  const { motion, leaf, channelsOf, first, scale } = options;
   const result: MotionAxis[] = [];
   const orientation = new THREE.Quaternion();
 
   for (const bone of ancestors(motion, leaf)) {
-    const channels = rotations[0].get(bone) ?? [];
+    const channels = channelsOf(bone);
     const position = pointOf(first, bone);
 
-    channels.forEach((channel, index) => {
+    channels.forEach((channel) => {
       const axis = AXES[channel.axis].clone().applyQuaternion(orientation);
-      const degrees = continuousAngles(rotations.map((frame) => frame.get(bone)?.[index]?.degrees ?? Number.NaN));
-      const span = Math.max(...degrees) - Math.min(...degrees);
 
       orientation.multiply(
         new THREE.Quaternion().setFromAxisAngle(AXES[channel.axis], THREE.MathUtils.degToRad(channel.degrees)),
       );
 
-      if (span < 1e-7) return;
+      if (channel.span < 1e-7) return;
 
       result.push({
         joint: {
@@ -140,7 +158,7 @@ function axisEntries(options: {
           type: 'revolute',
           limb: limbOf(leaf),
         },
-        values: degrees,
+        values: channel.values,
       });
     });
   }
@@ -154,10 +172,11 @@ export function motionChains(
   options: { scale: number; limbs?: string[] },
 ): MotionChain[] {
   const { positions: frames, rotations } = samples;
+  const channelsOf = channelSamples(rotations);
 
   return motionLeaves(motion, options.limbs).map((leaf) => ({
     name: motion.endSites?.parentOf.get(leaf) ?? leaf,
-    axes: axisEntries({ motion, leaf, rotations, first: frames[0], scale: options.scale }),
+    axes: axisEntries({ motion, leaf, channelsOf, first: frames[0], scale: options.scale }),
     tip: tuple(pointOf(frames[0], leaf).clone().multiplyScalar(options.scale)),
     targets: frames.map((frame) => tuple(pointOf(frame, leaf).clone().multiplyScalar(options.scale))),
   }));

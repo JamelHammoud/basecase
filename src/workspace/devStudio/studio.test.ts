@@ -50,7 +50,6 @@ const NAMES_BEFORE_THE_SPLIT = [
   'fleet',
   'fleetModel',
   'guide',
-  'handoffEvidence',
   'importRobot',
   'inputEvents',
   'interference',

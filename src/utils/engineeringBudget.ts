@@ -21,6 +21,7 @@ export function budgetRow(ctx: CheckContext): CheckRow {
     purchases: ctx.input.purchases ?? {},
     measures: ctx.measures,
     supportG: ctx.input.supportG,
+    wiring: ctx.input.wiring,
   });
   const est = bom.totals.estimatedUsd;
   let status: CheckRow['status'] = 'pass';

@@ -21,6 +21,7 @@ import { ignoreFinding, ignoreRule, restoreFinding, restoreRule } from '../readi
 import type { ReadinessHandle } from '../workspace/useReadiness';
 import { usePurchases } from './build/usePurchases';
 import { sceneTether } from '../utils/powerSources';
+import { currentWiring } from '../readiness/currentWiring';
 
 interface BuildPanelProps {
   parts: ScenePart[];
@@ -51,6 +52,9 @@ function supportByMaterial(print: PrintReport | null) {
 
 const fileStem = (sceneName: string) => sceneName.replace(/[^\w-]+/g, '-').replace(/^-|-$/g, '') || 'robot';
 
+const panelBom = (input: Parameters<typeof buildBom>[0], readiness: ReadinessHandle) =>
+  buildBom({ ...input, wiring: currentWiring(readiness) });
+
 export const BuildPanel: React.FC<BuildPanelProps> = ({
   parts,
   sceneName,
@@ -73,7 +77,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   const { measures, report: print } = printing;
   const [checking, setChecking] = useState<BomLine | null>(null);
   const { ref: setScroller, style: fadeStyle } = useScrollFade();
-  const bom = buildBom({ parts, project, purchases, measures, supportG: supportByMaterial(print) });
+  const bom = panelBom({ parts, project, purchases, measures, supportG: supportByMaterial(print) }, readiness);
   const file = fileStem(sceneName);
   const money = useMoney();
   const tether = sceneTether({ parts, project });

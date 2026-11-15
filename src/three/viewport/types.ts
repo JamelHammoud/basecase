@@ -26,6 +26,7 @@ import type { JointAxes } from '../../joints/jointCandidates';
 import type { JointAxisQuery } from '../analysis/jointAxis';
 import type { CheckDot } from '../../utils/engineeringTypes';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
+import type { Netlist, WiringScene } from '../../wiring/netlist';
 import type {
   CameraPreset,
   MeasureUnit,
@@ -100,6 +101,7 @@ export interface BuildStepView {
   moves: Array<{ partId: string; offset: Vec3 }>;
   arrows: Array<{ from: Vec3; to: Vec3 }>;
   labels: Array<{ partId: string; text: string }>;
+  routes?: Array<{ points: Vec3[] }>;
   removing?: boolean;
 }
 
@@ -203,6 +205,7 @@ export interface Viewport3DHandle {
   ) => Promise<Array<{ view: string; dataUrl: string; labels?: number[] }>>;
   interference: (onlyIds?: string[]) => Promise<{ interferences: Interference[]; coplanar: Coplanar[] }>;
   fastenerChains: () => Promise<ChainResult>;
+  wiring: (scene: WiringScene) => Promise<Netlist>;
   assembly: (options: Omit<AssemblyGeometryInput, keyof FastenerInput>) => Promise<AssemblyGeometry>;
   measureParts: (ids?: string[]) => Promise<Record<string, MeshMeasure>>;
   visibleShares: () => Promise<Record<string, number>>;

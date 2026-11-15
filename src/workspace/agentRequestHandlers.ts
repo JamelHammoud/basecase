@@ -203,18 +203,22 @@ const shapesOf = (ctx: RequestContext) => async (ids: string[], faces?: Record<s
 const printCtx = (ctx: RequestContext) => ({ project: ctx.project(), printer: ctx.printer() });
 
 async function bom(_payload: Payload, ctx: RequestContext) {
+  const parts = ctx.parts();
+  const project = ctx.project();
+  const viewport = ctx.viewport();
   const print = await printReportOf(ctx.parts(), printCtx(ctx), shapesOf(ctx));
   const supportG: Partial<Record<ProjectSettings['material'], number>> = {};
 
   for (const r of print.parts) supportG[r.material] = (supportG[r.material] ?? 0) + r.supportG;
 
   const built = buildBom({
-    parts: ctx.parts(),
-    project: ctx.project(),
+    parts,
+    project,
     purchases: await platformBridge.listPurchases(),
-    measures: (await ctx.viewport()?.measureParts()) ?? {},
+    measures: (await viewport?.measureParts()) ?? {},
     now: new Date(),
     supportG,
+    wiring: await viewport?.wiring({ parts, project }),
   });
 
   return {

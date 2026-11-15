@@ -9,6 +9,7 @@ covers:
   - src/components/build/BuildAlongBar.tsx
   - src/guide/buildAlong.ts
   - src/three/viewport/buildStep.ts
+  - src/components/build/BuildAlongItems.tsx
 ---
 
 Build Along plays your robot's build guide on the canvas one step at a time, so you can follow along with the parts on your desk.
@@ -17,14 +18,19 @@ Build Along plays your robot's build guide on the canvas one step at a time, so 
 2. Check the parts and tools this step uses. They're listed under the bar, with counts for parts, for example 4 × M3 × 6 Socket Head Screw.
 3. Watch the step's parts and screws fly in along the blue arrows. You can orbit to see the step from any side.
 4. Put each servo into the joint named on its label, for example Shoulder lift, ID 2. First set the servo to that bus ID, so that Operate and the sim drive the right joint.
-5. To go to the next step, press [[→]]. To go back, press [[←]].
-6. To return to your scene, click **Done** or press [[Esc]]. Nothing in your scene changes.
+5. Follow the cable path shown when both endpoints have been installed. The cable's callout names its endpoints, stock and recorded length, for example Elbow, ID 2 to Wrist, ID 3 and a 180 mm ROBOTIS Robot Cable-X3P.
+6. To go to the next step, press [[→]]. To go back, press [[←]].
+7. To return to your scene, click **Done** or press [[Esc]]. Nothing in your scene changes.
 
 ![A step with four screws flying into the base along blue arrows, and 4 × M3 × 6 Socket Head Screw listed under the bar](/help/build-along/step.png)
 
 If you changed the design since the guide was last made, Build Along makes the guide again first and shows its progress in the bar.
 
 ![Three servos labeled Shoulder pan, ID 1, Shoulder lift, ID 2 and Elbow, ID 3](/help/build-along/servos.png)
+
+Each connection appears once, at the first step that has both endpoints. A callout can name a cable that is too short. Resolve [Troubleshoot wiring checks](/help/troubleshoot-servo-bus) before using the guide to build.
+
+![The Wrist ID 3 step with its incoming Elbow ID 2 cable and 180 mm stock callout](/help/build-along/cable-route.png)
 
 A green check appears beside the step count when every printed part the step uses is marked printed. The build guide also shows a check beside the step number. When you [print plates on several printers](/help/print-plates-on-several-printers), the parts print in this order.
 

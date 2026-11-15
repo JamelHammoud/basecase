@@ -26,6 +26,7 @@ import { SkeletonOverlay } from './skeletonOverlay';
 import { BlueprintUnderlay } from './blueprint';
 import { BuildStepLayer } from './buildStep';
 import { currentView, focusOn, frameObjects, frameScene, lookThrough, setCameraPreset } from './cameraOps';
+import { snapshotSolidsWith, wiringSnapshot } from './analysisSnapshots';
 import { CanvasSizer } from './canvasSizer';
 import { captureScreenshot, captureViews } from './captures';
 import { silhouetteShots } from './fitCapture';
@@ -283,13 +284,7 @@ export class ViewportEngine {
     const unbatched = <T>(run: () => T) => ctx.batches.unbatched(run);
     const solidShapes = (visibleOnly: boolean) => snapshotShapes(measure.solidObjects(ctx, { visibleOnly }));
     const restSolids = (visibleOnly: boolean) => withRest(() => solidShapes(visibleOnly));
-    const restSolidsWith = (ids: string[]) =>
-      withRest(() => {
-        const solids = measure.solidObjects(ctx, { visibleOnly: true });
-        const known = new Set(solids.map((s) => s.id));
-
-        return snapshotShapes([...solids, ...measure.partObjects(ctx, ids).filter((o) => !known.has(o.id))]);
-      });
+    const restSolidsWith = (ids: string[]) => withRest(() => snapshotSolidsWith(ctx, ids));
     const restShapes = (ids?: string[]) => withRest(() => snapshotShapes(measure.partObjects(ctx, ids)));
     const camera = <T>(run: () => T) => {
       ctx.loop.frameAnimation = null;
@@ -333,6 +328,7 @@ export class ViewportEngine {
       },
       interference: (onlyIds) => interferenceIn(restSolids(true), interferenceOptions(onlyIds)),
       fastenerChains: () => fastenersIn(restSolids(false), fastenerInput(this.props.parts)),
+      wiring: (scene) => wiringSnapshot(scene, () => restSolids(false)),
       assembly: (options) => assemblyIn(restSolids(false), { ...fastenerInput(this.props.parts), ...options }),
       posedInterference: (onlyIds, riders) =>
         interferenceIn(solidShapes(true), { ...interferenceOptions(onlyIds), riders }).then((r) => r.interferences),

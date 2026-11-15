@@ -27,6 +27,8 @@ import type { ArmModel, PayloadMap } from '../../utils/payload';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
 import { errorMessage } from '../../utils/errorMessage';
 import { workerIndices } from '../../../electron/workerIndices.mjs';
+import type { Netlist, WiringScene } from '../../wiring/netlist';
+import { wiringCache } from './wiringCache';
 
 interface Client {
   rpc: WorkerClient<typeof analysisHandlers>;
@@ -123,6 +125,14 @@ export function interferenceIn(
   options: CollideOptions & { riders?: OutputRiders },
 ): Promise<{ interferences: Interference[]; coplanar: Coplanar[] }> {
   return analyze(leastBusy(), scene, { kind: 'interference', instances: scene.instances, ...options });
+}
+
+const cachedWiring = wiringCache();
+
+export function wiringIn(shapes: SceneShapes, scene: WiringScene): Promise<Netlist> {
+  return cachedWiring(shapes.instances, scene, () =>
+    analyze(leastBusy(), shapes, { kind: 'wiring', instances: shapes.instances, scene }),
+  );
 }
 
 export function printReportsIn(

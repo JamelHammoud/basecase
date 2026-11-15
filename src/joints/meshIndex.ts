@@ -144,17 +144,13 @@ export class MeshIndex {
   }
 
   private linkNeighbours(list: number[], out: number[][]): void {
-    for (let i = 0; i < list.length; i++) {
-      for (let j = i + 1; j < list.length; j++) {
-        const a = list[i];
-        const b = list[j];
-
+    for (const a of list) {
+      for (const b of list) {
         if (a === b) continue;
 
         out[a].push(b);
-        out[b].push(a);
 
-        if (this.curved[a] && this.curved[b]) continue;
+        if (a > b || (this.curved[a] && this.curved[b])) continue;
 
         const cosine = this.cosBetween(a, b);
 

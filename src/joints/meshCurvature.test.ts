@@ -145,6 +145,14 @@ describe('shared-edge curvature classification', () => {
     }
   });
 
+  it('preserves neighbor order when several faces share weld-collapsed edges', () => {
+    expectTopology(
+      Float32Array.from([
+        0, 0, 0, 0, 0.0001, 0, 1, 0, 0, 0, 0, 0, 0, 0.0001, 0.0001, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1,
+      ]),
+    );
+  });
+
   it('preserves empty, degenerate, tiny, weld-collapsed, incomplete and nonfinite geometry', () => {
     const unusual = [
       [],

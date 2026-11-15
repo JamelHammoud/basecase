@@ -24,7 +24,7 @@ export const HELP_COLLECTIONS: CollectionInfo[] = [
   {
     slug: 'simulate-and-train',
     title: 'Simulate and train',
-    description: 'Run the robot in MuJoCo, drive it, try Cases, train skills and export datasets.',
+    description: 'Compare designs, run the robot in MuJoCo, drive it, try Cases, train skills and export datasets.',
   },
   {
     slug: 'build-and-print',

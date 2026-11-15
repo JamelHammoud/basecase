@@ -173,20 +173,20 @@ function compareCommands(core: WorkspaceCore): Command[] {
   }));
 }
 
-function exploreCommands({ caseExplore, tool }: WorkspaceCore): Command[] {
-  if (!caseExplore.available || caseExplore.running) return [];
+function studyCommands({ study }: WorkspaceCore): Command[] {
+  if (!study.available) return [];
+
+  if (study.running)
+    return [{ id: 'study-stop', group: 'Simulate', label: 'Stop Study', icon: <StopIcon />, run: study.stop }];
 
   return [
     {
-      id: 'case-explore',
+      id: 'study',
       group: 'Simulate',
-      label: 'Explore',
+      label: 'Study',
       icon: <SwapIcon />,
-      keywords: 'case servo version variant voltage supply sweep which buy cheaper stronger compare',
-      run: () => {
-        caseExplore.start();
-        tool.setRightTab('sim');
-      },
+      keywords: 'design knobs parameter sweep battery foot dimension voltage weight cost runtime torque compare',
+      run: study.show,
     },
   ];
 }
@@ -209,7 +209,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
         ]
       : [];
 
-  if (!posing.hasRig) return images;
+  if (!posing.hasRig) return [...images, ...studyCommands(core)];
 
   const drive: Command = sim.drive.active
     ? {
@@ -294,7 +294,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...addPanelCommands(core),
     ...renameCommands(core),
     ...(cases.active ? compareCommands(core) : []),
-    ...exploreCommands(core),
+    ...studyCommands(core),
     ...matCommands(core),
     ...(cases.active ? multiplyCommands(cases) : []),
     ...shareCommands(simTraining),

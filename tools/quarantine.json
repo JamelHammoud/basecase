@@ -16,14 +16,6 @@
     "reason": "In run 43637620265 on Windows, the first attempt drove only 0.0294 m and the retry left Drive off for 60 s. The test passed on Linux at the same commit in 26.4 s and on Windows in the preceding run in 19.3 s, with unchanged joystick test, bridge, frame and drive hook. The cause is not established."
   },
   {
-    "file": "e2e/webTrain.e2e.test.ts",
-    "test": "trains Stand on the tab engine, passes Arena, and keeps it through a reload",
-    "issue": 794,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Passes on Linux in about 70 s. On Windows the web studio trains and checks Stand so slowly that the Arena check is still running after the 180 s wait, in three of the last five nightly runs."
-  },
-  {
     "file": "e2e/firstLaunch.e2e.test.ts",
     "test": "opens on the rover driving to its flag",
     "issue": 794,

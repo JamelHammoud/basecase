@@ -15,7 +15,7 @@ covers:
   - forge/crates/forge-train/src/trainer.rs
 ---
 
-While Forge trains a skill, you can watch each snapshot of it run on the canvas. Once the skill passes Arena, you can replay any of them.
+While Forge trains a skill, you can watch its snapshots on the canvas, then replay the saved snapshots once Basecase keeps the skill.
 
 **Note:** Snapshots need the desktop app. If you train in the browser, you see only the training progress.
 
@@ -32,7 +32,7 @@ While Forge trains a skill, you can watch each snapshot of it run on the canvas.
 
 ![Stand ready, with six snapshots from 50 to 300 under its Arena line](/help/watch-a-skill-learn/snapshots.png)
 
-If Arena refuses a Motor Kit skill, the skill and its snapshots aren't kept. Instead, its row shows how close it came, such as "Refused in Arena: 20 of 32 tries".
+If Arena refuses a Motor Kit candidate, the candidate and its snapshots aren't kept. Its row shows how close it came, such as "Refused in Arena: 20 of 32 tries". A candidate that fails a required start or stop isn't kept either, and the row names the failed movement. An earlier passing skill and its snapshots stay available, with the refusal above its Arena result.
 
 When you stop training or open another tab, Basecase puts back the controller you had before.
 

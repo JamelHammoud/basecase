@@ -24,6 +24,8 @@ covers:
   - src/components/routines/RoutineNode.tsx
   - src/routines/stepMenu.ts
   - src/routines/routineRun.ts
+  - src/routines/kitBehavior.ts
+  - src/routines/physicsKit.ts
   - src/workspace/useRoutines.ts
   - src/workspace/routineCommands.tsx
 ---
@@ -67,6 +69,12 @@ To add a step at a certain point in the flow, click the + on any line. To move a
 ## What the robot needs
 
 **Drive**, **Turn** and **Stop** use the robot's **Walk** and **Settle** skills when it has them. Without them, a robot with four or more legs, or with wheels, uses the built-in gait from Drive, while a robot with two legs needs a trained **Walk**. An arm can't drive or turn.
+
+Each switch has its own proof. A Walk that passed Arena can still fail to turn from Settle, so that Turn step stays unavailable. Its message names the movement that failed, and **Run** appears once every required switch passes. Changing either skill or the robot's physics makes the affected proof out of date.
+
+A failed stop also keeps **Run** unavailable, including a stop before a reaction or after a step times out. The step that needs to stop shows the failed movement.
+
+![The Turn step refused after Settle because the policy didn’t turn 0.3 radians in place](/help/build-a-routine/start-turn-refused.png)
 
 If a step switches straight from one skill into another, such as Walk into a Wave, it runs once you prove the switch. See [Prove a hand-off between skills](/help/prove-a-hand-off-between-skills).
 

@@ -213,7 +213,7 @@ export function useAgentRequests(options: AgentRequestOptions) {
     routines: core.simTraining.routines,
     cases: core.simTraining.cases,
     caseCompare: core.caseCompare,
-    caseExplore: core.caseExplore,
+    study: core.study,
     caseRun: core.caseRun,
     datasets: core.datasets,
     skills: core.simTraining.skills,

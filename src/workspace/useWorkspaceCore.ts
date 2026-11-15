@@ -7,9 +7,7 @@ import { newSceneId } from '../utils/sceneIds';
 import { usePosing } from '../utils/usePosing';
 import { projectFromSeed } from './helpers';
 import type { SceneWorkspaceProps, WorkspaceSeed } from './types';
-import { useAnnotations } from './useAnnotations';
-import { useMarks, useMarkState } from './useMarks';
-import { useMeasure } from './useMeasure';
+import { useMarks } from './useMarks';
 import { usePoseScope } from './usePoseScope';
 import { useCadCompile } from './useCadCompile';
 import { useRobotUpgrade } from './useRobotUpgrade';
@@ -28,6 +26,7 @@ import { useSketchSession } from './useSketchSession';
 import { useRobotSync } from './useRobotSync';
 import { useRepair } from './useRepair';
 import { useLatestRef } from '../utils/useLatestRef';
+import { useWorkspaceTools } from './useWorkspaceTools';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -64,6 +63,17 @@ const seedLoader = (to: SeedTargets) => (next: WorkspaceSeed, message?: string) 
   if (message) to.showToast(message);
 };
 
+const resetStudyBeforeLoad =
+  (study: { reset: () => void }, load: ReturnType<typeof seedLoader>) => (next: WorkspaceSeed, message?: string) => {
+    study.reset();
+    load(next, message);
+  };
+
+const showStudyPanel = (tool: ReturnType<typeof useToolMode>, studio: SceneWorkspaceProps['studio']) => () => {
+  tool.setRightTab('sim');
+  studio.setIsRightOpen(true);
+};
+
 export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWorkspaceProps) {
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const scene = useSceneMeta(seed);
@@ -76,25 +86,12 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   useCadCompile(docs);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const measure = useMeasure();
-  const { setMeasuring } = measure;
-  const markState = useMarkState();
-  const { setMarking } = markState;
-  const annotations = useAnnotations({
+  const { measure, markState, annotations, tool } = useWorkspaceTools({
     initial: seed?.annotations ?? [],
     parts,
     showToast,
     setSelectedIds,
-    stopTools: () => {
-      setMeasuring(false);
-      setMarking(false);
-    },
-  });
-  const tool = useToolMode({
     setIsRightOpen: studio.setIsRightOpen,
-    annotations,
-    measure,
-    mark: { marking: markState.marking, setMarking },
   });
   const marks = useMarks({ docs, showToast, selection: markState.selection, tool: markState.tool });
   const posing = usePosing({
@@ -140,8 +137,10 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const repair = useRepair({ ...docs, viewportRef, guide, buildAlong, printing });
 
   const readiness = useSceneReadiness(docs, printing, studio, viewportRef);
-  const { caseCompare, caseExplore } = useCaseStudies({
+  const { caseCompare, study } = useCaseStudies({
     inFront: active,
+    sim: simTraining.sim,
+    onShow: showStudyPanel(tool, studio),
     kase: simTraining.cases.active,
     fingerprint: readiness.fingerprint,
     studio,
@@ -158,7 +157,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     printer,
     readiness,
     caseCompare,
-    caseExplore,
+    study,
     printing,
     triesView,
     datasets,
@@ -191,7 +190,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     repair,
     undo,
     redo: () => docs.travel({ direction: 'redo', codeOnly: caseRun.open }, restorePose),
-    loadSeed,
+    loadSeed: resetStudyBeforeLoad(study, loadSeed),
   };
 }
 

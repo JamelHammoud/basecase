@@ -1,4 +1,4 @@
-import { modelHashes, type Skill } from '../skills/artifacts';
+import type { Skill } from '../skills/artifacts';
 import type { SkillRecord } from '../skills/skillRecords';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotJoint, ScenePart } from '../types/robotics';
@@ -10,8 +10,10 @@ import { loadKitLibrary } from '../routines/kitLibrary';
 import type { RoutineKit } from '../routines/physicsKit';
 import { scriptedDrive } from '../routines/physicsDrive';
 import { inRoutinesWorker } from '../routines/routinesClient';
-import type { Routine } from '../routines/schema';
+import type { Routine, SkillContract } from '../routines/schema';
 import { skillId } from '../routines/skillNames';
+import { physicsStamp } from '../routines/skillStamps';
+import { hashOf } from '../skills/hash';
 
 export interface OwnSkill {
   hash: string;
@@ -22,6 +24,7 @@ export interface OwnSkill {
 export interface RoutineSkills {
   own: () => Promise<OwnSkill[]>;
   handoffs: () => HandoffProofs | undefined;
+  kit?: readonly SkillContract[];
 }
 
 export const NO_ROUTINE_SKILLS: RoutineSkills = { own: () => Promise.resolve([]), handoffs: () => undefined };
@@ -41,7 +44,7 @@ export async function sceneKit(
   const { joints, parts } = scene;
   const own = scene.own ?? [];
   const drive = scriptedDrive(model, joints, parts);
-  const key = `${modelHashes(model).physics}#${drive?.kind ?? ''}#${own.map((o) => o.hash).join(',')}`;
+  const key = `${physicsStamp(model)}#${hashOf(drive)}#${own.map((o) => o.hash).join(',')}`;
   const known = kits.get(key);
 
   if (known) return known;
@@ -75,7 +78,20 @@ export async function checkRoutine(
   const { routine, parts, joints } = options;
   const skills = options.skills ?? NO_ROUTINE_SKILLS;
   const [model, own] = await Promise.all([options.buildModel(), skills.own()]);
-  const kit = await sceneKit(model, { joints, parts, own });
+  const kit = skills.kit
+    ? {
+        skills: skills.kit.map((skill) => ({
+          ...skill,
+          transitions: Object.fromEntries(
+            Object.entries(skill.transitions).map(([to, proof]) => [to, { ...proof, modelHash: physicsStamp(model) }]),
+          ),
+        })),
+        modelHash: physicsStamp(model),
+        policies: await sceneSkills(own),
+        drive: scriptedDrive(model, joints, parts),
+        problems: {},
+      }
+    : await sceneKit(model, { joints, parts, own });
   const scene = {
     skills: withHandoffs(kit, skills.handoffs()),
     modelHash: kit.modelHash,

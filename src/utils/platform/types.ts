@@ -12,7 +12,7 @@ import type {
   RobotSample,
   RobotUnitState,
 } from '../../robot/robotState';
-import type { CadAudit, CadPort } from '../../types/cadAudit';
+import type { CadAudit, CadExpect, CadPort } from '../../types/cadAudit';
 import {
   AcpChatMessage,
   AcpStatusInfo,
@@ -218,7 +218,7 @@ declare global {
       openCadFile: (payload: { name: string; bytes: Uint8Array }) => Promise<OpenedCad>;
       exportStep: (job: StepJob) => Promise<ExportedStep>;
       tuneCadPart: (payload: CadTuneRequest) => Promise<CadTuneAnswer>;
-      renderCad: (payload: { language: CadLanguage; code: string }) => Promise<Uint8Array>;
+      renderCad: (payload: { language: CadLanguage; code: string; expect?: CadExpect }) => Promise<Uint8Array>;
       savePurchase: (payload: { key: string; record: StoredPurchase | null }) => Promise<Purchases>;
       getChat: (id: string) => Promise<AgentConversation | null>;
       saveChat: (conv: AgentConversation) => Promise<AgentConversationSummary[]>;

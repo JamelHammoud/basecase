@@ -43,7 +43,7 @@ If the robot misbehaves in the simulation, fix the design. Basecase writes your 
 
 ## Servos, measured or estimated
 
-If a catalog servo with a published model drives a joint, the joint moves the way a bench test of that servo model says it does. Basecase models the STS3215 at 7.4 V and the XL330 at 5 V. [Explore](/help/explore-servo-versions-on-a-case) instead models each servo at the supply voltage it's trying. Each model covers the servo's gain and delay, back-EMF damping, and friction that grows with load.
+If a catalog servo with a published model drives a joint, the joint moves the way a bench test of that servo model says it does. Basecase models the STS3215 at 7.4 V and the XL330 at 5 V. [Study](/help/study-design-options) models each servo at the supply voltage it's trying. Each model covers the servo's gain and delay, back-EMF damping, and friction that grows with load.
 
 Every other joint gets an estimated servo. If the joint has a servo, Basecase sets its torque from that servo's stall torque. If it has none, Basecase sets the torque from the weight the joint holds.
 

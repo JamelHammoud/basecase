@@ -8,23 +8,30 @@ Makers with the most parts in the catalog (`src/data/components.ts`).
 
 ### Feetech
 
-- **Link:** https://www.feetechrc.com
-- **Checked:** 2026-11-13
-- **Better than Basecase:** makes the STS3215 behind the SO-101: 19.5 kg·cm peak stall at 6 V, a 12-bit magnetic encoder over 360°, a half-duplex serial bus from 38400 bps to 1 Mbps with ids 0 to 253, and load, position, speed, voltage and current fed back. The product page has a datasheet PDF and a dimension drawing as an image, with no price and no CAD file ([STS3215](https://www.feetechrc.com/74v-19-kgcm-plastic-case-metal-tooth-magnetic-code-double-axis-ttl-series-steering-gear)). Its wiki, in Chinese, covers Python, Linux, Arduino, ESP32 and STM32, the FT-SCS, Modbus-RTU and CAN protocols and the register maps per series, and marks per model whether a STEP file exists yet ([wiki](https://ftservo.github.io/ftservo-wiki/)).
-- **Worse than Basecase:** Feetech publishes no 3D model for the STS3215 on its page ([STS3215](https://www.feetechrc.com/74v-19-kgcm-plastic-case-metal-tooth-magnetic-code-double-axis-ttl-series-steering-gear)). Basecase's catalog carries a Waveshare model checked against Feetech's drawing, four STS3215 variants with their torque, speed and current, and the SCS0009 and STS3250 (`src/data/components.ts`), and its daemon speaks the Feetech bus to an emulated STS3215 byte for byte ([Robot runtime](../guide/robot-runtime.md)).
-- **Basecase should:** integrate. Offer Feetech the catalog's checked STS3215 model and register ledger for its wiki's model pages, which mark STEP files as missing, in exchange for official models and the register dumps the runtime still marks as assumed ([Robot runtime](../guide/robot-runtime.md)).
+- **Link:** https://ftservo.github.io/ftservo-wiki/
+- **Checked:** 2026-11-15
+- **Better than Basecase:** publishes Python, Linux, Arduino, ESP32 and STM32 integration guides, packet protocols and series register tables ([wiki](https://ftservo.github.io/ftservo-wiki/)). Its ST-3215-C001 page identifies the STS3215 and document revision A/0, links a datasheet and dimension drawing, and explicitly flags inconsistent voltage bounds between the website and PDF ([model page](https://ftservo.github.io/ftservo-wiki/products/models/st-3215-c001/main/)).
+- **Worse than Basecase:** that model page marks STEP, model-specific firmware/register documentation and raw test data as missing ([model page](https://ftservo.github.io/ftservo-wiki/products/models/st-3215-c001/main/)). Basecase carries a Waveshare model checked against Feetech drawings, separate C001, C018, C044 and C046 actuator records, and a byte-level STS3215 emulator with a provenance ledger ([catalog](../../src/data/components.ts), [Robot runtime](../guide/robot-runtime.md)).
+- **Basecase should:** integrate the model-specific references while preserving suffix, document revision, voltage and test conditions, because the maker page itself reports conflicting specifications ([model page](https://ftservo.github.io/ftservo-wiki/products/models/st-3215-c001/main/)). Use that evidence to resolve catalog and runtime assumptions rather than replacing variant data with the family summary ([catalog](../../src/data/components.ts), [Robot runtime](../guide/robot-runtime.md)).
 
 ### ROBOTIS
 
-- **Link:** https://emanual.robotis.com
-- **Checked:** 2026-11-13
-- **Better than Basecase:** publishes everything a model needs for each Dynamixel. The XL330-M288-T's e-manual gives stall torque and no-load speed at 3.7, 5 and 6 V (0.52 N·m and 103 rev/min at 5 V), six operating modes from current to multi-turn and PWM, Protocol 2.0 at up to 4 Mbps, and downloads of its STEP, DWG and PDF drawings and its moment of inertia ([XL330-M288](https://emanual.robotis.com/docs/en/dxl/x/xl330-m288/)).
-- **Worse than Basecase:** the e-manual describes one servo at a time ([XL330-M288](https://emanual.robotis.com/docs/en/dxl/x/xl330-m288/)); Basecase picks Dynamixels for a design's joints, checks their torque in the sim and drives them through the same daemon as Feetech servos ([Robot runtime](../guide/robot-runtime.md), `src/data/components.ts`).
-- **Basecase should:** integrate. The catalog takes six Dynamixels' models from ROBOTIS's e-manual, but only the XL330 has a measured fit; the others' armature is estimated from their torque (`src/data/components.ts`, [Simulate](../guide/simulate.md)). Ask ROBOTIS for each Dynamixel's rotor inertia and friction, which the e-manual doesn't list, so those servos simulate from the maker's numbers.
+- **Link:** https://docs.robotis.com
+- **Checked:** 2026-11-15
+- **Better than Basecase:** the XL330-M288-T reference publishes 0.52 N·m stall torque and 103 rpm no-load speed at 5 V, operating modes, control tables and STEP, DWG, PDF and moment-of-inertia downloads ([e-manual](https://emanual.robotis.com/docs/en/dxl/x/xl330-m288/)). The e-manual now points to ROBOTIS Docs for the latest references ([migration notice](https://emanual.robotis.com/docs/en/dxl/x/xl330-m288/), [current portal](https://docs.robotis.com/)).
+- **Worse than Basecase:** ROBOTIS's model reference documents the servo and its controls ([reference](https://emanual.robotis.com/docs/en/dxl/x/xl330-m288/)). Basecase already places exact Dynamixel models in a robot, simulates their actuator parameters and calibrates individual joints through its runtime ([catalog](../../src/data/components.ts), [Simulate](../guide/simulate.md), [Robot runtime](../guide/robot-runtime.md)).
+- **Basecase should:** integrate the current documentation portal as a source for exact model records, retaining old model links until their replacements are verified ([portal](https://docs.robotis.com/), [catalog](../../src/data/components.ts)). Keep published motor specifications separate from each joint's fitted dynamics and their provenance ([Robot runtime](../guide/robot-runtime.md)).
+
+### Pololu
+
+- **Link:** https://www.pololu.com
+- **Checked:** 2026-11-15
+- **Better than Basecase:** the catalog's #4753 50:1 encoder gearmotor has a maker-hosted STEP bundle, dimension drawings and datasheet. Its page lists $60.95 for one and $56.07 each at five, and currently offers backorders ([product and resources](https://www.pololu.com/product/4753/resources)).
+- **Worse than Basecase:** Pololu's page describes and supplies the individual motor ([product](https://www.pololu.com/product/4753/resources)). Basecase already records its exact product number, maker model source, 200 rpm speed, 21 kg·cm stall torque, 5.5 A stall current and encoder resolution in the robot catalog ([catalog](../../src/data/components.ts)).
+- **Basecase should:** integrate through those exact maker links and preserve the distinction between list price and a checked purchase price ([Build](../guide/build.md)). Do not count an offered backorder as immediate stock because Pololu ships it when available and can hold an entire order for it ([ordering](https://www.pololu.com/ordering)).
 
 ### To check
 
-- Pololu
 - Adafruit
 - Raspberry Pi
 - Seeed Studio
@@ -39,10 +46,10 @@ Bambu Lab printers are integrated already ([Printing](../guide/printing.md)).
 ### Bambu Lab
 
 - **Link:** https://bambulab.com
-- **Checked:** 2026-11-13
-- **Better than Basecase:** launched the H3C on 3 November 2026 at $2,499 with the AMS 3H and nine PrintTools: each tool has its own filament path and heater, a change takes "less than six seconds", nozzles run 0.2 to 0.8 mm, and the bed is 330 × 320 × 325 mm ([3Dnatives](https://www.3dnatives.com/en/bambu-lab-h3c-03112026/)).
-- **Worse than Basecase:** a printer prints the plates it's sent. Basecase lays out a robot's parts per material, picks each part's face and leaves already printed parts off ([Printing](../guide/printing.md)).
-- **Basecase should:** integrate further. The catalog has the H3C from Bambu Studio 2.9.1 (`src/data/printerCatalog.ts`), but Basecase slices one job per material ([Printing](../guide/printing.md)), so a robot in PLA, PETG and TPU becomes three prints where a nine-tool printer could take one. Hand such a printer one project with each part's filament assigned ([Bambu Studio](competitors.md#bambu-studio)).
+- **Checked:** 2026-11-15
+- **Better than Basecase:** Bambu Studio 2.9.1 supports the H3C and assigns different nozzle diameters and layer heights to regions of one model ([maker's release](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.01.70)).
+- **Worse than Basecase:** Bambu's release describes preparing a supplied model for printing ([release](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.01.70)). Basecase also prepares all printed parts of a robot, in build order, with their materials and printed inventory ([Printing](../guide/printing.md)).
+- **Basecase should:** integrate using the multi-material project handoff that already ships, with every plate and per-part filament assignment in one unsliced project ([Printing](../guide/printing.md), [Bambu Studio](competitors.md#bambu-studio)). Keep that distinct from Basecase's per-material CLI slicing when describing what a multi-tool printer can receive.
 
 ### To check
 
@@ -55,20 +62,20 @@ Bambu Lab printers are integrated already ([Printing](../guide/printing.md)).
 ### Hugging Face
 
 - **Link:** https://huggingface.co
-- **Checked:** 2026-11-13
-- **Better than Basecase:** hosts the datasets and policies LeRobot trains on ([LeRobot docs](https://huggingface.co/docs/lerobot/index)). PRO is $9 a month with 10× private storage, and storage past that costs $12 per TB a month for public repositories and $18 for private ones, with egress included ([pricing](https://huggingface.co/pricing)).
-- **Worse than Basecase:** LeRobot's recording tutorial records a real robot driven by a teleoperation device "such as a leader arm or keyboard", and the person keeps or re-records each episode by hand with the arrow keys ([recording](https://huggingface.co/docs/lerobot/il_robots)). Basecase records tries in simulation, driven with the keyboard or a gamepad, and Export Dataset and Publish to Hugging Face keep only the tries the Case's contract passed ([Cases](../guide/cases.md)).
-- **Basecase should:** integrate further, as it already does: Publish to Hugging Face sends a Case's passed tries to a Hub dataset repo as LeRobot v2.1, tagged `v2.1` ([Cases](../guide/cases.md)), which LeRobot 0.4 and later convert to v3 before reading ([integrations](integrations.md#lerobot)). Write v3, so `lerobot-train` takes the published repo id with no conversion ([recording](https://huggingface.co/docs/lerobot/il_robots)).
+- **Checked:** 2026-11-15
+- **Better than Basecase:** hosts the shared datasets and policies used by LeRobot ([docs](https://huggingface.co/docs/lerobot/index)). PRO costs $9 per month with 10 times the private storage capacity, twice the public capacity and a private Dataset Viewer. Base storage rates are $12 per TB per month for public repositories and $18 for private repositories, with egress included ([pricing](https://huggingface.co/pricing)).
+- **Worse than Basecase:** LeRobot's recording tutorial uses keyboard controls to keep or re-record episodes ([recording](https://huggingface.co/docs/lerobot/il_robots)). Basecase labels a simulated try with its Case contract and uses passed demonstrations for export ([Cases](../guide/cases.md)).
+- **Basecase should:** integrate through the existing publication path, which writes v3 on main and tags v3.0, plus the v2.1 compatibility revision ([publisher](../../electron/hub/publishRepo.mjs), [Cases](../guide/cases.md)). Keep its dataset format and compatibility revision visible in integration guidance ([integration](integrations.md#lerobot)).
 
 ## Kit makers
 
 ### SO-101 kits
 
 - **Link:** https://github.com/TheRobotStudio/SO-ARM100
-- **Checked:** 2026-11-13
-- **Better than Basecase:** The Robot Studio publishes the SO-101's STL files and a sourcing table: $121.94 for one follower arm and $229.88 for a leader and follower in the US, with EU, RMB and JPY tables too. Kits come from Seeed Studio, WowRobo, RobotEd, Robonine, PartaBot, ForgeMotion Labs and others, some printed and some assembled ([repository](https://github.com/TheRobotStudio/SO-ARM100)). The follower uses six Feetech STS3215 servos at 1/345 and the leader mixes 1/191, 1/345 and 1/147 gearing ([LeRobot SO-101](https://huggingface.co/docs/lerobot/so101)).
-- **Worse than Basecase:** LeRobot's SO-101 guide starts from bought parts, then assembles, wires and calibrates both arms before either moves ([LeRobot SO-101](https://huggingface.co/docs/lerobot/so101)). In Basecase the SO-101 is a preset that imports with its joints, ready to pose and animate in the Pose tab ([Joints and motion](../guide/joints-and-motion.md)), and the catalog lists the STS3215 ([`src/data/components.ts`](../../src/data/components.ts)).
-- **Basecase should:** integrate. When the SO-101 preset is in a scene, the Build tab's bill of materials ([Build](../guide/build.md)) should offer The Robot Studio's sourcing table and these kit sellers as another source for the preset's parts, so someone can buy the arm they just simulated.
+- **Checked:** 2026-11-15
+- **Better than Basecase:** The Robot Studio publishes printable parts, regional sourcing tables and links to kit sellers including Seeed Studio, WowRobo, RobotEd, Robonine and PartaBot. Its US table totals $121.94 for one follower and $229.88 for two arms, which are sourcing estimates rather than live kit quotes ([repository](https://github.com/TheRobotStudio/SO-ARM100)). The follower uses six STS3215 motors with 1/345 gearing, while the leader mixes 1/191, 1/345 and 1/147 ([assembly guide](https://huggingface.co/docs/lerobot/so101)).
+- **Worse than Basecase:** the real-robot guide requires sourcing, motor configuration, assembly and calibration ([guide](https://huggingface.co/docs/lerobot/so101)). Basecase's SO-101 preset imports with joints for posing, animation and simulation before parts are bought ([Joints and motion](../guide/joints-and-motion.md), [Simulate](../guide/simulate.md)).
+- **Basecase should:** integrate the maker's sourcing table and kit links beside the existing preset's BOM, keeping a complete kit distinct from its individual parts ([Build](../guide/build.md), [cart](../../src/components/build/cart.ts)). Preserve the leader/follower motor variants when relating a kit to the simulated arm ([assembly guide](https://huggingface.co/docs/lerobot/so101), [catalog](../../src/data/components.ts)).
 
 ### To check
 
@@ -77,9 +84,16 @@ Bambu Lab printers are integrated already ([Printing](../guide/printing.md)).
 
 ## Part suppliers
 
+### DigiKey
+
+- **Link:** https://developer.digikey.com
+- **Checked:** 2026-11-15
+- **Better than Basecase:** offers APIs for product lookup, quotes and MyLists ([developer portal](https://developer.digikey.com/)). MyLists exposes creating a list and adding parts to it ([API index](https://developer.digikey.com/products/mylists/mylists)).
+- **Worse than Basecase:** API requests require an access token and application credentials ([documentation](https://developer.digikey.com/documentation)). Basecase's existing Amazon cart needs no connected account and uses the units left to buy after on-hand inventory ([Build](../guide/build.md), [cart](../../src/components/build/cart.ts)).
+- **Basecase should:** integrate with a user-requested MyLists handoff for the BOM's DigiKey lines, using exact part identities and remaining quantities ([integration](integrations.md#digikey)). Creating a supplier list should not place an order.
+
 ### To check
 
-- Digi-Key
 - Mouser
 - McMaster-Carr
 - Amazon

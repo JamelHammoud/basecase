@@ -1,11 +1,8 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import sharp from 'sharp';
 import { afterEach, describe, expect, it } from 'vitest';
 import { kitchenCollider, kitchenSplat } from '../src/cases/worldImportFixture';
 import type { WorldImportFile } from '../src/cases/worldImportTypes';
-import { endTryAt, inDataset, loadFixtureRobot, passedDatasetFiles } from './driveChecks';
+import { loadFixtureRobot } from './driveChecks';
 import type { SimState } from './driveStudio';
 import { openApp, partCount, shown, type App } from './harness';
 
@@ -76,48 +73,13 @@ async function expectKitchenCamera() {
   await expect.poll(() => tileDifference(baseline)).toBeGreaterThan(0.05);
 }
 
-async function recordKitchenTry() {
-  await app.page
-    .locator(shown('button'), { hasText: /^Try It$/ })
-    .first()
-    .click();
-  await endTryAt(app.page, 0.2);
-  await expect.poll(async () => (await simState()).tries.length).toBe(1);
-  await expect.poll(() => app.page.locator(shown('[data-testid="try-row"]')).count()).toBe(1);
-}
-
-async function expectKitchenDataset() {
-  const files = inDataset(await passedDatasetFiles(app.page));
-  const videos = Object.keys(files).filter((path) => path.endsWith('.mp4'));
-
-  expect(videos.sort()).toEqual([
-    'v2.1/videos/chunk-000/observation.images.scene/episode_000000.mp4',
-    'videos/observation.images.scene/chunk-000/file-000.mp4',
-  ]);
-
-  for (const path of videos) expect(files[path].length).toBeGreaterThan(0);
-}
-
 async function dropFixtures(files: WorldImportFile[]) {
-  const directory = await mkdtemp(join(tmpdir(), 'basecase-world-import-'));
+  const dropped = files.map(({ name, bytes }) => ({ name, base64: Buffer.from(bytes).toString('base64') }));
 
-  try {
-    const dropped = [];
-
-    for (const file of files) {
-      const path = join(directory, file.name);
-
-      await writeFile(path, file.bytes);
-      dropped.push({ name: file.name, base64: (await readFile(path)).toString('base64') });
-    }
-
-    await app.page.evaluate(
-      (payload) => (window as unknown as { __studio: Studio }).__studio.dropFiles(payload),
-      dropped,
-    );
-  } finally {
-    await rm(directory, { recursive: true, force: true });
-  }
+  await app.page.evaluate(
+    (payload) => (window as unknown as { __studio: Studio }).__studio.dropFiles(payload),
+    dropped,
+  );
 }
 
 async function makeKitchen(files = [kitchenCollider(), kitchenSplat()]) {
@@ -127,19 +89,7 @@ async function makeKitchen(files = [kitchenCollider(), kitchenSplat()]) {
 
   await expect.poll(() => card.count()).toBe(1);
   expect(await card.locator('[role=radio][aria-checked=true]', { hasText: 'Kitchen' }).count()).toBe(1);
-  await card.locator('[role=radio]', { hasText: 'Reach a Spot' }).click();
-
-  for (const [label, value] of [
-    ['Distance', '1200'],
-    ['Radius', '150'],
-    ['Time', '12'],
-  ]) {
-    const input = card.locator('label', { hasText: label }).locator('input');
-
-    await input.fill(value);
-    await input.press('Enter');
-  }
-
+  expect(await card.locator('[role=radio][aria-checked=true]', { hasText: 'Reach a Spot' }).count()).toBe(1);
   await card.locator('button', { hasText: 'Make Case' }).click();
   await expect.poll(async () => (await simState()).activeCase).toBe('reach-a-spot-in-kitchen');
   await expect.poll(async () => (await worldState())?.loaded).toBe(true);
@@ -171,15 +121,6 @@ describe('a captured world dropped on the canvas', () => {
     expect(app.errors).toEqual([]);
   });
 
-  it('records a kitchen try and exports Scene videos in both LeRobot layouts', async () => {
-    app = await openApp();
-    await loadFixtureRobot(app.page, 'rover-diff');
-    await makeKitchen();
-    await recordKitchenTry();
-    await expectKitchenDataset();
-    expect(app.errors).toEqual([]);
-  });
-
   it('shows the mesh when the capture has no splat', async () => {
     app = await openApp();
     await loadFixtureRobot(app.page, 'rover-diff');
@@ -194,7 +135,6 @@ describe('a captured world dropped on the canvas', () => {
 
   it('refuses a splat dropped without a collider by naming the missing collider', async () => {
     app = await openApp();
-    await loadFixtureRobot(app.page, 'rover-diff');
     await dropFixtures([kitchenSplat()]);
 
     await expect

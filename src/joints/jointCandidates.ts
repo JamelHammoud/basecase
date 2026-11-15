@@ -1,6 +1,7 @@
-import { canonicalAxis, coaxialPair, lineTolerance, roundFaces, slideTravel, type Pairing } from './axisFinder';
+import { canonicalAxis, coaxialPair, roundFaces, slideTravel, type Pairing } from './axisFinder';
+import { axisClusters, collinear, type AxisLink } from './axisClusters';
 import type { Cylinder } from './cylinderFit';
-import { dot, scale, sub, type MeshIndex, type V3 } from './meshIndex';
+import type { MeshIndex, V3 } from './meshIndex';
 import { orientJointGraph } from './jointGraph';
 
 export interface Body {
@@ -35,12 +36,6 @@ export interface JointAxes {
   faces: LoneFace[];
 }
 
-interface Link {
-  shaft: string;
-  bore: string;
-  pairing: Pairing;
-}
-
 interface Join {
   a: string;
   b: string;
@@ -50,7 +45,6 @@ interface Join {
   confidence: number;
 }
 
-const PARALLEL_COS = Math.cos(Math.PI / 180);
 const FACES_PER_PART = 3;
 const SAME_FLOOR_MM = 1;
 
@@ -58,17 +52,9 @@ const hundredth = (v: number) => Math.round(v * 100) / 100;
 
 const confidenceOf = (p: Pairing) => hundredth(Math.min(1, Math.max(0, p.fit * Math.min(1, p.engaged / p.radius))));
 
-function collinear(p: Pairing, q: Pairing) {
-  if (Math.abs(dot(p.axis, q.axis)) < PARALLEL_COS) return false;
-
-  const d = sub(q.origin, p.origin);
-
-  return Math.hypot(...sub(d, scale(p.axis, dot(d, p.axis)))) <= lineTolerance(Math.max(p.radius, q.radius));
-}
-
-function linksOf(bodies: Body[]): Link[] {
+function linksOf(bodies: Body[]): AxisLink[] {
   const faces = new Map(bodies.map((b) => [b.id, roundFaces(b.index)]));
-  const links: Link[] = [];
+  const links: AxisLink[] = [];
 
   bodies.forEach((a, i) => {
     for (const b of bodies.slice(i + 1)) {
@@ -82,20 +68,7 @@ function linksOf(bodies: Body[]): Link[] {
   return links;
 }
 
-function clusters(links: Link[]): Link[][] {
-  const out: Link[][] = [];
-
-  for (const link of links) {
-    const home = out.find((c) => c[0].shaft === link.shaft && collinear(c[0].pairing, link.pairing));
-
-    if (home) home.push(link);
-    else out.push([link]);
-  }
-
-  return out;
-}
-
-function joinsOf(cluster: Link[]): Join[] {
+function joinsOf(cluster: AxisLink[]): Join[] {
   const [first] = cluster;
 
   if (cluster.length === 1) {
@@ -159,7 +132,7 @@ function rootFirst(bodies: Body[]) {
   });
 }
 
-function loneFaces(bodies: Body[], links: Link[]): LoneFace[] {
+function loneFaces(bodies: Body[], links: AxisLink[]): LoneFace[] {
   const used = new Set<Cylinder>(links.flatMap((l) => [l.pairing.shaft, l.pairing.bore]));
 
   return bodies.flatMap((b) =>
@@ -173,7 +146,7 @@ function loneFaces(bodies: Body[], links: Link[]): LoneFace[] {
 
 export function jointCandidates(bodies: Body[]): JointAxes {
   const links = linksOf(bodies);
-  const { kept, fastened } = sortedJoins(clusters(links).flatMap(joinsOf));
+  const { kept, fastened } = sortedJoins(axisClusters(links).flatMap(joinsOf));
   const index = new Map(bodies.map((b) => [b.id, b.index]));
   const candidates = orientJointGraph(rootFirst(bodies), kept, fastened).map((j): JointCandidate => {
     const axis = canonicalAxis(j.pairing.axis);

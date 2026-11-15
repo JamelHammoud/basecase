@@ -107,6 +107,7 @@ export interface Compact {
   dirs: number[];
   rangeM: number;
   rays: number;
+  world: WorldRays;
 }
 
 export function compactEye(eye: Eye, body: number): Compact {
@@ -122,7 +123,15 @@ export function compactEye(eye: Eye, body: number): Compact {
     dirs.push(...d);
   }
 
-  return { body, pos: eye.pos, index, dirs, rangeM: eye.rangeM, rays: eyeRays(eye) };
+  return {
+    body,
+    pos: eye.pos,
+    index,
+    dirs,
+    rangeM: eye.rangeM,
+    rays: eyeRays(eye),
+    world: { origin: [0, 0, 0], dirs: new Array<number>(dirs.length).fill(0) },
+  };
 }
 
 export interface WorldRays {
@@ -134,16 +143,22 @@ function toWorld(data: MjData, c: Compact): WorldRays {
   const p = data.xpos as Float64Array;
   const r = data.xmat as Float64Array;
   const b = c.body;
-  const rot = (x: number, y: number, z: number, k: number) =>
-    r[b * 9 + k * 3] * x + r[b * 9 + k * 3 + 1] * y + r[b * 9 + k * 3 + 2] * z;
-  const origin = [0, 1, 2].map((k) => p[b * 3 + k] + rot(...c.pos, k));
-  const dirs: number[] = [];
+  const { origin, dirs } = c.world;
 
-  for (let i = 0; i < c.dirs.length; i += 3) {
-    for (let k = 0; k < 3; k++) dirs.push(rot(c.dirs[i], c.dirs[i + 1], c.dirs[i + 2], k));
+  for (let k = 0; k < 3; k++) {
+    const at = b * 9 + k * 3;
+    const x = r[at];
+    const y = r[at + 1];
+    const z = r[at + 2];
+
+    origin[k] = p[b * 3 + k] + (x * c.pos[0] + y * c.pos[1] + z * c.pos[2]);
+
+    for (let i = 0; i < c.dirs.length; i += 3) {
+      dirs[i + k] = x * c.dirs[i] + y * c.dirs[i + 1] + z * c.dirs[i + 2];
+    }
   }
 
-  return { origin, dirs };
+  return c.world;
 }
 
 export interface RayCast {
@@ -158,7 +173,11 @@ export function rayCast(mj: MainModule, model: MjModel, data: MjData, most: numb
   return { mj, model, data, geomid: new mj.IntBuffer(Math.max(1, most)), dist: new mj.DoubleBuffer(Math.max(1, most)) };
 }
 
-export function castEye(run: RayCast, c: Compact, hit: (ray: number, d: number, k: number) => void): WorldRays | null {
+export function castEye(
+  run: RayCast,
+  c: Compact,
+  hit: (ray: number, d: number, k: number, world: WorldRays) => void,
+): WorldRays | null {
   if (!c.index.length) return null;
 
   const world = toWorld(run.data, c);
@@ -183,7 +202,7 @@ export function castEye(run: RayCast, c: Compact, hit: (ray: number, d: number, 
   c.index.forEach((ray, k) => {
     const d = seen[k];
 
-    if (d >= 0 && d <= c.rangeM) hit(ray, d, k);
+    if (d >= 0 && d <= c.rangeM) hit(ray, d, k, world);
   });
 
   return world;

@@ -1,4 +1,5 @@
 import { fileSize, MB } from '../../electron/fileSize.mjs';
+import { eachLimited } from '../../electron/eachLimited.mjs';
 import { readImageFile } from './imageFile';
 import { platformBridge } from './platformBridge';
 
@@ -259,20 +260,15 @@ export async function uploadEvidenceFolder(
 
   onProgress(0, usable.length);
 
-  const queue = [...usable];
-  const worker = async () => {
-    for (let next = queue.shift(); next; next = queue.shift()) {
-      const res = await uploadOne(id, folder.name, next).catch(() => 'skip' as const);
+  await eachLimited(usable, 4, async (next) => {
+    const res = await uploadOne(id, folder.name, next).catch(() => 'skip' as const);
 
-      skipped += res === 'skip' ? 1 : 0;
-      fileCount += res === 'skip' ? 0 : 1;
-      imageCount += res === 'image' ? 1 : 0;
+    skipped += res === 'skip' ? 1 : 0;
+    fileCount += res === 'skip' ? 0 : 1;
+    imageCount += res === 'image' ? 1 : 0;
 
-      onProgress(++done, usable.length);
-    }
-  };
-
-  await Promise.all([worker(), worker(), worker(), worker()]);
+    onProgress(++done, usable.length);
+  });
 
   return { id, name: folder.name, fileCount, imageCount, skipped };
 }

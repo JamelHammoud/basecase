@@ -101,25 +101,20 @@ export class Scanner {
 
   private cast(slot: ScanSlot, time: number) {
     const { compact: c, offset, points } = slot;
-    const found: Array<[number, number]> = [];
 
     this.values.fill(1, offset, offset + c.rays);
-
-    const world = castEye(this.run, c, (ray, d, k) => {
-      this.values[offset + ray] = d / c.rangeM;
-      found.push([k, d]);
-    });
-
     slot.hits = 0;
     slot.next = time + slot.periodS;
 
-    if (!world) return;
+    castEye(this.run, c, (ray, d, k, world) => {
+      this.values[offset + ray] = d / c.rangeM;
 
-    for (const [k, d] of found) {
-      const at = (axis: number) => world.origin[axis] + world.dirs[k * 3 + axis] * d;
+      const at = slot.hits * 3;
 
-      points.set([at(0) * 1000, at(2) * 1000, -at(1) * 1000], slot.hits * 3);
+      points[at] = (world.origin[0] + world.dirs[k * 3] * d) * 1000;
+      points[at + 1] = (world.origin[2] + world.dirs[k * 3 + 2] * d) * 1000;
+      points[at + 2] = -(world.origin[1] + world.dirs[k * 3 + 1] * d) * 1000;
       slot.hits++;
-    }
+    });
   }
 }

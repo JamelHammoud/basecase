@@ -69,31 +69,43 @@ export function filteredSensitivity(filter: DensityFilter, density: Float64Array
   });
 }
 
-function trialDensity(density: Float64Array, gradient: Float64Array, frozen: Uint8Array, lambda: number): Float64Array {
-  return density.map((value, e) =>
-    frozen[e]
-      ? 1
-      : Math.max(0.001, value - 0.15, Math.min(1, value + 0.15, value * Math.sqrt(Math.max(0, -gradient[e]) / lambda))),
-  );
-}
-
-export function optimalityUpdate(options: {
+interface DensityUpdate {
   density: Float64Array;
   gradient: Float64Array;
   frozen: Uint8Array;
   budget: number;
-}): Float64Array {
-  const { density, gradient, frozen, budget } = options;
+}
+
+function trialDensity(result: Float64Array, { density, gradient, frozen }: DensityUpdate, lambda: number): number {
+  let volume = 0;
+
+  for (let e = 0; e < density.length; e++) {
+    const value = density[e];
+    const next = frozen[e]
+      ? 1
+      : Math.max(0.001, value - 0.15, Math.min(1, value + 0.15, value * Math.sqrt(Math.max(0, -gradient[e]) / lambda)));
+
+    result[e] = next;
+    volume += next;
+  }
+
+  return volume;
+}
+
+export function optimalityUpdate(options: DensityUpdate): Float64Array {
   let low = 0;
-  let high = Math.max(...gradient.map((value) => -value)) * 1e6;
-  let result = density;
+  let high = -Infinity;
+  const result = new Float64Array(options.density.length);
+
+  for (const value of options.gradient) high = Math.max(high, -value);
+
+  high *= 1e6;
 
   for (let step = 0; step < 55; step++) {
     const lambda = (low + high) / 2;
+    const volume = trialDensity(result, options, lambda);
 
-    result = trialDensity(density, gradient, frozen, lambda);
-
-    if (result.reduce((sum, value) => sum + value, 0) > budget) low = lambda;
+    if (volume > options.budget) low = lambda;
     else high = lambda;
   }
 

@@ -1,84 +1,104 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync, spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const root = fileURLToPath(new URL('../../', import.meta.url));
-const temporary = [];
-const git = (cwd, args) =>
-  execFileSync('git', ['-c', 'user.name=me', '-c', 'user.email=me@example.com', ...args], {
-    cwd,
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+const fixture = vi.hoisted(() => ({
+  remove: vi.fn(),
+  openSlotPool: vi.fn(),
+  closeAppModules: vi.fn(),
+  runMicroOnce: vi.fn(),
+}));
 
-function comparisonFixture() {
-  const tree = fs.mkdtempSync(path.join(os.tmpdir(), 'compare-cli-test-'));
-  const bench = path.join(root, 'bench');
+vi.mock('../harness.mjs', async (importOriginal) => ({
+  ...(await importOriginal()),
+  root: '.',
+}));
+vi.mock('../archive.mjs', async (importOriginal) => ({
+  ...(await importOriginal()),
+  gitInfo: () => ({ commit: 'abc1234', dirty: true }),
+}));
+vi.mock('../slots.mjs', () => ({ openSlotPool: fixture.openSlotPool }));
+vi.mock('../micro/once.mjs', () => ({ runMicroOnce: fixture.runMicroOnce }));
+vi.mock('../micro/scenes.mjs', () => ({ closeAppModules: fixture.closeAppModules }));
+vi.mock('../micro/tasks/index.mjs', () => ({ selectTasks: () => [{ id: 'A1' }], runnable: () => true }));
+vi.mock('./against.mjs', async (importOriginal) => ({
+  ...(await importOriginal()),
+  checkoutRef: () => ({ label: 'main', commit: 'abc1234', remove: fixture.remove }),
+}));
+vi.mock('./arms.mjs', async (importOriginal) => ({
+  ...(await importOriginal()),
+  againstArms: () => [
+    { label: 'working tree', model: 'claude-opus-5-5', harness: 'tree', git: { commit: 'abc1234', dirty: true } },
+    { label: 'main', model: 'claude-opus-5-5', harness: 'ref', git: { commit: 'abc1234', dirty: false } },
+  ],
+}));
 
-  temporary.push(tree);
-  fs.cpSync(bench, path.join(tree, 'bench'), {
-    recursive: true,
-    filter: (source) =>
-      !/\.test\.mjs$/.test(source) && !['data', 'runs'].includes(path.relative(bench, source).split(path.sep)[0]),
-  });
-  fs.mkdirSync(path.join(tree, 'electron'));
-  fs.copyFileSync(path.join(root, 'electron/plural.mjs'), path.join(tree, 'electron/plural.mjs'));
-  fs.writeFileSync(path.join(tree, 'electron/cad-agent-prompt.mjs'), 'export default "Build robots.";\n');
-  fs.writeFileSync(path.join(tree, 'package-lock.json'), '{}\n');
-  fs.symlinkSync(fs.realpathSync(path.join(root, 'node_modules')), path.join(tree, 'node_modules'), 'dir');
-  git(tree, ['init', '-q', '-b', 'main']);
-  git(tree, ['add', 'bench/micro', 'electron/cad-agent-prompt.mjs', 'package-lock.json']);
-  git(tree, ['commit', '-q', '-m', 'Fixture']);
-  fs.writeFileSync(path.join(tree, 'electron/cad-agent-prompt.mjs'), 'export default "Build serviceable robots.";\n');
-
-  return tree;
-}
+let tree;
+const argv = process.argv;
+const events = ['exit', 'SIGINT', 'SIGTERM'];
+const listeners = new Map(events.map((event) => [event, new Set(process.listeners(event))]));
 
 afterEach(() => {
-  for (const tree of temporary.splice(0)) fs.rmSync(tree, { recursive: true, force: true });
+  for (const event of events) {
+    for (const listener of process.listeners(event).filter((item) => !listeners.get(event).has(item))) {
+      process.removeListener(event, listener);
+    }
+  }
+
+  process.argv = argv;
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+  fs.rmSync(tree, { recursive: true, force: true });
 });
 
 describe('comparison command', () => {
-  it('persists a deadline report and removes the reference worktree before starting an app', () => {
-    const tree = comparisonFixture();
-    const runsDir = path.join(tree, 'reports');
-    const child = spawnSync(
-      process.execPath,
-      [
-        path.join(tree, 'bench/compare.mjs'),
-        '--against',
-        'main',
-        '--tasks',
-        'A1',
-        '--minutes',
-        '0.00000001',
-        '--runs-dir',
-        runsDir,
-        '--run',
-        'deadline',
-        '--no-cache',
-      ],
-      { cwd: tree, encoding: 'utf8', timeout: 3000 },
-    );
+  it('persists a deadline report and cleans up the reference without starting an app', async () => {
+    tree = fs.mkdtempSync(path.join(os.tmpdir(), 'compare-cli-test-'));
 
-    expect(child.error).toBeUndefined();
-    expect(child.status, child.stderr).toBe(0);
+    const runsDir = path.join(tree, 'reports');
+    const exit = vi.spyOn(process, 'exit').mockImplementation(() => {});
+
+    process.argv = [
+      process.execPath,
+      'bench/compare.mjs',
+      '--against',
+      'main',
+      '--tasks',
+      'A1',
+      '--minutes',
+      '0.00000001',
+      '--runs-dir',
+      runsDir,
+      '--run',
+      'deadline',
+      '--no-cache',
+    ];
+    vi.useFakeTimers();
+    vi.setSystemTime(10000);
+    vi.spyOn(process, 'uptime').mockReturnValue(1);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await import('../compare.mjs');
 
     const results = JSON.parse(fs.readFileSync(path.join(runsDir, 'deadline/results.json'), 'utf8'));
     const report = fs.readFileSync(path.join(runsDir, 'deadline/report.md'), 'utf8');
 
+    expect(exit).toHaveBeenCalledExactlyOnceWith(0);
     expect(results.plan.stop).toBe('deadline');
     expect(results.plan.rounds).toBe(0);
+    expect(results.plan.tasks).toBe(1);
+    expect(results.plan.elapsedSeconds).toBe(1);
     expect(results.results).toEqual([]);
-    expect(results.arms).toHaveLength(2);
-    expect(results.arms[0].harness).not.toBe(results.arms[1].harness);
+    expect(results.arms).toEqual([
+      { label: 'working tree', harness: 'tree', git: { commit: 'abc1234', dirty: true } },
+      { label: 'main', harness: 'ref', git: { commit: 'abc1234', dirty: false } },
+    ]);
     expect(report).toContain('# working tree vs main');
     expect(report).toMatch(/deadline|time limit/i);
-    expect(git(tree, ['worktree', 'list', '--porcelain']).match(/^worktree /gm)).toHaveLength(1);
-    expect(child.stdout).not.toContain('dev server up');
-    expect(child.stderr).not.toContain('CAD kernel preflight');
+    expect(fixture.remove).toHaveBeenCalledOnce();
+    expect(fixture.closeAppModules).toHaveBeenCalledOnce();
+    expect(fixture.openSlotPool).not.toHaveBeenCalled();
+    expect(fixture.runMicroOnce).not.toHaveBeenCalled();
   });
 });

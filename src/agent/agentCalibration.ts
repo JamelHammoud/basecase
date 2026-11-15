@@ -8,7 +8,7 @@ export async function calibrationErrorsText(project: ProjectSettings, unit: stri
   const histories = unitHistories(project, unit);
   const rows = await Promise.all(
     (project.joints ?? []).map(async (joint) => {
-      const errors = await replayErrors(histories[joint.id]);
+      const errors = await replayErrors(histories[joint.id]).catch(() => null);
 
       if (!errors) return null;
 

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { eachLimited } from '../eachLimited.mjs';
 import { serviceRefusal } from '../refusal.mjs';
 import { fileSize, MB } from '../fileSize.mjs';
 import { percent } from '../percent.mjs';
@@ -99,19 +100,15 @@ export async function downloadAsset(a, dir, say) {
 
   if (!files.some((f) => f.path === a.rootPath)) throw new Error('The asset’s main file is missing.');
 
-  const queue = [...files];
   let done = 0;
   let bytes = 0;
-  const worker = async () => {
-    for (let f = queue.shift(); f; f = queue.shift()) {
-      await downloadOne(a, f, dir);
-      done++;
-      bytes += f.size ?? 0;
-      say(`Downloading ${percent(bytes / Math.max(total, 1))}`, { done, total: files.length });
-    }
-  };
 
-  await Promise.all(Array.from({ length: Math.min(6, files.length) }, worker));
+  await eachLimited(files, 6, async (f) => {
+    await downloadOne(a, f, dir);
+    done++;
+    bytes += f.size ?? 0;
+    say(`Downloading ${percent(bytes / Math.max(total, 1))}`, { done, total: files.length });
+  });
 
   return path.join(dir, a.rootPath);
 }

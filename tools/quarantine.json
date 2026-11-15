@@ -1,5 +1,61 @@
 [
   {
+    "file": "e2e/caseCode.e2e.test.ts",
+    "test": "unloads a panel that never answers with its error, while the page keeps drawing frames",
+    "issue": 1137,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43736502131 showed the panel error and removed its iframe, but recorded no about:blank navigation at line 301 on either Windows attempt. Both attempts then timed out in afterEach browser.close() after 120000 ms. Linux passed at the same commit in 15116 ms. The preceding Windows run 43735086890 passed in 17065 ms, with no intervening changes to the test, frame, bridge, harness, dependencies or e2e configuration. Commit 171272612 added srcdoc removal before unloading and closed #747, but the navigation or renderer shutdown cause of this recurrence is not established. Issue #1137 tracks Windows frame-lifecycle and process traces and equal-load measurements before restoring the test."
+  },
+  {
+    "file": "e2e/gallery.e2e.test.ts",
+    "test": "keeps the landing page on phones, and says plainly when a link is wrong",
+    "issue": 1139,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43736502131 saw zero No Case here elements at line 184 on the first Windows attempt, then exhausted the unchanged 30000 ms navigation deadline for /c/no-such-case on retry. Linux passed at the same commit in 996 ms. The preceding Windows run 43735086890 passed in 1758 ms, with no intervening gallery, application, dependency or e2e configuration changes. Attempts share one browser and close pages only after success. The initial rendering or navigation bottleneck is not established."
+  },
+  {
+    "file": "e2e/gallery.e2e.test.ts",
+    "test": "drives a shared Case from its code joystick and shows its speed in the HUD",
+    "issue": 1139,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43736502131 exhausted the unchanged 30000 ms navigation deadline for /r/tester/rover-cockpit-1a2b3c at line 106 on both Windows attempts, before joystick or HUD assertions. Linux passed at the same commit in 4606 ms. The preceding Windows run 43735086890 passed in 10140 ms, with no intervening gallery, application, dependency or e2e configuration changes. Earlier failures can retain pages in the shared browser. The navigation or resource bottleneck is not established."
+  },
+  {
+    "file": "e2e/gallery.e2e.test.ts",
+    "test": "keeps a shared code panel away from the page’s IndexedDB, its cookies and the Hub",
+    "issue": 1139,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43736502131 exhausted the unchanged 30000 ms navigation deadline for /r/tester/rover-cockpit-1a2b3c at line 226 on both Windows attempts, before sandbox probes were asserted. Linux passed at the same commit in 3854 ms. The preceding Windows run 43735086890 passed in 5681 ms, with no intervening gallery, application, dependency or e2e configuration changes. The file took 548442 ms and retained failed pages in its shared browser. The navigation or resource bottleneck is not established."
+  },
+  {
+    "file": "e2e/firstLaunch.e2e.test.ts",
+    "test": "says why Try on Real Robot didn’t start, and keeps saying it under the button",
+    "issue": 1127,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43728033376 timed out in openApp navigation at harness.ts:197 on the first Windows attempt, before camera refusal was tested. The retry logged studio readiness after 113411 ms and exceeded the unchanged 180000 ms test budget. Linux passed at the same commit in 14089 ms. Commit d84a7f5e0 had supplied camera denial and isolated this test in a second app while the beforeAll rover app remains running. The navigation or resource bottleneck is not established."
+  },
+  {
+    "file": "e2e/linkage.e2e.test.ts",
+    "test": "",
+    "issue": 1128,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43728033376 inserted and undid the linkage but failed to restore five parts after redo at line 142 on the first Windows attempt. Its retry could not find the Sketch solution button because the first attempt had closed Sketch. Linux passed insertion at the same commit in 1213 ms. Windows passed the unchanged test in run 43721538732 in 1384 ms. The redo dispatch, focus or document-state cause is not established. The whole file is listed because insertion depends on the preceding path test and the coupler sweep depends on insertion. Selective observation would omit those prerequisites."
+  },
+  {
+    "file": "e2e/visionTraining.e2e.test.ts",
+    "test": "freezes real image sources, compares ONNX models, saves the result and applies the retained model",
+    "issue": 1129,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43728033376 observed zero saved training runs after Train at line 58 on both Windows attempts. Each attempt opens a fresh app and Library. Linux passed the complete pipeline at the same commit in 12825 ms, and both controlled training-and-stop tests passed on Windows. Commit 899e7069c introduced the walkthrough after the last green nightly. The snapshot preparation, ONNX evaluation or persistence stage responsible is not established."
+  },
+  {
     "file": "e2e/trainFromTries.e2e.test.ts",
     "test": "starts the dataset job from its button and command, freezes it once and recovers when training stops",
     "issue": 995,
@@ -30,14 +86,6 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Run 43710741335 kept status loading and the hold controller after Try at line 112 on both Windows attempts. Training, saved skill validation and reload completed before that assertion. Linux passed at the same commit in 19849 ms. The preceding Windows run 43708315996 passed in 16443 ms with no intervening changes to the walkthrough, simulation, workspace startup, web storage, dependencies or e2e configuration. Each attempt opens a fresh browser. The worker loading or policy startup stage responsible is not established. Track this additional startup failure in the existing Windows worker-start issue #995."
-  },
-  {
-    "file": "e2e/caseRun.e2e.test.ts",
-    "test": "runs a Case without a console in the default layout: cameras, brief, servos and tries, then Esc returns",
-    "issue": 1026,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Run 43708315996 exhausted the unchanged 30000 ms click budget finding Stop Try at line 137 on both Windows attempts after observing Drive on and playing true. Each attempt opens a fresh app. Linux passed at the same commit in 22.8 s, and the preceding Windows run 43705870784 passed in 107.0 s with unchanged walkthrough, Case startup and recording code. The Case phase, automatic completion or browser command stage responsible is not established."
   },
   {
     "file": "e2e/labelFrames.e2e.test.ts",
@@ -77,14 +125,6 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Run 43698588307 could not find Stop Try at line 44 on the first Windows attempt, then could not click it at line 50 after the clock advanced on retry. Each attempt opens a fresh app. Linux passed at that commit in 8.5 s, and Windows passed in run 43696182210 in 11.0 s. The recording phase or browser timing cause is not established."
-  },
-  {
-    "file": "e2e/worldImport.e2e.test.ts",
-    "test": "records a kitchen try and exports Scene videos in both LeRobot layouts",
-    "issue": 995,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Run 43693830979 finished the short kitchen recording but saved no try on either Windows attempt at line 142. The second poll also stopped responding. The recording, scoring or persistence stage responsible is not established."
   },
   {
     "file": "e2e/scanMap.e2e.test.ts",
@@ -148,14 +188,6 @@
     "reason": "Run 43687018679 left Drive off for 60 s on Linux in both attempts and on Windows after a separate failed panel drag. The unchanged test and drag hook passed on Windows in run 43642970706, where the test took 9.2 s. The cause is not established."
   },
   {
-    "file": "e2e/caseCode.e2e.test.ts",
-    "test": "drives the rover from a code joystick, shows its speed in a HUD overlay, and leaves on Esc pressed inside",
-    "issue": 842,
-    "until": "2026-11-21",
-    "platform": "win32",
-    "reason": "In run 43637620265 on Windows, the first attempt drove only 0.0294 m and the retry left Drive off for 60 s. The test passed on Linux at the same commit in 26.4 s and on Windows in the preceding run in 19.3 s, with unchanged joystick test, bridge, frame and drive hook. The cause is not established."
-  },
-  {
     "file": "e2e/firstLaunch.e2e.test.ts",
     "test": "opens on the rover driving to its flag",
     "issue": 794,
@@ -168,8 +200,7 @@
     "test": "opens the saved scene instead after a relaunch",
     "issue": 795,
     "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "On Windows the untouched first-launch rover was written when New Scene opened beside it, so the test read the rover's 4 parts instead of the cube. Passes on Linux."
+    "reason": "Run 43728033376 also failed on Linux: the first attempt observed zero save-scene writes within the unchanged 10000 ms poll, and the retry observed two scene ids instead of one. The preceding green Linux run 43715791435 passed the relaunch test in 10588 ms. Issue #795 already tracks Windows saving the untouched rover and retaining both scene ids on retry. Attempts share one beforeAll app and its post history. The initial missing save and the unexpected rover draft change are not established. Trace draft changes, save scheduling and serialization from page load, isolate attempts and measure both platforms before restoring this walkthrough."
   },
   {
     "file": "e2e/caseLogic.e2e.test.ts",

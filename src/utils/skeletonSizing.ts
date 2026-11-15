@@ -6,6 +6,7 @@ import { cross, dot, G, norm, type V3 } from './engineeringMath';
 import { swingTorque } from './engineeringTorque';
 import { prettyJointName } from './jointNames';
 import { SkeletonTree } from './skeletonTree';
+import { measureSkeletonLink } from './skeletonLinkMeasure';
 
 export const LIMB_SHARE = 0.45;
 
@@ -27,30 +28,16 @@ function actuatorGrams(j: SkeletonJoint): number {
   return componentWeightG(j.actuator.split('|')[0].replace(/^component:/, '')) ?? 0;
 }
 
-function linkCentre(tree: SkeletonTree, j: SkeletonJoint): ZUpVec {
-  const ends = tree.linkEnds(j);
-
-  if (!ends.length) return j.origin;
-
-  const weights = ends.map((e) => Math.hypot(...diff(e, j.origin)) || 1);
-  const total = weights.reduce((s, w) => s + w, 0);
-
-  return [0, 1, 2].map(
-    (k) => ends.reduce((s, e, i) => s + ((j.origin[k] + e[k]) / 2) * weights[i], 0) / total,
-  ) as ZUpVec;
-}
-
 function pointMasses(skeleton: RobotSkeleton, totalG: number, tree: SkeletonTree): PointMass[] {
   const joints = skeleton.joints;
   const actuators = joints.reduce((s, j) => s + actuatorGrams(j), 0);
   const fixed = joints.reduce((s, j) => s + (j.linkMassG ?? 0), 0);
-  const free = joints.filter((j) => !j.linkMassG);
-  const freeLength = free.reduce((s, j) => s + tree.linkLength(j), 0);
+  const links = joints.map((joint) => ({ joint, ...measureSkeletonLink(joint.origin, tree.linkEnds(joint)) }));
+  const freeLength = links.reduce((sum, link) => (link.joint.linkMassG ? sum : sum + link.length), 0);
   const spread = Math.max(0, totalG - actuators - fixed) * LIMB_SHARE;
-  const linkG = (j: SkeletonJoint) => j.linkMassG ?? (freeLength ? (spread * tree.linkLength(j)) / freeLength : 0);
 
-  return joints.flatMap((j) => [
-    { g: linkG(j), at: linkCentre(tree, j), joint: j.id, radiusMm: tree.linkLength(j) },
+  return links.flatMap(({ joint: j, length, at }) => [
+    { g: j.linkMassG ?? (freeLength ? (spread * length) / freeLength : 0), at, joint: j.id, radiusMm: length },
     { g: actuatorGrams(j), at: j.origin, joint: j.id, radiusMm: 0 },
     {
       g: j.payloadG ?? 0,

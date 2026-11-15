@@ -1,7 +1,5 @@
 import type { RobotJoint } from '../types/robotics';
-import { weight } from './weight';
-import { lengthLabel } from './size';
-import { plural } from '../../electron/plural.mjs';
+import { weightRow } from './engineeringWeight';
 import { isLegJoint, robotBodies, type RobotBody } from './engineeringBody';
 import { servoMountRows, rangeOfMotionRows } from './engineeringJoints';
 import { downstreamOf, massOf, partMasses } from './engineeringMass';
@@ -20,7 +18,7 @@ import { jointLoad, peakRow, torqueRow } from './engineeringTorque';
 import { FALLS, fallsRow } from './engineeringFalls';
 import { payloadRows } from './engineeringPayload';
 import { STRENGTH_CHECK, strengthRows } from './engineeringStrength';
-import type { CheckContext, CheckRow, EngineeringInputs, EngineeringReport, PartMass } from './engineeringTypes';
+import type { CheckContext, CheckRow, EngineeringInputs, EngineeringReport } from './engineeringTypes';
 import { bodyMasses } from '../reality/bodyMasses';
 
 export { STRENGTH_CHECK };
@@ -58,25 +56,6 @@ export const ENGINEERING_CHECKS = [
   'Budget',
   'Time',
 ];
-
-const gramsOf = (masses: PartMass[]) => masses.reduce((s, m) => s + m.grams, 0);
-
-function weightRow(all: CheckContext['all'], masses: PartMass[], bodies: RobotBody[]): CheckRow {
-  const counted = masses.filter((m) => bodies.some((b) => b.parts.has(m.id)));
-  const apart = masses.filter((m) => !counted.includes(m));
-  const est = counted.filter((m) => m.source === 'estimate');
-  const estimated = est.length ? `. ${plural(est.length, 'part')} estimated from volume (${weight(gramsOf(est))})` : '';
-  const leftOut = apart.length
-    ? `. Leaves out ${plural(apart.length, 'part')} off the robot (${weight(gramsOf(apart))})`
-    : '';
-
-  return {
-    check: 'Weight',
-    status: est.length ? 'warn' : 'pass',
-    detail: `${weight(all.grams)}, center of mass ${lengthLabel(all.com[1])} up${estimated}${leftOut}`,
-    ids: est.map((m) => m.id),
-  };
-}
 
 function jointPartsRows(ctx: CheckContext): CheckRow[] {
   const unknownIds = ctx.joints.flatMap((j: RobotJoint) =>
@@ -146,6 +125,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
   const env = { volts: servoSupplyVolts(ctx), crouch: crouchModel(ctx) };
   const loads = ctx.joints.filter((j) => j.type === 'revolute').map((j) => jointLoad(ctx, j, env));
   const wiring = input.wiring ?? wiringNetlist({ parts, project });
+  const stability = stabilityOf(ctx);
   const rows: CheckRow[] = [
     weightRow(ctx.all, masses, bodies),
     ...(ctx.joints.length ? [] : [{ check: 'Servo torque', status: 'not run' as const, detail: 'No joints' }]),
@@ -164,7 +144,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     ...rangeChangeRows(ctx),
     ...powerRows(ctx),
     ...wiringRows(wiring, joints),
-    ...stabilityRows(ctx),
+    ...stabilityRows(stability),
     ...heatRows(ctx),
     ...strengthRows(ctx, loads),
     budgetRow(ctx),
@@ -177,7 +157,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     massG: ctx.all.grams,
     com: ctx.all.com,
     masses,
-    stability: stabilityOf(ctx),
+    stability,
     wiring,
   };
 }

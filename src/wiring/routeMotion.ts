@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import type { PortVec } from '../types/ports';
 import type { RobotJoint } from '../types/robotics';
 import { sweepSamples } from '../utils/engineeringJoints';
 import { buildRig, forwardKinematics, partMotion, type Rig } from '../utils/kinematics';
@@ -73,60 +72,6 @@ export function* routePoses(motion: RouteMotion): Generator<Record<string, numbe
 
     done = at < 0;
   }
-}
-
-const distance = (a: PortVec, b: PortVec) => new THREE.Vector3(...a).distanceTo(new THREE.Vector3(...b));
-
-function chainOf(motion: RouteMotion, partId: string | undefined): RobotJoint[] {
-  const owner = partId && motion.rig.ownerOf.get(partId);
-
-  return owner ? [...(motion.rig.chain.get(owner) ?? [])].map((id) => motion.rig.byId.get(id)!) : [];
-}
-
-function chainBound(input: {
-  chain: RobotJoint[];
-  point: PortVec;
-  halves?: Map<string, number>;
-  extra?: number;
-}): number {
-  const { chain, point, halves, extra = 0 } = input;
-  let bound = 0;
-
-  for (const [i, j] of chain.entries()) {
-    const half = halves ? (halves.get(j.id) ?? 0) : Math.max(...(j.range ?? [0]).map(Math.abs));
-    const translations = chain
-      .slice(0, i)
-      .reduce(
-        (sum, k) =>
-          sum +
-          (k.type === 'prismatic' ? Math.max(...(k.range ?? [0]).map(Math.abs)) : 2 * distance(k.origin, j.origin)),
-        0,
-      );
-    const radius = distance(point, j.origin) + translations + extra;
-
-    bound +=
-      j.type === 'prismatic' ? half : 2 * radius * Math.sin(Math.min(Math.PI, THREE.MathUtils.degToRad(half)) / 2);
-  }
-
-  return bound;
-}
-
-export function relativeMotionBound(
-  motion: RouteMotion,
-  point: { position: PortVec; obstacleId?: string },
-  obstacleId: string | undefined,
-): number {
-  const pointChain = chainOf(motion, point.obstacleId);
-  const obstacleChain = chainOf(motion, obstacleId);
-  const shared = new Set(pointChain.filter((j) => obstacleChain.includes(j)));
-  const movingPoint = pointChain.filter((j) => !shared.has(j));
-  const movingObstacle = obstacleChain.filter((j) => !shared.has(j));
-  const extra = chainBound({ chain: movingPoint, point: point.position });
-
-  return (
-    chainBound({ chain: movingPoint, point: point.position, halves: motion.halves }) +
-    chainBound({ chain: movingObstacle.reverse(), point: point.position, halves: motion.halves, extra })
-  );
 }
 
 export function poseTransforms(motion: RouteMotion, values: Record<string, number>): Map<string, THREE.Matrix4> {

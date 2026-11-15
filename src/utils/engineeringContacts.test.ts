@@ -13,6 +13,61 @@ const patch = (x: number, z: number, r = 2): Array<[number, number]> => [
 ];
 
 describe('Standing stability from where parts meet the floor', () => {
+  it('shares one support measurement between the check and the numeric report', () => {
+    let reads = 0;
+    const parts = Array.from({ length: 40 }, (_, i) => part(`foot${i}`, { massG: 100 }));
+    const measures: Measures = Object.fromEntries(
+      parts.map((p, i) => [
+        p.id,
+        {
+          ...box([i * 20 - 10, 0, -10], [i * 20 + 10, 20, 10]),
+          get base() {
+            reads += 1;
+
+            return patch(i * 20, 0, 10);
+          },
+        },
+      ]),
+    );
+    const report = run({ parts, measures, joints: [] });
+
+    expect(report.stability).toEqual({ marginMm: 10, heightMm: 10, tipDeg: 45, onALine: false });
+    expect(row(report, 'Standing stability')).toMatchObject({
+      status: 'pass',
+      detail: 'Center of mass 10 mm inside the outline of the feet, 10 mm up: tips past 45°',
+    });
+    expect(reads).toBe(parts.length * 2);
+  });
+
+  it('remeasures support after a scene edit', () => {
+    const foot = part('foot', { massG: 100 });
+    const scene = {
+      parts: [foot],
+      measures: { foot: withBase(box([-10, 0, -10], [10, 20, 10]), patch(0, 0, 10)) },
+      joints: [],
+    };
+    const before = run(scene);
+
+    scene.measures.foot = withBase(scene.measures.foot, patch(30, 0, 10));
+
+    const after = run(scene);
+
+    expect(before.stability?.marginMm).toBe(10);
+    expect(after.stability?.marginMm).toBe(-20);
+    expect(row(before, 'Standing stability')?.status).toBe('pass');
+    expect(row(after, 'Standing stability')?.status).toBe('fail');
+  });
+
+  it.each([{ parts: [] }, { parts: [part('floating', { massG: 100 })] }])(
+    'omits both stability results without floor contact: $parts.length parts',
+    ({ parts }) => {
+      const report = run({ parts, measures: { floating: box([-10, 30, -10], [10, 50, 10]) }, joints: [] });
+
+      expect(report.stability).toBeUndefined();
+      expect(row(report, 'Standing stability')).toBeUndefined();
+    },
+  );
+
   const onBall = (base?: Array<[number, number]>) => {
     const ball = box([-50, 0, -50], [50, 100, 50]);
 

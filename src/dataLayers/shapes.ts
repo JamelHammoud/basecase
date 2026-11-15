@@ -34,18 +34,34 @@ export interface LinePoint {
 
 const scratch = new THREE.Vector3();
 
+function appendPoint(shapes: Shapes, color: Rgba) {
+  shapes.lines.push(scratch.x, scratch.y, scratch.z);
+  shapes.lineColors.push(color[0], color[1], color[2]);
+}
+
+function transformPoint(shapes: Shapes, matrix: THREE.Matrix4, point: LinePoint, color: Rgba) {
+  scratch.set(point.x, point.y, point.z).applyMatrix4(matrix);
+  appendPoint(shapes, color);
+}
+
 export function addSegment(shapes: Shapes, matrix: THREE.Matrix4, ends: [LinePoint, LinePoint], color: Rgba) {
-  for (const end of ends) {
-    scratch.set(end.x, end.y, end.z).applyMatrix4(matrix);
-    shapes.lines.push(scratch.x, scratch.y, scratch.z);
-    shapes.lineColors.push(color[0], color[1], color[2]);
-  }
+  for (const end of ends) transformPoint(shapes, matrix, end, color);
 }
 
 export function addStrip(shapes: Shapes, matrix: THREE.Matrix4, points: LinePoint[], color: Rgba) {
-  for (let i = 1; i < points.length; i++) addSegment(shapes, matrix, [points[i - 1], points[i]], color);
+  if (points.length < 2) return;
+
+  scratch.set(points[0].x, points[0].y, points[0].z).applyMatrix4(matrix);
+
+  for (let i = 1; i < points.length; i++) {
+    appendPoint(shapes, color);
+    transformPoint(shapes, matrix, points[i], color);
+  }
 }
 
 export function addList(shapes: Shapes, matrix: THREE.Matrix4, points: LinePoint[], color: Rgba) {
-  for (let i = 1; i < points.length; i += 2) addSegment(shapes, matrix, [points[i - 1], points[i]], color);
+  for (let i = 1; i < points.length; i += 2) {
+    transformPoint(shapes, matrix, points[i - 1], color);
+    transformPoint(shapes, matrix, points[i], color);
+  }
 }

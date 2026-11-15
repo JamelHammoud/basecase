@@ -22,7 +22,7 @@ import { entryFor, markLooked, recordAttempt } from '../lib/pullState.mjs';
 import { run } from '../lib/sh.mjs';
 import { voiceNewPages, voiced } from '../lib/voiceHook.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
-import { saveDelivery } from '../lib/deliveryState.mjs';
+import { hasPendingDelivery, saveDelivery } from '../lib/deliveryState.mjs';
 import { deliver } from '../lib/deliver.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
 import { keepStepLinks } from '../lib/stepLinks.mjs';
@@ -63,7 +63,7 @@ const jamelComments = (comments) =>
   comments.filter((comment) => comment.author === OWNER_LOGIN && !isLoopComment(comment));
 
 function needFor(pull) {
-  if (!pull.headRefName.startsWith('loop/')) return null;
+  if (!pull.headRefName.startsWith('loop/') || hasPendingDelivery(pull.headRefName)) return null;
 
   const entry = entryFor(pull.number);
   const failing = pullReview(pull) === 'failure' || pullCheck(pull) === 'failure';

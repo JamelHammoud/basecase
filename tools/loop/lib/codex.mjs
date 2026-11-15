@@ -112,13 +112,15 @@ export function codexArgs(options, files) {
 export function codexSession(out, options) {
   const events = jsonLines(out);
   const started = events.find((event) => event.type === 'thread.started');
-  const id = started?.thread_id ?? options.continuation?.id;
-  const totalUsage = events.findLast((event) => event.type === 'turn.completed')?.usage;
-  const previous = continuationMatches(options.continuation, options) ? (options.continuation.totalUsage ?? {}) : {};
+  const resumed = continuationMatches(options.continuation, options);
+  const id = started?.thread_id ?? (resumed ? options.continuation.id : null);
+  const reportedUsage = events.findLast((event) => event.type === 'turn.completed')?.usage;
+  const previous = resumed ? (options.continuation.totalUsage ?? {}) : {};
+  const totalUsage = reportedUsage ?? (resumed ? options.continuation.totalUsage : undefined);
   const usage =
-    totalUsage &&
+    reportedUsage &&
     Object.fromEntries(
-      Object.entries(totalUsage).map(([key, value]) => [key, Math.max(0, value - (previous[key] ?? 0))]),
+      Object.entries(reportedUsage).map(([key, value]) => [key, Math.max(0, value - (previous[key] ?? 0))]),
     );
   const session =
     id && !options.sandbox
@@ -162,15 +164,18 @@ export function runCodex(options, execute = run) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-codex-'));
   const schemaFile = path.join(dir, 'schema.json');
   const outFile = path.join(dir, 'answer.json');
+  let result = { session: continuationMatches(options.continuation, options) ? options.continuation : null };
+  let formatRetried = false;
 
   fs.writeFileSync(schemaFile, JSON.stringify(strictSchema(options.schema)));
 
   try {
-    const result = executeCodex(options, { schemaFile, outFile }, execute);
+    result = executeCodex(options, { schemaFile, outFile }, execute);
 
     if (!result.formatError || !result.session) return result;
 
     fs.rmSync(outFile, { force: true });
+    formatRetried = true;
 
     const repaired = executeCodex(
       {
@@ -185,7 +190,7 @@ export function runCodex(options, execute = run) {
 
     return { ...repaired, formatRetried: true, previousUsage: result.usage };
   } catch (error) {
-    return { ok: false, error: `Codex gave no usable answer: ${error.message}` };
+    return { ...result, ok: false, formatRetried, error: `Codex gave no usable answer: ${error.message}` };
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

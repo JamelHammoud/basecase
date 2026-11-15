@@ -9,6 +9,7 @@ vi.stubEnv('BASECASE_LOOP_DIR', directory);
 
 const { deliver } = await import('./deliver.mjs');
 const { completeDelivery, hasPendingDelivery, pendingSteps, saveDelivery } = await import('./deliveryState.mjs');
+const { clearPath, close } = await import('./worktree.mjs');
 const entry = {
   branch: 'loop/build/42-feature',
   dir: directory,
@@ -25,6 +26,17 @@ afterAll(() => {
 });
 
 describe('durable delivery', () => {
+  it('preserves the pending worktree when another lane tries to clear or close it', () => {
+    const marker = path.join(directory, 'retained-work');
+
+    fs.writeFileSync(marker, 'verified edits');
+    saveDelivery(entry);
+
+    expect(() => clearPath(directory)).toThrow('retained work');
+    close(entry);
+    expect(fs.readFileSync(marker, 'utf8')).toBe('verified edits');
+  });
+
   it('preserves verified work after a push failure and retries delivery without rebuilding', () => {
     let fail = true;
     const create = vi.fn(() => 'https://example.com/pull/42');

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { store } from './store.mjs';
+import { run } from './sh.mjs';
 
 const recoveries = store('work-recovery', {});
 
@@ -21,3 +22,14 @@ export const activeRecoveries = () => recoveries.all().filter((entry) => entry.d
 export const hasRecovery = (dir) => activeRecoveries().some((entry) => entry.dir === dir);
 export const recoveryReady = (entry, inputSignature) =>
   !entry || entry.attempts < 1 || entry.inputSignature !== inputSignature;
+
+export function refreshRecovery({ dir }, execute = run) {
+  execute('git', ['fetch', '-q', 'origin', 'main'], { cwd: dir });
+
+  const merged = execute('git', ['merge', '--no-edit', '--autostash', 'origin/main'], {
+    cwd: dir,
+    allowFail: true,
+  });
+
+  return `The task inputs changed since this session stopped. The runner fetched current main and attempted to merge it into this retained worktree with autostash. Inspect git status, resolve any merge or autostash conflicts and preserve the earlier edits before continuing.\nGit merge output:\n${`${merged.out}\n${merged.err}`.slice(-6000)}`;
+}

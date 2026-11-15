@@ -42,4 +42,10 @@ describe('step backoff', () => {
     expect(stepWaiting(entry, { now: 1, openNumbers: new Set([42]), inputSignature: 'source-a' })).toBe(true);
     expect(stepWaiting(entry, { now: 1, openNumbers: new Set(), inputSignature: 'source-a' })).toBe(false);
   });
+
+  it('reconsiders changed inputs before applying dependencies from an earlier decline', () => {
+    const entry = recordDecline(12, { now: 0, waitFor: [42], inputSignature: 'source-a' });
+
+    expect(stepWaiting(entry, { now: 1, openNumbers: new Set([42]), inputSignature: 'source-b' })).toBe(false);
+  });
 });

@@ -82,11 +82,34 @@ describe('agent routing', () => {
   });
 
   it('uses restored Codex allowance instead of waiting for an obsolete hold', () => {
-    mocks.codexHeld = { until: Date.now() + 60_000 };
+    mocks.codexHeld = { until: Date.now() + 60_000, since: Date.now() - 1000 };
     mocks.quota = { at: Date.now(), windows: [{ minutes: 10080, used: 5, reset: Date.now() + 86_400_000 }] };
     mocks.codex.mockReturnValue({ ok: true, output: { changed: true } });
 
     expect(runAgent(task)).toMatchObject({ ok: true, provider: 'codex' });
     expect(mocks.reserve).not.toHaveBeenCalled();
+  });
+
+  it('does not clear a real limit using quota cached before the rejection', () => {
+    const now = Date.now();
+    const release = vi.fn();
+
+    mocks.codexHeld = { until: now + 60_000, since: now - 10_000, observedAt: now };
+    mocks.quota = { at: now - 1000, windows: [{ minutes: 10080, used: 5, reset: now + 86_400_000 }] };
+    mocks.reserve.mockReturnValue(release);
+    mocks.claude.mockReturnValue({ ok: true, output: { changed: true } });
+
+    expect(runAgent(task)).toMatchObject({ provider: 'claude', overflow: true });
+    expect(mocks.codex).not.toHaveBeenCalled();
+    expect(release).toHaveBeenCalledOnce();
+  });
+
+  it('keeps explicit Claude selection behind protected overflow admission', () => {
+    vi.stubEnv('BASECASE_LOOP_PROVIDER', 'claude');
+    mocks.reserve.mockReturnValue(null);
+
+    expect(() => runAgent(task)).toThrow('limited');
+    expect(mocks.codex).not.toHaveBeenCalled();
+    expect(mocks.claude).not.toHaveBeenCalled();
   });
 });

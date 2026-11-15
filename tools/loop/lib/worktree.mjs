@@ -17,6 +17,8 @@ const safeSlug = (text) =>
     .slice(0, 48) || 'change';
 
 export function clearPath(dir) {
+  if (hasPendingWorktree(dir) || hasRecovery(dir)) throw new Error('Worktree has retained work');
+
   git(['worktree', 'remove', '--force', dir], { allowFail: true });
   fs.rmSync(dir, { recursive: true, force: true });
   git(['worktree', 'prune'], { allowFail: true });

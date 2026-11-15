@@ -11,6 +11,7 @@ import { codexPause, isActive, pause, resumeCodex, startCodexPause, startPause, 
 export { sandboxArgs } from './claude.mjs';
 
 const TELLING = new Set(['build', 'refine', 'revise', 'rebuild']);
+const restoredAfter = (quota, held) => primaryAvailable(quota) && quota.at > (held?.observedAt ?? held?.since ?? 0);
 
 export const brief = (name) =>
   [
@@ -114,10 +115,12 @@ export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox, contin
     brief: system ?? brief(name),
   };
 
-  if (policy.provider === 'claude') return measured('claude', options, runClaude);
+  if (policy.provider === 'claude') return overflow(options);
 
   const quota = quotaSnapshot('codex');
   const reserve = primaryReserve(quota);
+  const held = codexPause();
+  const restored = restoredAfter(quota, held);
 
   if (reserve) {
     startCodexPause(reserve.reset);
@@ -125,9 +128,9 @@ export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox, contin
     return overflow(options);
   }
 
-  if (isActive(codexPause()) && !primaryAvailable(quota)) return overflow(options);
+  if (isActive(held) && !restored) return overflow(options);
 
-  if (codexPause() && primaryAvailable(quota)) resumeCodex();
+  if (held && restored) resumeCodex();
 
   const launch = (env) => runCodex({ ...options, env });
   const result = measured('codex', options, () => (sandbox ? withoutGithub(launch) : launch()));

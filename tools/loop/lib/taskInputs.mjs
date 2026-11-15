@@ -17,6 +17,15 @@ export function taskInputSignature(step, execute = run) {
 
   if (!result.ok) return null;
 
+  const objects = result.out.split('\n').map((line) => line.split('\t')[1]);
+  const identified = files.every((file) => {
+    const source = file.replace(/\/$/, '');
+
+    return objects.some((object) => object === source || object?.startsWith(`${source}/`));
+  });
+
+  if (!identified) return null;
+
   return fingerprint({
     body: step.body,
     title: step.title,

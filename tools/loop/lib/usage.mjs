@@ -85,6 +85,7 @@ const startIn = (file, until, now) => {
 
   writeTo(file, {
     since: current?.since ?? now,
+    observedAt: now,
     until: Math.max(until, current?.until ?? 0),
     probedAt: current?.probedAt ?? now,
     announced: current?.announced ?? false,

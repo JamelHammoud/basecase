@@ -5,7 +5,7 @@ const issueNumber = (url) => Number(/\/issues\/(\d+)/.exec(url ?? '')?.[1]) || n
 
 const numbers = (list) => new Set(list.map((issue) => issue.number));
 
-const STEP_LABELS = ['loop:next', 'loop:building'];
+const STEP_LABELS = ['loop:next', 'loop:building', 'loop:blocked'];
 
 function openStep(gh, title) {
   const match = gh.findOpenIssue?.({ title, similarAmong: STEP_LABELS });

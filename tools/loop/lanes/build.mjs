@@ -11,7 +11,7 @@ import { close, openBranch } from '../lib/worktree.mjs';
 import { eligibleTask, unavailableCapabilities } from '../lib/capabilities.mjs';
 import { pendingSteps } from '../lib/deliveryState.mjs';
 import { taskInputSignature } from '../lib/taskInputs.mjs';
-import { clearRecovery, recoveryFor, saveRecovery } from '../lib/workRecovery.mjs';
+import { clearRecovery, recoveryFor, refreshRecovery, saveRecovery } from '../lib/workRecovery.mjs';
 import { inputsReady, recoverySignature } from '../lib/taskReadiness.mjs';
 
 export const schedule = {
@@ -95,6 +95,12 @@ function claimNextStep() {
   return null;
 }
 
+function recoveryContext(step, inputSignature, recovery) {
+  if (!recovery || recovery.inputSignature === recoverySignature(step, inputSignature)) return '';
+
+  return refreshRecovery(recovery);
+}
+
 function buildStep(step, { log, slot }) {
   editIssueLabels(step.number, { add: [BUILDING], remove: [NEXT, 'loop:blocked'] });
 
@@ -108,7 +114,12 @@ function buildStep(step, { log, slot }) {
   };
 
   try {
-    const prompt = `Build this step, issue #${step.number}: ${step.title}\n\n${step.body}`;
+    const prompt = [
+      `Build this step, issue #${step.number}: ${step.title}\n\n${step.body}`,
+      recoveryContext(step, inputSignature, recovery),
+    ]
+      .filter(Boolean)
+      .join('\n\n');
     const result = checkedRun({
       cwd: worktree.dir,
       name: 'build',
@@ -119,11 +130,13 @@ function buildStep(step, { log, slot }) {
       continuation: recovery?.session,
     });
 
-    if (!result.ok && result.session)
+    const failedSession = result.session ?? recovery?.session;
+
+    if (!result.ok && failedSession)
       saveRecovery(step.number, {
         worktree,
         inputSignature: recoverySignature(step, inputSignature),
-        session: result.session,
+        session: failedSession,
       });
 
     if (result.ok) clearRecovery(step.number);

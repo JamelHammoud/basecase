@@ -7,6 +7,7 @@ import { nudge } from '../lib/pullState.mjs';
 import { json, run } from '../lib/sh.mjs';
 import { membersOf } from '../lib/evidence.mjs';
 import { isBatch } from '../lib/landing.mjs';
+import { hasPendingDelivery } from '../lib/deliveryState.mjs';
 
 export const schedule = {
   slots: 1,
@@ -51,7 +52,8 @@ const recentlyMerged = () =>
 const readyToLand = (pull) =>
   pull.mergeable !== 'CONFLICTING' && pullCheck(pull) === 'success' && pullReview(pull) === 'success';
 
-const busy = (pull) => held(`pull-${pull.number}`);
+const busy = (pull) =>
+  held(`pull-${pull.number}`) || held(`review-${pull.number}`) || hasPendingDelivery(pull.headRefName);
 
 const oldest = (times) => times.filter(Boolean).sort()[0] ?? null;
 

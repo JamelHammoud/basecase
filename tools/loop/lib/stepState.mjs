@@ -17,9 +17,9 @@ export const recordDecline = (number, { now, waitFor, inputSignature, missing = 
   }));
 
 export function stepWaiting(entry, { now, openNumbers, inputSignature }) {
-  if (entry.waitFor.some((number) => openNumbers.has(number))) return true;
-
   if (entry.inputSignature && inputSignature && entry.inputSignature !== inputSignature) return false;
+
+  if (entry.waitFor.some((number) => openNumbers.has(number))) return true;
 
   if (entry.inputSignature && inputSignature === entry.inputSignature) return entry.waitFor.length === 0;
 

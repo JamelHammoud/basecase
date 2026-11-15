@@ -10,6 +10,7 @@ import { byRank } from '../lib/rank.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
 import { run } from '../lib/sh.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
+import { hasPendingDelivery } from '../lib/deliveryState.mjs';
 
 export const schedule = {
   agent: true,
@@ -144,6 +145,7 @@ function staleFailures(pulls) {
 export default function rebase({ log }) {
   const pulls = openPulls()
     .filter((pull) => pull.headRefName.startsWith('loop/'))
+    .filter((pull) => !hasPendingDelivery(pull.headRefName))
     .sort(byRank);
 
   fetchAll();

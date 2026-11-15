@@ -1,6 +1,7 @@
 import { deliver } from '../lib/deliver.mjs';
 import { pendingDeliveries } from '../lib/deliveryState.mjs';
 import { close } from '../lib/worktree.mjs';
+import { claim } from '../lib/claim.mjs';
 
 export const schedule = {
   slots: 1,
@@ -10,11 +11,21 @@ export const schedule = {
 
 export default function delivery({ log }) {
   for (const entry of pendingDeliveries()) {
-    const url = deliver(entry);
+    const release = entry.number ? claim(`pull-${entry.number}`) : () => {};
 
-    if (!url) continue;
+    if (!release) continue;
 
-    log(`delivered ${url} from existing verified work`);
-    close(entry);
+    try {
+      const url = deliver(entry);
+
+      if (!url) continue;
+
+      log(`delivered ${url} from existing verified work`);
+      close(entry);
+    } catch (error) {
+      log(`${entry.branch}: delivery failed: ${error.message}`);
+    } finally {
+      release();
+    }
   }
 }

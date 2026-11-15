@@ -25,7 +25,7 @@ export function withoutGithub(fn) {
   }
 }
 
-export function runClaude({ cwd, brief, prompt, schema, hours, sandbox, policy }, execute = run) {
+export function runClaude({ cwd, name, brief, prompt, schema, hours, sandbox, policy }, execute = run) {
   const args = [
     '-p',
     prompt,
@@ -35,6 +35,7 @@ export function runClaude({ cwd, brief, prompt, schema, hours, sandbox, policy }
     policy.claudeModel,
     '--effort',
     policy.claudeEffort,
+    ...(name === 'voice' ? ['--safe-mode'] : []),
     ...(sandbox ? sandboxArgs(sandbox) : ['--dangerously-skip-permissions']),
     '--output-format',
     'json',
@@ -50,9 +51,16 @@ export function runClaude({ cwd, brief, prompt, schema, hours, sandbox, policy }
       allowFail: true,
     });
   const response = sandbox ? withoutGithub(launch) : launch();
+
+  return claudeAnswer(response);
+}
+
+function claudeAnswer(response) {
   const limited = limitIn(response);
 
   if (limited) return { ok: false, limited };
+
+  if (!response.ok) return { ok: false, error: response.err || 'Claude process failed' };
 
   try {
     const parsed = JSON.parse(response.out);

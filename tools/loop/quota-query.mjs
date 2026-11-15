@@ -1,7 +1,12 @@
 import { spawn } from 'node:child_process';
+import { claudeWindows } from './lib/quotaWindows.mjs';
+import { codexHome } from './lib/codexHome.mjs';
 
 async function codex() {
-  const child = spawn(process.env.CODEX_BIN || 'codex', ['app-server'], { stdio: ['pipe', 'pipe', 'ignore'] });
+  const child = spawn(process.env.CODEX_BIN || 'codex', ['app-server'], {
+    stdio: ['pipe', 'pipe', 'ignore'],
+    env: { ...process.env, ...codexHome() },
+  });
   const pending = new Map();
   let buffer = '';
 
@@ -63,24 +68,18 @@ async function claude() {
   };
   const session = query({
     prompt,
-    options: { tools: [], maxTurns: 1, pathToClaudeCodeExecutable: process.env.CLAUDE_BIN || 'claude' },
+    options: {
+      tools: [],
+      maxTurns: 1,
+      pathToClaudeCodeExecutable: process.env.CLAUDE_BIN || 'claude',
+      env: { ...process.env, ANTHROPIC_API_KEY: '' },
+    },
   });
 
   try {
     const usage = await session.usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET({ skipBehaviors: true });
 
-    return Object.entries(usage.rate_limits ?? {}).flatMap(([name, window]) =>
-      window && typeof window.utilization === 'number' && window.resets_at
-        ? [
-            {
-              bucket: name,
-              used: window.utilization,
-              minutes: name === 'five_hour' ? 300 : 10080,
-              reset: Date.parse(window.resets_at),
-            },
-          ]
-        : [],
-    );
+    return claudeWindows(usage);
   } finally {
     finish?.();
     session.close();

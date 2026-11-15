@@ -93,6 +93,66 @@ describe('Codex execution', () => {
     expect(calls).toBe(1);
   });
 
+  it('preserves matching recovery context when launching a continuation throws', () => {
+    const original = options();
+    const continuation = {
+      provider: 'codex',
+      id: 'task-thread',
+      fingerprint: fingerprint({ cwd: original.cwd, brief: original.brief, schema }),
+    };
+    const execute = () => {
+      throw new Error('login sharing is busy');
+    };
+
+    expect(runCodex({ ...original, continuation }, execute)).toMatchObject({ ok: false, session: continuation });
+    expect(runCodex({ ...original, continuation, brief: 'Different instructions.' }, execute).session).toBeNull();
+  });
+
+  it('retains the completed implementation thread if a formatting retry cannot launch', () => {
+    let calls = 0;
+    const execute = () => {
+      calls++;
+
+      if (calls === 2) throw new Error('login sharing is busy');
+
+      return { ok: true, out: events.map((event) => JSON.stringify(event)).join('\n'), err: '' };
+    };
+    const result = runCodex(options(), execute);
+
+    expect(result).toMatchObject({ ok: false, formatRetried: true, session: { id: 'task-thread' } });
+    expect(result.usage).toEqual({ input_tokens: 50, output_tokens: 10 });
+  });
+
+  it('never relabels an unmatched continuation as a new session after a failed fresh start', () => {
+    const original = options();
+    const continuation = {
+      provider: 'codex',
+      id: 'old-thread',
+      fingerprint: fingerprint({ cwd: original.cwd, brief: original.brief, schema }),
+    };
+    const result = runCodex({ ...original, continuation, brief: 'Independent review.' }, () => ({
+      ok: false,
+      out: '',
+      err: 'could not launch',
+    }));
+
+    expect(result).toMatchObject({ ok: false, session: null });
+  });
+
+  it('preserves prior cumulative usage when a resumed process fails before completing a turn', () => {
+    const original = options();
+    const continuation = {
+      provider: 'codex',
+      id: 'old-thread',
+      totalUsage: { input_tokens: 50, output_tokens: 10 },
+      fingerprint: fingerprint({ cwd: original.cwd, brief: original.brief, schema }),
+    };
+    const result = runCodex({ ...original, continuation }, () => ({ ok: false, out: '', err: 'could not launch' }));
+
+    expect(result.session.totalUsage).toEqual(continuation.totalUsage);
+    expect(result.usage).toBeUndefined();
+  });
+
   it('keeps prose-only input away from shell tools, web access and repository instructions', () => {
     const args = codexArgs(options({ name: 'voice', sandbox: { tools: [], allow: [] } }), {
       schemaFile: 'schema.json',

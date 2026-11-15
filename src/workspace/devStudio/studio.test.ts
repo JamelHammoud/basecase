@@ -66,6 +66,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'mates',
   'meshByColor',
   'multiplyRuns',
+  'openBuildAlong',
   'operatorCamera',
   'partTriangles',
   'parts',

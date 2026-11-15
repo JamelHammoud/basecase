@@ -23,7 +23,8 @@ function facePoints(pos: Float32Array, cellMm: number): number[] {
 
     for (let i = 1; n > 1 && i < n; i++) {
       for (let j = 1; i + j < n; j++) {
-        const [u, v] = [i / n, j / n];
+        const u = i / n;
+        const v = j / n;
 
         out.push(
           a.x + (b.x - a.x) * u + (c.x - a.x) * v,
@@ -39,16 +40,18 @@ function facePoints(pos: Float32Array, cellMm: number): number[] {
 
 function closestToCellCentres(pos: Float32Array, box: THREE.Box3, cells: number): Float32Array {
   const size = new THREE.Vector3().subVectors(box.max, box.min);
+  const { x: minX, y: minY, z: minZ } = box.min;
   const best = new Map<number, { d: number; i: number }>();
 
   for (let i = 0; i < pos.length; i += 3) {
-    const c = [0, 1, 2].map((k) => cellIndex(pos[i + k], box.min.getComponent(k), size.getComponent(k), cells));
-    const key3 = (c[0] * cells + c[1]) * cells + c[2];
-    const d = [0, 1, 2].reduce((s, k) => {
-      const centre = box.min.getComponent(k) + ((c[k] + 0.5) / cells) * size.getComponent(k);
-
-      return s + (pos[i + k] - centre) ** 2;
-    }, 0);
+    const x = cellIndex(pos[i], minX, size.x, cells);
+    const y = cellIndex(pos[i + 1], minY, size.y, cells);
+    const z = cellIndex(pos[i + 2], minZ, size.z, cells);
+    const key3 = (x * cells + y) * cells + z;
+    const dx = pos[i] - (minX + ((x + 0.5) / cells) * size.x);
+    const dy = pos[i + 1] - (minY + ((y + 0.5) / cells) * size.y);
+    const dz = pos[i + 2] - (minZ + ((z + 0.5) / cells) * size.z);
+    const d = dx ** 2 + dy ** 2 + dz ** 2;
     const prev = best.get(key3);
 
     if (!prev || d < prev.d) best.set(key3, { d, i });
@@ -58,8 +61,9 @@ function closestToCellCentres(pos: Float32Array, box: THREE.Box3, cells: number)
   let o = 0;
 
   for (const { i } of [...best.values()].sort((a, b) => a.i - b.i)) {
-    out.set([pos[i], pos[i + 1], pos[i + 2]], o);
-    o += 3;
+    out[o++] = pos[i];
+    out[o++] = pos[i + 1];
+    out[o++] = pos[i + 2];
   }
 
   return out;

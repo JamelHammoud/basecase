@@ -60,8 +60,7 @@ function lowestAlong(tris: Float32Array, up: THREE.Vector3): number {
   return lowest;
 }
 
-function supportUnder(bvh: MeshBVH, centroid: THREE.Vector3, down: THREE.Vector3, h: number) {
-  const ray = new THREE.Ray(centroid.clone().addScaledVector(down, 1e-3), down);
+function supportUnder(bvh: MeshBVH, ray: THREE.Ray, h: number) {
   const hit = bvh.raycastFirst(ray, THREE.DoubleSide);
 
   return hit && hit.distance < h ? hit.distance : h;
@@ -86,7 +85,7 @@ function addTriangleCost(
   cost: OrientationCost,
   triangle: CostTriangle,
   bvh: MeshBVH,
-  limits: { cos: number; supportCos: number },
+  limits: { cos: number; supportCos: number; ray: THREE.Ray },
 ) {
   const { normal, centroid, area } = triangle;
   const facing = normal.dot(cost.down);
@@ -103,13 +102,18 @@ function addTriangleCost(
 
   cost.overhang += area;
 
-  if (facing > limits.supportCos) cost.support += area * facing * supportUnder(bvh, centroid, cost.down, h);
+  if (facing > limits.supportCos) {
+    limits.ray.set(centroid, cost.down);
+    limits.ray.origin.addScaledVector(cost.down, 1e-3);
+    cost.support += area * facing * supportUnder(bvh, limits.ray, h);
+  }
 }
 
 function orientationCosts(tris: Float32Array, bvh: MeshBVH, downs: Vec3[]) {
   const limits = {
     cos: Math.cos(THREE.MathUtils.degToRad(PRINT_RULES.overhangDeg)),
     supportCos: Math.cos(THREE.MathUtils.degToRad(PRINT_RULES.supportDeg)),
+    ray: new THREE.Ray(),
   };
   const costs: OrientationCost[] = downs.map((down) => {
     const up = new THREE.Vector3(...down).negate().normalize();

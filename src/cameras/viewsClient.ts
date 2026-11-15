@@ -30,7 +30,7 @@ const localHandlers = async (): Promise<ViewHandlers> => {
     },
     close: async () => ({ result: true }),
     load: async (job) => ({ result: await stage.loadCameraStage(job) }),
-    frame: async (request) => ({ result: { bitmaps: stage.renderCameraFrame(request), vision: {} } }),
+    frame: async (request) => ({ result: { bitmaps: await stage.renderCameraFrame(request), vision: {} } }),
     training: async (request) => ({ result: await stage.renderTrainingFrame(request) }),
   };
 };

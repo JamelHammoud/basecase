@@ -33,7 +33,7 @@ MuJoCo is the physics engine behind much of robotics research. Basecase runs Goo
 You don't write a model file. Each time you start a simulation, Basecase writes a MuJoCo model (MJCF, MuJoCo's XML format) from your scene as it is at that moment. The model is built from four things:
 
 - **Bodies.** Each joint gets one body, which holds the parts that joint moves. A robot that walks or rolls floats free, while an arm stays bolted to the floor.
-- **Mass.** Each part weighs what the Weight check in the Build tab says it weighs.
+- **Mass.** Link weights and terminal payloads include the active body fit, as in the Build tab's Weight check.
 - **Shape.** Each part collides as the convex hull of its mesh, the shape you'd get by stretching plastic wrap around the part.
 - **Start.** The robot starts in the pose shown on the canvas, raised until it clears the floor.
 
@@ -53,6 +53,16 @@ To see which joints use estimates, open **Build** ▸ **Checks**:
 - **Servo models** lists each servo that isn't **Measured** yet.
 
 When you calibrate a connected robot, Basecase replaces the model of each Feetech or Dynamixel servo, published or estimated, with one fitted to that servo. The Pose tab then marks each of those joints **Measured**. For the steps, see [Calibrate an emulated robot](/help/calibrate-an-emulated-robot).
+
+## Bodies fitted from recordings
+
+You can also [fit a robot's body from a recorded run](/help/fit-a-robots-body-from-a-recorded-run). The fit adjusts link masses and terminal payloads on top of the active servo calibrations. For a robot that floats free, it also fits floor friction.
+
+Basecase fits the first half of the run and keeps the result only when median error on the held-out half falls by at least 25%. **Can’t tell** leaves the active model in place.
+
+A kept body version changes simulation, Checks and training together. Policies trained on the previous model show **Out of date**. **Weight** and **Servo torque** refresh in Checks. **Peak torque** and **Falls** need new simulation measurements before their results count on the changed body.
+
+The newest active body version supplies the scene's floor friction, shared by every robot. Rolling back restores the previous body model and its fingerprint, so a policy trained on that model is current again.
 
 ## What a run tells you
 

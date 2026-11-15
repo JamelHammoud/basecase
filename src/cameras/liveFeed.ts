@@ -1,3 +1,4 @@
+import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import type { SimModel } from '../sim/mjcfTypes';
 import { sourcedMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
@@ -70,7 +71,13 @@ export class LiveFeed {
 
   private sceneTicket = 0;
 
-  private sent: { parts: ScenePart[]; world: ScenePart[]; model?: SimModel | null; views?: string } = {
+  private sent: {
+    imported?: ImportedWorldView | null;
+    parts: ScenePart[];
+    world: ScenePart[];
+    model?: SimModel | null;
+    views?: string;
+  } = {
     parts: [],
     world: [],
   };
@@ -101,16 +108,23 @@ export class LiveFeed {
     return channel.port2;
   }
 
-  async scene(parts: ScenePart[], world: ScenePart[]): Promise<void> {
-    if (this.sceneTicket && same(this.sent.parts, parts) && same(this.sent.world, world)) return;
+  async scene(parts: ScenePart[], world: ScenePart[], imported?: ImportedWorldView | null): Promise<void> {
+    if (
+      this.sceneTicket &&
+      same(this.sent.parts, parts) &&
+      same(this.sent.world, world) &&
+      this.sent.imported?.hash === imported?.hash &&
+      String(this.sent.imported?.position) === String(imported?.position)
+    )
+      return;
 
-    this.sent = { ...this.sent, parts, world };
+    this.sent = { ...this.sent, parts, world, imported };
 
     const ticket = ++this.sceneTicket;
     const meshes = await sourcedMeshFiles([...parts, ...world]);
 
     if (ticket === this.sceneTicket)
-      this.post({ type: 'scene', parts: packParts(parts), world: packParts(world), meshes });
+      this.post({ type: 'scene', parts: packParts(parts), world: packParts(world), meshes, imported });
   }
 
   model(model: SimModel | null): void {

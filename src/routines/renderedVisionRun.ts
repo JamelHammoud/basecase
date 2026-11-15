@@ -21,7 +21,7 @@ export async function runRenderedVisionJob(request: RenderedVisionRequest, progr
         const results: VisionResult[] = [];
 
         for (const view of request.stage.views) {
-          const frames = renderCameraFrame({ poses: null, keys: [view.key], timestamp });
+          const frames = await renderCameraFrame({ poses: null, keys: [view.key], timestamp });
           const frame = frames[view.key];
 
           if (!frame) throw new Error(`The L2 camera ${view.key} could not render.`);

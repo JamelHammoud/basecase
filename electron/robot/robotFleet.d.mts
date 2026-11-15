@@ -1,3 +1,4 @@
+import type { RobotRun } from '../../src/robot/runBuffer';
 import type { NetworkRobot, NetworkRobotAsk } from '../../src/robot/networkTypes';
 import type { RobotPolicyRef } from '../../src/robot/robotPolicy';
 import type {
@@ -28,6 +29,7 @@ export class RobotFleet {
   discover(): Promise<NetworkRobot[]>;
   command(command: Record<string, unknown>, unit?: string): ConnectReply;
   calibrate(joints: RobotMount[], unit?: string): ConnectReply;
+  readRun(unit?: string): RobotRun | null;
   record(sample: RobotSample, unit?: string): ConnectReply;
   disconnect(unit?: string): ConnectReply;
   policy(refs: RobotPolicyRef[], unit?: string): ConnectReply;

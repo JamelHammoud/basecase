@@ -7,9 +7,7 @@ import { newSceneId } from '../utils/sceneIds';
 import { usePosing } from '../utils/usePosing';
 import { projectFromSeed } from './helpers';
 import type { SceneWorkspaceProps, WorkspaceSeed } from './types';
-import { useAnnotations } from './useAnnotations';
-import { useMarks, useMarkState } from './useMarks';
-import { useMeasure } from './useMeasure';
+import { useWorkspaceTools } from './useWorkspaceTools';
 import { usePoseScope } from './usePoseScope';
 import { useCadCompile } from './useCadCompile';
 import { useRobotUpgrade } from './useRobotUpgrade';
@@ -18,7 +16,6 @@ import { useSelectionActions } from './useSelectionActions';
 import { useSimTraining } from './useSimTraining';
 import { useCaseStudies } from './useCaseStudies';
 import { useToast } from './useToast';
-import { useToolMode } from './useToolMode';
 import { useWorkspaceDataLayers } from './useWorkspaceDataLayers';
 import { useConsoleEditing } from './useConsoleEditing';
 import { useCaseRun } from './useCaseRun';
@@ -27,6 +24,7 @@ import { useSceneReadiness } from './useReadiness';
 import { useSketchSession } from './useSketchSession';
 import { useRobotSync } from './useRobotSync';
 import { useRepair } from './useRepair';
+import { useLatestRef } from '../utils/useLatestRef';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -76,27 +74,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   useCadCompile(docs);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const measure = useMeasure();
-  const { setMeasuring } = measure;
-  const markState = useMarkState();
-  const { setMarking } = markState;
-  const annotations = useAnnotations({
-    initial: seed?.annotations ?? [],
-    parts,
-    showToast,
-    setSelectedIds,
-    stopTools: () => {
-      setMeasuring(false);
-      setMarking(false);
-    },
-  });
-  const tool = useToolMode({
-    setIsRightOpen: studio.setIsRightOpen,
-    annotations,
-    measure,
-    mark: { marking: markState.marking, setMarking },
-  });
-  const marks = useMarks({ docs, showToast, selection: markState.selection, tool: markState.tool });
+  const { measure, annotations, tool, marks } = useWorkspaceTools({ docs, seed, studio, showToast, setSelectedIds });
   const posing = usePosing({
     parts,
     project,
@@ -129,6 +107,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   const dataLayers = useWorkspaceDataLayers({ simTraining, parts, viewportRef, tool, studio, showToast });
   const caseRun = useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining });
+  const viewRef = useLatestRef({ active, tab: tool.leftTab, sidebarOpen: studio.isLeftOpen && !caseRun.open });
   const { triesView, datasets } = useTriesWork(simTraining, showToast);
 
   const { travel } = docs;
@@ -177,6 +156,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     marks,
     measure,
     tool,
+    operateVisible: () => viewRef.current.active && viewRef.current.sidebarOpen && viewRef.current.tab === 'operate',
     posing,
     onRobot,
     posable,

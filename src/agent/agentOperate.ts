@@ -1,4 +1,5 @@
 import type { CameraVision } from '../cameras/scopedVision';
+import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import * as THREE from 'three';
 import { cameraShots, type CameraShot } from '../cameras/cameraShots';
 import type { FixedCamera } from '../cameras/fixed';
@@ -35,6 +36,7 @@ export interface OperateContext {
   rig: Rig;
   parts: ScenePart[];
   fixedCameras: FixedCamera[];
+  imported?: ImportedWorldView | null;
   wait?: (ms: number) => Promise<void>;
   shoot?: typeof cameraShots;
   calibrationErrors?: () => Promise<string>;
@@ -148,6 +150,7 @@ export async function operateRequest(ctx: OperateContext, p: OperatePayload): Pr
     vision: ctx.cameraVision,
     parts: ctx.parts,
     world: ctx.sim.worldParts,
+    imported: ctx.imported,
     model: ctx.sim.model,
     fixed: ctx.fixedCameras,
     names,

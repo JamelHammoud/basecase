@@ -23,6 +23,14 @@ export interface LinkInertial {
   inertia: { ixx: number; ixy: number; ixz: number; iyy: number; iyz: number; izz: number };
 }
 
+export interface LinkPayload {
+  kg: number;
+  com: V3;
+  radius: number;
+}
+
+type InertialMass = Pick<PlacedPart, 'kg' | 'com' | 'size'> & { isotropic?: number };
+
 function boxTriangles(p: ScenePart): Float32Array {
   const d = p.dimensions;
   const box = new THREE.BoxGeometry(Math.max(d.width, 1), Math.max(d.height, 1), Math.max(d.depth, 1));
@@ -76,18 +84,22 @@ export function placedParts({ body, byId, masses, triangles }: PlaceOptions): Pl
 
 const sq = (v: number) => v * v;
 
-export function linkInertial(parts: PlacedPart[]): LinkInertial {
-  const kg = parts.reduce((s, p) => s + p.kg, 0);
-  const com = [0, 1, 2].map((a) => (kg > 0 ? parts.reduce((s, p) => s + p.kg * p.com[a], 0) / kg : 0)) as V3;
+export function linkInertial(parts: PlacedPart[], payload?: LinkPayload): LinkInertial {
+  const masses: InertialMass[] = [...parts];
+
+  if (payload) masses.push({ ...payload, size: [0, 0, 0], isotropic: (2 / 5) * payload.kg * payload.radius ** 2 });
+
+  const kg = masses.reduce((s, p) => s + p.kg, 0);
+  const com = [0, 1, 2].map((a) => (kg > 0 ? masses.reduce((s, p) => s + p.kg * p.com[a], 0) / kg : 0)) as V3;
   const I = { ixx: 0, ixy: 0, ixz: 0, iyy: 0, iyz: 0, izz: 0 };
 
-  for (const { kg: m, com: c, size } of parts) {
+  for (const { kg: m, com: c, size, isotropic = 0 } of masses) {
     const [a, b, h] = size;
     const [dx, dy, dz] = [c[0] - com[0], c[1] - com[1], c[2] - com[2]];
 
-    I.ixx += (m / 12) * (sq(b) + sq(h)) + m * (sq(dy) + sq(dz));
-    I.iyy += (m / 12) * (sq(a) + sq(h)) + m * (sq(dx) + sq(dz));
-    I.izz += (m / 12) * (sq(a) + sq(b)) + m * (sq(dx) + sq(dy));
+    I.ixx += isotropic + (m / 12) * (sq(b) + sq(h)) + m * (sq(dy) + sq(dz));
+    I.iyy += isotropic + (m / 12) * (sq(a) + sq(h)) + m * (sq(dx) + sq(dz));
+    I.izz += isotropic + (m / 12) * (sq(a) + sq(b)) + m * (sq(dx) + sq(dy));
     I.ixy -= m * dx * dy;
     I.ixz -= m * dx * dz;
     I.iyz -= m * dy * dz;

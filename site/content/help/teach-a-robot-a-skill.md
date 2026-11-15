@@ -54,7 +54,7 @@ The agent tells you what each method tried. If a design change would make the sk
 
 ## When the design changes
 
-A skill belongs to the design it was trained on. Changing a color or a name keeps the skill ready. If you change a mass or a size, its row shows **Recheck**. If you change a joint, the row shows **Train**. Either button sends your words back to the agent.
+A skill belongs to the design it was trained on. Changing a color or a name keeps the skill ready. Changing mass or size, including a body fit or rollback, shows **Recheck** when the proved physics no longer matches. If you change a joint, the row shows **Train**. Either button sends your words back to the agent.
 
 To send a ready network policy to several emulated robots, see [Roll out a skill to a fleet of emulated robots](/help/roll-out-a-skill-to-a-fleet). Each unit must pass Arena on its own twin.
 

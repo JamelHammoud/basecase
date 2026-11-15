@@ -21,6 +21,9 @@ import { adoptEmbeddedParts, isSolidPart } from './mjcfEmbedded';
 import { emitWorld, worldFloor } from './mjcfWorld';
 import { robotScans } from './lidar';
 import { classifyRobot, isWheelJoint } from './morphology';
+import { applyBodyFits } from '../reality/bodyModel';
+import { bodyFitForCalibration, bodyPayloads } from '../reality/bodyLayout';
+import { activeBodyCalibration } from '../reality/history';
 
 export { fromMj, quatFromMj, quatToMj, simDeltas, toMj, worldDeltas } from './mjcfFrames';
 export { SIM_MODEL_VERSION } from './mjcfTypes';
@@ -417,7 +420,7 @@ export function buildMjcf(given: MjcfInput): SimModel {
     .map((s) => ({ ...s, joints: s.joints.filter((j) => built.has(j)) }))
     .filter((s) => s.joints.length);
 
-  return {
+  const model: SimModel = {
     version: SIM_MODEL_VERSION,
     xml,
     bodies: st.bodies,
@@ -425,7 +428,20 @@ export function buildMjcf(given: MjcfInput): SimModel {
     robots: st.robots,
     initial: { values: st.initialValues, roots: st.roots },
     massKg: st.massKg,
+    bodyPayloads: bodyPayloads(st.bodies, parts),
     ...(scans.length ? { scans } : {}),
     ...(servoSpreads.length ? { servoSpreads } : {}),
   };
+
+  const fits = model.robots.flatMap((robot) => {
+    const active = activeBodyCalibration(project.bodyCalibrations?.[robot.key]);
+    const saved = active ? bodyFitForCalibration(active, model.bodies, robot.key) : undefined;
+    const fit = input.bodyFits?.[robot.key] ?? saved;
+    const recordedAt = input.bodyFits?.[robot.key] ? Infinity : Date.parse(active?.recordedAt ?? '') || 0;
+
+    return fit ? [{ robot: robot.key, fit, recordedAt }] : [];
+  });
+  const newest = fits.toSorted((a, b) => a.recordedAt - b.recordedAt || a.robot.localeCompare(b.robot)).at(-1);
+
+  return applyBodyFits(model, Object.fromEntries(fits.map(({ robot, fit }) => [robot, fit])), newest?.robot);
 }

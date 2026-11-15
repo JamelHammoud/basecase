@@ -1,4 +1,5 @@
 import type { CameraVision } from '../cameras/scopedVision';
+import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import type * as THREE from 'three';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Controller } from '../sim/engine';
@@ -40,6 +41,7 @@ export interface SimContext {
   restoreCanvas: () => void;
   parts: ScenePart[];
   fixedCameras?: FixedCamera[];
+  imported?: ImportedWorldView | null;
 }
 
 const DIRS: Record<string, [number, number, number]> = {
@@ -212,6 +214,7 @@ async function cameraReply(ctx: SimContext, run: SimRun, names: string[] | undef
     vision: ctx.cameraVision,
     parts: ctx.parts,
     world: ctx.sim.worldParts,
+    imported: ctx.imported,
     model: run.model,
     fixed: ctx.fixedCameras ?? [],
     names: names.slice(0, 3),

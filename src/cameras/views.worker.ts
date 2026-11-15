@@ -31,7 +31,7 @@ serve({
     return reply(frame, [frame.jpeg.buffer, frame.instanceIds.buffer, frame.depth.buffer]);
   },
   frame: async (request: CameraFrameRequest) => {
-    const bitmaps = renderCameraFrame(request);
+    const bitmaps = await renderCameraFrame(request);
     const results = await Promise.all(
       Object.entries(bitmaps).map(async ([key, bitmap]) => [key, await vision.infer(key, bitmap)]),
     );

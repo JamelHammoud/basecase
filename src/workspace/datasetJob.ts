@@ -1,3 +1,4 @@
+import { caseWorldView } from '../cases/worldView';
 import { caseSlots, type Case } from '../cases/schema';
 import { slotKeys } from '../cases/slots';
 import { sha256, type TryRecord } from '../cases/tries';
@@ -131,6 +132,7 @@ export async function prepareDataset(input: DatasetJobInput): Promise<PreparedDa
     robotType: snakeKey(scene.robotName),
     parts: visible,
     world: scene.world,
+    ...(kase?.world.imported ? { imported: caseWorldView(kase) } : {}),
     model: scene.model,
     cameras: datasetCameras(visible, scene.world),
     episodes,

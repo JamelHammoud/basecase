@@ -84,7 +84,7 @@ function inferencePort(detected: boolean) {
 beforeEach(() => {
   vi.clearAllMocks();
   stage.load.mockResolvedValue(true);
-  stage.render.mockImplementation(({ keys }) =>
+  stage.render.mockImplementation(async ({ keys }) =>
     Object.fromEntries(keys.map((key: string) => [key, { close: vi.fn() }])),
   );
 });
@@ -123,7 +123,7 @@ describe('rendered L2 worker job', () => {
   it('closes its inference connection when a camera fails to render', async () => {
     const port = inferencePort(true);
 
-    stage.render.mockReturnValue({});
+    stage.render.mockResolvedValue({});
     await expect(
       runRenderedVisionJob({ plan: plan(), scenario, stage: job, port, cameraPrefix: 'routine-l2:run:' }, vi.fn()),
     ).rejects.toThrow('could not render');

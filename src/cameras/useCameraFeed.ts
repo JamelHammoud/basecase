@@ -1,3 +1,4 @@
+import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore } from 'react';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { CameraLink } from '../sim/useSimWorker';
@@ -9,6 +10,7 @@ import { useVisionScope } from './visionScope';
 
 export interface CameraFeedInput {
   active: boolean;
+  imported?: ImportedWorldView | null;
   parts: ScenePart[];
   world: ScenePart[];
   model: SimModel | null;
@@ -31,7 +33,7 @@ export function useCameraFeed(input: CameraFeedInput): CameraFeed {
   const feedRef = useRef<LiveFeed | null>(null);
   const releaseCameras = useRef<(() => void) | null>(null);
   const [streaming, setStreaming] = useState(0);
-  const { parts, world, model, views, enlarged, connectCameras } = input;
+  const { parts, world, imported, model, views, enlarged, connectCameras } = input;
   const cameraKeys = views.map((view) => view.key).join('\n');
   const visionActive = useSyncExternalStore(
     onVisionAssignments,
@@ -73,8 +75,8 @@ export function useCameraFeed(input: CameraFeedInput): CameraFeed {
   }, [active, connectCameras, simulated]);
 
   useEffect(() => {
-    if (active) void feedRef.current?.scene(parts, world);
-  }, [active, parts, world]);
+    if (active) void feedRef.current?.scene(parts, world, imported);
+  }, [active, parts, world, imported]);
 
   useEffect(() => {
     if (active) feedRef.current?.model(model);

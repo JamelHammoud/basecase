@@ -85,6 +85,8 @@ Boxes also appear on live camera tiles and recorded camera videos at the playhea
 
 Detectors recognize their model's classes. The CPU fallback can take seconds per image, and Routines ignore images older than their freshness limit.
 
-Trained policies can't see camera images, but they can sense depth through a camera as a grid of distances. The agent sets this up when a skill needs it.
+In a [captured world](/help/import-a-world), your camera tiles and the agent's camera shots show the splat, or the mesh when there is no splat.
+
+Trained policies can't see camera images, but they can sense depth through a camera as a grid of distances. The agent sets this up when a skill needs it. In a captured world, depth follows the collider surfaces the robot collides with.
 
 To watch from a fixed spot in the scene instead, [add a camera view](/help/add-a-camera-view).

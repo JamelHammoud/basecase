@@ -130,6 +130,7 @@ const ROUTES: Record<string, Route> = {
   'print-discover': () => [],
   'print-last-slice': () => null,
   'robot-discover': () => [],
+  'robot-read-run': () => null,
   'print-printer-status': () => null,
   'roboflow-account': () => ({ saved: false }),
   'roboflow-set-key': () => ({ error: 'Download Basecase to connect Roboflow.' }),

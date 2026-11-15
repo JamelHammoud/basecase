@@ -1,3 +1,4 @@
+import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { MeshFiles } from '../three/componentMeshes';
 import type { ScenePart } from '../types/robotics';
@@ -12,6 +13,7 @@ export interface CameraStageJob {
   parts: ScenePart[];
   world: ScenePart[];
   meshes?: MeshFiles;
+  imported?: ImportedWorldView | null;
   model: SimModel | null;
   views: CameraView[];
 }
@@ -34,10 +36,10 @@ export async function loadCameraStage(job: CameraStageJob): Promise<boolean> {
   stage.setModel(job.model);
   stage.setViews(job.views);
 
-  return stage.setScene(job.parts, job.world, job.meshes);
+  return stage.setScene(job.parts, job.world, job.meshes, job.imported);
 }
 
-export const renderCameraFrame = (request: CameraFrameRequest): Record<string, ImageBitmap> =>
+export const renderCameraFrame = async (request: CameraFrameRequest): Promise<Record<string, ImageBitmap>> =>
   stage?.shoot(request.poses, request.keys) ?? {};
 
 export function renderTrainingFrame(request: CameraTrainingRequest): Promise<CameraTrainingFrame> {

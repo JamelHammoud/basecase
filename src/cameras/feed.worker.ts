@@ -40,6 +40,7 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 let timerAt = Infinity;
 let drewAt = -Infinity;
 let frames = 0;
+let drawing = false;
 
 function wake(at: number) {
   if (timer !== null && timerAt <= at) return;
@@ -94,10 +95,10 @@ function postStream({ id, target }: StreamJob) {
   scope.postMessage({ type: 'stream', id, bitmap } satisfies FeedEvent, [bitmap]);
 }
 
-function render(tiles: LiveJob[], due: StreamJob[], visionJobs: LiveJob[]) {
+async function render(tiles: LiveJob[], due: StreamJob[], visionJobs: LiveJob[]) {
   drewAt = performance.now();
 
-  const drawn = stage.draw(poses, [...tiles, ...visionJobs, ...due]);
+  const drawn = await stage.draw(poses, [...tiles, ...visionJobs, ...due]);
   const tilesDrawn = tiles.filter((job) => drawn.includes(job));
 
   if (drawn.length) gl.finish();
@@ -134,9 +135,13 @@ function setVisionTargets() {
   }
 }
 
-function draw() {
+async function draw() {
   timer = null;
   timerAt = Infinity;
+
+  if (drawing) return;
+
+  drawing = true;
 
   const tiles: LiveJob[] = dirty ? [...targets].map(([key, target]) => ({ key, target })) : [];
   const now = performance.now();
@@ -153,9 +158,12 @@ function draw() {
 
   dirty = false;
 
-  if (tiles.length || due.length || visionJobs.length) render(tiles, due, visionJobs);
-
-  plan();
+  try {
+    if (tiles.length || due.length || visionJobs.length) await render(tiles, due, visionJobs);
+  } finally {
+    drawing = false;
+    plan();
+  }
 }
 
 function target([width, height]: [number, number]): LiveTarget | null {
@@ -187,8 +195,8 @@ const handlers: { [K in FeedRequest['type']]: (msg: Extract<FeedRequest, { type:
     setVisionTargets();
     schedule();
   },
-  scene: async ({ parts, world, meshes }) => {
-    if (await stage.setScene(parts, world, meshes)) schedule();
+  scene: async ({ parts, world, meshes, imported }) => {
+    if (await stage.setScene(parts, world, meshes, imported)) schedule();
   },
   model: ({ model }) => {
     stage.setModel(model);

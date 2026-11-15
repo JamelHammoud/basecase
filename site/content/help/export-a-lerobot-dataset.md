@@ -50,7 +50,7 @@ If none of the tries fit, the toast says "Export and training take only passed t
 
 ## What's in the zip
 
-Each selected recording range becomes one episode, recorded at 25 frames a second. An episode holds the joint positions, the joint targets, and a 640 × 480 video from each camera. A try's segments go in as subtasks, each with its instruction or label. A segment selection includes only its selected frames and overlapping subtasks. There's always a **scene** camera at the front three-quarters, plus one camera for each camera part on the robot. Camera views you add to the scene aren't part of the dataset.
+Each selected recording range becomes one episode, recorded at 25 frames a second. An episode holds the joint positions, the joint targets, and a 640 × 480 video from each camera. A try's segments go in as subtasks, each with its instruction or label. A segment selection includes only its selected frames and overlapping subtasks. There's always a **scene** camera at the front three-quarters, plus one camera for each camera part on the robot. Camera views you add to the scene aren't part of the dataset. A captured world's splat or mesh appears in every camera video, at the same placement as the Case.
 
 The videos are rendered from the recorded motion. Imported camera clips stay with the try and aren't copied into this export. Detection boxes aren't drawn into exported videos.
 

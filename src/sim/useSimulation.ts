@@ -193,6 +193,7 @@ export interface SceneModelOptions {
   alone?: boolean;
   pin?: string | null;
   calibrations?: Record<string, CalibrationHistory>;
+  withoutBody?: boolean;
 }
 
 function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: Inputs) {
@@ -224,7 +225,7 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
         {
           parts: current.parts,
           rig: current.rig,
-          project: current.project,
+          project: options?.withoutBody ? { ...current.project, bodyCalibrations: undefined } : current.project,
           pose: current.pose,
           measures,
           partTriangles: vp.partTriangles,
@@ -363,7 +364,7 @@ export function useSimulation(props: Inputs): Simulation {
       send({ type: 'speed', value: s });
     },
     setController,
-    buildModel: (options) => buildModel({ alone: options?.alone }),
+    buildModel,
     ...touch,
     setFault: (joint, kind) => send({ type: 'fault', joint, kind }),
     setPhysics: (physics) => send({ type: 'physics', physics }),

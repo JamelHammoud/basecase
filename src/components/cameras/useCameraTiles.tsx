@@ -1,3 +1,4 @@
+import type { ImportedWorldView } from '../../three/viewport/importedWorld';
 import React, { useState } from 'react';
 import { enlargeCameraView, useCameraViewsState } from '../../cameras/cameraViewsStore';
 import { useCameraFeed } from '../../cameras/useCameraFeed';
@@ -13,6 +14,7 @@ import type { CameraTileProps } from './CameraTile';
 
 export interface CameraTilesInput {
   parts: ScenePart[];
+  imported?: ImportedWorldView | null;
   sim: Pick<Simulation, 'status' | 'model' | 'worldParts' | 'connectCameras'>;
   cameras: FixedCameras;
   patchPart: (id: string, patch: Partial<ScenePart>) => void;
@@ -45,6 +47,7 @@ export function useCameraTiles(input: CameraTilesInput): CameraTiles {
   const feed = useCameraFeed({
     active: active(views),
     parts: solid,
+    imported: input.imported,
     world: shownWorld(sim.worldParts),
     model: sim.model,
     views: simulated,

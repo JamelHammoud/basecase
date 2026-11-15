@@ -1,3 +1,4 @@
+import { caseWorldView } from '../cases/worldView';
 import { newDataset, type Dataset } from '../datasets/datasetFile';
 import { loadDatasets, saveDataset } from '../datasets/datasetStore';
 import { sourcedMeshFiles } from '../three/componentMeshes';
@@ -98,6 +99,7 @@ export async function makeTrainingImages(
   try {
     const header = await worker.call('load', {
       ...job,
+      imported: job.imported ?? caseWorldView(job.kase),
       parts: packParts(job.parts),
       rig: job.rig && { ...job.rig, parts: [] },
       world: job.world && packParts(job.world),

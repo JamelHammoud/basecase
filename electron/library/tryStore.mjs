@@ -4,6 +4,7 @@ import { checkedFileId, isSafeFileId } from '../backend/constants.mjs';
 import { writeAtomic } from './atomicFile.mjs';
 import { cleanVideoAssets } from './tryVideoUploads.mjs';
 import { videoLocation, keepVideo, storedVideo } from './tryVideoFiles.mjs';
+import { sessionTail } from './sessionTail.mjs';
 
 export const TRY_MANIFEST = 'try.json';
 export const TRY_RECORDING = 'recording.bin';
@@ -348,6 +349,7 @@ function quietly(work) {
 }
 
 export const sessionSink = (store) => ({
+  read: (id) => sessionTail(path.join(store.dirOf(id), TRY_SESSION)),
   append: (id, text) => quietly(() => store.appendSession(id, text)),
   keep: (manifest) => quietly(() => store.save({ manifest })),
   drop: (id) => quietly(() => store.delete([id])),

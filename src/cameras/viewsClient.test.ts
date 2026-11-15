@@ -79,7 +79,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubGlobal('Worker', CameraWorker);
   stage.training.mockResolvedValue(labelled);
-  stage.frame.mockReturnValue({ scene: { width: 1, height: 1 } });
+  stage.frame.mockResolvedValue({ scene: { width: 1, height: 1 } });
   stage.infer.mockResolvedValue({ detections: [{ label: 'cup', score: 0.9, box: [0, 0, 1, 1] }] });
 });
 afterEach(() => vi.unstubAllGlobals());

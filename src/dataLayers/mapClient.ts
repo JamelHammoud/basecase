@@ -1,3 +1,4 @@
+import type { MapWorldRequest } from './mapWorld';
 import type { Recording } from '../sim/recorder';
 import { workerClient } from '../utils/workerRpc';
 import { mapJobs, type MapJobs } from './mapJobs';
@@ -13,6 +14,8 @@ const client = workerClient<MapJobs>(
   () => new Worker(new URL('./map.worker.ts', import.meta.url), { type: 'module' }),
   async () => (localJobs ??= mapJobs()),
 );
+
+export const makeMapWorld = (request: MapWorldRequest) => client.call('makeWorld', request);
 
 const built = new WeakMap<object, Map<string, Promise<MapCloud | null>>>();
 

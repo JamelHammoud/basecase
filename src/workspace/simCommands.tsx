@@ -1,5 +1,5 @@
 import type { Command } from '../components/CommandPalette';
-import { RunIcon, StopIcon } from '../design-system';
+import { RunIcon, StopIcon, CasesIcon } from '../design-system';
 import type { CommandInputs } from './sceneCommands';
 
 export function simCommands({ core }: CommandInputs): Command[] {
@@ -8,8 +8,23 @@ export function simCommands({ core }: CommandInputs): Command[] {
 
   if (!posing.hasRig) return [];
 
+  const makeWorld = core.dataLayers.rows().find((layer) => layer.makeWorld)?.makeWorld;
+  const mapCommands: Command[] = makeWorld
+    ? [
+        {
+          id: 'map-make-world',
+          group: 'Simulate',
+          label: 'Make World',
+          icon: <CasesIcon />,
+          keywords: 'map scan recording reconstruct collider',
+          run: makeWorld,
+        },
+      ]
+    : [];
+
   if (sim.status === 'off')
     return [
+      ...mapCommands,
       {
         id: 'sim-start',
         group: 'Simulate',
@@ -24,6 +39,7 @@ export function simCommands({ core }: CommandInputs): Command[] {
     ];
 
   return [
+    ...mapCommands,
     {
       id: 'sim-stop',
       group: 'Simulate',

@@ -77,6 +77,9 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
           options={worlds.map((w) => ({ value: w.kind, label: w.name, title: w.trueSize ? w.name : undefined }))}
         />
       )}
+      {world === 'imported' && builder.imported?.asset.world.reconstruction?.estimates.floor && (
+        <p className="text-[12.5px] leading-snug text-white/60">Estimated floor and 1 m obstacle height</p>
+      )}
       <div className="flex flex-col gap-2">
         {spots.targets.length > 0 && (
           <RoomTargetPicker count={spots.count} targets={spots.targets} picked={chosen} onPick={spots.pick} />

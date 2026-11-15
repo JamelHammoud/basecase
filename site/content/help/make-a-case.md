@@ -56,6 +56,8 @@ Basecase opens the Case in the **Simulate** tab and shows its world on the canva
 
 To use a captured or generated place, drop its collider mesh onto the canvas. New Case opens with that world picked. See [Import a captured world](/help/import-a-world) for the files to include.
 
+To use an imported ROS recording's scan map, choose **Make World** from the **Map** row's menu in **Layers**. New Case opens with **Map** picked under **World**. For a planar scan, it identifies the estimated floor and 1 m obstacle height. See [Map a robot run](/help/map-a-robot-run) for the steps and limits.
+
 ## Describe a Case in words
 
 Click **Ask the Agent**, under **New Case**, to put `/case` in the agent's box. Type the goal after it, such as "push the box to the wall in under 10 seconds", and send it. The agent builds the Case with the same builder as **New Case** and opens it.

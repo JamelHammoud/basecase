@@ -1,3 +1,4 @@
+import type { MapWorldRequest } from './mapWorld';
 import { reply } from '../utils/workerRpc';
 import { decodeTopicLog } from '../topics/topicFile';
 import { TopicIndex } from '../topics/topicIndex';
@@ -34,6 +35,15 @@ export function mapJobs() {
   const live = new Map<number, ScanMap>();
 
   return {
+    makeWorld: async (input: MapWorldRequest) => {
+      const [{ reconstructMapWorld }, { prepareMeshWorld }] = await Promise.all([
+        import('./mapWorld'),
+        import('../cases/worldImportOps'),
+      ]);
+      const asset = await reconstructMapWorld(input);
+
+      return prepareMeshWorld(asset.world, asset.pieces);
+    },
     tryMap: (input: TryMapInput) => {
       const cloud = buildTryMap(input);
 

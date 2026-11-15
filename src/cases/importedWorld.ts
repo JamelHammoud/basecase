@@ -1,3 +1,4 @@
+import { Quaternion, Vector3 } from 'three';
 import type { V3 } from '../utils/kinematics';
 import { routeClearance, type BuilderRobot, type GoalKind } from './caseGoals';
 import type { CaseWorld } from './caseWorlds';
@@ -59,6 +60,20 @@ function candidates({ min, max }: SurfaceBounds, clearance: number): V3[] {
   return [centre, ...spots.sort((a, b) => distance(a) - distance(b))];
 }
 
+function recordedStarts(asset: WorldAsset): V3[] {
+  const { reconstruction, transform } = asset.world;
+
+  if (!reconstruction) return [];
+
+  const rotation = new Quaternion(...transform.quaternion);
+
+  return reconstruction.origins.map((origin) => {
+    const point = new Vector3(...origin).applyQuaternion(rotation).multiplyScalar(transform.scale);
+
+    return [point.x + transform.translation[0], 0, point.z + transform.translation[2]];
+  });
+}
+
 function planning(asset: WorldAsset, robot: BuilderRobot): WorldPlanning {
   const key = [robot.footprint.width, robot.footprint.depth, robot.heightMm].join('|');
   const stored = cache.get(asset) ?? new Map<string, WorldPlanning>();
@@ -88,7 +103,7 @@ function planning(asset: WorldAsset, robot: BuilderRobot): WorldPlanning {
     ].every(([x, z]) => supported([p[0] + x, 0, p[2] + z]));
   const clear = (p: V3) => within(p) && !occupied(p, blocked, clearance) && onFloor(p);
   const centre: V3 = [(bounds.min[0] + bounds.max[0]) / 2, 0, (bounds.min[2] + bounds.max[2]) / 2];
-  const spot = clear(centre) ? centre : (candidates(bounds, clearance).find(clear) ?? null);
+  const spot = [...recordedStarts(asset), centre].find(clear) ?? candidates(bounds, clearance).find(clear) ?? null;
   const result = { spot, objects };
 
   stored.set(key, result);

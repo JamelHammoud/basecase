@@ -1,3 +1,4 @@
+import type { ScanWorldProvenance } from './worldProvenance';
 import type { Room } from './roomPlan';
 
 export interface WorldImportFile {
@@ -44,6 +45,7 @@ export interface WorldMesh {
 export interface ImportedMeshWorld {
   kind: 'mesh';
   name: string;
+  reconstruction?: ScanWorldProvenance;
   mesh: WorldMesh;
   transform: {
     scale: number;

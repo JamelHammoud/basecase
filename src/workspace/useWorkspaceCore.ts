@@ -18,7 +18,7 @@ import { useSimTraining } from './useSimTraining';
 import { useCaseStudies } from './useCaseStudies';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
-import { useDataLayers } from './useDataLayers';
+import { useWorkspaceDataLayers } from './useWorkspaceDataLayers';
 import { useConsoleEditing } from './useConsoleEditing';
 import { useCaseRun } from './useCaseRun';
 import { useSceneGuide } from './useSceneGuide';
@@ -124,7 +124,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     showReferenceImages: studio.showReferenceImages,
   });
 
-  const dataLayers = useDataLayers({ sim: simTraining.sim, timeline: simTraining.cases.timeline, parts, viewportRef });
+  const dataLayers = useWorkspaceDataLayers({ simTraining, parts, viewportRef, tool, studio, showToast });
   const caseRun = useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining });
   const { triesView, datasets } = useTriesWork(simTraining, showToast);
 

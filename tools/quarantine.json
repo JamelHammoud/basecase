@@ -1,5 +1,13 @@
 [
   {
+    "file": "e2e/caseCode.e2e.test.ts",
+    "test": "unloads a panel that never answers with its error, while the page keeps drawing frames",
+    "issue": 1137,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43736502131 showed the panel error and removed its iframe, but recorded no about:blank navigation at line 301 on either Windows attempt. Both attempts then timed out in afterEach browser.close() after 120000 ms. Linux passed at the same commit in 15116 ms. The preceding Windows run 43735086890 passed in 17065 ms, with no intervening changes to the test, frame, bridge, harness, dependencies or e2e configuration. Commit 171272612 added srcdoc removal before unloading and closed #747, but the navigation or renderer shutdown cause of this recurrence is not established. Issue #1137 tracks Windows frame-lifecycle and process traces and equal-load measurements before restoring the test."
+  },
+  {
     "file": "e2e/firstLaunch.e2e.test.ts",
     "test": "says why Try on Real Robot didn’t start, and keeps saying it under the button",
     "issue": 1127,

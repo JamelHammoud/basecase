@@ -13,6 +13,7 @@ import { toCommand } from './caseDrives';
 import { runCase as runCaseOn, type CaseRobot, type RunOptions } from './runCase';
 import { parseCase as parseCaseFile, worldItem, type Case } from './schema';
 import { scoreTry, tryManifest, type TryRecord, type TryScoring } from './tries';
+import { TimelineCursor } from '../utils/timelineCursor';
 
 export const parseCase = parseCaseFile;
 
@@ -65,7 +66,11 @@ export async function referenceTry(mj: MainModule, kase: Case, robot: FixtureRob
   });
   const controller = liveController(robot, rig, model);
   const engine = new SimEngine(mj, model);
-  const script = [...staged.kase.reference.timeline].sort((a, b) => a.at - b.at);
+  const script = new TimelineCursor(
+    staged.kase.reference.timeline,
+    (c) => c.at,
+    (c) => engine.command(toCommand(c)),
+  );
 
   engine.setController(controller);
 
@@ -76,7 +81,7 @@ export async function referenceTry(mj: MainModule, kase: Case, robot: FixtureRob
   engine.commandHook = recorder.command;
 
   while (engine.data.time - start < staged.kase.task.seconds) {
-    while (script.length && script[0].at <= engine.data.time - start + 1e-9) engine.command(toCommand(script.shift()!));
+    script.advance(engine.data.time - start);
 
     engine.step(LIVE_FRAME_SECONDS);
   }

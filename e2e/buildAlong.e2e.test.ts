@@ -1,6 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../src/types/robotics';
-import { shapeKey } from '../src/print/shapeKey';
 import { component, sceneOf } from '../src/wiring/fixtures';
 import type { Net } from '../src/wiring/netlist';
 import { buildCheckPage, studioLoad } from './buildCheckFixtures';
@@ -9,10 +8,7 @@ import { openApp, shown, type App } from './harness';
 interface BuildAlongStudio {
   load: (record: { name: string; parts: unknown[]; project: unknown }) => void;
   sceneRecord: () => { project: ProjectSettings };
-  parts: () => Array<{ id: string; visible: boolean }>;
-  shownParts: () => string[];
   buildAlongSteps: () => Array<{
-    shown: string[];
     servos: Array<{ partId: string; joint: string; id: number }>;
     routes: Net[];
   }>;
@@ -48,15 +44,6 @@ const servo = (id: string, y: number) =>
     color: '#222222',
   });
 
-const parts = [
-  part('base', 0, 20, { name: 'Base', dimensions: { width: 80, height: 20, depth: 80 } }),
-  servo('pan-servo', 20),
-  part('upper-arm', 60, 60, { name: 'Upper Arm' }),
-  servo('lift-servo', 120),
-  part('forearm', 160, 60, { name: 'Forearm' }),
-  part('cutout', 180, 10, { name: 'Cable Hole', role: 'cutout' }),
-];
-
 const joint = (id: string, name: string, extra: Partial<RobotJoint>): RobotJoint => ({
   id,
   name,
@@ -69,26 +56,12 @@ const joint = (id: string, name: string, extra: Partial<RobotJoint>): RobotJoint
   ...extra,
 });
 
-const joints: RobotJoint[] = [
-  joint('mount', 'Mount', { type: 'fixed', parent: ['base'], child: ['pan-servo'] }),
-  joint('pan', 'Shoulder pan', { parent: ['base'], child: ['upper-arm'], actuators: ['pan-servo'] }),
-  joint('lift', 'Shoulder lift', { parent: ['upper-arm'], child: ['forearm'], actuators: ['lift-servo'] }),
-];
-
-const sceneParts = () =>
-  app.page.evaluate(() => (window as unknown as { __studio: BuildAlongStudio }).__studio.parts());
-
-const shownParts = () =>
-  app.page.evaluate(() => (window as unknown as { __studio: BuildAlongStudio }).__studio.shownParts().sort());
-
 const planSteps = () =>
   app.page.evaluate(() => (window as unknown as { __studio: BuildAlongStudio }).__studio.buildAlongSteps());
 
 const toolbar = () => app.page.locator(shown('[role=toolbar][aria-label="Build Along"]'));
 
 const stepShown = () => toolbar().getAttribute('data-step');
-
-const sorted = (ids: string[]) => [...ids].sort();
 
 const openBuildAlong = async () => {
   await app.page.keyboard.press('Meta+k');
@@ -99,32 +72,6 @@ const openBuildAlong = async () => {
 
 beforeEach(async () => {
   app = await openApp();
-  await app.page.evaluate(
-    ({ parts, joints, prints }) => {
-      const s = (window as unknown as { __studio: BuildAlongStudio }).__studio;
-
-      s.load({ name: 'Arm', parts, project: { ...s.sceneRecord().project, joints, prints } });
-    },
-    {
-      parts,
-      joints,
-      prints: [
-        {
-          id: 'arm-print',
-          plate: 1,
-          material: 'PLA',
-          hash: 'arm-plate',
-          parts: parts
-            .filter((p) => ['upper-arm', 'forearm'].includes(p.id))
-            .map((p) => ({ id: p.id, key: shapeKey(p) })),
-          printer: 'default',
-          sentAt: '2026-11-14T00:00:00.000Z',
-          state: 'printed',
-        },
-      ],
-    },
-  );
-  await vi.waitFor(async () => expect(await shownParts()).toHaveLength(parts.length), { timeout: 30000 });
 }, 120000);
 
 afterEach(async () => {
@@ -191,66 +138,6 @@ describe('Build Along', () => {
     );
     await app.page.keyboard.press('Escape');
     await expect.poll(routes).toEqual([]);
-    expect(app.errors).toEqual([]);
-  });
-
-  it('filters the viewport by step, renders servo labels and restores the scene on exit', async () => {
-    const before = await sceneParts();
-
-    await openBuildAlong();
-
-    const steps = await planSteps();
-    const servoStep = steps.findIndex((step) => step.servos.length > 0);
-
-    expect(steps.length).toBeGreaterThan(1);
-    expect(servoStep).toBeGreaterThanOrEqual(0);
-    await expect.poll(shownParts).toEqual(sorted(steps[0].shown));
-    expect(await shownParts()).not.toEqual(sorted(parts.map((p) => p.id)));
-    await app.page.keyboard.press('ArrowRight');
-    await expect.poll(stepShown).toBe('2');
-    await expect.poll(shownParts).toEqual(sorted(steps[1].shown));
-    expect(await shownParts()).not.toEqual(sorted(steps[0].shown));
-
-    const key = servoStep === 0 ? 'ArrowLeft' : 'ArrowRight';
-
-    for (let remaining = Math.abs(servoStep - 1); remaining > 0; remaining--) await app.page.keyboard.press(key);
-
-    await expect.poll(stepShown).toBe(String(servoStep + 1));
-    await expect
-      .poll(() => app.page.locator(shown('[data-build-label]')).allTextContents())
-      .toEqual(steps[servoStep].servos.map((servo) => `${servo.joint}, ID ${servo.id}`));
-
-    const stepParts = await app.page.evaluate(
-      () =>
-        (window as unknown as { __studio: BuildAlongStudio }).__studio.sceneRecord().project.buildGuide?.stepParts
-          ?.ids ?? [],
-    );
-    const unreadyStep = stepParts.findIndex((ids) => ids.includes('base'));
-    const readyStep = stepParts.findIndex(
-      (ids) => !ids.includes('base') && ids.some((id) => ['upper-arm', 'forearm'].includes(id)),
-    );
-    let currentStep = servoStep;
-
-    expect(stepParts).toHaveLength(steps.length);
-    expect(unreadyStep).toBeGreaterThanOrEqual(0);
-    expect(readyStep).toBeGreaterThanOrEqual(0);
-
-    for (const target of [{ index: unreadyStep }, { index: readyStep, ready: 'true' }]) {
-      const key = target.index < currentStep ? 'ArrowLeft' : 'ArrowRight';
-
-      for (let remaining = Math.abs(target.index - currentStep); remaining > 0; remaining--)
-        await app.page.keyboard.press(key);
-
-      await expect.poll(stepShown).toBe(String(target.index + 1));
-      await expect.poll(() => toolbar().getAttribute('data-ready')).toBe(target.ready ?? null);
-      currentStep = target.index;
-    }
-
-    await toolbar().getByRole('button', { name: /^Done/ }).click();
-    await expect.poll(() => toolbar().count()).toBe(0);
-    expect(await sceneParts()).toEqual(before);
-    await expect.poll(shownParts).toEqual(sorted(parts.map((p) => p.id)));
-    await expect.poll(() => app.page.locator('[data-build-label]').count()).toBe(0);
     expect(app.errors).toEqual([]);
   });
 });

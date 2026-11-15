@@ -32,6 +32,8 @@ The [web studio](https://app.basecase.so) is the same studio as the desktop app,
 
 The web studio saves your scenes and Library models in your browser's storage, on that computer only. It doesn't save chats.
 
+Camera detection runs in the browser too. Its first use downloads the model and keeps a checked copy in browser storage. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
+
 **Note:** If you clear site data for app.basecase.so, your browser deletes your scenes and Library models.
 
 ## What needs the desktop app

@@ -1,6 +1,7 @@
+import { ResetVisionScopeContext, useVisionScope } from '../cameras/visionScope';
 import { useScenePrinting } from './usePrinting';
 import { useTriesWork } from './useDatasets';
-import { useRef, useState } from 'react';
+import { use, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { newSceneId } from '../utils/sceneIds';
 import { usePosing } from '../utils/usePosing';
@@ -36,6 +37,7 @@ function useSceneMeta(seed?: WorkspaceSeed) {
 }
 
 interface SeedTargets {
+  resetVision: () => void;
   guide: { cancel: () => void };
   buildAlong: { close: () => void };
   scene: Pick<ReturnType<typeof useSceneMeta>, 'setSceneId' | 'setSceneName' | 'setGlobalGoal'>;
@@ -47,6 +49,7 @@ interface SeedTargets {
 }
 
 const seedLoader = (to: SeedTargets) => (next: WorkspaceSeed, message?: string) => {
+  to.resetVision();
   to.guide.cancel();
   to.buildAlong.close();
   to.scene.setSceneId(next.sceneId);
@@ -62,6 +65,8 @@ const seedLoader = (to: SeedTargets) => (next: WorkspaceSeed, message?: string) 
 };
 
 export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWorkspaceProps) {
+  const vision = useVisionScope();
+  const resetVision = use(ResetVisionScopeContext);
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const scene = useSceneMeta(seed);
   const docs = useSceneDocument(seed);
@@ -131,7 +136,8 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const { travel } = docs;
   const { restorePose } = posing;
   const undo = () => travel({ direction: 'undo', codeOnly: caseRun.open }, restorePose);
-  const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
+  const editing = { guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast };
+  const loadSeed = seedLoader({ ...editing, resetVision });
 
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo, guide });
 
@@ -149,6 +155,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   return {
     workspaceId,
+    vision,
     studio,
     printer,
     readiness,

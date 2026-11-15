@@ -52,6 +52,8 @@ You can also start a try by pressing [[⌘K]] and choosing **Try ⟨Case⟩**.
 
 To steer a humanoid or an arm with your own arms, press [[⌘K]] and choose **Drive with Camera** before you click **Try It**. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
+If the Case's logic uses vision, Basecase loads its models before driving starts. If a model can't load, the try stays stopped and the message names the node to run again.
+
 To judge your real wheeled or legged robot on a printed mat, click **Try on Real Robot** instead of **Try It**. See [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 
 If the robot can't drive, **Teach It to Move** appears under **Try It**. It trains a **Walk** skill, as described in [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
@@ -80,6 +82,8 @@ If the robot lacks what the Case needs, hold your pointer over the row's note an
 ## Results
 
 After a run, **Results** shows whether the robot stayed up and which joints worked hardest. Below that, the tries are listed worst first, so misses appear at the top. A replay includes anything the Case's code moved, lit or hid during the try.
+
+If a try has saved camera videos, its camera tiles play those videos at the playhead and show detections for that frame. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see) for a detection example.
 
 To delete a try, right-click it, choose **Delete**, then confirm. To tag it, choose **Tag** in the same menu, as in [Label a try](/help/label-a-try).
 

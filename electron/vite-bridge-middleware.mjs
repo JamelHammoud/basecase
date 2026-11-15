@@ -3,8 +3,11 @@ import { guardBridge } from './bridgeGuard.mjs';
 import { roboflowPostRoutes } from './roboflow/routes.mjs';
 import { earthPostRoutes } from './earth/routes.mjs';
 import { nodeKernelService } from './cad-kernel/nodeHost/client.mjs';
+import { MODEL_PREFIX, modelResponse } from './hub/modelRoute.mjs';
+import { Readable } from 'node:stream';
 import { hubPostRoutes } from './hub/routes.mjs';
 import { tryPostRoutes } from './library/tryRoutes.mjs';
+import { TRY_VIDEO_PREFIX, tryVideoMiddleware } from './library/tryVideo.mjs';
 import { datasetPostRoutes } from './library/datasetRoutes.mjs';
 import { onshapePostRoutes } from './onshape/routes.mjs';
 import { phoneBridgeMiddleware } from './phone/phoneBridge.mjs';
@@ -202,6 +205,26 @@ function bridgeMiddleware(backend) {
   };
 }
 
+function modelMiddleware(libraryDir) {
+  return async (req, res) => {
+    const request = new Request(`http://localhost${MODEL_PREFIX}${(req.url ?? '').replace(/^\//, '')}`, {
+      method: req.method,
+      headers: req.headers,
+    });
+    const response = await modelResponse(request, libraryDir);
+
+    res.writeHead(response.status, Object.fromEntries(response.headers));
+
+    if (!response.body) return res.end();
+
+    const stream = Readable.fromWeb(response.body);
+
+    res.on('close', () => stream.destroy());
+    stream.on('error', () => res.destroy());
+    stream.pipe(res);
+  };
+}
+
 function installBridge(server) {
   const kernel = process.env.BASECASE_NODE_KERNEL === '1' ? nodeKernelService : undefined;
   const backend = new BasecaseBackendService(process.cwd(), { kernel });
@@ -211,6 +234,8 @@ function installBridge(server) {
   server.httpServer?.once('close', stopAgent);
   server.httpServer?.once('close', () => phone.dispose());
   process.once('exit', stopAgent);
+  server.middlewares.use(MODEL_PREFIX, guardBridge(modelMiddleware(backend.libraryDir)));
+  server.middlewares.use(TRY_VIDEO_PREFIX, guardBridge(tryVideoMiddleware(backend.tries)));
   server.middlewares.use('/api/events', guardBridge(eventsMiddleware(backend)));
   server.middlewares.use('/api/bridge', guardBridge(phoneBridgeMiddleware(phone)));
   server.middlewares.use('/api/bridge', guardBridge(bridgeMiddleware(backend)));

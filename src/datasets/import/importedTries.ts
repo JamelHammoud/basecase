@@ -16,6 +16,7 @@ export interface ImportTarget {
 export interface ImportedTry {
   stored: StoredTry;
   recording: Recording;
+  videos?: Array<{ camera: string; bytes: Uint8Array }>;
 }
 
 export interface BuiltTries {

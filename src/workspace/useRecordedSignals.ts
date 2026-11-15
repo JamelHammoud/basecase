@@ -1,3 +1,6 @@
+import { useVisionScope, type VisionScope } from '../cameras/visionScope';
+import { sceneVisionSignals } from '../cameras/sceneVision';
+import { withVisionSignals } from '../cameras/visionBus';
 import { useEffect, useEffectEvent, useState } from 'react';
 import type { CaseConsole } from '../cases/console/format';
 import {
@@ -63,18 +66,23 @@ const consoleOf = ({ caseConsole, cameras }: RecordedInput) => ({
   cameras,
 });
 
-function busOf(scene: RecordedScene, input: RecordedInput): RecordedBus {
+function busOf(scene: RecordedScene, input: RecordedInput, scope: VisionScope): RecordedBus {
   const topics = recordingTopics(scene.recording);
 
-  return topicBus(recordedBus(withMeaning(recordedTrack(scene, consoleOf(input)), topics)), topics);
+  return withVisionSignals(
+    topicBus(recordedBus(withMeaning(recordedTrack(scene, consoleOf(input)), topics)), topics),
+    input.cameras,
+    sceneVisionSignals(scope, true),
+  );
 }
 
 export function useRecordedSignals(input: RecordedInput): RecordedBus | null {
+  const scope = useVisionScope();
   const { timeline, model, caseConsole, cameras } = input;
 
   const [held, setHeld] = useState<Held | null>(null);
   const key = timeline.recording
-    ? `${timeline.record?.id}:${model?.version}:${JSON.stringify([caseConsole.input, caseConsole.signals ?? [], cameras])}`
+    ? `${scope.recorded.source.id}:${timeline.record?.id}:${model?.version}:${JSON.stringify([caseConsole.input, caseConsole.signals ?? [], cameras])}`
     : null;
   const stale = !!held && held.key !== key;
 
@@ -85,7 +93,7 @@ export function useRecordedSignals(input: RecordedInput): RecordedBus | null {
 
     if (!scene || !alive()) return;
 
-    const shown = busOf(scene, input);
+    const shown = busOf(scene, input, scope);
     const contract = timeline.scene?.scoring.kase.task.contract;
 
     setHeld({ key: built, bus: shown });
@@ -95,7 +103,7 @@ export function useRecordedSignals(input: RecordedInput): RecordedBus | null {
     void goalVerdicts(workerJudge(contract), scene.trace).then((verdicts) => {
       if (!alive() || !verdicts.length) return;
 
-      const judged = busOf({ ...scene, verdicts }, input);
+      const judged = busOf({ ...scene, verdicts }, input, scope);
 
       judged.seek(shown.frame());
       setHeld({ key: built, bus: judged });

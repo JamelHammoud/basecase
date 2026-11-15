@@ -1,8 +1,9 @@
+import { useVisionScope } from '../cameras/visionScope';
 import { useEffect, useEffectEvent, useRef } from 'react';
 import { readStoredTry, type StoredTry } from '../cases/tryFile';
 import { sha256 } from '../cases/tries';
-import { keepTries, loadSession, noteStoredTry, saveTryVideo } from '../cases/tryStore';
-import { useOperatorCamera } from '../cameras/operator/operatorCamera';
+import { keepTries, loadSession, noteStoredTry } from '../cases/tryStore';
+import { operatorCameraSnapshot, useOperatorCamera } from '../cameras/operator/operatorCamera';
 import { openDataImport } from '../datasets/import/dataImportClient';
 import { connectedFrom } from '../robot/calibrationSession';
 import { readOperateLog } from '../robot/operateLog';
@@ -56,9 +57,13 @@ async function replayed(sim: Simulation, stored: StoredTry, video: VideoSegment 
   try {
     const recording = await job.replay({ model, episode, plan: operatePlan(stored.robot.joints, episode) });
 
-    if (video) await saveTryVideo(stored.id, video.bytes);
-
-    await keepTries([{ stored: operateStored(stored, recording, video), recording }]);
+    await keepTries([
+      {
+        stored: operateStored(stored, recording, video),
+        recording,
+        ...(video ? { videos: [{ camera: 'operator', bytes: video.bytes }] } : {}),
+      },
+    ]);
   } finally {
     job.close();
   }
@@ -66,7 +71,7 @@ async function replayed(sim: Simulation, stored: StoredTry, video: VideoSegment 
 
 export function useOperateTries({ active, sceneId, joints, sim, showToast }: OperateTriesInput) {
   const robot = useRobot();
-  const camera = useOperatorCamera();
+  const camera = useOperatorCamera(useVisionScope().operator.source);
   const sent = useRef('');
   const stream = active && robot.link === 'connected' ? camera.stream : null;
 
@@ -109,7 +114,7 @@ export function useOperateTries({ active, sceneId, joints, sim, showToast }: Ope
   }, [stream]);
 
   useEffect(() => {
-    if (!camera.stream) releaseOperateVideo();
+    if (!camera.stream && !operatorCameraSnapshot().stream) releaseOperateVideo();
   }, [camera.stream]);
 
   useEffect(() => {

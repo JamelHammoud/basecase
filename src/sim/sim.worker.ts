@@ -26,9 +26,10 @@ import { WorldMoves } from './worldMoves';
 import type { WorldChange, WorldLooks } from '../cases/worldSet';
 import { runFalls, type FallPlan, type FallRun } from './fallRuns';
 import { LivePhysics, type SimPhysics } from './livePhysics';
+import type { VisionResult } from '../vision/types';
 
 export type SimRequest =
-  | { type: 'load'; model: SimModel; controller?: Controller }
+  | { type: 'load'; model: SimModel; controller?: Controller; loadId?: number }
   | { type: 'play' }
   | { type: 'pause' }
   | { type: 'reset'; initial?: RobotPoseState }
@@ -48,6 +49,7 @@ export type SimRequest =
   | ({ type: 'run' } & RunRequest)
   | ({ type: 'falls'; id: number } & FallPlan)
   | ({ type: 'routine' } & LiveRoutineInput)
+  | { type: 'vision'; result: VisionResult; ageMs: number }
   | ({ type: 'case' } & LiveCaseInput)
   | { type: 'caseEnd' }
   | { type: 'watch'; watch: WatchInput | null }
@@ -59,7 +61,7 @@ export type SimRequest =
 
 export type SimResponse =
   | ({ type: 'routine' } & LiveUpdate)
-  | { type: 'ready'; nq: number; nu: number; nbody: number }
+  | { type: 'ready'; nq: number; nu: number; nbody: number; loadId?: number }
   | { type: 'error'; message: string; id?: number }
   | { type: 'recorded'; recording: Recording | null }
   | { type: 'scrubbed'; efforts: RecordedEfforts | null }
@@ -82,6 +84,7 @@ export type SimResponse =
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 let mj: MainModule | null = null;
 let engine: SimEngine | null = null;
+let loadGeneration = 0;
 let world: WorldMoves | null = null;
 let looksShown = -1;
 let playing = false;
@@ -225,7 +228,12 @@ async function watch(msg: Msg<'watch'>) {
 }
 
 async function load(msg: Msg<'load'>) {
+  const generation = ++loadGeneration;
+
   mj ??= await loadMujoco();
+
+  if (generation !== loadGeneration) return;
+
   engine?.dispose();
   engine = null;
   live = null;
@@ -246,7 +254,7 @@ async function load(msg: Msg<'load'>) {
 
   const m = engine.model;
 
-  post({ type: 'ready', nq: m.nq, nu: m.nu, nbody: m.nbody });
+  post({ type: 'ready', nq: m.nq, nu: m.nu, nbody: m.nbody, loadId: msg.loadId });
   frame();
 }
 
@@ -367,6 +375,10 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     post({ type: 'fell', id: msg.id, runs: runFalls(mj, engine, msg) });
   },
   routine: startRoutine,
+  vision: (msg) => {
+    live?.acceptVision(msg.result, msg.ageMs);
+    liveCase?.acceptVision(msg.result, msg.ageMs);
+  },
   case: startCase,
   caseEnd: () => {
     liveCase = null;
@@ -388,6 +400,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     frame(true);
   },
   dispose: () => {
+    loadGeneration++;
     playing = false;
     live = null;
     watching = null;

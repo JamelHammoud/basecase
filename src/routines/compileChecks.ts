@@ -1,6 +1,7 @@
 import type { CompileContext } from './compileContext';
 import { checkCondition, leaves } from './compileConditions';
 import { findNode } from './nodes';
+import { routineModelUnavailable } from './vision';
 import type { AskStep, InferStep, Reaction, Resource, Step, TogetherStep, WaitStep } from './schema';
 import { childSequences, forEachStep } from './schema';
 
@@ -24,6 +25,12 @@ function checkDo(ctx: CompileContext, step: Extract<Step, { kind: 'do' }>) {
   if (!same) ctx.fail('holds-mismatch', `${step.skill} holds ${skill.holds.join(' and ')}.`, node);
 }
 
+function checkModelAvailable(ctx: CompileContext, model: string, node: string) {
+  if (!routineModelUnavailable(model, ctx.options.unavailableModels ?? [])) return;
+
+  ctx.fail('model-unavailable', `${ctx.nodeLabel(model)} couldn’t load for ${node}. Run it again.`, node);
+}
+
 function checkInfer(ctx: CompileContext, step: InferStep) {
   const node = ctx.nodeOf(step);
   const model = findNode(step.model);
@@ -33,6 +40,8 @@ function checkInfer(ctx: CompileContext, step: InferStep) {
   if (!model || model.tier !== 'perception') {
     return ctx.fail('unknown-model', `There’s no ${step.model} model to check with.`, node);
   }
+
+  checkModelAvailable(ctx, step.model, node);
 
   if (!model.outputs.includes(step.output.type)) {
     ctx.fail('type-mismatch', `${model.label} doesn’t return ${step.output.type}.`, node);
@@ -106,6 +115,8 @@ function checkWatchers(ctx: CompileContext) {
     else if (!model.outputs.includes(w.publishes.type)) {
       ctx.fail('type-mismatch', `${model.label} doesn’t publish ${w.publishes.type}.`, w.id);
     }
+
+    checkModelAvailable(ctx, w.model, w.id);
 
     if (w.rateHz < PERCEPTION_HZ.min || w.rateHz > PERCEPTION_HZ.max) {
       ctx.fail('rate-out-of-range', 'Watchers run between 1 and 30 times a second.', w.id);

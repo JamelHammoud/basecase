@@ -1,5 +1,6 @@
+import { useVisionScope } from '../cameras/visionScope';
 import { useEffect } from 'react';
-import { teachGestures, useOperatorCamera } from '../cameras/operator/operatorCamera';
+import { operatorCameraSnapshot, teachGestures, useOperatorCamera } from '../cameras/operator/operatorCamera';
 import { TeachGestureSheet } from '../components/gestures/TeachGestureSheet';
 import { closeTeachGesture, useTeachGestureOpen } from '../components/gestures/teachGestureStore';
 import type { ProjectSettings } from '../types/robotics';
@@ -13,21 +14,24 @@ interface TeachGestureHostProps {
 
 export function TeachGestureHost({ active, cases, project }: TeachGestureHostProps) {
   const open = useTeachGestureOpen();
-  const cameraOpen = useOperatorCamera().open;
+  const { source } = useVisionScope().operator;
+  const cameraOpen = useOperatorCamera(source).open;
   const id = cases.active?.id;
   const stored = project.cases?.find((c) => c.id === id)?.gestures;
 
   useEffect(() => {
-    if (!active) return;
+    if (!active || !cameraOpen) return;
 
     teachGestures((stored ?? []).filter((g) => g.examples.length));
 
-    return () => teachGestures([]);
-  }, [active, stored]);
+    return () => {
+      if (operatorCameraSnapshot(source).open) teachGestures([]);
+    };
+  }, [active, stored, cameraOpen, source]);
 
   useEffect(() => {
-    if (!cameraOpen) closeTeachGesture();
-  }, [cameraOpen]);
+    if (active && !cameraOpen) closeTeachGesture();
+  }, [active, cameraOpen]);
 
   if (!open || !active || !cameraOpen || !cases.active) return null;
 

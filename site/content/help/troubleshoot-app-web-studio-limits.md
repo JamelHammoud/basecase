@@ -62,3 +62,5 @@ If you clear the browser's data and a scene goes with it, you can't get that sce
 ## What works without the desktop app
 
 Designing, Checks, the bill of materials and prices, Print mode's plate layout and 3MF export all run in your browser. Saving a scene to share works the same way in the web studio and the desktop app. For the steps, see [Share a scene](/help/share-a-scene).
+
+Camera detection also runs in your browser. Its first use downloads the model and saves a checked copy in browser storage. Clearing site data removes that copy too. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).

@@ -1,3 +1,4 @@
+import { VisionScopeProvider } from './cameras/VisionScopeProvider';
 import { memo } from 'react';
 import { CanvasCard } from './workspace/CanvasCard';
 import { CanvasContextMenu } from './workspace/CanvasContextMenu';
@@ -73,7 +74,15 @@ function SceneWorkspaceImpl(props: SceneWorkspaceProps) {
   );
 }
 
+function ScopedWorkspace(props: SceneWorkspaceProps) {
+  return (
+    <VisionScopeProvider scene={props.workspaceId}>
+      <SceneWorkspaceImpl {...props} />
+    </VisionScopeProvider>
+  );
+}
+
 export const SceneWorkspace = memo(
-  SceneWorkspaceImpl,
+  ScopedWorkspace,
   (prev, next) => !prev.active && !next.active && prev.workspaceId === next.workspaceId && prev.seed === next.seed,
 );

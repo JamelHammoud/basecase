@@ -1,10 +1,13 @@
 import type { SimModel } from '../sim/mjcfTypes';
 import { sourcedMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
+import { errorMessage } from '../utils/errorMessage';
 import type { ScenePart } from '../types/robotics';
 import type { FeedEvent, FeedRequest } from './feedProtocol';
 import { LARGE_SIZE, TILE_SIZE } from './liveStage';
 import type { CameraView } from './views';
+import * as defaultVision from './visionSession';
+import type { CameraVision } from './scopedVision';
 
 export type Canvases = Map<string, HTMLCanvasElement>;
 
@@ -62,6 +65,10 @@ export class LiveFeed {
 
   private streamId = 0;
 
+  private stopped = false;
+
+  private readonly stopVision: () => void;
+
   private sceneTicket = 0;
 
   private sent: { parts: ScenePart[]; world: ScenePart[]; model?: SimModel | null; views?: string } = {
@@ -69,10 +76,31 @@ export class LiveFeed {
     world: [],
   };
 
-  constructor(canvases: Canvases, onFrames: (frames: number) => void) {
+  constructor(
+    canvases: Canvases,
+    onFrames: (frames: number) => void,
+    vision: Pick<
+      CameraVision,
+      'connectVisionFrames' | 'onVisionAssignments' | 'visionAssignments' | 'setCameraVisionError'
+    > = defaultVision,
+  ) {
+    const { connectVisionFrames, onVisionAssignments, visionAssignments } = vision;
     const receive = feedReceiver(canvases, this.streams, onFrames);
 
     this.worker.onmessage = ({ data }: MessageEvent<FeedEvent>) => receive(data);
+    this.stopVision = onVisionAssignments(() => this.post({ type: 'vision', assignments: visionAssignments() }));
+    void connectVisionFrames()
+      .then((port) => {
+        if (this.stopped) return port.close();
+
+        this.post({ type: 'vision-port', port, timeOrigin: performance.timeOrigin }, [port]);
+        this.post({ type: 'vision', assignments: visionAssignments() });
+      })
+      .catch((error: unknown) => {
+        if (this.stopped) return;
+
+        for (const { camera } of visionAssignments()) vision.setCameraVisionError(camera, errorMessage(error));
+      });
   }
 
   link(): MessagePort {
@@ -133,6 +161,8 @@ export class LiveFeed {
   }
 
   dispose(): void {
+    this.stopped = true;
+    this.stopVision();
     this.worker.terminate();
     this.streams.clear();
     this.ids.clear();

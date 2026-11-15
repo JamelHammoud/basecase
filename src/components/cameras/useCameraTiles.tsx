@@ -3,6 +3,7 @@ import { enlargeCameraView, useCameraViewsState } from '../../cameras/cameraView
 import { useCameraFeed } from '../../cameras/useCameraFeed';
 import { cameraViews, stripParts, type CameraView } from '../../cameras/views';
 import { cameraStream, type CameraStream } from '../../cameras/cameraStream';
+import { useVisionScope } from '../../cameras/visionScope';
 import { ContextMenu, type ContextMenuEntry } from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
 import type { ScenePart } from '../../types/robotics';
@@ -30,18 +31,23 @@ const shownWorld = (world: ScenePart[]) =>
   world.some((p) => p.visible === false) ? world.filter((p) => p.visible !== false) : world;
 
 export function useCameraTiles(input: CameraTilesInput): CameraTiles {
+  const scope = useVisionScope();
+  const { recordedCanvasRef, streamRecordedCamera, useRecordedCameraViews } = scope.playback;
   const { parts, sim, cameras, patchPart, active, onFrames } = input;
   const { enlarged } = useCameraViewsState();
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const solid = stripParts(parts);
-  const views = cameraViews(solid, sim.worldParts, cameras.cameras);
+  const recorded = useRecordedCameraViews();
+  const recordedKeys = new Set(recorded.map((view) => view.key));
+  const simulated = cameraViews(solid, sim.worldParts, cameras.cameras).filter((view) => !recordedKeys.has(view.key));
+  const views = [...recorded, ...simulated];
   const feed = useCameraFeed({
     active: active(views),
     parts: solid,
     world: shownWorld(sim.worldParts),
     model: sim.model,
-    views,
+    views: simulated,
     enlarged,
     connectCameras: sim.connectCameras,
     onFrames: (frames) => onFrames?.(frames),
@@ -64,14 +70,29 @@ export function useCameraTiles(input: CameraTilesInput): CameraTiles {
     views,
     tile: (view) => ({
       view,
+      vision: recordedKeys.has(view.key) ? scope.recorded : scope.simulated,
       large: enlarged === view.key,
       renaming: renaming === view.key,
       onRename: (name) => rename(view, name),
-      canvasRef: feed.canvasRef(view.key),
+      canvasRef: recordedKeys.has(view.key)
+        ? (canvas) => recordedCanvasRef(view.key, canvas)
+        : feed.canvasRef(view.key),
       onToggleSize: () => enlargeCameraView(view.key),
-      onMenu: (x, y) => setMenu({ x, y, items: cameraMenu(view, actions) }),
+      onMenu: (x, y) => {
+        if (!view.recorded) setMenu({ x, y, items: cameraMenu(view, actions) });
+      },
     }),
     menu: menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />,
-    stream: cameraStream({ views, feed: feed.stream }),
+    stream: cameraStream({
+      views,
+      feed: (stream) =>
+        recordedKeys.has(stream.key)
+          ? streamRecordedCamera(
+              stream.key,
+              { width: stream.size[0], height: stream.size[1], fps: stream.fps },
+              stream.onFrame,
+            )
+          : feed.stream(stream),
+    }),
   };
 }

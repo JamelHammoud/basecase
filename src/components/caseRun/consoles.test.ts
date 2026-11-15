@@ -1,3 +1,4 @@
+import { createVisionScope, VisionScopeContext } from '../../cameras/visionScope';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
@@ -31,9 +32,10 @@ const runnable = (raw: Record<string, unknown>) => {
   };
 };
 
-function context(caseConsole: CaseConsole): PanelContext {
+function context(caseConsole: CaseConsole, visionScope = createVisionScope('console-fixture')): PanelContext {
   const bus = createSignalBus(caseConsole.signals);
   const views = cameraViews(arm.parts, []);
+  const vision = visionScope.simulated;
 
   bus.push({
     time: 1,
@@ -76,6 +78,7 @@ function context(caseConsole: CaseConsole): PanelContext {
         views,
         tile: (view) => ({
           view,
+          vision,
           large: false,
           renaming: false,
           onRename: () => undefined,
@@ -92,18 +95,23 @@ function context(caseConsole: CaseConsole): PanelContext {
 }
 
 function render(caseConsole: CaseConsole) {
-  const ctx = context(caseConsole);
+  const visionScope = createVisionScope('console-fixture');
+  const ctx = context(caseConsole, visionScope);
   const layout = consoleLayout(caseConsole, { desktop: true, studio: true });
   const html = (side: 'before' | 'after') =>
     layout[side]
       .map((area) =>
         renderToStaticMarkup(
-          createElement(CaseRunArea, {
-            area,
-            side,
-            ctx,
-            header: createElement(ModeHeader, { title: kase.name, onDone: () => undefined }),
-          }),
+          createElement(
+            VisionScopeContext,
+            { value: visionScope },
+            createElement(CaseRunArea, {
+              area,
+              side,
+              ctx,
+              header: createElement(ModeHeader, { title: kase.name, onDone: () => undefined }),
+            }),
+          ),
         ),
       )
       .join('');

@@ -1,6 +1,7 @@
 ---
 title: Arrange a Case's console
 date: 2026-11-14
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 5
@@ -44,5 +45,7 @@ Basecase saves the layout with the Case in your `.basecase` file, and a robot yo
 A card can be 200 to 720 pixels wide. A console holds up to six cards, including the canvas, and up to 24 panels. If a change would break the layout, Basecase keeps the layout as it was and shows you why.
 
 You can arrange the console while a try runs, and the try keeps running. You can't change the console while a try plays back, or in a robot shared in the browser.
+
+Camera panels show detection boxes with each object's class and score. The boxes stay out of saved camera images and videos. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see) for the camera controls and a detection example.
 
 The agent reads your layout along with the scene. It also builds the code panels, such as a joystick or a piano. See [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).

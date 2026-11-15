@@ -61,7 +61,7 @@ function cameraCommands({ core }: CommandInputs): Command[] {
 }
 
 function gestureCommands({ core }: CommandInputs): Command[] {
-  if (!operatorCameraSnapshot().open || !core.simTraining.cases.active) return [];
+  if (!operatorCameraSnapshot(core.vision.operator.source).open || !core.simTraining.cases.active) return [];
 
   return [
     {

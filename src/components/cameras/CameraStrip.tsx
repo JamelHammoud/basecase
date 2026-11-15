@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { toggleCameraViews, useCameraViewsState } from '../../cameras/cameraViewsStore';
 import { OPERATOR_KEY, useOperatorCamera } from '../../cameras/operator/operatorCamera';
 import { hasCameraViews } from '../../cameras/views';
+import { useVisionScope } from '../../cameras/visionScope';
 import { ChevronDownIcon, ChevronUpIcon, IconButton } from '../../design-system';
 import { CameraTile } from './CameraTile';
 import { OperatorTile } from './OperatorTile';
@@ -12,7 +13,8 @@ const ic = 'w-4 h-4';
 
 export const CameraStrip: React.FC<Omit<CameraTilesInput, 'active'>> = (props) => {
   const { expanded, enlarged } = useCameraViewsState();
-  const operator = useOperatorCamera();
+  const scope = useVisionScope();
+  const operator = useOperatorCamera(scope.operator.source);
   const present = operator.open || hasCameraViews(props.parts, props.cameras.cameras, props.sim.status !== 'off');
   const frameCounter = useRef<HTMLDivElement | null>(null);
   const tiles = useCameraTiles({

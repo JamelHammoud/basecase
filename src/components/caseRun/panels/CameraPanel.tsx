@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { use } from 'react';
 import { OPERATOR_KEY, useOperatorCamera } from '../../../cameras/operator/operatorCamera';
+import { VisionScopeContext } from '../../../cameras/visionScope';
 import { CameraTile } from '../../cameras/CameraTile';
 import { OperatorTile } from '../../cameras/OperatorTile';
 import type { PanelViewProps } from '../panelContext';
@@ -7,7 +8,8 @@ import { Titled } from './PanelTitle';
 
 export const CameraPanel: React.FC<PanelViewProps<'camera'>> = ({ panel, ctx }) => {
   const cameras = ctx.studio?.cameras;
-  const operator = useOperatorCamera();
+  const scope = use(VisionScopeContext);
+  const operator = useOperatorCamera(scope?.operator.source ?? null);
 
   if (!cameras) return null;
 

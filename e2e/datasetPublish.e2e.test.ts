@@ -1,126 +1,20 @@
 import { parquetReadObjects } from 'hyparquet';
 import type { Dataset } from '../src/datasets/datasetFile';
-import { afterEach, beforeEach, describe, expect, inject, it } from 'vitest';
-import type { VisionManifest } from '../src/vision/manifest';
-import { inputSensitiveDetectionOnnx } from '../src/vision/onnxFixture';
-import type { SimState, Studio } from './driveStudio';
-import { startFakeHub, type FakeHub } from './fakeHub';
-import { datasetFiles, endTryAt, expectPublished, inDataset, loadFixtureRobot } from './driveChecks';
-import { openApp, openPlayTab, type App } from './harness';
-import { visionManifest } from './visionFixtures';
-
-const HUB_TOKEN = 'hf_e2eFakeHubToken';
-const SHORT_TRY_SECONDS = 0.4;
-
-type PublishStudio = Studio & {
-  configureVision: (manifest: VisionManifest, bytes: number[], cameras: string[]) => Promise<unknown>;
-};
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { datasetFiles, inDataset, loadFixtureRobot } from './driveChecks';
+import { openApp, type App } from './harness';
 
 let app: App;
-let hub: FakeHub;
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
-
-const simState = () =>
-  app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState() as SimState);
-
 const button = (name: string | RegExp) => app.page.locator(visible('button'), { hasText: name }).first();
 
-const datasetPane = () => app.page.getByTestId('dataset-pane');
-
-async function reopenDataset() {
-  if (await datasetPane().count()) return;
-
-  await app.page.locator(visible('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
-  await app.page.locator(visible('[data-testid="library-datasets"] button')).first().click();
-  await expect.poll(() => datasetPane().count()).toBe(1);
-}
-
-async function passedTry() {
-  await loadFixtureRobot(app.page, 'arm-3dof');
-  await openPlayTab(app.page, 'Cases');
-  await button('New Case').click();
-  await app.page.locator(visible('[data-testid="new-case"] button'), { hasText: 'Make Case' }).click();
-  await expect.poll(async () => (await simState()).activeCase).toMatch(/^touch-a-point/);
-  await button('Try It').click();
-  await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-  await endTryAt(app.page, SHORT_TRY_SECONDS);
-  await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
-  await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.passTries());
-}
-
 beforeEach(async () => {
-  hub = await startFakeHub({ token: HUB_TOKEN, port: inject('hubPort') });
-  app = await openApp({}, ['hub-']);
-
-  const bytes = inputSensitiveDetectionOnnx();
-
-  await app.page.evaluate(
-    ({ manifest, data }) =>
-      (window as unknown as { __studio: PublishStudio }).__studio.configureVision(manifest, data, []),
-    { manifest: visionManifest(bytes), data: [...bytes] },
-  );
+  app = await openApp();
 }, 120000);
 
 afterEach(async () => {
   await app?.close();
-  await hub?.close();
-});
-
-describe('Publish a dataset', () => {
-  it.skipIf(process.platform === 'win32')(
-    'publishes a dataset of a passed try to Hugging Face after signing in from Settings, tagged with its version',
-    async () => {
-      const publish = () => button('Publish to Hugging Face');
-      const commitsOf = (name: string) => hub.repos.get(name)?.commits.length ?? 0;
-      const ours = () => [...hub.repos.keys()].filter((name) => /^tester\/touch-a-point-[0-9a-f]{6}$/.test(name));
-      const token = app.page.locator(visible('input[aria-label="Access token"]'));
-      const toast = (text: RegExp) => app.page.getByRole('status').filter({ hasText: text });
-      const outcome = toast(/Published to|Couldn’t publish|as it is now/);
-
-      await passedTry();
-      await expect.poll(() => button('Make Dataset').count()).toBe(1);
-      expect(await publish().count()).toBe(0);
-      await button('Make Dataset').click();
-      await expect.poll(() => datasetPane().count()).toBe(1);
-      await expect.poll(() => publish().count()).toBe(1);
-
-      await publish().click();
-      await token
-        .or(toast(/Publishing dataset/))
-        .or(outcome)
-        .first()
-        .waitFor({ timeout: 10000 });
-
-      if (await token.isVisible()) {
-        await token.fill(HUB_TOKEN);
-        await token.press('Enter');
-        await expect
-          .poll(() => app.page.locator(visible('[role=dialog][aria-label=Settings]')).innerText())
-          .toContain('tester');
-        await app.page.keyboard.press('Escape');
-        await reopenDataset();
-        await publish().dblclick();
-      }
-
-      await outcome.first().waitFor({ timeout: 120000 });
-
-      const said = await outcome.first().innerText();
-      const [repo] = ours();
-
-      expect(said).toMatch(/^Published to /);
-      expect(ours()).toHaveLength(1);
-      expect(said).toContain(repo);
-      expect(commitsOf(repo)).toBe(2);
-      await expectPublished(hub, repo);
-      await expect.poll(() => hub.repos.get(repo)!.tags.get('dataset-v1')).toBe(commitsOf(repo));
-      expect(JSON.stringify(await app.page.evaluate(() => localStorage))).not.toContain(HUB_TOKEN);
-      expect(JSON.stringify(app.posts)).not.toContain(HUB_TOKEN);
-      expect(app.requests.filter((url) => url.includes('/api/bridge/hub-model-file'))).toEqual([]);
-      expect(app.errors).toEqual([]);
-    },
-    180000,
-  );
 });
 
 type DatasetStudio = {

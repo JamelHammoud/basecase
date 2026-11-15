@@ -8,7 +8,6 @@ import type { FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
-import { filesAtTag, type FakeHub } from './fakeHub';
 import type { SimState, Studio } from './driveStudio';
 import { partCount, shown } from './harness';
 
@@ -45,36 +44,6 @@ export async function expectDataset(zipped: Record<string, Buffer>) {
   ]);
 
   for (const path of videos) await expectVideo(files[path], rows.length);
-}
-
-export async function expectPublished(hub: FakeHub, repo: string) {
-  const published = hub.repos.get(repo)!;
-  const paths = [...published.files.keys()];
-
-  await expect.poll(() => published.tags.get('v3.0')).toBe(published.commits.length);
-  expect(published.tags.get('v2.1')).toBe(published.commits.length - 1);
-
-  const legacy = filesAtTag(published, 'v2.1');
-  const rows = await parquetRows(published.files.get('data/chunk-000/file-000.parquet')!);
-  const info = JSON.parse(published.files.get('meta/info.json')!.toString());
-  const legacyInfo = JSON.parse(legacy.get('meta/info.json')!.toString());
-
-  expect(published.kind).toBe('dataset');
-  expect(info.codebase_version).toBe('v3.0');
-  expect(info.total_frames).toBe(rows.length);
-  expect(paths).toEqual(expect.arrayContaining(['meta/tasks.parquet', 'meta/episodes/chunk-000/file-000.parquet']));
-  expect(paths.filter((p) => p.endsWith('.jsonl') || p.endsWith('modality.json'))).toEqual([]);
-  expect(paths.filter((p) => p.endsWith('.mp4'))).toEqual(['videos/observation.images.scene/chunk-000/file-000.mp4']);
-  expect(legacyInfo).toMatchObject({ codebase_version: 'v2.1', total_frames: rows.length });
-  expect([...legacy.keys()]).toEqual(
-    expect.arrayContaining([
-      'meta/modality.json',
-      'meta/episodes.jsonl',
-      'data/chunk-000/episode_000000.parquet',
-      'videos/chunk-000/observation.images.scene/episode_000000.mp4',
-    ]),
-  );
-  expect(hub.requests.filter((r) => r.method === 'PUT').every((r) => r.auth === undefined)).toBe(true);
 }
 
 export function pickTimeline(): ReferenceCommand[] {

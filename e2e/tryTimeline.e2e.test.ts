@@ -7,6 +7,7 @@ let app: App;
 
 interface SimState {
   drive: string;
+  playing: boolean;
   activeCase: string | null;
   tries: Array<{ passed: boolean; margin: number }>;
   selected: string[];
@@ -81,6 +82,7 @@ describe('Try timeline', () => {
     await openTouchTheDots();
     await button('Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+    expect((await simState()).playing).toBe(true);
     await holdKey('w', 800);
     await button('Stop Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);

@@ -38,7 +38,10 @@ it('posts saved contact evidence when seeking and no evidence for legacy recordi
     const legacy = { ...recording, contacts: undefined, contactOffsets: undefined };
 
     expect(frameContacts(recording, 0).length).toBeGreaterThan(0);
-    await send({ type: 'load', model });
+    await send({ type: 'load', model, loadId: 42 });
+    expect(replies.map((reply) => reply.type)).toEqual(['world', 'frame', 'ready']);
+    expect(replies.find((reply) => reply.type === 'frame')?.playing).toBe(false);
+    expect(replies.at(-1)).toMatchObject({ type: 'ready', loadId: 42 });
 
     for (const kept of [recording, empty, legacy]) {
       await send({ type: 'scrub', recording: kept, efforts: { peaks: [], forces: [] } });

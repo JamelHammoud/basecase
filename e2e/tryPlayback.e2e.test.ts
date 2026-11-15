@@ -4,6 +4,7 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT, type ScenePart } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
 import { openApp, partCount, shown, type App } from './harness';
+import { endTryAt } from './driveChecks';
 
 let app: App;
 
@@ -20,8 +21,9 @@ interface Timeline {
 interface SimState {
   stats: { time: number } | null;
   drive: string;
+  playing: boolean;
   activeCase: string | null;
-  tries: unknown[];
+  tries: Array<{ seconds: number }>;
   timeline: Timeline | null;
   joints: Record<string, { position: number }>;
 }
@@ -124,14 +126,11 @@ describe('Playing a try through its console', () => {
 
       await page.evaluate(() => void (window as unknown as Window).__studio.referenceTry());
       await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+      expect((await simState()).playing).toBe(true);
 
-      const started = (await simState()).stats?.time ?? 0;
-
-      await expect
-        .poll(async () => ((await simState()).stats?.time ?? 0) - started, { timeout: 60000 })
-        .toBeGreaterThan(3);
-      await panel('tries').locator('button', { hasText: 'Stop Try' }).first().click();
+      await endTryAt(page, 3.1);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+      expect((await simState()).tries[0].seconds).toBeGreaterThan(3);
       expect(await plot().getAttribute('data-playhead')).toBeNull();
 
       await panel('tries').getByTestId('try-row').first().click();

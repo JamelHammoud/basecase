@@ -265,8 +265,8 @@ async function load(msg: Msg<'load'>) {
 
   const m = engine.model;
 
-  post({ type: 'ready', nq: m.nq, nu: m.nu, nbody: m.nbody, loadId: msg.loadId });
   frame();
+  post({ type: 'ready', nq: m.nq, nu: m.nu, nbody: m.nbody, loadId: msg.loadId });
 }
 
 function record(msg: Msg<'record'>) {

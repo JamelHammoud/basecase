@@ -8,7 +8,7 @@ In New Case, world choices have no tooltip repeating their visible name. Cancel 
 
 A Case is a world with one to four robot slots, controls and goals that any compatible robots can enter. It lives in `src/cases/`.
 
-Pending try startup belongs to the saved Case object in `project.cases`. Validation creates a new parsed Case on each render, so that parsed object cannot own the startup lease. Editing or switching the saved Case still cancels the pending start.
+Stored project Case records are immutable. Pending try startup belongs to the saved Case object in `project.cases`, which owns the startup lease. `readCases` keeps each validated Case in a weak cache keyed by its source record. Workspace renders and edits to other Cases retain the active Case's identity. Replacing a record, even under the same id, validates it again and changes that identity. The startup lease survives its own phase and simulator updates, while Stop, a changed, switched or closed Case, and unmount still invalidate pending compilation, camera preparation and model loading. Keying the lease only by the Case id would let a replaced Case finish a stale startup.
 
 - **A Case is the test.** A Skill (§8i) is a solution to it.
 - **Case objects never edit parts.** They render on their own layer, and stay out of the BOM, Build Check and picking.

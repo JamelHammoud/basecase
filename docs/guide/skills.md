@@ -58,6 +58,8 @@ The independent verifier, on the WASM `SimEngine`. `runArena({ mj, model, contra
 
 ### Feasibility, Tier 1 (`feasibility.ts`)
 
+Stance weight sharing and the prompt solver's `anythingIk.ts` use `utils/matrixScans.ts` for pivot selection. IK also accumulates back-substitution terms through it. Both scan dense rows without copying tails, preserving arithmetic order and their existing zero-pivot behavior. `denseSolves.test.ts` checks offset force balance, empty and single-foot support, and planted targets on three- and six-joint MuJoCo arms with no tail copies.
+
 `checkFeasibility(mj, model, task)` runs only checks that a model can settle, each marked `exact`, `estimate` or `sampled`, with plain messages:
 
 - **Holding torque** from `mj_inverse` (constraints off, zero velocity and acceleration) plus foot and payload loads by virtual work. Stand checks the start pose and a crouch 15% lower (feet held by IK), with the weight shared over the feet by a minimum-norm force and moment balance. A joint fails above 0.60 of its torque, the Stance limit in the Build checks (§8b).

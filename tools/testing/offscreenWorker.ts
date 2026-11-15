@@ -55,17 +55,22 @@ export async function openOffscreenWorker(modulePath: string, exported: string):
 
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
 
-  const browser = await chromium.launch({
-    channel: 'chrome',
-    headless: true,
-    args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'],
-  });
+  let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
   const close = async () => {
-    await browser.close();
-    server.close();
+    try {
+      await browser?.close();
+    } finally {
+      server.close();
+    }
   };
 
   try {
+    browser = await chromium.launch({
+      channel: 'chrome',
+      headless: true,
+      args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'],
+    });
+
     const page = await browser.newPage();
     const address = server.address();
 

@@ -26,8 +26,8 @@ export const kitchenCameras: DatasetCamera[] = [
   },
 ];
 
-export async function kitchenView(splat = true): Promise<ImportedWorldView> {
-  const world = await readWorldFiles(splat ? [kitchenCollider(), kitchenSplat()] : [kitchenCollider()]);
+export async function kitchenView(splat = true, points = 8192): Promise<ImportedWorldView> {
+  const world = await readWorldFiles(splat ? [kitchenCollider(), kitchenSplat(points)] : [kitchenCollider()]);
 
   if (world.kind !== 'mesh') throw new Error('Expected the kitchen mesh.');
 

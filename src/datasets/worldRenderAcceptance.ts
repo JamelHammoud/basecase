@@ -7,7 +7,15 @@ import { createStudioScene } from '../three/thumbnailStage';
 import { renderDataset } from './buildDataset';
 import { datasetFiles } from './lerobotExport';
 import { placeCamera } from './cameras';
-import { BACKGROUND, createRenderStage, floor, posed, renderView, videoCodec } from './renderVideos';
+import {
+  BACKGROUND,
+  createRenderStage,
+  disposeRenderStage,
+  floor,
+  posed,
+  renderView,
+  videoCodec,
+} from './renderVideos';
 import type { RenderStage } from './renderVideos';
 import { kitchenCameras, kitchenView, stationaryEpisode } from './worldRenderFixture';
 
@@ -72,7 +80,7 @@ let current: RenderStage | null = null;
 let labels: TrainingPasses | null = null;
 let imported: ReturnType<typeof kitchenView> | null = null;
 
-const capture = () => (imported ??= kitchenView());
+const capture = () => (imported ??= kitchenView(true, 1024));
 
 async function stageForCheck() {
   current ??= await createRenderStage([], world, undefined, { size: [128, 96] });
@@ -167,33 +175,31 @@ export async function worldRenderDepth() {
 }
 
 export async function worldRenderVideos() {
-  const stage = await reset();
+  const room = await capture();
+  const stage = await createRenderStage([], [], undefined, { size: [128, 96], imported: room });
   const episode = stationaryEpisode();
 
-  stage.renderer.setSize(640, 480, false);
-  stage.ground.visible = false;
-  stage.world.forEach((part) => {
-    part.group.visible = false;
-  });
-  await stage.captured.set(await capture());
-
-  return datasetFiles(
-    await renderDataset(
-      stage,
-      {
-        name: 'kitchen',
-        robotType: 'fixture',
-        parts: [],
-        world: [],
-        imported: await capture(),
-        model: episode.model,
-        cameras: kitchenCameras,
-        episodes: [{ recording: episode.recording, task: '', source: {} }],
-        source: {},
-      },
-      await videoCodec(),
-    ),
-  );
+  try {
+    return await datasetFiles(
+      await renderDataset(
+        stage,
+        {
+          name: 'kitchen',
+          robotType: 'fixture',
+          parts: [],
+          world: [],
+          imported: room,
+          model: episode.model,
+          cameras: kitchenCameras,
+          episodes: [{ recording: episode.recording, task: '', source: {} }],
+          source: {},
+        },
+        await videoCodec(),
+      ),
+    );
+  } finally {
+    disposeRenderStage(stage);
+  }
 }
 
 const checks = {

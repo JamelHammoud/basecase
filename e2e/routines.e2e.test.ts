@@ -44,12 +44,75 @@ async function loadRobot(id: string) {
   await expect.poll(() => partCount(app.page)).toBe(robot.parts.length);
 }
 
+async function createRoutineWithDrive() {
+  const { page } = app;
+
+  await loadRobot('rover-diff');
+  await openPlayTab(page, 'Routines');
+  await page.locator(visible('button'), { hasText: 'New Routine' }).first().click();
+  await expect.poll(async () => (await routineState()).routine?.requires).toEqual(['wheels']);
+  await inFlow('[data-insert]').click();
+  await page.getByRole('menuitem', { name: 'Drive' }).click();
+  await expect.poll(mainSteps).toEqual(['drive']);
+}
+
 beforeAll(async () => {
   app = await openApp();
 }, 120000);
 
 afterAll(async () => {
   await app?.close();
+});
+
+describe('Routines by hand', () => {
+  it('renames a Routine and adds and deletes a step through the keyboard', async () => {
+    const { page } = app;
+
+    await createRoutineWithDrive();
+    await inFlow('button[aria-haspopup="menu"]:not([data-insert])').click();
+    await page.getByRole('menuitem', { name: 'Rename' }).click();
+    await page.getByLabel('Routine name').fill('Patrol');
+    await page.getByLabel('Routine name').press('Enter');
+    await expect.poll(async () => (await routineState()).routine?.name).toBe('Patrol');
+    await inFlow('button[aria-label="Add step"]:not([data-insert])').click();
+    await expect.poll(() => page.evaluate(() => document.activeElement?.textContent)).toBe('Drive');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await expect.poll(mainSteps).toEqual(['drive', 'stop']);
+    await inFlow('[data-flow-node="stop"]').click();
+    await page.keyboard.press('Backspace');
+    await expect.poll(mainSteps).toEqual(['drive']);
+    await page.locator(visible('button'), { hasText: 'Undo' }).first().click();
+    await expect.poll(mainSteps).toEqual(['drive', 'stop']);
+    expect(app.errors).toEqual([]);
+  });
+
+  it('undoes field edits through the title bar and keyboard', async () => {
+    const { page } = app;
+    const titleUndo = page.locator('button[aria-label="Undo"]');
+    const titleRedo = page.locator('button[aria-label="Redo"]');
+    const firstDistance = async () => {
+      const step = (await routineState()).routine?.base.onTimeout[0];
+
+      return step && 'move' in step ? step.move?.distance : undefined;
+    };
+
+    await createRoutineWithDrive();
+    await expect.poll(firstDistance).toBe(1);
+    await page.getByLabel('Distance').fill('0.9');
+    await page.getByLabel('Distance').press('Enter');
+    await expect.poll(firstDistance).toBe(0.9);
+    await expect.poll(() => titleUndo.isEnabled()).toBe(true);
+    await titleUndo.click();
+    await expect.poll(firstDistance).toBe(1);
+    await titleRedo.click();
+    await expect.poll(firstDistance).toBe(0.9);
+    await inFlow('[data-flow-node="drive"]').click();
+    await page.keyboard.press('ControlOrMeta+z');
+    await expect.poll(firstDistance).toBe(1);
+    expect(app.errors).toEqual([]);
+  });
 });
 
 describe('Hand-offs', () => {

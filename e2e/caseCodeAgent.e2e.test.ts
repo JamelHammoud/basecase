@@ -16,11 +16,20 @@ interface SimState {
 type Studio = {
   simState: () => SimState;
   load: (r: unknown) => void;
+  agentRequest: (kind: string, payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
 };
 
 const simState = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState());
 
+const agentRequest = (kind: string, payload: Record<string, unknown>) =>
+  app.page.evaluate(([k, p]) => (window as unknown as { __studio: Studio }).__studio.agentRequest(k, p), [
+    kind,
+    payload,
+  ] as const);
+
 const panel = (id: string) => app.page.locator(shown(`[data-panel="${id}"]`));
+
+const remote = () => app.page.frameLocator('[data-code-panel="remote"]');
 
 const rightTabs = () => app.page.locator(shown('[role="tablist"][aria-label="Inspector"] [role="tab"]'));
 
@@ -28,6 +37,21 @@ const composer = () => app.page.locator(shown('aside textarea')).last();
 
 const sentPrompt = () =>
   (app.posts.find((p) => p.route === 'acp-prompt')?.body as { promptText?: string } | undefined)?.promptText;
+
+const RECORDED_FIRST_WRITE = {
+  panel: 'remote',
+  title: 'Remote',
+  place: { side: 'left', size: 280 },
+  source: `<div style="display:grid;gap:var(--bc-gap);padding:var(--bc-inset)">
+  <button data-move="wave">Wave</button>
+</div>
+<script>
+document.querySelector('[data-move="wave"]').addEventListener('click', () => basecase.event('wave'));
+console.log('remote ready');
+</script>`,
+};
+
+const BROKEN_REVISION = { panel: 'remote', source: '<button>Sit</button>\n<script>\nconst = 1;\n</script>' };
 
 function roverScene() {
   const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
@@ -57,7 +81,7 @@ const stillTrying = async () => {
   return state.drive === 'on' && state.tries.length === 0;
 };
 
-async function startTry() {
+async function openCase() {
   const { page } = app;
   const scene = roverScene();
 
@@ -69,6 +93,11 @@ async function startTry() {
   await page.keyboard.press('Meta+k');
   await page.keyboard.type('Run Case');
   await page.keyboard.press('Enter');
+  await expect.poll(() => panel('tries').count()).toBe(1);
+}
+
+async function startTry() {
+  await openCase();
   await panel('tries').locator('button', { hasText: 'Try It' }).first().click();
   await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
 }
@@ -82,6 +111,27 @@ afterEach(async () => {
 });
 
 describe('the agent beside a running Case', () => {
+  it('mounts a written panel, reports a broken revision and restores the earlier frame with ⌘Z', async () => {
+    await openCase();
+
+    const first = await agentRequest('write_case_code', RECORDED_FIRST_WRITE);
+
+    expect(first).toMatchObject({ ok: true, case: 'rover-remote', panel: 'remote', running: true, loaded: true });
+    expect(first).toMatchObject({ errors: [], refused: [], logs: ['remote ready'] });
+    await expect.poll(() => remote().getByRole('button', { name: 'Wave' }).count()).toBe(1);
+
+    const broken = await agentRequest('write_case_code', BROKEN_REVISION);
+
+    expect(broken).toMatchObject({ ok: true, loaded: false, errors: [{ line: 3 }] });
+    await expect.poll(() => panel('remote').getByTestId('code-failed').count()).toBe(1);
+
+    await app.page.keyboard.press('Meta+z');
+    await expect.poll(() => panel('remote').getByTestId('code-failed').count()).toBe(0);
+    await expect.poll(() => remote().getByRole('button', { name: 'Sit' }).count()).toBe(0);
+    await expect.poll(() => remote().getByRole('button', { name: 'Wave' }).count()).toBe(1);
+    expect(await simState()).toMatchObject({ activeCase: 'rover-remote', drive: 'off', tries: [] });
+  });
+
   it('opens the agent beside a running Case with ⌘I, and a message there is about that Case', async () => {
     await startTry();
     await app.page.keyboard.press('Meta+i');

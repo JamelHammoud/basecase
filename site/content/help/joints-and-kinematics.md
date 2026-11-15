@@ -55,6 +55,7 @@ Each joint has these fields:
 Joints come with a robot, a hand, or a design from the agent. You can also add them yourself:
 
 - [Import a robot](/help/import-a-robot) brings in every joint from its URDF or MJCF file, including the axis, limits, and torque limit.
+- [Import an Onshape assembly as a robot](/help/import-an-onshape-assembly) brings in revolute and cylindrical mates as hinges, and slider mates as slides. Joints keep the mate's limits, including those inside repeated or nested subassemblies. A cylindrical mate's slide stays fixed.
 - **Parts** ▸ **Hands** lists posable hands whose makers publish their joints, such as LEAP, ORCA, and Allegro.
 - The agent declares joints when it designs a robot. It also adds or changes joints when you ask it to.
 - [Design a linkage from a path](/help/design-a-linkage-from-a-path) adds a four-bar linkage with a crank joint driven by a servo.

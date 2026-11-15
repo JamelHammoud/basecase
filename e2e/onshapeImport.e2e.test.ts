@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { box } from '../src/sim/fixtures/parts';
-import type { ProjectSettings, ScenePart } from '../src/types/robotics';
+import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../src/types/robotics';
 import { fakeArm, ONSHAPE_LINK, signedIn, type ArmOptions } from './fakeOnshape';
+import { fakeLegs } from './fakeOnshapeLegs';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
@@ -19,8 +20,8 @@ const project = async () => (await record()).project;
 
 const armOf = async () => (await record()).parts.find((p) => p.name === 'Arm')!;
 
-async function recordedImport(options: ArmOptions = {}) {
-  const account = await signedIn(fakeArm(options));
+async function recordedImport(options: ArmOptions = {}, assembly = fakeArm(options)) {
+  const account = await signedIn(assembly);
   const { model, files } = await account.importAssembly({ link: ONSHAPE_LINK });
 
   return {
@@ -98,6 +99,26 @@ describe('Onshape import', () => {
 
     await expect.poll(async () => (await armOf()).dimensions.height).toBeCloseTo(before.dimensions.height, 1);
     expect(await partCount(app.page)).toBe(scene.parts.length + 1);
+    expect(app.errors).toEqual([]);
+  });
+
+  it('imports ranged knees and cylindrical axles inside a subassembly from the link', async () => {
+    await app.page.evaluate(
+      (project) => (window as unknown as { __studio: Studio }).__studio.load({ name: 'Leg', parts: [], project }),
+      DEFAULT_PROJECT,
+    );
+
+    lists['onshape-import'] = await recordedImport({}, fakeLegs({ count: 1, cylindrical: true }));
+    await command('Import Robot');
+    await app.page.getByLabel('Robot link').fill(ONSHAPE_LINK);
+    await app.page.getByRole('button', { name: 'Import', exact: true }).click();
+    await expect.poll(async () => (await project()).joints?.length ?? 0).toBe(3);
+
+    const joints = (await project()).joints!;
+
+    expect(joints.find((j) => j.name === 'Knee')).toMatchObject({ type: 'revolute', range: [-60, 80] });
+    expect(joints.find((j) => j.name === 'Axle')).toMatchObject({ type: 'revolute', range: [-30, 30] });
+    expect((await record()).parts.flatMap((p) => p.robotLink?.fixedMates ?? [])).toEqual(['Axle slide']);
     expect(app.errors).toEqual([]);
   });
 });

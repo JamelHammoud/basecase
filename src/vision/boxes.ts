@@ -21,12 +21,12 @@ function overlap(a: VisionDetection, b: VisionDetection) {
   return area / Math.max(1e-12, w * h + bw * bh - area);
 }
 
-export function suppress(detections: VisionDetection[], threshold = 0.45) {
+export function suppress<T extends VisionDetection>(detections: T[], threshold = 0.45) {
   const sorted = detections
     .filter((d) => Number.isFinite(d.score) && d.box.every(Number.isFinite))
     .sort((a, b) => b.score - a.score);
-  const kept: VisionDetection[] = [];
-  const byLabel = new Map<string, VisionDetection[]>();
+  const kept: T[] = [];
+  const byLabel = new Map<string, T[]>();
 
   for (const item of sorted) {
     if (kept.length >= 300) break;

@@ -5,17 +5,25 @@ import { openOffscreenWorker, type OffscreenTestWorker } from '../../tools/testi
 import type { worldRenderPixels, worldRenderVideos } from './worldRenderAcceptance';
 
 let worker: OffscreenTestWorker;
+let opening: Promise<OffscreenTestWorker>;
+const setup = new AbortController();
 
 beforeAll(async () => {
-  worker = await openOffscreenWorker(
+  opening = openOffscreenWorker(
     fileURLToPath(new URL('./worldRenderAcceptance.ts', import.meta.url)),
     'worldRenderChecks',
+    { signal: setup.signal, timeout: 15000 },
   );
+  worker = await opening;
   await worker.run('init');
 }, 15000);
 
 afterAll(async () => {
-  await worker?.close();
+  setup.abort();
+  await opening?.then(
+    (opened) => opened.close(),
+    () => undefined,
+  );
 });
 
 async function packets(bytes: Uint8Array) {

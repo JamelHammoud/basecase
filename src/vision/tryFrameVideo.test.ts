@@ -4,16 +4,24 @@ import { openOffscreenWorker, type OffscreenTestWorker } from '../../tools/testi
 import type { tryFrameVideoAcceptance } from './tryFrameVideoAcceptance';
 
 let worker: OffscreenTestWorker;
+let opening: Promise<OffscreenTestWorker>;
+const setup = new AbortController();
 
 beforeAll(async () => {
-  worker = await openOffscreenWorker(
+  opening = openOffscreenWorker(
     fileURLToPath(new URL('./tryFrameVideoAcceptance.ts', import.meta.url)),
     'tryFrameVideoAcceptance',
+    { signal: setup.signal, timeout: 15000 },
   );
+  worker = await opening;
 }, 15000);
 
 afterAll(async () => {
-  await worker?.close();
+  setup.abort();
+  await opening?.then(
+    (opened) => opened.close(),
+    () => undefined,
+  );
 });
 
 it('decodes real JPEG pixels from imported and Operate videos using their stored clip offsets', async () => {

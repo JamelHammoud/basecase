@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { once } from 'node:events';
 import { build, normalizePath } from 'vite';
 import { chromium } from 'playwright-core';
 
@@ -14,9 +15,14 @@ export interface OffscreenTestWorker {
   close: () => Promise<void>;
 }
 
+interface OffscreenWorkerOptions {
+  signal?: AbortSignal;
+  timeout?: number;
+}
+
 export async function workerCode(modulePath: string, exported: string): Promise<string> {
   const entry = 'offscreen-worker-test';
-  const module = `import { ${exported} as run } from ${JSON.stringify(normalizePath(modulePath))}; self.onmessage = async ({data: {id, payload}}) => { try { self.postMessage({id, result: await run(payload)}); } catch (e) { self.postMessage({id, error: String(e.stack || e) }); } };`;
+  const module = `import { ${exported} as run } from ${JSON.stringify(normalizePath(modulePath))}; self.onmessage = async ({data: {id, payload}}) => { try { self.postMessage({id, result: await run(payload)}); } catch (e) { self.postMessage({id, error: String(e.stack || e) }); } }; self.postMessage({ready: true});`;
   const built = await build({
     configFile: false,
     logLevel: 'silent',
@@ -46,61 +52,113 @@ export async function workerCode(modulePath: string, exported: string): Promise<
   return chunk.code;
 }
 
-export async function openOffscreenWorker(modulePath: string, exported: string): Promise<OffscreenTestWorker> {
+function initializeWorker(): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const host = window as unknown as WorkerHost;
+    const worker = new Worker('/worker.js', { type: 'module' });
+
+    host.renderTestWorker = worker;
+    host.renderTestNextId = 0;
+    host.renderTestError = null;
+    host.renderTestWaiting = new Map();
+    worker.onmessage = ({ data }) => {
+      if (data.ready) return resolve();
+
+      const waiter = host.renderTestWaiting.get(data.id);
+
+      if (!waiter) return;
+
+      host.renderTestWaiting.delete(data.id);
+
+      if (data.error) waiter.reject(new Error(data.error));
+      else waiter.resolve(data.result);
+    };
+    worker.onerror = (event) => {
+      reject(new Error(event.message));
+      host.renderTestError = event.message;
+      host.renderTestWaiting.forEach((waiter) => waiter.reject(new Error(event.message)));
+      host.renderTestWaiting.clear();
+    };
+  });
+}
+
+export async function openOffscreenWorker(
+  modulePath: string,
+  exported: string,
+  { signal, timeout = 15000 }: OffscreenWorkerOptions = {},
+): Promise<OffscreenTestWorker> {
+  const started = performance.now();
+
+  signal?.throwIfAborted();
+
   const code = await workerCode(modulePath, exported);
+
+  signal?.throwIfAborted();
+
   const server = createServer((request, response) => {
     response.setHeader('content-type', request.url === '/worker.js' ? 'text/javascript' : 'text/html');
     response.end(request.url === '/worker.js' ? code : '<!doctype html><title>World rendering test</title>');
   });
 
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  let browser: Awaited<ReturnType<typeof chromium.launchPersistentContext>> | null = null;
+  let closed = false;
+  let closing: Promise<void> | undefined;
+  const close = () => {
+    closed = true;
+    signal?.removeEventListener('abort', abort);
+    closing ??= Promise.allSettled([
+      browser?.close(),
+      new Promise<void>((resolve) => {
+        server.close(() => resolve());
+        server.closeAllConnections();
+      }),
+    ]).then((results) => {
+      const failed = results.find((result) => result.status === 'rejected');
 
-  let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
-  const close = async () => {
-    try {
-      await browser?.close();
-    } finally {
-      server.close();
-    }
-  };
-
-  try {
-    browser = await chromium.launch({
-      channel: 'chrome',
-      headless: true,
-      args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'],
+      if (failed?.status === 'rejected') throw failed.reason;
     });
 
-    const page = await browser.newPage();
+    return closing;
+  };
+  const abort = () => {
+    void close().catch(() => undefined);
+  };
+
+  signal?.addEventListener('abort', abort, { once: true });
+
+  try {
+    const listening = once(server, 'listening', { signal });
+
+    server.listen({ port: 0, host: '127.0.0.1', signal });
+    await listening;
+
     const address = server.address();
 
     if (!address || typeof address === 'string') throw new Error('Expected test server port');
 
-    await page.goto(`http://127.0.0.1:${address.port}`);
-    await page.evaluate(() => {
-      const host = window as unknown as WorkerHost;
-      const worker = new Worker('/worker.js', { type: 'module' });
-
-      host.renderTestWorker = worker;
-      host.renderTestNextId = 0;
-      host.renderTestError = null;
-      host.renderTestWaiting = new Map();
-      worker.onmessage = ({ data }) => {
-        const waiter = host.renderTestWaiting.get(data.id);
-
-        if (!waiter) return;
-
-        host.renderTestWaiting.delete(data.id);
-
-        if (data.error) waiter.reject(new Error(data.error));
-        else waiter.resolve(data.result);
-      };
-      worker.onerror = (event) => {
-        host.renderTestError = event.message;
-        host.renderTestWaiting.forEach((waiter) => waiter.reject(new Error(event.message)));
-        host.renderTestWaiting.clear();
-      };
+    const launched = await chromium.launchPersistentContext('', {
+      channel: 'chrome',
+      headless: true,
+      timeout: Math.max(1, timeout - (performance.now() - started)),
+      ignoreDefaultArgs: ['about:blank'],
+      args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader', `--app=http://127.0.0.1:${address.port}/`],
     });
+
+    if (closed) {
+      await launched.close();
+      signal?.throwIfAborted();
+
+      throw new Error('Worker setup closed');
+    }
+
+    browser = launched;
+
+    const page = browser.pages()[0];
+
+    if (!page) throw new Error('Expected test page');
+
+    await page.evaluate(initializeWorker);
+    signal?.throwIfAborted();
 
     return {
       close,

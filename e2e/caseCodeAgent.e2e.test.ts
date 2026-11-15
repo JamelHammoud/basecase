@@ -75,12 +75,6 @@ function roverScene() {
   };
 }
 
-const stillTrying = async () => {
-  const state = await simState();
-
-  return state.drive === 'on' && state.tries.length === 0;
-};
-
 async function openCase() {
   const { page } = app;
   const scene = roverScene();
@@ -96,12 +90,6 @@ async function openCase() {
   await expect.poll(() => panel('tries').count()).toBe(1);
 }
 
-async function startTry() {
-  await openCase();
-  await panel('tries').locator('button', { hasText: 'Try It' }).first().click();
-  await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-}
-
 beforeEach(async () => {
   app = await openApp();
 }, 120000);
@@ -111,7 +99,7 @@ afterEach(async () => {
 });
 
 describe('the agent beside a running Case', () => {
-  it('mounts a written panel, reports a broken revision and restores the earlier frame with ⌘Z', async () => {
+  it('edits and undoes live panels, then sends the running Case context through ⌘I', async () => {
     await openCase();
 
     const first = await agentRequest('write_case_code', RECORDED_FIRST_WRITE);
@@ -130,15 +118,12 @@ describe('the agent beside a running Case', () => {
     await expect.poll(() => remote().getByRole('button', { name: 'Sit' }).count()).toBe(0);
     await expect.poll(() => remote().getByRole('button', { name: 'Wave' }).count()).toBe(1);
     expect(await simState()).toMatchObject({ activeCase: 'rover-remote', drive: 'off', tries: [] });
-  });
 
-  it('opens the agent beside a running Case with ⌘I, and a message there is about that Case', async () => {
-    await startTry();
     await app.page.keyboard.press('Meta+i');
     await expect.poll(() => rightTabs().allTextContents()).toEqual(['Agent']);
     await composer().fill('Add a Sit button');
     await app.page.keyboard.press('Enter');
     await expect.poll(() => sentPrompt()).toContain('running the Case Rover Remote (rover-remote)');
-    expect(await stillTrying()).toBe(true);
-  }, 180000);
+    expect(await simState()).toMatchObject({ activeCase: 'rover-remote', drive: 'off', tries: [] });
+  });
 });

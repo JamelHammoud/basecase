@@ -21,28 +21,53 @@ function scalar(raw: string): FrontMatterValue {
   return value;
 }
 
+function continuation(lines: string[], start: number, literal: boolean) {
+  let end = start;
+
+  while (
+    end < lines.length &&
+    (!lines[end].trim() || (literal ? lines[end].startsWith('  ') : LIST_ITEM.test(lines[end])))
+  ) {
+    end += 1;
+  }
+
+  const values = lines.slice(start, end);
+  const value = literal
+    ? values
+        .map((line) => line.slice(2))
+        .join('\n')
+        .trimEnd()
+    : values.filter((line) => line.trim()).map((line) => unquote(LIST_ITEM.exec(line)![1].trim()));
+
+  return { value, end };
+}
+
 function parseLines(lines: string[], path: string): Record<string, FrontMatterValue> {
   const data: Record<string, FrontMatterValue> = {};
-  let listKey: string | null = null;
+  let index = 0;
 
-  for (const line of lines) {
-    const item = LIST_ITEM.exec(line);
-    const list = listKey ? data[listKey] : null;
+  while (index < lines.length) {
+    const line = lines[index++];
 
-    if (item && Array.isArray(list)) {
-      list.push(unquote(item[1].trim()));
-
-      continue;
-    }
+    if (!line.trim()) continue;
 
     const pair = KEY_LINE.exec(line);
 
     if (!pair) throw new Error(`${path}: can't read front matter line "${line}"`);
 
     const [, key, raw] = pair;
+    const value = raw.trim();
 
-    listKey = raw.trim() === '' ? key : null;
-    data[key] = listKey ? [] : scalar(raw.trim());
+    if (value !== '' && value !== '|') {
+      data[key] = scalar(value);
+
+      continue;
+    }
+
+    const block = continuation(lines, index, value === '|');
+
+    data[key] = block.value;
+    index = block.end;
   }
 
   return data;
@@ -57,10 +82,15 @@ export function parseFrontMatter(source: string, path: string): FrontMatter {
 
   if (end < 0) throw new Error(`${path}: close the front matter with a --- line`);
 
-  const fields = lines.slice(1, end).filter((line) => line.trim() !== '');
+  const fields = lines.slice(1, end);
+  const data = parseLines(fields, path);
+
+  if (/(?:^|\/)help\//.test(path) && Object.hasOwn(data, 'updated')) {
+    throw new Error(`${path}: remove "updated:", help dates come from git`);
+  }
 
   return {
-    data: parseLines(fields, path),
+    data,
     body: lines
       .slice(end + 1)
       .join('\n')

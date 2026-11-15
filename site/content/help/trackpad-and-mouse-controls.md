@@ -1,7 +1,6 @@
 ---
 title: Trackpad and mouse controls
 date: 2026-11-13
-updated: 2026-11-13
 collection: get-started
 type: reference
 order: 2

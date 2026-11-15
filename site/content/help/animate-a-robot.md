@@ -1,7 +1,6 @@
 ---
 title: Animate a robot with a walk cycle or motion capture
 date: 2026-11-13
-updated: 2026-11-14
 collection: engineer
 type: task
 order: 2

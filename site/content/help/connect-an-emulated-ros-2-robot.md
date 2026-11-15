@@ -1,7 +1,6 @@
 ---
 title: Connect an emulated ROS 2 robot
 date: 2026-11-13
-updated: 2026-11-14
 collection: operate
 type: task
 keywords:

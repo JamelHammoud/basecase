@@ -1,7 +1,6 @@
 ---
 title: Share a robot as a link
 date: 2026-11-13
-updated: 2026-11-14
 collection: files-and-sharing
 type: task
 covers:
@@ -10,6 +9,9 @@ covers:
   - src/components/simulate/ResultsSection.tsx
   - src/workspace/caseCommands.tsx
   - src/gallery/
+hub_run_a_case_order: 40
+hub_run_a_case: |
+  A link you make with **Share Robot** opens the same console in the browser. See [Share a robot as a link](/help/share-a-robot-as-a-link). Camera panels, the servos table and the tries work only in the studio. In the browser, code panels get no camera frames and keep no values.
 ---
 
 Send someone a link that opens your robot and its Case in their browser. They can drive the robot there, or open it in the studio. Sharing works in the desktop app and needs a Hugging Face account.

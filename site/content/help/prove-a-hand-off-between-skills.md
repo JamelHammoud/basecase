@@ -22,6 +22,9 @@ covers:
   - src/routines/physicsProver.ts
   - src/routines/handoffTraining.ts
   - src/skills/handoff.ts
+hub_the_design_agent_order: 30
+hub_the_design_agent: |
+  - For a Routine, it proves each switch between skills and names any that fell.
 ---
 
 Check that your robot can switch from one skill straight into another, such as from Walk into a Wave, without falling.

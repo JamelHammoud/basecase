@@ -20,6 +20,12 @@ covers:
   - src/workspace/useTriesView.ts
   - src/workspace/useTrySearch.ts
   - src/cases/trySearch/
+hub_the_design_agent_order: 60
+hub_the_design_agent: |
+  - Ask for tries, such as failed grasps from last week. It searches the tries from every scene and names the ones that match.
+hub_open_a_try_from_any_scene_order: 10
+hub_open_a_try_from_any_scene: |
+  The search at the top of the Library also finds tries, by words or by facts such as failed or last week. See [Search tries](/help/search-tries). To gather the tries a search finds into a dataset, press [[⌘K]] and choose **Make Dataset**. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
 ---
 
 You can search the tries in all your scenes at once: by words, by details such as failed or last week, or for tries with a similar motion.

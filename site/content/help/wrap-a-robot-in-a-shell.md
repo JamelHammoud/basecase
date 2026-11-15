@@ -1,7 +1,6 @@
 ---
 title: Wrap a robot in a character shell
 date: 2026-11-13
-updated: 2026-11-13
 collection: design
 type: task
 covers:

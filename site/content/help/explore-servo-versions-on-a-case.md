@@ -27,6 +27,9 @@ covers:
   - src/components/simulate/ExploreRows.tsx
   - src/components/simulate/CaseSections.tsx
   - src/workspace/caseCommands.tsx
+hub_the_design_agent_order: 100
+hub_the_design_agent: |
+  - Ask which servo to buy. It runs the Case on each catalog version and answers with passes, cost and mass.
 ---
 
 Explore runs a Case on every catalog version of your robot's servos and supply voltage. Then you can apply the one that passes for the least money.

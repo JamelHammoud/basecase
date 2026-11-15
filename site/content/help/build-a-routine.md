@@ -1,7 +1,6 @@
 ---
 title: Build a Routine
 date: 2026-11-13
-updated: 2026-11-13
 collection: simulate-and-train
 type: task
 order: 9

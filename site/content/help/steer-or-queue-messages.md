@@ -1,7 +1,6 @@
 ---
 title: Steer or queue messages while the agent works
 date: 2026-11-13
-updated: 2026-11-13
 collection: agent
 type: task
 order: 5

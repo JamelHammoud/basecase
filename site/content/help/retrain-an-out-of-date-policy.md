@@ -1,7 +1,6 @@
 ---
 title: Retrain an out-of-date policy
 date: 2026-11-12
-updated: 2026-11-13
 collection: simulate-and-train
 type: task
 order: 8

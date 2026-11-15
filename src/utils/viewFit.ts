@@ -1,4 +1,4 @@
-import { maskArea, maskProfileOf, type Mask, type Profile } from './silhouetteProfile';
+import { maskProfileOf, type Mask, type Profile } from './silhouetteProfile';
 import { distanceToEdge, type Grid } from './targetFit';
 
 export interface Moments {
@@ -55,25 +55,38 @@ export function shrinkMask(mask: Mask, maxSide: number): Mask {
   return { data, width, height };
 }
 
-export function placeModel(photo: Mask, model: Mask, align: Omit<Alignment, 'iou'>): Uint8Array {
-  const m = moments(model);
-  const p = moments(photo);
+function placement(photo: Mask, model: Mask) {
+  return {
+    model,
+    m: moments(model),
+    p: moments(photo),
+    width: photo.width,
+    height: photo.height,
+    out: new Uint8Array(photo.width * photo.height),
+  };
+}
+
+function placeInto(work: ReturnType<typeof placement>, align: Omit<Alignment, 'iou'>): Uint8Array {
+  const { model, m, p, width, height, out } = work;
   const cos = Math.cos((align.roll * Math.PI) / 180),
     sin = Math.sin((align.roll * Math.PI) / 180);
-  const out = new Uint8Array(photo.width * photo.height);
 
-  for (let y = 0; y < photo.height; y++)
-    for (let x = 0; x < photo.width; x++) {
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
       const u = (x - p.cx - align.dx) / align.scale,
         v = (y - p.cy - align.dy) / align.scale;
       const mx = Math.round(m.cx + cos * u + sin * v),
         my = Math.round(m.cy - sin * u + cos * v);
       const inside = mx >= 0 && my >= 0 && mx < model.width && my < model.height;
 
-      out[y * photo.width + x] = inside ? model.data[my * model.width + mx] : 0;
+      out[y * width + x] = inside ? model.data[my * model.width + mx] : 0;
     }
 
   return out;
+}
+
+export function placeModel(photo: Mask, model: Mask, align: Omit<Alignment, 'iou'>): Uint8Array {
+  return placeInto(placement(photo, model), align);
 }
 
 function iou(a: Uint8Array, b: Uint8Array): number {
@@ -91,13 +104,14 @@ function iou(a: Uint8Array, b: Uint8Array): number {
 const SCALES = [0.96, 1, 1.04];
 
 export function alignModel(photo: Mask, model: Mask, rolls: number[] = [0]): Alignment {
-  const base = Math.sqrt(maskArea(photo) / Math.max(1, maskArea(model)));
+  const work = placement(photo, model);
+  const base = Math.sqrt(work.p.area / Math.max(1, work.m.area));
   let best: Alignment = { iou: -1, roll: 0, scale: base, dx: 0, dy: 0 };
 
   for (const roll of rolls)
     for (const k of SCALES) {
       const candidate = { roll, scale: base * k, dx: 0, dy: 0 };
-      const score = iou(photo.data, placeModel(photo, model, candidate));
+      const score = iou(photo.data, placeInto(work, candidate));
 
       if (score > best.iou) best = { ...candidate, iou: score };
     }

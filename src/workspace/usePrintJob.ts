@@ -12,6 +12,7 @@ import type { ShowToast } from './types';
 import type { PlateFiles, WrittenPlates } from './usePlateWriter';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
+import { currentSlices } from '../print/slices';
 
 interface PrintJobOptions {
   jobId: string;
@@ -163,14 +164,13 @@ export function usePrintJob(options: PrintJobOptions) {
     }
   };
 
-  const freshSlice = (plate: Plate) =>
-    (slice?.labels ?? '') === options.labels
-      ? slice?.plates.find((p) => p.number === plate.number && p.hash === plate.hash)
-      : undefined;
+  const slices = currentSlices(slice, options.labels);
+  const freshSlice = (plate: Plate) => slices?.find((p) => p.number === plate.number && p.hash === plate.hash);
 
   return {
     jobId,
     slice,
+    slices,
     freshSlice,
     slicing,
     progress,

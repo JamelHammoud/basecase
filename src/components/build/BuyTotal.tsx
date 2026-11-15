@@ -68,6 +68,20 @@ export const BuyTotal: React.FC<BuyTotalProps> = ({ totals: t, project, onChange
         </div>
       </div>
       {budget !== undefined && <BudgetBar t={t} budget={budget} />}
+      <div className="flex justify-end">
+        <div className="w-[112px] shrink-0">
+          <NumberInput
+            label="Time"
+            value={project.budgetHours ?? 0}
+            min={0}
+            step={1}
+            precision={1}
+            unit="h"
+            title="Time budget"
+            onChange={(hours, live) => !live && onChangeProject({ budgetHours: hours > 0 ? hours : undefined })}
+          />
+        </div>
+      </div>
     </>
   );
 };

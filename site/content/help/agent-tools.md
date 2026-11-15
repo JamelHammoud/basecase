@@ -146,10 +146,12 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `check_printability` | Checks each part against your printer |
 | `slice_plates` | Slices plates for print time and grams, without printing |
 | `merge_parts` | Merges printed parts that `check_assembly` lists into one, when you ask |
-| `set_build` | Sets extras, budget, filament and the power supply for a robot with no battery |
+| `set_build` | Sets extras, money and time budgets, filament and the power supply for a robot with no battery |
 | `build_guide` | Writes the printable assembly guide |
 | `size_actuators` | Picks the cheapest servos that pass the torque checks |
 | `size_arm` | Sizes and places an arm from the points it must reach and the grams it carries |
 | `sweep_design` | Tries a value on copies, without changing the scene |
+
+For `set_build`, `budget_hours` sets the time budget in hours when you give one. Zero clears it, and leaving it out keeps the current budget. [Set a time budget](/help/set-a-time-budget) shows the field and the Time check.
 
 With Claude Code, the agent can also start part designers, which are smaller agents that each model one subassembly. Every agent can also search the web, and Claude Code and Gemini CLI keep a to-do list.

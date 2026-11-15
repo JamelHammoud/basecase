@@ -89,6 +89,25 @@ describe('operate', () => {
     expect(reply.text.endsWith(` ${errors}`)).toBe(true);
   });
 
+  it('keeps the completed action, camera images and detections when the optional replay summary rejects', async () => {
+    const sim = fakeSim(true);
+    const detections = [{ label: 'cup', score: 0.9, box: [0.1, 0.2, 0.3, 0.4] }];
+    const shots = [{ view: 'Wrist Camera', dataUrl: 'data:image/jpeg;base64,', detections }];
+    const shoot = vi.fn(async () => ({ shots, missing: [], available: ['Wrist Camera'] }));
+    const calibrationErrors = vi.fn(async () => {
+      throw new Error('Replay worker stopped.');
+    });
+    const reply = await operateRequest({ ...context(sim, shoot), calibrationErrors }, { seconds: 2 });
+
+    expect(calibrationErrors).toHaveBeenCalledOnce();
+    expect(sim.drive.setKeys).toHaveBeenLastCalledWith({ v: [0, 0, 0] });
+    expect(sim.pause).toHaveBeenCalledOnce();
+    expect(reply.text).toMatch(/Ran 2 s\. Upright/);
+    expect(reply.text).toContain(JSON.stringify(detections));
+    expect(reply.images).toEqual(shots);
+    expect(reply.text).not.toContain('Replay worker stopped.');
+  });
+
   it('says what to do when nothing drives the robot', async () => {
     const sim = fakeSim(false);
 

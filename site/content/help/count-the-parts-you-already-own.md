@@ -38,7 +38,7 @@ Tell Basecase which parts you already have, and the bill of materials and the bu
 
 ![On hand set to 6 under the 6× Feetech STS3215 line of an SO-101](/help/count-the-parts-you-already-own/on-hand.png)
 
-The quantity drops to the number you still need to buy, and the line shows how many come from your own parts. The line's price and the total also drop. For example, on an SO-101 with six STS3215s, entering 6 on hand takes the servo line from ≈ $120.00 to $0.00, and the total from ≈ $127.48 to ≈ $7.48.
+The quantity drops to the number you still need to buy, and the line shows how many come from your own parts. The line's price and the total also drop. For example, on an SO-101 with six STS3215s, entering 6 on hand takes the servo line from ≈ $120.00 to $0.00. The remaining total depends on the other parts and selected cable lengths.
 
 ![The SO-101 bill of materials with 0× Feetech STS3215, 6 on hand and $0.00](/help/count-the-parts-you-already-own/owned.png)
 
@@ -47,6 +47,7 @@ To put the old count back, click **Undo** in the toast. To clear a count, type 0
 ## How counts work
 
 - Count single pieces, even if you bought them in packs. If you have 100 M3 screws on hand and a robot uses 13, none are listed to buy.
+- Each cable product and length has its own count. Owning a 300 mm cable doesn’t reduce the number of 900 mm cables to buy.
 - Filament is counted in grams.
 - Printed parts from a print service have no **On hand**. Their quoted price covers every copy.
 - A count belongs to the part, so every scene that uses the part takes your count off what's left to buy.

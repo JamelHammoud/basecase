@@ -66,6 +66,7 @@ export const projectFingerprint = (
 ) =>
   readinessFingerprint(parts, {
     joints: project.joints,
+    wiring: project.wiring,
     budget: project.budgetUsd,
     budgetHours: project.budgetHours,
     printerCount: world.printerCount ?? 1,
@@ -147,7 +148,7 @@ export async function runReadiness({
   rememberClamps(parts, clampsOf(geometry.chains));
 
   const fits = designedFits(await viewport.interference(), parts, geometry.chains);
-  const bom = buildBom({ parts, project, purchases, measures, supportG: supportOf(print) });
+  const bom = buildBom({ parts, project, purchases, measures, supportG: supportOf(print), wiring: engineering.wiring });
 
   return readinessOf(
     [
@@ -170,6 +171,7 @@ export async function runReadiness({
       decisions: project.readiness,
       fingerprint: geometry.timedOut ? UNSETTLED_FINGERPRINT : fingerprint,
       rows: [...engineering.rows, ...cases],
+      wiring: engineering.wiring,
     },
   );
 }

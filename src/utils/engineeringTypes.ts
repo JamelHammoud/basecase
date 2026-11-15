@@ -146,6 +146,7 @@ export interface EngineeringInputs extends Pick<TimeInput, 'print' | 'slices' | 
   chains?: ChainResult | null;
   printDowns?: Record<string, V3>;
   strength?: (jobs: StrengthJob[]) => Array<StrengthReading | null>;
+  wiring?: Netlist;
 }
 
 export interface SweepRequest {

@@ -1,5 +1,5 @@
 import { componentPorts } from '../data/componentPorts';
-import type { ConnectorRole, ConnectorType, Port } from '../types/ports';
+import type { ConnectorRole, ConnectorType, Port, PortVec } from '../types/ports';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 
 export const CONNECTOR_NAMES: Record<ConnectorType, string> = {
@@ -15,11 +15,30 @@ export interface NetEnd {
   id: string | null;
   name: string;
   connector: ConnectorType;
+  port?: Port;
+}
+
+export interface CableRoute {
+  points: PortVec[];
+  requiredMm: number | null;
+  cableSupplyId: string | null;
+  lengthMm: number | null;
+  status: 'pass' | 'fail' | 'unresolved';
+  reason: string | null;
+  limitingPose: Record<string, number>;
+}
+
+export interface WiringRouteSpec {
+  from: { partId: string; port: string };
+  to: { partId: string; port: string };
+  supplyId?: string;
+  anchors?: Array<{ partId: string; position: PortVec }>;
 }
 
 export interface Net {
   from: NetEnd;
   to: NetEnd;
+  route?: CableRoute;
 }
 
 export interface BusServo {
@@ -54,7 +73,12 @@ export interface WiringScene {
 export const portOf = (p: ScenePart, role: ConnectorRole): Port | undefined =>
   p.kind === 'component' ? componentPorts(p.componentId).find((port) => port.role === role) : undefined;
 
-export const endOf = (p: ScenePart, port: Port): NetEnd => ({ id: p.id, name: p.name, connector: port.connector! });
+export const endOf = (p: ScenePart, port: Port): NetEnd => ({
+  id: p.id,
+  name: p.name,
+  connector: port.connector!,
+  port: { ...port, position: [...port.position], axis: [...port.axis] },
+});
 
 export const busIn = (p: ScenePart) => portOf(p, 'bus-in');
 

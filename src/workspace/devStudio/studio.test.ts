@@ -11,6 +11,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'bodyChecks',
   'bodyModel',
   'bomLines',
+  'buildAlongRoutes',
   'buildAlongSteps',
   'buildTime',
   'cadSources',

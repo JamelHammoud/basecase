@@ -22,11 +22,21 @@ import { percent } from '../../electron/percent.mjs';
 type Payload = Record<string, unknown>;
 
 async function sceneBom(ctx: RequestContext): Promise<Bom> {
+  const parts = ctx.parts();
+  const project = ctx.project();
+  const viewport = ctx.viewport();
+  const [purchases, measures, wiring] = await Promise.all([
+    platformBridge.listPurchases(),
+    viewport?.measureParts(),
+    viewport?.wiring({ parts, project }),
+  ]);
+
   return buildBom({
-    parts: ctx.parts(),
-    project: ctx.project(),
-    purchases: await platformBridge.listPurchases(),
-    measures: (await ctx.viewport()?.measureParts()) ?? {},
+    parts,
+    project,
+    purchases,
+    measures: measures ?? {},
+    wiring,
   });
 }
 

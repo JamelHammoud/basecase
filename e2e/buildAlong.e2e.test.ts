@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RobotJoint, ScenePart } from '../src/types/robotics';
+import type { ProjectSettings, RobotJoint, ScenePart } from '../src/types/robotics';
 import { shapeKey } from '../src/print/shapeKey';
 import { component, sceneOf } from '../src/wiring/fixtures';
 import type { Net } from '../src/wiring/netlist';
@@ -8,7 +8,7 @@ import { openApp, shown, type App } from './harness';
 
 interface BuildAlongStudio {
   load: (record: { name: string; parts: unknown[]; project: unknown }) => void;
-  sceneRecord: () => { project: Record<string, unknown> };
+  sceneRecord: () => { project: ProjectSettings };
   parts: () => Array<{ id: string; visible: boolean }>;
   shownParts: () => string[];
   buildAlongSteps: () => Array<{
@@ -18,7 +18,6 @@ interface BuildAlongStudio {
   }>;
   buildAlongRoutes: () => Net[];
   selection: () => string[];
-  readySteps: () => boolean[];
 }
 
 let app: App;
@@ -199,7 +198,6 @@ describe('Build Along', () => {
     const before = await sceneParts();
 
     await openBuildAlong();
-    expect(await toolbar().getAttribute('data-ready')).toBeNull();
 
     const steps = await planSteps();
     const servoStep = steps.findIndex((step) => step.servos.length > 0);
@@ -222,20 +220,32 @@ describe('Build Along', () => {
       .poll(() => app.page.locator(shown('[data-build-label]')).allTextContents())
       .toEqual(steps[servoStep].servos.map((servo) => `${servo.joint}, ID ${servo.id}`));
 
-    const readiness = await app.page.evaluate(() =>
-      (window as unknown as { __studio: BuildAlongStudio }).__studio.readySteps(),
+    const stepParts = await app.page.evaluate(
+      () =>
+        (window as unknown as { __studio: BuildAlongStudio }).__studio.sceneRecord().project.buildGuide?.stepParts
+          ?.ids ?? [],
     );
-    const readyStep = readiness.indexOf(true);
+    const unreadyStep = stepParts.findIndex((ids) => ids.includes('base'));
+    const readyStep = stepParts.findIndex(
+      (ids) => !ids.includes('base') && ids.some((id) => ['upper-arm', 'forearm'].includes(id)),
+    );
+    let currentStep = servoStep;
 
-    expect(readyStep).toBeGreaterThan(0);
+    expect(stepParts).toHaveLength(steps.length);
+    expect(unreadyStep).toBeGreaterThanOrEqual(0);
+    expect(readyStep).toBeGreaterThanOrEqual(0);
 
-    const readyKey = readyStep < servoStep ? 'ArrowLeft' : 'ArrowRight';
+    for (const target of [{ index: unreadyStep }, { index: readyStep, ready: 'true' }]) {
+      const key = target.index < currentStep ? 'ArrowLeft' : 'ArrowRight';
 
-    for (let remaining = Math.abs(readyStep - servoStep); remaining > 0; remaining--)
-      await app.page.keyboard.press(readyKey);
+      for (let remaining = Math.abs(target.index - currentStep); remaining > 0; remaining--)
+        await app.page.keyboard.press(key);
 
-    await expect.poll(stepShown).toBe(String(readyStep + 1));
-    await expect.poll(() => toolbar().getAttribute('data-ready')).toBe('true');
+      await expect.poll(stepShown).toBe(String(target.index + 1));
+      await expect.poll(() => toolbar().getAttribute('data-ready')).toBe(target.ready ?? null);
+      currentStep = target.index;
+    }
+
     await toolbar().getByRole('button', { name: /^Done/ }).click();
     await expect.poll(() => toolbar().count()).toBe(0);
     expect(await sceneParts()).toEqual(before);

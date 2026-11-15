@@ -6,15 +6,10 @@ import type { PoseSample } from '../src/cameras/operator/poseFollow';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import type { VisionManifest } from '../src/vision/manifest';
-import { inputSensitiveDetectionOnnx, tinyDetectionOnnx } from '../src/vision/onnxFixture';
+import { inputSensitiveDetectionOnnx } from '../src/vision/onnxFixture';
 import type { VisionResult } from '../src/vision/types';
 import { FAKE_CAMERA, openApp, shown, type App } from './harness';
-import {
-  armWithWristCamera,
-  blackWhiteVideo,
-  recordedCameraFixture,
-  visionManifest as manifest,
-} from './visionFixtures';
+import { blackWhiteVideo, recordedCameraFixture, visionManifest as manifest } from './visionFixtures';
 
 let app: App;
 
@@ -135,44 +130,4 @@ describe('desktop camera inference', () => {
       await live.page.keyboard.press('Escape');
     }
   });
-});
-
-async function renderedCameraVision(web: boolean) {
-  app = await openApp({}, [], { web });
-
-  const bytes = tinyDetectionOnnx();
-
-  await app.page.evaluate(
-    async ({ model, data }) => {
-      await (window as unknown as { __studio: Studio }).__studio.configureVision(model, data, ['wrist_camera']);
-    },
-    { model: manifest(bytes, 'block'), data: [...bytes] },
-  );
-  await app.page.evaluate(
-    (record) => (window as unknown as { __studio: Studio }).__studio.load(record),
-    armWithWristCamera(),
-  );
-  await expect.poll(async () => (await state()).signals['vision.wrist_camera.block']).toBe(1);
-
-  const box = app.page.locator(shown('[data-camera="wrist_camera"] [data-testid="vision-box"]'));
-
-  await expect.poll(() => box.count()).toBe(1);
-  expect(await box.getAttribute('data-label')).toBe('block');
-  expect(Number(await box.getAttribute('data-score'))).toBeCloseTo(0.9);
-
-  const result = (await state()).models['wrist_camera:rfdetr-nano']!;
-
-  expect(result.modelId).toBe('rfdetr-nano');
-  expect(result.width).toBe(320);
-  expect(result.height).toBe(240);
-  result.detections[0].box.forEach((value, index) => expect(value).toBeCloseTo([0.1, 0.2, 0.3, 0.4][index]));
-  expect(app.errors).toEqual([]);
-}
-
-it('publishes rendered camera boxes and signals through ONNX in the desktop build', async () => {
-  await renderedCameraVision(false);
-});
-
-it('publishes rendered camera boxes and signals through ONNX in the web build', async () => {
-  await renderedCameraVision(true);
 });

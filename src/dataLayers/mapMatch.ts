@@ -180,7 +180,7 @@ function addRow(system: System, q: ArrayLike<number>, s: Structure, k: number) {
   for (let a = 0; a < 6; a++) {
     system.g[a] += j[a] * r;
 
-    for (let b = 0; b < 6; b++) system.h[a * 6 + b] += j[a] * j[b];
+    for (let b = a; b < 6; b++) system.h[a * 6 + b] += j[a] * j[b];
   }
 
   system.rows++;
@@ -222,6 +222,8 @@ function linearize(pass: Pass, pose: THREE.Matrix4): System {
     q[2] = e[2] * x + e[6] * y + e[10] * z + e[14];
     addPoint(pass, system, q);
   }
+
+  for (let a = 0; a < 6; a++) for (let b = 0; b < a; b++) system.h[a * 6 + b] = system.h[b * 6 + a];
 
   return system;
 }

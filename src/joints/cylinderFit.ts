@@ -137,9 +137,11 @@ export function fitCircle(points: Array<[number, number]>): { cx: number; cy: nu
     for (let i = 0; i < 3; i++) {
       b[i] += row[i] * rhs;
 
-      for (let j = 0; j < 3; j++) a[i][j] += row[i] * row[j];
+      for (let j = i; j < 3; j++) a[i][j] += row[i] * row[j];
     }
   }
+
+  for (let i = 0; i < 3; i++) for (let j = 0; j < i; j++) a[i][j] = a[j][i];
 
   const s = solve3(a, b);
 

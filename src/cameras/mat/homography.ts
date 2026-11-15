@@ -75,7 +75,7 @@ function normalEquations(pairs: PointPair[]): { ata: number[][]; atb: number[] }
     for (let r = 0; r < 8; r++) {
       atb[r] += row[r] * value;
 
-      for (let c = 0; c < 8; c++) ata[r][c] += row[r] * row[c];
+      for (let c = r; c < 8; c++) ata[r][c] += row[r] * row[c];
     }
   };
 
@@ -86,6 +86,8 @@ function normalEquations(pairs: PointPair[]): { ata: number[][]; atb: number[] }
     add([x, y, 1, 0, 0, 0, -u * x, -u * y], u);
     add([0, 0, 0, x, y, 1, -v * x, -v * y], v);
   }
+
+  for (let r = 0; r < 8; r++) for (let c = 0; c < r; c++) ata[r][c] = ata[c][r];
 
   return { ata, atb };
 }

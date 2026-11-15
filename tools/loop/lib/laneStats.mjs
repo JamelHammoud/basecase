@@ -1,5 +1,8 @@
+import { stepOf } from './stepLinks.mjs';
 import { copyNetOf } from './copy.mjs';
 import { isLoopReview, kindOf, membersOf, parseReview } from './evidence.mjs';
+
+export { stepOf } from './stepLinks.mjs';
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -17,7 +20,6 @@ const STEP_LABELS = new Set(['loop:next', 'loop:building', 'loop:feature', 'loop
 const BRANCH_LANE = /^loop\/([a-z]+)\//;
 const REPAIR_SHA = /^loop\/repair\/main-([0-9a-f]{7,40})/;
 const MERGED_PULL = /^Merge pull request #(\d+)|\(#(\d+)\)$/m;
-const CLOSES = /^Closes #(\d+)\b/m;
 
 export const round = (value) => (value === null ? null : Math.round(value * 100) / 100);
 
@@ -35,8 +37,6 @@ const mean = (values) => (values.length === 0 ? null : values.reduce((sum, v) =>
 const inWindow = (at, { from, to }) => Boolean(at) && at >= from && at <= to;
 
 export const laneOf = (pull) => BRANCH_LANE.exec(pull.headRefName ?? '')?.[1] ?? kindOf(pull);
-
-export const stepOf = (pull) => Number(CLOSES.exec(pull.body ?? '')?.[1]) || null;
 
 export const isStepIssue = (issue) => (issue.labels ?? []).some((label) => STEP_LABELS.has(label.name));
 

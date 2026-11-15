@@ -8,6 +8,7 @@ import { voiceNewPages, voiced } from './voiceHook.mjs';
 import { CODE_ROOT } from './paths.mjs';
 import { protectedIn, protectedList } from './protected.mjs';
 import { run } from './sh.mjs';
+import { keepStepLinks } from './stepLinks.mjs';
 
 export const KINDS = {
   feature: { prefix: 'Feature', template: 'feature' },
@@ -88,7 +89,7 @@ export function pullBody(change, { branch, slug, extra = {}, protectedPaths = []
 
   const links = (change.links ?? []).join(' ');
 
-  return withProtected(links ? `${body}\n\n${links}` : body, protectedPaths);
+  return keepStepLinks(withProtected(links ? `${body}\n\n${links}` : body, protectedPaths), { headRefName: branch });
 }
 
 export const REVISED_FIELDS = ['summary', 'why', 'checked', 'screenshots', 'copy'];
@@ -121,11 +122,13 @@ export function revisedBody(body, change, { branch, slug, landed = NOTHING_LANDE
   const values = fieldValues(change, { branch, slug, landed });
   const template = templateFor(change, values);
 
-  return REVISED_SECTIONS.reduce((text, field) => {
+  const revised = REVISED_SECTIONS.reduce((text, field) => {
     const heading = headingOf(template, field) ?? ADDED_SECTIONS[field];
 
     return heading ? withSection(text, heading, values[field]) : text;
   }, body);
+
+  return keepStepLinks(revised, { body, headRefName: branch });
 }
 
 const git = (args, dir, opts = {}) => run('git', args, { cwd: dir, ...opts });

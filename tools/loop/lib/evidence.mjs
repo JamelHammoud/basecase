@@ -40,7 +40,7 @@ export const membersOf = (body) => [...(body ?? '').matchAll(/^- #(\d+) /gm)].ma
 export const kindOf = (pull) =>
   pull.labels
     ?.map((label) => label.name)
-    .find((name) => name.startsWith('loop:'))
+    .find((name) => name.startsWith('loop:') && !name.startsWith('loop:step:'))
     ?.slice('loop:'.length) ?? 'other';
 
 export const reviewNotes = (pulls) =>

@@ -180,6 +180,7 @@ describe('Build Along', () => {
     const before = await sceneParts();
 
     await openBuildAlong();
+    expect(await toolbar().getAttribute('data-ready')).toBeNull();
 
     const steps = await planSteps();
     const servoStep = steps.findIndex((step) => step.servos.length > 0);

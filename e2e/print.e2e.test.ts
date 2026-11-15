@@ -151,20 +151,43 @@ describe('print layout', () => {
     await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(0);
   });
 
-  it('opens the plates with ⌘P, shows the Print panel, and closes with Esc', async () => {
+  it('opens plates with ⌘P, marks the cube printed and shows its Build Along readiness', async () => {
+    await app.page.evaluate(
+      (parts) => {
+        const studio = (window as unknown as { __studio: Studio }).__studio;
+
+        studio.load({ parts, project: studio.sceneRecord().project });
+      },
+      [printed('readiness-cube', [0, 10, 0], { width: 20, height: 20, depth: 20 })],
+    );
     await app.page
       .locator('main')
       .first()
       .click({ position: { x: 20, y: 20 } });
     await app.page.keyboard.press('Meta+p');
     await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(1);
+    await expect.poll(printPlates).toEqual({ open: true, fitTest: false, plates: [['readiness-cube']] });
     await expect.poll(() => app.page.locator(visible('canvas')).count()).toBeGreaterThan(0);
     await expect.poll(() => app.page.locator(visible('h3'), { hasText: /^Plate 1$/ }).count()).toBe(1);
     expect(await app.page.locator(visible('h3'), { hasText: /^Plates$/ }).count()).toBe(0);
     expect(await app.page.getByRole('button', { name: 'Close plates' }).count()).toBe(0);
+    expect(await readySteps()).toEqual([false]);
+
+    await app.page.getByRole('button', { name: 'Mark Printed', exact: true }).click();
+    await expect.poll(readySteps).toEqual([true]);
 
     await app.page.keyboard.press('Escape');
     await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(0);
+    await app.page.keyboard.press('Meta+k');
+    await app.page.getByLabel('Search commands').fill('Build Along');
+    await app.page.keyboard.press('Enter');
+
+    const toolbar = app.page.locator(visible('[role=toolbar][aria-label="Build Along"]'));
+
+    await expect.poll(() => toolbar.getAttribute('data-step')).toBe('1');
+    await expect.poll(() => toolbar.getAttribute('data-ready')).toBe('true');
+    await app.page.keyboard.press('Escape');
+    await expect.poll(() => toolbar.count()).toBe(0);
     expect(app.errors).toEqual([]);
   });
 

@@ -15,6 +15,7 @@ import {
   pickTimeline,
 } from './driveChecks';
 import { expectRealTry } from './driveMat';
+import { loadMultiplyTry } from './driveMultiply';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 
 let app: App;
@@ -306,6 +307,36 @@ describe('a real robot', () => {
     },
     120000,
   );
+});
+
+describe('Multiply', () => {
+  itUnlessWindows('multiplies a saved passed try from ⌘K and groups its variation under the source row', async () => {
+    const kase = await loadMultiplyTry(app.page);
+
+    await openPlayTab(app.page, 'Cases');
+    await app.page.locator(visible('[data-testid="cases-panel"] button'), { hasText: kase.name }).first().click();
+    await expect.poll(async () => (await simState()).activeCase).toBe(kase.id);
+    await expect.poll(async () => (await simState()).tries.length).toBe(1);
+    await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.multiplyRuns(1));
+    await app.page.keyboard.press('Meta+k');
+    await app.page.getByLabel('Search commands').fill('Multiply');
+    await expect.poll(() => app.page.getByText(/^Multiply$/).count()).toBe(1);
+    await app.page.keyboard.press('Enter');
+    await app.page
+      .getByRole('status')
+      .filter({ hasText: /^Kept 1 of 1\b/ })
+      .first()
+      .waitFor();
+    await expect.poll(async () => (await simState()).tries.filter((t) => t.generated).length).toBe(1);
+
+    const rows = app.page.locator(visible('[data-testid="try-row"]'));
+
+    expect((await simState()).multiplying).toBe(false);
+    expect((await simState()).tries.every((t) => t.passed)).toBe(true);
+    expect(await rows.count()).toBe(1);
+    expect(await rows.first().getByTestId('try-generated').innerText()).toBe('1 variation');
+    expect(app.errors).toEqual([]);
+  });
 });
 
 describe('a gripper', () => {

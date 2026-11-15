@@ -1,7 +1,9 @@
 import { ExtrudeGeometry, Path, Shape, ShapeGeometry } from 'three';
 import type { ScenePart } from '../types/robotics';
 
-export function plateTriangles(options: { holes?: boolean; concave?: boolean; tilt?: boolean } = {}): Float32Array {
+export function plateTriangles(
+  options: { holes?: boolean; concave?: boolean; tilt?: boolean; steps?: number } = {},
+): Float32Array {
   const shape = new Shape();
   const outline = options.concave
     ? [
@@ -36,7 +38,12 @@ export function plateTriangles(options: { holes?: boolean; concave?: boolean; ti
     }
   }
 
-  const geometry = new ExtrudeGeometry(shape, { depth: 3, bevelEnabled: false, curveSegments: 12 });
+  const geometry = new ExtrudeGeometry(shape, {
+    depth: 3,
+    bevelEnabled: false,
+    curveSegments: 12,
+    steps: options.steps ?? 1,
+  });
 
   if (options.tilt) geometry.rotateX(0.43).rotateY(0.29);
 

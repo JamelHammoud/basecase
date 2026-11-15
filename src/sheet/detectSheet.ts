@@ -63,41 +63,70 @@ function frame(normal: Vector3) {
   return { project };
 }
 
-function capEdges(faces: Face[], normal: Vector3, height: number): Edge[] | undefined {
-  const { project } = frame(normal);
-  const edges: Edge[] = [];
+function projectedBounds(faces: Face[], normal: Vector3) {
+  const ranges = new Float64Array(faces.length * 2);
+  let low = Infinity;
+  let high = -Infinity;
 
-  for (const face of faces) {
-    if (!face.vertices.every((p) => Math.abs(p.dot(normal) - height) <= TOLERANCE_MM)) continue;
+  for (let i = 0; i < faces.length; i++) {
+    const [a, b, c] = faces[i].vertices;
+    const x = a.dot(normal);
+    const y = b.dot(normal);
+    const z = c.dot(normal);
+    const min = Math.min(x, y, z);
+    const max = Math.max(x, y, z);
 
-    const points = face.vertices.map(project);
-
-    edges.push([points[0], points[1]], [points[1], points[2]], [points[2], points[0]]);
+    ranges[i * 2] = min;
+    ranges[i * 2 + 1] = max;
+    low = Math.min(low, min);
+    high = Math.max(high, max);
   }
 
-  return boundaryEdges(edges);
+  return { ranges, low, high };
 }
 
-function parallelSides(faces: Face[], normal: Vector3, low: number, high: number): boolean {
-  return faces.every((face) => {
-    const levels = face.vertices.map((p) => p.dot(normal));
-    const isCap =
-      levels.every((p) => Math.abs(p - low) <= TOLERANCE_MM) || levels.every((p) => Math.abs(p - high) <= TOLERANCE_MM);
+function parallelSides(faces: Face[], normal: Vector3, bounds: ReturnType<typeof projectedBounds>): boolean {
+  return faces.every(
+    (face, i) =>
+      bounds.ranges[i * 2 + 1] - bounds.low <= TOLERANCE_MM ||
+      bounds.high - bounds.ranges[i * 2] <= TOLERANCE_MM ||
+      Math.abs(face.normal.dot(normal)) <= ANGLE_TOLERANCE,
+  );
+}
 
-    return isCap || Math.abs(face.normal.dot(normal)) <= ANGLE_TOLERANCE;
-  });
+function capEdges(faces: Face[], normal: Vector3, bounds: ReturnType<typeof projectedBounds>) {
+  const { project } = frame(normal);
+  const bottom: Edge[] = [];
+  const top: Edge[] = [];
+
+  for (let i = 0; i < faces.length; i++) {
+    const face = faces[i];
+    const onBottom = bounds.ranges[i * 2 + 1] - bounds.low <= TOLERANCE_MM;
+    const onTop = bounds.high - bounds.ranges[i * 2] <= TOLERANCE_MM;
+
+    if (!onBottom && !onTop) continue;
+
+    const [a, b, c] = face.vertices.map(project);
+    const ab: Edge = [a, b];
+    const bc: Edge = [b, c];
+    const ca: Edge = [c, a];
+
+    if (onBottom) bottom.push(ab, bc, ca);
+
+    if (onTop) top.push(ab, bc, ca);
+  }
+
+  return { bottom: boundaryEdges(bottom), top: boundaryEdges(top) };
 }
 
 function profileAlong(faces: Face[], normal: Vector3): SheetProfile | undefined {
-  const levels = faces.flatMap((face) => face.vertices.map((p) => p.dot(normal)));
-  const low = levels.reduce((a, b) => Math.min(a, b), Infinity);
-  const high = levels.reduce((a, b) => Math.max(a, b), -Infinity);
+  const bounds = projectedBounds(faces, normal);
+  const { low, high } = bounds;
   const thicknessMm = high - low;
 
-  if (thicknessMm <= TOLERANCE_MM || !parallelSides(faces, normal, low, high)) return undefined;
+  if (thicknessMm <= TOLERANCE_MM || !parallelSides(faces, normal, bounds)) return undefined;
 
-  const bottom = capEdges(faces, normal, low);
-  const top = capEdges(faces, normal, high);
+  const { bottom, top } = capEdges(faces, normal, bounds);
 
   if (!bottom?.length || !top?.length) return undefined;
 

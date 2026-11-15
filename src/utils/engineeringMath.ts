@@ -22,14 +22,25 @@ export const norm = (a: V3): V3 => {
   return [a[0] / l, a[1] / l, a[2] / l];
 };
 
-export function rotateAbout(v: V3, k: V3, deg: number): V3 {
-  const t = (deg * Math.PI) / 180;
-  const c = Math.cos(t),
-    s = Math.sin(t);
+function rotated(v: V3, k: V3, c: number, s: number): V3 {
   const kv = cross(k, v);
   const kd = dot(k, v) * (1 - c);
 
   return [v[0] * c + kv[0] * s + k[0] * kd, v[1] * c + kv[1] * s + k[1] * kd, v[2] * c + kv[2] * s + k[2] * kd];
+}
+
+export function rotationAbout(k: V3, deg: number): (v: V3) => V3 {
+  const t = (deg * Math.PI) / 180;
+  const c = Math.cos(t);
+  const s = Math.sin(t);
+
+  return (v) => rotated(v, k, c, s);
+}
+
+export function rotateAbout(v: V3, k: V3, deg: number): V3 {
+  const t = (deg * Math.PI) / 180;
+
+  return rotated(v, k, Math.cos(t), Math.sin(t));
 }
 
 export const lineDistance = (p: V3, o: V3, a: V3) => len(cross(sub(p, o), a));

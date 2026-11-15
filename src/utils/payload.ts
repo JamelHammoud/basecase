@@ -1,4 +1,4 @@
-import { G, norm, rotateAbout, sub, type V3 } from './engineeringMath';
+import { G, norm, rotationAbout, sub, type V3 } from './engineeringMath';
 import { HOLD_LIMIT, holdTorque, liftableKg, type JointAxis } from './holdingTorque';
 import { seededRandom } from './seededRandom';
 
@@ -47,9 +47,11 @@ const add = (a: V3, b: V3): V3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 const scale = (a: V3, k: number): V3 => [a[0] * k, a[1] * k, a[2] * k];
 
 function moverOf(joint: JointAxis, value: number) {
-  if (!joint.revolute) return (p: V3) => add(p, scale(joint.axis, value));
+  if (!joint.revolute) return { move: (p: V3) => add(p, scale(joint.axis, value)), turn: (a: V3) => a };
 
-  return (p: V3) => add(joint.anchor, rotateAbout(sub(p, joint.anchor), joint.axis, value));
+  const turn = rotationAbout(joint.axis, value);
+
+  return { move: (p: V3) => add(joint.anchor, turn(sub(p, joint.anchor))), turn };
 }
 
 export function poseArm(arm: ArmModel, values: number[]): Posed {
@@ -58,8 +60,7 @@ export function poseArm(arm: ArmModel, values: number[]): Posed {
   let tip = arm.tip;
 
   joints.forEach((joint, i) => {
-    const move = moverOf(joint, values[i]);
-    const turn = (a: V3) => (joint.revolute ? rotateAbout(a, joint.axis, values[i]) : a);
+    const { move, turn } = moverOf(joint, values[i]);
 
     for (let k = i + 1; k < joints.length; k++)
       joints[k] = { ...joints[k], anchor: move(joints[k].anchor), axis: turn(joints[k].axis) };

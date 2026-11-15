@@ -4,6 +4,7 @@ import { SIM_MODEL_VERSION } from '../src/sim/mjcfTypes';
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 import { driveRecordableMotion } from './operateMotion';
+import { expectOperateRecording } from './operateRecording';
 
 let app: App;
 
@@ -14,6 +15,7 @@ const ARM_JOINTS = ARM.project.joints.map((joint) => joint.id);
 interface FakeLink {
   factory: boolean;
   intents: number[][];
+  statuses: Array<Array<number | null>>;
   plantStall: (id: number) => boolean;
   policy: { kind: string; id?: string; hash?: string }[];
   plugIn: () => boolean;
@@ -285,7 +287,15 @@ describe('Operate replay', () => {
       const moved = await link();
 
       await expect.poll(link, { timeout: 20000 }).toBeGreaterThan(moved + 10);
-      expect(await page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.plantStall(2))).toBe(true);
+
+      const savedAfter = app.posts.length;
+      const statuses = await page.evaluate(() => {
+        const robot = (window as unknown as StudioWindow).__fakeRobotLink;
+
+        if (!robot.plantStall(2)) throw new Error('The emulated elbow did not stall');
+
+        return robot.statuses;
+      });
 
       const sent = await page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.intents.at(-1)!);
 
@@ -303,6 +313,7 @@ describe('Operate replay', () => {
       await expect.poll(gap, { timeout: 60000, interval: 100 }).toBeLessThan(0.02);
       await expect.poll(async () => (await replayed()).tries.length, { timeout: 60000 }).toBe(1);
       expect(await page.locator(visible('[data-testid="peak-row"]')).count()).toBeGreaterThan(0);
+      await expectOperateRecording(app, ARM_JOINTS, statuses, savedAfter);
       expect(app.errors).toEqual([]);
       await page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.robotDisconnect());
     },

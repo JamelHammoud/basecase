@@ -45,7 +45,7 @@ interface StudioWindow {
     feedVoice: (samples: number[], sampleRate: number) => void;
     addCase: (raw: unknown) => string;
     feedPose: (samples: PoseSample[], fps: number) => void;
-    operatorCamera: () => { feeding: boolean };
+    operatorCamera: () => { feeding: boolean; open: boolean; live: boolean; ended: boolean };
   };
 }
 
@@ -92,6 +92,7 @@ const FAST_FEED_FPS = 120;
 const HAND_MOVED_MM = 10;
 const FACE_TURNED_DEG = 10;
 const SETTLED_DEG = 2;
+const OPERATOR_TILE = '[data-testid="camera-tile"][data-camera="operator"]';
 
 let app: App;
 
@@ -100,6 +101,8 @@ const studio = () => app.page.evaluate(() => (window as unknown as StudioWindow)
 const phoneState = () => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.phone());
 
 const inputEvents = () => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.inputEvents());
+
+const operatorCamera = () => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.operatorCamera());
 
 const pageNow = () => app.page.evaluate(() => performance.now());
 
@@ -336,11 +339,16 @@ describe('gestures', () => {
     expect(app.errors).toEqual([]);
   });
 
-  it('fires a gesture its Case was taught from three examples', async () => {
+  it('fires a gesture its Case was taught from three examples and ends camera capture on Escape', async () => {
     const salute = { name: 'salute', examples: [0, 1, 2].map((v) => exampleFrom(saluteMotion(v))) };
     const since = await watchCamera({ ...WATCH_CAMERA, gestures: [salute] }, saluteMotion(3));
 
     expect(await gestures(since)).toEqual(['salute']);
+    expect(await operatorCamera()).toMatchObject({ open: true, live: true });
+    await app.page.locator(shown(OPERATOR_TILE)).first().waitFor();
+    await stopDriving();
+    await expect.poll(() => app.page.locator(OPERATOR_TILE).count()).toBe(0);
+    await expect.poll(operatorCamera).toMatchObject({ open: false, live: false, ended: true });
     expect(app.errors).toEqual([]);
   });
 });

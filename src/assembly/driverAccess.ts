@@ -79,10 +79,13 @@ function lKeys(path: Path): DriverOption[] {
 
   return Array.from({ length: KEY_SECTORS }, (_, k) => {
     const set = new Set(shortArm);
+    const directions = [-0.5, 0, 0.5].map((da) => {
+      const a = (k * 2 * Math.PI) / KEY_SECTORS + da;
+
+      return u.clone().multiplyScalar(Math.cos(a)).addScaledVector(w, Math.sin(a));
+    });
     const arms = KEY_HEIGHTS.flatMap((h) =>
-      [-0.5, 0, 0.5].map((da) => {
-        const a = (k * 2 * Math.PI) / KEY_SECTORS + da;
-        const dir = u.clone().multiplyScalar(Math.cos(a)).addScaledVector(w, Math.sin(a));
+      directions.map((dir) => {
         const from = path.top.clone().addScaledVector(path.axis, h).addScaledVector(dir, KEY_ARM_FROM_MM);
 
         return { from, dir, length: KEY_ARM_TO_MM - KEY_ARM_FROM_MM };
@@ -115,10 +118,10 @@ function ballEnds(path: Path): DriverOption[] {
 export function driverOptions(chain: FastenerChain, solids: Placed[], skip: Set<string>): DriverOption[] {
   const top = new THREE.Vector3(...chain.top);
   const axis = new THREE.Vector3(...chain.axis);
-  const reach = new THREE.Box3().setFromPoints([top, top.clone().addScaledVector(axis, STRAIGHT_MM + 20)]);
-  const near = solids.filter(
-    (m) => m.id !== chain.id && !skip.has(m.id) && m.box.intersectsBox(reach.clone().expandByScalar(60)),
-  );
+  const reach = new THREE.Box3()
+    .setFromPoints([top, top.clone().addScaledVector(axis, STRAIGHT_MM + 20)])
+    .expandByScalar(60);
+  const near = solids.filter((m) => m.id !== chain.id && !skip.has(m.id) && m.box.intersectsBox(reach));
   const path = { top, axis, near };
 
   return [straight(path), ...lKeys(path), ...ballEnds(path)];

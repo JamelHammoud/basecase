@@ -5,6 +5,7 @@ import { plural } from '../../electron/plural.mjs';
 import { isLegJoint, robotBodies, type RobotBody } from './engineeringBody';
 import { servoMountRows, rangeOfMotionRows } from './engineeringJoints';
 import { downstreamOf, massOf, partMasses } from './engineeringMass';
+import { timeRow } from './engineeringTime';
 import { budgetRow } from './engineeringBudget';
 import { crouchModel } from './engineeringCrouch';
 import { heatRows } from './engineeringHeat';
@@ -53,6 +54,7 @@ export const ENGINEERING_CHECKS = [
   'Heat near servos',
   STRENGTH_CHECK,
   'Budget',
+  'Time',
 ];
 
 const gramsOf = (masses: PartMass[]) => masses.reduce((s, m) => s + m.grams, 0);
@@ -164,6 +166,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     ...heatRows(ctx),
     ...strengthRows(ctx, loads),
     budgetRow(ctx),
+    ...(input.print ? [timeRow(input)] : []),
   ];
 
   return {

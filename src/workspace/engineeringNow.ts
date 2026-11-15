@@ -10,6 +10,9 @@ import { jointsWithChains } from '../assembly/rigJoints';
 import { platformBridge } from '../utils/platformBridge';
 import { payloadMapsIn } from '../three/analysis/analysisPool';
 import type { ArmModel } from '../utils/payload';
+import { printBridge } from '../print/printBridge';
+import { resolvePrinter } from '../data/printers';
+import { printReportOf } from '../utils/printReport';
 import { rememberStress } from '../strength/fields';
 import type { StrengthJob } from '../strength/types';
 
@@ -48,6 +51,9 @@ export interface EngineeringNowInput {
   walk?: WalkSim | string;
   falls?: FallSim | string;
   supportG?: EngineeringInputs['supportG'];
+  print?: EngineeringInputs['print'];
+  slices?: EngineeringInputs['slices'];
+  printerCount?: number;
   printDowns?: EngineeringInputs['printDowns'];
 }
 
@@ -129,8 +135,21 @@ export async function engineeringInputs(
 
 export async function runEngineeringNow(options: EngineeringNowInput) {
   const { viewport, parts, project, withSweep, walk, falls, supportG, printDowns } = options;
+  const printers = options.print ? [] : await printBridge.printers();
+  const print =
+    options.print ??
+    (viewport
+      ? await printReportOf(
+          parts,
+          { project, printer: resolvePrinter(project.printer, printers) },
+          viewport.printShapes,
+        )
+      : undefined);
   const input: EngineeringInputs = {
     ...(await engineeringInputs(viewport, parts, project)),
+    print,
+    slices: options.slices,
+    printerCount: options.printerCount ?? printers.length,
     walk,
     falls,
     supportG,

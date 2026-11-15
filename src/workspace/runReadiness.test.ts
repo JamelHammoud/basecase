@@ -49,6 +49,7 @@ describe('what makes checks run again', () => {
   });
 
   it.each<[string, Partial<ProjectSettings>]>([
+    ['time budget', { budgetHours: 6 }],
     ['infill', { infillPct: 100 }],
     ['gait', { animations: [{ id: 'a', name: 'walk' }] as ProjectSettings['animations'] }],
     ['first ranges', { firstRanges: { j: [-90, 90] } }],
@@ -56,6 +57,13 @@ describe('what makes checks run again', () => {
     ['active calibration', { servoCalibrations: { j: { versions: [], active: 1 } } }],
   ])('the project’s %s', (_name, change) => {
     expect(print([part], { ...project, ...change })).not.toBe(print());
+  });
+
+  it('printer count and sliced times', () => {
+    expect(print([part], project, { ...world, printerCount: 2 })).not.toBe(print());
+    expect(print([part], project, { ...world, slices: [{ number: 1, hash: 'plate', seconds: 600 }] })).not.toBe(
+      print(),
+    );
   });
 
   it('a saved price', () => {

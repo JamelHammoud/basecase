@@ -3,6 +3,11 @@ import type { Studio } from '../types';
 
 export default function buildStudio(studio: Studio) {
   return {
+    buildTime: () => {
+      const row = studio().core.readiness.current?.rows.find((r) => r.check === 'Time');
+
+      return row ? { hours: row.hours, status: row.status } : null;
+    },
     guide: async () => {
       const made = await studio().core.guide.generate();
 

@@ -45,6 +45,8 @@ A thin area of 100 mm² or more is a panel that would print with holes, and it b
 
 Plates are packed per material, around the bed's clear areas. Parts the build guide needs first go on the first plates, and parts no step uses go last. Until a plate is sliced, its time and weight show with ≈. Once Bambu Studio or OrcaSlicer slices it, the plate shows the slicer's own time, grams, supports and warnings.
 
+The Time check uses sliced times for matching plates and estimates for the rest. It divides print hours across your saved printers, counting at least one, then adds estimated assembly and servo setup. It doesn't assign plates to printers or account for when printers are free. To compare that total with the hours available, [Set a time budget](/help/set-a-time-budget).
+
 ## What Basecase won't print
 
 A printed part meant to be clear, such as one named “Front Glass”, blocks the build. A printer can't make clear parts. A part bigger than the plate blocks it too. **Parts** in Print mode says how many pieces to split it into.

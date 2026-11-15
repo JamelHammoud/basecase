@@ -62,4 +62,6 @@ To delete a saved price, click it, click **Delete Price**, then click **Delete**
 
 Press [[⌘,]], choose **Build**, then pick one of 30 currencies in **Currency** under **Prices**. Basecase converts prices using European Central Bank rates, which update once a day when the app starts. A price you type in your currency reads back exactly as you typed it.
 
+To plan your build around the hours available, [set a time budget](/help/set-a-time-budget).
+
 Next, [buy the parts for a robot](/help/buy-the-parts-for-a-robot).

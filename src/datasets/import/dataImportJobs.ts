@@ -2,8 +2,9 @@ import { loadMujoco } from '../../sim/loadMujoco';
 import type { SimModel } from '../../sim/mjcfTypes';
 import { importedTries, replayedRecording, type BuiltTries, type ImportTarget, type ReplayJob } from './importedTries';
 import type { ReplayPlan } from './kinematicRecording';
-import { readImportSource, type ImportSource } from './readSource';
+import { readImportSource, type ReadSource, type ImportSource } from './readSource';
 import { ImageImportSession, type ImageImportContext, type ImageImportSummary } from './imageImportSession';
+import { importVideoBytes } from './importVideoBytes';
 import { DataImportError, type SourceData, type SourceFormat } from './types';
 import { columnSpans, mergedSpans, type ColumnSpan } from './units';
 
@@ -27,7 +28,7 @@ export const sourceSpans = (data: SourceData) =>
   mergedSpans(data.episodes.map((e) => columnSpans(e.state, data.names.length)));
 
 export function importHandlers() {
-  let read: SourceData | null = null;
+  let read: ReadSource | null = null;
   const images = new ImageImportSession();
 
   return {
@@ -37,7 +38,7 @@ export function importHandlers() {
 
       const found = await readImportSource(source);
 
-      read = found && 'data' in found ? found.data : null;
+      read = found && 'data' in found ? found : null;
 
       const imageManifest = images.load(found && 'images' in found ? (found.images ?? null) : null);
 
@@ -71,11 +72,18 @@ export function importHandlers() {
     build: async (job: BuildJob): Promise<BuiltTries> => {
       if (!read) throw new DataImportError('Import the files again.');
 
-      const data = read;
+      const { data, files } = read;
 
       read = null;
 
-      return importedTries(await loadMujoco(), { model: job.model, data, plan: job.plan, target: job.target });
+      const built = await importedTries(await loadMujoco(), {
+        model: job.model,
+        data,
+        plan: job.plan,
+        target: job.target,
+      });
+
+      return data.format === 'mcap' ? built : importVideoBytes(built, files);
     },
     replay: async (job: ReplayJob) => replayedRecording(await loadMujoco(), job),
   };

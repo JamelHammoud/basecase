@@ -54,12 +54,11 @@ function openedGrid(options: {
   mesh: HexMesh;
   ranked: number[];
   count: number;
-  minWallMm: number;
+  offsets: V3[];
   paths: Uint8Array;
 }): FineGrid {
-  const { mesh, ranked, count, minWallMm, paths } = options;
+  const { mesh, ranked, count, offsets, paths } = options;
   const grid = fineGrid(mesh, ranked, count, paths);
-  const offsets = ballOffsets(grid.h, minWallMm / 2 + Math.max(...grid.h) / 2);
   const expanded = grid.solid.map((_, cell) =>
     offsets.some((offset) => grid.solid[offsetCell(grid, cell, offset)] === 1) ? 1 : 0,
   );
@@ -107,15 +106,16 @@ export function targetDensityGrid(options: {
     .map(({ e }) => e);
   const paths = interfacePaths(mesh, density, regions);
   const template = fineGrid(mesh, ranked, ranked.length, paths);
+  const offsets = ballOffsets(template.h, minWallMm / 2 + Math.max(...template.h) / 2);
   const frozen = template.solid.map((_, cell) => (frozenAt(regions, cellCenter(template, cell)) ? 1 : 0));
   const original = template.solid;
   let low = 0;
   let high = ranked.length;
-  let chosen = openedGrid({ mesh, ranked, count: 0, minWallMm, paths });
+  let chosen = openedGrid({ mesh, ranked, count: 0, offsets, paths });
 
   for (let step = 0; step < 10; step++) {
     const count = Math.floor((low + high) / 2);
-    const grid = openedGrid({ mesh, ranked, count, minWallMm, paths });
+    const grid = openedGrid({ mesh, ranked, count, offsets, paths });
     const mask = grid.solid.map((value, cell) => (original[cell] && (value || frozen[cell]) ? 1 : 0));
     const grams = gridMass(grid, mask, massTarget);
 

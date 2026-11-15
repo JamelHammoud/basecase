@@ -1,11 +1,14 @@
+import type { CameraVision } from '../../cameras/scopedVision';
 import React from 'react';
 import { lensLabel } from '../../cameras/lens';
 import { RenameField } from '../../design-system';
 import type { CameraView } from '../../cameras/views';
+import { DetectionOverlay } from './DetectionOverlay';
 import { tileChip, tileFrame, tileLabel } from './tileStyle';
 
 export interface CameraTileProps {
   view: CameraView;
+  vision: CameraVision;
   large: boolean;
   fill?: boolean;
   renaming: boolean;
@@ -15,7 +18,16 @@ export interface CameraTileProps {
   onMenu: (x: number, y: number) => void;
 }
 
-export const CameraTile: React.FC<CameraTileProps> = ({ view, large, fill, renaming, onRename, canvasRef, ...on }) => (
+export const CameraTile: React.FC<CameraTileProps> = ({
+  view,
+  vision,
+  large,
+  fill,
+  renaming,
+  onRename,
+  canvasRef,
+  ...on
+}) => (
   <div data-testid="camera-tile" data-camera={view.key} className={tileFrame(fill, large)}>
     <button
       type="button"
@@ -29,6 +41,7 @@ export const CameraTile: React.FC<CameraTileProps> = ({ view, large, fill, renam
     >
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
     </button>
+    <DetectionOverlay vision={vision} camera={view.key} />
     {renaming ? (
       <div className="absolute left-1.5 right-1.5 top-1.5 flex">
         <RenameField name={view.label} onDone={onRename} />
@@ -36,10 +49,12 @@ export const CameraTile: React.FC<CameraTileProps> = ({ view, large, fill, renam
     ) : (
       <span className={tileLabel}>{view.label}</span>
     )}
-    <span
-      className={`pointer-events-none absolute right-1.5 bottom-1.5 text-white/60 tabular opacity-0 group-hover/tile:opacity-100 transition-opacity ${tileChip}`}
-    >
-      {lensLabel(view.lens)}
-    </span>
+    {!view.recorded && (
+      <span
+        className={`pointer-events-none absolute right-1.5 bottom-1.5 text-white/60 tabular opacity-0 group-hover/tile:opacity-100 transition-opacity ${tileChip}`}
+      >
+        {lensLabel(view.lens)}
+      </span>
+    )}
   </div>
 );

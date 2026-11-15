@@ -2,6 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { net, protocol } from 'electron';
+import { isAppUrl } from './appOrigin.mjs';
+import { MODEL_PREFIX, modelResponse } from './hub/modelRoute.mjs';
+import { TRY_VIDEO_PREFIX, tryVideoRequest } from './library/tryVideo.mjs';
 import { KERNEL_SCHEME } from './cad-kernel/sandbox/policy.mjs';
 
 export const APP_ORIGIN = 'app://basecase';
@@ -94,6 +97,17 @@ async function fromDist(request, { distDir, transformHtml }) {
 
 const isPageOriginHeader = (name) => name === 'origin' || name.startsWith('sec-fetch-');
 
+function trustedAssetRequest(request) {
+  const origin = request.headers.get('origin');
+  const site = request.headers.get('sec-fetch-site');
+
+  return (
+    isAppUrl(request.url, APP_ORIGIN) &&
+    (!origin || isAppUrl(origin, APP_ORIGIN)) &&
+    (!site || site === 'same-origin' || site === 'none')
+  );
+}
+
 function proxiedHeaders(headers) {
   const out = new Headers(headers);
 
@@ -118,5 +132,18 @@ async function fromDevServer(request, { devServer, transformHtml }) {
 export function serveApp(options) {
   const handle = options.devServer ? fromDevServer : fromDist;
 
-  protocol.handle('app', (request) => handle(request, options));
+  protocol.handle('app', async (request) => {
+    const { pathname } = new URL(request.url);
+    const asset = pathname.startsWith(TRY_VIDEO_PREFIX) || pathname.startsWith(MODEL_PREFIX);
+
+    if (asset && !trustedAssetRequest(request)) return new Response(null, { status: 403, headers: isolated({}) });
+
+    if (pathname.startsWith(TRY_VIDEO_PREFIX) && options.tries)
+      return respond(await tryVideoRequest(request, options.tries));
+
+    if (pathname.startsWith(MODEL_PREFIX) && options.libraryDir)
+      return respond(await modelResponse(request, options.libraryDir));
+
+    return handle(request, options);
+  });
 }

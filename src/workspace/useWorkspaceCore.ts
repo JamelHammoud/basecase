@@ -1,3 +1,4 @@
+import { useVisionScope } from '../cameras/visionScope';
 import { useScenePrinting } from './usePrinting';
 import { useTriesWork } from './useDatasets';
 import { useRef, useState } from 'react';
@@ -128,9 +129,8 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const viewRef = useLatestRef({ active, tab: tool.leftTab, sidebarOpen: studio.isLeftOpen && !caseRun.open });
   const { triesView, datasets } = useTriesWork(simTraining, showToast);
 
-  const { travel } = docs;
   const { restorePose } = posing;
-  const undo = () => travel({ direction: 'undo', codeOnly: caseRun.open }, restorePose);
+  const undo = () => docs.travel({ direction: 'undo', codeOnly: caseRun.open }, restorePose);
   const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo, guide });
@@ -152,6 +152,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   return {
     workspaceId,
+    vision: useVisionScope(),
     studio,
     printer,
     readiness,
@@ -188,7 +189,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     buildAlong,
     repair,
     undo,
-    redo: () => travel({ direction: 'redo', codeOnly: caseRun.open }, restorePose),
+    redo: () => docs.travel({ direction: 'redo', codeOnly: caseRun.open }, restorePose),
     loadSeed: resetStudyBeforeLoad(study, loadSeed),
   };
 }

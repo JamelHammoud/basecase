@@ -1,5 +1,6 @@
 import { cellCenter, type HexMesh } from './mesh';
 import { cellIndex } from './voxels';
+import type { V3 } from './types';
 
 export interface DensityFilter {
   start: Int32Array;
@@ -7,21 +8,22 @@ export interface DensityFilter {
   weight: Float64Array;
 }
 
-function offsetsFor(steps: number[]): Array<[number, number, number]> {
-  const out: Array<[number, number, number]> = [];
+function offsetsFor(h: V3, radius: number): Array<[number, number, number, number]> {
+  const steps = h.map((value) => Math.ceil(radius / value));
+  const out: Array<[number, number, number, number]> = [];
 
   for (let dz = -steps[2]; dz <= steps[2]; dz++)
     for (let dy = -steps[1]; dy <= steps[1]; dy++)
-      for (let dx = -steps[0]; dx <= steps[0]; dx++) out.push([dx, dy, dz]);
+      for (let dx = -steps[0]; dx <= steps[0]; dx++)
+        out.push([dx, dy, dz, radius - Math.hypot(dx * h[0], dy * h[1], dz * h[2])]);
 
-  return out;
+  return out.filter(([, , , weight]) => weight > 0);
 }
 
 export function densityFilter(mesh: HexMesh, radius: number): DensityFilter {
   const { grid } = mesh;
   const elementOf = new Int32Array(grid.solid.length).fill(-1);
-  const steps = grid.h.map((h) => Math.ceil(radius / h));
-  const offsets = offsetsFor(steps);
+  const offsets = offsetsFor(grid.h, radius);
   const start = new Int32Array(mesh.cells.length + 1);
   const near: number[] = [];
   const weight: number[] = [];
@@ -31,11 +33,10 @@ export function densityFilter(mesh: HexMesh, radius: number): DensityFilter {
     const p = cellCenter(grid, cell);
     const own = p.map((v, axis) => Math.round((v - grid.origin[axis]) / grid.h[axis] - 0.5));
 
-    for (const [dx, dy, dz] of offsets) {
+    for (const [dx, dy, dz, w] of offsets) {
       const ijk = [own[0] + dx, own[1] + dy, own[2] + dz];
-      const w = radius - Math.hypot(dx * grid.h[0], dy * grid.h[1], dz * grid.h[2]);
 
-      if (w <= 0 || ijk.some((v, axis) => v < 0 || v >= grid.n[axis])) continue;
+      if (ijk.some((v, axis) => v < 0 || v >= grid.n[axis])) continue;
 
       const other = elementOf[cellIndex(grid, ijk[0], ijk[1], ijk[2])];
 

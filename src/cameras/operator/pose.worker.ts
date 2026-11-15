@@ -11,6 +11,7 @@ import {
 } from './poseProtocol';
 import { playback, RUNNERS, type Picture, type Runner } from './runners';
 import { createFrameQueue } from './workerFrames';
+import { createOperatorVision } from './liveVision';
 
 interface Lane {
   robot: InputRobot;
@@ -34,8 +35,10 @@ const fail = (e: unknown, kind?: LandmarkKind) =>
   post({ type: 'error', ...(kind ? { kind } : {}), message: e instanceof Error ? e.message : String(e) });
 
 const detecting = (lane: Lane): lane is Lane & { runner: Runner } => !!lane.runner && !lane.fed;
+const vision = createOperatorVision((error) => fail(error));
 
 function detect(picture: Picture, seenAt: number) {
+  vision.take(picture);
   lastTimestamp = Math.max(performance.now(), lastTimestamp + 1);
 
   for (const [kind, lane] of lanes) {
@@ -52,7 +55,7 @@ function detect(picture: Picture, seenAt: number) {
 }
 
 const frames = createFrameQueue({
-  wanted: () => !closed && [...lanes.values()].some(detecting),
+  wanted: () => !closed && (vision.wanted() || [...lanes.values()].some(detecting)),
   detect,
   fail: (e) => fail(e),
 });
@@ -149,6 +152,7 @@ function close() {
   closed = true;
   [...lanes.keys()].forEach((kind) => leave({ kind }));
   frames.stop();
+  vision.close();
   gestures.stop();
   scope.close();
 }
@@ -160,6 +164,8 @@ const handlers: { [K in PoseRequest['type']]: (msg: Extract<PoseRequest, { type:
   join,
   leave,
   frame: ({ bitmap }) => frames.take(bitmap),
+  'vision-port': ({ port, timeOrigin }) => vision.connect(port, timeOrigin),
+  'vision-assignments': ({ assignments }) => vision.configure(assignments),
   feed: (request) => {
     try {
       feed(request);

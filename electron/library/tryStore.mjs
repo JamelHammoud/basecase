@@ -3,6 +3,8 @@ import path from 'node:path';
 import { checkedFileId, isSafeFileId } from '../backend/constants.mjs';
 import { writeAtomic } from './atomicFile.mjs';
 import { sessionTail } from './sessionTail.mjs';
+import { cleanVideoAssets } from './tryVideoUploads.mjs';
+import { videoLocation, videoOwner, keepVideo, storedVideo } from './tryVideoFiles.mjs';
 
 export const TRY_MANIFEST = 'try.json';
 export const TRY_RECORDING = 'recording.bin';
@@ -14,7 +16,6 @@ const MAX_MANIFEST = 256 * 1024;
 const MAX_RECORDING = 1024 * 1024 * 1024;
 const MAX_STRIP = 2 * 1024 * 1024;
 const MAX_SESSION = 256 * 1024 * 1024;
-const MAX_VIDEO = 2 * 1024 * 1024 * 1024;
 const MAX_INDEX = 512 * 1024 * 1024;
 const MAX_MANIFEST_BATCH = 500;
 const SOURCES = new Set(['case', 'generated', 'real', 'import', 'operate']);
@@ -46,7 +47,10 @@ function outcomeOf(value) {
 function tagsOf(labels) {
   const tags = isPlain(labels) && Array.isArray(labels.tags) ? labels.tags : [];
 
-  return tags.filter((tag) => typeof tag === 'string').slice(0, MAX_TAGS).map((tag) => tag.slice(0, 64));
+  return tags
+    .filter((tag) => typeof tag === 'string')
+    .slice(0, MAX_TAGS)
+    .map((tag) => tag.slice(0, 64));
 }
 
 export function summarizeTry(manifest, { recording, strip, stamp }) {
@@ -272,14 +276,20 @@ export class TryStore {
     return { ok: true };
   }
 
-  saveVideo({ id, bytes }) {
-    const dir = this.dirOf(id);
+  saveVideo(payload) {
+    return keepVideo(this.dirOf(payload.id), payload);
+  }
 
-    if (!fs.existsSync(path.join(dir, TRY_MANIFEST))) return { ok: false };
+  videoTarget(payload) {
+    return videoLocation(this.dirOf(payload.id), payload);
+  }
 
-    writeAtomic(path.join(dir, TRY_VIDEO), checkedBytes(bytes, MAX_VIDEO));
+  videoFile(payload) {
+    return storedVideo(this.dirOf(payload.id), payload);
+  }
 
-    return { ok: true };
+  videoOwner(payload) {
+    return videoOwner(this.dirOf(payload.id), payload);
   }
 
   saveStrip({ id, bytes }) {
@@ -329,6 +339,8 @@ export class TryStore {
     for (const dir of dirs) fs.rmSync(dir, { recursive: true, force: true });
 
     for (const id of ids) this.forget(id);
+
+    void cleanVideoAssets(this.triesDir).catch(() => {});
 
     return { deleted: ids };
   }

@@ -71,6 +71,22 @@ describe('camera results in the coordinator', () => {
 });
 
 describe('multiple camera observations', () => {
+  it('uses a retained model only for its bound camera and perception node', () => {
+    const plan = planWithCup();
+
+    plan.visionModels = [{ camera: 'wrist', node: 'object-detection', modelId: 'local-cups' }];
+
+    const vision = new RoutineVisionFacts(plan);
+    const detection = { label: 'cup', score: 1, box: [0, 0, 1, 1] as [number, number, number, number] };
+
+    vision.accept({ ...emptyFrame, camera: 'wrist', detections: [detection] }, 0);
+    vision.accept({ ...emptyFrame, camera: 'other', modelId: 'local-cups', detections: [detection] }, 0);
+    expect(vision.read(plan.watchers[1], 1)).toBeUndefined();
+    vision.accept({ ...emptyFrame, camera: 'wrist', modelId: 'local-cups', detections: [detection] }, 0);
+    expect(vision.read(plan.watchers[1], 1)?.num).toBe(1);
+    expect(vision.read(plan.watchers[0], 1)).toBeUndefined();
+  });
+
   it('keeps a wrist detection when a second camera sees nothing and expires each capture separately', () => {
     const plan = planWithCup();
     const vision = new RoutineVisionFacts(plan);

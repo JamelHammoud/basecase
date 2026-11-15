@@ -117,6 +117,8 @@ scope.onmessage = async ({ data }) => {
 async function command(data: Record<string, unknown>) {
   if (data.type === 'load') return load(data);
 
+  if (data.type === 'infer-encoded') return inferEncoded(data);
+
   if (data.type === 'infer')
     return engine.infer(String(data.modelId), pixels(data.frame as ImageBitmap | VisionPixels), data.options as object);
 
@@ -148,4 +150,22 @@ async function load(data: Record<string, unknown>) {
   if (loading.get(manifest.id) !== generation) return;
 
   return engine.load(manifest, downloaded);
+}
+
+async function inferEncoded(data: Record<string, unknown>) {
+  const jpeg = data.jpeg;
+
+  if (!(jpeg instanceof Uint8Array) || jpeg.byteLength < 1 || jpeg.byteLength > 64 * 1024 * 1024)
+    throw new Error('Choose an image under 64 MB.');
+
+  const frame = await createImageBitmap(new Blob([new Uint8Array(jpeg)], { type: 'image/jpeg' }));
+
+  try {
+    const started = performance.now();
+    const result = await engine.infer(String(data.modelId), pixels(frame), data.options as object);
+
+    return { result, inferenceMs: performance.now() - started };
+  } finally {
+    frame.close();
+  }
 }

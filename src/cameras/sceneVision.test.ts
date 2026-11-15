@@ -7,9 +7,11 @@ import { RoutineVisionFacts } from '../routines/visionFacts';
 import type { VisionResult } from '../vision/types';
 import { createSignalBus } from '../cases/console/signalBus';
 import { withVisionSignals } from './visionBus';
-import { createVisionScope } from './visionScope';
+import { createVisionScope, visionScopeForScene } from './visionScope';
 import { liveSceneVision, sceneVisionSignals, subscribeLiveSceneVision } from './sceneVision';
 import { publishCameraVision } from './visionSession';
+
+vi.mock('../utils/platform/web/idb', () => ({ idbAll: async () => [] }));
 
 vi.mock('../vision/runtime', () => ({
   visionRuntime: () => ({ load: async () => undefined, subscribe: vi.fn(), onError: vi.fn() }),
@@ -51,6 +53,22 @@ async function scene(name: string) {
 }
 
 describe('scene-owned camera inference', () => {
+  it('keeps the saved scene identity across reopen and replaces sources when the same tab loads a different scene', () => {
+    const original = createVisionScope('saved-kitchen');
+    const reopened = createVisionScope('saved-kitchen');
+
+    expect(reopened.scene).toBe(original.scene);
+    expect(reopened.simulated.source.id).not.toBe(original.simulated.source.id);
+    expect(visionScopeForScene(original, 'saved-kitchen')).toBe(original);
+
+    const replaced = visionScopeForScene(original, 'saved-bedroom');
+
+    expect(replaced.scene).toBe('saved-bedroom');
+    expect(replaced.simulated.source.scene).toBe('saved-bedroom');
+    expect(replaced.simulated.source.id).not.toBe(original.simulated.source.id);
+    expect(original.simulated.source.scene).toBe('saved-kitchen');
+  });
+
   it('keeps opposing wrist detections in their own Routine, overlay and console', async () => {
     const a = await scene('kitchen');
     const b = await scene('workshop');

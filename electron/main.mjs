@@ -25,6 +25,7 @@ import { registerHubHandlers } from './hub/routes.mjs';
 import { registerTryHandlers } from './library/tryRoutes.mjs';
 import { sessionSink } from './library/tryStore.mjs';
 import { registerDatasetHandlers } from './library/datasetRoutes.mjs';
+import { registerVisionTrainingHandlers } from './visionTraining/routes.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
 import { registerRoboflowHandlers } from './roboflow/routes.mjs';
 import { registerEarthHandlers } from './earth/routes.mjs';
@@ -256,6 +257,7 @@ registerPrintHandlers(ipcMain, backend.printing);
 registerHubHandlers(ipcMain, backend.hub);
 registerTryHandlers(ipcMain, backend.tries);
 registerDatasetHandlers(ipcMain, backend.datasets);
+registerVisionTrainingHandlers(ipcMain, backend.visionTraining);
 registerOnshapeHandlers(ipcMain, backend.onshape);
 registerEarthHandlers(ipcMain, backend.earth);
 registerRoboflowHandlers(ipcMain, backend.roboflow);
@@ -342,6 +344,7 @@ app.on('before-quit', () => {
   updates.dispose();
   backend.kit.dispose();
   backend.trainer.dispose();
+  backend.visionTraining.dispose().catch(() => {});
   backend.printing.dispose();
 });
 

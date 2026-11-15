@@ -11,6 +11,8 @@ import {
   type ContextMenuEntry,
 } from '../design-system';
 import type { Dataset } from '../datasets/datasetFile';
+import { imageCount } from '../datasets/datasetView';
+import { datasetVisionView } from './visionTrainingView';
 import { datasetVersionGroups, datasetVersionMembers } from './datasetVersionView';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { DatasetActions } from '../components/tries/DatasetPane';
@@ -98,8 +100,36 @@ export interface DatasetMode {
   menu: (id: string) => ContextMenuEntry[];
 }
 
+function datasetActions(core: WorkspaceCore, dataset: Dataset): DatasetActions {
+  const {
+    datasets,
+    simTraining: { cases },
+    triesView: view,
+  } = core;
+  const { fromTries } = cases;
+  const hasImages = dataset !== null && imageCount(dataset) > 0;
+  const vision = hasImages ? datasetVisionView(core) : undefined;
+
+  return {
+    exporting: cases.dataset.exporting,
+    canPublish: cases.dataset.canPublish,
+    canTrain: hasImages
+      ? datasets.vision.canTrain
+      : fromTries.canTrain && enoughToTrain(cases.dataset.records.of(dataset)),
+    trainBusy: hasImages ? datasets.vision.busy : fromTries.busy,
+    training: hasImages ? vision!.running : fromTries.training === dataset.id,
+    result: hasImages ? null : fromTries.resultFor(dataset),
+    vision,
+    exportDataset: () => datasets.exportDataset(dataset),
+    publishDataset: () => datasets.publishDataset(dataset),
+    train: () => datasets.train(dataset, () => showNewCase(core)),
+    update: () => datasets.update(dataset),
+    selectVersion: view.selectVersion,
+  };
+}
+
 export function useDatasetMode(core: WorkspaceCore): DatasetMode {
-  const { triesView: view, datasets, simTraining } = core;
+  const { triesView: view, simTraining } = core;
   const { cases, sim } = simTraining;
   const dataset = view.open ? view.dataset : null;
   const modelHash = useModelHash(sim.buildModel, {
@@ -115,7 +145,6 @@ export function useDatasetMode(core: WorkspaceCore): DatasetMode {
     sceneId: cases.sceneId,
     caseId: cases.active?.id ?? null,
   });
-  const { fromTries } = cases;
 
   return {
     dataset,
@@ -123,19 +152,7 @@ export function useDatasetMode(core: WorkspaceCore): DatasetMode {
     fitting,
     earlier,
     elsewhere,
-    actions: dataset && {
-      exporting: cases.dataset.exporting,
-      canPublish: cases.dataset.canPublish,
-      canTrain: fromTries.canTrain && enoughToTrain(cases.dataset.records.of(dataset)),
-      trainBusy: fromTries.busy,
-      training: fromTries.training === dataset.id,
-      result: fromTries.resultFor(dataset),
-      exportDataset: () => datasets.exportDataset(dataset),
-      publishDataset: () => datasets.publishDataset(dataset),
-      train: () => datasets.train(dataset, () => showNewCase(core)),
-      update: () => datasets.update(dataset),
-      selectVersion: view.selectVersion,
-    },
+    actions: dataset ? datasetActions(core, dataset) : null,
     menu: (id) => tileMenu(core, id),
   };
 }

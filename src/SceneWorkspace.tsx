@@ -1,5 +1,5 @@
-import { createVisionScope, VisionScopeContext } from './cameras/visionScope';
-import { memo, useState } from 'react';
+import { createVisionScope, VisionScopeContext, visionScopeForScene, type VisionScope } from './cameras/visionScope';
+import { memo, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { CanvasCard } from './workspace/CanvasCard';
 import { CanvasContextMenu } from './workspace/CanvasContextMenu';
 import { CaseRunAreas, CaseRunProvider } from './workspace/CaseRunProvider';
@@ -14,9 +14,16 @@ import { WorkspaceSheets } from './workspace/WorkspaceSheets';
 
 export type { Preferences, StudioShared, WorkspaceHandle, WorkspaceMeta, WorkspaceSeed } from './workspace/types';
 
-function SceneWorkspaceImpl(props: SceneWorkspaceProps) {
+function SceneWorkspaceImpl(props: SceneWorkspaceProps & { setVisionScope: Dispatch<SetStateAction<VisionScope>> }) {
   const { core, actions, ui, clipboard, agent, canvasMenu, drop, rightIslandRef } = useWorkspace(props);
   const { studio, docs, tool } = core;
+  const { sceneId } = core.scene;
+  const { setVisionScope } = props;
+
+  useEffect(() => {
+    setVisionScope((scope) => visionScopeForScene(scope, sceneId));
+  }, [sceneId, setVisionScope]);
+
   const { openSettings } = studio;
   const { openMenu } = canvasMenu;
   const { setPaletteOpen } = ui;
@@ -75,11 +82,11 @@ function SceneWorkspaceImpl(props: SceneWorkspaceProps) {
 }
 
 function ScopedWorkspace(props: SceneWorkspaceProps) {
-  const [scope] = useState(() => createVisionScope(props.workspaceId));
+  const [scope, setVisionScope] = useState(() => createVisionScope(props.seed?.sceneId ?? props.workspaceId));
 
   return (
     <VisionScopeContext value={scope}>
-      <SceneWorkspaceImpl {...props} />
+      <SceneWorkspaceImpl {...props} setVisionScope={setVisionScope} />
     </VisionScopeContext>
   );
 }

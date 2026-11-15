@@ -9,6 +9,7 @@ import { hubPostRoutes } from './hub/routes.mjs';
 import { tryPostRoutes } from './library/tryRoutes.mjs';
 import { TRY_VIDEO_PREFIX, tryVideoMiddleware } from './library/tryVideo.mjs';
 import { datasetPostRoutes } from './library/datasetRoutes.mjs';
+import { visionTrainingPostRoutes } from './visionTraining/routes.mjs';
 import { onshapePostRoutes } from './onshape/routes.mjs';
 import { phoneBridgeMiddleware } from './phone/phoneBridge.mjs';
 import { PhonePairing } from './phone/phonePairing.mjs';
@@ -115,6 +116,7 @@ function postRoutes(backend) {
     ...hubPostRoutes(backend.hub),
     ...tryPostRoutes(backend.tries),
     ...datasetPostRoutes(backend.datasets),
+    ...visionTrainingPostRoutes(backend.visionTraining),
     ...onshapePostRoutes(backend.onshape),
     ...earthPostRoutes(backend.earth),
     ...roboflowPostRoutes(backend.roboflow),
@@ -160,11 +162,28 @@ async function respondToPost({ routes, url, body, res }) {
 
 function handlePost({ routes, url, req, res }) {
   let body = '';
+  let length = 0;
+  let refused = false;
 
   req.on('data', (chunk) => {
+    if (refused) return;
+
+    length += chunk.length;
+
+    if (url.startsWith('/vision-training-') && length > 24 * 1024 * 1024) {
+      refused = true;
+      body = '';
+      res.statusCode = 413;
+      res.end(JSON.stringify({ error: 'The training request is too large' }));
+
+      return;
+    }
+
     body += chunk.toString();
   });
-  req.on('end', () => respondToPost({ routes, url, body, res }));
+  req.on('end', () => {
+    if (!refused) respondToPost({ routes, url, body, res });
+  });
 }
 
 function eventsMiddleware(backend) {
@@ -231,10 +250,13 @@ function installBridge(server) {
   const backend = new BasecaseBackendService(process.cwd(), { kernel });
   const phone = new PhonePairing();
   const stopAgent = () => backend.disconnectAcpAgent();
+  const stopVisionTraining = () => backend.visionTraining.dispose().catch(() => {});
 
   server.httpServer?.once('close', stopAgent);
+  server.httpServer?.once('close', stopVisionTraining);
   server.httpServer?.once('close', () => phone.dispose());
   process.once('exit', stopAgent);
+  process.once('exit', stopVisionTraining);
   server.middlewares.use(MODEL_PREFIX, guardBridge(modelMiddleware(backend.libraryDir)));
   server.middlewares.use(TRY_VIDEO_PREFIX, guardBridge(tryVideoMiddleware(backend.tries)));
   server.middlewares.use('/api/events', guardBridge(eventsMiddleware(backend)));

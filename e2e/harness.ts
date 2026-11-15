@@ -9,6 +9,8 @@ import { tryPostRoutes } from '../electron/library/tryRoutes.mjs';
 import { tryVideoRequest } from '../electron/library/tryVideo.mjs';
 import { TryStore } from '../electron/library/tryStore.mjs';
 import { RoboflowAccount } from '../electron/roboflow/index.mjs';
+import { VisionTrainingStore } from '../electron/visionTraining/store.mjs';
+import { visionTrainingPostRoutes } from '../electron/visionTraining/routes.mjs';
 import { roboflowPostRoutes } from '../electron/roboflow/routes.mjs';
 import { TEST_HOOKS_FLAG } from '../src/utils/platform/testHooksFlag';
 
@@ -84,7 +86,13 @@ function libraryReplies(libraryDir: string): Record<string, Reply> {
   const tries = new TryStore({ triesDir, cacheFile: path.join(libraryDir, '.try-summaries.json') });
   const datasets = new DatasetStore({ dir: path.join(libraryDir, 'datasets') });
 
-  return { ...repliesOf(tryPostRoutes(tries)), ...repliesOf(datasetPostRoutes(datasets)) };
+  const vision = new VisionTrainingStore({ libraryDir });
+
+  return {
+    ...repliesOf(tryPostRoutes(tries)),
+    ...repliesOf(datasetPostRoutes(datasets)),
+    ...repliesOf(visionTrainingPostRoutes(vision)),
+  };
 }
 
 type SavedPurchases = Record<string, unknown>;

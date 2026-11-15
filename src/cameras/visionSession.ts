@@ -1,3 +1,4 @@
+import { retainedVisionModel } from '../vision/training/modelBindings';
 import { visionModel } from '../vision/catalogue';
 import type { VisionResult } from '../vision/types';
 import type { VisionManifest } from '../vision/manifest';
@@ -206,7 +207,7 @@ export function ensureVisionModel(modelId: string): Promise<void> {
 
   if (existing) return existing;
 
-  const manifest = visionModel(modelId);
+  const manifest = retainedVisionModel(modelId) ?? visionModel(modelId);
 
   if (!manifest) return Promise.reject(new Error(`No vision model ${modelId}.`));
 

@@ -35,6 +35,8 @@ You can teach your robot a Case from tries you drove yourself. Basecase keeps th
 
 Training runs in the desktop app, which uses Forge to train on your computer.
 
+The dataset must contain tries without images. A dataset with images offers **Train** for [vision training](/help/train-a-vision-model), even when it also holds tries.
+
 1. Open a Case and drive it with **Try It** until at least five tries pass. For steps, see [Try a Case](/help/try-a-case).
 2. Under **Results**, click **Make Dataset**. The dataset opens over the canvas. To gather tries from a Library search instead, see [Make a dataset from tries](/help/make-a-dataset-from-tries).
 3. Click **Train from Tries**.

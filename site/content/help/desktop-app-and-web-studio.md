@@ -45,6 +45,7 @@ Some features work only in the desktop app. In the web studio, you see this inst
 | Slicing and printing | “Download Basecase to slice and print.” |
 | SimReady objects | “Download Basecase to insert SimReady models.” |
 | Training and teaching skills | “Download Basecase to train policies.”, except Motor Kit skills in a browser that can run them |
+| Training vision models | Train in the desktop app from an image dataset |
 | **Play** ▸ **Operate** | Not shown |
 | STEP and IGES import | Meshes only: STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE |
 | Publishing a dataset to Hugging Face | Export only |

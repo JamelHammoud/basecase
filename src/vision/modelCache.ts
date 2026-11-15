@@ -1,4 +1,4 @@
-import type { VisionModelFile } from './manifest';
+import type { VisionArtifact } from './manifest';
 import { verifyModelBytes } from './verifyBytes';
 import { validateVisionModelFile } from './manifest';
 import { idbGet, idbPut } from '../utils/platform/web/idb';
@@ -78,7 +78,9 @@ export function modelCacheUrl(source: string, base: string, sha256: string) {
   return url;
 }
 
-export async function modelBytes(model: VisionModelFile, source?: string) {
+export async function modelBytes(model: VisionArtifact, source?: string) {
+  if ('source' in model) throw new Error('Supply retained local model bytes.');
+
   if (!source) return webModelFile(model);
 
   const url = modelCacheUrl(source, self.location.href, model.sha256);

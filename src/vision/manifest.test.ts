@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateVisionManifest } from './manifest';
+import { validateVisionManifest, validateVisionModelFile } from './manifest';
 
 export const testManifest = () => ({
   version: 1,
@@ -19,6 +19,20 @@ export const testManifest = () => ({
 });
 
 describe('vision manifest', () => {
+  it('accepts local content references while refusing them at the Hub boundary', () => {
+    const local = { source: 'local', sha256: 'a'.repeat(64), bytes: 128 };
+
+    expect(validateVisionManifest({ ...testManifest(), model: local }).model).toEqual(local);
+    expect(() => validateVisionModelFile(local)).toThrow();
+
+    for (const model of [
+      { ...local, owner: 'test' },
+      { ...local, source: 'remote' },
+      { ...local, sha256: '../file' },
+    ])
+      expect(() => validateVisionManifest({ ...testManifest(), model })).toThrow();
+  });
+
   it('accepts supported kinds and bounded model contracts', () => {
     for (const kind of ['detect', 'segment', 'keypoints', 'classify', 'depth']) {
       expect(validateVisionManifest({ ...testManifest(), kind }).kind).toBe(kind);

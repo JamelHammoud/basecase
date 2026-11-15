@@ -32,7 +32,13 @@ describe('measure toolbar', () => {
     await app.page.mouse.click(floor.x, floor.y);
     await expect.poll(numberFields).toBeGreaterThan(fieldsBefore);
 
-    await app.page.getByRole('button', { name: 'Done', exact: true }).click();
+    const done = app.page.getByRole('button', { name: 'Done', exact: true }).filter({ visible: true });
+    const tooltip = app.page.getByRole('tooltip');
+
+    await done.hover();
+    await expect.poll(() => tooltip.textContent()).toBe('Esc');
+    expect(await tooltip.locator('kbd').textContent()).toBe('Esc');
+    await done.click();
     await expect.poll(() => visible('Ruler')).toBe(0);
     expect(await visible('Shapes')).toBe(1);
   });

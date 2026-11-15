@@ -113,12 +113,11 @@ export const Modal: React.FC<ModalProps> = ({
         {action && (
           <div className="px-[20px] py-[12px] border-t border-white/[0.06] flex items-center gap-[8px] shrink-0">
             <div className="flex-1 min-w-0 flex items-center gap-[8px]">{footerStart}</div>
-            <Button variant="ghost" title="Cancel" shortcut="Esc" onClick={onClose}>
+            <Button variant="ghost" shortcut="Esc" onClick={onClose}>
               Cancel
             </Button>
             <Button
               variant={action.tone ?? 'primary'}
-              title={action.label}
               shortcut="↩"
               disabled={action.disabled}
               autoFocus={action.autoFocus}

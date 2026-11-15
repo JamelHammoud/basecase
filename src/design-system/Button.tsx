@@ -71,7 +71,7 @@ export const Button: React.FC<ButtonProps> = ({
     </button>
   );
 
-  if (!title) return button;
+  if (!title && !shortcut) return button;
 
   return (
     <Tooltip label={title} shortcut={shortcut} side={tooltipSide} className={fullWidth ? 'w-full' : ''}>

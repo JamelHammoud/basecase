@@ -131,7 +131,7 @@ export interface StoredFalls extends FallSim {
   key: string;
 }
 
-export interface EngineeringInputs extends Pick<TimeInput, 'print' | 'slices' | 'printerCount'> {
+export interface EngineeringInputs extends Pick<TimeInput, 'print' | 'slices' | 'printerCount' | 'assemblySteps'> {
   parts: ScenePart[];
   project: ProjectSettings;
   measures: Record<string, MeshMeasure | undefined>;

@@ -18,7 +18,7 @@ export function sceneChecks(
         parts: docs.partsRef.current,
         project: docs.projectRef.current,
         setAction,
-        slices: core.printing.job.slice?.plates,
+        slices: core.printing.job.slices,
         printerCount: core.studio.printers.printers.length,
         keepWalk: (walk) => docs.updateProjectNow((p) => ({ ...p, walk })),
         keepFalls: (falls) => docs.updateProjectNow((p) => ({ ...p, falls })),

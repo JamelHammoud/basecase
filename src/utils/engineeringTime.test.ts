@@ -8,6 +8,7 @@ import { isPrinted } from './bom';
 import { buildTime, timeRow } from './engineeringTime';
 import { engineeringFindings } from '../readiness/findings';
 import { runEngineering } from './engineering';
+import { currentSlices } from '../print/slices';
 
 const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
 const project = { ...DEFAULT_PROJECT, joints: rover.joints, budgetHours: 2 };
@@ -42,7 +43,9 @@ describe('build time budget', () => {
 
     expect(row.status).toBe('fail');
     expect(row.agentText).toMatch(/Plate .*Step .*servo/s);
-    expect(row.agentText).toContain('infill');
+    expect(row.agentText).toContain('Merge compatible printed parts');
+    expect(row.agentText).toContain('referenceable catalog part');
+    expect(row.agentText).not.toContain('infill');
   });
 
   it('rises with infill and falls when a printed part becomes a catalog part', () => {
@@ -94,6 +97,22 @@ describe('build time budget', () => {
     expect(buildTime({ ...input(), parts: withInsert }).assemblyMinutes).toBeGreaterThan(
       buildTime({ ...input(), parts: withScrew }).assemblyMinutes,
     );
+  });
+
+  it('uses estimates after labels change, as Print mode does', () => {
+    const print = report();
+    const plate = print.plan.plates[0];
+    const record = {
+      labels: 'original-guide',
+      plates: [{ ...plate, seconds: 360, support: false, warnings: [], thumbnail: null }],
+    };
+    const estimate = buildTime({ ...input(), print });
+    const sliced = buildTime({ ...input(), print, slices: currentSlices(record, 'original-guide') });
+
+    expect(sliced.printHours).toBeCloseTo(estimate.printHours - plate.hours + 0.1);
+    expect(buildTime({ ...input(), print, slices: currentSlices(record, 'revised-guide') })).toEqual(estimate);
+    expect(currentSlices(null, '')).toBeUndefined();
+    expect(currentSlices({ plates: record.plates }, '')).toBe(record.plates);
   });
 
   it('allows more setup time for eighteen servos than six', () => {

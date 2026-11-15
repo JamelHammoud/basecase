@@ -61,7 +61,7 @@ export const batteriesIn = (parts: ScenePart[]) =>
 export const projectFingerprint = (
   parts: ScenePart[],
   project: ProjectSettings,
-  printerId: string,
+  printer: Pick<PrinterSetup, 'model' | 'nozzle'>,
   world: ReadinessWorld,
 ) =>
   readinessFingerprint(parts, {
@@ -70,6 +70,8 @@ export const projectFingerprint = (
     budgetHours: project.budgetHours,
     printerCount: world.printerCount ?? 1,
     slices: world.slices?.map(({ number, hash, seconds }) => [number, hash, seconds]),
+    plates: parts.map((p) => [p.id, p.print?.plate, p.print?.at, p.print?.turned]),
+    guideSteps: jsonHash(project.buildGuide?.stepParts),
     tether: project.tether,
     extras: project.extras,
     sourced: jsonHash(project.sourced),
@@ -84,7 +86,7 @@ export const projectFingerprint = (
     firstRanges: project.firstRanges,
     calibrations: activeVersions(project.servoCalibrations),
     goneMates: goneMateIds(project.joints),
-    printerId,
+    printer: [printer.model.id, printer.nozzle, printer.model.bed, printer.model.height, printer.model.keepOut],
     purchases: jsonHash(world.purchases ?? {}),
     money: [world.money.code, world.money.ratesDate],
   });

@@ -15,6 +15,7 @@ import { resolvePrinter } from '../data/printers';
 import { printReportOf } from '../utils/printReport';
 import { rememberStress } from '../strength/fields';
 import type { StrengthJob } from '../strength/types';
+import { guideStepParts } from '../guide/guideSteps';
 
 const isServo = (p: ScenePart) =>
   p.kind === 'component' && !!p.componentId && COMPONENT_BY_ID[p.componentId]?.group === 'Servos';
@@ -150,6 +151,7 @@ export async function runEngineeringNow(options: EngineeringNowInput) {
     print,
     slices: options.slices,
     printerCount: options.printerCount ?? printers.length,
+    assemblySteps: guideStepParts(parts, project),
     walk,
     falls,
     supportG,

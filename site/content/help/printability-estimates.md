@@ -21,6 +21,7 @@ related:
 covers:
   - src/three/printability.ts
   - src/utils/printReport.ts
+  - src/utils/engineeringTime.ts
   - src/print/
   - src/readiness/wording.ts
 ---
@@ -45,7 +46,11 @@ A thin area of 100 mm² or more is a panel that would print with holes, and it b
 
 Plates are packed per material, around the bed's clear areas. Parts the build guide needs first go on the first plates, and parts no step uses go last. Until a plate is sliced, its time and weight show with ≈. Once Bambu Studio or OrcaSlicer slices it, the plate shows the slicer's own time, grams, supports and warnings.
 
-The Time check uses sliced times for matching plates and estimates for the rest. It divides print hours across your saved printers, counting at least one, then adds estimated assembly and servo setup. It doesn't assign plates to printers or account for when printers are free. To compare that total with the hours available, [Set a time budget](/help/set-a-time-budget).
+The Time check uses sliced times for matching plates with current labels and estimates for the rest. It divides print hours across your saved printers, counting at least one, then adds estimated assembly and servo setup. It doesn't assign plates to printers or account for when printers are free.
+
+Assembly allows one minute per guide step, half a minute per fastener, one and a half per insert, and two per other part. Each part counts once. Servo setup and calibration allow five minutes per movable joint. These are planning estimates. Delivery, failed prints and print service lead times are excluded.
+
+To compare that total with the hours available, [Set a time budget](/help/set-a-time-budget).
 
 ## What Basecase won't print
 

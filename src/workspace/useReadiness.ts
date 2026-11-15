@@ -61,7 +61,7 @@ export function useReadiness({
   const [runs] = useState(newestRuns);
   const money = useMoney();
   const [purchases] = usePurchases();
-  const fingerprint = projectFingerprint(parts, project, printer.model.id, { purchases, money, printerCount, slices });
+  const fingerprint = projectFingerprint(parts, project, printer, { purchases, money, printerCount, slices });
 
   useEffect(() => {
     void loadSourced();
@@ -72,7 +72,7 @@ export function useReadiness({
 
   const checkNow = (): Promise<Readiness | null> => {
     const viewport = viewportRef.current;
-    const now = projectFingerprint(partsRef.current, projectRef.current, printer.model.id, {
+    const now = projectFingerprint(partsRef.current, projectRef.current, printer, {
       purchases: knownPurchases(),
       money: currentMoney(),
       printerCount,
@@ -162,7 +162,7 @@ export function useSceneReadiness(
     project: docs.project,
     printer: printing.printer,
     printerCount: studio.printers.printers.length,
-    slices: printing.job.slice?.plates,
+    slices: printing.job.slices,
     partsRef: docs.partsRef,
     projectRef: docs.projectRef,
     viewportRef,

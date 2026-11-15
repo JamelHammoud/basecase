@@ -14,15 +14,16 @@ export interface TimeInput {
   print?: PrintReport;
   slices?: Array<Pick<SlicedPlate, 'number' | 'hash' | 'seconds'>>;
   printerCount?: number;
+  assemblySteps?: string[][];
 }
 
 export const TIME_MINUTES = { step: 1, part: 2, fastener: 0.5, insert: 1.5, servo: 5 };
 
-export function assemblyTimes(parts: ScenePart[], project: ProjectSettings) {
+export function assemblyTimes(parts: ScenePart[], project: ProjectSettings, steps = guideStepParts(parts, project)) {
   const byId = new Map(parts.filter(isBuilt).map((p) => [p.id, p]));
   const counted = new Set<string>();
 
-  return guideStepParts(parts, project).map((ids, index) => {
+  return steps.map((ids, index) => {
     const fresh = ids.filter((id) => byId.has(id) && !counted.has(id)).map((id) => byId.get(id)!);
 
     fresh.forEach((p) => counted.add(p.id));
@@ -57,7 +58,7 @@ export function buildTime(input: TimeInput) {
   });
   const unplaced = Math.max(0, (print?.totals.hours ?? 0) - plates.reduce((n, p) => n + p.estimated, 0));
   const printHours = (plates.reduce((n, p) => n + p.hours, 0) + unplaced) / printers;
-  const steps = assemblyTimes(parts, project);
+  const steps = assemblyTimes(parts, project, input.assemblySteps);
   const assemblyMinutes = steps.reduce((n, s) => n + s.minutes, 0);
   const servos = servoLayout(project.joints ?? []).ids.length;
   const setupMinutes = servos * TIME_MINUTES.servo;
@@ -91,7 +92,7 @@ export function timeRow(input: TimeInput): CheckRow {
     ? `Step ${time.mostFasteners.step}: ${plural(time.mostFasteners.fasteners, 'fastener')}, ${time.mostFasteners.minutes.toFixed(1)} min (${time.mostFasteners.ids.join(', ')}).`
     : '';
   const fix =
-    'Merge compatible printed parts in Print mode, lower infill only on parts that carry no load, or replace a printed part with a referenceable catalog part. Preserve the robot’s function and strength. Keep each edit in one undo step, then recheck.';
+    'Merge compatible printed parts in Print mode or replace a printed part with a referenceable catalog part. Preserve the robot’s function and strength. Keep each edit in one undo step, then recheck.';
 
   return {
     check: 'Time',

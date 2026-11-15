@@ -6,7 +6,7 @@ image: /changelog/set-a-time-budget/cover.png
 
 You can now give your robot a budget in hours beside its money budget. Checks compares the estimated printing, assembly, and servo setup time with it.
 
-In the Build tab, enter hours in the Time field under Bill of materials. The Time check shows the three contributions together.
+The Time field sits under Bill of materials in the Build tab. The Time check shows the three contributions together.
 
 A rover for this weekend can fit your money budget while taking longer to print and assemble than you have available. The check fails above your hours and warns above 90 percent, so that tradeoff appears while you design.
 

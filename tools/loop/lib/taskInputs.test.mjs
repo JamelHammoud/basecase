@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { taskInputSignature } from './taskInputs.mjs';
 
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'loop-task-inputs-'));
@@ -44,5 +44,22 @@ describe('task evidence invalidation', () => {
     expect(taskInputSignature({ body: 'Inputs: `src/cameras/`' }, execute)).toEqual(expect.any(String));
     expect(taskInputSignature({ body: 'Inputs: `src/missing/`' }, execute)).toBeNull();
     expect(taskInputSignature({ body: 'Inputs: `src/cameras/`, `src/missing/`' }, execute)).toBeNull();
+  });
+
+  it('tracks top-level declared folders without treating every mentioned file as an input', () => {
+    const execute = vi.fn(() => ({ ok: true, out: '100644 blob a\telectron/input.mjs' }));
+    const step = { body: 'Inputs: `electron/`\nCheck `tools/loop/lib/agent.mjs` for the command.' };
+
+    expect(taskInputSignature(step, execute)).toEqual(expect.any(String));
+    expect(execute.mock.calls[0][1]).toEqual([
+      'ls-tree',
+      '-r',
+      'origin/main',
+      '--',
+      'electron/',
+      'AGENTS.md',
+      'package-lock.json',
+      '.nvmrc',
+    ]);
   });
 });

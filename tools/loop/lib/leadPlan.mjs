@@ -10,7 +10,7 @@ const STEP_LABELS = ['loop:next', 'loop:building', 'loop:blocked'];
 function openStep(gh, title) {
   const match = gh.findOpenIssue?.({ title, similarAmong: STEP_LABELS });
 
-  return match?.labels.some((label) => STEP_LABELS.includes(label)) ? match : null;
+  return match?.labels.some((label) => STEP_LABELS.includes(label.name ?? label)) ? match : null;
 }
 
 function tracker(issues, gh) {

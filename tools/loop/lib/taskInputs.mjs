@@ -5,7 +5,10 @@ import { HOME_CHECKOUT } from './paths.mjs';
 import { run } from './sh.mjs';
 
 export function taskInputSignature(step, execute = run) {
-  const files = namedAreas(step.body).files;
+  const declared = /^Inputs:[ \t]*(.+)$/im.exec(step.body ?? '')?.[1];
+  const files = declared
+    ? [...declared.matchAll(/`([^`\n]+)`/g)].map((match) => match[1])
+    : namedAreas(step.body).files;
 
   if (files.length === 0) return null;
 

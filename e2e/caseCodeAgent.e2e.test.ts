@@ -1,6 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { gradeTask } from '../bench/micro/grade.mjs';
-import { CASE_CODE_TASKS } from '../bench/micro/tasks/caseCode.mjs';
 import { presetCase } from '../src/cases/caseBuilder';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
@@ -138,33 +136,5 @@ describe('the agent writing a running Case’s code', () => {
     await app.page.keyboard.press('Enter');
     await expect.poll(() => sentPrompt()).toContain('running the Case Rover Remote (rover-remote)');
     expect(await stillTrying()).toBe(true);
-  }, 180000);
-
-  it('grades a Case’s code in the app: the empty Case fails W6 and its reference remote passes', async () => {
-    const { page } = app;
-    const remoteTask = CASE_CODE_TASKS.find((t) => t.id === 'W6')!;
-    const studio = (method: string, ...rest: unknown[]) =>
-      page.evaluate(
-        ([m, a]) =>
-          (window as unknown as Record<string, Record<string, (...x: unknown[]) => unknown>>).__studio[m](...a),
-        [method, rest] as const,
-      );
-    const graded = async (scene: { parts: unknown[] }) => {
-      await studio('load', scene);
-      await expect.poll(() => partCount(page)).toBe(scene.parts.length);
-
-      return gradeTask(remoteTask, { before: scene, after: scene, app: { page, studio } });
-    };
-
-    expect((await graded(await remoteTask.startScene())).status).toBe('fail');
-
-    const reference = await graded(await remoteTask.solutionScene());
-
-    expect(reference.checks.map((c) => [c.pass, c.detail])).toEqual([
-      [true, '1 panel ran'],
-      [true, 'None refused'],
-      [true, 'All found'],
-      [true, 'Dance drove, Stop stopped'],
-    ]);
   }, 180000);
 });

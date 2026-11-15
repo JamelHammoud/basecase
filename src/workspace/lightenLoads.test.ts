@@ -31,6 +31,28 @@ async function measuredScene() {
 }
 
 describe('Lighten load collection', () => {
+  it('names an unusable mounting port once in the refusal', async () => {
+    const { parts, project, viewport } = await measuredScene();
+    const part = parts.find((candidate) => candidate.id === L_BRACKET)!;
+
+    part.cad!.ports = [{ name: 'mount', position: [0, 0, 0], axis: [0, 0, 1], kind: 'bore' }];
+
+    await expect(lightenLoads(viewport, parts, project, L_BRACKET)).rejects.toHaveProperty(
+      'message',
+      `${part.name}: mount needs a measured diameter before lightening.`,
+    );
+  });
+
+  it('refuses placeholder component geometry from the shared menu and agent action', async () => {
+    const { parts, project, viewport } = await measuredScene();
+
+    vi.mocked(viewport.meshesReady).mockResolvedValue(['feetech-sts3215']);
+
+    await expect(lightenLoads(viewport, parts, project, L_BRACKET)).rejects.toThrow('measure a box in its place');
+    expect(viewport.fastenerChains).not.toHaveBeenCalled();
+    expect(viewport.measureParts).not.toHaveBeenCalled();
+  });
+
   it('uses every Strength job, including the saved walking peak, with the same world coordinates', async () => {
     const { parts, project, viewport, chains } = await measuredScene();
 

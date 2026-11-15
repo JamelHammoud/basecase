@@ -1,9 +1,20 @@
 import * as THREE from 'three';
-import type { LightenFrozen, LightenInput } from '../../strength/lighten';
+import type { LightenFrozen, LightenInput, LightenResult } from '../../strength/lighten';
 import type { ScrewLine, V3 } from '../../strength/types';
 
 export interface LightenTask extends Omit<LightenInput, 'positions'> {
   part: string;
+  shapeTransform?: number[];
+}
+
+export function lightenResultInFrame(result: LightenResult, transform?: number[]): LightenResult {
+  if (!transform) return result;
+
+  const inverse = new THREE.Matrix4().fromArray(transform).invert();
+
+  new THREE.BufferAttribute(result.positions, 3).applyMatrix4(inverse);
+
+  return result;
 }
 
 const point = (inverse: THREE.Matrix4, p: V3): V3 => new THREE.Vector3(...p).applyMatrix4(inverse).toArray() as V3;

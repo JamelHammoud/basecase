@@ -26,7 +26,7 @@ export function LightenSheet({ busy, problem, onClose, onLighten }: LightenSheet
         onClick: () => onLighten({ targetShare: targetPercent / 100, minWallMm }),
       }}
     >
-      <div className="space-y-4">
+      <div className="space-y-4" aria-busy={busy}>
         <FieldRow label="Target mass">
           <NumberInput
             value={targetPercent}
@@ -52,9 +52,8 @@ export function LightenSheet({ busy, problem, onClose, onLighten }: LightenSheet
           </FieldRow>
         </Section>
         {busy && (
-          <div role="status" className="flex items-center gap-2 text-[13px] text-white/60">
+          <div className="flex items-center text-white/60">
             <Spinner className="w-3.5 h-3.5" />
-            <span>Lightening…</span>
           </div>
         )}
         {problem && (

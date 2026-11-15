@@ -23,7 +23,7 @@ afterAll(async () => {
 });
 
 describe('Lighten', () => {
-  it('opens Lighten from the part menu and cancels without changing the part', async () => {
+  it('opens Lighten, refuses an unloaded part and cancels without changing it', async () => {
     const source = box('bracket', [0, 10, 0], [20, 10, 6], 2);
     const scene = { parts: [source], project: DEFAULT_PROJECT };
 
@@ -40,6 +40,11 @@ describe('Lighten', () => {
     expect(await sheet.getByLabel('Target mass').inputValue()).toBe('50');
     await sheet.getByRole('button', { name: 'Expert' }).click();
     expect(await sheet.getByLabel('Min. wall').inputValue()).toBe('1.5');
+    await sheet.getByRole('button', { name: 'Lighten', exact: true }).click();
+    await expect
+      .poll(() => sheet.getByRole('alert').textContent())
+      .toBe('bracket has no measured Strength load path to lighten.');
+    expect((await record()).parts).toEqual([source]);
     await sheet.getByRole('button', { name: 'Cancel', exact: true }).click();
     await expect.poll(() => sheet.count()).toBe(0);
     expect((await record()).parts).toEqual([source]);

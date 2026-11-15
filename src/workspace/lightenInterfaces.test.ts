@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { Matrix4 } from 'three';
 import { addHoles } from '../agent/cadCode';
 import { portsOf, worldPort } from '../agent/ports';
 import { hardware, printed } from '../assembly/assembly.fixtures';
@@ -29,6 +30,32 @@ function lineThrough(regions: LightenFrozen, point: V3, radius: number) {
   expect(Math.hypot(...cross)).toBeCloseTo(0, 6);
   expect(Math.hypot(...d)).toBeGreaterThan(80);
 }
+
+it('uses the retained affine frame once for scaled ports, face mates and generated clearance holes', () => {
+  const part = printed('bracket', { size: [40, 10, 30] }, [10, 20, 30]);
+
+  part.rotation = [20, 35, 55];
+  part.dimensions = { width: 80, height: 30, depth: 120 };
+  part.sheetTransform = new Matrix4().set(1.2, 0.2, 0, 3, 0.2, 1.4, 0, -2, 0, 0, 1, 1, 0, 0, 0, 1).toArray();
+  part.cad!.ports = [
+    { name: 'bore', position: [2, 3, 4], axis: [0, 0, 1], diameterMm: 4, kind: 'bore' },
+    { name: 'face', position: [4, 5, 6], axis: [0, 1, 0], kind: 'face' },
+  ];
+  part.cad!.code = addHoles('openscad', 'cube(10);', [
+    { start: [2, 3, 4], direction: [0, 0, 1], diameter: 4, length: 10 },
+  ]);
+
+  const regions = frozenInterfaces({ part, parts: [part], measure });
+  const bore = worldPort(part, portsOf(part)[0]);
+  const face = worldPort(part, portsOf(part)[1]);
+
+  expect(regions.lines).toHaveLength(2);
+  expect(regions.lines![0]).toEqual(regions.lines![1]);
+  lineThrough(regions, bore.position, regions.lines![0].radius);
+  expect(regions.lines![0].radius).toBeGreaterThanOrEqual(8);
+  closeVector(regions.planes![0].point, face.position);
+  closeVector(regions.planes![0].normal, face.axis);
+});
 
 describe('Lighten interfaces', () => {
   it('keeps unused bores, full mating faces, and unrelated screw seats in world coordinates', () => {

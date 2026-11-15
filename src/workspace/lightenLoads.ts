@@ -6,6 +6,7 @@ import { runEngineering } from '../utils/engineering';
 import { engineeringInputs } from './engineeringNow';
 import { frozenInterfaces } from './lightenInterfaces';
 import { freshWalk } from './storedWalk';
+import { awaitPartModels } from './agentPartModels';
 
 export async function lightenLoads(
   viewport: Viewport3DHandle,
@@ -16,6 +17,8 @@ export async function lightenLoads(
   const part = parts.find((candidate) => candidate.id === partId);
 
   if (!part) throw new Error(`Part ${partId} was not found.`);
+
+  await awaitPartModels('lighten_part', viewport);
 
   const input = await engineeringInputs(viewport, parts, project);
   const jobs: StrengthJob[] = [];
@@ -39,9 +42,9 @@ export async function lightenLoads(
   try {
     return { jobs, frozen: frozenInterfaces({ part, parts, chains: input.chains, measure }) };
   } catch (error) {
-    throw new Error(
-      `${part.name}: ${error instanceof Error ? error.message : 'its interfaces could not be measured.'}`,
-      { cause: error },
-    );
+    const reason = error instanceof Error ? error.message : 'its interfaces could not be measured.';
+    const named = reason.startsWith(`${part.name}:`) ? reason : `${part.name}: ${reason}`;
+
+    throw new Error(named, { cause: error });
   }
 }

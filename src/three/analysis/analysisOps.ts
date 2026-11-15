@@ -21,7 +21,7 @@ import { planMerges } from '../../print/merge/mergePlan';
 import { plateFiles, type ThreeMfResult, type ThreeMfTask } from './plateFiles';
 import { sceneStl } from './sceneStl';
 import { lightenPart, type LightenResult } from '../../strength/lighten';
-import { lightenInFrame, type LightenTask } from './lightenFrame';
+import { lightenInFrame, lightenResultInFrame, type LightenTask } from './lightenFrame';
 
 export type { PlateFilesInput, ThreeMfFileSpec, ThreeMfResult } from './plateFiles';
 
@@ -195,7 +195,7 @@ function lightenJob(task: Extract<AnalysisTask, { kind: 'lighten' }>) {
     positions: solid.positions,
     ...local,
     jobs: local.jobs.map((job) => ({ ...job, down: candidateDowns(solid, job.down).chosen })),
-  });
+  }).then((result) => lightenResultInFrame(result, task.shapeTransform));
 }
 
 function stlFiles(task: Extract<AnalysisTask, { kind: 'partStls' }>) {

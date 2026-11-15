@@ -1,7 +1,7 @@
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { LightenResult } from '../strength/lighten';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
-import { isPrinted } from '../utils/bom';
+import { isMadePart } from '../utils/bom';
 import { errorMessage } from '../utils/errorMessage';
 import { percent } from '../../electron/percent.mjs';
 import { lightenLoads } from './lightenLoads';
@@ -21,7 +21,7 @@ export interface LightenContext {
   current?: () => boolean;
 }
 
-export const canLighten = (part: ScenePart) => isPrinted(part) && part.visible && !part.locked;
+export const canLighten = (part: ScenePart) => isMadePart(part) && part.visible && !part.locked;
 
 function sameLightenProject(before: ProjectSettings, after: ProjectSettings): boolean {
   const keys = new Set([...Object.keys(before), ...Object.keys(after)] as Array<keyof ProjectSettings>);
@@ -37,6 +37,7 @@ export function lightenedPart(part: ScenePart, result: LightenResult): ScenePart
 
   return {
     ...withSculptMesh(part, sculptMesh),
+    sheetTransform: part.sheetTransform,
     cad,
     mesh: undefined,
     sketch: undefined,
@@ -67,7 +68,13 @@ export async function applyLighten(ctx: LightenContext, options: LightenOptions 
 
     if (stale()) return { text: 'The scene changed. Run Lighten again.' };
 
-    const result = await viewport.lightenPart({ part: part.id, ...loads, targetShare, minWallMm });
+    const result = await viewport.lightenPart({
+      part: part.id,
+      ...loads,
+      targetShare,
+      minWallMm,
+      shapeTransform: part.sheetTransform,
+    });
 
     if (stale()) return { text: 'The scene changed. Run Lighten again.' };
 

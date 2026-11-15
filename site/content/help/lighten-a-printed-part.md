@@ -30,7 +30,7 @@ Mounting regions and the wall setting can keep the result above your target mass
 4. In **Expert**, set **Min. wall** if you need a different minimum wall thickness. The starting value is 1.5 mm.
    ![Expert with Min. wall set to 1.5 mm](/help/lighten-a-printed-part/expert.png)
 
-5. Click **Lighten** to replace the part with the result.
+5. In the dialog, click **Lighten** to replace the part with the result.
 
    ![The lightened coxa bracket with its mounting holes retained](/help/lighten-a-printed-part/result.png)
 6. In **Build**, review **Checks** for the changed part before printing it.

@@ -1,6 +1,8 @@
+import { Matrix3, Matrix4 } from 'three';
 import { toScene } from '../agent/agentFrame';
 import { generatedHoles } from '../agent/cadHoles';
 import { portsOf, worldPort, type WorldPort } from '../agent/ports';
+import { sheetPorts } from '../agent/sheetPorts';
 import type { ChainResult, FastenerChain } from '../assembly/assemblyTypes';
 import { fastenerSpec } from '../assembly/fastenerSpec';
 import { THREAD } from '../data/hardware';
@@ -11,6 +13,7 @@ import type { Port } from '../types/ports';
 import type { ScenePart } from '../types/robotics';
 
 const axes = [0, 1, 2];
+const sourcePorts = (part: ScenePart) => portsOf({ ...part, sheetTransform: undefined });
 
 function scaleOf(part: ScenePart): number[] {
   const size = [part.dimensions.width, part.dimensions.height, part.dimensions.depth];
@@ -27,7 +30,21 @@ function portAt(part: ScenePart, port: Port): WorldPort {
   if (Math.hypot(...axis) === 0 || [...position, ...axis].some((value) => !Number.isFinite(value)))
     throw new Error(`${part.name}: ${port.name} has no measured axis or position.`);
 
-  return worldPort(part, { ...port, position, axis });
+  const transformed = part.sheetTransform ? sheetPorts(part, [port])[0] : { ...port, position, axis };
+
+  return worldPort(part, transformed);
+}
+
+function radiusScale(part: ScenePart): number {
+  const scale = Math.max(...scaleOf(part));
+
+  if (!part.sheetTransform) return scale;
+
+  const linear = new Matrix3().setFromMatrix4(new Matrix4().fromArray(part.sheetTransform)).elements.map(Math.abs);
+  const rows = axes.map((row) => axes.reduce((sum, col) => sum + linear[col * 3 + row], 0));
+  const columns = axes.map((col) => axes.reduce((sum, row) => sum + linear[col * 3 + row], 0));
+
+  return scale * Math.sqrt(Math.max(...rows) * Math.max(...columns));
 }
 
 function acrossBounds(at: WorldPort, measure: MeshMeasure, radius: number): ScrewLine {
@@ -51,14 +68,14 @@ function portRadius(part: ScenePart, port: Port): number {
   if (cylindrical && !(diameter && diameter > 0))
     throw new Error(`${part.name}: ${port.name} needs a measured diameter before lightening.`);
 
-  return (((diameter ?? 0) + (port.pitchDiameterMm ?? 0)) / 2) * Math.max(...scaleOf(part));
+  return (((diameter ?? 0) + (port.pitchDiameterMm ?? 0)) / 2) * radiusScale(part);
 }
 
 function preservePorts(part: ScenePart, measure: MeshMeasure): LightenFrozen {
   const lines: ScrewLine[] = [];
   const planes: NonNullable<LightenFrozen['planes']> = [];
 
-  for (const port of portsOf(part)) {
+  for (const port of sourcePorts(part)) {
     const at = portAt(part, port);
 
     if (port.kind === 'face') planes.push({ point: at.position, normal: at.axis, halfThickness: 0 });
@@ -130,7 +147,7 @@ function preserveChains(options: {
 }
 
 function preserveMates(part: ScenePart, parts: ScenePart[]): NonNullable<LightenFrozen['planes']> {
-  const own = new Map(portsOf(part).map((port) => [port.name, port]));
+  const own = new Map(sourcePorts(part).map((port) => [port.name, port]));
   const inbound = parts.flatMap((other) => (other.mates ?? []).filter((mate) => mate.target === part.id));
   const names = [...(part.mates ?? []).map((mate) => mate.port), ...inbound.map((mate) => mate.targetPort)];
   const missing = names.find((name) => !own.has(name));
@@ -158,7 +175,7 @@ function preserveCuts(part: ScenePart, measure: MeshMeasure): ScrewLine[] {
   return generatedHoles(part.cad.language, part.cad.code).map((hole) => {
     const local = toScene(hole.start).map((value, axis) => value - part.cad!.originOffset[axis]) as V3;
     const at = portAt(part, { name: 'generated hole', position: local, axis: toScene(hole.direction), kind: 'bore' });
-    const radius = (hole.diameter / 2) * Math.max(...scaleOf(part));
+    const radius = (hole.diameter / 2) * radiusScale(part);
 
     return acrossBounds(at, measure, radius);
   });

@@ -1,10 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Matrix4 } from 'three';
 import { findPort, worldPort } from '../agent/ports';
 import { shapeKey } from '../print/shapeKey';
 import { box } from '../sim/fixtures/parts';
 import type { LightenResult } from '../strength/lighten';
 import { DEFAULT_PROJECT, type ScenePart } from '../types/robotics';
 import { isPrinted } from '../utils/bom';
+import { buildPartGroup, releasePartGroup } from '../three/buildPartMesh';
+import { localTriangles } from '../three/meshMeasure';
+import { lightenResultInFrame } from '../three/analysis/lightenFrame';
 import { docFromParts, pushHistory, trackedOf, travelProject } from './docHistory';
 import { applyLighten, canLighten, lightenedPart } from './lighten';
 import * as loads from './lightenLoads';
@@ -79,6 +83,26 @@ function setup() {
 }
 
 describe('Lighten scene edit', () => {
+  it('keeps affine mounting ports and applies a retained sheet frame exactly once to the worker mesh', () => {
+    const part = printedPart();
+
+    part.dimensions = { width: 40, height: 30, depth: 24 };
+    part.sheetTransform = new Matrix4().set(1.2, 0.2, 0, 3, 0.2, 1.4, 0, -2, 0, 0, 1, 1, 0, 0, 0, 1).toArray();
+
+    const returned = lightenResultInFrame({ ...result, positions: positions.slice() }, part.sheetTransform);
+    const changed = lightenedPart(part, returned);
+    const group = buildPartGroup(changed, false);
+    const actual = localTriangles(group);
+
+    expect(canLighten(part)).toBe(true);
+    expect(changed.sheetTransform).toEqual(part.sheetTransform);
+    expect(worldPort(changed, findPort(changed, 'mount')!)).toEqual(worldPort(part, findPort(part, 'mount')!));
+    actual.forEach((value, index) => expect(value).toBeCloseTo(positions[index], 4));
+    expect(actual).toHaveLength(positions.length);
+    expect(returned.massShare).toBe(result.massShare);
+    releasePartGroup(group);
+  });
+
   it('keeps identity and world ports while replacing the printed geometry and its print revision', () => {
     const part = printedPart();
     const changed = lightenedPart(part, result);
@@ -197,5 +221,14 @@ describe('Lighten scene edit', () => {
     for (const patch of [{ kind: 'component' }, { visible: false }, { locked: true }, { role: 'reference' }] as const) {
       expect(canLighten({ ...part, ...patch })).toBe(false);
     }
+
+    const imported: ScenePart = {
+      ...part,
+      kind: 'mesh',
+      mesh: { file: 'motor.stl', positions: Array.from(positions), indices: [0, 1, 2], baseSize: [20, 10, 6] },
+    };
+
+    expect(canLighten(imported)).toBe(true);
+    expect(canLighten({ ...imported, componentId: 'motor' })).toBe(false);
   });
 });

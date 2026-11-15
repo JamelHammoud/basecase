@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 5. Layout
 
+Each mounted scene workspace owns a `VisionScopeContext`. Camera inference, camera overlays and recorded-video playback use that workspace’s sources even while another scene tab is active.
+
 - **Docked side panels** (Figma reverted floating panels because they cramped the canvas).
   - Each panel is a rounded card (§2) with a 44px header row; window-level controls live in the title bar.
   - **Left (288px):** shows one view at a time, picked in the view rail (§2): **Parts · Play · Layers · Library**, opening on Parts. Parts inserts everything a scene can hold: components, hardware, robots and objects, under one search. Its header names the view, except Play's. Loading another scene into the tab sends the scene's own views (Cases, Routines) back to Parts, so a rail click always opens the view rather than collapsing it.

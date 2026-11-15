@@ -11,6 +11,7 @@ import { webTries } from './webTries';
 export interface KeptTry {
   stored: StoredTry;
   recording: Recording | null;
+  videos?: Array<{ camera: string; bytes: Uint8Array }>;
 }
 
 export interface TriesChange {
@@ -85,10 +86,10 @@ async function update(change: (tries: TrySummary[]) => TrySummary[]) {
   if (listed) publish(change(listed));
 }
 
-const withMotion = ({ stored, recording }: KeptTry): KeptTry => {
+const withMotion = ({ stored, recording, videos }: KeptTry): KeptTry => {
   const motion = stored.motion ?? (recording && motionTrace(recording));
 
-  return { stored: motion ? { ...stored, motion } : stored, recording };
+  return { stored: motion ? { ...stored, motion } : stored, recording, videos };
 };
 
 export async function keepTries(given: KeptTry[]) {
@@ -97,6 +98,10 @@ export async function keepTries(given: KeptTry[]) {
   const kept = given.map(withMotion);
 
   for (const { stored, recording } of kept) await backend.save(stored, recording);
+
+  const videos = kept.flatMap(({ stored, videos }) => (videos ?? []).map((video) => ({ ...video, id: stored.id })));
+
+  if (videos.length) await backend.saveVideos(videos);
 
   const ids = new Set(kept.map((k) => k.stored.id));
   const summaries = kept.map((k) => summaryOf(k.stored, { recording: !!k.recording, strip: false }));

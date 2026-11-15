@@ -10,6 +10,7 @@ export interface CompileOptions {
   provenTransitions?: readonly string[];
   capabilities?: readonly Capability[];
   modelHash?: string;
+  unavailableModels?: readonly string[];
 }
 
 export interface FactInfo extends PlanFact {

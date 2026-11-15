@@ -1,3 +1,6 @@
+import { visionSignalClass, visionSignalValues } from '../cameras/visionSignals';
+import type { VisionResult } from '../vision/types';
+import { RoutineVisionFacts } from '../routines/visionFacts';
 import type { SimEngine } from '../sim/engine';
 import { compileRoutine, type CompileResult } from '../routines/compile';
 import { applyControl, type BodyControl, controlFor, type RoutineBody, SKILL_SECONDS } from '../routines/physicsBody';
@@ -85,6 +88,9 @@ export class CaseLogicRun {
   private readonly body: RoutineBody | null;
   private readonly handBack: () => void;
   private readonly inputs: CaseInput[] = [];
+  private readonly visionInputs = new Map<string, CaseInput>();
+  private readonly visionNames = new Set<string>();
+  private readonly visionFrames = new Map<string, { result: VisionResult; at: number }>();
   private facts: CaseFacts = {};
   private factsAt = 0;
   private control: BodyControl | null = null;
@@ -97,6 +103,7 @@ export class CaseLogicRun {
     this.handBack = input.handBack;
     rig.host.skillLatency = (skill) => (SKILL_SECONDS[skill] ?? SKILL_MS / 1000) * 1000;
     rig.host.feed = (fact, atMs) => this.fed(fact, atMs);
+    rig.host.vision = new RoutineVisionFacts(input.plan);
     rig.control.onChange = (skills) => this.take(skills);
   }
 
@@ -106,11 +113,64 @@ export class CaseLogicRun {
     return new CaseLogicRun(input, await startScenario(input.plan, scenario));
   }
 
+  acceptVision(result: VisionResult, ageMs = 0) {
+    const at = this.factsAt - Math.max(0, ageMs);
+    const prefix = `vision.${result.camera}.`;
+
+    const accepted = this.rig.host.vision?.accept(result, at);
+
+    if (!accepted || !result.camera || at < 0 || result.depth) return;
+
+    this.visionFrames.set(`${result.camera}:${result.modelId}`, { result, at });
+
+    for (const detection of result.detections) this.visionNames.add(`${prefix}${visionSignalClass(detection.label)}`);
+
+    for (const reading of this.cameraReadings(this.factsAt)) this.visionInputs.set(reading.name, reading);
+  }
+
+  private cameraReadings(atMs: number): CaseInput[] {
+    const frames = [...this.visionFrames.values()].filter((frame) => frame.at <= atMs && atMs - frame.at <= 500);
+    const cameras = new Set(frames.map((frame) => frame.result.camera));
+
+    return [...cameras].flatMap((camera) => {
+      const captures = frames.filter((frame) => frame.result.camera === camera);
+      const known = [...this.visionNames].filter((name) => name.startsWith(`vision.${camera}.`));
+      const values = visionSignalValues(
+        captures.map((frame) => frame.result),
+        known,
+      );
+      const at = Math.min(...captures.map((frame) => frame.at)) / 1000;
+
+      return Object.entries(values).map(([name, value]) => ({ name, value, at }));
+    });
+  }
+
+  cameraFacts(): CaseFacts {
+    const watchers = Object.fromEntries(
+      this.rig.plan.watchers.flatMap((watcher) => {
+        const value = this.rig.host.vision?.read(watcher, this.factsAt);
+
+        if (!value) return [];
+
+        const type = this.rig.plan.facts[watcher.fact]?.type;
+
+        return [[watcher.id, type === 'boolean' ? value.num !== 0 : value.num]];
+      }),
+    );
+    const signals = this.cameraReadings(this.factsAt);
+
+    return { ...Object.fromEntries(signals.map((event) => [event.name, event.value])), ...watchers };
+  }
+
   input(event: CaseInput) {
     this.inputs.push(event);
   }
 
   private fed(fact: string, atMs: number) {
+    const vision = this.cameraReadings(atMs).find((event) => event.name === fact) ?? this.visionInputs.get(fact);
+
+    if (vision) return { value: vision.value, at: vision.at * 1000 };
+
     for (let i = this.inputs.length - 1; i >= 0; i--) {
       const event = this.inputs[i];
 
@@ -152,6 +212,6 @@ export class CaseLogicRun {
   }
 
   result(): CaseLogicResult {
-    return { trace: this.rig.host.trace, said: this.rig.host.said, facts: { ...this.facts } };
+    return { trace: this.rig.host.trace, said: this.rig.host.said, facts: { ...this.facts, ...this.cameraFacts() } };
   }
 }

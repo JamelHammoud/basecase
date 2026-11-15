@@ -1,12 +1,16 @@
 import { useSyncExternalStore } from 'react';
 import { GESTURE_EVENT } from '../../cases/gestures';
 import { emitInputEvent } from '../../sim/inputEvents';
+import { errorMessage } from '../../utils/errorMessage';
 import type { InputRobot } from '../../sim/inputTypes';
 import type { GestureExample } from '../gestures/gestureMatch';
 import type { TaughtGesture } from '../gestures/gestureRecognizer';
 import type { FaceFollow, FaceSample } from './faceFollow';
 import type { HandFollow, HandSample } from './handFollow';
 import { createLatencyLog, type LatencyStats } from './latencyLog';
+import * as defaultVision from '../visionSession';
+import { scopedVision, type CameraVision } from '../scopedVision';
+import { poseVisionResult } from './poseVision';
 import { frameSource, type FrameSource } from './operatorFrames';
 import type { PoseFollow, PoseSample } from './poseFollow';
 import {
@@ -39,6 +43,7 @@ export const CAMERA_REFUSAL = 'Couldn’t open the camera.';
 interface Member {
   robot: InputRobot;
   joined: boolean;
+  ready: boolean;
   settle: ((refusal: string | null) => void) | null;
 }
 
@@ -46,6 +51,8 @@ interface Session {
   worker: Worker;
   frames: FrameSource;
   stream: MediaStream;
+  stopVision: () => void;
+  vision: Pick<CameraVision, 'publishCameraVision'>;
 }
 
 interface Fresh<T> {
@@ -92,7 +99,10 @@ function settle(kind: LandmarkKind, refusal: string | null) {
   const member = members.get(kind);
   const resolve = member?.settle;
 
-  if (member) member.settle = null;
+  if (member) {
+    member.settle = null;
+    member.ready = refusal === null;
+  }
 
   resolve?.(refusal);
 }
@@ -115,6 +125,7 @@ const entry = <T>(follow: T | null, seenAt: number): Fresh<T> | undefined =>
 function keep(event: FollowEvent) {
   if (event.type === 'pose') {
     fresh.body = entry(event.follow, event.seenAt);
+    session?.vision.publishCameraVision(poseVisionResult(event.image, event.seenAt - performance.timeOrigin));
 
     return setPoints(event.image);
   }
@@ -159,15 +170,23 @@ function start(stream: MediaStream): Session {
   const [track] = stream.getVideoTracks();
   const worker = new Worker(new URL('./pose.worker.ts', import.meta.url), { type: 'module' });
 
-  worker.onmessage = (ev: MessageEvent<PoseEvent>) => receive(ev.data);
-  worker.onerror = (ev) => fail(ev.message || 'The pose worker stopped.');
+  worker.onmessage = (ev: MessageEvent<PoseEvent>) => {
+    if (session?.worker === worker) receive(ev.data);
+  };
+  worker.onerror = (ev) => {
+    if (session?.worker === worker) fail(ev.message || 'The pose worker stopped.');
+  };
 
   const frames = frameSource(stream, worker);
   const open: PoseRequest = { type: 'open', frames: frames.frames };
 
   worker.postMessage(open, frames.frames ? [frames.frames] : []);
   worker.postMessage({ type: 'gestures', taught } satisfies PoseRequest);
-  session = { worker, frames, stream };
+
+  const source = [...members.values()][0]?.robot.visionSource;
+  const vision = source ? scopedVision(source) : defaultVision;
+
+  session = { worker, frames, stream, vision, stopVision: connectOperatorVision(worker, vision) };
   lastTrack = track ?? null;
   latency.clear();
   set({ open: true, stream, label: track?.label || null, estimator: null, error: null });
@@ -210,11 +229,70 @@ function endSession() {
   if (!live) return;
 
   live.frames.stop();
+  live.stopVision();
   live.worker.postMessage({ type: 'close' } satisfies PoseRequest);
   live.worker.terminate();
   stopCameraStream(live.stream);
   setPoints(null);
   set(CLOSED);
+}
+
+function connectOperatorVision(
+  worker: Worker,
+  vision: Pick<
+    CameraVision,
+    | 'connectVisionFrames'
+    | 'ensureVisionCamera'
+    | 'onVisionAssignments'
+    | 'registerVisionCameras'
+    | 'invalidateVisionCamera'
+    | 'setCameraVisionError'
+    | 'visionAssignments'
+  >,
+): () => void {
+  const {
+    connectVisionFrames,
+    ensureVisionCamera,
+    onVisionAssignments,
+    registerVisionCameras,
+    invalidateVisionCamera,
+    setCameraVisionError,
+    visionAssignments,
+  } = vision;
+  let closed = false;
+  let disconnectVision: (() => void) | null = null;
+  const configure = () =>
+    worker.postMessage({ type: 'vision-assignments', assignments: visionAssignments() } satisfies PoseRequest);
+  const stopAssignments = onVisionAssignments(configure);
+  const stopCameras = registerVisionCameras(worker, [OPERATOR_KEY]);
+
+  configure();
+  void ensureVisionCamera(OPERATOR_KEY).catch(() => undefined);
+  void connectVisionFrames()
+    .then(({ port, disconnect }) => {
+      if (closed) {
+        disconnect();
+        port.close();
+
+        return;
+      }
+
+      disconnectVision = disconnect;
+      worker.postMessage({ type: 'vision-port', port, timeOrigin: performance.timeOrigin } satisfies PoseRequest, [
+        port,
+      ]);
+    })
+    .catch((error: unknown) => {
+      if (!closed) setCameraVisionError(OPERATOR_KEY, errorMessage(error));
+    });
+
+  return () => {
+    closed = true;
+    stopAssignments();
+    stopCameras();
+    disconnectVision?.();
+    invalidateVisionCamera(OPERATOR_KEY);
+  };
 }
 
 function enter(live: Session, kind: LandmarkKind, member: Member) {
@@ -246,9 +324,12 @@ export function leaveOperatorCamera(kind: LandmarkKind) {
 }
 
 export async function joinOperatorCamera(kind: LandmarkKind, robot: InputRobot): Promise<string | null> {
+  if ([...members.values()].some((member) => member.robot.visionSource?.id !== robot.visionSource?.id))
+    closeOperatorCamera();
+
   leaveOperatorCamera(kind);
 
-  const member: Member = { robot, joined: false, settle: null };
+  const member: Member = { robot, joined: false, ready: false, settle: null };
   const current = () => members.get(kind) === member;
 
   members.set(kind, member);
@@ -345,6 +426,8 @@ export function recordGestureExample(ms: number): Promise<GestureExample | null>
 export const operatorLatency = (): LatencyStats | null => latency.stats();
 
 export const operatorPoints = () => points;
+
+export const operatorPoseReady = () => members.get('body')?.ready === true;
 
 export const operatorFeeding = () => feeding.size > 0;
 

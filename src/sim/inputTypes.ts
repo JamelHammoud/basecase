@@ -11,9 +11,10 @@ export interface InputLook {
   tiltSign: 1 | -1;
 }
 
-export type InputRobot =
+export type InputRobot = (
   | { kind: 'tip'; start: V3; reachMm: number }
-  | { kind: 'joints'; rig: Rig; points: PointTable; joints: string[]; look?: InputLook };
+  | { kind: 'joints'; rig: Rig; points: PointTable; joints: string[]; look?: InputLook }
+) & { visionSource?: import('../vision/types').VisionSource };
 
 export interface InputMoment {
   cls: DriveClass;

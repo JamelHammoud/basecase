@@ -1,4 +1,5 @@
 import { type RefObject, useEffect, useEffectEvent, useRef, useState } from 'react';
+import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import { sceneCapabilities } from '../routines/capabilities';
 import { NOT_COMPILED, useRoutineRuns } from './useRoutineRuns';
 import type { RoutineEdit } from '../routines/edit';
@@ -24,6 +25,7 @@ interface RoutineOptions {
   project: ProjectSettings;
   projectRef: RefObject<ProjectSettings>;
   sim: Simulation;
+  imported?: ImportedWorldView | null;
   commitParts: CommitParts;
   updateProjectNow: (patch: (p: ProjectSettings) => ProjectSettings) => void;
   commitRoutines: (list: readonly Routine[]) => void;
@@ -47,7 +49,12 @@ export const plainRun = (routine: Routine): Scenario => ({
 export function useRoutines(options: RoutineOptions) {
   const { parts, project, sim, commitParts, updateProjectNow, showToast } = options;
   const [view, setView] = useState<RoutineView>(EMPTY_VIEW);
-  const sceneRef = useLatestRef({ parts, joints: project.joints ?? [] });
+  const sceneRef = useLatestRef({
+    parts,
+    joints: project.joints ?? [],
+    cameras: project.cameras ?? [],
+    imported: options.imported,
+  });
   const capabilities = () => sceneCapabilities(sceneRef.current);
   const { commitRoutines, undo } = options;
   const store = useRoutineStore({ project, projectRef: options.projectRef, commitRoutines, capabilities });
@@ -151,6 +158,7 @@ export function useRoutines(options: RoutineOptions) {
   };
 
   const { runLive, runHeadless } = useRoutineRuns({
+    scope: active,
     pending,
     sim,
     sceneRef,

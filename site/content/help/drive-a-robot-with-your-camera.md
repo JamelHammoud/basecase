@@ -42,6 +42,8 @@ This works on humanoids and fixed arms. A rover, or a robot with legs and no arm
 
 ![The camera's tile with your skeleton drawn over it, and the robot raising its right arm](/help/drive-a-robot-with-your-camera/driving.png)
 
+The camera tile also shows detection boxes with their class and score. These overlays stay out of saved video. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
+
 To stop, press [[Esc]]. The camera turns off.
 
 You can also press [[⌘K]] and choose **Drive with Camera**.

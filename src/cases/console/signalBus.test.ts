@@ -48,6 +48,17 @@ describe('the signal bus', () => {
     expect(bus.expand('joint.*.position')).toEqual(['joint.elbow.position']);
   });
 
+  it('records vision counts and top boxes in the same bus history as other camera signals', () => {
+    const bus = createSignalBus();
+
+    bus.push(sample(1, { vision: { 'vision.wrist_camera.cup': 1, 'vision.wrist_camera.cup.x': 0.25 } }));
+    bus.push(sample(1.5, { vision: { 'vision.wrist_camera.cup': 0, 'vision.wrist_camera.cup.x': 0 } }));
+
+    expect(bus.read('vision.wrist_camera.cup')).toBe(0);
+    expect(bus.series('vision.wrist_camera.cup')).toEqual({ t: [1, 1.5], v: [1, 0] });
+    expect(bus.expand('vision.wrist_camera.*')).toContain('vision.wrist_camera.cup');
+  });
+
   it('runs a Case’s timer, counter and score only while a try runs, and starts them over with each try', () => {
     const bus = createSignalBus(GAME);
 

@@ -1,8 +1,9 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { timelineLanes } from '../cases/timelineLanes';
 import type { TryRecord } from '../cases/tries';
-import { loadRecording } from '../cases/tryStore';
+import { loadManifests, loadRecording } from '../cases/tryStore';
 import type { SeedReplay } from '../cases/seedReplay';
+import { useVisionScope } from '../cameras/visionScope';
 import type { Simulation } from '../sim/useSimulation';
 import { useTimelinePlayback } from './useTimelinePlayback';
 import { useTryLabels } from './useTryLabels';
@@ -40,6 +41,7 @@ const openedView = (opened: Opened | null) => ({
 });
 
 export function useTryTimeline(options: TimelineOptions) {
+  const { closeRecordedCameras, openRecordedCameras, seekRecordedCameras } = useVisionScope().playback;
   const { sim } = options;
   const [opened, setOpened] = useState<Opened | null>(null);
   const opening = useRef(0);
@@ -59,11 +61,20 @@ export function useTryTimeline(options: TimelineOptions) {
     }),
   });
 
+  useEffect(() => {
+    if (opened) seekRecordedCameras(playback.frame * opened.recording.dt, !playback.playing);
+  }, [opened, playback.frame, playback.playing, seekRecordedCameras]);
+
+  useEffect(() => () => closeRecordedCameras(), [closeRecordedCameras]);
+
   const show = async (record: TryRecord, at?: number, seeded?: SeedReplay, current = () => true) => {
     const previous = pending.current?.current() ? pending.current.origin : opened;
     const ticket = ++opening.current;
     const valid = () => ticket === opening.current && current();
-    const recording = seeded?.recording ?? (await loadRecording(record.id));
+    const [recording, manifests] = await Promise.all([
+      seeded?.recording ?? loadRecording(record.id),
+      loadManifests([record.id]),
+    ]);
 
     if (!recording || !valid()) return false;
 
@@ -75,6 +86,7 @@ export function useTryTimeline(options: TimelineOptions) {
 
     if (!prepared || !valid()) return false;
 
+    openRecordedCameras(manifests[0] ?? null);
     setOpened(prepared);
     playback.reset(at ?? prepared.trips[0]?.frame ?? 0, recording.frames);
 
@@ -88,6 +100,7 @@ export function useTryTimeline(options: TimelineOptions) {
     if (!opened) return;
 
     playback.stop();
+    closeRecordedCameras();
     setOpened(null);
     void sim.scrub(null);
 
@@ -103,6 +116,7 @@ export function useTryTimeline(options: TimelineOptions) {
     opening.current++;
     pending.current = null;
     playback.stop();
+    closeRecordedCameras();
     setOpened(null);
   });
 

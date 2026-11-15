@@ -5,13 +5,14 @@ import { findNode, MODEL_NODES } from './nodes';
 import { allSteps } from './schema';
 
 describe('the ML node catalogue', () => {
-  it('lists each node once, with a model, licence and an empty speed slot until measured', () => {
+  it('lists each node once, with a model, licence and positive timings only for measured devices', () => {
     expect(new Set(MODEL_NODES.map((n) => n.id)).size).toBe(MODEL_NODES.length);
 
     for (const node of MODEL_NODES) {
       expect(node.model && node.licence && node.label).toBeTruthy();
       expect(node.runsOn.length).toBeGreaterThan(0);
-      expect(node.measuredMs).toEqual({});
+
+      for (const measured of Object.values(node.measuredMs)) expect(measured).toBeGreaterThan(0);
     }
   });
 

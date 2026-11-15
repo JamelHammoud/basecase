@@ -14,7 +14,13 @@ interface Trail {
 type Studio = {
   load: (record: unknown) => void;
   caseTrails: () => Trail[];
-  simState: () => { timeline: { seed: number; frame: number; sought: number | null } | null };
+  simState: () => {
+    status: string;
+    world: string[];
+    guests: string[];
+    tries: unknown[];
+    timeline: { seed: number; frame: number; sought: number | null } | null;
+  };
 };
 
 it('opens all 20 seeded trails from Checks and replays a failed seed at its first trip', async () => {
@@ -41,6 +47,7 @@ it('opens all 20 seeded trails from Checks and replays a failed seed at its firs
     await row.click();
     await expect.poll(async () => (await trails()).length).toBe(20);
 
+    const before = await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState());
     const shown = await trails();
     const failed = shown.find((t) => !t.passed && t.firstTrip && t.points.some((p) => p.visible))!;
 
@@ -58,6 +65,15 @@ it('opens all 20 seeded trails from Checks and replays a failed seed at its firs
     expect(clicked.passed).toBe(false);
     expect(opened.frame).toBe(clicked.firstTrip!.frame);
     await expect.poll(async () => (await timeline())?.sought).toBe(clicked.firstTrip!.frame);
+    await app.page.keyboard.press('Escape');
+    await expect.poll(timeline).toBeNull();
+
+    const after = await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState());
+
+    expect(after.status).toBe(before.status);
+    expect(after.world).toEqual(before.world);
+    expect(after.guests).toEqual(before.guests);
+    expect(after.tries).toEqual(before.tries);
     expect(app.errors).toEqual([]);
   } finally {
     await app.close();

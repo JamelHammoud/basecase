@@ -16,7 +16,7 @@ import { endPoint } from './probes';
 import { robotFacts } from './robotFit';
 import { caseRandom, jitteredWorld } from './caseRandom';
 import { CASE_RUNS, runCaseTimes, summarizeRuns } from './caseRuns';
-import type { Case } from './schema';
+import { caseSlots, type Case } from './schema';
 import { caseRobot, presetCase } from './testing';
 
 const fixture = (id: string) => fixtureRobots().find((r) => r.id === id)!;
@@ -233,22 +233,26 @@ describe('seeded replay', () => {
 });
 
 describe('seeded arm paths', () => {
-  it('samples an arm’s effector at 10 Hz rather than its stationary base', async () => {
+  it.each([false, true])('samples an arm’s effector at 10 Hz with a custom binding of %s', async (custom) => {
     const mj = await loadMujoco();
     const arm = fixture('arm-3dof');
     const robot = caseRobot(arm);
-    const kase = template(arm, 'touch-the-dots');
+    const rig = buildRig(arm.joints, arm.parts);
+    const facts = robotFacts(rig, arm.parts);
+    const authored = template(arm, 'touch-the-dots');
+    const slot = caseSlots(authored)[0];
+    const part = arm.parts.find((p) => p.id === facts.endEffector!.part)!;
+    const effector = custom ? { part: part.id, point: part.position } : facts.endEffector;
+    const kase = { ...authored, slot: { ...slot, binding: { ...slot.binding, endEffector: effector ?? undefined } } };
     const result = await caseRunner(mj, kase, robot, { controller: 'reference' }).run(3);
     const batch = await runSeeds(mj, kase, robot, { seeds: [3] });
 
     if (!('outcomes' in batch)) throw new Error(batch.refusal);
 
     const path = batch.outcomes[0].path;
-    const rig = buildRig(arm.joints, arm.parts);
-    const facts = robotFacts(rig, arm.parts);
     const world = {
       model: result.model,
-      effector: facts.endEffector,
+      effector,
       basePart: null,
       basePoint: [0, 0, 0] as [number, number, number],
       objectAt: new Map(),

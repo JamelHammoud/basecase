@@ -1,6 +1,7 @@
 import { buildRig } from '../utils/kinematics';
 import { endPoint, type ProbeWorld } from './probes';
-import { robotFacts } from './robotFit';
+import { boundEffector, robotFacts } from './robotFit';
+import { caseSlots } from './schema';
 import type { CaseResult, CaseRobot } from './runCase';
 
 export const PATH_DT = 0.1;
@@ -10,7 +11,7 @@ export function runPath(result: CaseResult, robot: CaseRobot): Float32Array {
   const facts = robotFacts(rig, robot.parts);
   const world: ProbeWorld = {
     model: result.model,
-    effector: facts.endEffector,
+    effector: boundEffector(caseSlots(result.case)[0].binding, facts, rig),
     basePart: robot.parts.find((p) => !rig.ownerOf.has(p.id))?.id ?? null,
     basePoint: rig.robots[0]?.pivot ?? [0, 0, 0],
     objectAt: new Map(),

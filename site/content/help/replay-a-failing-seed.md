@@ -16,13 +16,13 @@ covers:
 
 Find where a randomized Case run failed, then inspect its joint positions and effort at that moment.
 
-1. In the **Build** tab, under Checks, click the Case's row.
+1. In the **Build** tab, under **Checks**, click the Case's row.
 
-![Reach a Spot with all 20 seeded paths on the canvas](/help/replay-a-failing-seed/trails.png)
+   ![Reach a Spot with all 20 seeded paths on the canvas](/help/replay-a-failing-seed/trails.png)
 
 2. On the canvas, click a red trail.
 
-![A failed Reach a Spot seed open at its first trip on the joint timeline](/help/replay-a-failing-seed/timeline.png)
+   ![A failed Reach a Spot seed open at its first trip on the joint timeline](/help/replay-a-failing-seed/timeline.png)
 
 3. On the timeline, press [[←]] or [[→]] to inspect the frames around the failure.
 4. Press [[Esc]] to close the replay.

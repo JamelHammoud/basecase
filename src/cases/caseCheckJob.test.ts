@@ -6,6 +6,8 @@ import { CaseCheckSession, replyTransfer, type WireRobot } from './caseCheckJob'
 import { caseWorkerCount } from './caseChecksClient';
 import { seedBatches } from './caseRuns';
 import { caseRobot, presetCase } from './testing';
+import { SimEngine } from '../sim/engine';
+import { recordedEfforts } from '../sim/recordedFrames';
 
 const SIM_MS = 30_000;
 
@@ -101,6 +103,21 @@ describe('the Case checks worker job', () => {
     expect(replay.replay.passed).toBe(batch.result.outcomes[0].passed);
     expect(replay.replay.recording.frames).toBeGreaterThan(3);
     expect(replyTransfer(replay)).toContain(replay.replay.recording.qpos.buffer);
+    expect(replyTransfer(replay)).toContain(replay.replay.efforts.peaks[0].buffer);
+
+    const nominal = new SimEngine(mj, replay.replay.model);
+
+    try {
+      const nominalEfforts = recordedEfforts(mj, nominal, replay.replay.recording);
+      const peak = (values: Float32Array) => values.reduce((max, value) => Math.max(max, Math.abs(value)), 0);
+
+      expect(replay.replay.efforts.peaks.map(peak)).not.toEqual(nominalEfforts.peaks.map(peak));
+      expect(replay.replay.efforts.peaks.every((values, i) => peak(values) <= peak(nominalEfforts.peaks[i]))).toBe(
+        true,
+      );
+    } finally {
+      nominal.dispose();
+    }
   });
 
   it('splits 20 seeds evenly across the workers', () => {

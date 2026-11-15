@@ -21,6 +21,7 @@ import type { Case } from './schema';
 import type { TryScoring } from './tries';
 import { multiplyTry, type Multiplied } from './tryReplay';
 import { recordingTransfer } from '../sim/recorder';
+import { effortsTransfer } from '../sim/recordedFrames';
 import { seedReplay, type SeedReplay } from './seedReplay';
 
 export interface WireRobot {
@@ -84,7 +85,8 @@ export type CaseCheckReply =
 export function replyTransfer(reply: CaseCheckReply): Transferable[] {
   if (reply.type === 'multiply') return reply.result.kept.flatMap((v) => recordingTransfer(v.recording));
 
-  if (reply.type === 'record') return recordingTransfer(reply.replay.recording);
+  if (reply.type === 'record')
+    return [...recordingTransfer(reply.replay.recording), ...effortsTransfer(reply.replay.efforts)];
 
   if (reply.type === 'runs' && 'outcomes' in reply.result) return reply.result.outcomes.map((o) => o.path.buffer);
 
@@ -133,7 +135,7 @@ export class CaseCheckSession {
     if (job.type === 'record') {
       const result = await caseRunner(mj, job.kase, robot, { ...controlOf(job), record: true }).run(job.seed);
 
-      return { type: 'record', replay: await seedReplay(result, job.seed) };
+      return { type: 'record', replay: await seedReplay(mj, result, job.seed) };
     }
 
     if (job.type === 'replay') {

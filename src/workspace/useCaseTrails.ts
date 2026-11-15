@@ -40,8 +40,10 @@ export function useCaseTrails(options: TrailOptions) {
   const [selected, setSelected] = useState<string | null>(null);
   const readRobot = useEffectEvent(options.caseRobot);
   const onError = useEffectEvent((message: string) => options.showToast(message, { tone: 'error' }));
-  const show = useEffectEvent(async (replay: SeedReplay) => {
-    await options.timeline.show(await replayRecord(replay), replay.trips[0]?.frame ?? 0, replay);
+  const show = useEffectEvent(async (replay: SeedReplay, current: () => boolean) => {
+    const record = await replayRecord(replay);
+
+    if (current()) await options.timeline.show(record, replay.trips[0]?.frame ?? 0, replay, current);
   });
   const readCase = useEffectEvent(() => options.active);
   const id = active?.id;
@@ -67,11 +69,12 @@ export function useCaseTrails(options: TrailOptions) {
 
       viewport?.setCaseTrails(verdict.runs.outcomes, (seed) => {
         const ticket = ++opening;
+        const current = () => live && ticket === opening;
 
         void verdict
           .record(seed)
           .then(async (replay) => {
-            if (live && ticket === opening) await show(replay);
+            if (current()) await show(replay, current);
           })
           .catch((e: unknown) => {
             if (live) onError(errorMessage(e));

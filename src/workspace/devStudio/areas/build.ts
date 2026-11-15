@@ -1,6 +1,7 @@
 import { buildBom } from '../../../utils/bom';
 import type { Studio } from '../types';
 import { currentWiring } from '../../../readiness/currentWiring';
+import type { GuidePlan } from '../../../guide/guideTypes';
 
 export default function buildStudio(studio: Studio) {
   return {
@@ -16,6 +17,7 @@ export default function buildStudio(studio: Studio) {
     },
     buildAlongSteps: () => studio().core.buildAlong.steps,
     buildAlongRoutes: () => studio().core.buildAlong.step?.routes ?? [],
+    openBuildAlong: (plan: GuidePlan) => studio().core.buildAlong.openPlan(async () => plan),
     bomLines: () => {
       const { docs, readiness } = studio().core;
       const { partsRef, projectRef } = docs;

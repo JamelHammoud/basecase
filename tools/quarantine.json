@@ -39,13 +39,6 @@
     "reason": "Run 43708315996 exceeded the unchanged 10000 ms beforeAll budget at line 109 on Linux while opening the compiled inference worker fixture, before its test ran. The preceding Linux run 43705870784 passed in 3.7 s with unchanged fixture, inference runtime, dependencies and test configuration. Run 43701002471 failed the same setup hook on Windows while Linux passed at that commit in 4.2 s. The log does not identify whether bundling, Chrome launch or navigation stalled. The whole file is quarantined because its setup precedes individual-test quarantine hooks."
   },
   {
-    "file": "e2e/trainingImages.e2e.test.ts",
-    "test": "makes a labelled block image from the palette and downloads its COCO and YOLO dataset",
-    "issue": 1033,
-    "until": "2026-11-28",
-    "reason": "Run 43703438118 returned no completed frame set within the unchanged 30000 ms poll at line 111 on both Linux attempts. The same walkthrough passed on Linux in run 43701002471 in 25.4 s, with no intervening changes to its test, training-image generation or camera-stage code. That earlier run exceeded the unchanged 60000 ms test budget on both Windows attempts without identifying a failing stage. Each attempt opens a fresh app. The model build, worker render or persistence stage responsible is not established."
-  },
-  {
     "file": "e2e/operateNetwork.e2e.test.ts",
     "test": "pairs once, climbs the daemon ladder to Test and stops on a lost client",
     "issue": 1024,
@@ -71,7 +64,7 @@
   },
   {
     "file": "e2e/worldImport.e2e.test.ts",
-    "test": "records a kitchen try with its world in the camera tile and every exported video",
+    "test": "records a kitchen try and exports Scene videos in both LeRobot layouts",
     "issue": 995,
     "until": "2026-11-28",
     "platform": "win32",

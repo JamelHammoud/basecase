@@ -1,5 +1,7 @@
 # Case comparison under Linux load
 
+This records the earlier simulation walkthrough’s fixture investigation. [#1086](https://github.com/JamelHammoud/basecase/issues/1086) replaces its repeated simulation with deterministic worker replies while retaining the command-to-results browser path. These measurements apply to the earlier test. Current comparison coverage is listed in [Running and testing](../guide/running-and-testing.md).
+
 ## Scope
 
 [Issue #996](https://github.com/JamelHammoud/basecase/issues/996) tracks the comparison failure in [Linux job 132729516961](https://github.com/JamelHammoud/basecase/actions/runs/43687018679/job/132729516961). The job reported both attempts failing in 24.0 seconds, then was cancelled before its final assertion trace. That log does not establish which assertion failed.

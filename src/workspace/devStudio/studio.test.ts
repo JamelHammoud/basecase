@@ -3,7 +3,7 @@ import { assembleStudio } from './assembleStudio';
 import { STUDIO_AREAS } from './studioAreas';
 import type { Studio } from './types';
 
-const NAMES_BEFORE_THE_SPLIT = [
+const EXPECTED_NAMES = [
   'addCase',
   'agentRequest',
   'attachRobot',
@@ -68,6 +68,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'mates',
   'meshByColor',
   'multiplyRuns',
+  'openBuildAlong',
   'operatorCamera',
   'partTriangles',
   'parts',
@@ -76,7 +77,6 @@ const NAMES_BEFORE_THE_SPLIT = [
   'pickFiles',
   'plantHandoff',
   'plateFiles',
-  'playCameraTry',
   'pose',
   'poseTool',
   'posedPort',
@@ -145,8 +145,8 @@ const unused: Studio = () => {
 };
 
 describe('__studio', () => {
-  it('exposes exactly the names it had before the split into areas', () => {
-    expect(Object.keys(assembleStudio(STUDIO_AREAS, unused)).sort()).toEqual(NAMES_BEFORE_THE_SPLIT);
+  it('exposes exactly the expected hook names', () => {
+    expect(Object.keys(assembleStudio(STUDIO_AREAS, unused)).sort()).toEqual(EXPECTED_NAMES);
   });
 
   it('fails when two areas define one name', () => {

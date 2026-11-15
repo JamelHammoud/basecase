@@ -46,7 +46,7 @@ A servo's page in **Parts** shows its stall torque as a load: the Feetech STS321
 
 ## What a joint needs
 
-A leg joint that swings forward and back carries the robot's whole weight on one leg, at the walk's crouch of at least 30°. On a robot with three or more legs, two legs share that load.
+For each leg, the check selects the largest group of parallel, level joint axes for the crouch load. A knee breaks a tie between groups. These joints carry the robot's whole weight on one leg, at a crouch of at least 30°. On a robot with three or more legs, two legs share that load.
 
 Any other joint has to hold its own limb anywhere in its range. If you import a robot with no servos, the check grades its joints against the torque limit in its description.
 
@@ -65,11 +65,11 @@ An active [body fit](/help/fit-a-robots-body-from-a-recorded-run) adjusts link w
 
 These limits come from robots that walk. Under the older rule of a fifth of stall, every walking robot fails at the knee.
 
-A failing joint is a blocker. A joint with no servo data turns amber and shows up as “No torque data”.
+A failing joint is a blocker. Joints without servo data or a published torque limit appear under **Torque estimates** and aren't graded by **Servo torque**.
 
 ## Reading a row
 
-Click **Servo torque** under **Checks** in the Build tab. Each line names the joint, the torque it needs, its share of the servo's stall at your voltage, and its heat against rated. Click a line to select the servo.
+Click **Servo torque** under **Checks** in the Build tab. Warning and failing lines name the joint, its load, stall share and heat against rated. Joints graded against a published torque limit show their load and limit. Click a line to select the servo or its parts.
 
 ## Peak torque, once it walks
 
@@ -89,7 +89,7 @@ A fall hits a leg servo harder than walking does. **Falls** tips the robot over 
 
 - **A stronger servo.** Compare the strength on each servo's page in **Parts** ▸ **Servos**. A joint's plot under **Peak torque** names the next one up.
 - **A shorter lever.** Torque grows with the distance from the joint to the load it holds.
-- **A lighter robot.** Every leg joint carries the full weight.
+- **A lighter robot.**
 - **A higher voltage,** inside the servo's range. The check reads torque at your supply voltage, so raising it can add torque.
 
 To hand the problem to the agent, click **Fix** on a failing line.

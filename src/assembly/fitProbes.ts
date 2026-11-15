@@ -87,9 +87,12 @@ function firstSolid(from: THREE.Vector3, dir: THREE.Vector3, others: Placed[]): 
   let nearest = LEAD_REACH_MM;
 
   for (const q of others) {
-    const hit = sortedHits(q, from, dir)[0];
+    ray.origin.copy(from).applyMatrix4(q.inverse);
+    ray.direction.copy(dir).transformDirection(q.inverse);
 
-    if (hit !== undefined && hit < nearest) nearest = hit;
+    const hit = q.solid.bvh.raycastFirst(ray, THREE.DoubleSide, 0, nearest);
+
+    if (hit && hit.distance < nearest) nearest = hit.distance;
   }
 
   return nearest;

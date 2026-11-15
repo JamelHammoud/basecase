@@ -18,6 +18,7 @@ export interface PolicyState {
   startedAt: number;
   src: ObsSource;
   targets: Float64Array;
+  actuators: number[];
   command: [number, number, number];
   eyes: EyeCaster | null;
 }

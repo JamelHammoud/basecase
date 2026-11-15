@@ -1,3 +1,4 @@
+import { kitchenView } from '../datasets/worldRenderFixture';
 import { describe, expect, it, vi } from 'vitest';
 import type { CameraShotInput } from '../cameras/cameraShots';
 import type { Simulation } from '../sim/useSimulation';
@@ -55,7 +56,8 @@ describe('operate', () => {
       missing: [],
       available: ['Scene'],
     }));
-    const reply = await operateRequest(context(sim, shoot), { action: { forward: 0.5 }, seconds: 2 });
+    const imported = await kitchenView();
+    const reply = await operateRequest({ ...context(sim, shoot), imported }, { action: { forward: 0.5 }, seconds: 2 });
 
     expect(sim.drive.setKeys).toHaveBeenNthCalledWith(1, expect.objectContaining({ v: [0.5, 0, 0] }));
     expect(sim.drive.setKeys).toHaveBeenLastCalledWith({ v: [0, 0, 0] });
@@ -63,6 +65,7 @@ describe('operate', () => {
     expect([...shoot.mock.calls[0][0].frames[0].poses!]).toEqual([1, 2, 3]);
     expect(reply.text).toMatch(/Ran 2 s\. Upright/);
     expect(reply.images).toHaveLength(1);
+    expect(shoot.mock.calls[0][0].imported).toBe(imported);
   });
 
   it('ends with the bench replay errors per joint when a servo was calibrated', async () => {

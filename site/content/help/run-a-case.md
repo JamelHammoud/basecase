@@ -90,7 +90,7 @@ A console can hold the Case's own code in up to 4 panels. Each panel is a small 
 
 Code panels can change the Case's world during a run. They can move, light or hide any object the Case marks as movable, such as a target that pops up or a wall that opens. To get a movable object, tell the agent which object should move when it makes the Case. Basecase records each change in the try, so a replay shows the same world.
 
-A panel can watch the Scene view, a camera view you placed, or one of the robot's cameras, at up to 640 × 480 and 15 frames a second. A panel can't watch your computer's camera.
+A panel can watch the Scene view, a camera view you placed, or one of the robot's cameras, at up to 640 × 480 and 15 frames a second. Camera cards and panel camera frames include the Case's [captured splat or mesh](/help/import-a-world). A panel can't watch your computer's camera.
 
 To remember something like a high score, a panel can keep a value of up to 64 KB on this computer. The value stays after **Reset** and after you reopen the scene. Deleting the Case or the scene removes it. The Case doesn't carry the value, so a Case you share, open on another computer or copy with **Duplicate Scene** starts without it.
 

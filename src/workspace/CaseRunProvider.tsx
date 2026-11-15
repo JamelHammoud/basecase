@@ -1,3 +1,4 @@
+import { caseWorldView } from '../cases/worldView';
 import React, { createContext, use, useEffect, useEffectEvent } from 'react';
 import { consoleScope } from '../cases/console/format';
 import { frameAtTime } from '../cases/console/recordedSignals';
@@ -64,6 +65,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
   const { timeline } = cases;
   const wantsCameras = caseConsole.panels.some((p) => p.kind === 'camera');
   const cameras = useCameraTiles({
+    imported: caseWorldView(cases.active),
     parts,
     sim,
     cameras: actions.cameras,

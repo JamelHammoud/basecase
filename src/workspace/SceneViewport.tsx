@@ -51,6 +51,18 @@ function shownPartsFor(core: WorkspaceCore) {
   return [...parts, ...drilledOperands(core.parts, core.selectedIds)];
 }
 
+function cameraStripFor(core: WorkspaceCore, actions: WorkspaceActions) {
+  return (
+    <CameraStrip
+      imported={worldViewFor(core)}
+      parts={core.parts}
+      sim={core.simTraining.sim}
+      cameras={actions.cameras}
+      patchPart={actions.edits.patchPart}
+    />
+  );
+}
+
 export function SceneViewport({ active, core, actions, agent }: SceneViewportProps) {
   const {
     viewportRef,
@@ -140,9 +152,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         active={active}
         ready={core.printing.readySteps(core.buildAlong.stepParts)}
       />
-      {!core.caseRun.open && (
-        <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
-      )}
+      {!core.caseRun.open && cameraStripFor(core, actions)}
       <AnnotationLayer
         annotations={annotations.annotations}
         parts={parts}

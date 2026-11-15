@@ -55,6 +55,8 @@ Ask it to make a flat chest plate aluminum, carbon fiber or acrylic, and it assi
 
 Say what you want to do with a robot, such as play a game on a gamepad, and the agent builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case). In a [scanned room](/help/import-a-scanned-room), the agent aims the Case at a door or a piece of furniture you name, such as under the table.
 
+In a [captured world](/help/import-a-world), the agent's simulation camera shots show the Case's splat or mesh. It sees the same place as the live camera tiles when it [drives the robot](/help/watch-what-the-robots-cameras-see#let-the-agent-look).
+
 If the agent needs a control the Case's panels don't have, like a joystick or a piano, it draws one as a code panel. If that code moves an object, such as a target to whack, the agent marks the object as movable. After each write, it reads the panel's errors and a capture of the window, then fixes what broke.
 
 Name a movement, such as a wave, and the Case reacts to it as a gesture. If no built-in gesture matches, the agent asks you to teach it. For the steps, see [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).

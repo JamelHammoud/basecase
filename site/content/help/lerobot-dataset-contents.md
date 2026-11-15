@@ -90,6 +90,8 @@ Frames are 25 a second: every second frame of the try's 50 Hz recording. Joints 
 
 Camera parts are the ones under **Cameras** and **Depth Cameras** in Parts. A fisheye lens records as a fisheye. Every video is 640 × 480, encoded as H.264, or VP9 or AV1 where H.264 isn't available, with a key frame each second.
 
+In a [captured world](/help/import-a-world), every camera video shows the Case's splat, or its mesh when there is no splat. The world keeps the same placement as in the Case.
+
 ## Versions
 
 LeRobot 0.4 and later read v3.0 and stream it from the Hub. GR00T reads LeRobot v2 only, so it takes the v2.1 copy. Both hold the same rows, so their episode counts, frame counts and statistics match.

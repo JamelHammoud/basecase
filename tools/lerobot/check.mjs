@@ -52,3 +52,4 @@ async function main() {
 }
 
 await main();
+await import('../perf/worldVideosBench.mjs');

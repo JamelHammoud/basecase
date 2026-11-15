@@ -14,6 +14,8 @@ covers:
   - src/workspace/worldImport.ts
   - src/workspace/useCanvasDrop.ts
   - src/three/viewport/importedWorld.ts
+  - src/cameras/capturedWorld.ts
+  - src/cameras/liveStage.ts
 keywords:
   - Marble
   - World Labs
@@ -45,7 +47,11 @@ A mesh without a splat shows its own colors or textures. Keep every linked file 
 
 The dropped files can total up to 64 MB, with up to 200,000 collider triangles and 1,000,000 splat points. Basecase reads the world as meters unless its largest extent is at least 1,000 units, which it reads as millimeters. It levels the largest upward-facing plane to the floor.
 
-The imported appearance is shown on the main canvas. Camera tiles and dataset videos don't include that appearance.
+The canvas, camera tiles and exported dataset videos show the imported splat, or the mesh when there is no splat. Depth follows the collider.
+
+![The Scene camera tile beside a rover in Kitchen](/help/import-a-world/camera-tiles.png)
+
+To keep camera videos from passed tries, follow [Export a LeRobot dataset](/help/export-a-lerobot-dataset).
 
 For a RoomPlan JSON capture, follow [Import a scanned room as a Case world](/help/import-a-scanned-room). Continue with [Try a Case](/help/try-a-case) to record another run.
 

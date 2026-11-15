@@ -1,3 +1,5 @@
+import type { VideoCodec } from 'mediabunny';
+import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import type { MeshFiles } from '../three/componentMeshes';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
@@ -5,8 +7,15 @@ import type { ScenePart } from '../types/robotics';
 import { FRAME_HEIGHT, FRAME_WIDTH, type DatasetCamera } from './cameras';
 import { datasetJoints, episodeData, type DatasetSegment, type DatasetSlot } from './episodes';
 import { datasetFiles } from './lerobotExport';
-import type { DatasetEpisode, ScanSensor } from './lerobotRows';
-import { codecName, createRenderStage, disposeRenderStage, renderEpisode, videoCodec } from './renderVideos';
+import type { DatasetEpisode, DatasetSpec, ScanSensor } from './lerobotRows';
+import {
+  codecName,
+  createRenderStage,
+  disposeRenderStage,
+  renderEpisode,
+  videoCodec,
+  type RenderStage,
+} from './renderVideos';
 import { segmentRows } from './segmentRows';
 
 export interface DatasetJobEpisode {
@@ -22,6 +31,7 @@ export interface DatasetJob {
   parts: ScenePart[];
   world: ScenePart[];
   meshes?: MeshFiles;
+  imported?: ImportedWorldView | null;
   model: SimModel;
   cameras: DatasetCamera[];
   episodes: DatasetJobEpisode[];
@@ -43,31 +53,39 @@ export const scanSensors = (model: SimModel, parts: ScenePart[]): ScanSensor[] =
 
 export async function buildDataset(job: DatasetJob): Promise<DatasetFiles> {
   const codec = await videoCodec();
-  const stage = await createRenderStage(job.parts, job.world, job.meshes);
-  const episodes: DatasetEpisode[] = [];
+  const stage = await createRenderStage(job.parts, job.world, job.meshes, { imported: job.imported });
+  let spec: DatasetSpec;
 
   try {
-    for (const e of job.episodes) {
-      const data = episodeData(e.recording, job.model, e.task, job.slots);
-      const rendered = await renderEpisode(stage, {
-        model: job.model,
-        recording: e.recording,
-        frames: data.frames,
-        cameras: job.cameras,
-        codec,
-      });
-
-      const segments = segmentRows(e.segments ?? [], data.frames);
-
-      episodes.push({ ...data, ...rendered, source: e.source, ...(segments.length ? { segments } : {}) });
-    }
+    spec = await renderDataset(stage, job, codec);
   } finally {
     disposeRenderStage(stage);
   }
 
+  return datasetFiles(spec);
+}
+
+export async function renderDataset(stage: RenderStage, job: DatasetJob, codec: VideoCodec): Promise<DatasetSpec> {
+  const episodes: DatasetEpisode[] = [];
+
+  for (const e of job.episodes) {
+    const data = episodeData(e.recording, job.model, e.task, job.slots);
+    const rendered = await renderEpisode(stage, {
+      model: job.model,
+      recording: e.recording,
+      frames: data.frames,
+      cameras: job.cameras,
+      codec,
+    });
+
+    const segments = segmentRows(e.segments ?? [], data.frames);
+
+    episodes.push({ ...data, ...rendered, source: e.source, ...(segments.length ? { segments } : {}) });
+  }
+
   const { names, groups } = datasetJoints(job.model, job.slots);
 
-  return datasetFiles({
+  return {
     robotType: job.robotType,
     jointNames: names,
     jointGroups: groups,
@@ -75,5 +93,5 @@ export async function buildDataset(job: DatasetJob): Promise<DatasetFiles> {
     episodes,
     source: job.source,
     scans: scanSensors(job.model, job.parts),
-  });
+  };
 }

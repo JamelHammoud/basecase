@@ -50,6 +50,8 @@ You can play a recorded try in its Case's own cards. The cameras, numbers, plots
 
 You can also play a try by clicking its row in the Simulate tab's Results, or its tile in **Library** ▸ **Tries**. When you stop playing, you're back where you were.
 
+If the try's Case has a [captured world](/help/import-a-world), its camera cards show the splat or mesh while the robot follows the playhead.
+
 Plots show the whole try, with a line at the playhead. The map draws the whole path the robot took, with a dot where the robot is at the playhead. If a try's Case isn't in this scene, the try plays through the default cards: the cameras, the brief, the failures, the servos and the tries. A try imported from a ROS recording adds a column of cards for its topics, as in [Play a ROS recording's topics in the console](/help/play-a-ros-recordings-topics-in-the-console).
 
 **Note:** A try plays only if it fits the robot as it is now. If you've added or removed a joint since the try was recorded, it won't open. Tries from a real robot don't play.

@@ -33,4 +33,6 @@ The ZIP contains COCO and Ultralytics YOLO packages with train, validation and t
 
 The Case supplies object pose variation, named points and declared color classes. The picker repeats seed 1. The same Case, camera settings and rendering environment reproduce the same image and label bytes.
 
+In a [captured world](/help/import-a-world), the images show the splat, or the mesh when there is no splat. Depth uses the collider surfaces the robot collides with. The captured world has no object labels of its own.
+
 You can also open **Make Training Images** in a Case's **Results**. To publish a saved version, follow [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).

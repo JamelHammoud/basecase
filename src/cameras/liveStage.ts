@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { CapturedWorld } from './capturedWorld';
+import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import { placeCamera } from '../datasets/cameras';
 import { applyDeltas, BACKGROUND, floor, posed, type Posed } from '../datasets/renderVideos';
 import { simDeltas, worldDeltas } from '../sim/mjcfFrames';
@@ -98,6 +100,8 @@ export class LiveStage {
 
   private readonly labels: TrainingPasses;
 
+  private readonly captured: CapturedWorld;
+
   private readonly ground = floor();
 
   private readonly surfacePool = new TrainingSurfaces();
@@ -112,7 +116,7 @@ export class LiveStage {
 
   private sceneTicket = 0;
 
-  private trainingTail: Promise<void> = Promise.resolve();
+  private tail: Promise<void> = Promise.resolve();
 
   constructor([width, height]: [number, number] = LARGE_SIZE) {
     this.renderer = new THREE.WebGLRenderer({
@@ -127,6 +131,7 @@ export class LiveStage {
     this.renderer.setClearColor(BACKGROUND, 1);
     this.scene.add(this.ground);
     this.lens = new LensRenderer(this.renderer);
+    this.captured = new CapturedWorld(this.scene, this.renderer);
     this.labels = new TrainingPasses(this.renderer, this.scene, this.lens);
     this.parts = new Layer(this.scene);
     this.world = new Layer(this.scene);
@@ -136,8 +141,28 @@ export class LiveStage {
     return this.renderer.domElement as unknown as OffscreenCanvas;
   }
 
-  async setScene(parts: ScenePart[], world: ScenePart[], meshes?: MeshFiles): Promise<boolean> {
+  setScene(
+    parts: ScenePart[],
+    world: ScenePart[],
+    meshes?: MeshFiles,
+    imported?: ImportedWorldView | null,
+  ): Promise<boolean> {
     const ticket = ++this.sceneTicket;
+
+    return this.enqueue(async () => {
+      if (ticket !== this.sceneTicket) return false;
+
+      return this.syncScene(parts, world, meshes, imported);
+    });
+  }
+
+  private async syncScene(
+    parts: ScenePart[],
+    world: ScenePart[],
+    meshes?: MeshFiles,
+    imported?: ImportedWorldView | null,
+  ): Promise<boolean> {
+    const ticket = this.sceneTicket;
 
     provideMeshFiles(meshes);
     await loadPartMeshes([...this.parts.changed(parts), ...this.world.changed(world)]);
@@ -146,7 +171,9 @@ export class LiveStage {
 
     this.surfacePool.dispose();
     this.parts.sync(parts);
-    this.world.sync(world);
+    this.world.sync(world.filter((part) => !imported || part.visible !== false));
+    this.ground.visible = !imported;
+    await this.captured.set(imported ?? null);
     await this.lens.warm(this.scene).catch(() => undefined);
 
     return ticket === this.sceneTicket;
@@ -160,7 +187,11 @@ export class LiveStage {
     this.views = views;
   }
 
-  draw(poses: Float64Array | null, jobs: LiveJob[]): LiveJob[] {
+  draw(poses: Float64Array | null, jobs: LiveJob[]): Promise<LiveJob[]> {
+    return this.enqueue(() => this.captureDraw(poses, jobs));
+  }
+
+  private async captureDraw(poses: Float64Array | null, jobs: LiveJob[]): Promise<LiveJob[]> {
     const byKey = new Map(this.views.map((v) => [v.key, v]));
     const ready = jobs.filter((job) => byKey.has(job.key));
 
@@ -173,19 +204,23 @@ export class LiveStage {
       const width = Math.min(target.canvas.width, gl.width);
       const height = Math.min(target.canvas.height, gl.height);
 
-      this.render(byKey.get(key)!, parts, { width, height });
+      await this.render(byKey.get(key)!, parts, { width, height });
       target.ctx.drawImage(gl, 0, gl.height - height, width, height, 0, 0, width, height);
     }
 
     return ready;
   }
 
-  shoot(poses: Float64Array | null, keys: string[]): Record<string, ImageBitmap> {
+  shoot(poses: Float64Array | null, keys: string[]): Promise<Record<string, ImageBitmap>> {
+    return this.enqueue(() => this.captureShots(poses, keys));
+  }
+
+  private async captureShots(poses: Float64Array | null, keys: string[]): Promise<Record<string, ImageBitmap>> {
     const parts = this.pose(poses);
     const out: Record<string, ImageBitmap> = {};
 
     for (const view of this.views.filter((v) => keys.includes(v.key))) {
-      this.render(view, parts);
+      await this.render(view, parts);
       out[view.key] = this.canvas.transferToImageBitmap();
     }
 
@@ -193,9 +228,13 @@ export class LiveStage {
   }
 
   training(request: CameraTrainingRequest): Promise<CameraTrainingFrame> {
-    const result = this.trainingTail.then(() => this.captureTraining(request));
+    return this.enqueue(() => this.captureTraining(request));
+  }
 
-    this.trainingTail = result.then(
+  private enqueue<T>(work: () => Promise<T>): Promise<T> {
+    const result = this.tail.then(work);
+
+    this.tail = result.then(
       () => undefined,
       () => undefined,
     );
@@ -239,15 +278,11 @@ export class LiveStage {
     );
 
     try {
+      await this.captured.prepare(this.scene, this.lens, shot);
       this.lens.render(this.scene, shot);
 
       const jpeg = await trainingJpeg(this.canvas, request.seed, request.randomization?.noise);
-      const labels = this.labels.capture({
-        shot,
-        items,
-        width,
-        height,
-      });
+      const labels = this.captured.labels(() => this.labels.capture({ shot, items, width, height }));
       const keypoints = projectTrainingPoints({
         shot,
         width,
@@ -273,9 +308,11 @@ export class LiveStage {
     materials.forEach((material) => material.dispose());
     this.scene.environment?.dispose();
     this.surfacePool.dispose();
+    this.captured.dispose();
     this.labels.dispose();
     this.lens.dispose();
     this.renderer.dispose();
+    this.renderer.forceContextLoss();
   }
 
   private pose(poses: Float64Array | null): Map<string, THREE.Matrix4> {
@@ -296,9 +333,16 @@ export class LiveStage {
     return parts;
   }
 
-  private render(view: CameraView, parts: Map<string, THREE.Matrix4>, viewport?: { width: number; height: number }) {
+  private async render(
+    view: CameraView,
+    parts: Map<string, THREE.Matrix4>,
+    viewport?: { width: number; height: number },
+  ) {
     const delta = view.part ? parts.get(view.part) : undefined;
 
-    this.lens.render(this.scene, { ...placeCamera(view, delta), lens: view.lens }, viewport);
+    const shot = { ...placeCamera(view, delta), lens: view.lens };
+
+    await this.captured.prepare(this.scene, this.lens, shot, viewport);
+    this.lens.render(this.scene, shot, viewport);
   }
 }

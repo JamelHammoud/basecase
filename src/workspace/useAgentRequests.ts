@@ -1,3 +1,4 @@
+import { caseWorldView } from '../cases/worldView';
 import { resolvePrinter } from '../data/printers';
 import { useRef } from 'react';
 import type { AgentOp } from '../agent/agentScene';
@@ -129,6 +130,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       restoreCanvas: () => viewportRef.current?.setPose(posing.deltas),
       parts: partsRef.current,
       fixedCameras: projectRef.current.cameras ?? [],
+      imported: caseWorldView(simTraining.cases.active),
       velocity: simTraining.skills.velocity,
       calibrationErrors: () => calibrationErrorsText(projectRef.current, unit),
       fleet: simTraining.fleet.tools,

@@ -1,5 +1,13 @@
 [
   {
+    "file": "e2e/labelFrames.e2e.test.ts",
+    "test": "extracts pose labels from a reference pick try, draws a box and undoes it",
+    "issue": 1049,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43703438118 returned zero saved tries instead of one at line 69 after Stop Try on the first Windows attempt. On retry, Stop Try detached during the click at line 66 and exhausted the unchanged 30000 ms action limit. Linux passed at the same commit in 11.8 s, and the preceding Windows run 43701002471 passed in 41.4 s with unchanged walkthrough, recording, simulation and Case code. Attempts share one beforeAll app. The original recording, scoring or persistence failure and the retry button loss are not established."
+  },
+  {
     "file": "src/vision/inferenceWorker.test.ts",
     "test": "",
     "issue": 1035,

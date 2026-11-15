@@ -116,4 +116,28 @@ describe('repair guide planning', () => {
 
     expect(await guide.repairPlan(geometry)).toBeNull();
   });
+
+  it('rejects a timed-out measurement without caching its incomplete order', async () => {
+    const { guide, geometry } = await setup();
+    const generate = vi.spyOn(generation, 'generateGuidePlan');
+    const unfinished = {
+      ...geometry,
+      timedOut: true,
+      moves: Object.fromEntries(
+        Object.entries(geometry.moves).map(([id, motion]) => [
+          id,
+          { ...motion, local: motion.local.map(() => Object.keys(geometry.moves).filter((other) => other !== id)) },
+        ]),
+      ),
+    };
+
+    expect(await guide.repairPlan(unfinished)).toBeNull();
+    expect(generate).not.toHaveBeenCalled();
+
+    const plan = await guide.repairPlan(geometry);
+
+    expect(plan?.steps.some((step) => step.unproven)).toBe(false);
+    expect(generate).toHaveBeenCalledOnce();
+    expect(await guide.repairPlan(geometry)).toBe(plan);
+  });
 });

@@ -75,6 +75,20 @@ describe('opening a repair', () => {
     expect(markForReprint).not.toHaveBeenCalled();
   });
 
+  it('discards an edited scene before its old measurement reaches the guide cache', async () => {
+    const { options, markForReprint, geometry } = await setup();
+
+    options.viewportRef.current!.assembly = async () => {
+      options.partsRef.current = options.partsRef.current.filter((part) => part.id !== 'cover');
+
+      return geometry;
+    };
+
+    expect((await useRepair(options).open('plate')).plan).toBeUndefined();
+    expect(options.guide.repairPlan).not.toHaveBeenCalled();
+    expect(markForReprint).not.toHaveBeenCalled();
+  });
+
   it('does not mark a cancelled opening for replacement', async () => {
     const { options, markForReprint } = await setup();
 

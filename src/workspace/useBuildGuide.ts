@@ -163,6 +163,8 @@ export function useBuildGuide(options: BuildGuideOptions) {
   };
 
   const repairPlan = async (geometry: AssemblyGeometry): Promise<GuidePlan | null> => {
+    if (geometry.timedOut) return null;
+
     const currentFingerprint = guideFingerprint(sceneName, partsRef.current, projectRef.current);
 
     if (planRef.current?.fingerprint === currentFingerprint) return planRef.current.plan;

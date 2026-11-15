@@ -11,10 +11,29 @@ export interface TreeNode {
 
 type Slot = DecodedMessage | Decoded[];
 
-const SEGMENT = /([^.[\]]+)|\[(\d+)\]/gu;
+type Path = Array<string | number>;
 
-const tokens = (path: string): Array<string | number> =>
-  [...path.matchAll(SEGMENT)].map((m) => (m[1] === undefined ? Number(m[2]) : m[1]));
+const SEGMENT = /([^.[\]]+)|\[(\d+)\]/gu;
+const paths = new WeakMap<RecordedTopic, Map<string, Path>>();
+
+function tokens(topic: RecordedTopic, path: string): Path {
+  let kept = paths.get(topic);
+
+  if (!kept) {
+    kept = new Map();
+    paths.set(topic, kept);
+  }
+
+  const found = kept.get(path);
+
+  if (found) return found;
+
+  const made = [...path.matchAll(SEGMENT)].map((m) => (m[1] === undefined ? Number(m[2]) : m[1]));
+
+  kept.set(path, made);
+
+  return made;
+}
 
 function child(slot: Slot, key: string | number, next: string | number): Slot {
   const held = Object.hasOwn(slot, key) ? (slot as Record<string | number, Decoded>)[key] : undefined;
@@ -28,8 +47,7 @@ function child(slot: Slot, key: string | number, next: string | number): Slot {
   return made;
 }
 
-function place(root: DecodedMessage, path: string, value: Decoded) {
-  const keys = tokens(path);
+function place(root: DecodedMessage, keys: Path, value: Decoded) {
   let slot: Slot = root;
 
   for (let i = 0; i < keys.length - 1; i++) slot = child(slot, keys[i], keys[i + 1]);
@@ -45,7 +63,7 @@ export function messageAt(topic: RecordedTopic, message: number): DecodedMessage
   topic.numbers.forEach((values, path) => {
     if (!fieldPresent(topic, path, message, 'number')) return;
 
-    if (!Number.isNaN(values[message]) || !isItem(path)) place(root, path, values[message]);
+    if (!Number.isNaN(values[message]) || !isItem(path)) place(root, tokens(topic, path), values[message]);
   });
   topic.labels.forEach((values, path) => {
     if (!fieldPresent(topic, path, message, 'label')) return;
@@ -54,15 +72,15 @@ export function messageAt(topic: RecordedTopic, message: number): DecodedMessage
 
     if (values[message] === '' && numeric !== undefined && !Number.isNaN(numeric)) return;
 
-    if (topic.presence || values[message] !== '' || !isItem(path)) place(root, path, values[message]);
+    if (topic.presence || values[message] !== '' || !isItem(path)) place(root, tokens(topic, path), values[message]);
   });
   topic.lists.forEach((list, path) => {
     if (fieldPresent(topic, path, message, 'list'))
-      place(root, path, list.v.subarray(list.at[message], list.at[message + 1]));
+      place(root, tokens(topic, path), list.v.subarray(list.at[message], list.at[message + 1]));
   });
   topic.blobs.forEach((blob, path) => {
     if (fieldPresent(topic, path, message, 'blob'))
-      place(root, path, blob.bytes.subarray(blob.at[message], blob.at[message + 1]));
+      place(root, tokens(topic, path), blob.bytes.subarray(blob.at[message], blob.at[message + 1]));
   });
 
   return root;

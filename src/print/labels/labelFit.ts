@@ -67,7 +67,9 @@ function tallest(
   return lo;
 }
 
-function candidateCenters(face: FlatFace): Array<[number, number]> {
+function* candidateCenters(face: FlatFace): Generator<[number, number]> {
+  if (insideFace(face, face.centroid)) yield face.centroid;
+
   const xs = face.tris.filter((_, i) => i % 2 === 0);
   const ys = face.tris.filter((_, i) => i % 2 === 1);
   const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
@@ -79,9 +81,9 @@ function candidateCenters(face: FlatFace): Array<[number, number]> {
   const [cx, cy] = face.centroid;
   const distance = ([x, y]: [number, number]) => Math.hypot(x - cx, y - cy);
 
-  return [face.centroid, ...grid.sort((a, b) => distance(a) - distance(b) || a[0] - b[0] || a[1] - b[1])].filter((p) =>
-    insideFace(face, p),
-  );
+  grid.sort((a, b) => distance(a) - distance(b) || a[0] - b[0] || a[1] - b[1]);
+
+  for (const point of grid) if (insideFace(face, point)) yield point;
 }
 
 export function fitLabel(face: FlatFace, text: string): LabelSpot | null {

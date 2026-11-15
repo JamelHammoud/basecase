@@ -19,6 +19,7 @@ import {
   RotateLeftIcon,
   SelectAllIcon,
   SparklesIcon,
+  SwapIcon,
   SubtractIcon,
   UngroupIcon,
   UnionIcon,
@@ -33,6 +34,7 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
+import { canRepair } from './useRepair';
 
 export interface PartActionInputs {
   core: WorkspaceCore;
@@ -178,6 +180,17 @@ export function onePartActions({ core, actions }: Omit<PartActionInputs, 'ui'>, 
   const setFlag = (patch: Partial<ScenePart>) => actions.edits.patchPart(part.id, patch);
 
   return {
+    repair: canRepair(part)
+      ? {
+          id: 'repair',
+          label: 'Repair',
+          icon: SwapIcon,
+          run: () =>
+            void core.repair.open(part.id).then((result) => {
+              if (!result.plan) core.showToast(result.text, { tone: 'error' });
+            }),
+        }
+      : null,
     resetRotation: {
       id: 'reset-rotation',
       label: 'Reset Rotation',

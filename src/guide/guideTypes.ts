@@ -68,6 +68,8 @@ export interface GuideStep {
   tools: string[];
   attach?: string;
   unproven?: boolean;
+  repairPhase?: 'remove' | 'swap' | 'reassemble';
+  shownIds?: string[];
 }
 
 export interface GuideModule {
@@ -87,6 +89,7 @@ export interface GuidePlan {
   modules: GuideModule[];
   steps: GuideStep[];
   partIds: string[];
+  repair?: { partId: string; printed: boolean };
 }
 
 export const MAIN_MODULE = 'main';

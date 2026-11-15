@@ -110,8 +110,12 @@ export class BuildStepLayer {
     this.pose.clear();
     this.moving = view.moves.length > 0 && !reducedMotion();
 
-    if (this.moving)
-      view.moves.forEach((m) => this.pose.set(m.partId, new THREE.Matrix4().makeTranslation(...m.offset)));
+    const offsetScale = view.removing && this.moving ? 0 : 1;
+
+    if (this.moving || view.removing)
+      view.moves.forEach(({ partId, offset: [x, y, z] }) =>
+        this.pose.set(partId, new THREE.Matrix4().makeTranslation(x * offsetScale, y * offsetScale, z * offsetScale)),
+      );
 
     this.started = performance.now();
     view.arrows.forEach((a) => this.arrows.add(arrowObject(a.from, a.to, this.material)));
@@ -176,7 +180,8 @@ export class BuildStepLayer {
 
     if (t < 0) return false;
 
-    const k = 1 - easeInOutCubic(Math.min(1, t));
+    const eased = easeInOutCubic(Math.min(1, t));
+    const k = view.removing ? eased : 1 - eased;
 
     view.moves.forEach(({ partId, offset: [x, y, z] }) => this.pose.get(partId)?.makeTranslation(x * k, y * k, z * k));
     this.ctx.layer.applyPoseTo(view.moves.map((m) => m.partId));

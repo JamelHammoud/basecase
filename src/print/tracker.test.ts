@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { PrintRecord, ScenePart } from '../types/robotics';
-import { readySteps, withRecord } from './tracker';
+import { DEFAULT_PROJECT, type PrintRecord, type ProjectSettings, type ScenePart } from '../types/robotics';
+import { markForReprint, plateStatus, printedKeys, readySteps, splitPrinted, withRecord } from './tracker';
+import type { Plate } from './plan';
+import { sceneJson } from '../utils/sceneJson';
+import { projectFromSeed } from '../workspace/helpers';
 
 const part = (id: string, extra: Partial<ScenePart> = {}): ScenePart => ({
   id,
@@ -59,5 +62,43 @@ describe('steps whose printed parts are ready', () => {
 
   it('marks nothing before anything prints', () => {
     expect(readySteps(steps, { parts, keyOf })).toEqual([false, false, false, false]);
+  });
+});
+
+describe('a replacement print', () => {
+  const now = new Date('2026-11-14T10:00:00.000Z');
+  const original = printed(['base', 'leg', 'foot']);
+
+  it('persists a request for the same shape while preserving other printed parts and history', async () => {
+    const project = { ...DEFAULT_PROJECT, prints: markForReprint(original, 'leg', now) };
+    const saved = JSON.parse(await sceneJson({ parts, project })) as { project: ProjectSettings };
+    const records = projectFromSeed(saved.project).prints!;
+
+    expect(records).toContainEqual(original[0]);
+    expect(printedKeys(records).get('leg')).toBeUndefined();
+    expect(splitPrinted(parts, records, keyOf).printed.map((p) => p.id)).toEqual(['base', 'foot']);
+    expect(readySteps(steps, { parts, records, keyOf })).toEqual([true, false, false, true]);
+    expect(original).toEqual(printed(['base', 'leg', 'foot']));
+  });
+
+  it('keeps a replacement pending after a failed print and clears it after a new successful print', () => {
+    const requested = markForReprint(original, 'leg', now);
+    const replacement = { ...printed(['leg'])[0], id: 'replacement', sentAt: now.toISOString() };
+    const failed = withRecord(requested, { ...replacement, state: 'failed' });
+
+    expect(printedKeys(failed).has('leg')).toBe(false);
+    expect(printedKeys(withRecord(failed, replacement)).get('leg')).toBe(keyOf(parts[1]));
+  });
+
+  it('makes an unchanged plate available again without marking its other parts unprinted', () => {
+    const plate = { hash: original[0].hash, items: [{ id: 'base' }, { id: 'leg' }, { id: 'foot' }] } as Plate;
+    const records = markForReprint(original, 'leg', now);
+
+    expect(plateStatus(plate, records).state).toBe('new');
+    expect(printedKeys(records).get('base')).toBe(keyOf(parts[0]));
+
+    const replacement = { ...printed(['leg'])[0], id: 'replacement', sentAt: now.toISOString() };
+
+    expect(plateStatus(plate, withRecord(records, replacement)).state).toBe('printed');
   });
 });

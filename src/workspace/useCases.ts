@@ -24,6 +24,7 @@ import { useCaseTry } from './useCaseTry';
 import { useRealRobotTries } from './useRealRobotTries';
 import { useDatasetExport } from './useDatasetExport';
 import { useTryMultiply, type TryMultiply } from './useTryMultiply';
+import { useCaseTrails } from './useCaseTrails';
 import { useTryTimeline, type TryTimeline } from './useTryTimeline';
 import { useTriesTraining, type TriesTraining } from './useTriesTraining';
 import { useStoredTries } from './useStoredTries';
@@ -112,6 +113,7 @@ export function useCases(options: CasesOptions) {
   const open = (id: string | null) => {
     const kase = cases.find((c) => c.id === id) ?? null;
 
+    trails.select(null);
     setActiveId(kase?.id ?? null);
     stage(kase);
   };
@@ -170,6 +172,7 @@ export function useCases(options: CasesOptions) {
   };
 
   const timeline = useTryTimeline({ sim, rig, parts, cases, partners });
+  const trails = useCaseTrails({ ...options, active, timeline, open });
 
   const builder = useCaseBuilder({ rig, parts, add, partners });
   const naming = useCaseNames(setProject);
@@ -189,13 +192,9 @@ export function useCases(options: CasesOptions) {
   const images = useTrainingImages({ ...options, active });
   const caseDataset = useCaseDataset({ active, tries: fromSim, sceneId, showDataset: options.showDataset, showToast });
   const attempt = useCaseTry({
-    skills: options.skills,
-    sim,
-    rig,
-    parts,
+    ...options,
     joints: project.joints ?? [],
     active,
-    partners,
     onTry,
     onRefuse: (message) => showToast(message),
   });
@@ -219,6 +218,7 @@ export function useCases(options: CasesOptions) {
     hasRobot,
     fixedBase,
     open,
+    openCheck: trails.openCheck,
     add,
     addAndTry,
     remove,

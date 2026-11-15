@@ -21,6 +21,7 @@ import type { Case } from './schema';
 import type { TryScoring } from './tries';
 import { multiplyTry, type Multiplied } from './tryReplay';
 import { recordingTransfer } from '../sim/recorder';
+import { seedReplay, type SeedReplay } from './seedReplay';
 
 export interface WireRobot {
   id: string;
@@ -60,6 +61,10 @@ export interface ReplayJob extends Controlled {
   seed: number;
 }
 
+export interface RecordJob extends Omit<ReplayJob, 'type'> {
+  type: 'record';
+}
+
 export interface MultiplyJob {
   type: 'multiply';
   source: TryScoring;
@@ -67,16 +72,24 @@ export interface MultiplyJob {
 }
 
 export type CaseCheckJob =
-  { type: 'model'; robot: WireRobot; walks: SkillRecord[] } | RunsJob | ReplayJob | MultiplyJob;
+  { type: 'model'; robot: WireRobot; walks: SkillRecord[] } | RunsJob | ReplayJob | RecordJob | MultiplyJob;
 
 export type CaseCheckReply =
   | { type: 'model'; modelHash: string; walk: WalkPick | null; stop: string | null }
   | { type: 'runs'; result: SeedRuns }
   | { type: 'replay'; film: FilmShot | null }
+  | { type: 'record'; replay: SeedReplay }
   | { type: 'multiply'; result: Multiplied };
 
-export const replyTransfer = (reply: CaseCheckReply): Transferable[] =>
-  reply.type === 'multiply' ? reply.result.kept.flatMap((v) => recordingTransfer(v.recording)) : [];
+export function replyTransfer(reply: CaseCheckReply): Transferable[] {
+  if (reply.type === 'multiply') return reply.result.kept.flatMap((v) => recordingTransfer(v.recording));
+
+  if (reply.type === 'record') return recordingTransfer(reply.replay.recording);
+
+  if (reply.type === 'runs' && 'outcomes' in reply.result) return reply.result.outcomes.map((o) => o.path.buffer);
+
+  return [];
+}
 
 export const caseRobotOf = (robot: WireRobot): CaseRobot => ({
   id: robot.id,
@@ -117,6 +130,12 @@ export class CaseCheckSession {
     const held = this.robotFor(job);
     const robot = caseRobotOf(held);
 
+    if (job.type === 'record') {
+      const result = await caseRunner(mj, job.kase, robot, { ...controlOf(job), record: true }).run(job.seed);
+
+      return { type: 'record', replay: await seedReplay(result, job.seed) };
+    }
+
     if (job.type === 'replay') {
       const result = await caseRunner(mj, job.kase, robot, controlOf(job)).run(job.seed);
 
@@ -141,7 +160,7 @@ export class CaseCheckSession {
     return { type: 'model', modelHash, walk, stop };
   }
 
-  private robotFor(job: RunsJob | ReplayJob): WireRobot {
+  private robotFor(job: RunsJob | ReplayJob | RecordJob): WireRobot {
     if (job.robot) this.held = { hash: job.modelHash, robot: job.robot };
 
     if (this.held?.hash !== job.modelHash) throw new Error(`No robot with model ${job.modelHash} was sent.`);

@@ -53,6 +53,7 @@ function holdPolicy(model: SimModel): PolicySpec {
 
 const runsOf = (passes: number): CaseRuns => ({
   runs: TRIES_RUNS,
+  outcomes: [],
   passes,
   medianMargin: 0.1,
   worstMargin: 0.1,

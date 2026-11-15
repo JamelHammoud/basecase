@@ -77,6 +77,8 @@ const DETACHED: Viewport3DHandle = {
   cancelMeasure: () => false,
   shownPartIds: () => [],
   checkDotCount: () => 0,
+  setCaseTrails: () => {},
+  caseTrailState: () => [],
 };
 
 const canvasCursor = (props: ViewportProps) => {

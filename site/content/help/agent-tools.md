@@ -118,7 +118,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `write_case_code` | Writes or replaces one of a Case's code panels, and replies with its errors, its console lines, its refused calls and a picture of the window |
 | `read_case_code` | Reads a code panel's source, or lists a Case's code panels |
 | `delete_case_code` | Takes a code panel out of a Case |
-| `run_case` | Runs a Case 20 times and reports how often it passed and why it failed |
+| `run_case` | Runs a Case 20 times and reports how often it passed, why it failed, and each failing seed's number and first failure frame |
 | `read_try` | Reads one try from its recording: its signals over a time window, when each failure first tripped, a picture of the canvas at one moment, and its whole-run scan map's bounds and point count |
 | `compare_case` | Runs a Case on this robot and another open tab's, and says which passes more often |
 | `explore_case` | Runs a Case on each catalog version of the robot's servos and supply voltage |

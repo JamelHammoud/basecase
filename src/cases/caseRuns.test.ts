@@ -8,6 +8,12 @@ import { modelOf } from '../skills/fixtureModels';
 import { buildRig } from '../utils/kinematics';
 import { buildCase, builderRobot, CASE_PRESETS, presetsFor, type PresetId } from './caseBuilder';
 import { caseRunner } from './runCase';
+import { runPath } from './runPath';
+import { runSeeds } from './caseRuns';
+import { SimEngine } from '../sim/engine';
+import { fitsRecording } from '../sim/recordedFrames';
+import { endPoint } from './probes';
+import { robotFacts } from './robotFit';
 import { caseRandom, jitteredWorld } from './caseRandom';
 import { CASE_RUNS, runCaseTimes, summarizeRuns } from './caseRuns';
 import type { Case } from './schema';
@@ -37,6 +43,7 @@ describe('seeded Case runs', () => {
       expect(again.margin).toBe(a.margin);
       expect(again.passed).toBe(a.passed);
       expect(other.margin).not.toBe(a.margin);
+      expect(runPath(a, caseRobot(rover))).toEqual(runPath(again, caseRobot(rover)));
     },
     SIM_MS,
   );
@@ -106,24 +113,6 @@ describe('seeded Case runs', () => {
     SIM_MS,
   );
 
-  it('the weak quadruped fails Walk Without Falling, mostly by falling', async () => {
-    const mj = await loadMujoco();
-    const quad = fixture('must-fail-weak-quad');
-    const made = buildCase(
-      { goal: 'walk', world: 'floor' },
-      builderRobot(buildRig(quad.joints, quad.parts), quad.parts),
-    );
-
-    if (!made.ok) throw new Error(made.problem);
-
-    const runs = await runCaseTimes(mj, made.kase, caseRobot(quad));
-    const row = caseRow(made.kase, runs);
-
-    expect(runs.passes).toBeLessThan(10);
-    expect(row.status).toBe('fail');
-    expect(row.items?.[0]?.text).toBe('Fell');
-  }, 60_000);
-
   it(
     'a robot that doesn’t fit gets a failing row that says why',
     async () => {
@@ -192,6 +181,92 @@ function holdPolicy(robot: FixtureRobot): PolicySpec {
   };
 }
 
+describe('seeded falls', () => {
+  it('the weak quadruped fails Walk Without Falling, mostly by falling', async () => {
+    const mj = await loadMujoco();
+    const quad = fixture('must-fail-weak-quad');
+    const made = buildCase(
+      { goal: 'walk', world: 'floor' },
+      builderRobot(buildRig(quad.joints, quad.parts), quad.parts),
+    );
+
+    if (!made.ok) throw new Error(made.problem);
+
+    const runs = await runCaseTimes(mj, made.kase, caseRobot(quad));
+    const row = caseRow(made.kase, runs);
+
+    expect(runs.passes).toBeLessThan(10);
+    expect(row.status).toBe('fail');
+    expect(row.items?.[0]?.text).toBe('Fell');
+
+    const fallen = runs.outcomes.filter((o) => o.failed.includes('fell'));
+
+    expect(fallen.length).toBeGreaterThan(0);
+    expect(fallen.every((o) => o.firstTrip?.label === 'fell' && o.firstTrip.frame > 0)).toBe(true);
+  }, 60_000);
+});
+
+describe('seeded replay', () => {
+  it('records the same verdict and final qpos as its summary and fits its model', async () => {
+    const mj = await loadMujoco();
+    const rover = fixture('rover-diff');
+    const a = await caseRunner(mj, template(rover, 'reach-the-flag'), caseRobot(rover), {
+      controller: 'reference',
+    }).run(7);
+    const recorded = await caseRunner(mj, template(rover, 'reach-the-flag'), caseRobot(rover), {
+      controller: 'reference',
+      record: true,
+    }).run(7);
+    const recording = recorded.recording!;
+    const engine = new SimEngine(mj, recorded.model);
+
+    try {
+      expect(fitsRecording(engine, recording)).toBe(true);
+      expect(recorded.passed).toBe(a.passed);
+      expect(recorded.margin).toBe(a.margin);
+      expect(recorded.finalQpos).toEqual(a.finalQpos);
+      expect(recording.qpos.slice(-recording.nq)).toEqual(a.finalQpos);
+    } finally {
+      engine.dispose();
+    }
+  });
+});
+
+describe('seeded arm paths', () => {
+  it('samples an arm’s effector at 10 Hz rather than its stationary base', async () => {
+    const mj = await loadMujoco();
+    const arm = fixture('arm-3dof');
+    const robot = caseRobot(arm);
+    const kase = template(arm, 'touch-the-dots');
+    const result = await caseRunner(mj, kase, robot, { controller: 'reference' }).run(3);
+    const batch = await runSeeds(mj, kase, robot, { seeds: [3] });
+
+    if (!('outcomes' in batch)) throw new Error(batch.refusal);
+
+    const path = batch.outcomes[0].path;
+    const rig = buildRig(arm.joints, arm.parts);
+    const facts = robotFacts(rig, arm.parts);
+    const world = {
+      model: result.model,
+      effector: facts.endEffector,
+      basePart: null,
+      basePoint: [0, 0, 0] as [number, number, number],
+      objectAt: new Map(),
+    };
+
+    expect(path).toBeInstanceOf(Float32Array);
+    expect(path).toHaveLength(Math.ceil(result.frames.length / 5) * 3);
+
+    for (let i = 0; i < path.length / 3; i++) {
+      const expected = endPoint('end-effector', world, result.frames[i * 5].poses);
+
+      expect(Array.from(path.slice(i * 3, i * 3 + 3))).toEqual(Array.from(Float32Array.from(expected.toArray())));
+    }
+
+    expect(Array.from(path.slice(0, 3))).not.toEqual(Array.from(path.slice(-3)));
+  });
+});
+
 describe('a ready Walk drives every robot that moves around, as Drive picks it', () => {
   const walkCase = (robot: FixtureRobot): Case => {
     const made = buildCase(
@@ -243,7 +318,14 @@ describe('a ready Walk drives every robot that moves around, as Drive picks it',
 
 describe('summarizing runs', () => {
   let seed = 0;
-  const run = (passed: boolean, margin: number, failed: string[] = []) => ({ seed: ++seed, passed, margin, failed });
+  const run = (passed: boolean, margin: number, failed: string[] = []) => ({
+    seed: ++seed,
+    passed,
+    margin,
+    failed,
+    path: new Float32Array(),
+    firstTrip: null,
+  });
 
   it('counts passes across batches, takes the median margin, ranks failures and finds the worst run', () => {
     seed = 0;
@@ -255,6 +337,7 @@ describe('summarizing runs', () => {
 
     expect(runs).toEqual({
       runs: 5,
+      outcomes: runs.outcomes,
       passes: 2,
       medianMargin: -0.1,
       worstMargin: -0.6,

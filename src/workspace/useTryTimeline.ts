@@ -1,4 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { caseWorldItems } from '../cases/importedWorldItems';
+import type { SimModel } from '../sim/mjcfTypes';
 import { stageCase, stagedEffectors } from '../cases/caseCast';
 import type { Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
@@ -7,6 +9,7 @@ import { trySignals, type TryRecord, type TryScoring } from '../cases/tries';
 import { tripFrames, type Trip } from '../cases/tripFrames';
 import { loadRecording } from '../cases/tryStore';
 import type { RecordedEfforts } from '../sim/recordedFrames';
+import type { SeedReplay } from '../cases/seedReplay';
 import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
 import { withoutTopics } from '../topics/recordingTopics';
@@ -37,6 +40,7 @@ interface Opened {
   trips: Trip[];
   scene: TryScene | null;
   before: 'off' | 'paused' | 'playing';
+  restore?: () => void;
 }
 
 function sceneOf(options: TimelineOptions, record: TryRecord, recording: Recording): TryScene | null {
@@ -59,6 +63,58 @@ function simBefore(sim: Simulation): Opened['before'] {
   if (sim.status === 'off') return 'off';
 
   return sim.playing ? 'playing' : 'paused';
+}
+
+function restoreSeedWorld(sim: Simulation, model: SimModel | null, before: Opened['before']) {
+  const world = sim.worldParts;
+
+  return () => {
+    sim.setWorld(world);
+
+    if (before === 'off') return;
+
+    void sim.start(model ?? undefined).then(() => {
+      if (before === 'paused') sim.pause();
+    });
+  };
+}
+
+function openingFrame(at: number | undefined, trips: Trip[]): number {
+  return at ?? trips[0]?.frame ?? 0;
+}
+
+async function prepareOpening(
+  options: TimelineOptions,
+  record: TryRecord,
+  recording: Recording,
+  seeded?: SeedReplay,
+): Promise<Opened | null> {
+  const { sim } = options;
+  const before = simBefore(sim);
+  const restore = seeded ? restoreSeedWorld(sim, sim.modelNow(), before) : undefined;
+
+  if (sim.drive.active) sim.drive.stop();
+
+  if (seeded) sim.setWorld(caseWorldItems(seeded.kase));
+
+  if (seeded || !sim.modelNow()) await sim.start(seeded?.model);
+
+  const efforts = await sim.scrub(withoutTopics(recording));
+
+  if (!efforts) return null;
+
+  const staged = sceneOf(options, record, recording);
+  const scene =
+    seeded && staged
+      ? {
+          kase: staged.kase,
+          scoring: { ...staged.scoring, kase: seeded.kase, model: seeded.model },
+          trace: seeded.trace,
+        }
+      : staged;
+  const trips = seeded?.trips ?? (await tripsOf(scene));
+
+  return { record, recording, efforts, trips, scene, before, restore };
 }
 
 function useSimGone(opened: Opened | null, sim: Simulation, drop: () => void) {
@@ -102,28 +158,18 @@ export function useTryTimeline(options: TimelineOptions) {
     }),
   });
 
-  const show = async (record: TryRecord, at?: number) => {
+  const show = async (record: TryRecord, at?: number, seeded?: SeedReplay) => {
     const ticket = ++opening.current;
-    const recording = await loadRecording(record.id);
-    const before = simBefore(sim);
+    const recording = seeded?.recording ?? (await loadRecording(record.id));
 
     if (!recording || ticket !== opening.current) return false;
 
-    if (sim.drive.active) sim.drive.stop();
+    const prepared = await prepareOpening(options, record, recording, seeded);
 
-    if (!sim.modelNow()) await sim.start();
+    if (!prepared || ticket !== opening.current) return false;
 
-    const efforts = await sim.scrub(withoutTopics(recording));
-
-    if (!efforts || ticket !== opening.current) return false;
-
-    const scene = sceneOf(options, record, recording);
-    const trips = await tripsOf(scene);
-
-    if (ticket !== opening.current) return false;
-
-    setOpened({ record, recording, efforts, trips, scene, before: opened?.before ?? before });
-    playback.reset(at ?? trips[0]?.frame ?? 0, recording.frames);
+    setOpened({ ...prepared, before: opened?.before ?? prepared.before, restore: opened?.restore ?? prepared.restore });
+    playback.reset(openingFrame(at, prepared.trips), recording.frames);
 
     return true;
   };
@@ -135,6 +181,8 @@ export function useTryTimeline(options: TimelineOptions) {
     playback.stop();
     setOpened(null);
     void sim.scrub(null);
+
+    if (opened.restore) return opened.restore();
 
     if (opened.before === 'off') sim.stop();
     else sim.reset();

@@ -138,14 +138,22 @@ describe('parts on hand', () => {
     buildBom({ parts: [...servos, ...screws], project, purchases, measures: {}, now });
   const lineOf = (bom: ReturnType<typeof buildBom>, key: string) => bom.lines.find((l) => l.key === key)!;
 
-  it('buys only the servos past the ones on hand, and adds only their cost', () => {
-    const none = bomWith({ [servoKey]: checked });
-    const six = bomWith({ [servoKey]: { ...checked, onHand: 6 } });
+  it.each([
+    { onHand: 0, toBuy: 8, lineUsd: 140, savings: 0 },
+    { onHand: 6, toBuy: 2, lineUsd: 35, savings: 105 },
+    { onHand: 8, toBuy: 0, lineUsd: 0, savings: 140 },
+  ])(
+    'buys $toBuy servos with $onHand on hand and removes their owned cost from the total',
+    ({ onHand, toBuy, lineUsd, savings }) => {
+      const none = bomWith({ [servoKey]: checked });
+      const owned = bomWith({ [servoKey]: { ...checked, onHand } });
 
-    expect(lineOf(six, servoKey)).toMatchObject({ qty: 8, owned: 6, toBuy: 2, packs: 2, lineUsd: 35 });
-    expect(lineOf(none, servoKey)).toMatchObject({ owned: 0, toBuy: 8, lineUsd: 140 });
-    expect(none.totals.estimatedUsd - six.totals.estimatedUsd).toBeCloseTo(105, 2);
-  });
+      expect(lineOf(owned, servoKey)).toMatchObject({ qty: 8, owned: onHand, toBuy, packs: toBuy, lineUsd });
+      expect(lineOf(none, servoKey)).toMatchObject({ owned: 0, toBuy: 8, lineUsd: 140 });
+      expect(none.totals.estimatedUsd - owned.totals.estimatedUsd).toBeCloseTo(savings, 2);
+      expect(none.totals.pricedUsd - owned.totals.pricedUsd).toBeCloseTo(savings, 2);
+    },
+  );
 
   it('counts a part owned with no checked price, and its list price only for what is left to buy', () => {
     const line = lineOf(bomWith({ [servoKey]: { onHand: 6 } }), servoKey);

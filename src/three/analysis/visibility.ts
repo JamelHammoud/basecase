@@ -108,15 +108,28 @@ function worldSamples(parts: VisibilityInput[]) {
   return { points, owner };
 }
 
-function splat(points: Float32Array, owner: Int32Array, [axis, sign]: [number, number], counts: Float64Array) {
-  const box = new THREE.Box3().setFromArray(points);
-  const keep = [0, 1, 2].filter((k) => k !== axis);
-  const span = Math.max(...keep.map((k) => box.max.getComponent(k) - box.min.getComponent(k)), 1e-6);
-  const depth = new Float64Array(GRID * GRID).fill(-Infinity);
-  const winner = new Int32Array(GRID * GRID).fill(-1);
+interface SplatWorkspace {
+  points: Float32Array;
+  owner: Int32Array;
+  box: THREE.Box3;
+  depth: Float64Array;
+  winner: Int32Array;
+}
+
+function splat(workspace: SplatWorkspace, [axis, sign]: [number, number], counts: Float64Array) {
+  const { points, owner, box, depth, winner } = workspace;
+  const uAxis = axis === 0 ? 1 : 0;
+  const vAxis = axis === 2 ? 1 : 2;
+  const uMin = box.min.getComponent(uAxis);
+  const vMin = box.min.getComponent(vAxis);
+  const span = Math.max(box.max.getComponent(uAxis) - uMin, box.max.getComponent(vAxis) - vMin, 1e-6);
+
+  depth.fill(-Infinity);
+  winner.fill(-1);
 
   for (let i = 0; i < owner.length; i++) {
-    const [u, v] = keep.map((k) => Math.floor(((points[i * 3 + k] - box.min.getComponent(k)) / span) * (GRID - 1)));
+    const u = Math.floor(((points[i * 3 + uAxis] - uMin) / span) * (GRID - 1));
+    const v = Math.floor(((points[i * 3 + vAxis] - vMin) / span) * (GRID - 1));
     const cell = u * GRID + v;
     const d = points[i * 3 + axis] * sign;
 
@@ -134,8 +147,15 @@ export function visibleShares(parts: VisibilityInput[]): Record<string, number> 
 
   const { points, owner } = worldSamples(parts);
   const counts = new Float64Array(parts.length);
+  const workspace: SplatWorkspace = {
+    points,
+    owner,
+    box: new THREE.Box3().setFromArray(points),
+    depth: new Float64Array(GRID * GRID),
+    winner: new Int32Array(GRID * GRID),
+  };
 
-  for (const view of VIEWS) splat(points, owner, view, counts);
+  for (const view of VIEWS) splat(workspace, view, counts);
 
   const total = counts.reduce((s, x) => s + x, 0) || 1;
 

@@ -234,20 +234,31 @@ export class SweepRaster {
   }
 
   private addTriangle(soup: Float32Array, t: number): void {
-    const edge = Math.max(
-      Math.hypot(soup[t + 3] - soup[t], soup[t + 4] - soup[t + 1], soup[t + 5] - soup[t + 2]),
-      Math.hypot(soup[t + 6] - soup[t], soup[t + 7] - soup[t + 1], soup[t + 8] - soup[t + 2]),
-      Math.hypot(soup[t + 6] - soup[t + 3], soup[t + 7] - soup[t + 4], soup[t + 8] - soup[t + 5]),
-    );
+    const x = soup[t];
+    const y = soup[t + 1];
+    const z = soup[t + 2];
+    const ax = soup[t + 3];
+    const ay = soup[t + 4];
+    const az = soup[t + 5];
+    const bx = soup[t + 6];
+    const by = soup[t + 7];
+    const bz = soup[t + 8];
+    const ux = ax - x;
+    const uy = ay - y;
+    const uz = az - z;
+    const vx = bx - x;
+    const vy = by - y;
+    const vz = bz - z;
+    const edge = Math.max(Math.hypot(ux, uy, uz), Math.hypot(vx, vy, vz), Math.hypot(bx - ax, by - ay, bz - az));
     const n = Math.max(1, Math.ceil(edge / (this.cell * SAMPLE_SHARE)));
 
     for (let i = 0; i <= n; i++) {
-      for (let j = 0; j <= n - i; j++) {
-        const [bu, bv] = [i / n, j / n];
-        const at = (k: number) =>
-          soup[t + k] + (soup[t + 3 + k] - soup[t + k]) * bu + (soup[t + 6 + k] - soup[t + k]) * bv;
+      const bu = i / n;
 
-        this.addPoint(at(0), at(1), at(2));
+      for (let j = 0; j <= n - i; j++) {
+        const bv = j / n;
+
+        this.addPoint(x + ux * bu + vx * bv, y + uy * bu + vy * bv, z + uz * bu + vz * bv);
       }
     }
   }

@@ -18,14 +18,23 @@ export class CellMask {
   }
 
   private markTriangle(soup: Float32Array, t: number, reach: number): void {
-    const low = [0, 1, 2].map((a) =>
-      Math.floor((Math.min(soup[t + a], soup[t + 3 + a], soup[t + 6 + a]) - reach) / this.size),
-    );
-    const high = [0, 1, 2].map((a) =>
-      Math.floor((Math.max(soup[t + a], soup[t + 3 + a], soup[t + 6 + a]) + reach) / this.size),
-    );
+    const ax = soup[t];
+    const ay = soup[t + 1];
+    const az = soup[t + 2];
+    const bx = soup[t + 3];
+    const by = soup[t + 4];
+    const bz = soup[t + 5];
+    const cx = soup[t + 6];
+    const cy = soup[t + 7];
+    const cz = soup[t + 8];
+    const lowX = Math.floor((Math.min(ax, bx, cx) - reach) / this.size);
+    const lowY = Math.floor((Math.min(ay, by, cy) - reach) / this.size);
+    const lowZ = Math.floor((Math.min(az, bz, cz) - reach) / this.size);
+    const highX = Math.floor((Math.max(ax, bx, cx) + reach) / this.size);
+    const highY = Math.floor((Math.max(ay, by, cy) + reach) / this.size);
+    const highZ = Math.floor((Math.max(az, bz, cz) + reach) / this.size);
 
-    for (let i = low[0]; i <= high[0]; i++)
-      for (let j = low[1]; j <= high[1]; j++) for (let k = low[2]; k <= high[2]; k++) this.cells.add(keyOf(i, j, k));
+    for (let i = lowX; i <= highX; i++)
+      for (let j = lowY; j <= highY; j++) for (let k = lowZ; k <= highZ; k++) this.cells.add(keyOf(i, j, k));
   }
 }

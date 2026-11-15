@@ -69,6 +69,7 @@ export function interfacePaths(mesh: HexMesh, density: Float64Array, regions: Li
   const previous = new Int32Array(grid.solid.length).fill(-1);
   const queue = new CostQueue();
   const neighbours = voxelNeighbours(grid);
+  let remaining = frozen.reduce((sum, value) => sum + value, 0);
 
   mesh.cells.forEach((cell, e) => (resistance[cell] = 1 / (0.001 + density[e] ** 3)));
   distance[root] = 0;
@@ -76,6 +77,8 @@ export function interfacePaths(mesh: HexMesh, density: Float64Array, regions: Li
 
   for (let entry = queue.pop(); entry; entry = queue.pop()) {
     if (entry.cost > distance[entry.cell]) continue;
+
+    if (frozen[entry.cell] && --remaining === 0) break;
 
     for (const other of neighbours(entry.cell)) {
       const cost = entry.cost + (resistance[entry.cell] + resistance[other]) / 2;

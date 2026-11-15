@@ -43,6 +43,16 @@ interface Posed {
   tip: V3;
 }
 
+interface GravityLoad {
+  force: V3;
+  limitNm: number;
+}
+
+const UNIT_GRAVITY: V3 = [0, -G, 0];
+
+const gravityLoads = (arm: ArmModel): GravityLoad[] =>
+  arm.links.map((link) => ({ force: [0, -link.massKg * G, 0], limitNm: HOLD_LIMIT * link.stallNm }));
+
 const add = (a: V3, b: V3): V3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 const scale = (a: V3, k: number): V3 => [a[0] * k, a[1] * k, a[2] * k];
 
@@ -73,15 +83,16 @@ export function poseArm(arm: ArmModel, values: number[]): Posed {
   return { joints, coms, tip };
 }
 
-function holdingKg(arm: ArmModel, posed: Posed): number {
+function holdingKg(loads: GravityLoad[], posed: Posed): number {
   return posed.joints.reduce((least, joint, i) => {
     const unit = joint.revolute ? MM : 1;
-    const own = posed.coms
-      .slice(i)
-      .reduce((s, com, k) => s + holdTorque(joint, com, [0, -arm.links[i + k].massKg * G, 0]), 0);
-    const perKg = holdTorque(joint, posed.tip, [0, -G, 0]);
+    let own = 0;
 
-    return Math.min(least, liftableKg(own * unit, perKg * unit, HOLD_LIMIT * arm.links[i].stallNm));
+    for (let k = i; k < posed.coms.length; k++) own += holdTorque(joint, posed.coms[k], loads[k].force);
+
+    const perKg = holdTorque(joint, posed.tip, UNIT_GRAVITY);
+
+    return Math.min(least, liftableKg(own * unit, perKg * unit, loads[i].limitNm));
   }, Infinity);
 }
 
@@ -92,6 +103,7 @@ const least = (samples: PayloadSample[]) => samples.reduce((m, s) => Math.min(m,
 export function payloadMap(arm: ArmModel, count = PAYLOAD_SAMPLES): PayloadMap | null {
   const random = seededRandom(SEED);
   const samples: Array<PayloadSample & { reach: number }> = [];
+  let loads: GravityLoad[] | undefined;
 
   for (let n = 0; n < count; n++) {
     const values = arm.links.map((l) => l.range[0] + (l.range[1] - l.range[0]) * random());
@@ -99,7 +111,8 @@ export function payloadMap(arm: ArmModel, count = PAYLOAD_SAMPLES): PayloadMap |
 
     if (posed.tip[1] < arm.floorY) continue;
 
-    samples.push({ at: posed.tip, kg: holdingKg(arm, posed), reach: reachOf(arm, posed.tip) });
+    loads ??= gravityLoads(arm);
+    samples.push({ at: posed.tip, kg: holdingKg(loads, posed), reach: reachOf(arm, posed.tip) });
   }
 
   const reachMm = samples.reduce((m, s) => Math.max(m, s.reach), 0);

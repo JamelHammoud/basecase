@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { G, cross, dot, norm, rotateAbout, sub, type V3 } from './engineeringMath';
+import { G, cross, dot, norm, rotateAbout, rotationAbout, sub, type V3 } from './engineeringMath';
 import { HOLD_LIMIT, holdTorque, liftableKg } from './holdingTorque';
 import { CLOSE_IN_SHARE, FULL_REACH_SHARE, payloadMap, poseArm, type ArmModel } from './payload';
 import { seededRandom } from './seededRandom';
@@ -95,6 +95,30 @@ function armOf(count: number, seed = 1): ArmModel {
 }
 
 describe('prepared payload rotations', () => {
+  it('preserves direct and prepared rotations through degenerate and nonfinite coordinates', () => {
+    const vectors: V3[] = [
+      [0, -0, 0],
+      [3, -7, 2],
+      [1e-200, -1e-200, 1e-200],
+      [1e200, -1e200, 1e200],
+      [Infinity, 1, -Infinity],
+      [NaN, 2, 3],
+    ];
+
+    for (const axis of vectors) {
+      for (const degrees of [0, -0, -360, 90, 1e-9, 720, -57.2, Infinity, NaN]) {
+        const turn = rotationAbout(axis, degrees);
+
+        for (const vector of vectors) {
+          const expected = formerRotation(vector, axis, degrees);
+
+          expect(rotateAbout(vector, axis, degrees)).toEqual(expected);
+          expect(turn(vector)).toEqual(expected);
+        }
+      }
+    }
+  });
+
   it('preserves complete mixed-joint poses across axes, angles and source edits', () => {
     for (let trial = 0; trial < 80; trial++) {
       const arm = armOf(1 + (trial % 8), trial + 1);

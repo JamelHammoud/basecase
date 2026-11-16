@@ -53,6 +53,11 @@ interface IkState {
 
 type StepResult = 'improved' | 'converged' | 'worse';
 
+interface IkStep {
+  delta: number[];
+  maxStep: number;
+}
+
 const MAX_STEP = 15;
 const TORSO = /waist|torso|spine|trunk|chest/i;
 
@@ -115,8 +120,7 @@ function normalEquations(pb: IkProblem, state: IkState, cols: THREE.Vector3[][])
   return { JtJ, g };
 }
 
-function trialValues(pb: IkProblem, state: IkState, delta: number[]): JointValues {
-  const maxStep = Math.max(...delta.map(Math.abs));
+function trialValues(pb: IkProblem, state: IkState, { delta, maxStep }: IkStep): JointValues {
   const scale = maxStep > MAX_STEP ? MAX_STEP / maxStep : 1;
   const trial: JointValues = { ...state.values };
 
@@ -134,15 +138,15 @@ function tryStep(pb: IkProblem, state: IkState, JtJ: Float64Array[], g: Float64A
 
     return r;
   });
-  const delta = solveLinear(augmented);
+  const step = solveLinear(augmented);
 
-  if (!delta) {
+  if (!step) {
     state.lambda *= 4;
 
     return 'worse';
   }
 
-  const trial = trialValues(pb, state, delta);
+  const trial = trialValues(pb, state, step);
   const tPosed = forwardKinematics(pb.rig, { values: trial, root: pb.opts.root });
   const tErr = residuals(pb, tPosed);
   const tCost = costOf(pb, tErr, trial);
@@ -244,7 +248,7 @@ function eliminateBelow(M: number[][], c: number, n: number) {
   }
 }
 
-function solveLinear(M: number[][]): number[] | null {
+function solveLinear(M: number[][]): IkStep | null {
   const n = M.length;
 
   for (let c = 0; c < n; c++) {
@@ -257,6 +261,7 @@ function solveLinear(M: number[][]): number[] | null {
   }
 
   const x = new Array(n).fill(0);
+  let maxStep = -Infinity;
 
   for (let r = n - 1; r >= 0; r--) {
     let s = M[r][n];
@@ -264,7 +269,8 @@ function solveLinear(M: number[][]): number[] | null {
     for (let k = r + 1; k < n; k++) s -= M[r][k] * x[k];
 
     x[r] = s / M[r][r];
+    maxStep = Math.max(maxStep, Math.abs(x[r]));
   }
 
-  return x;
+  return { delta: x, maxStep };
 }

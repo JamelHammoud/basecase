@@ -111,3 +111,15 @@ On November 16, 2026, `scratch/sculpt-normal-parity.mjs` compared the preceding 
 The [Sculpt a part](../../site/content/help/sculpt-a-part.md) article still describes the same actions, settings and geometry. No labels, visible states or workflow change, so it needs no edit or new capture.
 
 Changed-file validation passed formatting, lint, documentation, site copy for 295 pages, TypeScript and all 788 tests across 105 related files. The related run reported 38.10 seconds. Output remains in `scratch/check-sculpt-normals.log`. Copy accounting is net zero, and preflight reports no findings.
+
+## Prism corners share edge normal calculations
+
+A whole-app search found one outline corner builder, `three/partMesh/edgedProfile.ts`, called by the shared edged prism builder. Boxes, cubes, hexagonal prisms and wedges use it, including deformed variants. Cylinders and tubes use separate profile normals and do not repeat this edge calculation.
+
+Each edge previously calculated its length and divided its normal components twice, once for each adjacent corner. Corner preparation now carries the previous edge normal and retains the closing normal. Three-, four- and six-edge outlines fall from six, eight and twelve `Math.hypot` calls to three, four and six. These are tested operation counts, not timings or a claim about complete mesh build latency. Direction tuples remain independent across corners and calls, preserving editable chamfer results.
+
+`edgedProfile.test.ts` compares exact corner records against the former calculation for 66 outlines, both windings and both edge styles, before and after input edits. Cases include empty inputs, single points, two points, repeated points, signed zero, tiny edges and generated convex rings. Separate cases count normalizations for all three shipped outline sizes and check direction independence. Existing `edgedGeometry.test.ts` covers complete shape bounds, volumes, winding and deformation. No visible state, workflow, help article or browser coverage changes. No retry, timeout or quarantine changes apply.
+
+Changed-file validation passed formatting, lint, documentation, site copy for 295 pages and types. Its related run passed 101 files and 757 tests, with four 5,000 ms timeouts in unchanged tests. Three were the Carry a cup prescribed-seed batches in `classroom/grading.test.ts:50`, for seeds 1–5, 6–10 and 11–15. The fourth was `leagues/replay.test.ts:17`, loading catalog geometry before browser measurement. The run took 60.59 seconds. The cause of these timeouts was not established, and they remain unresolved without test budget or quarantine changes. The full log is `scratch/check-prism-normals.log`.
+
+Preflight requested a reread of [Round or bevel a part's edges](../../site/content/help/round-or-bevel-a-parts-edges.md). Its selection, Shape controls, size limits, deformation and screenshot states remain accurate because the corner records are unchanged. The article is intentionally unchanged.

@@ -2,6 +2,14 @@
 
 Implementation: [Engineering calculations](../guide/build.md#performance-engineering-calculations). Shared requirements: [Performance](../guide/performance.md).
 
+## Axis rotations allocate only their result
+
+The whole-app search found two callers of the shared Rodrigues calculation: direct `rotateAbout` in swing-torque sweeps and prepared `rotationAbout` in payload poses. The calculation now holds its three perpendicular components as scalars instead of constructing a cross-product array. Each rotation still returns a fresh vector and keeps the previous multiplication and addition order. No caller or sampling policy changes.
+
+A scratch Vitest probe counted calls through both entry points while running complete payload maps and a default torque sweep. An all-revolute six-link arm with 300 samples made 17,100 rotations. A twelve-link arm with 600 samples made 133,200 rotations. The default −90° to 90° sweep made 37 rotations. The previous helper constructed one temporary cross-product vector per rotation, so these fixtures remove 17,100, 133,200 and 37 temporary arrays respectively. Counts were measured on macOS arm64 with Node v26.13.0. They are source allocation counts supported by measured call counts, not heap measurements, timings or complete Checks latency measurements.
+
+`payloadRotation.test.ts` compares both rotation entry points exactly with the previous formula across zero and nonunit axes, signed zeros, tiny and overflowing coordinates, nonfinite values and multiple turns. Its existing comparisons retain complete mixed-joint pose and payload-map coverage, later source edits and floor rejection. Existing `swingTorque.test.ts` checks complete sampled torque maxima. No UI, user action or screenshot state changes, so the existing torque and Payload help articles remain unchanged.
+
 ## Axis distances use scalar products
 
 A whole-app search found one tuple-based point-to-axis cross-product distance helper, `utils/engineeringMath.ts`. Servo alignment, wheel contacts, agent interface checks and planned-joint matching share it. The separate `three/analysis/lineDistance.ts` prepares a line projection with retained Three.js workspaces and already avoids per-query vectors. Its degenerate-line behavior differs and stays unchanged.

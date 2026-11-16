@@ -23,10 +23,12 @@ export const norm = (a: V3): V3 => {
 };
 
 function rotated(v: V3, k: V3, c: number, s: number): V3 {
-  const kv = cross(k, v);
+  const x = k[1] * v[2] - k[2] * v[1];
+  const y = k[2] * v[0] - k[0] * v[2];
+  const z = k[0] * v[1] - k[1] * v[0];
   const kd = dot(k, v) * (1 - c);
 
-  return [v[0] * c + kv[0] * s + k[0] * kd, v[1] * c + kv[1] * s + k[1] * kd, v[2] * c + kv[2] * s + k[2] * kd];
+  return [v[0] * c + x * s + k[0] * kd, v[1] * c + y * s + k[1] * kd, v[2] * c + z * s + k[2] * kd];
 }
 
 export function rotationAbout(k: V3, deg: number): (v: V3) => V3 {

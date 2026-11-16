@@ -2,6 +2,12 @@
 
 Implementation: [Simulation](../guide/simulate.md#performance-simulation). Shared requirements: [Performance](../guide/performance.md).
 
+## Robot exports index joint identities
+
+`src/sim/robotPackage/jointLookup.test.ts` compares every generated file byte for byte with scan-based joint lookup across all fixture robots. The reference replaces only index lookup with the previous first-match `find`, keeping geometry, serializers and package metadata identical. It also checks reversed model order, two policies with different action orders and an unknown joint, duplicate model and scene ids, independently missing model and scene joints, empty lists and edits between calls.
+
+For the 12-joint quadruped and 18-joint hexapod, the complete package pipeline reads model joint ids 36 and 54 times, down from 336 and 720. Getters count reads on each source model joint. Each fixture includes two policies, each referring to every model joint and one unknown id. Indexed lookup reads each id once for URDF, once for the joint map and once for all policies together. The scan reference reads 2N(N + 1) + 2N ids. These are operation counts measured by the tests, without timing assertions or a claim about complete export time. Indices retain linear storage and no state survives an export call.
+
 ## Simulated sensors reuse world-ray and hit buffers
 
 `rayCasting.test.ts` checks rotated and translated poses against independent Three.js geometry, zero directions, range misses, independent sensors, scan rates, time reversal and snapshots. Its 300- and 600-ray fixtures require 180 rotation-coefficient reads across 20 casts, down from 54,180 and 108,180. A scratch comparison matched 480 complete scan snapshots byte for byte against the previous implementation across 40 sensor configurations, moving poses, different scan rates, range misses and time reversal. These are operation counts and numerical comparisons without timing assertions or a claim about complete simulation time.

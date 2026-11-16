@@ -79,3 +79,11 @@ Each mounted scene workspace owns a `VisionScopeContext`. Camera inference, came
   - No empty-scene prompt: an empty scene is just the canvas.
   - **First launch** is the one exception: a profile with no saved scenes and no tabs to restore opens on the two-wheel rover driving to its flag, with Simulate in front (§5a, §8h). Every new scene after that, ⌘T included, is an empty canvas.
   - Annotation pins and cards.
+
+## Performance: panels and layers
+
+Measurements and limits: [Panels and Layers performance evidence](../notes/performance-layout.md).
+
+- **Layers indexes groups once.** `layerRows.ts` builds each group's members in one pass, then uses those lists for expanded rows and search matches. It never scans the whole scene per group. [Evidence](../notes/performance-layout.md#layers-indexes-groups-once).
+
+- **Keep views alive.** Panels that switch (sidebar views, inspector tabs) mount on first use and then stay in React's `<Activity>`, so switching back is instant and hidden views run no effects.

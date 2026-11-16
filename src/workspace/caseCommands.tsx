@@ -155,6 +155,14 @@ function shareCommands({ share }: WorkspaceCore['simTraining']): Command[] {
       keywords: 'link url web browser gallery hub hugging face publish drive',
       run: share.share,
     },
+    {
+      id: 'enter-league',
+      group: 'Simulate',
+      label: 'Enter League',
+      icon: <ShareIcon />,
+      keywords: 'robot standings competition case hub replay',
+      run: share.league.show,
+    },
   ];
 }
 

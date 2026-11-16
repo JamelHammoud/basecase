@@ -82,7 +82,7 @@ export class HubAccount {
     return this.account();
   }
 
-  async publish({ name, files, kind = 'dataset', tag } = {}) {
+  async publish({ name, files, kind = 'dataset', tag, includeRevision = false } = {}) {
     const token = this.keys.get(TOKEN);
 
     if (!token) throw new Error('Add a Hugging Face access token in Settings ▸ Accounts.');
@@ -93,7 +93,13 @@ export class HubAccount {
     const namespace = this.keys.get(NAME) ?? (await client.whoami()).name;
     const sent = kind === 'model' ? withPolicyOnnx(files) : files;
 
-    return publishRepo(client, { namespace, name, files: sent, tag: versionTag });
+    return publishRepo(client, {
+      namespace,
+      name,
+      files: sent,
+      tag: versionTag,
+      includeRevision: includeRevision === true,
+    });
   }
 
   skillFiles(ref) {

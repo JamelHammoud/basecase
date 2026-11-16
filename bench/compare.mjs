@@ -17,6 +17,7 @@ import { harnessKey, runFromCache } from './compare/cache.mjs';
 import { againstArms, armCache, DEFAULT_MODEL, dirOf, modelArms } from './compare/arms.mjs';
 import { checkoutRef, refFromArgs } from './compare/against.mjs';
 import { compareStats } from './compare/stats.mjs';
+import { comparisonOutcome, EFFICIENCY_OBJECTIVE } from './compare/outcome.mjs';
 import { compareMarkdown } from './compare/report.mjs';
 
 const started = Date.now() - Math.round(process.uptime() * 1000);
@@ -24,6 +25,7 @@ const args = process.argv.slice(2);
 const against = args.includes('--against') ? refFromArgs(args) : null;
 const opts = {
   ...comparisonLimits(args),
+  efficiencyObjective: EFFICIENCY_OBJECTIVE,
   maxRounds: Number(argOption(args, 'seeds', 3)),
   budget: Number(argOption(args, 'budget', 20)),
   parallel: Number(argOption(args, 'parallel', 8)),
@@ -304,7 +306,13 @@ async function liveRun({ task, seed, label }, slot, signal) {
 
     const problem = noteServed(r, model);
 
-    return { ...r, model: label, ...(problem ? { status: 'error', detail: problem } : {}) };
+    return {
+      ...r,
+      checks: grade.checks?.map(({ name, pass }) => ({ name, pass })),
+      effort,
+      model: label,
+      ...(problem ? { status: 'error', detail: problem } : {}),
+    };
   } finally {
     state.inflight--;
   }
@@ -360,9 +368,9 @@ async function runRound(seed) {
   const live = [];
 
   for (const job of jobs) {
-    const cached = caches[labels.indexOf(job.label)].get(job.task.id)?.[seed - 1];
+    const cached = caches[labels.indexOf(job.label)].get(job.task.id)?.find((entry) => entry.seed === seed);
 
-    if (cached) results.push({ ...runFromCache(cached, job.label), seed });
+    if (cached) results.push(runFromCache(cached, job.label));
     else live.push(job);
   }
 
@@ -384,7 +392,9 @@ function finish() {
     cleanupReserveSeconds,
     stop: state.stop ?? 'rounds',
   };
+  const outcome = against ? comparisonOutcome({ stats, plan, results, labels, resolved, provider, effort }) : undefined;
   const report = compareMarkdown({
+    outcome,
     stats,
     models: resolved,
     labels,
@@ -394,11 +404,11 @@ function finish() {
     error: failure?.message ?? state.detail,
   });
 
-  writeResults({ stats, plan, error: failure?.message ?? state.detail });
+  writeResults({ stats, plan, outcome, error: failure?.message ?? state.detail });
   fs.writeFileSync(path.join(outRoot, 'report.md'), report + '\n');
   console.log(`\n${report}\n\nSaved to ${path.relative(root, outRoot)}/report.md`);
 
-  return { stats, plan, error: failure?.message ?? state.detail };
+  return { stats, plan, outcome, error: failure?.message ?? state.detail };
 }
 
 fs.mkdirSync(outRoot, { recursive: true });

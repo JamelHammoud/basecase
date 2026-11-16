@@ -105,6 +105,7 @@ export async function runMicroOnce({
     seed,
     heldOut: !!task.heldOut,
     grade: grade.status,
+    checks: grade.checks.map(({ name, pass }) => ({ name, pass })),
     harness: harness ?? null,
     provider: provider ?? null,
     ...modelFields(result, { model, effort }),

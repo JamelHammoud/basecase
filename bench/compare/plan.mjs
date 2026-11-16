@@ -39,8 +39,12 @@ export function historicalRunCost(entries, taskIds) {
   return mean(taskIds.map(ofTask));
 }
 
+const cachedSeeds = (runs, rounds) =>
+  new Set(runs.filter(({ seed }) => Number.isInteger(seed) && seed >= 1 && seed <= rounds).map(({ seed }) => seed))
+    .size;
+
 export const liveRunsPlanned = ({ tasks, rounds, caches }) =>
-  caches.map((byTask) => tasks.reduce((n, task) => n + Math.max(0, rounds - (byTask.get(task.id)?.length ?? 0)), 0));
+  caches.map((byTask) => tasks.reduce((n, task) => n + rounds - cachedSeeds(byTask.get(task.id) ?? [], rounds), 0));
 
 export function splitSlots(parallel, [a, b]) {
   if (!a || !b) return [a ? parallel : 0, b ? parallel : 0];

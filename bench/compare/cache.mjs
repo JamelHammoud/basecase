@@ -114,6 +114,8 @@ export function runFromCache(entry, label) {
     task: entry.task,
     seed: entry.seed,
     status: entry.grade,
+    checks: entry.checks,
+    effort: entry.effort,
     costUsd: entry.costUsd,
     seconds: entry.seconds,
     tokens: entry.tokens,

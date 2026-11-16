@@ -54,11 +54,20 @@ describe('Windows diagnostic requirements', () => {
     ).toContain('windows-diagnostics');
   });
 
+  it('keeps Windows quarantine measurements gated when the same paragraph preserves Linux coverage', () => {
+    const task = {
+      title: 'Make reference Case recording deterministic on Windows',
+      body: 'Classify and trace the cause on Windows against the production bundle, preserving Linux coverage. Measure at least 10 runs before and 10 after under the same load, with pass counts and elapsed times. Keep every existing assertion. Remove the matching Windows entry from tools/quarantine.json once the test is deterministic.',
+    };
+
+    expect(unavailableCapabilities(task)).toContain('windows-diagnostics');
+  });
+
   it('keeps ordinary Windows CI work and Linux-only measurements eligible', () => {
     expect(
       unavailableCapabilities({
         title: 'Verify Windows compatibility',
-        body: 'Requires: windows-ci\nRun the regression checks on the published PR.',
+        body: 'Requires: windows-ci\nThe feature works on Windows desktop. Run the regression checks on the published PR.',
       }),
     ).toEqual([]);
     expect(

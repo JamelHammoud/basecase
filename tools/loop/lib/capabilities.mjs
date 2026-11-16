@@ -14,7 +14,7 @@ export const REQUIREMENTS = [
 
 const requiredLine = /^Requires:\s*(.+)$/im;
 const needsWindowsHost =
-  /(?:requires?|needs?|resume on|continue on|reproduce on|access to|on) (?:an? |the |live |interactive )?Windows (?:execution )?(?:host|machine|desktop|target)/i;
+  /(?:requires?|needs?|resume on|continue on|reproduce on|access to) (?:an? |the |live |interactive )?Windows (?:execution )?(?:host|machine|desktop|target)/i;
 const measurements =
   /(?:\bten\b|\b10\b)[^.\n]{0,100}\b(?:before|baseline)\b[^.\n]{0,120}\b(?:after|fixed)\b|\b(?:before|baseline)\b[^.\n]{0,80}(?:\bten\b|\b10\b)[^.\n]{0,120}\b(?:after|fixed)\b/i;
 const windowsExecution = /\bWindows(?:\s+CI)?\s+(?:run|runner|execution|diagnostic|experiment|process trac)/i;
@@ -38,6 +38,7 @@ const existingEvidence = (paragraph) =>
 
 function needsWindowsDiagnostics(task) {
   const title = /\bWindows\b/i.test(task.title ?? '');
+  const quarantine = title && /\bquarantine\b/i.test(task.body ?? '');
 
   return String(task.body ?? '')
     .split(/\n\s*\n/)
@@ -45,7 +46,7 @@ function needsWindowsDiagnostics(task) {
       (paragraph) =>
         !existingEvidence(paragraph) &&
         measurements.test(paragraph) &&
-        (windowsExecution.test(paragraph) || (title && !/\b(?:Linux|macOS)\b/i.test(paragraph))),
+        (windowsExecution.test(paragraph) || quarantine || (title && !/\b(?:Linux|macOS)\b/i.test(paragraph))),
     );
 }
 

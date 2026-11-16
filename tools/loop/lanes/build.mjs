@@ -84,7 +84,7 @@ function reconsideration({ missing, inputSignature, waitFor, until }) {
 function decline(step, reason, inputSignature) {
   const openNumbers = openPullNumbers();
   const waitFor = [...reason.matchAll(/#(\d+)/g)].map((m) => Number(m[1])).filter((n) => openNumbers.has(n));
-  const missing = unavailableCapabilities({ body: reason });
+  const missing = unavailableCapabilities({ title: step.title, body: reason });
   const entry = recordDecline(step.number, {
     now: Date.now(),
     waitFor,

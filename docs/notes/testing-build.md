@@ -79,3 +79,48 @@ Fleet's Site selector supplies the selected site's visible name. The facility se
 Export confirmations remain under [Copy](../guide/copy.md) §3b-13 because their results are outside the canvas. `downloadBytes` starts an anchor download and does not render a result in the studio. STL, image, scene, 3MF, USDZ, Kit, Robot Package and BOM exports retain their success toasts. The Robot Package and Kit help articles retain their success screenshots and instructions.
 
 `e2e/robotPackage.e2e.test.ts` checks the actual download's filename and failure status in addition to its existing success-toast and package-content assertions. Its download event uses the existing 30-second completion deadline. No assertion, timeout, retry or quarantine is weakened. Browser execution remains with CI.
+
+## Electrical projection
+
+The electrical projection, Checks integration and Schematic export share one worker-owned derivation. Ten generated fixtures include ordinary component dimensions, mechanical links and joints: tethered SO-101, battery rover, quadruped, hexapod, pan-tilt camera, gripper, mixed-voltage robot, dual-bus arm, sensor-rich inspection robot and fixed appliance. Unsupported sensors, variants, host connections, loads and source declarations remain requirements. All ten packages are incomplete drafts. None establishes hardware readiness.
+
+Manufacturer evidence inspected on 16 November 2026:
+
+- [Feetech C001 specification, table 6-7](https://www.feetechrc.com/Data/feetechrc/upload/file/20260622/6391772523943436695270694.pdf) numbers GND, Vcc and TTL as 1, 2 and 3.
+- [Waveshare adapter schematic, H3/H5 and DC1](https://files.waveshare.com/wiki/Bus_Servo_Adapter_A/Bus_Servo_Adapter_A.pdf) numbers DATA, DC_IN0 and GND as 1, 2 and 3. DC1 uses terminal 1 for positive and 2/3 for ground.
+- [ROBOTIS XL330-M288](https://emanual.robotis.com/docs/en/dxl/x/xl330-m288/) and [U2D2](https://emanual.robotis.com/docs/en/parts/interface/u2d2/) identify TTL GND, VDD and DATA as 1, 2 and 3.
+- [Pololu D36V50F6](https://www.pololu.com/product/4092) describes labeled VIN, VOUT and GND pads. The family shares these interface labels, with different output ratings.
+- [MEAN WELL GST60A specification, pages 2–3](https://www.meanwell.com/Upload/PDF/GST60A/GST60A-SPEC.PDF) identifies GST60A05-P1J as 5 V, 6 A, ±5%, center positive. DC return is isolated from AC frame ground.
+- [Littelfuse FHA specification](https://www.littelfuse.com/~/media/commercial-vehicle/datasheets/automotive-fuse-holders/ato/littelfuse-fuse-holders-ato-fha-datasheet.pdf) identifies 0FHA0001ZXJ as a bare standard-duty holder with two unpolarized leads, rated up to 20 A and 32 V. A/B are schematic lead designations. No fuse rating is inferred.
+- [C&K 7000 specification, pages 1–3](https://www.ckswitches.com/media/1394/7000toggle.pdf) identifies 7103 terminal 2 as common and its ON path as 2-to-3. Q contacts are rated 5 A at 28 VDC. Terminal 1 remains explicitly unused.
+
+`tools/electrical/expected.ts` independently declares connector pin groups and expected servo rails without importing production pin maps or topology. `check.mjs --docker` uses Linux KiCad CLI 9.0.6, requires zero ERC violations and compares XML netlists for all ten fixtures. Removing a ground label must fail ERC. Shorting positive to ground must fail independent netlist comparison. Pin-map and supply perturbations must also produce requirements. Unknown interfaces are absent from verified pin groups and remain draft findings. A clean ERC checks only the represented software model.
+
+The first serializer marked symbols off-board, which caused KiCad to omit all components and nets. Symbols now remain in netlist export while staying out of its BOM. Fuse and switch input/output paths remain separate nets. Grounds bypass those positive-path modules. Shared bus rails retain every bus identity and individual interface rating. No power flag, blanket suppression or invented circuit conceals missing information.
+
+Focused tests cover reversed polarity, conflicting supplies, missing ground, unknown maps, overloaded declared rails, repeated modules, duplicate names, missing source evidence, malformed declarations, fresh walking estimates, immutable input data, canonical hashing and real scene-file save/reopen byte equality. Stale-scene tests reject parts, supplies and scene identity changes and cancellation. The browser acceptance file uses ordinary desktop and web export controls, edits Supply voltage before export and verifies the changed finding, ZIP, references and SHA-256 fingerprint. Browser acceptance runs in CI. A production documentation walkthrough locally exercised the same desktop controls, downloaded small and repeated-module packages and captured the two help states without app errors.
+
+The path-scoped Electrical export workflow configures Linux Docker validation and Windows export/path determinism. Windows execution is CI evidence, not a local observation. No full-suite validator, timeout increase, retry or quarantine was added.
+
+The final changed-file check passed formatting, lint, documentation, types, site copy for 301 pages and 2,511 related tests across 387 passing files. One existing file and test remained skipped. Its 388-file selection took 100.83 seconds because the shared power helper reaches many existing consumers. An earlier 14-file electrical check passed 94 tests. Earlier related-run failures remain historical evidence in `scratch/electrical/final-check.log`, superseded by `final-all-changed-check.log`. The production capture passed but its unused web development servers reported a shutdown warning after the existing teardown deadline. No timeout or retry changed. Final CLI reports, measurements and captures remain under `scratch/electrical/`. The small existing help contraction correction permits the site checker to validate the new pages.
+
+### Electrical help coverage review
+
+The preflight coverage prompts were checked against the actual menu, command conditions, export callbacks and readiness aggregation. The new electrical findings join the existing verdict rather than replacing it. No existing export or import route changed.
+
+| Article | Result |
+| --- | --- |
+| Checks and blockers | The verdict, ignore actions, background execution and limits still hold. The schematic article now contributes its electrical summary through the existing hub fields, without editing the hub. |
+| Export a robot package | Export ▸ Robot Package, its rig condition, progress, filename and ROS files still hold. The menu and completion images illustrate those unchanged controls. |
+| Export a STEP file | Desktop availability, Export ▸ STEP, Export STEP in the command palette and saving behavior are unchanged. Both illustrated controls remain available. |
+| Export an STL file | Export ▸ STL, the nonempty-scene condition, binary mesh producer and filename remain unchanged. The menu image still shows the target control. |
+| Export plates as 3MF | Export ▸ 3MF Plates, material filenames, plate writer and web availability are unchanged. Its menu image still shows 3MF Plates below STL. |
+| The path from design to build | Added the electrical blockers and schematic handoff beside the existing cable and BOM explanation. Cable quantities and Build Along behavior remain unchanged. |
+| Get a robot ready to build | Added the electrical failure action and selected-product rating limit. Replaced the historical all-checks-passed illustration with the captured conflicting-supply state. Supply, payload, Cases and ignore instructions remain unchanged. |
+| Import a file | Import routing, file formats, dialogs and illustrated SVG controls are unchanged. The command list only gains a separate export. |
+| Open a shared scene | Open Scene File still invokes the same scene opener. Scene copying, tab behavior and supported entry points are unchanged. |
+| Parts, assemblies and mounting ports | Catalog geometry, mounting and connector-port contracts are unchanged. The electrical maps are separate evidence, so none of its placement or cable instructions needs rewriting. |
+| Set a time budget | The same Time inputs, thresholds and estimates feed readiness. Electrical findings append independent rows. Its estimate, over-budget and within-budget states remain valid. |
+| Share a scene | Export ▸ Scene, Export Scene and the shared-scene encoder are unchanged. The existing menu image still shows Scene. |
+
+No unchanged article was edited merely to clear a coverage prompt. Existing menu images identify the same target commands despite the added Schematic item. The new electrical state reuses the production capture linked by the schematic task. Documentation-only correction checks and current copy accounting are retained in `scratch/electrical/help-preflight-check.log` and `help-preflight-copy.txt`.

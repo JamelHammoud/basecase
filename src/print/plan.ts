@@ -68,8 +68,8 @@ export interface PrintPlan {
 export const poseScore = (pose: PrintPose, fits: boolean) =>
   (fits ? 0 : 1e12) + pose.supportMm3 - pose.contactMm2 * 0.5 + pose.size[2] * 0.01;
 
-function overridePose(shape: PrintShape, down?: Vec3) {
-  return down ? shape.poses.find((p) => sameDirection(p.down, down)) : undefined;
+function overridePoseIndex(shape: PrintShape, down?: Vec3) {
+  return down ? shape.poses.findIndex((p) => sameDirection(p.down, down)) : -1;
 }
 
 function splitNote(size: Vec3, bed: Bed) {
@@ -99,15 +99,27 @@ function poseFit(pose: PrintPose, bed: Bed, print?: PartPrint) {
 }
 
 export function choosePose(shape: PrintShape, bed: Bed, print?: PartPrint): PrintCheck {
-  const forced = overridePose(shape, print?.down);
-  const candidates = forced ? [forced] : shape.poses.filter((p) => !p.requested);
-  const scored = candidates.map((pose) => {
-    const fit = poseFit(pose, bed, print);
+  const forced = overridePoseIndex(shape, print?.down);
+  const first = forced >= 0 ? forced : shape.poses.findIndex((p) => !p.requested);
+  const end = forced >= 0 ? first + 1 : shape.poses.length;
+  let pose = shape.poses[first];
+  let fit = poseFit(pose, bed, print);
+  let score = poseScore(pose, !!fit);
 
-    return { pose, fit, score: poseScore(pose, !!fit) };
-  });
-  const best = scored.reduce((a, b) => (b.score < a.score ? b : a));
-  const { pose, fit } = best;
+  for (let i = first + 1; i < end; i++) {
+    const candidate = shape.poses[i];
+
+    if (candidate.requested) continue;
+
+    const candidateFit = poseFit(candidate, bed, print);
+    const candidateScore = poseScore(candidate, !!candidateFit);
+
+    if (candidateScore < score) {
+      pose = candidate;
+      fit = candidateFit;
+      score = candidateScore;
+    }
+  }
 
   return {
     pose,

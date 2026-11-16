@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { RobotJoint } from '../types/robotics';
 import { limbOf } from '../utils/robotImport/published';
 import { ROBOT_PRESETS } from '../utils/robotImport/presets';
+import { intentFromSim } from './intentMirror';
+import { INITIAL_ROBOT } from './robotState';
 import { sceneRobot } from './sceneRobot';
 import {
   G1_JOINT_NAMES,
@@ -88,5 +90,23 @@ describe('Unitree G1 joint map', () => {
       expect(isUnitreeG1(joints)).toBe(false);
       expect(robot.ok && robot.spec.family).toBe('feetech');
     }
+  });
+
+  it('maps a full G1 simulation to writable intents with the right shoulder at daemon id 23', () => {
+    const joints = g1Joints();
+    const robot = sceneRobot(joints);
+
+    if (!robot.ok) throw new Error(robot.reason);
+
+    const shoulder = (-40 / 180) * Math.PI;
+    const targets = joints.map((j) => (j.name === 'right_shoulder_pitch_joint' ? shoulder : 0.25));
+    const intents = intentFromSim(INITIAL_ROBOT, robot.joints, { ids: joints.map((j) => j.id), targets });
+
+    expect(intents).toEqual(
+      G1_WRITABLE_JOINTS.map((name) => (name === 'right_shoulder_pitch_joint' ? shoulder : 0.25)),
+    );
+    expect(intents).toHaveLength(17);
+    expect(intents[G1_WRITABLE_IDS.indexOf(23)]).toBeCloseTo(shoulder, 12);
+    expect(robot.joints.some((id) => G1_LEG_JOINTS.some((name) => id === `scene-${name}`))).toBe(false);
   });
 });

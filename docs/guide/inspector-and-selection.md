@@ -173,6 +173,8 @@ Measurements and limits: [Sketch performance evidence](../notes/performance-sket
 
 Measurements and limits: [Selection performance evidence](../notes/performance-selection.md).
 
+- **Boolean drill picking accumulates surface gaps directly.** `booleans/picking.ts` scans every intersection and retains the nearest operand without gap lists or ranking records. One intersection array is cleared before each probe and reused throughout the call. Entry and exit faces both count, equal gaps retain the first operand, and misses return no operand. Double-click, command-click and selection within nested booleans share this picker. `picking.test.ts` covers cut surfaces, drill gating, entry and exit distances, ties, misses and fresh geometry after edits. [Evidence](../notes/performance-selection.md#boolean-drill-picking-accumulates-surface-gaps-directly).
+
 - **Align and Spread index the selection once.** `utils/selection.ts` filters unlocked parts through an id set shared by both commands. Align applies positions through a set of the selected part objects. Membership work is linear in scene and selection size, with Spread also sorting the selected parts by position. The Inspector, right-click menu and command palette use these same helpers.
 
 - **Selecting groups uses membership sets.** `expandToGroups` scans the scene twice, collecting selected group ids and then their missing members. Ordered additions, group toggles and drill-in detection also use sets, keeping membership work linear in scene and selection size. [Evidence](../notes/performance-selection.md#selecting-groups-uses-membership-sets).

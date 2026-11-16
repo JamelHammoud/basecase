@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { afterAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'loop-codex-home-'));
 const source = path.join(directory, 'personal');
@@ -15,6 +15,9 @@ vi.stubEnv('BASECASE_LOOP_DIR', directory);
 vi.stubEnv('CODEX_HOME', source);
 
 const { codexHome } = await import('./codexHome.mjs');
+const { held } = await import('./claim.mjs');
+
+afterEach(() => vi.restoreAllMocks());
 
 afterAll(() => {
   fs.rmSync(directory, { recursive: true, force: true });
@@ -22,6 +25,26 @@ afterAll(() => {
 });
 
 describe('isolated loop profile', () => {
+  it('holds the shared profile claim while replacing config and releases it on failure', () => {
+    const rename = fs.renameSync;
+    const replace = vi.spyOn(fs, 'renameSync').mockImplementation((from, to) => {
+      expect(held('codex-home-auth')).toBe(true);
+
+      return rename(from, to);
+    });
+
+    codexHome();
+    expect(replace).toHaveBeenCalled();
+    expect(held('codex-home-auth')).toBe(false);
+    replace.mockImplementation(() => {
+      throw Object.assign(new Error('Windows config replacement refused'), { code: 'EPERM' });
+    });
+    expect(() => codexHome()).toThrow('Windows config replacement refused');
+    expect(held('codex-home-auth')).toBe(false);
+    replace.mockRestore();
+    expect(() => codexHome()).not.toThrow();
+  });
+
   it('shares the subscription login while excluding personal connectors and API-key overrides', () => {
     const env = codexHome({ OPENAI_API_KEY: 'test-key', CODEX_API_KEY: 'test-codex-key' });
     const config = fs.readFileSync(path.join(env.CODEX_HOME, 'config.toml'), 'utf8');

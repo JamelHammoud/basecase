@@ -17,6 +17,34 @@ function image(width: number, height: number, subject: (x: number, y: number) =>
 }
 
 describe('image flood analysis', () => {
+  it.each([
+    { color: [138, 100, 100, 255], backgroundAlpha: 255, expected: '#d4d4d8' },
+    { color: [138, 101, 100, 255], backgroundAlpha: 255, expected: '#8a6564' },
+    { color: [138, 101, 100, 90], backgroundAlpha: 255, expected: '#d4d4d8' },
+    { color: [138, 101, 100, 91], backgroundAlpha: 255, expected: '#8a6564' },
+    { color: [100, 100, 100, 91], backgroundAlpha: 0, expected: '#646464' },
+    { color: [100, 100, 100, 90], backgroundAlpha: 0, expected: '#d4d4d8' },
+  ])('keeps color and alpha cutoffs for $color on alpha $backgroundAlpha', ({ color, backgroundAlpha, expected }) => {
+    const photo = image(20, 20, () => false);
+
+    for (let pixel = 0; pixel < 400; pixel++) photo.data.set([100, 100, 100, backgroundAlpha], pixel * 4);
+
+    for (let y = 6; y < 14; y++) for (let x = 6; x < 14; x++) photo.data.set(color, (y * 20 + x) * 4);
+
+    const original = photo.data.slice();
+    const result = analyzePixels({
+      data: photo.data,
+      gridSize: 20,
+      imageWidth: 200,
+      imageHeight: 200,
+      targetSpanMm: 70,
+      extrudeHeightMm: 10,
+    });
+
+    expect(result.dominantColor).toBe(expected);
+    expect(photo.data).toEqual(original);
+  });
+
   it('keeps enclosed background in the silhouette while leaving an open channel outside', () => {
     const photo = image(40, 30, (x, y) => x >= 8 && x <= 31 && y >= 6 && y <= 23 && !(x >= 16 && x <= 23 && y >= 12));
     const mask = floodMaskOf(photo).mask!;

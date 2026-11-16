@@ -132,7 +132,7 @@ export class ArenaWorld {
   }
 
   private drawServo(slot: ServoSlot | undefined, draw: ServoDraw) {
-    if (!slot) return;
+    if (!slot || slot.actuator < 0) return;
 
     const { model } = this.engine;
     const { actuator: a, dof } = slot;

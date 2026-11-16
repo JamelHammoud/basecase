@@ -54,6 +54,15 @@ The description names mesh files that aren't next to it. Many repos keep their m
 
 If some meshes load and others don't, Basecase still imports the robot, and a toast shows how many files are missing.
 
+## An imported joint falls in simulation
+
+MJCF joints without actuators import as passive joints. They move under gravity or contact without a motor holding them.
+
+If the joint should have motor control:
+
+1. In **Pose**, right-click the joint's row.
+2. In **Actuation**, choose **Powered**.
+
 ## Other messages
 
 | Message | What to do |

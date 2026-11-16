@@ -279,3 +279,9 @@ Move refusals read the latest Forge error after the worker finishes, preserving 
 - `e2e/remoteTraining.e2e.test.ts` configures a fixture computer through Settings, trains Stand, reloads and reconnects to the same call through the existing progress and skill rows. Its remote boundary is controlled. It stops after reattachment and checks progress delivery and credential exclusion from saved scenes. Acceptance and refusal remain in the focused recovery tests above, without repeating Arena in the browser.
 
 Recovery limitations and evidence are recorded in [Skills testing evidence](../notes/testing-skills.md#remote-training-recovery).
+
+## Passive robot joints
+
+Skill environments keep physical observation identities separate from actuator identities. Action validation refuses passive joints, while observations and recorded initial coordinates may include them. The Motor Kit already selects actuated position joints. Its job writer now orders control defaults by actuator and retains all physical starting coordinates separately. A robot without powered action joints cannot start a training job. Actuator hashes and robot fingerprints invalidate policy and readiness evidence after an actuation edit.
+
+`src/sim/passiveJoints.test.ts`, `passiveMotion.test.ts`, `passiveChannels.test.ts` and `passiveHistory.test.ts` cover the mechanism matrix, training maps and evidence keys. [Evidence](../notes/testing-skills.md#passive-robot-joints).

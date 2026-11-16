@@ -339,3 +339,9 @@ Measurements and limits: [Calibration and body properties performance evidence](
 - **Body fitting.** `e2e/bodyFit.e2e.test.ts` fits recorded twin motion through Operate, checks the updated model and Checks, then rolls back through confirmation. `src/workspace/agentBodyTools.test.ts` checks agent delegation to the shared action. `src/workspace/bodyActions.test.ts` checks missing recordings, evidence, versioning and stale-result rejection. Alongside the planted-fit coverage above, `bodyActions.test.ts` and `bodyFreshness.test.ts` retain history, rollback and Checks invalidation coverage on every platform. [Windows incident evidence](../notes/testing-robot-runtime.md#windows-body-fitting).
 
 - **Windows network pairing.** The native network coverage above retains the same 150000 µs stop bound, sealed stop and reconnect. `session.rs` checks heartbeat and intent watchdogs. [Incident evidence](../notes/testing-robot-runtime.md#windows-network-pairing).
+
+## Passive joint mappings
+
+`servoLayout` assigns consecutive IDs only to powered movable declarations. Passive joints consume no emulated servo, ROS command joint or robot-package servo ID. Physical simulation readouts and recordings still include them. Changing actuation preserves powered-joint source order and invalidates existing model-bound evidence.
+
+`src/sim/passiveJoints.test.ts` checks exact servo layouts and robot-package map sizes for ten mechanisms, including a powered shoulder with a passive wrist and two passive fingers beside a powered joint. [Evidence](../notes/testing-robot-runtime.md#passive-robot-joints).

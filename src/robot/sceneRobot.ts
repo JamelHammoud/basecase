@@ -14,7 +14,7 @@ export interface ServoLayout {
 }
 
 export function servoLayout(joints: readonly RobotJoint[]): ServoLayout {
-  const movable = joints.filter((j) => j.type !== 'fixed');
+  const movable = joints.filter((j) => j.type !== 'fixed' && j.actuation !== 'passive');
 
   return {
     movable,

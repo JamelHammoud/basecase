@@ -858,3 +858,9 @@ Broken room imports assert the room parser’s error.
 ### Platform coverage limits
 
 `forgeTab.e2e.test.ts` trains on Metal WebGPU and runs only on macOS; a runner with no GPU can't train Stand in its budget. `drive.e2e.test.ts` skips six tests on Windows (the text-field canvas prompt, Touch the Dots, New Case, rough ground, the Case mat and Multiply) until #205: MuJoCo's wasm stalls in instantiation on the Windows runner against the built bundle, while the same tests pass on Linux. `dataImport.e2e.test.ts` skips its two robot-joint import tests on Windows until #205 for the same reason: building imported tries loads MuJoCo in the import worker.
+
+## Passive robot recording channels
+
+Arm, gripper and wheel control discovery excludes passive joints. Live gait outputs omit passive coordinates while keeping physical foot geometry. Simulation recordings retain every physical joint coordinate and velocity, including passive robot joints. Their control buffers retain only actual MuJoCo actuators. LeRobot and demonstration policy features use powered joints through `datasets/episodes.ts`, avoiding a negative actuator address or an invented action channel. Passive state remains available in the underlying Try recording.
+
+`src/sim/passiveMotion.test.ts` checks physical and control widths across ten mechanisms. `passiveJoints.test.ts` checks dataset action selection. [Evidence](../notes/testing-cases.md#passive-robot-joints).

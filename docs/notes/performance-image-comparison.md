@@ -10,6 +10,12 @@ Implementation: [Image comparison](../guide/agent.md#performance-image-compariso
 
 `simplifyPolygon.test.ts` compares 1,800 open, closed and reflected outline queries with the previous calculation, including frozen inputs, ties, repeated points and later edits. Its 48-ray fixture removes 75 slice calls and 25 concatenations. A scratch comparison matched 120 complete photo analyses at three raster sizes. These are operation counts and output comparisons, without timing assertions or a claim about complete attachment time.
 
+## Photo outline ranges prepare one baseline
+
+`simplifyPolygon.ts` calculates each range's endpoint direction and squared length once, instead of recalculating them for each interior point. The existing `simplifyPolygon.test.ts` parity coverage checks the previous recursive calculation across 1,800 queries and boundary cases. Repository searches found no other point-list simplifier. Sketch's similarly named distance helper evaluates constraints rather than simplifying outlines.
+
+On macOS arm64 with Node 26.13.0, the existing 48-ray, seed-3 outline fixture at tolerance 0.022 matched the previous result. Proxy-counted coordinate reads fell from 2,428 to 1,656. After five warmup batches, 21 alternating measured batches of 5,000 simplifications gave median times of 0.01262 ms before and 0.00973 ms after. The benchmark compared the pre-change range implementation with the new implementation. These shared-host measurements cover simplification alone, without a CI timing assertion or a claim about complete photo-tool time. The throwaway benchmark lives in `scratch/outline-bench.ts` during implementation and isn't committed.
+
 ## Mask bounds and row extents share one scan
 
 `maskRows.test.ts` checks direct measurements, sparse masks, holes, nonbinary pixels, narrow and empty images, edits, source preservation and independent results. Its filled 40 × 300 and 40 × 600 profile and tracing fixtures read 12,000 and 24,000 pixels instead of 24,000 and 48,000. Scratch comparisons matched 3,200 band/profile results, 400 traced outlines and 400 complete target fits exactly against the previous implementation. On shared macOS arm64 hardware with Node 26.13.0, ten-profile batches on a seeded 600 × 600 mask took medians of 20.33 ms before and 9.17 ms after, across 30 alternating measurements after five warmups. These measure profile calculation alone, without CI timing assertions or a claim about complete photo-tool time.

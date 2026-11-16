@@ -47,7 +47,7 @@ Clear every problem the Build tab finds before you print the parts, buy them, an
 6. If the robot runs on a power supply instead of a battery, open **Servo voltage** and type the supply's volts in **V**.
 7. Open **Supply current** and type the power supply's amps in **A**.
 8. Open **Current and runtime** to see how long the battery lasts, such as **about 2 h 08 min**. After the agent runs the trained walk policy in the simulator, the section shows the average and peak amps from that walk, and the joint that draws the most. Until then, and after you change the design, the runtime shows **(estimate)**.
-9. If the robot is an arm fixed in place, click **Payload** to see how much its hand holds at full reach and close in. While **Payload** is open, the canvas shows a dot everywhere the hand reaches. Bluer dots mean the hand lifts more there.
+9. If the robot is an arm fixed in place with a powered joint chain, click **Payload** to see how much its hand holds at full reach and close in. While **Payload** is open, the canvas shows a dot everywhere the hand reaches. Bluer dots mean the hand lifts more there.
 10. If the scene has Cases, click a Case's row in **Checks** to open it in Simulate with its 20 paths on the canvas.
 11. Wait for the header to read **Ready to build**. Basecase runs the checks again after every change.
 

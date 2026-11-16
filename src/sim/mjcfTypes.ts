@@ -38,8 +38,8 @@ export interface SimJoint {
   type: 'revolute' | 'prismatic';
   range?: [number, number];
   effort: number;
-  effortSource: 'servo' | 'published' | 'estimate';
-  dynamics: 'measured' | 'estimated';
+  effortSource: 'servo' | 'published' | 'estimate' | 'passive';
+  dynamics: 'measured' | 'estimated' | 'passive';
   robot: string;
   drive: SimDrive;
   actuator: number;

@@ -20,6 +20,7 @@ covers:
   - src/components/build/QtyEditor.tsx
   - src/components/build/BuyRow.tsx
   - src/components/build/buyLine.ts
+  - src/utils/bomCategories.ts
   - src/components/BuildPanel.tsx
   - src/utils/onHand.ts
   - src/utils/bom.ts

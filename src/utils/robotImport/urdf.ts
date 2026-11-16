@@ -125,6 +125,13 @@ function urdfJoint(j: Element): UrdfJoint | null {
     axis: new THREE.Vector3(ax, ay, az).normalize(),
     limit: urdfLimit(t, lim),
     effort: positiveAttr(lim, 'effort'),
+    ...(elem(j, 'basecase')?.getAttribute('actuation') === 'passive'
+      ? {
+          actuation: 'passive' as const,
+          damping: Number(elem(j, 'dynamics')?.getAttribute('damping') ?? 0),
+          frictionloss: Number(elem(j, 'dynamics')?.getAttribute('friction') ?? 0),
+        }
+      : {}),
     velocity: positiveAttr(lim, 'velocity'),
   };
 }
@@ -182,6 +189,7 @@ function linkTree(links: Map<string, ModelLink>, raw: UrdfJoint[], root: string)
         axis: j.axis,
         limit: j.limit,
         effort: j.effort,
+        ...(j.actuation ? { actuation: j.actuation, damping: j.damping, frictionloss: j.frictionloss } : {}),
         velocity: j.velocity,
       });
       walk(j.child, jw, depth + 1);

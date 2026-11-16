@@ -30,7 +30,9 @@ function wheelRadius(j: RobotJoint, rig: Rig, byId: Map<string, ScenePart>): num
 
 export function wheelSetups(rig: Rig, parts: ScenePart[], robot?: string): WheelSetup[] {
   const byId = new Map(parts.map((p) => [p.id, p]));
-  const wheels = rig.joints.filter((j) => (!robot || rig.robotOf.get(j.id) === robot) && isWheelJoint(j, byId, rig));
+  const wheels = rig.joints.filter(
+    (j) => j.actuation !== 'passive' && (!robot || rig.robotOf.get(j.id) === robot) && isWheelJoint(j, byId, rig),
+  );
   const forward = roverForward(wheels.map((j) => j.axis));
   const left = UP.clone().cross(forward);
   const center = wheels
@@ -80,7 +82,7 @@ export function armSetup(input: ArmSetupInput): ArmSetup {
     rig: rigForWorker(input.rig),
     part: input.effector.part,
     point: input.effector.point,
-    joints: input.joints,
+    joints: input.joints.filter((id) => input.rig.byId.get(id)?.actuation !== 'passive'),
     start: input.start ?? {},
     anchor: input.anchor,
     reachMm: input.reachMm,

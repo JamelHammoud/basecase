@@ -159,6 +159,7 @@ const rangeIn = (r: unknown, min: number, max: number) =>
 
 export interface ModelIndex {
   joints: Set<string>;
+  actuators?: Set<string>;
   parts: Set<string>;
   robots: Set<string>;
   bodies: Set<string>;
@@ -166,6 +167,7 @@ export interface ModelIndex {
 
 export const modelIndex = (model: SimModel, robot: string): ModelIndex => ({
   joints: new Set(model.joints.filter((j) => j.robot === robot).map((j) => j.id)),
+  actuators: new Set(model.joints.filter((j) => j.robot === robot && j.actuator >= 0).map((j) => j.id)),
   parts: new Set(model.bodies.flatMap((b) => b.parts)),
   robots: new Set(model.robots.map((r) => r.key)),
   bodies: new Set(model.bodies.map((b) => b.name)),
@@ -206,7 +208,7 @@ function termProblems(term: ObservationTerm, index: ModelIndex): string[] {
 }
 
 function actionProblems(action: ActionSpec, index: ModelIndex): string[] {
-  const out = jointProblems(action.joints, index, 'The action');
+  const out = jointProblems(action.joints, { ...index, joints: index.actuators ?? index.joints }, 'The action');
 
   if (action.kind !== 'position-offset' && action.kind !== 'velocity') out.push('Unknown action kind.');
 

@@ -1,4 +1,5 @@
-import { BOM_CATEGORIES, type Bom, type BomCategory, type BomLine } from '../../utils/bomTypes';
+import { type Bom, type BomCategory, type BomLine } from '../../utils/bomTypes';
+import { bomCategories } from '../../utils/bomCategories';
 import { plural } from '../../../electron/plural.mjs';
 
 export interface BomGroup {
@@ -39,10 +40,5 @@ function groupOf(category: BomCategory, lines: BomLine[]): BomGroup {
 }
 
 export function bomGroups(bom: Pick<Bom, 'lines'>): BomGroup[] {
-  return BOM_CATEGORIES.map((category) =>
-    groupOf(
-      category,
-      bom.lines.filter((l) => l.category === category),
-    ),
-  ).filter((group) => group.lines.length);
+  return bomCategories(bom.lines).map(({ category, lines }) => groupOf(category, lines));
 }

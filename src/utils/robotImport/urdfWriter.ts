@@ -152,6 +152,12 @@ function jointXml(st: WriteState, link: JointLink, body?: SimBody) {
     lines.push(`    <axis xyz="${vec([axis.x, axis.y, axis.z])}"/>`, `    ${limitXml(sim, scene)}`);
   }
 
+  if (sim?.actuator === -1)
+    lines.push(
+      '    <basecase actuation="passive"/>',
+      `    <dynamics damping="${f(scene?.damping ?? 0)}" friction="${f(scene?.frictionloss ?? 0)}"/>`,
+    );
+
   st.joints.push(...lines, '  </joint>');
 }
 

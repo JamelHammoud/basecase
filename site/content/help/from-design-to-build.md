@@ -41,7 +41,7 @@ The **Build** tab tells you whether you can build the design. Its **Checks** run
 
 Each problem counts as a blocker or a note:
 
-- A **blocker** stops Ready to build. A screw that no driver can reach is a blocker, and so is a wall too thin to print or a servo too weak for its joint.
+- A **blocker** stops Ready to build. Examples include an unreachable screw, a wall too thin to print, a weak servo or a motor assigned to a passive joint.
 - A **note** turns a check amber but doesn't change the verdict. A part that needs a lot of support material gets a note.
 
 Only you can set a blocker aside, with **Ignore**. The agent can say it disagrees, and the row shows its reason. But the agent can't clear anything, and nothing it writes changes the verdict. [Checks in the Build tab](/help/build-checks) lists every check.

@@ -126,17 +126,24 @@ describe('grouped dispatch through the existing workflow queue', () => {
   it('cancels a queued group without dispatch and keeps it cancelled across restart', async () => {
     const { trainer, service, make } = fixture();
 
-    trainer.start(request);
-    trainer.start({ ...request, workspaceId: 'skill:other', recoveryKey: 'other:0' });
+    const active = trainer.start(request);
+    const cancelled = trainer.start({ ...request, workspaceId: 'skill:other', recoveryKey: 'other:0' });
+
     trainer.stop('skill:other');
     await flush();
     trainer.dispose();
 
+    const directories = fs.readdirSync(trainer.jobsDir);
+    const listing = vi
+      .spyOn(fs, 'readdirSync')
+      .mockReturnValueOnce([cancelled.jobId, ...directories.filter((id) => id !== cancelled.jobId)]);
     const recovered = make();
 
+    listing.mockRestore();
     await flush();
     expect(service.dispatch).toHaveBeenCalledTimes(3);
-    expect(recovered.remoteEntries[1].outcome.kind).toBe('error');
+    expect(recovered.remoteEntries.find((entry) => entry.id === cancelled.jobId).outcome.kind).toBe('error');
+    expect(recovered.remoteEntries.find((entry) => entry.id === active.jobId).outcome).toBeUndefined();
   });
 
   it('returns surviving candidates beside a failed child and records every failure when none survive', async () => {

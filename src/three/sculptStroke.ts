@@ -88,6 +88,30 @@ function strokesFor({ localHitPoint, localHitNormal, dragDeltaLocal, settings }:
   return strokes;
 }
 
+function applyDirectStroke(
+  geo: THREE.BufferGeometry,
+  step: BrushStep,
+  brush: { kind: SculptBrushKind; radius: number },
+) {
+  const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
+  const normAttr = geo.getAttribute('normal') as THREE.BufferAttribute;
+  const radiusSq = brush.radius * brush.radius;
+  const move = BRUSHES[brush.kind];
+
+  for (let i = 0; i < posAttr.count; i++) {
+    step.v.fromBufferAttribute(posAttr, i);
+
+    const distSq = step.v.distanceToSquared(step.stroke.center);
+
+    if (distSq > radiusSq) continue;
+
+    step.n.fromBufferAttribute(normAttr, i);
+    step.w = 0.5 * (1 + Math.cos((Math.PI * Math.sqrt(distSq)) / brush.radius));
+    move(step);
+    posAttr.setXYZ(i, step.v.x, step.v.y, step.v.z);
+  }
+}
+
 function applyStroke(
   geo: THREE.BufferGeometry,
   stroke: Stroke,
@@ -99,9 +123,17 @@ function applyStroke(
   const radiusSq = radius * radius;
   const v = new THREE.Vector3();
   const n = new THREE.Vector3();
+  const avgPos = new THREE.Vector3();
+  const step: BrushStep = { v, n, stroke, w: 0, amp: strength * radius * 0.14, avgPos, strength };
+
+  if (brush.kind !== 'smooth') {
+    applyDirectStroke(geo, step, brush);
+
+    return;
+  }
+
   const affectedIndices: number[] = [];
   const falloffs: number[] = [];
-  const avgPos = new THREE.Vector3();
 
   for (let i = 0; i < posAttr.count; i++) {
     v.fromBufferAttribute(posAttr, i);
@@ -121,7 +153,6 @@ function applyStroke(
 
   avgPos.divideScalar(affectedIndices.length);
 
-  const step: BrushStep = { v, n, stroke, w: 0, amp: strength * radius * 0.14, avgPos, strength };
   const move = BRUSHES[brush.kind];
 
   for (let k = 0; k < affectedIndices.length; k++) {

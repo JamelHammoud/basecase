@@ -2,9 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { robotFacts } from '../cases/robotFit';
 import { currentDesign, skillFiles, skillFromTraining, skillHash, type Skill } from '../skills/artifacts';
 import { fixtureModel } from '../skills/fixtureModels';
-import { kitEnvironment } from '../skills/kitEnvironment';
-import type { KitOutcome } from '../skills/motorKit';
+import { driveAccess } from '../sim/driveAccess';
+import { kitTopSpeed } from '../skills/kitModel';
+import { kitEnvironment, type TrainedEntry } from '../skills/kitEnvironment';
+import { readyStand } from '../skills/hubSkillFixtures';
+import { installPlan } from '../skills/hubSkill';
+import { robotSchema } from '../skills/robotSchema';
+import { KIT_LABELS } from '../skills/skillRows';
+import { kitSkillName, type KitOutcome } from '../skills/motorKit';
 import type { SkillRunner } from '../skills/skillsClient';
+import type { SkillsJob, SkillPorts } from '../skills/skillsJob';
 import { stubTabEngine } from '../skills/skillsPlatform';
 import { designOf } from '../skills/skillsRuntime';
 import type { SkillRow } from '../skills/skillRows';
@@ -38,10 +45,10 @@ const cost = { wallS: 1, steps: 1, forgeRuns: 1 };
 const morphologyOf = ({ robot }: ReturnType<typeof hexapod>) =>
   robotFacts(buildRig(robot.joints, robot.parts), robot.parts).morphology;
 
-function passedStand(): Skill {
-  const environment = kitEnvironment(model, 'stand');
+function passedStand(entry: TrainedEntry = 'stand'): Skill {
+  const environment = kitEnvironment(model, entry);
   const skill = skillFromTraining({
-    name: 'Stand',
+    name: KIT_LABELS[entry],
     start: null,
     current: currentDesign({ design: designOf(model), model, environment }),
     environment,
@@ -139,8 +146,111 @@ describe('Train on a gallery Case card', () => {
     const { made, last } = trainer(() => ({ kind: 'refused', reason: 'No Stand passed.', relaxation: null, cost }));
 
     expect(await made.train(model)).toBeNull();
-    expect(last()[0].state).toEqual({ kind: 'untrained' });
+    expect(last()[0].state).toEqual({ kind: 'untrained', refused: 'No Stand passed.' });
     expect(await made.carried()).toBeNull();
+  });
+});
+
+describe('Install on a gallery Case card', () => {
+  it.each<TrainedEntry>(['stand', 'settle-to-neutral'])(
+    'installs %s through the runtime and carries fresh target evidence into Open Scene',
+    async (entry) => {
+      const sourceModel = fixtureModel('quad-servo');
+      const source = readyStand(sourceModel, 'source');
+
+      source.name = kitSkillName(entry);
+
+      if (source.controller.kind !== 'policy') throw new Error('Expected a policy.');
+
+      const plan = installPlan(
+        {
+          skill: { ...source, controller: source.controller },
+          environment: kitEnvironment(sourceModel, entry),
+          schema: robotSchema(sourceModel),
+        },
+        model,
+      );
+      const jobs: unknown[] = [];
+      const installed = passedStand(entry);
+      const runner = (async (job, ports) => {
+        jobs.push(job);
+        await ports.save(skillFiles(skillHash(installed)).skill, JSON.stringify(installed));
+
+        return {
+          type: 'kit',
+          outcome: { kind: 'skill', skill: installed, environment: kitEnvironment(model, entry), cost },
+        };
+      }) as SkillRunner;
+      const rows: SkillRow[][] = [];
+      const made = galleryTrainer({ slug: hexapod().slug, onRows: (next) => rows.push(next), runner });
+      const onOutcome = vi.fn();
+      const record = await made.install(model, { ...plan, onOutcome });
+
+      expect(jobs).toEqual([expect.objectContaining({ type: 'kit', entry, warm: plan.warm })]);
+      expect(record).toMatchObject({ kit: entry, binding: installed.binding, evidence: installed.evidence });
+      expect(rows.at(-1)?.[0]).toMatchObject({ label: KIT_LABELS[entry], state: { kind: 'ready' } });
+      expect(onOutcome).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'passed', evidence: installed.evidence }),
+      );
+      await openGalleryScene(hexapod(), (await made.carried())!);
+      expect(stored.get(`trained/skill:${record!.hash}`)).toEqual(installed);
+    },
+  );
+
+  it('keeps the previously retained skill when another installation is refused', async () => {
+    const stand = passedStand();
+    const runner = (async (job: SkillsJob, ports: SkillPorts) => {
+      if (job.type !== 'kit' || job.entry !== 'stand')
+        return { type: 'kit', outcome: { kind: 'refused', reason: 'No Settle passed.', relaxation: null, cost } };
+
+      await ports.save(skillFiles(skillHash(stand)).skill, JSON.stringify(stand));
+
+      return {
+        type: 'kit',
+        outcome: { kind: 'skill', skill: stand, environment: kitEnvironment(model, 'stand'), cost },
+      };
+    }) as SkillRunner;
+    const made = galleryTrainer({ slug: hexapod().slug, onRows: () => {}, runner });
+    const record = await made.train(model);
+    const source = readyStand(model, 'source');
+
+    if (source.controller.kind !== 'policy') throw new Error('Expected a policy.');
+
+    expect(
+      await made.install(model, {
+        entry: 'settle-to-neutral',
+        warm: { from: skillHash(source), policy: source.controller.policy },
+      }),
+    ).toBeNull();
+    expect(await made.carried()).toEqual({ kind: 'skill', record, skill: stand });
+  });
+
+  it('keeps ready entries available and carries the skill selected by Try', async () => {
+    const rows: SkillRow[][] = [];
+    const runner = (async (job: SkillsJob, ports: SkillPorts) => {
+      if (job.type !== 'kit') throw new Error('Expected a Kit job.');
+
+      const skill = passedStand(job.entry);
+
+      await ports.save(skillFiles(skillHash(skill)).skill, JSON.stringify(skill));
+
+      return { type: 'kit', outcome: { kind: 'skill', skill, environment: kitEnvironment(model, job.entry), cost } };
+    }) as SkillRunner;
+    const made = galleryTrainer({ slug: hexapod().slug, onRows: (next) => rows.push(next), runner });
+    const stand = await made.train(model);
+    const source = readyStand(model, 'source');
+
+    if (source.controller.kind !== 'policy') throw new Error('Expected a policy.');
+
+    const settle = await made.install(model, {
+      entry: 'settle-to-neutral',
+      warm: { from: skillHash(source), policy: source.controller.policy },
+    });
+
+    expect(rows.at(-1)?.map((row) => row.kit)).toEqual(['stand', 'settle-to-neutral']);
+    expect(await made.carried()).toMatchObject({ record: settle });
+    await made.skill(stand!);
+    expect(await made.carried()).toMatchObject({ record: stand });
   });
 
   it('carries the trained skill into the scene Open Scene saves, record and skill file', async () => {
@@ -160,5 +270,44 @@ describe('Train on a gallery Case card', () => {
     });
     expect(stored.get(`trained/skill:${record!.hash}`)).toEqual(passedStand());
     expect(location.assign).toHaveBeenCalledWith('/');
+  });
+});
+
+describe('Drive an installed gallery Walk', () => {
+  it('supplies the retained ready velocity policy to the normal Drive controller', async () => {
+    const source = readyStand(model, 'source');
+
+    if (source.controller.kind !== 'policy') throw new Error('Expected a policy.');
+
+    const controller = source.controller;
+    const skill = { ...passedStand('velocity-tracking'), controller };
+    const runner = (async (_job, ports) => {
+      await ports.save(skillFiles(skillHash(skill)).skill, JSON.stringify(skill));
+
+      return {
+        type: 'kit',
+        outcome: { kind: 'skill', skill, environment: kitEnvironment(model, 'velocity-tracking'), cost },
+      };
+    }) as SkillRunner;
+    const made = galleryTrainer({ slug: hexapod().slug, onRows: () => {}, runner });
+
+    expect(await made.velocity()).toBeNull();
+
+    const record = await made.install(model, {
+      entry: 'velocity-tracking',
+      warm: { from: skillHash(source), policy: controller.policy },
+    });
+    const velocity = await made.velocity();
+    const bundle = hexapod();
+    const access = driveAccess({
+      model,
+      rig: buildRig(bundle.robot.joints, bundle.robot.parts),
+      parts: bundle.robot.parts,
+      velocity,
+    });
+
+    expect(velocity).toEqual({ policy: controller.policy, topSpeed: kitTopSpeed(model) });
+    expect(access).toMatchObject({ kind: 'policy', velocity });
+    expect(await made.carried()).toMatchObject({ record });
   });
 });

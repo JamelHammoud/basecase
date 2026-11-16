@@ -89,8 +89,13 @@ const ROUTES: Record<string, Route> = {
     return bytes && { data: bytesToBase64(bytes) };
   },
   'hub-model-file': () => ({ web: true }),
-  'hub-skill-outcomes': () => [],
-  'hub-publish-skill-outcome': () => ({ stored: false, published: false }),
+  'hub-find-skills': () => import('./webHub').then(({ webHub }) => webHub.call('find', undefined)),
+  'hub-skill-files': (body) =>
+    import('./webHub').then(({ webHub }) =>
+      webHub.call('files', body.arg as import('../../../hub/hubBridge').HubRepoRef),
+    ),
+  'hub-skill-outcomes': () => import('./webHub').then(({ webHub }) => webHub.call('outcomes', undefined)),
+  'hub-publish-skill-outcome': (body) => import('./webHub').then(({ webHub }) => webHub.call('saveOutcome', body.arg)),
   'acp-status': () => WEB_AGENT_STATUS,
   'sourced-parts': () => [],
   'sourced-mesh': () => ({ data: null }),

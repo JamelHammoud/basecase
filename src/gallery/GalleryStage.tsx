@@ -1,4 +1,4 @@
-import React, { useEffect, useEffectEvent, useRef } from 'react';
+import React, { useEffect, useEffectEvent, useLayoutEffect, useRef } from 'react';
 import { scaledToReach } from '../cases/scale';
 import { robotFacts } from '../cases/robotFit';
 import { caseWorldItems } from '../cases/importedWorldItems';
@@ -6,6 +6,7 @@ import { caseWorldView } from '../cases/worldView';
 import { DriveOverlay } from '../components/simulate/DriveOverlay';
 import { Viewport3D, type Viewport3DHandle } from '../components/Viewport3D';
 import { forgeHook } from '../forge/forgeHook';
+import type { VelocitySource } from '../sim/useDrive';
 import { useSimulation } from '../sim/useSimulation';
 import { DEFAULT_PROJECT, type ProjectSettings, type SculptSettings } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
@@ -22,15 +23,21 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle; Console: GalleryCon
   bundle,
   Console,
 }) => {
+  const velocity = useRef<VelocitySource | null>(null);
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const { parts, joints } = bundle.robot;
   const project: ProjectSettings = { ...DEFAULT_PROJECT, joints };
   const rig = buildRig(joints, parts);
-  const sim = useSimulation({ parts, project, rig, pose: undefined, viewportRef, restDeltas: NO_POSE });
+  const sim = useSimulation({ parts, project, rig, pose: undefined, viewportRef, restDeltas: NO_POSE, velocity });
   const { drive } = sim;
   const kase = bundle.case;
   const facts = robotFacts(rig, parts);
   const training = useGalleryTraining({ slug: bundle.slug, morphology: facts.morphology, sim });
+
+  useLayoutEffect(() => {
+    velocity.current = training.velocity;
+  });
+
   const world = caseWorldItems(scaledToReach(kase, facts.reachMm, facts.anchor));
   const begin = useEffectEvent(() => {
     sim.setWorld(world);
@@ -59,6 +66,8 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle; Console: GalleryCon
     (window as unknown as { __forge?: unknown }).__forge = forgeHook(training);
   });
 
+  const installSheet =
+    training.installer && training.installProps ? <training.installer.Component {...training.installProps} /> : null;
   const canvas = (
     <div className="absolute inset-0">
       <Viewport3D
@@ -100,7 +109,12 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle; Console: GalleryCon
         parts={parts}
         joints={joints}
         canvas={canvas}
-        card={card}
+        card={(docked) => (
+          <>
+            {card(docked)}
+            {installSheet}
+          </>
+        )}
       />
     );
 
@@ -108,6 +122,7 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle; Console: GalleryCon
     <div className="fixed inset-0 bg-[#1b1b1b] text-white">
       {canvas}
       {card(false)}
+      {installSheet}
     </div>
   );
 };

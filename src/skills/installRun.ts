@@ -28,12 +28,14 @@ export async function observeInstall(options: {
 
   try {
     const outcome = await work();
+
+    if (signal.aborted) throw new Error('Stopped.');
+
     const evidence = outcome.kind === 'skill' ? outcome.skill.evidence : outcome.evidence;
     const status = outcome.kind === 'skill' ? 'passed' : 'failed';
     const environment = outcome.environment;
 
-    if (signal.aborted) notify(completed, { status: 'cancelled' });
-    else if (outcome.kind !== 'skill' && options.infrastructure?.()) notify(completed, { status: 'infrastructure' });
+    if (outcome.kind !== 'skill' && options.infrastructure?.()) notify(completed, { status: 'infrastructure' });
     else notify(completed, { status, ...(evidence ? { evidence } : {}), ...(environment ? { environment } : {}) });
 
     return outcome;

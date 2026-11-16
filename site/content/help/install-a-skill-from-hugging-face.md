@@ -35,7 +35,9 @@ hub_the_design_agent: |
 
 Start your robot from a published skill that Basecase retrains on your robot and checks in Arena.
 
-Install Skill works in the desktop app, on legged robots. It takes Motor Kit skills: Stand, Walk, Get up and Settle. You don't need to sign in to Hugging Face to install a public skill.
+Install Skill works on legged robots in the desktop app and in browsers that support training. It takes Motor Kit skills: Stand, Walk, Get up and Settle. You don't need to sign in to Hugging Face to install a public skill.
+
+Browser downloads support regular Hub files. A download redirect the browser can’t inspect is refused. Use the desktop app for those repos.
 
 1. In Basecase, open your robot.
 2. In your robot's scene, open the **Simulate** tab.
@@ -51,13 +53,15 @@ Install Skill works in the desktop app, on legged robots. It takes Motor Kit ski
 
 ![The hexapod's Stand row ready after installing](/help/install-a-skill-from-hugging-face/installed.png)
 
+On a shared robot page, click **Install Skill**, then click **Install** beside a fitting skill. After training, click **Try** to run it, or **Open Scene** to keep it in the studio.
+
 You can also right-click a row under **Train** and choose **Install Skill**. In **Install Skill**, you can paste a repo link into the field and press [[↩]] instead.
 
 The list puts skills Basecase can install first, then uses reported installation results on similar robot bodies, limb positions and the source's Arena passes. Skills it can't install appear last with their reason. Repos whose policy or Arena evidence doesn't match `skill.json` are left out. If the Hub can't be reached, the list is empty and you can still enter a link.
 
 If a file doesn't match `skill.json`, the install stops and a toast shows the name of the file. Legs with a different number of joints don't fit, and the toast says how many joints each one has.
 
-Installation results are saved on your computer. While signed in, Basecase also publishes them under your own Hugging Face account. Pending results publish when you next open **Install Skill** or finish an installation while signed in. Failed Arena runs count as failures. Canceled attempts and infrastructure failures don’t affect ordering. Reports must match the source commit and current Arena version. Other people’s reports help order the list but don’t prove your installation.
+Browser installation results stay in this browser and survive reload. Desktop installation results are saved on your computer. On desktop, while signed in, Basecase also publishes them under your own Hugging Face account. Pending results publish when you next open **Install Skill** or finish an installation while signed in. Failed Arena runs count as failures. Canceled attempts and infrastructure failures don’t affect ordering. Reports must match the source commit and current Arena version. Other people’s reports help order the list but don’t prove your installation.
 
 The author's Arena evidence doesn't carry over, so your installed skill needs its own. Installed Walk and Settle candidates also face the same required starts and stops as locally trained candidates.
 

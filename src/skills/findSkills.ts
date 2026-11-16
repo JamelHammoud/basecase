@@ -5,11 +5,22 @@ import { robotSchema } from './robotSchema';
 import { kitRobot } from './kitModel';
 import type { RankedSkill } from './skillRank';
 import type { SKILL_RANK_HANDLERS } from './skillRankJob';
+import type { produceInstallOutcome } from './installOutcome';
 
 const ranking = workerClient<typeof SKILL_RANK_HANDLERS>(
   () => new Worker(new URL('./skillRank.worker.ts', import.meta.url), { type: 'module' }),
-  () => import('./skillRankJob').then((m) => m.SKILL_RANK_HANDLERS),
+  async () => {
+    if (typeof window !== 'undefined') throw new Error('Worker failed');
+
+    return (await import('./skillRankJob')).SKILL_RANK_HANDLERS;
+  },
 );
+
+export const prepareSkillInstallation = (files: Record<string, unknown>, model: SimModel) =>
+  ranking.call('prepareInstall', { files, model });
+
+export const prepareInstallOutcome = (options: Parameters<typeof produceInstallOutcome>[0]) =>
+  ranking.call('installOutcome', options);
 
 export async function findSkills(model: SimModel, query = ''): Promise<RankedSkill[]> {
   try {

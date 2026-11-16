@@ -28,7 +28,7 @@ The motor parts stay in the scene.
 Simulation records the joint's motion. You can’t command it through live drive or training.
 You can pose it before starting simulation.
 
+Passive joints don’t model cables or tendons. They are simulated mechanisms with no claim of physical validation.
+
 Choose **Powered** in the same menu to restore powered behavior.
 Reassign any motors through the design agent, or undo the passive edit with [[⌘Z]].
-
-Passive joints don’t model cables or tendons. They are simulated mechanisms with no claim of physical validation.

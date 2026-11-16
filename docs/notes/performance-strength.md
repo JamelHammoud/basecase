@@ -98,3 +98,12 @@ A whole-app search found one density-filter implementation, called by `lightenOp
 On the existing 300- and 600-cell fixtures with unit spacing and a 1.5 mm radius, each cell visits 19 positive-weight offsets. The removed neighbor-coordinate arrays number 5,700 and 11,400. Four additional coordinate arrays per cell disappear from center construction and remapping, bringing the structural totals to 6,900 and 13,800. These counts follow the loops and fixture dimensions, without an allocation profiler, timing assertion or claim about complete Lighten latency. Offset preparation and final output storage remain.
 
 `lightenNeighborhoods.test.ts` retains independent all-pairs comparisons of complete filter entries, weights and sensitivity results. It also checks singleton axes, a single occupied cell, sparse boundary cells, changed spacing, translation, reversed element order and independence of earlier results. Existing Lighten pipeline tests cover the optimization consumers.
+
+
+## Strength load paths append converging screws directly
+
+A whole-app search found both growing screw-list copies in `utils/strengthPaths.ts`: touched-part collection and merging branch results into the next frontier. `engineeringStrength.ts` uses this traversal for Build Checks and Lighten load collection. Each destination now receives direct appends into its hop-owned list. Branch expansion no longer creates an intermediate map before merging it.
+
+The committed convergence fixtures use 1, 8, 300 and 600 branches, each joining the same printed destination through its own screw. The previous frontier merge copied 44,850 and 179,700 earlier entries at 300 and 600 branches, respectively. Those copies fall to zero. Each screw is appended once to that destination. These are structural counts from the loops, without an allocation profiler, timing assertion or claim about complete Checks latency.
+
+`strengthPaths.test.ts` checks exact path order, original screw references and independent repeated searches. Existing cases retain cycles, duplicate contacts, three-hop limits, material barriers, receiver edits and complete load-plan coverage. A scratch comparison matched complete path results exactly in 1,500 generated assemblies and receiver edits against the previous implementation. Its source is local in `scratch/strengthPaths-parity.test.ts`.

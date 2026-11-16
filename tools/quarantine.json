@@ -117,7 +117,7 @@
     "issue": 1365,
     "until": "2026-11-28",
     "platform": "win32",
-    "reason": "Run 43844795005 observed zero initial train-start requests at line 26, then stalled locating Connect in configureRemoteComputer at line 111 on retry. The existing grouped recovery quarantine under #1365 already records absent dispatch and configuration stalls. The cause remains unestablished. Both recovery paths stay active on other platforms while #1365 traces configuration, dispatch, persistence and reattachment and measures baseline and candidate runs at equal load."
+    "reason": "Run 43844795005 observed zero initial train-start requests at line 26, then stalled locating Connect in configureRemoteComputer at line 111 on retry. The deleted grouped recovery walkthrough had recorded absent dispatch and configuration stalls under #1365. The cause remains unestablished. The single-attempt walkthrough stays active on Linux and macOS while #1365 traces configuration, dispatch, persistence and reattachment and measures baseline and candidate runs at equal load."
   },
   {
     "file": "e2e/fleet.e2e.test.ts",

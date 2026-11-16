@@ -57,6 +57,8 @@ Clear every problem the Build tab finds before you print the parts, buy them, an
 
 You can also find **Show Build** and **Run Checks** in [[⌘K]].
 
+Opening a submitted robot from [Grade a class](/help/grade-a-class) can open **Build** with its failing check expanded and affected parts selected. Checks run again on the opened design.
+
 The settings for this tab are in **Settings** ▸ **Build**. To open them, press [[⌘,]] or choose **Build Settings** in [[⌘K]]. There you can choose:
 
 - Whether the agent fixes new blockers

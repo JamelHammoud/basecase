@@ -9,16 +9,20 @@ export function GalleryScene({
   bundle,
   Console,
   replay,
+  onOpenScene,
+  embedded,
 }: {
   bundle: GalleryBundle;
   Console: GalleryConsoleView | null;
   replay?: SeedReplay;
+  onOpenScene?: () => void;
+  embedded?: boolean;
 }) {
   const [scope] = useState(() => createVisionScope(`gallery-${bundle.slug}`));
 
   return (
     <VisionScopeContext value={scope}>
-      <GalleryStage bundle={bundle} Console={Console} replay={replay} />
+      <GalleryStage bundle={bundle} Console={Console} replay={replay} onOpenScene={onOpenScene} embedded={embedded} />
     </VisionScopeContext>
   );
 }

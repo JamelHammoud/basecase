@@ -55,3 +55,15 @@ describe('detached Study Checks', () => {
     expect(gradeStudy(sceneOf([servo]), choices).runtimeMinutes).toBeUndefined();
   });
 });
+
+it('leaves a classroom budget unevaluated when imported geometry has no price', () => {
+  const part = { ...box('imported', [0, 10, 0], [20, 20, 20], 100), kind: 'mesh' as const };
+  const scene = { ...sceneOf([part]), project: { ...DEFAULT_PROJECT, budgetUsd: 60 } };
+  const row = gradeStudyDetached(scene, { ...choices, completeBudget: true });
+
+  expect(row.checks.find((check) => check.check === 'Budget')).toMatchObject({
+    status: 'not run',
+    detail: 'Budget needs a price for every part.',
+  });
+  expect(gradeStudyDetached(scene, choices).checks.find((check) => check.check === 'Budget')?.status).toBe('pass');
+});

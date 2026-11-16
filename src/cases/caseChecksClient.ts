@@ -47,6 +47,7 @@ const spawnCaseWorker = () =>
 export class CaseCheckPool {
   private slots = new Map<number, Slot>();
   private calls = 0;
+  private disposed = false;
   private idle: ReturnType<typeof setTimeout> | null = null;
 
   private readonly spawn: () => WorkerLike;
@@ -64,6 +65,8 @@ export class CaseCheckPool {
     job: Extract<CaseCheckJob, { type: T }>,
     options: JobOptions = {},
   ): Promise<Extract<CaseCheckReply, { type: T }>> {
+    if (this.disposed) return Promise.reject(new Error('Canceled'));
+
     if (this.idle) clearTimeout(this.idle);
 
     this.idle = null;
@@ -87,6 +90,11 @@ export class CaseCheckPool {
 
       this.next(at);
     });
+  }
+
+  dispose() {
+    this.disposed = true;
+    this.failAll(new Error('Canceled'));
   }
 
   private withWorld(job: CaseCheckJob): CaseCheckJob {
@@ -180,6 +188,10 @@ export class CaseCheckPool {
   }
 
   private close() {
+    if (this.idle) clearTimeout(this.idle);
+
+    this.idle = null;
+
     for (const slot of this.slots.values()) slot.worker.terminate();
 
     this.slots.clear();

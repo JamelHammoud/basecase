@@ -19,6 +19,7 @@ export interface CasesPanelProps {
   cases: Cases;
   compare: Pick<CaseCompare, 'choices' | 'start'>;
   onOpen: () => void;
+  classroom?: { open: () => void; export: () => void };
   onShowRobots: () => void;
   onDescribe?: () => void;
 }
@@ -74,7 +75,7 @@ function matEntry({ mat }: Cases): ContextMenuEntry[] {
   return [{ label: 'Export Case Mat', icon: <DownloadIcon />, onSelect: mat.exportMat }];
 }
 
-export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, onDescribe }) => {
+export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, onDescribe, classroom }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
 
   const open = (id: string) => {
@@ -89,7 +90,18 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, 
       items: [
         renameEntry(() => cases.naming.start(id)),
         { divider: true },
-        ...(cases.active?.id === id ? [...compareEntry(compare, onOpen), ...matEntry(cases)] : []),
+        ...(cases.active?.id === id
+          ? [
+              ...compareEntry(compare, onOpen),
+              ...matEntry(cases),
+              ...(classroom
+                ? [
+                    { label: 'Export Assignment', icon: <DownloadIcon />, onSelect: classroom.export },
+                    { label: 'Classroom', icon: <CompareIcon />, onSelect: classroom.open },
+                  ]
+                : []),
+            ]
+          : []),
         deleteEntry(() => cases.remove(id)),
       ],
     });

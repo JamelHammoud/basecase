@@ -139,7 +139,16 @@ function gradeWithCache(scene: StudyScene, options: StudyGradeOptions, cache: St
   ];
   const readiness = readinessOf(findings, { parts: scene.parts, fingerprint: '', rows: report.rows });
   const row = gradeStudyReport({ ...scene, measures }, options, report);
-  const checks = studyChecks(readiness);
+  const unknownCost = bom.totals.unpriced + bom.madeElsewhere.length + bom.unmeasured.length + bom.standIns.length;
+  const missingMeshPrice = parts.some((part) => part.kind === 'mesh' && !part.componentId && !part.supplyId);
+  const checks = studyChecks(readiness).map((check) =>
+    options.completeBudget &&
+    (unknownCost > 0 || missingMeshPrice) &&
+    check.check === 'Budget' &&
+    check.status !== 'fail'
+      ? { ...check, status: 'not run' as const, detail: 'Budget needs a price for every part.' }
+      : check,
+  );
 
   if (geometry.timedOut)
     checks.push({ check: 'Checks', status: 'fail', detail: 'The assembly checks reached their time limit.', ids: [] });

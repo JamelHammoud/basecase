@@ -16,7 +16,7 @@ export const CheckItem: React.FC<{
   context: FindingContext;
   stressIds?: string[];
 }> = ({ check, blockers, notes, context, stressIds }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(check.name === context.focusedCheck);
 
   useEffect(() => (open && stressIds?.length ? showStress(stressIds) : undefined), [open, stressIds]);
 

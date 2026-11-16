@@ -15,6 +15,7 @@ export interface FindingActions {
 }
 
 export interface FindingContext {
+  focusedCheck?: string;
   parts: ScenePart[];
   panScroll: boolean;
   actions: FindingActions;

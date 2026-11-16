@@ -5,7 +5,9 @@ import { showsLanding } from './landing/showsLanding';
 const source = galleryBundleSource(location.pathname);
 const league = leagueSource(location.pathname);
 
-if (location.pathname === '/fleet' || location.pathname === '/fleet/enroll') {
+if (location.pathname === '/classroom') {
+  import('./classroom/mountClassroom');
+} else if (location.pathname === '/fleet' || location.pathname === '/fleet/enroll') {
   import('./fleet/browser/mountFleet');
 } else if (showsLanding()) {
   import('./landing/mountLanding');

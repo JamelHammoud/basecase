@@ -81,3 +81,5 @@ A Case can also supply labeled images without a recorded try. **Make Training Im
 - **Ask the Agent** lets you describe a Case in words: type `/case` in the agent's box.
 - **The agent** builds a Case once you tell it what to do with a robot, such as play a block game, and opens the Case mid-run.
 - **Replay in Sim** in **Operate** builds a Case from the 20 seconds before a servo fault. To learn how, see [Replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation).
+
+- **Classroom** imports a teacher’s assignment as an independent robot scene. Follow [Submit a robot](/help/submit-a-robot).

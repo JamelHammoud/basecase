@@ -6,7 +6,7 @@ import { StudyWireWriter } from './wire';
 
 export interface StudySession {
   grade: (scene: StudyScene, options: StudyGradeOptions) => Promise<StudyRow>;
-  refresh: (scene: StudyScene, changed: string[]) => Promise<StudyScene>;
+  refresh: (scene: StudyScene, changed: string[], triangleLimit?: number) => Promise<StudyScene>;
   hold: (scene: StudyScene, options?: StudyHoldOptions) => Promise<StudyHoldInput>;
   dispose: () => void;
 }
@@ -38,10 +38,13 @@ export function createStudySession(): StudySession {
 
       return { ...row, sceneKey: studyFingerprint(scene.parts, scene.project) };
     },
-    refresh: async (scene, changed) => {
+    refresh: async (scene, changed, triangleLimit) => {
       assertOpen();
 
-      return writer.refreshed(scene, await client.call('refresh', { packet: writer.write(scene), changed }));
+      return writer.refreshed(
+        scene,
+        await client.call('refresh', { packet: writer.write(scene), changed, triangleLimit }),
+      );
     },
     hold: async (scene, options) => {
       assertOpen();

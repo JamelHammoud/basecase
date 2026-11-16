@@ -1,3 +1,4 @@
+import { exportClassroom, openClassroom } from './classroomActions';
 import { LeftSidebar } from '../components/LeftSidebar';
 import { LAYOUT, PanelResizer } from '../design-system';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
@@ -68,6 +69,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
       }
       cases={{
         cases: core.simTraining.cases,
+        classroom: IS_WEB_DEMO ? { open: openClassroom, export: () => void exportClassroom(core) } : undefined,
         compare: core.caseCompare,
         onOpen: () => tool.setRightTab('sim'),
         onShowRobots: showRobots,

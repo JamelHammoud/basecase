@@ -70,6 +70,7 @@ export interface StudySceneOptions {
 }
 
 export interface StudyGradeOptions {
+  completeBudget?: boolean;
   knobs: StudyKnob[];
   selection: StudySelection;
   purchases?: Purchases;

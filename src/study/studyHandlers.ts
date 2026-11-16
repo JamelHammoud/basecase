@@ -30,8 +30,16 @@ export function createStudyHandlers() {
 
       return reply({ report: { joints, massG }, model });
     },
-    refresh: async ({ packet, changed }: { packet: StudyPacket; changed: string[] }) => {
-      const scene = await refreshStudyGeometry(reader.read(packet), changed);
+    refresh: async ({
+      packet,
+      changed,
+      triangleLimit,
+    }: {
+      packet: StudyPacket;
+      changed: string[];
+      triangleLimit?: number;
+    }) => {
+      const scene = await refreshStudyGeometry(reader.read(packet), changed, triangleLimit);
 
       return reply(reader.refreshed(scene, changed));
     },

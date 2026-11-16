@@ -2,6 +2,18 @@
 
 Implementation: [Engineering calculations](../guide/build.md#performance-engineering-calculations). Shared requirements: [Performance](../guide/performance.md).
 
+## Axis distances use scalar products
+
+A whole-app search found one tuple-based point-to-axis cross-product distance helper, `utils/engineeringMath.ts`. Servo alignment, wheel contacts, agent interface checks and planned-joint matching share it. The separate `three/analysis/lineDistance.ts` prepares a line projection with retained Three.js workspaces and already avoids per-query vectors. Its degenerate-line behavior differs and stays unchanged.
+
+The tuple helper previously allocated one offset vector and one cross-product vector per query. It now calculates those six scalar components directly and passes the same three products to `Math.hypot` in the same order. For 300 and 600 queries, temporary three-coordinate arrays fall from 600 and 1,200 to zero. These are source-derived allocation counts, not measured timings or complete Checks latency measurements. Axis normalization remains the caller's responsibility.
+
+`engineeringLineDistance.test.ts` compares exact outputs with the former calculation for 1,800 generated point, origin and axis combinations, 300 later edits and 448 exceptional combinations. It checks source preservation, nonunit and zero axes, signed zero, subnormal values, overflow, infinities and NaN. Existing engineering output, wheel-contact and agent interface tests retain consumer coverage. No timeout, retry or quarantine changes apply.
+
+No labels, controls, verdicts, user actions or screenshot states change. The existing Servo torque and sizing and Checks in the Build tab help articles remain accurate.
+
+Validation on macOS arm64 with Node v26.13.0 passed the corrected test's changed-file check, including formatting, lint, site copy, types and both tests. The initial four-file check passed documentation, site copy and types, but caught a test nesting limit that was then fixed. Its broad related selection completed in 202.61 seconds with 2,446 passing tests, 22 failures across ten files and one skipped file and test. The failures were 20 timeouts and two classroom count assertions reporting 15 rather than 20 after seed groups timed out. The timeout files were `classroom/grading.test.ts`, `cases/caseBuilder.test.ts`, `cases/contactProbes.test.ts`, `cases/slots.test.ts`, `cases/terrain.test.ts`, `cases/worldImportRuns.test.ts`, `reality/bodyFit.test.ts`, `strength/lightenPipeline.test.ts`, `skills/kitTransitions.test.ts` and `utils/armSizing.test.ts`, all under `src/`. Lighten reached 30 seconds and the others reached five seconds. This shared-host run is not evidence of clean broad-suite validation or a proven cause for those failures. No retries, timeout changes or quarantine entries were added. Logs remain in `scratch/check-axis-distance.log` and `scratch/check-axis-distance-correction.log`.
+
 ## Robot attachment bounds compare directly
 
 `engineeringReadings.test.ts` covers nearby unassigned parts, distant scenery, dynamic objects and independent robot loads through complete engineering reports. A scratch comparison matched complete body results against the previous implementation across 60 cases. Fixtures used all three axes, both directions, gaps of 0, 49.999, 50, 50.001 and 100 mm, reversed part order, dynamic exclusions and later bounds edits. It also checked that grouping preserved its inputs.

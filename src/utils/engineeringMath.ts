@@ -43,7 +43,13 @@ export function rotateAbout(v: V3, k: V3, deg: number): V3 {
   return rotated(v, k, Math.cos(t), Math.sin(t));
 }
 
-export const lineDistance = (p: V3, o: V3, a: V3) => len(cross(sub(p, o), a));
+export function lineDistance(p: V3, o: V3, a: V3): number {
+  const x = p[0] - o[0];
+  const y = p[1] - o[1];
+  const z = p[2] - o[2];
+
+  return Math.hypot(y * a[2] - z * a[1], z * a[0] - x * a[2], x * a[1] - y * a[0]);
+}
 
 export function rotateEuler(v: V3, deg: V3): V3 {
   const e = new THREE.Euler(...(deg.map((d) => THREE.MathUtils.degToRad(d)) as V3), 'XYZ');

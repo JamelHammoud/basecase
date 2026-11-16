@@ -46,6 +46,18 @@ Remaining limits include API-only role administration, fixed parentage after ide
 
 The ten deployment fixtures prove heterogeneous inventory identities and access, not scheduling, incident response, navigation, metrics attribution or deployment execution. No SAML, SCIM, paid service, remote TLS installation, mobile device or physical robot was used.
 
+## Linux service setup deadline
+
+[Full Check 43919874616](https://github.com/JamelHammoud/basecase/actions/runs/43919874616) at `c3694589d6cd7c1e46ba1c7f999a0fa85edca4c4` failed the `tools/fleet/service.test.mjs:12` beforeAll hook after 10012 ms against its existing 10000 ms budget. All eleven test bodies were skipped. The Linux job passed 1433 files and 9304 tests, with two existing skipped files. Its other Fleet database suites passed later. The complete retained log is `scratch/unit-linux.log`.
+
+Classification: intermittent Linux setup failure. [The last full green Check](https://github.com/JamelHammoud/basecase/actions/runs/43864963744), at `6be4b9dd8d0e4cf9f0d9c7ceef80166365e36d03`, passed all eleven cases in 8408 ms. Fleet fixtures, service sources, the unit configuration and package lock have no diff between those revisions. Its log is `scratch/green-unit-linux.log`. These observations do not establish a repeated failure rate, an environment version change or a faulty intervening commit to revert.
+
+The hook starts Docker PostgreSQL, runs migrations, bootstraps two organizations, creates nested inventory and roles, and enrolls a viewer. The timeout does not identify which stage stalled. Changing Docker readiness, identity work or deadlines without that evidence would guess at the cause. The file is quarantined only on Linux through 30 November 2026 under [#1507](https://github.com/JamelHammoud/basecase/issues/1507), with `loop:fix`, `loop:next` and `loop:priority`. Current platform coverage and the temporary gap are recorded in [Fleet](../guide/fleet.md#testing-coverage-and-measurements).
+
+The fix owner must trace startup stages and cleanup under representative Linux load, coordinate shared fixture changes with Windows registry owner #1401 and Linux browser owner #1386, and fix the demonstrated cause. Restoration requires the same behavioral assertions and cleanup, existing deadlines and retries disabled, plus at least ten baseline and ten candidate runs at equal load. Repair made no local browser run or flake-rate measurement. Windows unit failures remain with the earlier repair.
+
+The repair's changed-file check passed formatting, docs, quarantine validation and 113 tests across thirteen related files in 7.56 seconds. The log is `scratch/repair-check.log`. Direct selection checks confirmed Linux-only file exclusion and expiry on 30 November. This validates the quarantine configuration rather than a service startup fix.
+
 ## Review corrections
 
 The publisher failure probe in `scratch/review-probes.mjs` left one pending disconnect and no active request after an allocation failure. The publisher now processes each newer pending observation independently and discards an old generation before reconnect allocation. Fast regressions hold the failed request while queuing disconnect and fault transitions. They assert the transmitted status and generation without retries or timing waits.

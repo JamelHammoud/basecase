@@ -68,7 +68,6 @@ export function submitDiagnostic(input, context) {
     if (file.type !== 'file') throw new Error('Selected test is not a published file');
 
     const workflowRef = context.workflowRef ?? 'main';
-    const workflow = context.api(`${endpoint}/commits/${encodeURIComponent(workflowRef)}`);
     const dispatched = context.api(`${endpoint}/actions/workflows/diagnostic.yml/dispatches`, {
       ref: workflowRef,
       return_run_details: true,
@@ -77,7 +76,7 @@ export function submitDiagnostic(input, context) {
 
     if (!Number.isSafeInteger(dispatched?.workflow_run_id)) throw new Error('Dispatch returned no durable run ID');
 
-    request.workflowRevision = workflow.sha;
+    request.workflowRef = workflowRef;
     request.runId = dispatched.workflow_run_id;
     request.url = dispatched.html_url;
     request.state = 'dispatched';
@@ -101,22 +100,25 @@ const minutesOf = (jobs) =>
     return sum + (Number.isFinite(elapsed) ? Math.max(0, elapsed) / 60000 : 0);
   }, 0);
 
-function retainJobLogs(jobs, request, context) {
+async function retainJobLogs(jobs, request, context) {
   if (!context.log) return [];
 
-  return jobs.map((job) => {
-    try {
-      if (!Number.isSafeInteger(job.id)) throw new Error('Malformed job ID');
+  return Promise.all(
+    jobs.map(async (job) => {
+      try {
+        if (!Number.isSafeInteger(job.id)) throw new Error('Malformed job ID');
 
-      const file = `job-${job.id}.log`;
+        const file = `job-${job.id}.log`;
+        const log = await context.log(job.id);
 
-      fs.writeFileSync(path.join(rootFor(context, request.ticket), file), context.log(job.id).slice(-1024 * 1024));
+        fs.writeFileSync(path.join(rootFor(context, request.ticket), file), Buffer.from(log).subarray(-1024 * 1024));
 
-      return { jobId: job.id, file };
-    } catch (error) {
-      return { jobId: job.id, error: error.message };
-    }
-  });
+        return { jobId: job.id, file };
+      } catch (error) {
+        return { jobId: job.id, error: error.message };
+      }
+    }),
+  );
 }
 
 function verifiedManifest(manifest, files, run) {
@@ -135,7 +137,7 @@ function verifiedManifest(manifest, files, run) {
   );
 }
 
-function retrieve(request, run, context) {
+async function retrieve(request, run, context) {
   const endpoint = `repos/${request.repository}/actions/runs/${run.id}`;
   const { jobs } = context.api(`${endpoint}/jobs?per_page=100`);
   const result = {
@@ -146,7 +148,7 @@ function retrieve(request, run, context) {
     conclusion: run.conclusion,
     jobs,
     ciMinutes: minutesOf(jobs),
-    logs: retainJobLogs(jobs, request, context),
+    logs: await retainJobLogs(jobs, request, context),
     verified: false,
   };
 
@@ -213,7 +215,17 @@ export function compareDiagnostic(result, baselineId, context) {
   return comparison;
 }
 
-export function collectDiagnostic(ticket, context) {
+function matchesDispatch(run, request) {
+  return (
+    run?.display_title === `diagnostic-${request.ticket}` &&
+    run.path === '.github/workflows/diagnostic.yml' &&
+    run.event === 'workflow_dispatch' &&
+    /^[a-f0-9]{40}$/.test(run.head_sha ?? '') &&
+    (!request.workflowRevision || run.head_sha === request.workflowRevision)
+  );
+}
+
+export async function collectDiagnostic(ticket, context) {
   if (!validTicket(ticket)) throw new Error('Malformed diagnostic ticket');
 
   const root = rootFor(context, ticket);
@@ -225,8 +237,10 @@ export function collectDiagnostic(ticket, context) {
 
   const run = context.api(`repos/${request.repository}/actions/runs/${request.runId}`);
 
-  if (run.display_title !== `diagnostic-${ticket}` || run.head_sha !== request.workflowRevision)
-    throw new Error('Diagnostic run does not match its dispatch');
+  if (!matchesDispatch(run, request)) throw new Error('Diagnostic run does not match its dispatch');
+
+  request.workflowRevision = run.head_sha;
+  write(path.join(root, 'request.json'), request);
 
   const reference = { ...request, state: run?.status ?? 'pending', url: run?.html_url, runId: run?.id };
 
@@ -237,7 +251,7 @@ export function collectDiagnostic(ticket, context) {
   let result;
 
   try {
-    result = retrieve(request, run, context);
+    result = await retrieve(request, run, context);
   } catch (error) {
     const saved = path.join(root, 'result.json');
     const metadata = fs.existsSync(saved) ? JSON.parse(fs.readFileSync(saved, 'utf8')) : {};

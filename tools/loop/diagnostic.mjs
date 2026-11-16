@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { ARCHIVE_LIMIT } from './lib/diagnosticContract.mjs';
 import { collectDiagnostic, compareDiagnostic, submitDiagnostic } from './lib/diagnostics.mjs';
 import { rememberDiagnostic } from './lib/diagnosticReadiness.mjs';
+import { diagnosticJobLog } from './lib/diagnosticLog.mjs';
 import { repo } from './lib/github.mjs';
 
 const context = {
@@ -21,19 +22,7 @@ const context = {
     return text.trim() ? JSON.parse(text) : null;
   },
   download: (endpoint) => execFileSync('gh', ['api', endpoint], { maxBuffer: ARCHIVE_LIMIT, timeout: 60000 }),
-  log: (id) => {
-    try {
-      return execFileSync('gh', ['api', `repos/${repo()}/actions/jobs/${id}/logs`], {
-        encoding: 'utf8',
-        maxBuffer: 1024 * 1024,
-        timeout: 60000,
-      });
-    } catch (error) {
-      if (error.stdout) return String(error.stdout).slice(-1024 * 1024);
-
-      throw new Error('Job log could not be retrieved', { cause: error });
-    }
-  },
+  log: (id) => diagnosticJobLog({ id, repository: repo() }),
 };
 
 try {
@@ -41,13 +30,13 @@ try {
 
   if (!['submit', 'collect'].includes(command) || !value)
     throw new Error(
-      'Usage: node tools/loop/diagnostic.mjs submit <selection.json> [published-workflow-ref] | collect <ticket>',
+      'Usage: node tools/loop/diagnostic.mjs submit <selection.json> [published-workflow-ref] | collect <ticket> [full-check-run-id]',
     );
 
   const result =
     command === 'submit'
       ? submitDiagnostic(JSON.parse(fs.readFileSync(value, 'utf8')), context)
-      : collectDiagnostic(value, context);
+      : await collectDiagnostic(value, context);
 
   rememberDiagnostic(result);
 

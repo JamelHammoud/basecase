@@ -13,6 +13,7 @@ export function readDiagnosticArchive(bytes) {
 
       if (
         !/^(?:manifest\.json|run-\d+\.(?:json|log))$/.test(entry.name) ||
+        (entry.compression === 0 && entry.size !== entry.originalSize) ||
         entry.originalSize > FILE_LIMIT ||
         total > ARCHIVE_LIMIT ||
         count > 61

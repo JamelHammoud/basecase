@@ -20,14 +20,14 @@ const selection = {
 
 afterEach(() => dirs.splice(0).forEach((dir) => fs.rmSync(dir, { recursive: true, force: true })));
 
-function world(overrides = {}) {
+function world({ workflowRevision = sha, ...overrides } = {}) {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'diagnostic-'));
   const calls = [];
   const manifest = {
     version: 1,
     selection,
     revision: sha,
-    workflowRevision: sha,
+    workflowRevision,
     workload: { retries: 0 },
     environment: { platform: 'win32' },
     results: Array.from({ length: 10 }, () => ({ selected: 1, status: 'passed' })),
@@ -53,7 +53,9 @@ function world(overrides = {}) {
       return {
         id: 42,
         display_title: 'diagnostic-ticket',
-        head_sha: sha,
+        head_sha: workflowRevision,
+        path: '.github/workflows/diagnostic.yml',
+        event: 'workflow_dispatch',
         status: 'completed',
         conclusion: 'success',
         html_url: 'https://github.com/o/r/actions/runs/42',
@@ -63,6 +65,7 @@ function world(overrides = {}) {
       return {
         jobs: [
           {
+            id: 11,
             started_at: '2026-11-15T00:00:00Z',
             completed_at: '2026-11-15T00:02:00Z',
             steps: [{ name: 'Install', conclusion: 'success' }],
@@ -86,15 +89,16 @@ function world(overrides = {}) {
   return { cwd, calls, api, download: () => archive, repository: 'o/r', ticket: () => 'ticket', ...overrides };
 }
 
-it('drives submit, completed Windows evidence retrieval and the same repair handoff without a new session', () => {
-  const context = world();
+it('drives submit, completed Windows evidence retrieval and the same repair handoff without a new session', async () => {
+  const context = world({ log: async () => Buffer.from('cleanup failed') });
   const request = submitDiagnostic(selection, context);
-  const result = collectDiagnostic(request.ticket, context);
+  const result = await collectDiagnostic(request.ticket, context);
   const handoff = JSON.parse(fs.readFileSync(path.join(context.cwd, 'scratch/task-handoff.json')));
 
   expect(result.state).toBe('completed');
   expect(result.verified).toBe(true);
   expect(result.ciMinutes).toBe(2);
+  expect(result.logs).toEqual([{ jobId: 11, file: 'job-11.log' }]);
   expect(result.manifest.results).toHaveLength(10);
   expect(handoff.task).toBe('#1139');
   expect(handoff.decisions).toEqual(['retain assertions']);
@@ -105,9 +109,12 @@ it('drives submit, completed Windows evidence retrieval and the same repair hand
     inputs: { selection: JSON.stringify({ ...selection, ticket: 'ticket' }) },
   });
   expect(fs.readFileSync(path.join(context.cwd, 'scratch/diagnostics/ticket/run-1.log'), 'utf8')).toBe('test output');
+  expect(fs.readFileSync(path.join(context.cwd, 'scratch/diagnostics/ticket/job-11.log'), 'utf8')).toBe(
+    'cleanup failed',
+  );
 });
 
-it('returns an unfinished run immediately and keeps its durable reference for the same context', () => {
+it('returns an unfinished run immediately and keeps its durable reference for the same context', async () => {
   const context = world();
   const original = context.api;
 
@@ -120,11 +127,37 @@ it('returns an unfinished run immediately and keeps its durable reference for th
   };
   submitDiagnostic(selection, context);
 
-  expect(collectDiagnostic('ticket', context).state).toBe('in_progress');
+  expect((await collectDiagnostic('ticket', context)).state).toBe('in_progress');
   expect(context.calls.some(({ endpoint }) => endpoint.includes('/artifacts'))).toBe(false);
 });
 
-it('compares elapsed job minutes at the same workload revision without starting sessions', () => {
+it('binds evidence to the dispatched runner revision when its branch advances before dispatch', async () => {
+  const context = world({ workflowRevision: 'b'.repeat(40) });
+  const request = submitDiagnostic(selection, context);
+  const result = await collectDiagnostic(request.ticket, context);
+
+  expect(result).toMatchObject({ verified: true, workflowRevision: 'b'.repeat(40) });
+  expect(result.manifest.revision).toBe(sha);
+});
+
+it.each([{ path: '.github/workflows/check.yml' }, { event: 'pull_request' }, { display_title: 'diagnostic-other' }])(
+  'rejects a run outside the dispatched diagnostic contract: %j',
+  async (change) => {
+    const context = world();
+    const original = context.api;
+
+    context.api = (endpoint, body) => {
+      const response = original(endpoint, body);
+
+      return response?.id === 42 ? { ...response, ...change } : response;
+    };
+    submitDiagnostic(selection, context);
+
+    await expect(collectDiagnostic('ticket', context)).rejects.toThrow('does not match its dispatch');
+  },
+);
+
+it('compares elapsed job minutes at the same workload revision without starting sessions', async () => {
   const context = world();
   const original = context.api;
 
@@ -145,7 +178,7 @@ it('compares elapsed job minutes at the same workload revision without starting 
   };
   submitDiagnostic(selection, context);
 
-  const result = collectDiagnostic('ticket', context);
+  const result = await collectDiagnostic('ticket', context);
 
   expect(compareDiagnostic(result, 100, context)).toMatchObject({
     fullCheckMinutes: 20,
@@ -154,7 +187,7 @@ it('compares elapsed job minutes at the same workload revision without starting 
   });
 });
 
-it('refuses oversized hosted artifacts before downloading and retains the failed retrieval reference', () => {
+it('refuses oversized hosted artifacts before downloading and retains the failed retrieval reference', async () => {
   const context = world();
   const original = context.api;
 
@@ -170,7 +203,7 @@ it('refuses oversized hosted artifacts before downloading and retains the failed
   };
   submitDiagnostic(selection, context);
 
-  expect(collectDiagnostic('ticket', context)).toMatchObject({
+  expect(await collectDiagnostic('ticket', context)).toMatchObject({
     verified: false,
     runId: 42,
     error: 'Diagnostic artifact limit exceeded',
@@ -227,7 +260,7 @@ it('retains failed dispatch and refuses nonexistent revisions or files', () => {
   );
 });
 
-it.each(['cancelled', 'missing artifact'])('retains %s without marking the path verified', (failure) => {
+it.each(['cancelled', 'missing artifact'])('retains %s without marking the path verified', async (failure) => {
   const context = world();
   const original = context.api;
 
@@ -243,7 +276,7 @@ it.each(['cancelled', 'missing artifact'])('retains %s without marking the path 
 
   submitDiagnostic(selection, context);
 
-  const result = collectDiagnostic('ticket', context);
+  const result = await collectDiagnostic('ticket', context);
 
   expect(result.conclusion).toBe(failure === 'cancelled' ? 'cancelled' : 'success');
   expect(result.verified).toBe(false);
@@ -270,4 +303,13 @@ it('bounds archive expansion and excludes credentials from the test environment'
     CI: 'true',
     BASECASE_QUARANTINE: 'off',
   });
+});
+
+it('rejects stored ZIP entries whose declared expansion hides an oversized file', () => {
+  const archive = Buffer.from(zipSync({ 'run-1.log': new Uint8Array(1024 * 1024 + 1) }, { level: 0 }));
+  const header = archive.indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02]));
+
+  archive.writeUInt32LE(1, header + 24);
+
+  expect(() => readDiagnosticArchive(archive)).toThrow();
 });

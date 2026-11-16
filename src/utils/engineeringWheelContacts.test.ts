@@ -92,9 +92,11 @@ describe('Wheel hinge contact classification', () => {
     ctx.bodies.push({ ...ctx.bodies[0], key: 'second', feet: [second] });
 
     expect(stabilityOf(ctx)?.onALine).toBe(true);
+    expect(ctx.bodies.map((body) => stabilityOf({ ...ctx, bodies: [body] })?.onALine)).toEqual([true, true]);
 
     ctx.joints[0].child = [];
 
     expect(stabilityOf(ctx)?.onALine).toBe(false);
+    expect(ctx.bodies.map((body) => stabilityOf({ ...ctx, bodies: [body] })?.onALine)).toEqual([false, false]);
   });
 });

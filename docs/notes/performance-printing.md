@@ -103,7 +103,7 @@ The current entry fixture has one exact STS3215 c001 as its stationary base and 
 
 ### Current archive and preparation measurements
 
-The final sampler includes `provenance.json` with the source scene, Checks, printer, bed, plate plan and file specification. Both archives delivered with empty app errors.
+The final sampler includes `provenance.json` with the source scene, printer, bed, plate plan and file specification. Both archives delivered with empty app errors.
 
 | Observation | Small arm | Repeated modules |
 | --- | ---: | ---: |

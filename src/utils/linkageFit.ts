@@ -35,6 +35,10 @@ export function decode(x: Float64Array, n: number, direction: 1 | -1): FitLinkag
 
   for (let i = 1; i < n; i++) thetas.push(thetas[i - 1] + direction * (MIN_STEP + Math.exp(x[9 + i])));
 
+  return { ...decodeShape(x), thetas };
+}
+
+function decodeShape(x: Float64Array): Omit<FitLinkage, 'thetas'> {
   return {
     origin: [x[0], x[1]],
     angle: x[2],
@@ -43,7 +47,6 @@ export function decode(x: Float64Array, n: number, direction: 1 | -1): FitLinkag
     coupler: Math.exp(x[5]),
     rocker: Math.exp(x[6]),
     point: [x[7], x[8]],
-    thetas,
   };
 }
 
@@ -80,7 +83,7 @@ function clampedClosure(l: FourBar, theta: number): { p: Vec2; miss: number } {
 
 const linkResidual = (v: number, { minLink, maxLink }: FitBounds) => PENALTY * (over(minLink - v) + over(v - maxLink));
 
-function boundResiduals(out: number[], l: FitLinkage, bounds: FitBounds): void {
+function boundResiduals(out: number[], l: FourBar, bounds: FitBounds): void {
   const longest = Math.max(l.ground, l.coupler, l.rocker);
   const rest = l.ground + l.coupler + l.rocker - longest;
   const at = out.length - 7;
@@ -96,21 +99,26 @@ function boundResiduals(out: number[], l: FitLinkage, bounds: FitBounds): void {
 
 export function residuals(x: Float64Array, problem: FitProblem, out: number[] = []): number[] {
   const { targets, direction, bounds } = problem;
-  const l = decode(x, targets.length, direction);
+  const l = decodeShape(x);
   const cos = Math.cos(l.angle);
   const sin = Math.sin(l.angle);
   let miss = 0;
+  let theta = x[9];
 
   out.length = targets.length * 2 + 9;
-  targets.forEach((t, i) => {
-    const { p, miss: m } = clampedClosure(l, l.thetas[i]);
+
+  for (let i = 0; i < targets.length; i++) {
+    if (i > 0) theta += direction * (MIN_STEP + Math.exp(x[9 + i]));
+
+    const t = targets[i];
+    const { p, miss: m } = clampedClosure(l, theta);
 
     out[i * 2] = l.origin[0] + p[0] * cos - p[1] * sin - t[0];
     out[i * 2 + 1] = l.origin[1] + p[0] * sin + p[1] * cos - t[1];
     miss += m;
-  });
+  }
 
-  const sweep = Math.abs(l.thetas[l.thetas.length - 1] - l.thetas[0]);
+  const sweep = Math.abs(theta - x[9]);
 
   out[targets.length * 2] = PENALTY * miss;
   out[targets.length * 2 + 1] = PENALTY * over(sweep - MAX_SWEEP);

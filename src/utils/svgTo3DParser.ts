@@ -58,11 +58,13 @@ function shapeBounds(shapes: ExtractedShape[]) {
   let maxX = -Infinity,
     maxY = -Infinity;
 
-  for (const pt of shapes.flatMap((s) => s.outerPts)) {
-    minX = Math.min(minX, pt.x);
-    maxX = Math.max(maxX, pt.x);
-    minY = Math.min(minY, pt.y);
-    maxY = Math.max(maxY, pt.y);
+  for (const shape of shapes) {
+    for (const pt of shape.outerPts) {
+      minX = Math.min(minX, pt.x);
+      maxX = Math.max(maxX, pt.x);
+      minY = Math.min(minY, pt.y);
+      maxY = Math.max(maxY, pt.y);
+    }
   }
 
   return { minX, minY, maxX, maxY };

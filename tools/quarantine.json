@@ -1,5 +1,13 @@
 [
   {
+    "file": "electron/simready/localFacility.test.mjs",
+    "test": "",
+    "issue": 1487,
+    "until": "2026-11-30",
+    "platform": "win32",
+    "reason": "Run 43906210676 exceeded the 10000 ms beforeAll budget while preparing the pinned USD environment, then teardown failed with EPERM unlinking Scripts/python.exe. All 12 cases passed on Windows in 9050 ms in full green run 43864963744 with unchanged converter inputs. The setup stage that stalled and the process holding the interpreter are not established."
+  },
+  {
     "file": "e2e/closedLinkages.e2e.test.ts",
     "test": "inserts a Sketch Path four-bar, simulates its joined links and reopens articulated recording",
     "issue": 1479,

@@ -41,9 +41,10 @@ afterAll(() => fs.rmSync(repo, { recursive: true, force: true }));
 describe('copyReport, a dry run of the review lane on a fixture pull request', () => {
   it('lists what the pull request adds, changes and removes, with the net', () => {
     const report = copyReport(repo, { base: 'main', head: 'feature' });
+    const [accounting, context] = report.text.split('\n\nSource proximity only,');
 
     expect(report.net).toBe(1);
-    expect(report.text).toContain(
+    expect(accounting).toBe(
       [
         '+ "Drag a part onto the grid"  src/Hint.tsx:1',
         '+ "Add Part"  src/Panel.tsx:3',
@@ -53,6 +54,7 @@ describe('copyReport, a dry run of the review lane on a fixture pull request', (
         'Copy: 2 added, 1 changed, 1 removed, net +1',
       ].join('\n'),
     );
+    expect(context).toContain('src/Panel.tsx / <module>');
     expect(copyReviewNote(report)).toMatch(/why nothing on screen already says it/);
   });
 
@@ -60,9 +62,12 @@ describe('copyReport, a dry run of the review lane on a fixture pull request', (
     git('checkout', '-q', 'main');
     write('src/Draft.tsx', '<p>Draft</p>;\n');
 
-    expect(copyReport(repo, { base: 'main', head: null }).text).toContain(
-      '+ "Draft"  src/Draft.tsx:1\n\nCopy: 1 added, 0 changed, 0 removed, net +1',
+    const [accounting, context] = copyReport(repo, { base: 'main', head: null }).text.split(
+      '\n\nSource proximity only,',
     );
+
+    expect(accounting).toBe('+ "Draft"  src/Draft.tsx:1\n\nCopy: 1 added, 0 changed, 0 removed, net +1');
+    expect(context).toContain('src/Draft.tsx / <module>');
   });
 
   it('says it could not count instead of failing the review', () => {

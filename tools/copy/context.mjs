@@ -8,15 +8,23 @@ const lineOf = (file, position) => file.getLineAndCharacterOfPosition(position).
 const clip = (text, limit = 180) => (text.length > limit ? `${text.slice(0, limit - 1)}…` : text);
 const functionName = (node) => node.name?.getText() ?? node.parent?.name?.getText() ?? '<anonymous>';
 
+function scopeRange(node) {
+  const declaration = node.parent;
+  const list = declaration.parent;
+  const statement = list?.parent;
+
+  return ts.isVariableDeclaration(declaration) && list.declarations.length === 1 && ts.isVariableStatement(statement)
+    ? statement
+    : node;
+}
+
 function scopeAt(file, line) {
-  let scope = file;
+  const functions = [];
   const conditions = [];
   const visit = (node) => {
     if (lineOf(file, node.getStart(file)) > line || lineOf(file, node.end) < line) return;
 
-    const namedFunction = ts.isFunctionLike(node) && node.body && (node.name || ts.isVariableDeclaration(node.parent));
-
-    if (namedFunction || (scope === file && ts.isFunctionLike(node) && node.body)) scope = node;
+    if (ts.isFunctionLike(node) && node.body) functions.push(node);
 
     if (ts.isConditionalExpression(node) || ts.isIfStatement(node) || ts.isBinaryExpression(node)) {
       conditions.push(lineOf(file, node.getStart(file)));
@@ -26,6 +34,18 @@ function scopeAt(file, line) {
   };
 
   visit(file);
+
+  const start = file.getPositionOfLineAndCharacter(line - 1, 0);
+  const sourceLine = file.text.slice(start, file.getLineStarts()[line] ?? file.end);
+  const from = start + sourceLine.length - sourceLine.trimStart().length;
+  const to = start + sourceLine.trimEnd().length;
+  const candidates = functions.filter((node) => {
+    const range = scopeRange(node);
+
+    return range.getStart(file) <= from && range.end >= to;
+  });
+  const named = candidates.filter((node) => node.name || ts.isVariableDeclaration(node.parent));
+  const scope = named.at(-1) ?? candidates.at(-1) ?? file;
 
   return { scope, conditions };
 }

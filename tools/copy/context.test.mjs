@@ -40,6 +40,10 @@ it('carries bounded revision source through the local report and review prompt w
     fs.rmSync(path.join(cwd, 'src/Deleted.tsx'));
     write('src/Change.tsx', 'function Recovery() { return <p>Connect the printer in Settings</p>; }');
     write(
+      'src/Scopes.tsx',
+      'const caption = { title: "Heading" }; function Helper() { return null; }\nexport const Inline = () => <p>Welcome</p>;',
+    );
+    write(
       'src/Panel.tsx',
       [
         "import { Child } from './Child';",
@@ -47,7 +51,7 @@ it('carries bounded revision source through the local report and review prompt w
         '  return <section>',
         '    <h2>Supplies</h2><p>Supplies</p>',
         '    <output>{total}</output><p>Total supply cost</p>',
-        '    <Button title="Save">Save</Button>',
+        '    <Button title="Save" onClick={function handleSave() { save(); }}>Save</Button>',
         '    <p>Choose a printer in Settings</p>',
         '    <button aria-label="Close panel"><Icon /></button>',
         '    {ready ? <p>Ready</p> : <p>Connect a printer</p>}',
@@ -76,7 +80,10 @@ it('carries bounded revision source through the local report and review prompt w
     expect(local).toContain('Panel');
     expect(local).toContain('Recovery');
     expect(local).toContain('src/Renamed.tsx / Old');
+    expect(local).toContain('src/Scopes.tsx / <module>');
+    expect(local).toContain('src/Scopes.tsx / Inline');
     expect(local.match(/^src\/Panel.tsx \/ Panel$/gm)).toHaveLength(1);
+    expect(diff.context.some(({ heading }) => heading.endsWith('/ handleSave'))).toBe(false);
     expect(diff.context.some(({ heading }) => heading.includes('Deleted.tsx'))).toBe(false);
     expect(diff.changed).toContainEqual(
       expect.objectContaining({ after: expect.objectContaining({ text: 'Connect the printer in Settings' }) }),
@@ -90,7 +97,7 @@ it('carries bounded revision source through the local report and review prompt w
     expect(local).toContain('unresolved conditions');
     expect(local).toContain('imported children');
     expect(local).toContain('omitted');
-    expect(local.length - formatCopyDiff({ ...diff, context: undefined }).length).toBeLessThanOrEqual(6200);
+    expect(local.length - formatCopyDiff({ ...diff, context: undefined }).length).toBeLessThanOrEqual(6000);
     expect(occurrences.added.filter(({ text }) => text === 'Remove')).toHaveLength(2);
     expect(occurrences.added.some(({ text }) => text === 'Close')).toBe(false);
     expect(occurrences.removed).toContainEqual(expect.objectContaining({ file: 'src/Deleted.tsx', line: 1 }));

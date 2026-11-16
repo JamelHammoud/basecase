@@ -208,6 +208,8 @@ Additional evidence includes the Kit menu item's disabled predicate beside Scene
 Dynamic composition and imported children remain untraced. Conditions are shown as source, never evaluated. A callback or value may be composed elsewhere, an accessibility name may serve a different channel, and nearby branches may be exclusive. Sparse or clipped excerpts require inspection of the named revision. Neither proximity nor missing context proves redundancy. These measurements establish neither lower allowance consumption nor fewer review rounds. No model call, scanner, review stage, merge gate, retry, wait, browser test, deadline or quarantine is added.
 
 
+Review of #1418 reproduced a named inline click handler being reported as the scope of its adjacent button label. Scope selection now requires a function or its single-variable declaration to cover the whole occurrence line. The fixture retains the surrounding component for that handler, uses module scope for copy beside an unrelated function, and preserves a one-line arrow component's name. Report and publication tests compare the complete accounting section exactly, verify all five missing-reason markers in the publication fixture, and enforce the documented 6,000-character context cap. The measurements above precede these review corrections and were not remeasured.
+
 ## Loop product dispatch evidence
 
 Issue #1331 changes capacity selection in arc #224. It leaves #1286's CAD scene reads and held-out harness experiment unchanged. Product scope, ownership, dependencies, acceptance checks, provider quotas and protected overflow remain unchanged.

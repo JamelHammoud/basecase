@@ -63,6 +63,7 @@ it('rejects missing occurrence reasons and preserves complete publication and re
     const partial = check(copyLines(copy.slice(1)));
     const complete = check(body);
     const review = copyReport(cwd, { base: 'main', body });
+    const [accounting] = review.text.split('\n\nSource proximity only,');
 
     expect(missing.status, missing.stderr).toBe(1);
     expect(partial.status, partial.stderr).toBe(1);
@@ -73,10 +74,18 @@ it('rejects missing occurrence reasons and preserves complete publication and re
     expect(copyProblems({ ...occurrences, copy: copy.slice(0, 2) })).toHaveLength(2);
     expect(review.net).toBe(5);
 
-    for (const occurrence of occurrences.added) {
-      expect(review.text).toContain(`"${occurrence.text}"  ${occurrence.file}:${occurrence.line}`);
-    }
-
+    expect(accounting).toBe(
+      [
+        '+ "Open Scene"  electron/app-menu.mjs:1  (why: Opens the scene picker from the native menu)',
+        '+ "Save scene?"  electron/dialogs.mjs:3  (why: Asks before each independent save operation)',
+        '+ "Save scene?"  electron/dialogs.mjs:4  (why: Asks before each independent save operation)',
+        '+ "Close"  src/View.tsx:1  (why: Closes each independently opened panel)',
+        '+ "Close"  src/View.tsx:1  (why: Closes each independently opened panel)',
+        '',
+        'Copy: 5 added, 0 changed, 0 removed, net +5',
+      ].join('\n'),
+    );
+    expect(copyReport(cwd, { base: 'main', body: '' }).text.match(/why: MISSING/g)).toHaveLength(5);
     expect(review.text).not.toContain('why: MISSING');
     expect(review.text.match(/why: Closes each independently opened panel/g)).toHaveLength(2);
     expect(review.text.match(/why: Asks before each independent save operation/g)).toHaveLength(2);

@@ -75,3 +75,32 @@ describe('servo rotor classification', () => {
     expect(splitRotor(rigid)).toBeNull();
   });
 });
+
+it.each([1, 25, 50])(
+  'preserves interleaved triangle order and independent output storage with %i repeats',
+  (repeats) => {
+    const stator = box([40, 20, 30], [0, 0, 0]);
+    const rotor = box([8, 2, 8], [0, 14, 0]);
+    const positions = new Float32Array((stator.length + rotor.length) * repeats);
+
+    for (let t = 0; t < 12 * repeats; t++) {
+      const offset = (t % 12) * 9;
+
+      positions.set(stator.subarray(offset, offset + 9), t * 18);
+      positions.set(rotor.subarray(offset, offset + 9), t * 18 + 9);
+    }
+
+    const before = positions.slice();
+    const solid = new ShapeSolid(positions);
+    const split = splitRotor(solid)!;
+
+    expect(split.stator.positions).toEqual(combined(Array.from({ length: repeats }, () => stator)));
+    expect(split.rotor.positions).toEqual(combined(Array.from({ length: repeats }, () => rotor)));
+    expect(split.stator.positions.buffer).not.toBe(positions.buffer);
+    expect(split.rotor.positions.buffer).not.toBe(positions.buffer);
+    expect(split.stator.positions.buffer).not.toBe(split.rotor.positions.buffer);
+    expect(positions).toEqual(before);
+    expect(splitRotor(solid)).toBe(split);
+    expect(splitRotor(new ShapeSolid(positions.slice()))?.rotor.positions).toEqual(split.rotor.positions);
+  },
+);

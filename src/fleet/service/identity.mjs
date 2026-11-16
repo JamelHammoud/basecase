@@ -2,20 +2,21 @@ import { createHash, randomBytes, randomUUID, scrypt, timingSafeEqual } from 'no
 import { promisify } from 'node:util';
 import { ACTIONS } from './authorization.mjs';
 import { transaction } from './database.mjs';
+import { auditedIdentityTransaction, lockIdentity, protectRecovery } from './recoveryProtection.mjs';
 import { identifier, insist, rules, text } from './validation.mjs';
 
 const derive = promisify(scrypt);
 
 export const hash = (value) => createHash('sha256').update(value).digest('hex');
 
-async function passwordHash(password, salt = randomBytes(16).toString('hex')) {
+export async function passwordHash(password, salt = randomBytes(16).toString('hex')) {
   text(password, 1024);
   insist(password.length >= 14);
 
   return `${salt}:${Buffer.from(await derive(password, salt, 64)).toString('hex')}`;
 }
 
-async function matchesPassword(password, stored) {
+export async function matchesPassword(password, stored) {
   const [salt] = stored.split(':');
   const actual = await passwordHash(password, salt);
 
@@ -79,6 +80,7 @@ export async function bootstrap(pool, options) {
 export async function login(pool, body) {
   const org = identifier(body.org);
   const email = text(body.email).toLowerCase();
+
   const result = await pool.query('SELECT account,password FROM fleet_passwords WHERE org=$1 AND email=$2', [
     org,
     email,
@@ -87,14 +89,37 @@ export async function login(pool, body) {
 
   insist(found?.password && (await matchesPassword(text(body.password, 1024), found.password)), 401);
 
-  return issueCredential(pool, { org, account: found.account, kind: 'session', duration: 12 * 3600000 });
+  return transaction(pool, async (client) => {
+    await lockIdentity(client, org);
+
+    const current = await client.query('SELECT password FROM fleet_passwords WHERE org=$1 AND account=$2', [
+      org,
+      found.account,
+    ]);
+
+    insist(current.rows[0]?.password === found.password, 401);
+
+    return issueCredential(client, { org, account: found.account, kind: 'session', duration: 12 * 3600000 });
+  });
 }
 
 export async function enroll(pool, body) {
   const tokenHash = hash(text(body.token));
   const password = await passwordHash(body.password);
 
-  return transaction(pool, async (client) => {
+  return auditedIdentityTransaction(pool, async (client) => {
+    const candidate = await client.query(
+      "SELECT org,account FROM fleet_credentials WHERE hash=$1 AND kind='enrollment'",
+      [tokenHash],
+    );
+
+    insist(candidate.rows[0], 401);
+    await protectRecovery(
+      client,
+      { org: candidate.rows[0].org, account: candidate.rows[0].account },
+      { id: candidate.rows[0].account, action: 'recovery.password.enroll' },
+    );
+
     const result = await client.query(
       "DELETE FROM fleet_credentials WHERE hash=$1 AND kind='enrollment' AND expires>now() RETURNING org,account",
       [tokenHash],
@@ -116,6 +141,9 @@ export async function invite(client, actor, body) {
   const org = actor.org;
   const account = identifier(body.account);
   const email = text(body.email).toLowerCase();
+
+  await protectRecovery(client, actor, { id: account, action: 'recovery.password.invite' });
+
   const exists = await client.query("SELECT 1 FROM fleet_resources WHERE org=$1 AND id=$2 AND kind='account'", [
     org,
     account,

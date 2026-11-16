@@ -90,6 +90,7 @@ export async function fleetFixture(options = {}) {
   let service;
   const fixture = {
     origin: `http://127.0.0.1:${port}`,
+    databaseUrl: postgres.url,
     get pool() {
       return pool;
     },

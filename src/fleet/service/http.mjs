@@ -2,7 +2,7 @@ import http from 'node:http';
 import https from 'node:https';
 import { authenticate } from './identity.mjs';
 import { authenticatedApi, publicApi } from './api.mjs';
-import { transaction } from './database.mjs';
+import { auditedIdentityTransaction, lockIdentity } from './recoveryProtection.mjs';
 import { identifier, insist } from './validation.mjs';
 import { subscriptions } from './subscriptions.mjs';
 import { facilityJobs, facilityRequest } from './facilities.mjs';
@@ -107,9 +107,16 @@ async function dispatch(options) {
 
   if (parts[0] === 'subscribe' && method === 'GET') return stream.open({ request, response, token, actor });
 
-  const result = await transaction(pool, (client) =>
-    authenticatedApi(client, actor, { method, parts, body, query: url.searchParams }),
-  );
+  const result = await auditedIdentityTransaction(pool, async (client) => {
+    if (method === 'GET' || !['account', 'role', 'group', 'invitations', 'credentials'].includes(parts[0]))
+      return authenticatedApi(client, actor, { method, parts, body, query: url.searchParams });
+
+    await lockIdentity(client, actor.org);
+
+    const currentActor = await authenticate(client, token);
+
+    return authenticatedApi(client, currentActor, { method, parts, body, query: url.searchParams });
+  });
 
   reply(response, result);
 }

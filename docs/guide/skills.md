@@ -242,6 +242,8 @@ The gate judges Kit skills twice with the unchanged `runArena` (its files and th
 
 ## Performance: skill feasibility and moves
 
+- **IK solves share direct determinants.** Feasibility and solver-race IK use `utils/solve3.ts`, shared with cylinder circle fitting. It removes replacement-column matrices while preserving determinant arithmetic and each caller's singularity policy. `solve3.test.ts` compares exact results with the previous copying equations across dense, damped, singular and nonfinite systems. Existing reach and solver-race tests retain integration coverage. [Shared evidence](../notes/performance-joints.md#three-dimensional-solves-use-direct-determinants).
+
 Measurements and limits: [Skill feasibility and moves performance evidence](../notes/performance-skills.md).
 
 - **Move summaries accumulate extrema directly.** `skills/moveReference.ts`, `moveEnvironment.ts` and `moveTube.ts` scan frames and tube bands without mapped or flattened sample arrays. Action scaling, fall thresholds, Forge's stand height and the rest-pose refusal share these paths. The action scan removes one temporary array per frame and the flattened joint-offset array, while height, tilt and tube distances also discard their temporary arrays. Each call owns only scalar extrema and the existing rest-pose array. [Evidence](../notes/performance-skills.md#move-summaries-accumulate-extrema-directly).

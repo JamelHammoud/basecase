@@ -1,3 +1,4 @@
+import { determinant3, solve3 } from '../utils/solve3';
 import { add, cross, dot, scale, sub, unit, type MeshIndex, type V3 } from './meshIndex';
 
 export interface Cylinder {
@@ -104,18 +105,6 @@ function angularSpanDeg(index: MeshIndex, tris: number[], [u, w]: [V3, V3]) {
   return ((2 * Math.PI - gap) * 180) / Math.PI;
 }
 
-function solve3(a: number[][], b: number[]): number[] | null {
-  const det = (m: number[][]) =>
-    m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
-    m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
-    m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
-  const d = det(a);
-
-  if (Math.abs(d) < 1e-12) return null;
-
-  return [0, 1, 2].map((k) => det(a.map((row, i) => row.map((x, j) => (j === k ? b[i] : x)))) / d);
-}
-
 export function fitCircle(points: Array<[number, number]>): { cx: number; cy: number; r: number } | null {
   if (points.length < 3) return null;
 
@@ -143,9 +132,11 @@ export function fitCircle(points: Array<[number, number]>): { cx: number; cy: nu
 
   for (let i = 0; i < 3; i++) for (let j = 0; j < i; j++) a[i][j] = a[j][i];
 
-  const s = solve3(a, b);
+  const determinant = determinant3(a);
 
-  if (!s) return null;
+  if (Math.abs(determinant) < 1e-12) return null;
+
+  const s = solve3(a, b, determinant);
 
   const cx = -s[0] / 2;
   const cy = -s[1] / 2;

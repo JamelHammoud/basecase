@@ -78,7 +78,7 @@ The **Train** section appears only when the browser can train on the GPU. A skil
 
 When you open a gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), its Case card has **Train**, which trains Stand. Once the skill passes Arena, the robot uses it to stand. Click **Open Scene** to open the robot in the studio with Stand ready.
 
-The card also offers **Install Skill** to train from a published policy. After it passes, **Try** uses the installed skill and **Open Scene** carries it into the studio. See [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
+The card also offers **Install Skill** to train from a published policy. After it passes, **Drive** runs Walk and **Try** runs the other skills. **Open Scene** carries the skill into the studio. See [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
 
 ![The hexapod's Case card with Stand ready](/help/train-stand-and-walk-with-the-motor-kit/gallery.png)
 

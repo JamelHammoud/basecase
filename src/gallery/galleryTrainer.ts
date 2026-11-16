@@ -39,6 +39,7 @@ export function galleryTrainer(options: TrainerOptions): GalleryTrainer {
   let model: SimModel | null = null;
   let records: SkillRecord[] = [];
   let retained: SkillRecord | null = null;
+  let completed: SkillRecord | null = null;
   let jobs: SkillJob[] = [];
   let refusals: SkillRefusals = {};
   let selected: TrainedEntry = 'stand';
@@ -62,6 +63,7 @@ export function galleryTrainer(options: TrainerOptions): GalleryTrainer {
     save: platform.save,
     loadSkill: platform.loadSkill,
     onRecord: (record) => {
+      completed = record;
       retained = record;
       records = withRecord(records, record);
       emit();
@@ -88,24 +90,26 @@ export function galleryTrainer(options: TrainerOptions): GalleryTrainer {
 
     model = built;
     selected = install.entry;
+    completed = null;
 
     return runtime.installKit(built, install);
   };
   const installed = async () => {
     await runtime.settled();
 
-    return ready();
+    return completed;
   };
 
   return {
     train: async (built) => {
+      if (runtime.busy) return null;
+
       model = built;
+      completed = null;
 
       if (runtime.trainKit(built, selected)) return null;
 
-      await runtime.settled();
-
-      return ready();
+      return installed();
     },
     install: async (built, install) => (startInstall(built, install) ? null : installed()),
     hubSkills: (buildModel, onInstalled) => ({

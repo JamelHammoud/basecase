@@ -53,8 +53,6 @@ Browser downloads support regular Hub files. A download redirect the browser can
 
 ![The hexapod's Stand row ready after installing](/help/install-a-skill-from-hugging-face/installed.png)
 
-On a shared robot page, click **Install Skill**, then click **Install** beside a fitting skill. After training, click **Try** to run it, or **Open Scene** to keep it in the studio.
-
 You can also right-click a row under **Train** and choose **Install Skill**. In **Install Skill**, you can paste a repo link into the field and press [[↩]] instead.
 
 The list puts skills Basecase can install first, then uses reported installation results on similar robot bodies, limb positions and the source's Arena passes. Skills it can't install appear last with their reason. Repos whose policy or Arena evidence doesn't match `skill.json` are left out. If the Hub can't be reached, the list is empty and you can still enter a link.
@@ -66,5 +64,19 @@ Browser installation results stay in this browser and survive reload. Desktop in
 The author's Arena evidence doesn't carry over, so your installed skill needs its own. Installed Walk and Settle candidates also face the same required starts and stops as locally trained candidates.
 
 If Arena refuses the candidate, its row shows "Refused in Arena" with its worst count. A failed start or stop names the switch and movement that failed. Basecase keeps the previous passing skill available, with the refusal above its Arena result. Without a previous skill, the row offers **Train** again.
+
+## On a shared robot page
+
+1. In the robot's Case card, click **Install Skill**.
+
+![The hexapod's Case card with Install Skill](/help/install-a-skill-from-hugging-face/gallery.png)
+
+2. In the published skills list, click **Install** beside a fitting skill.
+3. In the Case card, wait for the skill's row to show its Arena result.
+4. In the ready row, click **Try** or **Drive** to run the skill.
+
+5. In the Case card, click **Open Scene** to keep the skill in the studio.
+
+Walk uses **Drive**. Stand, Get up and Settle use **Try**.
 
 To learn what Arena checks, see [Arena](/help/arena).

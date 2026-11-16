@@ -252,6 +252,43 @@ describe('Install on a gallery Case card', () => {
     await made.skill(stand!);
     expect(await made.carried()).toMatchObject({ record: stand });
   });
+});
+
+describe('Replace a ready gallery skill', () => {
+  it.each(['refused', 'cancelled'] as const)(
+    'does not reactivate an older ready entry after a %s replacement',
+    async (failure) => {
+      let replace = false;
+      const runner = (async (job: SkillsJob, ports: SkillPorts) => {
+        if (job.type !== 'kit') throw new Error('Expected a Kit job.');
+
+        if (replace && failure === 'cancelled') made.stop();
+
+        if (replace)
+          return { type: 'kit', outcome: { kind: 'refused', reason: 'No candidate passed.', relaxation: null, cost } };
+
+        const skill = passedStand(job.entry);
+
+        await ports.save(skillFiles(skillHash(skill)).skill, JSON.stringify(skill));
+
+        return { type: 'kit', outcome: { kind: 'skill', skill, environment: kitEnvironment(model, job.entry), cost } };
+      }) as SkillRunner;
+      const made = galleryTrainer({ slug: hexapod().slug, onRows: () => {}, runner });
+      const source = readyStand(model, 'source');
+
+      if (source.controller.kind !== 'policy') throw new Error('Expected a policy.');
+
+      const warm = { from: skillHash(source), policy: source.controller.policy };
+
+      await made.train(model);
+
+      const settle = await made.install(model, { entry: 'settle-to-neutral', warm });
+
+      replace = true;
+      expect(await made.install(model, { entry: 'stand', warm })).toBeNull();
+      expect(await made.carried()).toMatchObject({ record: settle });
+    },
+  );
 
   it('carries the trained skill into the scene Open Scene saves, record and skill file', async () => {
     const { made } = trainer((skill) => ({ kind: 'skill', skill, environment: kitEnvironment(model, 'stand'), cost }));

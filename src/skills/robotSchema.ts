@@ -142,12 +142,21 @@ function limbsOf(schema: RobotSchema): Limb[] | null {
 const distance = (a: [number, number], b: [number, number]) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 
 function nearest(limb: Limb, from: Limb[]): Limb | null {
-  const fitting = from.filter((l) => l.joints.length === limb.joints.length);
+  let best: Limb | null = null;
+  let bestDistance = Infinity;
 
-  return fitting.reduce<Limb | null>(
-    (best, l) => (!best || distance(l.anchor, limb.anchor) < distance(best.anchor, limb.anchor) ? l : best),
-    null,
-  );
+  for (const candidate of from) {
+    if (candidate.joints.length !== limb.joints.length) continue;
+
+    const gap = distance(candidate.anchor, limb.anchor);
+
+    if (!best || gap < bestDistance) {
+      best = candidate;
+      bestDistance = gap;
+    }
+  }
+
+  return best;
 }
 
 const sizes = (limbs: Limb[]) => [...new Set(limbs.map((l) => l.joints.length))].sort((a, b) => a - b).join(' and ');

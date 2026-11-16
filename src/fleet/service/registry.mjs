@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { allowed } from './authorization.mjs';
+import { protectRecovery } from './recoveryProtection.mjs';
 import { administrative, identifier, insist, resourceData } from './validation.mjs';
 
 export const organization = (org) => ({
@@ -163,6 +164,9 @@ export async function createResource(client, actor, kind, body) {
   const proposed = proposedResource({ org: actor.org, id, kind, ancestors }, data, parent);
 
   demandResource(actor, action, proposed);
+
+  if (administrative(kind)) await protectRecovery(client, actor, { data, action: `recovery.${kind}.create` });
+
   await checkReferences(client, actor, kind, data);
   await client.query('INSERT INTO fleet_resources(org,id,kind,parent,ancestors,data) VALUES ($1,$2,$3,$4,$5,$6)', [
     actor.org,
@@ -178,6 +182,10 @@ export async function createResource(client, actor, kind, body) {
 
 export async function updateResource(client, actor, options) {
   const { kind, id, body } = options;
+
+  if (administrative(kind))
+    await protectRecovery(client, actor, { id, data: resourceData(kind, body), action: `recovery.${kind}.update` });
+
   const current = await readResource(client, actor.org, id);
 
   insist(current.kind === kind && (body.parent === undefined || body.parent === current.parent));
@@ -198,6 +206,8 @@ export async function updateResource(client, actor, options) {
 }
 
 export async function deleteResource(client, actor, kind, id) {
+  if (administrative(kind)) await protectRecovery(client, actor, { id, action: `recovery.${kind}.delete` });
+
   const current = await readResource(client, actor.org, id);
 
   insist(current.kind === kind, 403);

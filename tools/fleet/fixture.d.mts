@@ -40,6 +40,7 @@ export interface FleetClient {
 
 export interface FleetFixture {
   origin: string;
+  databaseUrl: string;
   bootstrap(name: string): Promise<FleetClient>;
 
   restart(): Promise<void>;

@@ -66,6 +66,8 @@ Create an account with `POST /v1/<org>/account`, passing `name` and a `roles` ar
 
 Groups use `POST /v1/<org>/group` with `name`, `members` containing account UUIDs and `roles` containing role UUIDs. Read, replace and delete groups through their ID paths. Role changes and revocation clear connected browser inventories and require a reload.
 
+Use [Recover a Fleet organization](/help/recover-a-fleet-organization) to restore access without creating another organization.
+
 ## Service credentials and observations
 
 `POST /v1/<org>/credentials` takes a `rules` array and returns a scoped service token. It expires after 30 days and can’t exceed its issuing account's current access. `GET /v1/<org>/credentials` returns credential metadata with at most 100 records and a `next` cursor. Pass that cursor as `after` to read another page. `DELETE /v1/<org>/credentials/<credential>` revokes a credential. These paths also support revoking browser sessions and unused invitations.

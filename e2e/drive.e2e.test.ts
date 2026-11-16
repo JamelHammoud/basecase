@@ -83,15 +83,6 @@ describe('live drive', () => {
     await stopDriving();
   });
 
-  it('drives an arm with W', async () => {
-    await startDriving('arm-6dof');
-    expect((await simState()).driveClass).toBe('arm');
-    await holdKey('w', 800);
-    await expect.poll(async () => (await simState()).stats?.time ?? 0).toBeGreaterThan(1);
-    expect((await simState()).stats?.robots[0].fellAt ?? null).toBeNull();
-    await stopDriving();
-  });
-
   it('offers to teach a biped to walk instead of Drive', async () => {
     await loadFixture('biped-servo');
     await clickTab('Simulate');

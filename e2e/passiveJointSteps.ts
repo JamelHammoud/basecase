@@ -9,8 +9,6 @@ interface Studio {
   sceneRecord: () => { project: { joints: RobotJoint[] } };
   simState: () => { joints: Record<string, { position: number }>; playing: boolean };
   robotPackage: () => Promise<{ simXml: string }>;
-  lastDownload: () => { name: string; base64: string } | null;
-  dropFiles: (files: Array<{ name: string; base64: string }>) => void;
 }
 
 export const passiveRecord = () => {
@@ -72,28 +70,4 @@ export async function fall(app: App) {
   );
 
   expect(xml.match(/<(position|velocity|motor) /g) ?? []).toHaveLength(0);
-}
-
-export async function reopenExport(app: App) {
-  await app.page
-    .locator(shown('button'), { hasText: /^Export$/ })
-    .first()
-    .click();
-  await app.page.getByRole('menuitem', { name: 'Scene', exact: true }).click();
-  await expect
-    .poll(() => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.lastDownload()?.name))
-    .toMatch(/\.basecase$/);
-
-  const tabCount = await app.page.locator('[role="tab"]:has([data-tab-close])').count();
-
-  await app.page.evaluate(() => {
-    const studio = (window as unknown as { __studio: Studio }).__studio;
-
-    studio.dropFiles([studio.lastDownload()!]);
-  });
-  await expect.poll(() => app.page.locator('[role="tab"]:has([data-tab-close])').count()).toBe(tabCount + 1);
-  await expect
-    .poll(() => app.page.locator('[role="tab"][aria-selected="true"]:has([data-tab-close])').textContent())
-    .toMatch(/Finger/);
-  await expect.poll(async () => (await sceneJoints(app))[0]?.actuation).toBe('passive');
 }

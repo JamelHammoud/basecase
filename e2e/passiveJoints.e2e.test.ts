@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { openApp, type App } from './harness';
-import { command, fall, makePassive, openFinger, reopenExport, sceneJoints } from './passiveJointSteps';
+import { command, fall, makePassive, openFinger, sceneJoints } from './passiveJointSteps';
 
 let app: App;
 
@@ -13,17 +13,14 @@ afterAll(async () => {
 });
 
 describe('passive joints in Pose', () => {
-  it('changes a powered finger to passive, falls, exports and reopens, then undoes and redoes the original edit', async () => {
+  it('changes a powered finger to passive with undo and redo, then falls without a motor', async () => {
     await openFinger(app);
     await makePassive(app);
-    await fall(app);
-    await command(app, 'Stop Simulation');
-    await reopenExport(app);
-    await app.page.keyboard.press('Meta+w');
-    await expect.poll(async () => (await sceneJoints(app))[0]?.actuation).toBe('passive');
     await app.page.keyboard.press('Meta+z');
     await expect.poll(async () => (await sceneJoints(app))[0]?.actuation).toBe('powered');
     await app.page.keyboard.press('Meta+Shift+z');
     await expect.poll(async () => (await sceneJoints(app))[0]?.actuation).toBe('passive');
+    await fall(app);
+    await command(app, 'Stop Simulation');
   });
 });

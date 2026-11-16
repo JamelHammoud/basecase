@@ -13,10 +13,12 @@ covers:
 
 Train a skill on a Linux computer from the desktop studio and recover its locally checked policy after a restart.
 
-You can use one Linux x64 training computer with the desktop studio. The training computer must have glibc 2.35 or newer, OpenSSH, flock and GNU coreutils.
+You can use one Linux x64 training computer with the desktop studio. The training computer must have glibc 2.35 or newer, OpenSSH, flock, taskset, prlimit and GNU coreutils.
 Use an existing SSH identity that authenticates without an interactive password prompt. Read the training computer's SSH host public key through a trusted connection before you configure it.
 
 You can recover training runs for Motor Kit skills, taught skills, saved moves and dataset cloning. You run coaching, stress training and hand-off training on your computer.
+
+One attempt is the default. You can [train several seeds on another computer](/help/train-several-seeds-on-another-computer) with a shared budget.
 
 1. Press [[⌘,]] to open **Settings**.
 2. In **Settings**, choose **Training**.
@@ -26,12 +28,12 @@ You can recover training runs for Motor Kit skills, taught skills, saved moves a
 6. In **Host key**, enter the verified public host key, including its key type and encoded key. Leave out the trailing comment.
 7. Click **Connect**.
 
-![Training settings with one Linux computer selected](/help/train-on-another-computer/settings.png)
+![Training settings with one Linux computer and two seed attempts selected](/help/train-on-another-computer/settings.png)
 
 8. Close **Settings**.
 9. In the scene's **Simulate** tab, click **Train** beside the skill.
 
-![Stand training on the selected computer](/help/train-on-another-computer/training.png)
+![Stand showing aggregate training progress on the selected computer](/help/train-on-another-computer/training.png)
 
 10. After you close the studio, reopen the same scene to recover the run and its local evaluation.
 

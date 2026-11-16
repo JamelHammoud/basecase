@@ -20,6 +20,7 @@ import { worstEvidence } from './skillRecords';
 import { collapsedStart } from './kitStart';
 import { proveSkill } from './prove';
 import { loadKitLibrary } from '../routines/kitLibrary';
+import { seedDevelopment } from './seedDevelopment';
 
 export type { ForgeJob, ForgeOutcome, ForgeRunner, SkillSave } from './forgeRunner';
 export type { KitEntry } from './kitEnvironment';
@@ -107,6 +108,7 @@ function refusalFor(mj: MainModule, model: SimModel) {
 }
 
 interface Attempt {
+  grouped: boolean;
   input: KitInput;
   entry: TrainedEntry;
   environment: Environment;
@@ -239,7 +241,14 @@ async function train(run: Attempt, stage: KitStage, from: { seed: number; folder
     warmPolicy: from.folder ? null : input.warm?.policy,
     reverse: input.reverse,
   });
-  const outcome = await runCounted(input.forge, { name: job.name, xml: input.model.xml, job }, clock.tally);
+  const outcome = await runCounted(
+    input.forge,
+    { name: job.name, xml: input.model.xml, job },
+    clock.tally,
+    seedDevelopment({ mj: input.mj, model: input.model, environment: run.environment }),
+  );
+
+  run.grouped ||= !!outcome.candidates;
 
   return { policy: outcome.ok ? outcome.policy : null, folder: runFolder(outcome) };
 }
@@ -259,6 +268,7 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
   const starts = entry === 'velocity-tracking' || entry === 'settle-to-neutral';
   const skills = [...(starts ? await loadKitLibrary() : []), ...(input.skills ?? [])];
   const run: Attempt = {
+    grouped: false,
     input: { ...input, skills },
     entry,
     environment,
@@ -276,6 +286,7 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
     validate: async (policy: PolicySpec) => (await validate(run, policy)).score,
     judge: (policy: PolicySpec) => judge(run, policy),
     aborted: () => !!input.signal?.aborted,
+    grouped: () => run.grouped,
   });
 
   if (skill) return { kind: 'skill', skill, environment, cost: clock.cost() };

@@ -280,6 +280,18 @@ Move refusals read the latest Forge error after the worker finishes, preserving 
 
 Recovery limitations and evidence are recorded in [Skills testing evidence](../notes/testing-skills.md#remote-training-recovery).
 
+### Grouped remote seed selection
+
+`ForgeOutcome.candidates` carries bounded child policies and frozen input fingerprints through the existing runner. `runCounted` includes every child's reported work and calls `seedSelection` before returning a policy to the skill solver. Stand, saved motions and reward search evaluate every readable candidate with `seedDevelopment`: one deterministic nominal rollout of the task contract, with score `2 * passed + tanh(margin)`. Divergence scores −2. This evaluation has no sealed Arena draws or private judgment salt. Stable child order resolves ties. Cloning selects the lowest validation loss from its frozen dataset split. Training loss and remote readiness claims are not readiness evidence.
+
+The selected policy then follows the ordinary local validation and Arena path. A grouped try trains one seed group rather than repeating the outer schedule's seed count. Its first Arena refusal ends the search, including the tracking and reward-search ladder. Other children never receive another sealed trial to find a passing alternative. Existing single-attempt schedules keep their behavior. Infrastructure failure, local rejection and stale-design refusal do not replace a retained record.
+
+`ForgeRunner.selected` acknowledges local selection through the existing worker bridge before Arena begins. The native runner records it in the parent's durable journal. Replaying must name the same candidate and evidence. Retained skill origin records include the development evaluation, chosen child and each child's seed, input hashes, actual work, score and failure. Grouped dataset cloning records aggregate work rather than only the chosen policy's steps.
+
+Rover velocity goals consume the existing velocity action contract. Their taught environment selects powered velocity channels in model order, with a 6 rad/s action scale. Reward search uses `trainingJob` for these channels rather than the position-only Motor Kit builder. Position-driven robot ordering stays unchanged.
+
+Coverage: `seedSelection.test.ts` checks stable ties, cloning loss, failed children and terminal Arena rejection. `seedWorkflows.test.ts` runs quad and hexapod Stand, warm starts, taught motion and rover velocity through controlled development and Arena boundaries. `recoveredSkill.test.ts` checks grouped recovery, retained provenance and one local Arena decision. `trainerForgeRecovery.test.ts` checks reported work when every child fails. Native SSH, resource measurements and cancellation stay in the transport fixture. The browser walkthrough configures two attempts, reloads and consumes controlled completion and a controlled local verdict through the normal runtime. [Evidence and limits](../notes/testing-skills.md#grouped-remote-seeds).
+
 ## Passive robot joints
 
 Skill environments keep physical observation identities separate from actuator identities. Action validation refuses passive joints, while observations and recorded initial coordinates may include them. The Motor Kit already selects actuated position joints. Its job writer now orders control defaults by actuator and retains all physical starting coordinates separately. A robot without powered action joints cannot start a training job. Actuator hashes and robot fingerprints invalidate policy and readiness evidence after an actuation edit.

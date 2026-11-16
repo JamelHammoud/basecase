@@ -36,6 +36,7 @@ export interface RaceCandidate {
 }
 
 export interface RaceAttempt {
+  terminal?: boolean;
   method: Method;
   passed: boolean;
   cost: RaceCost;

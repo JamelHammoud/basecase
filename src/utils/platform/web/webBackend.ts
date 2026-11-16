@@ -126,6 +126,7 @@ const ROUTES: Record<string, Route> = {
   'remote-training-status': () => ({ selected: false }),
   'remote-training-configure': () => ({ error: 'Download Basecase to connect a training computer.' }),
   'remote-training-clear': () => ({ selected: false }),
+  'remote-training-selection': () => ({ error: 'Download Basecase to connect a training computer.' }),
   'vision-training-status': () => ({ desktopOnly: true }),
   'vision-training-start': () => ({ error: 'Download Basecase to train vision models.' }),
   'vision-training-stop': () => null,

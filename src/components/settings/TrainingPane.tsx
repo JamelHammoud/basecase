@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, TextInput } from '../../design-system';
+import { Button, SegmentedControl, TextInput } from '../../design-system';
 import { remoteTrainingBridge, type TrainingComputer, type TrainingComputerStatus } from '../../remoteTraining/bridge';
 import { errorMessage } from '../../utils/errorMessage';
 import { SettingsGroup as Group, SettingsRow as Row } from '../SettingsRows';
@@ -19,7 +19,14 @@ export const TrainingPane: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const accept = (next: TrainingComputerStatus) => {
     setStatus(next);
-    setComputer({ host: next.host ?? '', user: next.user ?? '', hostKey: next.hostKey ?? '', key: '' });
+    setComputer({
+      host: next.host ?? '',
+      user: next.user ?? '',
+      hostKey: next.hostKey ?? '',
+      key: '',
+      attempts: next.attempts ?? 1,
+      concurrency: next.concurrency ?? 1,
+    });
   };
 
   useEffect(() => {
@@ -62,6 +69,22 @@ export const TrainingPane: React.FC = () => {
             Use This Computer
           </Button>
         )}
+      </Row>
+      <Row label="Attempts" hint="Share the training budget across seeds.">
+        <SegmentedControl
+          aria-label="Attempts"
+          value={String(computer.attempts ?? 1)}
+          options={[1, 2, 3, 4].map((value) => ({ value: String(value), label: String(value) }))}
+          onChange={(value) => setComputer({ ...computer, attempts: Number(value) })}
+        />
+      </Row>
+      <Row label="Concurrent attempts">
+        <SegmentedControl
+          aria-label="Concurrent attempts"
+          value={String(computer.concurrency ?? 1)}
+          options={[1, 2].map((value) => ({ value: String(value), label: String(value) }))}
+          onChange={(value) => setComputer({ ...computer, concurrency: Number(value) })}
+        />
       </Row>
       {FIELDS.map(({ field, label, hint }) => (
         <Row key={field} label={label} hint={hint} stacked>

@@ -29,9 +29,23 @@ export function inputManifest(hashes) {
   return entries.map(([name, hash]) => `${hash}  ${name}`).join('\n');
 }
 
-export function workerScript() {
+function affinityScript(slot) {
+  return `cores=$(awk '$1 == "Cpus_allowed_list:" { n = split($2, groups, ","); count = 0; for (i = 1; i <= n && count < 2; i++) { split(groups[i], range, "-"); last = range[2] == "" ? range[1] : range[2]; for (cpu = range[1]; cpu <= last && count < 2; cpu++) { print cpu; count++ } } }' /proc/self/status)
+core=$(printf '%s\\n' "$cores" | awk 'NR == 1 { first = $1 } NR == ${slot === 1 ? 2 : 1} { selected = $1 } END { print selected == "" ? first : selected }')
+taskset -pc "$core" "$$" >/dev/null || { printf '1\\n' > exit; exit 0; }
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 RAYON_NUM_THREADS=1
+`;
+}
+
+export function workerScript(slot = 0, grouped = false) {
   return `umask 077
+prlimit --pid "$$" --fsize=${ARTIFACT_BYTES}:${ARTIFACT_BYTES} || { printf '1\\n' > exit; exit 0; }
 printf '%s\\n' "$$" > pid
+exec 8>../cpu-${slot === 1 ? 1 : 0}.lock
+flock 8
+if test -f stop; then printf '125\\n' > exit; exit 0; fi
+${grouped ? affinityScript(slot) : ''}
+LD_LIBRARY_PATH="$PWD" ./forge-train --check >/dev/null || { printf '1\\n' > exit; exit 0; }
 mkfifo events.pipe
 awk '{ line = substr($0, 1, 65536); n += length(line) + 1; if (n > ${LOG_BYTES}) { close("events.log"); printf "" > "events.log"; close("events.log"); n = length(line) + 1 } print line >> "events.log"; close("events.log") }' < events.pipe &
 reader=$!
@@ -47,7 +61,7 @@ mv exit.partial exit
 export function dispatchScript(descriptor, files) {
   const dir = remoteDirectory(descriptor.id);
   const manifest = inputManifest(descriptor.inputHashes);
-  const worker = Buffer.from(workerScript()).toString('base64');
+  const worker = Buffer.from(workerScript(descriptor.slot, descriptor.grouped)).toString('base64');
 
   return `set -eu
 umask 077
@@ -57,6 +71,9 @@ cd "$dir"
 exec 9>dispatch.lock
 flock 9
 if test -d started; then exit 0; fi
+if test -f stop; then printf '125\\n' > exit; exit 0; fi
+storage=$(du -sk .. | cut -f 1)
+test "$storage" -le 8388608
 ${Object.entries(files)
   .map(([name, bytes]) => uploadFile(name, bytes))
   .join('')}
@@ -65,7 +82,6 @@ ${manifest}
 BASECASE_HASHES
 sha256sum --check --status inputs.sha256
 chmod 700 forge-train
-LD_LIBRARY_PATH="$PWD" ./forge-train --check >/dev/null
 base64 -d > run.sh <<'BASECASE_WORKER'
 ${worker}
 BASECASE_WORKER
@@ -127,5 +143,5 @@ printf '}\\n'
 }
 
 export function stopScript(descriptor) {
-  return `set -eu\ncd ${remoteDirectory(descriptor.id)}\n: > stop\n`;
+  return `set -eu\nmkdir -p ${remoteDirectory(descriptor.id)}\ncd ${remoteDirectory(descriptor.id)}\n: > stop\n`;
 }

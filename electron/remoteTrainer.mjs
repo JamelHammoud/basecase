@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Trainer, PRIORITY } from './trainer.mjs';
 import { isCount, readJsonOrNull, RUN_ID } from './backend/trainingSnapshots.mjs';
+import { connectSeedGroup, prepareSeedGroup, prepareSeedInputs } from './remoteTraining/group.mjs';
 
 const POLL_MS = 2000;
 const RECOVERY_KEY = /^[a-zA-Z0-9:_-]{1,160}$/;
@@ -89,7 +90,7 @@ export class RemoteTrainer extends Trainer {
     if (!this.remote.selected() || !recoveryKey || request.priority === PRIORITY.kit) return super.start(request);
 
     const entry = {
-      ...this.prepare(request, true),
+      ...this.prepareForeground(request),
       recoveryKey,
       fingerprint: digest(request),
       dispatched: false,
@@ -99,11 +100,24 @@ export class RemoteTrainer extends Trainer {
 
     persist(entry);
     this.remoteEntries.push(entry);
-    this.prepareRemote(entry);
+    this.prepareQueued(entry);
     this.yieldKit();
     this.place(entry);
 
     return { jobId: entry.id };
+  }
+
+  prepareForeground(request) {
+    return prepareSeedGroup(this, request) ?? this.prepare(request, true);
+  }
+
+  prepareQueued(entry) {
+    if (!entry.children) return this.prepareRemote(entry);
+
+    const preparing = prepareSeedInputs(this, entry);
+
+    this.preparations.set(entry.id, preparing);
+    void preparing.catch(() => {});
   }
 
   reattach(entry, request) {
@@ -136,6 +150,13 @@ export class RemoteTrainer extends Trainer {
     const { entry } = running;
 
     try {
+      if (entry.children) {
+        await connectSeedGroup(this, running);
+        this.schedule(running);
+
+        return;
+      }
+
       entry.descriptor ??= await (this.preparations.get(entry.id) ?? this.remote.prepare(entry));
       this.preparations.delete(entry.id);
       persist(entry);
@@ -204,6 +225,10 @@ export class RemoteTrainer extends Trainer {
     queueMicrotask(() => !this.disposed && this.launchNext());
   }
 
+  persistRemote(entry) {
+    if (!this.disposed) persist(entry);
+  }
+
   prepareRemote(entry) {
     const preparing = this.remote.prepare(entry).then((descriptor) => {
       entry.descriptor = descriptor;
@@ -269,6 +294,10 @@ export class RemoteTrainer extends Trainer {
     running.entry.stopping = true;
     persist(running.entry);
 
+    for (const child of running.entry.children ?? []) {
+      if (child.descriptor && !child.outcome) void this.remote.stop(child.descriptor).catch(() => {});
+    }
+
     if (running.entry.descriptor) void this.remote.stop(running.entry.descriptor).catch(() => {});
 
     return { stopping: true };
@@ -291,7 +320,12 @@ export class RemoteTrainer extends Trainer {
   getPolicy(id) {
     const local = super.getPolicy(id);
 
-    if (local || !RUN_ID.test(id) || !this.remoteEntries.some((e) => e.id === id)) return local;
+    if (
+      local ||
+      !RUN_ID.test(id) ||
+      !this.remoteEntries.some((e) => e.id === id || e.children?.some((child) => child.id === id))
+    )
+      return local;
 
     return readJsonOrNull(path.join(this.jobsDir, id, 'policy.json'));
   }
@@ -307,7 +341,7 @@ export class RemoteTrainer extends Trainer {
       ...[...this.jobs.values(), ...this.queue].map((entry) => entry.id),
       ...this.remoteEntries
         .filter((entry) => !entry.outcome || entry.recoveryKey?.startsWith(`${workflows.get(entry.workspaceId)}:`))
-        .map((entry) => entry.id),
+        .flatMap((entry) => [entry.id, ...(entry.children ?? []).map((child) => child.id)]),
     ]);
     const removable = fs.existsSync(this.jobsDir)
       ? fs

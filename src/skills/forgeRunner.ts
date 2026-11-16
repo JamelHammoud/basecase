@@ -1,4 +1,5 @@
 import type { PolicySpec } from '../sim/policy';
+import { selectSeeds, selectionOf, type SeedCandidate, type SeedSelection } from './seedSelection';
 
 export interface ForgeJob {
   name: string;
@@ -12,9 +13,12 @@ export interface ForgeOutcome {
   events: object[];
   stderr: string;
   run?: string;
+  candidates?: SeedCandidate[];
 }
 
-export type ForgeRunner = (job: ForgeJob) => Promise<ForgeOutcome>;
+export type ForgeRunner = ((job: ForgeJob) => Promise<ForgeOutcome>) & {
+  selected?: (selection: SeedSelection) => Promise<void>;
+};
 
 export type SkillSave = (path: string, text: string) => Promise<void>;
 
@@ -45,10 +49,18 @@ export function runFolder(outcome: ForgeOutcome): string | null {
   return file.replace(POLICY_FILE, '');
 }
 
-export async function runCounted(forge: ForgeRunner, job: ForgeJob, tally: ForgeTally): Promise<ForgeOutcome> {
-  const outcome = await forge(job);
+export async function runCounted(
+  forge: ForgeRunner,
+  job: ForgeJob,
+  tally: ForgeTally,
+  evaluate?: (policy: PolicySpec) => Promise<number>,
+): Promise<ForgeOutcome> {
+  const outcome = await selectSeeds(await forge(job), evaluate);
+  const selection = outcome.policy ? selectionOf(outcome.policy) : undefined;
 
-  tally.forgeRuns += 1;
+  if (selection) await forge.selected?.(selection);
+
+  tally.forgeRuns += outcome.candidates?.length ?? 1;
   tally.steps += doneSteps(outcome.events);
 
   return outcome;

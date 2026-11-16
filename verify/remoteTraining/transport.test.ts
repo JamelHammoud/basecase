@@ -14,6 +14,9 @@ import { kitEnvironment } from '../../src/skills/kitEnvironment';
 import { runArena } from '../../src/skills/arena';
 import { isPolicySpec } from '../../src/sim/policy';
 import { environmentHash } from '../../src/skills/environment';
+import { RemoteTrainer } from '../../electron/remoteTrainer.mjs';
+import { selectSeeds, selectionOf } from '../../src/skills/seedSelection';
+import { seedDevelopment } from '../../src/skills/seedDevelopment';
 
 const name = `basecase-training-${process.pid}`;
 const fixtureHome = '/srv/basecase-training';
@@ -129,4 +132,146 @@ it('trains through sshd, reattaches to the detached job, downloads verified arti
       hostKey: fs.readFileSync(`${key}.pub`, 'utf8').trim().split(' ').slice(0, 2).join(' '),
     }),
   ).rejects.toThrow();
+});
+
+const resourceScript = `set -eu
+for process in /proc/[0-9]*; do
+  test "$(cat "$process/comm" 2>/dev/null)" = forge-train || continue
+  awk '/VmHWM:/{rss=$2} /Threads:/{threads=$2} END{printf "%d %d\\n", rss, threads}' "$process/status" 2>/dev/null || true
+done
+`;
+
+async function configuredService(label: string, concurrency: number) {
+  const host = docker('inspect', '--format', '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}', name);
+  const hostKey = docker('exec', name, 'cat', '/etc/ssh/ssh_host_ed25519_key.pub').split(' ').slice(0, 2).join(' ');
+  const service = new RemoteTraining({ libraryDir: path.join(dir, label), secrets });
+
+  await service.configure({ host, user: 'trainer', key, hostKey, attempts: 2, concurrency });
+
+  return service;
+}
+
+async function sampleResources(service: RemoteTraining) {
+  const computer = service.configuration()!.computer;
+  const text = await service.execute(computer, resourceScript);
+  const rows = text
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => line.split(' ').map(Number));
+
+  return {
+    rssKb: rows.reduce((sum, row) => sum + row[0], 0),
+    threads: rows.reduce((sum, row) => sum + row[1], 0),
+    processes: rows.length,
+  };
+}
+
+async function waitGroup(trainer: RemoteTrainer, service: RemoteTraining) {
+  const peak = { rssKb: 0, threads: 0, processes: 0 };
+
+  while (!trainer.remoteEntries[0].outcome) {
+    const resources = await sampleResources(service);
+
+    peak.rssKb = Math.max(peak.rssKb, resources.rssKb);
+    peak.threads = Math.max(peak.threads, resources.threads);
+    peak.processes = Math.max(peak.processes, resources.processes);
+
+    await setTimeout(100);
+  }
+
+  return peak;
+}
+
+async function cpuComparison(concurrency: number) {
+  const label = `workers-${concurrency}`;
+  const service = await configuredService(label, concurrency);
+  const trainer = new RemoteTrainer({ libraryDir: path.join(dir, label), remote: service, emit: () => {} });
+  const model = fixtureModel('quad-servo');
+  const job = { ...kitJob(model, 'stand', { minutes: 1, seed: 31, maxIterations: 8 }), envs: 8, threads: 1 };
+  const started = performance.now();
+
+  try {
+    trainer.start({ workspaceId: 'skill:cpu', recoveryKey: 'cpu:0', xml: model.xml, job });
+
+    const peak = await waitGroup(trainer, service);
+    const entry = trainer.remoteEntries[0];
+
+    expect(entry.outcome.kind).toBe('done');
+    expect(new Set(entry.children.map((child) => child.id)).size).toBe(2);
+    expect(entry.children.every((child) => child.outcome.kind === 'done')).toBe(true);
+
+    const mj = await loadMujoco();
+    const environment = kitEnvironment(model, 'stand');
+    const candidates = entry.outcome.candidates.map((child) => ({ ...child, policy: trainer.getPolicy(child.id) }));
+    const outcome = await selectSeeds(
+      { ok: true, policy: null, candidates, events: [], stderr: '' },
+      seedDevelopment({ mj, model, environment }),
+    );
+
+    if (!outcome.policy) throw new Error('The CPU fixture produced no development candidate.');
+
+    expect(service.recordSelection(selectionOf(outcome.policy)!)).toBe(true);
+
+    const evidence = await runArena({
+      mj,
+      model,
+      environment,
+      contract: environment.contract,
+      controller: { kind: 'policy', policy: outcome.policy, robot: model.robots[0].key },
+      salt: new Uint8Array(32).fill(17),
+    });
+    const diskKb = Number(
+      (
+        await service.execute(
+          service.configuration()!.computer,
+          'du -sk "$HOME/.local/share/basecase/training" | cut -f 1',
+        )
+      ).trim(),
+    );
+
+    return {
+      concurrency,
+      wallMs: performance.now() - started,
+      steps: entry.outcome.candidates.reduce((sum, child) => sum + child.steps, 0),
+      peak,
+      diskKb,
+      localPassed: evidence.passed,
+    };
+  } finally {
+    trainer.dispose();
+  }
+}
+
+it('compares one and two CPU workers with identical aggregate work and reports local outcomes', async () => {
+  const one = await cpuComparison(1);
+  const two = await cpuComparison(2);
+
+  expect(one.steps).toBeGreaterThan(0);
+  expect(two.steps).toBe(one.steps);
+  expect(one.peak.processes).toBeLessThanOrEqual(1);
+  expect(two.peak.processes).toBeLessThanOrEqual(2);
+  process.stdout.write(
+    `Remote seed CPU comparison: ${JSON.stringify({ one, two, memory: 'Sampled /proc VmHWM, summed across active trainers' })}\n`,
+  );
+});
+
+it('stops every real grouped child through stop files and retains no candidate', async () => {
+  const service = await configuredService('cancel-group', 2);
+  const trainer = new RemoteTrainer({ libraryDir: path.join(dir, 'cancel-group'), remote: service, emit: () => {} });
+  const model = fixtureModel('quad-servo');
+  const job = { ...kitJob(model, 'stand', { minutes: 1, seed: 31, maxIterations: 10000 }), envs: 8, threads: 1 };
+
+  try {
+    trainer.start({ workspaceId: 'skill:cancel', recoveryKey: 'cancel:0', xml: model.xml, job });
+
+    while (!trainer.remoteEntries[0].outcome && !trainer.remoteEntries[0].children.every((child) => child.dispatching))
+      await setTimeout(20);
+
+    trainer.stop('skill:cancel');
+    await waitGroup(trainer, service);
+    expect(trainer.remoteEntries[0].outcome).toMatchObject({ kind: 'error', message: 'Training stopped.' });
+  } finally {
+    trainer.dispose();
+  }
 });

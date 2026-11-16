@@ -20,7 +20,7 @@ export function runtimeForge(options: {
     onSnapshot: snapshot,
   });
 
-  return async (job) => {
+  const runner: ForgeRunner = async (job) => {
     setJob({ message: 'Starting', share: null });
 
     const outcome = await forge(job);
@@ -32,4 +32,8 @@ export function runtimeForge(options: {
 
     return outcome;
   };
+
+  runner.selected = forge.selected;
+
+  return runner;
 }

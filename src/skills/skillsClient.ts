@@ -17,6 +17,19 @@ const failed = (e: unknown): ForgeOutcome => ({
   stderr: errorMessage(e),
 });
 
+function acknowledge(
+  worker: Worker,
+  reply: { type: 'save-result' | 'selection-result'; call: number },
+  work: Promise<unknown>,
+) {
+  void work
+    .then(
+      () => null,
+      (error: unknown) => errorMessage(error),
+    )
+    .then((error) => worker.postMessage({ ...reply, error }));
+}
+
 function answer(worker: Worker, msg: SkillsMessage, ports: SkillPorts) {
   if (msg.type === 'progress') {
     ports.progress?.(msg.share);
@@ -34,13 +47,17 @@ function answer(worker: Worker, msg: SkillsMessage, ports: SkillPorts) {
   }
 
   if (msg.type === 'save') {
-    void ports
-      .save(msg.path, msg.text)
-      .then(
-        () => null,
-        (e: unknown) => errorMessage(e),
-      )
-      .then((error) => worker.postMessage({ type: 'save-result', call: msg.call, error }));
+    acknowledge(worker, { type: 'save-result', call: msg.call }, ports.save(msg.path, msg.text));
+
+    return true;
+  }
+
+  if (msg.type === 'seed-selection') {
+    acknowledge(
+      worker,
+      { type: 'selection-result', call: msg.call },
+      Promise.resolve(ports.forge.selected?.(msg.selection)),
+    );
 
     return true;
   }

@@ -111,6 +111,8 @@ export async function runSolverRace(input: RaceInput): Promise<RaceOutcome> {
     attempts.push(found.attempt);
 
     if (found.skill) return finish({ clock, attempts, found, input });
+
+    if (found.attempt.terminal) return finish({ clock, attempts, found, input });
   }
 
   return finish({ clock, attempts, found: null, input });

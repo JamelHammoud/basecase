@@ -7,6 +7,7 @@ import { skillFiles, skillHash } from './artifacts';
 import { lastError, type ForgeJob, type ForgeRunner, type SkillSave } from './forgeRunner';
 import { skillRecord, type SkillRecord } from './skillRecords';
 import { triesSkill } from './triesTraining';
+import { selectSeeds, selectionOf } from './seedSelection';
 
 export interface TriesPlan {
   datasetId?: string;
@@ -37,17 +38,22 @@ export interface TriesPorts {
 
 export async function runTries(plan: TriesPlan, ports: TriesPorts) {
   const startedAt = Date.now();
-  const outcome = await ports.forge(plan.job);
+  const outcome = await selectSeeds(await ports.forge(plan.job));
   const policy = outcome.ok ? outcome.policy : null;
 
   if (!policy) return plan.done({ runs: null, kept: false, problem: lastError(outcome) });
+
+  const selection = selectionOf(policy);
+
+  if (selection) await ports.forge.selected?.(selection);
 
   const verdict = await plan.judge(policy).catch((e: unknown) => errorMessage(e));
 
   if (typeof verdict === 'string') return plan.done({ runs: null, kept: false, problem: verdict });
 
   const { runs } = verdict;
-  const cost = { wallS: (Date.now() - startedAt) / 1000, steps: policy.trainedSteps };
+  const steps = outcome.candidates?.reduce((sum, candidate) => sum + candidate.steps, 0) ?? policy.trainedSteps;
+  const cost = { wallS: (Date.now() - startedAt) / 1000, steps };
   const { model, kase } = plan;
   const made = triesSkill({
     model,
@@ -55,7 +61,7 @@ export async function runTries(plan: TriesPlan, ports: TriesPorts) {
     kase,
     policy,
     runs,
-    origin: { method: 'ask-for-demo', cost },
+    origin: { method: 'ask-for-demo', cost, training: selectionOf(policy) },
   });
 
   if (made) {

@@ -4,6 +4,8 @@ interface RemoteTrainingTarget {
   configure(config: unknown): Promise<unknown>;
 
   clear(): unknown;
+
+  recordSelection(value: unknown): unknown;
 }
 
 export function registerRemoteTrainingHandlers(

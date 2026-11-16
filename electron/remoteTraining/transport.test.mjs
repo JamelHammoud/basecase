@@ -91,6 +91,28 @@ describe('durable remote training', () => {
     await expect(f.service.dispatch(descriptor)).rejects.toThrow('frozen');
   });
 
+  it.each(['forge-train', 'libmujoco.so.4.0.0'])(
+    'refuses a missing or changed frozen %s before preparing another child',
+    async (name) => {
+      const f = fixture();
+      const frozen = await prepared(f);
+      const dir = path.join(f.dir, 'training', 'policy-child');
+
+      fs.mkdirSync(dir);
+      fs.copyFileSync(path.join(frozen.dir, 'model.xml'), path.join(dir, 'model.xml'));
+      fs.copyFileSync(path.join(frozen.dir, 'job.json'), path.join(dir, 'job.json'));
+      f.service.clear();
+
+      const child = { id: 'policy-child', dir, workspaceId: 'skill:fixture', fingerprint: 'exact-inputs', frozen };
+
+      expect((await f.service.prepare(child)).computer).toBe(frozen.computer);
+      fs.writeFileSync(path.join(frozen.dir, name), 'changed');
+      await expect(f.service.prepare(child)).rejects.toThrow('frozen training runtime changed');
+      fs.rmSync(path.join(frozen.dir, name));
+      await expect(f.service.prepare(child)).rejects.toThrow('frozen training runtime changed');
+    },
+  );
+
   it('downloads policy and resume after checks and writes Stop on the existing job after restart', async () => {
     const f = fixture();
     const descriptor = await prepared(f);
@@ -108,6 +130,17 @@ describe('durable remote training', () => {
     expect(f.calls.at(-1).input).toContain(': > stop');
     f.service.markCompleted(descriptor);
     expect(f.service.descriptors()).toEqual([]);
+  });
+
+  it('downloads a cloning policy without requiring a PPO resume artifact', async () => {
+    const f = fixture();
+    const descriptor = await prepared(f);
+
+    descriptor.cloning = true;
+    f.responses.push(reply({ state: 'done', 'policy.json': artifact('{"policy":1}') }));
+    expect((await f.service.poll(descriptor)).state).toBe('done');
+    expect(fs.existsSync(path.join(descriptor.dir, 'policy.json'))).toBe(true);
+    expect(fs.existsSync(path.join(descriptor.dir, 'resume.json'))).toBe(false);
   });
 
   it('refuses corrupted or oversized artifacts before replacing either local file', async () => {

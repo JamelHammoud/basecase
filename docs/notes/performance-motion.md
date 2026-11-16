@@ -35,3 +35,33 @@ The lookup test bounds a 65,536-key search to 17 timestamp reads, and motion sam
 ## Motion fitting summarizes channels without temporary arrays
 
 `motionSkeletonStats.test.ts` checks exact agreement with the previous calculation across 80 seeded multi-joint trajectories, short and missing samples, signed zero, nonfinite values, changed inputs and four complete BVH fits. A 160,000-frame fixture checks summaries beyond ordinary argument-spread limits. These checks cover summary storage and results, without timing assertions or a claim about complete fitting time.
+
+
+## Ancestor chains append before reversing
+
+The whole-app `unshift` search found four ancestry constructors: motion source axes, skeleton leg sizing, Payload links and Case arm facts. Each now appends while walking toward the root and reverses its owned ancestor array once. Queue priority, trace display and byte encoders are separate uses and retain their front insertion. No persistent cache or shared array is introduced.
+
+For n retained ancestors, front insertion moves n(n−1)/2 existing elements. Appending followed by reversal takes linear array work. This changes chain construction only. Hierarchy traversal, descendant collection and the complete sizing or fitting calculation can still do more work.
+
+A local Node v26.13.0 microbenchmark on Apple M5 Pro compared numeric chain construction with the old front insertion and the new append-and-reverse pattern. It checked equal ordered results for every length from 0 through 2,048. Each timing is the median of five batches after warming both implementations.
+
+| Chain length | Chains per batch | Front insertion ms | Append and reverse ms |
+| --- | --- | --- | --- |
+| 32 | 62,500 | 25.012 | 3.072 |
+| 256 | 7,812 | 41.405 | 4.163 |
+| 2,048 | 976 | 163.217 | 4.338 |
+
+These isolated construction timings exclude map lookups, joint filtering, transforms and downstream calculations. They are local measurements, not complete interaction timings or CI budgets. The throwaway benchmark and raw output stay in `scratch/ancestor-chains.mjs` and `scratch/ancestor-chains-results.jsonl`.
+
+`motionSkeletonSource.test.ts` checks root-first axis identities through 1, 16 and 64 ancestor links, unchanged parent maps and repeated results. Existing motion channel tests cover shared static orientations and branching endpoints. `skeletonHierarchy.scale.test.ts` and `skeletonSizing.test.ts` cover hierarchy sizing and load calculations. `payload.test.ts` checks complete Payload reporting. `robotFit.test.ts` checks branch priority, ordered movable chains, fixed terminal hands and edited ancestry. No browser flow or visible control changes.
+
+
+### Help coverage verification
+
+The three help articles flagged by preflight were reread against the final ancestry changes. None needs a text or screenshot update:
+
+- [Cases](../../site/content/help/cases.md): `chainOf` still excludes fixed and passive joints and returns the same root-first chain. Arm selection, shoulder anchor and reach calculations are unchanged, preserving the slot and world-scaling descriptions.
+- [Get a robot ready to build](../../site/content/help/get-a-robot-ready-to-build.md): `chainTo` returns the same ordered movable links. Powered-chain eligibility, Payload values, shading and controls are unchanged, preserving step 9 and the Payload screenshot.
+- [Joints and kinematics](../../site/content/help/joints-and-kinematics.md): `ancestors` returns the same root-first bone names and stops at the same repeated name. Motion axes and their accumulated orientations are unchanged. The guide addition describes implementation work only, preserving the article's hierarchy and Design From Motion descriptions.
+
+Preflight reports unchanged covered articles without comparing their claims. These three reminders remain in its output after verification. No article was edited solely to suppress a reminder.

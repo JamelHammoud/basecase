@@ -92,11 +92,11 @@ function legChain(tree: SkeletonTree, j: SkeletonJoint): SkeletonJoint[] {
   let up = j.parent ? byId.get(j.parent) : undefined;
 
   while (up?.limb === 'leg') {
-    above.unshift(up);
+    above.push(up);
     up = up.parent ? byId.get(up.parent) : undefined;
   }
 
-  return [...above, ...below];
+  return [...above.reverse(), ...below];
 }
 
 const footOf = (chain: SkeletonJoint[]): ZUpVec => {

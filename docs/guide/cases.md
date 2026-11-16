@@ -579,6 +579,8 @@ The agent builds a Case app the way a person would with a web page: it writes a 
 
 ## Performance: case facts and world geometry
 
+- **Arm ancestry appends before reversing.** `cases/robotFit.ts` collects powered movable ancestors with appends and reverses once before arm selection. Root-first order, passive and fixed exclusions, branch priority, hand selection and reach arithmetic stay unchanged. Existing `robotFit.test.ts` covers ordered chains, branches, fixed terminal hands and ancestry edits. [Shared ancestry evidence](../notes/performance-motion.md#ancestor-chains-append-before-reversing).
+
 - **Arm discovery retains candidate chains.** `cases/robotFit.ts` builds each eligible leaf's movable chain once, returns the first tagged arm immediately and retains the first untagged chain as fallback. The selected record retains the terminal leaf for hand discovery and its movable chain for reach and anchor calculations. Leaf order, wheel and jaw exclusions, and the two-joint minimum stay unchanged. [Evidence](../notes/performance-cases.md#arm-discovery-retains-candidate-chains).
 
 Measurements and limits: [Case facts and world geometry performance evidence](../notes/performance-cases.md).

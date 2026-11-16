@@ -163,6 +163,8 @@ Measurements and limits: [Joints and kinematics performance evidence](../notes/p
 
 ## Performance: motion fitting and retargeting
 
+- **Ancestor chains append before reversing.** `utils/motionSkeletonSource.ts` and `utils/skeletonSizing.ts` collect ancestors from leaf to root with append operations, then reverse the owned arrays once. Motion axis order, cycle termination, leg boundaries and descendant order stay unchanged. Payload checks and Case arm discovery use the same construction pattern. `motionSkeletonSource.test.ts` checks root-first axes through 1, 16 and 64 links, repeated calls and unchanged ancestry. Existing skeleton hierarchy and sizing tests cover long leg chains and calculated loads. [Evidence](../notes/performance-motion.md#ancestor-chains-append-before-reversing).
+
 Measurements and limits: [Motion fitting and retargeting performance evidence](../notes/performance-motion.md).
 
 - **Robot landmarks select joint extrema without sorting.** `utils/mocapBones.ts` maps limb, neck and torso names in one joint pass. `utils/retargetRobot.ts` scans descendants and named joint ids for limb ends, soles, head landmarks and torso or head carriers. These paths no longer filter, copy or sort candidate arrays to select one joint. The shallowest or deepest choice, source-order ties, zero defaults for missing depths and movable-joint rules stay unchanged. [Evidence](../notes/performance-motion.md#robot-landmarks-select-joint-extrema-without-sorting).

@@ -51,10 +51,10 @@ function ancestors(motion: Mocap, leaf: string): string[] {
 
   for (let at: string | null = leaf; at && !seen.has(at); at = motion.parentOf.get(at) ?? null) {
     seen.add(at);
-    chain.unshift(at);
+    chain.push(at);
   }
 
-  return chain;
+  return chain.reverse();
 }
 
 function includeLimb(name: string, limbs?: string[]): boolean {

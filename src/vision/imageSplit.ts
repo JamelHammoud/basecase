@@ -1,14 +1,20 @@
 import { splitOf } from '../datasets/datasetSplit';
 import type { FrameSet } from './frameSet';
 
-export function imageSplit(set: Pick<FrameSet, 'seed' | 'frames' | 'splits'>) {
-  if (set.splits) {
-    return {
-      train: set.frames.filter((frame) => set.splits?.[frame.id] === 'train').map((frame) => frame.id),
-      validation: set.frames.filter((frame) => set.splits?.[frame.id] === 'validation').map((frame) => frame.id),
-      test: set.frames.filter((frame) => set.splits?.[frame.id] === 'test').map((frame) => frame.id),
-    };
+function savedSplit(frames: FrameSet['frames'], assignments: NonNullable<FrameSet['splits']>) {
+  const split: Record<ImageSplit, string[]> = { train: [], validation: [], test: [] };
+
+  for (const frame of frames) {
+    const name = assignments[frame.id];
+
+    if (name === 'train' || name === 'validation' || name === 'test') split[name].push(frame.id);
   }
+
+  return split;
+}
+
+export function imageSplit(set: Pick<FrameSet, 'seed' | 'frames' | 'splits'>) {
+  if (set.splits) return savedSplit(set.frames, set.splits);
 
   const first = splitOf(
     set.frames.map((f) => f.id),

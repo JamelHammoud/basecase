@@ -22,6 +22,8 @@ The Linux bundle contains `forge-train` and the pinned MuJoCo shared library. Th
 
 Coverage: `electron/remoteTrainer.test.mjs` checks durable dispatch, restart reattachment, disconnection, Stop, input refusal, replay and remote process failure. Transport exploit and client tests live in `electron/remoteTraining/`. Linux CI runs `verify/remoteTraining/transport.test.ts` against an ephemeral sshd container, with CPU Forge training and local Arena. Windows CI runs the SSH client spawning and path tests. The workflow recovery and browser entry coverage are described in [Skills](skills.md#testing-coverage), with fixture failure evidence in [Skills test evidence](../notes/testing-skills.md#remote-training-recovery).
 
+The transport fixture is pinned in `verify/manifest.json`, alongside the other verification files. Adding it without its hash leaves Gatekeeper's manifest drifted.
+
 - **C MuJoCo stays the compiler and oracle.** Forge links stock `libmujoco` to compile the generated MJCF and to check its own results. We never fork MuJoCo's C code. Forge's own engine is a reimplementation of MuJoCo's formulation for the subset Basecase generates.
 - **Same events as the Python trainer.** Forge prints the same JSON lines on stdout, so `electron/trainer.mjs` barely changes.
 - **Anything outside the subset routes to C MuJoCo, never silently.** The feature matrix refuses what it can't simulate exactly.

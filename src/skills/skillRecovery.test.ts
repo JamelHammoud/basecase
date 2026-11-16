@@ -88,4 +88,15 @@ describe('remote skill recovery', () => {
     await remote.journal.begin(row);
     await expect(remote.journal.capture({ type: 'worker', job })).rejects.toThrow('Disk full');
   });
+
+  it('clears the active identity even when deleting its completed journal fails', async () => {
+    const { journal, store } = setup();
+
+    await journal.begin(row);
+    await journal.capture({ type: 'worker', job });
+    store.delete = vi.fn().mockRejectedValue(new Error('Journal unavailable'));
+    await expect(journal.finish()).rejects.toThrow('Journal unavailable');
+    expect(journal.key).toBeUndefined();
+    expect(journal.judgmentSalt).toBeUndefined();
+  });
 });

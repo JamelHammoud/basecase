@@ -10,7 +10,7 @@ Choose the computer in **Settings** ▸ **Training**, then use the skill's exist
 
 The studio transfers the matching Forge runtime and frozen job inputs, verifies their hashes and starts a detached process. It keeps remote logs within 1 MiB. If you stop a job while disconnected, the studio sends the stop request to that same job when you reconnect.
 
-Test the returned policy in Arena on your computer. You can’t use a remote computer to supply readiness evidence or apply an old run's result to a changed design. You use the same training inputs for existing demonstrations, taught motions and warm starts.
+The studio checks the returned policy in Arena on your computer. You can’t use a remote computer to supply readiness evidence or apply an old run's result to a changed design. You use the same training inputs for existing demonstrations, taught motions and warm starts.
 
 You run automatic background training, coaching, stress training and hand-off training on your own computer. You can connect one training computer, with no parallel seed scheduling or hosted service.
 

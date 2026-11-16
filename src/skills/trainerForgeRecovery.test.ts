@@ -12,6 +12,8 @@ vi.mock('../utils/platformBridge', () => ({
     subscribeEvents: vi.fn(),
     getPolicy: vi.fn(),
     deletePolicy: vi.fn(),
+    kitRequest: vi.fn(),
+    kitCancel: vi.fn(),
   },
 }));
 
@@ -99,5 +101,57 @@ describe('returning a remote Forge result', () => {
     expect(outcome.ok).toBe(false);
     expect(outcome.policy).toBeNull();
     expect(outcome.stderr).toBe('The trainer saved no policy.');
+  });
+
+  it('delivers Stop after an in-flight start creates its job and keeps detach recoverable', async () => {
+    for (const reason of [undefined, 'detach']) {
+      vi.mocked(platformBridge.trainStop).mockClear();
+
+      let accept = (_reply: { jobId: string }) => {};
+
+      vi.mocked(platformBridge.trainStart).mockImplementationOnce(() => new Promise((resolve) => (accept = resolve)));
+
+      const controller = new AbortController();
+      const running = trainerForge({
+        workspaceId: 'scene',
+        background: false,
+        recoveryKey: 'workflow',
+        onProgress: () => {},
+        signal: controller.signal,
+      })(job);
+
+      controller.abort(reason);
+      await running;
+      expect(platformBridge.trainStop).not.toHaveBeenCalled();
+      accept({ jobId: 'policy-remote' });
+      await Promise.resolve();
+      expect(platformBridge.trainStop).toHaveBeenCalledTimes(reason === 'detach' ? 0 : 1);
+    }
+  });
+
+  it('cancels a background request immediately while the Kit scheduler is still debouncing it', async () => {
+    let cancel = () => {};
+
+    vi.mocked(platformBridge.kitRequest).mockImplementationOnce(
+      () => new Promise((resolve) => (cancel = () => resolve({ jobId: null }))),
+    );
+    vi.mocked(platformBridge.kitCancel).mockImplementationOnce(async () => {
+      cancel();
+
+      return { ok: true };
+    });
+
+    const controller = new AbortController();
+    const running = trainerForge({
+      workspaceId: 'scene',
+      background: true,
+      onProgress: () => {},
+      signal: controller.signal,
+    })(job);
+
+    controller.abort();
+    expect(platformBridge.kitCancel).toHaveBeenCalledWith('scene');
+    await running;
+    expect(platformBridge.trainStop).not.toHaveBeenCalled();
   });
 });

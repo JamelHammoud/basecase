@@ -10,7 +10,7 @@ export async function runMoveWork(options: {
   animation: RobotAnimation;
   ports: { forge: ForgeRunner; signal: AbortSignal };
   deps: RuntimeDeps;
-  error?: string;
+  error?: () => string | undefined;
   keep: (target: SkillTarget, record: SkillRecord) => Promise<void>;
   refuse: (target: SkillTarget, line: string) => void;
 }) {
@@ -25,5 +25,5 @@ export async function runMoveWork(options: {
   if (outcome.kind === 'skill')
     return keep(target, skillRecord(outcome.skill, { kit: null, move: moveTag(animation.id, environment) }));
 
-  refuse(target, error ?? outcome.reason);
+  refuse(target, error?.() ?? outcome.reason);
 }

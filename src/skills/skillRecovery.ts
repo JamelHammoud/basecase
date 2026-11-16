@@ -137,8 +137,10 @@ export class SkillRecovery {
   }
 
   async finish() {
-    if (this.active && !this.preserved) await this.options.store.delete(this.options.workspaceId);
+    const remove = this.active && !this.preserved;
 
     this.active = null;
+
+    if (remove) await this.options.store.delete(this.options.workspaceId);
   }
 }

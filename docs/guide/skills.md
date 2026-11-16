@@ -268,6 +268,10 @@ Reopening the scene builds its current model and restores the existing training 
 
 The journal resolves writes only after its IndexedDB transaction commits and caps a workflow at 64 MB. An unavailable or full journal fails before dispatch. The receiving bridge validates returned policies with `isRunnablePolicy` before sending them to a skill worker.
 
+Journal cleanup failures report a refusal and release the training row and active workflow identity, so later training can start. Stop waits for an in-flight Forge start to identify its job before sending the stop request. Detaching a recoverable workflow leaves that job running even when its start response arrives after disposal.
+
+Move refusals read the latest Forge error after the worker finishes, preserving connection failures instead of replacing them with a generic Arena refusal. `runtimeMove.test.ts` covers that boundary.
+
 - `skillRecovery.test.ts` covers committed workflow inputs, restart identity, stale models and tasks, local fallback, persistence failure and function-free journal metadata.
 - `recoveredSkill.test.ts` replays a real Kit worker with controlled Forge and Arena boundaries. It checks local evidence retention, local Arena refusal despite a remote ready claim, frozen seeds and scene edits both before recovery and during an active result.
 - `recoveryJudgmentReplay.test.ts` runs a multi-candidate Kit curriculum twice with controlled local judgment boundaries. It checks identical judgment sequences, candidate ranking and complete later warm-start jobs, with no judgment key in remote inputs. `localJudgments.test.ts` checks distinct draws within a workflow, exact replay and separation between workflows.

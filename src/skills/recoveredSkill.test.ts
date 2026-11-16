@@ -22,7 +22,7 @@ beforeAll(async () => {
 
 beforeEach(() => vi.clearAllMocks());
 
-function recovered(passed: boolean) {
+function recovered(passed: boolean, cleanupFails = false) {
   const evidence = {
     ...readyStand(model, 'quad').evidence!,
     passed,
@@ -50,6 +50,8 @@ function recovered(passed: boolean) {
         stored = structuredClone(value);
       },
       delete: async () => {
+        if (cleanupFails) throw new Error('Journal unavailable');
+
         stored = null;
       },
       deletePrefix: async () => {},
@@ -153,5 +155,22 @@ describe('local judgment after remote recovery', () => {
     expect(seededRecoveryJob(job)).toBe(job);
     expect(seededRecoveryJob(job, 'workflow')).toEqual(seededRecoveryJob(job, 'workflow'));
     expect(seededRecoveryJob(job, 'workflow')).not.toEqual(seededRecoveryJob(job, 'other-workflow'));
+  });
+
+  it('releases the training row and private workflow state when journal cleanup fails', async () => {
+    const state = recovered(true, true);
+
+    await state.runtime.recover(model);
+    await state.runtime.settled();
+    expect(state.runtime.busy).toBe(false);
+    expect(state.runtime.jobs).toEqual([]);
+    expect(state.refusals).toContain('Journal unavailable');
+    expect(state.recovery.key).toBeUndefined();
+
+    const work = vi.fn(async () => {});
+
+    expect(state.runtime.startJob({ target: 'kit:stand', label: 'Stand' }, work)).toBeNull();
+    await state.runtime.settled();
+    expect(work).toHaveBeenCalledOnce();
   });
 });

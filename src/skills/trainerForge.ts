@@ -126,7 +126,8 @@ export function trainerForge(options: TrainerForgeOptions): ForgeRunner {
       };
 
       const abort = () => {
-        if (!options.recoveryKey || options.signal?.reason !== 'detach') stop(options);
+        if ((options.background || jobId !== null) && (!options.recoveryKey || options.signal?.reason !== 'detach'))
+          stop(options);
 
         settle(failure('Stopped.'));
       };
@@ -146,6 +147,9 @@ export function trainerForge(options: TrainerForgeOptions): ForgeRunner {
           if (!res.jobId) return settle(failure('A newer design replaced this run.'));
 
           jobId = res.jobId;
+
+          if (options.signal?.aborted) return abort();
+
           early.filter((ev) => ev.jobId === jobId).forEach(handle);
         },
         (e: unknown) => settle(failure(errorMessage(e))),

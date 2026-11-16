@@ -35,8 +35,6 @@ You can teach your robot a Case from tries you drove yourself. Basecase keeps th
 
 Desktop runs can [train on another computer](/help/train-on-another-computer) over SSH. After a restart, Basecase recovers the frozen training inputs and judges the policy locally.
 
-Training runs in the desktop app, which uses Forge to train on your computer.
-
 The dataset must contain tries without images. A dataset with images offers **Train** for [vision training](/help/train-a-vision-model), even when it also holds tries.
 
 1. Open a Case and drive it with **Try It** until at least five tries pass. For steps, see [Try a Case](/help/try-a-case).

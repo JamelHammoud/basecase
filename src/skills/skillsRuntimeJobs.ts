@@ -77,7 +77,9 @@ export abstract class SkillsRuntimeJobs {
 
       controller.abort();
     } finally {
-      await this.deps.recovery?.finish();
+      await this.deps.recovery?.finish().catch((error: unknown) => {
+        if (run.model) this.refuse(run.target, run.model, { line: errorMessage(error), signal: controller.signal });
+      });
       this.user = null;
       this.forgeErrors.delete(run.target);
       this.trails.delete(run.target);

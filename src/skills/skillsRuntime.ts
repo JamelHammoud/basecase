@@ -298,6 +298,7 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
       target: `goal:${draft.name}`,
       label: draft.request || draft.name,
       background: false,
+      model,
       work: async (forge, signal) => {
         const reply = await this.deps.runner(
           { type: 'race', model, draft, budgetSteps },
@@ -400,7 +401,7 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
       animation,
       ports,
       deps: this.deps,
-      error: this.forgeErrors.get(`move:${animation.id}`),
+      error: () => this.forgeErrors.get(`move:${animation.id}`),
       keep: (target, record) => this.keep(target, record),
       refuse: (target, line) => this.refuse(target, model, { line, signal: ports.signal }),
     });

@@ -6,6 +6,7 @@ import type { RobotJoint, ScenePart } from '../../types/robotics';
 import type { PartMass } from '../engineeringTypes';
 import type { V3 } from '../kinematics';
 import { linkInertial, placedParts, type LinkInertial, type LinkPayload, type PlacedPart } from './urdfLinks';
+import { indexJoints } from './jointIndex';
 
 export interface UrdfInput {
   name: string;
@@ -29,6 +30,8 @@ interface WriteState {
   input: UrdfInput;
   byId: Map<string, ScenePart>;
   masses: Map<string, PartMass>;
+  simJoints: Map<string, SimJoint>;
+  sceneJoints: Map<string, RobotJoint>;
   meshes: Record<string, Float32Array>;
   colors: Map<string, string>;
   links: string[];
@@ -134,8 +137,8 @@ interface JointLink {
 }
 
 function jointXml(st: WriteState, link: JointLink, body?: SimBody) {
-  const sim = body?.joint ? st.input.model.joints.find((j) => j.id === body.joint) : undefined;
-  const scene = body?.joint ? st.input.joints.find((j) => j.id === body.joint) : undefined;
+  const sim = body?.joint ? st.simJoints.get(body.joint) : undefined;
+  const scene = body?.joint ? st.sceneJoints.get(body.joint) : undefined;
   const lines = [
     `  <joint name="${esc(link.name)}" type="${jointType(sim)}">`,
     `    <parent link="${esc(link.parent)}"/>`,
@@ -178,6 +181,8 @@ export function writeUrdf(input: UrdfInput): UrdfFiles {
     input,
     byId: new Map(input.parts.map((p) => [p.id, p])),
     masses: new Map(input.masses.map((m) => [m.id, m])),
+    simJoints: indexJoints(input.model.joints),
+    sceneJoints: indexJoints(input.joints),
     meshes: {},
     colors: new Map(),
     links: [],

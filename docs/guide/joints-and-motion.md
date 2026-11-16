@@ -120,6 +120,8 @@ Measurements and limits: [Robot shells performance evidence](../notes/performanc
 
 Measurements and limits: [Joints and kinematics performance evidence](../notes/performance-joints.md).
 
+- **URDF export indexes joint identities.** `utils/robotImport/urdfWriter.ts` prepares model and scene joint indices once per write through `jointIndex.ts`. First duplicate matches, missing-joint behavior and output order stay unchanged. Robot Package's joint map and policies share the same indexing helper. Coverage and measurements belong to [Simulation](simulate.md#performance-simulation).
+
 - **Four-bar derivative probes share residual storage.** `utils/linkageFit.ts` fills one workspace across every perturbed parameter, without intermediate bound arrays or concatenating path errors. Sketch Path and the agent share this fitter. `linkageClosure.test.ts` compares full residual vectors with the previous equations across generated trials, both directions, bounds, edits and nonfinite inputs, and checks resized workspaces and independent results. [Evidence](../notes/performance-joints.md#four-bar-derivative-probes-share-residual-storage).
 
 - **Joint-axis clustering indexes shafts once per query.** `joints/axisClusters.ts` searches only clusters belonging to the current shaft, removing scans across unrelated shafts. Automatic joint-axis discovery shares this path, retaining global cluster creation order, member order, first-match representatives and collinearity arithmetic. No index survives a query. [Evidence](../notes/performance-joints.md#joint-axis-clustering-indexes-shafts-once-per-query).

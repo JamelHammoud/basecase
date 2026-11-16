@@ -6,7 +6,13 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const f = vi.hoisted(() => ({
   dir: '',
   state: null,
-  candidate: { key: 'candidate-one', source: 'micro', ref: 'week/A1', text: 'Seat the screw heads' },
+  candidate: {
+    source: 'tune-waste',
+    ref: 'tune-waste/repeated-read/get_scene',
+    text: 'repeated-read: get_scene',
+    measured: { frequency: 4, milliseconds: 500 },
+    evidence: ['week/A1'],
+  },
   selection: { provider: 'codex', model: 'gpt-6.1-sol', effort: 'medium' },
   benchmarkSelection: vi.fn(),
   runAgent: vi.fn(),
@@ -17,6 +23,9 @@ const f = vi.hoisted(() => ({
 
 vi.mock('./paths.mjs', () => ({
   CODE_ROOT: '.',
+  get HOME_CHECKOUT() {
+    return f.dir;
+  },
   get LOOP_DIR() {
     return f.dir;
   },
@@ -29,7 +38,6 @@ vi.mock('./worktree.mjs', () => ({ openBranch: () => ({ dir: f.dir, branch: 'loo
 vi.mock('./capacity.mjs', () => ({ measure: () => ({ sessions: 0, loadPerCore: 0.1 }), capacityHold: () => null }));
 vi.mock('./locks.mjs', () => ({ heldLocks: () => ['nightly-1'] }));
 vi.mock('../../../verify/lib/quiet.mjs', () => ({ quietRequested: () => false }));
-vi.mock('./harnessEvidence.mjs', () => ({ chooseCandidate: () => f.candidate }));
 vi.mock('./store.mjs', () => ({
   store: () => ({
     get: () => structuredClone(f.state),
@@ -72,11 +80,18 @@ function writeComparison(args, result = outcome()) {
 
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'results.json'), JSON.stringify(result));
-  fs.writeFileSync(path.join(dir, 'report.md'), 'Before main: 0. After working tree: 1.');
+  fs.writeFileSync(
+    path.join(dir, 'report.md'),
+    `${args.includes('--tune') ? 'Tune' : 'Held-out'}: total work per successful task, failed attempts included.`,
+  );
 }
 
 function shell(_, args) {
-  if (args[0] === '--input-type=module') return { ok: true, out: '[]' };
+  if (args[0] === '--input-type=module')
+    return {
+      ok: true,
+      out: JSON.stringify([{ source: 'review', ref: '#1', text: 'Unmeasured finding' }, f.candidate]),
+    };
 
   if (args[0] === 'rev-parse') return { ok: true, out: 'abc123' };
 
@@ -123,6 +138,8 @@ it('drives the nightly entry through proposal, both measurements, reporting and 
 
   nightlyHarness({ log: vi.fn(), release: 'v0.2.1' });
   expect(f.runAgent).toHaveBeenCalledOnce();
+  expect(f.runAgent.mock.calls[0][0].prompt).toContain(JSON.stringify(f.candidate.measured));
+  expect(f.runAgent.mock.calls[0][0].prompt).toContain(f.candidate.ref);
   expect(commands()).toHaveLength(2);
 
   for (const [, args, options] of commands()) {
@@ -135,8 +152,10 @@ it('drives the nightly entry through proposal, both measurements, reporting and 
 
   expect(commands()[0][1]).toContain('--tune');
   expect(commands()[1][1]).toContain('--heldout');
-  expect(f.state.entries.at(-1)).toMatchObject({ verdict: 'kept' });
-  expect(f.state.entries.at(-1).lesson).toContain('Before main: 0. After working tree: 1.');
+  expect(f.state.entries.at(-1)).toMatchObject({ verdict: 'kept', waste: f.candidate.measured });
+  expect(f.state.entries.at(-1).evidence).toContain('week/A1');
+  expect(f.state.entries.at(-1).lesson).toContain('Tune: total work per successful task');
+  expect(f.state.entries.at(-1).lesson).toContain('Held-out: total work per successful task');
   expect(f.publish).toHaveBeenCalledOnce();
   expect(f.close).toHaveBeenCalledOnce();
 });

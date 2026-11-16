@@ -117,6 +117,7 @@ export function runFromCache(entry, label) {
     costUsd: entry.costUsd,
     seconds: entry.seconds,
     tokens: entry.tokens,
+    toolCalls: entry.toolCalls,
     servedBy: entry.servedBy,
     provider: entry.provider ?? 'claude',
     model: label,

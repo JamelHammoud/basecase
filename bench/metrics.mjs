@@ -1,8 +1,14 @@
 import fs from 'node:fs';
 
 const isSubagent = (u) => !!u?._meta?.claudeCode?.parentToolUseId;
-const toolNameOf = (u) =>
-  String(u._meta?.claudeCode?.toolName ?? u.toolName ?? u.title ?? '').replace(/^mcp__\w+?__/, '');
+
+export const toolNameOf = (u) => {
+  const wrapped = typeof u.rawInput?.server === 'string' && typeof u.rawInput?.tool === 'string';
+
+  return String(wrapped ? u.rawInput.tool : (u._meta?.claudeCode?.toolName ?? u.toolName ?? u.title ?? ''))
+    .replace(/^mcp__\w+?__/, '')
+    .replace(/^mcp\.[\w-]+\./, '');
+};
 
 export function readEvents(file) {
   if (!fs.existsSync(file)) return [];
@@ -59,7 +65,7 @@ function toolCounts(updates) {
 export function tokensOf(usage) {
   if (!usage || typeof usage !== 'object') return null;
 
-  const n = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  const n = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
 
   return {
     input: n(usage.inputTokens),

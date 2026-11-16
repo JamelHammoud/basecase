@@ -221,8 +221,15 @@ function centroid(index: MeshIndex, t: number): V3 {
   return scale(add(add(a, b), c), 1 / 3);
 }
 
-const triangleResidual = (index: MeshIndex, fit: Fit, t: number) =>
-  Math.max(...[0, 1, 2].map((k) => fit.residuals.get(index.corners[t * 3 + k])!));
+function triangleFits(index: MeshIndex, fit: Fit, t: number, limit: number) {
+  for (let k = 0; k < 3; k++) {
+    const withinLimit = fit.residuals.get(index.corners[t * 3 + k])! <= limit;
+
+    if (!withinLimit) return false;
+  }
+
+  return true;
+}
 
 function rms(residuals: Map<number, number>) {
   let sum = 0;
@@ -253,7 +260,7 @@ export function fitCylinder(index: MeshIndex, region: number[], minSpanDeg: numb
 
     if (rms(fit.residuals) <= limit) return fit.cylinder.spanDeg >= minSpanDeg ? fit.cylinder : null;
 
-    const kept = tris.filter((t) => triangleResidual(index, fit, t) <= limit);
+    const kept = tris.filter((t) => triangleFits(index, fit, t, limit));
 
     if (kept.length === tris.length) return null;
 

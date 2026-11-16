@@ -4,7 +4,7 @@ Implementation: [Simulation](../guide/simulate.md#performance-simulation). Share
 
 ## Robot exports index joint identities
 
-`src/sim/robotPackage/jointLookup.test.ts` compares every generated file byte for byte with scan-based joint lookup across all fixture robots. The reference replaces only index lookup with the previous first-match `find`, keeping geometry, serializers and package metadata identical. It also checks reversed model order, two policies with reversed action order and an unknown joint, duplicate model and scene ids, missing joints, empty lists and edits between calls.
+`src/sim/robotPackage/jointLookup.test.ts` compares every generated file byte for byte with scan-based joint lookup across all fixture robots. The reference replaces only index lookup with the previous first-match `find`, keeping geometry, serializers and package metadata identical. It also checks reversed model order, two policies with different action orders and an unknown joint, duplicate model and scene ids, independently missing model and scene joints, empty lists and edits between calls.
 
 For the 12-joint quadruped and 18-joint hexapod, the complete package pipeline reads model joint ids 36 and 54 times, down from 336 and 720. Getters count reads on each source model joint. Each fixture includes two policies, each referring to every model joint and one unknown id. Indexed lookup reads each id once for URDF, once for the joint map and once for all policies together. The scan reference reads 2N(N + 1) + 2N ids. These are operation counts measured by the tests, without timing assertions or a claim about complete export time. Indices retain linear storage and no state survives an export call.
 

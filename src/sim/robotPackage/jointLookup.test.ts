@@ -38,8 +38,8 @@ function policies(joints: string[]): PackagedPolicy[] {
     createdAt: '2026-11-12T00:00:00Z',
   };
 
-  return ['first', 'second'].map((id) => ({
-    spec,
+  return ['first', 'second'].map((id, index) => ({
+    spec: { ...spec, joints: index === 0 ? [...joints, 'missing'] : actionJoints },
     record: {
       id,
       name: id,
@@ -79,7 +79,12 @@ describe('robot package joint identity lookup', () => {
     job.model.joints.push({ ...firstSim, name: 'duplicate', range: [-1, 1] });
     job.project.joints = [...job.project.joints!, { ...firstScene, velocity: 999 }];
     matchesScan(job);
+
+    const modelJoints = job.model.joints;
+
     job.model.joints = job.model.joints.filter((joint) => joint.id !== firstSim.id);
+    matchesScan(job);
+    job.model.joints = modelJoints;
     job.project.joints = job.project.joints.filter((joint) => joint.id !== firstScene.id);
     matchesScan(job);
     job.model.joints[0] = { ...job.model.joints[0], name: 'edited', range: [-12, 34] };

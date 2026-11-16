@@ -10,8 +10,8 @@ A rover’s chassis can hide a low obstacle from its camera. By changing the cam
 
 You compare candidates using the same recorded body poses, timestamps, target identities and minimum pixel areas. In Study, you measure 320 × 240 instance and depth passes at 2 to 32 selected timestamps, with separate results for each camera and target. With multiple cameras, you count a target at a timestamp if any camera meets its minimum area.
 
-Select a row to inspect visible pixels and intervals where the target falls outside the view or below the declared area. Preview changes on the canvas, and apply the camera and lens settings in one undoable edit. You use those scene settings to make training images.
+Each result includes visible pixels and intervals where the target falls outside the view or below the declared area. Camera and lens settings preview on the canvas and apply in one undoable edit. Training images use the applied scene settings.
 
-You can miss events between timestamps when sampling. You measure simulated visibility here, not detector accuracy, physical sensor performance or Case success. You cannot use missing captures. If you change the source try, you need to run another comparison.
+You can miss events between timestamps when sampling. You measure simulated visibility here, not detector accuracy, physical sensor performance or Case success. You can’t use missing captures. If you change the source try, you need to run another comparison.
 
 Follow the steps in [Compare camera placements](/help/compare-camera-placements).

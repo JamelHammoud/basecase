@@ -24,9 +24,9 @@ covers:
   - src/components/simulate/StudyVisibilityDetails.tsx
 ---
 
-Compare camera placements over the same saved simulated try to see which ones keep declared objects visible. You can then apply a configuration before making training images.
+Compare camera poses and lenses over one saved simulated try, then apply a configuration before making training images.
 
-You can measure simulated geometry, but you can’t measure detector accuracy with this comparison. Use camera parts that appear in live camera views. Changes to camera poses move connected mounting parts together. You can’t use the comparison to construct mounts or establish that a robot passes its Case.
+Use camera parts that appear in live camera views. Pose changes move mounting parts linked by fastened mates, press fits or part frames together. This comparison measures simulated geometry. It can’t measure detector accuracy, construct mounts or establish that a robot passes its Case.
 
 1. Open the Case whose simulated try you want to replay.
 2. Press [[⌘K]] and choose **Study**.

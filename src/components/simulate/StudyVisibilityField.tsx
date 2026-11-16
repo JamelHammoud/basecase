@@ -89,6 +89,7 @@ export function StudyVisibilityField({ study }: { study: Study }) {
               min={2}
               max={32}
               precision={0}
+              unit=""
               disabled={running}
               onChange={(samples) => visibility.edit({ ...request, samples })}
             />

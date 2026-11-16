@@ -78,4 +78,22 @@ describe('Study camera choices', () => {
       studyScene({ ...scene, parts: [box('eye', [0, 0, 0], [10, 10, 10], 0)] }, [lens], [0]),
     ).rejects.toThrow();
   });
+
+  it('follows rigid mates and frame links without moving sliding or partially constrained neighbors', async () => {
+    const kinds = ['fastened', 'press_fit', 'slider', 'coaxial', 'face'] as const;
+    const neighbors = kinds.map((type, i) => ({
+      ...box(type, [i * 10, 100, 10], [5, 5, 5], 0),
+      mates: [{ port: 'face', target: camera.id, targetPort: 'back', type }],
+    }));
+    const frame = { ...box('frame', [0, 100, 20], [5, 5, 5], 0), frame: 'press_fit' };
+    const parts = [camera, ...neighbors, frame];
+    const edited = await studyScene({ ...scene, parts }, [pose], [0]);
+
+    expect(edited.parts[1]).not.toBe(neighbors[0]);
+    expect(edited.parts[2]).not.toBe(neighbors[1]);
+    expect(edited.parts[6]).not.toBe(frame);
+    expect(edited.parts.slice(3, 6)).toEqual(neighbors.slice(2));
+    expect(edited.parts.slice(3, 6).every((part, i) => part === neighbors[i + 2])).toBe(true);
+    expect(parts[0]).toBe(camera);
+  });
 });

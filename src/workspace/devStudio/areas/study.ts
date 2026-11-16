@@ -10,7 +10,6 @@ export default function studyStudio(studio: Studio) {
       const study = studio().core.study;
 
       return {
-        keepStudyTry: () => keepStudyTry(studio),
         record: study.shown,
         preview: study.previewKey,
         running: study.running,

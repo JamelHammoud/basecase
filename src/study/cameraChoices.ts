@@ -27,7 +27,12 @@ function mountedIds(parts: ScenePart[], id: string): Set<string> {
   const links = new Map(parts.map((part) => [part.id, new Set<string>()]));
 
   for (const part of parts) {
-    const targets = [...(part.mates ?? []).map((mate) => mate.target), ...(part.frame ? [part.frame] : [])];
+    const targets = [
+      ...(part.mates ?? [])
+        .filter((mate) => mate.type === 'fastened' || mate.type === 'press_fit')
+        .map((mate) => mate.target),
+      ...(part.frame ? [part.frame] : []),
+    ];
 
     for (const target of targets) {
       links.get(part.id)!.add(target);

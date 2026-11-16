@@ -69,7 +69,11 @@ function UnitRow({ unit, selected, rollOut, incidents }: UnitRowProps) {
       </span>
       <MetaLine
         className="text-[12px] text-white/50 tabular-nums"
-        items={[rungLabel(unit.state.mode), unit.version?.slice(0, SHORT_VERSION), twinCount(rollOut, unit)]}
+        items={[
+          unit.state.link === 'connected' ? rungLabel(unit.state.mode) : null,
+          unit.version?.slice(0, SHORT_VERSION),
+          twinCount(rollOut, unit),
+        ]}
       />
       {held && <p className="text-[12px] text-white/50">{held}</p>}
       {failure && <p className="text-[12px] text-white/50">{failure}</p>}
@@ -77,7 +81,6 @@ function UnitRow({ unit, selected, rollOut, incidents }: UnitRowProps) {
         <Button
           size="sm"
           variant="ghost"
-          title={`Inspect Problems for ${unit.unit}`}
           onClick={(event) => {
             event.stopPropagation();
             inspectUnitProblems(unit.unit);

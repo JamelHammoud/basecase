@@ -56,3 +56,5 @@ The new first-status assertion failed with a null session before recorder event 
 The browser walkthrough opens Operate in two scene tabs before inspecting. It requires exactly one incident dialog, acknowledges the active incident, closes the dialog with Escape from the action button, reopens it and fetches the exact kept recording. The dialog mounts through the active workspace's sheet host with its own error boundary. Browser execution stays in CI.
 
 The review validation passed `check:changed` for the code and test changes, including 47 related test files and 222 tests, types, lint, docs and site copy.
+
+The native fleet integration asserts that the arm fault precedes its recorded event, preserving the existing renderer replay binding while checking the incident against that same saved session. The disconnected incident browser fixture also asserts that its retained row has no Look rung. These assertions add no recording wait or retry.

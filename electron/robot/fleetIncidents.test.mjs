@@ -75,6 +75,9 @@ it('binds a fleet fault and a lost quadruped to their own sessions while another
     const fault = incidents.items[0];
     const manifest = events.find((event) => event.event === 'recorded' && event.unit === 'arm').manifest;
 
+    expect(events.findIndex((event) => event.event === 'fault' && event.unit === 'arm')).toBeLessThan(
+      events.findIndex((event) => event.event === 'recorded' && event.unit === 'arm'),
+    );
     expect(fault).toMatchObject({
       unit: 'arm',
       session: manifest.id,

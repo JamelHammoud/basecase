@@ -38,7 +38,7 @@ The daemon reports every servo 10 times a second, and the app shows the newest r
 
 ## Fleet rows
 
-Operate lists connected units and units with retained incident history by name above the controls. Each row shows its rung and policy version. After Roll Out, it also shows the twin's pass count or failing contract line. A fault marks only that unit's row.
+Operate lists connected units and units with retained incident history by name above the controls. Connected rows show their rung and policy version. After Roll Out, it also shows the twin's pass count or failing contract line. A fault marks only that unit's row.
 
 Click a connected row to select the unit. The header, Ladder, servo readings, messages and measured canvas robot then follow that unit. **Stop**, **Disconnect** and commands from the simulation apply to the selected unit.
 

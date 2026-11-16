@@ -78,6 +78,7 @@ it('restores a fleet problem, acknowledges it and opens its exact kept try', asy
     );
     await expect.poll(() => partCount(page)).toBe(ARM.parts.length);
     await openPlayTab(page, 'Operate');
+    expect(await page.locator(shown('[data-fleet-unit="arm-3"]')).innerText()).not.toContain('Look');
     await page
       .locator(shown('[data-fleet-unit="arm-3"]'))
       .getByRole('button', { name: 'Inspect Problems', exact: true })

@@ -246,6 +246,13 @@ export class RobotLink {
 
     if (typeof event.mode === 'string' && event.event !== 'completed') this.onMode(session, event);
 
+    if (event.event === 'fault') {
+      this.emit(event);
+      session.recorder?.event(event);
+
+      return;
+    }
+
     session.recorder?.event(event);
     this.emit(event);
   }

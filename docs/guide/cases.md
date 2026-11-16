@@ -621,6 +621,8 @@ Measurements and limits: [Vision training performance evidence](../notes/perform
 
 ## Performance: dataset preparation
 
+- **Quality flags share frame validity.** `datasets/qualityFlags.ts` scans timestamps, joint positions and body poses for NaNs once per labeling call. Gap and idle detection share a temporary byte per frame, rebuilt on every call so edited recordings are checked again. Late timestamps remain gaps without breaking idle stretches. Timeline labeling and the agent's `label_tries` use this shared path. `qualityFrameGaps.test.ts` checks all three NaN channels, adjacent missing frames, first and last frames, empty recordings, late timestamps and edits between calls. Existing `qualityFlags.test.ts` retains real arm replay, joint-limit, effort, model mismatch, ordering and cap coverage. [Evidence](../notes/performance-datasets.md#quality-flags-share-frame-validity).
+
 - **Import path sorting prepares depth once per candidate.** LeRobot root discovery in `datasets/import/sourceKind.ts` shares `utils/pathsByDepth.ts` with robot entry discovery. It retains shallowest-depth priority, lexical ties and root-prefix handling without splitting paths inside the comparator. `sourceKind.test.ts` covers mixed formats, reordered inputs, changed candidates and unchanged source arrays. [Shared evidence](../notes/performance-joints.md#import-path-sorting-prepares-depth-once-per-candidate).
 
 Measurements and limits: [Dataset preparation performance evidence](../notes/performance-datasets.md).

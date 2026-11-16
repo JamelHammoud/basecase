@@ -2,6 +2,18 @@
 
 Implementation: [Dataset preparation](../guide/cases.md#performance-dataset-preparation). Shared requirements: [Performance](../guide/performance.md).
 
+## Quality flags share frame validity
+
+Gap and idle flag detection previously checked the same timestamp, joint-position row and body-pose row separately for NaNs. The shared label pass now computes one byte per frame and shares it across both consumers. Searching `src/` found these two consumers in `datasets/qualityFlags.ts`, reached through `workspace/tryLabelPass.ts`. No other quality flag frame-validity scan remains. The mask belongs to one call, so later edits cannot reuse stale validity.
+
+On November 16, 2026, a local Node v26.13.0 probe on macOS arm64 with an Apple M5 Pro compared the previous and current complete `qualityFlags` calls. Each fixture had 10,000 frames, 24 joint positions and 32 bodies with seven pose channels. One fixture moved each body 2 mm per frame. The other held every body stationary. Both omitted a model, leaving joint-limit checking out of the measurement. After ten warmup calls per version, seven alternating batches of five calls gave median batch means of 2.993 ms before and 1.246 ms after for moving bodies, and 7.194 ms before and 5.034 ms after for stationary bodies.
+
+For either NaN-free fixture, validity checks fall from 4,980,000 to 2,490,000 scalar NaN tests per call. This is a derived operation count. Pose comparisons for idle detection remain unchanged. The new temporary mask uses 10,000 bytes for these fixtures and is released after each call. Recordings with early NaNs already short-circuit their channel scans, so their savings depend on where the NaNs occur.
+
+The probe checked exact output parity across 80 generated recordings with zero through 553 frames, moving and stationary bodies, NaNs in all three channels and late timestamps. `qualityFrameGaps.test.ts` retains boundary, mixed-gap and edited-recording checks without a timing assertion. `qualityFlags.test.ts` retains real MuJoCo arm replay coverage. No quarantine condition was added.
+
+These are local synchronous flagging measurements, not CI results or full timeline latency. Segmentation, persistence, joint-limit scans, effort flags, thresholds, sorting and the 100-flag cap are unchanged. There is no screen or interaction change.
+
 ## Imported joint ranges accumulate extrema directly
 
 `src/datasets/import/units.test.ts` compares merged ranges and unit detection with the previous mapped extrema across 21 generated groups of 80 episodes with 12 columns. It covers NaN, infinities, reversed ranges, signed zero, empty inputs, inclusive thresholds and unchanged inputs. Existing `importedTries.test.ts` retains complete import and replay coverage.

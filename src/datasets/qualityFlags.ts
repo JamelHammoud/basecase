@@ -87,10 +87,18 @@ function hasNaN(values: ArrayLike<number>, from: number, length: number) {
 const blankFrame = (r: Recording, f: number) =>
   Number.isNaN(r.t[f]) || hasNaN(r.qpos, f * r.nq, r.nq) || hasNaN(r.poses, f * r.nbody * POSE, r.nbody * POSE);
 
+function blankFrames(recording: Recording): Uint8Array {
+  const blank = new Uint8Array(recording.frames);
+
+  for (let f = 0; f < recording.frames; f++) blank[f] = Number(blankFrame(recording, f));
+
+  return blank;
+}
+
 const lateFrame = (r: Recording, f: number) => f > 0 && r.t[f] - r.t[f - 1] > FLAG_RULES.gapFactor * r.dt;
 
-function gapFlags(recording: Recording): QualityFlag[] {
-  const missing = (f: number) => blankFrame(recording, f) || lateFrame(recording, f);
+function gapFlags(recording: Recording, blanks: Uint8Array): QualityFlag[] {
+  const missing = (f: number) => Boolean(blanks[f]) || lateFrame(recording, f);
   const start = (s: Stretch) => (lateFrame(recording, s.from) ? s.from - 1 : s.from);
 
   return stretches(recording.frames, missing).map((s) => ({
@@ -133,12 +141,12 @@ function stillSince(recording: Recording, anchor: number, frame: number) {
   return true;
 }
 
-function stillStretches(recording: Recording): Stretch[] {
+function stillStretches(recording: Recording, blanks: Uint8Array): Stretch[] {
   const found: Stretch[] = [];
   let anchor = -1;
 
   for (let f = 0; f <= recording.frames; f++) {
-    const blank = f === recording.frames || blankFrame(recording, f);
+    const blank = f === recording.frames || Boolean(blanks[f]);
     const moved = !blank && anchor >= 0 && !stillSince(recording, anchor, f);
 
     if (anchor >= 0 && (blank || moved)) found.push({ from: anchor, to: f });
@@ -150,10 +158,10 @@ function stillStretches(recording: Recording): Stretch[] {
   return found;
 }
 
-function idleFlags(recording: Recording): QualityFlag[] {
+function idleFlags(recording: Recording, blanks: Uint8Array): QualityFlag[] {
   const long = (s: Stretch) => recording.t[s.to - 1] - recording.t[s.from] > FLAG_RULES.idleSeconds;
 
-  return stillStretches(recording)
+  return stillStretches(recording, blanks)
     .filter(long)
     .map((s) => ({ kind: 'idle' as const, at: secondsAt(recording, s.from) }));
 }
@@ -164,12 +172,13 @@ const byTime = (a: QualityFlag, b: QualityFlag) =>
   a.at - b.at || kindOrder(a) - kindOrder(b) || (a.joint ?? '').localeCompare(b.joint ?? '');
 
 export function qualityFlags({ recording, model, modelMatches }: FlagInput): QualityFlag[] {
+  const blanks = blankFrames(recording);
   const flags: QualityFlag[] = [
     ...(modelMatches === false ? [{ kind: 'model' as const, at: 0 }] : []),
     ...(model && modelMatches !== false ? limitFlags(recording, model) : []),
-    ...gapFlags(recording),
+    ...gapFlags(recording, blanks),
     ...effortFlags(recording),
-    ...idleFlags(recording),
+    ...idleFlags(recording, blanks),
   ];
 
   return flags.sort(byTime).slice(0, LABEL_LIMITS.flags);

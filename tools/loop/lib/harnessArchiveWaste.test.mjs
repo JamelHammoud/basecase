@@ -105,30 +105,69 @@ it('replays comparison arms, falls through partial duplicates and rejects oversi
   }
 });
 
-it('preserves missed-check evidence from a passing tune archive without a separate harvest', async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-missed-check-'));
+it.each(['claude', 'codex', 'dotted'])(
+  'preserves missed-check evidence from a passing %s tune archive without a separate harvest',
+  async (provider) => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-missed-check-'));
+
+    try {
+      archive(root, 'A1', [['get_readiness', {}, 'READY TO BUILD. No blockers.', 'completed', 10]]);
+
+      const dir = path.join(root, 'replay', 'micro', 'A1', 'seed-1');
+      const scene = await recordFromFixture(FAULTS.shortScrew(boltedPair({ layout: 'visor' })), specToPart);
+      const events = fs
+        .readFileSync(path.join(dir, 'events.jsonl'), 'utf8')
+        .split('\n')
+        .map((row) => JSON.parse(row));
+
+      const start = events[0].update;
+
+      delete start.toolName;
+
+      if (provider === 'claude') start.title = 'mcp__robotics_cad__get_readiness';
+
+      if (provider === 'codex') start.rawInput = { server: 'robotics_cad', tool: 'get_readiness', arguments: {} };
+
+      if (provider === 'dotted') start.title = 'mcp.robotics_cad.get_readiness';
+
+      events[1].update.content = [{ type: 'text', text: 'READY TO BUILD. No blockers.' }];
+      fs.writeFileSync(path.join(dir, 'events.jsonl'), events.map((row) => JSON.stringify(row)).join('\n'));
+      fs.writeFileSync(path.join(dir, 'scene.json'), JSON.stringify(scene));
+
+      const candidates = archiveCandidates([root], '2026-11-07');
+
+      expect(candidates).toContainEqual(
+        expect.objectContaining({ source: 'run', kind: 'short', graded: true, ids: ['visor-1'] }),
+      );
+      expect(candidates[0].ref).toContain('replay/micro/A1/seed-1');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  },
+);
+
+it('counts partial copies once against the attempt limit and verifies complete archive identities', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-copies-'));
+  const partial = path.join(root, 'partial');
+  const complete = path.join(root, 'complete');
 
   try {
-    archive(root, 'A1', [['get_readiness', {}, 'READY TO BUILD. No blockers.', 'completed', 10]]);
+    for (let i = 0; i < WASTE_LIMITS.entries; i++) archive(complete, `task-${i}`, fixtures.reads);
 
-    const dir = path.join(root, 'replay', 'micro', 'A1', 'seed-1');
-    const scene = await recordFromFixture(FAULTS.shortScrew(boltedPair({ layout: 'visor' })), specToPart);
-    const events = fs
-      .readFileSync(path.join(dir, 'events.jsonl'), 'utf8')
-      .split('\n')
-      .map((row) => JSON.parse(row));
+    fs.mkdirSync(partial);
+    fs.copyFileSync(path.join(complete, 'index.jsonl'), path.join(partial, 'index.jsonl'));
 
-    events[0].update.title = 'mcp__robotics_cad__get_readiness';
-    events[1].update.content = [{ type: 'text', text: 'READY TO BUILD. No blockers.' }];
-    fs.writeFileSync(path.join(dir, 'events.jsonl'), events.map((row) => JSON.stringify(row)).join('\n'));
-    fs.writeFileSync(path.join(dir, 'scene.json'), JSON.stringify(scene));
+    const candidates = archiveCandidates([partial, complete], '2026-11-07');
 
-    const candidates = archiveCandidates([root], '2026-11-07');
+    expect(candidates[0].measured.frequency).toBe(WASTE_LIMITS.entries * 2);
 
-    expect(candidates).toContainEqual(
-      expect.objectContaining({ source: 'run', kind: 'short', graded: true, ids: ['visor-1'] }),
+    const summary = path.join(complete, 'replay', 'micro', 'task-0', 'seed-1', 'summary.json');
+    const saved = JSON.parse(fs.readFileSync(summary, 'utf8'));
+
+    fs.writeFileSync(summary, JSON.stringify({ ...saved, provider: 'codex' }));
+    expect(archiveCandidates([partial, complete], '2026-11-07')[0].measured.frequency).toBe(
+      (WASTE_LIMITS.entries - 1) * 2,
     );
-    expect(candidates[0].ref).toContain('replay/micro/A1/seed-1');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

@@ -1,8 +1,14 @@
 import fs from 'node:fs';
 
 const isSubagent = (u) => !!u?._meta?.claudeCode?.parentToolUseId;
-const toolNameOf = (u) =>
-  String(u._meta?.claudeCode?.toolName ?? u.toolName ?? u.title ?? '').replace(/^mcp__\w+?__/, '');
+
+export const toolNameOf = (u) => {
+  const wrapped = typeof u.rawInput?.server === 'string' && typeof u.rawInput?.tool === 'string';
+
+  return String(wrapped ? u.rawInput.tool : (u._meta?.claudeCode?.toolName ?? u.toolName ?? u.title ?? ''))
+    .replace(/^mcp__\w+?__/, '')
+    .replace(/^mcp\.[\w-]+\./, '');
+};
 
 export function readEvents(file) {
   if (!fs.existsSync(file)) return [];

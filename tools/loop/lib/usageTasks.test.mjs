@@ -105,4 +105,22 @@ describe('work per linked merged task', () => {
       unattributed: { sessions: 1 },
     });
   });
+
+  it('keeps Claude totals incomplete when cache usage is absent from a main or repair attempt', () => {
+    const claudeUsage = { input_tokens: 10, output_tokens: 5, cache_read_input_tokens: 100 };
+    const report = taskUsage(
+      [
+        session('revise-21', { provider: 'claude', usage: claudeUsage }),
+        session('revise-21', {
+          provider: 'claude',
+          usage: { ...claudeUsage, cache_creation_input_tokens: 20 },
+          previousUsage: { input_tokens: 10, output_tokens: 5 },
+        }),
+      ],
+      pulls,
+    );
+
+    expect(report.mergedWork).toMatchObject({ tokens: null, measuredTokens: 265, missingUsage: 2 });
+    expect(report.workPerMergedTask.tokens).toBeNull();
+  });
 });

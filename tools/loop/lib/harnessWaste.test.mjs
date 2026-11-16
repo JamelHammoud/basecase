@@ -55,6 +55,26 @@ it('does not count changed replies, incomplete calls or unmeasured durations as 
   expect(wastePatterns(records)).toEqual([]);
 });
 
+it('keeps unfinished mutations and changed failure replies out of redundant work', () => {
+  const records = replay([fixture.reads[0], ['update_parts', {}, 'changed', 'completed', 10], fixture.reads[1]]);
+
+  records.splice(3, 1);
+  expect(wastePatterns(records)).toEqual([]);
+
+  const overlapping = replay([fixture.reads[0], ['update_parts', {}, 'changed', 'completed', 10], ...fixture.reads]);
+  const [mutationEnd] = overlapping.splice(3, 1);
+
+  overlapping.push(mutationEnd);
+  expect(wastePatterns(overlapping)).toEqual([]);
+
+  const failures = replay(fixture.failures);
+
+  failures.at(-1).update.rawOutput = 'new diagnostic';
+  expect(wastePatterns(failures)).toEqual([]);
+  delete failures.at(-1).update.rawOutput;
+  expect(wastePatterns(failures)).toEqual([]);
+});
+
 it.each(['wrapped', 'dotted', 'claude'])('recognizes %s provider records and requires actual replies', (shape) => {
   const records = replay(fixture.reads);
 
@@ -70,7 +90,10 @@ it.each(['wrapped', 'dotted', 'claude'])('recognizes %s provider records and req
 
   expect(wastePatterns(records)[0]).toMatchObject({ frequency: 2, milliseconds: 70 });
 
-  for (const { update } of records) delete update.rawOutput;
+  for (const { update } of records) {
+    delete update.rawOutput;
+    update.content = [];
+  }
 
   expect(wastePatterns(records)).toEqual([]);
 });

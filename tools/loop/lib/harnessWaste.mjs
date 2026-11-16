@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { toolNameOf } from '../../../bench/metrics.mjs';
 
 const hash = (value) =>
   crypto
@@ -19,19 +20,17 @@ const CHECKS = new Set(['get_readiness', 'check_assembly', 'check_scene']);
 
 function toolStart(u, t) {
   const wrapped = typeof u.rawInput?.server === 'string' && typeof u.rawInput?.tool === 'string';
-  const name = wrapped ? u.rawInput.tool : (u._meta?.claudeCode?.toolName ?? u.toolName ?? u.title ?? '');
   const input = wrapped ? u.rawInput.arguments : u.rawInput;
 
   return {
-    name: String(name)
-      .replace(/^mcp__\w+?__/, '')
-      .replace(/^mcp\.[\w-]+\./, ''),
+    name: toolNameOf(u),
     input: input === undefined ? null : hash(input),
     started: t,
   };
 }
 
-const outputOf = (u) => u.rawOutput ?? u.content ?? u._meta?.claudeCode?.toolResponse;
+const outputOf = (u) =>
+  u.rawOutput ?? u._meta?.claudeCode?.toolResponse ?? (u.content?.length === 0 ? undefined : u.content);
 
 const durationOf = (start, end) =>
   Number.isFinite(start) && Number.isFinite(end) && end >= start ? end - start : null;
@@ -42,9 +41,17 @@ const toolEnd = (call, u, t) => ({
   duration: durationOf(call.started, t),
 });
 
-function completedCalls(records) {
+function noteMutation(clock, name, delta) {
+  if (READS.has(name)) return;
+
+  clock.epoch++;
+  clock.mutations += delta;
+}
+
+function recordedCalls(records) {
   const pending = new Map();
-  const completed = [];
+  const calls = [];
+  const clock = { epoch: 0, mutations: 0 };
 
   for (const record of records) {
     const u = record.update;
@@ -52,7 +59,14 @@ function completedCalls(records) {
     if (record.type !== 'acp-session-update' || !u?.toolCallId) continue;
 
     if (u.sessionUpdate === 'tool_call') {
-      pending.set(u.toolCallId, toolStart(u, record.t));
+      const start = toolStart(u, record.t);
+
+      noteMutation(clock, start.name, 1);
+
+      const call = { ...start, epoch: clock.epoch, output: null, failed: false, complete: false };
+
+      pending.set(u.toolCallId, call);
+      calls.push(call);
     }
 
     if (u.sessionUpdate !== 'tool_call_update' || !['completed', 'failed'].includes(u.status)) continue;
@@ -61,11 +75,15 @@ function completedCalls(records) {
 
     if (!call) continue;
 
-    completed.push(toolEnd(call, u, record.t));
+    noteMutation(clock, call.name, -1);
+    Object.assign(call, toolEnd(call, u, record.t), {
+      complete: true,
+      stable: !clock.mutations && call.epoch === clock.epoch,
+    });
     pending.delete(u.toolCallId);
   }
 
-  return completed;
+  return calls;
 }
 
 function addPattern(patterns, kind, calls) {
@@ -83,7 +101,8 @@ function addPattern(patterns, kind, calls) {
   patterns.set(key, pattern);
 }
 
-const sameCall = (a, b) => a.input !== null && a.name === b.name && a.input === b.input;
+const sameCall = (a, b) =>
+  a.input !== null && a.output !== null && a.name === b.name && a.input === b.input && a.output === b.output;
 
 function recordFailures(patterns, failed, call) {
   if (!call.failed) {
@@ -107,7 +126,7 @@ export function wastePatterns(records) {
   const reads = new Map();
   const failed = [];
 
-  for (const call of completedCalls(records)) {
+  for (const call of recordedCalls(records)) {
     const signature = `${call.name}/${call.input}/${call.output}`;
 
     recordFailures(patterns, failed, call);
@@ -118,7 +137,7 @@ export function wastePatterns(records) {
       continue;
     }
 
-    if (call.failed || call.output === null || call.input === null) continue;
+    if (!call.complete || !call.stable || call.failed || call.output === null || call.input === null) continue;
 
     if (reads.has(signature)) addPattern(patterns, CHECKS.has(call.name) ? 'unchanged-check' : 'repeated-read', [call]);
 

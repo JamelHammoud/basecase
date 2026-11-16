@@ -10,14 +10,20 @@ export const tokenCount = (usage) =>
 export const cachedInputTokens = (usage) =>
   measuredValue(usage?.cached_input_tokens) + measuredValue(usage?.cache_read_input_tokens);
 
-const measuredUsage = (usage) => ['input_tokens', 'output_tokens'].every((key) => measuredNumber(usage?.[key]));
+const measuredUsage = (usage, provider) => {
+  const keys = ['input_tokens', 'output_tokens'];
+
+  if (provider === 'claude') keys.push('cache_read_input_tokens', 'cache_creation_input_tokens');
+
+  return keys.every((key) => measuredNumber(usage?.[key]));
+};
 
 const measuredCachedInput = (usage) =>
   ['cached_input_tokens', 'cache_read_input_tokens'].some((key) => measuredNumber(usage?.[key]));
 
 const missingMeasurement = (record, measured) =>
-  !measured(record.usage) ||
-  ((record.previousUsage !== undefined || record.formatRetried) && !measured(record.previousUsage));
+  !measured(record.usage, record.provider) ||
+  ((record.previousUsage !== undefined || record.formatRetried) && !measured(record.previousUsage, record.provider));
 
 export function sessionTotals(records) {
   const missingUsage = records.filter((record) => missingMeasurement(record, measuredUsage)).length;

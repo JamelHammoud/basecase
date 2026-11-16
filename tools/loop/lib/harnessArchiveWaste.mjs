@@ -71,7 +71,7 @@ function replayEntry(root, entry) {
       return [];
     }
 
-    if (!saved || saved.heldOut || saved.harness !== entry.harness || saved.servedBy !== entry.servedBy) return [];
+    if (!matchingSummary(saved, entry)) return [];
 
     const events = boundedText(path.join(dir, 'events.jsonl'));
 
@@ -81,6 +81,17 @@ function replayEntry(root, entry) {
 
     return [{ patterns: wastePatterns(records), faults: missedChecks(dir, records, root) }];
   });
+}
+
+function matchingSummary(saved, entry) {
+  return (
+    saved &&
+    !saved.heldOut &&
+    ['task', 'seed', 'harness', 'servedBy', 'model', 'effort'].every(
+      (key) => (saved[key] ?? null) === (entry[key] ?? null),
+    ) &&
+    (saved.provider ?? 'claude') === (entry.provider ?? 'claude')
+  );
 }
 
 function appendEvidence(groups, pattern, entry) {
@@ -110,27 +121,28 @@ function appendEvidence(groups, pattern, entry) {
 
 export function archiveWaste(sources) {
   const groups = new Map();
-  const seen = new Set();
+  const attempts = new Map();
   const faults = [];
   const entries = sources
     .flatMap(({ root, entries }) => entries.map((entry) => ({ root, entry })))
     .sort(
       (a, b) => b.entry.at.localeCompare(a.entry.at) || JSON.stringify(a.entry).localeCompare(JSON.stringify(b.entry)),
     );
-  let replayed = 0;
 
   for (const { root, entry } of entries) {
-    const key = [entry.run, entry.task, entry.seed, entry.model, entry.harness, entry.provider].join('/');
+    const key = [entry.run, entry.task, entry.seed, entry.model, entry.harness, entry.provider ?? 'claude'].join('/');
 
-    if (seen.has(key) || replayed >= WASTE_LIMITS.entries || entry.kind !== 'micro' || !entry.servedBy) continue;
+    if (entry.kind !== 'micro' || !entry.servedBy) continue;
 
-    replayed++;
+    if (!attempts.has(key) && attempts.size >= WASTE_LIMITS.entries) continue;
 
-    const replay = replayEntry(root, entry);
+    attempts.set(key, [...(attempts.get(key) ?? []), { root, entry }]);
+  }
 
-    if (replay.length) seen.add(key);
+  for (const copies of attempts.values()) {
+    const replay = replayCopies(copies);
 
-    for (const result of replay) {
+    for (const { result, entry } of replay) {
       faults.push(...result.faults);
 
       for (const pattern of result.patterns) appendEvidence(groups, pattern, entry);
@@ -138,4 +150,14 @@ export function archiveWaste(sources) {
   }
 
   return [...groups.values(), ...faults];
+}
+
+function replayCopies(copies) {
+  for (const { root, entry } of copies) {
+    const replay = replayEntry(root, entry);
+
+    if (replay.length) return replay.map((result) => ({ result, entry }));
+  }
+
+  return [];
 }

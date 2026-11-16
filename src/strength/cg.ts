@@ -7,21 +7,21 @@ export interface ElasticSystem {
   fixed: Uint8Array;
 }
 
-function pinBlock(m: BlockMatrix, fixed: Uint8Array, at: { i: number; k: number }): void {
-  const j = m.cols[at.k];
+function pinBlock(m: BlockMatrix, fixed: Uint8Array, i: number, k: number): void {
+  const j = m.cols[k];
 
   for (let r = 0; r < 3; r++)
     for (let c = 0; c < 3; c++) {
-      const row = at.i * 3 + r;
+      const row = i * 3 + r;
       const col = j * 3 + c;
 
-      if (fixed[row] || fixed[col]) m.values[at.k * 9 + r * 3 + c] = row === col ? 1 : 0;
+      if (fixed[row] || fixed[col]) m.values[k * 9 + r * 3 + c] = row === col ? 1 : 0;
     }
 }
 
 function pin(m: BlockMatrix, fixed: Uint8Array): void {
   for (let i = 0; i < m.rowStart.length - 1; i++)
-    for (let k = m.rowStart[i]; k < m.rowStart[i + 1]; k++) pinBlock(m, fixed, { i, k });
+    for (let k = m.rowStart[i]; k < m.rowStart[i + 1]; k++) pinBlock(m, fixed, i, k);
 }
 
 export function multiplyBlocks(m: BlockMatrix, x: Float64Array, y: Float64Array): void {
@@ -51,26 +51,29 @@ export function multiplyBlocks(m: BlockMatrix, x: Float64Array, y: Float64Array)
 }
 
 function invert3(a: Float64Array, at: number, out: Float64Array, to: number): void {
-  const [m0, m1, m2, m3, m4, m5, m6, m7, m8] = a.subarray(at, at + 9);
+  const m0 = a[at];
+  const m1 = a[at + 1];
+  const m2 = a[at + 2];
+  const m3 = a[at + 3];
+  const m4 = a[at + 4];
+  const m5 = a[at + 5];
+  const m6 = a[at + 6];
+  const m7 = a[at + 7];
+  const m8 = a[at + 8];
   const c0 = m4 * m8 - m5 * m7;
   const c1 = m5 * m6 - m3 * m8;
   const c2 = m3 * m7 - m4 * m6;
   const det = m0 * c0 + m1 * c1 + m2 * c2 || 1e-30;
 
-  out.set(
-    [
-      c0 / det,
-      (m2 * m7 - m1 * m8) / det,
-      (m1 * m5 - m2 * m4) / det,
-      c1 / det,
-      (m0 * m8 - m2 * m6) / det,
-      (m2 * m3 - m0 * m5) / det,
-      c2 / det,
-      (m1 * m6 - m0 * m7) / det,
-      (m0 * m4 - m1 * m3) / det,
-    ],
-    to,
-  );
+  out[to] = c0 / det;
+  out[to + 1] = (m2 * m7 - m1 * m8) / det;
+  out[to + 2] = (m1 * m5 - m2 * m4) / det;
+  out[to + 3] = c1 / det;
+  out[to + 4] = (m0 * m8 - m2 * m6) / det;
+  out[to + 5] = (m2 * m3 - m0 * m5) / det;
+  out[to + 6] = c2 / det;
+  out[to + 7] = (m1 * m6 - m0 * m7) / det;
+  out[to + 8] = (m0 * m4 - m1 * m3) / det;
 }
 
 function blockJacobi(m: BlockMatrix): Float64Array {

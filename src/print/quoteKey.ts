@@ -7,4 +7,14 @@ export const copiesOf = (p: ScenePart) => p.print?.copies ?? 1;
 export const quoteKey = (p: ScenePart, material: PrintMaterial): string =>
   hashText([shapeKey(p), p.print?.down?.join(',') ?? '', material, copiesOf(p)].join('|'));
 
-export const quoteOf = (part: string, quotes: PrintQuote[] = []) => quotes.find((q) => q.part === part);
+export function quotesByPart(quotes: readonly PrintQuote[] = []): Map<string, PrintQuote> {
+  const byPart = new Map<string, PrintQuote>();
+
+  for (const quote of quotes) {
+    const part = quote.part;
+
+    if (!byPart.has(part)) byPart.set(part, quote);
+  }
+
+  return byPart;
+}

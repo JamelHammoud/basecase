@@ -1,3 +1,4 @@
+import { openFleet } from '../fleet/openFleet';
 import { fleetIncidents, inspectUnitProblems } from '../robot/fleetIncidentStore';
 import type { Command } from '../components/CommandPalette';
 import { OperateIcon } from '../design-system';
@@ -164,6 +165,14 @@ export function operateCommands(inputs: CommandInputs): Command[] {
       icon: <OperateIcon />,
       keywords: 'robot daemon emulated servos operate hardware',
       run: showOperate,
+    },
+    {
+      id: 'open-fleet',
+      group: 'Operate',
+      label: 'Open Fleet',
+      icon: <OperateIcon />,
+      keywords: 'organization site registry inventory browser',
+      run: openFleet,
     },
     ...linkCommands(inputs, showOperate),
     {

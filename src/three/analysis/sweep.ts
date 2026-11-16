@@ -1,8 +1,8 @@
-import * as THREE from 'three';
 import type { SweepRequest } from '../../utils/engineeringTypes';
 import { DEEPER_THAN_REST_MM, pairKey } from '../interference';
 import { collide, place, type Placed } from './collide';
 import { splitRotor } from './rotorSplit';
+import { prepareSweepRotation } from './sweepRotation';
 
 export type SweepSpec = SweepRequest;
 
@@ -69,25 +69,16 @@ function floorHit(moved: Placed[], angle: number): SweepHit | null {
   return low && low.y < -1 ? { a: low.id, b: 'floor', depthMm: Math.round(-low.y * 10) / 10, angle } : null;
 }
 
-function rotationAbout(spec: SweepSpec, angle: number) {
-  const origin = new THREE.Vector3(...spec.origin);
-  const axis = new THREE.Vector3(...spec.axis).normalize();
-
-  return new THREE.Matrix4()
-    .makeTranslation(origin.x, origin.y, origin.z)
-    .multiply(new THREE.Matrix4().makeRotationAxis(axis, THREE.MathUtils.degToRad(angle)))
-    .multiply(new THREE.Matrix4().makeTranslation(-origin.x, -origin.y, -origin.z));
-}
-
 export function sweepClashes(scene: Placed[], spec: SweepSpec): SweepHit[] {
   const { placed, moving: movingSet } = withRotors(scene, spec);
   const moving = [...movingSet];
   const options = { ...SWEEP_OPTIONS, focus: moving, straddle: moving, coplanar: false };
   const baseline = new Map(collide(placed, options).interferences.map((f) => [pairKey(f.a, f.b), f.depthMm]));
   const out: SweepHit[] = [];
+  const rotationAt = prepareSweepRotation(spec);
 
   for (const angle of spec.anglesDeg) {
-    const rotation = rotationAbout(spec, angle);
+    const rotation = rotationAt(angle);
     const posed = placed.map((p) =>
       movingSet.has(p.id) ? place(p.id, p.solid, rotation.clone().multiply(p.matrix)) : p,
     );

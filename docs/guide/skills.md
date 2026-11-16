@@ -250,7 +250,11 @@ Measurements and limits: [Skill feasibility and moves performance evidence](../n
 
 - **Feasibility shares body topology per model.** `skills/feasibilityBodies.ts` prepares subtree intervals, ordered robot members and leaves once when `openKin` compiles a model. Foot discovery no longer rebuilds membership for each possible leaf. Mass calculations, joint chains, link scaling and payload ancestry reuse the index, while positions and masses remain live. [Evidence](../notes/performance-skills.md#feasibility-shares-body-topology-per-model).
 
+- **Rover routes prepare compiled geometry radii once.** `skills/wheelBodyRadii.ts` collects the largest geometry size per body in one pass. `anythingRoute.ts` reuses these radii for every powered velocity joint, without per-wheel geometry lists or size copies. The 1 mm minimum, wheel order, spin and lateral offsets stay unchanged. Empty wheel lists skip preparation. The scene-based manual drive setup uses part dimensions instead of compiled geometry. [Evidence](../notes/performance-skills.md#rover-routes-prepare-compiled-geometry-radii-once).
+
 ## Testing coverage
+
+- **Compiled rover wheel setup.** `wheelBodyRadii.test.ts` compares complete wheel setups against the previous geometry scan on differential and four-wheel MuJoCo rovers and an arm. It covers reversed joint order, passive joints, empty bodies, multiple geometries, the radius floor, nonfinite sizes, edits and geometry-owner read counts.
 
 - **Pose animation training.** `src/skills/skillRows.test.ts` checks Sit discovery, passing evidence and invalidation after animation edits. `src/skills/skillsRuntime.test.ts` checks move training, record creation and snapshot retention with a supplied runner. `src/skills/moveEnvironment.test.ts` checks the 51-frame reference, one-shot clock, Forge job and real MuJoCo rollouts where holding still fails and following the clock passes. The remaining browser tests retain Train entry, training snapshots and saved snapshot playback. [Incident evidence](../notes/testing-skills.md#pose-animation-training).
 
@@ -297,3 +301,11 @@ Coverage: `seedSelection.test.ts` checks stable ties, cloning loss, failed child
 Skill environments keep physical observation identities separate from actuator identities. Action validation refuses passive joints, while observations and recorded initial coordinates may include them. The Motor Kit already selects actuated position joints. Its job writer now orders control defaults by actuator and retains all physical starting coordinates separately. A robot without powered action joints cannot start a training job. Actuator hashes and robot fingerprints invalidate policy and readiness evidence after an actuation edit.
 
 `src/sim/passiveJoints.test.ts`, `passiveMotion.test.ts`, `passiveChannels.test.ts` and `passiveHistory.test.ts` cover the mechanism matrix, training maps and evidence keys. [Evidence](../notes/testing-skills.md#passive-robot-joints).
+
+### Arena passive-joint coverage
+
+`arenaPassive.test.ts` checks a mixed arm through real WASM MuJoCo. Servo draws leave the passive joint's nonzero damping unchanged while applying the powered joint's gain. Existing `servoDraws.test.ts` retains all powered draw multipliers and restoration across tries. Gatekeeper's source-lock tests retain file-drift refusal. [Evidence](../notes/testing-skills.md#arena-source-lock-after-passive-joints).
+
+### Windows remote recovery coverage
+
+Both remote recovery walkthroughs are quarantined only on Windows through 28 November 2026 under #1365. Browser coverage stays active on Linux and macOS, with `seedWorkflows.test.ts`, `recoveredSkill.test.ts` and `seedSelection.test.ts` retaining selection, recovery and local verdict coverage on every platform. [Failure evidence and restoration conditions](../notes/testing-skills.md#windows-grouped-recovery-quarantine).

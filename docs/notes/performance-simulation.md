@@ -12,6 +12,14 @@ For the 12-joint quadruped and 18-joint hexapod, the complete package pipeline r
 
 `rayCasting.test.ts` checks rotated and translated poses against independent Three.js geometry, zero directions, range misses, independent sensors, scan rates, time reversal and snapshots. Its 300- and 600-ray fixtures require 180 rotation-coefficient reads across 20 casts, down from 54,180 and 108,180. A scratch comparison matched 480 complete scan snapshots byte for byte against the previous implementation across 40 sensor configurations, moving poses, different scan rates, range misses and time reversal. These are operation counts and numerical comparisons without timing assertions or a claim about complete simulation time.
 
+### Sensor setup copies direction components directly
+
+`compactEye.test.ts` compares full direction and pixel-index lists with the previous slice-based compactor for 0, 1, 192, 720, 768 and 4,096 rays. Frozen sources check input preservation. Separate coverage retains nonfinite components and signed zero, then verifies independent direction, index and world-buffer storage after source edits and another setup. Existing `rayCasting.test.ts` covers the shared compactor through real MuJoCo eye casts and LiDAR scans.
+
+The default 16 × 12 eye removes 192 temporary three-component arrays per setup. A maximum 32 × 24 eye removes 768, and a maximum 720-ray LiDAR removes 720. Four maximum eyes remove 3,072 temporary arrays. These are source-derived allocation counts, not elapsed-time measurements. Setup still allocates its retained compact lists and world buffers and remains linear in ray count. Casting frequency, ray counts and physics work stay unchanged.
+
+The targeted check passed formatting, lint, docs, site copy and types, then 351 related test files and 2,104 tests in 105.86 seconds. One existing file and test were skipped. This includes the new compaction parity cases and existing MuJoCo eye and LiDAR integration coverage. No timeout, retry or quarantine changed.
+
 ## Single-body pose reads transform only their owner
 
 `mjcfFrames.test.ts` compares the previous full-map calculation across rotations, aliases, duplicate ids, both namespaces, missing ids, nonfinite poses, source edits and independent results. Across 20 queries, its 300- and 600-body fixtures reduce body rotations from 6,000 and 12,000 to 20, and matrix clones from 9,000 and 18,000 to zero. Membership searches remain linear in body and member counts. These are operation counts, without timing assertions or a claim about complete simulation time.

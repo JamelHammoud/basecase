@@ -88,6 +88,16 @@ Replay has no publishing token. Catalog geometry must load before any replay mea
 
 The replay job emits results only after every entry and seed completes. The final trusted publishing job validates the artifact’s manifest, closure and exact workflow provenance before publishing complete standings. Existing frozen measurements cannot be replaced. An identical replay leaves the original frozen evidence intact. Fixture dispatch runs the same bounded process and checks every measured standing against the committed rover fixture. The workflow adds no job to pull request Check.
 
+### Fleet authentication and authorization
+
+The self-hosted Fleet service is a separate authenticated HTTPS origin, never a relaxation of the desktop bridge. `electron/bridgeGuard.mjs`, `electron/appOrigin.mjs` and `electron/robot/robotRoutes.mjs` keep their existing guards. Fleet refuses remote HTTP, nonloopback HTTP binds, forged Host and cross-origin browser API requests. Public app code and the sign-in shell carry no registry data. Organization assets, list queries, exports, subscriptions and mutations require live credentials and the single default-deny evaluator described in [Fleet](fleet.md).
+
+Organization UUIDs partition every resource lookup, parent relationship, role reference and status update. Explicit denies override grants from every role and group. Scoped service credentials intersect the issuing account's current roles. Passwords use salted scrypt. Session, enrollment and service tokens have 256 random bits and are stored only as SHA-256 hashes. Enrollment is single-use. Session revocation and role changes invalidate subscriptions through PostgreSQL notifications. HTTP errors never expose database details. Inventory exports cannot read the credential or password tables.
+
+The studio publisher reads its origin and token only from an operator-selected local configuration file, never from agent or renderer data. Its HTTPS and loopback HTTP connector intentionally supports private self-hosted addresses. It refuses redirects and URL credentials and caps requests and replies. It does not use the public-only fetcher, whose private-address refusal remains authoritative for agent-controlled URLs. No Fleet token enters a scene, export, preload or bridge response.
+
+`tools/fleet/authorization.test.mjs`, `service.test.mjs` and `adapter.test.mjs` cover authorization matrices, cross-organization references, revoked credentials, protected assets, live subscription invalidation, hostile origins, oversized batches and insecure remote transports. [Boundary evidence](../notes/node.md#fleet-authorization-boundary) records the tests and limits.
+
 ### Fleet incident history
 
 Fleet incidents consume the existing robot event channel. No command, IPC handler, HTTP route, deployment interface or recording format is added. Acknowledgment writes only local incident state. It cannot issue a robot command or clear a daemon latch. Existing command validation, motor locks, control precedence and ladder checks continue to own motion.

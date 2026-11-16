@@ -2,6 +2,12 @@
 
 Implementation: [Collision analysis](../guide/build.md#performance-collision-analysis). Shared requirements: [Performance](../guide/performance.md).
 
+## Joint sweeps prepare their pivot frame once
+
+`sweepRotation.test.ts` compares exact matrices against the previous calculation across 100 seeded pivot and axis combinations, repeated angles and degenerate or nonfinite axes. Separate preparations retain independent workspaces and read edited origins and axes. A real two-box sweep compares complete batched reports against independent single-angle sweeps, including obstacle interference, floor penetration, repeated angles, empty angle lists and unchanged source placements.
+
+The 300- and 600-angle fixtures reduce axis normalizations from 300 and 600 to one, and translation builds from 600 and 1,200 to two. The composed rotation retains one matrix identity across all angles. Rotation preparation owns four matrices per sweep instead of allocating three per angle, while moving placements still own their separate matrices. These are operation and storage counts, without timing assertions or a claim about complete collision-check time. No preparation is shared between sweeps, and per-angle collision and floor queries retain their existing work.
+
 ## Rotor classification prepares its output line once
 
 `lineDistance.test.ts` compares Three's unbounded projections across 12,000 seeded queries, degenerate lines, nonfinite values and independent preparations. Its 300- and 600-probe fixtures reduce dot products from 600 and 1,200 to 301 and 601. `rotorSplit.test.ts` compares complete partitions across 90 translated and scaled meshes near axis and reach limits, preserving source arrays and cached results. These are operation counts and result comparisons, without timing assertions or a claim about complete check time.
@@ -37,3 +43,9 @@ A 3 mm bracket (about 1,900 cells) solves in 0.2 s, a 124 mm hollow arm (8,900 c
 ## Visible-share projections reuse one workspace
 
 `visibility.test.ts` checks exact shares for overlapping, rotated, scaled and far-translated meshes, empty geometry and collapsed ranges. A local operation-count comparison on one and two meshes, each with 4,000 cached samples, reduced bounds scans from five to one. Projection-limit reads fell from 40,020 and 80,020 to 20 in both cases. These are operation counts, without timing assertions.
+
+## Collision pairs share prepared containment directions
+
+`collisionDirections.test.ts` drives real BVH collision checks on four and eight overlapping, rotated box placements. Every pair reports interference, matching independent two-part calls in value and order. Direction preparation falls from nine vector clones and transforms per pair to three per participating placement. The fixtures reduce transforms from 54 to 12 and from 252 to 24. A changed-frame case rotates an existing placement that remains overlapping and moves another placement clear, updating their matrices, inverses and boxes between calls. It retains the independent pair reports, requires three fresh direction transforms for the rotated placement and confirms that the isolated part prepares no directions. The original case only moved a part clear, leaving its edited inverse unused by collision probes.
+
+These are operation counts, without timing assertions or a claim about complete collision-check time. The cache lasts only for one collision call and does not share preparation across sweep angles. Existing containment, crossing, coplanar and servo-sweep tests continue to cover the surrounding geometry calculations.

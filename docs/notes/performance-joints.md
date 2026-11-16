@@ -160,3 +160,135 @@ The three covered articles were reread against the final parser diff:
 - [Robot import troubleshooting](../../site/content/help/troubleshoot-app-robot-import-fails.md): link validation, fetches, mesh resolution and messages remain unchanged. The malformed-tag tests verify rejection at the current position, and the scratch comparison checks exact parser error messages. `xacro.ts` still wraps failures with the same file-specific import error.
 
 All steps, labels and screenshots remain accurate, so these articles are unchanged. Preflight reports unchanged covered articles mechanically and retains the three reminders after this verification.
+
+## Root transforms are constructed directly
+
+The whole-app search found one shared robot root-transform constructor, `utils/kinematicsMotion.ts::rootMatrix`. Every forward-kinematics call uses it for each robot. Posing, IK, gait and motion fitting therefore share the change without caller-specific implementations. Other translation compositions found in robot import and mat test fixtures construct different transforms and remain unchanged.
+
+For a root with nonzero rotation and translation, construction previously allocated four matrices and performed three matrix multiplications. It now allocates only the returned matrix and performs no matrix multiplications. Rotation still uses three.js's XYZ Euler construction. The pivot offset is calculated from the rotation columns, followed by world-axis translation. Translation-only roots remove one temporary matrix and one multiplication. Identity roots retain their single returned matrix. These are source-derived operation counts. Euler objects, the degree-conversion array and forward-kinematics results still allocate.
+
+`kinematicsRoot.test.ts` compares all matrix elements against the previous composed reference across 720 finite-input cases. They include missing and partial roots, signed zero, multi-turn angles and offset pivots. A geometric check verifies the pivot moves only by world translation and a point rotates about that pivot. Input values and previously returned matrices remain independent across calls. Existing kinematics and animation tests exercise the callers. No timing assertion, retry, timeout or quarantine is added.
+
+The [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) concept article was reread against the final code and guide diff after the preflight reminder. Its joint-field table and import entry points are untouched. The hierarchy, group and fastener ownership, mount anchoring, four-bar closure and deletion sections describe code outside the root constructor. The pose section still holds because root transforms only affect posed coordinates, without editing modeled parts. IK still uses the same targets, limits and torso stiffness. Robot selection and per-robot root assignment in `forwardKinematics` are unchanged. The article has no screenshots. No label or instruction became inaccurate, so the article remains unchanged as preflight permits.
+
+A local construction benchmark on November 16, 2026 used Node v26.13.0 on macOS arm64 with an Apple M5 Pro. It compared the previous function with the current function read from source and type-stripped through Node. Both received five warmup batches, then 15 alternating measured batches of 100,000 calls over 256 finite roots. Median batch time fell from 20.301 ms to 16.562 ms, about 18%. These isolated construction timings do not establish complete interaction or solver latency. Other work was running on the host. The script and raw results remain in `scratch/root-bench.mjs` and `scratch/root-bench-direct.log`. The initial Vitest benchmark was stopped during filesystem discovery before it ran, then replaced with this direct benchmark.
+
+Local validation passed formatting, lint, types, documentation and site copy for 281 pages. The ordinary `check:changed` run was stopped after more than nine minutes of Vitest filesystem work without a test starting. A scratch configuration using `--configLoader native --no-fsModuleCache` ran both root and joint-motion files successfully: two files and seven tests in 145 ms. The original related-test selection was then run with those two flags, keeping the repository test configuration and every assertion. No tracked harness setting, test timeout, retry or quarantine changed. The initial log and process sample remain in `scratch/check-root.log` and `scratch/related-sample.txt`.
+
+The related run completed in 165.53 seconds: 557 files passed, three failed and one was skipped. It passed 3,786 tests, failed four and skipped one. Each failure reported `Test timed out in 5000ms`, with no assertion mismatch:
+
+- `cases/handoffGoal.test.ts`: replays the recorded object trajectory and scores the same physical evidence.
+- `cases/terrain.test.ts`: hexapod walks across default Rough Ground, and misses it limp.
+- `skills/kitTransitions.test.ts`: hexapod walk to settle, and hexapod turn-away to walk with a −90 degree turn.
+
+These files are unchanged. No baseline replay was run, so this is evidence of local timeouts rather than proof they also fail before the change. The complete output is in `scratch/root-related-direct.log`. Full local validation is therefore not green despite the focused regression tests passing. There is no new quarantine or proposed timeout increase.
+
+
+## MJCF actuator attachment indexes names once
+
+The whole-app search found one MJCF actuator-to-joint name matcher, in `utils/robotImport/mjcf.ts::applyActuators`. All MJCF import entry points reach it through `readModel.ts`, after include expansion. URDF transmission handling and runtime actuator addressing use different inputs and are outside this attachment operation. No controls, instructions or screenshots change.
+
+For 300 and 600 uniquely named joints with one actuator each, the previous matcher performed 45,150 and 180,300 joint-name comparisons. It also read each actuator's joint attribute that many times. The new matcher visits 300 and 600 joints to build a first-match index, then performs 300 and 600 attribute reads and map lookups. Index storage is linear in unique joint names and belongs to one parse. Imports without actuators return before building it. These are source-derived operation counts, without timing assertions or a claim about complete import latency. XML parsing, geometry, transforms and the actuator list still allocate.
+
+`mjcfActuators.test.ts` checks joint-level effort precedence, motor control range and gear, default-class force ranges, first nonzero effort across multiple actuator sections, passive resistance, unknown references, missing and empty names, duplicate first matches and generated fixed-joint names. Wide 300- and 600-joint models check ordered attachment with reversed actuator lists. Editing an actuator reference and parsing again checks fresh attachment and independence of earlier outputs. Existing robot import and passive history tests exercise the surrounding pipelines. No retry, timeout or quarantine changes.
+
+Local `check:changed` passed formatting, lint, documentation, site copy for 281 pages, types and all 269 tests in 37 related files. The related-test phase reported 2.08 seconds. Copy accounting reported zero added, changed or removed strings.
+
+The covered help articles were read against the final code and guide diff. [Import a robot](../../site/content/help/import-a-robot.md) still describes the same entry points, file selection, joint limits and passive imports. [Robot import troubleshooting](../../site/content/help/troubleshoot-app-robot-import-fails.md) keeps the same messages, mesh resolution and passive-joint advice. [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) keeps the same joint fields, hierarchy, poses and robot selection. No step, label or screenshot became inaccurate, so these articles remain unchanged.
+
+## Cylinder fits collect welded corners directly
+
+The whole-app search for welded corner collection found one `cornersOf` implementation, in `joints/cylinderFit.ts`. Clicked-face fitting and automatic shaft-and-bore discovery both reach it through `axisFinder.ts`. Other set-and-flatten expressions collect robot membership, signals or catalog ids rather than triangle corners and are outside this preparation.
+
+For T triangles, each fitting round previously created T three-entry corner arrays, T three-entry index arrays and one flattened 3T-entry list before constructing the deduplicating set. Collection now inserts each corner directly into that set. The set and returned unique-id array remain necessary. First-occurrence order, circle arithmetic and refit behavior stay unchanged. These are source-derived allocation counts, without a claim about total discovery latency.
+
+A local isolated collection benchmark on November 16, 2026 used Node v26.13.0 on macOS arm64 with an Apple M5 Pro. Synthetic connected triangle indices reused welded vertices and visited triangles in reverse order. Complete ordered outputs matched for empty, 512-, 4,096- and 32,768-triangle inputs. Both implementations received three warmup batches, followed by nine alternating measured batches. The new function was loaded from the working source through Node type stripping.
+
+| Triangles | Collections per batch | Previous median ms | Direct median ms |
+| --- | --- | --- | --- |
+| 512 | 195 | 8.442 | 2.131 |
+| 4,096 | 24 | 7.993 | 2.466 |
+| 32,768 | 4 | 11.650 | 4.163 |
+
+These timings exclude mesh indexing, circle fitting and discovery. Other work was running on the host. No CI timing assertion applies. The script and raw output remain in `scratch/cylinder-corners.mjs` and `scratch/cylinder-corners-results.jsonl`.
+
+`joints/cylinderFit.test.ts` checks first-seen welded vertex order through reversed and repeated triangle lists, repeated independent results and unchanged input lists. Existing tests check complete cylinder dimensions, residual reuse after distorted-patch trimming and minimum angular-span rejection. Axis-finder and joint-candidate tests cover both callers. No timeout, retry or quarantine changes.
+
+The covered [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) article was reread against the final code and guide diff. Its joint-field table, import links and joint creation entry points remain accurate. The direct collector preserves first-seen vertex order before circle fitting, so fitted axes and acceptance thresholds remain unchanged. Hierarchy, mount anchoring, deletion, modeled poses, IK and robot selection use unchanged code. The article has no screenshots. No instruction or label became inaccurate, so it remains unchanged as the preflight finding permits.
+
+The [Join two parts with a hinge or slider](../../site/content/help/join-two-parts-with-a-hinge.md) task was also checked. Both clicked-face and automatic shaft-and-bore fitting reach the same collector, with unchanged entry points and acceptance rules. Its steps, labels and screenshot states remain accurate, so no article or screenshot edit is needed.
+
+## Imported joints group link ownership once
+
+The whole-app search found repeated `partOfLink` ownership filtering only in `utils/robotImport/importRobot.ts`. Every source format reaches its shared `sceneJoints` builder. Preparation now retains one group entry per built part, keyed by its nearest movable joint or the null base owner. The existing owner cache still resolves fixed chains. Lookups copy their matching ids so parent and child arrays never alias. Geometry-free parent fallback still walks ancestors and retains its 50-step limit.
+
+On November 16, 2026, a scratch comparison extracted the before and after joint builders and counted entries yielded by the built-link map on macOS arm64 with Node 26.13.0. Synthetic chain and star fixtures use one base part and one part per revolute joint. Complete joint outputs matched with identical supplied rounding and limb classifiers.
+
+| Joints | Shape | Before link entries | After link entries |
+| --- | --- | --- | --- |
+| 300 | Chain | 180,600 | 301 |
+| 300 | Star | 180,600 | 301 |
+| 600 | Chain | 721,200 | 601 |
+| 600 | Star | 721,200 | 601 |
+
+These are operation counts, without timing assertions or a claim about complete import latency. Mesh loading, geometry conversion, published mass preparation, joint transforms and output-array copies remain. The index adds operation-local storage proportional to the built parts and their owners. It is rebuilt for each import.
+
+`utils/robotImport.test.ts` exercises actual local-file imports through parsing and geometry conversion. It checks ordered base and fixed-link groups, branching joints, fallback across a geometry-free joint, missing base geometry, repeated imports after source changes and independent output arrays. Its MJCF case checks two joints on one body, including the explicit predecessor and empty-owner fallback. Existing xacro import equivalence tests continue to cover the shared import pipeline. No UI, workflow or quarantine changes.
+
+## Joint-axis queries select scene instances once
+
+The whole-app search found repeated scene-instance lookup in both `jointAxisOf` and `jointAxesOf`, in `three/analysis/jointAxis.ts`. Both analysis-worker task handlers share the new query-local selection pass. The single-part Lighten lookup in `analysisOps.ts` has no repeated lookup. Vision acceptance looks up detection instances, which are different records and outside this operation.
+
+For N scene instances and R requested ids, selection now visits at most N instances and prepares at most R distinct selected entries. Previously each requested id restarted a linear search. With 600 unrelated instances followed by three mesh instances, 600 missing requests and two matched requests performed 363,003 instance-id reads. Selection now performs 603. A single-axis query whose two parts come first stops after those two instances. An empty batch reads none. These are source-derived operation counts, without timing assertions or a claim about complete discovery latency. Geometry indexing and candidate pair fitting remain unchanged.
+
+`three/analysis/jointAxis.test.ts` runs real transformed bore-and-pin meshes through both worker entry functions and compares complete results with direct `MeshIndex` inputs. It covers reversed request order, missing ids, repeated requests, duplicate scene ids with first-match precedence, changed transforms, unchanged source inputs and repeat calls. Its broad scene fixture counts unrelated id reads and verifies early termination and empty batches. Existing axis-finder and joint-candidate tests cover fitting tolerances and graph discovery. No timeout, retry or quarantine changes.
+
+The covered [Join two parts with a hinge or slider](../../site/content/help/join-two-parts-with-a-hinge.md) and [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) articles retain accurate controls, steps and joint behavior. This refinement changes worker preparation only, so no help steps or screenshots change.
+
+Local `check:changed` passed formatting, lint, documentation, site copy for 281 pages, types and all 285 tests in 47 related files. The related run reported 9.99 seconds. `copy-diff` reported zero added, changed or removed strings. Preflight flagged the unchanged Joints and kinematics article because it covers the edited guide. The full article was checked against the final change. Its fields, joint sources, hierarchy, pose behavior, IK and robot selection remain accurate, so the article stays unchanged under the finding's explicit allowance.
+
+## Coupler-only sampling omits full pose records
+
+The whole-app search for `fourBarPose` found two point-only consumers, `couplerSampler` and `couplerPoint`, both in `utils/linkageKinematics.ts`. The remaining callers in `linkageFrames.ts` and `linkageParts.ts` use the crank and coupler joints as well as the traced point. They still need full poses. Curve generation and both synthesis scoring passes share the prepared point sampler.
+
+Previously each successful point-only sample created a `{ b, c, p }` pose record by spreading the closure result, only to discard that record after placing `p`. Both consumers now share a local point calculation that calls the same closure and offset functions in the same order. Closure records and coordinate arrays remain. No additional cache or retained workspace is introduced.
+
+For a 720-interval fully closing curve, the source-derived count of discarded full-pose records falls from 721 to zero. A single successful `couplerPoint` call removes one record. Failed closures create no full-pose record in either version. These are allocation counts, without a timing assertion or a claim about complete synthesis latency.
+
+`utils/couplerSampling.test.ts` compares both consumers with placed full poses across 40 seeded shapes and 52 angles per shape. It checks exact coordinates, reverse sweeps, failed closure, nonfinite angles, source preservation, geometry edits and independently owned results. Existing linkage sampling tests cover complete curves and preview frames, while synthesis tests cover fitted results and ranking. No timeout, retry or quarantine changes.
+
+The [Design a linkage from a path](../../site/content/help/design-a-linkage-from-a-path.md) task and [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) concept remain accurate. Their controls, limits, coordinates, insertion, posing and simulation behavior do not change. The concept has no screenshots or numbered steps. Its four-bar explanation still matches `kinematicsLoop.ts`, which uses unchanged `linkAngles`, while preview bars and insertion still use unchanged `fourBarPose`. Joint fields, sources, hierarchy, deletion, modeled poses, IK and robot selection are outside the point-only sampling change. No help text or screenshot state needs an edit.
+
+Local `check:changed` passed formatting, lint, documentation, site copy for 285 pages, types and 3,852 related tests across 570 passing files. One existing file was skipped. The related run took 81.57 seconds. `copy-diff` reported net zero. Preflight flagged the unchanged Joints and kinematics article because it covers the edited guide. The full article was checked against the final code, including joint fields, sources, hierarchy, mount anchoring, deletion, posing, IK and robot selection. All remain accurate, so the article stays unchanged under the finding’s explicit allowance.
+
+## Pose sections prepare naming rules once
+
+The whole-app search for `jointGroups`, `jointRowLabels`, `groupRank` and `GROUP_ORDER` found one section-ordering and row-labeling implementation in `utils/jointNames.ts`, consumed by `PosePanel.tsx`. Other callers use individual joint names or group labels without section sorting or row shortening. No second naming path needs this preparation.
+
+Section ranks now use a module-local map of the nine canonical labels instead of repeatedly lowercasing and scanning those labels inside the sort comparator. Section labels still come from `jointGroupLabel`, with the same canonical casing. Each row-label call normalizes and splits its group once, creates one common omission set and at most one additional set containing abbreviated side tags. A row uses that additional set only when its own name has a recognized side. Non-sided sections retain side words and abbreviations. Preparation belongs to the call and reads changed section names afresh.
+
+For a 600-row section, group normalization and splitting fall from 600 calls each to one each. Omission sets fall from 600 to two for a sided section and one for an unsided section. These are source-derived operation and allocation counts, without timing assertions or a claim about complete panel rendering time. Per-joint tokenization, side recognition, duplicate detection and result-map construction remain.
+
+`utils/jointNames.test.ts` checks every canonical section rank, source order, explicit limb assignment, movable-joint filtering and independent output arrays. Row-label tests cover duplicate fallback, retained sides under Other, abbreviated side recognition, uppercase group names and unchanged input joints. Three 600-row fixtures count group normalization once per call and verify complete output size and endpoint labels. No timeout, retry or quarantine changes apply.
+
+The abbreviated-side fixture includes non-colliding `LL_ankle` and `wrist_r` names alongside the colliding `L_knee` and `knee_l` pair. The original pair fell back to full names, so it could not detect a missing abbreviated-side omission. The added names assert prefix and suffix omission in a sided section and retention under Other across alternating calls.
+
+The [Pose a robot](../../site/content/help/pose-a-robot.md) and [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) articles were checked against the final behavior. Section names, row labels, order, controls and user actions remain unchanged. Their instructions remain accurate, so no help prose or screenshots change. The concept article now lists `src/utils/jointNames.ts` in `covers`, directly tracking the implementation of its limb-grouping description. Its joint fields, import paths, hierarchy, mount anchoring, deletion, pose behavior, inverse kinematics and robot-selection descriptions remain accurate. The article contains no screenshots to update.
+
+## Rig component lookups compress their full paths
+
+The whole-app search found map-based connected-component root walks in rig grouping, Onshape rigid grouping, print merging and print-label faces. The latter two already shared a fully compressing iterative helper. That helper now lives at `electron/componentRoot.mjs`, and both `kinematicsRig.ts` and `electron/onshape/assembly.mjs` share it. Array-based walks in world meshes, rotor splitting and CAD topology already compress paths. Dataset and vision source grouping also compress every traversed link, using maps where roots have no parent entry.
+
+On November 16, 2026, a scratch comparison on Node 26.13.0 counted `Map.get` calls during complete `buildRig` calls. Each fixture has independent root joints whose two parent-part ids overlap with the next joint, forming one connected robot without a deep kinematic hierarchy. At 300 joints, reads fell from 98,099 to 9,000. At 600 joints, reads fell from 376,199 to 18,000. Complete rigs matched the previous implementation. The script is `scratch/rig-components.mjs`. These are deterministic operation counts, without timing assertions or a claim about complete interaction latency. The map retains one entry per member and no extra path array.
+
+`kinematicsRobotGroups.test.ts` bounds lookup work on both sizes and checks the complete robot's ordered joints, part set, averaged pivot, membership and source preservation. Existing cases cover separate robots, shared bases, duplicate names, edits and undo. `print/componentGrouping.test.ts` retains missing-root, empty-string and zero-id checks, descending print chains and label faces. Print union rules and output order are unchanged.
+
+The existing [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) article still describes the same hierarchy, grouped-part ownership and per-robot posing. No label, action or visible state changed, so its text and screenshots remain unchanged.
+
+Preflight also named four print articles. [The path from design to build](../../site/content/help/from-design-to-build.md) and [Printability estimates](../../site/content/help/printability-estimates.md) retain their readiness, support, plate and timing behavior. [Label printed parts with their guide letters](../../site/content/help/label-printed-parts.md) retains its toggles, letter dimensions, candidate faces and two screenshots. [Merge printed parts into one print](../../site/content/help/merge-printed-parts-into-one-print.md) retains its eligibility rules, controls, undo and two screenshots. Their print code changes only its import path, so all four articles remain unchanged after comparison with the final diff.
+
+Onshape had the same partial compression. A direct comparison of its union/find sequence over 300 and 600 chained occurrences preserved every root and reduced map reads from 90,598 to 2,092 and from 361,198 to 4,192. `scratch/onshape-components.mjs` records this operation-count comparison. `electron/onshape/assemblyGroups.test.mjs` bounds complete assembly grouping reads on both sizes, checks occurrence order and source preservation, and regroups the same input after removing mates. The existing import and update tests retain fastened-mate integration coverage. No networking or account behavior changes. The renderer uses the same JavaScript helper through its type declaration.
+
+The [Import an Onshape assembly as a robot](../../site/content/help/import-an-onshape-assembly.md) article still describes identical account setup, mate grouping, link names, motion and updates. Its screenshots show unchanged controls and imported results, so no article edit is needed. A separate scratch replay also compared 120 generated rigs with shared parts and grouped-part adoption against the previous implementation, with exact equality.
+
+Final `check:changed` validation passed formatting, lint, types, documentation, site copy for 285 pages and the selected related tests: 572 files and 3,866 tests passed, with one existing skip. The focused component run passed four files and 22 tests. No timeout, retry, skip or quarantine was added. Logs remain in `scratch/check-grouping-final.log` and `scratch/component-focused-final.log`.

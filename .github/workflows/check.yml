@@ -113,8 +113,11 @@ jobs:
             cargo test --locked --manifest-path hw/Cargo.toml -p robot-daemon --bin robot-daemon
           fi
       - name: Check everything
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event_name != 'pull_request' && runner.os == 'Linux' }}
         run: npm run check
+      - name: Check Windows types and unit tests
+        if: ${{ github.event_name != 'pull_request' && runner.os == 'Windows' }}
+        run: npm run typecheck && npm test
       - name: Compare passive joint physics with native MuJoCo
         run: |
           if [ "${{ github.event_name }}" != 'pull_request' ]; then

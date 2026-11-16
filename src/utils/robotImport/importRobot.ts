@@ -158,11 +158,21 @@ function sceneJoints(
   base: Omit<JointBuild, 'idOf' | 'jointAbove' | 'partsOwnedBy'>,
 ) {
   const ownerOf = linkOwners(model);
+  const partsByOwner = new Map<ModelJoint | null, string[]>();
+
+  for (const [link, id] of partOfLink) {
+    const owner = ownerOf(link);
+    const parts = partsByOwner.get(owner) ?? [];
+
+    parts.push(id);
+    partsByOwner.set(owner, parts);
+  }
+
   const build: JointBuild = {
     ...base,
     idOf: jointIds(model),
     jointAbove: (j) => j.after ?? ownerOf(j.parent),
-    partsOwnedBy: (joint) => [...partOfLink].filter(([link]) => ownerOf(link) === joint).map(([, id]) => id),
+    partsOwnedBy: (joint) => partsByOwner.get(joint)?.slice() ?? [],
   };
 
   return model.joints.filter((j) => j.type !== 'fixed').map((j) => sceneJoint(build, j));

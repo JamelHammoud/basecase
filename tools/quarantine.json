@@ -1,5 +1,77 @@
 [
   {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for nominal",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43844795005 exceeded the unchanged 5000 ms budget at 5009 ms, while its other 15 variants passed. Focused Windows diagnostic 43847288865 passed the same nominal test at the same revision in 4451.1547 ms with one worker and no retries. The responsible capture, native startup or scoring stage is not established. Issue #1390 owns tracing and equal-load baseline and candidate measurements before restoration."
+  },
+  {
+    "file": "e2e/inputs.e2e.test.ts",
+    "test": "fires a gesture its Case was taught from three examples and ends camera capture on Escape",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43844795005 left operatorCamera().feeding true through its unchanged 10000 ms poll, then reached the final empty-error assertion on retry with an unclosed VideoFrame warning. The existing wave quarantine under #995 has the same two symptoms. Feed completion and the remaining frame owner are not established. Preserve the salute, live camera, Escape shutdown, tile removal, ended track and empty-error assertions during tracing and equal-load measurements."
+  },
+  {
+    "file": "e2e/remoteTraining.e2e.test.ts",
+    "test": "configures a training computer and reattaches Stand after a studio restart without a second dispatch",
+    "issue": 1365,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43844795005 observed zero initial train-start requests at line 26, then stalled locating Connect in configureRemoteComputer at line 111 on retry. The existing grouped recovery quarantine under #1365 already records absent dispatch and configuration stalls. The cause remains unestablished. Both recovery paths stay active on other platforms while #1365 traces configuration, dispatch, persistence and reattachment and measures baseline and candidate runs at equal load."
+  },
+  {
+    "file": "e2e/fleet.e2e.test.ts",
+    "test": "opens Fleet from Operate, restricts a site viewer and reopens persistent inventory",
+    "issue": 1386,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Run 43844795005 completed the inventory walkthrough but failed its final error assertion with 78 ERR_NETWORK_CHANGED asset failures. Retry then timed out filling Organization ID after the shared browser had signed in and the viewer roles had been removed. The same Fleet test, browser, fixture, harness, lockfile and e2e configuration passed Linux run 43839831222 in 7945 ms. The initial network-change trigger is not established. Issue #1386 owns startup tracing, attempt isolation and equal-load measurements before restoration. Enrollment and non-Linux coverage remain active."
+  },
+  {
+    "file": "e2e/caseCode.e2e.test.ts",
+    "test": "passes pointer input through the HUD and stops driving before closing Run Case on Escape inside a code frame",
+    "issue": 1377,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Run 43831610288 kept Drive off for the unchanged 60000 ms poll at line 223 after the joystick click on both Linux attempts. Windows passed at the same commit. Linux passed in run 43824172798 with unchanged Case code, browser test, dependencies and harness. Each attempt owns a fresh app. Frame handshake, click delivery and simulation startup are not distinguished by the log. Issue #1377 owns tracing and equal-load measurements before restoration."
+  },
+  {
+    "file": "e2e/caseCodeAgent.e2e.test.ts",
+    "test": "edits and undoes live panels, then sends the running Case context through ⌘I",
+    "issue": 1377,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Run 43831610288 returned It didn’t answer. instead of the syntax error at source line 3 at line 113 on both Linux attempts. The first panel write loaded. Windows passed at the same commit in 13.406 s. Linux passed in run 43824172798 in 12.140 s with unchanged frame code, browser test, dependencies and harness. Each attempt owns a fresh app. Frame startup, error delivery and watchdog timing are not distinguished by the log. Issue #1377 owns tracing and equal-load measurements before restoration."
+  },
+  {
+    "file": "e2e/remoteTraining.e2e.test.ts",
+    "test": "configures two attempts, recovers one grouped workflow and shows its local verdict",
+    "issue": 1365,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43831610288 observed one train-start request instead of two after reload at line 75 on the first Windows attempt, then stalled clicking Concurrent attempts on retry. Linux passed at the same commit. Windows passed both recovery tests in run 43824172798 with unchanged training code and fixture. Issue #1365 already owns tracing model reconstruction, journal persistence and worker reattachment, followed by equal-load measurements. Both browser paths remain active on Linux and macOS."
+  },
+  {
+    "file": "e2e/passiveFixtures.e2e.test.ts",
+    "test": "creates Open a Lid, edits its weight and reopens its recorded reference",
+    "issue": 1364,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43831610288 reached Drive on but retained zero saved tries at line 46 on both Windows attempts. Linux passed both fixture walkthroughs at the same commit in 29.259 s. Commit 37dccba61 introduced them after the last green run. Each attempt owns a fresh app. Recording, automatic finish, scoring and persistence are not distinguished by the log. Issue #1364 already owns Windows tracing and equal-load measurements before restoration. Real MuJoCo contact, recording and negative controls remain in passiveFixtures.test.ts."
+  },
+  {
+    "file": "e2e/passiveFixtures.e2e.test.ts",
+    "test": "creates Pull a Drawer, edits its weight and reopens its recorded reference",
+    "issue": 1364,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43831610288 reached Drive on but retained zero saved tries at line 46 on both Windows attempts. Linux passed both fixture walkthroughs at the same commit in 29.259 s. Commit 37dccba61 introduced them after the last green run. Each attempt owns a fresh app. Recording, automatic finish, scoring and persistence are not distinguished by the log. Issue #1364 already owns Windows tracing and equal-load measurements before restoration. Real MuJoCo contact, recording and negative controls remain in passiveFixtures.test.ts."
+  },
+  {
     "file": "e2e/caseCode.e2e.test.ts",
     "test": "unloads a panel that never answers with its error, while the page keeps drawing frames",
     "issue": 1137,

@@ -76,7 +76,7 @@ Measurements and limits: [Print planning and labels performance evidence](../not
 
 - **Welding rejects collapsed triangles as they arrive.** `print/threeMf.ts` writes retained triangle indices into one typed buffer during vertex welding. It keeps first-seen coordinates, quantized vertex identities and triangle order, including vertices from discarded faces. A mesh without collapsed faces returns that buffer directly. Other meshes copy only the retained prefix so worker transfers carry no unused capacity. The shared path covers 3MF, printed labels, Wrap Robot and Lighten. `print/threeMf.test.ts` checks mixed collapsed faces against an independent reference, quantization, empty meshes, unchanged inputs and exact-sized independent buffers. [Evidence](../notes/performance-printing.md#welding-rejects-collapsed-triangles-as-they-arrive).
 
-- **Print connected-component lookups compress their full paths.** `print/componentRoot.ts` shares an iterative map lookup across print-merge groups and print-label faces. Each caller keeps its existing root choice and output order. Both append to their own member arrays instead of copying a growing array per member. [Evidence](../notes/performance-printing.md#print-connected-component-lookups-compress-their-full-paths).
+- **Print connected-component lookups compress their full paths.** `electron/componentRoot.mjs` shares an iterative map lookup across print-merge groups and print-label faces. Each caller keeps its existing root choice and output order. Both append to their own member arrays instead of copying a growing array per member. [Evidence](../notes/performance-printing.md#print-connected-component-lookups-compress-their-full-paths).
 
 ### Browser assertion scope
 

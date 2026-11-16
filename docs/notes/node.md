@@ -252,3 +252,25 @@ Review reproduced two missed selections. Vitest expands `styled %c text` to `sty
 The updated isolated run passes 12 tests across the three selector test files. Its generated fixture has 11 runtime cases, including the style placeholder. The additional CLI regression removes shared setup and renames its adjacent declaration together, then verifies the affected-file selection and all 11 executed cases. The report is `scratch/review-selector-report.json`, with output in `scratch/review-selector-isolated.log`.
 
 The standard `check:changed` run also passes during review, including formatting, ESLint, documentation and all 12 related tests in 2.71 seconds of test execution. A local dependency copy omitting the shared caches allowed discovery to complete without a repository configuration change. Its log is `scratch/review-check-final.log`.
+
+## Fleet authorization boundary
+
+The [Fleet service](../guide/fleet.md) uses one evaluator for direct resource reads, enumeration, exports, text assets, mutations and subscription snapshots. Fast tests exercise two organizations, nested sites, group grants, custom role replacement and deletion, deny overrides, attribute conditions, token ceilings, enrollment replay, session revocation and role changes on an open subscription.
+
+The transport test rejects a remote HTTP origin and a wildcard HTTP bind paired with a loopback origin. Request handling also checks the socket peer, preventing a remote request with a forged loopback Host. The service does not trust forwarded headers as proof of HTTPS. The studio connector's redirect refusal prevents bearer forwarding to another origin. Operator-owned configuration is its only source of addresses and credentials. Desktop bridge and trusted IPC implementations are unchanged.
+
+The initial integration run exposed JSON scope arrays being encoded as PostgreSQL arrays instead of JSON. Explicit JSON serialization fixed credential issuance. An export without any export grant initially returned an empty page, and now refuses the request. Allocating a new generation initially cleared the previous source timestamp. Status now stores its observation generation separately and keeps the last observation until a new generation publishes. The original persistence assertion remains intact.
+
+No SAML, SCIM, physical robot, remote identity provider or cross-host TLS deployment was exercised. TLS is required by the service configuration and connector validation outside loopback. The committed integration tests run against HTTP loopback. Registry performance and memory evidence are in [Fleet measurements](fleet.md).
+
+## Nightly Windows static check duplication
+
+[Check run 43831610288](https://github.com/JamelHammoud/basecase/actions/runs/43831610288) at `129c2956` cancelled the Windows unit job at 08:44:31 UTC, fifteen minutes after setup began. `npm run check` began at 08:31:17. Typechecking began at 08:35:39 and Vitest at 08:36:34, leaving 7 minutes 57 seconds for unit tests. There was no stalled final test identified. Tests were still completing normally at cancellation, including the mask test's separate 6.207-second failure. The final aggregate `check` only reported the unit and browser failures and requires no assertion change.
+
+The last green run, [43739315274](https://github.com/JamelHammoud/basecase/actions/runs/43739315274), spent 3 minutes 14 seconds before typechecking and 9 minutes 5 seconds in Vitest. The failing run spent 4 minutes 22 seconds before typechecking. Windows runner image `windows-2025-vs2026/20261103.298.1` was unchanged. This is accumulated suite cost and runner variability, not evidence of a newly hung test or an image regression. No single merge explains the job cancellation.
+
+Windows now omits static checks already run by Linux on the same revision, retaining types, the complete active unit suite and the following native physics step. Replaying the failing timestamps with that work removed recovers about 4 minutes 22 seconds for unit and native checks, without another runner, longer deadline or retry. This is a timestamp projection, not a measured new Windows run. The mask test separately stops recording the reference decoder's per-pixel calls. CI owns the final full-suite runtime and success verdict.
+
+## Windows recovery fixture line endings
+
+Nightly Check 43844795005 failed `workRecovery.test.mjs` after a successful Git refresh because `source.txt` contained `new source\r\n` rather than `new source\n`. The temporary repository omitted the application's `.gitattributes`, so Windows Git's CRLF conversion changed the fixture checkout. The recovery implementation itself preserved the source update and unfinished work. The fixture now commits the application's `* text=auto eol=lf` attributes and explicitly enables `core.autocrlf=true` in both repositories. This exercises Windows conversion on every platform while retaining exact byte assertions for refreshed, modified and untracked files. The existing conflict case stays active. The three related tests passed locally in the changed-file check, with no production recovery behavior or assertion changed.

@@ -49,6 +49,28 @@ function measuredFit(index: MeshIndex, minSpan = 30) {
 }
 
 describe('cylinder fit vertex reuse', () => {
+  it('retains first-seen welded vertex order across reordered and repeated triangles', () => {
+    const index = cylinder(32);
+    const region = Array.from({ length: index.triangles }, (_, i) => index.triangles - i - 1);
+
+    region.push(...region.slice(0, 12));
+
+    const expectedIds = [...new Set(region.flatMap((t) => [0, 1, 2].map((k) => index.corners[t * 3 + k])))];
+    const before = [...region];
+    const vertices = vi.spyOn(index, 'vertex');
+    const first = fitCylinder(index, region, 30);
+
+    expect(first).toMatchObject({ radius: expect.closeTo(6, 5), length: 40, convex: true });
+    expect(vertices.mock.calls.slice(0, expectedIds.length).map(([id]) => id)).toEqual(expectedIds);
+    expect(region).toEqual(before);
+    vertices.mockClear();
+
+    const second = fitCylinder(index, region, 30);
+
+    expect(second).toEqual(first);
+    expect(vertices.mock.calls.slice(0, expectedIds.length).map(([id]) => id)).toEqual(expectedIds);
+  });
+
   it.each([64, 128])('reads each fitting vertex once on a %i-segment cylinder', (segments) => {
     const { found, rounds } = measuredFit(cylinder(segments));
 

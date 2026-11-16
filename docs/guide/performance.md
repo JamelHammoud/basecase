@@ -25,6 +25,7 @@ Update the relevant section in those files. A refinement within an existing subs
 
 | Subsystem | Implementation | Measurements and limits |
 | --- | --- | --- |
+| Fleet registry | [Guide](fleet.md) | [Evidence](../notes/fleet.md) |
 | Case facts and world geometry | [Guide](cases.md#performance-case-facts-and-world-geometry) | [Evidence](../notes/performance-cases.md) |
 | Image comparison | [Guide](agent.md#performance-image-comparison) | [Evidence](../notes/performance-image-comparison.md) |
 | Vision inference | [Guide](cameras.md#performance-vision-inference) | [Evidence](../notes/performance-vision-inference.md) |

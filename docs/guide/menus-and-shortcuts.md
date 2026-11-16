@@ -57,3 +57,5 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 ### Case reference command
 
 An open Case with reference commands offers **Try Reference** in the Try section and the command palette while both simulated and real tries are idle. It starts `CaseTry.reference`, which records the reference through the ordinary drive and try pipeline. The command stays inside a running Case console, like Try It. It adds no keyboard shortcut.
+
+- **Open Fleet** in Operate and its command palette group opens the address set in Operate's Fleet address field. The [Fleet workspace](fleet.md) runs in the browser and keeps organization inventory separate from live studio connections.

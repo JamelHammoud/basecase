@@ -87,16 +87,22 @@ export function couplerSampler(l: PlacedFourBar): (thetaDeg: number) => Vec2 | n
   const place = placementFor(l);
 
   return (thetaDeg) => {
-    const pose = fourBarPose(l, thetaDeg);
+    const point = localCouplerPoint(l, thetaDeg);
 
-    return pose && place(pose.p);
+    return point && place(point);
   };
 }
 
-export function couplerPoint(l: PlacedFourBar, thetaDeg: number): Vec2 | null {
-  const pose = fourBarPose(l, thetaDeg);
+function localCouplerPoint(l: FourBar, thetaDeg: number): Vec2 | null {
+  const closed = closure(l, toRadians(thetaDeg));
 
-  return pose && placed(l, pose.p);
+  return closed && couplerOffset(closed.b, closed.c, l.point, l.coupler);
+}
+
+export function couplerPoint(l: PlacedFourBar, thetaDeg: number): Vec2 | null {
+  const point = localCouplerPoint(l, thetaDeg);
+
+  return point && placed(l, point);
 }
 
 export function linkAngles(l: Links, thetaDeg: number): { coupler: number; rocker: number } | null {

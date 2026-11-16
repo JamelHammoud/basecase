@@ -77,6 +77,26 @@ jobs:
           cargo test --locked --release --manifest-path hw/Cargo.toml -p robot-daemon
           --test network_security --test binary_network
 
+  static:
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - run: npm ci
+      - name: Check static rules
+        run: >-
+          npm run check:tracked && npm run check:docs && npm run check:site &&
+          npm run check:quarantine && npm run format:check && npm run lint && npm run lint:py
+      - run: npm audit --audit-level=high
+
   unit:
     strategy:
       fail-fast: false
@@ -112,11 +132,8 @@ jobs:
           if git diff --name-only HEAD^1 HEAD | grep -q '^hw/'; then
             cargo test --locked --manifest-path hw/Cargo.toml -p robot-daemon --bin robot-daemon
           fi
-      - name: Check everything
-        if: ${{ github.event_name != 'pull_request' && runner.os == 'Linux' }}
-        run: npm run check
-      - name: Check Windows types and unit tests
-        if: ${{ github.event_name != 'pull_request' && runner.os == 'Windows' }}
+      - name: Check types and unit tests
+        if: ${{ github.event_name != 'pull_request' }}
         run: npm run typecheck && npm test
       - name: Compare passive joint physics with native MuJoCo
         run: |
@@ -125,7 +142,7 @@ jobs:
           elif git diff --name-only HEAD^1 HEAD | grep -qE '^(src/(joints/|sim/(mjcf|actuatorChannels|fixtures/passive)|types/(robotics|joint))|tools/sim/)'; then
             node tools/sim/contactParity.mjs
           fi
-      - if: runner.os == 'Linux'
+      - if: ${{ github.event_name == 'pull_request' }}
         run: npm audit --audit-level=high
 
   e2e:
@@ -429,12 +446,14 @@ jobs:
 
   check:
     if: always()
-    needs: [changes, unit, e2e, e2e-changed, e2e-windows, app, ros, ios, lerobot, vision, daemon-arm64, credit, copy]
+    needs:
+      [changes, static, unit, e2e, e2e-changed, e2e-windows, app, ros, ios, lerobot, vision, daemon-arm64, credit, copy]
     runs-on: ubuntu-latest
     steps:
       - name: Pass only when every job that had to run passed
         env:
           REQUIRED: ${{ needs.changes.result }} ${{ needs.unit.result }} ${{ needs.credit.result }}
+          STATIC: ${{ needs.static.result }}
           E2E: ${{ needs.e2e.result }}
           E2E_CHANGED: ${{ needs.e2e-changed.result }}
           FULL: ${{ github.event_name != 'pull_request' }}
@@ -456,11 +475,12 @@ jobs:
           EVENT: ${{ github.event_name }}
         shell: bash
         run: |
-          echo "Required: $REQUIRED; full: $FULL; e2e: $E2E; changed e2e: $E2E_CHANGED; app: $APP (needed: $APP_NEEDED); ROS: $ROS (needed: $ROS_NEEDED); iOS: $IOS (needed: $IOS_NEEDED); LeRobot: $LEROBOT (needed: $LEROBOT_NEEDED); Windows e2e: $WINDOWS_E2E; copy: $COPY"
+          echo "Required: $REQUIRED; static: $STATIC; full: $FULL; e2e: $E2E; changed e2e: $E2E_CHANGED; app: $APP (needed: $APP_NEEDED); ROS: $ROS (needed: $ROS_NEEDED); iOS: $IOS (needed: $IOS_NEEDED); LeRobot: $LEROBOT (needed: $LEROBOT_NEEDED); Windows e2e: $WINDOWS_E2E; copy: $COPY"
           [ "$(wc -w <<< "$REQUIRED")" -eq 3 ] || exit 1
           for r in $REQUIRED; do [ "$r" = success ] || exit 1; done
           want_full=skipped
           [ "$FULL" = true ] && want_full=success
+          [ "$STATIC" = "$want_full" ] || exit 1
           [ "$E2E" = "$want_full" ] || exit 1
           [ "$WINDOWS_E2E" = "$want_full" ] || exit 1
           want_changed=success

@@ -291,6 +291,8 @@ The selector fixtures also cover Vitest's `%c` title substitution and shared set
 
 Browser checks of help hubs assert the current Study contribution, while `helpHubs.test.ts` checks every hub against all of its source contributions.
 
-### Nightly Windows unit coverage
+### Nightly static and unit coverage
 
-Linux runs `npm run check`. Windows runs `npm run typecheck && npm test`, followed by the existing native passive-joint parity step. Formatting, lint, documentation, site, quarantine and tracked-file checks run once on Linux against the same revision. Windows retains TypeScript, every active unit test and native parity. This removes duplicated static work from its existing fifteen-minute job budget. [Timing evidence and limits](../notes/node.md#nightly-windows-static-check-duplication).
+The nightly `static` job runs tracked-file, documentation, site, quarantine, formatting, JavaScript lint, Python lint and dependency audit checks once on Linux. It runs alongside the unit jobs against the same revision. Both Linux and Windows unit jobs run `npm run typecheck && npm test`, followed by the existing native passive-joint parity step. Every active unit test remains covered on both platforms. Pull requests retain their changed-file check and Linux dependency audit.
+
+The final `check` requires `static` to succeed for scheduled and dispatched runs and to be skipped for pull requests. Static checks no longer consume the Linux unit job's fifteen-minute budget. No test, assertion or deadline changes. [Linux timing evidence and validation](../notes/node.md#nightly-linux-static-and-unit-budget) and [earlier Windows evidence](../notes/node.md#nightly-windows-static-check-duplication) record the reason and limits.

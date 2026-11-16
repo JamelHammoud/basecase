@@ -4,7 +4,7 @@ Basecase is built by a team of agents with no person in the loop. Jamel, the fou
 
 ## Rules every lane follows
 
-- Follow AGENTS.md and the guide for every area you touch (`docs/guide/`), including the loop guide (`docs/guide/loop.md`, §0l). Read them before changing an area.
+- Follow AGENTS.md and the guide for every area you touch (`docs/guide/`), including the loop guide (`docs/guide/loop.md`, §0l). Read them before changing an area. Put performance implementation facts in the area's guide and measurements in its existing subsystem note under `docs/notes/`. Follow the performance guide's links to find them. A refinement within an existing subsystem leaves `docs/guide/performance.md` and the root index alone.
 - Never run `git commit`, `git push`, `gh pr` or anything that publishes. The loop's runner commits, pushes and opens the pull request from what you leave in the worktree and the JSON you answer with.
 - Never credit a model or tool anywhere: no `Co-Authored-By`, no "Generated with", in code, commits or text.
 - Run only fast checks yourself: `npm run check:changed -- <files you changed>`. Don't run the whole suite or the e2e tests locally. CI runs them on the pull request, and the loop reacts to the result. Do write the e2e test a feature needs.

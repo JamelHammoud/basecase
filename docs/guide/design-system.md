@@ -46,3 +46,11 @@ Use these primitives. Never hand-roll a styled `<button>` or input when one fits
 - Thumbnails (`three/partThumbnails.ts`) render at 480 × 360 with a studio environment map, so metals read on dark tiles; dark parts get more exposure.
 - `ImageViewer`: full-window image viewer. Pinch or ⌘-scroll zooms at the pointer, two-finger scroll and drag pan, double-click toggles fit / 100%+, − + 0 keys, ← → and a filmstrip for several images, Esc or a backdrop click closes. Controls float in glass islands: Zoom out, the zoom readout, which zooms to fit (0), Zoom in and Close. A control never sits beside another that does its job, so there's no separate fit button.
 - Tokens in `theme.ts` (`THEME_COLORS`, `LAYOUT`, `DRAG_REGION`, `NO_DRAG_REGION`) mirror the `@theme` block in `index.css`.
+
+## Performance: trace plots
+
+Measurements and limits: [Trace plots performance evidence](../notes/performance-plots.md).
+
+- **Plot ranges scan samples without copying them.** `design-system/tracePaths.ts` accumulates finite bounds directly from each trace's arrays for both axes, including explicit limits and zero. It retains only two bounds, regardless of recording length. All `TracePlot` callers share this path: console time and XY plots, try timeline lanes, calibration replay and torque envelopes. [Evidence](../notes/performance-plots.md#plot-ranges-scan-samples-without-copying-them).
+
+- **Plot sampling writes directly into paths.** `design-system/tracePaths.ts` emits index-spaced samples into SVG commands without complete point lists, per-column sets, nested bucket arrays or flattening. Console time plots, try timeline lanes and calibration replay share this path. The reduction threshold, temporal extrema order, first ties and missing-column pen lifts stay unchanged. [Evidence](../notes/performance-plots.md#plot-sampling-writes-directly-into-paths).

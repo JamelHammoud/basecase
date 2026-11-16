@@ -2,6 +2,18 @@
 
 Implementation: [Cable routing](../guide/build.md#performance-cable-routing). Shared requirements: [Performance](../guide/performance.md).
 
+## Joint sampling gaps accumulate directly
+
+The whole-app search for `routeMotion`, `halves` and adjacent sample-gap calculations found one routing half-gap constructor. Every bus and power route uses its per-joint values through `relativeMotionBound`. Other sample-gap lists, such as bench-log timestamps, serve different calculations.
+
+For a nonempty list of N samples, the previous constructor copied N−1 sample entries and built N−1 half-gap entries before spreading them into `Math.max`. The direct scan retains one scalar and applies the same subtraction, division and maximum in source order. Empty and singleton lists still yield zero. Sampling, joint iteration, Cartesian pose limits and failure messages are unchanged. These are code-derived allocation counts, without timing assertions or a claim about complete routing latency.
+
+`routeMotion.test.ts` checks ten range cases, including reversed and collapsed ranges, off-grid endpoints, nonfinite inputs and both sides of the 61,440-degree sampling guard. Each case also checks unchanged source scenes and independent results after a range edit. Existing motion tests retain nested revolute and prismatic clearance bounds. Routing analysis and bound tests cover bus and power consumers. No timeout, retry or quarantine changes apply.
+
+This changes no action, label or visible state. Existing cable-routing help steps and captures remain accurate.
+
+Targeted validation passed formatting, lint, types, documentation, site copy for 291 pages and 332 tests across 54 related files. Copy diff is net zero. Preflight flagged [Servo bus or Cable reach is red](../../site/content/help/troubleshoot-servo-bus.md). Its endpoint selection, cable measurements, routing refusals, stock lengths and expanded-check screenshot were checked against the final code and remain accurate, so the article stays unchanged.
+
 ## Saved routing choices are indexed once
 
 `routeSpecs.test.ts` compares complete routed netlists against per-net selection using the previous four-field matching rule. Its 24 nets span bus and power routes, with ordered anchors, passing stock and unavailable stock. Reversed choices precede matching choices, and later duplicate choices carry different stock and anchors. The test checks source preservation and a new analysis after inserting an overriding choice. Additional cases check separator collisions, missing endpoints and absent choices. Existing routing tests retain motion, clearance and refusal coverage.

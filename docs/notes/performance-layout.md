@@ -47,3 +47,13 @@ For a grid with 600 string labels, source-derived temporary-array counts fall fr
 On November 16, 2026, `scratch/choice-parity.test.ts` compared the previous and final implementations across 600 labels, four font sizes, astral and combining characters, an isolated surrogate, empty strings and mixed React labels. All widths, cell minima and complete CSS templates matched exactly. The scratch run passed. Committed `choiceLayout.test.ts` retains calibrated width and panel wrapping coverage and adds Unicode and mixed-label cases. No timeout, retry or quarantine changes apply.
 
 This changes no action, label or visible state. Help instructions and screenshots remain accurate, so no help article or capture changes are needed. Implementation and coverage are in [Design system](../guide/design-system.md#performance-choice-grid-sizing).
+
+## Context menu ordering partitions in one source pass
+
+The whole-app search found one destructive-entry partition and divider cleanup, `design-system/menuOrder.ts`, called by the shared `ContextMenu`. Camera menu tests also invoke it directly. Popover menus render their supplied children and do not run this normalization. No second implementation needs changing.
+
+For a nonempty mixed menu, the previous source creates four arrays: ordinary entries, cleaned ordinary entries, destructive entries and the final concatenation. The new source creates two arrays and appends destructive entries into the ordinary result. Source entry visits fall from two full passes plus an ordinary-entry pass to one full pass. The final destructive-entry append remains. For menus without destructive entries, explicit array allocations fall from three to two. These are source-derived counts, not timings or engine heap measurements. No complete menu-opening latency claim is made.
+
+The committed parity test covers 4,096 combinations and preserves heading order, destructive order and divider positions. Separate cases verify the first divider's identity across intervening destructive entries, source ownership, fresh results after edits and empty inputs. Existing camera menu tests cover caller integration. No timeout, retry, quarantine or browser harness changes apply.
+
+This changes no action, label or visible state. Existing help instructions and menu screenshots remain accurate, so no help article or screenshot changes are needed.

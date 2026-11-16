@@ -2,6 +2,16 @@
 
 Implementation: [Panels and Layers](../guide/layout.md#performance-panels-and-layers). Shared requirements: [Performance](../guide/performance.md).
 
+## Insertable search indices
+
+Parts search previously rebuilt each robot's lowercased name, group and search text and tokenized every object category on every query. It now retains robot text by immutable entry identity in a weak map and prepares the ten fixed object categories once. Entries without other owners can be collected. Replacing an entry refreshes its text, and query-specific scores and tie positions are never cached. The default preset list is also prepared once.
+
+A scratch comparison against the previous implementation returned identical complete result lists for 94 queries using 17 robot entries, including one imported robot, and ten object categories. Queries covered preset names and makers, imported source URLs, object names and examples, exact hardware sizes, empty queries and no matches. The committed `src/components/parts/insertSearch.test.ts` additionally checks one title read across five queries, fresh replacement text and reordered score ties.
+
+On an Apple M5 Pro with macOS arm64 and Node 26.13.0, nine batches of 500 queries each had median times of 17.82 ms before and 15.05 ms after. Each batch repeated `arm`, `robot`, `mug`, `desk` and `servo` 100 times with the same entries. The parity pass warmed both implementations first. Per batch, robot text construction falls from 8,500 to zero after warmup and object tokenization falls from 5,000 to zero. The retained indices initially require 17 robot constructions and ten category tokenizations. These are local pure-search measurements, excluding rendering and React compilation, not browser latency or CI budgets. Scratch sources and results remain untracked in `scratch/`.
+
+The screen, actions and labels are unchanged, so there is no new browser walkthrough or help screenshot. This coverage does not measure index reuse across React renders or garbage collection.
+
 ## Layers indexes groups once
 
 `layerRows.scale.test.ts` checks scene order, complete group selection and collapsed/search results on 600 interleaved parts in 200 groups, with a linear budget for group lookups rather than a wall-clock limit.

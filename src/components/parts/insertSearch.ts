@@ -26,6 +26,9 @@ const OBJECT_WORD_SCORE = 5;
 const wordsOf = (text: string) => text.toLowerCase().match(/[a-z0-9]+/g) ?? [];
 
 const objectWords = (c: ObjectCategory) => wordsOf(`${c.title} ${c.examples}`);
+const objectIndex = OBJECT_CATEGORIES.map((category) => ({ category, words: objectWords(category) }));
+const defaultRobots = robotEntries([]);
+const robotIndices = new WeakMap<RobotEntry, Scorable>();
 
 const sameWord = (w: string, known: string) =>
   known === w || known === `${w}s` || known === `${w}es` || w === `${known}s`;
@@ -33,14 +36,21 @@ const sameWord = (w: string, known: string) =>
 const names = (known: string[]) => (w: string) => known.some((k) => sameWord(w, k));
 
 const robotIndex = (r: RobotEntry): Scorable => {
+  const indexed = robotIndices.get(r);
+
+  if (indexed) return indexed;
+
   const group = `robot robots ${r.group} ${GROUP_WORDS[r.group]}`.toLowerCase();
   const { title, maker, description, url } = r.preset;
-
-  return {
+  const entry = {
     name: title.toLowerCase(),
     group,
     text: [title, maker, description, r.imported ? url : '', group].join(' ').toLowerCase(),
   };
+
+  robotIndices.set(r, entry);
+
+  return entry;
 };
 
 interface Scored {
@@ -63,10 +73,12 @@ function robotHits(robots: RobotEntry[], words: string[]): Scored[] {
 }
 
 const objectHits = (words: string[]): Scored[] =>
-  OBJECT_CATEGORIES.filter((c) => words.every(names(objectWords(c)))).map((category, i) => ({
-    hit: { kind: 'objects', category },
-    score: OBJECT_WORD_SCORE * words.length - i / 1000,
-  }));
+  objectIndex
+    .filter((entry) => words.every(names(entry.words)))
+    .map(({ category }, i) => ({
+      hit: { kind: 'objects', category },
+      score: OBJECT_WORD_SCORE * words.length - i / 1000,
+    }));
 
 export interface InsertSources {
   sourced?: SourcedItem[];
@@ -74,7 +86,7 @@ export interface InsertSources {
 }
 
 export function searchInsertables(query: string, sources: InsertSources = {}): Hit[] {
-  const { sourced = sourcedItems(), robots = robotEntries([]) } = sources;
+  const { sourced = sourcedItems(), robots = defaultRobots } = sources;
   const parts = scoreCatalog(query, sourced);
   const partHits: Scored[] = parts.hits.map(({ item, score }) => ({ hit: { kind: 'part', item }, score }));
 

@@ -33,8 +33,13 @@ const SKIPPED = [
   ['<?', '?>'],
 ] as const;
 
-const attrsOf = (text: string): Array<[string, string]> =>
-  [...text.matchAll(ATTR)].map((m) => [m[1], decodeEntities(m[2] ?? m[3])]);
+function attrsOf(text: string): Array<[string, string]> {
+  const attrs: Array<[string, string]> = [];
+
+  for (const m of text.matchAll(ATTR)) attrs.push([m[1], decodeEntities(m[2] ?? m[3])]);
+
+  return attrs;
+}
 
 interface Cursor {
   text: string;

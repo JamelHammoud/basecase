@@ -53,11 +53,22 @@ describe('xacro XML cursor', () => {
       attrs: [
         ['name', `link_${i}`],
         ['index', String(i)],
+        ['empty', ''],
+        ['name', `duplicate_${i}`],
+        ['xacro:value', `left < right & "quoted" 'text' 🤖 ${i}`],
+        ['unknown', '&unrecognized;'],
       ] as Array<[string, string]>,
       children: [{ tag: 'visual', attrs: [], children: [] }],
     }));
     const root = { tag: 'robot', attrs: [], children };
 
-    expect(parseXml(serializeXml(root))).toEqual(root);
+    const source = serializeXml(root).replaceAll('empty=""', "empty=''\t");
+
+    expect(parseXml(source)).toEqual(root);
+    expect(parseXml('<robot a="&#65;" b=\'&#x1F916;\'/>').attrs).toEqual([
+      ['a', 'A'],
+      ['b', '🤖'],
+    ]);
+    expect(parseXml(source)).toEqual(root);
   });
 });

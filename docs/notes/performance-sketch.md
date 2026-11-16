@@ -109,3 +109,14 @@ The whole-app search found one production caller of the Sketch square solver, `u
 For n residuals, the removed clone allocated one outer array and n row arrays and copied n² numeric entries per trial. At 20 and 40 residuals across six trials, this removes 126 and 246 arrays and 2,400 and 9,600 copied entries respectively. These are counts calculated from the removed clone, not timings or heap measurements. Damping matrix construction, residual copies and elimination arithmetic remain unchanged. No complete solve or interaction speedup is claimed.
 
 `dampedSteps.test.ts` covers exact weighted-step parity across damping values and weight scales, unchanged Jacobians, weights and residuals, singular trials, pivoting, partial elimination, retained outputs and interleaved prepared systems. Existing Sketch solver tests exercise constraints, dragged points and later edits through this same path. No quarantine applies. No visible state or workflow changes, so help steps and screenshots remain accurate.
+
+
+## Four-bar queries normalize only the nearest segment
+
+The whole-app search found one prepared polyline distance query in `utils/linkageKinematics.ts`. Both consumers are in `utils/linkage.ts`: sampled coupler path errors and drawn-polyline following scores. Other segment-distance functions perform individual picking or support-edge measurements rather than repeated queries over this prepared curve.
+
+The query selects a segment using squared residuals, then repeats its projection and calls `Math.hypot` once. Equal squared minima, nonfinite minima and minima below 1e-300 fall back to the original hypot scan. This preserves robust normalization for overflow and very small residuals. Segment preparation and projection arithmetic remain unchanged. The fallback repeats the segment scan, so this refinement does not claim a gain for degenerate or extreme queries.
+
+`linkageDistance.test.ts` compares exact results with the original scan across seeded curves and queries, source edits, repeated vertices, empty and single-point curves, NaN and infinities. It also compares complete synthesized linkages and ranking with both consumers using the original distance query. New cases cover underflow, overflowing squares and tied minima. No quarantine applies.
+
+For ordinary 360- and 720-segment straight polylines queried beyond their final endpoint, spy assertions count one hypot call instead of 360 and 720. Each new query performs one additional segment projection for the winner. These are deterministic operation counts, not timings or claims about complete synthesis or interaction speed. No visible state or workflow changes, so help articles and screenshots remain accurate.

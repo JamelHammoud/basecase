@@ -166,10 +166,38 @@ interface CurveSegment {
   lengthSquared: number;
 }
 
-function segmentDistance(p: Vec2, { x, y, dx, dy, lengthSquared }: CurveSegment): number {
+function segmentDistance(p: Vec2, segment: CurveSegment, norm = Math.hypot): number {
+  const { x, y, dx, dy, lengthSquared } = segment;
   const t = lengthSquared ? Math.min(1, Math.max(0, ((p[0] - x) * dx + (p[1] - y) * dy) / lengthSquared)) : 0;
 
-  return Math.hypot(p[0] - x - t * dx, p[1] - y - t * dy);
+  return norm(p[0] - x - t * dx, p[1] - y - t * dy);
+}
+
+const squaredNorm = (x: number, y: number) => x * x + y * y;
+
+function nearestDistance(p: Vec2, segments: CurveSegment[]): number {
+  let best = Infinity;
+  let nearest: CurveSegment | undefined;
+  let tied = false;
+
+  for (const segment of segments) {
+    const squared = segmentDistance(p, segment, squaredNorm);
+
+    if (squared <= best) {
+      tied = squared === best;
+      nearest = segment;
+    }
+
+    best = Math.min(best, squared);
+  }
+
+  if (nearest && !tied && best >= 1e-300 && Number.isFinite(best)) return segmentDistance(p, nearest);
+
+  let distance = Infinity;
+
+  for (const segment of segments) distance = Math.min(distance, segmentDistance(p, segment));
+
+  return distance;
 }
 
 export function curveDistance(curve: Vec2[]): (point: Vec2) => number {
@@ -189,11 +217,5 @@ export function curveDistance(curve: Vec2[]): (point: Vec2) => number {
     segments.push({ x, y, dx, dy, lengthSquared: dx * dx + dy * dy });
   }
 
-  return (p) => {
-    let best = Infinity;
-
-    for (const segment of segments) best = Math.min(best, segmentDistance(p, segment));
-
-    return best;
-  };
+  return (p) => nearestDistance(p, segments);
 }

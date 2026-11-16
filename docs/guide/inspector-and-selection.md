@@ -149,6 +149,8 @@ Measurements and limits: [Mirror performance evidence](../notes/performance-mirr
 
 ## Performance: sketch
 
+- **Four-bar curve queries normalize only the nearest segment.** `utils/linkageKinematics.ts` compares squared residuals before evaluating the selected segment with `Math.hypot`. Tied minima, nonfinite results and squared distances below 1e-300 retain the original scan. Path-error scoring and polyline-following ranking share this query. `linkageDistance.test.ts` checks exact reference distances, complete fit results, degenerate curves, extreme residuals, edits and normalization counts. [Evidence](../notes/performance-sketch.md#four-bar-queries-normalize-only-the-nearest-segment).
+
 Measurements and limits: [Sketch performance evidence](../notes/performance-sketch.md).
 
 - **SVG bounds scan contours directly.** `utils/svgTo3DParser.ts` visits each shape's outer points without flattening them into a temporary list. Import SVG previews, extrusion and Edit in Sketch share this parser. Point order, extrema arithmetic, hole exclusion and normalized contours stay unchanged. `svgTo3DParser.test.ts` covers filled paths with holes, outline sizing, overrides and empty input. [Evidence](../notes/performance-sketch.md#svg-bounds-scan-contours-directly).

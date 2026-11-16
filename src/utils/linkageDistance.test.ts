@@ -41,6 +41,51 @@ function countedCurve(points: Vec2[]) {
 
 afterEach(() => vi.restoreAllMocks());
 
+describe('nearest four-bar segment distances', () => {
+  it.each([360, 720])('normalizes only the nearest of %d ordinary segments', (segments) => {
+    const curve = Array.from({ length: segments + 1 }, (_, i): Vec2 => [i, 0]);
+    const distance = kinematics.curveDistance(curve);
+    const point: Vec2 = [segments + 20, 3];
+    const expected = referenceDistance(point, curve);
+    const hypot = vi.spyOn(Math, 'hypot');
+
+    expect(distance(point)).toBe(expected);
+    expect(hypot).toHaveBeenCalledTimes(1);
+  });
+
+  it('retains hypot arithmetic for squared-distance ties and extreme residuals', () => {
+    const curves: Vec2[][] = [
+      [
+        [0, 0],
+        [0, 0],
+        [0, 0],
+      ],
+      [
+        [0, 0],
+        [1, 0],
+        [2, 0],
+      ],
+      [
+        [0, 0],
+        [1e-160, 0],
+      ],
+    ];
+    const points: Vec2[] = [
+      [1, 1],
+      [0, 1e-160],
+      [1e200, 1e200],
+      [NaN, 0],
+      [Infinity, 0],
+    ];
+
+    for (const curve of curves) {
+      const distance = kinematics.curveDistance(curve);
+
+      for (const point of points) expect(distance(point)).toBe(referenceDistance(point, curve));
+    }
+  });
+});
+
 describe('prepared four-bar curve distances', () => {
   it('matches segment scans exactly across seeded curves and queries', () => {
     const random = seededRandom('123456789abcdef00123456789abcdef');

@@ -222,3 +222,16 @@ A scratch comparison on macOS arm64 with Node v26.13.0 compared complete body re
 The existing [Checks in the Build tab](../../site/content/help/build-checks.md) and [Servo torque and sizing](../../site/content/help/servo-torque-and-sizing.md) articles still describe the same mass, load and stability behavior. No user action, label or screenshot state changes, so both articles remain unchanged.
 
 Preflight also flagged [Weight and center of mass](../../site/content/help/weight-and-center-of-mass.md). Its own-parts rule, passive joints, 50 mm attachment limit, scenery and dynamic-object exclusions, per-robot mass and lowest stability margin remain unchanged. The article and its instructions remain accurate.
+
+
+## Stance loads accumulate supporting contacts once
+
+The whole-app search found one floor-contact centroid calculation for stance torque, in `utils/engineeringTorque.ts`. Build and agent reports share it through `jointLoad`. Skeleton sizing uses one modeled foot position rather than a measured floor-contact list, so it has no equivalent repeated centroid scan.
+
+For F floor contacts and K downstream contacts, the previous calculation filtered F entries, then traversed the K-entry list twice. It looked up each accepted measurement four times. The replacement scans F contacts once and reads each accepted measurement once, accumulating count, X and Z in source order. One K-entry temporary list and 2K extra list visits disappear per joint. For 18 joints each supported by one of six contacts, this removes 18 temporary lists and reduces measurement lookups from 72 to 18. These are source-derived operation counts, not timings or complete Checks latency measurements. Downstream ownership, body mass, load sharing and moment calculations remain unchanged.
+
+`engineeringStance.test.ts` compares exact stance loads with the previous filtered calculation for both biped pitch axes, no contacts, one contact, multiple contacts, unrelated contacts, reversed order, repeated references and later bounds replacements. It also checks unchanged scene inputs. Existing `engineeringReadings.test.ts` retains full report coverage for separate robots, scenery exclusion, floating feet and four-leg load sharing. No timing assertion, timeout, retry or quarantine changes apply.
+
+The existing [Servo torque and sizing](../../site/content/help/servo-torque-and-sizing.md) and [Checks in the Build tab](../../site/content/help/build-checks.md) articles still describe the same stance estimates, verdicts and actions. No user action, label or screenshot state changes, so both articles remain unchanged.
+
+Validation on macOS arm64 passed 1,841 related tests across 291 files, with one existing file and test skipped. That run took 64.82 seconds. Its initial formatting and type findings were confined to the new test fixture. After correction, changed-file checks passed formatting, lint, documentation, site copy for 297 pages, types and the focused comparison test. Logs remain in `scratch/check-stance.log` and `scratch/check-stance-correction.log`. Copy accounting is net zero. Preflight flagged the unchanged torque help article, checked above.

@@ -21,3 +21,7 @@ The calibration test checks complete bounded steps, unchanged inputs and repeat 
 ## Dense solvers scan matrix tails directly
 
 `leastSquares.test.ts` and `denseSolves.test.ts` check pivoting, source preservation, singular refusal, arm targets and force balance with no tail copies. A scratch comparison matched the former results exactly on 300 systems per solver, including empty, singular and row-swapped systems. At 16 variables, calibration and IK each remove 32 temporary arrays containing 256 entries per solve. The three-variable stance solve removes three arrays containing six entries. These are allocation counts, without timing assertions.
+
+## Live angle history reuses circular storage
+
+`robot/robotGap.test.ts` compares 24 generated streams with copied histories and checks inclusive time boundaries, duplicate timestamps, returned angle identities, changing frame rates, long gaps, wrapped growth and resets. Over 3,000 frames at 20 ms intervals and 6,000 at 10 ms, retained-array slice calls fall from 5,498 and 10,998 to zero. Those slices previously copied 1,379,998 and 5,509,998 entries. Every measured-robot gap comparison shares `AngleTrace`. Capacity growth still copies retained entries and keeps its peak capacity until reset. Expiry releases angle references immediately. These are operation counts without timing assertions or a claim about complete simulation time.

@@ -54,3 +54,9 @@ The shared welder removes the post-weld traversal and temporary JavaScript index
 ## Print connected-component lookups compress their full paths
 
 `print/componentGrouping.test.ts` checks membership, ordering, repeated joins, cycles, unchanged inputs and map-read budgets at 300 and 600 items. On the 600-item fixtures, total map reads fell from 721,798 to 4,792 for descending print joins, and from 368,996 to 10,198 for descending coplanar triangles. These are operation counts, without wall-clock assertions.
+
+## Printed-label fallback bounds scan interleaved coordinates
+
+The fallback grid now reads each triangle coordinate once and retains four extrema. For 300 and 600 triangles, the previous two filters visited 3,600 and 7,200 coordinates, copied 1,800 and 3,600 values into two typed arrays, then visited those copies twice for extrema. The new bounds scan reads 1,800 and 3,600 coordinates and allocates no coordinate arrays. These are structural operation counts, not timings or complete plate-writing measurements. Full-size centroid fits still bypass bounds preparation entirely.
+
+`src/print/labels/labelFit.test.ts` retains the 320 complete-fit comparisons across holes, notches, rotations, rejected fits and edits. A dense fallback fixture repeats a ring’s triangles into an offset typed-array view with 192,000 points, comparing the complete result against the small equivalent ring. It checks the centroid is in the hole, so bounds preparation cannot be bypassed. In a local Node replay, spreading 192,000 coordinates into the previous minimum calculation threw `RangeError: Maximum call stack size exceeded`. The scan completed with the expected extrema. The engine’s precise argument limit varies. No UI, workflow or browser coverage changes are needed.

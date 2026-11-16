@@ -48,6 +48,8 @@ Named buttons show only their key caps in tooltips. Measure and Annotate keep Es
 
 ## Testing coverage
 
+- **Printer settings copy.** Test Connection names its own row. Empty network discovery keeps No printers found beside the existing Add Printer action, without a second instruction to add by address. Connection results, busy labels, field names, units and sending requirements remain visible. `e2e/print.e2e.test.ts` retains the Add Printer entry from Print, manual printer configuration and network discovery followed by adding both found printers. These walkthroughs do not cover empty discovery or connection-test busy, successful and failed replies. [Copy evidence and coverage limits](../notes/testing-toolbar-and-settings.md#printer-settings-copy).
+
 - **Shortcut tooltips.** The existing Measure walkthrough in `e2e/measure.e2e.test.ts` finds Done by its accessible name and checks that its tooltip contains only the Esc key cap before clicking it.
 
 - **Mark labels.** `e2e/marks.e2e.test.ts` draws a straight stroke on an empty canvas, checks label focus and commits the label with Enter. It uses two mouse-move steps instead of the circle's 80 and does not insert an unused cube. `three/viewport/markMath.test.ts` covers loop geometry, repeated endpoints, point edits and bounded projection storage at 400 and 800 points. `three/viewport/markLayer.test.ts` covers selection and eraser hits, tie order, the reach boundary, dragging and camera or viewport changes. [Incident evidence](../notes/testing-toolbar-and-settings.md#mark-labels).

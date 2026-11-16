@@ -28,7 +28,7 @@ covers:
   - src/components/print/PrinterLive.tsx
 ---
 
-Basecase shows a message under **Test Connection** or in Print mode if it can't reach a printer or send it a plate. Find your message below and follow its steps.
+Basecase shows a message beside **Test Connection** or in Print mode if it can't reach a printer or send it a plate. Find your message below and follow its steps.
 
 ## “Couldn’t reach the printer at …”
 

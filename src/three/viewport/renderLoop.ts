@@ -55,8 +55,13 @@ function followCamera(stage: Stage, fitLight: boolean): boolean {
   fillLight.position.copy(camera.position).add(camera.up.clone().multiplyScalar(distance * 0.35));
   fillLight.target.position.copy(orbit.target);
   fillLight.target.updateMatrixWorld();
-  camera.near = Math.max(0.5, distance / 400);
-  camera.updateProjectionMatrix();
+
+  const near = Math.max(0.5, distance / 400);
+
+  if (camera.near !== near) {
+    camera.near = near;
+    camera.updateProjectionMatrix();
+  }
 
   return !keyLight.position.equals(lightWas) || keyLight.shadow.camera.right !== spanWas;
 }

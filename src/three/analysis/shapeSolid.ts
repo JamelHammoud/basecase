@@ -82,6 +82,7 @@ function faceData(positions: Float32Array): Faces {
     b = new THREE.Vector3(),
     c = new THREE.Vector3(),
     n = new THREE.Vector3(),
+    edge = new THREE.Vector3(),
     center = new THREE.Vector3();
   const tri = new THREE.Triangle(a, b, c);
 
@@ -90,11 +91,16 @@ function faceData(positions: Float32Array): Faces {
     b.fromArray(positions, t * 3 + 3);
     c.fromArray(positions, t * 3 + 6);
 
-    const area = tri.getArea();
+    n.subVectors(c, b).cross(edge.subVectors(a, b));
+
+    const lengthSq = n.lengthSq();
+    const length = Math.sqrt(lengthSq);
+    const area = length * 0.5;
 
     if (area < MIN_FACE_AREA) continue;
 
-    tri.getNormal(n);
+    if (lengthSq > 0) n.multiplyScalar(1 / length);
+    else n.set(0, 0, 0);
 
     const splits = Math.min(MAX_FACE_SPLITS, Math.ceil(Math.sqrt(area / FACE_PIECE_MM2)));
     const start = centers.length;

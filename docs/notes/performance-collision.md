@@ -85,3 +85,11 @@ Whole-app search found one connected-body bounds and reach accumulator in `three
 On November 16, 2026, `scratch/rotor-body-scan.mjs` compared the previous and changed accumulators exactly across 120 generated inputs, including empty inputs and incomplete triangles. Every measurement map matched, and source buffers remained unchanged. Instrumented 300-triangle and 600-triangle fixtures reduced map lookups from 900 and 1,800 to 300 and 600. Map writes fell by the same counts. These are operation counts, without timing assertions, heap measurements or a claim about complete collision-check latency.
 
 Existing `rotorSplit.test.ts` compares complete partitions across 90 translated and scaled classification cases and checks interleaved triangles, rigid fallback, independent buffers, replacement geometry and cache identity. No timeout, retry or quarantine changes apply. No user action, label or visible state changes, so existing help instructions and captures remain accurate.
+
+## Face sampling shares area and normal products
+
+`shapeSolid.ts` previously called Three.js `Triangle.getArea` and `Triangle.getNormal` for every accepted face. Both subtract the same edges, cross them and calculate their length. Face preparation now retains one cross product and its length for both results. One edge workspace belongs to the preparation call. Rejected faces still stop at the area threshold.
+
+`facePieces.test.ts` counts 300 and 600 cross products for 300 and 600 accepted triangles, down from 600 and 1,200. Accepted triangles also need one square root instead of two. These are operation counts, not wall-clock or complete collision latency measurements. The checks run in Node on arm64 without a browser or GPU.
+
+The sphere fixture compares every emitted Float32 normal and area weight against the previous Three.js calculation. Existing cases cover reversed winding, the inclusive 0.5 mm² threshold, degenerate and empty geometry, the 12-split cap, 3,000-triangle stride selection, cached buffers and replacement geometry. Barycentric center arithmetic is unchanged. No user action or visible state changes, so help instructions and captures remain accurate.

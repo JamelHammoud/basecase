@@ -45,8 +45,45 @@ describe('face subdivision', () => {
     expect(strided.surfaceArea).toBe(1500);
   });
 
+  it('matches triangle area and normal calculations across varied orientations and areas', () => {
+    const source = new THREE.SphereGeometry(20, 24, 16);
+    const geometry = source.toNonIndexed();
+    const positions = new Float32Array(geometry.attributes.position.array);
+    const expectedNormals: number[] = [];
+    const expectedAreas: number[] = [];
+    const tri = new THREE.Triangle();
+    const normal = new THREE.Vector3();
+
+    for (let i = 0; i < positions.length; i += 9) {
+      tri.a.fromArray(positions, i);
+      tri.b.fromArray(positions, i + 3);
+      tri.c.fromArray(positions, i + 6);
+
+      const area = tri.getArea();
+
+      if (area < 0.5) continue;
+
+      tri.getNormal(normal);
+
+      const splits = Math.min(12, Math.ceil(Math.sqrt(area / 25)));
+
+      for (let piece = 0; piece < splits * splits; piece++) {
+        expectedNormals.push(normal.x, normal.y, normal.z);
+        expectedAreas.push(area / (splits * splits));
+      }
+    }
+
+    const faces = new ShapeSolid(positions).faces;
+
+    expect(faces.normals).toEqual(rounded(expectedNormals));
+    expect(faces.areas).toEqual(rounded(expectedAreas));
+    geometry.dispose();
+    source.dispose();
+  });
+
   it.each([300, 600])('uses one center workspace for %i faces', (count) => {
     const workspaces = new Set<THREE.Vector3>();
+    const cross = vi.spyOn(THREE.Vector3.prototype, 'cross');
     const addScaledVector = THREE.Vector3.prototype.addScaledVector;
     const add = vi.spyOn(THREE.Vector3.prototype, 'addScaledVector').mockImplementation(function (
       this: THREE.Vector3,
@@ -64,8 +101,10 @@ describe('face subdivision', () => {
       expect(solid.faces.areas).toHaveLength(count * 4);
       expect(add).toHaveBeenCalledTimes(count * 4 * 3);
       expect(workspaces.size).toBe(1);
+      expect(cross).toHaveBeenCalledTimes(count);
     } finally {
       add.mockRestore();
+      cross.mockRestore();
     }
   });
 

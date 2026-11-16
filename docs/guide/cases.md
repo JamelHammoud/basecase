@@ -885,7 +885,7 @@ The studio pointer/Escape and agent live-edit walkthroughs are quarantined only 
 
 ### COCO mask decoding coverage
 
-`imageMasks.test.ts` retains exhaustive small images, generated and edited masks, source immutability, sparse runs and independent results. The 300- and 600-pixel fixtures compare every decoded byte against the reference decoder, with coordinate-rounding instrumentation limited to the optimized decoder. [Test overhead evidence](../notes/performance-vision-inference.md#coco-decoding-test-instrumentation).
+`imageMasks.test.ts` retains exhaustive small images, generated and edited masks, source immutability, sparse runs and independent results. The 300- and 600-pixel fixtures compare every decoded byte and output length against the reference decoder through `Buffer.equals`, avoiding generic deep equality over large typed arrays. Coordinate-rounding instrumentation remains limited to the optimized decoder. [Test overhead evidence](../notes/performance-vision-inference.md#coco-decoding-test-instrumentation).
 
 ### Browser assertion scope
 

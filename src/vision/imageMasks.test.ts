@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { describe, expect, it, vi } from 'vitest';
 import type { ImageMask } from './frameSet';
 import { decodeMask, encodeMask } from './imageMasks';
@@ -97,7 +98,7 @@ describe('COCO mask decoding', () => {
         floor.mockRestore();
       }
 
-      expect(actual).toEqual(expected);
+      expect(Buffer.from(actual).equals(Buffer.from(expected))).toBe(true);
       expect(currentCalls).toBe(Math.floor(mask.counts.length / 2));
     }
   });

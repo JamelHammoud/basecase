@@ -54,8 +54,12 @@ describe('collision containment directions', () => {
   it('reads changed inverse frames on every call and leaves isolated parts unprepared', () => {
     const { scene, solid } = fixture(3);
     const first = collide(scene, options);
+    const rotated = place(scene[0].id, solid, new THREE.Matrix4().makeRotationY(Math.PI / 3));
     const moved = place(scene[1].id, solid, new THREE.Matrix4().makeTranslation(100, 0, 0));
 
+    scene[0].matrix.copy(rotated.matrix);
+    scene[0].inverse.copy(rotated.inverse);
+    scene[0].box.copy(rotated.box);
     scene[1].matrix.copy(moved.matrix);
     scene[1].inverse.copy(moved.inverse);
     scene[1].box.copy(moved.box);

@@ -42,3 +42,20 @@ A local Node 26.13.0 comparison on an Apple M5 Pro, macOS arm64, mixed 100,000 c
 All variants produced exactly equal accumulated wheel-speed checksums. Across 100,000 ticks, the four-wheel mixer removes 500,000 temporary arrays and the six-wheel mixer removes 700,000. Route playback additionally replaces 100,000 speed records with one runner-owned record. These are source-derived allocation counts. Timings measure only mixing on a shared local machine, not MuJoCo physics, complete driving latency or CI performance. No timing assertion was added.
 
 `src/sim/wheelSpeeds.test.ts` retains exact numeric parity with the old calculation and covers output ownership, unusual ids, radius clamping and repeated route control writes. The integration comparisons cover manual speed ramping and clamping, route turns, duplicate wheel ids, untouched controls and passive and missing actuator bindings. Existing real-physics drive tests remain unchanged.
+
+## Routine scenario events use a heap
+
+Implementation: [Routine scenario tests](../guide/routines.md#scenario-tests-l0). The dynamic scenario clock is shared by L0, L1, L2 and live Routine physics. Unlike fixed simulation schedules, callbacks insert new events while the queue is being drained. A cursor alone cannot replace its ordered insertion. The heap preserves the former time, priority and sequence comparison without moving every later event on insertion or removal.
+
+A local Node 26.13.0 comparison on an Apple M5 Pro, macOS arm64, scheduled N events at `(i * 79) % 307` milliseconds with five alternating priorities. Each clock also ran recurring 20 ms and 50 ms callbacks through 400 ms. Each sample constructed and drained `ceil(50000 / N)` clocks, including callback creation and checksum accumulation. Both implementations received three warmups followed by nine interleaved samples. Median elapsed milliseconds:
+
+| Initial events | Clocks per sample | Sorted array | Heap |
+| --- | --- | --- | --- |
+| 8 | 6,250 | 6.92 | 3.56 |
+| 32 | 1,563 | 3.04 | 1.80 |
+| 256 | 196 | 2.87 | 1.63 |
+| 4,096 | 13 | 7.99 | 2.90 |
+
+Every paired sample had an exactly equal callback-time checksum. These shared-machine measurements cover scheduling alone, without coordinator, physics, rendering or inference work. They are not complete Routine timings or CI budgets. Pending storage remains linear and each clock owns its queue.
+
+`src/routines/scenarioClock.test.ts` compares full callback traces with the former sorted-array implementation for 2,048 initial events, two insertions per callback, all phase priorities and three recurring periods. It drains the queue across repeated and incremental time boundaries. A separate case covers empty and singleton queues and continuing after a callback throws. Existing `scenario.test.ts` runs the real WASM coordinator through generated scenarios and checks determinism and control timing. No timing assertion was added.

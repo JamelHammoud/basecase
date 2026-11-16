@@ -90,12 +90,16 @@ describe('prepared damping steps', () => {
       counted(Array.from({ length: columns }, (_, c) => Math.sin(p + c * 0.3) + Number(p === c))),
     );
     const reads = () => j.reduce((sum, row) => sum + row.reads(), 0);
+    const weights = counted(new Array<number>(columns).fill(1));
     const step = prepareLeastNorm(
       j.map((row) => row.array),
-      new Array<number>(columns).fill(1),
+      weights.array,
       new Array(size).fill(1),
     );
     const preparedReads = reads();
+
+    expect(weights.reads()).toBe(size * columns);
+    expect(preparedReads).toBe((size * size + size) * columns);
 
     for (const damping of DAMPING) expect(step(damping)).not.toBeNull();
 

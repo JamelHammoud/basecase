@@ -1,5 +1,45 @@
 [
   {
+    "file": "e2e/scanMap.e2e.test.ts",
+    "test": "rebuilds the displayed map when Scan Matching is turned off in Layers",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43938326448 failed both Windows attempts before Scan Matching was clicked, first with zero map points after opening the imported corridor try and then without the Imported 1 try confirmation. Linux passed the exact walkthrough at the same revision in 11330 ms. Its unchanged importCorridor helper is also used by the saved-world walkthrough already tracked in #995 for the same two setup symptoms. The failing import or playback stage is not established. Issue #995 owns startup tracing, isolated attempts and equal-load baseline and candidate measurements before restoration."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for short",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43938326448 exceeded the unchanged 5000 ms budget at 5004 ms on Windows. The same case passed in 1106 ms in full green run 43864963744, with unchanged parity test, capture, variants and native replay helper, and passed on Linux at the failing revision in 1073 ms. The responsible capture, native provisioning, replay or scoring stage is not established. Issue #1390 owns this additional lid variant, stage tracing and equal-load baseline and candidate measurements before restoration."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for weak",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43938326448 exceeded the unchanged 5000 ms budget at 5002 ms on Windows. The same case passed in 1022 ms in full green run 43864963744, with unchanged parity test, capture, variants and native replay helper, and passed on Linux at the failing revision in 861 ms. The responsible capture, native provisioning, replay or scoring stage is not established. Issue #1390 owns this additional lid variant, stage tracing and equal-load baseline and candidate measurements before restoration."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for locked",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43938326448 exceeded the unchanged 5000 ms budget at 5006 ms on Windows. The same case passed in 1170 ms in full green run 43864963744, with unchanged parity test, capture, variants and native replay helper, and passed on Linux at the failing revision in 963 ms. The responsible capture, native provisioning, replay or scoring stage is not established. Issue #1390 owns this additional lid variant, stage tracing and equal-load baseline and candidate measurements before restoration."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for limp",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43938326448 exceeded the unchanged 5000 ms budget at 5020 ms on Windows. The same case passed in 2590 ms in full green run 43864963744, with unchanged parity test, capture, variants and native replay helper, and passed on Linux at the failing revision in 763 ms. The responsible capture, native provisioning, replay or scoring stage is not established. Issue #1390 owns this additional lid variant, stage tracing and equal-load baseline and candidate measurements before restoration."
+  },
+  {
     "file": "tools/fleet/service.test.mjs",
     "test": "",
     "issue": 1507,

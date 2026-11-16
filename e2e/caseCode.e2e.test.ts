@@ -337,7 +337,7 @@ describe('Case code that shapes its world', () => {
 
     expect(Math.hypot(lamp[0] - 240, lamp[2] - 420)).toBeLessThan(1);
 
-    await tries('Stop Try').click();
+    await page.keyboard.press('Escape');
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
     expect((await simState()).tries[0].world).toBeGreaterThan(0);
 

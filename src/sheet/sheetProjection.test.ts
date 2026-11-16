@@ -44,7 +44,7 @@ describe('sheet projection reuse', () => {
     });
     expect(triangles).toEqual(original);
     expect(projections).toBeLessThanOrEqual((triangles.length / 9) * 4 + 32);
-    expect(clones).toBeLessThanOrEqual(triangles.length / 9 + 32);
+    expect(clones).toBeLessThanOrEqual(32);
     expect(normalizations).toBeLessThanOrEqual(triangles.length / 9 + 14);
   });
 

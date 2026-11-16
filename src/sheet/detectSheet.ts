@@ -29,18 +29,18 @@ function facesOf(triangles: Float32Array): Face[] {
 
 function candidateNormals(faces: Face[]): Vector3[] {
   const directions = new Map<string, { normal: Vector3; sum?: Vector3; area: number }>();
+  const normal = new Vector3();
 
   for (const face of faces) {
-    const normal = face.normal.clone();
-    const values = normal.toArray();
-    const dominant = values.reduce((best, value, i) => (Math.abs(value) > Math.abs(values[best]) ? i : best), 0);
+    normal.copy(face.normal);
 
-    if (values[dominant] < 0) normal.negate();
+    let dominant = Math.abs(normal.y) > Math.abs(normal.x) ? normal.y : normal.x;
 
-    const key = normal
-      .toArray()
-      .map((value) => Math.round(value * 100))
-      .join(',');
+    if (Math.abs(normal.z) > Math.abs(dominant)) dominant = normal.z;
+
+    if (dominant < 0) normal.negate();
+
+    const key = `${Math.round(normal.x * 100)},${Math.round(normal.y * 100)},${Math.round(normal.z * 100)}`;
     const found = directions.get(key);
 
     if (found) {
@@ -51,7 +51,7 @@ function candidateNormals(faces: Face[]): Vector3[] {
       continue;
     }
 
-    directions.set(key, { normal, area: face.area });
+    directions.set(key, { normal: normal.clone(), area: face.area });
   }
 
   return [...directions.values()]

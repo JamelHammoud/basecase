@@ -48,7 +48,11 @@ export async function editPicoIdentity(page: Page, supplierPartNumber = '2648-SC
   await dialog.getByRole('textbox', { name: 'Supplier', exact: true }).fill('DigiKey');
   await dialog.getByRole('textbox', { name: 'Supplier part number', exact: true }).fill(supplierPartNumber);
   await dialog.getByRole('textbox', { name: 'Ordering unit', exact: true }).fill('piece');
-  await dialog.getByRole('textbox', { name: 'Units per order', exact: true }).fill('1');
+
+  const units = dialog.getByRole('textbox', { name: 'Units per order', exact: true });
+
+  await units.fill('');
+  await units.pressSequentially('1.0');
 
   return dialog;
 }

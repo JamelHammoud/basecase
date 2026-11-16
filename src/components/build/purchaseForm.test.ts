@@ -130,4 +130,20 @@ describe('purchase form', () => {
       supplier: undefined,
     });
   });
+
+  it.each([
+    ['1.0', 1],
+    ['1.5', 1.5],
+    ['0.5', 0.5],
+    ['', undefined],
+    ['0.', undefined],
+    ['-2', undefined],
+    ['Infinity', undefined],
+    ['not a number', undefined],
+  ])('saves the ordering conversion draft %s as %s', (draft, expected) => {
+    const form = initialPurchaseForm(line());
+    const saved = purchaseRecord({ ...form, price: '5', identity: { unitsPerOrder: draft } });
+
+    expect(saved.identity?.unitsPerOrder).toBe(expected);
+  });
 });

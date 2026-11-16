@@ -1,5 +1,4 @@
 import { TextInput } from '../../design-system';
-import type { PurchaseIdentity } from '../../types/purchasing';
 import type { PurchaseForm } from './purchaseForm';
 
 const fields = [
@@ -18,7 +17,7 @@ export function IdentityFields({
   onChange: (patch: Partial<PurchaseForm>) => void;
 }) {
   const identity = form.identity ?? {};
-  const update = (patch: Partial<PurchaseIdentity>) =>
+  const update = (patch: Partial<NonNullable<PurchaseForm['identity']>>) =>
     onChange({ identity: { ...identity, ...patch, sourceUrl: form.url.trim() || undefined } });
 
   return (
@@ -34,7 +33,7 @@ export function IdentityFields({
         <TextInput
           inputMode="decimal"
           value={identity.unitsPerOrder ?? ''}
-          onChange={(event) => update({ unitsPerOrder: Number(event.target.value) || undefined })}
+          onChange={(event) => update({ unitsPerOrder: event.target.value })}
         />
       </label>
     </div>

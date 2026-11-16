@@ -4,7 +4,7 @@ import { type BomLine, localDate, parseAsin } from '../../utils/bom';
 import { type Money, USD_MONEY } from '../../utils/currency';
 
 export interface PurchaseForm {
-  identity?: PurchaseIdentity;
+  identity?: Omit<PurchaseIdentity, 'unitsPerOrder'> & { unitsPerOrder?: number | string };
   url: string;
   title: string;
   pack: number;
@@ -74,13 +74,15 @@ function formIdentity(form: PurchaseForm): PurchaseIdentity | undefined {
 
   if (!identity) return undefined;
 
+  const per = Number(identity.unitsPerOrder);
+
   return {
     manufacturer: fact(identity.manufacturer),
     mpn: fact(identity.mpn),
     supplier: fact(identity.supplier),
     supplierPartNumber: fact(identity.supplierPartNumber),
     orderingUnit: fact(identity.orderingUnit),
-    unitsPerOrder: identity.unitsPerOrder,
+    unitsPerOrder: Number.isFinite(per) && per > 0 ? per : undefined,
     sourceUrl: fact(identity.sourceUrl) || fact(form.url),
   };
 }

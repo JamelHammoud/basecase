@@ -90,7 +90,7 @@ The first broad changed-file check selected 639 files. It reported 629 passed, n
 
 A focused changed-file run of the purchasing tests reported four files and 34 tests passed in 769 ms. That was an intermediate source snapshot, before the final normalization assertions. The browser walkthrough is declared in `e2e/bomPurchasing.e2e.test.ts` for the existing Linux and Windows CI harness. It opens a generated arm with three Pico 2 boards in the BOM, edits the listing and owned stock through existing controls, parses the real CSV download, reloads the saved scene and repeats, then corrects the packaging-specific supplier number. No supplier website is automated. Supplier matching, external upload acceptance and manufactured electrical performance remain unmeasured.
 
-### Supplier spreadsheet handoff
+### Final implementation validation
 
 On 16 November 2026, the final named-file `check:changed` run selected 644 test files. It passed 643 files and 4,460 tests, with one existing skipped file and test, in 115.78 seconds. Formatting, ESLint, TypeScript, documentation and the 301-page site check passed. A follow-up check for the browser helper, reload comparison and help wording passed its eight related purchase-form tests. The browser walkthrough itself remains for Linux and Windows CI, as required by this task's local-check policy.
 
@@ -130,3 +130,11 @@ The eight preflight notices were checked against the complete supplier-handoff d
 - `weight-and-center-of-mass.md`: `supplies.ts` adds optional purchasing identity to its interface. Supply records, masses, density fallbacks, body fitting and stability calculations are unchanged.
 
 These are coverage-overlap notices, not stale help instructions. The articles remain unchanged under preflight's stated exception. No screenshot state needs replacement for these metadata additions.
+
+### Ordering conversion editing
+
+Review found that the Units per order input converted its value on every keystroke. Typing `1.0` erased the decimal point after `1` and then produced `10`. Typing `0.5` could erase both the zero and point before retaining `5`. Either sequence could change Supplier Order Qty in the exported file.
+
+The form now retains conversion drafts as text and converts them only when building the saved purchase. Eight purchase-form cases cover `1.0`, `1.5`, `0.5`, cleared and zero drafts, a negative value, infinity and nonnumeric text. The existing browser workflow types `1.0` sequentially and retains its exact expected CSV quantities, purchase reload and packaging correction. Browser execution remains with Linux and Windows CI. No deadline, retry or existing assertion changes.
+
+The review's named seven-file `check:changed` run passed formatting, lint, documentation, types, all 304 site pages and 41 related tests across nine files. The related tests took 428 ms. `git diff --check` also passed. These checks do not execute the browser workflow.

@@ -67,14 +67,20 @@ describe('sculpt brush workspace', () => {
     }
   });
 
-  it.each(BRUSHES.filter((brush) => brush !== 'smooth'))('reads %s stroke positions once before normals', (brush) => {
+  it.each(BRUSHES)('reads only the attributes needed by %s before recomputing normals', (brush) => {
     for (const triangles of [100, 200]) {
       const stroke = input(brush, triangles);
       const position = stroke.geo.getAttribute('position');
       const read = vi.spyOn(position, 'getX');
+      const normal = stroke.geo.getAttribute('normal');
+      const normalReads = (['getX', 'getY', 'getZ'] as const).map((axis) => vi.spyOn(normal, axis));
+      const affected = 2 * triangles;
+      const extraPositions = brush === 'smooth' ? affected : 0;
+      const neededNormals = brush === 'inflate' || brush === 'carve' ? affected : 0;
 
       sculptStroke(stroke);
-      expect(read).toHaveBeenCalledTimes(2 * position.count);
+      expect(read).toHaveBeenCalledTimes(2 * position.count + extraPositions);
+      normalReads.forEach((normalRead) => expect(normalRead).toHaveBeenCalledTimes(position.count + neededNormals));
       stroke.geo.dispose();
     }
   });

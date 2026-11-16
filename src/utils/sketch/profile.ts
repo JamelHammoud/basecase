@@ -21,17 +21,28 @@ export function arcSweep(center: Vec2, from: Vec2, to: Vec2) {
   return { start, sweep: sweep === 0 ? TAU : sweep };
 }
 
-export function arcPoints(center: Vec2, from: Vec2, to: Vec2): Vec2[] {
+function appendArc(
+  out: Vec2[],
+  options: { center: Vec2; from: Vec2; to: Vec2; reverse?: boolean; includeEnd?: boolean },
+) {
+  const { center, from, to, reverse = false, includeEnd = true } = options;
   const r = Math.hypot(from[0] - center[0], from[1] - center[1]);
   const { start, sweep } = arcSweep(center, from, to);
   const steps = Math.max(4, Math.ceil(sweep / ARC_STEP));
-  const out: Vec2[] = [];
+  const count = steps + Number(includeEnd);
 
-  for (let i = 0; i <= steps; i++) {
-    const a = start + (sweep * i) / steps;
+  for (let i = 0; i < count; i++) {
+    const index = reverse ? steps - i : i;
+    const a = start + (sweep * index) / steps;
 
     out.push([center[0] + r * Math.cos(a), center[1] + r * Math.sin(a)]);
   }
+}
+
+export function arcPoints(center: Vec2, from: Vec2, to: Vec2): Vec2[] {
+  const out: Vec2[] = [];
+
+  appendArc(out, { center, from, to });
 
   return out;
 }
@@ -66,13 +77,20 @@ export function insideLoop([px, py]: Vec2, loop: Vec2[]) {
 
 const otherEnd = (edge: Edge, at: string) => (edge.a === at ? edge.b : edge.a);
 
-function edgePoints(edge: Edge, from: string, point: (id: string) => Vec2): Vec2[] {
-  if (edge.kind === 'line') return [point(from)];
+function appendEdge(out: Vec2[], edge: Edge, from: string, point: (id: string) => Vec2) {
+  if (edge.kind === 'line') {
+    out.push(point(from));
 
-  const pts = arcPoints(point(edge.c), point(edge.a), point(edge.b));
-  const ordered = from === edge.a ? pts : [...pts].reverse();
+    return;
+  }
 
-  return ordered.slice(0, -1);
+  appendArc(out, {
+    center: point(edge.c),
+    from: point(edge.a),
+    to: point(edge.b),
+    reverse: from !== edge.a,
+    includeEnd: false,
+  });
 }
 
 function walkLoop(start: Edge, next: (id: string) => Edge | undefined, used: Set<string>, point: (id: string) => Vec2) {
@@ -83,7 +101,7 @@ function walkLoop(start: Edge, next: (id: string) => Edge | undefined, used: Set
 
   while (edge) {
     used.add(edge.id);
-    out.push(...edgePoints(edge, at, point));
+    appendEdge(out, edge, at, point);
     at = otherEnd(edge, at);
 
     if (at === origin) return out;

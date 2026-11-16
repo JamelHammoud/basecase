@@ -6,6 +6,16 @@ it('retains identical checks with less total work including failed attempts', ()
   expect(comparisonOutcome(comparison())).toMatchObject({ outcome: 'efficiency-win', tokenReduction: 120 });
 });
 
+it('compares normalized responding identities even when the requested model is an alias', () => {
+  const result = comparison();
+
+  result.resolved = result.labels.map(() => ({ id: 'sol', arg: 'sol', expectServed: null }));
+  result.results[0].servedBy = 'GPT-6-1-SOL[1m]';
+  expect(comparisonOutcome(result).outcome).toBe('efficiency-win');
+  result.results[0].servedBy = 'gpt-6-sol';
+  expect(comparisonOutcome(result).outcome).toBe('incomplete');
+});
+
 const rejected = {
   'aggregate tie': (result) => {
     result.results[0].status = 'fail';

@@ -1,4 +1,4 @@
-import { servedMismatch } from './models.mjs';
+import { sameServedModel, servedMismatch } from './models.mjs';
 import { bootstrapCI } from './stats.mjs';
 import { workSummary } from './work.mjs';
 
@@ -23,6 +23,7 @@ function completeRows({ results, labels, resolved, stats, plan, provider }) {
         ['pass', 'fail'].includes(run.status) &&
         !run.timedOut &&
         !!run.servedBy &&
+        sameServedModel(results[0].servedBy, run.servedBy) &&
         !servedMismatch(resolved[labels.indexOf(run.model)], run.servedBy),
     )
   );

@@ -368,9 +368,9 @@ async function runRound(seed) {
   const live = [];
 
   for (const job of jobs) {
-    const cached = caches[labels.indexOf(job.label)].get(job.task.id)?.[seed - 1];
+    const cached = caches[labels.indexOf(job.label)].get(job.task.id)?.find((entry) => entry.seed === seed);
 
-    if (cached) results.push({ ...runFromCache(cached, job.label), seed });
+    if (cached) results.push(runFromCache(cached, job.label));
     else live.push(job);
   }
 

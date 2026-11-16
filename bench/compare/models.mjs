@@ -7,6 +7,8 @@ const canonical = (id) =>
 
 const isConcreteId = (arg) => /^(claude-|gpt-|o\d)/i.test(arg);
 
+export const sameServedModel = (a, b) => canonical(a) === canonical(b);
+
 function familyMatch(arg, available) {
   const words = canonical(arg).split(/[^a-z0-9]+/);
 

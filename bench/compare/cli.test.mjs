@@ -33,7 +33,7 @@ vi.mock('./arms.mjs', async (importOriginal) => ({
   ...(await importOriginal()),
   againstArms: () => [
     { label: 'working tree', model: fixture.model, harness: 'tree', git: { commit: 'abc1234', dirty: true } },
-    { label: 'main', model: fixture.model, harness: 'ref', git: { commit: 'abc1234', dirty: false } },
+    { label: 'main', model: fixture.model, harness: 'ref', git: { commit: 'abc1234', dirty: false }, cache: true },
   ],
 }));
 
@@ -106,7 +106,7 @@ describe('comparison command', () => {
   });
 });
 
-it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance', 'efficiency'])(
+it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance', 'efficiency', 'efficiency cache'])(
   'checks %s through the comparison command',
   async (scenario) => {
     vi.resetModules();
@@ -139,7 +139,7 @@ it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance', 'effic
       })),
     );
 
-    if (scenario === 'efficiency') {
+    if (scenario.startsWith('efficiency')) {
       fixture.tasks = Array.from({ length: 6 }, (_, i) => ({ id: `T${i}` }));
       fixture.runMicroOnce.mockImplementation(async ({ task, out }) => {
         const arm = out.dir.includes('working-tree') ? 0 : 1;
@@ -150,6 +150,8 @@ it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance', 'effic
         return { ...run, grade: { status: run.status, checks: run.checks } };
       });
     }
+
+    if (scenario === 'efficiency cache') writeCachedSeeds(tree);
 
     process.argv = [
       process.execPath,
@@ -162,7 +164,7 @@ it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance', 'effic
       'medium',
       '--seeds',
       '1',
-      '--no-cache',
+      ...(scenario === 'efficiency cache' ? [] : ['--no-cache']),
       ...(scenario === 'claude allowance' ? ['--loop-allowance', '--parallel', '8'] : []),
       '--runs-dir',
       tree,
@@ -193,7 +195,19 @@ it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance', 'effic
       expect(fixture.runMicroOnce.mock.calls.every(([options]) => typeof options.turn === 'function')).toBe(true);
     }
 
-    if (scenario === 'efficiency') expect(result.outcome.outcome).toBe('efficiency-win');
+    if (scenario.startsWith('efficiency')) expect(result.outcome.outcome).toBe('efficiency-win');
+
+    if (scenario === 'efficiency cache') {
+      const baseline = result.results.filter((run) => run.model === 'main');
+
+      expect(baseline.find((run) => run.task === 'T0')).toMatchObject({
+        seed: 1,
+        cached: 'seed-1',
+        tokens: { total: 200 },
+      });
+      expect(baseline.find((run) => run.task === 'T1')).toMatchObject({ seed: 1, tokens: { total: 200 } });
+      expect(fixture.runMicroOnce).toHaveBeenCalledTimes(11);
+    }
 
     if (scenario === 'wrong snapshot') {
       expect(result.plan.stop).toBe('error');
@@ -207,3 +221,24 @@ it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance', 'effic
     fixture.tasks = [{ id: 'A1' }];
   },
 );
+
+function writeCachedSeeds(dir) {
+  const baseline = comparison()
+    .results.filter((run) => run.model === 'main')
+    .slice(0, 2);
+  const rows = baseline.flatMap((run, i) =>
+    [2, 1].slice(0, i ? 1 : 2).map((seed) => ({
+      ...run,
+      seed,
+      kind: 'micro',
+      grade: run.status,
+      harness: 'ref',
+      model: fixture.model,
+      run: `seed-${seed}`,
+      at: seed === 2 ? '2026-11-01' : '2026-11-02',
+      tokens: { total: seed === 2 ? 1000 : 200 },
+    })),
+  );
+
+  fs.writeFileSync(path.join(dir, 'index.jsonl'), rows.map((row) => JSON.stringify(row)).join('\n'));
+}

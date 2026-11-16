@@ -84,3 +84,5 @@ A Hugging Face LeRobot dataset link, or a folder or zip that holds a LeRobot dat
 A Roboflow or Hugging Face image dataset link, or a COCO, YOLO or Pascal VOC folder or zip, adds labeled images to the Library. Roboflow and Hugging Face dataset links require the desktop app. See [Import an image dataset](/help/import-an-image-dataset).
 
 To learn how the joints work after you import a robot, see [Joints and kinematics](/help/joints-and-kinematics).
+
+MJCF joints without actuators import as passive joints. They move under gravity or contact without motor control.

@@ -1,7 +1,8 @@
+import type { RobotJoint } from '../types/robotics';
 import { useRef, useState } from 'react';
 import type { FoundAxis } from '../joints/axisFinder';
 import { confirmAction } from '../design-system/confirmStore';
-import { handJoint, withJoints, withoutJoint, withRange, type HandJointType } from '../joints/declare';
+import { handJoint, withJoints, withoutJoint, withRange, withActuation, type HandJointType } from '../joints/declare';
 import type { AxisPickHit } from '../three/viewport/types';
 import type { ScenePart } from '../types/robotics';
 import { prettyJointName } from '../utils/kinematics';
@@ -132,6 +133,8 @@ export function useHandJoints(core: WorkspaceCore) {
     onAxisPick,
     remove,
     setRange,
+    setActuation: (id: string, actuation: NonNullable<RobotJoint['actuation']>) =>
+      docs.commitJoints((p) => ({ ...p, joints: withActuation(p.joints ?? [], id, actuation) })),
   };
 }
 

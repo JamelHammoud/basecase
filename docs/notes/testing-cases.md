@@ -33,3 +33,7 @@ The duplicate row-count browser test was removed after taking 89 s in run 436429
 | Total | 245.184 | 447.531 |
 
 The four original walkthroughs also passed on the final bundle without retries: the default console in 44.22 s, the custom console in 22.70 s, panel playback in 37.60 s and the timeline in 29.02 s. These are Vitest's per-test durations, including each test's fixture hooks.
+
+## Passive robot joints
+
+Recording assertions check nq and nv against physical DOFs and nu against the exact powered count, including zero-actuator robots. Control buffers have frames times nu entries. The dataset and demonstration feature schema still pairs powered joint positions with powered actions. Passive coordinates remain in the saved recording rather than acquiring fake actions. This does not change articulated Case fixture bindings or recording formats.

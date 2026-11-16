@@ -9,3 +9,9 @@ Current coverage: [owning guide](../guide/joints-and-motion.md#testing-coverage)
 ## Character shells
 
 The SO-101 browser sequence and its fixture were removed after its wrap test took 76 s in run 43642970706 (#865). Its undo and posing tests depended on that wrap finishing.
+
+## Passive robot joints
+
+The actuation field lives in `src/types/joint.ts`, reexported from robotics.ts to keep the shared type file under its enforced line limit. The existing declaration, project history and scene-file format carry the new fields without a parallel representation. Passive selection clears assigned motor references but leaves the physical parts. Switching back to Powered does not guess a motor assignment.
+
+The history integration test compresses and decodes a real scene, exercises pushHistory and travelProject in both directions, compares legacy omitted intent, imports MJCF and marked URDF, and refuses a contradictory tool record. Browser coverage exports a scene file and reopens it in another tab, then returns to the original tab for undo and redo. Opening a file creates a new history rather than inventing history across files.

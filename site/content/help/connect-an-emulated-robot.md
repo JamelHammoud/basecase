@@ -38,7 +38,7 @@ Every servo is emulated, and no released build of Basecase can drive real motors
 1. Open a scene with a robot that has joints.
 2. Click **Play** in the view rail.
 3. Click **Operate** at the top of the panel.
-4. Click **Connect Emulated Robot**. The header names the servos, one for each joint that moves. For example, "2 emulated Feetech servos".
+4. Click **Connect Emulated Robot**. The header names the servos, one for each powered joint that moves. For example, "2 emulated Feetech servos".
 5. Under **Ladder**, click **Set Up** to check that every servo answers.
 6. Click **Test** to turn on the motors. Once they're on, the header reads "Motors running".
 
@@ -56,7 +56,7 @@ When you choose **Connect Emulated Robot**, Basecase starts its robot daemon on 
 
 To run the daemon on a Linux computer instead, see [Connect a robot computer](/help/connect-a-robot-computer). That connection uses your local network and keeps real motors locked.
 
-The daemon runs the emulated servos on the Feetech bus, numbered from 1 upward in the order of the scene's moving joints. Each Feetech or Dynamixel servo behaves like the servo from Parts on its joint. Any other joint gets an STS3215. A joint whose motor isn't a Feetech or Dynamixel servo, such as the DS3218, reads No reply.
+The daemon runs the emulated servos on the Feetech bus, numbered from 1 upward in the order of the scene's powered moving joints. Each Feetech or Dynamixel servo behaves like the servo from Parts on its joint. Any other powered joint gets an STS3215. A joint whose motor isn't a Feetech or Dynamixel servo, such as the DS3218, reads No reply.
 
 Each emulated servo sits on its joint with its own hidden offset of up to 12°, and about one in four is reversed. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) finds both using a camera.
 

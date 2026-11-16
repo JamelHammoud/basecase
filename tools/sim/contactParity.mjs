@@ -33,9 +33,10 @@ async function loadModules(files) {
 }
 
 async function fixtures(mj) {
-  const [{ contactScene, contactSliders }, { captureContactReplay }] = await loadModules([
+  const [{ contactScene, contactSliders }, { captureContactReplay }, { passiveReplays }] = await loadModules([
     '/src/sim/fixtures/contactRobots.ts',
     '/src/sim/fixtures/contactReplay.ts',
+    '/src/sim/fixtures/passiveReplay.ts',
   ]);
   const built = contactSliders(2);
   const sim = {
@@ -60,7 +61,7 @@ async function fixtures(mj) {
     { name: `sliders-${count}`, xml: contactSliders(count).xml, steps: 10 },
   ]);
 
-  return [...cases, capture.finish('captured-sliders', sim)];
+  return [...cases, capture.finish('captured-sliders', sim), ...passiveReplays(mj)];
 }
 
 function primeHistory(mj, model, data) {

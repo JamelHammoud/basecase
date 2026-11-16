@@ -32,7 +32,7 @@ If Operate won't let you climb a rung, or the emulated robot stops, find the mes
 
 ## Connect Emulated Robot is missing
 
-Operate needs a joint that moves. If the scene has none, Operate shows "No robot." If it has more than 32 moving joints, Operate shows nothing to connect.
+Operate needs a powered joint that moves. If the scene has none, Operate shows "No robot." If it has more than 32 powered moving joints, Operate shows nothing to connect.
 
 **Note:** Operate isn't available in the browser version of Basecase.
 

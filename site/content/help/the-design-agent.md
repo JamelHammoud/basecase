@@ -36,7 +36,7 @@ The agent builds in the open scene, so you can watch it work. It reads your word
 
 The agent picks parts from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. Parts you [own](/help/count-the-parts-you-already-own) come first. If the catalog doesn't have a part, the agent can add one it found on the web, and the bill of materials lists it as Added by Agent.
 
-The agent can pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach the robot a skill. It can gather tries into a dataset from a search or from a list of tries. For example:
+The agent can declare joints, pose and animate the robot, and run it in simulation. It can write and run a Case, write a Routine, and teach the robot a skill. It can gather tries into a dataset from a search or from a list of tries. For example:
 
 {{help-hub}}
 

@@ -33,6 +33,14 @@ export const defineJoints = {
               .describe(
                 'The joint this one is mounted on, when several joints share one link (a 2-DOF wrist: the second joint sits on the first)',
               ),
+            actuation: z
+              .enum(['powered', 'passive'])
+              .optional()
+              .describe(
+                'Passive joints move through gravity or contact and have no actuators. Omitted keeps legacy powered behavior.',
+              ),
+            damping: z.number().finite().nonnegative().optional().describe('Physical joint damping in SI units'),
+            frictionloss: z.number().finite().nonnegative().optional().describe('Physical joint friction in SI units'),
             actuators: z
               .array(z.string())
               .max(2)

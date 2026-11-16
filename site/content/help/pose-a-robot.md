@@ -47,3 +47,5 @@ You can also set joints in the limb sections below **Poses**, such as **Head** o
 Every pose change is a step you can undo with [[⌘Z]]. Changes made within 0.7 seconds of each other undo together, so one drag undoes in one step.
 
 **Note:** The **Pose** tab shows only while a robot is selected, and picking a tool in the bottom toolbar leaves the tab. In [[⌘K]], you can find **Show Pose**, **Rest Pose**, and **Apply** followed by each saved pose's name.
+
+To let gravity or contact move a joint without a motor, [make the joint passive](/help/make-a-joint-passive).

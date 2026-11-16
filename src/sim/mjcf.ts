@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { assertJointActuation } from '../joints/actuation';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { RobotJoint, RobotPoseState, ScenePart } from '../types/robotics';
 import { partMasses } from '../utils/engineering';
@@ -25,6 +26,7 @@ import { robotScans } from './lidar';
 import { classifyRobot, isWheelJoint } from './morphology';
 import { applyBodyFits } from '../reality/bodyModel';
 import { bodyFitForCalibration, bodyPayloads } from '../reality/bodyLayout';
+import { passiveJointXml } from './mjcfPassive';
 import { activeBodyCalibration } from '../reality/history';
 
 export { fromMj, quatFromMj, quatToMj, simDelta, simDeltas, toMj, worldDelta, worldDeltas } from './mjcfFrames';
@@ -183,7 +185,7 @@ function estimatedJointAttrs(effort: number, revolute: boolean): string {
   return `damping="${f(effort * 0.02)}" armature="${f(armature)}" frictionloss="${f(effort * 0.01)}"`;
 }
 
-function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
+function poweredJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
   const { st } = rb;
   const axis = toMj(j.axis).map((v) => v * 1000);
   const revolute = j.type === 'revolute';
@@ -227,6 +229,10 @@ function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
   if (v) st.initialValues[j.id] = clampJoint(j, v);
 
   return jointLine;
+}
+
+function movableJointXml(rb: RobotBuild, joint: RobotJoint, name: string): string {
+  return joint.actuation === 'passive' ? passiveJointXml(rb, joint, name) : poweredJointXml(rb, joint, name);
 }
 
 function jointParts(st: BuildState, jointId: string): string[] {
@@ -378,6 +384,8 @@ ${st.actuatorXml.join('\n')}
 }
 
 export function buildMjcf(given: MjcfInput): SimModel {
+  assertJointActuation(given.rig.joints);
+
   const input = { ...given, rig: adoptEmbeddedParts(given.rig, given.parts, given.partTriangles) };
   const { parts, rig, project } = input;
   const st: BuildState = {

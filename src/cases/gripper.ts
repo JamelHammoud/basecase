@@ -85,7 +85,11 @@ function closingLimit(jaw: Jaw, toward: THREE.Vector3): number | null {
 
 function jawsOf(rig: Rig, palm: string | null, byId: Map<string, ScenePart>, joints: RobotJoint[]): Jaw[] {
   const leaves = joints.filter(
-    (j) => isMovable(j) && rig.parentOf.get(j.id) === palm && !joints.some((c) => rig.parentOf.get(c.id) === j.id),
+    (j) =>
+      isMovable(j) &&
+      j.actuation !== 'passive' &&
+      rig.parentOf.get(j.id) === palm &&
+      !joints.some((c) => rig.parentOf.get(c.id) === j.id),
   );
 
   return leaves.flatMap((joint) => {

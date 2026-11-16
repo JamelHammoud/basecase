@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ContextMenu, ContextMenuEntry, Section, deleteEntry, useScrollFade } from '../design-system';
+import { ContextMenu, ContextMenuEntry, MenuItem, Section, deleteEntry, useScrollFade } from '../design-system';
 import type { RobotJoint } from '../types/robotics';
 import { jointGroups, jointRowLabels } from '../utils/jointNames';
 import type { Posing } from '../utils/usePosing';
@@ -11,6 +11,7 @@ import { SkeletonSection } from './pose/SkeletonSection';
 import type { SkeletonEdit } from '../workspace/useSkeletonEdit';
 
 export interface JointEdits {
+  setActuation: (id: string, actuation: NonNullable<RobotJoint['actuation']>) => void;
   remove: (id: string) => void;
   setRange: (id: string, range: [number, number], live?: boolean) => void;
 }
@@ -30,6 +31,24 @@ const jointMenu = (j: RobotJoint, edits: JointEdits): ContextMenuEntry[] => [
   {
     label: 'Range',
     submenu: () => <JointRangeFields joint={j} onChange={(range, live) => edits.setRange(j.id, range, live)} />,
+  },
+  {
+    label: 'Actuation',
+    submenu: (close) => (
+      <>
+        {(['powered', 'passive'] as const).map((actuation) => (
+          <MenuItem
+            key={actuation}
+            checked={(j.actuation ?? 'powered') === actuation}
+            label={actuation === 'passive' ? 'Passive' : 'Powered'}
+            onSelect={() => {
+              edits.setActuation(j.id, actuation);
+              close();
+            }}
+          />
+        ))}
+      </>
+    ),
   },
   deleteEntry(() => edits.remove(j.id)),
 ];

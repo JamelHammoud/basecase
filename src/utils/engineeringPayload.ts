@@ -58,6 +58,8 @@ function handPoint(ctx: CheckContext, tip: RobotJoint): V3 | null {
 }
 
 function linksOf(ctx: CheckContext, chain: RobotJoint[], volts?: number): ArmModel['links'] | null {
+  if (chain.some((j) => j.actuation === 'passive')) return null;
+
   const carried = chain.map((j) => downstreamOf(j, ctx.joints));
   const stalls = chain.map((j) => jointRating(ctx, j, volts)?.stallNm ?? j.effortNm);
 

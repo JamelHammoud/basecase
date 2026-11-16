@@ -53,8 +53,10 @@ You can also press [[⌘K]] and choose **Drive with Camera**.
 
 | Robot | What moves |
 |---|---|
-| Humanoid | Its arms, waist and head follow yours. Its legs stay still. |
+| Humanoid | Its powered arm, waist and head joints follow yours. Its legs receive no camera commands. |
 | Fixed arm | Its hand follows your right hand as you move it away from your right shoulder, scaled to the arm's reach. To close its gripper, pinch your left thumb and index finger together. |
+
+Passive joints receive no camera commands and keep moving under physics.
 
 If a humanoid has a Walk skill that's ready, it keeps standing on that skill, and [[W]] [[A]] [[S]] [[D]] still walk it. If it doesn't, Basecase holds its base in place while you drive, so it can't fall over. The base stays held after you stop, until you end the simulation.
 

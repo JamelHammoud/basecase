@@ -47,10 +47,12 @@ The arm appears on the canvas, selected. A toast at the bottom shows how many jo
 
 To send a joint back to 0, double-click its slider. Posing moves the parts on the canvas without changing them.
 
+The arm's joints start powered. To let one move freely under physics, [make it passive](/help/make-a-joint-passive) before starting the simulation.
+
 ## Simulate it
 
 1. Click **Simulate** at the top of the right panel.
-2. Click the blue **Simulate** button. The arm starts running under physics and holds the pose you set. The clock beside the controls counts up.
+2. Click the blue **Simulate** button. The arm starts running under physics. Powered joints hold the pose you set, and the clock beside the controls counts up.
 3. Under **Control**, choose **Limp**. The motors let go and the arm folds down.
 4. To start again from your pose, click **Reset**.
 5. To go back to editing, click **Stop simulation**.

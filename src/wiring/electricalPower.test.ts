@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { electricalProjection } from './electrical';
-import { electricalRows } from './electricalChecks';
+import { electricalFindings, electricalRows } from './electricalChecks';
 import { component, so101 } from './fixtures';
 import { readinessOf } from '../readiness/readiness';
 import { engineeringFindings } from '../readiness/findings';
@@ -82,7 +82,7 @@ describe('electrical rail requirements', () => {
     const engineering = runEngineering({ ...scene, measures: {}, servoOutputs: {} });
     const before = engineeringFindings(engineering);
     const rows = electricalRows(projection);
-    const after = readinessOf([...before, ...engineeringFindings({ ...engineering, rows })], {
+    const after = readinessOf([...before, ...electricalFindings(projection)], {
       parts: scene.parts,
       fingerprint: 'scene',
       rows,

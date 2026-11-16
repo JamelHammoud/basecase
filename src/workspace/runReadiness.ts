@@ -166,7 +166,7 @@ export async function runReadiness({
     [
       ...assemblyFindings(assemblyReport(parts, geometry)),
       ...engineeringFindings(engineering),
-      ...engineeringFindings({ ...engineering, rows: electrical }),
+      ...electrical.findings,
       ...fitFindings(fits.items),
       ...printFindings(print),
       ...bomFindings(bom),
@@ -183,7 +183,7 @@ export async function runReadiness({
       parts,
       decisions: project.readiness,
       fingerprint: geometry.timedOut ? UNSETTLED_FINGERPRINT : fingerprint,
-      rows: [...engineering.rows, ...electrical, ...cases],
+      rows: [...engineering.rows, ...electrical.rows, ...cases],
       wiring: engineering.wiring,
     },
   );

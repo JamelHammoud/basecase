@@ -1,15 +1,7 @@
 name: Electrical export
 
 on:
-  pull_request:
-    paths:
-      - 'src/wiring/electrical*'
-      - 'src/workspace/*Schematic*'
-      - 'src/workspace/schematic*'
-      - 'src/utils/engineeringPower.ts'
-      - 'tools/electrical/**'
-      - 'e2e/schematic.e2e.test.ts'
-      - '.github/workflows/electrical.yml'
+  workflow_call:
   workflow_dispatch:
 
 permissions:

@@ -30,10 +30,20 @@ interface Level {
 const SHORTEST = 3 * ARM_MIN_LINK;
 const LONGEST = MAX_RISE_MM + 3 * MAX_LINK_MM;
 
+function nearestOption(options: PlanarTarget[], height: number, l1: number): number {
+  let distance = Infinity;
+
+  for (const target of options) distance = Math.min(distance, Math.hypot(target.u - l1, target.w - height));
+
+  return distance;
+}
+
 function nearest(level: Level): number {
-  return Math.max(
-    ...level.planar.map((options) => Math.min(...options.map((t) => Math.hypot(t.u - level.l1, t.w - level.height)))),
-  );
+  let distance = -Infinity;
+
+  for (const options of level.planar) distance = Math.max(distance, nearestOption(options, level.height, level.l1));
+
+  return distance;
 }
 
 function distanceBounds() {
@@ -109,7 +119,7 @@ function outOfReach(search: ArmSearch, planar: PlanarTarget[][]): number {
       const height = shoulderHeight({ base: search.base, baseHeight: rise });
 
       for (let l1 = ARM_MIN_LINK; l1 <= MAX_LINK_MM; l1 += STEP_MM)
-        if (nearest({ planar: [options], height, l1 }) <= longest) return false;
+        if (nearestOption(options, height, l1) <= longest) return false;
     }
 
     return true;

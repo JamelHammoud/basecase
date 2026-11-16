@@ -106,7 +106,7 @@ describe('createRetargeter', () => {
     expect(moving.values.left_elbow_joint).not.toBe(waiting[4]!.values.left_elbow_joint);
   });
 
-  it('turns the body by the hips when a live source has no root rotation', () => {
+  it.each([0, 20, -60])('turns the body relative to a rest heading of %s degrees', (restHeading) => {
     const { rig, pointOf } = humanoid();
     const m = mocap();
     const stand = keypointFrame(m, m.rest);
@@ -117,11 +117,14 @@ describe('createRetargeter', () => {
         Object.entries(stand).map(([k, p]) => [k, [c * p[0] + s * p[2], p[1], c * p[2] - s * p[0]] as V3]),
       );
     };
-    const rt = createRetargeter({ rig, pointOf, rest: stand });
+    const rt = createRetargeter({ rig, pointOf, rest: turn(restHeading) });
+    const inverse = rt.body()!.basisInv!.toArray();
     const yaw = (f: HumanFrame, t: number) => rt.step(f, t)!.root.rotation.map((v) => v + 0);
 
-    expect(yaw(turn(0), 0)).toEqual([0, 0, 0]);
-    expect(yaw(turn(30), 0.03)).toEqual([0, 30, 0]);
-    expect(yaw(without(turn(45), 'hips'), 0.06)).toEqual([0, 30, 0]);
+    expect(yaw(turn(restHeading), 0)).toEqual([0, 0, 0]);
+    expect(yaw(turn(restHeading + 30), 0.03)).toEqual([0, 30, 0]);
+    expect(yaw(without(turn(restHeading + 45), 'hips'), 0.06)).toEqual([0, 30, 0]);
+    expect(yaw(turn(restHeading - 15), 0.09)).toEqual([0, -15, 0]);
+    expect(rt.body()!.basisInv!.toArray()).toEqual(inverse);
   });
 });

@@ -12,7 +12,7 @@ covers:
 
 Restore administrator access to your existing self-hosted inventory using the service's local database credentials.
 
-You must control the service host and its PostgreSQL credentials. Recovery revokes every session, service token and unused invitation in that organization. You keep your robot identities and inventory.
+You must control the service host and its PostgreSQL credentials. Recovery revokes every session, service token, SCIM token, pending SAML exchange and unused invitation in that organization. You keep your robot identities and inventory.
 
 1. On the service host, set `FLEET_DATABASE_URL` to the existing service database.
 2. In the repository, set `FLEET_RECOVERY_ORG` to the existing organization UUID printed during bootstrap.
@@ -43,9 +43,9 @@ python3 -c 'import getpass,json; print(json.dumps({"password":getpass.getpass("N
 
 In PowerShell, use `$env:FLEET_RECOVERY_ORG` for the organization variable and `python` for the Python launcher. Use the same JSON format on Windows and Linux. The commands refuse interactive stdin, extra arguments and input exceeding 8 KiB. They print IDs or a refusal without printing the supplied password.
 
-During setup, you create one separate local account and a protected administrator role. You can run setup after someone has deleted the ordinary administrator. The email identifies the login but provides no proof of ownership. Setup does not promote existing accounts or match them by email.
+During setup, you create one separate local account and a protected administrator role. You can run setup after someone has deleted the ordinary administrator. The email identifies the login but provides no proof of ownership. Setup doesn’t promote existing accounts or match them by email.
 
-Your database access authorizes recovery. You don’t need an emailed code or an expiring recovery token. After you rotate the password, you can’t use the old password, and the service revokes all organization credentials. Issue replacement service tokens through the existing identity API after signing in.
+Your database access authorizes recovery. You don’t need an emailed code or an expiring recovery token. After you rotate the password, you can’t use the old password, and the service revokes all organization credentials. Issue replacement service tokens through the existing identity API after signing in. Rotate SCIM tokens in Fleet access settings. The recovery account keeps password access when the organization requires SSO.
 
 ## Inspect the recovery record
 

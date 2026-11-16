@@ -2,7 +2,6 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { database } from './database.mjs';
 import { bootstrap } from './identity.mjs';
-import { startService } from './http.mjs';
 import { staticAssets } from './static.mjs';
 import { insist } from './validation.mjs';
 import { localRecoveryCommand } from './recoveryCommand.mjs';
@@ -50,6 +49,7 @@ async function runService() {
       ? { cert: await readFile(process.env.FLEET_TLS_CERT), key: await readFile(process.env.FLEET_TLS_KEY) }
       : undefined;
     const origin = process.env.FLEET_ORIGIN ?? 'http://127.0.0.1:7440';
+    const { startService } = await import('./http.mjs');
     const service = await startService({
       pool,
       origin,

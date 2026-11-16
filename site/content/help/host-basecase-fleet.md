@@ -36,7 +36,7 @@ Outside loopback, set `FLEET_ORIGIN` to the service's HTTPS origin, `FLEET_TLS_C
 
 ## Accounts and roles
 
-Administration uses the version 1 JSON API. The browser provides enrollment, sign-in, inventory and sign-out. Administration requires organization-level `iam.manage`.
+Role and local account administration uses the version 1 JSON API. The browser provides enrollment, sign-in, inventory and sign-out. Its access settings configure identity providers and provisioning tokens. Administration requires organization-level `iam.manage`.
 
 `POST /v1/sessions` takes `org`, `email` and `password` and returns a session token. Send it as `Authorization: Bearer <token>` for subsequent API calls. Session tokens expire after 12 hours.
 
@@ -66,11 +66,11 @@ Create an account with `POST /v1/<org>/account`, passing `name` and a `roles` ar
 
 Groups use `POST /v1/<org>/group` with `name`, `members` containing account UUIDs and `roles` containing role UUIDs. Read, replace and delete groups through their ID paths. Role changes and revocation clear connected browser inventories and require a reload.
 
-Use [Recover a Fleet organization](/help/recover-a-fleet-organization) to restore access without creating another organization.
+Use [Connect identity providers to Fleet](/help/federate-fleet-identities) for SAML connections, group grants and SCIM provisioning. Use [Recover a Fleet organization](/help/recover-a-fleet-organization) to restore access without creating another organization.
 
 ## Service credentials and observations
 
-`POST /v1/<org>/credentials` takes a `rules` array and returns a scoped service token. It expires after 30 days and can’t exceed its issuing account's current access. `GET /v1/<org>/credentials` returns credential metadata with at most 100 records and a `next` cursor. Pass that cursor as `after` to read another page. `DELETE /v1/<org>/credentials/<credential>` revokes a credential. These paths also support revoking browser sessions and unused invitations.
+`POST /v1/<org>/credentials` takes a `rules` array and returns a scoped service token. It expires after 30 days and can’t exceed its issuing account's current access. `GET /v1/<org>/credentials` returns credential metadata with at most 100 records and a `next` cursor. Pass that cursor as `after` to read another page. `DELETE /v1/<org>/credentials/<credential>` revokes a credential. These paths also support revoking browser sessions and unused invitations. SSO sessions can’t issue service tokens.
 
 The action names keep viewing, export, incident response, scheduling, deployment and robot control separate. Read the names and limits from `GET /v1/<org>/contracts`. The service doesn’t execute those robot operations.
 

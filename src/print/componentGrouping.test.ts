@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { flatFaces } from './labels/labelFaces';
 import { connectedGroups, isConnected, type Pair } from './merge/mergeJoins';
 import type { MeshData } from './threeMf';
-import { componentRoot } from './componentRoot';
+import { componentRoot } from '../../electron/componentRoot.mjs';
 
 function measured<T>(run: () => T) {
   const spy = vi.spyOn(Map.prototype, 'get');

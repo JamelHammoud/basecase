@@ -1,4 +1,4 @@
-import { componentRoot } from '../componentRoot';
+import { componentRoot } from '../../../electron/componentRoot.mjs';
 import type { MeshData } from '../threeMf';
 
 export type V3 = [number, number, number];

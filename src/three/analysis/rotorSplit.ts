@@ -75,13 +75,18 @@ function measureBodies(
   const out = new Map<number, Body>();
   const p = new THREE.Vector3();
 
-  for (let v = 0; v < solid.positions.length / 3; v++) {
-    const body = out.get(bodies[Math.floor(v / 3)]) ?? { box: new THREE.Box3(), reach: 0 };
+  for (let i = 0; i < solid.positions.length; i += 9) {
+    const id = bodies[i / 9];
+    const body = out.get(id) ?? { box: new THREE.Box3(), reach: 0 };
+    const end = Math.min(i + 9, solid.positions.length);
 
-    p.fromArray(solid.positions, v * 3);
-    body.box.expandByPoint(p);
-    body.reach = Math.max(body.reach, distance(p));
-    out.set(bodies[Math.floor(v / 3)], body);
+    for (let v = i; v < end; v += 3) {
+      p.fromArray(solid.positions, v);
+      body.box.expandByPoint(p);
+      body.reach = Math.max(body.reach, distance(p));
+    }
+
+    out.set(id, body);
   }
 
   return out;

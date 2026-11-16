@@ -35,13 +35,19 @@ export function routeMotion(scene: WiringScene): RouteMotion {
   const rig = buildRig(resolveJoints(scene.project.joints ?? [], scene.parts), scene.parts);
   const joints = rig.joints.filter((j) => j.type !== 'fixed');
   const samples = joints.map(samplesOf);
-  const halves = new Map(
-    joints.map((j, i) => [j.id, Math.max(0, ...samples[i].slice(1).map((v, k) => (v - samples[i][k]) / 2))]),
-  );
+  const halves = new Map(joints.map((j, i) => [j.id, largestHalfGap(samples[i])]));
   const invalid = joints.some((j) => !j.range || j.range.length !== 2 || !j.range.every(Number.isFinite));
   const failure = invalid ? 'Joint range unbounded' : unsupported(rig.joints, samples);
 
   return { rig, joints, samples, halves, failure };
+}
+
+function largestHalfGap(samples: number[]): number {
+  let largest = 0;
+
+  for (let i = 1; i < samples.length; i++) largest = Math.max(largest, (samples[i] - samples[i - 1]) / 2);
+
+  return largest;
 }
 
 function unsupported(joints: RobotJoint[], samples: number[][]): string | null {

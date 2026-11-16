@@ -152,14 +152,6 @@
     "reason": "Run 43831610288 returned It didn’t answer. instead of the syntax error at source line 3 at line 113 on both Linux attempts. The first panel write loaded. Windows passed at the same commit in 13.406 s. Linux passed in run 43824172798 in 12.140 s with unchanged frame code, browser test, dependencies and harness. Each attempt owns a fresh app. Frame startup, error delivery and watchdog timing are not distinguished by the log. Issue #1377 owns tracing and equal-load measurements before restoration."
   },
   {
-    "file": "e2e/remoteTraining.e2e.test.ts",
-    "test": "configures two attempts, recovers one grouped workflow and shows its local verdict",
-    "issue": 1365,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Run 43831610288 observed one train-start request instead of two after reload at line 75 on the first Windows attempt, then stalled clicking Concurrent attempts on retry. Linux passed at the same commit. Windows passed both recovery tests in run 43824172798 with unchanged training code and fixture. Issue #1365 already owns tracing model reconstruction, journal persistence and worker reattachment, followed by equal-load measurements. Both browser paths remain active on Linux and macOS."
-  },
-  {
     "file": "e2e/passiveFixtures.e2e.test.ts",
     "test": "creates Open a Lid, edits its weight and reopens its recorded reference",
     "issue": 1364,
@@ -249,7 +241,7 @@
   },
   {
     "file": "e2e/inputs.e2e.test.ts",
-    "test": "hears a recorded \u201csit\u201d in a Case whose logic listens for it",
+    "test": "hears a recorded “sit” in a Case whose logic listens for it",
     "issue": 995,
     "until": "2026-11-28",
     "platform": "win32",

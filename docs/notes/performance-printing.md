@@ -2,6 +2,18 @@
 
 Implementation: [Print planning and labels](../guide/printing.md#performance-print-planning-and-labels). Shared requirements: [Performance](../guide/performance.md).
 
+## Merge guide bounds accumulate as members are measured
+
+Repository search found one union stand-in for Merge's saved-step estimate, in `src/print/merge/mergeGuide.ts`. Both Print and the agent receive the shared planner's result. The existing `selectionBounds` helper measures each member and immediately folds its extrema into the result. This replaces retention of every member box followed by six coordinate projections and extrema scans. Each part is still measured once. Stand-in center arithmetic, dimensions, rotation, retained identity, removed hardware and guide planning stay unchanged.
+
+For N members, the change removes one N-entry box-reference array, six N-entry coordinate arrays and two three-entry axis arrays per union. The two result extrema arrays and each member's measured bounds remain. These are source-derived allocation counts, without timing assertions or a claim about complete Merge planning speed. The existing helper performs the same minimum and maximum arithmetic, including nonfinite coordinates and signed zero, without a persistent cache.
+
+A local scratch replay compared bounds against the previous mapped calculation in 255 cases. It used 120 rotated and translated member groups derived from the Shin fixture, repeated each after editing a member, then checked NaN, infinities and signed zero on all three position axes. Every result matched and the initial inputs remained unchanged. The replay is `scratch/merge-bounds.test.ts`. Existing `src/print/merge/mergePlan.test.ts` retains complete group, saved-step, material, bed and actual boolean-merge checks. No permanent test duplicates the existing bounds helper.
+
+Changed-file validation passed formatting, lint, documentation, site copy, types and all 49 selected test files with 291 tests. The test phase took 11.62 seconds locally. Copy diff reports zero added, changed or removed strings.
+
+Preflight flagged [The path from design to build](../../site/content/help/from-design-to-build.md), [Merge printed parts into one print](../../site/content/help/merge-printed-parts-into-one-print.md) and [Printability estimates](../../site/content/help/printability-estimates.md). Their assembly-order, saved-step, printer-fit and estimate claims remain accurate. No control, visible state or user action changes, so their text, steps, labels and screenshots remain unchanged.
+
 ## Fleet relocation retains plate bounds
 
 For a successful relocation of N items, the previous path measured the footprint twice. Each measurement allocated six N-entry arrays and N rectangle objects. It visited items once to build rectangles and once for heights, then visited rectangle fields through four mapped arrays and their extrema scans. Relocation now measures bounds in one item scan with five scalar extrema and reuses them for fitting and translation. Diagonal items also share absolute sine and cosine between both extents. The existing moved-item and matrix output allocations remain.

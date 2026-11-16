@@ -13,6 +13,8 @@ import { quietRequested } from '../../verify/lib/quiet.mjs';
 import { capacityHold, measure as measureCapacity } from './lib/capacity.mjs';
 import { UsageLimit } from './lib/usage.mjs';
 
+import { fetchGit } from './lib/gitFetch.mjs';
+
 const LANES = laneNames();
 const [lane, slot = '1'] = process.argv.slice(2);
 
@@ -66,7 +68,7 @@ function updateHome() {
 
   const before = run('git', ['rev-parse', 'HEAD'], { cwd: HOME_CHECKOUT }).out.trim();
 
-  run('git', ['fetch', '-q', 'origin', ref], { cwd: HOME_CHECKOUT });
+  fetchGit(['-q', 'origin', ref]);
 
   const target = run('git', ['rev-parse', `origin/${ref}`], { cwd: HOME_CHECKOUT }).out.trim();
 

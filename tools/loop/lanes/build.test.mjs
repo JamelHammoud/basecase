@@ -59,6 +59,31 @@ afterAll(() => {
 });
 
 describe('builder recovery attempts', () => {
+  it('returns a task immediately after setup fails, then retries it without waiting for orphan recovery', () => {
+    const failure = new Error('fetch failed');
+    const worktree = { dir: directory, branch: 'loop/build/48-feature' };
+
+    calls.steps = [queuedStep(48)];
+    calls.openBranch
+      .mockImplementationOnce(() => {
+        throw failure;
+      })
+      .mockReturnValue(worktree);
+    calls.checkedRun.mockReturnValue({ ok: false, error: 'task stopped' });
+
+    expect(() => build({ log: vi.fn(), slot: 1 })).toThrow(failure);
+    expect(calls.steps[0].labels).toEqual([{ name: 'loop:next' }]);
+    expect(calls.checkedRun).not.toHaveBeenCalled();
+    expect(calls.close).not.toHaveBeenCalled();
+    expect(calls.release).toHaveBeenCalledOnce();
+
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.openBranch).toHaveBeenCalledTimes(2);
+    expect(calls.checkedRun).toHaveBeenCalledOnce();
+    expect(calls.close).toHaveBeenCalledWith(worktree);
+  });
+
   it('stops after its recovery fails without returning a new session', () => {
     const worktree = { dir: directory, branch: 'loop/build/42-feature' };
     const session = { provider: 'codex', id: 'saved-thread' };

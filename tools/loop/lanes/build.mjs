@@ -102,7 +102,7 @@ function recoveryContext(step, inputSignature, recovery) {
 }
 
 function retainFailedSession(step, inputSignature, worktree, session) {
-  if (!session) return;
+  if (!session || !worktree) return;
 
   saveRecovery(step.number, {
     worktree,
@@ -112,11 +112,8 @@ function retainFailedSession(step, inputSignature, worktree, session) {
 }
 
 function buildStep(step, { log, slot }) {
-  editIssueLabels(step.number, { add: [BUILDING], remove: [NEXT, 'loop:blocked'] });
-
-  const inputSignature = taskInputSignature(step);
-  const recovery = recoveryFor(step.number);
-  const worktree = recovery ?? openBranch('build', `${step.number}-${slot}-${step.title}`);
+  let inputSignature;
+  let worktree;
   const giveBack = (result) => {
     editIssueLabels(step.number, { add: [NEXT], remove: [BUILDING] });
 
@@ -124,6 +121,13 @@ function buildStep(step, { log, slot }) {
   };
 
   try {
+    editIssueLabels(step.number, { add: [BUILDING], remove: [NEXT, 'loop:blocked'] });
+    inputSignature = taskInputSignature(step);
+
+    const recovery = recoveryFor(step.number);
+
+    worktree = recovery ?? openBranch('build', `${step.number}-${slot}-${step.title}`);
+
     const prompt = [
       `Build this step, issue #${step.number}: ${step.title}\n\n${step.body}`,
       recoveryContext(step, inputSignature, recovery),
@@ -176,7 +180,7 @@ function buildStep(step, { log, slot }) {
 
     throw error;
   } finally {
-    close(worktree);
+    if (worktree) close(worktree);
   }
 }
 

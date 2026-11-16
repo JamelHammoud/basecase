@@ -31,3 +31,11 @@ On shared macOS arm64 hardware with an Apple M5 Pro and Node 26.13.0, a scratch 
 ## Sketch deletion avoids repeated membership searches
 
 `sketch/removal.test.ts` compares 120 mixed selections with the previous cleanup and checks shared centers, every constraint kind, references, duplicate ids, source preservation and later edits. Its 300- and 600-line fixtures delete alternating lines. Entity-id reads fall from 22,800 and 90,600 to 599 and 1,199. Retained-point comparisons fall from 135,150 and 540,300 to zero. These are operation counts for deletion cleanup, without timing assertions or a claim about complete selection or rendering time.
+
+## Sketch constraint batches assign ids once
+
+The whole-app search found one constraint-creation helper, `utils/sketch/edit.ts`'s `withConstraints`. Rectangles, dimensioned lines and circles, dimension edits and constraint commands all call it. Solver updates replace existing constraints rather than assign new ids. SVG conversion creates no constraints.
+
+`constraintBatch.test.ts` compares complete results against the previous batch implementation across 100 fixtures with gaps, cross-collection prefixes, fractional, malformed, infinite and large numeric ids. It checks every constraint kind, empty-batch identity, source preservation, retained references, independent added objects, subsequent batches and later source edits. Existing edit and solver tests cover the callers. No quarantine applies.
+
+For six added constraints on fixtures with 300 and 600 items in each collection, counted existing-id reads fall from 7,200 and 14,400 to 900 and 1,800. The old append path copies 1,815 and 3,615 existing constraint entries across six growing lists. The new path copies 300 and 600 entries once. These are deterministic operation counts, without timing assertions or a claim about complete Sketch interaction time. Constraint solving remains unchanged.

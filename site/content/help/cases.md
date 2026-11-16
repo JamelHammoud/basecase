@@ -38,6 +38,7 @@ Watching a robot stand in the simulation won't tell you whether it can reach a s
 - **Slots.** The kinds of robots the Case needs: an arm, wheels or legs. Arm control and driven-wheel matching use powered joints. Hand Off to a Spot needs two arms with grippers, opened in separate scene tabs.
 - **A world.** The objects around the robot. Objects can be solid or pushable, and markers show a spot without getting in the robot's way. During a run, the Case's code can move, light or hide any object tagged movable.
   The world can include the ground. As you make the Case, you can add [rough ground, a step or a slope](/help/test-a-robot-on-rough-ground-steps-or-a-slope), sized to the robot's legs or wheels.
+  You can [open lids and pull drawers](/help/open-lids-and-pull-drawers) through physical contact, with editable travel, weight and resistance.
   You can also [import a captured world](/help/import-a-world) from a collider mesh, with an optional splat for its appearance.
 - **Controls.** The commands you steer with during a try, such as Move and Turn, or Move and Raise and Lower for an arm.
 - **A contract.** The rules for a try: what it takes to pass, and what fails it, such as a fall.
@@ -46,7 +47,7 @@ Watching a robot stand in the simulation won't tell you whether it can reach a s
 - **Gestures**, if you taught it any: movements you make at the camera that the Case reacts to. See [Teach a robot a gesture](/help/teach-a-robot-a-gesture).
 - **Image variation**, if declared: named object points, color classes, camera mount tolerance and distractors for rendered training images.
 
-Each Case comes with a reference route that passes it, so you know a pass is possible. To see each goal and how the contract judges it, read [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts).
+Each Case comes with a reference route. Changing a fixture’s geometry or resistance can make the same robot miss. To see each goal and how the contract judges it, read [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts).
 
 A Case's logic and console can read camera detections, including object counts, scores and boxes. Detections belong to that scene and camera source, so a cup seen in another tab can't trigger this Case. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
 

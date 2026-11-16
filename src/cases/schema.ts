@@ -1,4 +1,7 @@
 import type { PartKind, ScenePart } from '../types/robotics';
+import type { PassiveJoint } from '../sim/passiveJoint';
+import { fixtureSignals } from './fixtureTravel';
+import { readPassiveJoint, validateFixtures } from './fixtureValidation';
 import type { WorldBehavior, WorldItem } from '../sim/mjcfTypes';
 import type { V3 } from '../utils/kinematics';
 import { consoleReader, type CaseConsole } from './console/format';
@@ -70,6 +73,8 @@ export interface RobotSlot {
 }
 
 export interface WorldObject {
+  parent?: string;
+  joint?: PassiveJoint;
   id: string;
   name: string;
   kind: (typeof WORLD_KINDS)[number];
@@ -219,6 +224,8 @@ const readObject: Reader<WorldObject> = (value, where) => {
   const v = asRecord(value, where);
 
   return {
+    ...(v.parent === undefined ? {} : { parent: asId(v.parent, `${where}.parent`) }),
+    ...(v.joint === undefined ? {} : { joint: readPassiveJoint(v.joint, `${where}.joint`) }),
     id: asId(v.id, `${where}.id`),
     name: asString(v.name, `${where}.name`),
     kind: oneOf(WORLD_KINDS)(v.kind, `${where}.kind`),
@@ -241,6 +248,8 @@ export const readWorldObjects = (value: unknown): WorldObject[] => {
   const objects = listOf(readObject, MAX_OBJECTS)(value, 'world.objects');
 
   if (new Set(objects.map((o) => o.id)).size !== objects.length) refuse('world.objects', 'repeats an id');
+
+  validateFixtures(objects);
 
   return objects;
 };
@@ -368,7 +377,10 @@ export function parseCase(input: unknown): Case {
   checkScore(task, objects);
 
   const gestures = optional(readGestures, v.gestures, 'gestures');
-  const signals = { probes: task.probes.map((p) => p.signal), gestures: gestureNames(gestures) };
+  const signals = {
+    probes: [...task.probes.map((p) => p.signal), ...fixtureSignals(objects)],
+    gestures: gestureNames(gestures),
+  };
   const caseConsole = optional(consoleReader(signals), v.console, 'console');
 
   const kase: Case = {
@@ -441,5 +453,11 @@ export function worldItem(o: WorldObject): WorldItem {
     ...(o.friction !== undefined ? { physics: { dynamic: o.behavior === 'dynamic', friction: o.friction } } : {}),
   };
 
-  return { ...part, behavior: o.behavior, ...(o.movable ? { movable: true } : {}) };
+  return {
+    ...part,
+    behavior: o.behavior,
+    ...(o.parent ? { parent: o.parent } : {}),
+    ...(o.joint ? { joint: o.joint } : {}),
+    ...(o.movable ? { movable: true } : {}),
+  };
 }

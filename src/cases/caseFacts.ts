@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { worldDeltas } from '../sim/mjcfFrames';
 import type { SimModel } from '../sim/mjcfTypes';
+import { fixtureTravel, travelSignal } from './fixtureTravel';
 import type { Case, WorldObject } from './schema';
 
 export type FactValue = boolean | number | string;
@@ -45,6 +46,7 @@ export interface CaseFactReader {
 
 export function caseFactReader(kase: Case, model: SimModel): CaseFactReader {
   const objects = kase.world.objects;
+  const fixtures = objects.filter((o) => o.joint);
   const spots: Spot[] = objects
     .filter((o) => o.behavior === 'marker')
     .map((o) => ({ id: o.id, object: o, inverse: restMatrix(o).invert() }));
@@ -81,6 +83,8 @@ export function caseFactReader(kase: Case, model: SimModel): CaseFactReader {
         });
       }
 
+      for (const o of fixtures) facts[travelSignal(o.id)] = fixtureTravel(o, deltas);
+
       for (const s of spots) facts[countFact(s.id)] = counts.get(s.id) ?? 0;
 
       if (rule) facts.score = rule.counts === 'in' ? (counts.get(rule.spot) ?? 0) : departed;
@@ -95,7 +99,9 @@ export function caseFactReader(kase: Case, model: SimModel): CaseFactReader {
 export function caseSignalNames(kase: Case): Set<string> {
   const spots = kase.world.objects.filter((o) => o.behavior === 'marker').map((o) => countFact(o.id));
 
-  return new Set<string>([...CASE_SIGNALS, ...spots]);
+  const fixtures = kase.world.objects.filter((o) => o.joint).map((o) => travelSignal(o.id));
+
+  return new Set<string>([...CASE_SIGNALS, ...spots, ...fixtures]);
 }
 
 export function sampleSignals(facts: CaseFacts, names: Set<string>, out: Record<string, number[]>) {

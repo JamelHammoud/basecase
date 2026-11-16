@@ -14,11 +14,17 @@ type NewConstraint = SketchConstraint extends infer C ? (C extends SketchConstra
 
 const idNumber = (id: string, prefix: string) => (id.startsWith(prefix) ? Number(id.slice(prefix.length)) || 0 : 0);
 
-export function nextId(sketch: Sketch, prefix: string): string {
-  const ids = [...sketch.points, ...sketch.entities, ...sketch.constraints].map((x) => idNumber(x.id, prefix));
+function nextIdNumber(sketch: Sketch, prefix: string): number {
+  let highest = 0;
 
-  return `${prefix}${Math.max(0, ...ids) + 1}`;
+  for (const items of [sketch.points, sketch.entities, sketch.constraints]) {
+    for (const item of items) highest = Math.max(highest, idNumber(item.id, prefix));
+  }
+
+  return highest + 1;
 }
+
+export const nextId = (sketch: Sketch, prefix: string): string => `${prefix}${nextIdNumber(sketch, prefix)}`;
 
 export const pointOf = (sketch: Sketch, id: string) => sketch.points.find((p) => p.id === id);
 
@@ -43,10 +49,17 @@ export function withEntity(sketch: Sketch, entity: NewEntity, prefix: string) {
 }
 
 export function withConstraints(sketch: Sketch, added: NewConstraint[]): Sketch {
-  return added.reduce<Sketch>(
-    (s, c) => ({ ...s, constraints: [...s.constraints, { ...c, id: nextId(s, 'k') } as SketchConstraint] }),
-    sketch,
-  );
+  if (!added.length) return sketch;
+
+  let next = nextIdNumber(sketch, 'k');
+  const constraints = [...sketch.constraints];
+
+  for (const constraint of added) {
+    constraints.push({ ...constraint, id: `k${next}` } as SketchConstraint);
+    next += 1;
+  }
+
+  return { ...sketch, constraints };
 }
 
 export function solved(sketch: Sketch, drag?: Drag): Sketch | null {

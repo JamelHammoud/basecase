@@ -4,7 +4,7 @@ Implementation: [Image comparison](../guide/agent.md#performance-image-compariso
 
 ## Photo foreground thresholds compare squared distances
 
-Repository searches found two RGB-distance threshold paths: `imagePixelAnalysis.ts` foreground classification and `silhouette.ts` background flooding. Both now compare the squared distance with the squared cutoff. The silhouette border-spread calculation retains `Math.hypot` because it averages actual distances. Pixel coordinates and background colors are bounded byte values, and corner averages have quarter-byte precision.
+Repository searches found two RGB-distance threshold paths: `imagePixelAnalysis.ts` foreground classification and `silhouette.ts` background flooding. Both now compare the squared distance with the squared cutoff. The silhouette border-spread calculation retains `Math.hypot` because it averages actual distances. RGB channels are byte values, and corner-average background channels have quarter-byte precision.
 
 `imagePixelAnalysis.test.ts` checks strict color-distance and alpha cutoffs through complete image analysis, including transparent backgrounds and unchanged input bytes. Existing `silhouette.test.ts` checks its strict distance cutoff, independent channel variation, spread boundaries, border weighting and narrow images. A scratch comparison matched complete analysis results and silhouette masks on 600 seeded images with sizes from 8 × 8 to 32 × 32. The images include fractional corner averages, transparent backgrounds, partial alpha and both plain and busy borders.
 

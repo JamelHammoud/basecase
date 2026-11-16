@@ -129,5 +129,20 @@ describe('object triangle extraction', () => {
     expect(actual).toEqual(expected);
     expect(copies).toBe(0);
     expect(actual).toHaveLength(triangles * 9);
+
+    const inverse = rigidFrame(group).matrix.invert();
+    const point = new THREE.Vector3();
+
+    for (let i = 0; i < expected.length; i += 3) {
+      point.fromArray(expected, i).applyMatrix4(inverse).toArray(expected, i);
+    }
+
+    const read = vi.spyOn(THREE.Vector3.prototype, 'fromArray');
+    const local = localTriangles(group);
+    const reads = read.mock.calls.length;
+
+    read.mockRestore();
+    expect(local).toEqual(expected);
+    expect(reads).toBe(0);
   });
 });

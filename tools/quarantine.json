@@ -1,5 +1,21 @@
 [
   {
+    "file": "src/vision/tryFrameVideo.test.ts",
+    "test": "",
+    "issue": 1400,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43851640785 exhausted the unchanged 15000 ms beforeAll budget before decoded-pixel assertions. The preceding Windows run 43847119378 passed in 8504 ms with unchanged video test, fixture, helper, extraction, dependencies and config. Linux passed at the failing revision in 9218 ms. The responsible bundle, browser or worker startup stage is unknown. Issue #1400 owns Windows tracing, cancellation and cleanup, and equal-load baseline and candidate measurements before restoration. Whole-file filtering is required because setup precedes individual-test filtering."
+  },
+  {
+    "file": "tools/fleet/registry.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43851640785 exhausted the unchanged 10000 ms beforeAll budget after the PostgreSQL launcher repair. Focused Windows diagnostic 43853345452 passed the exact test at the same revision with one worker and no retries in a 6520 ms process. Linux passed in 2616 ms and the other three PostgreSQL-backed Windows suites passed. The native database or service setup stage responsible is unknown. Issue #1401 owns startup tracing, cleanup and equal-load baseline and candidate measurements. The whole file is filtered because setup precedes individual-test filtering."
+  },
+  {
     "file": "src/sim/fixtures/passiveParity.test.ts",
     "test": "matches C and WASM lid travel, stops, contacts and verdict for nominal",
     "issue": 1390,

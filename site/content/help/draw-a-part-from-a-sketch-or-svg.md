@@ -43,6 +43,7 @@ covers:
   - src/utils/sketch/bounds.ts
   - src/utils/sketch/profile.ts
   - src/utils/sketch/face.ts
+  - src/utils/sketch/boundaryMerge.ts
   - src/utils/sketch/placement.ts
   - src/utils/svgTo3DParser.ts
   - src/workspace/useSketchSession.ts

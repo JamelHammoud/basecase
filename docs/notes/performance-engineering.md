@@ -2,6 +2,14 @@
 
 Implementation: [Engineering calculations](../guide/build.md#performance-engineering-calculations). Shared requirements: [Performance](../guide/performance.md).
 
+## Robot attachment bounds compare directly
+
+`engineeringReadings.test.ts` covers nearby unassigned parts, distant scenery, dynamic objects and independent robot loads through complete engineering reports. A scratch comparison matched complete body results against the previous implementation across 60 cases. Fixtures used all three axes, both directions, gaps of 0, 49.999, 50, 50.001 and 100 mm, reversed part order, dynamic exclusions and later bounds edits. It also checked that grouping preserved its inputs.
+
+Two growing-chain fixtures used 300 and 600 unassigned solids in reverse order, each 10 mm wide with a 50 mm gap. Instrumenting axis-array `every` calls measured 45,150 and 180,300 before, and zero after. Complete body results matched. Each comparison now avoids its three-element axis array and callback. The number and order of bounds comparisons remain unchanged, including the quadratic worst case in nearby-part growth.
+
+Measurements used scratch Vitest on macOS arm64 with Node v26.13.0. These are operation counts, not timings or complete Checks latency measurements. No timing assertion or permanent test was added. The Weight and center of mass help article was checked against the unchanged grouping rule and controls. No screen state or help step changed.
+
 ## Box corners allocate only their results
 
 The whole-app search found one box-corner constructor using nested temporary axis arrays, `utils/engineeringMath.ts`. Its consumers are Payload hand-point selection and joint-support span measurement. Other eight-corner loops already select coordinates directly. The motion-hardware mesh loop constructs a four-corner mounting pattern, rather than a box.

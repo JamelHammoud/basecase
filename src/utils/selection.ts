@@ -77,14 +77,18 @@ export function expandToGroups(parts: ScenePart[], ids: string[]): string[] {
   return [...ids, ...extra];
 }
 
-function alignTarget(sel: ScenePart[], axis: Axis, mode: AlignMode): number {
-  if (sel.length === 1) return 0;
+function alignTarget(bounds: Map<ScenePart, ReturnType<typeof partBounds>>, axis: Axis, mode: AlignMode): number {
+  let min = Infinity;
+  let max = -Infinity;
 
-  const b = selectionBounds(sel);
+  for (const b of bounds.values()) {
+    min = Math.min(min, b.min[axis]);
+    max = Math.max(max, b.max[axis]);
+  }
 
-  if (mode === 'min') return b.min[axis];
+  if (mode === 'min') return min;
 
-  return mode === 'max' ? b.max[axis] : (b.min[axis] + b.max[axis]) / 2;
+  return mode === 'max' ? max : (min + max) / 2;
 }
 
 const ALIGN_FACTOR: Record<AlignMode, number> = { min: 0, center: 0.5, max: 1 };
@@ -100,15 +104,16 @@ export function alignParts(all: ScenePart[], ids: string[], axis: Axis, mode: Al
 
   if (sel.length === 0) return all;
 
-  const target = alignTarget(sel, axis, mode);
-  const selected = new Set(sel);
+  const bounds = new Map(sel.map((p) => [p, partBounds(p)]));
+  const target = sel.length === 1 ? 0 : alignTarget(bounds, axis, mode);
   const precise = sel.some((p) => p.sheetTransform);
 
   return all.map((p) => {
-    if (!selected.has(p)) return p;
+    const b = bounds.get(p);
 
-    const bounds = partBounds(p);
-    const anchor = bounds.min[axis] + (bounds.max[axis] - bounds.min[axis]) * ALIGN_FACTOR[mode];
+    if (!b) return p;
+
+    const anchor = b.min[axis] + (b.max[axis] - b.min[axis]) * ALIGN_FACTOR[mode];
     const position: [number, number, number] = [...p.position];
 
     const at = p.position[axis] + target - anchor;

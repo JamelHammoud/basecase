@@ -56,18 +56,24 @@ export function rootMatrix(pivot: V3, root?: RootOffset): THREE.Matrix4 {
   const r = root.rotation ?? [0, 0, 0];
 
   if (r[0] || r[1] || r[2]) {
-    const rot = new THREE.Matrix4().makeRotationFromEuler(
-      new THREE.Euler(...(r.map(THREE.MathUtils.degToRad) as V3), 'XYZ'),
-    );
+    m.makeRotationFromEuler(new THREE.Euler(...(r.map(THREE.MathUtils.degToRad) as V3), 'XYZ'));
 
-    m.makeTranslation(px, py, pz)
-      .multiply(rot)
-      .multiply(new THREE.Matrix4().makeTranslation(-px, -py, -pz));
+    const e = m.elements;
+
+    m.setPosition(
+      e[0] * -px + e[4] * -py + e[8] * -pz + px,
+      e[1] * -px + e[5] * -py + e[9] * -pz + py,
+      e[2] * -px + e[6] * -py + e[10] * -pz + pz,
+    );
   }
 
   const t = root.position ?? [0, 0, 0];
 
-  if (t[0] || t[1] || t[2]) m.premultiply(new THREE.Matrix4().makeTranslation(t[0], t[1], t[2]));
+  if (t[0] || t[1] || t[2]) {
+    const e = m.elements;
+
+    m.setPosition(e[12] + t[0], e[13] + t[1], e[14] + t[2]);
+  }
 
   return m;
 }

@@ -2,6 +2,16 @@
 
 Implementation: [Engineering calculations](../guide/build.md#performance-engineering-calculations). Shared requirements: [Performance](../guide/performance.md).
 
+## Box corners allocate only their results
+
+The whole-app search found one box-corner constructor using nested temporary axis arrays, `utils/engineeringMath.ts`. Its consumers are Payload hand-point selection and joint-support span measurement. Other eight-corner loops already select coordinates directly. The motion-hardware mesh loop constructs a four-corner mounting pattern, rather than a box.
+
+Each box previously constructed one X array, two Y arrays and four Z arrays, alongside the eight returned tuples and their outer array. Direct construction removes those seven temporary arrays and eight pushes per box. The nine returned arrays remain independently owned on every call. These are code-derived allocation counts, without a timing measurement or a claim about complete Checks latency. Input coordinates are copied without arithmetic, retaining signed zero, nonfinite values, coincident bounds and reversed bounds.
+
+Existing `payload.test.ts` covers complete Payload rows, stronger actuators, the injected payload sampler and non-arm exclusion. `engineering.test.ts` covers sound and unsupported joints through the complete report. No new browser behavior, control, label or screenshot state changes. No quarantine or test-policy change applies.
+
+Local verification on macOS arm64 with Node 26.13.0 passed formatting, lint, docs, site copy and types. Related selection ran 363 files in 102.84 seconds, with 361 passing, one skipped and one failing. It passed 2,277 tests. The two-arm Hand Off case in `cases/slots.test.ts:113` exceeded its existing 5,000 ms deadline. Isolated checks of that file passed all six tests with the original helper in 884 ms and the refined helper in 741 ms. These file durations include import and setup. This isolates the observed timeout from a repeatable result failure, without establishing its cause or complete Checks latency. The baseline log stays in `scratch/box-corners-baseline-check.log`. No deadline, retry or quarantine was changed.
+
 ## BOM categories group rows once
 
 `bomCategories.test.ts` compares complete ordered groups and purchase summaries against the previous per-category filters across 100 generated lists and their edits. Coverage includes empty categories, reversed rows, changed categories, repeated references, unpriced lines, zero prices, estimates, warnings, stale prices, source preservation and independent result arrays. Existing `bom.test.ts` and `buyLine.test.ts` retain BOM export and purchase integration coverage.

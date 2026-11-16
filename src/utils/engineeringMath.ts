@@ -52,12 +52,19 @@ export function rotateEuler(v: V3, deg: V3): V3 {
 }
 
 export function boxCorners(min: V3, max: V3): V3[] {
-  const out: V3[] = [];
+  const [x0, y0, z0] = min;
+  const [x1, y1, z1] = max;
 
-  for (const x of [min[0], max[0]])
-    for (const y of [min[1], max[1]]) for (const z of [min[2], max[2]]) out.push([x, y, z]);
-
-  return out;
+  return [
+    [x0, y0, z0],
+    [x0, y0, z1],
+    [x0, y1, z0],
+    [x0, y1, z1],
+    [x1, y0, z0],
+    [x1, y0, z1],
+    [x1, y1, z0],
+    [x1, y1, z1],
+  ];
 }
 
 export { convexHull } from './convexHull';

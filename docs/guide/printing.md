@@ -40,6 +40,8 @@ Guide visibility probes retain a separate small ID render target. They no longer
 
 ## Performance: print planning and labels
 
+- **Start Next keeps one winning plate.** `print/fleet.ts` scans the current plates once and checks status, material and bed fit only when a plate can beat the lowest-numbered eligible plate found so far. Equal numbers retain source order. No candidate list, sort or persistent cache remains. The shared selector serves every idle printer in Print mode. `fleet.test.ts` compares selection against exhaustive filtering and sorting across unordered plates, ties, busy states, material and bed refusals, and checks fresh statuses on subsequent calls. [Evidence](../notes/performance-printing.md#start-next-keeps-one-winning-plate).
+
 - **Service quotes are indexed per operation.** `quotesByPart` retains the first quote for each part. Quote requests and service BOM pricing each build one operation-local map, removing per-part scans of saved quotes. Every call reads current quotes without a persistent cache. `serviceQuotes.test.ts` covers both paths, duplicate and deleted identities, quote replacement, stale prices and source preservation. [Evidence](../notes/performance-printing.md#service-quotes-are-indexed-per-operation).
 
 Measurements and limits: [Print planning and labels performance evidence](../notes/performance-printing.md).

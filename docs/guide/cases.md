@@ -807,7 +807,7 @@ Each `e2e/caseStartup.e2e.test.ts` attempt opens a fresh app. `src/workspace/use
 
 ### Scan maps coverage
 
-`e2e/scanMap.e2e.test.ts` clicks Scan Matching in Layers and checks that disabling it rebuilds the displayed map with more points. Its separate Make World test keeps the corridor import, Layers menu and saved-world flow. `src/dataLayers/map.test.ts` checks corridor fusion and matching accuracy. `src/three/viewport/mapLayer.test.ts` checks that the complete map stays fixed while the playhead moves. `src/dataLayers/storeMap.test.ts` checks visibility and matching settings, `src/dataLayers/mapClient.test.ts` checks separate caches for each matching choice, and `src/three/viewport/dataLayers.test.ts` checks hiding and showing rendered layers. The focused Scan Matching walkthrough omits scrubbing, visibility changes and the second matching rebuild, leaving those details to the tests above.
+`e2e/scanMap.e2e.test.ts` clicks Scan Matching in Layers and checks that disabling it rebuilds the displayed map with more points. Its separate Make World test keeps the corridor import, Layers menu and saved-world flow. Both walkthroughs are quarantined only on Windows through 28 November 2026 under #995 while their shared import and playback setup is investigated. Other platforms retain both. `src/dataLayers/map.test.ts` checks corridor fusion and matching accuracy. `src/three/viewport/mapLayer.test.ts` checks that the complete map stays fixed while the playhead moves. `src/dataLayers/storeMap.test.ts` checks visibility and matching settings, `src/dataLayers/mapClient.test.ts` checks separate caches for each matching choice, and `src/three/viewport/dataLayers.test.ts` checks hiding and showing rendered layers. These fast tests remain active on Windows. The focused Scan Matching walkthrough omits scrubbing, visibility changes and the second matching rebuild, leaving those details to the tests above.
 
 [Incident evidence and limits](../notes/testing-worlds.md).
 
@@ -894,6 +894,12 @@ The operator-camera browser check runs on Linux, Windows and macOS. It opens Dri
 [Running a Case](#running-a-case) records studio HUD pointer passthrough, both Escape steps, center-click driving, real bridge joystick commands, release, HUD signals, Escape forwarding and overlay checks. That bridge coverage runs on every platform. `sim/drive.test.ts` checks rover movement, stopping and turning in MuJoCo. The remaining code-panel browser tests open Run Case from ⌘K and leave with Escape.
 
 [Incident evidence and limits](../notes/testing-case-code.md).
+
+### Recorded code world changes
+
+`e2e/caseCode.e2e.test.ts` retains agent-created movable objects, the real code-frame Light action, rendered color and position, one saved try and its exact recorded world event. It ends driving with Escape after inspecting the live change, avoiding a click on Stop Try after recording has ended. `e2e/tryStop.e2e.test.ts` separately retains Stop Try and Stop Driving behavior. `src/cases/console/codeWorld.test.ts` retains movable-object routing, fixed-object refusal and malformed-pose checks, while `src/workspace/useCaseTry.test.ts` retains recording lifecycle coverage.
+
+[Incident evidence and limits](../notes/testing-case-code.md#windows-world-change-recording).
 
 ### Windows dataset training and wave completion
 

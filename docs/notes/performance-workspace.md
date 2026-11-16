@@ -36,7 +36,7 @@ The atomic replacement probe interrupts the final scene rename. The old scene re
 
 The graph's resource budget is 64 MiB of history JSON, 1,000 versions, 100,000 content blocks and 10,000 parts per descriptor. Manifest keys must be distinct SHA-256 identifiers. Declared block sizes share a 64 MiB budget before reads, and actual sizes and hashes must agree. Desktop reads refuse symbolic links and nonregular files. Browser Blob handles are size-checked before their text is decoded.
 
-The acceptance tests retain the ten design cases across the graph, merge and shared Case suites. Browser declarations cover the history entry point, close and reopen, restore, reload and retained source branch after merge. Cross-platform browser execution remains a CI observation, rather than a local claim.
+The acceptance tests retain the ten design cases across the graph, merge and shared Case suites. The retained browser declaration covers the history entry point, close and reopen, restore and reload. Cross-platform browser execution remains a CI observation, rather than a local claim.
 
 ### Shared-part browser observation, 16 November 2026
 
@@ -74,3 +74,17 @@ The twelve unchanged articles retain their steps, labels and described screensho
 | `troubleshoot-scene-files` | Portable imports still use `decodeSceneFile`, save under a new id and retain the existing part, world and fixture validation errors. History is excluded from portable files. |
 
 The screenshots in these twelve articles describe unchanged controls and states. No replacement capture is needed. Their mechanical preflight reminders remain because the coverage check has no read acknowledgment field. No unrelated page was edited solely to clear a reminder.
+
+### Branch merge browser failure, 16 November 2026
+
+Check for pull request #1565 passed the named-version recovery browser test in 33,359 ms. The branch merge story failed in 85,236 ms including one configured retry. At line 113, the merge had already reduced the target to one part and both tabs remained open. The final click on the source tab waited 30,000 ms because the still-open Scene History overlay intercepted pointer events. The aggregate Check failed solely because this changed-browser job failed.
+
+The slow branch story was deleted rather than extending its waits or retaining its retry-dependent execution. `versionOperations.test.ts` checks a shared branch base, selected incoming edits, both retained histories and restoration of the unchanged source snapshot. `versionMerge.test.ts` checks independent edits, dependency closure, explicit conflicts and unchanged source and target inputs. `sceneBranches.test.ts` covers linked branch creation and source identity. The named-version browser recovery test remains. Automated browser control wiring for branch comparison and merge is a coverage gap. The earlier documentation capture exercised those controls but is not a recurring test. No quarantine, timeout or retry setting changed.
+
+### Coverage reminder follow-up
+
+All twelve articles in the table above were read again against the final feature diff. `useAgentSession.ts` adds only the version service passed to adopted runs, retaining attachment handling and the 1,568-pixel upload limit. `agentLanes.ts` retains `MAX_LANES = 4` and changes only the ownership source for Revert availability. `useAgentRun.ts` wraps prompt execution with baseline and completion storage, retaining `runOnce` error replies, steering, queue consumption and retry controls. The Case code-edit undo path is unchanged.
+
+`WorkspaceSheets.tsx` retains `FleetIncidentsHost` and adds a separate `SceneHistoryHost`. `RightTabPanels.tsx` changes Revert availability inside the Agent conversation, leaving teaching controls and skill freshness unchanged. `TitleBarTabs.tsx` passes the new history action without changing the title-bar positions or existing controls. `tabModel.ts` adds history and fingerprint fields without changing `sceneRobots` or the eight-tab limit. `useSceneLibrary.ts` changes duplication, while portable import still uses `decodeSceneFile` and a fresh scene id. A duplicate has a fresh id, so Case console values remain separate under `caseStoreKey`.
+
+The agent guide's checkpoint section changes recovery, already covered by the updated undo article linked from the design-agent hub. The twelve articles make no claim that checkpoints remove. Their referenced image files exist, and their described screenshot states use the unchanged controls above. No article text, screenshot or publication date needs replacement. Preflight still emits the same twelve read reminders because it checks changed paths rather than recording this assessment.

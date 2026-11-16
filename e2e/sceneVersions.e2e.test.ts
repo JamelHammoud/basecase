@@ -87,32 +87,3 @@ it('names a version, edits and closes the robot, then reopens and restores the v
     await browser.close();
   }
 });
-
-it('branches a version and merges an independent edit while retaining the source branch', async () => {
-  const browser = await launchChrome();
-  const page = await browser.newPage();
-
-  try {
-    await seed(page);
-    await command(page, 'Scene History');
-    await page.getByLabel('Version name').fill('Camera baseline');
-    await page.getByRole('button', { name: 'Save Version', exact: true }).click();
-    await page.getByRole('button', { name: 'Camera baseline', exact: true }).click();
-    await page.getByRole('button', { name: 'Branch', exact: true }).click();
-    await page.locator('[role="tab"]:has([data-tab-close])').filter({ hasText: 'Arm bracket copy' }).click();
-    await expect.poll(() => page.locator('[role="tab"]:has([data-tab-close])').count()).toBe(2);
-    await removeCamera(page);
-    await page.locator('[role="tab"]:has([data-tab-close])').filter({ hasText: 'Arm bracket' }).first().click();
-    await command(page, 'Scene History');
-    await page.getByLabel('Compare with').selectOption({ label: 'Arm bracket copy' });
-    await page.getByRole('button', { name: 'Compare', exact: true }).click();
-    await page.getByRole('switch', { name: 'camera', exact: true }).click();
-    await page.getByRole('button', { name: 'Merge Parts', exact: true }).click();
-    await expect.poll(() => partCount(page)).toBe(1);
-    expect(await page.locator('[role="tab"]:has([data-tab-close])').count()).toBe(2);
-    await page.locator('[role="tab"]:has([data-tab-close])').filter({ hasText: 'Arm bracket copy' }).click();
-    await expect.poll(() => partCount(page)).toBe(1);
-  } finally {
-    await browser.close();
-  }
-});

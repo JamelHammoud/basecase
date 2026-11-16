@@ -290,21 +290,25 @@ export const dragPoint = (sketch: Sketch, point: string, to: Vec2) =>
   pointOf(sketch, point)?.fixed ? null : solved(sketch, { point, to });
 
 export function polylineSketch(loops: Vec2[][]): Sketch {
-  return loops.reduce<Sketch>(
-    (sketch, loop) => {
-      const start = sketch.points.length;
-      const points = loop.map(([x, y], i) => ({ id: `p${start + i + 1}`, x, y }));
-      const lines = loop.map((_, i) => ({
-        id: `l${sketch.entities.length + i + 1}`,
-        kind: 'line' as const,
-        a: points[i].id,
-        b: points[(i + 1) % loop.length].id,
-      }));
+  const sketch: Sketch = { points: [], entities: [], constraints: [] };
 
-      return { ...sketch, points: [...sketch.points, ...points], entities: [...sketch.entities, ...lines] };
-    },
-    { points: [], entities: [], constraints: [] },
-  );
+  for (const loop of loops) {
+    const start = sketch.points.length;
+
+    for (let i = 0; i < loop.length; i++) {
+      const [x, y] = loop[i];
+
+      sketch.points.push({ id: `p${start + i + 1}`, x, y });
+      sketch.entities.push({
+        id: `l${sketch.entities.length + 1}`,
+        kind: 'line',
+        a: `p${start + i + 1}`,
+        b: `p${start + ((i + 1) % loop.length) + 1}`,
+      });
+    }
+  }
+
+  return sketch;
 }
 
 export function setConstraintValue(sketch: Sketch, constraint: string, value: number): Sketch | null {

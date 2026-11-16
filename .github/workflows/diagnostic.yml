@@ -1,0 +1,66 @@
+name: Targeted diagnostics
+run-name: diagnostic-${{ fromJSON(inputs.selection).ticket }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      selection:
+        description: Exact published workload revision and literal test selection JSON
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ${{ fromJSON(inputs.selection).platform == 'windows' && 'windows-latest' || 'ubuntu-latest' }}
+    timeout-minutes: ${{ fromJSON(inputs.selection).platform == 'windows' && 25 || 15 }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: workload
+    env:
+      DIAGNOSTIC: ${{ inputs.selection }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ fromJSON(inputs.selection).revision }}
+          path: workload
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version-file: workload/.nvmrc
+          cache: npm
+          cache-dependency-path: workload/package-lock.json
+      - name: Validate the exact selection and revision
+        run: |
+          node --input-type=module -e 'import {diagnosticSelection} from "../tools/loop/lib/diagnosticContract.mjs"; import fs from "node:fs"; const s=diagnosticSelection(JSON.parse(process.env.DIAGNOSTIC)); if(!fs.statSync(s.file).isFile()) throw Error("Missing test file");'
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2
+      - run: npm ci
+      - if: startsWith(fromJSON(inputs.selection).file, 'e2e/')
+        run: rustup toolchain install stable --profile minimal
+      - if: startsWith(fromJSON(inputs.selection).file, 'e2e/')
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
+        with:
+          workspaces: workload/hw
+      - name: Stage the native robot daemon for network tests
+        if: startsWith(fromJSON(inputs.selection).file, 'e2e/')
+        run: npm run build:daemon
+      - if: startsWith(fromJSON(inputs.selection).file, 'e2e/')
+        run: npx vite build
+      - if: startsWith(fromJSON(inputs.selection).file, 'e2e/')
+        run: npx vite build --mode web --outDir dist-web
+      - name: Measure every selected attempt with retries disabled
+        run: node ../tools/loop/ci-diagnostic.mjs
+      - name: Retain every completed result and cleanup log
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: diagnostic-${{ fromJSON(inputs.selection).ticket }}
+          path: workload/scratch/diagnostic-artifact/
+          if-no-files-found: warn
+          retention-days: 14

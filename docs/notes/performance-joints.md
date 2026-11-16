@@ -336,3 +336,15 @@ The three help coverage notices were checked against this channel-discovery chan
 - [The design agent](../../site/content/help/the-design-agent.md) keeps the same animation capability, checks, priorities and editing controls. `animateText` uses the shared collector for the same unique joint count, without changing its reply wording. The article has no screenshots.
 
 All three articles remain accurate and are intentionally unchanged. No new capture or help copy is needed for this internal allocation refinement.
+
+## Xacro block binding advances without array front removal
+
+The whole-app search for xacro block consumption found one binding path in `utils/robotImport/xacro.ts`. Block properties and `insert_block` read already bound nodes rather than consuming the argument list. Each macro call now owns a cursor into its element list. Both single-element and named-children parameters advance it once, while scalar parameters leave it alone. No cursor survives the call.
+
+`xacroBlocks.test.ts` expands two calls with 300 and 600 alternating single-element and named-children parameters, scalar defaults between them, text between passed blocks, caller-scoped expressions and reverse insertion order. Complete ordered link names match the generated expectation, and a second expansion matches the full serialized output. A separate case checks missing-block refusal, recovery on a later expansion and repeated insertion of one bound block. Existing `xacro.test.ts` retains includes, real description packages, default values and expansion limits.
+
+For each call consuming all 300 or 600 passed blocks, the former front-removal algorithm logically moved 44,850 or 179,700 remaining references. The cursor performs 300 or 600 indexed reads with zero front removals. The two-call fixtures include one extra unused block in the first call, raising their former logical movement totals to 90,000 and 360,000. These are source-derived operation counts, not measured engine copies or timings. Parsing, expression evaluation and output serialization still do their existing work. No complete-import speedup is claimed.
+
+[Import a robot](../../site/content/help/import-a-robot.md) retains the same file choices, xacro defaults, includes, refusal behavior and four screenshots. [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) retains the same imported joint and posing behavior. This change adds no action, label or visible state, so both articles remain unchanged. No browser test, timeout, retry or quarantine changes apply.
+
+Preflight also named [A robot won't import from a link or folder](../../site/content/help/troubleshoot-app-robot-import-fails.md). Its link eligibility, repository access, missing descriptions and meshes, passive joints, archive limits and dataset routing are unaffected by block consumption. Its actions and messages remain accurate, and it has no screenshots. The article stays unchanged.

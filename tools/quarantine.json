@@ -1,5 +1,13 @@
 [
   {
+    "file": "e2e/closedLinkages.e2e.test.ts",
+    "test": "inserts a Sketch Path four-bar, simulates its joined links and reopens articulated recording",
+    "issue": 1479,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43899757955 left simState().playing false through the unchanged poll at closedLinkageSteps.ts:81 on the first Windows attempt. Its retry reused the beforeAll app and found ten parts instead of five during insertion at line 49. Focused Windows diagnostic 43904412478 passed the exact test at the same revision in 24.833 s with one worker and retries disabled. Linux passed in 18.454 s. Commit 7a006d9c2 introduced the walkthrough after the last green Check. Retained retry state explains the second failure, but the first startup cause is not established. Issue #1479 owns startup and worker tracing, isolated attempts and equal-load baseline and candidate measurements. All fast closed-linkage physics, control, contract, provenance and C/WASM parity tests remain active, alongside browser coverage on other platforms."
+  },
+  {
     "file": "e2e/gallery.e2e.test.ts",
     "test": "drive a rover in the browser, at real time, under the web demo",
     "issue": 1403,

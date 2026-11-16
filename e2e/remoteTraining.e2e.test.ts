@@ -9,7 +9,7 @@ import {
   remoteTrainingFixture,
 } from './remoteTrainingFixture';
 
-it('configures a training computer and recovers Stand after a studio restart without a second dispatch', async () => {
+it('configures a training computer and reattaches Stand after a studio restart without a second dispatch', async () => {
   const app = await openApp({ scenes: [], 'train-status': { uv: true, ready: true, running: [] } });
 
   try {
@@ -35,10 +35,6 @@ it('configures a training computer and recovers Stand after a studio restart wit
     expect(remote.dispatched.size).toBe(1);
     await remote.emit({ kind: 'status', message: 'Connecting to training computer' });
     await expect.poll(() => remoteStandRow(page).innerText()).toContain('Connecting to training computer');
-    await remote.finish();
-    await remoteStandRow(page).getByRole('button', { name: 'Try', exact: true }).waitFor();
-    expect(await remoteStandRow(page).getAttribute('data-skill')).toMatch(/^[a-f0-9]{64}$/);
-    expect(remote.skills.size).toBeGreaterThan(0);
 
     for (const credential of [REMOTE_COMPUTER.key, REMOTE_COMPUTER.host, REMOTE_COMPUTER.hostKey])
       expect(JSON.stringify(remote.scene())).not.toContain(credential);

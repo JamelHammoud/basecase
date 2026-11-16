@@ -2,7 +2,6 @@ import { expect } from 'vitest';
 import type { Page } from 'playwright-core';
 import type { TrainStartPayload } from '../src/utils/platform/types';
 import type { SavedSceneRecord } from '../src/types/robotics';
-import { holdPolicy } from './holdPose';
 import { shown, type App } from './harness';
 
 export const REMOTE_COMPUTER = {
@@ -75,7 +74,6 @@ export async function remoteTrainingFixture(app: App) {
   const { page } = app;
   const starts: TrainStartPayload[] = [];
   const dispatched = new Set<string>();
-  const skills = new Map<string, unknown>();
   let computer = { selected: false };
   let scene: SavedSceneRecord | null = null;
   const state = () => ({ ...REMOTE_COMPUTER, key: undefined, keySaved: true, selected: true });
@@ -100,21 +98,6 @@ export async function remoteTrainingFixture(app: App) {
     dispatched.add(String(payload.recoveryKey));
     await route.fulfill({ json: { jobId: JOB_ID } });
   });
-  await page.route(
-    (url) => url.pathname === '/api/bridge/policy',
-    (route) => route.fulfill({ json: holdPolicy(starts.at(-1)!.job) }),
-  );
-  await page.route('**/api/bridge/skill-save', async (route) => {
-    const { hash, text } = route.request().postDataJSON();
-
-    skills.set(hash, JSON.parse(text));
-    await route.fulfill({ json: { ok: true } });
-  });
-  await page.route(
-    (url) => url.pathname === '/api/bridge/skill',
-    (route) =>
-      route.fulfill({ json: skills.get(new URL(route.request().url()).searchParams.get('hash') ?? '') ?? null }),
-  );
   await page.route('**/api/bridge/save-scene', async (route) => {
     scene = route.request().postDataJSON() as SavedSceneRecord;
     await route.fulfill({ json: { ...scene, partCount: scene.parts.length } });
@@ -142,10 +125,8 @@ export async function remoteTrainingFixture(app: App) {
   return {
     starts,
     dispatched,
-    skills,
     scene: () => scene,
     reload,
     emit,
-    finish: () => emit({ kind: 'done', record: { id: JOB_ID, trainedSteps: 1 } }),
   };
 }

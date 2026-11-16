@@ -102,16 +102,19 @@ function gaitFeet(rig: Rig, spec: GaitSpec, pointOf: PointOf): GaitFeet | string
 }
 
 function swingJoints(rig: Rig, feetParts: string[]): string[] {
+  const chains = feetParts.map((part) => rig.chain.get(rig.ownerOf.get(part)!));
   const legJoints = new Set<string>();
-  const chainOf = (p: string) => rig.chain.get(rig.ownerOf.get(p)!);
+  const free: string[] = [];
 
-  feetParts.forEach((p) => chainOf(p)?.forEach((j) => legJoints.add(j)));
+  chains.forEach((chain) => chain?.forEach((joint) => legJoints.add(joint)));
 
-  const shared = [...legJoints].filter((j) => feetParts.every((p) => chainOf(p)?.has(j)));
+  for (const id of legJoints) {
+    if (chains.every((chain) => chain?.has(id))) continue;
 
-  shared.forEach((j) => legJoints.delete(j));
+    if (isMovable(rig.byId.get(id)!)) free.push(id);
+  }
 
-  return [...legJoints].filter((id) => isMovable(rig.byId.get(id)!));
+  return free;
 }
 
 function gaitShape(spec: GaitSpec, n: number, leg: number, spread: number) {

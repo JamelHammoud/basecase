@@ -20,6 +20,30 @@ export interface TimeInput {
 
 export const TIME_MINUTES = { step: 1, part: 2, fastener: 0.5, insert: 1.5, servo: 5 };
 
+function longestPlate<T extends { hours: number }>(plates: T[]): T | undefined {
+  let longest: T | undefined;
+
+  for (const plate of plates) {
+    if (Number.isNaN(plate.hours)) return [...plates].sort((a, b) => b.hours - a.hours)[0];
+
+    if (!longest || plate.hours > longest.hours) longest = plate;
+  }
+
+  return longest;
+}
+
+function fastenerStep<T extends { fasteners: number; minutes: number }>(steps: T[]): T | undefined {
+  let most: T | undefined;
+
+  for (const step of steps) {
+    const order = most ? step.fasteners - most.fasteners || step.minutes - most.minutes : 1;
+
+    if (order > 0) most = step;
+  }
+
+  return most;
+}
+
 export function assemblyTimes(parts: ScenePart[], project: ProjectSettings, steps = guideStepParts(parts, project)) {
   const byId = new Map<string, ScenePart>();
 
@@ -77,8 +101,8 @@ export function buildTime(input: TimeInput) {
   const assemblyMinutes = steps.reduce((n, s) => n + s.minutes, 0);
   const servos = servoLayout(project.joints ?? []).ids.length;
   const setupMinutes = servos * TIME_MINUTES.servo;
-  const longest = [...plates].sort((a, b) => b.hours - a.hours)[0];
-  const mostFasteners = [...steps].sort((a, b) => b.fasteners - a.fasteners || b.minutes - a.minutes)[0];
+  const longest = longestPlate(plates);
+  const mostFasteners = fastenerStep(steps);
 
   return {
     hours: printHours + (assemblyMinutes + setupMinutes) / 60,

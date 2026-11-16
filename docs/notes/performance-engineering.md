@@ -2,6 +2,14 @@
 
 Implementation: [Engineering calculations](../guide/build.md#performance-engineering-calculations). Shared requirements: [Performance](../guide/performance.md).
 
+## Time bottlenecks scan contributors once
+
+`engineeringTimeBottlenecks.test.ts` compares selection against the previous sort formula across 100 generated plate and assembly-step lists and reversed inputs. It covers first ties, fastener ties resolved by minutes, empty lists, signed zero, infinities, NaN and matching sliced durations. Inputs stay unchanged. Existing `engineeringTime.test.ts` and `engineeringTimeGuide.test.ts` retain complete budget and saved-guide integration coverage.
+
+A scratch comparison ran the previous and current `buildTime` with 300 and 600 plates and steps. Plate `i` has `(i * 37) % count` hours. Each step repeats its own unique screw id `(i * 37) % 19 + 1` times, exercising the retained within-step repeat rule. Complete results matched. Instrumenting `Array.prototype.sort` found two sorts and 4,080 comparator calls before for 300 contributors, and two sorts and 8,870 calls for 600. Both new runs made zero sort calls. The two copied candidate arrays are also removed. Selection now makes one traversal per list, keeping one candidate per traversal. NaN plate estimates keep the old sort because their comparator does not define a total order.
+
+Measurements used Vitest on macOS arm64 with Node v26.13.0. These are sorting operation counts, not timings or total comparison counts. No claim is made about complete Checks latency and no timing assertion was added.
+
 ## Assembly time tallies accepted parts directly
 
 `assemblyTimes.test.ts` compares complete per-step results against the previous calculation across 160 generated step lists and their later visibility edits. It checks source preservation, screws, inserts, ordinary parts, hidden and reference parts, pivot axes, missing ids, empty steps and repeats within and across steps. Existing `engineeringTime.test.ts` retains full budget, slicing, printer-count and servo-setup coverage.

@@ -1,3 +1,4 @@
+import { classroomCommands } from './classroomCommands';
 import type { Command } from '../components/CommandPalette';
 import {
   BotIcon,
@@ -321,6 +322,7 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...leaderCommands(inputs),
   ...onshapeCommands(inputs),
   ...caseCommands(inputs),
+  ...classroomCommands(inputs.core),
   ...frameLabelCommands(inputs.core),
   ...skillCommands(inputs),
   ...slashPaletteCommands(inputs),

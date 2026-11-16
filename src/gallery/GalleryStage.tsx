@@ -25,7 +25,9 @@ export const GalleryStage: React.FC<{
   bundle: GalleryBundle;
   Console: GalleryConsoleView | null;
   replay?: SeedReplay;
-}> = ({ bundle, Console, replay }) => {
+  onOpenScene?: () => void;
+  embedded?: boolean;
+}> = ({ bundle, Console, replay, onOpenScene, embedded }) => {
   const velocity = useRef<VelocitySource | null>(null);
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const { parts, joints } = bundle.robot;
@@ -116,7 +118,10 @@ export const GalleryStage: React.FC<{
       training={training}
       docked={docked}
       replayControls={replay ? <GalleryReplayControls key={replay.seed} replay={replay} sim={sim} /> : undefined}
-      onOpenScene={() => void training.carried().then((trained) => openGalleryScene(bundle, trained ?? bundle.trained))}
+      onOpenScene={
+        onOpenScene ??
+        (() => void training.carried().then((trained) => openGalleryScene(bundle, trained ?? bundle.trained)))
+      }
     />
   );
 
@@ -140,7 +145,7 @@ export const GalleryStage: React.FC<{
     );
 
   return (
-    <div className="fixed inset-0 bg-[#1b1b1b] text-white">
+    <div className={`${embedded ? 'absolute' : 'fixed'} inset-0 bg-[#1b1b1b] text-white`}>
       {canvas}
       {card(false)}
       {installSheet}

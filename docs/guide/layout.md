@@ -94,3 +94,7 @@ Measurements and limits: [Panels and Layers performance evidence](../notes/perfo
 - **Tries append into one list per robot.** `tryGroups` in `workspace/useTriesView.ts` serves Library, Tries mode and dataset members. It groups before sorting, appends without copying prior members and sorts each group newest first. Robot names keep locale order. Distinct names that compare equal keep the order of their first newest try, with timestamp ties resolved by input order. Equal-time tries keep input order and stored summaries remain unchanged. `useTriesView.test.ts` covers those ordering and ownership contracts. [Evidence](../notes/performance-layout.md#try-grouping).
 
 - **Keep views alive.** Panels that switch (sidebar views, inspector tabs) mount on first use and then stay in React's `<Activity>`, so switching back is instant and hidden views run no effects.
+
+### Classroom workspace
+
+The browser's Classroom command opens `/classroom` in another tab. It uses one tile per submitted revision, with its display name, fingerprint prefix, status, estimated cost, weight, Case pass count and existing Check labels. Weight uses the shared formatter, with its unit supplying the label. A selected replay uses the existing gallery rendering path. Opening a robot creates an independent studio scene and preserves the grid. The assignment and submission file inputs use the shared 32px TextInput primitive with native browser selection. See [Cases](cases.md#classroom-assignments).

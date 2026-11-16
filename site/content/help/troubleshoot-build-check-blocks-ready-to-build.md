@@ -38,7 +38,7 @@ The Checks header shows Ready to build only when no check holds a blocker. Until
 At least one check still holds a blocker, often one you haven't opened.
 
 1. Click **Build** at the top of the right panel.
-2. Open the check at the top of **Checks**. Basecase lists the worst ones first.
+2. In **Checks**, open the first check with a blocker if it’s closed. Basecase lists the worst ones first.
 3. To select a part, click its name under a problem.
 4. Change the part, or click **Fix** to hand the problem to the agent.
 5. Wait a moment after your last edit. The header reads **Checking…**, then shows the new verdict.

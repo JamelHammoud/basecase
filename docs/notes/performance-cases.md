@@ -33,3 +33,20 @@ A seeded scratch comparison matched 300 complete ordered routes against the prev
 ## Captured world benchmarks
 
 `node tools/perf/worldBench.mjs --dist dist --scene scratch/rover.json` imports a synthetic 1,000,000-point kitchen splat into a saved rover scene, waits for all points to enter Spark's active set, warms one orbit and measures a second four-second orbit at 1440 × 900. It uses the viewport benchmark's WebGL probes and Chrome's GPU-process trace, records CPU work p95, frame interval p95 and average GPU-process work per rendered frame, and fails when CPU work p95 or GPU-process work exceeds 16 ms. `--cpu` selects SwiftShader, `--budget` changes that explicit budget, and `--output` chooses the JSON report (default `scratch/perf/world.json`). No GPU measurement has been recorded for this change. GPU-process work measures Chrome's submission work rather than hardware execution time. The decomposition test’s 200,000-triangle worker budget is 10 seconds. Run `src/cases/worldDecomposition.perf.test.ts` with `vitest.perf.config.ts` for that measurement. It transfers a tessellated kitchen into a bundled worker and checks the gap under its table. The initial direct 200,000-triangle box measurement took 17.95 seconds before boundary-preserving collision simplification was added. This is a local measurement, not a CI result.
+
+## Classroom grading
+
+Host: Apple M5 Pro, 24 GiB RAM, macOS, Node 26.13.0. The scratch measurement uses the same bundled native-thread adapters as the integration matrix. Each revision changes the starter rover chassis width, uses a distinct display name and pins the same Reach a Spot assignment with twenty seeds. The input-byte total counts complete submission files. Assignment construction and row retention are included in elapsed time, while the shared worker-bundle build runs before timing. No browser rendering is included.
+
+Worker memory samples `heapUsed + external` after each dispatch reply, including WASM external allocations. The aggregate sums the latest samples from concurrently retained workers. These are peak sampled worker values, not continuous high-water marks or whole-process RSS. Workers are terminated and awaited before retained-driver memory is measured after garbage collection. The driver retains submissions and result rows, matching the local grid's retained references.
+
+| Observation | Submissions | Duration | Input bytes | Peak sampled single worker | Peak sampled aggregate workers | Retained driver delta |
+| --- | --- | --- | --- | --- | --- | --- |
+| Earlier | 3 | 2.454 s | 8,118 | 38.6 MB | 84.0 MB | 1.25 MB |
+| Earlier | 30 | 23.750 s | 81,201 | 44.2 MB | 88.1 MB | 2.45 MB |
+| Final | 3 | 3.078 s | 8,118 | 45.4 MB | 90.7 MB | 1.26 MB |
+| Final | 30 | 51.852 s | 81,201 | 43.9 MB | 91.3 MB | 2.17 MB |
+
+The final observation includes the finite-output guard and stricter malformed-part validation. The host is shared and its load was not controlled. These observations establish no regression or improvement between revisions. The fixtures use primitive robot geometry and declared joint loads rather than maximum-size catalog designs.
+
+Every sample ended with zero active workers. The runtime limit is one submission at a time and at most one file worker, one Study worker and one Case worker for its grading session. A selected replay is separate from the grid, and selecting it cancels an active batch. Imports are capped at 8 MiB per file, 64 MiB of retained submission files, thirty revisions, 256 parts, 64 joints and 100,000 prepared triangles. These limits are supported format and scheduling bounds, not measured guarantees for maximum-size inputs or other devices. Native-worker startup and memory behavior differ from browser workers. Browser transfer, GPU memory, large imported worlds and maximum-size catalog robots were not measured in this sample.

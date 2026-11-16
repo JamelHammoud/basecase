@@ -66,3 +66,11 @@ Measurements and limits: [Scene storage and startup performance evidence](../not
 ### Passive fixture imports
 
 Portable scene decoding validates articulated Case records through `validateFixtureImports` before returning their project. Malformed pivots, axes, topology and physics values refuse the import. Existing rigid Case records retain their loading path. `src/cases/fixturePersistence.test.ts` checks both valid topology round trips and damaged fixture refusal in portable scenes and gallery bundles, along with robot undo and redo. [Case format](cases.md#passive-lid-and-drawer-fixtures) documents the bounds.
+
+## Assignment attempts
+
+Classroom imports and submission inspection call `classroom/storage.ts` and ordinary browser `saveScene` with a fresh `attempt-<uuid>` id. Repeated imports of the same assignment never derive an id from its gallery slug and never replace another scene. Project settings retain the original assignment and local display name through browser autosave. The assignment's referenced world stays in `sceneWorldAssets` even if the student removes its exploratory Case entry.
+
+Submit flushes the scene through its existing workspace handle before delivering the file, then refuses delivery if parts or project settings changed during preparation. Opening a submission creates another independent scene, preserves Classroom in its original tab and carries the failing Check's selection context. The original grid and its submission references remain in the IndexedDB settings store across reloads. An index references separate assignment and submission records, and writes update only changed tiles in the same transaction as the index. These are ordinary snapshots, with no classroom version or merge format.
+
+`e2e/classroom.e2e.test.ts` declares reload of a student's edited attempt, preserved assignment identity and a second independent import of the same assignment. It also checks that opening a submitted design leaves the teacher's grid available. File authority and worker grading coverage lives in [Cases](cases.md#classroom-assignments). [Observations and limits](../notes/testing-cases.md#classroom-assignments).

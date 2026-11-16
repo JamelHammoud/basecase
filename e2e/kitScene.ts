@@ -1,5 +1,4 @@
 import type { Page } from 'playwright-core';
-import type { kitArmScene } from '../src/kit/entry.fixtures';
 import type { SavedSceneRecord } from '../src/types/robotics';
 
 function seedKitScene(record: SavedSceneRecord) {
@@ -26,7 +25,11 @@ function seedKitScene(record: SavedSceneRecord) {
   });
 }
 
-export async function openKitScene(page: Page, scene: ReturnType<typeof kitArmScene>, webUrl?: string) {
+export async function openKitScene(
+  page: Page,
+  scene: Pick<SavedSceneRecord, 'name' | 'parts' | 'project'>,
+  webUrl?: string,
+) {
   if (!webUrl) {
     await page.evaluate(
       (record) => (window as unknown as { __studio: { load: (record: unknown) => void } }).__studio.load(record),

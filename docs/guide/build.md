@@ -374,3 +374,13 @@ Measurements and limits: [Collision analysis performance evidence](../notes/perf
 Checks refuses passive records with assigned motors through the existing Joint parts finding. Explicit passive joints remain in geometry, range sweeps and structural ownership. Torque sizing and estimated-servo warnings exclude them, since they do not promise a held position. Payload mapping refuses chains containing a passive joint rather than treating a published torque as available motor torque. Existing walk and falls freshness keys include the complete joint declarations, so an actuation edit invalidates those results.
 
 The passive mechanism integration tests cover action and servo mapping and the history test covers walk and falls key invalidation. [Evidence](../notes/testing-build.md#passive-robot-joints).
+
+## Classroom grading
+
+Classroom uses `createStudyGrader` for measured geometry, BOM, mass, torque and other engineering Checks. It supplies the original assignment's budget and an empty purchase inventory, so a teacher's on-hand stock and personal checked prices cannot lower a student's cost. Tiles label the total Estimated cost. The optional `completeBudget` grading flag leaves Budget not run when parts lack prices, unless the known subtotal already fails the budget. Imported meshes without a catalog or supply price count as incomplete. Unresolved purchase references, including unknown component variants, also count as incomplete. Regular Study grading keeps its existing behavior.
+
+Study geometry refresh accepts an optional triangle limit. Classroom passes 100,000, checked cumulatively as parts are prepared in the worker. Limit failures dispose the grading session and do not mutate the saved robot. Existing Study callers omit the limit.
+
+Opening a submitted scene selects the failing Check's parts and opens Build. `FindingContext.focusedCheck` starts its existing Check disclosure open. This does not install the class result as readiness evidence. The ordinary fresh Build pipeline remains the only Ready to build verdict. Annotate feedback belongs to that independent scene.
+
+`classroom/grading.test.ts`, `study/grade.test.ts` and `study/geometry.test.ts` cover independent grading, budget failure and missing-price refusal, weakened robots and geometry limits. The classroom browser walkthrough declares the ordinary export, submission and Check inspection path. [Detailed evidence](../notes/testing-cases.md#classroom-assignments).

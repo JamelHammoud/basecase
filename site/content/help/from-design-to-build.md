@@ -46,6 +46,8 @@ Each problem counts as a blocker or a note:
 
 Only you can set a blocker aside, with **Ignore**. The agent can say it disagrees, and the row shows its reason. But the agent can't clear anything, and nothing it writes changes the verdict. [Checks in the Build tab](/help/build-checks) lists every check.
 
+A classroom result doesn't grant **Ready to build**. Open the submitted robot and use its fresh **Build** checks, as described in [Grade a class](/help/grade-a-class).
+
 ## What you buy
 
 Basecase builds the **Bill of materials** from the scene. It counts components by part, and screws and nuts by their exact size. Printed parts become grams of filament for each material, and Basecase rounds filament up to whole spools with 15% to spare. If you don't have a printer, Slant 3D can quote each printed part instead.

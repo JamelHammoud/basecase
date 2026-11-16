@@ -116,6 +116,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
           readiness={readiness.current}
           checking={readiness.checking}
           context={{
+            focusedCheck: project.assignment?.inspection?.check,
             parts,
             panScroll,
             actions: {

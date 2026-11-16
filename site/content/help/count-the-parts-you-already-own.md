@@ -55,6 +55,8 @@ To put the old count back, click **Undo** in the toast. To clear a count, type 0
 - Basecase doesn't take parts off your count when you build a robot, so update the count yourself after a build.
 - The Budget check and **Buy All** leave out the parts you own.
 
+Classroom grading uses the full design cost, without subtracting the teacher's on-hand inventory. See [Grade a class](/help/grade-a-class).
+
 ## Tell the agent what you own
 
 You can also paste an order confirmation or a parts list into the agent's composer and ask it to record what you own. The agent saves the counts in the same place as the ones you type in **On hand**. When it picks parts, it lists the ones you own first and uses them before buying others.

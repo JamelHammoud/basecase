@@ -49,6 +49,7 @@ export type KitOutcome =
 export interface KitWarm {
   from: string;
   policy: PolicySpec;
+  initialMinutes?: number;
 }
 
 export interface KitInput extends KitContext {
@@ -230,7 +231,11 @@ async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>
 
 async function train(run: Attempt, stage: KitStage, from: { seed: number; folder: string | null }) {
   const { input, entry, start, clock } = run;
-  const { minutes, delaySteps, delayRamp } = stage;
+  const { delaySteps, delayRamp } = stage;
+  const initial = input.warm?.initialMinutes;
+  const replaceInitial =
+    clock.tally.forgeRuns === 0 && initial !== undefined && Number.isFinite(initial) && initial > 0;
+  const minutes = replaceInitial ? Math.min(stage.minutes, initial) : stage.minutes;
   const job = kitJob(input.model, entry, {
     minutes,
     seed: from.seed,

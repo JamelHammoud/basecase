@@ -20,7 +20,7 @@ async function recoveredRecord(
   if (job.type === 'kit') {
     const { outcome } = await runner(job, ports);
 
-    return outcome.kind === 'skill' ? skillRecord(outcome.skill, { kit: job.entry }) : outcome.reason;
+    return outcome.kind === 'skill' ? skillRecord(outcome.skill, { kit: job.entry, model: job.model }) : outcome.reason;
   }
 
   if (job.type === 'move') {

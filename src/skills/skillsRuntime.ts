@@ -25,6 +25,7 @@ import { recoveredRun } from './recoveredRun';
 import { SkillsRuntimeJobs } from './skillsRuntimeJobs';
 import { runMoveWork } from './runtimeMove';
 import type { RecoverableSkillJob } from './skillRecovery';
+import { DESIGN_CHANGED } from './skillRecovery';
 import { runTries, type TriesPlan } from './triesRun';
 
 export type { ForgeFactory, ForgeFactoryOptions, JobRow } from './skillsRuntimeTypes';
@@ -40,6 +41,7 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
   lastRace: RaceReport | null = null;
   private drafts = new Map<string, DraftReport>();
   private recoveryTries?: RecoveryTriesPorts;
+  private designRevision = 0;
 
   readonly coach: SkillCoach;
   readonly stress: SkillStress;
@@ -57,6 +59,8 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
 
         if (this.user && deps.recovery && recoverableWorker(job.type))
           await deps.recovery.capture({ type: 'worker', job: request as RecoverableSkillJob });
+
+        deps.recovery?.assertCurrent();
 
         return deps.runner(request, { ...ports, localSalt: deps.recovery?.judgmentSalt });
       }) as RuntimeDeps['runner'],
@@ -76,6 +80,7 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
   }
 
   invalidateRecovery() {
+    this.designRevision += 1;
     this.deps.recovery?.invalidate();
   }
 
@@ -110,6 +115,10 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
 
   setKitContext(context: NonNullable<RuntimeDeps['kitContext']>) {
     this.deps.kitContext = context;
+  }
+
+  setKitSources(sources: NonNullable<RuntimeDeps['kitSources']>) {
+    this.deps.kitSources = sources;
   }
 
   startJob(row: JobRow, work: (ports: SkillPorts) => Promise<void>): string | null {
@@ -153,22 +162,17 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
   }
 
   trainKit(model: SimModel, entry: TrainedEntry): string | null {
-    if (this.user) return BUSY;
-
-    this.running = this.start({
-      recoverable: true,
-      target: `kit:${entry}`,
-      label: KIT_LABELS[entry],
-      background: false,
-      model,
-      work: (forge, signal) => this.kitWork(model, entry, { forge, signal }),
-    });
-
-    return null;
+    return this.startKit(model, { entry });
   }
 
   installKit(model: SimModel, install: KitInstall): string | null {
+    return this.startKit(model, install);
+  }
+
+  private startKit(model: SimModel, install: Omit<KitInstall, 'warm'> & { warm?: KitWarm }): string | null {
     if (this.user) return BUSY;
+
+    const revision = this.designRevision;
 
     this.running = this.start({
       recoverable: true,
@@ -177,7 +181,7 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
       background: false,
       model,
       work: (forge, signal) =>
-        this.kitWork(model, install.entry, { forge, signal, warm: install.warm }, install.onOutcome),
+        this.kitWork(model, install.entry, { forge, signal, warm: install.warm, revision }, install.onOutcome),
     });
 
     return null;
@@ -339,10 +343,11 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
     return { forge: failForge, save: this.deps.save };
   }
 
-  private async keep(target: SkillTarget, record: SkillRecord) {
+  private async keep(target: SkillTarget, record: SkillRecord, assertCurrent?: () => void) {
     const refs = trailRefs(this.trails.get(target) ?? NO_SNAPSHOTS);
     const kept = refs.length ? await (this.deps.snapshots ?? NO_SNAPSHOT_STORE).keep(record.hash, refs) : [];
 
+    assertCurrent?.();
     this.deps.onRecord(kept.length ? { ...record, snapshots: kept } : record);
   }
 
@@ -366,21 +371,29 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
   private async kitWork(
     model: SimModel,
     entry: TrainedEntry,
-    ports: { forge: ForgeRunner; signal: AbortSignal; warm?: KitWarm },
+    ports: { forge: ForgeRunner; signal: AbortSignal; warm?: KitWarm; revision?: number },
     completed?: InstallCompleted,
   ) {
+    const revision = ports.revision ?? this.designRevision;
+    const assertCurrent = () => {
+      ports.signal.throwIfAborted();
+
+      if (revision !== this.designRevision) throw new Error(DESIGN_CHANGED);
+    };
     const outcome = await runRuntimeKit({
       model,
       entry,
-      ports,
+      ports: { forge: ports.forge, signal: ports.signal, warm: ports.warm },
       completed,
       infrastructure: () => this.forgeErrors.has(`kit:${entry}`),
       deps: this.deps,
+      assertCurrent,
     });
 
     const target: SkillTarget = `kit:${entry}`;
 
-    if (outcome.kind === 'skill') return this.keep(target, skillRecord(outcome.skill, { kit: entry }));
+    if (outcome.kind === 'skill')
+      return this.keep(target, skillRecord(outcome.skill, { kit: entry, model }), assertCurrent);
 
     const line = outcome.validation ? outcome.reason : this.refusalLine(target, outcome);
 
@@ -432,7 +445,7 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
 
     await this.keep(
       task.target,
-      skillRecord(reply.skill, { kit: task.entry, move, coach: task.record.coach ?? undefined }),
+      skillRecord(reply.skill, { kit: task.entry, move, coach: task.record.coach ?? undefined, model }),
     );
   }
 

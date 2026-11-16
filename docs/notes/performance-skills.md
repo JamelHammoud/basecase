@@ -2,6 +2,18 @@
 
 Implementation: [Skill feasibility and moves](../guide/skills.md#performance-skill-feasibility-and-moves). Shared requirements: [Performance](../guide/performance.md).
 
+## Local source preparation
+
+`localKitSource.ts` scans scene metadata and ranks compatible references by current robot key, creation time and hash. It reads only the selected artifact. Missing, malformed, hash-mismatched or incompatible selected artifacts return to the cold path without loading another candidate. Source and target schemas admit at most 256 action joints. Mapping uses the shared Install Skill converter, then validates the resulting policy again. No candidate is evaluated in physics during selection.
+
+Production source preparation uses the existing ranking worker for hashing, proof validation, native actor shape validation and policy mapping. Browser worker failure refuses reuse rather than doing this work on the renderer. Only small bounded schema metadata is scanned before loading the selected artifact. The store refuses files over its existing 32 MB save limit.
+
+The one-minute native Metal comparison in [Skills test evidence](testing-skills.md#edited-robot-local-sources) includes production file reads and preparation inside every retention clock. Median warm preparation was 26.0337 ms for six quadruped edits and 45.1311 ms for four hexapod edits. These Node-side measurements include read, parse, validation, hashing and mapping. They exclude renderer-to-worker transport and worker startup, so they are not UI latency measurements. A final-code replay through the ranking handler matched all ten measured mapped policy hashes. Its real-file preparation medians were 46.0721 ms for quad and 49.3636 ms for hex, with a 39.5875 to 59.3557 ms combined range. This includes Node handler loading, but not browser transport. The single preliminary cached-string measurement was 58.2169 ms and excluded file IO. Its 15-second warm schedule took longer, and is retained as failed experiment evidence.
+
+The four-pair macOS native CPU cohort measured median warm preparation of 30.0845 ms with real source reads. The additional six-to-six CPU pair took 40.7473 ms to prepare its warm input.
+
+Native learning results, total training steps, all verification work, source preparation runs, shared host load and unsupported mappings are reported in that same testing note. The limited observed retention improvement does not establish a universal speedup.
+
 ## Move summaries accumulate extrema directly
 
 `moveExtrema.test.ts` compares the previous reductions across three robot models and 30 motions, edits, empty inputs, signed zero and nonfinite values. It also checks action scaling and height at the 30,000-frame limit. Thresholds and arithmetic remain unchanged. These are allocation changes and numerical comparisons, without timing assertions or a claim about complete training time.

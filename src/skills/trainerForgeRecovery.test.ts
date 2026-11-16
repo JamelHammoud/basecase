@@ -14,6 +14,7 @@ vi.mock('../utils/platformBridge', () => ({
     deletePolicy: vi.fn(),
     kitRequest: vi.fn(),
     kitCancel: vi.fn(),
+    trainStatus: vi.fn(),
   },
 }));
 
@@ -40,6 +41,43 @@ beforeEach(() => {
   });
   vi.mocked(platformBridge.deletePolicy).mockResolvedValue(true);
   vi.mocked(platformBridge.trainStop).mockResolvedValue({ stopping: true });
+});
+
+describe('warm policy runner availability', () => {
+  it('keeps background reuse cold when remote Forge masks an unavailable local Python runner', async () => {
+    const options = { workspaceId: 'warm', background: true, onProgress: () => {} };
+
+    vi.mocked(platformBridge.trainStatus).mockResolvedValue({
+      ready: true,
+      uv: true,
+      running: [],
+      engine: 'forge',
+      local: { ready: false, engine: 'python' },
+    });
+    expect(await trainerForge(options).canWarm?.()).toBe(false);
+    vi.mocked(platformBridge.trainStatus).mockResolvedValue({
+      ready: true,
+      uv: true,
+      running: [],
+      engine: 'forge',
+      local: { ready: true, engine: 'forge' },
+    });
+    expect(await trainerForge(options).canWarm?.()).toBe(true);
+  });
+
+  it('admits native local and foreground remote warm starts while keeping Python and background work local', async () => {
+    const options = { workspaceId: 'warm', background: false, onProgress: () => {} };
+
+    vi.mocked(platformBridge.trainStatus).mockResolvedValue({ ready: true, uv: true, running: [], engine: 'python' });
+    expect(await trainerForge(options).canWarm?.()).toBe(false);
+    vi.mocked(platformBridge.trainStatus).mockResolvedValue({ ready: true, uv: true, running: [], engine: 'forge' });
+    expect(await trainerForge(options).canWarm?.()).toBe(true);
+    vi.mocked(platformBridge.trainStatus).mockClear();
+    expect(await trainerForge({ ...options, recoveryKey: 'frozen-remote' }).canWarm?.()).toBe(true);
+    expect(platformBridge.trainStatus).not.toHaveBeenCalled();
+    vi.mocked(platformBridge.trainStatus).mockResolvedValue({ ready: true, uv: true, running: [], engine: 'python' });
+    expect(await trainerForge({ ...options, background: true, recoveryKey: 'ignored' }).canWarm?.()).toBe(false);
+  });
 });
 
 describe('returning a remote Forge result', () => {

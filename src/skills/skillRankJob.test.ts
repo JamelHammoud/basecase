@@ -4,6 +4,9 @@ import { publishedSkillFiles } from './hubSkill';
 import { readyStand } from './hubSkillFixtures';
 import { kitEnvironment } from './kitEnvironment';
 import { SKILL_RANK_HANDLERS } from './skillRankJob';
+import { readyKitSource } from './kitSourceFixtures';
+import { skillRecord } from './skillRecords';
+import { isTrainablePolicy } from './policyCheck';
 
 function sourceFiles() {
   const model = fixtureModel('quad-servo');
@@ -17,6 +20,22 @@ function sourceFiles() {
 }
 
 describe('installation preparation in the ranking worker', () => {
+  it('validates and maps one selected local artifact before the training request is frozen', () => {
+    const source = fixtureModel('quad-servo');
+    const model = fixtureModel('hexapod');
+    const skill = readyKitSource(source);
+    const record = skillRecord(skill, { kit: 'stand', model: source });
+    const before = JSON.stringify(skill);
+    const { result } = SKILL_RANK_HANDLERS.prepareLocalKit({ model, record, skill });
+
+    expect(result?.from).toBe(record.hash);
+    expect(isTrainablePolicy(result?.policy)).toBe(true);
+    expect(result?.policy.joints).toEqual(kitEnvironment(model, 'stand').action.joints);
+    expect(JSON.stringify(skill)).toBe(before);
+    expect(
+      SKILL_RANK_HANDLERS.prepareLocalKit({ model, record: { ...record, hash: 'a'.repeat(64) }, skill }).result,
+    ).toBeUndefined();
+  });
   it('checks the package and maps its policy onto the target robot', () => {
     const model = fixtureModel('hexapod');
     const { result } = SKILL_RANK_HANDLERS.prepareInstall({ files: sourceFiles(), model });

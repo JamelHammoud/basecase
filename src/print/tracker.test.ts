@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROJECT, type PrintRecord, type ProjectSettings, type ScenePart } from '../types/robotics';
-import { markForReprint, plateStatus, printedKeys, readySteps, splitPrinted, withRecord } from './tracker';
+import { markForReprint, plateStatusLookup, printedKeys, readySteps, splitPrinted, withRecord } from './tracker';
 import type { Plate } from './plan';
 import { sceneJson } from '../utils/sceneJson';
 import { projectFromSeed } from '../workspace/helpers';
@@ -94,11 +94,11 @@ describe('a replacement print', () => {
     const plate = { hash: original[0].hash, items: [{ id: 'base' }, { id: 'leg' }, { id: 'foot' }] } as Plate;
     const records = markForReprint(original, 'leg', now);
 
-    expect(plateStatus(plate, records).state).toBe('new');
+    expect(plateStatusLookup(records)(plate).state).toBe('new');
     expect(printedKeys(records).get('base')).toBe(keyOf(parts[0]));
 
     const replacement = { ...printed(['leg'])[0], id: 'replacement', sentAt: now.toISOString() };
 
-    expect(plateStatus(plate, withRecord(records, replacement)).state).toBe('printed');
+    expect(plateStatusLookup(withRecord(records, replacement))(plate).state).toBe('printed');
   });
 });

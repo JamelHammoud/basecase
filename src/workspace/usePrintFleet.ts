@@ -3,7 +3,7 @@ import { resolvePrinter, type MyPrinter, type PrinterSetup } from '../data/print
 import { isIdle, nextPlate, sameMachine, type FleetPrinter } from '../print/fleet';
 import type { Plate } from '../print/plan';
 import { printBridge, type PrinterStatus } from '../print/printBridge';
-import { printRecordFor, withRecord } from '../print/tracker';
+import { printRecordFor, withRecord, type PlateStatusLookup } from '../print/tracker';
 import type { PrintRecord, ScenePart } from '../types/robotics';
 import { errorMessage } from '../utils/errorMessage';
 import { shapeKey } from '../print/shapeKey';
@@ -17,6 +17,7 @@ interface FleetOptions {
   parts: ScenePart[];
   plates: Plate[];
   records: PrintRecord[];
+  plateStatus: PlateStatusLookup;
   setRecords: (update: (prev: PrintRecord[]) => PrintRecord[]) => void;
   job: PrintJob;
   recording: boolean;
@@ -83,7 +84,9 @@ export function usePrintFleet(options: FleetOptions) {
   };
 
   const nextFor = (target: FleetPrinter) =>
-    isIdle(target) ? nextPlate({ plates: options.plates, records, printer: target, scene: printer }) : null;
+    isIdle(target)
+      ? nextPlate({ plates: options.plates, plateStatus: options.plateStatus, printer: target, scene: printer })
+      : null;
 
   return { sending, status: statusOf(printer), statusOf, fleet, sendPlate, nextFor };
 }

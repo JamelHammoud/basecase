@@ -1,9 +1,8 @@
 import type { PrinterSetup } from '../data/printers';
-import type { PrintRecord } from '../types/robotics';
 import { bedOf, fitOnBed, type Bed, type Rect } from './bed';
 import type { Plate, PlanItem } from './plan';
 import type { PrinterStatus } from './printBridge';
-import { plateStatus } from './tracker';
+import type { PlateStatusLookup } from './tracker';
 
 export interface FleetPrinter {
   setup: PrinterSetup;
@@ -56,13 +55,13 @@ export const isIdle = (printer: FleetPrinter) => printer.status?.state === 'idle
 
 interface NextPlate {
   plates: Plate[];
-  records: PrintRecord[];
+  plateStatus: PlateStatusLookup;
   printer: FleetPrinter;
   scene: PrinterSetup;
 }
 
-export function nextPlate({ plates, records, printer, scene }: NextPlate): Plate | null {
-  const open = plates.filter((p) => !BUSY.has(plateStatus(p, records).state) && offeredTo(p, printer, scene));
+export function nextPlate({ plates, plateStatus, printer, scene }: NextPlate): Plate | null {
+  const open = plates.filter((p) => !BUSY.has(plateStatus(p).state) && offeredTo(p, printer, scene));
 
   return open.sort((a, b) => a.number - b.number)[0] ?? null;
 }

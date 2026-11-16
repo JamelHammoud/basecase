@@ -2,6 +2,10 @@
 
 Implementation: [Print planning and labels](../guide/printing.md#performance-print-planning-and-labels). Shared requirements: [Performance](../guide/performance.md).
 
+## Plate statuses share prepared print history
+
+`print/plateStatus.test.ts` compares the previous scan across 120 generated histories in both input orders, plus frozen inputs, repeated queries and later edits. With 100 and 200 records and unmatched plate queries, record-hash reads fall from 10,000 and 40,000 to 100 and 200. On all-replacement fixtures of those sizes, record-part-list reads fall from 20,000 and 80,000 to 200 and 400. These are operation counts without timing assertions or a claim about complete printing time.
+
 ## Printed-label plane areas accumulate during grouping
 
 `labelFaces.test.ts` checks 80 transformed indexed boxes, exact threshold boundaries, disconnected faces, winding, degenerate triangles, typed-array views, edits and independent output buffers. On its 300- and 600-triangle rejected-plane fixtures, area measurements fall from 600 and 1,200 to 300 and 600. Retained faces also skip that area-only pass. These are operation counts without timing assertions or a claim about complete plate-writing time.

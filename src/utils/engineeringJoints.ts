@@ -13,12 +13,10 @@ const revolute = (ctx: CheckContext) => ctx.joints.filter((j) => j.type === 'rev
 
 const isOffAxis = ({ angle, off }: { angle: number; off: number }) => angle > 3 || off > 1.5;
 
-function lineOffset(line: ServoLine, j: RobotJoint) {
-  const a = norm(j.axis);
-
+function lineOffset(line: ServoLine, origin: V3, a: V3) {
   return {
     angle: (Math.acos(Math.min(1, Math.abs(dot(line.axis, a)))) * 180) / Math.PI,
-    off: lineDistance(line.point, j.origin, a),
+    off: lineDistance(line.point, origin, a),
   };
 }
 
@@ -27,9 +25,15 @@ function outputOffset(ctx: CheckContext, j: RobotJoint, id: string) {
 
   if (!o) return null;
 
-  const main = lineOffset(o, j);
+  const a = norm(j.axis);
 
-  return (o.alternates ?? []).map((line) => lineOffset(line, j)).find((x) => !isOffAxis(x)) ?? main;
+  for (const line of o.alternates ?? []) {
+    const offset = lineOffset(line, j.origin, a);
+
+    if (!isOffAxis(offset)) return offset;
+  }
+
+  return lineOffset(o, j.origin, a);
 }
 
 function misalignments(ctx: CheckContext, j: RobotJoint): string[] {

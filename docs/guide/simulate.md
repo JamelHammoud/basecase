@@ -102,6 +102,8 @@ Stages 3 and 4 of the robotics loop (§1); milestones in [docs/Robotics loop.md]
 
 ## Performance: simulation
 
+- **Link mass centroids accumulate in one pass.** `utils/robotImport/urdfLinks.ts` sums link mass and three weighted coordinates together before the separate inertia pass. Robot Package and headless URDF exports share it. Payload order, per-coordinate addition order, minimum mass and inertia floors stay unchanged. Existing Robot Package, ROS package and body calibration tests retain export coverage. [Parity evidence](../notes/performance-motion.md#mass-centroids-accumulate-in-one-pass).
+
 Measurements and limits: [Simulation performance evidence](../notes/performance-simulation.md).
 
 - **Robot exports index joint identities once per operation.** `utils/robotImport/jointIndex.ts` retains the first joint for each id. URDF writing indexes model and scene joints, joint-map generation indexes model joints, and policy packaging shares one model index across every policy. Missing-joint fallbacks, file contents and joint order stay unchanged. Indices end with each call, so edits rebuild them. Empty policy lists build no index. Desktop and headless package exports share these writers, and Robot Computer installation shares joint-map generation. [Evidence](../notes/performance-simulation.md#robot-exports-index-joint-identities).

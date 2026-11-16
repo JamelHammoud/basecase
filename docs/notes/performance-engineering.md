@@ -2,6 +2,12 @@
 
 Implementation: [Engineering calculations](../guide/build.md#performance-engineering-calculations). Shared requirements: [Performance](../guide/performance.md).
 
+## Motion boundaries scan without sorting
+
+`engineeringSweep.test.ts` compares complete motion finding items against the previous filter-and-sort calculation across 100 generated clash lists and their later edits. Coverage includes reversed and one-sided ranges, first-pair ties, published-joint depth and floor exclusions, no collisions, signed zeros, infinities and NaN angles. The existing engineering pipeline tests retain range sampling and slide verdict coverage.
+
+Getter-count fixtures assign clash `i` the angle `((i * 37) % count) - count / 2 + 0.5`, with a designed range of −90° to 90°. Across 300 and 600 clashes, source-angle reads fall from 4,180 and 9,440 to 604 and 1,204. Each direction retains one clash and one clear sample without filtered candidate arrays or sorting. Counts were measured with Node on macOS arm64. These are operation counts, without timing assertions or a claim about complete collision-sweep or Checks time. Geometry work and sampling density are unchanged.
+
 ## Torque summaries select the worst joint in one scan
 
 `worstJointLoad.test.ts` compares selection against the previous filter-and-sort implementation across 160 generated load lists. It checks both Build summaries and Study metrics, missing ratings, first ties, source preservation, later edits, signed zeros, infinities and NaN ordering. NaN inputs retain the old sorting path rather than imposing a new ordering.

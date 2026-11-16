@@ -153,6 +153,8 @@ The ten-fixture integration matrix in `kit/buildKit.test.ts` uses the real BOM, 
 
 ## Performance: strength and lighten
 
+- **Elastic setup uses scalar block offsets.** `strength/cg.ts` passes row and block indices directly when pinning supports and writes each diagonal inverse directly into the preconditioner. Strength and every Lighten load case share this setup, without per-block records, typed-array views or temporary inverse arrays. Inverse arithmetic, the singular-determinant fallback and solve-owned buffers stay unchanged. `cg.test.ts` checks known displacements across all four materials, partial axis constraints, independent residuals, changed loads, input preservation and stopping limits. It also checks that a prepared solve creates no Float64 block views or inverse-copy calls. [Evidence](../notes/performance-strength.md#elastic-setup-uses-scalar-block-offsets).
+
 Measurements and limits: [Strength and Lighten performance evidence](../notes/performance-strength.md).
 
 - **Lighten measures reconstructed pieces once.** `strength/lightenPieces.ts` selects the largest connected solid in one scan, retaining its volume for the mass report. `lightenShape.ts` also reuses the source volume for frozen-mount validation. First ties, mounting refusals, mesh output and solid cleanup stay unchanged across the part menu, command palette and agent. [Evidence](../notes/performance-strength.md#lighten-measures-reconstructed-pieces-once).

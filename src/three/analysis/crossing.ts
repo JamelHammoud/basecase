@@ -7,6 +7,15 @@ export interface Crossing {
   into: THREE.Vector3;
 }
 
+interface CrossingSample {
+  x: number;
+  y: number;
+  z: number;
+  dx: number;
+  dy: number;
+  dz: number;
+}
+
 const PLANE_EPS = 0.01;
 const SEGMENT_EPS = 0.01;
 const PARALLEL = 1e-6;
@@ -70,20 +79,20 @@ class TriangleCut {
     if (count < 2) this.from = this.to = 0;
   }
 
-  point(): THREE.Vector3 {
+  point(target: THREE.Vector3): THREE.Vector3 {
     const i = this.firstEdge;
     const j = (i + 1) % 3;
     const at = this.sides[i] / (this.sides[i] - this.sides[j]);
 
-    return this.corners[i].clone().lerp(this.corners[j], at);
+    return target.copy(this.corners[i]).lerp(this.corners[j], at);
   }
 }
 
 function crossingOf(
   a: ExtendedTriangle,
   b: ExtendedTriangle,
-  cuts: { a: TriangleCut; b: TriangleCut },
-): Crossing | null {
+  cuts: { a: TriangleCut; b: TriangleCut; point: THREE.Vector3; into: THREE.Vector3 },
+): CrossingSample | null {
   a.getNormal(NORMAL_A);
   b.getNormal(NORMAL_B);
   LINE.crossVectors(NORMAL_A, NORMAL_B);
@@ -102,21 +111,28 @@ function crossingOf(
 
   if (to - from <= SEGMENT_EPS) return null;
 
-  const onPlane = cuts.a.point();
+  const onPlane = cuts.a.point(cuts.point);
   const along = (from + to) / 2 - onPlane.dot(LINE);
 
+  onPlane.addScaledVector(LINE, along);
+  cuts.into.copy(NORMAL_A).add(NORMAL_B).negate().normalize();
+
   return {
-    point: onPlane.addScaledVector(LINE, along),
-    into: NORMAL_A.clone().add(NORMAL_B).negate().normalize(),
+    x: onPlane.x,
+    y: onPlane.y,
+    z: onPlane.z,
+    dx: cuts.into.x,
+    dy: cuts.into.y,
+    dz: cuts.into.z,
   };
 }
 
 const MAX_GATHERED = 2048;
 
 export function crossingsOf(A: Placed, B: Placed, keep: number): Crossing[] {
-  const found: Crossing[] = [];
+  const found: CrossingSample[] = [];
   const bToA = A.inverse.clone().multiply(B.matrix);
-  const cuts = { a: new TriangleCut(), b: new TriangleCut() };
+  const cuts = { a: new TriangleCut(), b: new TriangleCut(), point: new THREE.Vector3(), into: new THREE.Vector3() };
 
   A.solid.bvh.bvhcast(B.solid.bvh, bToA, {
     intersectsTriangles: (t1: ExtendedTriangle, t2: ExtendedTriangle) => {
@@ -130,5 +146,11 @@ export function crossingsOf(A: Placed, B: Placed, keep: number): Crossing[] {
 
   const stride = Math.max(1, Math.floor(found.length / keep));
 
-  return found.filter((_, i) => i % stride === 0).slice(0, keep);
+  return found
+    .filter((_, i) => i % stride === 0)
+    .slice(0, keep)
+    .map(({ x, y, z, dx, dy, dz }) => ({
+      point: new THREE.Vector3(x, y, z),
+      into: new THREE.Vector3(dx, dy, dz),
+    }));
 }

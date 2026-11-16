@@ -156,7 +156,10 @@ function executeCodex(options, files, execute) {
     cwd: options.cwd,
     env: codexHome(options.env),
     input: resumed ? options.prompt : `${options.brief}\n\n---\n\n${options.prompt}`,
-    timeout: Math.max(1, Math.min(options.hours * 3_600_000, (options.deadlineAt ?? Infinity) - Date.now())),
+    timeout: Math.max(
+      1,
+      Math.floor(Math.min(options.hours * 3_600_000, (options.deadlineAt ?? Infinity) - Date.now())),
+    ),
     allowFail: true,
   });
   const metadata = codexSession(response.out, options);

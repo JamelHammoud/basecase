@@ -65,7 +65,7 @@ export function runClaude({ cwd, name, brief, prompt, schema, hours, deadlineAt,
     execute(process.env.CLAUDE_BIN || 'claude', args, {
       cwd,
       env: claudeSubscriptionEnv(env),
-      timeout: Math.max(1, Math.min(hours * 3_600_000, (deadlineAt ?? Infinity) - Date.now())),
+      timeout: Math.max(1, Math.floor(Math.min(hours * 3_600_000, (deadlineAt ?? Infinity) - Date.now()))),
       allowFail: true,
     });
   const response = sandbox ? withoutGithub(launch) : launch();

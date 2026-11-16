@@ -230,3 +230,21 @@ it('keeps formatting repair inside the same total execution deadline', () => {
     clock.mockRestore();
   }
 });
+
+it('passes an integer process timeout when the remaining hours lose precision', () => {
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(1000);
+  const execute = vi.fn((_command, args, settings) => {
+    expect(Number.isInteger(settings.timeout)).toBe(true);
+    expect(settings.timeout).toBeLessThanOrEqual(1001);
+    fs.writeFileSync(args[args.indexOf('-o') + 1], '{"changed":true}');
+
+    return { ok: true, out: events.map((event) => JSON.stringify(event)).join('\n'), err: '' };
+  });
+
+  try {
+    expect(runCodex(options({ hours: 1001 / 3_600_000, deadlineAt: 2001 }), execute).ok).toBe(true);
+    expect(execute).toHaveBeenCalledOnce();
+  } finally {
+    clock.mockRestore();
+  }
+});

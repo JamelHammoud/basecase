@@ -4,6 +4,7 @@ import { BANNED_COPY } from '../../../verify/rehearsal/uiRules.ts';
 import { judge } from '../../copy/budget.mjs';
 import { changedFiles, copyDiffOfRange, copyOccurrences } from '../../copy-diff.mjs';
 import { runAgent } from './agent.mjs';
+import { buildOutcome } from './buildOutcome.mjs';
 import { ANNOUNCED, copyLines } from './pull.mjs';
 
 const CHANGELOG = 'site/content/changelog/';
@@ -157,7 +158,7 @@ const shouldCheck = (result, name) =>
   result.ok &&
   result.output.changed &&
   !result.output.abandon &&
-  (name !== 'build' || result.output.outcome?.status === 'complete');
+  (name !== 'build' || buildOutcome(result.output, new Set()).status === 'complete');
 
 function checkedChange(first, { kind, log, session }) {
   const problems = preflight(session.cwd, { kind: kind ?? first.output.kind, copy: first.output.copy });

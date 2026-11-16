@@ -131,7 +131,9 @@ function limitedOverflow(options, primary) {
   startCodexPause(primary.limited.until);
 
   try {
-    return overflow(options, primary);
+    const result = overflow(options, primary);
+
+    return { ...result, session: result.session ?? primary.session };
   } catch (error) {
     error.session ??= primary.session;
 

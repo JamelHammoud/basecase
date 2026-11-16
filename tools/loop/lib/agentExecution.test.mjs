@@ -203,3 +203,15 @@ it('preserves the interrupted primary session when protected overflow cannot sta
   expect(mocks.codex).toHaveBeenCalledOnce();
   expect(mocks.claude).not.toHaveBeenCalled();
 });
+
+it.each([false, true])('retains the primary session when overflow returns ok=%s without a session', (ok) => {
+  const session = { provider: 'codex', id: 'interrupted-feature' };
+  const release = vi.fn();
+
+  mocks.codex.mockReturnValue({ ok: false, session, limited: { until: Date.now() + 60_000 } });
+  mocks.reserve.mockReturnValue(release);
+  mocks.claude.mockReturnValue({ ok, output: { changed: false, outcome: { status: 'incomplete' } } });
+
+  expect(runAgent(task)).toMatchObject({ ok, session, provider: 'claude', overflow: true });
+  expect(release).toHaveBeenCalledOnce();
+});

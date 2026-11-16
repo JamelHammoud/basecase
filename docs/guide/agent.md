@@ -210,3 +210,41 @@ Optional diagnostics preserve the completed tool result when they fail. Catch in
 - Agent replies that link out open in the system browser (Electron `setWindowOpenHandler`).
 
 Camera shots from `simulate` and `operate` receive the active Case's captured-world asset and placement. They use the same worker scene and lenses as the live cameras and dataset videos, including a splat or the mesh fallback (§8l).
+
+## Performance: image comparison
+
+Measurements and limits: [Image comparison performance evidence](../notes/performance-image-comparison.md).
+
+- **Outline distances propagate one minimum per cell.** `utils/targetFit.ts` shares its distance transform across sketch-target and camera-fit gaps. Each sweep reads four neighbors once and writes only their improving minimum, removing four helper calls and repeated distance reads per cell. Edge seeds, sweep order, diagonal costs and Float32 outputs stay unchanged. [Evidence](../notes/performance-image-comparison.md#outline-distances-propagate-one-minimum-per-cell).
+
+- **Photo outlines simplify through index ranges.** `utils/simplifyPolygon.ts` writes retained points into one output array without copying recursive subarrays or concatenating intermediate results. Image attachments share this path through `imagePixelAnalysis.ts`, the only point-list simplifier in the app. Point order, point references, tolerance comparisons and the four-point cutoff stay unchanged. [Evidence](../notes/performance-image-comparison.md#photo-outlines-simplify-through-index-ranges).
+
+- **Mask bounds and row extents share one scan.** `utils/maskRows.ts` replaces separate bounds and row-width scans in silhouette profiles, outline tracing and sketch-target fitting. Target fitting also reuses both measured bounds for corner radii. Empty rows, band boundaries, tracing order and model widths over the target's vertical range stay unchanged. [Evidence](../notes/performance-image-comparison.md#mask-bounds-and-row-extents-share-one-scan).
+
+- **Camera alignment prepares masks once.** `utils/viewFit.ts` shares centroid and occupied-area measurements across every rotation and scale candidate in a scoring call. It overwrites one raster instead of allocating one per candidate. [Evidence](../notes/performance-image-comparison.md#camera-alignment-prepares-masks-once).
+
+- **Image floods queue each open pixel once.** `utils/pixelFlood.ts` shares four-neighbor traversal between silhouette backgrounds and image-analysis backgrounds and holes. Candidates are marked before classification, so border duplicates and converging paths never repeat classification or queue an open pixel twice. Hole fills allocate no neighbor arrays per pixel. Corner-radius estimation applies the same rule to its two inward directions. [Evidence](../notes/performance-image-comparison.md#image-floods-queue-each-open-pixel-once).
+
+- **Target alignment reuses one raster.** `utils/targetFit.ts` samples each source mask once, indexes occupied target cells and scores all 81 shifts by their intersection with the model. Constant mask totals determine the union, and only the winning shifted grid is built. Eight cells of padding contain the four-cell search in each direction. [Evidence](../notes/performance-image-comparison.md#target-alignment-reuses-one-raster).
+
+- **Comparison overlays reuse four colors.** `utils/targetFit.ts` shares four RGBA arrays across sketch-target and camera-fit rendering, replacing an RGB array and an RGBA array per output pixel. [Evidence](../notes/performance-image-comparison.md#comparison-overlays-reuse-four-colors).
+
+- **Photo border medians use fixed histograms.** `utils/silhouette.ts` counts RGB border samples into three 256-bin arrays instead of copying and sorting three channel arrays. It keeps the upper median, doubled corner samples, spread threshold and color-distance threshold. [Evidence](../notes/performance-image-comparison.md#photo-border-medians-use-fixed-histograms).
+
+## Performance: agent and cad kernel
+
+Measurements and limits: [Agent and CAD kernel performance evidence](../notes/performance-agent-kernel.md).
+
+- **Suggestion distances reuse one short row.** `electron/editDistance.mjs` replaces both edit-distance implementations in CAD part suggestions and help-label checks. Each nonempty comparison keeps one array of `min(a.length, b.length) + 1` entries, overwriting it with a retained diagonal value. Empty comparisons return without allocating a row. UTF-16 costs, rankings, stable ties and glossary preference stay unchanged. [Evidence](../notes/performance-agent-kernel.md#suggestion-distances-reuse-one-short-row).
+
+- **Unordered string pairs use one comparison.** `electron/cad-kernel/pairKey.mjs` serves collision baselines, joint discovery, port matching, sheet boundaries and closure, Sketch face outlines, CAD edge matching, crease adjacency and contact-replay fixtures. It orders strings with the same UTF-16 comparison as default sorting and retains each caller's separator, without allocating or sorting a two-item array. Joint grouping calculates its key once per join. Numeric edge keys retain numeric ordering. [Evidence](../notes/performance-agent-kernel.md#unordered-string-pairs-use-one-comparison).
+
+- **Fixed file batches share a cursor.** `electron/eachLimited.mjs` advances through prepared lists without copying or shifting pending queues. Evidence attachments, robot meshes, Onshape parts, SimReady files and Hub LFS uploads share it. Evidence, Onshape and Hub keep four active tasks at most. Robot meshes and SimReady keep six. Each item is claimed before awaiting its task, preserving source-order starts and original indices while progress follows completion. A task failure rejects the batch while other workers continue, as before. [Evidence](../notes/performance-agent-kernel.md#fixed-file-batches-share-a-cursor).
+
+- **Worker batches build their indices once.** `electron/workerIndices.mjs` assigns each job index to one worker by striding through its share. Joint sweeps, strength analysis and OpenSCAD recipe port extraction share it, without mapping and filtering the full input once per worker. Worker assignments, order within each worker and result order stay unchanged, including empty chunks. [Evidence](../notes/performance-agent-kernel.md#worker-batches-build-their-indices-once).
+
+- **Base64 goes through byte arrays.** `src/utils/base64.ts` uses native `Uint8Array` base64 methods when available, avoiding temporary binary strings and per-byte JavaScript conversion. Older browsers use the chunked encoder and `atob` decoder. All renderer conversions, including sourced meshes, SimReady files, dataset fixtures and file-picker test hooks, use these helpers. Encoding respects a typed array's offset and length. Decoding returns an owned buffer of exactly the decoded length. The [native API](https://tc39.es/proposal-arraybuffer-base64/) uses the standard alphabet, padding on encode and loose final chunks on decode, matching the fallback's accepted bytes.
+
+- **Agent mirroring indexes sources and existing twins once.** `agent/agentMirror.ts` builds both lookup maps in one scene pass, preserving first-match and request-order behavior. [Evidence](../notes/performance-agent-kernel.md#agent-mirroring-indexes-sources-and-existing-twins-once).
+
+- **The CAD kernel never touches the renderer or boot.** Its sandbox windows open in the main process on the first compile (or 2 s after an MCP server starts), never during boot, and paint nothing (`show: false`, `paintWhenInitiallyHidden: false`, no WebGL); results pass through the main process as bytes it doesn't parse. [Evidence](../notes/performance-agent-kernel.md#the-cad-kernel-never-touches-the-renderer-or-boot).

@@ -1,0 +1,35 @@
+# Image comparison performance
+
+Implementation: [Image comparison](../guide/agent.md#performance-image-comparison). Shared requirements: [Performance](../guide/performance.md).
+
+## Outline distances propagate one minimum per cell
+
+`targetDistance.test.ts` compares every binary pattern on nine grids through twelve cells, 160 generated masks and later edits, long diagonals, source views, independent outputs and both comparison paths. On empty 300 × 10 and 600 × 10 masks, distance-buffer reads fall from 38,144 and 76,544 to 23,840 and 47,840, with no writes added. These are operation counts without timing assertions or a claim about complete comparison time.
+
+## Photo outlines simplify through index ranges
+
+`simplifyPolygon.test.ts` compares 1,800 open, closed and reflected outline queries with the previous calculation, including frozen inputs, ties, repeated points and later edits. Its 48-ray fixture removes 75 slice calls and 25 concatenations. A scratch comparison matched 120 complete photo analyses at three raster sizes. These are operation counts and output comparisons, without timing assertions or a claim about complete attachment time.
+
+## Mask bounds and row extents share one scan
+
+`maskRows.test.ts` checks direct measurements, sparse masks, holes, nonbinary pixels, narrow and empty images, edits, source preservation and independent results. Its filled 40 × 300 and 40 × 600 profile and tracing fixtures read 12,000 and 24,000 pixels instead of 24,000 and 48,000. Scratch comparisons matched 3,200 band/profile results, 400 traced outlines and 400 complete target fits exactly against the previous implementation. On shared macOS arm64 hardware with Node 26.13.0, ten-profile batches on a seeded 600 × 600 mask took medians of 20.33 ms before and 9.17 ms after, across 30 alternating measurements after five warmups. These measure profile calculation alone, without CI timing assertions or a claim about complete photo-tool time.
+
+## Camera alignment prepares masks once
+
+`viewFitAlignment.test.ts` compares fresh-raster scoring on 60 seeded mask pairs, including source edits, empty masks, ties and result ownership. On empty 64 × 48 and 128 × 96 masks with 27 candidates, model pixel reads fall from 86,016 and 344,064 to 3,072 and 12,288. These are operation counts for mask preparation, without timing assertions or a claim about complete camera fitting time.
+
+## Image floods queue each open pixel once
+
+`pixelFlood.test.ts`, `imagePixelAnalysis.test.ts` and `targetFit.test.ts` check boundaries, enclosed regions, measurements and traversal counts. A blank 128 × 96 photo took 49,152 stack removals before this change and 12,288 after it. This is an operation count, not a wall-clock measurement.
+
+## Target alignment reuses one raster
+
+`targetAlignment.test.ts` compares exhaustive resampling across aspect ratios, scales, all nine combinations of offsets −4, 0 and 4, unchanged inputs and first-offset ties. On its 240 × 240 fixture, target data-property reads fall from 4,665,601 to 57,601, including the bounds scan's one property read. These are operation counts, without timing assertions.
+
+## Comparison overlays reuse four colors
+
+`targetOverlay.test.ts` compares every byte with the previous renderer across six scales, all four colors, nonbinary masks, changed inputs and independent results. Its 300- and 600-cell fixtures at 3× scale remove 5,400 and 10,800 temporary color arrays respectively. The four palette arrays are shared across renders, while each result owns its output buffer. These are allocation counts, without timing assertions or a claim about complete comparison time.
+
+## Photo border medians use fixed histograms
+
+`silhouette.test.ts` checks those boundaries, RGB extremes, enclosed background, narrow images and source preservation. A scratch comparison matched the previous masks and refusal results on 600 seeded images. On macOS with Node 26.13.0, rejecting one seeded 900 × 900 busy image took a median of 2.23 ms before and 0.13 ms after, over 25 alternating measurements after five warmups per implementation. This measures the busy-background refusal path, without a CI timing assertion or a claim about full photo-tool latency.

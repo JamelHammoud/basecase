@@ -100,6 +100,25 @@ function overflow(options, primary) {
   }
 }
 
+export function primaryAllowed() {
+  const quota = quotaSnapshot('codex');
+  const reserve = primaryReserve(quota);
+  const held = codexPause();
+  const restored = restoredAfter(quota, held);
+
+  if (reserve) {
+    startCodexPause(reserve.reset);
+
+    return false;
+  }
+
+  if (isActive(held) && !restored) return false;
+
+  if (held && restored) resumeCodex();
+
+  return true;
+}
+
 export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox, continuation, system, task }) {
   const policy = policyFor(name);
   const options = {
@@ -117,20 +136,7 @@ export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox, contin
 
   if (policy.provider === 'claude' || sandbox?.tools.length > 0) return overflow(options);
 
-  const quota = quotaSnapshot('codex');
-  const reserve = primaryReserve(quota);
-  const held = codexPause();
-  const restored = restoredAfter(quota, held);
-
-  if (reserve) {
-    startCodexPause(reserve.reset);
-
-    return overflow(options);
-  }
-
-  if (isActive(held) && !restored) return overflow(options);
-
-  if (held && restored) resumeCodex();
+  if (!primaryAllowed()) return overflow(options);
 
   const launch = (env) => runCodex({ ...options, env });
   const result = measured('codex', options, () => (sandbox ? withoutGithub(launch) : launch()));

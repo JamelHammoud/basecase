@@ -72,7 +72,7 @@ const harnessesText = ({ git, plan }) =>
     : `Commit ${commitOf(git)}, harness ${plan.harness}.`;
 
 function setupLine({ git, effort, plan }) {
-  return `${harnessesText({ git, plan })} Effort ${effort ?? 'agent default'}. ${plan.rounds} of ${plan.maxRounds} rounds over ${plan.tasks} tasks, ${plan.parallel} at a time, ${STOPS[plan.stop] ?? plan.stop}.`;
+  return `${harnessesText({ git, plan })} Provider ${plan.provider ?? 'claude'}. Effort ${effort ?? 'agent default'}. ${plan.rounds} of ${plan.maxRounds} rounds over ${plan.tasks} tasks, ${plan.parallel} at a time, ${STOPS[plan.stop] ?? plan.stop}.`;
 }
 
 const askedLine = (models, plan) =>

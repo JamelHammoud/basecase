@@ -14,3 +14,11 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 - **Persistence:** resolved comments are hidden on the canvas but still listed in Inspect ▸ Comments. Annotations save with the scene and appear in `DESIGN_BRIEF.md` (§4) and `design-spec.json`.
 - **Attachment lookup:** `utils/annotationAttachments.ts` indexes parts once per batch for pin layout and scene export. Export resolves each open comment once, sharing its part and world position between JSON and Markdown. Hidden parts and reference images remain valid attachments. A missing part or offset keeps the saved position, and duplicate part IDs keep the first match. Positions use translation plus offset, with no rotation. Each call reads the current parts, so moving, renaming, deleting and undoing refresh attachments.
 - **Layout:** pins and their open card update after a viewport render or a change to their annotations, parts or draft. A `ResizeObserver` also repositions the card when its contents or canvas area change size. Empty layers do no projection work, and pins never run their own animation loop (§0f).
+
+## Performance: annotation projection
+
+Measurements and limits: [Annotation projection performance evidence](../notes/performance-annotations.md).
+
+- **Comment attachments resolve in linear work.** `utils/annotationAttachments.ts` builds one part index per batch for canvas pins and scene exports. JSON and Markdown share the export's resolved comments instead of searching the scene four times per comment. [Evidence](../notes/performance-annotations.md#comment-attachments-resolve-in-linear-work).
+
+- **DOM overlays follow viewport renders.** Comment pins and agent cursors project through the handle's `onRender` subscription, not separate animation loops. An empty comment layer and a hidden cursor subscribe to nothing. Comment cards also reflow through a `ResizeObserver` on the layer and card. A cursor animates toward its last projection only until it settles within 0.05 px, then stops requesting frames. Effect cleanup removes render listeners, resize observers and pending cursor frames.

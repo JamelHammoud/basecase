@@ -134,6 +134,29 @@ const calibration = [ROW_FONT, STACKED_FONT].flatMap((font) =>
 );
 
 describe('choice grid layout', () => {
+  it('measures Unicode code points with the same fallback as unknown glyphs', () => {
+    expect(labelWidth('😀', ROW_FONT)).toBe(ROW_FONT);
+    expect(labelWidth('漢😀', STACKED_FONT)).toBe(STACKED_FONT * 2);
+    expect(labelWidth('', ROW_FONT)).toBe(0);
+    expect(labelWidth('W😀i', ROW_FONT)).toBeCloseTo(0.99 * ROW_FONT + ROW_FONT + 0.27 * ROW_FONT);
+  });
+
+  it('ignores nontext labels while retaining empty text cell padding', () => {
+    for (const stacked of [false, true]) {
+      for (const icons of [false, true]) {
+        const options = { stacked, icons };
+
+        expect(choiceMinCell({ ...options, labels: [null, false, 12] })).toBe(0);
+        expect(choiceMinCell({ ...options, labels: [null, '', false] })).toBe(
+          choiceMinCell({ ...options, labels: [''] }),
+        );
+        expect(choiceMinCell({ ...options, labels: [null, 'W😀i', 12, 'MGN12', false] })).toBe(
+          choiceMinCell({ ...options, labels: ['W😀i', 'MGN12'] }),
+        );
+      }
+    }
+  });
+
   it.each(calibration)('estimates %s at %ipx at least as wide as SF Pro draws it, and within 2.5px', (l, font, px) => {
     expect(labelWidth(l, font)).toBeGreaterThanOrEqual(px);
     expect(labelWidth(l, font)).toBeLessThanOrEqual(px + 2.5);

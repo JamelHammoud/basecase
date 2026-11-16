@@ -35,3 +35,15 @@ A scratch comparison retained complete output equality across ten combinations o
 On an Apple M5 Pro with macOS arm64 and Node 26.13.0, eleven alternating batches of ten merges had median per-merge times of 9.71 ms before and 0.16 ms after. The equality comparisons warmed both implementations before timing. These local pure-helper measurements exclude React rendering, browser latency and CI. Sources and raw measurements remain in ignored `scratch/layer-owners.test.ts` and `scratch/layer-owner-results.json`. The measurement used nonempty layer lists, so it does not measure the empty-list fast path.
 
 The screen, actions and text stay unchanged. No browser walkthrough, help article update or screenshot is needed for this internal assembly refinement.
+
+## Choice grid sizing scans labels directly
+
+A whole-app search for `labelWidth`, `choiceMinCell` and `GLYPH_EM` found one shared estimator in `design-system/choiceLayout.ts`. Every ChoiceGrid uses it through `choiceGridTemplate`. There is no second glyph-width implementation to change.
+
+The estimator now iterates strings by code point instead of spreading them into arrays. Grid sizing visits the original React label list once, retaining one maximum instead of filtering strings and mapping widths into two arrays. Unknown astral characters still count as one 1em code point. Empty strings still receive cell padding, while a list without string labels still returns zero. Font calibration, arithmetic order, icons and wrapping remain unchanged.
+
+For a grid with 600 string labels, source-derived temporary-array counts fall from 602 to zero: 600 character arrays, one filtered label list and one width list. Source-list traversals fall from two to one. Glyph lookup counts do not change. These are allocation and traversal counts, without a timing claim about rendering or panel interaction. The existing module-initialization glyph table remains unchanged.
+
+On November 16, 2026, `scratch/choice-parity.test.ts` compared the previous and final implementations across 600 labels, four font sizes, astral and combining characters, an isolated surrogate, empty strings and mixed React labels. All widths, cell minima and complete CSS templates matched exactly. The scratch run passed. Committed `choiceLayout.test.ts` retains calibrated width and panel wrapping coverage and adds Unicode and mixed-label cases. No timeout, retry or quarantine changes apply.
+
+This changes no action, label or visible state. Help instructions and screenshots remain accurate, so no help article or capture changes are needed. Implementation and coverage are in [Design system](../guide/design-system.md#performance-choice-grid-sizing).

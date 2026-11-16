@@ -46,7 +46,7 @@ function closeIfMerged(step, index) {
 const unbuilt = (steps, index) =>
   steps.filter((step) => !closeIfMerged(step, index) && stepStatus(index, step.number) === 'none');
 
-const waitingSteps = () => {
+export const waitingSteps = () => {
   const index = stepPullIndex();
 
   if (!index) return [];
@@ -102,8 +102,14 @@ function decline(step, reason, inputSignature) {
   );
 }
 
-function claimNextStep() {
-  for (const step of waitingSteps()) {
+export const taskKindOf = (step) =>
+  /^Kind:\s*(\w+)/im.exec(step.body ?? '')?.[1]?.toLowerCase() ??
+  ['feature', 'integration', 'fix', 'refine', 'harness'].find((kind) => hasLabel(step, `loop:${kind}`));
+
+export const productStep = (step) => ['feature', 'integration', 'fix'].includes(taskKindOf(step));
+
+export function claimNextStep({ productOnly = false } = {}) {
+  for (const step of waitingSteps().filter((step) => !productOnly || productStep(step))) {
     const release = claim(`step-${step.number}`);
 
     if (release) return { step, release };
@@ -143,7 +149,13 @@ function retainPublicationFailure(step, { inputSignature, worktree, session, err
   retainFailedSession(step, inputSignature, worktree, { session: error.session ?? session, reason: error });
 }
 
-function buildStep(step, { log, slot }) {
+const executionIdentity = (step, { slot, worker }) => ({
+  task: `step-${step.number}`,
+  taskKind: taskKindOf(step),
+  worker: worker ?? `build-${slot}`,
+});
+
+export function buildStep(step, { log, slot, worker }) {
   let inputSignature;
   let worktree;
   let continuation;
@@ -171,6 +183,7 @@ function buildStep(step, { log, slot }) {
     const result = checkedRun({
       cwd: worktree.dir,
       name: 'build',
+      ...executionIdentity(step, { slot, worker }),
       prompt,
       schema: CHANGE_SCHEMA,
       hours: 12,
@@ -193,7 +206,10 @@ function buildStep(step, { log, slot }) {
     }
 
     const latest = stepPullIndex({ fresh: true });
-    const taken = latest ? stepStatus(latest, step.number) : 'none';
+
+    if (!latest) throw new Error('Could not verify step publication history.');
+
+    const taken = stepStatus(latest, step.number);
 
     if (taken !== 'none') {
       clearRecovery(step.number);
@@ -222,6 +238,14 @@ function buildStep(step, { log, slot }) {
   }
 }
 
+export function executeClaim(next, context) {
+  try {
+    buildStep(next.step, context);
+  } finally {
+    next.release();
+  }
+}
+
 export default function build({ log, slot }) {
   for (const step of issues(NEXT).filter((issue) => issue.author?.login === OWNER_LOGIN && !eligibleTask(issue))) {
     editIssueLabels(step.number, { add: ['loop:blocked'], remove: [NEXT, BUILDING] });
@@ -236,9 +260,5 @@ export default function build({ log, slot }) {
     return;
   }
 
-  try {
-    buildStep(next.step, { log, slot });
-  } finally {
-    next.release();
-  }
+  executeClaim(next, { log, slot });
 }

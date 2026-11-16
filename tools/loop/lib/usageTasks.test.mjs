@@ -124,3 +124,26 @@ describe('work per linked merged task', () => {
     expect(report.workPerMergedTask.tokens).toBeNull();
   });
 });
+
+it('attributes borrowed product capacity by task kind while retaining its worker and review attempts', () => {
+  const report = taskUsage(
+    [
+      session('step-10', { name: 'build', lane: 'build', worker: 'refine-2', taskKind: 'integration' }),
+      session('review-21', { name: 'review', lane: 'review' }),
+      session('revise-21', { name: 'revise', lane: 'revise', ok: false }),
+    ],
+    pulls,
+  );
+
+  expect(report.tasks[0]).toMatchObject({
+    kind: 'integration',
+    workers: ['refine-2'],
+    reviewAttempts: 1,
+    failedAttempts: 1,
+  });
+  expect(report.byKind.integration).toMatchObject({
+    mergedTasks: 1,
+    tokensPerMergedTask: 360,
+    millisecondsPerMergedTask: 1500,
+  });
+});

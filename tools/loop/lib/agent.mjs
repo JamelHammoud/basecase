@@ -26,6 +26,9 @@ function measured(provider, options, execute) {
   const pending = {
     provider,
     name: options.name,
+    lane: options.name,
+    worker: options.worker ?? process.env.BASECASE_LOOP_WORKER ?? process.env.BASECASE_LOOP_LANE ?? options.name,
+    taskKind: options.taskKind,
     task: options.task ?? path.basename(options.cwd),
     startedAt,
     state: 'running',
@@ -39,7 +42,7 @@ function measured(provider, options, execute) {
     ...pending,
     id,
     state: 'completed',
-    lane: process.env.BASECASE_LOOP_LANE ?? options.name,
+    lane: options.name,
     provider,
     name: options.name,
     model: provider === 'codex' ? options.policy.model : options.policy.claudeModel,
@@ -119,7 +122,19 @@ export function primaryAllowed() {
   return true;
 }
 
-export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox, continuation, system, task }) {
+export function runAgent({
+  cwd,
+  name,
+  prompt,
+  schema,
+  hours = 6,
+  sandbox,
+  continuation,
+  system,
+  task,
+  taskKind,
+  worker,
+}) {
   const policy = policyFor(name);
   const options = {
     cwd,
@@ -131,6 +146,8 @@ export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox, contin
     continuation,
     policy,
     task,
+    taskKind,
+    worker,
     brief: system ?? brief(name),
   };
 

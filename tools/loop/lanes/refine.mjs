@@ -1,3 +1,4 @@
+import { buildStep, claimNextStep } from './build.mjs';
 import { CHANGE_SCHEMA } from '../lib/agent.mjs';
 import { issues, openPulls } from '../lib/github.mjs';
 import { inFlight, inFlightText } from '../lib/inFlight.mjs';
@@ -13,7 +14,7 @@ export const schedule = {
   agent: true,
   slots: 2,
   everySeconds: 60,
-  does: 'Lands one refinement everywhere it holds, in one pull request',
+  does: 'Builds ready product steps first, otherwise lands one refinement everywhere it holds',
 };
 
 const STEP_LABELS = ['loop:next', 'loop:building'];
@@ -116,4 +117,16 @@ export default function refine({ log }, deps = LIVE) {
   } finally {
     deps.close(worktree);
   }
+}
+
+export function selectWork({ slot }) {
+  const next = claimNextStep({ productOnly: true });
+
+  if (!next) return null;
+
+  return {
+    lane: 'build',
+    release: next.release,
+    run: (context) => buildStep(next.step, { ...context, worker: `refine-${slot}` }),
+  };
 }

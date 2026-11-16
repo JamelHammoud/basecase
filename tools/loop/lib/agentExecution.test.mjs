@@ -146,3 +146,19 @@ describe('agent routing', () => {
     expect(mocks.claude).not.toHaveBeenCalled();
   });
 });
+
+it('journals the selected product kind and originating refinement worker before and after execution', () => {
+  vi.stubEnv('BASECASE_LOOP_LANE', 'refine');
+  mocks.codex.mockReturnValue({ ok: true, output: { changed: true, kind: 'integration' } });
+  runAgent({ ...task, task: 'step-10', taskKind: 'integration', worker: 'refine-2' });
+
+  for (const [entry] of mocks.journal.mock.calls) {
+    expect(entry).toMatchObject({
+      name: 'build',
+      lane: 'build',
+      task: 'step-10',
+      taskKind: 'integration',
+      worker: 'refine-2',
+    });
+  }
+});

@@ -173,3 +173,52 @@ Current coverage lives in [Copy](../guide/copy.md#3d-checklist-before-shipping-a
 Review of #1303 found that native fields sharing a local initializer collapsed onto its literal node. A source with one `const message` and two dialog calls returned one occurrence at the declaration instead of two at the calls. Native hits now identify both the use and the literal branch, preserving repeated references and conditional branches without changing renderer deduplication. The review also reproduced false outer-initializer extraction through destructured parameters and locals, catch bindings and loop variables. Those bindings now stop outer lookup.
 
 `tools/copy/accounting.test.mjs` checks repeated menu and dialog references, shared fields, conditional branches, use locations and shadowing negative controls. The publication fixture starts with one native reference and adds two more, checking that budget, preflight and review all retain the two additions and require their reason. These are static extraction and temporary-repository checks. They add no publication step, model call or browser run. The replay timings above describe the implementation before these review corrections and were not remeasured.
+
+
+## Loop product dispatch evidence
+
+Issue #1331 changes capacity selection in arc #224. It leaves #1286's CAD scene reads and held-out harness experiment unchanged. Product scope, ownership, dependencies, acceptance checks, provider quotas and protected overflow remain unchanged.
+
+### Baseline before policy selection
+
+The observation window is 9 November 2026 at 05:36:55.934 UTC through 16 November at the same time. Read-only GitHub merged-pull history returned 830 merges in that window. Title prefixes identify 541 Refine, 76 Feature, 21 Integration, 62 Fix, 77 Repair, 30 Loop, 9 Batch, 6 Lesson, 5 Market and 2 Update merges. One merge has no kind prefix. Direct feature, integration and fix merges total 159, or 19.2 percent. Refine merges account for 65.2 percent. Batch members are not expanded, and a merge's title does not establish its size or value. The observed direct-product merge rate is 22.71 per day across this seven-day window, alongside 118.57 total merges per day. These are baseline rates, not a dispatch treatment result.
+
+Local session retention starts on 15 November at 23:32:20.531 UTC. The same cutoff contains 426 invocations, including running records. Names are build 69, refine 91, review 79, revise 5, rebase 13, lead 45, groom 2, learn 1 and voice 121. Of these, 424 have completed records and two remain running. Completed build invocations total 68 and completed refine invocations total 90. Neither is a completed-task count. No completed invocation records a process failure. That does not establish zero failed reviews, declined tasks or lost sessions.
+
+The existing task-work join finds 16 merged steps with attributed invocations: six feature, five integration and five refine steps. It joins the cached all-step pull index observed at 05:39:47.830 UTC, so completion state is slightly newer than the session cutoff. The linked sample includes 67 invocations, 21 review attempts and five revision invocations. The remaining 359 invocations are visibly unattributed, including independent refinements, planning, voice and running work. There are no attributed unmerged invocations in this retained sample. This is incomplete retention and linkage, not evidence that unfinished work consumed no resources.
+
+| Recorded task kind | Linked merged tasks | Review invocations | Recorded failed attempts | Tokens per completion | Elapsed work per completion |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Feature | 6 | 8 | 0 | 26,378,137.50 | 55.72 min |
+| Integration | 5 | 8 | 0 | 20,114,106.80 | 39.90 min |
+| Refine | 5 | 5 | 0 | 6,590,836.80 | 15.46 min |
+
+Across the linked sample, measured work totals 291,793,543 tokens and 611.16 session minutes. Per completion that is 18,237,096.44 tokens and 38.20 session minutes. All linked records have token and elapsed measurements. Cached input accounts for 283,623,808 tokens and is already included in the token total. Session minutes sum concurrent work and are not wall-clock delivery time. These numbers exclude earlier work outside retention and unlinked sessions. They cannot measure subscription allowance per completion.
+
+Only digest #69 was available. It reports the week beginning 6 November, 12 merges, zero recorded reviews, one revert and 168 hours of red main. Its body has no structured lane comparison. There is no valid week-over-week worst measure or comparable previous session window. Review invocations above are not digest verdict rounds. The existing digest remains the source for review rounds when comparable records exist.
+
+This mix supports directing the two existing refinement workers toward eligible product steps first. It does not support a gain claim, a new scheduler or idle periods to enforce 60/25/10/5 shares. Review and repair capacity stays as configured. Refinements remain useful fallback work.
+
+### Queue replay and selection cost
+
+The replay uses local cached next, building, blocked, all-step-pull and open-pull snapshots observed between 05:39:47.830 and 05:40:51.342 UTC on 16 November. It calls the real `waitingSteps`, `claimNextStep`, capability, readiness and dependency logic. GitHub reads and issue writes are replaced by these snapshots and inert boundaries. Filesystem claims are real. Existing local decline and recovery records and current main source signatures determine input readiness. Nothing publishes or starts a model.
+
+The next queue contains #1328, #1291, #992, #823, #774, #773, #772, #643, #453 and #391. Eight have unchanged declined inputs. #1328 and #1291 have ready inputs but depend on open #1291 and #773 respectively. #823 also depends on #773 and #772. No queued step lacks a declared capability or already has a published pull in this snapshot. The shared selector returns no eligible step, including stale-building and blocked candidates.
+
+| Frozen snapshot replay, five build and two refinement workers | Current dispatch | Product-first dispatch |
+| --- | ---: | ---: |
+| Eligible product starts | 0 | 0 |
+| Step refinement starts | 0 | 0 |
+| Independent refinement starts | 2 | 2 |
+| Blocked selections reaching execution | 0 | 0 |
+| Duplicate claims | 0 | 0 |
+
+Eight input blocks and two dependency blocks are refusals before selection, not failed executions. Empty eligibility makes the zero duplicate count vacuous. The replay supplies zero queued CI runs and uses the empty open-pull snapshot, so both refinement workers can use fallback. Replaying the refinement-cap case separately, three outstanding refinement pulls hold fallback but do not hold a selected build task. A global cap still holds either kind.
+
+On the macOS task host, ten repeated shared queue selections took a median 67.58 ms and maximum 69.17 ms. The prior refinement-only path did no product selection. This is added local selection cost, dominated by existing source-signature Git reads, not agent or publication time. It adds no wait, polling, retry, model call, worker slot or merge gate. It is not a CI threshold or an end-to-end speedup.
+
+The deterministic runner integration fixtures supply eligible founder-priority product work, unlike the frozen queue. Two workers claim distinct product steps before either executes, then produce two product executions with their own closing links and no independent refinement session. A held step is skipped for another eligible step. Dependency, capability, producer capacity and global backpressure fixtures prevent blocked execution. Publication races prevent a second publication. A publication-preparation failure retains the session and resumes through the build path. A failed fresh history lookup also refuses publication and retains recoverable work.
+
+Reproduction uses `waitingSteps` and `claimNextStep` with inert GitHub boundaries over the named cache snapshots, retaining all selected claims until the worker batch ends. Compare five ordinary claims plus two independent refinement starts with five ordinary claims plus two product-only claims and immediate fallback. Use `taskUsage` and `sessionTotals` over the retained session JSON and cached all-step pull records for the accounting table. Merge rates use read-only merged pull history filtered to the exact observation window. Session summaries, source snapshots, scripts and complete reports stay in `scratch/` and local state.
+
+Historical queue states at individual session starts were not retained. The snapshots have different timestamps and local inputs can change. Replaying the same queue for each historical invocation would invent readiness and completion. This replay establishes current eligibility refusal and fallback behavior only. It cannot establish completed-feature throughput, quality, allowance gains or a causal comparison. The baseline is available for later observations through the existing usage and digest reports, without adding a gate or observation wait. No quarantines change.

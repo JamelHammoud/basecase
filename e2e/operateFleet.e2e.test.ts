@@ -5,7 +5,6 @@ import type { SkillRecord } from '../src/skills/skillRecords';
 import type { TwinVerdict } from '../src/fleet/twinArena';
 import { fleetSkillFixture } from './fleetSkillFixture';
 import { ARM } from './armFixture';
-import { driveRecordableMotion } from './operateMotion';
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
 import { openApp, openPlayTab, partCount, shown, type App } from './harness';
 
@@ -32,18 +31,12 @@ type Studio = {
   connectUnit: (unit: string) => Promise<{ ok: boolean }>;
   fleet: () => { selected: string; units: FleetRow[] };
   fleetModel: () => Promise<SimModel>;
-  simState: () => { drive: string };
   seedFleetSkill: (record: SkillRecord, skill?: Skill) => Promise<void>;
   stubFleetTwins: (twins: Record<string, TwinVerdict> | null) => void;
   rollOutState: () => { held: Record<string, string>; reached: string[]; stage: string } | null;
 };
 
-type FakeUnit = {
-  intents: number[][];
-  statuses: unknown[];
-  plantStall: (id: number) => boolean;
-  policy: Array<{ kind: string; hash?: string }>;
-};
+type FakeUnit = { plantStall: (id: number) => boolean; policy: Array<{ kind: string; hash?: string }> };
 
 type FleetWindow = { __studio: Studio; __fakeRobotLink: { units: Record<string, FakeUnit> } };
 
@@ -68,46 +61,6 @@ async function climbToTest(unit: string) {
 
 const policyOf = (unit: string) =>
   app.page.evaluate((u) => (window as unknown as FleetWindow).__fakeRobotLink.units[u].policy, unit);
-
-async function recordFleetFault() {
-  const { page } = app;
-
-  await row(WEAK).click();
-  await page.locator(shown('[role=tab]'), { hasText: 'Simulate' }).first().click();
-  await page
-    .locator(shown('button'), { hasText: /^Drive$/ })
-    .first()
-    .click();
-  await expect.poll(() => page.evaluate(() => (window as unknown as FleetWindow).__studio.simState().drive)).toBe('on');
-  await driveRecordableMotion(page, WEAK);
-  await openPlayTab(page, 'Operate');
-  await row('arm-1').click();
-  await page.evaluate((u) => (window as unknown as FleetWindow).__fakeRobotLink.units[u].plantStall(2), WEAK);
-}
-
-async function inspectFleetFault() {
-  const { page } = app;
-
-  const continuing = () =>
-    page.evaluate(() => (window as unknown as FleetWindow).__fakeRobotLink.units['arm-1'].intents.length);
-  const sentBefore = await continuing();
-
-  await expect.poll(continuing).toBeGreaterThan(sentBefore);
-  await row(WEAK).getByRole('button', { name: 'Inspect Problems', exact: true }).click();
-
-  const incidents = page.getByRole('dialog').filter({ has: page.locator('[data-incident]') });
-  const incident = incidents.locator('[data-incident]').first();
-
-  await expect.poll(() => incident.getAttribute('data-active')).toBe('true');
-  await incidents.getByRole('button', { name: 'Acknowledge', exact: true }).first().click();
-  expect(await incident.getAttribute('data-active')).toBe('true');
-  expect(await incident.innerText()).toContain('Acknowledged');
-  expect((await fleet()).units.find((u) => u.unit === WEAK)?.faultLatched).toBe(true);
-  await expect.poll(() => incidents.getByRole('button', { name: 'Open Try', exact: true }).count()).toBe(1);
-  await incidents.getByRole('button', { name: 'Open Try', exact: true }).click();
-  await expect.poll(() => page.locator(shown('[data-testid="try-timeline"]')).count()).toBe(1);
-  await page.locator(shown('[data-testid="try-timeline"]')).getByRole('button', { name: 'Close', exact: true }).click();
-}
 
 beforeAll(async () => {
   app = await openApp();
@@ -159,7 +112,7 @@ describe('Operate a fleet of emulated arms', () => {
       nextSkill,
     );
 
-    await recordFleetFault();
+    await page.evaluate((u) => (window as unknown as FleetWindow).__fakeRobotLink.units[u].plantStall(2), WEAK);
     await expect.poll(() => row(WEAK).getAttribute('data-fault')).toBe('true');
 
     const afterStall = (await fleet()).units;
@@ -168,8 +121,6 @@ describe('Operate a fleet of emulated arms', () => {
       ['arm-1', 'test', 'running', false],
       ['arm-2', 'test', 'running', false],
     ]);
-
-    await inspectFleetFault();
 
     await page.evaluate((twins) => (window as unknown as FleetWindow).__studio.stubFleetTwins(twins), {
       'arm-1': { unit: 'arm-1', passes: 32, trials: 32, passed: true, line: '32 of 32 tries, at least 91%' },

@@ -19,3 +19,7 @@ The retained tests do not cover the complete palette-to-generated-guide browser 
 ## Parts on hand
 
 The duplicate browser test was removed after taking 64 s in run 43642970706 and failing repeatedly on Windows (#851, #836).
+
+## Passive robot joints
+
+Passive declarations do not create missing-servo or torque-estimate warnings. They remain in the rig and range sweeps. Payload mapping rejects a chain containing passive motion rather than using an old effort rating as a motor. Walk and falls keys hash full declarations, so changes invalidate cached evidence without a new version or cache format.

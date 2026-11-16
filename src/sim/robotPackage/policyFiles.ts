@@ -61,15 +61,18 @@ export function policyFiles(policies: PackagedPolicy[], model: Pick<SimModel, 'j
   if (!policies.length) return {};
 
   const joints = indexJoints(model.joints);
+  const passive = new Set([...joints].filter(([, j]) => j.actuator < 0).map(([id]) => id));
 
   return Object.fromEntries(
-    policies.flatMap((p) => {
-      const folder = `policies/${p.record.id.replace(/[^\w-]/g, '_')}`;
+    policies
+      .filter((p) => p.spec.joints.every((id) => !passive.has(id)))
+      .flatMap((p) => {
+        const folder = `policies/${p.record.id.replace(/[^\w-]/g, '_')}`;
 
-      return [
-        [`${folder}/policy.json`, jsonBytes(p.spec)],
-        [`${folder}/spec.json`, jsonBytes(policySpecFile(p, joints))],
-      ];
-    }),
+        return [
+          [`${folder}/policy.json`, jsonBytes(p.spec)],
+          [`${folder}/spec.json`, jsonBytes(policySpecFile(p, joints))],
+        ];
+      }),
   );
 }

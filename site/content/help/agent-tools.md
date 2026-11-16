@@ -95,7 +95,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `skeleton_from_motion` | Fits a skeleton to an attached BVH clip or public URL at a chosen height and path tolerance, places one catalog servo per joint and opens Edit Skeleton |
 | `set_interfaces` | Sets what each part designer must connect to |
 | `check_interfaces` | Checks a subassembly against those connections |
-| `define_joints` | Declares the robot's joints |
+| `define_joints` | Declares powered or passive robot joints |
 | `synthesize_linkage` | Fits a four-bar linkage to a path, and can add it with a servo on its crank |
 | `find_joint_axes` | Finds the hinges in imported parts: each shaft or pin in a bore |
 | `get_rig` | Lists joints, poses and animations |

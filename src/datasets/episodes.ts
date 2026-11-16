@@ -51,7 +51,7 @@ export interface JointGroup {
 export function robotJoints(model: SimModel, robotKey = model.robots[0]?.key): SimJoint[] {
   const ids = new Set(model.robots.find((r) => r.key === robotKey)?.joints ?? []);
 
-  return model.joints.filter((j) => ids.has(j.id));
+  return model.joints.filter((j) => ids.has(j.id) && j.actuator >= 0);
 }
 
 export const scanWidth = (model: SimModel) => eyeSize(model.scans);

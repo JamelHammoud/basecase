@@ -1,3 +1,5 @@
+import { actuatorDefaults } from '../sim/actuatorChannels';
+import { requireActions } from '../sim/trainingJob';
 import type { Eye } from '../sim/eyes';
 import type { PolicySpec } from '../sim/policy';
 import type { StartArea } from './environment';
@@ -92,6 +94,9 @@ function rootOffset(model: SimModel, start: KitStart | null) {
 
 export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOptions) {
   const robot = kitRobot(model);
+
+  requireActions(robot.joints);
+
   const sim = model.robots[0];
   const byId = new Map(model.joints.map((j) => [j.id, j]));
   const start = options.start ?? null;
@@ -108,7 +113,7 @@ export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOpti
     root: robot.root,
     joints: robot.joints.map((id) => ({ id, name: byId.get(id)!.name })),
     defaultPose: robot.joints.map((id) => unit(byId.get(id)!, model.initial.values[id] ?? 0)),
-    ctrlDefault: pose,
+    ctrlDefault: actuatorDefaults(model.joints, (_, i) => pose[i]),
     initialJoints: Object.fromEntries(model.joints.map((j, i) => [j.name, pose[i]])),
     rootOffset: rootOffset(model, start),
     actionScale: KIT_ACTION_SCALE,

@@ -177,3 +177,13 @@ Measurements and limits: [Motion fitting and retargeting performance evidence](.
 - **Onshape imports.** Each test attempt opens a fresh app and resets its import response. The update test imports its own arm before adding a servo, so CI can select it without running the import-and-pose test first.
 
 - **Character shells.** `src/wrap/wrapCore.test.ts` checks shell generation, wall thickness, clearance at rest and clearance across both joints' full ranges on a two-joint arm. `src/wrap/wrapPlan.test.ts` checks target selection, link splitting, mesh hiding, printed shells, joint attachment, posing and one-step undo and redo. Undo and redo now use the real document history with prebuilt shell geometry, without running the wrap worker in Chrome. [Incident evidence](../notes/testing-joints-and-motion.md#character-shells).
+
+## Passive robot joints
+
+`RobotJoint.actuation` is optional. Omitted and `powered` retain legacy powered simulation. `passive` preserves the physical hinge or slider, axis, range and initial pose without an actuator. `damping` and `frictionloss` declare nonnegative finite resistance in SI units. Passive joints have no estimated damping, friction, armature or holding torque. They are distinct from fixed joints.
+
+Pose's joint-row menu has Actuation with Powered and Passive. Choosing Passive clears actuator assignments in one `commitJoints` history step, leaving motor parts in the scene. Choosing Powered does not recreate those assignments. Undo and redo restore the complete declaration. `define_joints` accepts the same actuation and resistance fields. Contradictory passive declarations with actuator references are refused by declaration and MJCF building.
+
+Scene files preserve the optional declaration. Existing saved imports with no declaration keep their previous behavior. New MJCF imports identify joints without actuators as passive and retain physical resistance. Exported URDF joints retain physical motion and use a `basecase` child with `actuation="passive"` to preserve intent when reimported. Ordinary URDF files without this marker retain legacy behavior. This does not implement tendon routing or cable physics. Help: [Make a joint passive](../../site/content/help/make-a-joint-passive.md).
+
+Coverage: `src/sim/passiveHistory.test.ts` checks real scene-file compression, undo and redo, tool refusal, legacy imports and MJCF/URDF intent. `passiveJoints.test.ts` and `passiveMotion.test.ts` exercise ten mechanism models with real WASM MuJoCo. `e2e/passiveJoints.e2e.test.ts` covers the Pose menu, undo and redo, falling motion and motor count. Scene-file compression and reload remain in the fast history integration test. [Evidence](../notes/testing-joints-and-motion.md#passive-robot-joints).

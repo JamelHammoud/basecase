@@ -52,6 +52,8 @@ export function effortOf(
   j: RobotJoint,
   { byId, rig, masses, volts }: EffortScene,
 ): { effort: number; source: SimJoint['effortSource'] } {
+  if (j.actuation === 'passive') return { effort: 0, source: 'passive' };
+
   const stall = jointServos(j, byId, volts).reduce((s, spec) => s + spec.stallNm, 0);
 
   if (stall > 0) return { effort: stall, source: 'servo' };

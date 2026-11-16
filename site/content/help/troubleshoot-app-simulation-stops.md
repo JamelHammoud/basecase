@@ -60,6 +60,8 @@ The figure compares the simulation's speed with the clock.
 
 ## Checks says the simulation guesses torque
 
-In the **Build** tab, Checks may say “These joints have no servo, so the simulation guesses their torque from weight.” Assign a servo from **Parts** to each of those joints so the simulation can use the servo's datasheet limits.
+In the **Build** tab, Checks warns when a powered joint has no servo or published torque. Assign a servo from **Parts** so simulation can use its datasheet limits.
+
+For an intentionally unpowered joint, [make it passive](/help/make-a-joint-passive) instead. Passive joints need no estimated motor torque.
 
 If Checks says “These servos aren’t calibrated on this robot.”, those servos have no measured model. You can measure any Feetech or Dynamixel servo with [Calibrate an emulated robot](/help/calibrate-an-emulated-robot). Other servos keep their estimate.

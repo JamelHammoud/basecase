@@ -35,7 +35,7 @@ function chainOf(rig: Rig, leaf: RobotJoint): RobotJoint[] {
   for (let id: string | null | undefined = leaf.id; id; id = rig.parentOf.get(id)) {
     const joint = rig.byId.get(id);
 
-    if (joint && isMovable(joint)) chain.unshift(joint);
+    if (joint && isMovable(joint) && joint.actuation !== 'passive') chain.unshift(joint);
   }
 
   return chain;
@@ -167,7 +167,7 @@ export function robotFacts(rig: Rig, parts: ScenePart[], robotKey?: string): Rob
   const byId = new Map(parts.map((p) => [p.id, p]));
   const joints = robot ? rig.joints.filter((j) => rig.robotOf.get(j.id) === robot.key) : [];
   const morphology = robot ? classifyRobot(robot, rig, byId) : 'fixed';
-  const wheels = joints.filter((j) => isWheelJoint(j, byId, rig)).map((j) => j.id);
+  const wheels = joints.filter((j) => j.actuation !== 'passive' && isWheelJoint(j, byId, rig)).map((j) => j.id);
   const arm = armFacts(joints, rig, byId, morphology);
   const capabilities: Capability[] = [
     ...(arm.endEffector ? (['arm'] as const) : []),

@@ -41,3 +41,9 @@ The remote recovery browser test failed twice in Linux Check while waiting 30 se
 Review found that a rejected journal deletion escaped the runtime's final cleanup, leaving its training row busy indefinitely. `recoveredSkill.test.ts` now injects that storage failure and checks row removal, private identity cleanup, refusal delivery and a subsequent job. `skillRecovery.test.ts` checks that failed deletion clears the active identity and judgment key. `trainerForgeRecovery.test.ts` delays the start response until after Stop or detach, then checks that only Stop reaches the newly created job. These checks use controlled storage and bridge promises, with no timing waits or native training.
 
 The extracted move lifecycle originally captured its infrastructure error before the worker ran, so a connection failure returned only the generic training refusal. `runtimeMove.test.ts` introduces the error during the worker call and checks that the final refusal reads it afterward.
+
+## Passive robot joints
+
+The existing action and observation contracts remain intact. The environment index retains all physical joint identities and a separate actuator set. Validation uses the actuator set only for actions. Jobs retain initialJoints for every physical coordinate, while defaultPose and joints describe controlled outputs and ctrlDefault follows actuator order. Empty action sets are refused. Existing subset admission and native fallback own accelerated backend support. No GPU parity or training-quality claim follows from the mapping tests.
+
+`passiveChannels.test.ts` also checks interleaved and reordered actuator metadata, Motor Kit defaults, passive observations versus actions and live gait output. Legacy powered output is covered by the existing drive suites.

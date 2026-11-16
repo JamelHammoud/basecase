@@ -36,12 +36,12 @@ The steps below run the daemon on this computer. To run it on Linux and connect 
 ![Operate with ROS 2 chosen above Connect Emulated Robot](/help/connect-an-emulated-ros-2-robot/connect.png)
 
 4. Click **Connect Emulated Robot**. The emulated robot publishes `/joint_states` and takes commands on `/forward_position_controller/commands`.
-5. Under **Ladder**, click **Set Up**. Basecase matches joints by name and checks that the robot publishes every joint in your scene. If the robot doesn't publish one of your joints, or publishes a joint your scene doesn't have, the message names that joint and nothing moves.
+5. Under **Ladder**, click **Set Up**. Basecase matches joints by name and checks that the robot publishes every powered joint in your scene. If the robot doesn't publish one of your joints, or publishes a joint your scene doesn't have, the message names that joint and nothing moves.
 6. Click **Test**. For a ROS 2 robot, the ladder stops at Test.
-7. Drive the robot in the Simulate tab, a Case try, or Drive. Each joint follows the simulation and goes through the same safety checks as emulated servos.
+7. Drive the robot in the Simulate tab, a Case try, or Drive. Each powered joint follows the simulation and goes through the same safety checks as emulated servos.
 
 ![The emulated ROS 2 robot following the simulation in Test](/help/connect-an-emulated-ros-2-robot/test.png)
 
 8. Click **Stop**. The robot holds the last positions it measured, and the daemon sends nothing more. If the app stops sending commands, the robot holds on its own within 100 ms.
 
-Any scene robot with up to 32 joints can connect this way. Servo calibration applies only to Feetech and Dynamixel servos.
+Any scene robot with up to 32 powered joints can connect this way. Servo calibration applies only to Feetech and Dynamixel servos.

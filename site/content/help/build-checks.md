@@ -63,10 +63,10 @@ For an Onshape robot, **Assembly** also lists **Fixed Mates** as notes. A cylind
 | Servo torque | Each servo's load against its stall and rated torque | Over 0.60 of stall torque, or running too hot. Amber from 0.40 of stall |
 | Peak torque | Torque and speed while a trained policy walks for 14 seconds | Over stall for more than 50 ms, or a fall. Amber when over 5% of a joint's walk is past its servo's torque–speed line. Not run without a walking policy |
 | Falls | Each leg servo's torque as the robot tips over from 12 directions, against its rated torque | Over 5× rated torque in a fall. Amber over 3×. Not run until the agent checks falls |
-| Torque estimates | Joints with no servo or published torque | A note: the simulation guesses their torque from weight |
+| Torque estimates | Powered joints with no servo or published torque | A note: the simulation guesses their torque from weight |
 | Servo models | Whether each servo runs on a measured calibration | A note naming the servos that aren't calibrated |
-| Payload | What an arm lifts at full reach and close in | Never. It reports the numbers |
-| Joint parts | The parts each joint names | A joint naming a part that doesn't exist |
+| Payload | What an arm with powered joints lifts at full reach and close in | Never. It reports the numbers |
+| Joint parts | The parts and actuation each joint declares | A missing part or a passive joint with a motor assigned |
 | Servo alignment | Each servo's output against its joint axis | A servo that doesn't line up with its joint |
 | Joint support | What holds each joint on both sides | A note when a joint is held on one side only |
 | Range of motion | Each joint swept every 15° through its range | A part hit before the end of the range |

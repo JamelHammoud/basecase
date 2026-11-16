@@ -146,6 +146,7 @@ function sceneJoint(b: JointBuild, j: ModelJoint): RobotJoint {
     range: jointRange(j),
     limb: limbOf(j.name),
     effortNm: j.effort,
+    ...(j.actuation ? { actuation: j.actuation, damping: j.damping, frictionloss: j.frictionloss } : {}),
     velocity: velocity === undefined ? undefined : round(velocity),
     published: b.name,
   };

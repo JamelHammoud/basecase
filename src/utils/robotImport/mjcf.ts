@@ -115,6 +115,9 @@ function mjJoint(ctx: MjContext, j: Element, link: BodyLink, after: ModelJoint |
 
   return {
     effort: frc > 0 ? frc : undefined,
+    actuation: 'passive',
+    damping: Number(a('damping') ?? 0),
+    frictionloss: Number(a('frictionloss') ?? 0),
     name: j.getAttribute('name') ?? `${link.name}_joint`,
     type: type === 'slide' ? 'prismatic' : 'revolute',
     parent: link.parent,
@@ -219,7 +222,11 @@ function applyActuators(ctx: MjContext, mj: Element) {
   for (const act of elems(mj, 'actuator').flatMap((x) => [...x.children])) {
     const j = ctx.joints.find((k) => k.name === act.getAttribute('joint'));
 
-    if (!j || j.effort) continue;
+    if (!j) continue;
+
+    j.actuation = 'powered';
+
+    if (j.effort) continue;
 
     const effort = actuatorEffort(ctx, act);
 

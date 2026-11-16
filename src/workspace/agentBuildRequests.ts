@@ -17,6 +17,9 @@ export interface JointSpec {
   parent: string[];
   child: string[];
   parent_joint?: string;
+  actuation?: RobotJoint['actuation'];
+  damping?: number;
+  frictionloss?: number;
   actuators?: string[];
   origin?: Vec3;
   axis?: Vec3;
@@ -43,6 +46,14 @@ function seeded(j: JointSpec, planned: SkeletonJoint | undefined): JointSpec {
   };
 }
 
+function actuationFields(j: JointSpec): Partial<RobotJoint> {
+  return {
+    ...(j.actuation ? { actuation: j.actuation } : {}),
+    ...(j.damping !== undefined ? { damping: j.damping } : {}),
+    ...(j.frictionloss !== undefined ? { frictionloss: j.frictionloss } : {}),
+  };
+}
+
 function makeJoint(j: JointSpec, parts: ScenePart[], servoOutput: ServoOutputOf, planned?: SkeletonJoint) {
   const out = j.actuators?.length ? servoOutput(j.actuators[0]) : null;
   const origin = j.origin ? toScene(j.origin) : (out?.point ?? (planned && toScene(planned.origin)));
@@ -62,6 +73,7 @@ function makeJoint(j: JointSpec, parts: ScenePart[], servoOutput: ServoOutputOf,
       axis,
       range: j.range,
       actuators: j.actuators,
+      ...actuationFields(j),
       limb: j.limb,
     },
     parts,

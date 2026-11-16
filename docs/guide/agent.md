@@ -250,3 +250,7 @@ Measurements and limits: [Agent and CAD kernel performance evidence](../notes/pe
 - **Agent mirroring indexes sources and existing twins once.** `agent/agentMirror.ts` builds both lookup maps in one scene pass, preserving first-match and request-order behavior. [Evidence](../notes/performance-agent-kernel.md#agent-mirroring-indexes-sources-and-existing-twins-once).
 
 - **The CAD kernel never touches the renderer or boot.** Its sandbox windows open in the main process on the first compile (or 2 s after an MCP server starts), never during boot, and paint nothing (`show: false`, `paintWhenInitiallyHidden: false`, no WebGL); results pass through the main process as bytes it doesn't parse. [Evidence](../notes/performance-agent-kernel.md#the-cad-kernel-never-touches-the-renderer-or-boot).
+
+## Passive joint declarations
+
+`define_joints` accepts optional `actuation` (`powered` or `passive`), `damping` and `frictionloss`. Omitted actuation retains legacy powered behavior. Passive joints need an explicit axis and origin or a matching skeleton joint, and cannot name actuators. Resistance is nonnegative and finite in SI units. The shared declaration validator and MJCF builder refuse contradictory motor assignments. `src/sim/passiveHistory.test.ts` covers tool refusal and persistence.

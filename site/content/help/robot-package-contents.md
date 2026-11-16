@@ -34,9 +34,9 @@ The zip unpacks to one folder named `<scene>-robot`. Lengths are in meters and a
 | File | What it holds |
 |---|---|
 | `robot.xml` | The MuJoCo model the Simulate tab runs, unchanged. Collision shapes are written inside it, so it needs no other file. It holds everything the simulation holds, scenery included. |
-| `urdf/robot.urdf` | One link per body of the robot and one joint per link, named as in `robot.xml`. Each link has the mass of its parts, its center of mass and its inertia, including the active body fit’s mass scales and payloads. The root is a massless `base_link`. A `ros2_control` block lists each movable joint with a position command and its limits, on ROS 2's mock hardware. |
+| `urdf/robot.urdf` | One link per body of the robot and one joint per link, named as in `robot.xml`. Each link has the mass of its parts, its center of mass and its inertia, including the active body fit’s mass scales and payloads. The root is a massless `base_link`. A `ros2_control` block lists each powered movable joint with a position command and its limits, on ROS 2's mock hardware. |
 | `meshes/<part>.stl` | One binary STL per part, already placed in its link's frame. The URDF uses each one for both looks and collisions, by `package://` path. |
-| `joint_map.json` | One entry per movable joint: servo id, joint name, type, servo bus, servo part, zero offset, direction, limits and the active calibration. |
+| `joint_map.json` | One entry per powered movable joint: servo id, joint name, type, servo bus, servo part, zero offset, direction, limits and the active calibration. |
 | `policies/<id>/policy.json` | A trained policy as Basecase runs it, weights included. |
 | `policies/<id>/spec.json` | What the policy reads and drives: its inputs and their sizes, the joints it moves by name, the default pose, the action scale and the control step. |
 | `package.xml` | The ROS 2 package manifest, named after the robot with `_description` added, such as `arm_description`. Its maintainer and license are placeholders to fill in. |
@@ -62,6 +62,6 @@ The zip unpacks to one folder named `<scene>-robot`. Lengths are in meters and a
 
 ## What's left out
 
-Scenes with no trained policy have no `policies` folder. A policy whose file can't be found is left out. ONNX copies of policies aren't included.
+Scenes with no trained policy have no `policies` folder. A policy whose file can't be found, or which commands a now-passive joint, is left out. ONNX copies of policies aren't included.
 
 To make the zip, follow [Export a robot package](/help/export-a-robot-package).

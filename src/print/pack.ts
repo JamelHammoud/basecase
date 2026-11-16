@@ -1,4 +1,4 @@
-import { overlaps, type Bed, type Rect } from './bed';
+import { fitOnBed, overlaps, placementFits, type Bed, type Rect } from './bed';
 import { packSpot } from './packSpot';
 
 export interface PackItem {
@@ -50,14 +50,25 @@ function occupy(space: PlateSpace, used: Rect) {
 }
 
 function newPlate(bed: Bed, gap: number): PlateSpace {
-  const space = { free: [{ x: 0, y: 0, w: bed.width + gap, d: bed.depth + gap }] };
+  const margin = bed.margin ?? 0;
+  const space = { free: [{ x: margin, y: margin, w: bed.width - margin * 2 + gap, d: bed.depth - margin * 2 + gap }] };
 
   for (const k of bed.keepOut) occupy(space, k);
 
   return space;
 }
 
-function placeLoose(spaces: PlateSpace[], item: PackItem, gap: number, bed: Bed): Placement {
+function freshPlacement(space: PlateSpace, item: PackItem, gap: number, bed: Bed): Omit<Placement, 'plate'> | null {
+  const fit = fitOnBed(item.w, item.d, 1, bed);
+
+  if (!fit?.spot) return null;
+
+  occupy(space, { ...fit.spot, w: fit.spot.w + gap, d: fit.spot.d + gap });
+
+  return { ...fit.spot, yaw: fit.yaw };
+}
+
+function placeLoose(spaces: PlateSpace[], item: PackItem, gap: number, bed: Bed): Placement | null {
   for (let plate = Math.max(0, (item.startPlate ?? 1) - 1); ; plate++) {
     for (let p = 0; p < plate; p++) spaces[p] ??= newPlate(bed, gap);
 
@@ -67,7 +78,11 @@ function placeLoose(spaces: PlateSpace[], item: PackItem, gap: number, bed: Bed)
 
     const found = packSpot(spaces[plate].free, item.w + gap, item.d + gap);
 
-    if (!found && fresh) return { plate: plate + 1, x: 0, y: 0, w: item.w, d: item.d, yaw: 0 };
+    if (!found && fresh) {
+      const fallback = freshPlacement(spaces[plate], item, gap, bed);
+
+      return fallback ? { plate: plate + 1, ...fallback } : null;
+    }
 
     if (!found) continue;
 
@@ -83,7 +98,7 @@ function placeFixed(spaces: PlateSpace[], item: PackItem, gap: number, bed: Bed)
   const fixed = item.fixed!;
   const [w, d] = fixed.turned ? [item.d, item.w] : [item.w, item.d];
   const rect = { x: fixed.x, y: fixed.y, w, d };
-  const inside = rect.x >= -EPS && rect.y >= -EPS && rect.x + w <= bed.width + EPS && rect.y + d <= bed.depth + EPS;
+  const inside = placementFits(rect, bed);
 
   if (!inside || fixed.plate < 1) return null;
 
@@ -101,31 +116,35 @@ export function packPlates(
   bed: Bed,
   gap = 6,
 ): { placements: Record<string, Placement>; plates: number } {
+  if (bed.unsupported) return { placements: {}, plates: 0 };
+
   const spaces: PlateSpace[] = [];
   const placements: Record<string, Placement> = {};
-  const loose: PackItem[] = [];
 
   for (const item of items.filter((i) => i.fixed && i.diagonalYaw === undefined)) {
     const placed = placeFixed(spaces, item, gap, bed);
 
     if (placed) placements[item.id] = placed;
-    else loose.push(item);
   }
 
-  const rest = [...loose, ...items.filter((i) => !i.fixed && i.diagonalYaw === undefined)].sort(
-    (a, b) =>
-      (a.startPlate ? 0 : 1) - (b.startPlate ? 0 : 1) ||
-      stepRank(a) - stepRank(b) ||
-      b.w * b.d - a.w * a.d ||
-      Math.max(b.w, b.d) - Math.max(a.w, a.d),
-  );
+  const rest = items
+    .filter((i) => !i.fixed && i.diagonalYaw === undefined)
+    .sort(
+      (a, b) =>
+        (a.startPlate ? 0 : 1) - (b.startPlate ? 0 : 1) ||
+        stepRank(a) - stepRank(b) ||
+        b.w * b.d - a.w * a.d ||
+        Math.max(b.w, b.d) - Math.max(a.w, a.d),
+    );
   const stepped = rest.some((i) => i.step !== undefined);
   let tail: number | undefined;
 
   for (const item of rest) {
     if (stepped && item.step === undefined && !item.startPlate) tail ??= Math.max(1, spaces.length);
 
-    placements[item.id] = placeLoose(spaces, tail ? { ...item, startPlate: tail } : item, gap, bed);
+    const placed = placeLoose(spaces, tail ? { ...item, startPlate: tail } : item, gap, bed);
+
+    if (placed) placements[item.id] = placed;
   }
 
   let plates = spaces.length;

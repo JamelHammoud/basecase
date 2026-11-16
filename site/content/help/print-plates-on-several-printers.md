@@ -46,7 +46,7 @@ To use Start Next, you need the desktop app and two or more printers that report
 
 6. Repeat these steps for the next idle printer. That printer gets the next plate that isn't already sent, printing or printed.
 
-Start Next offers a printer only the plates that fit on its bed. A Bambu printer that reports its loaded filament gets only the plates in that material. A printer with a different bed or nozzle slices the plate with its own profile before it prints.
+Start Next offers a printer only the plates that fit on its bed, clear of supported obstacles and supplied brim clearance. A Bambu printer that reports its loaded filament gets only the plates in that material. A printer with a different bed or nozzle slices the plate with its own profile before it prints.
 
 Plates follow the order of the build guide. In the bar under each plate, the number beside the box icon is the first step that needs that plate's parts. Build Along numbers steps the same way.
 

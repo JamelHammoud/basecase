@@ -83,6 +83,10 @@ Basecase slices each material separately before sending a plate.
 - **Parts** lists every part with its size, time and plate. Parts with problems are listed first.
 - **Merge** lists printed parts that are bolted together on one link and could print as one. To combine them, see [Merge printed parts into one print](/help/merge-printed-parts-into-one-print).
 
+When a printer profile includes supported obstacle volumes, the plate reserves space around clips and tool docks, including supplied toolhead and brim clearance. A drag into that space returns the part to its previous position. A saved position or rotation that crosses it leaves the part off the plates. Click **Auto Arrange** to clear saved positions and pack again, including parts left off the plates. When no plates remain, it clears saved positions for all parts.
+
+Obstacle space is reserved for the full print height, even for low clips. Unsupported obstacle profiles leave parts off the plates and show a message in **Parts**. Basecase checks placement envelopes, not every slicer travel move. The current catalog profiles contain no obstacle volumes beyond their existing bed exclusions.
+
 After a print, a switch under **Printer** (such as Skip 3 printed parts) leaves the parts you already printed off the plates. The switch is on by default. For example, if you edit one bracket after a print, the next plate holds only that bracket.
 
 When you [repair a part](/help/repair-a-part), it stops counting as printed even if its shape hasn't changed. At the replacement step, **Print** opens a plate with one copy of that part. This plate has no **Copies**, **Don't print**, skip-printed switch or **Merge** section. The part's placement and **Don't label** choice last only while the repair plate is open.

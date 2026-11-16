@@ -2,6 +2,12 @@
 
 Implementation: [Engineering calculations](../guide/build.md#performance-engineering-calculations). Shared requirements: [Performance](../guide/performance.md).
 
+## Torque summaries select the worst joint in one scan
+
+`worstJointLoad.test.ts` compares selection against the previous filter-and-sort implementation across 160 generated load lists. It checks both Build summaries and Study metrics, missing ratings, first ties, source preservation, later edits, signed zeros, infinities and NaN ordering. NaN inputs retain the old sorting path rather than imposing a new ordering.
+
+Getter-count fixtures assign joint `i` the share `(i * 37) % length`, then compare the selected object with the previous implementation. On 300 and 600 loads, share reads fall from 4,334 and 9,600 to 300 and 600. Study also drops its extra copy of the filtered candidates. Counts were measured with Node v26.13.0 on macOS arm64. These are operation counts, without timing assertions or a claim about complete Checks or Study time.
+
 ## Payload maps prepare gravity loads once
 
 `payloadRotation.test.ts` compares complete maps through mixed joints, zero and nonfinite loads, source edits and floor changes. Its six-link, 300-sample fixture reduces mass reads from 6,300 to six and limit reads from 1,800 to six. Its twelve-link, 600-sample fixture reduces mass reads from 46,800 to twelve and limit reads from 7,200 to twelve. Rejected and zero-sample maps read neither value. These are operation counts, without timing assertions or a claim about complete Checks time.

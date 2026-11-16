@@ -45,7 +45,7 @@ export async function assemblyCheck(ctx: AssemblyContext) {
   ctx.setAction('Checking the assembly');
 
   const parts = ctx.parts();
-  const merges = mergeInput(parts, ctx.project(), bedOf(ctx.printer().model));
+  const merges = mergeInput(parts, ctx.project(), bedOf(ctx.printer().model, ctx.project().printProcess));
   const geometry = await viewport.assembly({
     serviceable: serviceableIds(parts),
     budgetMs: ASSEMBLY_BUDGET_MS,

@@ -121,7 +121,7 @@ export function usePrintJob(options: PrintJobOptions) {
 
   const sliceOn = async (plate: Plate, target: PrinterSetup): Promise<string | null> => {
     const { report } = options;
-    const bed = bedOf(target.model);
+    const bed = bedOf(target.model, options.project.printProcess);
     const moved = report && plateOnBed(plate, report.plan.bed, bed);
 
     if (!report || !moved) return null;

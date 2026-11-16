@@ -108,7 +108,7 @@ function issuesFor(check: PrintCheck, grams: number, supportG: number): string[]
 
 function reportPart(part: ScenePart, shape: PartShape, ctx: { project: ProjectSettings; printer: PrinterSetup }) {
   const { measure } = shape;
-  const check = choosePose(shape.check, bedOf(ctx.printer.model), part.print);
+  const check = choosePose(shape.check, bedOf(ctx.printer.model, ctx.project.printProcess), part.print);
   const material = printMaterialOf(part, ctx.project);
   const grams = filamentGrams(measure, material, ctx.project.infillPct);
   const supportG = (check.supportMm3 * SUPPORT_FILL * MATERIAL_DENSITY[material]) / 1000;
@@ -186,7 +186,7 @@ export function reportFromShapes(
       firstStep: firstStep.get(r.id),
     })),
     ctx.printer,
-    bedOf(ctx.printer.model),
+    bedOf(ctx.printer.model, ctx.project.printProcess),
     printSettingsKey(ctx.project),
   );
   const plates: PrintReport['plates'] = {};

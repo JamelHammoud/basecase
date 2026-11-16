@@ -39,6 +39,6 @@ A row appears only for parts that:
 - Touch each other
 - Are joined only by screws and inserts
 
-Basecase also offers the merge only when the robot still comes apart in order, no servo gets sealed in, and the merged part fits your printer's bed with no more than 2 cm³ of extra support.
+Basecase also offers the merge only when the robot still comes apart in order, no servo gets sealed in, and the merged part fits your printer's bed with no more than 2 cm³ of extra support. That fit includes supported obstacle envelopes and the selected quality preset's supplied brim clearance.
 
 While Print mode is open, you can also choose **Merge** with the part names from [[⌘K]]. Or ask the agent to merge them. In Layers, the merged part keeps the parts it was made from under it, so you can still move or resize them.

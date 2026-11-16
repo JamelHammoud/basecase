@@ -565,6 +565,8 @@ The agent builds a Case app the way a person would with a web page: it writes a 
 
 ## Performance: case facts and world geometry
 
+- **Arm discovery retains candidate chains.** `cases/robotFit.ts` builds each eligible leaf's movable chain once, returns the first tagged arm immediately and retains the first untagged chain as fallback. The selected record retains the terminal leaf for hand discovery and its movable chain for reach and anchor calculations. Leaf order, wheel and jaw exclusions, and the two-joint minimum stay unchanged. [Evidence](../notes/performance-cases.md#arm-discovery-retains-candidate-chains).
+
 Measurements and limits: [Case facts and world geometry performance evidence](../notes/performance-cases.md).
 
 - **Case facts accumulate occupancy during classification.** `cases/caseFacts.ts` removes a filtered mover list for every marker and the copied and filtered score lists on every read. Marker counts and `in` scores use one occupancy map, and `out` scores count departures in the existing pose traversal. Live play, headless runs and saved-try scoring share this path. [Evidence](../notes/performance-cases.md#case-facts-accumulate-occupancy-during-classification).

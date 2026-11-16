@@ -49,3 +49,9 @@ Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performanc
 ## Rig group adoption indexes groups once per pass
 
 `kinematicsGroups.test.ts` checks assignments and bounds group-property reads below 12,000 for 600 parts in one or 200 groups, with moving links and base-only mounts. The moving-link fixtures previously took 719,999 and 481,000 reads.
+
+## Four-bar derivative probes share residual storage
+
+`linkageClosure.test.ts` compares all path errors and nine penalties against the previous calculation across 200 generated trials and their edits. It also checks changed bounds and workspace lengths, independent result ownership, failed closures, tangencies and nonfinite inputs. Existing linkage pipeline tests cover complete synthesis and ranking.
+
+For five- and twelve-point paths, the Jacobian probes 14 and 21 parameters. The previous residual assembly constructed six arrays per probe: path errors, three other links, four links, mapped link penalties, bound penalties and the concatenated result. The new assembly constructs one residual workspace per Jacobian, replacing 84 and 126 arrays respectively. Decoded geometry, closure results and derivative columns still allocate. These are source-derived allocation counts, without timing assertions or a claim about complete synthesis time.

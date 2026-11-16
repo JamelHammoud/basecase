@@ -33,7 +33,7 @@ function previousClamped(l: FourBar, theta: number): { p: Vec2; miss: number } {
   return { p: couplerOffset(b, c, l.point, l.coupler), miss };
 }
 
-function previousPathResiduals(x: Float64Array, problem: FitProblem): number[] {
+function previousResiduals(x: Float64Array, problem: FitProblem): number[] {
   const l = decode(x, problem.targets.length, problem.direction);
   const cos = Math.cos(l.angle);
   const sin = Math.sin(l.angle);
@@ -50,7 +50,22 @@ function previousPathResiduals(x: Float64Array, problem: FitProblem): number[] {
     miss += sample.miss;
   });
 
-  return [...out, 10 * miss];
+  const others = [l.ground, l.coupler, l.rocker];
+  const longest = Math.max(...others);
+  const rest = others.reduce((sum, value) => sum + value, 0) - longest;
+  const { minLink, maxLink } = problem.bounds;
+  const over = (value: number) => Math.max(0, value);
+  const sweep = Math.abs(l.thetas[l.thetas.length - 1] - l.thetas[0]);
+
+  return [
+    ...out,
+    10 * miss,
+    10 * over(sweep - 2 * Math.PI * 0.97),
+    10 * over(l.crank * 1.02 - Math.min(...others)),
+    10 * over(l.crank + longest - rest + 0.02 * l.crank),
+    ...[l.ground, l.crank, l.coupler, l.rocker].map((value) => 10 * (over(minLink - value) + over(value - maxLink))),
+    10 * over(Math.hypot(l.point[0], l.point[1]) - maxLink),
+  ];
 }
 
 const trial = (links: Links, count: number, direction: 1 | -1): FitLinkage => ({
@@ -84,12 +99,40 @@ describe('four-bar fit closure', () => {
       const problem = problemFor(count, direction);
       const saved = x.slice();
 
-      expect(residuals(x, problem).slice(0, count * 2 + 1)).toEqual(previousPathResiduals(x, problem));
+      expect(residuals(x, problem)).toEqual(previousResiduals(x, problem));
       expect(x).toEqual(saved);
 
       x[3 + (i % 4)] += 0.5;
-      expect(residuals(x, problem).slice(0, count * 2 + 1)).toEqual(previousPathResiduals(x, problem));
+      expect(residuals(x, problem)).toEqual(previousResiduals(x, problem));
     }
+  });
+
+  it('reuses probe storage across changed sizes and bounds without aliasing independent results', () => {
+    const workspace = Array.from({ length: 100 }, () => NaN);
+    const links = { ground: 40, crank: 20, coupler: 50, rocker: 50 };
+    const firstProblem = problemFor(12, 1);
+    const firstX = encode(trial(links, 12, 1), 1);
+    const independent = residuals(firstX, firstProblem);
+    const saved = [...independent];
+
+    for (const count of [12, 5, 9, 6, 12]) {
+      const direction = count % 2 ? -1 : 1;
+      const problem = problemFor(count, direction);
+      const x = encode(trial(links, count, direction), direction);
+
+      problem.bounds = { minLink: 30, maxLink: 45 };
+      x[7] = 400;
+      x[10] = 2;
+
+      const actual = residuals(x, problem, workspace);
+
+      expect(actual).toBe(workspace);
+      expect(actual).toEqual(previousResiduals(x, problem));
+      expect(actual).toHaveLength(count * 2 + 9);
+      expect(independent).toEqual(saved);
+    }
+
+    expect(residuals(firstX, firstProblem)).toEqual(saved);
   });
 
   it.each([
@@ -112,7 +155,7 @@ describe('four-bar fit closure', () => {
         expect(closure(l, theta)).toEqual(previousClosure(l, theta));
       }
 
-      expect(residuals(x, problem).slice(0, 25)).toEqual(previousPathResiduals(x, problem));
+      expect(residuals(x, problem)).toEqual(previousResiduals(x, problem));
     },
   );
 
@@ -127,7 +170,7 @@ describe('four-bar fit closure', () => {
     const cos = vi.spyOn(Math, 'cos');
 
     try {
-      const expected = previousPathResiduals(x, problem);
+      const expected = previousResiduals(x, problem);
 
       expect(sin).toHaveBeenCalledTimes(25 + failed);
       expect(cos).toHaveBeenCalledTimes(25 + failed);
@@ -138,7 +181,7 @@ describe('four-bar fit closure', () => {
 
       expect(sin).toHaveBeenCalledTimes(25);
       expect(cos).toHaveBeenCalledTimes(25);
-      expect(actual.slice(0, 25)).toEqual(expected);
+      expect(actual).toEqual(expected);
     } finally {
       sin.mockRestore();
       cos.mockRestore();

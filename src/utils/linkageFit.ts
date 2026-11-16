@@ -78,51 +78,59 @@ function clampedClosure(l: FourBar, theta: number): { p: Vec2; miss: number } {
   return { p: couplerOffset(b, c, l.point, l.coupler), miss };
 }
 
-function boundResiduals(l: FitLinkage, { minLink, maxLink }: FitBounds): number[] {
-  const others = [l.ground, l.coupler, l.rocker];
-  const longest = Math.max(...others);
-  const rest = others.reduce((s, v) => s + v, 0) - longest;
-  const links = [l.ground, l.crank, l.coupler, l.rocker];
+const linkResidual = (v: number, { minLink, maxLink }: FitBounds) => PENALTY * (over(minLink - v) + over(v - maxLink));
 
-  return [
-    PENALTY * over(l.crank * (1 + GRASHOF_MARGIN) - Math.min(...others)),
-    PENALTY * over(l.crank + longest - rest + GRASHOF_MARGIN * l.crank),
-    ...links.map((v) => PENALTY * (over(minLink - v) + over(v - maxLink))),
-    PENALTY * over(Math.hypot(l.point[0], l.point[1]) - maxLink),
-  ];
+function boundResiduals(out: number[], l: FitLinkage, bounds: FitBounds): void {
+  const longest = Math.max(l.ground, l.coupler, l.rocker);
+  const rest = l.ground + l.coupler + l.rocker - longest;
+  const at = out.length - 7;
+
+  out[at] = PENALTY * over(l.crank * (1 + GRASHOF_MARGIN) - Math.min(l.ground, l.coupler, l.rocker));
+  out[at + 1] = PENALTY * over(l.crank + longest - rest + GRASHOF_MARGIN * l.crank);
+  out[at + 2] = linkResidual(l.ground, bounds);
+  out[at + 3] = linkResidual(l.crank, bounds);
+  out[at + 4] = linkResidual(l.coupler, bounds);
+  out[at + 5] = linkResidual(l.rocker, bounds);
+  out[at + 6] = PENALTY * over(Math.hypot(l.point[0], l.point[1]) - bounds.maxLink);
 }
 
-export function residuals(x: Float64Array, problem: FitProblem): number[] {
+export function residuals(x: Float64Array, problem: FitProblem, out: number[] = []): number[] {
   const { targets, direction, bounds } = problem;
   const l = decode(x, targets.length, direction);
   const cos = Math.cos(l.angle);
   const sin = Math.sin(l.angle);
-  const out: number[] = [];
   let miss = 0;
 
+  out.length = targets.length * 2 + 9;
   targets.forEach((t, i) => {
     const { p, miss: m } = clampedClosure(l, l.thetas[i]);
 
-    out.push(l.origin[0] + p[0] * cos - p[1] * sin - t[0], l.origin[1] + p[0] * sin + p[1] * cos - t[1]);
+    out[i * 2] = l.origin[0] + p[0] * cos - p[1] * sin - t[0];
+    out[i * 2 + 1] = l.origin[1] + p[0] * sin + p[1] * cos - t[1];
     miss += m;
   });
 
   const sweep = Math.abs(l.thetas[l.thetas.length - 1] - l.thetas[0]);
 
-  return [...out, PENALTY * miss, PENALTY * over(sweep - MAX_SWEEP), ...boundResiduals(l, bounds)];
+  out[targets.length * 2] = PENALTY * miss;
+  out[targets.length * 2 + 1] = PENALTY * over(sweep - MAX_SWEEP);
+  boundResiduals(out, l, bounds);
+
+  return out;
 }
 
 const sumSquares = (r: number[]) => r.reduce((s, v) => s + v * v, 0);
 
 function jacobian(x: Float64Array, r0: number[], problem: FitProblem): Float64Array[] {
   const columns: Float64Array[] = [];
+  const workspace: number[] = [];
 
   for (let k = 0; k < x.length; k++) {
     const saved = x[k];
 
     x[k] = saved + STEP_H;
 
-    const r = residuals(x, problem);
+    const r = residuals(x, problem, workspace);
 
     x[k] = saved;
     columns.push(Float64Array.from(r, (v, i) => (v - r0[i]) / STEP_H));

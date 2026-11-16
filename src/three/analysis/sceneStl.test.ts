@@ -101,4 +101,25 @@ describe('streamed STL transforms', () => {
 
     expect(sceneStl(instances, () => solid)).toEqual(previousScene(instances, solids));
   });
+
+  it('preserves scene facets spanning mesh boundaries and truncates the combined final facet', () => {
+    const lengths = [[6, 3], [12, 9], [0, 6, 0, 3], [1, 8], [8, 8, 8], [10, 17, 4], [0, 0], [3]];
+
+    for (const sizes of lengths) {
+      const solids = new Map(
+        sizes.map((length, i) => [
+          String(i),
+          new ShapeSolid(Float32Array.from({ length }, (_, j) => Math.sin(i * 13 + j) * 17)),
+        ]),
+      );
+      const instances = sizes.map((_, i) => ({ key: String(i), matrix: matrixFor(i + 1) }));
+
+      expect(
+        sameBytes(
+          sceneStl(instances, (key) => solids.get(key)!),
+          previousScene(instances, solids),
+        ),
+      ).toBe(true);
+    }
+  });
 });

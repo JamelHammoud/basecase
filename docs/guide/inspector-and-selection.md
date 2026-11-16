@@ -181,6 +181,8 @@ Measurements and limits: [Sketch performance evidence](../notes/performance-sket
 
 - **Sketch profiles measure each loop's area once.** `utils/sketch/profile.ts` retains the largest area while rejecting degenerate loops, instead of remeasuring both candidates at every comparison. The Sketch panel and solid creation, including edits, share this path. [Evidence](../notes/performance-sketch.md#sketch-profiles-measure-each-loops-area-once).
 
+- **Sketch weights each Jacobian row once.** `utils/sketch/leastNorm.ts` fills one reusable row workspace before preparing its diagonal terms and off-diagonal products. Multiplication association and diagonal addition order remain unchanged. `dampedSteps.test.ts` retains exact step parity, singular recovery, source preservation and bounded preparation reads. [Evidence](../notes/performance-sketch.md#sketch-weights-each-jacobian-row-once).
+
 - **Damping trials reuse unchanged matrix products.** Sketch and four-bar fitting prepare their weighted products or normal equations once per linearization, as IK and servo fitting already do. A rejected trial changes only damping, and an accepted step prepares the next system. [Evidence](../notes/performance-sketch.md#damping-trials-reuse-unchanged-matrix-products).
 
 - **Sketch deletion avoids repeated membership searches.** `utils/sketch/edit.ts` checks selected entity ids once for reference protection, then records discarded point ids while retaining fixed and used points. No retained-point search runs per source point. [Evidence](../notes/performance-sketch.md#sketch-deletion-avoids-repeated-membership-searches).

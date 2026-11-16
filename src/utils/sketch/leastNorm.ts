@@ -1,18 +1,23 @@
 import { solveSquareInPlace, type Matrix } from './linalg';
 
 function weightedProducts(j: Matrix, weights: number[]) {
-  const diagonal = j.map((row) => weights.map((w, c) => row[c] * w * row[c]));
-  const matrix = j.map((row, p) =>
-    j.map((other, q) => {
+  const diagonal: Matrix = [];
+  const weightedRow = new Array<number>(weights.length);
+  const matrix = j.map((row, p) => {
+    for (let c = 0; c < weights.length; c++) weightedRow[c] = row[c] * weights[c];
+
+    diagonal.push(weightedRow.map((value, c) => value * row[c]));
+
+    return j.map((other, q) => {
       if (p === q) return 0;
 
       let sum = 0;
 
-      for (let c = 0; c < weights.length; c++) sum += row[c] * weights[c] * other[c];
+      for (let c = 0; c < weights.length; c++) sum += weightedRow[c] * other[c];
 
       return sum;
-    }),
-  );
+    });
+  });
 
   return { matrix, diagonal };
 }

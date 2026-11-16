@@ -2,6 +2,16 @@
 
 Implementation: [Dataset preparation](../guide/cases.md#performance-dataset-preparation). Shared requirements: [Performance](../guide/performance.md).
 
+## Dataset slot columns assemble together
+
+Multi-slot `datasetJoints` now appends joint references and prefixed names into the final output arrays and records group boundaries from the accumulated length. The previous implementation retained per-slot records, constructed a starts array through copied prefix reductions, and flattened joints and names separately. Searching `src/` found one slot-column constructor. `episodeData` and `buildDataset` share it, covering episode rows and metadata for both LeRobot versions.
+
+On November 16, 2026, a local Node v26.13.0 probe on macOS arm64 with an Apple M5 Pro compared the previous complete helper with the replacement. The fixture had 24 model joints across three robots, every fourth joint passive, and four slots selecting robots 0, 1, 2 and 0. After 10,000 warmup calls per version, nine alternating batches of 10,000 calls gave median batch means of 0.001570 ms before and 0.000949 ms after. Output equality was checked before timing. At four slots the replacement removes four prefix arrays holding six slot references, the four slot records and their containing array, the starts array, and four temporary prefixed-name arrays. Per-slot robot lookup and joint filtering remain.
+
+`episodes.test.ts` compares 80 generated layouts against the previous constructor, with zero through four slots, missing robots, passive joints, repeated names, reversed membership lists and preserved input objects. A separate case checks repeated robot selections, an empty group between populated groups, slot renaming and model reordering between calls. Existing `jointIndices.test.ts` covers recorded state/action alignment, and `lerobot.test.ts` covers two-arm parquet rows and modality ranges.
+
+These are isolated synchronous helper timings, not complete export latency or CI results. Cases currently permit at most four slots, so prefix-copy savings are bounded and small. No timing assertion or quarantine condition was added. Single-slot behavior, column order, metadata and the export flow stay unchanged, with no screen or interaction change.
+
 ## Quality flags share frame validity
 
 Gap and idle flag detection previously checked the same timestamp, joint-position row and body-pose row separately for NaNs. The shared label pass now computes one byte per frame and shares it across both consumers. Searching `src/` found these two consumers in `datasets/qualityFlags.ts`, reached through `workspace/tryLabelPass.ts`. No other quality flag frame-validity scan remains. The mask belongs to one call, so later edits cannot reuse stale validity.

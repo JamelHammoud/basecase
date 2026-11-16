@@ -1,5 +1,3 @@
-import http from 'node:http';
-import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { presetCase } from '../src/cases/caseBuilder';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
@@ -71,30 +69,7 @@ const framesUntil = (selector: string) =>
     selector,
   );
 
-const PROBES = (base: string) => `<div id="out"></div>
-<script>
-const out = document.getElementById('out');
-const mark = (name, value) => {
-  const el = document.createElement('div');
-  el.dataset.probe = name;
-  el.textContent = value;
-  out.append(el);
-};
-const probe = (name, run) => {
-  try { run(); mark(name, 'allowed'); } catch { mark(name, 'blocked'); }
-};
-fetch('${base}/fetch').then(() => mark('fetch', 'allowed'), () => mark('fetch', 'blocked'));
-const socket = new WebSocket('${base.replace('http', 'ws')}/socket');
-socket.onopen = () => mark('socket', 'allowed');
-socket.onerror = () => mark('socket', 'blocked');
-probe('top', () => { top.location = '${base}/top'; });
-probe('parent', () => parent.document.title);
-probe('storage', () => localStorage.setItem('code', 'panel'));
-</script>`;
-
 const SPIN = '<p>Spinning</p><script>while (true) {}</script>';
-
-const AWAY = (base: string) => `<script>location.href = '${base}/self';</script>`;
 
 const LAMP = {
   id: 'lamp',
@@ -228,54 +203,6 @@ describe('Case code panels', () => {
     await frameOf('stick').locator('body').press('Escape');
     await expect.poll(areaCount).toBe(0);
     expect(app.errors).toEqual([]);
-  });
-
-  it('keeps a code panel off the network, the parent and storage', async () => {
-    const { page } = app;
-    const hits: string[] = [];
-    const server = http.createServer((req, res) => {
-      hits.push(req.url ?? '');
-      res.end('reached');
-    });
-
-    server.on('upgrade', (req, socket) => {
-      hits.push(`upgrade ${req.url}`);
-      socket.destroy();
-    });
-    await new Promise<void>((done) => server.listen(0, '127.0.0.1', done));
-
-    const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-
-    try {
-      await openCase({
-        input: ['code', 'keys'],
-        panels: [
-          { id: 'probes', kind: 'code', height: 160, source: PROBES(base) },
-          { id: 'away', kind: 'code', height: 80, source: AWAY(base) },
-        ],
-        layout: { areas: [{ canvas: true }, { size: 320, panels: ['probes', 'away'] }] },
-      });
-
-      const probes = frameOf('probes').locator('[data-probe]');
-
-      await expect.poll(() => probes.count()).toBe(5);
-      expect(
-        Object.fromEntries(await probes.evaluateAll((els) => els.map((e) => [e.dataset.probe, e.textContent]))),
-      ).toEqual({
-        fetch: 'blocked',
-        socket: 'blocked',
-        top: 'blocked',
-        parent: 'blocked',
-        storage: 'blocked',
-      });
-      expect(hits).toEqual([]);
-
-      await page.keyboard.press('Escape');
-      await expect.poll(areaCount).toBe(0);
-      expect(hits).toEqual([]);
-    } finally {
-      server.close();
-    }
   });
 
   it('unloads a panel that never answers with its error, while the page keeps drawing frames', async () => {

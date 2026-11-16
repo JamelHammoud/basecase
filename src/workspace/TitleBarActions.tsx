@@ -64,7 +64,6 @@ export function TitleBarActions({
           onExportStep={IS_WEB_DEMO ? undefined : () => void exports.exportStep()}
           onExportScene={() => void exports.exportScene()}
           onExportRobot={() => void exports.exportRobotPackage()}
-          onExportKit={() => void exports.exportKit()}
           onAirDrop={() => void exports.airDrop()}
           onCopyMarkdown={exports.copyBrief}
         />

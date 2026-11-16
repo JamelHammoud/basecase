@@ -1,5 +1,6 @@
 import { first, listVendors, loadVendor, parsePoints, resolvePreset } from '../../electron/print/profiles.mjs';
 import { matchesCondition } from './condition.mjs';
+import { brimSettings, obstacleSettings } from './obstacles.mjs';
 
 const MATERIALS = ['PLA', 'PETG', 'ABS', 'ASA', 'TPU'];
 const MATERIAL_ALIASES = { FLEX: 'TPU' };
@@ -38,7 +39,7 @@ function processRank(name, defaultProcess) {
   return style && name.includes(` ${style} `) ? 1 : 2;
 }
 
-function processesFor(vendor, machine) {
+function processesFor(vendor, machine, withObstacles) {
   const byLayer = new Map();
 
   for (const name of instantiated(vendor.process)) {
@@ -50,13 +51,14 @@ function processesFor(vendor, machine) {
     const current = byLayer.get(layer);
     const rank = processRank(name, machine.default_print_profile);
 
-    if (!current || rank < current.rank) byLayer.set(layer, { name, rank });
+    if (!current || rank < current.rank)
+      byLayer.set(layer, { name, rank, brim: withObstacles ? brimSettings(preset) : {} });
   }
 
   return [...byLayer.entries()]
     .sort(([a], [b]) => a - b)
     .filter(([layer]) => layer >= 0.08 && layer <= 0.32)
-    .map(([layer, { name }]) => ({ name, layer }));
+    .map(([layer, { name, brim }]) => ({ name, layer, ...brim }));
 }
 
 function filamentScore(name, material) {
@@ -111,6 +113,8 @@ function modelEntry(vendor, model, source) {
   if (bed.length < 3 || !height) return null;
 
   const exclude = parsePoints(machine.bed_exclude_area);
+  const obstacles = obstacleSettings(machine);
+  const process = resolvePreset(vendor.process, machine.default_print_profile);
 
   return {
     id: slug(model.name),
@@ -119,6 +123,8 @@ function modelEntry(vendor, model, source) {
     bed: points(bed),
     height,
     keepOut: exclude.length >= 3 ? [points(exclude)] : [],
+    ...obstacles,
+    ...(obstacles.obstacles ? brimSettings(process) : {}),
     nozzles: String(model.nozzle_diameter ?? first(machine.nozzle_diameter) ?? '0.4')
       .split(';')
       .map(Number)
@@ -131,7 +137,7 @@ function modelEntry(vendor, model, source) {
     presets: {
       machine: machineName,
       process: machine.default_print_profile ?? null,
-      processes: processesFor(vendor, machine),
+      processes: processesFor(vendor, machine, !!obstacles.obstacles),
       filaments: filamentsFor(vendor, machine),
     },
   };

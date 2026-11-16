@@ -143,6 +143,7 @@ export function usePrinting(options: PrintingOptions) {
   };
 
   const fleet = usePrintFleet({
+    process: project.printProcess,
     printer,
     printers: options.printers,
     parts,

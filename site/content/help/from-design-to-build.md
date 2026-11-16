@@ -80,6 +80,8 @@ An imported Onshape robot can be ready to build with motions held fixed. Cylindr
 
 Print times and filament amounts are estimates until Print mode slices the plates. Basecase tests range of motion every 15°, so it can miss a clash narrower than that. Peak torque needs a trained walking policy and stays Not run without one. Falls stays Not run until the agent tips the robot over in the simulation.
 
+Printer obstacles reserve space for the full print height, even for low clips. Unsupported obstacle geometry leaves parts off the plates. [Printability estimates](/help/printability-estimates) explains these placement limits.
+
 Time keeps assembly and servo setup as estimates after slicing. It excludes delivery, failed prints and print service lead times.
 
 Open the Build tab and follow [Get a robot ready to build](/help/get-a-robot-ready-to-build).

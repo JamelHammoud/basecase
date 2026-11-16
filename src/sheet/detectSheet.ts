@@ -27,7 +27,7 @@ function facesOf(triangles: Float32Array): Face[] {
 }
 
 function candidateNormals(faces: Face[]): Vector3[] {
-  const directions = new Map<string, { normal: Vector3; sum: Vector3; area: number }>();
+  const directions = new Map<string, { normal: Vector3; sum?: Vector3; area: number }>();
 
   for (const face of faces) {
     const normal = face.normal.clone();
@@ -43,20 +43,20 @@ function candidateNormals(faces: Face[]): Vector3[] {
     const found = directions.get(key);
 
     if (found) {
+      found.sum ??= found.normal.clone().multiplyScalar(found.area);
       found.sum.addScaledVector(normal, face.area);
       found.area += face.area;
-      found.normal.copy(found.sum).normalize();
 
       continue;
     }
 
-    directions.set(key, { normal, sum: normal.clone().multiplyScalar(face.area), area: face.area });
+    directions.set(key, { normal, area: face.area });
   }
 
   return [...directions.values()]
     .sort((a, b) => b.area - a.area)
     .slice(0, 12)
-    .map(({ normal }) => normal);
+    .map(({ normal, sum }) => sum?.normalize() ?? normal);
 }
 
 function frame(normal: Vector3) {

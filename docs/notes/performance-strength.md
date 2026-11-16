@@ -38,6 +38,14 @@ Implementation: [Strength and Lighten](../guide/build.md#performance-strength-an
 
 `material.test.ts` compares all four materials against independent stress and strain tensor rotation across 67 normals, plus isotropic invariance, edited inputs and independent outputs. A scratch comparison matched 3,248 complete matrices exactly against the previous calculation, including zero, nonfinite and extremely scaled normals. Across 300 and 600 transforms, row reductions fell from 77,400 and 154,800 to 23,400 and 46,800. These are operation counts without timing assertions or a claim about complete Strength or Lighten time.
 
+## Material inversion retains its augmented rows
+
+A whole-app search found one layered-material compliance inversion, in `strength/material.ts`. Strength solves, stress sampling and Lighten load preparation all call it through `stiffnessFor`. Other inverses serve different matrix shapes and algorithms.
+
+A scratch comparison matched 3,816 complete stiffness matrices exactly against the previous implementation. It covered all four catalog materials, 100 generated stiffness and Poisson combinations, zero stiffness, nonfinite Poisson values and 36 axis, oblique, zero and nonfinite normals. Instrumented maps over twelve-value augmented rows fell from 36 to zero per inversion. Six pivot normalizations and thirty elimination updates now write their existing rows. Matrix setup, row swaps and result extraction still allocate their original storage.
+
+`material.test.ts` retains independent tensor-rotation coverage across all four materials and 67 normals, isotropic invariance, edited inputs and independent outputs. These are numerical comparisons and allocation counts, without a timing assertion or a claim about complete Strength or Lighten latency. Scratch sources and results remain local in `scratch/material-inversion.test.mjs` and `scratch/material-inversion-results.json`.
+
 ## Elastic iterations accumulate products during existing passes
 
 `cg.test.ts` checks known displacements, independently measured residuals, changed loads, source preservation, truncated solves and empty, unloaded and fully fixed systems across all four materials. A scratch comparison matched complete solver results exactly in 290 cases. On shared macOS arm64 hardware with Node 26.13.0, five-solve batches of 100 iterations took medians of 17.61 ms before and 17.10 ms after on 300 cells, and 35.20 ms before and 33.97 ms after on 600 cells. Each used 11 alternating measurements after five warmups per implementation. The change removes two full vector scans per iteration and one initial scan. These measure the solver alone, without CI timing assertions or a claim about complete Strength or Lighten time.

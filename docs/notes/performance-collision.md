@@ -2,6 +2,12 @@
 
 Implementation: [Collision analysis](../guide/build.md#performance-collision-analysis). Shared requirements: [Performance](../guide/performance.md).
 
+## Joint sweeps prepare their pivot frame once
+
+`sweepRotation.test.ts` compares exact matrices against the previous calculation across 100 seeded pivot and axis combinations, repeated angles and degenerate or nonfinite axes. Separate preparations retain independent workspaces and read edited origins and axes. A real two-box sweep compares complete batched reports against independent single-angle sweeps, including obstacle interference, floor penetration, repeated angles, empty angle lists and unchanged source placements.
+
+The 300- and 600-angle fixtures reduce axis normalizations from 300 and 600 to one, and translation builds from 600 and 1,200 to two. The composed rotation retains one matrix identity across all angles. Rotation preparation owns four matrices per sweep instead of allocating three per angle, while moving placements still own their separate matrices. These are operation and storage counts, without timing assertions or a claim about complete collision-check time. No preparation is shared between sweeps, and per-angle collision and floor queries retain their existing work.
+
 ## Rotor classification prepares its output line once
 
 `lineDistance.test.ts` compares Three's unbounded projections across 12,000 seeded queries, degenerate lines, nonfinite values and independent preparations. Its 300- and 600-probe fixtures reduce dot products from 600 and 1,200 to 301 and 601. `rotorSplit.test.ts` compares complete partitions across 90 translated and scaled meshes near axis and reach limits, preserving source arrays and cached results. These are operation counts and result comparisons, without timing assertions or a claim about complete check time.

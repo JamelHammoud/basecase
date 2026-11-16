@@ -9,10 +9,11 @@ import { routePath, routeTopology, type RouteEndpoint, type RouteObstacle } from
 import type { RelativeBound, RoutePoint } from './routeCollision';
 import { relativeMotionBound } from './routeBound';
 import { pathLength } from './routeMeasure';
+import { indexRouteSpecs } from './routeSpecs';
 import { poseTransforms, routeMotion, routePoses, type RouteMotion } from './routeMotion';
 
 interface RouteContext {
-  scene: WiringScene;
+  specOf: ReturnType<typeof indexRouteSpecs>;
   motion: RouteMotion;
   bound: RelativeBound;
   obstacles: RouteObstacle[];
@@ -42,16 +43,6 @@ function endpoint(ctx: RouteContext, end: NetEnd): RouteEndpoint | null {
     axis: new THREE.Vector3(...port.axis).transformDirection(mount).toArray() as PortVec,
     obstacleId: end.id!,
   };
-}
-
-function specOf(scene: WiringScene, net: Net): WiringRouteSpec | undefined {
-  return scene.project.wiring?.find(
-    (spec) =>
-      spec.from.partId === net.from.id &&
-      spec.from.port === net.from.port?.name &&
-      spec.to.partId === net.to.id &&
-      spec.to.port === net.to.port?.name,
-  );
 }
 
 const transformed = (point: PortVec, matrix: THREE.Matrix4): PortVec =>
@@ -132,7 +123,7 @@ function stockFor(net: Net, requiredMm: number, spec: WiringRouteSpec | undefine
 function routeOne(ctx: RouteContext, net: Net): CableRoute {
   const from = endpoint(ctx, net.from);
   const to = endpoint(ctx, net.to);
-  const spec = specOf(ctx.scene, net);
+  const spec = ctx.specOf(net);
 
   if (!from || !to) return unresolved('Port geometry missing');
 
@@ -198,7 +189,7 @@ function stockReason(status: ReturnType<typeof selectCableStock>['status']): str
 export function routeNetlist(scene: WiringScene, netlist: Netlist, obstacles: RouteObstacle[]): Netlist {
   const motion = routeMotion(scene);
   const ctx: RouteContext = {
-    scene,
+    specOf: indexRouteSpecs(scene.project.wiring),
     motion,
     bound: relativeMotionBound(motion),
     obstacles,

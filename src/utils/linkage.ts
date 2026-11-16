@@ -17,7 +17,7 @@ import { seededRandom, type Random } from './seededRandom';
 import { planarDiameter } from './planarDiameter';
 
 export type { FourBar, GrashofClass, PlacedFourBar, Vec2 } from './linkageKinematics';
-export { couplerCurve, couplerPoint, fourBarPose, linkAngles, placed } from './linkageKinematics';
+export { couplerCurve, couplerPoint, fourBarPose, linkAngle, placed } from './linkageKinematics';
 
 export const MIN_PATH_POINTS = 5;
 export const MAX_PATH_POINTS = 12;

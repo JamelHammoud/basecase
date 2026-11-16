@@ -36,6 +36,12 @@ The targeted check passed formatting, lint, docs, site copy and types, then 351 
 
 A local Node 26.13.0 measurement on shared macOS hardware consumed 40,000 events across 4,001 ticks, including the initial copy and sort. After three warmups, the median of nine runs was 2,135.40 ms with `shift()` and 1.96 ms with the cursor. This measures scheduling alone, not physics, and adds no CI timing assertion.
 
+### Pending deadlines remain cached between ticks
+
+`src/utils/timelineCursor.test.ts` exercises 100 events spaced 1,000 time units apart across 100,001 integer ticks. After sorting, the former loop reads timestamps 100,100 times. Retaining the next deadline needs 100 reads, including the first deadline prepared in the constructor. A second sparse cursor advances alongside it to check independent scheduling. The existing 20,000-event fixture now asserts exactly 19,999 timestamp reads after construction, rather than allowing an extra read per tick.
+
+These are operation counts, not timings or complete simulation speed measurements. Sorting still calls the timestamp accessor, event delivery stays linear, and each cursor adds one scalar deadline. All production accessors read fixed event times or return numeric frame times. No caller edits scheduled times during playback. The cursor still releases consumed event references. Stable ties, the 1 ns due boundary, backward ticks and empty schedules retain coverage. No browser flow, timeout or quarantine changes.
+
 ## Wheel mixing writes directly into its output
 
 Manual rover driving and route playback were the two differential-wheel mixers in the app. Both built an outer entry array and one pair array per wheel on every tick. Route playback also discarded its speed record after writing controls. The shared mixer now writes each wheel speed into a record directly. Manual output remains a fresh snapshot, while each route runner owns one reusable speed record. No output record escapes route playback.

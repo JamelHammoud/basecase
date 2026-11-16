@@ -118,7 +118,7 @@ function spendLine(stats) {
   return `Spent ${money(spent)}${reused.length ? `; reused ${reused.join(' and ')} from earlier runs on the same harness` : ''}.`;
 }
 
-export function compareMarkdown({ stats, models, labels, effort, plan, git, error }) {
+export function compareMarkdown({ stats, models, labels, effort, plan, git, error, outcome }) {
   const [a, b] = labels;
   const ci = stats.ci ? `${signed(stats.ci[0])} to ${signed(stats.ci[1])}` : '—';
   const incomplete = ['deadline', 'slots', 'error', 'served', 'budget'].includes(plan.stop);
@@ -134,6 +134,13 @@ export function compareMarkdown({ stats, models, labels, effort, plan, git, erro
     ...(error ? ['', `Harness error: ${error}`] : []),
     '',
     `**${conclusion}**`,
+    ...(outcome
+      ? [
+          '',
+          `Harness outcome: ${outcome.outcome}. ${outcome.reason}`,
+          `Token reduction per successful task: ${cell(outcome.tokenReduction)}. 99% paired interval: ${outcome.tokenCi?.join(' to ') ?? 'unavailable'}. Duration increase per successful task: ${cell(outcome.durationIncrease)} seconds.`,
+        ]
+      : []),
     '',
     `Gap in pass rate (${a} − ${b}): ${signed(stats.meanDiff)}, 95% interval ${ci}. ${a} better on ${stats.wins} tasks, ${b} on ${stats.losses}, tied on ${stats.ties} (sign test p = ${cell(stats.signP)}).`,
     '',

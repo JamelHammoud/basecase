@@ -2,9 +2,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { comparison } from './fixtures/efficiency.mjs';
 
 const fixture = vi.hoisted(() => ({
   model: 'claude-opus-5-5',
+  tasks: [{ id: 'A1' }],
   remove: vi.fn(),
   openSlotPool: vi.fn(),
   closeAppModules: vi.fn(),
@@ -22,7 +24,7 @@ vi.mock('../archive.mjs', async (importOriginal) => ({
 vi.mock('../slots.mjs', () => ({ openSlotPool: fixture.openSlotPool }));
 vi.mock('../micro/once.mjs', () => ({ runMicroOnce: fixture.runMicroOnce }));
 vi.mock('../micro/scenes.mjs', () => ({ closeAppModules: fixture.closeAppModules }));
-vi.mock('../micro/tasks/index.mjs', () => ({ selectTasks: () => [{ id: 'A1' }], runnable: () => true }));
+vi.mock('../micro/tasks/index.mjs', () => ({ selectTasks: () => fixture.tasks, runnable: () => true }));
 vi.mock('./against.mjs', async (importOriginal) => ({
   ...(await importOriginal()),
   checkoutRef: () => ({ label: 'main', commit: 'abc1234', remove: fixture.remove }),
@@ -104,7 +106,7 @@ describe('comparison command', () => {
   });
 });
 
-it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance'])(
+it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance', 'efficiency'])(
   'checks %s through the comparison command',
   async (scenario) => {
     vi.resetModules();
@@ -136,6 +138,19 @@ it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance'])(
         }),
       })),
     );
+
+    if (scenario === 'efficiency') {
+      fixture.tasks = Array.from({ length: 6 }, (_, i) => ({ id: `T${i}` }));
+      fixture.runMicroOnce.mockImplementation(async ({ task, out }) => {
+        const arm = out.dir.includes('working-tree') ? 0 : 1;
+        const run = comparison().results.find(
+          (row) => row.task === task.id && row.model === (arm ? 'main' : 'working tree'),
+        );
+
+        return { ...run, grade: { status: run.status, checks: run.checks } };
+      });
+    }
+
     process.argv = [
       process.execPath,
       'bench/compare.mjs',
@@ -178,6 +193,8 @@ it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance'])(
       expect(fixture.runMicroOnce.mock.calls.every(([options]) => typeof options.turn === 'function')).toBe(true);
     }
 
+    if (scenario === 'efficiency') expect(result.outcome.outcome).toBe('efficiency-win');
+
     if (scenario === 'wrong snapshot') {
       expect(result.plan.stop).toBe('error');
       expect(fixture.runMicroOnce).not.toHaveBeenCalled();
@@ -187,5 +204,6 @@ it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance'])(
 
     vi.unstubAllGlobals();
     fixture.model = 'claude-opus-5-5';
+    fixture.tasks = [{ id: 'A1' }];
   },
 );

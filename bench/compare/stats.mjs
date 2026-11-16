@@ -21,12 +21,12 @@ function rng(seed) {
   };
 }
 
-export function bootstrapCI(values, { resamples = 4000, seed = 7, level = 0.95 } = {}) {
+export function bootstrapCI(values, { resamples = 4000, seed = 7, level = 0.95, statistic = mean } = {}) {
   if (values.length < 2) return null;
 
   const next = rng(seed);
   const means = Array.from({ length: resamples }, () =>
-    mean(Array.from({ length: values.length }, () => values[Math.floor(next() * values.length)])),
+    statistic(Array.from({ length: values.length }, () => values[Math.floor(next() * values.length)])),
   ).sort((a, b) => a - b);
   const tail = (1 - level) / 2;
 

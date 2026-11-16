@@ -970,3 +970,8 @@ The clean student editing and Submit declaration is quarantined only on Windows 
 The classroom inspection walkthrough matches Build with its optional blocker count in the accessible tab name. It retains both the selected-tab assertion and focus on the submitted design's failing Check.
 
 Submission deletion identifies the revision by fingerprint when confirmation completes, so a grading update cannot replace the selected tile out from under the action. `classroom/removal.test.ts` covers confirmation while a tile changes. Export checks the parts and project again after worker preparation and any scene flush, refusing a file if the source changed. `workspace/classroomActions.test.ts` covers both source changes and missing catalog geometry.
+
+
+## Comparing linked design versions
+
+Scene History compares open designs through existing Checks, BOM, Weight and Compare With paths. When both robots fit the active Case, that single Case is run for both. Results carry the measured design fingerprint. A changed fingerprint refuses a pending merge. Merging geometry does not import the incoming design's local tries, policies, skills, readiness decisions or handoff proofs. Ordinary Case and evidence freshness checks still own the verdict. `caseCompare.test.ts` checks the fingerprint alongside the existing shared Case, cost and mass pipeline. Graph and selective-merge coverage is in [Scene tabs](scene-tabs.md#versions-linked-branches-and-selective-merge).

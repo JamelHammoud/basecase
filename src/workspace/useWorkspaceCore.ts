@@ -1,3 +1,4 @@
+import { useWorkspaceVersioning } from './useWorkspaceVersioning';
 import { useVisionScope } from '../cameras/visionScope';
 import { useScenePrinting } from './usePrinting';
 import { useTriesWork } from './useDatasets';
@@ -14,9 +15,8 @@ import { useRobotUpgrade } from './useRobotUpgrade';
 import { useSceneDocument } from './useSceneDocument';
 import { useSelectionActions } from './useSelectionActions';
 import { useSimTraining } from './useSimTraining';
-import { useCaseStudies } from './useCaseStudies';
+import { useWorkspaceStudies } from './useWorkspaceStudies';
 import { useToast } from './useToast';
-import { useToolMode } from './useToolMode';
 import { useWorkspaceDataLayers } from './useWorkspaceDataLayers';
 import { useConsoleEditing } from './useConsoleEditing';
 import { useCaseRun } from './useCaseRun';
@@ -70,15 +70,18 @@ const resetStudyBeforeLoad =
     load(next, message);
   };
 
-const showStudyPanel = (tool: ReturnType<typeof useToolMode>, studio: SceneWorkspaceProps['studio']) => () => {
-  tool.setRightTab('sim');
-  studio.setIsRightOpen(true);
-};
+const versionSeedLoader =
+  (versions: { reset: (history?: string) => void }, load: ReturnType<typeof seedLoader>) =>
+  (next: WorkspaceSeed, message?: string) => {
+    versions.reset(next.history);
+    load(next, message);
+  };
 
 export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWorkspaceProps) {
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const scene = useSceneMeta(seed);
   const docs = useSceneDocument(seed);
+  const documentContext = { scene, docs, studio };
   const { parts, project, projectRef } = docs;
   const toasts = useToast(studio.openSettings);
   const { showToast } = toasts;
@@ -141,27 +144,19 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   });
 
   const { restorePose } = posing;
-  const undo = () => docs.travel({ direction: 'undo', codeOnly: caseRun.open }, restorePose);
+  const historyOptions = { seed, annotations, restorePose, codeOnly: caseRun.open };
+  const { versions, undo, redo } = useWorkspaceVersioning({ ...documentContext, ...historyOptions });
   const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo, guide });
   const repair = useRepair({ ...docs, viewportRef, guide, buildAlong, printing });
 
   const readiness = useSceneReadiness(docs, printing, studio, viewportRef);
-  const { caseCompare, study } = useCaseStudies({
-    inFront: active,
-    sim: simTraining.sim,
-    onShow: showStudyPanel(tool, studio),
-    kase: simTraining.cases.active,
-    fingerprint: readiness.fingerprint,
-    studio,
-    source: { workspaceId, sceneId: scene.sceneId, sceneName: scene.sceneName, docs, viewportRef },
-    parts,
-    project,
-    showToast,
-  });
+  const studyOptions = { active, workspaceId, viewportRef, readiness, simTraining, tool, showToast };
+  const { caseCompare, study } = useWorkspaceStudies({ ...documentContext, ...studyOptions });
 
   return {
+    versions,
     workspaceId,
     vision: useVisionScope(),
     studio,
@@ -201,8 +196,8 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     buildAlong,
     repair,
     undo,
-    redo: () => docs.travel({ direction: 'redo', codeOnly: caseRun.open }, restorePose),
-    loadSeed: resetStudyBeforeLoad(study, loadSeed),
+    redo,
+    loadSeed: versionSeedLoader(versions, resetStudyBeforeLoad(study, loadSeed)),
   };
 }
 

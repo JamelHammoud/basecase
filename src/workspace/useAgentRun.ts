@@ -16,7 +16,7 @@ import { newId } from './helpers';
 import { readinessGate } from './readinessGate';
 import { STOPPED_REASONS } from './liveRuns';
 import type { AgentCursors } from './useAgentCursors';
-import type { QueuedPrompt } from './agentLanes';
+import type { AgentLane, QueuedPrompt } from './agentLanes';
 import type { AgentLanes } from './useAgentLanes';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -47,6 +47,26 @@ const promptNote = ({ docs, caseRun, simTraining }: WorkspaceCore) =>
     runningCaseNote(caseRun.live ? simTraining.cases.active : null),
   );
 
+async function resumeAgentSession(options: {
+  id: string;
+  resume: string;
+  key: string;
+  setSession: (id: string, session: string) => void;
+}) {
+  const resumed = await platformBridge.resumeAcp(options.resume, options.key).catch(() => null);
+
+  if (resumed?.sessionId) options.setSession(options.id, resumed.sessionId);
+}
+
+function editedParts(lanes: AgentLane[], id: string) {
+  return Object.keys(lanes.find((lane) => lane.id === id)?.edits ?? {});
+}
+
+function setLaneBusy(lanes: AgentLanes, id: string, busy: boolean) {
+  lanes.flagsOf(id).busy = busy;
+  lanes.updateLane(id, (lane) => ({ ...lane, busy, status: '' }));
+}
+
 export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomModel }: AgentRunOptions) {
   const { showToast } = core;
   const { setCustomModels } = core.studio;
@@ -56,16 +76,7 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
 
   const setSession = (id: string, sessionId: string) => updateLane(id, (l) => ({ ...l, acpSessionId: sessionId }));
 
-  const setBusy = (id: string, busy: boolean) => {
-    flagsOf(id).busy = busy;
-    updateLane(id, (l) => ({ ...l, busy, status: '' }));
-  };
-
-  const resumeSession = async (id: string, resume: string) => {
-    const resumed = await platformBridge.resumeAcp(resume, keyOf(id)).catch(() => null);
-
-    if (resumed?.sessionId) setSession(id, resumed.sessionId);
-  };
+  const setBusy = (id: string, busy: boolean) => setLaneBusy(lanes, id, busy);
 
   const applyResult = (id: string, res: PromptResult, modelCountBefore: number) => {
     const models = Array.isArray(res.models) ? res.models : null;
@@ -88,7 +99,7 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
     updateLane(id, (l) => ({ ...l, status: '' }));
 
     try {
-      if (resume) await resumeSession(id, resume);
+      if (resume) await resumeAgentSession({ id, resume, key: keyOf(id), setSession });
 
       const modelCountBefore = (await platformBridge.listModels().catch(() => [])).length;
 
@@ -133,23 +144,34 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
     setBusy(id, true);
     updateLane(id, (l) => ({ ...l, edits: {} }));
 
-    const gate = readinessGate(core);
+    try {
+      await core.versions.begin(keyOf(id), first.run?.chatId);
 
-    gate.begin();
+      if (flags.stopped || !alive()) return;
 
-    while (payload) {
-      const finished = await runOnce(id, payload);
-      const next = alive() && !flags.stopped ? takeNext(id) : undefined;
-      const followUp = !next && finished && alive() && !flags.stopped ? await gate.followUp() : null;
-      const queued = next ?? (followUp ? { id: newId('queued'), params: followUp } : undefined);
+      const gate = readinessGate(core);
 
-      payload = queued && startQueued(id, queued);
+      gate.begin();
+
+      while (payload) {
+        const finished = await runOnce(id, payload);
+        const next = alive() && !flags.stopped ? takeNext(id) : undefined;
+        const followUp = !next && finished && alive() && !flags.stopped ? await gate.followUp() : null;
+        const queued = next ?? (followUp ? { id: newId('queued'), params: followUp } : undefined);
+
+        payload = queued && startQueued(id, queued);
+      }
+    } catch (error) {
+      showToast(errorMessage(error), { tone: 'error' });
+    } finally {
+      await core.versions
+        .finish(keyOf(id), editedParts(lanes.lanesRef.current, id))
+        .catch((error: unknown) => showToast(errorMessage(error), { tone: 'error' }));
+      setBusy(id, false);
+      void platformBridge.forgetAcpRun(keyOf(id));
+      actors.endLane(id);
+      cursors.clearLane(id);
     }
-
-    setBusy(id, false);
-    void platformBridge.forgetAcpRun(keyOf(id));
-    actors.endLane(id);
-    cursors.clearLane(id);
   };
 
   const enqueue = (id: string, params: AgentSendParams, at: 'start' | 'end') => {

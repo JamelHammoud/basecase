@@ -54,6 +54,12 @@ export async function idbGet<T>(name: WebStore, key: string): Promise<T | undefi
   return done<T | undefined>((await storeOf(name, 'readonly')).get(key));
 }
 
+export async function idbGetMany<T>(name: WebStore, keys: string[]): Promise<Array<T | undefined>> {
+  const store = await storeOf(name, 'readonly');
+
+  return Promise.all(keys.map((key) => done<T | undefined>(store.get(key))));
+}
+
 export async function idbAll<T>(name: WebStore, prefix?: string, count?: number): Promise<T[]> {
   const range = prefix === undefined ? undefined : IDBKeyRange.bound(prefix, `${prefix}\uffff`);
 

@@ -26,7 +26,7 @@ covers:
   - electron/library/datasetStore.mjs
 ---
 
-Basecase saves each scene as you work, so there's no Save command. To share a scene, send it as a single .basecase file.
+Basecase saves each scene as you work. To share a scene, send it as a single .basecase file.
 
 ## Scenes save themselves
 
@@ -72,7 +72,7 @@ A `.basecase` file is a copy of one scene that you can send to someone. It holds
 - Taught skills
 - The build guide
 
-Your chat with the agent also stays on your computer and isn't included in the file.
+Your chat, named versions and branch links stay on your computer and aren’t included in the file. See [Save and merge robot versions](/help/save-and-merge-robot-versions).
 
 When you open a scene file, Basecase creates a new scene from it. The two scenes are separate, so editing one doesn't change the other.
 

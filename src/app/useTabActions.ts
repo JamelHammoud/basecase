@@ -1,8 +1,9 @@
+import { branchScene } from './sceneBranches';
+import { errorMessage } from '../utils/errorMessage';
 import { useState } from 'react';
 import type { WorkspaceHandle, WorkspaceSeed } from '../SceneWorkspace';
 import type { SavedSceneSummary } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
-import { newSceneId } from '../utils/sceneIds';
 import { sceneStore } from '../utils/sceneStore';
 import { loadSceneSeed } from './sceneSeeds';
 import {
@@ -14,7 +15,6 @@ import {
   newTabId,
   nextActiveAfterClose,
   omitKeys,
-  sceneCopyName,
   type ClosedTab,
   type Metas,
   type TabEntry,
@@ -147,21 +147,25 @@ export function useTabActions(core: TabsCore) {
     openTab(last.seed, last.index);
   };
 
-  const duplicateTab = (id: string) => {
+  const duplicateTab = async (id: string) => {
     const tab = latestRef.current.tabs.find((t) => t.id === id);
     const snap = tab && snapshotOf(tab);
 
     if (!snap) return;
 
-    const { tabs, metas } = latestRef.current;
-    const at = tabs.findIndex((t) => t.id === id) + 1;
-    const sceneName = sceneCopyName(
-      snap.sceneName,
-      metas,
-      sceneStore.get().map((s) => s.name),
-    );
+    const branched = await handles.current.get(id)?.branch?.();
 
-    openTab({ ...snap, sceneId: newSceneId(), sceneName, chat: undefined, unsaved: true }, at);
+    if (branched) {
+      openTab(branched);
+
+      return;
+    }
+
+    const { tabs, metas } = latestRef.current;
+    const names = [...Object.values(metas).map((meta) => meta.name), ...sceneStore.get().map((entry) => entry.name)];
+    const seed = await branchScene(snap, names);
+
+    openTab(seed, tabs.findIndex((tab) => tab.id === id) + 1);
   };
 
   const cycleTab = (step: number) => {
@@ -196,11 +200,16 @@ export function useTabActions(core: TabsCore) {
   };
 
   return {
+    showHistory: (id: string) => {
+      selectTab(id);
+      handles.current.get(id)?.showHistory?.();
+    },
     openScene,
     closeTabs,
     closeTab,
     reopenTab,
-    duplicateTab,
+    duplicateTab: (id: string) =>
+      void duplicateTab(id).catch((error: unknown) => toastInFront(errorMessage(error), { tone: 'error' })),
     cycleTab,
     reorderTab,
     renameTab,

@@ -53,7 +53,7 @@ In the web studio, the **Agent** tab reads “Build with the agent in the deskto
 
 ## Your scenes are gone from the web studio
 
-The web studio stores your scenes, Library models, tries, dataset versions, prices and the parts you own in your browser, not online. Clearing the site's data deletes them, including frozen dataset recordings, images and exports. They don't show up in another browser or on another computer.
+The web studio stores your scenes, Library models, tries, dataset versions, prices and the parts you own in your browser, not online. Clearing the site's data deletes them, including frozen dataset recordings, images and exports. They don't show up in another browser or on another computer. Scene exports keep the current design, without saved versions or branch links.
 
 1. Before you clear browser data, open each scene and click **Export** in the title bar.
 2. Choose **Scene** to download a `.basecase` file.

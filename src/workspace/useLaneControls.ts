@@ -3,7 +3,7 @@ import type { ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import { chatTitle } from './acpTranscript';
 import type { AgentLane } from './agentLanes';
-import { recordEdit, revertEdits } from './runEdits';
+import { completedEdits, recordEdit } from './runEdits';
 import type { AgentLanes } from './useAgentLanes';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -62,7 +62,6 @@ function useRunFinished({ core, lanes, active, alive, persistLane }: LaneControl
 export function useLaneControls(options: LaneControlOptions) {
   const { core, lanes } = options;
   const { showToast, undo } = core;
-  const { commitParts } = core.docs;
   const { updateLane, flagsOf, keyOf } = lanes;
 
   useRunFinished(options);
@@ -72,12 +71,13 @@ export function useLaneControls(options: LaneControlOptions) {
     platformBridge.cancelAcp(keyOf(id)).catch(() => {});
   };
 
-  const revert = () => {
-    const { id, edits } = lanes.current;
+  const revert = async () => {
+    const { id, chatId } = lanes.current;
+    const owned = completedEdits(core.versions.view?.completedRuns ?? {}, keyOf(id), chatId);
 
-    if (!Object.keys(edits).length) return;
+    if (!owned?.parts.length) return;
 
-    commitParts((prev) => revertEdits(prev, edits));
+    await core.versions.revert(owned.key, owned.parts);
     updateLane(id, (l) => ({ ...l, edits: {} }));
     showToast('Reverted agent changes', { action: { label: 'Undo', onClick: undo } });
   };
@@ -85,7 +85,7 @@ export function useLaneControls(options: LaneControlOptions) {
   return {
     stop,
     stopAll: () => lanes.lanes.filter((l) => l.busy).forEach((l) => stop(l.id)),
-    revert,
+    revert: () => void core.versions.perform(revert),
     recordEdit: (id: string, partId: string, before: ScenePart | null) =>
       updateLane(id, (l) => ({ ...l, edits: recordEdit(l.edits, partId, before) })),
     stopFollowing: () => lanes.lanes.forEach((l) => (flagsOf(l.id).follow = false)),

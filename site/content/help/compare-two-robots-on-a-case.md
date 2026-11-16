@@ -56,6 +56,6 @@ To open the copy's tab with the Case, click the copy's row. If the copy doesn't 
 
 You can also press [[⌘K]] and choose **Compare with ⟨scene⟩**, where ⟨scene⟩ is the other scene's name. Or ask the agent which version is better, and it runs the same comparison.
 
-Comparisons between two scene tabs aren't saved. If you change either robot, the rows update the next time the first scene is in front.
+Comparisons between two scene tabs aren't saved. Changing either robot discards the old rows. The comparison runs again when the first scene is in front.
 
 The same 20 runs also appear as a row in **Checks**. See [Get a robot ready to build](/help/get-a-robot-ready-to-build).

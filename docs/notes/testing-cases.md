@@ -201,3 +201,9 @@ The final named changed-file check for camera Study passed 507 related tests acr
 Review found that removing a saved Study’s visibility request left its measurements loadable, while Apply treated it as an ordinary Study and skipped source validation. `cameraPersistence.test.ts` now rejects orphaned baseline measurements, orphaned candidate measurements and a record with both. An ordinary camera-choice Study with neither request nor measurements still loads. The Try selector’s blank option retains return to ordinary Study without repeating its field label. The Study help now limits seeded runs to comparisons with a Case.
 
 The review’s changed-file check passed formatting, ESLint, documentation, TypeScript, all 297 site pages and 283 related tests across 52 files. The log is `scratch/review-check.log`. Browser tests were not run locally.
+
+## Linked design comparison
+
+Scene History calls the existing shared Case comparison after both open robots are measured. The current Case and both scene fingerprints bind the result. A fingerprint change during measurement or before merge refuses the operation. `caseCompare.test.ts` retains its physical shared-Case and BOM/Weight checks and adds fingerprint coverage. The graph and selective-merge matrix lives in `workspace/versionOperations.test.ts` and `workspace/versionMerge.test.ts`. Browser entry-point declarations are in `e2e/sceneVersions.e2e.test.ts`. No incoming local try, policy, skill or handoff evidence is copied by a geometry merge.
+
+The version comparison also checks captured immutable part, project and annotation references plus the goal before and after worker merge. This rejects edits to settings outside the Checks fingerprint, including skeleton changes, without hashing full scene records on the renderer. The skeleton recovery integration case exercises this distinction.

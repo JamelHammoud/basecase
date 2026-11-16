@@ -25,3 +25,52 @@ No actions, labels or screen states change, so help instructions and screenshots
 ## Boot never waits on anything it doesn't need to draw
 
 The agent connection used to delay the window 0.7–2 s. Each tab builds its own WebGL context, environment map and shaders, costing about 60–250 ms apiece. Measure boot with real scenes reopened (`open-scenes` in `localStorage`), not an empty one.
+
+## Scene version codec and atomic replacement
+
+Version snapshots reuse canonical SHA-256 blocks for immutable parts and project fields. Ordered descriptors, manifests and scene references identify a version. Desktop branches share the same content directory. Browser branches share Blob records in IndexedDB, with the reference, scene and summary published together. Ordinary autosave and preview updates do not transfer a history graph.
+
+The 1,000-part codec fixture reports initial and incremental capture time, graph bytes and the bytes for two full snapshots. Changing one part adds one part block and one descriptor. The desktop fixture measures the same capture plus storage path, verifies zero additional history bytes for an identical branch and requires exactly three new files for one edit, including its manifest. These are local unit-process observations without timing assertions. They exclude worker transport and viewport work.
+
+The atomic replacement probe interrupts the final scene rename. The old scene remains readable after constructing another library instance. Incomplete siblings do not enter listings. Browser tests reject an aborted transaction without moving its history reference. Both stores retain immutable content after scene deletion, so surviving branches remain readable. There is no garbage collection or power-loss guarantee.
+
+The graph's resource budget is 64 MiB of history JSON, 1,000 versions, 100,000 content blocks and 10,000 parts per descriptor. Manifest keys must be distinct SHA-256 identifiers. Declared block sizes share a 64 MiB budget before reads, and actual sizes and hashes must agree. Desktop reads refuse symbolic links and nonregular files. Browser Blob handles are size-checked before their text is decoded.
+
+The acceptance tests retain the ten design cases across the graph, merge and shared Case suites. Browser declarations cover the history entry point, close and reopen, restore, reload and retained source branch after merge. Cross-platform browser execution remains a CI observation, rather than a local claim.
+
+### Shared-part browser observation, 16 November 2026
+
+On macOS arm64 with Node 26.13.0, a real IndexedDB profile in the Vite development web app saved 1,000 primitive parts. The first named checkpoint took 921 ms from click to durable completion. Removing one part and checkpointing took 953 ms. Shared history content grew from 376,954 bytes in 1,007 Blob records to 516,422 bytes in 1,009 records. The second checkpoint added only the ordered descriptor and manifest. Unchanged part records were reused. Reload retained the 999-part design and both named checkpoints.
+
+The capture also observed main-thread long tasks of 176, 97, 124 and 146 ms across checkpointing, viewport editing and history rendering. This combined development trace does not attribute those tasks to serialization and establishes no production responsiveness threshold. Hashing, graph serialization, history quoting and Blob preparation execute in workers. Scene JSON still joins cached part strings on the renderer, using the existing frame-sliced serializer. A production interaction profile remains a performance gap, without a quarantine or timing assertion.
+
+The retained measurement is `scratch/version-worker-measure.json`, produced by `scratch/version-worker-measure.test.ts`. Documentation capture used `scratch/version-capture.test.ts` and completed named save, close and reopen, restore, branch, selective merge and explicit conflict choice. Both captures drove the app through its public controls. No visual judgment was made from the images.
+
+### Covered help articles checked
+
+Preflight's coverage reminders were read against the connected implementation. [Undo what the agent changed](../../site/content/help/undo-agent-changes.md) now describes durable completed ownership and interrupted-run recovery. [Compare two robots on a Case](../../site/content/help/compare-two-robots-on-a-case.md) now describes discarding stale rows. [Scenes, files and the Library](../../site/content/help/scenes-files-and-the-library.md) names local history and branch-link export exclusions.
+
+The follow-up checked every remaining coverage reminder against the final code. Six more articles now describe the affected behavior:
+
+- `design-a-robot-with-the-agent` names the scene in a background completion toast, matching `useLaneControls.ts`.
+- `desktop-app-and-web-studio`, `troubleshoot-app-web-studio-limits` and `open-a-shared-scene` distinguish a portable current design from local saved versions and branch links.
+- `open-rename-and-close-tabs` and `reopen-a-saved-scene` describe Duplicate as an independently editable alternative with shared source history for selective merge.
+
+The twelve unchanged articles retain their steps, labels and described screenshot states:
+
+| Article | Checked against the final code |
+| --- | --- |
+| `agent-limits` | Durable checkpoints add no agent tool, file access, hardware access or extra chat slot. `agentLanes.ts` retains four lanes. |
+| `attach-photos-files-and-sketches` | `useAgentSession.ts` only passes version actions to run adoption. Attachment, folder and sketch controls are unchanged. |
+| `build-a-case-app-with-the-agent` | Baseline and completion capture wrap existing prompt execution. Case console reload, Undo, Done and keyboard paths are unchanged. |
+| `inspect-fleet-problems` | `WorkspaceSheets.tsx` adds a separate history host. Fleet incident controls, acknowledgment and recorded-try opening are unchanged. |
+| `open-a-past-chat` | `agentLanes.ts` changes Revert availability, without changing chat History, deletion confirmation, new-chat controls or four-lane behavior. |
+| `put-two-robots-in-one-case` | `tabModel.ts` carries history and comparison fingerprints. Robot-slot construction, Hand Off controls, try judgment and dataset columns are unchanged. Duplicate still supplies the separate arm. |
+| `steer-or-queue-messages` | `useAgentRun.ts` retains steer injection, queue order, Stop and lost-on-reload queue behavior inside the durable run boundary. |
+| `teach-a-robot-a-skill` | `RightTabPanels.tsx` changes only the Agent reply's Revert availability. Teaching controls, contract steps and skill freshness checks are unchanged. |
+| `the-basecase-window` | Title-bar plumbing adds Scene History to the existing tab menu. Listed title-bar positions, rail entries, panel controls and command menu still hold. |
+| `the-design-agent` | The agent guide adds recovery facts. Existing tool scope, priorities, Checks, ordinary undo, steering and follow-up settings remain accurate. The hub's feature summaries stay in feature articles. |
+| `troubleshoot-app-agent-not-connected` | The prompt wrapper adds durable run capture. Download, sign-in, reconnect and retry controls and their described messages are unchanged. |
+| `troubleshoot-scene-files` | Portable imports still use `decodeSceneFile`, save under a new id and retain the existing part, world and fixture validation errors. History is excluded from portable files. |
+
+The screenshots in these twelve articles describe unchanged controls and states. No replacement capture is needed. Their mechanical preflight reminders remain because the coverage check has no read acknowledgment field. No unrelated page was edited solely to clear a reminder.

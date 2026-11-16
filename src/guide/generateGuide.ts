@@ -23,6 +23,7 @@ export interface GenerateGuideInput {
   onProgress?: (p: GuideProgress) => void;
   onCover?: (dataUrl: string) => void;
   signal?: AbortSignal;
+  persist?: boolean;
   order?: () => Promise<CheckedOrder | null>;
 }
 
@@ -50,10 +51,12 @@ const localHandlers = async (): Promise<GuideHandlers> => {
   };
 };
 
-const client = workerClient<GuideHandlers>(
-  () => new Worker(new URL('./guide.worker.ts', import.meta.url), { type: 'module' }),
-  localHandlers,
-);
+const spawnGuide = () => new Worker(new URL('./guide.worker.ts', import.meta.url), { type: 'module' });
+const client = workerClient<GuideHandlers>(spawnGuide, localHandlers);
+const strictGuideClient = () =>
+  workerClient<GuideHandlers>(spawnGuide, async () => {
+    throw new Error('Kit export needs a worker.');
+  });
 
 export async function generateGuidePlan(input: Omit<PlanGuideJob, 'meshes'>): Promise<GuidePlan> {
   const parts = input.parts.filter(isBuilt);
@@ -89,8 +92,16 @@ async function brandMark(): Promise<string> {
 const newId = () => `guide-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
 function render(job: GuideJob, input: GenerateGuideInput): Promise<RenderedGuide | null> {
+  input.signal?.throwIfAborted();
+
+  const ephemeral = input.persist === false;
+  const rendering = ephemeral ? strictGuideClient() : client;
   const { port1, port2 } = new MessageChannel();
-  const cancel = () => port1.postMessage({ type: 'cancel' } satisfies GuidePortMessage);
+  const cancel = () => {
+    port1.postMessage({ type: 'cancel' } satisfies GuidePortMessage);
+
+    if (ephemeral) rendering.dispose();
+  };
 
   port1.onmessage = ({ data }: MessageEvent<GuidePortMessage>) => {
     if (data.type === 'progress') input.onProgress?.(data.progress);
@@ -99,9 +110,12 @@ function render(job: GuideJob, input: GenerateGuideInput): Promise<RenderedGuide
   };
   input.signal?.addEventListener('abort', cancel, { once: true });
 
-  return client.call('render', { job, port: port2 }, [port2]).finally(() => {
+  return rendering.call('render', { job, port: port2 }, [port2]).finally(() => {
     input.signal?.removeEventListener('abort', cancel);
     port1.close();
+    port2.close();
+
+    if (ephemeral) rendering.dispose();
   });
 }
 
@@ -152,10 +166,16 @@ export async function generateGuide(input: GenerateGuideInput): Promise<Generate
 
   if (!rendered || input.signal?.aborted) return null;
 
-  input.onProgress?.({ share: 0.97, label: 'Saving PDF' });
-
-  const saved = await platformBridge.saveGuide({ id, html: rendered.html });
+  const saved = await saveRendered(input, { id, html: rendered.html });
   const record = recordOf({ id, rendered, input, order });
 
-  return { record, plan: rendered.plan, saved: saved.ok, html: rendered.html };
+  return { record, plan: rendered.plan, saved, html: rendered.html };
+}
+
+async function saveRendered(input: GenerateGuideInput, payload: { id: string; html: string }): Promise<boolean> {
+  if (input.persist === false) return false;
+
+  input.onProgress?.({ share: 0.97, label: 'Saving PDF' });
+
+  return (await platformBridge.saveGuide(payload)).ok;
 }

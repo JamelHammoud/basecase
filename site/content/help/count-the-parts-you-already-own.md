@@ -49,7 +49,7 @@ To put the old count back, click **Undo** in the toast. To clear a count, type 0
 
 - Count single pieces, even if you bought them in packs. If you have 100 M3 screws on hand and a robot uses 13, none are listed to buy.
 - Each cable product and length has its own count. Owning a 300 mm cable doesn’t reduce the number of 900 mm cables to buy.
-- Filament is counted in grams.
+- Filament is counted in grams, including every copy set in Print mode.
 - Printed parts from a print service have no **On hand**. Their quoted price covers every copy.
 - A count belongs to the part, so every scene that uses the part takes your count off what's left to buy.
 - Basecase doesn't take parts off your count when you build a robot, so update the count yourself after a build.

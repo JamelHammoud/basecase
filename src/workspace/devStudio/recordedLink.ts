@@ -53,7 +53,7 @@ function observe(rec: Recording, event: RobotEvent, forward: Listener) {
   if (event.event === 'link' && event.state === 'connected') rec.recorder = recorderFor(rec, event, forward);
 
   rec.state = applyRobotEvent(rec.state, event);
-  forward(event);
+  forward({ ...event, context: rec.recorder?.incidentContext() });
   rec.recorder?.event(event);
 }
 

@@ -134,7 +134,7 @@ Basecase fits the first half of each recording, then checks the fit against the 
 
 In a run with three emulated STS3215 servos, all three read **Measured**. Each fit was 7 to 10% closer than the catalog model.
 
-If the robot leaves **Test** or faults during the run, Basecase records nothing. A message under the servo count tells you why.
+If the robot leaves **Test** or faults during the run, Basecase saves no calibration for that run. A message under the servo count tells you why. A fault also remains in the unit's [retained problems](/help/inspect-fleet-problems).
 
 Replays use the latest bench run, which Basecase keeps until it reloads. After a reload, the verdicts and versions stay, and the replays come back the next time you run **Calibrate Servos**.
 

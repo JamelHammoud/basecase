@@ -29,3 +29,13 @@ This walkthrough is quarantined only on Windows through 28 November 2026 after r
 ## Passive robot joints
 
 The ten-mechanism test compares servoLayout and jointMap lengths against the exact powered count. Passive joints receive no servo ID, preserving consecutive IDs and source order among powered declarations. The live Pose setup omits passive IDs. No daemon command or deployment format changes, and no physical robot is used.
+
+## Retained fleet incidents
+
+The fast collector matrix covers arm stalls, quadruped disconnects, independent units, duplicate faults, older status timestamps, healthy recovery, recurrence, acknowledgment with an active latch, missing recordings and 128-record eviction. A 10,000-event alternating-unit fixture retains two incidents. This is an operation-count observation, not a throughput timing.
+
+`fleetIncidentStore.test.ts` collects an unselected arm while another is selected, acknowledges it without changing its latch, then reloads the modules against the saved storage and compares retained records. The native integration uses RobotFleet, fake daemon pipes and a real TryStore. It checks the incident's session id against the saved manifest, the other arm's accepted command, a quadruped disconnect, and acknowledgment producing no daemon write.
+
+The browser walkthrough extends the existing fleet test with a kept moving session, inspection, acknowledgment while the latch remains active, another unit receiving intents, and Open Try through the timeline. Lifecycle and predicate matrices stay in fast tests. Local validation uses only `check:changed`. CI owns the browser walkthrough and platform observations. Help captures use the same emulated recorder through `recordedLink` without judging their appearance.
+
+History is collected while the studio is running. The local storage test simulates a renderer restart, not a physical host failure. Missing or malformed storage restores an empty history, and a storage write failure leaves the in-memory incidents available. Real motors and external sensor drivers are outside these tests. There is no new quarantine or retry.

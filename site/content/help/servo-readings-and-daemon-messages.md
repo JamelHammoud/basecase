@@ -38,13 +38,15 @@ The daemon reports every servo 10 times a second, and the app shows the newest r
 
 ## Fleet rows
 
-Operate lists each connected unit by name above the controls. Each row shows its rung and policy version. After Roll Out, it also shows the twin's pass count or failing contract line. A fault marks only that unit's row.
+Operate lists connected units and units with retained incident history by name above the controls. Each row shows its rung and policy version. After Roll Out, it also shows the twin's pass count or failing contract line. A fault marks only that unit's row.
 
-Click a row to select the unit. The header, Ladder, servo readings, messages and measured canvas robot then follow that unit. **Stop**, **Disconnect** and commands from the simulation apply to the selected unit.
+Click a connected row to select the unit. The header, Ladder, servo readings, messages and measured canvas robot then follow that unit. **Stop**, **Disconnect** and commands from the simulation apply to the selected unit.
 
 ![Operate with three units, each in Test, and the selected unit's controls below](/help/roll-out-a-skill-to-a-fleet/connected.png)
 
 Hover a unit's row to find **Roll Back** when it has a previous policy. This restores the policy version. A joint's **Roll Back** instead restores its servo calibration. **Roll Back** beside **Body v1**, or a later body version, restores the [body fit](/help/fit-a-robots-body-from-a-recorded-run).
+
+A row with history offers **Inspect Problems**. [Inspect fleet problems](/help/inspect-fleet-problems) to acknowledge an incident or open its kept try. History stays on this computer across studio restarts, bounded to 128 incidents and 256 KiB. Acknowledgment leaves an active fault active.
 
 ## The header
 

@@ -84,6 +84,7 @@ export class OperateRecorder {
     this.rung = 0;
     this.held = false;
     this.policyHash = null;
+    this.lastSessionId = null;
   }
 
   setContext(ask) {
@@ -94,6 +95,15 @@ export class OperateRecorder {
     if (context && this.session && !this.session.joints) this.session.joints = [...context.joints];
 
     return !!context;
+  }
+
+  incidentContext() {
+    return {
+      session: this.session?.id ?? this.lastSessionId,
+      sceneId: this.context?.sceneId ?? null,
+      modelHash: this.context?.modelHash ?? null,
+      policyHash: this.policyHash,
+    };
   }
 
   readRun() {
@@ -294,6 +304,7 @@ export class OperateRecorder {
     if (manifest) this.sink.keep(manifest);
     else this.sink.drop(session.id);
 
+    this.lastSessionId = session.id;
     this.onClosed({ id: session.id, reason, manifest, joints: session.joints });
   }
 }

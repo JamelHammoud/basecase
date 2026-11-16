@@ -24,6 +24,7 @@ export interface OperatePanelProps {
   calibration: CalibrationProps;
   onSetUpServos: () => void;
   onAddRobotComputer?: () => void;
+  onOpenTry?: (id: string) => Promise<boolean>;
   onReplay?: (messageId: number) => void;
   bodyCalibration?: BodyCalibrationProps;
 }
@@ -47,6 +48,7 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({
   onSetUpServos,
   onAddRobotComputer,
   onReplay,
+  onOpenTry,
   bodyCalibration,
 }) => {
   const robot = useRobot();
@@ -61,7 +63,7 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-[8px] pb-3" data-testid="operate-panel">
-      <FleetRows />
+      <FleetRows onOpenTry={onOpenTry} />
       {onAddRobotComputer && (
         <Button variant="ghost" fullWidth onClick={onAddRobotComputer}>
           Add a Robot Computer

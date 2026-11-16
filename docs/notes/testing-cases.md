@@ -53,3 +53,9 @@ A live try can start recording after the passive joint has settled against its c
 ## Passive robot joints
 
 Recording assertions check nq and nv against physical DOFs and nu against the exact powered count, including zero-actuator robots. Control buffers have frames times nu entries. The dataset and demonstration feature schema still pairs powered joint positions with powered actions. Passive coordinates remain in the saved recording rather than acquiring fake actions. This does not change articulated Case fixture bindings or recording formats.
+
+## Operate alert predicates
+
+`operateConditions.test.ts` evaluates existing Case contract predicates against supplied voltage using the real contract WASM. Samples at 0, 400, 800 and 1,000 ms establish a one-second condition. A 100 ms transient followed by fresh healthy voltage creates no alert. A gap from 400 to 1,000 ms resets continuity. Stale and missing readings remain unknown, including under negation. Duplicate and reordered samples do not extend duration, and a reading exactly on the threshold follows the evaluator's strict margin rule.
+
+These tests cover whole-window immediate predicates and continuous `hold_for` conditions. Windowed and sequence formulas and delta expressions remain saved-try scoring rules. No simulation geometry or unsupplied sensor fact is fabricated for a live robot. The worker retains only continuity timestamps and bounded pending messages. Fleet persistence and the browser path are recorded in [Robot runtime evidence](testing-robot-runtime.md#retained-fleet-incidents).

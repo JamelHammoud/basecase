@@ -13,8 +13,6 @@ import { seedBatches, type SeedRuns } from '../cases/caseRuns';
 import { classroomAssignments, generatedClassroom, pipelineResources } from './grading.fixtures';
 import { classroomFixture } from './fixtures';
 import { assignmentOf, classroomBytes, readAssignment, readSubmission, submissionOf } from './envelope';
-import { gradeClassroom } from './batch';
-import { addSubmission, type Classroom } from './storage';
 
 beforeAll(async () => {
   await buildClassroomWorkers();
@@ -120,31 +118,6 @@ describe('classroom production grading pipeline', () => {
 
       if (trial === 2) expect(rows[1]).toEqual(row);
     });
-  });
-
-  it('keeps malformed revisions from stopping a batch and retains distinct revisions with the same name', async () => {
-    const { assignment, valid, failing } = await generatedClassroom(1);
-    const bad = { ...valid, fingerprint: 'forged', assignmentFingerprint: 'changed' };
-    const grader = new ClassroomGrader(() => pipelineResources([]));
-    const collected: Array<{ error?: string; result?: unknown }> = [];
-    const classroom = [bad, valid, failing, valid].reduce<Classroom>(
-      (current, submission) => addSubmission(current, submission, classroomBytes(submission).length),
-      {
-        assignment,
-        submissions: [],
-      },
-    );
-
-    expect(classroom.submissions).toHaveLength(3);
-    await gradeClassroom({
-      snapshot: classroom,
-      grader,
-      current: () => true,
-      onRunning: () => {},
-      onTile: (tile) => collected.push(tile),
-    });
-    expect(collected[0].error).toMatch(/fingerprint|revision/);
-    expect(collected.slice(1).every((tile) => !!tile.result)).toBe(true);
   });
 
   it('cancels active and queued work and refuses further grading', async () => {

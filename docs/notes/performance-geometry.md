@@ -21,3 +21,11 @@ Implementation: [Mesh preparation](../guide/canvas.md#performance-mesh-preparati
 ## Booleans cut in the geometry worker
 
 For two 50,000-triangle meshes (`booleans.perf.test.ts`) that is about 2 ms to hand off and 3 ms to take the reply, while the cut (welding, Manifold) takes about 180 ms in the worker; it used to run on the main thread in three-bvh-csg. The test fails if any main-thread step reaches 16 ms.
+
+## STL transforms stream one facet at a time
+
+Scene export and posed print-service meshes previously retained 36 bytes of transformed coordinates per triangle alongside the final STL. Both now retain one 36-byte triangle workspace, independent of mesh size. At 30,000 and 60,000 triangles, transformed-coordinate storage falls from 1,080,000 and 2,160,000 bytes to 36 bytes. The final STL still takes 84 bytes plus 50 bytes per triangle. Scene export still retains its source-array references and one matrix and vector. These are structural storage counts, not measured process-memory peaks.
+
+`src/three/analysis/sceneStl.test.ts` compares complete files against the former transform-and-encode path across 80 generated meshes and subsequent edits. Coverage includes offset typed-array views, repeated instances, rotations, translations, reflections, collapsed scales, projective scene transforms, empty inputs, degenerate facets and nonfinite and incomplete posed inputs. Existing `analysis.test.ts` checks worker export and Z-up placement, and `posedStl.test.ts` checks off-plate placement. The untransformed `binaryStl` API retains double-precision normal calculation for Robot Package callers.
+
+A local replay on shared macOS arm64 hardware with Node 26.13.0 used 21 alternating five-call batches after five warmup batches. At 30,000 triangles, median posed write time changed from 1.98 ms to 1.94 ms and scene write time from 2.81 ms to 1.92 ms. At 60,000 triangles, posed writing changed from 4.00 ms to 3.68 ms and scene writing from 8.36 ms to 7.14 ms. These measure transforms and byte encoding alone, exclude worker handoff and file saving, and have no CI timing assertions. Other work shared the machine, so these timings do not establish a complete-export speedup. No UI state, workflow or browser coverage changes.

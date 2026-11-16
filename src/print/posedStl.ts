@@ -1,15 +1,24 @@
-import { binaryStl } from '../utils/stlBytes';
+import { StlWriter } from '../utils/stlBytes';
 
 export function posedStl(positions: ArrayLike<number>, m: number[]): Uint8Array {
-  const out = new Float32Array(positions.length);
+  const writer = new StlWriter(Math.floor(positions.length / 9));
 
-  for (let i = 0; i < positions.length; i += 3) {
-    const [x, y, z] = [positions[i], positions[i + 1], positions[i + 2]];
+  const triangle = writer.triangle;
 
-    out[i] = m[0] * x + m[4] * y + m[8] * z + m[12];
-    out[i + 1] = m[1] * x + m[5] * y + m[9] * z + m[13];
-    out[i + 2] = m[2] * x + m[6] * y + m[10] * z + m[14];
+  for (let f = 0; f < Math.floor(positions.length / 9); f++) {
+    for (let k = 0; k < 9; k += 3) {
+      const i = f * 9 + k;
+      const x = positions[i];
+      const y = positions[i + 1];
+      const z = positions[i + 2];
+
+      triangle[k] = m[0] * x + m[4] * y + m[8] * z + m[12];
+      triangle[k + 1] = m[1] * x + m[5] * y + m[9] * z + m[13];
+      triangle[k + 2] = m[2] * x + m[6] * y + m[10] * z + m[14];
+    }
+
+    writer.facet();
   }
 
-  return binaryStl(out);
+  return writer.bytes;
 }

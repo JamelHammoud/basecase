@@ -31,7 +31,6 @@ covers:
   - src/utils/engineeringFalls.ts
   - src/utils/engineeringEnvelope.ts
   - src/utils/keySpecs.ts
-  - docs/guide/build.md
 ---
 
 Servo torque helps you pick servos that won't stall or overheat. It compares the torque each joint has to hold with the torque its servo gives at your supply voltage.

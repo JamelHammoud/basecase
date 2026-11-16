@@ -59,3 +59,21 @@ A local Node 26.13.0 comparison on an Apple M5 Pro, macOS arm64, scheduled N eve
 Every paired sample had an exactly equal callback-time checksum. These shared-machine measurements cover scheduling alone, without coordinator, physics, rendering or inference work. They are not complete Routine timings or CI budgets. Pending storage remains linear and each clock owns its queue.
 
 `src/routines/scenarioClock.test.ts` compares full callback traces with the former sorted-array implementation for 2,048 initial events, two insertions per callback, all phase priorities and three recurring periods. It drains the queue across repeated and incremental time boundaries. A separate case covers empty and singleton queues and continuing after a callback throws. Existing `scenario.test.ts` runs the real WASM coordinator through generated scenarios and checks determinism and control timing. No timing assertion was added.
+
+## Routine text symbols use an index
+
+Implementation: [Routine scenario tests](../guide/routines.md#scenario-tests-l0). Compilation already indexed text symbols, while the shared runtime host used `indexOf` on every text watcher reading and inference result. Both now use `Symbols`, with a private map per table and the ordered list retained for coordinator and trace decoding. Runtime initialization copies the plan and indexes its first occurrences. Memory remains linear in distinct observed strings, with an additional map in each host. The list preserves duplicate seeds and never changes the source plan.
+
+A local Node 26.13.0 comparison on an Apple M5 Pro, macOS arm64, interned 100,000 cyclic readings from `person-0` through `person-(N-1)`. Each sample included constructing the table and accumulating returned ids. Three warmups preceded nine samples, alternating implementation order. Median elapsed milliseconds:
+
+| Seeded symbols | Previous list scan | Shared indexed table |
+| --- | --- | --- |
+| 8 | 7.11 | 1.28 |
+| 64 | 40.24 | 1.35 |
+| 256 | 113.72 | 1.51 |
+
+All paired checksums matched exactly. These shared-machine measurements cover interning alone, without coordinator, inference or physics work. They are not complete Routine timings or CI budgets. Tables with mostly new names retain their appended strings for the run's lifetime, as before.
+
+`src/routines/symbols.test.ts` compares 1,000 readings against the previous first-match algorithm, including duplicate seeds, empty strings, prototype-like names and Unicode. It also checks stable decoder-list identity, source preservation, compiler ids and isolation between runs. Existing generated-scenario coverage continues to exercise watcher and inference publication through the real WASM coordinator. No timing assertion was added.
+
+The local targeted check selected 133 related files. It passed 129 files and 773 tests, including symbol and Routine coverage. One file was skipped. Three Case physics tests exceeded their existing 5,000 ms limit: recorded object replay in `src/cases/handoffGoal.test.ts:235`, paired-arm Hand Off in `src/cases/slots.test.ts:113`, and hexapod Rough Ground in `src/cases/terrain.test.ts:165`. This run does not establish their baseline status. No timeout, retry, skip or quarantine was added, and no claim of a fully passing related run is made. Formatting, lint, documentation, site copy and types passed.

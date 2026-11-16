@@ -196,4 +196,13 @@ describe('builder task readiness', () => {
     expect(calls.checkedRun).not.toHaveBeenCalled();
     expect(calls.openBranch).not.toHaveBeenCalled();
   });
+
+  it('blocks legacy Windows diagnostics that only declare CI before opening a worktree', () => {
+    calls.steps = [{ ...queuedStep(50), body: 'Requires: windows-ci\nCapture Windows process traces.' }];
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.steps[0].labels).toEqual([{ name: 'loop:blocked' }]);
+    expect(calls.checkedRun).not.toHaveBeenCalled();
+    expect(calls.openBranch).not.toHaveBeenCalled();
+  });
 });

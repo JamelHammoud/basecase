@@ -14,10 +14,10 @@ export const REQUIREMENTS = [
 
 const requiredLine = /^Requires:\s*(.+)$/im;
 const needsWindowsHost =
-  /(?:requires?|needs?|resume on|continue on|reproduce on|access to) (?:an? |the |live |interactive )?Windows (?:execution )?(?:host|machine|desktop|target)/i;
-const measurements =
-  /(?:\bten\b|\b10\b)[^.\n]{0,100}\b(?:before|baseline)\b[^.\n]{0,120}\b(?:after|fixed)\b|\b(?:before|baseline)\b[^.\n]{0,80}(?:\bten\b|\b10\b)[^.\n]{0,120}\b(?:after|fixed)\b/i;
-const windowsExecution = /\bWindows(?:\s+CI)?\s+(?:run|runner|execution|diagnostic|experiment|process trac)/i;
+  /(?:requires?|needs?|resume on|continue on|reproduce on|access to) (?:an? |the |live |interactive )?Windows (?:execution )?(?:host|machine|desktop|target)|\bon (?:an? |the )?(?:live |interactive )?Windows (?:execution )?(?:host|machine)/i;
+const measurements = /\b(?:before|baseline)\b[^.\n]{0,200}\b(?:after|fixed|candidate)\b/i;
+const windowsExecution =
+  /\bWindows(?:\s+CI)?\s+(?:run|runner|execution|diagnostic|experiment|process trac)|\bon Windows\b/i;
 const rejections = store('capability-rejections', {});
 
 export const availableCapabilities = () => [
@@ -36,17 +36,28 @@ const existingEvidence = (paragraph) =>
   /\b(?:existing|retained|published)\s+(?:logs|traces|results)\b/i.test(paragraph) &&
   !/\b(?:collect|execute|capture|reproduce|measure)\b/i.test(paragraph);
 
+function diagnosticSentence(sentence, windowsContext) {
+  const runs =
+    measurements.test(sentence) && /\b(?:measure|collect|capture|record|runs?|timings?|elapsed)\b/i.test(sentence);
+  const traces =
+    /\bprocess trac(?:e|es|ing)\b/i.test(sentence) && /\b(?:collect|capture|record|reproduce)\b/i.test(sentence);
+
+  if (!runs && !traces) return false;
+
+  return /\bWindows\b/i.test(sentence) || (windowsContext && !/\b(?:Linux|macOS)\b/i.test(sentence));
+}
+
 function needsWindowsDiagnostics(task) {
   const title = /\bWindows\b/i.test(task.title ?? '');
-  const quarantine = title && /\bquarantine\b/i.test(task.body ?? '');
 
   return String(task.body ?? '')
     .split(/\n\s*\n/)
     .some(
       (paragraph) =>
         !existingEvidence(paragraph) &&
-        measurements.test(paragraph) &&
-        (windowsExecution.test(paragraph) || quarantine || (title && !/\b(?:Linux|macOS)\b/i.test(paragraph))),
+        paragraph
+          .split(/[.\n]/)
+          .some((sentence) => diagnosticSentence(sentence, title || windowsExecution.test(paragraph))),
     );
 }
 

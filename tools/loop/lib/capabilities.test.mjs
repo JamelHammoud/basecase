@@ -14,6 +14,12 @@ describe('executable work', () => {
     expect(unavailableCapabilities({ body: 'Resume on a Windows execution host and measure ten runs.' })).toEqual([
       'windows-host',
     ]);
+    expect(
+      unavailableCapabilities({
+        requires: ['windows-ci'],
+        body: 'Collect startup timing on an interactive Windows host.',
+      }),
+    ).toEqual(['windows-host']);
   });
 
   it('catches missing hardware and contradictory requirements before a task can be filed', () => {
@@ -38,6 +44,14 @@ describe('executable work', () => {
 });
 
 describe('Windows diagnostic requirements', () => {
+  it.each([
+    'Measure five Windows runs before and five after under the same load.',
+    'Collect baseline and candidate Windows runs before publication.',
+    'Capture Windows process traces before publishing the fix.',
+  ])('gates controlled diagnostics without depending on a ten-run sample: %s', (body) => {
+    expect(unavailableCapabilities({ title: 'Diagnose the lifecycle failure', body })).toContain('windows-diagnostics');
+  });
+
   it('gates legacy before/after Windows measurements separately from published-ref CI', () => {
     const task = {
       title: 'Make shutdown deterministic on Windows',
@@ -74,6 +88,18 @@ describe('Windows diagnostic requirements', () => {
       unavailableCapabilities({
         title: 'Keep Linux and Windows compatible',
         body: 'Requires: windows-ci, linux-container\n\nMeasure ten Linux runs before and ten after at equal load. Verify Windows compatibility in PR CI.',
+      }),
+    ).toEqual([]);
+    expect(
+      unavailableCapabilities({
+        title: 'Repair the Windows quarantine',
+        body: 'Measure ten Linux runs before and ten after at equal load. Verify Windows compatibility in PR CI and retain the quarantine entry until CI passes.',
+      }),
+    ).toEqual([]);
+    expect(
+      unavailableCapabilities({
+        title: 'Repair Windows serialization',
+        body: 'Compare baseline and candidate snapshots in a repository unit test. Verify compatibility in PR CI.',
       }),
     ).toEqual([]);
   });

@@ -58,9 +58,22 @@ export function isInside(solid: ShapeSolid, p: THREE.Vector3, dirs: THREE.Vector
   return false;
 }
 
-function penetration(inner: Placed, outer: Placed, { toleranceMm, maxSamples }: CollideOptions) {
+type DirectionCache = Map<Placed, THREE.Vector3[]>;
+
+function directionsOf(placed: Placed, cache: DirectionCache): THREE.Vector3[] {
+  const known = cache.get(placed);
+
+  if (known) return known;
+
+  const directions = RAY_DIRS.map((d) => d.clone().transformDirection(placed.inverse));
+
+  cache.set(placed, directions);
+
+  return directions;
+}
+
+function penetration(inner: Placed, outer: Placed, { toleranceMm, maxSamples }: CollideOptions, dirs: THREE.Vector3[]) {
   const toOuter = outer.inverse.clone().multiply(inner.matrix);
-  const dirs = RAY_DIRS.map((d) => d.clone().transformDirection(outer.inverse));
   const shrunk = outer.solid.box.clone().expandByScalar(-toleranceMm);
   const samples = samplesOf(inner.solid, maxSamples);
   const target = { point: new THREE.Vector3(), distance: 0, faceIndex: 0 };
@@ -89,9 +102,8 @@ const MIN_SAMPLES_INSIDE = 3;
 const CROSSINGS_PROBED = 24;
 const PROBE_STEPS_MM = [0.5, 1.5, 4, 12, 32];
 
-function crossingDepth(A: Placed, B: Placed) {
+function crossingDepth(A: Placed, B: Placed, dirsB: THREE.Vector3[]) {
   const aToB = B.inverse.clone().multiply(A.matrix);
-  const dirsB = RAY_DIRS.map((d) => d.clone().transformDirection(B.inverse));
   const target = { point: new THREE.Vector3(), distance: 0, faceIndex: 0 };
   const inB = new THREE.Vector3();
   const depthAt = (p: THREE.Vector3) => {
@@ -167,13 +179,13 @@ function sharedFace(A: Placed, B: Placed): Coplanar | null {
   return shared >= 4 ? { a: A.id, b: B.id, areaMm2: Math.round(shared) } : null;
 }
 
-function overlap(A: Placed, B: Placed, options: CollideOptions): Interference | null {
+function overlap(A: Placed, B: Placed, options: CollideOptions, directions: DirectionCache): Interference | null {
   if (!A.box.clone().expandByScalar(-options.toleranceMm).intersectsBox(B.box)) return null;
 
-  const ab = penetration(A, B, options);
-  const ba = penetration(B, A, options);
+  const ab = penetration(A, B, options, directionsOf(B, directions));
+  const ba = penetration(B, A, options, directionsOf(A, directions));
   const fraction = Math.max(ab.fraction, ba.fraction);
-  const crossed = crossingDepth(A, B);
+  const crossed = crossingDepth(A, B, directionsOf(B, directions));
   const enoughInside = fraction > 0.01 || Math.max(ab.inside, ba.inside) >= MIN_SAMPLES_INSIDE;
 
   if (crossed <= options.toleranceMm && !enoughInside) return null;
@@ -193,10 +205,11 @@ function overlap(A: Placed, B: Placed, options: CollideOptions): Interference | 
 export function collide(placed: Placed[], options: CollideOptions, skip?: SkipPair) {
   const interferences: Interference[] = [];
   const coplanar: Coplanar[] = [];
+  const directions: DirectionCache = new Map();
 
   for (const [A, B] of collisionPairs(placed, options, skip)) {
     const face = options.coplanar === false ? null : sharedFace(A, B);
-    const hit = overlap(A, B, options);
+    const hit = overlap(A, B, options, directions);
 
     if (face) coplanar.push(face);
 

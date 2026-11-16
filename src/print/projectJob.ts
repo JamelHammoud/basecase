@@ -1,5 +1,5 @@
 import type { PrinterSetup } from '../data/printers';
-import type { PrintMaterial, ProjectSettings } from '../types/robotics';
+import type { ProjectSettings } from '../types/robotics';
 import { itemName, jobSpec, type JobSpec } from './job';
 import type { PrintPlan } from './plan';
 import type { PrinterStatus } from './printBridge';
@@ -24,14 +24,14 @@ export function projectJobSpec(
 
   const materials = spec.groups.map((g) => g.material);
   const slots = [...trays].filter((t) => t.slot >= 0 && t.slot < 254).sort((a, b) => a.slot - b.slot);
-  const trayOf = (m: PrintMaterial) => slots.find((t) => t.type.toUpperCase().startsWith(m));
-  const ordered = [...materials];
+  const ordered = materials.map((type) => ({ type, tray: slots.find((t) => t.type.toUpperCase().startsWith(type)) }));
 
-  ordered.sort((a, b) => (trayOf(a)?.slot ?? Infinity) - (trayOf(b)?.slot ?? Infinity));
+  ordered.sort((a, b) => (a.tray?.slot ?? Infinity) - (b.tray?.slot ?? Infinity));
 
-  const filaments = ordered.map((type) => ({
+  const filamentIndex = new Map(ordered.map(({ type }, i) => [type, i + 1]));
+  const filaments = ordered.map(({ type, tray }) => ({
     type,
-    color: trayOf(type) ? trayColor(trayOf(type)!.color) : FALLBACK_COLOR,
+    color: tray ? trayColor(tray.color) : FALLBACK_COLOR,
     preset: spec.printer?.filaments[type] ?? `Generic ${type}`,
   }));
   const material = materials[0];
@@ -44,7 +44,7 @@ export function projectJobSpec(
         name: itemName(it.name, it.copy),
         matrix: it.matrix,
         plate: p.number,
-        filament: ordered.indexOf(p.material) + 1,
+        filament: filamentIndex.get(p.material)!,
       })),
     ),
     project: {

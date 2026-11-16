@@ -39,7 +39,9 @@ export function withoutGithub(fn) {
   }
 }
 
-export function runClaude({ cwd, name, brief, prompt, schema, hours, sandbox, policy }, execute = run) {
+export function runClaude({ cwd, name, brief, prompt, schema, hours, deadlineAt, sandbox, policy }, execute = run) {
+  if (deadlineAt <= Date.now()) return { ok: false, error: 'Task execution deadline exhausted' };
+
   const args = [
     '-p',
     prompt,
@@ -63,7 +65,7 @@ export function runClaude({ cwd, name, brief, prompt, schema, hours, sandbox, po
     execute(process.env.CLAUDE_BIN || 'claude', args, {
       cwd,
       env: claudeSubscriptionEnv(env),
-      timeout: hours * 60 * 60 * 1000,
+      timeout: Math.max(1, Math.floor(Math.min(hours * 3_600_000, (deadlineAt ?? Infinity) - Date.now()))),
       allowFail: true,
     });
   const response = sandbox ? withoutGithub(launch) : launch();

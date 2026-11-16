@@ -1,3 +1,4 @@
+import { buildOutcome, buildSchema } from '../lib/buildOutcome.mjs';
 import { CHANGE_SCHEMA } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import { closeIssue, commentOnIssue, editIssueLabels, hasLabel, issues, openPulls } from '../lib/github.mjs';
@@ -81,10 +82,8 @@ function reconsideration({ missing, inputSignature, waitFor, until }) {
   return `A builder picks it up again ${dependency}after ${retry} UTC at the earliest.`;
 }
 
-function decline(step, reason, inputSignature) {
-  const openNumbers = openPullNumbers();
-  const waitFor = [...reason.matchAll(/#(\d+)/g)].map((m) => Number(m[1])).filter((n) => openNumbers.has(n));
-  const missing = unavailableCapabilities({ title: step.title, body: reason });
+function decline(step, outcome, inputSignature) {
+  const { reason, dependencies: waitFor, capabilities: missing } = outcome;
   const entry = recordDecline(step.number, {
     now: Date.now(),
     waitFor,
@@ -125,17 +124,26 @@ function recoveryContext(step, inputSignature, recovery) {
   const refreshed =
     recovery.inputSignature === recoverySignature(step, inputSignature) ? '' : refreshRecovery(recovery);
 
-  return [failure, refreshed].filter(Boolean).join('\n\n');
+  return [
+    failure,
+    recovery.originalTask ? `Original task and acceptance scope:\n${recovery.originalTask}` : '',
+    'Continue the retained work and scratch/task-handoff.json. Complete the full acceptance scope before reporting complete.',
+    refreshed,
+  ]
+    .filter(Boolean)
+    .join('\n\n');
 }
 
-function retainFailedSession(step, inputSignature, worktree, { session, reason }) {
-  if (!session || !worktree) return;
+function retainFailedSession(step, inputSignature, worktree, { session, reason, outcome, execution }) {
+  if (!worktree) return;
 
   saveRecovery(step.number, {
     worktree,
     inputSignature: recoverySignature(step, inputSignature),
     session,
     reason: String(reason ?? '').slice(-6000),
+    outcome,
+    execution,
   });
 }
 
@@ -155,6 +163,23 @@ const executionIdentity = (step, { slot, worker }) => ({
   worker: worker ?? `build-${slot}`,
 });
 
+const retainedWorktree = (step, slot, recovery) => ({
+  ...(recovery ?? openBranch('build', `${step.number}-${slot}-${step.title}`)),
+  deadlineAt: recovery?.deadlineAt ?? (recovery?.at ?? Date.now()) + 12 * 60 * 60 * 1000,
+  originalTask: recovery?.originalTask ?? `${step.title}\n\n${step.body}`,
+});
+
+const executionOutcome = (result) =>
+  result.ok
+    ? buildOutcome(result.output, openPullNumbers())
+    : {
+        status: 'incomplete',
+        reason: String(result.error ?? 'Agent execution interrupted'),
+        evidence: result.journalId ? [result.journalId] : [],
+        dependencies: [],
+        capabilities: [],
+      };
+
 export function buildStep(step, { log, slot, worker }) {
   let inputSignature;
   let worktree;
@@ -162,7 +187,8 @@ export function buildStep(step, { log, slot, worker }) {
   const giveBack = (result) => {
     editIssueLabels(step.number, { add: [NEXT], remove: [BUILDING] });
 
-    if (result?.ok) decline(step, result.output.notes, inputSignature);
+    if (result?.outcome && ['blocked', 'declined'].includes(result.outcome.status))
+      decline(step, result.outcome, inputSignature);
   };
 
   try {
@@ -171,7 +197,7 @@ export function buildStep(step, { log, slot, worker }) {
 
     const recovery = recoveryFor(step.number);
 
-    worktree = recovery ?? openBranch('build', `${step.number}-${slot}-${step.title}`);
+    worktree = retainedWorktree(step, slot, recovery);
     continuation = recovery?.session;
 
     const prompt = [
@@ -185,7 +211,8 @@ export function buildStep(step, { log, slot, worker }) {
       name: 'build',
       ...executionIdentity(step, { slot, worker }),
       prompt,
-      schema: CHANGE_SCHEMA,
+      schema: buildSchema(CHANGE_SCHEMA),
+      deadlineAt: worktree.deadlineAt,
       hours: 12,
       log,
       continuation,
@@ -193,14 +220,22 @@ export function buildStep(step, { log, slot, worker }) {
 
     continuation = result.session ?? continuation;
 
-    if (!result.ok)
-      retainFailedSession(step, inputSignature, worktree, { session: continuation, reason: result.error });
+    const outcome = executionOutcome(result);
 
-    if (result.ok && !result.output.changed) clearRecovery(step.number);
-
-    if (!result.ok || !result.output.changed) {
-      giveBack(result);
-      log(`#${step.number} not built: ${String(result.error ?? result.output.notes).slice(0, 500)}`);
+    if (outcome.status !== 'complete') {
+      retainFailedSession(step, inputSignature, worktree, {
+        session: continuation,
+        reason: outcome.reason,
+        outcome,
+        execution: {
+          journalId: result.journalId,
+          reportedOutcome: result.output?.outcome,
+          checked: result.output?.checked,
+          notes: result.output?.notes,
+        },
+      });
+      giveBack({ outcome });
+      log(`#${step.number} unresolved: ${outcome.reason.slice(0, 500)}`);
 
       return;
     }

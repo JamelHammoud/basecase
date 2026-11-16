@@ -38,6 +38,8 @@ export function completionWindow(work, { since, until, pulls }) {
         {
           completions: tasks.length,
           completionsPerDay: tasks.length / ((until - since) / 86_400_000),
+          incompleteAttemptsPerCompletion: average(tasks, 'incompleteAttempts'),
+          unknownBuildOutcomes: tasks.reduce((sum, task) => sum + task.unknownBuildOutcomes, 0),
           reviewAttempts: tasks.reduce((sum, task) => sum + task.reviewAttempts, 0),
           reviewOutcomes: reviewOutcomeTotals(tasks),
           tokensPerCompletion: average(tasks, 'tokens'),

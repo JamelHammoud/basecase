@@ -39,6 +39,11 @@ const partitionOf = (record, link) => {
   return link.shared ? 'shared' : link.status;
 };
 
+const workPerCompletion = (totals, completions) => ({
+  tokens: completions && totals.tokens !== null ? totals.tokens / completions : null,
+  milliseconds: completions && totals.milliseconds !== null ? totals.milliseconds / completions : null,
+});
+
 export function taskUsage(records, pulls, publications = []) {
   const resolve = usageLinks(pulls, publications);
   const partitions = Object.fromEntries(
@@ -82,6 +87,7 @@ export function taskUsage(records, pulls, publications = []) {
   const allTasks = [...groups.values()].map(({ link, sessions }) => taskSummary(link, sessions));
   const tasks = allTasks.filter((task) => task.status === 'merged' && !task.shared);
   const mergedWork = sessionTotals(partitions.merged);
+  const totalWork = sessionTotals(records);
   const perTask = (key) => (tasks.length && mergedWork[key] !== null ? mergedWork[key] / tasks.length : null);
 
   return {
@@ -105,6 +111,9 @@ export function taskUsage(records, pulls, publications = []) {
         {
           mergedTasks: completed.length,
           failedAttempts: completed.reduce((sum, task) => sum + task.failedAttempts, 0),
+          unknownBuildOutcomes: completed.reduce((sum, task) => sum + task.unknownBuildOutcomes, 0),
+          incompleteAttemptsPerMergedTask:
+            completed.reduce((sum, task) => sum + task.incompleteAttempts, 0) / completed.length,
           reviewAttempts: completed.reduce((sum, task) => sum + task.reviewAttempts, 0),
           reviewOutcomes: reviewOutcomeTotals(completed),
           tokensPerMergedTask: completed.every((task) => task.tokens !== null)
@@ -117,6 +126,8 @@ export function taskUsage(records, pulls, publications = []) {
       ]),
     ),
     mergedWork,
+    totalWork,
+    totalWorkPerMergedTask: workPerCompletion(totalWork, tasks.length),
     workPerMergedTask: { tokens: perTask('tokens'), milliseconds: perTask('milliseconds') },
     unmerged: sessionTotals([...partitions.unfinished, ...partitions.abandoned]),
     ...Object.fromEntries(

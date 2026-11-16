@@ -27,7 +27,16 @@ const task = {
   kind: 'feature',
   log: vi.fn(),
 };
-const first = { ok: true, session, output: { changed: true, kind: 'feature', copy: [] } };
+const first = {
+  ok: true,
+  session,
+  output: {
+    changed: true,
+    outcome: { status: 'complete', reason: '', evidence: [], dependencies: [], capabilities: [] },
+    kind: 'feature',
+    copy: [],
+  },
+};
 
 afterEach(() => vi.clearAllMocks());
 afterAll(() => fs.rmSync(cwd, { recursive: true, force: true }));
@@ -67,4 +76,18 @@ describe('preflight continuation', () => {
     expect(() => checkedRun(task)).toThrow(failure);
     expect(failure.session).toEqual(session);
   });
+});
+
+it.each([
+  undefined,
+  { status: 'incomplete' },
+  { status: 'unknown' },
+  { status: 'complete' },
+  { ...first.output.outcome, dependencies: [99] },
+])('does not spend a preflight correction on unfinished or invalid build outcome %j', (outcome) => {
+  const unfinished = { ok: true, session, output: { changed: true, kind: 'feature', outcome } };
+
+  model.mockReturnValueOnce(unfinished);
+  expect(checkedRun(task)).toBe(unfinished);
+  expect(model).toHaveBeenCalledOnce();
 });

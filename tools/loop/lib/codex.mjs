@@ -144,12 +144,22 @@ export function codexSession(out, options) {
 }
 
 function executeCodex(options, files, execute) {
+  if (options.deadlineAt <= Date.now())
+    return {
+      ok: false,
+      session: continuationMatches(options.continuation, options) ? options.continuation : null,
+      error: 'Task execution deadline exhausted',
+    };
+
   const resumed = continuationMatches(options.continuation, options);
   const response = execute(process.env.CODEX_BIN || 'codex', codexArgs(options, files), {
     cwd: options.cwd,
     env: codexHome(options.env),
     input: resumed ? options.prompt : `${options.brief}\n\n---\n\n${options.prompt}`,
-    timeout: options.hours * 60 * 60 * 1000,
+    timeout: Math.max(
+      1,
+      Math.floor(Math.min(options.hours * 3_600_000, (options.deadlineAt ?? Infinity) - Date.now())),
+    ),
     allowFail: true,
   });
   const metadata = codexSession(response.out, options);

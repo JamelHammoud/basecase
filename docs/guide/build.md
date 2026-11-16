@@ -196,6 +196,8 @@ Measurements and limits: [Strength and Lighten performance evidence](../notes/pe
 
 ## Performance: engineering calculations
 
+- **Box corners allocate only their results.** `utils/engineeringMath.ts` returns eight owned corner tuples directly, without temporary axis arrays or growing the result with pushes. Payload hand-point selection and dual-shaft joint support share this helper. Corner order remains X, then Y, then Z, with the minimum before the maximum on each axis. Existing `payload.test.ts` and `engineering.test.ts` cover both report consumers. [Evidence](../notes/performance-engineering.md#box-corners-allocate-only-their-results).
+
 - **Service BOM lines reuse a quote index.** `buildBom` resolves each printed part through the operation-local `quotesByPart` map shared with print-service request selection. First matches, missing quotes, stale prices and refusals retain their existing behavior. `serviceQuotes.test.ts` covers both consumers and later replacements. [Evidence](../notes/performance-printing.md#service-quotes-are-indexed-per-operation).
 
 - **Payload ancestry appends before reversing.** `utils/engineeringPayload.ts` builds its movable root-to-tip chain with appends and one reversal, removing repeated front insertion. Fixed-joint exclusion and link order stay unchanged. Existing `payload.test.ts` covers complete Payload rows, actuator strength and non-arm exclusion. [Shared ancestry evidence](../notes/performance-motion.md#ancestor-chains-append-before-reversing).

@@ -2,6 +2,27 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## Import path sorting prepares depth once per candidate
+
+The whole-app search found depth-and-lexical path sorts in robot entry selection, XML peeks, xacro peeks and LeRobot root discovery. All four share `utils/pathsByDepth.ts`. Each sort splits each candidate once before comparing numeric depths. The rosbag2 first-shallowest reduction and GitHub search scoring do not sort paths and remain unchanged.
+
+On November 15, 2026, a scratch comparison on Node 26.13.0 counted slash-delimited `String.split` calls during complete robot entry selection and LeRobot root discovery. Repository fixtures reverse 300 or 600 paths, distribute them across eleven depths and permute their numeric names. Complete before and after results matched for XML, xacro, URDF and dataset fixtures.
+
+| Candidates | Discovery | Before splits | After splits |
+| --- | --- | --- | --- |
+| 300 | XML | 4,255 | 324 |
+| 300 | xacro | 4,471 | 492 |
+| 300 | URDF | 4,485 | 300 |
+| 300 | LeRobot | 4,184 | 300 |
+| 600 | XML | 9,623 | 624 |
+| 600 | xacro | 9,839 | 792 |
+| 600 | URDF | 10,153 | 600 |
+| 600 | LeRobot | 9,552 | 600 |
+
+These are operation counts without timing assertions or a claim about complete import latency. Each split still allocates its segments. Ranking adds one depth record per candidate, and sorting, lexical comparisons, retained-path arrays and file decoding remain. XML and xacro counts include subsequent candidate selection and filename parsing.
+
+`robotImport/entry.test.ts` checks the 24-file XML and 48-file xacro read limits, ordered shallowest choices and unchanged input, alongside existing description priority, include and scope cases. `datasets/import/sourceKind.test.ts` checks LeRobot root precedence across mixed formats, rotated inputs, added and removed roots and unrelated filenames. Existing reader tests cover complete dataset import. No UI state, workflow or quarantine changes.
+
 ## Xacro tokenization prepares its end once
 
 `xacroExpr.test.ts` covers arithmetic, short-circuiting, allowed functions and rejected syntax, plus leading, internal, trailing and Unicode whitespace, quoted spaces, whitespace-only input, invalid tokens after whitespace, recovery after failures and the original 4,000-character limit. Existing `xacro.test.ts` and `xacroImport.test.ts` cover expansion and imported robot equivalence.

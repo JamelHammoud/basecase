@@ -1,3 +1,4 @@
+import { lineIdentity } from './purchaseIdentity';
 import { BLOCKOUT_ONLY } from '../data/catalog';
 import { COMPONENT_BY_ID, componentVariant, type ComponentInfo, type ComponentVariant } from '../data/components';
 import { HardwareSpec, hardwareName, hardwareShopUrl, isStockLength, makeSpec, screwStandard } from '../data/hardware';
@@ -354,6 +355,7 @@ function bomLine(key: string, qty: number, partIds: string[], { purchases, now }
     url: record?.url || info.url,
     urlKind: record?.url ? 'product' : info.urlKind,
     record,
+    identity: lineIdentity(key, record),
     status: priceStatus(record, ageDays, split.toBuy),
     ageDays,
     ...linePricing(key, split.toBuy, record, filament),

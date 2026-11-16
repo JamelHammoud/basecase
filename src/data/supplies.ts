@@ -1,3 +1,4 @@
+import type { PurchaseIdentity } from '../types/purchasing';
 import type { PrintMaterial } from '../types/robotics';
 import type { ConnectorType } from '../types/ports';
 
@@ -10,6 +11,7 @@ export interface CableStock {
 }
 
 export interface SupplyInfo {
+  identity?: PurchaseIdentity;
   id: string;
   name: string;
   group: SupplyGroup;

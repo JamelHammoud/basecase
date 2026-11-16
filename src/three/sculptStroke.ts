@@ -94,7 +94,7 @@ function applyDirectStroke(
   brush: { kind: SculptBrushKind; radius: number },
 ) {
   const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
-  const normAttr = geo.getAttribute('normal') as THREE.BufferAttribute;
+  const normAttr = brush.kind === 'inflate' || brush.kind === 'carve' ? geo.getAttribute('normal') : undefined;
   const radiusSq = brush.radius * brush.radius;
   const move = BRUSHES[brush.kind];
 
@@ -105,7 +105,8 @@ function applyDirectStroke(
 
     if (distSq > radiusSq) continue;
 
-    step.n.fromBufferAttribute(normAttr, i);
+    if (normAttr) step.n.fromBufferAttribute(normAttr, i);
+
     step.w = 0.5 * (1 + Math.cos((Math.PI * Math.sqrt(distSq)) / brush.radius));
     move(step);
     posAttr.setXYZ(i, step.v.x, step.v.y, step.v.z);
@@ -118,7 +119,6 @@ function applyStroke(
   brush: { kind: SculptBrushKind; radius: number; strength: number },
 ) {
   const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
-  const normAttr = geo.getAttribute('normal') as THREE.BufferAttribute;
   const { radius, strength } = brush;
   const radiusSq = radius * radius;
   const v = new THREE.Vector3();
@@ -159,7 +159,6 @@ function applyStroke(
     const idx = affectedIndices[k];
 
     v.fromBufferAttribute(posAttr, idx);
-    n.fromBufferAttribute(normAttr, idx);
     step.w = falloffs[k];
     move(step);
     posAttr.setXYZ(idx, v.x, v.y, v.z);

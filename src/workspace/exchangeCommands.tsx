@@ -69,7 +69,19 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       keywords: 'share send friend basecase file download save',
       run: () => void exports.exportScene(),
     },
-    ...(exports.canExportRobot ? [robotPackage] : []),
+    ...(exports.canExportRobot
+      ? [
+          robotPackage,
+          {
+            id: 'export-kit',
+            group: 'Scene',
+            label: 'Kit',
+            icon: <FileIcon />,
+            keywords: 'export manufacturing packing plates servo zip download',
+            run: () => void exports.exportKit(),
+          },
+        ]
+      : []),
     ...(exports.canExportCutFiles
       ? [
           {

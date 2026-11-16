@@ -56,6 +56,8 @@ To set one problem aside, right-click its row and choose **Ignore**. To set asid
 
 Because the decision was yours, an ignored problem stays ignored when the parts change. The agent sees what you've ignored and leaves those problems alone. Everything you've set aside is listed under **Ignored**, below the list, and you can put any of it back from there.
 
+Ignoring a finding keeps the original measurement time.
+
 ## What Ready to build doesn't promise
 
 Checks measure the design as you modeled it. A strap or zip tie you'll add by hand isn't in the model, so its row is a note that you check yourself.

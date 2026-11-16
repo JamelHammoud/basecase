@@ -64,6 +64,8 @@ Checks only see what's in the model, so they miss things like a strap that holds
 1. Right-click the problem's row.
 2. Choose **Ignore**.
 
+Ignoring changes the verdict without rerunning the measurement or changing its recorded time.
+
 The problem moves to **Ignored**, below the list. To bring it back, click **Restore** there.
 
 **Note:** Only you can ignore a blocker. The agent can tell you it disagrees, but it can't clear a blocker by itself.

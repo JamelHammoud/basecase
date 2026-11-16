@@ -2,6 +2,16 @@
 
 Implementation: [Sketch](../guide/inspector-and-selection.md#performance-sketch). Shared requirements: [Performance](../guide/performance.md).
 
+## SVG bounds scan contours directly
+
+The bounds search found one remaining flattened point list in the SVG-to-solid parser, `utils/svgTo3DParser.ts`. Sketch framing and profile output already accumulate bounds directly. The parser now scans each outer contour in source order without collecting its references in another array. Holes remain excluded from bounds. Filled shapes and the outline fallback share the same scan, which supplies preview dimensions, extrusion contours and the Edit in Sketch handoff.
+
+On November 16, 2026, `scratch/svg-bounds.test.ts` compared complete parser results with the preceding implementation for 1, 30, 300 and 600 rectangular SVG paths. Both used the same sampled paths and fixed timestamp. Every result matched exactly. Instrumentation counted 49, 1,470, 14,700 and 29,400 outer-point references in the former flattened bounds list, and zero in the new scan. The log is `scratch/svg-bounds.log`. These are reference counts, not timings or heap measurements. Shape extraction, sampling, normalization and output allocation retain their existing work, and no complete-import speedup is claimed.
+
+Existing `svgTo3DParser.test.ts` covers normalized filled contours with a hole, skipped unfilled paths, tall outlines, dimension and color overrides, bevels and empty-input refusal. No new browser test, timeout, retry or quarantine is needed for this traversal change.
+
+[Draw a part from a sketch or SVG](../../site/content/help/draw-a-part-from-a-sketch-or-svg.md) was rechecked against `SvgImportPanel.tsx`, `OutputFields.tsx`, `useStudioDraft.ts` and the final parser. Choosing or dropping an SVG still loads the preview and shape and hole counts. Output keeps W, T and Bevel, Add still reparses with the chosen settings and file name, and Edit in Sketch still opens the draft built from the normalized contour. Draft defaults remain 64 for the span field, 10 for thickness and Bevel enabled. The bounds traversal changes none of these controls, results or transitions. The article's steps and four Sketch screenshots remain accurate and unchanged. No SVG screenshot exists in this article, and no screen state changed that needs a new capture.
+
 ## Sketch picking scans for one nearest target
 
 The whole-app search found both ranked nearest-target selections in `components/studio/sketchMarks.ts`'s `hitTest`, shared by new and reopened sketches through `useSketchSelection`. Drawing inference and face picking already retain nearest candidates directly. Path-layer sorting controls paint order and still needs its ordered result.

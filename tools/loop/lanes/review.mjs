@@ -1,7 +1,7 @@
 import { creditProblems } from '../credit.mjs';
 import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
-import { copyReport, copyReviewNote } from '../lib/copy.mjs';
+import { copyReport } from '../lib/copy.mjs';
 import { fetchAll, ownPatchId, resolveSha } from '../lib/branches.mjs';
 import {
   closePull,
@@ -17,6 +17,7 @@ import { duplicateTarget, inFlight, inFlightText } from '../lib/inFlight.mjs';
 import { byRank } from '../lib/rank.mjs';
 import { isSmall } from '../lib/smallChange.mjs';
 import { run } from '../lib/sh.mjs';
+import { reviewPrompt } from '../lib/reviewPrompt.mjs';
 import { voiceNewPages } from '../lib/voiceHook.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
 import { hasPendingDelivery } from '../lib/deliveryState.mjs';
@@ -113,10 +114,9 @@ function judge({ pull, worktree, diff, copy, onMain, log }) {
   const where = onMain
     ? 'The worktree is the pull request merged onto current main, so judge it as it would land.'
     : 'It conflicts with current main, so the worktree is its own head; the rebase lane will bring it up to date.';
-  const counted = `Its user-facing strings (\`tools/copy-diff.mjs\`):\n\n${fenced(copy.text)}\n\n${copyReviewNote(copy)}`;
   const others = inFlight();
   const duplicates = `Other pull requests, open or merged in the last day:\n\n${inFlightText({ ...others, except: pull.number })}\n\nIf one of them makes this same change (the same strings or the same behaviour, not merely the same area), set duplicateOf to its number.`;
-  const prompt = `Review pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${where}\n\n${counted}\n\n${duplicates}\n\n${FIX_IT}\n\nIts diff against main:\n\n${diff}`;
+  const prompt = reviewPrompt({ pull, where, copy, duplicates, fix: FIX_IT, diff });
   const result = runAgent({ cwd: worktree.dir, name: 'review', prompt, schema: SCHEMA, hours: 2 });
 
   if (!result.ok) {

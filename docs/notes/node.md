@@ -175,6 +175,39 @@ Review of #1303 found that native fields sharing a local initializer collapsed o
 `tools/copy/accounting.test.mjs` checks repeated menu and dialog references, shared fields, conditional branches, use locations and shadowing negative controls. The publication fixture starts with one native reference and adds two more, checking that budget, preflight and review all retain the two additions and require their reason. These are static extraction and temporary-repository checks. They add no publication step, model call or browser run. The replay timings above describe the implementation before these review corrections and were not remeasured.
 
 
+## Copy source context
+
+Issue #1414 refines the report for arc #224 after the recorded net increase of 128 strings across 193 merges. It changes no app strings. Occurrence extraction, normalization, move cancellation and justification policy remain the accounting contract above. Context is a lazy source walk over the already captured after-source, not a second string scanner. Counting, the budget job and preflight never evaluate it. The report is captured before review merges the head onto current main.
+
+Source evidence names an enclosing named function or component where available, preserving original line numbers. It groups shared context and clips individual lines at 180 characters. Occurrence lines take priority, followed by function starts, conditional starts and nearby lines. Numbered excerpts are ordered by source line after selection. Anonymous callbacks inside named functions use their named enclosing scope. Short groups come first, avoiding starvation by a large component. Added context is limited to 6,000 characters. Review spends the duplicate occurrence listing's saved space, with a 600-character minimum. Large reports and long lines explicitly mark omissions. The full occurrence list remains intact.
+
+The temporary-repository fixture covers adjacent duplicate captions, a displayed total beside its explanation, a labelled button's tooltip, recovery instructions, an icon accessibility name, exclusive branches, an imported child, repeated controls, changed wording, a modified renamed file and deleted source. It changes the checkout after recording the head and verifies the same source evidence. It checks shared context, bounded output and identical occurrence accounting. The same fixture feeds the production review-prompt assembler with controlled inputs. Publication tests still run the real budget command and verify occurrence reasons, including repeated native references, through preflight and voice boundaries.
+
+Initial fixture execution exposed source-order starvation: a large file consumed the context budget before the smaller panel. Short groups now come first. Prioritizing occurrence lines also avoids spending a short excerpt entirely on preceding controls. The useful instructions and accessibility labels remain reported copy, with no semantic rejection inferred from source proximity.
+
+On the macOS task host with Node v26.13.0, the sample is the nine revisions with added or changed copy among the latest 100 commits at `e917cde35`. Removal-only and no-copy revisions are outside this sample. The compared accounting is identical at every revision.
+
+| Change | Pinned head | Added / removed occurrences | Baseline prompt bytes | Context prompt bytes | Baseline preparation ms | Context preparation ms |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| #1398 | `afc1de2bbaf8` | 6 / 0 | 175,051 | 175,120 | 171.77 | 169.04 |
+| #1396 | `6e6d91b5d330` | 39 / 0 | 210,495 | 210,328 | 132.36 | 142.08 |
+| #1370 | `6333a4b8e899` | 20 / 0 | 203,861 | 203,657 | 99.32 | 98.67 |
+| #1354 | `6edeedf6e96f` | 7 / 0 | 122,159 | 122,090 | 147.26 | 147.07 |
+| #1323 | `93e274222ab1` | 6 / 0 | 107,706 | 107,775 | 113.77 | 113.88 |
+| #1312 | `212dbcd463a0` | 5 / 0 | 177,758 | 177,804 | 250.93 | 255.82 |
+| #1297 | `37dccba61cab` | 8 / 1 | 127,723 | 127,690 | 198.57 | 206.84 |
+| #1293 | `9a8a02e26702` | 3 / 0 | 149,167 | 149,417 | 312.53 | 301.07 |
+| #1280 | `d7cbda0933d5` | 11 / 0 | 255,350 | 255,172 | 348.59 | 345.83 |
+
+Aggregate assembled prompt size falls from 1,529,270 to 1,529,053 bytes, a reduction of 217 bytes. The sum of per-revision median preparations is 1775.10 ms before and 1780.31 ms after. This does not establish a preparation speedup or a CI budget. The reports alone grow in aggregate. Their context is offset by condensing the existing review brief without removing its occurrence requirements.
+
+Reproduce with `scannedSources`, `diffCopy`, `copyOccurrences` and `formatCopyDiff` at each pinned head and its first parent. The baseline is the starting report's format plus `report(judge(...))`, with the starting review brief. The candidate uses `copyReport` and the production `reviewPrompt` assembler with the shipped brief. Each occurrence receives the same controlled reason, not a fetched historical pull body. Repeated reason lines deliberately exercise the existing reason-joining behavior. Both prompts include the same real bounded diff and title, controlled duplicate and fix instructions, and unchanged shared brief. Each side is warmed once, then measured over three paired preparations. Per-row times are medians including Git source reads and accounting. Prompt sizes are UTF-8 bytes. Source loading, process contention and Git cache variability dominate these local observations. The script and raw evidence are `scratch/measure-copy.mjs`, `scratch/copy-measurements.json` and `scratch/context-<head>.txt`.
+
+Additional evidence includes the Kit menu item's disabled predicate beside Scene, Passive and Powered beside their actuation condition, Fleet registration fields with selected values, and recovery text in the function that shows it. All nine reports include source context. Some small reports grow individually. The aggregate comparison includes the shortened existing copy-review brief, rather than claiming the report alone always shrinks.
+
+Dynamic composition and imported children remain untraced. Conditions are shown as source, never evaluated. A callback or value may be composed elsewhere, an accessibility name may serve a different channel, and nearby branches may be exclusive. Sparse or clipped excerpts require inspection of the named revision. Neither proximity nor missing context proves redundancy. These measurements establish neither lower allowance consumption nor fewer review rounds. No model call, scanner, review stage, merge gate, retry, wait, browser test, deadline or quarantine is added.
+
+
 ## Loop product dispatch evidence
 
 Issue #1331 changes capacity selection in arc #224. It leaves #1286's CAD scene reads and held-out harness experiment unchanged. Product scope, ownership, dependencies, acceptance checks, provider quotas and protected overflow remain unchanged.

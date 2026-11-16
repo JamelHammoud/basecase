@@ -72,7 +72,12 @@ it('rejects missing occurrence reasons and preserves complete publication and re
     expect(copyProblems({ ...occurrences, copy: copy.slice(1) })).toHaveLength(2);
     expect(copyProblems({ ...occurrences, copy: copy.slice(0, 2) })).toHaveLength(2);
     expect(review.net).toBe(5);
-    expect(review.text).toContain(complete.stdout.trim());
+
+    for (const occurrence of occurrences.added) {
+      expect(review.text).toContain(`"${occurrence.text}"  ${occurrence.file}:${occurrence.line}`);
+    }
+
+    expect(review.text).not.toContain('why: MISSING');
     expect(review.text.match(/why: Closes each independently opened panel/g)).toHaveLength(2);
     expect(review.text.match(/why: Asks before each independent save operation/g)).toHaveLength(2);
     expect(review.text).toContain('electron/dialogs.mjs:3');

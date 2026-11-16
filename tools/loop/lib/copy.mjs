@@ -1,5 +1,5 @@
 import { copyDiffOfRange, copyOccurrences, formatCopyDiff } from '../../copy-diff.mjs';
-import { judge, report } from '../../copy/budget.mjs';
+import { judge, parseJustifications, report } from '../../copy/budget.mjs';
 import { json } from './sh.mjs';
 
 const NET = /^Copy: .*, net ([+-]?\d+)$/m;
@@ -10,9 +10,14 @@ export function copyReport(dir, { base = 'origin/main', head = 'HEAD', body } = 
 
     const occurrences = copyOccurrences(diff);
     const verdict = judge({ ...occurrences, body, banned: [] });
-    const evidence = body === undefined ? '' : `\n\nOccurrence reasons:\n${report(verdict, occurrences.removed)}`;
+    const plain = formatCopyDiff({ ...diff, context: undefined });
+    const reasons = body === undefined ? undefined : parseJustifications(body);
+    const compact = formatCopyDiff({ ...diff, context: undefined }, { reasons });
+    const previous =
+      plain + (body === undefined ? '' : `\n\nOccurrence reasons:\n${report(verdict, occurrences.removed)}`);
+    const contextBudget = body === undefined ? undefined : Math.max(600, previous.length - compact.length);
 
-    return { net: diff.net, text: formatCopyDiff(diff) + evidence };
+    return { net: diff.net, text: formatCopyDiff(diff, { reasons, contextBudget }) };
   } catch (error) {
     return { net: null, text: `Copy: not counted (${error.message.split('\n')[0]})` };
   }
@@ -27,6 +32,9 @@ export const copyReviewNote = ({ net }) => {
     ? 'This pull request adds more user-facing strings than it removes. Each added occurrence, including repeated controls and changed wording, needs a `copy:` line in the body naming why nothing on screen already says it; fail it with a blocker for every one whose reason is missing or does not hold up.'
     : 'It adds no more user-facing strings than it removes; still judge each added or changed string by the §3d checklist.';
 };
+
+export const copyReviewEvidence = (copy) =>
+  `Its user-facing strings (\`tools/copy-diff.mjs\`):\n\n\`\`\`\n${copy.text}\n\`\`\`\n\n${copyReviewNote(copy)}`;
 
 export const copyNetOf = (comments) =>
   comments

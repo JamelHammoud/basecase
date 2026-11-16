@@ -22,11 +22,12 @@ function recoveryCheckout() {
   git(main, 'init', '-q', '-b', 'main');
   git(main, 'config', 'user.name', 'test');
   git(main, 'config', 'user.email', 'test@example.com');
+  fs.writeFileSync(path.join(main, '.gitattributes'), '* text eol=lf\n');
   fs.writeFileSync(path.join(main, 'source.txt'), 'original source\n');
   fs.writeFileSync(path.join(main, 'retained.txt'), 'original work\n');
   git(main, 'add', '.');
   git(main, 'commit', '-qm', 'fixture');
-  git(root, 'clone', '-q', main, dir);
+  git(root, 'clone', '-q', '-c', 'core.autocrlf=true', main, dir);
   git(dir, 'config', 'user.name', 'test');
   git(dir, 'config', 'user.email', 'test@example.com');
 

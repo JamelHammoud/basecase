@@ -124,3 +124,7 @@ Servo populations (§8k) on the same hidden twin, with fresh units each run.
 - **Clean-checkout rerun:** clones this commit into a temp folder, `npm ci`, builds the trainer env once with `uv sync --frozen --exact` (a first sync racing between gates left a half-installed numpy), and reruns every required gate except Stage 7's own, inside the held lease; a void counts as a failure, the manifest must be approved, every parked gate must give a reason. The report is `verify/out/rehearsal/report.md`.
 - **72-hour run (parked):** the unsigned packaged app, PersonaLab driving the emulated robot through the relay, a fault from the matrix injected every 10-minute cycle and shown on screen within 3 s, no page errors; the Windows x64 half adds up checkpointed segments in `verify/out/rehearsal/soak-windows/` from the new Windows driver.
 - **Canaries:** a 20 px input, 10 px text, a slate grey, “No parts yet”, a silent persona, a persona that flags everything, a voided gate counted green, and a parked gate with no reason.
+
+## Frozen Arena coverage
+
+`verify/lib/run.test.mjs` checks the intact Motor Kit source lock and rejects mutations of both `arenaWorld.ts` and its shared delay wrapper. Baseline failures include the changed source path. The source lock includes the passive-actuator guard and retains every acceptance threshold. [Incident evidence](../notes/testing-skills.md#passive-arena-source-pin).

@@ -1,5 +1,45 @@
 [
   {
+    "file": "e2e/passiveFixtures.e2e.test.ts",
+    "issue": 1364,
+    "reason": "Run 43820519938 reached Drive on but retained zero tries at line 46 on both Windows attempts for each fixture. Linux passed at the same commit. Commit 37dccba61 introduced this browser coverage after the last green run. Each attempt opens a fresh app. The recording, automatic finish, scoring or persistence stage responsible is not established. Trace those stages and retain the weight edit, reference verdict, recorded reopening and travel assertions before restoring Windows coverage.",
+    "test": "creates Open a Lid, edits its weight and reopens its recorded reference",
+    "until": "2026-11-28",
+    "platform": "win32"
+  },
+  {
+    "file": "e2e/passiveFixtures.e2e.test.ts",
+    "issue": 1364,
+    "reason": "Run 43820519938 reached Drive on but retained zero tries at line 46 on both Windows attempts for each fixture. Linux passed at the same commit. Commit 37dccba61 introduced this browser coverage after the last green run. Each attempt opens a fresh app. The recording, automatic finish, scoring or persistence stage responsible is not established. Trace those stages and retain the weight edit, reference verdict, recorded reopening and travel assertions before restoring Windows coverage.",
+    "test": "creates Pull a Drawer, edits its weight and reopens its recorded reference",
+    "until": "2026-11-28",
+    "platform": "win32"
+  },
+  {
+    "file": "e2e/remoteTraining.e2e.test.ts",
+    "issue": 1365,
+    "reason": "Run 43820519938 observed zero train-start requests at line 64 on the first Windows attempt and only the initial request after reload at line 75 on the second. Linux passed at the same commit, and the single-attempt recovery walkthrough passed on Windows. Commit 212dbcd46 introduced grouped coverage. Preparation, worker startup, journal persistence and reattachment are not distinguished by the log. Retain parent and child identities, one dispatch and the local refusal while tracing the current workflow.",
+    "test": "configures two attempts, recovers one grouped workflow and shows its local verdict",
+    "until": "2026-11-28",
+    "platform": "win32"
+  },
+  {
+    "file": "e2e/vision.e2e.test.ts",
+    "issue": 1366,
+    "reason": "Run 43820519938 left operatorCamera().live false at line 65 on both Windows attempts. Linux passed at the same commit. The preceding Windows run 43739315274 passed in 13608 ms with unchanged camera code, fixture, harness, dependencies and e2e configuration. Each attempt opens a fresh app. The command, capture, worker readiness or detector stage responsible is not established. Preserve real pixel-sensitive inference and the independent pose fixture when restoring coverage.",
+    "test": "runs Find Faces on real fake-camera pixels while the body estimator uses its pose fixture",
+    "until": "2026-11-28",
+    "platform": "win32"
+  },
+  {
+    "file": "tools/loop/lib/codexHome.test.mjs",
+    "issue": 1367,
+    "reason": "Run 43820519938 reported this Windows failure before job cancellation lost its assertion summary. Diagnostic run 43823131452 selected the exact test at the same published commit with retries disabled and passed in 87.885 ms. The failing operation is not established. Config replacement precedes the auth claim, but no retained error establishes that as the cause. Retain child errors and trace config, auth and claims before a measured fix. The profile isolation test remains active everywhere, and concurrency remains active on Linux and macOS.",
+    "test": "initializes safely when several lanes start at once",
+    "until": "2026-11-28",
+    "platform": "win32"
+  },
+  {
     "file": "e2e/caseCode.e2e.test.ts",
     "test": "unloads a panel that never answers with its error, while the page keeps drawing frames",
     "issue": 1137,
@@ -73,7 +113,7 @@
   },
   {
     "file": "e2e/inputs.e2e.test.ts",
-    "test": "hears a recorded \u201csit\u201d in a Case whose logic listens for it",
+    "test": "hears a recorded “sit” in a Case whose logic listens for it",
     "issue": 995,
     "until": "2026-11-28",
     "platform": "win32",

@@ -13,3 +13,9 @@ The comparison in `src/utils/targetOverlay.test.ts` had the following budget evi
 ## Live cameras
 
 The standalone rover frame-rate e2e was removed under [#1096](https://github.com/JamelHammoud/basecase/issues/1096) after taking 43 s in run 43715791435. It required more than 15 frames in a fixed 1.5 s window after simulation and camera startup.
+
+## Windows operator vision startup
+
+[Check run 43820519938](https://github.com/JamelHammoud/basecase/actions/runs/43820519938) kept `operatorCamera().live` false at `e2e/vision.e2e.test.ts:65` on both Windows attempts. Linux passed at the same revision. The preceding Windows run 43739315274 passed in 13.608 seconds, with unchanged camera code, fixture, harness, dependencies and e2e configuration. Each attempt opens a fresh app. The logs do not identify the command, capture, worker readiness or detector stage responsible. This case is quarantined only on Windows until 28 November 2026 under [#1366](https://github.com/JamelHammoud/basecase/issues/1366). The separately quarantined rendered-camera case remains owned by #992.
+
+The walkthrough retains real fake-camera pixels through the pixel-sensitive ONNX detector and a separate pose fixture on Linux and macOS. Framework-free inference, pose forwarding, worker-error and shutdown checks remain active everywhere. Restore Windows after startup and cleanup traces identify the cause and ten before and ten after observations at equal load retain camera readiness, the face signal, 640 by 480 dimensions and the visible detection box. Repair measured no flake rate.

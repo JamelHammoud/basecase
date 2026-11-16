@@ -53,3 +53,9 @@ A live try can start recording after the passive joint has settled against its c
 ## Passive robot joints
 
 Recording assertions check nq and nv against physical DOFs and nu against the exact powered count, including zero-actuator robots. Control buffers have frames times nu entries. The dataset and demonstration feature schema still pairs powered joint positions with powered actions. Passive coordinates remain in the saved recording rather than acquiring fake actions. This does not change articulated Case fixture bindings or recording formats.
+
+## Windows passive fixture recording
+
+[Check run 43820519938](https://github.com/JamelHammoud/basecase/actions/runs/43820519938) at `017a5f2a7313ce68c18a51acc390cef00b7f2084` reached Drive on but saved zero tries at line 46 on both Windows attempts for both Open a Lid and Pull a Drawer. Linux passed at the same revision. Commit `37dccba61` introduced the walkthroughs after the last green run. Each attempt opens a fresh app. The log does not distinguish automatic finish, recording, scoring and persistence, so no product fix is claimed. Both Windows cases are quarantined until 28 November 2026 under [#1364](https://github.com/JamelHammoud/basecase/issues/1364).
+
+The all-platform passive-fixture integration test retains real reference contact, measured fixture travel, recording round trips, contract scoring and limp and locked negative controls. The browser walkthrough remains active on Linux and macOS. Restore Windows after traces identify the stage and at least ten before and ten after observations under equal load retain the 35 g edit, passing reference, recorded reopening and original travel assertions. Repair measured no flake rate.

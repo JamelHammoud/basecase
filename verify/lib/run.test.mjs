@@ -78,8 +78,9 @@ describe('gatekeeper', () => {
     const frozen = motorKit.checks[0];
     const read = fs.readFileSync.bind(fs);
     const changed = path.join(ROOT, file);
+    const baseline = frozen.run();
 
-    expect(frozen.run().ok).toBe(true);
+    expect(baseline.ok, baseline.detail).toBe(true);
 
     const reads = vi.spyOn(fs, 'readFileSync').mockImplementation((source, options) => {
       const content = read(source, options);

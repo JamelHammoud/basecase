@@ -149,6 +149,8 @@ The review lane sees the diff, the pull request body, the titles of the other pu
 
 ### CI repair
 
+The nightly unit matrix runs the complete static checks and unit suite on Linux and the complete unit suite on Windows. Windows does not repeat Linux formatting, lint or type checks. Both platforms retain their native physics parity step and unchanged job deadline. `workRecovery.test.mjs` gives its temporary Git repositories the shipped LF policy and forces `core.autocrlf=true` when cloning, so the recovery assertion also covers Windows checkout conversion. Concurrent profile startup remains covered on Linux and macOS, with its Windows case quarantined until 28 November 2026. [Incident evidence](../notes/node.md#nightly-windows-unit-repair).
+
 A red `check` on `main` is the first thing any lane fixes. Classify it before touching code:
 
 1. **Broke at a commit.** Find the commit; if one merge caused it, revert it, then fix forward.

@@ -878,3 +878,7 @@ Broken room imports assert the room parser’s error.
 Arm, gripper and wheel control discovery excludes passive joints. Live gait outputs omit passive coordinates while keeping physical foot geometry. Simulation recordings retain every physical joint coordinate and velocity, including passive robot joints. Their control buffers retain only actual MuJoCo actuators. LeRobot and demonstration policy features use powered joints through `datasets/episodes.ts`, avoiding a negative actuator address or an invented action channel. Passive state remains available in the underlying Try recording.
 
 `src/sim/passiveMotion.test.ts` checks physical and control widths across ten mechanisms. `passiveJoints.test.ts` checks dataset action selection. [Evidence](../notes/testing-cases.md#passive-robot-joints).
+
+### Passive fixture browser coverage
+
+`e2e/passiveFixtures.e2e.test.ts` retains New Case creation, a 35 g weight edit, a passing recorded reference and travel checks for both lid and drawer on Linux and macOS. Those two Windows cases are quarantined until 28 November 2026 under #1364. `src/cases/passiveFixtures.test.ts` retains real contact motion, recording round trips and limp and locked negative controls on every platform. [Incident evidence](../notes/testing-cases.md#windows-passive-fixture-recording).

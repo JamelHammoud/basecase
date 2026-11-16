@@ -4,6 +4,7 @@ import { hollowOf } from './hollow';
 import { meshOfSolid, soupOfMesh, type ManifoldApi, type Solid } from './manifold';
 import { SolidField } from './solidField';
 import { SweepRaster, type Motion } from './sweepRaster';
+import { turningReach } from './turningReach';
 import { centerOf, sizeOf, soupBounds, type Bounds } from './vec';
 import { BASE_LINK, WALL_MM, type V3, type WrapInput, type WrapJoint, type WrapResult } from './wrapTypes';
 
@@ -154,24 +155,6 @@ function sweepTest(rasters: SweepRaster[], dips: PointTest | null) {
   const test: PointTest = (x, y, z) => used.some((r) => r.hits(x, y, z)) || (dips?.(x, y, z) ?? false);
 
   return { test, box: dips ? null : merged(used.map((r) => r.reach())) };
-}
-
-function turningReach(joint: WrapJoint, moving: Bounds | null): Bounds | null {
-  if (!moving) return null;
-
-  const corners = [0, 1, 2, 3, 4, 5, 6, 7].map((i) =>
-    [0, 1, 2].map((k) => ((i >> k) & 1 ? moving.max[k] : moving.min[k])),
-  ) as V3[];
-
-  if (joint.type === 'prismatic') {
-    const ends = corners.flatMap((c) => joint.range.map((d) => c.map((v, k) => v + d * joint.axis[k]) as V3));
-
-    return merged(ends.map((c) => ({ min: c, max: c })));
-  }
-
-  const radius = Math.max(...corners.map((c) => Math.hypot(...c.map((v, k) => v - joint.origin[k]))));
-
-  return { min: joint.origin.map((v) => v - radius) as V3, max: joint.origin.map((v) => v + radius) as V3 };
 }
 
 function clearJoint(work: Work, joint: WrapJoint): void {

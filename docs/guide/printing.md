@@ -53,3 +53,7 @@ Measurements and limits: [Print planning and labels performance evidence](../not
 - **Printing never blocks the UI** (§8f): orientation candidates are found in the analysis workers (cached per shape), each scene's 3MF is welded, written and zipped in an analysis worker (`threeMf` task), and slicing runs as a child process in the main process. Plate layout and packing are plain data on the main thread (microseconds per part).
 
 - **Print connected-component lookups compress their full paths.** `print/componentRoot.ts` shares an iterative map lookup across print-merge groups and print-label faces. Each caller keeps its existing root choice and output order. Both append to their own member arrays instead of copying a growing array per member. [Evidence](../notes/performance-printing.md#print-connected-component-lookups-compress-their-full-paths).
+
+### Browser assertion scope
+
+Print-service account tests match `API key` exactly so Roboflow’s separate field does not match.

@@ -705,7 +705,7 @@ Windows retains Open Scene, and Linux and macOS retain all five tests. The Windo
 
 ### Recorded video
 
-`src/vision/tryFrameVideo.test.ts` runs on every platform after removing the Linux quarantine for [#1069](https://github.com/JamelHammoud/basecase/issues/1069). Real decoded-pixel, clip-offset and rotation assertions and both deadlines remain unchanged. `src/vision/tryFrameMedia.test.ts` retains clip-offset, boundary, drawing and disposal checks, while `src/vision/tryFrames.test.ts` checks saved-try extraction, timestamps, labels and source validation on every platform.
+`src/vision/tryFrameVideo.test.ts` remains active on Linux and macOS after the Linux repair for [#1069](https://github.com/JamelHammoud/basecase/issues/1069). Its Windows setup is quarantined through 28 November 2026 under [#1400](https://github.com/JamelHammoud/basecase/issues/1400), pending startup tracing and measured restoration. Real decoded-pixel, clip-offset and rotation assertions and both deadlines remain unchanged in quarantine observations. `src/vision/tryFrameMedia.test.ts` retains clip-offset, boundary, drawing and disposal checks, while `src/vision/tryFrames.test.ts` checks saved-try extraction, timestamps, labels and source validation on every platform.
 
 [Incident evidence and limits](../notes/recorded-video-worker-setup.md).
 

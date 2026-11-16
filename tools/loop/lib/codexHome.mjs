@@ -32,14 +32,14 @@ export function codexHome(env = {}) {
   const temporary = path.join(home, `config.${process.pid}.tmp`);
 
   fs.mkdirSync(home, { recursive: true, mode: 0o700 });
-  fs.writeFileSync(temporary, `${CONFIG}\n`, { mode: 0o600 });
-  fs.renameSync(temporary, path.join(home, 'config.toml'));
 
   const release = claimWithin('codex-home-auth', { ms: 1000, every: 10 });
 
   if (!release) throw new Error('Codex login sharing is busy');
 
   try {
+    fs.writeFileSync(temporary, `${CONFIG}\n`, { mode: 0o600 });
+    fs.renameSync(temporary, path.join(home, 'config.toml'));
     shareAuth(source, home);
   } finally {
     release();

@@ -30,30 +30,27 @@ export function frameGap(a: ArrayLike<number>, b: ArrayLike<number>): number {
 
 export class SpringMatch {
   private readonly example: GestureExample;
-  private previous: Float64Array;
-  private current: Float64Array;
+  private readonly costs: Float64Array;
 
   constructor(example: GestureExample) {
     this.example = example;
-    this.previous = new Float64Array(example.length + 1).fill(Number.POSITIVE_INFINITY);
-    this.current = new Float64Array(example.length + 1);
-    this.previous[0] = 0;
+    this.costs = new Float64Array(example.length + 1).fill(Number.POSITIVE_INFINITY);
+    this.costs[0] = 0;
   }
 
   step(frame: ArrayLike<number>): number {
     const m = this.example.length;
-    const prev = this.previous;
-    const cur = this.current;
+    const costs = this.costs;
+    let diagonal = 0;
 
-    cur[0] = 0;
+    for (let j = 1; j <= m; j++) {
+      const previous = costs[j];
 
-    for (let j = 1; j <= m; j++)
-      cur[j] = frameGap(frame, this.example[j - 1]) + Math.min(prev[j - 1], prev[j], cur[j - 1]);
+      costs[j] = frameGap(frame, this.example[j - 1]) + Math.min(diagonal, previous, costs[j - 1]);
+      diagonal = previous;
+    }
 
-    this.previous = cur;
-    this.current = prev;
-
-    return cur[m] / m;
+    return costs[m] / m;
   }
 }
 

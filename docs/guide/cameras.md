@@ -127,6 +127,8 @@ Measurements and limits: [Vision inference performance evidence](../notes/perfor
 
 Measurements and limits: [Gesture recognition performance evidence](../notes/performance-gestures.md).
 
+- **Streaming gesture matches retain one cost row.** `SpringMatch` in `cameras/gestures/gestureMatch.ts` overwrites its dynamic-programming row in place, carrying the previous diagonal in a scalar. Live taught recognition and whole-stream comparisons share this matcher. Open-begin boundaries, distance arithmetic, length normalization and empty-example scores stay unchanged. [Evidence](../notes/performance-gestures.md#streaming-gesture-matches-retain-one-cost-row).
+
 - **Teaching thresholds share bidirectional gesture distances.** `cameras/gestures/gestureMatch.ts` visits each unordered example pair once, updating both directional dynamic programs from one landmark-distance calculation. It retains two rows rather than a distance matrix. Open-begin boundaries, directional length normalization, repeated-reference exclusions and threshold arithmetic stay unchanged. All taught-gesture recognizers share this preparation. [Evidence](../notes/performance-gestures.md#teaching-thresholds-share-bidirectional-gesture-distances).
 
 - **Gesture smoothing reads windows directly.** `cameras/gestures/builtinGestures.ts` sums finite values in source order without slicing and filtering an array per output sample. Wave, Nod and Shake Head share this path. Window bounds, missing samples, sparse inputs and arithmetic stay unchanged. [Evidence](../notes/performance-gestures.md#gesture-smoothing-reads-windows-directly).

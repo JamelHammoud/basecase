@@ -153,7 +153,11 @@ export const followUpPrompt = ({ prompt, output, problems }) =>
     `The task:\n\n${prompt}`,
   ].join('\n\n');
 
-const shouldCheck = (result) => result.ok && result.output.changed && !result.output.abandon;
+const shouldCheck = (result, name) =>
+  result.ok &&
+  result.output.changed &&
+  !result.output.abandon &&
+  (name !== 'build' || result.output.outcome?.status === 'complete');
 
 function checkedChange(first, { kind, log, session }) {
   const problems = preflight(session.cwd, { kind: kind ?? first.output.kind, copy: first.output.copy });
@@ -185,7 +189,7 @@ function checkedChange(first, { kind, log, session }) {
 export function checkedRun({ kind, log, ...session }) {
   const first = runAgent(session);
 
-  if (!shouldCheck(first)) return first;
+  if (!shouldCheck(first, session.name)) return first;
 
   try {
     return checkedChange(first, { kind, log, session });

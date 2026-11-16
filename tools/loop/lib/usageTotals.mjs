@@ -51,6 +51,10 @@ export function sessionTotals(records) {
     sessions: records.length,
     completedSessions: records.filter((record) => record.state === 'completed').length,
     failedAttempts: records.filter((record) => record.ok === false).length,
+    incompleteAttempts: records.filter((record) => record.result?.outcome?.status === 'incomplete').length,
+    unknownBuildOutcomes: records.filter(
+      (record) => (record.lane ?? record.name) === 'build' && !record.result?.outcome,
+    ).length,
     revisions: records.filter((record) => (record.lane ?? record.name) === 'revise').length,
     tokens: missingUsage ? null : measuredTokens,
     measuredTokens,

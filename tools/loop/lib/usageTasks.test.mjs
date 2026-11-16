@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { taskUsage } from './usageTasks.mjs';
+import { completionWindow } from './usageCompletions.mjs';
 
 const usage = { input_tokens: 100, output_tokens: 20, cached_input_tokens: 80 };
 const session = (task, extra = {}) => ({ task, state: 'completed', ok: true, usage, durationMs: 500, ...extra });
@@ -146,4 +147,29 @@ it('attributes borrowed product capacity by task kind while retaining its worker
     tokensPerMergedTask: 360,
     millisecondsPerMergedTask: 1500,
   });
+});
+
+it('counts incomplete attempts per shipped feature and all observed work per completion', () => {
+  const incomplete = { result: { outcome: { status: 'incomplete' } }, taskKind: 'feature' };
+  const report = taskUsage(
+    [session('step-10', incomplete), session('review-21'), session('step-11', incomplete)],
+    pulls,
+  );
+
+  expect(report.byKind.feature).toMatchObject({ mergedTasks: 1, incompleteAttemptsPerMergedTask: 1 });
+  expect(report.totalWork).toMatchObject({ incompleteAttempts: 2, sessions: 3 });
+  expect(report.totalWorkPerMergedTask).toEqual({ tokens: 360, milliseconds: 1500 });
+  expect(report.workPerMergedTask).toEqual({ tokens: 240, milliseconds: 1000 });
+
+  const window = completionWindow(
+    { ...report, tasks: report.tasks.map((task) => ({ ...task, mergedAt: '2026-11-16T00:00:00Z' })) },
+    { since: Date.parse('2026-11-16'), until: Date.parse('2026-11-17'), pulls },
+  );
+
+  expect(window.byKind.feature).toMatchObject({ incompleteAttemptsPerCompletion: 1, unknownBuildOutcomes: 0 });
+  expect(taskUsage([session('step-11', incomplete)], pulls).totalWorkPerMergedTask.tokens).toBeNull();
+  expect(
+    taskUsage([session('step-10', incomplete), session('unlinked', { usage: null })], pulls).totalWorkPerMergedTask
+      .tokens,
+  ).toBeNull();
 });

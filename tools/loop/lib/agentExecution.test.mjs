@@ -162,3 +162,44 @@ it('journals the selected product kind and originating refinement worker before 
     });
   }
 });
+
+it('keeps the same deadline and journals incomplete work without claiming task completion', () => {
+  const outcome = {
+    status: 'incomplete',
+    reason: 'Acceptance checks remain',
+    evidence: ['scratch/task-handoff.json'],
+    dependencies: [],
+    capabilities: [],
+  };
+  const deadlineAt = Date.now() + 1000;
+
+  mocks.codex.mockReturnValue({ ok: true, output: { changed: false, outcome } });
+  runAgent({ ...task, deadlineAt });
+  expect(mocks.codex.mock.calls[0][0]).toMatchObject({ deadlineAt });
+  expect(mocks.codex.mock.calls[0][0].hours).toBeLessThanOrEqual(1 / 3600);
+  expect(mocks.journal.mock.calls[1][0].result).toMatchObject({ changed: false, outcome });
+  expect(runAgent({ ...task, deadlineAt: Date.now() - 1 })).toMatchObject({
+    ok: false,
+    error: 'Task execution deadline exhausted',
+  });
+  expect(mocks.codex).toHaveBeenCalledOnce();
+});
+
+it('preserves the interrupted primary session when protected overflow cannot start', () => {
+  const session = { provider: 'codex', id: 'interrupted-feature' };
+
+  mocks.codex.mockReturnValue({ ok: false, session, limited: { until: Date.now() + 60_000 } });
+  mocks.reserve.mockReturnValue(null);
+
+  let failure;
+
+  try {
+    runAgent(task);
+  } catch (error) {
+    failure = error;
+  }
+
+  expect(failure).toMatchObject({ session });
+  expect(mocks.codex).toHaveBeenCalledOnce();
+  expect(mocks.claude).not.toHaveBeenCalled();
+});

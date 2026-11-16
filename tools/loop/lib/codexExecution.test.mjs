@@ -208,3 +208,25 @@ describe('Codex limit recovery', () => {
     ).not.toBeNull();
   });
 });
+
+it('keeps formatting repair inside the same total execution deadline', () => {
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(1000);
+  const execute = vi.fn((_command, args, settings) => {
+    expect(settings.timeout).toBe(1000);
+    fs.writeFileSync(args[args.indexOf('-o') + 1], 'broken');
+    clock.mockReturnValue(2001);
+
+    return { ok: true, out: events.map((event) => JSON.stringify(event)).join('\n'), err: '' };
+  });
+
+  try {
+    expect(runCodex(options({ deadlineAt: 2000 }), execute)).toMatchObject({
+      ok: false,
+      session: { id: 'task-thread' },
+      error: 'Task execution deadline exhausted',
+    });
+    expect(execute).toHaveBeenCalledOnce();
+  } finally {
+    clock.mockRestore();
+  }
+});

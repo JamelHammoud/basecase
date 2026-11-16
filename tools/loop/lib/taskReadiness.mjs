@@ -12,9 +12,15 @@ export function inputsReady(issue, { now, openNumbers }) {
   if (!entry.declines && !recovery) return true;
 
   const inputSignature = taskInputSignature(issue);
+  const retainedIncomplete =
+    recovery?.outcome?.status === 'incomplete' &&
+    recovery.inputSignature === recoverySignature(issue, inputSignature) &&
+    recovery.originalTask === `${issue.title}\n\n${issue.body}` &&
+    !(entry.missing?.length || entry.waitFor?.length) &&
+    (!entry.taskHead || entry.taskHead === taskKey(issue));
 
   return (
     recoveryReady(recovery, recoverySignature(issue, inputSignature)) &&
-    !stepWaiting(entry, { now, openNumbers, inputSignature, taskHead: taskKey(issue) })
+    (retainedIncomplete || !stepWaiting(entry, { now, openNumbers, inputSignature, taskHead: taskKey(issue) }))
   );
 }

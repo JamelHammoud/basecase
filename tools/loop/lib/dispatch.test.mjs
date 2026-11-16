@@ -66,7 +66,15 @@ beforeEach(() => {
   calls.steps = [step(1)];
   calls.statuses = new Map();
   calls.historyAvailable = true;
-  calls.execute.mockReturnValue({ ok: true, output: { changed: true, kind: 'feature', title: 'Product' } });
+  calls.execute.mockReturnValue({
+    ok: true,
+    output: {
+      changed: true,
+      outcome: { status: 'complete', reason: '', evidence: [], dependencies: [], capabilities: [] },
+      kind: 'feature',
+      title: 'Product',
+    },
+  });
   calls.publish.mockImplementation(() => {
     calls.statuses.set(1, 'open');
 
@@ -83,7 +91,15 @@ it('starts one founder product through the runner, shared claim and publication 
     expect(claim('step-1')).toBeNull();
     expect(options).toMatchObject({ name: 'build', task: 'step-1', taskKind: 'feature', worker: 'refine-1' });
 
-    return { ok: true, output: { changed: true, kind: 'feature', title: 'Product' } };
+    return {
+      ok: true,
+      output: {
+        changed: true,
+        outcome: { status: 'complete', reason: '', evidence: [], dependencies: [], capabilities: [] },
+        kind: 'feature',
+        title: 'Product',
+      },
+    };
   });
   await run({ byLane: { refine: 3 } });
   expect(calls.execute).toHaveBeenCalledOnce();
@@ -133,7 +149,15 @@ it('prevents a simultaneous worker from executing the same product', async () =>
 
     expect(other).toBeNull();
 
-    return { ok: true, output: { changed: true, kind: 'feature', title: 'Product' } };
+    return {
+      ok: true,
+      output: {
+        changed: true,
+        outcome: { status: 'complete', reason: '', evidence: [], dependencies: [], capabilities: [] },
+        kind: 'feature',
+        title: 'Product',
+      },
+    };
   });
   await run();
   await run();
@@ -144,7 +168,16 @@ it('recovers a publication failure through the same build continuation', async (
   const session = { provider: 'codex', id: 'retained' };
 
   calls.steps = [step(5)];
-  calls.execute.mockReturnValue({ ok: true, session, output: { changed: true, kind: 'feature', title: 'Product' } });
+  calls.execute.mockReturnValue({
+    ok: true,
+    session,
+    output: {
+      changed: true,
+      outcome: { status: 'complete', reason: '', evidence: [], dependencies: [], capabilities: [] },
+      kind: 'feature',
+      title: 'Product',
+    },
+  });
   calls.publish.mockImplementationOnce(() => {
     throw new Error('publication failed');
   });
@@ -197,7 +230,15 @@ it('refuses a second publication if a pull appears during execution', async () =
   calls.execute.mockImplementationOnce(() => {
     calls.statuses.set(1, 'open');
 
-    return { ok: true, output: { changed: true, kind: 'feature', title: 'Product' } };
+    return {
+      ok: true,
+      output: {
+        changed: true,
+        outcome: { status: 'complete', reason: '', evidence: [], dependencies: [], capabilities: [] },
+        kind: 'feature',
+        title: 'Product',
+      },
+    };
   });
   await run();
   expect(calls.publish).not.toHaveBeenCalled();
@@ -211,7 +252,12 @@ it('reserves distinct product steps for simultaneous workers before either start
 
   calls.execute.mockImplementation((options) => ({
     ok: true,
-    output: { changed: true, kind: options.taskKind, title: options.task },
+    output: {
+      changed: true,
+      outcome: { status: 'complete', reason: '', evidence: [], dependencies: [], capabilities: [] },
+      kind: options.taskKind,
+      title: options.task,
+    },
   }));
 
   for (const selected of [first, second]) {
@@ -236,7 +282,12 @@ it('keeps completed work recoverable when publication history cannot be verified
     return {
       ok: true,
       session: { provider: 'codex', id: 'history-thread' },
-      output: { changed: true, kind: 'feature', title: 'Product' },
+      output: {
+        changed: true,
+        outcome: { status: 'complete', reason: '', evidence: [], dependencies: [], capabilities: [] },
+        kind: 'feature',
+        title: 'Product',
+      },
     };
   });
   await expect(run()).rejects.toThrow('Could not verify step publication history.');

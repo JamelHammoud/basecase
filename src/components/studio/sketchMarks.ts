@@ -54,19 +54,36 @@ function entityDistance(at: PointLookup, e: SketchEntity, p: Vec2) {
 }
 
 export function hitTest(sketch: Sketch, p: Vec2, tolerance: number): { point?: string; entity?: string } | null {
-  const near = sketch.points
-    .filter((q) => !q.fixed && Math.hypot(q.x - p[0], q.y - p[1]) <= tolerance)
-    .sort((a, b) => Math.hypot(a.x - p[0], a.y - p[1]) - Math.hypot(b.x - p[0], b.y - p[1]))[0];
+  let point: string | undefined;
+  let pointDistance = Infinity;
 
-  if (near) return { point: near.id };
+  for (const q of sketch.points) {
+    if (q.fixed) continue;
+
+    const distance = Math.hypot(q.x - p[0], q.y - p[1]);
+
+    if (distance <= tolerance && (point === undefined || distance < pointDistance)) {
+      point = q.id;
+      pointDistance = distance;
+    }
+  }
+
+  if (point !== undefined) return { point };
 
   const at = pointLookup(sketch);
-  const entity = sketch.entities
-    .map((e) => ({ e, d: entityDistance(at, e, p) }))
-    .filter(({ d }) => d <= tolerance)
-    .sort((a, b) => a.d - b.d)[0];
+  let entity: string | undefined;
+  let nearest = Infinity;
 
-  return entity ? { entity: entity.e.id } : null;
+  for (const e of sketch.entities) {
+    const distance = entityDistance(at, e, p);
+
+    if (distance <= tolerance && (entity === undefined || distance < nearest)) {
+      entity = e.id;
+      nearest = distance;
+    }
+  }
+
+  return entity === undefined ? null : { entity };
 }
 
 function measuredValue(at: PointLookup, e: SketchEntity) {

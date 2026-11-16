@@ -246,8 +246,15 @@ export class RobotLink {
 
     if (typeof event.mode === 'string' && event.event !== 'completed') this.onMode(session, event);
 
-    this.emit(event);
+    if (event.event === 'fault') {
+      this.emit(event);
+      session.recorder?.event(event);
+
+      return;
+    }
+
     session.recorder?.event(event);
+    this.emit(event);
   }
 
   withTruth(session, event) {
@@ -379,9 +386,9 @@ export class RobotLink {
   onExit(session, error) {
     if (this.session !== session) return;
 
-    this.session = null;
     clearInterval(session.aliveTimer);
     session.recorder?.close('disconnect');
+    this.session = null;
     clearTimeout(session.killTimer);
     fs.rmSync(session.artefacts, { recursive: true, force: true });
 

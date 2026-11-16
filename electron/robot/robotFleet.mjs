@@ -53,7 +53,11 @@ export class RobotFleet {
       this.fleet.delete(unit);
     }
 
-    this.emit({ ...event, unit });
+    const context = link.session?.recorder?.incidentContext() ?? link.incidentContext ?? null;
+
+    if (context) link.incidentContext = context;
+
+    this.emit({ ...event, unit, context });
   }
 
   rememberRecording(unit, recording) {

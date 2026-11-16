@@ -2,6 +2,14 @@
 
 Implementation: [Sketch](../guide/inspector-and-selection.md#performance-sketch). Shared requirements: [Performance](../guide/performance.md).
 
+## Sketch picking scans for one nearest target
+
+The whole-app search found both ranked nearest-target selections in `components/studio/sketchMarks.ts`'s `hitTest`, shared by new and reopened sketches through `useSketchSelection`. Drawing inference and face picking already retain nearest candidates directly. Path-layer sorting controls paint order and still needs its ordered result.
+
+`sketchPicking.test.ts` compares the previous filter-and-sort result across 100 deterministic sketches, seven tolerances and both mixed and all-fixed point sets. It covers overlapping circles, misses, negative and NaN tolerances, infinite distances, empty ids, source preservation and later edits. Existing `sketchMarks.test.ts` covers point priority, first ties, inclusive boundaries, lines, arcs, reference lines, duplicate coordinates and missing endpoints. No quarantine applies.
+
+For 300 and 600 eligible points in descending distance order, the previous filter and sort read point x coordinates 898 and 1,798 times. The direct scan reads them 300 and 600 times, bounded by getter assertions. These previous counts follow one filter measurement per point and two measurements per comparison across the descending run's adjacent comparisons. The filtered point candidate array is removed. Entity picking removes its complete ranking-record array, filtered array and sort while retaining one distance measurement per entity. These are operation counts, without timing assertions or a claim about complete pointer or rendering time. Point lookup preparation and distance arithmetic remain unchanged.
+
 ## SVG-to-Sketch conversion appends geometry once
 
 `utils/sketch/polylineSketch.test.ts` compares complete output with the previous converter across 200 deterministic mixed-loop fixtures and their reversed winding. It checks independent loop closure, empty loops, single points, repeated points, source preservation, later input and output edits, and 1,000 four-vertex loops. The whole-app search found one converter, called by `components/studio/useStudioDraft.ts` for SVG outlines and holes. Interactive point and entity additions edit existing sketches and keep their immutable update path.

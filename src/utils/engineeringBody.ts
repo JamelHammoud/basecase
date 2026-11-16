@@ -30,7 +30,14 @@ interface BodyInput {
 }
 
 function attached(a: MeshMeasure, b: MeshMeasure) {
-  return [0, 1, 2].every((k) => a.min[k] <= b.max[k] + ATTACHED_WITHIN_MM && b.min[k] <= a.max[k] + ATTACHED_WITHIN_MM);
+  return (
+    a.min[0] <= b.max[0] + ATTACHED_WITHIN_MM &&
+    b.min[0] <= a.max[0] + ATTACHED_WITHIN_MM &&
+    a.min[1] <= b.max[1] + ATTACHED_WITHIN_MM &&
+    b.min[1] <= a.max[1] + ATTACHED_WITHIN_MM &&
+    a.min[2] <= b.max[2] + ATTACHED_WITHIN_MM &&
+    b.min[2] <= a.max[2] + ATTACHED_WITHIN_MM
+  );
 }
 
 function growByNearness(group: Set<string>, loose: Map<string, MeshMeasure>, measures: BodyInput['measures']) {

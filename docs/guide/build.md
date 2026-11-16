@@ -196,6 +196,8 @@ Measurements and limits: [Strength and Lighten performance evidence](../notes/pe
 
 ## Performance: engineering calculations
 
+- **Robot attachment bounds compare directly.** `utils/engineeringBody.ts` tests the six bounds inequalities without an axis array or callback per nearby-part comparison. Build and agent engineering reports share this grouping path. Inclusive 50 mm gaps, axis order, short-circuiting, transitive growth and first-robot ownership remain unchanged. `engineeringReadings.test.ts` covers attached parts, scenery exclusion, dynamic objects and separate robot loads. [Evidence](../notes/performance-engineering.md#robot-attachment-bounds-compare-directly).
+
 - **Box corners allocate only their results.** `utils/engineeringMath.ts` returns eight owned corner tuples directly, without temporary axis arrays or growing the result with pushes. Payload hand-point selection and dual-shaft joint support share this helper. Corner order remains X, then Y, then Z, with the minimum before the maximum on each axis. Existing `payload.test.ts` and `engineering.test.ts` cover both report consumers. [Evidence](../notes/performance-engineering.md#box-corners-allocate-only-their-results).
 
 - **Service BOM lines reuse a quote index.** `buildBom` resolves each printed part through the operation-local `quotesByPart` map shared with print-service request selection. First matches, missing quotes, stale prices and refusals retain their existing behavior. `serviceQuotes.test.ts` covers both consumers and later replacements. [Evidence](../notes/performance-printing.md#service-quotes-are-indexed-per-operation).

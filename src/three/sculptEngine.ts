@@ -5,7 +5,11 @@ import { SculptMeshData } from '../types/robotics';
 export { applyDeformersToBufferGeometry } from './sculptDeformers';
 
 export function weldAndNormalizeGeometry(rawGeo: THREE.BufferGeometry): SculptMeshData {
-  const clean = rawGeo.clone();
+  const clean = new THREE.BufferGeometry();
+
+  clean.attributes = { ...rawGeo.attributes };
+  clean.morphAttributes = rawGeo.morphAttributes;
+  clean.setIndex(rawGeo.index);
 
   clean.deleteAttribute('uv');
   clean.deleteAttribute('normal');

@@ -67,6 +67,18 @@ describe('sculpt brush workspace', () => {
     }
   });
 
+  it.each(BRUSHES.filter((brush) => brush !== 'smooth'))('reads %s stroke positions once before normals', (brush) => {
+    for (const triangles of [100, 200]) {
+      const stroke = input(brush, triangles);
+      const position = stroke.geo.getAttribute('position');
+      const read = vi.spyOn(position, 'getX');
+
+      sculptStroke(stroke);
+      expect(read).toHaveBeenCalledTimes(2 * position.count);
+      stroke.geo.dispose();
+    }
+  });
+
   it.each(BRUSHES)('applies %s to each mirrored region without changing the stroke inputs', (brush) => {
     const stroke = input(brush);
     const geo = new THREE.SphereGeometry(10, 16, 12);

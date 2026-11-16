@@ -1,4 +1,4 @@
-import { copiesOf, quoteKey, quoteOf } from '../print/quoteKey';
+import { copiesOf, quoteKey } from '../print/quoteKey';
 import type { PrintMaterial, PrintQuote, ScenePart } from '../types/robotics';
 import { type BomLine, type PriceStatus, STALE_DAYS, daysSince } from './bomTypes';
 
@@ -7,7 +7,7 @@ export const PRINTED_LINE = 'printed:';
 export interface PrintedLineInput {
   part: ScenePart;
   material: PrintMaterial;
-  quotes?: PrintQuote[];
+  quote?: PrintQuote;
   now: Date;
 }
 
@@ -17,8 +17,7 @@ function quoteStatus(quote: PrintQuote | undefined, fresh: boolean, ageDays: num
   return !fresh || ageDays! > STALE_DAYS ? 'stale' : 'checked';
 }
 
-export function printedLine({ part, material, quotes, now }: PrintedLineInput): BomLine {
-  const quote = quoteOf(part.id, quotes);
+export function printedLine({ part, material, quote, now }: PrintedLineInput): BomLine {
   const fresh = quote?.key === quoteKey(part, material);
   const ageDays = quote ? daysSince(quote.checkedAt, now) : undefined;
   const status = quoteStatus(quote, fresh, ageDays);

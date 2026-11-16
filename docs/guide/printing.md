@@ -41,6 +41,8 @@ BOM preparation, reconciliation, fingerprints, CSV writing and ZIP compression r
 
 ## Performance: print planning and labels
 
+- **Service quotes are indexed per operation.** `quotesByPart` retains the first quote for each part. Quote requests and service BOM pricing each build one operation-local map, removing per-part scans of saved quotes. Every call reads current quotes without a persistent cache. `serviceQuotes.test.ts` covers both paths, duplicate and deleted identities, quote replacement, stale prices and source preservation. [Evidence](../notes/performance-printing.md#service-quotes-are-indexed-per-operation).
+
 Measurements and limits: [Print planning and labels performance evidence](../notes/performance-printing.md).
 
 - **Print material groups are built once.** `print/materialGroups.ts` groups eligible planning inputs and job plates in one pass. Planning keeps first-seen material order and input order within each material. Job files and slice groups reuse the same plate groups, preserving local and global numbers, copy names, matrices and hashes. Each operation rebuilds its groups from current inputs. `print/job.test.ts` covers interleaved build-order plates, copies, excluded inputs, empty plans, reordered inputs and source preservation. Existing plan, obstacle and project tests retain packing and archive coverage. [Evidence](../notes/performance-printing.md#print-material-groups-are-built-once).

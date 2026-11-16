@@ -25,7 +25,8 @@ const decodeEntities = (text: string) =>
     return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
   });
 
-const OPEN_TAG = /^<([A-Za-z_][\w:.-]*)((?:\s+[^\s=/>]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>/;
+const OPEN_TAG = /<([A-Za-z_][\w:.-]*)((?:\s+[^\s=/>]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>/y;
+const CLOSE_TAG = /<\/([A-Za-z_][\w:.-]*)\s*>/y;
 const ATTR = /([^\s=/>]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
 const SKIPPED = [
   ['<!--', '-->'],
@@ -50,7 +51,9 @@ function endOf(c: Cursor, close: string): number {
 }
 
 function closeTag(c: Cursor) {
-  const m = /^<\/([A-Za-z_][\w:.-]*)\s*>/.exec(c.text.slice(c.at));
+  CLOSE_TAG.lastIndex = c.at;
+
+  const m = CLOSE_TAG.exec(c.text);
   const open = c.stack.pop();
 
   if (!m || !open || open.tag !== m[1] || !c.stack.length) throw new XmlError(`Mismatched </${m?.[1] ?? ''}>`);
@@ -59,7 +62,9 @@ function closeTag(c: Cursor) {
 }
 
 function openTag(c: Cursor) {
-  const m = OPEN_TAG.exec(c.text.slice(c.at));
+  OPEN_TAG.lastIndex = c.at;
+
+  const m = OPEN_TAG.exec(c.text);
 
   if (!m) throw new XmlError(`Malformed tag at ${c.at}`);
 

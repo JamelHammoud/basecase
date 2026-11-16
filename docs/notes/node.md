@@ -218,6 +218,16 @@ Dynamic composition and imported children remain untraced. Conditions are shown 
 
 Review of #1418 reproduced a named inline click handler being reported as the scope of its adjacent button label. Scope selection now requires a function or its single-variable declaration to cover the whole occurrence line. The fixture retains the surrounding component for that handler, uses module scope for copy beside an unrelated function, and preserves a one-line arrow component's name. Report and publication tests compare the complete accounting section exactly, verify all five missing-reason markers in the publication fixture, and enforce the documented 6,000-character context cap. The measurements above precede these review corrections and were not remeasured.
 
+
+### Windows context deadline
+
+The same [Check 43930391936](https://github.com/JamelHammoud/basecase/actions/runs/43930391936) reported the copy-context fixture exceeding its 5,000 ms deadline at 5,068 ms on Windows. Linux passed in 1,225 ms. This fixture and its copy-scanning implementation are unchanged since the preceding green full Check, where it passed on Windows in 2,229 ms. The callback built a Git history and scanned the same range four times, including two identical scans after changing the checkout. This is a load-sensitive test workload failure observed on Windows, with no demonstrated environment change or platform logic defect.
+
+The fixture now shares Git setup across revision-isolation, source-context and review-prompt checks. One post-checkout range read verifies both formatted source evidence and occurrence identity, reducing complete scans from four to three. The local report still captures the original head before checkout changes, and the production review report independently reads that pinned head afterward. Exact context, accounting, bounded-output, rename, deletion and prompt assertions remain. There is no production scanner change, deadline increase, retry or quarantine. The repair records correctness checks rather than a flake-rate measurement.
+
+
+The repair's changed-file check passed formatting, ESLint, docs, site copy, TypeScript and all 127 tests across the classroom, selector and context files in a 39.21-second related-test phase on the shared macOS host. The final context-only refresh passed its three assertions in 634 ms. Evidence is `scratch/repair-check.log` and `scratch/repair-final-check.log`. These correctness runs establish no Windows rate or speedup.
+
 ## Loop product dispatch evidence
 
 Issue #1331 changes capacity selection in arc #224. It leaves #1286's CAD scene reads and held-out harness experiment unchanged. Product scope, ownership, dependencies, acceptance checks, provider quotas and protected overflow remain unchanged.
@@ -365,6 +375,13 @@ Review reproduced two missed selections. Vitest expands `styled %c text` to `sty
 The updated isolated run passes 12 tests across the three selector test files. Its generated fixture has 11 runtime cases, including the style placeholder. The additional CLI regression removes shared setup and renames its adjacent declaration together, then verifies the affected-file selection and all 11 executed cases. The report is `scratch/review-selector-report.json`, with output in `scratch/review-selector-isolated.log`.
 
 The standard `check:changed` run also passes during review, including formatting, ESLint, documentation and all 12 related tests in 2.71 seconds of test execution. A local dependency copy omitting the shared caches allowed discovery to complete without a repository configuration change. Its log is `scratch/review-check-final.log`.
+
+
+### Windows selector deadline
+
+[Check 43930391936](https://github.com/JamelHammoud/basecase/actions/runs/43930391936) at `7adf6a243fdb72c14daf544d2c0dd5514d096682` timed out the combined generated-title assertion after 6,230 ms on Windows. Linux passed it in 2,337 ms. The Windows file's other four tests passed. The failing callback prepared three Git revisions, invoked the selector twice and launched three independent Vitest processes within its 5,000 ms deadline.
+
+Classification: a load-sensitive test workload failure observed on Windows. The selector, its fixtures and its tests are unchanged from the last green full Check at `6be4b9dd8d0e4cf9f0d9c7ceef80166365e36d03`, where this assertion passed on Windows in 3,071 ms. No intervening selector merge or Windows logic defect explains this timeout. The generated-title fixture now shares Git preparation and runs one Vitest process per assertion. Full runtime-title parity, both changed parameterized cases, the changed direct case and unchanged-neighbor exclusion remain exact. This introduces no additional process, timeout, retry, quarantine or gate. Native Windows candidate timing remains for CI, and no failure rate is measured in repair.
 
 ## Fleet authorization boundary
 

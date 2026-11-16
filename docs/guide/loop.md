@@ -295,7 +295,7 @@ Check is built for fast pull requests, with the nightly suite as the safety net:
 
 Browser selection follows the [shared selection contract](running-and-testing.md#pull-request-browser-selection). `tools/e2e-changed.test.mjs` checks declaration ranges and title patterns. `tools/e2e-changed.integration.test.mjs` drives the selector CLI in temporary Git repositories and executes tiny fixtures with Check's Vitest file and name arguments. It retains the deleted kit declaration from `93e274222` without running the reverted feature. `tools/e2e-changed.audit.test.mjs` assigns every current browser declaration a precise pattern or an explicit file fallback. Detailed audit and timing evidence is in [Node-side notes](../notes/node.md#changed-browser-test-selection).
 
-The selector fixtures also cover Vitest's `%c` title substitution and shared setup removals combined with declaration edits in one diff hunk. Removing a declaration alone still leaves neighboring tests unselected.
+The selector fixtures share Git preparation for generated titles, then execute the complete title inventory, changed parameterized cases and changed direct cases in separate tests with one Vitest launch each. They also cover Vitest's `%c` title substitution and shared setup removals combined with declaration edits in one diff hunk. Removing a declaration alone still leaves neighboring tests unselected.
 
 ### Browser assertion scope
 

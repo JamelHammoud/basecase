@@ -25,7 +25,7 @@ Send someone a link that opens your robot and its Case in their browser. They ca
 
 If you haven't added a token, **Share Robot** opens **Accounts** instead. If the Hub refuses your token, click **Open** in the message and paste a new one.
 
-Someone who opens the link sees the robot in its Case's world, with the Case's name and brief. The page has a Drive button and Open Scene, which opens the robot in the studio in their browser. If the robot has legs, the page also shows **Train**, which uses their GPU to teach the robot to stand. Train works in Chrome or Edge. If they click Open Scene after training, the robot keeps that skill.
+Someone who opens the link sees the robot in its Case's world, with the Case's name and brief. The page has a Drive button and Open Scene, which opens the robot in the studio in their browser. If the robot has legs, the page also shows **Train**, which uses their GPU to teach the robot to stand. Train works in Chrome or Edge. They can also click **Install Skill** to start from a published Motor Kit policy. The page keeps it only after training and Arena pass on this robot. If they click Open Scene after training, the robot keeps that skill. See [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
 
 ![A shared rover open in the browser, with Drive and Open Scene](/help/share-a-robot-as-a-link/browser.png)
 

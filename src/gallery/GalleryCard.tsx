@@ -60,6 +60,11 @@ export const GalleryCard: React.FC<{
       {!docked && drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up…</p>}
       {!docked && drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
       <TrainPart training={training} />
+      {training.offered && (
+        <Button variant="secondary" size="md" fullWidth onClick={training.openInstall}>
+          Install Skill
+        </Button>
+      )}
       <Button variant="secondary" size="md" fullWidth onClick={onOpenScene}>
         Open Scene
       </Button>

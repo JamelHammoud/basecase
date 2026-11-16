@@ -54,10 +54,12 @@ export async function idbGet<T>(name: WebStore, key: string): Promise<T | undefi
   return done<T | undefined>((await storeOf(name, 'readonly')).get(key));
 }
 
-export async function idbAll<T>(name: WebStore, prefix?: string): Promise<T[]> {
+export async function idbAll<T>(name: WebStore, prefix?: string, count?: number): Promise<T[]> {
   const range = prefix === undefined ? undefined : IDBKeyRange.bound(prefix, `${prefix}\uffff`);
 
-  return done<T[]>((await storeOf(name, 'readonly')).getAll(range));
+  const store = await storeOf(name, 'readonly');
+
+  return done<T[]>(count === undefined ? store.getAll(range) : store.getAll(range, count));
 }
 
 export async function idbPut(name: WebStore, key: string, value: unknown): Promise<void> {
@@ -89,5 +91,48 @@ export async function idbWrite(changes: Change[]): Promise<void> {
       transaction.abort();
       reject(error);
     }
+  });
+}
+
+function trimKeys(store: IDBObjectStore, range: IDBKeyRange, count: number, keep: string) {
+  if (count <= 0) return;
+
+  const request = store.openKeyCursor(range);
+  let remaining = count;
+
+  request.onsuccess = () => {
+    const cursor = request.result;
+
+    if (!cursor || remaining <= 0) return;
+
+    if (cursor.key !== keep) {
+      store.delete(cursor.key);
+      remaining -= 1;
+    }
+
+    if (remaining > 0) cursor.continue();
+  };
+}
+
+export async function idbPutBounded(options: {
+  store: WebStore;
+  key: string;
+  value: unknown;
+  prefix: string;
+  max: number;
+}): Promise<void> {
+  const db = await openDb();
+  const transaction = db.transaction(options.store, 'readwrite');
+  const store = transaction.objectStore(options.store);
+  const range = IDBKeyRange.bound(options.prefix, `${options.prefix}\uffff`);
+
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onabort = () => reject(transaction.error);
+    store.put(options.value, options.key);
+
+    const count = store.count(range);
+
+    count.onsuccess = () => trimKeys(store, range, count.result - options.max, options.key);
   });
 }

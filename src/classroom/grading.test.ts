@@ -99,24 +99,53 @@ describe('classroom production grading pipeline', () => {
       forged.bundle.case.reference.timeline = [];
       forged.fingerprint = hashOf({ ...forged, fingerprint: undefined });
     });
-    it.each([0, 1, 2])('recomputes trial %i without trusting submitted evidence', async (trial) => {
-      const grader = new ClassroomGrader(() => pipelineResources([]));
-      const source = trial === 0 ? forged : submission;
-      const claimed = { ...source, score: 100, ready: true, runs: { passes: 20 } };
-      const row = await grader.grade(assignment, await readSubmission(classroomBytes(claimed)));
+    describe.each([0, 1, 2])('trial %i', (trial) => {
+      let resources: GradingResources;
+      let prepared: PreparedClassroom;
+      let claimed: typeof submission;
+      const workers: NodePipelineWorker[] = [];
+      const batches: SeedRuns[] = [];
 
-      rows.push(row);
-      expect(row.checks.find((check) => check.check === 'Budget')?.status).toBe('fail');
-      expect(row).not.toHaveProperty('ready');
+      beforeAll(async () => {
+        resources = pipelineResources(workers);
 
-      if (trial === 0) return;
+        const source = trial === 0 ? forged : submission;
+        const evidence = { ...source, score: 100, ready: true, runs: { passes: 20 } };
 
-      expect(row.checks).toEqual(rows[0].checks);
-      expect(row.runs).toEqual(rows[0].runs);
-      expect(row.costUsd).toBe(rows[0].costUsd);
-      expect(row.massG).toBe(rows[0].massG);
+        claimed = await readSubmission(classroomBytes(evidence));
+        prepared = await prepareClassroom(resources, assignment, claimed);
+      });
+      afterAll(async () => {
+        resources?.study.dispose();
+        resources?.cases.dispose();
+        resources?.files.dispose();
+        await settleClassroomWorkers();
+        expect(workers.every((worker) => worker.terminated)).toBe(true);
+      });
+      it.each(seedBatches(20, 4).map((seeds) => ({ seeds })))(
+        'recomputes prescribed seeds $seeds without trusting submitted evidence',
+        async ({ seeds }) => {
+          batches.push(await runClassroomSeeds(resources, prepared, seeds));
+        },
+      );
+      it('retains independent engineering and deterministic Case results', async () => {
+        const row = await finishClassroom(resources, prepared, claimed, batches);
+        const jobs = workers.flatMap((worker) => worker.jobs).filter((job) => job.type === 'runs');
 
-      if (trial === 2) expect(rows[1]).toEqual(row);
+        rows.push(row);
+        expect(jobs.flatMap((job) => job.seeds)).toEqual(assignment.seeds);
+        expect(row.checks.find((check) => check.check === 'Budget')?.status).toBe('fail');
+        expect(row).not.toHaveProperty('ready');
+
+        if (trial === 0) return;
+
+        expect(row.checks).toEqual(rows[0].checks);
+        expect(row.runs).toEqual(rows[0].runs);
+        expect(row.costUsd).toBe(rows[0].costUsd);
+        expect(row.massG).toBe(rows[0].massG);
+
+        if (trial === 2) expect(rows[1]).toEqual(row);
+      });
     });
   });
 

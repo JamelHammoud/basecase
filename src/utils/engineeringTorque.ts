@@ -43,13 +43,24 @@ interface Lever {
 }
 
 function stanceTorque(ctx: CheckContext, { joint, a, r, down, grams, carriedG }: Lever): number {
-  const feet = ctx.onFloor.filter((p) => down.has(p.id));
+  let count = 0;
+  let x = 0;
+  let z = 0;
 
-  if (!feet.length) return 0;
+  for (const p of ctx.onFloor) {
+    if (!down.has(p.id)) continue;
 
-  const m = (id: string) => ctx.measures[id]!;
-  const fx = feet.reduce((s, p) => s + (m(p.id).min[0] + m(p.id).max[0]) / 2, 0) / feet.length;
-  const fz = feet.reduce((s, p) => s + (m(p.id).min[2] + m(p.id).max[2]) / 2, 0) / feet.length;
+    const m = ctx.measures[p.id]!;
+
+    x += (m.min[0] + m.max[0]) / 2;
+    z += (m.min[2] + m.max[2]) / 2;
+    count++;
+  }
+
+  if (!count) return 0;
+
+  const fx = x / count;
+  const fz = z / count;
   const grf: V3 = [0, (carriedG / 1000) * G, 0];
   const tGrf = dot(cross(sub([fx, 0, fz], joint.origin), grf), a);
   const tDistal = dot(cross(r, gravity(grams)), a);

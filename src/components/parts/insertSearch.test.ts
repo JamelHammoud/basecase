@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { searchInsertables, type Hit } from './insertSearch';
 import { robotEntries } from './robotEntries';
 
@@ -68,5 +68,50 @@ describe('one search for everything a scene holds', () => {
     expect(hit.kind === 'robot' && hit.robot.group).toBe('Imported');
     expect(label(searchInsertables('github.com/me', { sourced: [], robots })[0])).toBe('Desk Arm');
     expect(searchInsertables('   ', { sourced: [], robots })).toEqual([]);
+  });
+
+  it('reads each immutable robot once across queries and accepts replacement entries', () => {
+    const [robot] = robotEntries([
+      { url: 'https://github.com/me/desk-arm', name: 'Desk Arm', joints: 2, thumbnail: '', importedAt: '' },
+    ]);
+    const title = vi.fn(() => 'Zephyra Arm');
+    const indexed = {
+      ...robot,
+      preset: {
+        ...robot.preset,
+        get title() {
+          return title();
+        },
+      },
+    };
+    const sources = { sourced: [], robots: [indexed] };
+
+    for (const query of ['zephyra', 'zephyra arm', 'github.com/me', 'arm', 'no-such-robot']) {
+      const hits = searchInsertables(query, sources);
+
+      expect(hits.some((hit) => hit.kind === 'robot' && hit.robot === indexed)).toBe(query !== 'no-such-robot');
+    }
+
+    expect(title).toHaveBeenCalledTimes(1);
+
+    const replacement = { ...indexed, preset: { ...robot.preset, title: 'Bench Manipulator' } };
+    const replaced = { sourced: [], robots: [replacement] };
+
+    expect(searchInsertables('zephyra', replaced)).toEqual([]);
+    expect(searchInsertables('bench', replaced)).toEqual([{ kind: 'robot', robot: replacement }]);
+  });
+
+  it('keeps current input order for tied robots after warming the indices', () => {
+    const robots = robotEntries([
+      { url: 'https://github.com/me/first', name: 'Desk Arm', joints: 2, thumbnail: '', importedAt: '' },
+      { url: 'https://github.com/me/second', name: 'Desk Arm', joints: 2, thumbnail: '', importedAt: '' },
+    ]).slice(0, 2);
+
+    expect(searchInsertables('desk arm', { sourced: [], robots })).toEqual(
+      robots.map((robot) => ({ kind: 'robot', robot })),
+    );
+    expect(searchInsertables('desk arm', { sourced: [], robots: robots.toReversed() })).toEqual(
+      robots.toReversed().map((robot) => ({ kind: 'robot', robot })),
+    );
   });
 });

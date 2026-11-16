@@ -65,7 +65,7 @@ const object = (v: unknown): Record<string, unknown> =>
   v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
 const text = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : '');
 const matching = (v: unknown, pattern: RegExp) => (typeof v === 'string' && pattern.test(v) ? v : null);
-const time = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0;
+const time = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 8.64e15;
 const nullableTime = (v: unknown) => v === null || time(v);
 
 export function incidentContext(value: unknown): IncidentContext {
@@ -105,7 +105,7 @@ function readIncident(value: unknown): FleetIncident[] {
       recoveredAt: v.recoveredAt as number | null,
       acknowledgedAt: v.acknowledgedAt as number | null,
       active: v.active === true,
-      recording: matching(v.recording, SAFE_ID),
+      recording: v.recording === v.session ? matching(v.recording, SAFE_ID) : null,
     },
   ];
 }

@@ -13,11 +13,12 @@ covers:
   - src/components/operate/FleetRows.tsx
   - src/robot/fleetIncidents.ts
   - src/workspace/useOperateAlerts.ts
+  - src/workspace/WorkspaceSheets.tsx
 ---
 
 Find a robot's fault or Case alert, acknowledge it, and open the try that captured it.
 
-1. In Play, choose **Operate**.
+1. In **Play**, choose **Operate**.
 2. In the robot's fleet row, click **Inspect Problems**.
 
 ![Two emulated arms with a problem on arm-2](/help/inspect-fleet-problems/fleet.png)
@@ -34,6 +35,6 @@ Find a robot's fault or Case alert, acknowledge it, and open the try that captur
 
 Or press [[⌘K]] and choose **Inspect Problems for ⟨unit⟩**.
 
-Click Acknowledge to record that you saw the incident. The [motor lock and safety ladder](/help/the-motor-lock-and-safety-ladder) continue to control movement.
+For movement controls, see [The motor lock and safety ladder](/help/the-motor-lock-and-safety-ladder).
 
 For task alerts, configure the Case's [contract conditions](/help/case-goals-worlds-and-contracts#operate-alerts).

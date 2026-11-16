@@ -2,6 +2,7 @@ import { jsonHash } from '../utils/geometryHash';
 import { OperateConditions, type ConditionSample } from './operateConditions';
 import type { NamedFailure } from '../skills/contract';
 import type { IncidentContext } from '../robot/fleetIncidents';
+import { MAX_UNITS } from '../../electron/robot/units.mjs';
 
 export interface AlertCase {
   id: string;
@@ -48,7 +49,10 @@ self.onmessage = async (event: MessageEvent<AlertRequest>) => {
       }
     : current;
 
+  runs.delete(request.unit);
   runs.set(request.unit, run);
+
+  if (runs.size > MAX_UNITS) runs.delete(runs.keys().next().value!);
 
   const results = await Promise.all(
     cases.map(async (kase, index) => {

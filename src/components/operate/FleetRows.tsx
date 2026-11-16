@@ -1,8 +1,7 @@
 import React from 'react';
-import { useFleetIncidents } from '../../robot/fleetIncidentStore';
+import { inspectUnitProblems, useFleetIncidents } from '../../robot/fleetIncidentStore';
 import type { FleetIncident } from '../../robot/fleetIncidents';
 import { unitEntry } from '../../robot/robotUnits';
-import { FleetIncidents } from './FleetIncidents';
 import { Button, MetaLine, RowActions } from '../../design-system';
 import { StatusDot } from '../../design-system/StatusDot';
 import type { RollOutState } from '../../fleet/rollOut';
@@ -37,10 +36,9 @@ interface UnitRowProps {
   selected: boolean;
   rollOut: RollOutState | null;
   incidents: FleetIncident[];
-  onOpenTry?: (id: string) => Promise<boolean>;
 }
 
-function UnitRow({ unit, selected, rollOut, incidents, onOpenTry }: UnitRowProps) {
+function UnitRow({ unit, selected, rollOut, incidents }: UnitRowProps) {
   const problem = problemOf(unit, incidents);
   const held = rollOut?.held[unit.unit];
   const failure = rollOut?.failures[unit.unit];
@@ -75,7 +73,19 @@ function UnitRow({ unit, selected, rollOut, incidents, onOpenTry }: UnitRowProps
       />
       {held && <p className="text-[12px] text-white/50">{held}</p>}
       {failure && <p className="text-[12px] text-white/50">{failure}</p>}
-      <FleetIncidents incidents={incidents} onOpenTry={onOpenTry} />
+      {incidents.length > 0 && (
+        <Button
+          size="sm"
+          variant="ghost"
+          title={`Inspect Problems for ${unit.unit}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            inspectUnitProblems(unit.unit);
+          }}
+        >
+          Inspect Problems
+        </Button>
+      )}
       {unit.hasPrevious && (
         <RowActions fill={ROW_FILL} className="inset-y-0 right-0 pr-1.5 rounded-r-lg">
           <Button
@@ -93,7 +103,7 @@ function UnitRow({ unit, selected, rollOut, incidents, onOpenTry }: UnitRowProps
   );
 }
 
-export const FleetRows: React.FC<{ onOpenTry?: (id: string) => Promise<boolean> }> = ({ onOpenTry }) => {
+export const FleetRows: React.FC = () => {
   const fleet: Fleet = useFleet();
   const rollOut = useRollOut();
   const incidents = useFleetIncidents();
@@ -116,7 +126,6 @@ export const FleetRows: React.FC<{ onOpenTry?: (id: string) => Promise<boolean> 
           selected={unit.unit === fleet.selected}
           rollOut={rollOut}
           incidents={incidents.filter((i) => i.unit === unit.unit)}
-          onOpenTry={onOpenTry}
         />
       ))}
     </div>

@@ -101,3 +101,51 @@ it('binds a fleet fault and a lost quadruped to their own sessions while another
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+it('announces the session of the first sample, a new rung and an immediate disconnect', () => {
+  const { fleet, events, spawned } = fleetWithFake({
+    tries: { append: () => {}, keep: () => {}, drop: () => {} },
+  });
+
+  try {
+    fleet.connect({ family: 'feetech', ids: [1], class: 'arm', emulated: true }, 'arm');
+    fleet.record(
+      { scene: { sceneId: 'scene-one', robot: 'arm', modelHash: 'a'.repeat(64), joints: ['shoulder'] } },
+      'arm',
+    );
+
+    const link = fleet.entryOf('arm').link;
+    const say = (event) => link.onLine(link.session, JSON.stringify(event));
+    const status = (mode) => say({ event: 'status', mode, joints: [{ id: 1, position: 2048 }] });
+
+    status('test');
+
+    const first = link.session.recorder.session.id;
+
+    expect(events.at(-1).context.session).toBe(first);
+    status('look');
+
+    const second = link.session.recorder.session.id;
+
+    expect(second).not.toBe(first);
+    expect(events.at(-1).context.session).toBe(second);
+    link.session.recorder.close('fault');
+    fleet.record(
+      { scene: { sceneId: 'scene-two', robot: 'arm', modelHash: 'b'.repeat(64), joints: ['shoulder'] } },
+      'arm',
+    );
+    link.session.recorder.setPolicy('c'.repeat(64));
+    expect(link.session.recorder.incidentContext()).toEqual({
+      session: second,
+      sceneId: 'scene-one',
+      modelHash: 'a'.repeat(64),
+      policyHash: null,
+    });
+    spawned[0].child.emit('exit');
+    expect(events.at(-1)).toMatchObject({ event: 'link', state: 'lost', context: { session: second } });
+  } finally {
+    fleet.dispose();
+
+    for (const { child } of spawned) child.emit('exit');
+  }
+});

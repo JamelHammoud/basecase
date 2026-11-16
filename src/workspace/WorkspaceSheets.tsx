@@ -19,6 +19,9 @@ import type { TrainingImages } from './useTrainingImages';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { PoseActions } from './usePoseActions';
 import { FrameLabelsHost } from './FrameLabelsHost';
+import { FleetIncidents } from '../components/operate/FleetIncidents';
+import { inspectUnitProblems, useFleetIncidents, useInspectedUnit } from '../robot/fleetIncidentStore';
+import { openIncidentTry } from './robotReplay';
 
 interface WorkspaceSheetsProps {
   active: boolean;
@@ -82,6 +85,19 @@ function LightenHost({ active, actions }: Pick<WorkspaceSheetsProps, 'active' | 
   return (
     <ErrorBoundary region="Lighten" onClose={lighten.close}>
       <LightenSheet busy={lighten.busy} problem={lighten.problem} onClose={lighten.close} onLighten={lighten.run} />
+    </ErrorBoundary>
+  );
+}
+
+function FleetIncidentsHost({ active, core }: Pick<WorkspaceSheetsProps, 'active' | 'core'>) {
+  const unit = useInspectedUnit();
+  const incidents = useFleetIncidents().filter((incident) => incident.unit === unit);
+
+  if (!active || !incidents.length) return null;
+
+  return (
+    <ErrorBoundary key={unit} region={incidents[0].name} onClose={() => inspectUnitProblems(null)}>
+      <FleetIncidents incidents={incidents} onOpenTry={(id) => openIncidentTry(core, id)} />
     </ErrorBoundary>
   );
 }
@@ -156,6 +172,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
       <MotionDesignHost active={active} pose={pose} />
       <TrainingImagesHost active={active} images={core.simTraining.cases.images} />
       <FrameLabelsHost active={active} labels={core.frameLabels} />
+      <FleetIncidentsHost active={active} core={core} />
       <TeachGestureHost active={active} cases={core.simTraining.cases} project={core.project} />
       <input
         ref={motionInputRef}

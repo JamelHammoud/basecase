@@ -70,6 +70,14 @@ it('restores a fleet problem, acknowledges it and opens its exact kept try', asy
     );
     await expect.poll(() => partCount(page)).toBe(ARM.parts.length);
     await openPlayTab(page, 'Operate');
+    await page.evaluate(() => (window as unknown as { __studioTabs: { open: () => void } }).__studioTabs.open());
+    await expect.poll(() => partCount(page)).toBe(0);
+    await page.evaluate(
+      (scene) => (window as unknown as { __studio: { load: (scene: unknown) => void } }).__studio.load(scene),
+      ARM,
+    );
+    await expect.poll(() => partCount(page)).toBe(ARM.parts.length);
+    await openPlayTab(page, 'Operate');
     await page
       .locator(shown('[data-fleet-unit="arm-3"]'))
       .getByRole('button', { name: 'Inspect Problems', exact: true })
@@ -78,10 +86,17 @@ it('restores a fleet problem, acknowledges it and opens its exact kept try', asy
     const dialog = page.getByRole('dialog').filter({ has: page.locator('[data-incident]') });
     const incident = dialog.locator('[data-incident]');
 
+    expect(await dialog.count()).toBe(1);
     expect(await incident.getAttribute('data-active')).toBe('true');
     await dialog.getByRole('button', { name: 'Acknowledge', exact: true }).click();
     expect(await incident.getAttribute('data-active')).toBe('true');
     expect(await incident.innerText()).toContain('Acknowledged');
+    await page.keyboard.press('Escape');
+    await expect.poll(() => dialog.count()).toBe(0);
+    await page
+      .locator(shown('[data-fleet-unit="arm-3"]'))
+      .getByRole('button', { name: 'Inspect Problems', exact: true })
+      .click();
     await dialog.getByRole('button', { name: 'Open Try', exact: true }).click();
     await expect.poll(() => page.locator(shown('[data-testid="try-timeline"]')).count()).toBe(1);
     expect(app.posts.filter((post) => post.route === 'tries-recording').map((post) => post.body)).toContainEqual({

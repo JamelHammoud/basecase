@@ -46,5 +46,13 @@ The changed fleet story failed in CI after 63,768 ms across two attempts. Open T
 
 The added recording and inspection detour is removed from the fleet story. `fleetIncidents.e2e.test.ts` owns a fresh app, restores an incident from storage and seeds a two-frame recording, then inspects, acknowledges and opens that exact id. It exits through Escape. Recorder retention and session binding remain covered by `electron/robot/fleetIncidents.test.mjs`, and independent operation remains covered by the original fleet walkthrough. No timeout, retry or quarantine was added. Browser execution remains in CI.
 
-
 The next changed-browser run failed at the timeline assertion after 47,254 ms across two attempts. The seeded recording declared three positions, velocities and actuators, while `ARM` loads two revolute joints. `fitsRecording` rejects that mismatch, so timeline opening returns false. The fixture now derives those dimensions, sample lengths and joint addresses from `ARM.project.joints`, and checks that the recording save succeeds. The same browser assertion still requires the timeline to open and the exact try id to be fetched. No assertion, timeout or retry changed. Local validation remains `check:changed`, with browser execution in CI.
+
+
+### Review regression coverage
+
+The new first-status assertion failed with a null session before recorder event ordering changed. The restored-date assertion accepted `1e100`, which throws when the incident dialog formats it. The native integration now checks the first status, a status that drops a rung, disconnect immediately after that status, and a closed session after the scene and policy change. Restored-history tests reject out-of-range dates in every lifecycle field and discard a recording reference for a different session.
+
+The browser walkthrough opens Operate in two scene tabs before inspecting. It requires exactly one incident dialog, acknowledges the active incident, closes the dialog with Escape from the action button, reopens it and fetches the exact kept recording. The dialog mounts through the active workspace's sheet host with its own error boundary. Browser execution stays in CI.
+
+The review validation passed `check:changed` for the code and test changes, including 47 related test files and 222 tests, types, lint, docs and site copy.

@@ -71,9 +71,13 @@ export function useOperateAlerts(records: ProjectSettings['cases'], sceneId: str
       if (context.sceneId !== sceneId || stamp <= clock.last || (clocks.size >= MAX_PENDING_UNITS && !clocks.has(unit)))
         return;
 
-      clocks.set(unit, { ...clock, last: stamp });
+      if (!busy.has(unit) && busy.size >= MAX_PENDING_UNITS) return;
 
-      const sample: AlertSample = { unit, at: clock.origin + stamp, now, signals: operateTelemetry(event), context };
+      const origin = Math.min(clock.origin, now - stamp);
+
+      clocks.set(unit, { origin, last: stamp });
+
+      const sample: AlertSample = { unit, at: origin + stamp, now, signals: operateTelemetry(event), context };
 
       if (!busy.has(unit)) return send(sample);
 

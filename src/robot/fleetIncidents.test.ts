@@ -118,3 +118,16 @@ it('binds a recorded try even when a condition result arrives after the recordin
   log.condition({ unit: 'arm', key: 'volts', message: 'Supply low', context }, true, 99);
   expect(log.items[0].recording).toBe(context.session);
 });
+
+it('rejects restored dates outside the display range and discards mismatched recording references', () => {
+  const log = new FleetIncidents();
+
+  log.event(fault(), 1000);
+
+  const incident = log.items[0];
+
+  for (const field of ['startedAt', 'lastAt', 'recoveredAt', 'acknowledgedAt'])
+    expect(readIncidents(JSON.stringify([{ ...incident, [field]: 1e100 }]))).toEqual([]);
+
+  expect(readIncidents(JSON.stringify([{ ...incident, recording: 'operate-other' }]))[0].recording).toBeNull();
+});

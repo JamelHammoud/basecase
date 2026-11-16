@@ -6,7 +6,7 @@ import { measuredJoints } from '../reality/measuredJoints';
 import { unitHistories } from '../reality/projectCalibrations';
 import { useFleet } from '../robot/useRobot';
 import { calibrateConnectedRobot, rollBackCalibration } from './calibrationActions';
-import { canReplayRuns, openIncidentTry, replayRobotRun } from './robotReplay';
+import { canReplayRuns, replayRobotRun } from './robotReplay';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
@@ -112,7 +112,6 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
         onAddRobotComputer: IS_WEB_DEMO ? undefined : () => addRobotComputer(core),
         onSetUpServos: () =>
           void setUpServos({ joints: core.project.joints ?? [], parts, select: core.setSelectedIds }),
-        onOpenTry: (id) => openIncidentTry(core, id),
         onReplay: canReplayRuns(core) ? (messageId) => replayRobotRun(core, messageId) : undefined,
       }}
       tab={tool.leftTab}

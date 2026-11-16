@@ -8,6 +8,7 @@ import { wiringNetlist } from './netlist';
 import { routePath, routeTopology, type RouteEndpoint, type RouteObstacle } from './routeGeometry';
 import type { RelativeBound, RoutePoint } from './routeCollision';
 import { relativeMotionBound } from './routeBound';
+import { pathLength } from './routeMeasure';
 import { poseTransforms, routeMotion, routePoses, type RouteMotion } from './routeMotion';
 
 interface RouteContext {
@@ -53,10 +54,6 @@ function specOf(scene: WiringScene, net: Net): WiringRouteSpec | undefined {
   );
 }
 
-const pathLength = (points: PortVec[]) =>
-  points
-    .slice(1)
-    .reduce((length, p, i) => length + new THREE.Vector3(...p).distanceTo(new THREE.Vector3(...points[i])), 0);
 const transformed = (point: PortVec, matrix: THREE.Matrix4): PortVec =>
   new THREE.Vector3(...point).applyMatrix4(matrix).toArray() as PortVec;
 

@@ -7,6 +7,7 @@ import { component, sceneOf } from './fixtures';
 import { analyzeWiring } from './routeAnalysis';
 import { relativeMotionBound } from './routeBound';
 import * as motionBounds from './routeBound';
+import * as routeMeasure from './routeMeasure';
 import type { RoutePoint } from './routeCollision';
 import type { RouteObstacle } from './routeGeometry';
 import { routeMotion, type RouteMotion } from './routeMotion';
@@ -190,6 +191,7 @@ it.each([300, 600])('prepares trigonometry and pivot offsets once across %i chan
   }));
   const sin = vi.spyOn(Math, 'sin');
   const distances = vi.spyOn(Vector3.prototype, 'distanceTo');
+  const scalarDistances = vi.spyOn(routeMeasure, 'distance');
   const expected = points.map((point) => previousBound(motion, point, 'obstacle'));
   const previousSines = sin.mock.calls.length;
   const previousDistances = distances.mock.calls.length;
@@ -209,5 +211,6 @@ it.each([300, 600])('prepares trigonometry and pivot offsets once across %i chan
   expect(previousSines).toBe(count * 5);
   expect(sin).toHaveBeenCalledTimes(8);
   expect(previousDistances).toBe(count * 11);
-  expect(distances).toHaveBeenCalledTimes(count * 4 + 2);
+  expect(distances).not.toHaveBeenCalled();
+  expect(scalarDistances).toHaveBeenCalledTimes(count * 4 + 2);
 });

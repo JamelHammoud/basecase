@@ -2,7 +2,7 @@ import { actuatorOf, COMPONENT_BY_ID } from '../data/components';
 import type { RobotSkeleton, SkeletonJoint, SkeletonLimb, ZUpVec } from '../types/skeleton';
 import { r1, r3 } from './agentFrame';
 import { lengthLabel } from '../utils/size';
-import { swapWords } from '../mirror/mirrorNames';
+import { SIDE_WORDS, swapWords } from '../mirror/mirrorNames';
 import { plural } from '../../electron/plural.mjs';
 import { weight } from '../utils/weight';
 import { SkeletonTree } from '../utils/skeletonTree';
@@ -104,7 +104,7 @@ function jointProblems(joints: SkeletonJoint[]): string[] {
   return problems;
 }
 
-const SIDE_PAIRS: Array<[string, string][]> = [[['left', 'right']], [['front', 'rear']], [['front', 'back']]];
+const SIDE_PAIRS = [SIDE_WORDS.x, ...SIDE_WORDS.y.map((pair) => [pair])];
 
 function autoPairs(joints: SkeletonJoint[]): Array<[string, string]> {
   const ids = new Set(joints.map((j) => j.id));

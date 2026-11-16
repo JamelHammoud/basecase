@@ -2,6 +2,14 @@
 
 Implementation: [Mirror](../guide/inspector-and-selection.md#performance-mirror). Shared requirements: [Performance](../guide/performance.md).
 
+## Assembly Mirror indexes scene identities once
+
+Assembly Mirror previously used request-array membership for every scene part, then searched the scene again for every mate target. It now prepares a selection set and a first-match source map once per call. The map has at most one entry per scene id and ends with the operation. Port matching and joint anchoring keep their existing work.
+
+On 16 November 2026, a scratch comparison ran the previous and current assembly implementations against 80 and 160 mated CAD sources. Each fixture placed the same number of unrelated parts before the sources and a stationary torso target last. Instrumented unrelated-part id reads fell from 6,480 to 240 and from 25,760 to 480. Both implementations retained every expected torso mate. These are operation counts, without timing assertions, garbage-collection measurements or a claim about total Mirror latency.
+
+`mirrorAssembly.test.ts` retains the linear read bounds and checks copied and stationary targets, selection order and duplicates, missing selections and targets, duplicate target first matches, changed placement, independent calls and source preservation. Existing tests cover mirrored joints, groups and placement. The whole-app search found one assembly mate-transfer caller. Agent mirroring already indexes sources and does not transfer mates. The Mirror help article clarifies copied and stationary mate targets. Controls, labels, states and user steps are unchanged, so its screenshots remain accurate.
+
 ## Mirror keeps one reflected coordinate buffer
 
 Imported and sculpted triangle soups previously copied the source positions for reflection, then copied that buffer again for winding reversal. Both now reverse winding in the owned reflected buffer. For a 100,000-triangle mesh with 900,000 numeric entries, this removes one 900,000-entry array and its copy per Mirror call. Indexed meshes keep their separate reflected positions and reversed indices. These are source-level allocation counts, without timing or garbage-collection measurements or a claim about total Mirror latency.

@@ -936,3 +936,5 @@ The workspace retains one assignment and up to 30 submission revisions in the ex
 `e2e/classroom.e2e.test.ts` declares the teacher's existing-Case export, clean student import, ordinary shape editing, Submit, two-submission grading and independent Check inspection. Its short second walkthrough reloads an edited attempt and starts the same assignment again. Case physics alone is controlled in the browser walkthrough, while file parsing, IndexedDB, Study workers and Checks remain real. Real MuJoCo and engineering results run in the integration matrix. No classroom result enters readiness evidence or skill retention.
 
 [Classroom evidence and limits](../notes/testing-cases.md#classroom-assignments) records local observations and remaining platform coverage. [Grading resource measurements](../notes/performance-cases.md#classroom-grading) records durations, sampled worker memory and retained data. Help: [Grade a class](../../site/content/help/grade-a-class.md).
+
+The classroom inspection walkthrough matches Build with its optional blocker count in the accessible tab name. It retains both the selected-tab assertion and focus on the submitted design's failing Check.

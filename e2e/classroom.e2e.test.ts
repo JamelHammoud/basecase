@@ -112,7 +112,7 @@ it('exports an existing Case, hands it to a clean browser and independently grad
 
     await exposeTestHooks(inspection);
     await expect
-      .poll(() => inspection.getByRole('tab', { name: 'Build', exact: true }).getAttribute('aria-selected'))
+      .poll(() => inspection.getByRole('tab', { name: /^(?:\d+ to fix )?Build$/ }).getAttribute('aria-selected'))
       .toBe('true');
     await expect
       .poll(() => inspection.evaluate(() => document.activeElement?.textContent ?? ''))

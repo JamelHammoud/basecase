@@ -101,9 +101,15 @@ After updating the retained worktree to `aad7c597f`, the complete changed-file c
 
 The ordinary Case menu, comparison, real-robot mat, Build, Study, posing, keyboard command and shared-link help paths retain their documented behavior. Classroom uses optional context fields and grading flags, so existing instructions and screenshots remain applicable. Its separate import, submit and grading tasks document the new path.
 
+### Classroom inspection selector failure
+
+The 16 November pull request Check failed twice at `classroom.e2e.test.ts:116` after reaching independent scene inspection. The first walkthrough took 70.682 seconds across both attempts. The reload walkthrough passed in 26.130 seconds. The aggregate `check` job failed because `e2e-changed` failed, with all three required jobs and copy successful.
+
+`RightPanelTabs` supplies Build with a blocker status. `PanelTabs` renders that status before the tab text, and `StatusDot` exposes its count as an image's accessible name. A failing design therefore names the tab `N to fix Build`. The exact `Build` locator cannot find it. The corrected locator accepts the optional numeric prefix and still requires Build to be selected before checking focus on the failing Check. No product behavior, assertion outcome, timeout, retry or quarantine changed. Browser execution remains in CI. This diagnosis does not establish browser duration after correction or explain the existing Vite teardown warning.
+
 ### Existing help audit
 
-The Strength task now opens its disclosure only if closed, since classroom inspection can expand it automatically. Its existing open-disclosure screenshots still show the documented state. The inventory task distinguishes full classroom design cost from remaining purchases. The readiness articles distinguish a classroom result from fresh Build Checks and describe automatic inspection focus.
+The Strength task and the Ready to build troubleshooting task now open a Check only if closed, since classroom inspection can expand it automatically. Their existing screenshots remain applicable. The inventory task distinguishes full classroom design cost from remaining purchases. The readiness articles distinguish a classroom result from fresh Build Checks and describe automatic inspection focus.
 
 The remaining overlapping articles retain their existing text and images for these reasons:
 
@@ -117,7 +123,10 @@ The remaining overlapping articles retain their existing text and images for the
 | Run any command from the keyboard | Classroom commands use the existing context-dependent command list. Matching, navigation, shortcuts and documented examples stay unchanged. |
 | Share a robot as a link | Only classroom replay supplies embedded rendering and its Open Scene override. Standalone gallery links retain their controls, console, training and scene-opening behavior. |
 | Study design options | Ordinary Study leaves `completeBudget` unset and uses the default unlimited geometry refresh. Classroom-only options leave Study pricing, runs, controls and pictured states unchanged. |
-| A check blocks Ready to build | The optional finding context does not change blocker verdicts, Fix, Ignore, Restore, Run Checks or settings. |
 | Try a Case on your real robot | Classroom actions are browser-only. The documented desktop mat menu, tracking, recording and pictured states stay unchanged. |
 
 Preflight's overlap scan reports every unchanged covered article, even after this audit. It has no acknowledgment input. These remaining reminders do not identify a stale step, label or screenshot.
+
+The follow-up audit reread all ten flagged articles against the diff from `origin/main`. `WorkspaceLeftSidebar` supplies classroom menu actions only with `IS_WEB_DEMO`, preserving the desktop comparison and mat menus pictured in those tasks. `CasesPanel` keeps the same comparison callback, New Case card, rename and delete entries. `sceneCommands` appends classroom commands without altering Export 3MF Plates, pose commands or palette matching. `FindingRow` adds only the optional focus field, preserving Quote and Fix callbacks. `CheckItem` uses that field for initial disclosure state, which required the troubleshooting correction above. The troubleshooting article contains no screenshots to replace.
+
+`GalleryApp` omits the new embedded and scene-opening overrides, so the shared-link article's standalone browser, console and trained-skill instructions remain true. `ClassroomReplay` supplies both overrides only for its modal. Regular Study's `refreshStudyGeometryIn` omits the optional triangle limit and its grading callers omit `completeBudget`, preserving the article's pricing, eight seeds, controls and screenshots. The nine unchanged articles need no replacement captures because the changed code does not alter the states their images document. This was a source and instruction audit, not a browser execution or visual judgment.

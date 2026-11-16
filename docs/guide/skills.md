@@ -311,3 +311,9 @@ Skill environments keep physical observation identities separate from actuator i
 ### Windows remote recovery coverage
 
 Both remote recovery walkthroughs are quarantined only on Windows through 28 November 2026 under #1365. Browser coverage stays active on Linux and macOS, with `seedWorkflows.test.ts`, `recoveredSkill.test.ts` and `seedSelection.test.ts` retaining selection, recovery and local verdict coverage on every platform. [Failure evidence and restoration conditions](../notes/testing-skills.md#windows-grouped-recovery-quarantine).
+
+### Limb matching work
+
+`robotSchema.ts` selects the nearest compatible source limb in one scan per target limb. It retains the winning distance and skips incompatible joint counts before measuring anchors. Install Skill, skill fit checks and retained-outcome matching all use this shared joint map. Equal distances keep source order, and source limbs may serve multiple target limbs.
+
+`robotSchema.test.ts` covers mixed lengths, ties, source reuse, missing lengths, reordered joints, edited anchors and nonfinite distances. It also counts distance calls for compatible pairs. Existing `hubSkill.test.ts` retains publication and installation integration coverage. [Operation counts and limits](../notes/performance-skills.md#limb-matching-retains-the-winning-distance).

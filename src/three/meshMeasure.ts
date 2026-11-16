@@ -2,11 +2,10 @@ import * as THREE from 'three';
 import type { SheetProfile } from '../types/sheet';
 
 export function worldTriangles(object: THREE.Object3D): Float32Array {
-  const chunks: Float32Array[] = [];
+  const meshes: THREE.Mesh[] = [];
+  let total = 0;
 
   object.updateWorldMatrix(true, true);
-
-  const v = new THREE.Vector3();
 
   object.traverse((o) => {
     const mesh = o as THREE.Mesh;
@@ -17,29 +16,26 @@ export function worldTriangles(object: THREE.Object3D): Float32Array {
 
     if (!pos) return;
 
-    const index = mesh.geometry.index;
-    const count = index ? index.count : pos.count;
-    const out = new Float32Array(count * 3);
-
-    for (let i = 0; i < count; i++) {
-      v.fromBufferAttribute(pos, index ? index.getX(i) : i).applyMatrix4(mesh.matrixWorld);
-      out[i * 3] = v.x;
-      out[i * 3 + 1] = v.y;
-      out[i * 3 + 2] = v.z;
-    }
-
-    chunks.push(out);
+    total += (mesh.geometry.index?.count ?? pos.count) * 3;
+    meshes.push(mesh);
   });
 
-  const total = chunks.reduce((n, c) => n + c.length, 0);
   const all = new Float32Array(total - (total % 9));
+  const v = new THREE.Vector3();
   let off = 0;
 
-  for (const c of chunks) {
-    const n = Math.min(c.length - (c.length % 9), all.length - off);
+  for (const mesh of meshes) {
+    const pos = mesh.geometry.attributes.position;
+    const index = mesh.geometry.index;
+    const count = index?.count ?? pos.count;
+    const complete = count - (count % 3);
 
-    all.set(c.subarray(0, n), off);
-    off += n;
+    for (let i = 0; i < complete; i++) {
+      v.fromBufferAttribute(pos, index ? index.getX(i) : i).applyMatrix4(mesh.matrixWorld);
+      all[off++] = v.x;
+      all[off++] = v.y;
+      all[off++] = v.z;
+    }
   }
 
   return all;

@@ -21,3 +21,11 @@ These are local helper timings, not CI results or complete import latency. File 
 ## Dataset snapshots restore each source once
 
 `snapshotImages.test.ts` bounds frame-ID reads to three per image while restoring and exporting 40 images, avoiding repeated full-set searches.
+
+## Joined video bounds accumulate while reading packets
+
+The shared dataset video joiner collects packets and their time bounds in one traversal. It removes two temporary numeric arrays containing twice the packet count and two post-collection traversals. The retained packet list is unchanged. Searching `src/` and `electron/` found no other encoded-packet time-bound calculation using mapped arrays.
+
+On November 16, 2026 UTC, a local Node v26.13.0 probe on macOS arm64 with an Apple M5 Pro compared the previous collector and mapped extrema with the collector that accumulates bounds. Its 100,000 packet records had permuted timestamps at 25 fps and 0.04-second durations. After 20 warmup calls per version, seven alternating batches of 50 calls gave median batch means of 1.959 ms before and 0.244 ms after. Each call removes 200,000 temporary numeric entries. The probe checked exact packet and bound parity for 100 sizes from zero through 99, five single-packet nonfinite or signed-zero cases, and the timing fixture.
+
+These are isolated synchronous collection timings, not complete export or CI measurements. Demuxing, asynchronous iteration, packet retention and muxing costs remain. `src/datasets/lerobotV3.test.ts` retains integration coverage of joined packet timestamps, episode spans, deterministic output, size rollover and decoder changes. No timing assertion or quarantine condition was added. The empty-stream extrema remain positive and negative infinity, matching the previous calculation.

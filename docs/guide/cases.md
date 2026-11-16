@@ -625,6 +625,8 @@ Measurements and limits: [Vision training performance evidence](../notes/perform
 
 Measurements and limits: [Dataset preparation performance evidence](../notes/performance-datasets.md).
 
+- **Joined video bounds accumulate while reading packets.** `datasets/joinVideos.ts` retains the minimum timestamp and maximum packet end during collection, without mapped timestamp arrays or spread arguments. Packet order, microsecond rounding, decoder compatibility and file grouping stay unchanged. `lerobotV3.test.ts` covers episode spans, packet times, deterministic bytes, size rollover and decoder changes. [Evidence](../notes/performance-datasets.md#joined-video-bounds-accumulate-while-reading-packets).
+
 - **Imported joint ranges accumulate extrema directly.** `datasets/import/units.ts` merges episode ranges without mapped coordinate lists and detects units without filtering or mapping columns. All source formats share these helpers through `sourceSpans` and `importStep`. Empty and unknown ranges retain their radian default, and nonfinite values retain their existing handling. `units.test.ts` compares generated episode groups with the prior calculations and checks unit thresholds and input immutability. [Evidence](../notes/performance-datasets.md#imported-joint-ranges-accumulate-extrema-directly).
 
 - **Dataset extraction indexes recorded joint columns.** `datasets/jointIndices.ts` replaces repeated model-array searches in episode export and training demonstration observations. The per-call index preserves object identity, first occurrences and selected order, and empty selections skip indexing. [Evidence](../notes/performance-datasets.md#dataset-extraction-indexes-recorded-joint-columns).

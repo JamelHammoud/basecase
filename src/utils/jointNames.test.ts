@@ -89,6 +89,35 @@ describe('jointGroups', () => {
 });
 
 describe('jointRowLabels', () => {
+  it.each(['Left leg', 'RIGHT ARM', 'Other'])('prepares %s once for a large section', (group) => {
+    const joints = Array.from({ length: 600 }, (_, i) => named(`left_elbow_${i}`));
+    const before = structuredClone(joints);
+    const lowercase = vi.spyOn(String.prototype, 'toLowerCase');
+    let labels: Map<string, string>;
+    let preparations: number;
+
+    try {
+      labels = jointRowLabels(joints, group);
+      preparations = lowercase.mock.contexts.filter((value) => String(value) === group).length;
+    } finally {
+      lowercase.mockRestore();
+    }
+
+    expect(preparations).toBe(1);
+    expect(labels.size).toBe(600);
+    expect(labels.get(joints[0].id)).toBe(group === 'Other' ? 'Left elbow 0' : 'Elbow 0');
+    expect(labels.get(joints[599].id)).toBe(group === 'Other' ? 'Left elbow 599' : 'Elbow 599');
+    expect(joints).toEqual(before);
+  });
+
+  it('omits abbreviated sides only on names with a recognized side', () => {
+    const joints = ['L_knee', 'knee_l', 'lhip', 'knee_r_middle', 'left_joint', 'joint'].map((name) => named(name));
+
+    expect(labelsOf(joints, 'LEFT LEG')).toEqual(['L knee', 'Knee l', 'Lhip', 'Knee r middle', 'Left', 'joint']);
+    expect(labelsOf(joints, 'Other')).toEqual(['L knee', 'Knee l', 'Lhip', 'Knee r middle', 'Left', 'joint']);
+    expect(labelsOf(joints, 'LEFT LEG')).toEqual(['L knee', 'Knee l', 'Lhip', 'Knee r middle', 'Left', 'joint']);
+  });
+
   it('names the first-launch rover’s wheels as Results does', () => {
     const rover = roundWheelRover();
     const rig = buildRig(rover.joints, rover.parts);

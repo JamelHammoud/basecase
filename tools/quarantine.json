@@ -2,23 +2,15 @@
   {
     "file": "e2e/passiveFixtures.e2e.test.ts",
     "issue": 1364,
-    "reason": "Run 43820519938 reached Drive on but retained zero tries at line 46 on both Windows attempts for each fixture. Linux passed at the same commit. Commit 37dccba61 introduced this browser coverage after the last green run. Each attempt opens a fresh app. The recording, automatic finish, scoring or persistence stage responsible is not established. Trace those stages and retain the weight edit, reference verdict, recorded reopening and travel assertions before restoring Windows coverage.",
+    "reason": "Run 43820519938 failed at the saved-try poll on both Windows attempts at 017a5f2. Diagnostic run 43824089003 selected this exact test at the same revision with retries and quarantine disabled in ten independent one-worker Windows processes. Observations 1, 4, 6 and 9 passed, and six failed at the same saved-try poll. The automatic finish, recording, scoring or persistence cause is not established. Retain the weight edit, reference verdict, recorded reopening and travel assertions. Issue #1364 owns tracing and equal-load repair measurements. The drawer test remains active because its ten diagnostic observations all failed.",
     "test": "creates Open a Lid, edits its weight and reopens its recorded reference",
-    "until": "2026-11-28",
-    "platform": "win32"
-  },
-  {
-    "file": "e2e/passiveFixtures.e2e.test.ts",
-    "issue": 1364,
-    "reason": "Run 43820519938 reached Drive on but retained zero tries at line 46 on both Windows attempts for each fixture. Linux passed at the same commit. Commit 37dccba61 introduced this browser coverage after the last green run. Each attempt opens a fresh app. The recording, automatic finish, scoring or persistence stage responsible is not established. Trace those stages and retain the weight edit, reference verdict, recorded reopening and travel assertions before restoring Windows coverage.",
-    "test": "creates Pull a Drawer, edits its weight and reopens its recorded reference",
     "until": "2026-11-28",
     "platform": "win32"
   },
   {
     "file": "e2e/remoteTraining.e2e.test.ts",
     "issue": 1365,
-    "reason": "Run 43820519938 observed zero train-start requests at line 64 on the first Windows attempt and only the initial request after reload at line 75 on the second. Linux passed at the same commit, and the single-attempt recovery walkthrough passed on Windows. Commit 212dbcd46 introduced grouped coverage. Preparation, worker startup, journal persistence and reattachment are not distinguished by the log. Retain parent and child identities, one dispatch and the local refusal while tracing the current workflow.",
+    "reason": "Run 43820519938 failed both Windows attempts at 017a5f2. Diagnostic run 43824076136 selected this exact test at the same revision with retries and quarantine disabled in ten independent one-worker Windows processes. Nine passed and observation 2 failed. This establishes same-revision Windows pass/fail evidence, not a repair. The preparation, worker startup, journal persistence or reattachment cause is not established. Retain parent and child identities, one dispatch and local refusal while tracing under #1365.",
     "test": "configures two attempts, recovers one grouped workflow and shows its local verdict",
     "until": "2026-11-28",
     "platform": "win32"
@@ -26,7 +18,7 @@
   {
     "file": "e2e/vision.e2e.test.ts",
     "issue": 1366,
-    "reason": "Run 43820519938 left operatorCamera().live false at line 65 on both Windows attempts. Linux passed at the same commit. The preceding Windows run 43739315274 passed in 13608 ms with unchanged camera code, fixture, harness, dependencies and e2e configuration. Each attempt opens a fresh app. The command, capture, worker readiness or detector stage responsible is not established. Preserve real pixel-sensitive inference and the independent pose fixture when restoring coverage.",
+    "reason": "Run 43820519938 left operatorCamera().live false on both Windows attempts at 017a5f2. Diagnostic run 43824318285 selected this exact test at the same revision with retries and quarantine disabled in ten independent one-worker Windows processes. Seven passed and observations 8 through 10 failed. This establishes same-revision Windows pass/fail evidence, not a repair. The command, capture, readiness or detector cause is not established. Preserve real pixel-sensitive inference and the independent pose fixture under #1366.",
     "test": "runs Find Faces on real fake-camera pixels while the body estimator uses its pose fixture",
     "until": "2026-11-28",
     "platform": "win32"

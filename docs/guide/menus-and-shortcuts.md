@@ -62,4 +62,4 @@ An open Case with reference commands offers **Try Reference** in the Try section
 
 ### Classroom commands
 
-In the browser studio, Classroom opens the local file workspace in another tab. Export Assignment appears with an open Case and robot, and Submit appears on an assignment attempt. The active Case's context menu also offers Export Assignment and Classroom. These actions use the command palette without new keyboard shortcuts. [Cases](cases.md#classroom-assignments) documents grading and file bounds.
+In the browser studio, Classroom opens the local file workspace in another tab. Export Assignment appears with an open Case and robot, and Submit appears on an assignment attempt. The active Case's context menu also offers Export Assignment and Classroom, with the same icons as their palette entries. These actions use the command palette without new keyboard shortcuts. [Cases](cases.md#classroom-assignments) documents grading and file bounds.

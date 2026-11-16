@@ -27,7 +27,7 @@ export function ClassroomApp() {
         <h1 className="text-[20px] font-medium mr-auto">{value?.assignment.bundle.title ?? 'Classroom'}</h1>
         <label className="text-[13px] flex gap-2 items-center">
           <span>Assignment file</span>
-          <input
+          <TextInput
             aria-label="Assignment file"
             type="file"
             accept=".caseclass,application/json"
@@ -59,7 +59,7 @@ export function ClassroomApp() {
             </Button>
             <label className="text-[13px] flex gap-2 items-center">
               <span>Submission files</span>
-              <input
+              <TextInput
                 aria-label="Submission files"
                 type="file"
                 accept=".casesubmit,application/json"

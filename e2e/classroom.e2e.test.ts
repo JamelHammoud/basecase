@@ -4,7 +4,7 @@ import type { Page } from 'playwright-core';
 import { launchChrome, exposeTestHooks, partCount } from './harness';
 import { openKitScene } from './kitScene';
 import { classroomFixture } from '../src/classroom/fixtures';
-import { classroomBytes, readAssignment, readSubmission, submissionOf } from '../src/classroom/envelope';
+import { assignmentOf, classroomBytes, readAssignment, readSubmission, submissionOf } from '../src/classroom/envelope';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { controlClassroomPhysics } from './classroomWorkers';
 
@@ -14,12 +14,10 @@ async function command(page: Page, label: string) {
   await page.getByText(label, { exact: true }).click();
 }
 
-it('exports an existing Case, hands it to a clean browser and independently grades two designs', async () => {
+it('exports an existing Case with its robot and budget', async () => {
   const browser = await launchChrome();
   const teacherContext = await browser.newContext({ acceptDownloads: true });
-  const studentContext = await browser.newContext({ acceptDownloads: true });
   const teacher = await teacherContext.newPage();
-  const student = await studentContext.newPage();
   const { bundle } = classroomFixture();
 
   try {
@@ -51,11 +49,27 @@ it('exports an existing Case, hands it to a clean browser and independently grad
 
     const assignmentBytes = new Uint8Array(await readFile((await (await exported).path())!));
     const assignment = await readAssignment(assignmentBytes);
-    const file = { name: 'assignment.caseclass', mimeType: 'application/json', buffer: Buffer.from(assignmentBytes) };
 
-    await teacher.goto(`${inject('webUrl')}/classroom`);
-    await controlClassroomPhysics(teacher);
-    await teacher.getByLabel('Assignment file').setInputFiles(file);
+    expect(assignment.budgetUsd).toBe(60);
+    expect(assignment.bundle.case).toEqual(bundle.case);
+    expect(assignment.bundle.robot.parts).toEqual(bundle.robot.parts);
+  } finally {
+    await browser.close();
+  }
+});
+
+it('edits an independent assignment attempt and exports its robot submission', async () => {
+  const browser = await launchChrome();
+  const student = await browser.newPage({ acceptDownloads: true });
+  const { bundle } = classroomFixture();
+  const assignment = await assignmentOf(bundle, 60);
+  const file = {
+    name: 'assignment.caseclass',
+    mimeType: 'application/json',
+    buffer: Buffer.from(classroomBytes(assignment)),
+  };
+
+  try {
     await student.goto(`${inject('webUrl')}/classroom`);
     await student.getByLabel('Assignment file').setInputFiles(file);
     await student.getByLabel('Name').fill('Ada');
@@ -78,6 +92,29 @@ it('exports an existing Case, hands it to a clean browser and independently grad
     expect(submitted.name).toBe('Ada');
     expect(submitted.bundle.robot.parts).toHaveLength(bundle.robot.parts.length + 1);
     expect(submitted.assignmentFingerprint).toBe(assignment.fingerprint);
+  } finally {
+    await browser.close();
+  }
+});
+
+it('grades two revisions and opens the failing Check without losing the grid', async () => {
+  const browser = await launchChrome();
+  const teacherContext = await browser.newContext();
+  const teacher = await teacherContext.newPage();
+  const { bundle } = classroomFixture();
+  const assignment = await assignmentOf(bundle, 60);
+  const first = await submissionOf(assignment, bundle, 'Ada');
+  const bytes = classroomBytes(first);
+  const file = {
+    name: 'assignment.caseclass',
+    mimeType: 'application/json',
+    buffer: Buffer.from(classroomBytes(assignment)),
+  };
+
+  try {
+    await teacher.goto(`${inject('webUrl')}/classroom`);
+    await controlClassroomPhysics(teacher);
+    await teacher.getByLabel('Assignment file').setInputFiles(file);
 
     const failed = structuredClone(bundle);
 
@@ -129,7 +166,6 @@ it('keeps an edited student attempt and its assignment after reload and imports 
   const browser = await launchChrome();
   const page = await browser.newPage({ acceptDownloads: true });
   const { bundle } = classroomFixture();
-  const { assignmentOf } = await import('../src/classroom/envelope');
   const assignment = await assignmentOf(bundle, 60);
   const file = {
     name: 'assignment.caseclass',

@@ -375,7 +375,7 @@ The passive mechanism integration tests cover action and servo mapping and the h
 
 ## Classroom grading
 
-Classroom uses `createStudyGrader` for measured geometry, BOM, mass, torque and other engineering Checks. It supplies the original assignment's budget and an empty purchase inventory, so a teacher's on-hand stock and personal checked prices cannot lower a student's cost. Tiles label the total Estimated cost. The optional `completeBudget` grading flag leaves Budget not run when parts lack prices, unless the known subtotal already fails the budget. Imported meshes without a catalog or supply price count as incomplete. Regular Study grading keeps its existing behavior.
+Classroom uses `createStudyGrader` for measured geometry, BOM, mass, torque and other engineering Checks. It supplies the original assignment's budget and an empty purchase inventory, so a teacher's on-hand stock and personal checked prices cannot lower a student's cost. Tiles label the total Estimated cost. The optional `completeBudget` grading flag leaves Budget not run when parts lack prices, unless the known subtotal already fails the budget. Imported meshes without a catalog or supply price count as incomplete. Unresolved purchase references, including unknown component variants, also count as incomplete. Regular Study grading keeps its existing behavior.
 
 Study geometry refresh accepts an optional triangle limit. Classroom passes 100,000, checked cumulatively as parts are prepared in the worker. Limit failures dispose the grading session and do not mutate the saved robot. Existing Study callers omit the limit.
 

@@ -14,28 +14,7 @@ import {
   type SubmissionTile,
 } from './storage';
 import { CLASSROOM_MAX_SUBMISSIONS } from './envelope';
-
-function confirmRemoval(
-  tile: SubmissionTile,
-  control: {
-    cancel: () => void;
-    state: { current: Classroom | null };
-    commit: (next: Classroom) => void;
-  },
-) {
-  confirmAction({
-    title: `Delete ${tile.submission.name}?`,
-    onConfirm: () => {
-      control.cancel();
-
-      if (control.state.current)
-        control.commit({
-          ...control.state.current,
-          submissions: control.state.current.submissions.filter((item) => item !== tile),
-        });
-    },
-  });
-}
+import { confirmRemoval } from './removal';
 
 function releaseClassroom(client: ReturnType<typeof classroomFileClient> | null, grader: ClassroomGrader | null) {
   client?.dispose();
@@ -65,14 +44,14 @@ export function useClassroom() {
 
     client.current = classroomFileClient();
     void loadClassroom()
+      .catch(report)
       .then((saved) => {
         if (!live) return;
 
         state.current = saved ?? null;
         setValue(saved ?? null);
         setLoaded(true);
-      })
-      .catch(report);
+      });
 
     return () => {
       live = false;

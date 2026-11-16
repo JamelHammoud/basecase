@@ -67,3 +67,15 @@ it('leaves a classroom budget unevaluated when imported geometry has no price', 
   });
   expect(gradeStudyDetached(scene, choices).checks.find((check) => check.check === 'Budget')?.status).toBe('pass');
 });
+
+it.each([
+  { supplyId: 'missing-supply' },
+  { componentId: 'missing-component' },
+  { componentId: 'feetech-sts3215', componentVariant: 'missing-variant' },
+])('refuses a Budget pass for an unresolved purchase reference %j', (reference) => {
+  const part = { ...box('imported', [0, 10, 0], [20, 20, 20], 100), kind: 'mesh' as const, ...reference };
+  const scene = { ...sceneOf([part]), project: { ...DEFAULT_PROJECT, budgetUsd: 60 } };
+  const row = gradeStudyDetached(scene, { ...choices, completeBudget: true });
+
+  expect(row.checks.find((check) => check.check === 'Budget')?.status).toBe('not run');
+});

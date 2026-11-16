@@ -2,6 +2,7 @@ import { SubmissionChecks } from './SubmissionChecks';
 import { inspectSubmission } from './inspection';
 import { CheckIcon } from '../components/build/CheckIcon';
 import { Button } from '../design-system';
+import { weight } from '../utils/weight';
 import { type SubmissionTile as Tile } from './storage';
 import type { Assignment } from './envelope';
 
@@ -63,22 +64,19 @@ export function SubmissionTile({
       )}
       {result && (
         <>
-          <dl className="grid grid-cols-2 gap-2 text-[13px]">
-            <div>
+          <div className="grid grid-cols-2 gap-2 text-[13px]">
+            <dl>
               <dt className="text-white/50">Estimated cost</dt>
               <dd>${result.costUsd.toFixed(2)}</dd>
-            </div>
-            <div>
-              <dt className="text-white/50">Mass</dt>
-              <dd>{result.massG.toFixed(0)} g</dd>
-            </div>
-            <div>
+            </dl>
+            <p>{weight(result.massG)}</p>
+            <dl>
               <dt className="text-white/50">Case</dt>
               <dd>
                 {result.runs?.passes ?? 0}/{result.runs?.runs ?? 0}
               </dd>
-            </div>
-          </dl>
+            </dl>
+          </div>
           {result.runs?.refusal && <p className="text-[13px] text-white/60">{result.runs.refusal}</p>}
           <SubmissionChecks checks={result.checks} />
         </>

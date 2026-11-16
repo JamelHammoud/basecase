@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Button,
+  CasesIcon,
   CompareIcon,
   ContextMenu,
   DownloadIcon,
@@ -97,7 +98,7 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, 
               ...(classroom
                 ? [
                     { label: 'Export Assignment', icon: <DownloadIcon />, onSelect: classroom.export },
-                    { label: 'Classroom', icon: <CompareIcon />, onSelect: classroom.open },
+                    { label: 'Classroom', icon: <CasesIcon />, onSelect: classroom.open },
                   ]
                 : []),
             ]

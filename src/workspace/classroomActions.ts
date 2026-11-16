@@ -36,15 +36,17 @@ function sourceOf(core: WorkspaceCore): ClassroomSource {
   };
 }
 
+function requireCurrentSource(core: WorkspaceCore) {
+  if (core.docs.partsRef.current !== core.parts || core.docs.projectRef.current !== core.project)
+    throw new Error('The scene changed. Export again.');
+}
+
 async function resolvedSource(core: WorkspaceCore): Promise<ClassroomSource> {
-  const parts = core.parts;
-  const project = core.project;
   const missing = await core.viewportRef.current?.meshesReady();
 
   if (!missing || missing.length) throw new Error('Load the robot’s meshes before exporting.');
 
-  if (core.docs.partsRef.current !== parts || core.docs.projectRef.current !== project)
-    throw new Error('The scene changed. Export again.');
+  requireCurrentSource(core);
 
   return sourceOf(core);
 }
@@ -67,6 +69,7 @@ export async function exportClassroom(core: WorkspaceCore, submit = false) {
 
     if (submit) await core.studio.handleOf(core.workspaceId)?.flush();
 
+    requireCurrentSource(core);
     downloadBytes(bytes, submit ? 'robot.casesubmit' : 'assignment.caseclass', 'application/json');
   } catch (error) {
     core.showToast(errorMessage(error), { tone: 'error' });

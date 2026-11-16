@@ -1,7 +1,7 @@
 import { GALLERY_BUNDLE_MAX_BYTES, readGalleryBundleBytes, type GalleryBundle } from './galleryBundle';
 import { restoreWorldAssets, sceneWorldAssets } from '../cases/worldAssets';
 
-async function cappedBytes(res: Response, max: number): Promise<Uint8Array> {
+export async function cappedBytes(res: Response, max: number): Promise<Uint8Array> {
   if (Number(res.headers.get('content-length') ?? 0) > max || !res.body) throw new Error('Too large');
 
   const reader = res.body.getReader();

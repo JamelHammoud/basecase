@@ -8,6 +8,7 @@ covers:
   - src/workspace/shareRobot.ts
   - src/components/simulate/ResultsSection.tsx
   - src/workspace/caseCommands.tsx
+  - src/components/ShareRobotSheet.tsx
   - src/gallery/
 hub_run_a_case_order: 40
 hub_run_a_case: |
@@ -21,7 +22,12 @@ Send someone a link that opens your robot and its Case in their browser. They ca
 3. Press [[⌘K]], then choose **Share Robot**.
 4. When the Link copied toast appears, paste the link wherever you want to send it. The link looks like `https://app.basecase.so/r/your-name/desk-rover-e39785`.
 
-![The Link copied toast above the toolbar](/help/share-a-robot-as-a-link/copied.png)
+![The Share Robot sheet with a copied robot link and the League link field](/help/share-a-robot-as-a-link/league.png)
+
+Sharing opens **Share Robot** with the copied link. To enter a competition, paste its link into **League link** and choose **Enter League**.
+The robot must use the League's pinned Case and contract. Enter League copies the immutable submission link and keeps it in the sheet.
+Send that link to the League publisher for a trusted CI receipt before the deadline.
+See [Replay a League](/help/replay-a-league).
 
 If you haven't added a token, **Share Robot** opens **Accounts** instead. If the Hub refuses your token, click **Open** in the message and paste a new one.
 

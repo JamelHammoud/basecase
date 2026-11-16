@@ -31,7 +31,8 @@ export const GalleryCard: React.FC<{
   training: GalleryTraining;
   docked: boolean;
   onOpenScene: () => void;
-}> = ({ kase, sim, training, docked, onOpenScene }) => {
+  replayControls?: React.ReactNode;
+}> = ({ kase, sim, training, docked, onOpenScene, replayControls }) => {
   const { drive } = sim;
 
   return (
@@ -47,19 +48,25 @@ export const GalleryCard: React.FC<{
         <h1 className="text-[15px] font-semibold text-white/90">{kase.name}</h1>
         <p className="mt-1 text-[13px] leading-snug text-white/60">{kase.brief}</p>
       </div>
-      <Button
-        variant="primary"
-        size="md"
-        fullWidth
-        icon={drive.active ? <StopIcon className="w-4 h-4" /> : <RunIcon className="w-4 h-4" />}
-        disabled={sim.status !== 'ready' || drive.status === 'checking'}
-        onClick={() => (drive.active ? drive.stop() : void drive.start())}
-      >
-        {drive.active ? 'Stop Driving' : 'Drive'}
-      </Button>
-      {!docked && drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up…</p>}
-      {!docked && drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
-      <TrainPart training={training} />
+      {replayControls ?? (
+        <>
+          <Button
+            variant="primary"
+            size="md"
+            fullWidth
+            icon={drive.active ? <StopIcon className="w-4 h-4" /> : <RunIcon className="w-4 h-4" />}
+            disabled={sim.status !== 'ready' || drive.status === 'checking'}
+            onClick={() => (drive.active ? drive.stop() : void drive.start())}
+          >
+            {drive.active ? 'Stop Driving' : 'Drive'}
+          </Button>
+          {!docked && drive.status === 'checking' && (
+            <p className="text-[12.5px] text-white/50">Checking it stays up…</p>
+          )}
+          {!docked && drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
+          <TrainPart training={training} />
+        </>
+      )}
       <Button variant="secondary" size="md" fullWidth onClick={onOpenScene}>
         Open Scene
       </Button>

@@ -193,6 +193,10 @@ The units of a fleet share one design but not one set of servos. Each unit gets 
 
 Roll Out uses these verdicts before sending the saved network policy, first to the chosen canaries and then to the remaining passing units (§8k). `rollOut.test.ts` covers order, repeated seeds, held twins, empty and unknown canaries, proof exceptions and partial pin or climb failures. `climbUnit.test.ts` covers refusals and listener cleanup without retrying. `twinWorker.test.ts` checks the calibrated model reaches the skills worker and the worker terminates after proof.
 
+### Retained policies in Leagues
+
+League entries use the gallery bundle’s retained network policy or policy-backed skill without installing a different controller. Admission refuses other retained controller kinds before accepting a receipt. Adjudication and browser replay run that controller through the existing Case runner. Open Scene keeps the selected robot, Case and retained policy through the gallery import path. League results compare whole robots on the pinned Case, separately from Arena installation evidence (§8h).
+
 ### Publishing and installing (`hubSkill.ts`, `robotSchema.ts`, `policyMap.ts`)
 
 A ready skill goes to a model repo on the Hugging Face Hub, and **Install Skill** brings one onto the open robot, where it trains again and Arena judges it on this robot's physics. Desktop only, on the one Hub path the datasets use (§8h: `src/hub/hubBridge.ts`, `electron/hub/`).

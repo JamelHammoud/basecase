@@ -1,4 +1,6 @@
 import React, { useEffect, useEffectEvent, useRef } from 'react';
+import type { SeedReplay } from '../cases/seedReplay';
+import { GalleryReplayControls } from './GalleryReplayControls';
 import { scaledToReach } from '../cases/scale';
 import { robotFacts } from '../cases/robotFit';
 import { caseWorldItems } from '../cases/importedWorldItems';
@@ -18,10 +20,11 @@ import { useGalleryTraining } from './useGalleryTraining';
 const SCULPT: SculptSettings = { brush: 'inflate', radiusMm: 10, strength: 0.5, symmetryX: false, symmetryZ: false };
 const NO_POSE = new Map();
 
-export const GalleryStage: React.FC<{ bundle: GalleryBundle; Console: GalleryConsoleView | null }> = ({
-  bundle,
-  Console,
-}) => {
+export const GalleryStage: React.FC<{
+  bundle: GalleryBundle;
+  Console: GalleryConsoleView | null;
+  replay?: SeedReplay;
+}> = ({ bundle, Console, replay }) => {
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const { parts, joints } = bundle.robot;
   const project: ProjectSettings = { ...DEFAULT_PROJECT, joints };
@@ -31,17 +34,34 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle; Console: GalleryCon
   const kase = bundle.case;
   const facts = robotFacts(rig, parts);
   const training = useGalleryTraining({ slug: bundle.slug, morphology: facts.morphology, sim });
-  const world = caseWorldItems(scaledToReach(kase, facts.reachMm, facts.anchor));
-  const begin = useEffectEvent(() => {
+  const world = caseWorldItems(replay?.kase ?? scaledToReach(kase, facts.reachMm, facts.anchor));
+  const begin = useEffectEvent((current: () => boolean) => {
     sim.setWorld(world);
-    void sim.start();
+
+    if (!replay) {
+      void sim.start();
+
+      return;
+    }
+
+    void sim.start(replay.model).then(async () => {
+      if (!current()) return;
+
+      await sim.scrub(replay.recording, replay.efforts);
+
+      if (current()) sim.seek(replay.trips[0]?.frame ?? 0);
+    });
   });
 
   useEffect(() => {
-    const soon = setTimeout(begin, 0);
+    let live = true;
+    const soon = setTimeout(() => begin(() => live), 0);
 
-    return () => clearTimeout(soon);
-  }, []);
+    return () => {
+      live = false;
+      clearTimeout(soon);
+    };
+  }, [replay]);
 
   useEffect(() => {
     (window as unknown as { __gallery?: unknown }).__gallery = {
@@ -77,7 +97,7 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle; Console: GalleryCon
         onSelectPart={() => {}}
         onUpdatePartTransform={() => {}}
       />
-      <DriveOverlay sim={sim} />
+      {!replay && <DriveOverlay sim={sim} />}
     </div>
   );
   const card = (docked: boolean) => (
@@ -86,6 +106,7 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle; Console: GalleryCon
       sim={sim}
       training={training}
       docked={docked}
+      replayControls={replay ? <GalleryReplayControls key={replay.seed} replay={replay} sim={sim} /> : undefined}
       onOpenScene={() => void training.carried().then((trained) => openGalleryScene(bundle, trained ?? bundle.trained))}
     />
   );

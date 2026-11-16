@@ -36,6 +36,8 @@ Basecase is a 3D CAD studio for robots, with an agent that designs alongside you
 
 MuJoCo is the physics engine that robotics labs use to test robots before they build them. Basecase runs it inside the app, on the same model it exports.
 
+You can also compare shared robots in [Leagues](/help/replay-a-league). Each League runs fixed robot revisions on one pinned Case. Frozen standings come from CI, and browser replays let you inspect a measured seed without changing the standings.
+
 ## How the stages loop
 
 If something fails in Engineer, Simulate or Train, you go back to Design. For example, if a knee servo has to hold more than 60% of its stall torque while the robot stands on one leg, the **Servo torque** check fails in the **Build** tab. To fix it, go back to Design and choose a stronger servo.

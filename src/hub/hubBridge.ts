@@ -13,6 +13,7 @@ export interface HubPublish {
   files: Record<string, Uint8Array>;
   kind?: 'dataset' | 'model';
   tag?: string;
+  includeRevision?: boolean;
 }
 
 export interface HubRepoRef {
@@ -40,6 +41,7 @@ export interface HubDatasetFiles {
 export interface HubPublished {
   repo: string;
   url: string;
+  revision?: string;
 }
 
 const forHttp = (payload: unknown) => {

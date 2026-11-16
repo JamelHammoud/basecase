@@ -34,7 +34,7 @@ const isVec3 = (v: unknown) => Array.isArray(v) && v.length === 3 && v.every((n)
 const isIndexList = (v: unknown, vertices: number) =>
   Array.isArray(v) && v.length % 3 === 0 && v.every((i) => Number.isInteger(i) && i >= 0 && i < vertices);
 
-function readMesh(value: unknown, where: string) {
+export function readMesh(value: unknown, where: string) {
   const m = asRecord(value, where);
   const positions = m.positions;
 

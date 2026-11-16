@@ -20,10 +20,11 @@ type Token = { kind: 'num'; value: number } | { kind: 'str'; value: string } | {
 
 function tokenize(text: string): Token[] {
   const out: Token[] = [];
+  const end = text.trimEnd().length;
 
   TOKEN.lastIndex = 0;
 
-  while (TOKEN.lastIndex < text.length && text.slice(TOKEN.lastIndex).trim()) {
+  while (TOKEN.lastIndex < end) {
     const m = TOKEN.exec(text);
 
     if (!m) throw new XacroError(`Can’t read ${text}`);

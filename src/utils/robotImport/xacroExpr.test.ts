@@ -43,6 +43,26 @@ describe('xacro expressions', () => {
     expect(run('width if True else missing')).toBeCloseTo(0.2);
   });
 
+  it('preserves whitespace within tokens and ignores whitespace around expressions', () => {
+    for (const whitespace of [' ', '\t\r\n', '\u00a0\u2003\ufeff', ' '.repeat(2000)]) {
+      expect(run(`\t1 + 2${whitespace}`)).toBe(3);
+      expect(run(`' left ' + " right "${whitespace}`)).toBe(' left  right ');
+      expect(() => run(whitespace)).toThrow('Expression ends early');
+      expect(() => run(`1 + @${whitespace}`)).toThrow('Can’t read');
+      expect(run(`2${whitespace}`)).toBe(2);
+    }
+  });
+
+  it('keeps the original expression limit before removing trailing whitespace', () => {
+    const expression = Array.from({ length: 500 }, () => '1').join('+');
+    const padded = expression.padEnd(4000);
+
+    expect(run(padded)).toBe(500);
+    expect(() => run(`${padded} `)).toThrow('Expression too long');
+    expect(() => run(`1 ${' '.repeat(3000)}@`)).toThrow('Can’t read');
+    expect(run('3')).toBe(3);
+  });
+
   it('refuses names it doesn’t know and calls it doesn’t allow', () => {
     for (const text of [
       'missing + 1',

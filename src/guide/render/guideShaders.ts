@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GUIDE_DIRECTIONS, GUIDE_NEIGHBORS } from './guideNeighbors';
+import { GUIDE_DIRECTIONS, GUIDE_NEIGHBORS, GUIDE_OFFSETS } from './guideNeighbors';
 
 const SURFACE_VERTEX = `
 varying vec3 vNormal;
@@ -96,7 +96,9 @@ void main() {
   vec3 n = texture2D(tNormal, vUv).xyz * 2.0 - 1.0;
   float z = viewZ(vUv);
   float ink = 0.0;
-  vec3 inkColor = INK;
+  vec4 inkId = here;
+  vec2 inkUv = vUv;
+  bool inkOutline = false;
 
 ${GUIDE_NEIGHBORS}      vec4 there = texture2D(tId, uv);
       bool none = there.a < 0.5;
@@ -122,10 +124,13 @@ ${GUIDE_NEIGHBORS}      vec4 there = texture2D(tId, uv);
       bool hereNearer = !empty && (none || z <= viewZ(uv));
 
       ink = strength;
-      inkColor = hereNearer ? inkFor(here, vUv, outline) : inkFor(there, uv, outline);
+      inkId = hereNearer ? here : there;
+      inkUv = hereNearer ? vUv : uv;
+      inkOutline = outline;
     }
   }
 
+  vec3 inkColor = ink > 0.0 ? inkFor(inkId, inkUv, inkOutline) : INK;
   vec3 base = empty ? vec3(1.0) : texture2D(tColor, vUv).rgb;
   float alpha = empty ? ink : 1.0;
   vec3 rgb = empty ? inkColor : mix(base, inkColor, ink);
@@ -168,6 +173,8 @@ export const compositeMaterial = () =>
       near: { value: 1 },
       far: { value: 1000 },
       depthEdge: { value: 2 },
+      neighborCount: { value: GUIDE_OFFSETS.length },
+      neighbors: { value: GUIDE_OFFSETS.map(([x, y]) => new THREE.Vector2(x, y)) },
     },
     depthTest: false,
     depthWrite: false,

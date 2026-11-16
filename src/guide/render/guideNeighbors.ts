@@ -1,20 +1,28 @@
 export const GUIDE_NEIGHBORS = `
-  for (int r = 1; r <= 2; r++) {
-    for (int k = 0; k < 8; k++) {
-      if (r == 2 && (k == 1 || k == 3 || k == 5 || k == 7)) continue;
+  for (int k = 0; k < neighborCount; k++) {
+    int r = k < 8 ? 1 : 2;
+    {
+      if (ink == 1.0) break;
 
-      vec2 uv = vUv + neighbor(k) * texel * float(r);
+      vec2 uv = vUv + neighbors[k] * texel;
 `;
 
 export const GUIDE_DIRECTIONS = `
-vec2 neighbor(int k) {
-  if (k == 0) return vec2(1.0, 0.0);
-  if (k == 1) return vec2(0.70710678, 0.70710678);
-  if (k == 2) return vec2(0.0, 1.0);
-  if (k == 3) return vec2(-0.70710678, 0.70710678);
-  if (k == 4) return vec2(-1.0, 0.0);
-  if (k == 5) return vec2(-0.70710678, -0.70710678);
-  if (k == 6) return vec2(0.0, -1.0);
-  return vec2(0.70710678, -0.70710678);
-}
+uniform int neighborCount;
+uniform vec2 neighbors[12];
 `;
+
+export const GUIDE_OFFSETS = [
+  [1, 0],
+  [0.70710678, 0.70710678],
+  [0, 1],
+  [-0.70710678, 0.70710678],
+  [-1, 0],
+  [-0.70710678, -0.70710678],
+  [0, -1],
+  [0.70710678, -0.70710678],
+  [2, 0],
+  [0, 2],
+  [-2, 0],
+  [0, -2],
+];

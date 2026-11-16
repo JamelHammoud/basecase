@@ -46,3 +46,91 @@ export const referenceToon = (source: THREE.ShaderMaterial) =>
     uniforms: source.uniforms,
     side: THREE.DoubleSide,
   });
+
+export const referenceCompositeFragment = `
+uniform sampler2D tColor;
+uniform sampler2D tNormal;
+uniform sampler2D tId;
+uniform sampler2D tDepth;
+uniform vec2 texel;
+uniform float near;
+uniform float far;
+uniform float depthEdge;
+varying vec2 vUv;
+
+const vec3 INK = vec3(0.07);
+const vec3 GHOST_INK = vec3(0.6);
+const vec3 SOFT_INK = vec3(0.72);
+const vec3 DARK_PART_INK = vec3(0.56);
+
+float viewZ(vec2 uv) {
+  return near + texture2D(tDepth, uv).x * (far - near);
+}
+
+float idOf(vec4 c) {
+  return floor(c.r * 255.0 + 0.5) + floor(c.g * 255.0 + 0.5) * 256.0;
+}
+
+bool isNew(vec4 c) {
+  return c.b > 0.75;
+}
+
+vec3 inkFor(vec4 nearId, vec2 nearUv, bool outline) {
+  if (!isNew(nearId)) return outline ? GHOST_INK : SOFT_INK;
+
+  float fill = dot(texture2D(tColor, nearUv).rgb, vec3(0.299, 0.587, 0.114));
+
+  return (!outline && fill < 0.3) ? DARK_PART_INK : INK;
+}
+
+
+
+void main() {
+  vec4 here = texture2D(tId, vUv);
+  bool empty = here.a < 0.5;
+  float id = idOf(here);
+  vec3 n = texture2D(tNormal, vUv).xyz * 2.0 - 1.0;
+  float z = viewZ(vUv);
+  float ink = 0.0;
+  vec3 inkColor = INK;
+
+
+  for (int r = 1; r <= 2; r++) {
+    for (int k = 0; k < 8; k++) {
+      float a = float(k) * 0.78539816;
+      vec2 uv = vUv + vec2(cos(a), sin(a)) * texel * float(r);
+      vec4 there = texture2D(tId, uv);
+      bool none = there.a < 0.5;
+
+      if (empty && none) continue;
+
+      float strength = 0.0;
+      bool outline = empty != none;
+
+      if (outline) {
+        strength = 1.0;
+      } else if (r == 1 && idOf(there) != id) {
+        strength = 0.85;
+      } else if (r == 1) {
+        vec3 m = texture2D(tNormal, uv).xyz * 2.0 - 1.0;
+        float crease = smoothstep(0.82, 0.62, dot(n, m));
+        float jump = smoothstep(depthEdge, depthEdge * 2.0, abs(viewZ(uv) - z));
+        strength = max(crease * 0.8, jump * 0.9);
+      }
+
+      if (strength <= ink) continue;
+
+      bool hereNearer = !empty && (none || z <= viewZ(uv));
+
+      ink = strength;
+      inkColor = hereNearer ? inkFor(here, vUv, outline) : inkFor(there, uv, outline);
+    }
+  }
+
+  vec3 base = empty ? vec3(1.0) : texture2D(tColor, vUv).rgb;
+  float alpha = empty ? ink : 1.0;
+  vec3 rgb = empty ? inkColor : mix(base, inkColor, ink);
+
+  gl_FragColor = vec4(rgb * alpha, alpha);
+}
+`;

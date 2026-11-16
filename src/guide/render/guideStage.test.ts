@@ -1,13 +1,14 @@
 import path from 'node:path';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { openOffscreenWorker, type OffscreenTestWorker } from '../../../tools/testing/offscreenWorker';
+import { probeGuideStage } from './guideStage.fixtures';
 
 const abort = new AbortController();
 let worker: OffscreenTestWorker | undefined;
 let setup: Promise<void>;
 
 beforeAll(() => {
-  setup = openOffscreenWorker(path.resolve('src/guide/render/guideStage.fixtures.ts'), 'probeGuideStage', {
+  setup = openOffscreenWorker(path.resolve('src/guide/render/guideStage.fixtures.ts'), probeGuideStage.name, {
     signal: abort.signal,
     timeout: 15000,
   }).then((opened) => {

@@ -1,15 +1,7 @@
 import * as THREE from 'three';
 import { blobDataUrl, SUPERSAMPLE, type StagePart } from './guideStage';
 import { compositeMaterial } from './guideShaders';
-import { GUIDE_NEIGHBORS } from './guideNeighbors';
-import { referenceNormal, referenceToon } from './guideReferenceShaders.fixtures';
-
-const oldNeighbors = `
-  for (int r = 1; r <= 2; r++) {
-    for (int k = 0; k < 8; k++) {
-      float a = float(k) * 0.78539816;
-      vec2 uv = vUv + vec2(cos(a), sin(a)) * texel * float(r);
-`;
+import { referenceCompositeFragment, referenceNormal, referenceToon } from './guideReferenceShaders.fixtures';
 
 const target = (width: number, height: number) =>
   new THREE.WebGLRenderTarget(width, height, {
@@ -54,7 +46,7 @@ export async function drawReference(parts: StagePart[], camera: THREE.Orthograph
 
   targets[0].depthTexture = depth;
   quad.frustumCulled = false;
-  composite.fragmentShader = composite.fragmentShader.replace(GUIDE_NEIGHBORS, oldNeighbors);
+  composite.fragmentShader = referenceCompositeFragment;
   renderer.setPixelRatio(1);
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
   renderer.toneMapping = THREE.NoToneMapping;

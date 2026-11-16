@@ -113,6 +113,8 @@ Measurements and limits: [Onshape imports performance evidence](../notes/perform
 
 Measurements and limits: [Robot shells performance evidence](../notes/performance-wrap.md).
 
+- **Shell field bounds merge in one pass.** `wrap/fieldSolid.ts` accumulates six extrema without filtering present boxes or mapping coordinate lists. Live shell regions, sweep raster unions and prismatic joint endpoint bounds share this merger. Null-only inputs still return null, and results own their coordinate arrays. `fieldSolid.test.ts` compares the previous equations across absent, degenerate and nonfinite boxes, source edits and large collections. [Evidence](../notes/performance-wrap.md#shell-field-bounds-merge-in-one-pass).
+
 - **Shell distance masks read triangle coordinates once.** `wrap/cellMask.ts` calculates expanded triangle bounds in scalars, removing four temporary arrays per triangle. Signed-distance queries in `SolidField` and carving bands in `nearSurface` share this prefilter. Cell size, rounding, inclusive bounds and packed keys stay unchanged. [Evidence](../notes/performance-wrap.md#shell-distance-masks-read-triangle-coordinates-once).
 
 - **Shell sweeps prepare triangle interpolation once.** `wrap/sweepRaster.ts` reads nine source coordinates per triangle, reuses both edge differences across its samples and calculates the outer weight once per row. Every stationary, hinge and slide raster shares this sampler. Sampling density, arithmetic order, projected rows and bounds stay unchanged, without per-sample weight arrays or interpolation functions. [Evidence](../notes/performance-wrap.md#shell-sweeps-prepare-triangle-interpolation-once).

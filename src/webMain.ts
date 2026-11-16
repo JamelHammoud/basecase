@@ -5,7 +5,9 @@ import { showsLanding } from './landing/showsLanding';
 const source = galleryBundleSource(location.pathname);
 const league = leagueSource(location.pathname);
 
-if (showsLanding()) {
+if (location.pathname === '/fleet' || location.pathname === '/fleet/enroll') {
+  import('./fleet/browser/mountFleet');
+} else if (showsLanding()) {
   import('./landing/mountLanding');
 } else if (league) {
   import('./leagues/mountLeague').then((m) => m.mountLeague(league));

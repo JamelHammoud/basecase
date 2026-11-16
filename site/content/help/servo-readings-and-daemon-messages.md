@@ -38,13 +38,15 @@ The daemon reports every servo 10 times a second, and the app shows the newest r
 
 ## Fleet rows
 
-Operate lists each connected unit by name above the controls. Each row shows its rung and policy version. After Roll Out, it also shows the twin's pass count or failing contract line. A fault marks only that unit's row.
+Operate lists this studio's connected units by name above their controls. Each row shows its rung and policy version. After Roll Out, it also shows the twin's pass count or failing contract line. A fault marks only that unit's row.
 
 Click a row to select the unit. The header, Ladder, servo readings, messages and measured canvas robot then follow that unit. **Stop**, **Disconnect** and commands from the simulation apply to the selected unit.
 
 ![Operate with three units, each in Test, and the selected unit's controls below](/help/roll-out-a-skill-to-a-fleet/connected.png)
 
 Hover a unit's row to find **Roll Back** when it has a previous policy. This restores the policy version. A joint's **Roll Back** instead restores its servo calibration. **Roll Back** beside **Body v1**, or a later body version, restores the [body fit](/help/fit-a-robots-body-from-a-recorded-run).
+
+View organization inventory and timestamped connection status through [Open Basecase Fleet](/help/open-basecase-fleet). The live servo readings described below follow the selected studio connection.
 
 ## The header
 

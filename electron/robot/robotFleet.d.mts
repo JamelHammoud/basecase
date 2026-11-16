@@ -12,6 +12,12 @@ import type {
 } from '../../src/robot/robotState';
 
 interface FleetOptions {
+  publisher?: {
+    publish(event: RobotEvent): Promise<void>;
+
+    dispose(): void;
+  };
+
   binary: string;
   emit: (event: RobotEvent) => void;
   tmpDir?: string;

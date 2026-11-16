@@ -29,3 +29,9 @@ This walkthrough is quarantined only on Windows through 28 November 2026 after r
 ## Passive robot joints
 
 The ten-mechanism test compares servoLayout and jointMap lengths against the exact powered count. Passive joints receive no servo ID, preserving consecutive IDs and source order among powered declarations. The live Pose setup omits passive IDs. No daemon command or deployment format changes, and no physical robot is used.
+
+## Fleet publisher
+
+`tools/fleet/adapter.test.mjs` pairs an authenticated TCP loopback peer through the real `RobotFleet` and network worker, publishes identity-addressed observations and verifies that disconnect leaves an offline inventory record. It uses the protocol peer, not a native daemon or physical robot. Disconnect completion comes from the link's closed event, followed by the publisher's active requests. Awaiting only requests already active before the asynchronous link close initially read the preceding online observation.
+
+The studio connection limit remains 32. The separate [10,000-identity registry measurements](fleet.md) establish no increase in concurrent control capacity. Browser entry and restart assertions are committed in `e2e/fleet.e2e.test.ts` for CI.

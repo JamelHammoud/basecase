@@ -1,3 +1,4 @@
+import { configuredStudioPublisher } from '../fleet/studioPublisher.mjs';
 import { NetworkCredentials } from './networkCredentials.mjs';
 import { discoverRobots } from './networkDiscovery.mjs';
 import { NetworkRobotLink } from './networkRobotLink.mjs';
@@ -28,6 +29,7 @@ const sceneWide = (unit) => unit === undefined || unit === null;
 export class RobotFleet {
   constructor(options) {
     this.options = options;
+    this.publisher = options.publisher ?? configuredStudioPublisher();
     this.emit = options.emit;
     this.credentials = new NetworkCredentials(options.networkStoreDir);
     this.candidates = [];
@@ -42,6 +44,10 @@ export class RobotFleet {
   }
 
   onEvent(unit, link, event) {
+    const current = this.fleet.get(unit)?.link === link;
+
+    if (current) void this.publisher?.publish({ ...event, unit }).catch(() => {});
+
     if (isEnded(event) && this.fleet.get(unit)?.link === link) {
       this.rememberRecording(unit, link.lastRecording);
       this.fleet.delete(unit);
@@ -240,6 +246,12 @@ export class RobotFleet {
   }
 
   dispose() {
+    const pending = [...this.fleet.keys()].map((unit) =>
+      this.publisher?.publish({ unit, event: 'link', state: 'closed' }),
+    );
+
     for (const entry of this.fleet.values()) entry.link.dispose();
+
+    void Promise.allSettled(pending).finally(() => this.publisher?.dispose());
   }
 }

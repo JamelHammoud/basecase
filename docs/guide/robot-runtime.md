@@ -346,3 +346,9 @@ Measurements and limits: [Calibration and body properties performance evidence](
 `servoLayout` assigns consecutive IDs only to powered movable declarations. Passive joints consume no emulated servo, ROS command joint or robot-package servo ID. Physical simulation readouts and recordings still include them. Changing actuation preserves powered-joint source order and invalidates existing model-bound evidence.
 
 `src/sim/passiveJoints.test.ts` checks exact servo layouts and robot-package map sizes for ten mechanisms, including a powered shoulder with a passive wrist and two passive fingers beside a powered joint. [Evidence](../notes/testing-robot-runtime.md#passive-robot-joints).
+
+### Fleet publisher
+
+Operate's Open Fleet button and command open the self-hosted [Fleet workspace](fleet.md). Its address is saved on this computer, independently of scenes and live `FleetRows`. `RobotFleet` optionally forwards current-link identity and status observations through `electron/fleet/studioPublisher.mjs`. Operator-owned credentials never enter renderer events. Publisher failures cannot block a robot command. Disconnect preserves the registry identity and publishes offline status. The live daemon connection cap remains 32.
+
+`tools/fleet/adapter.test.mjs` exercises the real authenticated loopback network link, the publisher's scoped service token and persistent disconnect status. `e2e/fleet.e2e.test.ts` drives the Operate entry into the site-filtered browser registry. [Evidence](../notes/testing-robot-runtime.md#fleet-publisher) records the coverage boundary.

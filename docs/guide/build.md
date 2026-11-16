@@ -304,6 +304,8 @@ Measurements and limits: [Sheet manufacturing performance evidence](../notes/per
 
 ## Performance: collision analysis
 
+- **Containment samples write into their final buffer.** `three/analysis/shapeSolid.ts` counts selected vertices and centroids using indices before allocating one exact Float32 buffer. The fill reads each selected coordinate directly, without a growing JavaScript coordinate list or its final copy. Interference, posed checks, output-riding cases and joint sweeps share this sampler. Vertex-first ordering, stride, centroid budget, float32 rounding and per-shape, per-budget caches stay unchanged. `solidSamples.test.ts` compares the previous buffered calculation across stride and budget boundaries, incomplete geometry, independent shapes and cache reuse. [Evidence](../notes/performance-collision.md#containment-samples-write-into-their-final-buffer).
+
 Measurements and limits: [Collision analysis performance evidence](../notes/performance-collision.md).
 
 - **Joint sweeps prepare their pivot frame once.** `three/analysis/sweepRotation.ts` normalizes the axis and builds both pivot translations once per sweep. Every angle reuses the same turn and composed rotation matrices, preserving translation and multiplication order. Moving placements receive cloned matrices before the next angle overwrites the workspace. A later sweep prepares its current origin and axis afresh. `sweepRotation.test.ts` covers exact matrix parity, independent preparations, edited pivots, operation counts and complete multi-angle clash and floor reports. [Evidence](../notes/performance-collision.md#joint-sweeps-prepare-their-pivot-frame-once).

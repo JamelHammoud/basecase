@@ -689,6 +689,12 @@ The `League adjudication` workflow is dispatched explicitly with `fixture`, `cre
 
 [Evidence and limits](../notes/testing-gallery.md#leagues).
 
+### Camera frames to code
+
+The camera-to-code walkthrough in `e2e/caseCode.e2e.test.ts` remains active on Linux and macOS. Windows observes it in quarantine through 28 November 2026 under [#1410](https://github.com/JamelHammoud/basecase/issues/1410). Its bitmap dimensions, requested rate, main-thread budget and Escape shutdown assertions are unchanged. `src/cameras/cameraStream.test.ts` checks camera routing and operator-camera refusal, `streamPace.test.ts` checks deterministic rate limits and missed slots, `feedWorker.test.ts` checks bitmap delivery, and `src/cases/console/codeWorld.test.ts` checks clamped dimensions, bridge pacing, stream limits and closure after stop or bridge shutdown. Windows lacks the combined real-bitmap delivery and Case-exit check while quarantined.
+
+[Incident evidence and restoration conditions](../notes/testing-case-code.md#windows-camera-stream-cost).
+
 ### Running Case chat context
 
 [The agent writing a Case’s code](#the-agent-writing-a-cases-code) records the shared panel-editing and shortcut/message walkthrough. `src/workspace/agentPrompt.test.ts` also checks code-editing instructions alongside other notes and unchanged chat text.

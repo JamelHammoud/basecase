@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { componentRoot } from '../componentRoot.mjs';
 import { frameOf, JOINT_TYPES, jointFrame, mateGroupsOf, matesOf } from './mates.mjs';
 import { partKey, pathKey } from './occurrences.mjs';
 
@@ -7,15 +8,7 @@ const IDENTITY = new THREE.Matrix4().toArray();
 
 function unionFind(keys) {
   const parent = new Map(keys.map((k) => [k, k]));
-  const find = (k) => {
-    let root = k;
-
-    while (parent.get(root) !== root) root = parent.get(root);
-
-    parent.set(k, root);
-
-    return root;
-  };
+  const find = (k) => componentRoot(parent, k);
 
   return { find, union: (a, b) => parent.set(find(a), find(b)) };
 }

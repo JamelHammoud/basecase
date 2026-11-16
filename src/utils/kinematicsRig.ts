@@ -1,4 +1,5 @@
 import type { RobotJoint, ScenePart } from '../types/robotics';
+import { componentRoot } from '../../electron/componentRoot.mjs';
 
 export type V3 = [number, number, number];
 
@@ -172,15 +173,7 @@ function jointChains(joints: RobotJoint[], parentOf: Map<string, string | null>)
 
 function unionFind() {
   const up = new Map<string, string>();
-  const find = (x: string): string => {
-    let r = x;
-
-    while (up.has(r) && up.get(r) !== r) r = up.get(r)!;
-
-    up.set(x, r);
-
-    return r;
-  };
+  const find = (x: string) => componentRoot(up, x);
   const join = (a: string, b: string) => {
     const ra = find(a),
       rb = find(b);

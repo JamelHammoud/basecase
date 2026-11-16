@@ -35,7 +35,7 @@ describe('scheduled simulation events', () => {
     expect(entries.map((e) => e.id)).toEqual(['last', 'first tie', 'before start', 'second tie', 'future']);
   });
 
-  it('visits a long schedule with at most one pending-event read per tick', () => {
+  it('reads each pending deadline once while consuming a long schedule', () => {
     const entries = Array.from({ length: 20_000 }, (_, i) => i / 10);
     const at = vi.fn((t: number) => t);
     let total = 0;
@@ -49,7 +49,33 @@ describe('scheduled simulation events', () => {
 
     expect(total).toBeCloseTo(entries.reduce((sum, t) => sum + t, 0));
     expect(cursor.remaining).toBe(0);
-    expect(at.mock.calls.length).toBeLessThanOrEqual(entries.length + 2001);
+    expect(at).toHaveBeenCalledTimes(entries.length - 1);
+  });
+
+  it('retains independent deadlines across sparse schedules and idle ticks', () => {
+    const at = vi.fn((t: number) => t);
+    const seen: number[] = [];
+    const other: number[] = [];
+    const entries = Array.from({ length: 100 }, (_, i) => (i + 1) * 1000);
+    const cursor = new TimelineCursor(entries, at, (t) => seen.push(t));
+    const second = new TimelineCursor(
+      [500, 1500],
+      (t) => t,
+      (t) => other.push(t),
+    );
+
+    at.mockClear();
+
+    for (let tick = 0; tick <= 100_000; tick++) {
+      cursor.advance(tick);
+      second.advance(tick);
+    }
+
+    expect(seen).toEqual(entries);
+    expect(other).toEqual([500, 1500]);
+    expect(at).toHaveBeenCalledTimes(entries.length - 1);
+    expect(cursor.remaining).toBe(0);
+    expect(second.remaining).toBe(0);
   });
 
   it('advances empty schedules without visiting or reading a time', () => {

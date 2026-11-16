@@ -35,10 +35,10 @@ function chainTo(rig: Rig, tip: RobotJoint): RobotJoint[] {
   for (let id: string | null | undefined = tip.id; id; id = rig.parentOf.get(id)) {
     const joint = rig.byId.get(id);
 
-    if (joint && isMovable(joint)) chain.unshift(joint);
+    if (joint && isMovable(joint)) chain.push(joint);
   }
 
-  return chain;
+  return chain.reverse();
 }
 
 function handPoint(ctx: CheckContext, tip: RobotJoint): V3 | null {

@@ -35,10 +35,10 @@ function chainOf(rig: Rig, leaf: RobotJoint): RobotJoint[] {
   for (let id: string | null | undefined = leaf.id; id; id = rig.parentOf.get(id)) {
     const joint = rig.byId.get(id);
 
-    if (joint && isMovable(joint) && joint.actuation !== 'passive') chain.unshift(joint);
+    if (joint && isMovable(joint) && joint.actuation !== 'passive') chain.push(joint);
   }
 
-  return chain;
+  return chain.reverse();
 }
 
 function leafJoints(joints: RobotJoint[], rig: Rig): RobotJoint[] {

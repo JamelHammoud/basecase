@@ -51,6 +51,23 @@ function branches(count: number) {
 }
 
 describe('motion source channels', () => {
+  it.each([1, 16, 64])('keeps root-first axes through %i ancestor links', (count) => {
+    const { motion, samples } = branches(count);
+
+    for (let i = 1; i < count; i++) motion.parentOf.set(`Arm${i}`, `Arm${i - 1}`);
+
+    const before = structuredClone(motion.parentOf);
+    const chains = motionChains(motion, samples, { scale: 1 });
+
+    expect(chains).toHaveLength(1);
+    expect(chains[0].axes.map((axis) => axis.joint.id)).toEqual([
+      `motion_${count}_0_z`,
+      ...Array.from({ length: count }, (_, i) => `motion_${count}_${i + 1}_y`),
+    ]);
+    expect(motion.parentOf).toEqual(before);
+    expect(motionChains(motion, samples, { scale: 1 })).toEqual(chains);
+  });
+
   it.each([100, 200])('assigns axis identities across %i endpoints with linear bone-list reads', (count) => {
     const { motion, samples } = branches(count);
     let reads = 0;

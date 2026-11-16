@@ -100,14 +100,30 @@ function rotorBodies(solid: ShapeSolid, line: THREE.Line3): Set<number> {
   );
 }
 
-function trianglesOf(positions: Float32Array, keep: (t: number) => boolean) {
-  const out: number[] = [];
+function partitionTriangles(positions: Float32Array, bodies: Uint32Array, rotorBodies: Set<number>): RotorSplit {
+  let rotorCount = 0;
 
-  for (let t = 0; t < positions.length / 9; t++) {
-    if (keep(t)) for (let k = 0; k < 9; k++) out.push(positions[t * 9 + k]);
+  for (const body of bodies) {
+    if (rotorBodies.has(body)) rotorCount++;
   }
 
-  return new ShapeSolid(new Float32Array(out));
+  const rotor = new Float32Array(rotorCount * 9);
+  const stator = new Float32Array((Math.ceil(positions.length / 9) - rotorCount) * 9);
+  let rotorAt = 0;
+  let statorAt = 0;
+
+  for (let t = 0; t < positions.length / 9; t++) {
+    const moving = rotorBodies.has(bodies[t]);
+    const output = moving ? rotor : stator;
+    const at = moving ? rotorAt : statorAt;
+
+    for (let k = 0; k < 9; k++) output[at + k] = positions[t * 9 + k];
+
+    if (moving) rotorAt += 9;
+    else statorAt += 9;
+  }
+
+  return { stator: new ShapeSolid(stator), rotor: new ShapeSolid(rotor) };
 }
 
 const OUTPUT_FACE_BAND = 0.6;
@@ -138,12 +154,7 @@ export function splitRotor(solid: ShapeSolid): RotorSplit | null {
   const rotor = rotorBodies(solid, outputLine(solid.positions));
   const bodies = triangleBodies(solid.positions);
   const split =
-    rotor.size && rotor.size < new Set(bodies).size
-      ? {
-          stator: trianglesOf(solid.positions, (t) => !rotor.has(bodies[t])),
-          rotor: trianglesOf(solid.positions, (t) => rotor.has(bodies[t])),
-        }
-      : null;
+    rotor.size && rotor.size < new Set(bodies).size ? partitionTriangles(solid.positions, bodies, rotor) : null;
 
   splitCache.set(solid, split);
 

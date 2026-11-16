@@ -19,6 +19,7 @@ import {
   daysSince,
 } from './bomTypes';
 import { printedLine } from './bomPrinted';
+import { quotesByPart } from '../print/quoteKey';
 
 import { neededSupplyKeys } from './bomNeeds';
 import { wiringNetlist } from '../wiring/netlist';
@@ -429,9 +430,10 @@ export function buildBom({
   for (const key of neededSupplyKeys(parts, listed, { tether: !!sceneTether({ parts, project }), netlist }))
     addCount(tally.counts, key, 1);
 
+  const quotes = quotesByPart(byService ? project.quotes : undefined);
   const printedLines = byService
     ? tally.made.map((part) =>
-        printedLine({ part, material: printMaterialOf(part, project), quotes: project.quotes, now }),
+        printedLine({ part, material: printMaterialOf(part, project), quote: quotes.get(part.id), now }),
       )
     : [];
   const lines = [...tally.counts]

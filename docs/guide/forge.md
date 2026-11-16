@@ -188,7 +188,7 @@ Sketch four-bars carry passive hinges and connect equalities in the same generat
 
 `forge-train/tests/closed_linkages.rs` generates all ten scene fixtures through `tools/sim/closedLinkageFixture.mjs`, loads their MJCF in C, checks physical and actuator counts and verifies equality refusal plus native fallback. It reports model preparation, native fallback startup and 250-step timings. A floating mechanism runs one PPO iteration on four environments, with one physics thread and one action. Its emitted policy then runs the existing three-variant Arena evaluation through WASM. The test preserves the 0.75 lower-bound bar and never installs a ready skill. Passing a training smoke run alone supplies no ready evidence. Fixed-base PPO admission remains unchanged.
 
-The normal native contact parity pipeline includes captured controls from the ten four-bars. [Simulation evidence](../notes/testing-simulate.md#closed-sketch-linkages) records execution status and [timings](../notes/performance-simulation.md#closed-sketch-linkages) separate WASM measurements from native CI output.
+The existing nightly packaged-app job runs this focused release-mode integration test on macOS and Windows after building Forge. It reuses that build, with no new CI job or pull request gate. The normal native contact parity pipeline includes captured controls from the ten four-bars. [Simulation evidence](../notes/testing-simulate.md#closed-sketch-linkages) records execution status and [timings](../notes/performance-simulation.md#closed-sketch-linkages) separate WASM measurements from native CI output.
 
 ### forge-sim: the SIMD engine
 

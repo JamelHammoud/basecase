@@ -47,7 +47,7 @@ The simulation crashed in the background, but your scene is safe.
 
 Other red text under **Simulate** explains why the model can't run. Stop the simulation, change the part or joints the message names, and start the simulation again.
 
-For a four-bar, choose its crank servo variant if one is missing. Repair inconsistent or singular joints, or insert the Sketch Path again. See [Simulate a four-bar](/help/simulate-a-four-bar).
+For a four-bar with a missing crank servo variant, ask the agent to replace that servo with the exact catalog variant you use. For inconsistent or singular joints, repair the joints. In either case, you can also insert the Sketch Path again. See [Simulate a four-bar](/help/simulate-a-four-bar).
 
 ## “This policy was trained on joints this robot no longer has. Train it again.”
 

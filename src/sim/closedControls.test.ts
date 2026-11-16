@@ -5,6 +5,7 @@ import { SimEngine } from './engine';
 import { buildMjcf } from './mjcf';
 import { buildRig } from '../utils/kinematics';
 import { loopValue } from '../utils/kinematicsLoop';
+import { box, fixtureMeasures, fixtureTriangles, joint } from './fixtures/parts';
 
 let mj: Awaited<ReturnType<typeof loadMujoco>>;
 
@@ -83,4 +84,32 @@ it('refuses a singular start and a missing catalog variant without a welded subs
   expect(() => buildMjcf({ ...input, parts, rig: buildRig(input.project.joints, parts) })).toThrow(
     /Choose the crank servo variant/,
   );
+});
+
+it('invalidates every robot fingerprint when a closure changes the shared solver tolerance', () => {
+  const { input } = closedLinkage();
+  const other = [box('base', [500, 300, 0], [20, 20, 20], 100), box('tip', [500, 320, 0], [10, 20, 10], 20)];
+  const hinge = joint({ id: 'other', link: ['base', 'tip'], origin: [500, 310, 0], axis: [0, 0, 1], effortNm: 1 });
+  const parts = [...input.parts, ...other];
+  const build = (closed: boolean) => {
+    const joints = [...input.project.joints.map((j) => (closed ? j : { ...j, loop: undefined })), hinge];
+
+    return buildMjcf({
+      ...input,
+      parts,
+      project: { ...input.project, joints },
+      rig: buildRig(joints, parts),
+      measures: fixtureMeasures(parts),
+      partTriangles: fixtureTriangles(parts),
+    });
+  };
+  const welded = build(false);
+  const closed = build(true);
+  const fingerprint = (model: typeof welded) => model.robots.find((r) => r.key === hinge.id)!.fingerprint;
+
+  expect(welded.xml).not.toContain('tolerance=');
+  expect(closed.xml).toContain('tolerance="1e-12"');
+  expect(fingerprint(closed)).not.toBe(fingerprint(welded));
+  expect(fingerprint(build(true))).toBe(fingerprint(closed));
+  expect(fingerprint(build(false))).toBe(fingerprint(welded));
 });

@@ -29,7 +29,7 @@ Use these steps for four-bars you insert through Sketch Path or the agent's link
 
 The crank keeps the catalog servo's limits and measured behavior. The other two hinges have no holding motors.
 
-If an older linkage asks for a servo variant, choose the variant on the crank before you restart the simulation. New linkages use STS3215 C001.
+If an older linkage asks for a servo variant, ask the agent to replace its crank servo with the exact catalog variant you use. You can also insert the path again. New linkages use STS3215 C001.
 
 If you start with a broken or singular configuration, the simulation stops with an error. Repair the joints or insert the path again.
 

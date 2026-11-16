@@ -294,6 +294,10 @@ jobs:
             hw
       - name: Build the Forge trainer and the robot daemon
         run: npm run build:forge && npm run build:daemon
+      - name: Test closed Sketch linkage training on native MuJoCo
+        run: |
+          export PATH="$PWD/forge/dist:$PATH"
+          cargo test --locked --release --manifest-path forge/Cargo.toml -p forge-train --test closed_linkages -- --nocapture
       - name: Package the app, unsigned
         run: npx electron-builder ${{ matrix.target }} --dir --publish never -c.mac.forceCodeSigning=false
         env:

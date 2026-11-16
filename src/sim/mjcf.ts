@@ -92,6 +92,7 @@ interface ActuatorSpecXml {
 
 const WHEEL_FULL_TORQUE_SPEED = 2;
 const DEFAULT_TIMESTEP = 0.002;
+const CLOSED_LOOP_TOLERANCE = 1e-12;
 
 type GeomRole = 'robot' | 'object' | 'scenery';
 
@@ -334,6 +335,7 @@ function emitRobot(st: BuildState, robot: Rig['robots'][number]) {
     joints: st.simJoints.filter((j) => j.robot === robot.key).map((j) => j.id),
     fingerprint: robotFingerprint({
       timestep: st.input.timestep ?? DEFAULT_TIMESTEP,
+      tolerance: st.loops.length ? CLOSED_LOOP_TOLERANCE : undefined,
       assets: st.assets.slice(assetsFrom),
       body: [...rootLines, ...equality],
       actuators: st.actuatorXml.slice(actuatorsFrom),
@@ -377,7 +379,7 @@ function emitObject(st: BuildState, ids: string[], index: number) {
 function mujocoXml(st: BuildState, timestep: number): string {
   return `<mujoco model="basecase">
   <compiler angle="radian" inertiafromgeom="true" boundmass="0.0005" boundinertia="1e-8"/>
-  <option timestep="${f(timestep)}" integrator="implicitfast"${st.loops.length ? ' tolerance="1e-12"' : ''}/>
+  <option timestep="${f(timestep)}" integrator="implicitfast"${st.loops.length ? ` tolerance="${CLOSED_LOOP_TOLERANCE}"` : ''}/>
   <default>
     <geom friction="0.9 0.02 0.002" solref="0.004 1" condim="3"/>
   </default>

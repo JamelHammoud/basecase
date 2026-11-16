@@ -1,4 +1,4 @@
-import type { Box3 } from 'three';
+import { Box3 } from 'three';
 
 interface Boxed {
   id: string;
@@ -39,6 +39,7 @@ export function collisionPairs<T extends Boxed>(solids: T[], options: PairOption
   const { kinds, partners } = partnerIndices(solids, options);
   const cursors = [0, 0, 0, 0];
   const pairs: Array<[T, T]> = [];
+  const grown = new Box3();
 
   for (let i = 0; i < solids.length; i++) {
     const kind = kinds[i];
@@ -49,7 +50,8 @@ export function collisionPairs<T extends Boxed>(solids: T[], options: PairOption
     if (cursors[kind] === indices.length) continue;
 
     const a = solids[i];
-    const grown = a.box.clone().expandByScalar(0.1);
+
+    grown.copy(a.box).expandByScalar(0.1);
 
     for (let at = cursors[kind]; at < indices.length; at++) {
       const b = solids[indices[at]];

@@ -1,8 +1,10 @@
+import type { PurchaseIdentity } from '../../types/purchasing';
 import type { PurchaseRecord } from '../../types/robotics';
 import { type BomLine, localDate, parseAsin } from '../../utils/bom';
 import { type Money, USD_MONEY } from '../../utils/currency';
 
 export interface PurchaseForm {
+  identity?: Omit<PurchaseIdentity, 'unitsPerOrder'> & { unitsPerOrder?: number | string };
   url: string;
   title: string;
   pack: number;
@@ -31,6 +33,7 @@ const shownPrice = (r: PurchaseRecord, money: Money) =>
 
 export function initialPurchaseForm(line: BomLine, money: Money = USD_MONEY): PurchaseForm {
   const r = line.record;
+  const identity = r?.identity ?? line.identity;
 
   return {
     url: r?.url ?? defaultUrl(line),
@@ -38,6 +41,7 @@ export function initialPurchaseForm(line: BomLine, money: Money = USD_MONEY): Pu
     pack: r?.packQty ?? (line.unit === 'g' ? 1000 : 1),
     price: r ? shownPrice(r, money) : '',
     note: r?.note ?? '',
+    ...(identity && { identity: { ...identity } }),
   };
 }
 
@@ -63,11 +67,32 @@ function listingUrl(url: string): Pick<PurchaseRecord, 'url' | 'asin'> {
   return { url: url || undefined };
 }
 
+const fact = (value: string | undefined) => value?.trim() || undefined;
+
+function formIdentity(form: PurchaseForm): PurchaseIdentity | undefined {
+  const identity = form.identity;
+
+  if (!identity) return undefined;
+
+  const per = Number(identity.unitsPerOrder);
+
+  return {
+    manufacturer: fact(identity.manufacturer),
+    mpn: fact(identity.mpn),
+    supplier: fact(identity.supplier),
+    supplierPartNumber: fact(identity.supplierPartNumber),
+    orderingUnit: fact(identity.orderingUnit),
+    unitsPerOrder: Number.isFinite(per) && per > 0 ? per : undefined,
+    sourceUrl: fact(identity.sourceUrl) || fact(form.url),
+  };
+}
+
 export function purchaseRecord(form: PurchaseForm, money: Money = USD_MONEY, checkedAt = localDate()): PurchaseRecord {
   const { usd, entered } = money.enter(parsePrice(form.price) ?? 0);
 
   return {
     ...listingUrl(form.url.trim()),
+    ...(form.identity && { identity: formIdentity(form) }),
     title: form.title.trim() || undefined,
     packQty: form.pack,
     priceUsd: usd,

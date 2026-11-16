@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Button, TextInput } from '../../design-system';
+import { FleetSso } from './FleetSso';
 import { fleetRequest } from './client';
 
 export function FleetSignIn({ onSignedIn }: { onSignedIn: () => void }) {
@@ -52,6 +53,7 @@ export function FleetSignIn({ onSignedIn }: { onSignedIn: () => void }) {
           </label>
         </>
       )}
+      {!token && <FleetSso key={org} org={org} />}
       <label className="block space-y-2">
         <span>Password</span>
         <TextInput

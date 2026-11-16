@@ -113,6 +113,14 @@ describe('elastic conjugate gradients', () => {
       iterations: 0,
       residual: 1,
     });
+
+    const first = conjugateGradient(system, force, { tolerance: 0, maxIterations: 1 });
+
+    expect(conjugateGradient(system, force, { tolerance: first.residual, maxIterations: 600 })).toEqual(first);
+
+    const converged = conjugateGradient(system, force, { tolerance: 1e-10, maxIterations: 600 });
+
+    expect(conjugateGradient(system, force, { tolerance: 0, maxIterations: converged.iterations })).toEqual(converged);
   });
 
   it('solves empty, unloaded and fully fixed systems without non-finite results', () => {

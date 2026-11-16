@@ -12,7 +12,7 @@ covers:
 
 View the robots your account can access across a self-hosted organization's sites.
 
-You need a running Fleet service, an organization ID and an enrolled account. Fleet requires HTTPS outside loopback.
+You need a running Fleet service, an organization ID and either an enrolled local account or a connected SSO provider. Fleet requires HTTPS outside loopback.
 
 1. In **Play**, choose **Operate**.
 2. In **Fleet address**, enter your service's address.
@@ -30,6 +30,8 @@ You need a running Fleet service, an organization ID and an enrolled account. Fl
 8. In **Site**, choose the site whose robots you want to view.
 
 ![The Ward A viewer's inventory with Delivery 01 marked stale](/help/open-basecase-fleet/inventory.png)
+
+For SSO, enter the organization ID and click **Sign In with SSO**, then choose your provider. [Connect identity providers to Fleet](/help/federate-fleet-identities) covers setup.
 
 You can view only the sites and robots your account can access. A robot marked **Stale** has no observation from the last 60 seconds. Disconnecting a robot leaves its identity in the inventory.
 

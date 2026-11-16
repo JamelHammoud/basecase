@@ -84,8 +84,10 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `view_image` | Downloads up to 4 images to look at (web) |
 | `find_objects` | Searches NVIDIA SimReady objects (web) |
 | `insert_object` | Inserts a SimReady object (web) |
-| `add_sourced_item` | Adds a part from outside the catalog to the bill of materials (web) |
+| `add_sourced_item` | Adds a part from outside the catalog to the bill of materials, with optional supplier identity and ordering units (web) |
 | `import_maker_cad` | Imports a maker's STEP or IGES file (web) |
+
+For `add_sourced_item`, `supplierIdentity` keeps the supplier name, exact supplier part number, ordering unit, units per order and source URL. Manufacturer identity stays in `maker` and `mpn`. These facts feed [Export remaining purchases](/help/export-remaining-purchases).
 
 ## Joints and motion
 

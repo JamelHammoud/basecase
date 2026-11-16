@@ -212,7 +212,9 @@
     "@mcap/core": "^2.4.0",
     "@mediapipe/tasks-vision": "1.2.2",
     "@modelcontextprotocol/sdk": "^1.32.1",
+    "@node-saml/node-saml": "^5.2.0",
     "@sparkjsdev/spark": "^2.4.0",
+    "@xmldom/xmldom": "^0.9.12",
     "electron-updater": "^6.8.10",
     "fzstd": "^0.1.1",
     "hyparquet-writer": "^0.18.0",
@@ -279,7 +281,8 @@
     "typescript-eslint": "^8.71.2",
     "vite": "^8.3.0",
     "vitest": "^5.0.5",
-    "wait-on": "^9.0.4"
+    "wait-on": "^9.0.4",
+    "xml-crypto": "^6.4.0"
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged && node tools/check-tracked.mjs",

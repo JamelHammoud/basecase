@@ -63,7 +63,7 @@ The bar under the total shows how much of your budget is left, or how far over b
 - The budget doesn't count **Equipment**, such as tools.
 - **Printed parts** quoted by Slant 3D count at the quoted price, and their lines have no **Add Price**. For the steps, see [Price printed parts from a print service](/help/price-printed-parts-from-a-print-service).
 
-To keep the store page with a price, open **Listing** in the same sheet and paste the link into **Listing link**.
+To keep the store page with a price, open **Listing** in the same sheet and paste the link into **Listing link**. Changing this link clears the previous identity fields. Enter the new listing’s manufacturer and supplier facts before saving if you need them in the spreadsheet. [Export remaining purchases](/help/export-remaining-purchases) shows the fields and their ordering units.
 
 To delete a saved price, click it, click **Delete Price**, then click **Delete**. The line goes back to its ≈ list price, or to **Add Price** if it has none.
 

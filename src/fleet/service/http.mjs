@@ -1,3 +1,6 @@
+import { allowed } from './authorization.mjs';
+import { organization } from './registry.mjs';
+import { federationHttp } from './federationHttp.mjs';
 import http from 'node:http';
 import https from 'node:https';
 import { authenticate } from './identity.mjs';
@@ -14,7 +17,7 @@ const tokenOf = (request) =>
   request.headers.authorization?.replace(/^Bearer /, '') ??
   /(?:^|;\s*)fleet_session=([A-Za-z0-9_-]+)/.exec(request.headers.cookie ?? '')?.[1];
 
-async function readBody(request) {
+async function readBody(request, raw = false) {
   let size = 0;
   const chunks = [];
 
@@ -26,7 +29,9 @@ async function readBody(request) {
 
   if (!size) return {};
 
-  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  const body = Buffer.concat(chunks).toString('utf8');
+
+  return raw ? body : JSON.parse(body);
 }
 
 function reply(response, data, status = 200) {
@@ -58,6 +63,8 @@ async function dispatch(options) {
       ['127.0.0.1', '::1'].includes(request.socket.remoteAddress?.replace(/^::ffff:/, '')),
     403,
   );
+
+  if (await federationHttp({ ...options, url, readBody, reply, sessionCookie, guard })) return;
 
   if (!url.pathname.startsWith('/v1/')) return options.assets(request, response, url);
 
@@ -91,7 +98,12 @@ async function dispatch(options) {
   const actor = await authenticate(pool, token);
 
   if (url.pathname === '/v1/me' && method === 'GET')
-    return reply(response, { org: actor.org, account: actor.account, credential: actor.credential });
+    return reply(response, {
+      org: actor.org,
+      account: actor.account,
+      credential: actor.credential,
+      canManage: allowed(actor, 'iam.manage', organization(actor.org)),
+    });
 
   if (url.pathname === '/v1/sessions/current' && method === 'DELETE') {
     await pool.query('DELETE FROM fleet_credentials WHERE id=$1', [actor.credential]);
@@ -105,11 +117,17 @@ async function dispatch(options) {
 
   insist(identifier(org) === actor.org, 403);
 
-  if (parts[0] === 'subscribe' && method === 'GET') return stream.open({ request, response, token, actor });
+  if (parts[0] === 'subscribe' && method === 'GET')
+    return auditedIdentityTransaction(pool, async (client) => {
+      await lockIdentity(client, actor.org);
+
+      const current = await authenticate(client, token);
+
+      return stream.open({ request, response, token, actor: current, client });
+    });
 
   const result = await auditedIdentityTransaction(pool, async (client) => {
-    if (method === 'GET' || !['account', 'role', 'group', 'invitations', 'credentials'].includes(parts[0]))
-      return authenticatedApi(client, actor, { method, parts, body, query: url.searchParams });
+    if (method === 'GET') return authenticatedApi(client, actor, { method, parts, body, query: url.searchParams });
 
     await lockIdentity(client, actor.org);
 

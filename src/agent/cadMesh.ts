@@ -1,6 +1,6 @@
 import type { CadAudit, CadExpect, CadPort } from '../types/cadAudit';
 import type { Port } from '../types/ports';
-import { r2, r3, toScene, type V3 } from './agentFrame';
+import { r2, r3, type V3 } from './agentFrame';
 import { mirroredAxis } from './cadCode';
 
 export interface AgentCadPayload {
@@ -21,12 +21,13 @@ export function cadMeshToScene(cad: AgentCadPayload) {
   const max: V3 = [-Infinity, -Infinity, -Infinity];
 
   for (let i = 0; i < cad.positions.length; i += 3) {
-    const s = toScene([cad.positions[i], cad.positions[i + 1], cad.positions[i + 2]]);
+    pos[i] = cad.positions[i];
+    pos[i + 1] = cad.positions[i + 2];
+    pos[i + 2] = -cad.positions[i + 1];
 
     for (let k = 0; k < 3; k++) {
-      pos[i + k] = s[k];
-      min[k] = Math.min(min[k], s[k]);
-      max[k] = Math.max(max[k], s[k]);
+      min[k] = Math.min(min[k], pos[i + k]);
+      max[k] = Math.max(max[k], pos[i + k]);
     }
   }
 
@@ -40,9 +41,9 @@ export function cadMeshToScene(cad: AgentCadPayload) {
     edges = new Array<number>(cad.edges.length);
 
     for (let i = 0; i < cad.edges.length; i += 3) {
-      const s = toScene([cad.edges[i], cad.edges[i + 1], cad.edges[i + 2]]);
-
-      for (let k = 0; k < 3; k++) edges[i + k] = r3(s[k] - center[k]);
+      edges[i] = r3(cad.edges[i] - center[0]);
+      edges[i + 1] = r3(cad.edges[i + 2] - center[1]);
+      edges[i + 2] = r3(-cad.edges[i + 1] - center[2]);
     }
   }
 

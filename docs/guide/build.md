@@ -180,6 +180,8 @@ Measurements and limits: [Strength and Lighten performance evidence](../notes/pe
 
 ## Performance: engineering calculations
 
+- **Torque percentiles select one rank.** Walking peak torque and fall impact checks share `utils/peakTorque.ts`'s percentile calculation. It partitions one copied sample buffer instead of fully sorting ordinary numeric samples. Partition work is bounded by four times the sample count before reverting to sorting. NaN, sparse samples and negative zero retain the previous stable sorting path. Nearest-rank clamping, empty results and input ownership stay unchanged. `torquePercentile.test.ts` compares generated orders, duplicates, edits and exceptional inputs against the previous calculation, and checks both callers' sample windows. [Evidence](../notes/performance-engineering.md#torque-percentiles-select-one-rank).
+
 Measurements and limits: [Engineering calculations performance evidence](../notes/performance-engineering.md).
 
 - **Assembly time tallies accepted parts directly.** `utils/engineeringTime.ts` indexes built parts without filtered or mapped staging lists. Each guide step collects its output ids and counts fasteners and inserts in one traversal, without temporary part lists or category arrays. The counted set advances after the step, preserving within-step repeats, source order and exclusion of parts used in earlier steps. Build's Time check is the only caller of `assemblyTimes`. `assemblyTimes.test.ts` compares complete estimates against the previous calculation across mixed steps, excluded parts, missing ids, repeats and later visibility edits. [Evidence](../notes/performance-engineering.md#assembly-time-tallies-accepted-parts-directly).

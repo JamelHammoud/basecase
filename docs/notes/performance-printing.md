@@ -2,6 +2,12 @@
 
 Implementation: [Print planning and labels](../guide/printing.md#performance-print-planning-and-labels). Shared requirements: [Performance](../guide/performance.md).
 
+## Welding rejects collapsed triangles as they arrive
+
+The shared welder removes the post-weld traversal and temporary JavaScript index list. For 30,000 triangles without collapsed faces, it removes 90,000 post-weld typed-index reads, 90,000 temporary list entries and the subsequent 90,000-entry typed-array copy. The existing index buffer becomes the result. For a mesh with half its triangles collapsed, the temporary 45,000-entry list is gone, while a typed copy of the retained prefix preserves exact buffer sizing. Welding still checks three indices per triangle during construction. These are structural operation counts, not wall-clock or complete export measurements.
+
+`src/print/threeMf.test.ts` compares 80 generated 90-triangle soups with mixed collapsed faces against an independent reference. It also checks first-seen coordinates after quantization, winding and ordering, unchanged inputs, empty and fully collapsed meshes, and exact-sized output buffers. Other welders in CAD import, kernel meshes and mesh simplification have different rounding or face-retention rules and do not use the removed filtering pass. No browser flow or on-screen state changes.
+
 ## Plate statuses share prepared print history
 
 `print/plateStatus.test.ts` compares the previous scan across 120 generated histories in both input orders, plus frozen inputs, repeated queries and later edits. With 100 and 200 records and unmatched plate queries, record-hash reads fall from 10,000 and 40,000 to 100 and 200. On all-replacement fixtures of those sizes, record-part-list reads fall from 20,000 and 80,000 to 200 and 400. These are operation counts without timing assertions or a claim about complete printing time.

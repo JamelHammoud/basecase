@@ -154,6 +154,8 @@ Checks retain their original timestamp and verdict, classified as current, stale
 
 ## Performance: strength and lighten
 
+- **Strength component filtering shares one probe mesh.** `strength/solve.ts` builds the complete voxel mesh once for load and support cell membership, then builds the filtered solve mesh. The probe belongs to that solve, so changed geometry and mounting regions receive fresh membership. Strength reporting, including Lighten verification, shares this path. `solvePreparation.test.ts` checks the two mesh builds, disconnected solids, changed supports, empty regions, finite nonzero displacement and unchanged inputs. The existing cantilever test retains the beam-theory comparison. [Evidence](../notes/performance-strength.md#strength-component-filtering-shares-one-probe-mesh).
+
 - **Elastic setup uses scalar block offsets.** `strength/cg.ts` passes row and block indices directly when pinning supports and writes each diagonal inverse directly into the preconditioner. Strength and every Lighten load case share this setup, without per-block records, typed-array views or temporary inverse arrays. Inverse arithmetic, the singular-determinant fallback and solve-owned buffers stay unchanged. `cg.test.ts` checks known displacements across all four materials, partial axis constraints, independent residuals, changed loads, input preservation and stopping limits. It also checks that a prepared solve creates no Float64 block views or inverse-copy calls. [Evidence](../notes/performance-strength.md#elastic-setup-uses-scalar-block-offsets).
 
 Measurements and limits: [Strength and Lighten performance evidence](../notes/performance-strength.md).

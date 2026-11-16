@@ -90,19 +90,26 @@ export function motionScale(motion: Mocap, heightMm: number): number {
   return heightMm / height;
 }
 
-function continuousAngles(angles: number[]): number[] {
-  let previous = angles[0];
+function continuousChannel(rotations: MotionFrames['rotations'], bone: string, index: number) {
+  const values: number[] = [];
+  let previous = 0;
   let value = 0;
+  let low = Infinity;
+  let high = -Infinity;
 
-  return angles.map((angle) => {
-    const difference = angle - previous;
+  for (const frame of rotations) {
+    const angle = frame.get(bone)?.[index]?.degrees ?? Number.NaN;
+    const difference = angle - (values.length ? previous : angle);
     const delta = THREE.MathUtils.euclideanModulo(difference + 180, 360) - 180;
 
     value += delta === -180 && difference > 0 ? 180 : delta;
     previous = angle;
+    values.push(value);
+    low = Math.min(low, value);
+    high = Math.max(high, value);
+  }
 
-    return value;
-  });
+  return { values, span: high - low };
 }
 
 function channelSamples(rotations: MotionFrames['rotations']) {
@@ -113,11 +120,10 @@ function channelSamples(rotations: MotionFrames['rotations']) {
 
     if (cached) return cached;
 
-    const channels = (rotations[0].get(bone) ?? []).map((channel, index) => {
-      const values = continuousAngles(rotations.map((frame) => frame.get(bone)?.[index]?.degrees ?? Number.NaN));
-
-      return { ...channel, values, span: Math.max(...values) - Math.min(...values) };
-    });
+    const channels = (rotations[0].get(bone) ?? []).map((channel, index) => ({
+      ...channel,
+      ...continuousChannel(rotations, bone, index),
+    }));
 
     byBone.set(bone, channels);
 

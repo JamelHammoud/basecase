@@ -1,3 +1,4 @@
+import { solve3 } from '../utils/solve3';
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import type { SimModel, SimRobot } from '../sim/mjcfTypes';
 import { feasibilityBodies, type FeasibilityBodies } from './feasibilityBodies';
@@ -192,17 +193,6 @@ export function pointJacobian(kin: Kin, options: { body: number; local: V3; join
 }
 
 const clamp = (j: JointInfo, v: number) => (j.range ? Math.max(j.range[0], Math.min(j.range[1], v)) : v);
-
-function solve3(m: number[][], b: V3): V3 {
-  const det = (a: number[][]) =>
-    a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1]) -
-    a[0][1] * (a[1][0] * a[2][2] - a[1][2] * a[2][0]) +
-    a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0]);
-  const d = det(m);
-  const column = (c: number) => m.map((row, r) => row.map((v, k) => (k === c ? b[r] : v)));
-
-  return [0, 1, 2].map((c) => det(column(c)) / d) as V3;
-}
 
 export function solveDls(jac: V3[], error: V3, damping: number): number[] {
   const jjt = [0, 1, 2].map((r) => [0, 1, 2].map((c) => jac.reduce((s, col) => s + col[r] * col[c], 0)));

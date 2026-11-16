@@ -1,3 +1,4 @@
+import { solve3 } from '../utils/solve3';
 import type { MainModule } from '@mujoco/mujoco';
 import { SimEngine } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -75,16 +76,6 @@ const minus = (a: V3, b: V3): V3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const length = (v: V3) => Math.hypot(...v);
 const clampTo = (q: number[], arm: Arm) =>
   q.map((v, i) => Math.min(arm.joints[i].range[1], Math.max(arm.joints[i].range[0], v)));
-
-function solve3(m: number[][], b: V3): V3 {
-  const det = (a: number[][]) =>
-    a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1]) -
-    a[0][1] * (a[1][0] * a[2][2] - a[1][2] * a[2][0]) +
-    a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0]);
-  const d = det(m);
-
-  return [0, 1, 2].map((k) => det(m.map((row, r) => row.map((v, c) => (c === k ? b[r] : v)))) / d) as V3;
-}
 
 function dampedStep(mj: MainModule, arm: Arm, q: number[], error: V3): number[] {
   const base = pointAt(mj, arm, q);

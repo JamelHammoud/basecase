@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { SheetProfile } from '../types/sheet';
 
-export function worldTriangles(object: THREE.Object3D): Float32Array {
+function objectTriangles(object: THREE.Object3D, local: boolean): Float32Array {
   const meshes: THREE.Mesh[] = [];
   let total = 0;
 
@@ -22,6 +22,7 @@ export function worldTriangles(object: THREE.Object3D): Float32Array {
 
   const all = new Float32Array(total - (total % 9));
   const v = new THREE.Vector3();
+  const inverse = local ? rigidFrame(object).matrix.invert() : null;
   let off = 0;
 
   for (const mesh of meshes) {
@@ -32,14 +33,23 @@ export function worldTriangles(object: THREE.Object3D): Float32Array {
 
     for (let i = 0; i < complete; i++) {
       v.fromBufferAttribute(pos, index ? index.getX(i) : i).applyMatrix4(mesh.matrixWorld);
+
+      if (inverse) v.set(Math.fround(v.x), Math.fround(v.y), Math.fround(v.z)).applyMatrix4(inverse);
+
       all[off++] = v.x;
       all[off++] = v.y;
       all[off++] = v.z;
     }
   }
 
+  if (inverse) {
+    for (let i = off; i < all.length; i += 3) v.set(0, 0, 0).applyMatrix4(inverse).toArray(all, i);
+  }
+
   return all;
 }
+
+export const worldTriangles = (object: THREE.Object3D): Float32Array => objectTriangles(object, false);
 
 const UNIT = new THREE.Vector3(1, 1, 1);
 
@@ -53,15 +63,7 @@ export function rigidFrame(object: THREE.Object3D) {
 }
 
 export function localTriangles(object: THREE.Object3D): Float32Array {
-  const triangles = worldTriangles(object);
-  const inverse = rigidFrame(object).matrix.invert();
-  const v = new THREE.Vector3();
-
-  for (let i = 0; i < triangles.length; i += 3) {
-    v.fromArray(triangles, i).applyMatrix4(inverse).toArray(triangles, i);
-  }
-
-  return triangles;
+  return objectTriangles(object, true);
 }
 
 export interface MeshMeasure {

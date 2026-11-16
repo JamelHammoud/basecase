@@ -10,6 +10,25 @@ const WARN_SHARE = 0.9;
 const qtyOf = (l: BomLine) => (l.unit === 'g' ? `${l.toBuy} g` : `${l.toBuy}×`);
 const BIGGEST = 3;
 
+export function biggestBudgetLines(lines: BomLine[]): BomLine[] {
+  const biggest: BomLine[] = [];
+
+  for (const line of lines) {
+    const cost = lineUsd(line);
+
+    if (Number.isNaN(cost)) return [...lines].sort((a, b) => lineUsd(b) - lineUsd(a)).slice(0, BIGGEST);
+
+    const before = biggest.findIndex((item) => cost > lineUsd(item));
+
+    if (before >= 0) biggest.splice(before, 0, line);
+    else if (biggest.length < BIGGEST) biggest.push(line);
+
+    if (biggest.length > BIGGEST) biggest.pop();
+  }
+
+  return biggest;
+}
+
 export function budgetRow(ctx: CheckContext): CheckRow {
   const budget = ctx.project.budgetUsd;
 
@@ -33,7 +52,6 @@ export function budgetRow(ctx: CheckContext): CheckRow {
   const byService = ctx.project.madeBy === 'service';
   const noSupport =
     !byService && !ctx.input.supportG && ctx.parts.some(isPrinted) ? '; support filament not counted' : '';
-  const biggest = [...bom.lines].sort((a, b) => lineUsd(b) - lineUsd(a)).slice(0, BIGGEST);
 
   return {
     check: 'Budget',
@@ -43,6 +61,9 @@ export function budgetRow(ctx: CheckContext): CheckRow {
     items:
       status === 'pass'
         ? []
-        : biggest.map((l) => ({ text: `${qtyOf(l)} ${l.name}: ≈ ${formatWhole(lineUsd(l))}`, ids: l.partIds })),
+        : biggestBudgetLines(bom.lines).map((l) => ({
+            text: `${qtyOf(l)} ${l.name}: ≈ ${formatWhole(lineUsd(l))}`,
+            ids: l.partIds,
+          })),
   };
 }

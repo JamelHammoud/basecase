@@ -120,6 +120,8 @@ Measurements and limits: [Robot shells performance evidence](../notes/performanc
 
 Measurements and limits: [Joints and kinematics performance evidence](../notes/performance-joints.md).
 
+- **Xacro tokenization prepares its end once.** `utils/robotImport/xacroExpr.ts` finds the last non-whitespace character once per expression, then uses the sticky token cursor without slicing and trimming the remaining text per token. Properties, macro arguments, conditions, `${}` and `$(eval)` share this evaluator. The original input still determines the 4,000-character limit and error text. `xacroExpr.test.ts` covers Unicode whitespace, quoted spaces, malformed input, recovery after errors and the exact length boundary. [Evidence](../notes/performance-joints.md#xacro-tokenization-prepares-its-end-once).
+
 - **URDF export indexes joint identities.** `utils/robotImport/urdfWriter.ts` prepares model and scene joint indices once per write through `jointIndex.ts`. First duplicate matches, missing-joint behavior and output order stay unchanged. Robot Package's joint map and policies share the same indexing helper. Coverage and measurements belong to [Simulation](simulate.md#performance-simulation).
 
 - **Four-bar derivative probes share residual storage.** `utils/linkageFit.ts` fills one workspace across every perturbed parameter, without intermediate bound arrays or concatenating path errors. Sketch Path and the agent share this fitter. `linkageClosure.test.ts` compares full residual vectors with the previous equations across generated trials, both directions, bounds, edits and nonfinite inputs, and checks resized workspaces and independent results. [Evidence](../notes/performance-joints.md#four-bar-derivative-probes-share-residual-storage).

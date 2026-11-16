@@ -55,3 +55,14 @@ The whole-app search found one profile edge sampler in `utils/sketch/profile.ts`
 `profileArcs.test.ts` compares exact standalone samples and complete contours with the previous arithmetic across 150 fixtures per direction. Fixtures cover translated centers, varying radii, angle wrapping, full circles, short sweeps and zero radii. Each fixture also checks unchanged inputs, a later center edit and reopening the original geometry. Existing profile, traversal and placement tests cover hole selection, branches and solid output. No quarantine applies.
 
 For 1,000 semicircular arcs with 36 segments each, forward tracing previously allocated 1,000 sampled arrays and 1,000 slices. Reverse tracing also allocated 1,000 reversed copies. Both directions generated 37,000 point tuples and discarded 1,000 endpoints. Direct tracing allocates none of those temporary arrays and generates only the 36,000 retained point tuples. Straight edges also append directly instead of allocating a one-entry array. These are code-derived operation counts, without timing assertions or a claim about complete Sketch interaction time.
+
+
+## Sketch marks share their outward center per query
+
+The whole-app search found one outward-centroid calculation in `components/studio/sketchMarks.ts`. Both `dimensionLabels` and `constraintGlyphs` now retain that center for their query. `SketchOverlay` uses both queries, and `useSketchKeys` uses dimension labels for keyboard editing. Point and entity hit testing does not calculate this centroid.
+
+`sketchMarks.test.ts` checks nonfixed-point preference, the all-fixed fallback, opposite outward directions, angle and length labels, selected-line measurements, stacked pair glyphs, source preservation, independent results and later edits. Empty, point-only and round-only queries perform no centroid membership reads. Existing tests cover every dimension and glyph kind, duplicate point coordinates and missing references.
+
+On 300- and 600-line fixtures, angle-label queries reduce centroid membership reads from 180,000 and 720,000 to 300 and 600. Selected-line measurements reduce them from 90,000 and 360,000 to 300 and 600. Two-target glyph queries reduce them from 180,000 and 720,000 to 300 and 600. Counts follow the previous filter per anchor and are bounded by getter assertions in the new implementation. The original centroid arithmetic and summation order remain unchanged. Repeated filtered point arrays and coordinate sums are removed, leaving one centroid calculation per query that needs it.
+
+A seeded scratch comparison matched 16,000 complete dimension and glyph results across 500 mixed sketches, four gaps and later edits. These are deterministic parity results and operation counts, without timing assertions or a claim about complete pointer or rendering time. Entity searches remain unchanged. No quarantine applies.

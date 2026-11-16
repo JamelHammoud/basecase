@@ -86,6 +86,14 @@ On November 16, 2026, `scratch/rotor-body-scan.mjs` compared the previous and ch
 
 Existing `rotorSplit.test.ts` compares complete partitions across 90 translated and scaled classification cases and checks interleaved triangles, rigid fallback, independent buffers, replacement geometry and cache identity. No timeout, retry or quarantine changes apply. No user action, label or visible state changes, so existing help instructions and captures remain accurate.
 
+## Collision pair padding reuses one box
+
+Repository search found one shared broad-phase pair planner in `three/analysis/collisionPairs.ts`. Interference, posed checks, output-riding servo checks and joint sweeps all call it through `collide.ts`. Other expanded boxes belong to separate containment, contact or assembly queries, rather than this pair traversal.
+
+`collisionPairs.test.ts` compares complete ordered pairs with the previous planner and checks touching and padding boundaries, empty bounds, focus, straddle and skip filters. Added 300-part and 600-part fixtures retain the same pairs and source boxes. Box clones fall from 299 and 599 to zero. Each call instead owns one Box3 and its two corner vectors, reducing padded-box workspaces from 299 and 599 to one. Expansion still occurs 299 and 599 times. These are instrumented operation and structural allocation counts, without heap measurements, timing assertions or a claim about complete check latency.
+
+A nested-query fixture checks that a skip callback can run another collision query without overwriting the outer padded bounds. A later source-bound edit changes the next result. No controls, labels or user actions change, so help articles and screenshots remain accurate.
+
 ## Face sampling shares area and normal products
 
 `shapeSolid.ts` previously called Three.js `Triangle.getArea` and `Triangle.getNormal` for every accepted face. Both subtract the same edges, cross them and calculate their length. Face preparation now retains one cross product and its length for both results. One edge workspace belongs to the preparation call. Rejected faces still stop at the area threshold.

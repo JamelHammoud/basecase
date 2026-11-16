@@ -23,8 +23,10 @@ describe('sheet projection reuse', () => {
     const triangles = plateTriangles({ holes: false, steps });
     const original = triangles.slice();
     const dot = vi.spyOn(Vector3.prototype, 'dot');
+    const clone = vi.spyOn(Vector3.prototype, 'clone');
     const profile = detectSheet(triangles);
     const projections = dot.mock.calls.length;
+    const clones = clone.mock.calls.length;
 
     expect(profile).toEqual({
       thicknessMm: 3,
@@ -40,6 +42,7 @@ describe('sheet projection reuse', () => {
     });
     expect(triangles).toEqual(original);
     expect(projections).toBeLessThanOrEqual((triangles.length / 9) * 4 + 32);
+    expect(clones).toBeLessThanOrEqual(triangles.length / 9 + 32);
   });
 
   it('keeps profiles through reversed winding and face order, and measures moved vertices afresh', () => {
@@ -61,5 +64,19 @@ describe('sheet projection reuse', () => {
     for (let i = 2; i < triangles.length; i += 3) triangles[i] += 12;
 
     expect(detectSheet(triangles)).toEqual(nearProfile({ ...expected, center: [0, 0, 13.5] }));
+  });
+
+  it('ignores interleaved degenerate faces without changing retained normals', () => {
+    const triangles = plateTriangles({ concave: true, tilt: true });
+    const expected = detectSheet(triangles)!;
+    const padded = new Float32Array(triangles.length * 2);
+
+    for (let i = 0; i < triangles.length; i += 9) {
+      padded.set(triangles.subarray(i, i + 9), i * 2);
+      padded.set([100, 200, 300, 101, 202, 303, 102, 204, 306], i * 2 + 9);
+    }
+
+    expect(detectSheet(padded)).toEqual(expected);
+    expect(detectSheet(triangles)).toEqual(expected);
   });
 });

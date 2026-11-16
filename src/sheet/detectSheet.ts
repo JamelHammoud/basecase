@@ -11,13 +11,16 @@ type Face = { vertices: Vector3[]; normal: Vector3; area: number };
 
 function facesOf(triangles: Float32Array): Face[] {
   const faces: Face[] = [];
+  const edge = new Vector3();
 
   for (let i = 0; i < triangles.length; i += 9) {
-    const vertices = [0, 3, 6].map((offset) => new Vector3().fromArray(triangles, i + offset));
-    const cross = vertices[1].clone().sub(vertices[0]).cross(vertices[2].clone().sub(vertices[0]));
+    const a = new Vector3().fromArray(triangles, i);
+    const b = new Vector3().fromArray(triangles, i + 3);
+    const c = new Vector3().fromArray(triangles, i + 6);
+    const cross = new Vector3().subVectors(b, a).cross(edge.subVectors(c, a));
     const area = cross.length() / 2;
 
-    if (area > 1e-8) faces.push({ vertices, normal: cross.normalize(), area });
+    if (area > 1e-8) faces.push({ vertices: [a, b, c], normal: cross.normalize(), area });
   }
 
   return faces;

@@ -2,6 +2,14 @@
 
 Implementation: [Viewport rendering](../guide/canvas.md#performance-viewport-rendering). Shared requirements: [Performance](../guide/performance.md).
 
+## Part-isolated captures index requested ids once
+
+The whole-app search found the repeated isolation membership scan in `three/viewport/captures.ts`. Both `captureViews` and `fitCapture.ts` use `hideForViews`, so agent views and silhouette fitting share the refinement. Each request indexes its nonempty id list once, then checks scene children through the set. No index survives the call.
+
+`src/three/viewport/captures.test.ts` uses 600 scene children and 300 requested ids, selecting every other child. The previous `includes` loop reads 135,150 id elements for this fixture. Set construction reads 300, asserted through element getters. These are deterministic operation counts, without timing assertions or a claim about complete capture latency. Rendering, GPU readback and encoding are outside this test.
+
+The same tests cover absent and empty requests, duplicates, missing ids, image-plane exclusion, previously hidden parts and worlds, repeated restoration, unchanged inputs and edited requests. Existing current-view tests retain frame-copy and worker-encoding coverage. No control, workflow or visible state changes, so help instructions and screenshots stay applicable. No quarantine applies.
+
 ## Line batches retain transform storage
 
 `LineBatch.setMatrix` previously cloned a Matrix4 and its 16-element array on every transform update. It now clones once when an instance first receives a matrix, then copies later values into that snapshot. Removal deletes the snapshot. The matrix texture and visibility behavior stay unchanged.

@@ -191,23 +191,30 @@ function sameLoop(a: SheetProfile['outline'], b: SheetProfile['outline']): boole
   );
 }
 
+const vertexKey = (p: Vector3) => `${Math.round(p.x * 10000)},${Math.round(p.y * 10000)},${Math.round(p.z * 10000)}`;
+
+function countEdge(edges: Map<string, number>, a: string, b: string) {
+  const edge = pairKey(a, b);
+
+  edges.set(edge, (edges.get(edge) ?? 0) + 1);
+}
+
 function closedSolid(faces: Face[]): boolean {
   const edges = new Map<string, number>();
-  const keyOf = (p: Vector3) =>
-    p
-      .toArray()
-      .map((n) => Math.round(n * 10000))
-      .join(',');
 
   for (const face of faces) {
-    const points = face.vertices.map(keyOf);
+    const a = vertexKey(face.vertices[0]);
+    const b = vertexKey(face.vertices[1]);
+    const c = vertexKey(face.vertices[2]);
 
-    for (let i = 0; i < 3; i++) {
-      const edge = pairKey(points[i], points[(i + 1) % 3]);
-
-      edges.set(edge, (edges.get(edge) ?? 0) + 1);
-    }
+    countEdge(edges, a, b);
+    countEdge(edges, b, c);
+    countEdge(edges, c, a);
   }
 
-  return [...edges.values()].every((count) => count === 2);
+  for (const count of edges.values()) {
+    if (count !== 2) return false;
+  }
+
+  return true;
 }

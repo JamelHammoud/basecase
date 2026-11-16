@@ -2,6 +2,18 @@
 
 Implementation: [Sheet manufacturing](../guide/build.md#performance-sheet-manufacturing). Shared requirements: [Performance](../guide/performance.md).
 
+## Sheet closure streams triangle keys
+
+The shared detector's closed-solid check previously made a coordinate array and mapped rounding array for each triangle corner, plus a mapped key list per face. It also copied all edge counts before checking them. The check now formats rounded scalar coordinates directly, counts three edge keys per face and scans the map's values directly. This removes seven temporary arrays per retained triangle and one final count array. The edge map and key strings remain. Rounding, signed-zero string conversion, undirected edge keys and exactly-two incidence validation stay unchanged.
+
+The whole-app search found this closure routine in `sheet/detectSheet.ts`, shared by both geometry-worker measurement routes and analysis reports. Cap boundary extraction has different incidence rules and already formats scalar keys. CAD edge identity includes a rounded midpoint and does not validate sheet closure. Neither needs this change. No user action, screen state, manufacturing rule or help step changes. [Cut parts from sheet](../../site/content/help/cut-parts-from-sheet.md) remains accurate.
+
+A local Vitest source replay compared complete profiles for 48 generated plates varying holes, concavity, tilt, wall subdivisions and 0.001 mm rounding after scaling and translation. All results matched exactly and source triangles stayed unchanged. Pockets, open faces, empty input and nonfinite input retained their refusals. On the existing 300- and 600-subdivision plates, containing 2,404 and 4,804 triangles, instrumented vector-to-array calls fell from 7,214 and 14,414 to two in both cases. Source-derived removed array counts are 16,829 and 33,629. These are operation counts, without timing assertions or a claim about total detection latency. Replay source and results live in `scratch/sheet-closure.test.ts` and `scratch/sheet-closure-results.json`.
+
+`sheetProjection.test.ts` retains an array-conversion budget independent of subdivisions with full-profile assertions, source preservation, winding, order, edits and interleaved degenerate faces. Existing `detectSheet.test.ts` covers through holes, concavity, tilted and rounded meshes, stock thickness, open caps, pockets and nonfinite data. No timeout, retry or quarantine changes apply.
+
+Changed-file validation passed formatting, lint, documentation, site copy for 297 pages, types and all 948 tests across 132 related files. The related run reported 42.11 seconds. Its log is `scratch/check-sheet-closure.log`. Copy accounting is net zero and preflight reports no findings.
+
 ## Sheet outline extents use one bounds scan
 
 The thickness-to-width check previously mapped each outline axis twice, once for its maximum and once for its minimum. It now accumulates both axes together through the existing lightweight Sketch bounds primitive. A candidate with N outline vertices needs N outline visits instead of 4N, without four N-element coordinate arrays or spread arguments. Two fixed bound pairs replace the axis list and mapped extent pair, with one bounds object added. Scalar minimum and maximum counts stay unchanged.

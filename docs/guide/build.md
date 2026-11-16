@@ -180,6 +180,8 @@ Measurements and limits: [Strength and Lighten performance evidence](../notes/pe
 
 ## Performance: engineering calculations
 
+- **Standing contacts index wheel hinges once.** `utils/engineeringStability.ts` groups revolute joints by child part within each stability calculation. Every floor-contact part reads its own candidates in joint order and stops at the first matching axle. Roundness, level-axis and centerline tolerances, exact mesh bases and bounds fallback stay unchanged. Build and agent engineering reports share this path. The index ends with the calculation, so ownership and geometry edits take effect on the next check. `engineeringWheelContacts.test.ts` covers rejected hinges, first-axis ties, duplicate children, each shared child across separate bodies, tolerances and later edits. Existing engineering contact tests cover complete report rows. [Evidence](../notes/performance-engineering.md#standing-contacts-index-wheel-hinges-once).
+
 - **Torque percentiles select one rank.** Walking peak torque and fall impact checks share `utils/peakTorque.ts`'s percentile calculation. It partitions one copied sample buffer instead of fully sorting ordinary numeric samples. Partition work is bounded by four times the sample count before reverting to sorting. NaN, sparse samples and negative zero retain the previous stable sorting path. Nearest-rank clamping, empty results and input ownership stay unchanged. `torquePercentile.test.ts` compares generated orders, duplicates, edits and exceptional inputs against the previous calculation, and checks both callers' sample windows. [Evidence](../notes/performance-engineering.md#torque-percentiles-select-one-rank).
 
 Measurements and limits: [Engineering calculations performance evidence](../notes/performance-engineering.md).
@@ -259,6 +261,8 @@ Measurements and limits: [Cable routing performance evidence](../notes/performan
 ## Performance: sheet manufacturing
 
 Measurements and limits: [Sheet manufacturing performance evidence](../notes/performance-sheet.md).
+
+- **Sheet face normals reuse one edge workspace.** `sheet/detectSheet.ts` loads each triangle's vertices directly and reuses one second-edge vector across face preparation. Every retained face owns its vertices and normal. The strict area cutoff of `1e-8`, face order and cross-product arithmetic stay unchanged. Geometry-worker measurements and analysis reports share this detector. `sheetProjection.test.ts` checks vector-clone budgets, full profiles, input preservation, reversed winding, face order, edits and interleaved degenerate faces. [Evidence](../notes/performance-sheet.md#sheet-face-normal-workspace).
 
 - **Sheet boundaries retain their areas while ordering loops.** `sheet/profileLoops.ts` measures each completed loop once when multiple loops need ordering, then sorts the retained areas. Empty and single-loop boundaries return without measuring areas. Both caps in sheet detection share this path, including geometry-worker measurements and analysis reports. Equal areas keep discovery order, either winding uses absolute area, and returned points retain their input references. Areas belong to one call, so edited boundaries are measured afresh. `profileLoops.test.ts` covers ordering, ties, winding, edits, input preservation and malformed boundaries. Existing sheet projection tests cover complete detected profiles. [Evidence](../notes/performance-sheet.md#sheet-boundary-loop-ordering).
 

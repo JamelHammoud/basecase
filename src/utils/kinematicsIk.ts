@@ -167,7 +167,11 @@ function tryStep(pb: IkProblem, state: IkState, JtJ: Float64Array[], g: Float64A
 }
 
 function iterate(pb: IkProblem, state: IkState, tol: number): boolean {
-  if (Math.max(...state.cur.map((e) => e.r.length())) < tol) return false;
+  let maxError = -Infinity;
+
+  for (const e of state.cur) maxError = Math.max(maxError, e.r.length());
+
+  if (maxError < tol) return false;
 
   pb.jacobian ??= prepareIkJacobian(pb.rig, pb.vars, pb.owners);
 
@@ -193,9 +197,16 @@ export function solveIK(rig: Rig, start: JointValues, targets: IkTarget[], opts:
 
   for (let it = 0; it < iterations && pb.vars.length; it++) if (!iterate(pb, state, tol)) break;
 
-  const errors = residuals(pb, state.posed).map((e) => e.r.length());
+  let maxError = 0;
+  const errors = state.cur.map((e) => {
+    const error = e.r.length();
 
-  return { values, errors, maxError: errors.length ? Math.max(...errors) : 0 };
+    maxError = Math.max(maxError, error);
+
+    return error;
+  });
+
+  return { values, errors, maxError };
 }
 
 export function preBend(rig: Rig, values: JointValues, ids: Iterable<string>, deg = 20): JointValues {

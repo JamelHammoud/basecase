@@ -52,6 +52,7 @@ async function ikPlan(input: RaceInput, clock: RaceClock): Promise<SolveResult> 
     environment: task.environment,
     controller: plan.controller,
     save: input.save,
+    judgment: input.judgment,
     origin: () => ({ method: 'ik-or-motion-plan', cost: elapsedOf(clock) }),
   });
   const reason = `${proof.evidence.summary} Planned within ${lengthLabel(plan.missM * 1000)}.`;

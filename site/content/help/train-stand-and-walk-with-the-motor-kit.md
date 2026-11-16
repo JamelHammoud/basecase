@@ -43,7 +43,7 @@ covers:
 
 The Motor Kit trains four basic skills for a robot that stands on its own legs: Stand, Walk, Get up and Settle. You don't have to write a goal. Basecase trains each skill and proves it in Arena.
 
-You train on your own GPU, in the desktop app or at app.basecase.so in Chrome or Edge.
+You can train locally in the desktop app or at app.basecase.so in Chrome or Edge. The desktop app can also [train on another computer](/help/train-on-another-computer) over SSH and recover the result after a restart.
 
 To train a skill:
 

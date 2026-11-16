@@ -64,6 +64,6 @@ export const inSkillsWorker: SkillRunner = (job, ports) => {
       else resolve(msg as ReplyTo<typeof job.type>);
     };
     worker.onerror = (e) => reject(new Error(e.message || 'The skills worker stopped.'));
-    worker.postMessage(job);
+    worker.postMessage({ ...job, localSalt: ports.localSalt });
   }).finally(() => worker.terminate()) as never;
 };

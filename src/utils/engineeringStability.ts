@@ -1,4 +1,4 @@
-import type { ScenePart } from '../types/robotics';
+import type { RobotJoint, ScenePart } from '../types/robotics';
 import type { RobotBody } from './engineeringBody';
 import { convexHull, lineDistance, norm, polygonMargin, type V3 } from './engineeringMath';
 import type { CheckContext, CheckRow, Stability } from './engineeringTypes';
@@ -16,27 +16,46 @@ function stabilityStatus({ marginMm, tipDeg, onALine }: Stability): CheckRow['st
 const ROUND_TOLERANCE = 0.1;
 const LEVEL_AXIS = 0.98;
 
-function wheelAxle(ctx: CheckContext, p: ScenePart): V3 | undefined {
+type WheelJoints = Map<string, RobotJoint[]>;
+
+function wheelJoints(joints: RobotJoint[]): WheelJoints {
+  const byChild: WheelJoints = new Map();
+
+  for (const joint of joints) {
+    if (joint.type !== 'revolute') continue;
+
+    for (const id of joint.child) {
+      const own = byChild.get(id) ?? [];
+
+      own.push(joint);
+      byChild.set(id, own);
+    }
+  }
+
+  return byChild;
+}
+
+function wheelAxle(ctx: CheckContext, p: ScenePart, byChild: WheelJoints): V3 | undefined {
   const m = ctx.measures[p.id]!;
   const centre = [0, 1, 2].map((k) => (m.min[k] + m.max[k]) / 2) as V3;
   const size = [0, 1, 2].map((k) => m.max[k] - m.min[k]) as V3;
 
-  return ctx.joints
-    .filter((j) => j.type === 'revolute' && j.child.includes(p.id))
-    .map((j) => ({ j, a: norm(j.axis) }))
-    .filter(({ j, a }) => {
-      const along = Math.abs(a[0]) >= LEVEL_AXIS ? 0 : 2;
-      const across = 2 - along;
-      const level = Math.abs(a[along]) >= LEVEL_AXIS;
-      const round = Math.abs(size[1] - size[across]) <= ROUND_TOLERANCE * size[1];
+  for (const j of byChild.get(p.id) ?? []) {
+    const a = norm(j.axis);
+    const along = Math.abs(a[0]) >= LEVEL_AXIS ? 0 : 2;
+    const across = 2 - along;
+    const level = Math.abs(a[along]) >= LEVEL_AXIS;
+    const round = Math.abs(size[1] - size[across]) <= ROUND_TOLERANCE * size[1];
 
-      return level && round && lineDistance(centre, j.origin, a) <= ROUND_TOLERANCE * size[1];
-    })[0]?.a;
+    if (level && round && lineDistance(centre, j.origin, a) <= ROUND_TOLERANCE * size[1]) return a;
+  }
+
+  return undefined;
 }
 
-function contactPoints(ctx: CheckContext, p: ScenePart): Array<[number, number]> {
+function contactPoints(ctx: CheckContext, p: ScenePart, byChild: WheelJoints): Array<[number, number]> {
   const m = ctx.measures[p.id]!;
-  const axle = wheelAxle(ctx, p);
+  const axle = wheelAxle(ctx, p, byChild);
 
   if (!axle && m.base?.length) return m.base;
 
@@ -62,10 +81,10 @@ function contactPoints(ctx: CheckContext, p: ScenePart): Array<[number, number]>
       ];
 }
 
-function bodyStability(ctx: CheckContext, b: RobotBody): Stability | undefined {
+function bodyStability(ctx: CheckContext, b: RobotBody, byChild: WheelJoints): Stability | undefined {
   if (!b.feet.length || b.mass.grams <= 0) return undefined;
 
-  const hull = convexHull(b.feet.flatMap((p) => contactPoints(ctx, p)));
+  const hull = convexHull(b.feet.flatMap((p) => contactPoints(ctx, p, byChild)));
   const heightMm = b.mass.com[1];
   const onALine = hull.length < 3;
   const marginMm = onALine ? 0 : polygonMargin(hull, [b.mass.com[0], b.mass.com[2]]);
@@ -74,7 +93,8 @@ function bodyStability(ctx: CheckContext, b: RobotBody): Stability | undefined {
 }
 
 export function stabilityOf(ctx: CheckContext): Stability | undefined {
-  const all = ctx.bodies.flatMap((b) => bodyStability(ctx, b) ?? []);
+  const byChild = wheelJoints(ctx.joints);
+  const all = ctx.bodies.flatMap((b) => bodyStability(ctx, b, byChild) ?? []);
 
   return all.sort((x, y) => x.marginMm - y.marginMm)[0];
 }

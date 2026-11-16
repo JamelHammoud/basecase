@@ -122,7 +122,7 @@ For N catalog entries and K electrically compatible alternatives, the previous s
 
 ## Standing stability retains one result
 
-The whole-app search found one lowest-margin stability selector, `utils/engineeringStability.ts`. Build and agent engineering reports both consume it through `runEngineering`. Ordinary calculations no longer build a result list, allocate a temporary singleton array per eligible body through `flatMap`, or sort the body results. Geometry measurement still runs for each eligible body. Equal margins keep the first body. A NaN margin falls back to the previous calculation and stable sort, including remeasurement, to preserve exceptional ordering.
+The whole-app search found one lowest-margin stability selector, `utils/engineeringStability.ts`. Build and agent engineering reports both consume it through `runEngineering`. Ordinary calculations no longer build a result list, allocate a temporary empty array per excluded body through `flatMap`, or sort the body results. Geometry measurement still runs for each eligible body. Equal margins keep the first body. A NaN margin falls back to the previous calculation and stable sort, including remeasurement, to preserve exceptional ordering.
 
 `engineeringStability.test.ts` compares complete selection results with individually measured, sorted bodies for sizes zero through 79, reversed source order and later center-of-mass edits. It covers massless and contactless exclusions, negative and tied margins, source preservation and nonfinite coordinates. Existing `engineeringContacts.test.ts` and `engineeringWheelContacts.test.ts` cover full report rows and support geometry.
 

@@ -36,6 +36,26 @@ function previousPartition(bodies: Float32Array[]) {
 }
 
 describe('servo rotor classification', () => {
+  it.each([25, 50])('matches complete partitions with %i disconnected stator bodies', (count) => {
+    const bodies = [
+      ...Array.from({ length: count }, (_, i) => box([4, 4, 4], [i * 8 + 20, 0, 0])),
+      box([8, 2, 8], [0, 14, 0]),
+    ];
+    const expected = previousPartition(bodies)!;
+    const split = splitRotor(new ShapeSolid(combined(bodies)))!;
+
+    expect(split.rotor.positions).toEqual(expected.rotor);
+    expect(split.stator.positions).toEqual(expected.stator);
+  });
+
+  it('keeps empty geometry rigid across cached and replacement shapes', () => {
+    const solid = new ShapeSolid(new Float32Array());
+
+    expect(splitRotor(solid)).toBeNull();
+    expect(splitRotor(solid)).toBeNull();
+    expect(splitRotor(new ShapeSolid(new Float32Array()))).toBeNull();
+  });
+
   it('preserves complete partitions near axis and reach limits across mesh translations and scales', () => {
     const offsets = [0, 0.999, 1, 1.001, -1, 12, 19.999, 20, 20.001];
 

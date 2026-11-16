@@ -33,3 +33,18 @@ Implementation: [Image comparison](../guide/agent.md#performance-image-compariso
 ## Photo border medians use fixed histograms
 
 `silhouette.test.ts` checks those boundaries, RGB extremes, enclosed background, narrow images and source preservation. A scratch comparison matched the previous masks and refusal results on 600 seeded images. On macOS with Node 26.13.0, rejecting one seeded 900 × 900 busy image took a median of 2.23 ms before and 0.13 ms after, over 25 alternating measurements after five warmups per implementation. This measures the busy-background refusal path, without a CI timing assertion or a claim about full photo-tool latency.
+
+## Photo regions copy contiguous rows
+
+`cropMask.test.ts` compares the previous pixel loop across 90 regions on five mask shapes, including fractional bounds, clipped and reversed regions, nonfinite bounds, zero dimensions, nonbinary pixels and offset buffer views. It also checks incomplete buffers, unchanged sources, edits and independent outputs. Existing `outlineTrace.test.ts` and `photoScale.test.ts` exercise tracing and known-part scaling through the shared cropper.
+
+On macOS arm64 with Node 26.13.0, a scratch comparison cropped the middle 80% of each axis of deterministic nonbinary masks. Each implementation had three warmup batches and eleven alternating measured batches of twenty crops. Complete results matched before timing. Median milliseconds per crop were:
+
+| Mask | Before | After |
+| --- | --- | --- |
+| 300 × 400 | 0.1092 | 0.0702 |
+| 1568 × 1568 | 1.9787 | 0.2231 |
+
+The cropper replaces per-pixel JavaScript copies with one native typed-array copy and one temporary buffer view per selected row. It still allocates a zeroed output the size of the source buffer. These local shared-host measurements cover cropping alone, without a CI timing threshold or a claim about complete photo-tool time.
+
+The initial parity fixture compared 90 crops at 300 × 400 through recursive assertions and exceeded the five-second test limit at 7.19 seconds. The retained suite uses a 31 × 43 mask for that shape, preserving all region cases. Larger masks stay in the on-demand benchmark. No timeout was raised.

@@ -27,6 +27,7 @@ covers:
   - src/utils/animation.ts
   - src/utils/mocap.ts
   - src/utils/mocapRetarget.ts
+  - src/utils/mocapGround.ts
 ---
 
 You can make a legged robot walk in place, or copy a person's movement from a BVH motion capture file onto your robot's joints.

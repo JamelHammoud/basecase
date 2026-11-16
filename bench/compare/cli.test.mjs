@@ -104,75 +104,88 @@ describe('comparison command', () => {
   });
 });
 
-it.each(['codex', 'wrong snapshot', 'wrong response'])('checks %s through the comparison command', async (scenario) => {
-  vi.resetModules();
-  vi.clearAllMocks();
-  tree = fs.mkdtempSync(path.join(os.tmpdir(), 'compare-provider-test-'));
-  fixture.model = 'gpt-6.1-sol';
+it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance'])(
+  'checks %s through the comparison command',
+  async (scenario) => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    tree = fs.mkdtempSync(path.join(os.tmpdir(), 'compare-provider-test-'));
 
-  const close = vi.fn();
-  const pool = { studios: [{ base: 'http://first' }, { base: 'http://second' }], slots: [{ post: vi.fn() }], close };
-  const exit = vi.spyOn(process, 'exit').mockImplementation(() => {});
+    const provider = scenario === 'claude allowance' ? 'claude' : 'codex';
 
-  fixture.openSlotPool.mockResolvedValue(pool);
-  fixture.runMicroOnce.mockResolvedValue({
-    grade: { status: 'pass' },
-    status: 'pass',
-    task: 'A1',
-    seed: 1,
-    servedBy: scenario === 'wrong response' ? 'claude-opus-5-5' : fixture.model,
-  });
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async (url) => ({
-      json: async () => ({
-        agentKind: scenario === 'wrong snapshot' && url.includes('second') ? 'claude' : 'codex',
-        models: [{ id: fixture.model, effortLevels: [{ id: 'medium' }] }],
-      }),
-    })),
-  );
-  process.argv = [
-    process.execPath,
-    'bench/compare.mjs',
-    '--against',
-    'main',
-    '--model',
-    fixture.model,
-    '--effort',
-    'medium',
-    '--seeds',
-    '1',
-    '--no-cache',
-    '--runs-dir',
-    tree,
-    '--run',
-    'provider',
-  ];
-  vi.spyOn(console, 'log').mockImplementation(() => {});
+    fixture.model = provider === 'claude' ? 'claude-opus-5-5' : 'gpt-6.1-sol';
 
-  await import('../compare.mjs');
+    const close = vi.fn();
+    const pool = { studios: [{ base: 'http://first' }, { base: 'http://second' }], slots: [{ post: vi.fn() }], close };
+    const exit = vi.spyOn(process, 'exit').mockImplementation(() => {});
 
-  const result = JSON.parse(fs.readFileSync(path.join(tree, 'provider/results.json'), 'utf8'));
+    fixture.openSlotPool.mockResolvedValue(pool);
+    fixture.runMicroOnce.mockResolvedValue({
+      grade: { status: 'pass' },
+      status: 'pass',
+      task: 'A1',
+      seed: 1,
+      servedBy: scenario === 'wrong response' ? 'claude-opus-5-5' : fixture.model,
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url) => ({
+        json: async () => ({
+          agentKind: scenario === 'wrong snapshot' && url.includes('second') ? 'claude' : provider,
+          models: [{ id: fixture.model, effortLevels: [{ id: 'medium' }] }],
+        }),
+      })),
+    );
+    process.argv = [
+      process.execPath,
+      'bench/compare.mjs',
+      '--against',
+      'main',
+      '--model',
+      fixture.model,
+      '--effort',
+      'medium',
+      '--seeds',
+      '1',
+      '--no-cache',
+      ...(scenario === 'claude allowance' ? ['--loop-allowance', '--parallel', '8'] : []),
+      '--runs-dir',
+      tree,
+      '--run',
+      'provider',
+    ];
+    vi.spyOn(console, 'log').mockImplementation(() => {});
 
-  expect(result.provider).toBe('codex');
-  expect(result.effort).toBe('medium');
-  expect(close).toHaveBeenCalledTimes(2);
-  expect(fixture.remove).toHaveBeenCalledOnce();
-  expect(exit).toHaveBeenCalledOnce();
+    await import('../compare.mjs');
 
-  if (scenario === 'codex') {
-    expect(result.plan.stop).toBe('rounds');
-    expect(result.results).toHaveLength(2);
-    expect(fixture.openSlotPool.mock.calls.every(([options]) => options.provider === 'codex')).toBe(true);
-  }
+    const result = JSON.parse(fs.readFileSync(path.join(tree, 'provider/results.json'), 'utf8'));
 
-  if (scenario === 'wrong snapshot') {
-    expect(result.plan.stop).toBe('error');
-    expect(fixture.runMicroOnce).not.toHaveBeenCalled();
-  }
+    expect(result.provider).toBe(provider);
+    expect(result.effort).toBe('medium');
+    expect(close).toHaveBeenCalledTimes(2);
+    expect(fixture.remove).toHaveBeenCalledOnce();
+    expect(exit).toHaveBeenCalledOnce();
 
-  if (scenario === 'wrong response') expect(result.plan.stop).toBe('served');
+    if (['codex', 'claude allowance'].includes(scenario)) {
+      expect(result.plan.stop).toBe('rounds');
+      expect(result.results).toHaveLength(2);
+      expect(fixture.openSlotPool.mock.calls.every(([options]) => options.provider === provider)).toBe(true);
+    }
 
-  vi.unstubAllGlobals();
-  fixture.model = 'claude-opus-5-5';
-});
+    if (scenario === 'claude allowance') {
+      expect(result.plan.parallel).toBe(1);
+      expect(fixture.openSlotPool.mock.calls.every(([options]) => options.parallel === 1)).toBe(true);
+      expect(fixture.runMicroOnce.mock.calls.every(([options]) => typeof options.turn === 'function')).toBe(true);
+    }
+
+    if (scenario === 'wrong snapshot') {
+      expect(result.plan.stop).toBe('error');
+      expect(fixture.runMicroOnce).not.toHaveBeenCalled();
+    }
+
+    if (scenario === 'wrong response') expect(result.plan.stop).toBe('served');
+
+    vi.unstubAllGlobals();
+    fixture.model = 'claude-opus-5-5';
+  },
+);

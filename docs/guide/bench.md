@@ -52,7 +52,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 Manual comparisons infer Codex for `gpt-` and `o` model ids and Claude otherwise. `--provider codex|claude` pins the app snapshots explicitly. Each snapshot saves that ACP command before startup. Discovery checks every snapshot’s provider, model resolution and effort support. Concrete Codex ids, like concrete Claude ids, must match the responding model before grading or archiving. Both arms use one provider. Explicit manual model and effort choices remain available.
 
-Nightly comparisons pass `--loop-allowance`. Every nested prompt uses the loop’s Codex admission or protected Claude reservation, and records its selection, usage and quota snapshots in the existing session journal. Claude arm groups run serially under the shared single-session policy. A comparison never changes providers after selection. Allowance refusal stops the comparison without another attempt. A clock check after quota admission prevents a prompt from starting after its deadline.
+Nightly comparisons pass `--loop-allowance`. Every nested prompt uses the loop’s Codex admission or protected Claude reservation, and records its selection, usage and quota snapshots in the existing session journal. Protected Claude comparisons use one slot per arm and run arm groups serially under the shared single-session policy, even if a larger parallel count was requested. A comparison never changes providers after selection. Allowance refusal stops the comparison without another attempt. A clock check after quota admission prevents a prompt from starting after its deadline. Quota snapshot and journal initialization failures release the reservation before propagating.
 
 ### Nightly experiment reports
 

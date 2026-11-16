@@ -53,8 +53,7 @@ const finished = (pending) => ({
   durationMs: Date.now() - pending.startedAt,
 });
 
-export async function benchmarkTurn(selection, execute) {
-  const release = benchmarkAdmission(selection.provider);
+async function admittedTurn(selection, execute) {
   const pending = {
     ...selection,
     name: 'harness-benchmark',
@@ -86,6 +85,14 @@ export async function benchmarkTurn(selection, execute) {
     recordSession({ ...finished(pending), id, ok: false, error: error.message });
 
     throw error;
+  }
+}
+
+export async function benchmarkTurn(selection, execute) {
+  const release = benchmarkAdmission(selection.provider);
+
+  try {
+    return await admittedTurn(selection, execute);
   } finally {
     release();
   }

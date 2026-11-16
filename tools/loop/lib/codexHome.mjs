@@ -43,5 +43,5 @@ export function codexHome(env = {}) {
     release();
   }
 
-  return { ...env, CODEX_HOME: home, OPENAI_API_KEY: '' };
+  return { ...env, CODEX_HOME: home, OPENAI_API_KEY: '', CODEX_API_KEY: '' };
 }

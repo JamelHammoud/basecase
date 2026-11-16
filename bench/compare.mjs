@@ -90,6 +90,8 @@ const provider = comparisonProvider(
 );
 const subscription = args.includes('--loop-allowance');
 
+if (subscription && provider === 'claude') opts.parallel = 1;
+
 for (const arm of arms) arm.provider = provider;
 
 const labels = arms.map((arm) => arm.label);

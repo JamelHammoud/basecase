@@ -558,3 +558,13 @@ The help articles [Animate a robot with a walk cycle or motion capture](../../si
 Validation passed formatting, lint, documentation links, site copy for 295 pages, types and 1,802 tests across 241 files. One file and test were skipped by the existing configuration. The related selection reached 242 files and finished in 82.76 seconds. The log is `scratch/check-gait-bounds.log`. Copy accounting reports zero additions, changes and removals.
 
 Preflight reports an unchanged covered-file reminder for Joints and kinematics because its guide changed. Every section remains accurate: joint fields and sources, hierarchy and four-bar behavior, design versus pose, IK and selected-robot operations are unchanged. It has no screenshots. The reminder requires checking the article and allows leaving accurate text unchanged, so no article edit is needed.
+
+## Four-bar insertion prepares only the requested bar
+
+The app-wide search found two eager per-bar lookup tables in `src/linkage/linkageParts.ts`, one for shapes and one for ports. Every insertion calls each table four times, discarding three bars each time. Sketch Path and agent synthesis both use `linkageParts`. Static title lookup remains unchanged because it constructs no per-insertion geometry.
+
+Guard returns now select the requested bar before allocating its point list, shape record or ports. Source-derived counts per insertion fall from 16 shape records and point lists to four. Port records fall from 36 to nine with a coupler point, or from 32 to eight without one. This removes 75% of these constructions, not 75% of total insertion work. Pivots, bounding meshes, recipes, servo mating and world transforms still run as before. These are allocation counts, not latency measurements.
+
+On November 16, 2026, `scratch/linkage-parity.test.ts` captured complete builds before the edit and compared serialized results after it. All nine cases matched exactly across three ground angles and absent, axial and offset coupler points. The baseline remains in `scratch/linkage-baseline.json` for this session. Existing `src/linkage/linkageParts.test.ts` checks posed curves, actuator assignment, servo height and recipes on ground and tilted planes. No timeout, retry or quarantine changes apply.
+
+The actions and visible states in the linkage help articles remain unchanged. No help or screenshot update is needed for this internal allocation reduction.

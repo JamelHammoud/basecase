@@ -114,7 +114,7 @@ The existing Try section and command palette offer **Try Reference** beside the 
 
 Each fixture joint publishes `<object id>-travel` as a Case fact, in signed degrees or millimeters, and as `probe.<object id>-travel` in console signals. `fixtureTravel.ts` reads the child's measured pose relative to its parent's measured pose. Recording uses the existing complete qpos and body-pose arrays, with robot actuator and recording joint-address lists unchanged. Saved scoring and console playback use those same world ids and Case definitions. Reach scaling scales pivots, geometry and slide limits and thresholds together, while hinge angles stay unchanged. Seed jitter leaves fixture members anchored. Portable scenes, gallery bundles and robot undo retain the complete Case topology.
 
-Coverage is in `passiveFixtures.test.ts`, `fixturePersistence.test.ts` and `src/sim/fixtures/passiveParity.test.ts`. The C/WASM matrix uses the existing contact replay path for both goals, nominal, limp, locked, weak-actuator, short-travel, high-resistance, reversed-axis and rotated configurations. It compares state, stops, active contact pairs and recorded verdicts. Browser coverage in `e2e/passiveFixtures.e2e.test.ts` chooses each goal through New Case, changes Weight, runs Try Reference and reopens the saved try to inspect travel and verdict. CI owns those browser checks. [Fixture evidence and limits](../notes/testing-cases.md#passive-lid-and-drawer-fixtures) record tolerances and local results. Steps are in [Open lids and pull drawers](../../site/content/help/open-lids-and-pull-drawers.md).
+Coverage is in `passiveFixtures.test.ts`, `fixturePersistence.test.ts` and `src/sim/fixtures/passiveParity.test.ts`. The C/WASM matrix uses the existing contact replay path for both goals, nominal, limp, locked, weak-actuator, short-travel, high-resistance, reversed-axis and rotated configurations. It compares state, stops, active contact pairs and recorded verdicts. Browser coverage in `e2e/passiveFixtures.e2e.test.ts` chooses each goal through New Case, changes Weight, runs Try Reference and reopens the saved try to inspect travel and verdict. They remain active on Linux and macOS and are quarantined on Windows through 28 November 2026 under #1364. [Fixture evidence and limits](../notes/testing-cases.md#passive-lid-and-drawer-fixtures) record tolerances and local results. Steps are in [Open lids and pull drawers](../../site/content/help/open-lids-and-pull-drawers.md).
 
 ### Cases from the robot
 
@@ -864,6 +864,14 @@ The operator-camera browser check remains active, along with the rendered feed's
 Camera worker shutdown separately closes retained frames and awaits reader cancellation before ending its scope, covered by `operator/workerFrames.test.ts` and `operator/cameraShutdown.test.ts`. The pan, MIDI and taught-gesture browser tests remain active on Windows. `gestures.test.ts` checks one event for a held wave, and `useTriesTraining.test.ts` and `devStudio/datasetFixture.test.ts` check the frozen sample-to-training pipeline. The dataset-training and held-wave browser walkthroughs remain active on Linux.
 
 [Incident evidence and limits](../notes/testing-inputs.md).
+
+### Linux Case code coverage
+
+The studio pointer/Escape and agent live-edit walkthroughs are quarantined only on Linux through 28 November 2026 under #1377. Windows and macOS retain both. Linux retains the shared gallery joystick and HUD walkthrough and the other active studio code-panel tests. `codeBridge.test.ts`, `codeDocument.test.ts`, `codeEdits.test.ts`, `agentCaseRequests.test.ts` and `agentPrompt.test.ts` retain handshake, driving, error reporting, document editing and Case context coverage. [Failure evidence and restoration conditions](../notes/testing-case-code.md#linux-startup-and-error-reporting).
+
+### COCO mask decoding coverage
+
+`imageMasks.test.ts` retains exhaustive small images, generated and edited masks, source immutability, sparse runs and independent results. The 300- and 600-pixel fixtures compare every decoded byte against the reference decoder, with coordinate-rounding instrumentation limited to the optimized decoder. [Test overhead evidence](../notes/performance-vision-inference.md#coco-decoding-test-instrumentation).
 
 ### Browser assertion scope
 

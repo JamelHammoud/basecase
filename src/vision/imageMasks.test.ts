@@ -85,16 +85,12 @@ describe('COCO mask decoding', () => {
     ];
 
     for (const mask of masks) {
+      const expected = previousDecode(mask);
       const floor = vi.spyOn(Math, 'floor');
-      let expected: Uint8Array;
       let actual: Uint8Array;
-      let previousCalls: number;
       let currentCalls: number;
 
       try {
-        expected = previousDecode(mask);
-        previousCalls = floor.mock.calls.length;
-        floor.mockClear();
         actual = decodeMask(mask);
         currentCalls = floor.mock.calls.length;
       } finally {
@@ -102,7 +98,6 @@ describe('COCO mask decoding', () => {
       }
 
       expect(actual).toEqual(expected);
-      expect(previousCalls).toBe(length);
       expect(currentCalls).toBe(Math.floor(mask.counts.length / 2));
     }
   });

@@ -297,3 +297,11 @@ Coverage: `seedSelection.test.ts` checks stable ties, cloning loss, failed child
 Skill environments keep physical observation identities separate from actuator identities. Action validation refuses passive joints, while observations and recorded initial coordinates may include them. The Motor Kit already selects actuated position joints. Its job writer now orders control defaults by actuator and retains all physical starting coordinates separately. A robot without powered action joints cannot start a training job. Actuator hashes and robot fingerprints invalidate policy and readiness evidence after an actuation edit.
 
 `src/sim/passiveJoints.test.ts`, `passiveMotion.test.ts`, `passiveChannels.test.ts` and `passiveHistory.test.ts` cover the mechanism matrix, training maps and evidence keys. [Evidence](../notes/testing-skills.md#passive-robot-joints).
+
+### Arena passive-joint coverage
+
+`arenaPassive.test.ts` checks a mixed arm through real WASM MuJoCo. Servo draws leave the passive joint's nonzero damping unchanged while applying the powered joint's gain. Existing `servoDraws.test.ts` retains all powered draw multipliers and restoration across tries. Gatekeeper's source-lock tests retain file-drift refusal. [Evidence](../notes/testing-skills.md#arena-source-lock-after-passive-joints).
+
+### Windows grouped recovery coverage
+
+The grouped recovery walkthrough is quarantined only on Windows through 28 November 2026 under #1365. The single-attempt recovery walkthrough remains active on Windows. Grouped browser coverage stays active on Linux and macOS, with `seedWorkflows.test.ts`, `recoveredSkill.test.ts` and `seedSelection.test.ts` retaining selection, recovery and local verdict coverage on every platform. [Failure evidence and restoration conditions](../notes/testing-skills.md#windows-grouped-recovery-quarantine).

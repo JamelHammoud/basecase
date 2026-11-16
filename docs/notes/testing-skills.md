@@ -65,3 +65,15 @@ The documentation capture configures two attempts through Settings and reloads a
 The existing action and observation contracts remain intact. The environment index retains all physical joint identities and a separate actuator set. Validation uses the actuator set only for actions. Jobs retain initialJoints for every physical coordinate, while defaultPose and joints describe controlled outputs and ctrlDefault follows actuator order. Empty action sets are refused. Existing subset admission and native fallback own accelerated backend support. No GPU parity or training-quality claim follows from the mapping tests.
 
 `passiveChannels.test.ts` also checks interleaved and reordered actuator metadata, Motor Kit defaults, passive observations versus actions and live gait output. Legacy powered output is covered by the existing drive suites.
+
+## Arena source lock after passive joints
+
+Commit `9a8a02e26` changed one line in `arenaWorld.ts` to refuse servo draws for joints with actuator index below zero. The `s3a-motor-kit` source hash still named the previous file. Both named latency tests in `verify/lib/run.test.mjs` therefore failed their initial unmodified-tree assertion in run 43831610288. A direct invocation reproduced `Changed without a maintainer: src/skills/arenaWorld.ts`. `controlDelay.ts` had not changed. This is a deterministic source-pin regression, not two latency failures.
+
+The repair retains the passive-joint guard, updates only its frozen source hash and the gate's own manifest hash, and adds real-MuJoCo coverage with passive damping 0.3 and a powered gain multiplier of two. Reverting the whole 87-file passive-joint merge would also remove behavior consumed by later lid and drawer work, so the repair fixes the source pin in place. No evidence threshold, count or runtime implementation changes. The existing source-mutation tests must still refuse changes to both latency files.
+
+## Windows grouped recovery quarantine
+
+[#1365](https://github.com/JamelHammoud/basecase/issues/1365) owns the Windows-only quarantine through 28 November 2026. Run 43831610288 observed one train-start instead of two after reload at line 75, then stalled clicking Concurrent attempts on retry. The same file passed both tests on Windows in run 43824172798 in 75.040 seconds, with unchanged training, worker and fixture code. Linux passed at the failing revision in 30.052 seconds. The earlier run 43820519938 alternated between zero initial dispatches and no reattachment. These observations do not identify whether model reconstruction, journal persistence, worker startup or reattachment stalled.
+
+The single-attempt walkthrough stays active on Windows, and grouped recovery stays active on Linux and macOS. Restoring the grouped Windows walkthrough requires production-path traces and at least ten observations before and after at equal load, including parent and child identities, one remote dispatch, controlled local refusal and process cleanup. Repair makes no flake-rate or product-fix claim.

@@ -57,7 +57,7 @@ function titlePattern(node, parameterized) {
 
   if (!parameterized) return escape(node.text);
 
-  const tokens = /%%|%[sdifjoO#$]|\$[$\p{ID_Continue}.]+/gu;
+  const tokens = /%%|%[sdifjoOc#$]|\$[$\p{ID_Continue}.]+/gu;
   let result = '';
   let end = 0;
 
@@ -122,22 +122,35 @@ export function testsAt(source, lines) {
 export function sharedDeletions(source, diff) {
   const { tests, invalid } = declarations(source);
   const lines = source.split('\n');
-  const hunks = [...diff.matchAll(/^@@ -(\d+)(?:,(\d+))? \+\d+,0 @@/gm)];
+  let oldLine = 0;
 
   if (invalid) return true;
 
-  return hunks.some((match) => {
-    const start = Number(match[1]);
-    const count = match[2] === undefined ? 1 : Number(match[2]);
+  for (const line of diff.split('\n')) {
+    const hunk = /^@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@/.exec(line);
 
-    return Array.from({ length: count }, (_, offset) => start + offset).some(
-      (line) => lines[line - 1]?.trim() && !tests.some((test) => test.start <= line && line <= test.end),
-    );
-  });
+    if (hunk) {
+      oldLine = Number(hunk[1]);
+
+      continue;
+    }
+
+    if (!oldLine) continue;
+
+    const removed = line.startsWith('-');
+
+    if (removed && lines[oldLine - 1]?.trim() && !tests.some((test) => test.start <= oldLine && oldLine <= test.end)) {
+      return true;
+    }
+
+    if (removed || line.startsWith(' ')) oldLine++;
+  }
+
+  return false;
 }
 
 function removedSetup({ git, revision, file, diff }) {
-  if (!/\+\d+,0 @@/.test(diff)) return false;
+  if (!/^@@ -\d+(?:,[1-9]\d*)? /m.test(diff)) return false;
 
   try {
     return sharedDeletions(git(['show', `${revision}:${file}`]), diff);

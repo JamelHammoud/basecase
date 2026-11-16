@@ -75,8 +75,9 @@ describe('browser selector entry point', () => {
       const collected = vitest(fix, ['run']);
       const all = testsAt(edited, new Set(edited.split('\n').map((_, index) => index + 1)));
 
-      expect(executed(collected)).toHaveLength(10);
+      expect(executed(collected)).toHaveLength(11);
       expect(executed(collected).every((name) => new RegExp(all.pattern).test(name))).toBe(true);
+      expect(executed(collected)).toContain('outer > inner > styled  text');
       fix.write(
         'e2e/probe.e2e.test.ts',
         edited.replace(
@@ -112,10 +113,32 @@ describe('browser selector entry point', () => {
 
       expect(found.files).toEqual([]);
       expect(found.fallbackFiles).toEqual(['e2e/probe.e2e.test.ts']);
-      expect(executed(vitest(fix, ['run', ...found.fallbackFiles, '-t', '.*']))).toHaveLength(10);
+      expect(executed(vitest(fix, ['run', ...found.fallbackFiles, '-t', '.*']))).toHaveLength(11);
       expect(testsAt("it('a', () => {});\nconst helper = 2;\nit('b', () => {});", changedLines('@@ -2 +2 @@'))).toEqual(
         { pattern: '', fallback: true },
       );
+    } finally {
+      fix.close();
+    }
+  });
+  it('falls back for shared setup removed in the same hunk as a changed declaration', () => {
+    const fix = fixture();
+
+    try {
+      fix.write(
+        'e2e/probe.e2e.test.ts',
+        cases.replace("  it('neighbor before'", "  const helper = 2;\n  it('neighbor before'"),
+      );
+
+      const base = fix.revision();
+
+      fix.write('e2e/probe.e2e.test.ts', cases.replace("'neighbor before'", "'renamed neighbor'"));
+      fix.revision();
+
+      const found = selection(fix, base);
+
+      expect(found).toEqual({ files: [], pattern: '', fallbackFiles: ['e2e/probe.e2e.test.ts'] });
+      expect(executed(vitest(fix, ['run', ...found.fallbackFiles, '-t', '.*']))).toHaveLength(11);
     } finally {
       fix.close();
     }

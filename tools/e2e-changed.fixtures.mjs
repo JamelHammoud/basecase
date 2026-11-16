@@ -23,6 +23,7 @@ describe('outer', () => {
       \${'b'} | \${2}
     \`('table $name $value', () => { expect(true).toBe(true); });
     itUnlessWindows('wrapped', () => { expect(true).toBe(true); });
+    it.each(['color: red'])('styled %c text', () => { expect(true).toBe(true); });
     test.runIf(true)(\`escaped \\n \\u0061 \\x62 \\\`\`, () => { expect(true).toBe(true); });
     it('neighbor after', () => { expect(true).toBe(true); });
   });

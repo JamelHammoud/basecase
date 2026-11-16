@@ -85,7 +85,14 @@ describe('changed browser declarations', () => {
   it('distinguishes removed setup from removed declarations', () => {
     const source = "const helper = 2;\nit('removed', () => {});\n";
 
-    expect(sharedDeletions(source, '@@ -1 +0,0 @@')).toBe(true);
-    expect(sharedDeletions(source, '@@ -2 +1,0 @@')).toBe(false);
+    expect(sharedDeletions(source, '@@ -1 +0,0 @@\n-const helper = 2;')).toBe(true);
+    expect(sharedDeletions(source, "@@ -2 +1,0 @@\n-it('removed', () => {});")).toBe(false);
+    expect(
+      sharedDeletions(
+        source,
+        "@@ -1,2 +1 @@\n-const helper = 2;\n-it('removed', () => {});\n+it('renamed', () => {});",
+      ),
+    ).toBe(true);
+    expect(sharedDeletions(source, "@@ -2 +2 @@\n-it('removed', () => {});\n+it('renamed', () => {});")).toBe(false);
   });
 });

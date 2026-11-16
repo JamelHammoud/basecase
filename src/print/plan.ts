@@ -5,6 +5,7 @@ import type { PartPrint, PrintMaterial } from '../types/robotics';
 import { bedSizeText, fitOnBed, heightFits, placementFits, type Bed } from './bed';
 import { sizeLabel } from '../utils/size';
 import { packPlates, type PackItem } from './pack';
+import { materialGroups } from './materialGroups';
 
 export interface PrintCheck {
   pose: PrintPose;
@@ -243,15 +244,12 @@ function materialPlates(group: MaterialPlan, bed: Bed, first: number, settings: 
 
 export function buildPrintPlan(inputs: PlanInput[], setup: PrinterSetup, bed: Bed, settings: string): PrintPlan {
   const placeable = inputs.filter((i) => i.check.fits && !i.print?.skip);
-  const materials = [...new Set(placeable.map((i) => i.material))];
   const plates: Plate[] = [];
 
-  for (const material of materials) {
-    const group = { material, inputs: placeable.filter((i) => i.material === material) };
-
+  for (const [material, inputs] of materialGroups(placeable)) {
     plates.push(
       ...materialPlates(
-        group,
+        { material, inputs },
         bed,
         plates.length + 1,
         `${setup.model.id}|${setup.nozzle}|${settings}${bed.obstacleKey ? `|${bed.obstacleKey}` : ''}`,

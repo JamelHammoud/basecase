@@ -85,6 +85,7 @@ function measured(provider, options, execute) {
           title: result.output.title,
           checked: result.output.checked,
           notes: result.output.notes,
+          outcome: result.output.outcome,
           verdict: result.output.verdict,
         }
       : null,
@@ -126,6 +127,20 @@ function overflow(options, primary) {
   }
 }
 
+function limitedOverflow(options, primary) {
+  startCodexPause(primary.limited.until);
+
+  try {
+    const result = overflow(options, primary);
+
+    return { ...result, session: result.session ?? primary.session };
+  } catch (error) {
+    error.session ??= primary.session;
+
+    throw error;
+  }
+}
+
 export function primaryAllowed() {
   const quota = quotaSnapshot('codex');
   const reserve = primaryReserve(quota);
@@ -151,6 +166,7 @@ export function runAgent({
   prompt,
   schema,
   hours = 6,
+  deadlineAt,
   sandbox,
   continuation,
   system,
@@ -167,7 +183,8 @@ export function runAgent({
     name,
     prompt,
     schema,
-    hours,
+    hours: deadlineAt ? Math.min(hours, (deadlineAt - Date.now()) / 3_600_000) : hours,
+    deadlineAt,
     sandbox,
     continuation,
     policy,
@@ -180,6 +197,8 @@ export function runAgent({
     brief: system ?? brief(name),
   };
 
+  if (options.hours <= 0) return { ok: false, session: continuation, error: 'Task execution deadline exhausted' };
+
   if (policy.provider === 'claude' || sandbox?.tools.length > 0) return overflow(options);
 
   if (!primaryAllowed()) return overflow(options);
@@ -187,11 +206,7 @@ export function runAgent({
   const launch = (env) => runCodex({ ...options, env });
   const result = measured('codex', options, () => (sandbox ? withoutGithub(launch) : launch()));
 
-  if (result.limited) {
-    startCodexPause(result.limited.until);
-
-    return overflow(options, result);
-  }
+  if (result.limited) return limitedOverflow(options, result);
 
   return result;
 }

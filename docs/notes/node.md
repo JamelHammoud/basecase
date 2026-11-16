@@ -427,3 +427,35 @@ The green run used Ubuntu image `20261111.82.6`. Both the preceding and timed-ou
 The existing nightly static workload now runs in parallel with both unit jobs. This moves about 216.7 seconds off the failing Linux unit path, plus the dependency audit, while adding one setup and dependency installation for the static job. The failing job's checkout, Node, uv and npm setup took about 62 seconds. Applying the observed 1.769 duration ratio to the preceding 358.99-second Vitest run projects about 635 seconds for tests, or about 741 seconds with setup, TypeScript and parity. This projection fits the unchanged 900-second limit but is not a measured candidate run. Shared-host variation and future suite growth remain limits. CI owns the full-suite runtime and passing verdict. No assertion, retry, quarantine or timeout changes.
 
 Local validation parses the workflow and checks that its static and unit commands preserve all nine commands in `npm run check`, plus dependency audit, native parity, pull request selection, the unit matrix and deadlines. Sixteen executions of the actual aggregate Bash script cover passing full and pull request results, static failure, cancellation and unexpected skipping, and failed unit results. The probe and output are `scratch/check-workflow-contract.mjs` and `scratch/workflow-contract.log`. `check:changed` passes formatting and documentation checks for the three changed files. `actionlint -shellcheck=` passes workflow and expression validation. With ShellCheck enabled, both the original and candidate workflow report the same pre-existing SC2129 redirect-style suggestion in the browser selector step. No full suite or browser test was run locally.
+
+## Loop incomplete work recovery
+
+Issue #1551 traced `buildStep` clearing recovery after every successful `changed: false` answer, then recording a decline. An unchanged known input signature with no named pull could wait indefinitely. Repeated source or task changes could instead start fresh worktrees, discarding prior context. An unfinished answer established neither a dependency nor a decision to abandon acceptance.
+
+The committed `tools/loop/fixtures/incomplete-attempts.json` freezes six completed build invocations, two each for #1491, #1272 and #1420. It retains journal ids, hashed work identities, usage, elapsed work and original result evidence. Their notes explicitly report outstanding implementation without an established external blocker. These historical execution statements select the replay sample only. Production admission does not classify prose.
+
+All six used distinct work identities. None of those identities matched a retained worktree at inspection on 16 November 2026. All three recovery records were empty. They therefore supply no safe live recovery to restore, and this change does not clear their declines or manufacture input changes. The sample demonstrates lost session and scratch context. It does not establish how many tracked source lines were lost.
+
+The runner-boundary replay pairs each task's two observed cost records. Its first controlled execution returns incomplete, and its continuation returns a synthetic full-acceptance completion. Production claims, readiness, `buildStep`, recovery records and task accounting run normally. Execution and publication stay controlled. The baseline columns describe the six historical attempts, not a second live provider run.
+
+| Frozen sample | Historical attempts | Controlled recovery replay |
+| --- | ---: | ---: |
+| Fresh starts | 6 | 3 |
+| Same-session continuations | 0 | 3 |
+| Lost retained contexts | 6 | 0 |
+| Acceptance completions | 0 | 3 synthetic |
+| Publications | 0 | 3 controlled |
+| Accounted invocations | 6 | 6 |
+| Accounted tokens | 2,660,727 | 2,660,727 cost weights |
+| Accounted elapsed work | 528,156 ms | 528,156 ms cost weights |
+| Incomplete attempts per completion | Undefined | 1 synthetic |
+| Total tokens per completion | Undefined | 886,909 synthetic |
+| Total elapsed work per completion | Undefined | 176,052 ms synthetic |
+
+The replay reuses measured historical costs as weights. Synthetic completion does not measure the real remaining implementation cost, subscription allowance, throughput or quality gain. Cached inputs are included in input tokens, not added again. These are six selected failures, not a representative sample or a week-over-week comparison. The issue's readiness snapshot found one waiting, eligible, input-ready and dependency-free step among 52 open steps, with four other ready steps building. The latest digest supplied no worst measure. Neither fact establishes a throughput regression.
+
+Actual subsequent outcomes are separate: #1491, #1272 and #1420 were still open when queried at 21:13 UTC on 16 November 2026. No completion caused by this unmerged change has been observed. Future measurements can use the existing journal and publication join, explicit incomplete counts per shipped feature and total observed work per completion. Unknown historical build outcomes remain counted separately. Report retained-history limits and missing usage with any comparison.
+
+Current coverage is in [Loop](../guide/loop.md#0l-how-agents-land-work). The runner acceptance tests retain a tracked edit and an untracked scratch handoff, preserve the original scope and deadline, and assert one publication after continuation. They also cover no source edits, invalid outcomes, devices unavailable, named pull blocks, exhausted continuation, source refresh, interrupted execution, sessionless results, concurrent claims and older decline evidence. Existing builder tests cover commit and publication failure, outbox ownership and duplicate publication protection. No timeout, continuation count, worker count, provider policy, review gate or quarantine condition changed. macOS checks are local. Linux and Windows execution remains with ordinary CI.
+
+Review reproduced three boundary failures with six failing assertions before correction. Converting 1,001 remaining milliseconds to hours and back produces `1000.9999999999999`, which Node rejects as a process timeout. Both runners now round down to whole milliseconds. A primary session was lost when overflow returned either a failed process or an incomplete answer without a session. Both results now retain the interrupted primary handle. Preflight also launched corrections for malformed `complete` outcomes, including one that named a dependency. It now uses the same structured validator as publication. Regression evidence is in `scratch/review-1553-regressions.log`. These corrections add no execution attempts or waiting period.

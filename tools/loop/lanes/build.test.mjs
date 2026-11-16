@@ -74,7 +74,12 @@ describe('builder publication recovery', () => {
     calls.checkedRun.mockReturnValue({
       ok: true,
       session,
-      output: { changed: true, title: 'Feature', kind: 'feature' },
+      output: {
+        changed: true,
+        outcome: { status: 'complete', reason: '', evidence: [], dependencies: [], capabilities: [] },
+        title: 'Feature',
+        kind: 'feature',
+      },
     });
     calls.publish.mockImplementation(() => {
       throw failure;
@@ -99,7 +104,12 @@ describe('builder publication recovery', () => {
     calls.checkedRun.mockReturnValue({
       ok: true,
       session,
-      output: { changed: true, title: 'Feature', kind: 'feature' },
+      output: {
+        changed: true,
+        outcome: { status: 'complete', reason: '', evidence: [], dependencies: [], capabilities: [] },
+        title: 'Feature',
+        kind: 'feature',
+      },
     });
     calls.publish.mockImplementationOnce(() => {
       saveDelivery({ ...worktree, body: 'Closes #53.' });
@@ -127,7 +137,12 @@ describe('builder publication recovery', () => {
     calls.checkedRun.mockReturnValue({
       ok: true,
       session,
-      output: { changed: true, title: 'Feature', kind: 'feature' },
+      output: {
+        changed: true,
+        outcome: { status: 'complete', reason: '', evidence: [], dependencies: [], capabilities: [] },
+        title: 'Feature',
+        kind: 'feature',
+      },
     });
     calls.publish.mockImplementationOnce(() => {
       throw failure;
@@ -175,7 +190,7 @@ describe('builder recovery attempts', () => {
 
     expect(calls.openBranch).toHaveBeenCalledTimes(2);
     expect(calls.checkedRun).toHaveBeenCalledOnce();
-    expect(calls.close).toHaveBeenCalledWith(worktree);
+    expect(calls.close).toHaveBeenCalledWith(expect.objectContaining(worktree));
   });
 
   it('stops after its recovery fails without returning a new session', () => {
@@ -241,7 +256,20 @@ describe('builder capability discoveries', () => {
     calls.steps = [queuedStep(49)];
     calls.signature = 'source-a';
     calls.openBranch.mockReturnValue(worktree);
-    calls.checkedRun.mockReturnValue({ ok: true, output: { changed: false, notes: 'Requires: physical-robot' } });
+    calls.checkedRun.mockReturnValue({
+      ok: true,
+      output: {
+        changed: false,
+        outcome: {
+          status: 'blocked',
+          reason: 'Requires physical hardware',
+          evidence: ['Device unavailable'],
+          dependencies: [],
+          capabilities: ['physical-robot'],
+        },
+        notes: 'Requires: physical-robot',
+      },
+    });
     build({ log: vi.fn(), slot: 1 });
     calls.signature = 'source-b';
     build({ log: vi.fn(), slot: 1 });

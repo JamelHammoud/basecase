@@ -180,31 +180,33 @@ function emptyFromCorner(
   corner: { x: number; y: number; sx: number; sy: number },
   reach: number,
 ) {
+  if (reach <= 0) return 0;
+
   const seen = new Set<number>();
-  const stack: number[][] = [];
+  const stack: number[] = [];
+  const endX = corner.x + corner.sx * reach;
+  const endY = corner.y + corner.sy * reach;
   let pixels = 0;
-  const offer = (x: number, y: number) => {
-    const inside = Math.abs(x - corner.x) < reach && Math.abs(y - corner.y) < reach;
-
-    if (!inside) return;
-
-    const i = y * width + x;
-
+  const offer = (i: number) => {
     if (seen.has(i)) return;
 
     seen.add(i);
 
-    if (!cells[i]) stack.push([x, y]);
+    if (!cells[i]) stack.push(i);
   };
 
-  offer(corner.x, corner.y);
+  offer(corner.y * width + corner.x);
 
   while (stack.length) {
-    const [x, y] = stack.pop()!;
+    const i = stack.pop()!;
+    const x = i % width;
+    const y = Math.floor(i / width);
 
     pixels++;
-    offer(x + corner.sx, y);
-    offer(x, y + corner.sy);
+
+    if (x + corner.sx !== endX) offer(i + corner.sx);
+
+    if (y + corner.sy !== endY) offer(i + corner.sy * width);
   }
 
   return pixels;

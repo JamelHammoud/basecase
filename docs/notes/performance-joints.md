@@ -2,6 +2,20 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## Cylinder bounds accumulate with vertex residuals
+
+The whole-app search found one axial projection list reduced separately to minimum and maximum in `joints/cylinderFit.ts`. Both clicked-face fitting and automatic shaft-and-bore discovery call it through `axisFinder.ts`. Other projection calculations serve different geometry and do not build this cylinder summary.
+
+Each successful circle fit now accumulates its axial minimum and maximum while writing vertex residuals directly into the result map. This removes the axial-coordinate array, the residual-entry array and one two-element entry tuple per welded vertex. It also removes both separate extrema scans and the map constructor's traversal of the entry array. Dot products, radial distances, source order, residual insertion order, center arithmetic and length arithmetic stay unchanged. Bounds start at positive and negative infinity and use `Math.min` and `Math.max`, preserving signed-zero and NaN reduction behavior. The retained vertex coordinates, circle projections and residual map still allocate.
+
+For the existing 64- and 128-segment cylinders with four height segments, one fit visits 320 and 640 welded vertices. Source-derived allocation counts remove two vertex-length arrays and 320 or 640 entry tuples per fit. Distorted regions repeat the same saving for the vertices retained by each refit. These are operation and allocation counts, not timings or a claim about complete axis-discovery latency.
+
+On November 16, 2026, `scratch/cylinder-bounds-parity.test.ts` compared complete old and new fit results for 96 generated regions and an empty region. It varied segment counts, rotations, translations, full and partial arcs, winding, distorted patches, minimum spans, reversed triangle order and repeated triangles. Repeated new fits matched and preserved source vertices and regions. Detailed output is in `scratch/cylinder-bounds-parity.log` for this session.
+
+Existing `src/joints/cylinderFit.test.ts` covers complete fits, angular-span refusal, distorted-patch trimming, source preservation, vertex reads and independent calls. Axis-finder and joint-candidate tests cover clicked faces and shaft-and-bore discovery. No timing assertions, timeouts, retries or quarantine changes apply.
+
+[Join two parts with a hinge or slider](../../site/content/help/join-two-parts-with-a-hinge.md) and [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) still describe the same actions, labels and results. No visible state or workflow changes, so their prose and screenshots remain accurate without edits.
+
 ## Cylinder span projections share one normal
 
 The app-wide search found one angular-span calculation reading the same triangle normal separately for its two planar projections, in `joints/cylinderFit.ts`. Both clicked-face fitting and automatic shaft-and-bore discovery use it. `MeshIndex.normal` returns a new three-number tuple on every read. Retaining the normal within the projection callback removes one read and tuple per triangle per fit, without a retained cache.

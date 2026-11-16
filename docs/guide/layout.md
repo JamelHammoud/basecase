@@ -86,4 +86,6 @@ Measurements and limits: [Panels and Layers performance evidence](../notes/perfo
 
 - **Layers indexes groups once.** `layerRows.ts` builds each group's members in one pass, then uses those lists for expanded rows and search matches. It never scans the whole scene per group. [Evidence](../notes/performance-layout.md#layers-indexes-groups-once).
 
+- **Tries append into one list per robot.** `tryGroups` in `workspace/useTriesView.ts` serves Library, Tries mode and dataset members. It groups before sorting, appends without copying prior members and sorts each group newest first. Robot names keep locale order. Distinct names that compare equal keep the order of their first newest try, with timestamp ties resolved by input order. Equal-time tries keep input order and stored summaries remain unchanged. `useTriesView.test.ts` covers those ordering and ownership contracts. [Evidence](../notes/performance-layout.md#try-grouping).
+
 - **Keep views alive.** Panels that switch (sidebar views, inspector tabs) mount on first use and then stay in React's `<Activity>`, so switching back is instant and hidden views run no effects.

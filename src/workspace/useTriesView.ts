@@ -31,9 +31,16 @@ const newestFirst = (a: TrySummary, b: TrySummary) => b.startedAt.localeCompare(
 export function tryGroups(tries: TrySummary[]): TryGroup[] {
   const groups = new Map<string, TrySummary[]>();
 
-  for (const t of [...tries].sort(newestFirst)) groups.set(t.robot, [...(groups.get(t.robot) ?? []), t]);
+  for (const t of tries) {
+    const list = groups.get(t.robot);
 
-  return [...groups].map(([robot, list]) => ({ robot, tries: list })).sort((a, b) => a.robot.localeCompare(b.robot));
+    if (list) list.push(t);
+    else groups.set(t.robot, [t]);
+  }
+
+  return [...groups]
+    .map(([robot, list]) => ({ robot, tries: list.sort(newestFirst) }))
+    .sort((a, b) => a.robot.localeCompare(b.robot));
 }
 
 export function picked(

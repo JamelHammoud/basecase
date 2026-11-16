@@ -1,4 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('./diagnosticReadiness.mjs', () => ({ windowsDiagnosticsReady: () => false }));
+
 import {
   availableCapabilities,
   AVAILABLE,

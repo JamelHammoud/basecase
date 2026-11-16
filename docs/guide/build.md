@@ -192,6 +192,8 @@ Measurements and limits: [Strength and Lighten performance evidence](../notes/pe
 
 - **Lighten prepares fixed filter neighborhoods once.** Density filtering calculates each offset’s distance and positive weight once, before visiting solid cells. Wall filtering shares its spherical offset list across all eleven mass trials. Neither list survives the operation. [Evidence](../notes/performance-strength.md#lighten-prepares-fixed-filter-neighborhoods-once).
 
+- **Density-filter neighbors use scalar grid coordinates.** `strength/lightenFilter.ts` decodes each element's integer cell index directly and checks candidate neighbors with scalar bounds. It avoids world-coordinate round trips and coordinate arrays per neighbor. Every Lighten optimization uses this shared filter. `lightenNeighborhoods.test.ts` compares complete entries and weights with independent element-pair enumeration on sparse anisotropic grids, singleton axes, reversed element order and edited cell sizes. [Evidence](../notes/performance-strength.md#density-filter-neighbors-use-scalar-grid-coordinates).
+
 - **Lighten expands each retained coarse cell once.** `strength/lightenFineGrid.ts` checks density-prefix membership and mounting paths per coarse cell, then fills its eight children. The template and all eleven wall-filtered mass trials share this builder, without additional retained storage. [Evidence](../notes/performance-strength.md#lighten-expands-each-retained-coarse-cell-once).
 
 ## Performance: engineering calculations

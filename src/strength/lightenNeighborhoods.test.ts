@@ -65,6 +65,26 @@ describe('Lighten filter neighborhoods', () => {
     });
   });
 
+  it.each([
+    [1, 1, 1],
+    [1, 5, 4],
+    [5, 1, 4],
+    [5, 4, 1],
+  ] satisfies V3[])('keeps boundary neighbors on a %s × %s × %s grid after edits', (nx, ny, nz) => {
+    const mesh = meshFor([nx, ny, nz], [0.75, 1.25, 2], nx * ny * nz > 1);
+    const first = densityFilter(mesh, 2.5);
+    const saved = structuredClone(first);
+
+    expect(first).toEqual(pairwiseFilter(mesh, 2.5));
+
+    mesh.cells.reverse();
+    mesh.grid.origin = [20.25, -12.5, 6];
+    mesh.grid.h = [1.5, 0.625, 0.5];
+
+    expect(densityFilter(mesh, 2.5)).toEqual(pairwiseFilter(mesh, 2.5));
+    expect(first).toEqual(saved);
+  });
+
   it.each([3, 6])('prepares density weights once for a 10 × 10 × %s grid', (depth) => {
     const mesh = meshFor([10, 10, depth]);
     const distance = vi.spyOn(Math, 'hypot');

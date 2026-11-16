@@ -1,4 +1,4 @@
-import { cellCenter, type HexMesh } from './mesh';
+import type { HexMesh } from './mesh';
 import { cellIndex } from './voxels';
 import type { V3 } from './types';
 
@@ -22,6 +22,7 @@ function offsetsFor(h: V3, radius: number): Array<[number, number, number, numbe
 
 export function densityFilter(mesh: HexMesh, radius: number): DensityFilter {
   const { grid } = mesh;
+  const [nx, ny, nz] = grid.n;
   const elementOf = new Int32Array(grid.solid.length).fill(-1);
   const offsets = offsetsFor(grid.h, radius);
   const start = new Int32Array(mesh.cells.length + 1);
@@ -30,15 +31,18 @@ export function densityFilter(mesh: HexMesh, radius: number): DensityFilter {
 
   mesh.cells.forEach((cell, e) => (elementOf[cell] = e));
   mesh.cells.forEach((cell, e) => {
-    const p = cellCenter(grid, cell);
-    const own = p.map((v, axis) => Math.round((v - grid.origin[axis]) / grid.h[axis] - 0.5));
+    const x = cell % nx;
+    const y = Math.floor(cell / nx) % ny;
+    const z = Math.floor(cell / (nx * ny));
 
     for (const [dx, dy, dz, w] of offsets) {
-      const ijk = [own[0] + dx, own[1] + dy, own[2] + dz];
+      const i = x + dx;
+      const j = y + dy;
+      const k = z + dz;
 
-      if (ijk.some((v, axis) => v < 0 || v >= grid.n[axis])) continue;
+      if (i < 0 || i >= nx || j < 0 || j >= ny || k < 0 || k >= nz) continue;
 
-      const other = elementOf[cellIndex(grid, ijk[0], ijk[1], ijk[2])];
+      const other = elementOf[cellIndex(grid, i, j, k)];
 
       if (other < 0) continue;
 

@@ -22,6 +22,7 @@ Basecase is built by a team of agents with no person in the loop. Jamel, the fou
 
 ## Efficient execution
 
+- Remote Git references are shared across worktrees. Fetch through `fetchGit` from `tools/loop/lib/gitFetch.mjs`, with the worktree as `cwd`, so the runner and agent sessions coordinate reference updates.
 - Keep one task's implementation, checks, documentation and corrections in the same session while its context remains useful. Use a fresh independent reviewer for the finished change.
 - Batch independent searches and commands. Filter large logs and search results in scripts before returning them to the model. Keep complete results in scratch files and return their paths with the relevant findings.
 - Reuse repository facts only while their files, toolchain and environment still match. A previous passing check is evidence only for the exact inputs it checked.

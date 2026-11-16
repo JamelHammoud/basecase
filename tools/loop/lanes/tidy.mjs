@@ -8,6 +8,8 @@ import { isLoopBranch, parseRefs, parseWorktrees, staleBranches, staleWorktrees 
 import { pendingDeliveries } from '../lib/deliveryState.mjs';
 import { activeRecoveries } from '../lib/workRecovery.mjs';
 
+import { fetchGit } from '../lib/gitFetch.mjs';
+
 export const schedule = {
   slots: 1,
   everySeconds: 60 * 60,
@@ -24,7 +26,7 @@ const ORPHAN_BRANCH_MS = 60 * 60 * 1000;
 const worktrees = () => parseWorktrees(git(['worktree', 'list', '--porcelain']).out);
 
 function deleteRemoteBranches(log, now) {
-  git(['fetch', '-q', '--prune', 'origin', '+refs/heads/loop/*:refs/remotes/origin/loop/*']);
+  fetchGit(['-q', '--prune', 'origin', '+refs/heads/loop/*:refs/remotes/origin/loop/*']);
 
   const branches = parseRefs(git(['for-each-ref', REF_FORMAT, 'refs/remotes/origin/loop']).out);
   const stale = staleBranches({

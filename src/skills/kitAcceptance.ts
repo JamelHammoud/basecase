@@ -15,6 +15,7 @@ export async function slowerSpeedEvidence(options: {
   entry: TrainedEntry;
   environment: Environment;
   policy: PolicySpec;
+  onEvidence?: (evidence: ArenaEvidence, environment: Environment) => void;
 }): Promise<ArenaEvidence[]> {
   const { mj, model, entry, environment, policy } = options;
 
@@ -31,7 +32,11 @@ export async function slowerSpeedEvidence(options: {
       robot: kitRobot(model).key,
     };
 
-    evidence.push(await runArena({ mj, model, contract, controller, environment: { ...environment, contract } }));
+    const testedEnvironment = { ...environment, contract };
+    const result = await runArena({ mj, model, contract, controller, environment: testedEnvironment });
+
+    options.onEvidence?.(result, testedEnvironment);
+    evidence.push(result);
   }
 
   return evidence;

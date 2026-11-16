@@ -8,7 +8,9 @@ You can now find published skills ranked for your robot in Install Skill, then t
 
 A hexapod's Stand used to start from zero even when a quad with the same legs could already stand. Now it can start from the quad's policy, with each leg taking the nearest leg that has as many joints.
 
-Skills Basecase can install come first in the list, followed by the closest limb positions and the most Arena passes on the source robot. Skills it can't install appear last with their reason. You can still install from a repo link.
+Skills Basecase can install come first in the list, followed by reported installation results on similar bodies, the closest limb positions and the most Arena passes on the source robot. Skills it can't install appear last with their reason. You can still install from a repo link.
+
+Installation outcomes stay on your computer and publish under your own Hub account when signed in. Failed Arena runs affect ranking. Cancellations and infrastructure failures don’t. Reports for another source commit or Arena version are ignored. Reported results never replace Arena on your robot.
 
 The Motor Kit trains from the installed policy, and Arena runs 96 tries for Stand on your robot. The new skill keeps its own evidence and the hash of the skill it started from. A ready skill can also be published to Hugging Face for another robot to use.
 

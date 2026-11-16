@@ -60,3 +60,9 @@ Measurements and limits: [Trace plots performance evidence](../notes/performance
 `choiceLayout.ts` measures label code points directly and retains the widest string label during one grid scan. It creates no character arrays, filtered label lists or width lists. Hardware sizes, finishes, drives, brushes and world choices share this estimator. Glyph advances, per-glyph multiplication and addition order, unknown-code-point fallback, padding and wrapping stay unchanged. No measurements persist between calls.
 
 `choiceLayout.test.ts` covers calibrated labels and wrapping across panel widths, Unicode fallback, mixed React labels and empty-string padding. [Evidence and limits](../notes/performance-layout.md#choice-grid-sizing-scans-labels-directly).
+
+## Performance: context menu ordering
+
+`menuOrder.ts` partitions entries during one source pass. It holds the first interior divider until another ordinary entry needs it, dropping leading, trailing and repeated dividers without a filtered intermediate list. Destructive entries retain their order and append to the ordinary result behind one new divider. Every `ContextMenu` shares this path, including canvas, list and camera menus. Popover children keep their caller-defined order.
+
+`menuOrder.test.ts` compares all 4,096 six-entry combinations of ordinary actions, destructive actions, headings and dividers against the preceding algorithm. It also checks entry identity, frozen input arrays, later edits, independent results and empty menus. [Evidence and limits](../notes/performance-layout.md#context-menu-ordering-partitions-in-one-source-pass).

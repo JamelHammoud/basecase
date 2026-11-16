@@ -115,13 +115,53 @@ export class TorqueRecorder {
   }
 }
 
+function partition(values: number[], left: number, right: number): number {
+  const pivot = values[(left + right) >>> 1];
+
+  while (left <= right) {
+    while (values[left] < pivot) left++;
+
+    while (values[right] > pivot) right--;
+
+    if (left > right) break;
+
+    [values[left], values[right]] = [values[right], values[left]];
+    left++;
+    right--;
+  }
+
+  return left;
+}
+
+function selectRank(values: number[], rank: number): number {
+  let left = 0;
+  let right = values.length - 1;
+  let remaining = values.length * 4;
+
+  while (left < right) {
+    remaining -= right - left + 1;
+
+    if (remaining < 0) return values.sort((a, b) => a - b)[rank];
+
+    const split = partition(values, left, right);
+
+    if (rank < split) right = split - 1;
+    else left = split;
+  }
+
+  return values[rank];
+}
+
 export function percentile(values: number[], q: number): number {
   if (!values.length) return 0;
 
-  const sorted = [...values].sort((a, b) => a - b);
-  const rank = Math.min(sorted.length - 1, Math.max(0, Math.ceil(q * sorted.length) - 1));
+  const samples = [...values];
+  const rank = Math.min(samples.length - 1, Math.max(0, Math.ceil(q * samples.length) - 1));
+  const ordered = samples.every((value) => typeof value === 'number' && !Number.isNaN(value) && !Object.is(value, -0));
 
-  return sorted[rank];
+  if (!ordered || Number.isNaN(rank)) return samples.sort((a, b) => a - b)[rank];
+
+  return selectRank(samples, rank);
 }
 
 function longestRun(values: number[], above: number): number {

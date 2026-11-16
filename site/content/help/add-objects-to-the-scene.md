@@ -48,3 +48,5 @@ To browse instead of search, click a category under **Objects** in Parts, such a
 An object moves freely in Simulate if its maker gave it a mass. Objects without a mass stay fixed. Checks treat a free object as scenery and don't add its weight to the robot's.
 
 Each object shows its maker and license. Most are CC-BY 4.0. To see an object's page on Hugging Face, click **Open on Hugging Face** in its hover card.
+
+For a local facility export, use [Register a Fleet facility](/help/register-a-fleet-facility).

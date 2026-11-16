@@ -70,6 +70,7 @@ export function useInventory(org: string) {
     robots,
     site,
     error,
+    refresh: () => setRevision((value) => value + 1),
     chooseSite(value: string) {
       setSite(value);
       setRobotAfter('');

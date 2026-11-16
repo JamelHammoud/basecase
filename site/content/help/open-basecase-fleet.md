@@ -33,7 +33,7 @@ You need a running Fleet service, an organization ID and an enrolled account. Fl
 
 You can view only the sites and robots your account can access. A robot marked **Stale** has no observation from the last 60 seconds. Disconnecting a robot leaves its identity in the inventory.
 
-You can press [[⌘K]] and choose **Open Fleet**. To open another page, use **Next Sites** or **Next Robots** when a page is available.
+You can press [[⌘K]] and choose **Open Fleet**. To ground a floorplan or twin, use [Register a Fleet facility](/help/register-a-fleet-facility). To open another page, use **Next Sites** or **Next Robots** when a page is available.
 
 If access changes or the connection closes, the list clears. Click **Reload Fleet** to check access again. Click **Sign Out** to revoke the browser session.
 

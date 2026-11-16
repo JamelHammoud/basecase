@@ -5,6 +5,7 @@ import { authenticatedApi, publicApi } from './api.mjs';
 import { transaction } from './database.mjs';
 import { identifier, insist } from './validation.mjs';
 import { subscriptions } from './subscriptions.mjs';
+import { facilityJobs, facilityRequest } from './facilities.mjs';
 
 const LOOPBACK = new Set(['127.0.0.1', '::1', 'localhost', '[::1]']);
 const sessionCookie = (token, secure) =>
@@ -62,6 +63,20 @@ async function dispatch(options) {
 
   guard(request, origin);
 
+  if (/^\/v1\/[^/]+\/site\/[^/]+\/facility(?:\/[^/]+)?$/.test(url.pathname)) {
+    const token = tokenOf(request);
+    const actor = await authenticate(pool, token);
+    const [, , org, ...parts] = url.pathname.split('/');
+
+    insist(identifier(org) === actor.org, 403);
+
+    const result = await facilityRequest({ pool, actor, token, parts, method, request, jobs: options.facilityJobs });
+
+    facilityReply(response, result);
+
+    return;
+  }
+
   const body = await readBody(request);
   const publicResult = await publicApi(pool, method, url.pathname, body);
 
@@ -109,12 +124,14 @@ export async function startService(options) {
 
   const pool = options.pool;
   const stream = await subscriptions(pool);
+  const jobs = facilityJobs();
   const handle = (request, response) => {
     void dispatch({
       request,
       response,
       pool,
       stream,
+      facilityJobs: jobs,
       origin,
       assets: options.assets ?? ((_request, res) => reply(res, {}, 404)),
     }).catch((error) => {
@@ -145,4 +162,15 @@ export async function startService(options) {
       await new Promise((resolve) => server.close(resolve));
     },
   };
+}
+
+function facilityReply(response, result) {
+  if (!result.raw) return reply(response, result.data);
+
+  response.writeHead(200, {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+  });
+  response.end(result.raw);
 }

@@ -69,3 +69,46 @@ Review found that the shared studio stylesheet locks scrolling on the document a
 Direct account, group and role reads previously evaluated `iam.manage` on the target resource, while identity lists and writes required organization-level access. A scoped identity grant could therefore read a record that it could neither enumerate nor manage. Writes checked only the organization, allowing an organization grant to bypass a deny on the individual identity. Direct reads and writes now require both organization-level access and a grant on the target resource, preserving deny precedence. The service integration regressions check all three kinds with scoped grants, explicit resource denies and an organization administrator.
 
 The correction's fast check passed formatting, lint, types, documentation, site copy and 41 related tests across 12 files. The related-test run reported 5.11 seconds. Its log is `scratch/review-check-final.log`. The PostgreSQL client was installed under scratch and linked into a local dependency directory, leaving the shared installation unchanged. The browser scrolling assertions remain for CI, with no local browser pass claim.
+
+## Facility placement and imports
+
+The site import and registration implementation lives in the [Fleet guide](../guide/fleet.md#sites-and-facility-twins). It reuses the existing Case mesh readers and pinned SimReady converter without calling Case floor levelling. No foundation, sensor, ROS, schedule or design-version format is replaced.
+
+### Generated acceptance matrix
+
+| Fixture | Evidence |
+| --- | --- |
+| Millimeter DXF factory | `sites/facility.test.ts` checks the 0.001 metric, layer identity and an unchanged 3 m source elevation |
+| Meter GLB warehouse | The existing generated GLB passes through the shared glTF parser and ENU conversion |
+| OBJ workshop | Explicit Y-up conversion preserves a 4 m source height |
+| Centimeter USD facility | Production usd-core conversion checks the unauthored 0.01 metric and transformed world coordinates |
+| Z-up USDZ facility | Generated local archive checks authored units and the unchanged 3 m source height |
+| Multilevel hospital | A 12 m OBJ level remains elevated, and the robot-position test retains Level 2 identity |
+| Registered LiDAR corridor | PLY point-cloud import retains measured elevations, and the shared registration path places local points |
+| Drone altitude | Registration tests preserve 130 m ellipsoid height without floor clamping |
+| Harbor vessel | Registration tests preserve a negative height and estimated confidence |
+| Antimeridian crossing | Two control points straddle ±180° and retain a continuous ECEF placement through serialization |
+
+The HTTP integration runs the actual DXF preparation before upload, refuses registration against another facility hash and also retains source hashes, restarts the service, reopens registration and geometry, publishes timestamped stale poses and declared work, and refuses unregistered local poses. Denied site reads, another organization, revoked accounts, incompatible datums, missing vertical offsets, hostile paths and tile subpaths are refused. Browser position tests hide a pose after the facility hash changes. Dense label layout retains only the visible grid slots, with inventory rows available for overflow.
+
+The real converter tests accept local sublayers and refuse absolute, escaping and remote layers and textures. Sdf's pinned Python bindings cannot return `subLayerOffsets` through generic `GetInfo`. The validator skips that nonasset numeric field, checks composition dependencies through `GetCompositionAssetDependencies`, and inspects other authored values. [OpenUSD documents](https://openusd.org/dev/api/class_sdf_layer.html) that `GetExternalAssetDependencies` alone omits references, payloads and sublayers. The hostile-layer tests assert the dependency refusal, so an unrelated conversion failure cannot satisfy them. Value clips and expression paths are refused. The package reader is not an operating-system sandbox. The Python process has a deadline and source, output and triangle caps. `localLimits.py` applies a 3 GiB address-space ceiling on Linux and a 3 GiB process-memory job limit on Windows before parsing supplied layers. macOS has no OS memory ceiling. A subprocess probe requests 4 GiB and requires refusal on Linux and Windows, while format conversions still run on every platform. Cold runtime installation and native-module initialization are not performance promises. The converter fixture installs and imports the pinned reader once before its independent conversions. Test timeouts and retry settings are unchanged.
+
+### Local measurements on 16 November 2026
+
+Apple M5 Pro, 24 GiB host memory, Node 26.13.0. `sites/measurements.test.ts` records a generated OBJ import, a 100-position batch and 200 dense labels without timing thresholds. The final fixture contains 19,998 noncollinear triangles in 592,751 source bytes. Its import took 77.61 ms. The 100-position batch took 0.46 ms, and dense label placement took 0.64 ms. A preceding collinear fixture was replaced, without using its timing as a comparison baseline. These are local observations, not production or shared-runner budgets.
+
+The documentation capture used `openApp` and the real Fleet service with PostgreSQL 18 in Docker. Selecting a tiny generated DXF reached the first map draw submission in 243.40 ms. Local USD reached that state in 1,294.36 ms, with runtime packages already available in the local uv cache. The probe waits for the map renderer to submit a frame, rather than only for its element to appear. These development-server observations do not measure completed GPU presentation or production-bundle latency. The capture produced the registration, globe selection, facility and USD images without judging their appearance. Its log is `scratch/fleet-capture-complete.log`, and its local timing artifact is `scratch/fleet-browser-measurements.json`.
+
+The development reverse proxy reported HMR WebSocket errors and an expected unauthenticated `/v1/me` response before sign-in. Vite also reported delayed shutdown after the capture passed. Those are capture-harness observations, not a clean production browser or packaged-app pass. The committed e2e checks remain for Linux and Windows CI.
+
+Each browser preparation allocates one worker, transfers four geometry buffers and terminates. Each service preparation allocates one worker, with at most two active jobs and no pending queue. USD uses one environment-preparation process followed by one Python converter process. The environment belongs to the service account's cache. Pose updates retain the facility buffers and the existing single subscription. These allocation counts follow the actual paths, rather than a measured worker census under many simultaneous browser sessions.
+
+Remaining limits are the current inventory page on the globe, labels bounded by screen space, one facility asset per site, yaw-only registration, explicit vertical offsets, untextured geometry, flattened DXF entities, point-cloud PLY, no value clips and no live Nucleus. No live GPS driver, ROS client, physical robot, device, remote service installation or scheduler was tested. The two browser robots use the foundation's real status envelopes with generated replay observations.
+
+
+The authenticated HTTP import measurement uses the generated DXF preparation and the real PostgreSQL write. Its 166-byte source and 296-byte normalized geometry took 57.41 ms end to end. Worker parsing, validation and hashing took 0.61 ms after worker module loading. The worker reported 9,330,888 used heap bytes and one allocated worker. That heap includes imported modules and job state. It is not service RSS, Python memory or a large-asset capacity result. The artifact is `scratch/fleet-service-measurements.json`.
+
+
+The same complete capture populated 100 robots through authenticated status events and submitted a second pose batch without replacing the facility buffers. The browser map reported 100 retained markers and a 0.60 ms update, including coordinate placement, marker updates, label layout and render submission. This is one small-geometry, software-WebGL development sample. It excludes completed GPU presentation and is not a frame-rate or large-facility claim.
+
+An intermediate capture received HTTP 400 while publishing a local pose. Its registration wait tested only inequality with null, which also accepts an absent response field. The wait now requires a present registration object. The complete capture then passed with no timeout or retry changes. The refusal predicate of the intermediate request was not identified. A later documentation-only capture attempt timed out navigating the unbundled studio before reaching Fleet. Its log is `scratch/fleet-capture-published.log`. Existing successful captures are retained. Neither observation is a passing production-browser result.

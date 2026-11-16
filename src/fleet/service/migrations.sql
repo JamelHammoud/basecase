@@ -73,3 +73,17 @@ CREATE OR REPLACE TRIGGER fleet_resource_changed AFTER INSERT OR UPDATE OR DELET
 CREATE OR REPLACE TRIGGER fleet_credential_changed AFTER INSERT OR UPDATE OR DELETE ON fleet_credentials FOR EACH ROW EXECUTE FUNCTION fleet_changed();
 CREATE OR REPLACE TRIGGER fleet_status_changed AFTER INSERT OR UPDATE ON fleet_status FOR EACH ROW EXECUTE FUNCTION fleet_changed();
 INSERT INTO fleet_schema(version) VALUES (1) ON CONFLICT DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS fleet_facilities (
+  org uuid NOT NULL,
+  site uuid NOT NULL,
+  summary jsonb NOT NULL,
+  registration jsonb,
+  geometry text NOT NULL,
+  source bytea NOT NULL,
+  PRIMARY KEY (org,site),
+  FOREIGN KEY (org,site) REFERENCES fleet_resources(org,id) ON DELETE CASCADE
+);
+ALTER TABLE fleet_status ADD COLUMN IF NOT EXISTS pose jsonb;
+ALTER TABLE fleet_status ADD COLUMN IF NOT EXISTS work jsonb;
+INSERT INTO fleet_schema(version) VALUES (2) ON CONFLICT DO NOTHING;

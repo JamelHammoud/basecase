@@ -2,10 +2,18 @@ import { useEffect, useState } from 'react';
 import { Button, Select } from '../../design-system';
 import { timeAgo } from '../../utils/timeAgo';
 import { useInventory } from './useInventory';
+import { FleetMap } from './FleetMap';
+import { FleetSite } from './FleetSite';
+import { FleetRobot } from './FleetRobot';
+import { inventoryPlacement } from './inventoryPlacement';
 
 export function FleetInventory({ org }: { org: string }) {
   const inventory = useInventory(org);
   const [now, setNow] = useState(Date.now);
+  const [selected, setSelected] = useState('');
+  const robots = inventoryPlacement(inventory.robots.items, inventory.sites.items);
+  const selectedRobot = robots.find((robot) => robot.id === selected);
+  const selectedSite = inventory.sites.items.find((site) => site.id === inventory.site);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 10000);
@@ -26,6 +34,33 @@ export function FleetInventory({ org }: { org: string }) {
         ]}
       />
       {inventory.sites.next && <Button onClick={inventory.nextSites}>Next Sites</Button>}
+      {!inventory.error && !inventory.site && (
+        <FleetMap
+          geometry={null}
+          robots={[...robots, ...inventory.sites.items.filter((site) => site.registration)]}
+          onSelect={(id) => {
+            if (inventory.sites.items.some((site) => site.id === id)) inventory.chooseSite(id);
+            else setSelected(id);
+          }}
+        />
+      )}
+      {!inventory.error && selectedSite && (
+        <FleetSite
+          key={selectedSite.id}
+          org={org}
+          site={selectedSite}
+          robots={robots}
+          onSelect={setSelected}
+          onChanged={inventory.refresh}
+        />
+      )}
+      {selectedRobot && (
+        <FleetRobot
+          robot={selectedRobot}
+          now={now}
+          onOpen={() => inventory.chooseSite(selectedRobot.facilitySite ?? '')}
+        />
+      )}
       <table className="w-full text-left text-[14px]">
         <thead>
           <tr className="h-10 text-white/50">
@@ -36,9 +71,13 @@ export function FleetInventory({ org }: { org: string }) {
           </tr>
         </thead>
         <tbody>
-          {inventory.robots.items.map((robot) => (
+          {robots.map((robot) => (
             <tr key={robot.id} className="h-12 border-t border-white/[0.06]">
-              <td>{robot.name}</td>
+              <td>
+                <Button variant="ghost" onClick={() => setSelected(robot.id)}>
+                  {robot.name}
+                </Button>
+              </td>
               <td className="text-[12px] text-white/50">{robot.id}</td>
               <td>{!robot.observedAt || now - Date.parse(robot.observedAt) > 60000 ? 'Stale' : robot.status}</td>
               <td>{robot.observedAt ? timeAgo(robot.observedAt) : ''}</td>

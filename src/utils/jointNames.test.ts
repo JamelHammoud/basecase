@@ -111,11 +111,15 @@ describe('jointRowLabels', () => {
   });
 
   it('omits abbreviated sides only on names with a recognized side', () => {
-    const joints = ['L_knee', 'knee_l', 'lhip', 'knee_r_middle', 'left_joint', 'joint'].map((name) => named(name));
+    const joints = ['L_knee', 'knee_l', 'lhip', 'knee_r_middle', 'left_joint', 'joint', 'LL_ankle', 'wrist_r'].map(
+      (name) => named(name),
+    );
+    const sided = ['L knee', 'Knee l', 'Lhip', 'Knee r middle', 'Left', 'joint', 'Ankle', 'Wrist'];
+    const unsided = ['L knee', 'Knee l', 'Lhip', 'Knee r middle', 'Left', 'joint', 'Ll ankle', 'Wrist r'];
 
-    expect(labelsOf(joints, 'LEFT LEG')).toEqual(['L knee', 'Knee l', 'Lhip', 'Knee r middle', 'Left', 'joint']);
-    expect(labelsOf(joints, 'Other')).toEqual(['L knee', 'Knee l', 'Lhip', 'Knee r middle', 'Left', 'joint']);
-    expect(labelsOf(joints, 'LEFT LEG')).toEqual(['L knee', 'Knee l', 'Lhip', 'Knee r middle', 'Left', 'joint']);
+    expect(labelsOf(joints, 'LEFT LEG')).toEqual(sided);
+    expect(labelsOf(joints, 'Other')).toEqual(unsided);
+    expect(labelsOf(joints, 'LEFT LEG')).toEqual(sided);
   });
 
   it('names the first-launch rover’s wheels as Results does', () => {

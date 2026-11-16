@@ -28,6 +28,8 @@ A million points rewrite in about 6 ms solid and 11 ms colored by intensity on a
 
 ## Scan reconstruction stays in the mapping worker
 
+A fresh Node worker per existing fixture on an Apple M5 Pro, Node 26.13.0, matching on, measured reconstruction plus hashing as follows. Heap and ArrayBuffers are end-of-call worker memory, not process peak RSS, and include retained intermediate allocations before GC. The machine was shared with other builds. These are local measurements, not CI timing assertions.
+
 | Fixture | Time | Pieces | Occupied/free cells | Heap | ArrayBuffers |
   | --- | --- | --- | --- | --- | --- |
   | Corridor | 2,904.5 ms | 64 | 702 / 5,163 | 17.5 MiB | 2.6 MiB |

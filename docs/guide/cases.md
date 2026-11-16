@@ -617,6 +617,8 @@ Measurements and limits: [Vision training performance evidence](../notes/perform
 
 ## Performance: dataset preparation
 
+- **Import path sorting prepares depth once per candidate.** LeRobot root discovery in `datasets/import/sourceKind.ts` shares `utils/pathsByDepth.ts` with robot entry discovery. It retains shallowest-depth priority, lexical ties and root-prefix handling without splitting paths inside the comparator. `sourceKind.test.ts` covers mixed formats, reordered inputs, changed candidates and unchanged source arrays. [Shared evidence](../notes/performance-joints.md#import-path-sorting-prepares-depth-once-per-candidate).
+
 Measurements and limits: [Dataset preparation performance evidence](../notes/performance-datasets.md).
 
 - **Imported joint ranges accumulate extrema directly.** `datasets/import/units.ts` merges episode ranges without mapped coordinate lists and detects units without filtering or mapping columns. All source formats share these helpers through `sourceSpans` and `importStep`. Empty and unknown ranges retain their radian default, and nonfinite values retain their existing handling. `units.test.ts` compares generated episode groups with the prior calculations and checks unit thresholds and input immutability. [Evidence](../notes/performance-datasets.md#imported-joint-ranges-accumulate-extrema-directly).

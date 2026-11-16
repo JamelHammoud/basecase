@@ -9,6 +9,7 @@ import type { BodyFacts } from './anythingBody';
 import { betterJudged, judgeOn, Trials, type Judged } from './anythingSim';
 import type { TaskSpec } from './anythingTypes';
 import { plural } from '../../electron/plural.mjs';
+import { wheelBodyRadii } from './wheelBodyRadii';
 
 const CHECK_CASES = 8;
 
@@ -45,28 +46,23 @@ export function wheelSetups(mj: MainModule, model: SimModel, facts: BodyFacts): 
   try {
     const { data } = engine;
     const wheels = facts.joints.filter((j) => j.actuated && j.drive === 'velocity');
+
+    if (!wheels.length) return [];
+
     const ids = wheels.map((j) => mj.mj_name2id(engine.model, mj.mjtObj.mjOBJ_JOINT.value, j.name));
     const cx = ids.reduce((s, id) => s + data.xanchor[id * 3], 0) / Math.max(ids.length, 1);
+    const radii = wheelBodyRadii(engine.model);
 
     return wheels.map((w, k) => {
       const id = ids[k];
       const body = engine.model.jnt_bodyid[id];
       const rolling = data.xaxis[id * 3];
-      const geoms = Array.from({ length: engine.model.ngeom }, (_, g) => g).filter(
-        (g) => engine.model.geom_bodyid[g] === body,
-      );
-      const radius = Math.max(
-        ...geoms.map((g) =>
-          Math.max(...Array.from(engine.model.geom_size.slice(g * 3, g * 3 + 3) as ArrayLike<number>)),
-        ),
-        0.001,
-      );
 
       return {
         joint: w.id,
         spin: rolling >= 0 ? 1 : -1,
         lateralMm: (data.xanchor[id * 3] - cx) * 1000,
-        radiusMm: radius * 1000,
+        radiusMm: (radii[body] ?? 0.001) * 1000,
       };
     });
   } finally {

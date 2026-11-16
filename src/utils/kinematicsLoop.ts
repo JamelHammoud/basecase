@@ -1,16 +1,16 @@
 import type { RobotJoint } from '../types/robotics';
-import { linkAngles } from './linkageKinematics';
+import { linkAngle } from './linkageKinematics';
 
 const wrapped = (deg: number) => ((((deg + 180) % 360) + 360) % 360) - 180;
 
 export function loopValue(j: Pick<RobotJoint, 'loop'>, driverValue: number): number {
   const { fourBar, link } = j.loop!;
-  const rest = linkAngles(fourBar, fourBar.theta);
-  const now = linkAngles(fourBar, fourBar.theta + driverValue);
+  const rest = linkAngle(fourBar, fourBar.theta, link);
+  const now = linkAngle(fourBar, fourBar.theta + driverValue, link);
 
-  if (!rest || !now) return 0;
+  if (rest === null || now === null) return 0;
 
-  if (link === 'rocker') return wrapped(now.rocker - rest.rocker);
+  if (link === 'rocker') return wrapped(now - rest);
 
-  return wrapped(now.coupler - rest.coupler - driverValue);
+  return wrapped(now - rest - driverValue);
 }

@@ -31,11 +31,11 @@ export function stepWaiting(
 
   if (missing.some((capability) => !available.includes(capability))) return true;
 
+  if (missing.length > 0) return entry.waitFor.some((number) => openNumbers.has(number));
+
   if (entry.inputSignature && inputSignature && entry.inputSignature !== inputSignature) return false;
 
   if (entry.waitFor.some((number) => openNumbers.has(number))) return true;
-
-  if (missing.length > 0) return false;
 
   if (entry.inputSignature && inputSignature === entry.inputSignature) return entry.waitFor.length === 0;
 

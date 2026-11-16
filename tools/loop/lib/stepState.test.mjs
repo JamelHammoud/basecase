@@ -84,4 +84,23 @@ describe('missing execution capabilities', () => {
     expect(stepWaiting(entry, { ...context, openNumbers: new Set([99]) })).toBe(true);
     expect(stepWaiting(entry, { ...context, openNumbers: new Set() })).toBe(false);
   });
+
+  it('keeps named dependencies blocking when capability availability changes the source fingerprint', () => {
+    const entry = recordDecline(15, {
+      now: 0,
+      waitFor: [99],
+      taskHead: 'task-a',
+      inputSignature: 'source-without-diagnostics',
+      missing: ['windows-diagnostics'],
+    });
+    const context = {
+      now: 1,
+      taskHead: 'task-a',
+      inputSignature: 'source-with-diagnostics',
+      available: ['windows-diagnostics'],
+    };
+
+    expect(stepWaiting(entry, { ...context, openNumbers: new Set([99]) })).toBe(true);
+    expect(stepWaiting(entry, { ...context, openNumbers: new Set() })).toBe(false);
+  });
 });

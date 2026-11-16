@@ -111,3 +111,12 @@ A scratch Vitest comparison matched complete stability results against the previ
 A scratch comparison matched complete power rows and battery runtimes against the previous implementation for 100 scenes with 1 through 100 servos. Reversing joints and servos and removing an actuator assignment also retained identical power rows. Instrumenting `Array.prototype.filter`, `map` and `flatMap` around battery runtime for 300 and 600 servos reduced calls from 21 to 18 in both fixtures. The removed arrays are the flattened driven-actuator ids, the unmeasured part list and its mapped idle currents. The sum retains servo order and the existing zero initial value.
 
 Measurements used Vitest on macOS arm64 with Node v26.13.0. These are array-operation counts, not timings or complete Checks latency measurements. Measured-joint filtering and hungriest-joint sorting remain unchanged. No controls or help steps changed.
+
+
+## Battery cost advice selects one compatible pack
+
+A whole-app search for `premiumPick` and `sameBattery` found one battery premium selector. Agent add and update results reach it through `agentCostRequests.ts`. Actuator advice already takes the first match from a shared price-ordered catalog, whose other callers need that ordering. Battery supply planning ranks different electrical criteria and remains separate.
+
+For N catalog entries and K electrically compatible alternatives, the previous selector allocated a K-entry filtered component list, K price records and a further price-filtered list before sorting. The replacement visits N entries once and retains only successive cheapest qualifying records. It removes three temporary arrays and candidate sorting. Compatibility checks and price reads retain source order. These are code-derived traversal and allocation counts, not timings or complete agent-response measurements.
+
+`premiumBattery.test.ts` checks voltage, capacity, continuous current, bare cells, absent prices, NaN prices, the strict half-price boundary, first equal-price ties, reordered catalogs, edited prices and unchanged source records. Existing `premiumPick.test.ts` retains real-catalog actuator advice and formatted text coverage. No quarantine or timing assertion applies. User actions, output text and screen states are unchanged, so help instructions and screenshots remain accurate.

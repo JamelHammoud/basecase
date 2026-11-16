@@ -2,6 +2,14 @@
 
 Implementation: [Engineering calculations](../guide/build.md#performance-engineering-calculations). Shared requirements: [Performance](../guide/performance.md).
 
+## BOM categories group rows once
+
+`bomCategories.test.ts` compares complete ordered groups and purchase summaries against the previous per-category filters across 100 generated lists and their edits. Coverage includes empty categories, reversed rows, changed categories, repeated references, unpriced lines, zero prices, estimates, warnings, stale prices, source preservation and independent result arrays. Existing `bom.test.ts` and `buyLine.test.ts` retain BOM export and purchase integration coverage.
+
+A scratch Vitest comparison matched complete Markdown and agent text exports against the previous implementation for 100 generated lists with zero to 297 rows distributed across all nine categories. Getter-count fixtures with 300 and 600 rows reduced category reads from 2,700 and 5,400 to 300 and 600 per grouping call. The Build purchase list and both grouped export formats share this pass. CSV retains its existing ungrouped row traversal. Category order and subtotal arithmetic are unchanged.
+
+Measurements ran on macOS arm64 with Node v26.13.0. These are operation counts, not timings or complete Build latency measurements. An initial scratch fixture supplied estimated totals without their required estimate records and failed in the existing Markdown formatter. The corrected fixture used explicit line totals and passed. No timing assertion was added. The buying and on-hand help articles were checked against the unchanged controls and screenshots, and their coverage now includes the shared grouper.
+
 ## Time bottlenecks scan contributors once
 
 `engineeringTimeBottlenecks.test.ts` compares selection against the previous sort formula across 100 generated plate and assembly-step lists and reversed inputs. It covers first ties, fastener ties resolved by minutes, empty lists, signed zero, infinities, NaN and matching sliced durations. Inputs stay unchanged. Existing `engineeringTime.test.ts` and `engineeringTimeGuide.test.ts` retain complete budget and saved-guide integration coverage.

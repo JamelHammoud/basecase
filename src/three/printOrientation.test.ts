@@ -7,6 +7,20 @@ import { bvhOf, checkPrintability, extraPose, extraPoses, type Vec3 } from './pr
 const trianglesOf = (geometry: THREE.BufferGeometry) =>
   (geometry.index ? geometry.toNonIndexed() : geometry).attributes.position.array as Float32Array;
 
+function steppedBoxes(segments: number) {
+  const boxes = [
+    new THREE.BoxGeometry(40, 30, 20, segments, segments, segments),
+    new THREE.BoxGeometry(20, 20, 10, segments, segments, segments).translate(30, 10, 0),
+  ];
+  const arrays = boxes.map((box) => trianglesOf(box.rotateZ(0.3).translate(15, -30, 20)));
+  const tris = new Float32Array(arrays[0].length + arrays[1].length);
+
+  tris.set(arrays[0]);
+  tris.set(arrays[1], arrays[0].length);
+
+  return tris;
+}
+
 function raisedTriangle(height: number, floor = false) {
   return new Float32Array([
     0,
@@ -118,6 +132,26 @@ describe('print orientation costs', () => {
 });
 
 describe('print orientation batches', () => {
+  it.each([5, 10])('rejects unsupported resting planes without reading every vertex at %s subdivisions', (segments) => {
+    const tris = steppedBoxes(segments);
+    const saved = tris.slice();
+    const bvh = bvhOf(tris);
+    let reads = 0;
+    const watched = new Proxy(tris, {
+      get(target, key) {
+        if (typeof key === 'string' && /^\d+$/.test(key)) reads++;
+
+        return Reflect.get(target, key, target);
+      },
+    });
+    const shape = checkPrintability(watched, bvh)!;
+
+    expect(shape.poses.map((pose) => pose.axis)).toEqual(['+x', '-x', '+y', '-y', '+z', '-z']);
+    expect(reads).toBeLessThan(tris.length * 18);
+    expect(shape).toEqual(checkPrintability(tris, bvh));
+    expect(tris).toEqual(saved);
+  });
+
   it('batches uncached requested faces while retaining cache keys, first matches and request order', () => {
     const tris = trianglesOf(new THREE.BoxGeometry(40, 20, 10));
     const solid = new ShapeSolid(tris);

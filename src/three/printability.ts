@@ -212,12 +212,16 @@ function faceBuckets(tris: Float32Array) {
 }
 
 function restsOn(tris: Float32Array, bucket: FaceBucket, n: THREE.Vector3): boolean {
-  let extreme = -Infinity;
+  const plane = bucket.offset / bucket.area;
 
-  for (let i = 0; i < tris.length; i += 3)
-    extreme = Math.max(extreme, tris[i] * n.x + tris[i + 1] * n.y + tris[i + 2] * n.z);
+  for (let i = 0; i < tris.length; i += 3) {
+    const projection = tris[i] * n.x + tris[i + 1] * n.y + tris[i + 2] * n.z;
+    const gap = projection - plane;
 
-  return extreme - bucket.offset / bucket.area < 0.3;
+    if (gap >= 0.3 || Number.isNaN(gap)) return false;
+  }
+
+  return true;
 }
 
 function faceDowns(tris: Float32Array): Vec3[] {

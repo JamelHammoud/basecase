@@ -33,7 +33,7 @@ export async function observeInstall(options: {
     const environment = outcome.environment;
 
     if (signal.aborted) notify(completed, { status: 'cancelled' });
-    else if (!evidence && options.infrastructure?.()) notify(completed, { status: 'infrastructure' });
+    else if (outcome.kind !== 'skill' && options.infrastructure?.()) notify(completed, { status: 'infrastructure' });
     else notify(completed, { status, ...(evidence ? { evidence } : {}), ...(environment ? { environment } : {}) });
 
     return outcome;

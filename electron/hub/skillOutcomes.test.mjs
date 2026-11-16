@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { startFakeHub } from '../../e2e/fakeHub.ts';
 import { HubAccount } from './index.mjs';
 
@@ -95,4 +95,64 @@ it('rejects oversized records and remote escaped names without constructing down
   );
   expect(await client.skillOutcomes()).toEqual([]);
   expect(hub.requests.every((r) => r.path === '/api/models')).toBe(true);
+});
+
+it('keeps valid local and remote reports when another report expands beyond the normalized size cap', async () => {
+  hub = await startFakeHub({ token: 'test' });
+
+  const client = account();
+  const local = { status: 'cancelled' };
+  const remote = { status: 'passed' };
+  const card = Buffer.from('---\nlibrary_name: basecase\ntags:\n- basecase-skill-outcome\n---');
+  const oversized = `[${new Array(15_000).fill('1e20').join(',')}]`;
+
+  await client.publishSkillOutcome(local);
+  hub.seed('reporter/expanded', { 'README.md': card, 'outcome.json': Buffer.from(oversized) }, 'model');
+  hub.seed('reporter/valid', { 'README.md': card, 'outcome.json': Buffer.from(JSON.stringify(remote)) }, 'model');
+  expect(await client.skillOutcomes()).toEqual([local, remote]);
+});
+
+it('stops reading local reports at the response cap in hash order', async () => {
+  hub = await startFakeHub({ token: 'test' });
+
+  const client = account();
+  const entries = await Promise.all(
+    Array.from({ length: 105 }, async (_, attempt) => {
+      const record = { attempt };
+
+      return { id: await client.outcomes.save(record), record };
+    }),
+  );
+  const saved = vi.spyOn(client.outcomes, 'saved');
+  const expected = entries.sort((a, b) => a.id.localeCompare(b.id)).slice(0, 100);
+
+  expect(await client.skillOutcomes()).toEqual(expected.map((entry) => entry.record));
+  expect(saved).toHaveBeenCalledTimes(100);
+});
+
+it('keeps local reports readable while publication metadata is replaced', async () => {
+  hub = await startFakeHub({ token: 'test' });
+
+  const client = account();
+  const outcome = { status: 'passed' };
+
+  await client.publishSkillOutcome(outcome);
+  await client.signIn('test');
+
+  const rename = fs.promises.rename.bind(fs.promises);
+  const replacement = vi.spyOn(fs.promises, 'rename').mockImplementationOnce(async (from, to) => {
+    const local = [];
+
+    for await (const saved of client.outcomes.local()) local.push(saved.record);
+
+    expect(local).toEqual([outcome]);
+    await rename(from, to);
+  });
+
+  try {
+    expect(await client.publishSkillOutcome(outcome)).toEqual({ stored: true, published: true });
+    expect(replacement).toHaveBeenCalledOnce();
+  } finally {
+    replacement.mockRestore();
+  }
 });

@@ -47,14 +47,17 @@ it('keeps a local verdict when feedback publication fails', async () => {
   ).resolves.toBe(refused);
 });
 
-it('classifies a trainer infrastructure refusal separately from Arena failure', async () => {
-  const completed = vi.fn();
+it.each([undefined, refused.evidence])(
+  'keeps trainer infrastructure failure neutral with evidence %j',
+  async (evidence) => {
+    const completed = vi.fn();
 
-  await observeInstall({
-    signal: new AbortController().signal,
-    completed,
-    infrastructure: () => true,
-    work: () => Promise.resolve({ ...refused, evidence: undefined }),
-  });
-  expect(completed).toHaveBeenCalledWith({ status: 'infrastructure' });
-});
+    await observeInstall({
+      signal: new AbortController().signal,
+      completed,
+      infrastructure: () => true,
+      work: () => Promise.resolve({ ...refused, evidence }),
+    });
+    expect(completed).toHaveBeenCalledWith({ status: 'infrastructure' });
+  },
+);

@@ -105,6 +105,14 @@ function validArena(record: InstallOutcome) {
 
 const validAttempt = (attempt: unknown) => typeof attempt === 'string' && attempt.length > 0 && attempt.length <= 128;
 
+function boundedSchema(value: unknown): value is RobotSchema {
+  return (
+    isRobotSchema(value) &&
+    value.limbs.length <= value.joints.length &&
+    value.joints.every((joint) => joint.depth > 0 && joint.depth <= value.joints.length)
+  );
+}
+
 function relevant(value: unknown, source: InstallOutcome['source'], target: RobotSchema): value is InstallOutcome {
   const r = value as InstallOutcome;
 
@@ -118,7 +126,7 @@ function relevant(value: unknown, source: InstallOutcome['source'], target: Robo
     /^[a-f0-9]{40}$/.test(r.source.revision) &&
     r.source.skill === source.skill &&
     r.source.schema === source.schema &&
-    isRobotSchema(r.target.schema) &&
+    boundedSchema(r.target.schema) &&
     jointMap(r.target.schema, target).ok &&
     jointMap(target, r.target.schema).ok &&
     validArena(r)

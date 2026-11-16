@@ -73,6 +73,12 @@ describe('reported installation outcomes', () => {
     ).toBe(0);
   });
   it('ignores malformed and unavailable feedback', () => expect(score([null, {}, '{'])).toBe(0));
+  it('rejects sparse limb depths before allocating joint maps', () => {
+    const outcome = record();
+
+    outcome.target.schema.joints[0].depth = 2 ** 32 - 2;
+    expect(score([outcome])).toBe(0);
+  });
   it('changes ordering while keeping incompatible candidates last and ties deterministic', () => {
     const files = Object.fromEntries(
       Object.entries(

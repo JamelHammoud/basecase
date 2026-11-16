@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
-import fs from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import { readCapped } from '../publicFetch.mjs';
+import { writeAtomicAsync } from '../library/atomicFile.mjs';
 import { gitBlob } from './gitBlob.mjs';
 import { checkedName, publishRepo } from './publishRepo.mjs';
 
@@ -49,7 +50,13 @@ async function remoteRecord(client, raw) {
     });
     const matches = file.lfs ? file.lfs.sha256 === digest(bytes) : file.blobId === gitBlob(bytes);
 
-    return matches ? JSON.parse(bytes.toString()) : null;
+    if (!matches) return null;
+
+    const record = JSON.parse(bytes.toString());
+
+    recordBytes(record);
+
+    return record;
   } catch {
     return null;
   }
@@ -91,29 +98,25 @@ export class SkillOutcomes {
     return path.join(this.dir, `${id}.json`);
   }
 
-  local() {
-    if (!fs.existsSync(this.dir)) return [];
+  async *local() {
+    const names = await fs.readdir(this.dir).catch(() => []);
 
-    return fs
-      .readdirSync(this.dir)
-      .sort()
-      .slice(0, LOCAL_RECORDS_MAX)
-      .flatMap((name) => {
-        const id = name.replace(/\.json$/, '');
+    for (const name of names.sort().slice(0, LOCAL_RECORDS_MAX)) {
+      if (!/^[a-f0-9]{64}\.json$/.test(name)) continue;
 
-        if (!HASH.test(id)) return [];
+      const saved = await this.saved(name.slice(0, -5));
 
-        return this.saved(id) ?? [];
-      });
+      if (saved) yield saved;
+    }
   }
 
-  saved(id) {
+  async saved(id) {
     try {
       const file = this.file(id);
 
-      if (fs.statSync(file).size > RECORD_BYTES + 2048) return null;
+      if ((await fs.stat(file)).size > RECORD_BYTES + 2048) return null;
 
-      const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const saved = JSON.parse(await fs.readFile(file, 'utf8'));
 
       return digest(recordBytes(saved.record)) === id ? { ...saved, id } : null;
     } catch {
@@ -121,14 +124,15 @@ export class SkillOutcomes {
     }
   }
 
-  save(record) {
+  async save(record) {
     const bytes = recordBytes(record);
     const id = digest(bytes);
     const file = this.file(id);
 
-    fs.mkdirSync(this.dir, { recursive: true });
-
-    if (!fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify({ record, published: [] }), { flag: 'wx' });
+    await fs.mkdir(this.dir, { recursive: true });
+    await fs.writeFile(file, JSON.stringify({ record, published: [] }), { flag: 'wx' }).catch((error) => {
+      if (error.code !== 'EEXIST') throw error;
+    });
 
     return id;
   }
@@ -155,17 +159,24 @@ export class SkillOutcomes {
       await publishRepo(client, { namespace, name, files: { 'README.md': Buffer.from(CARD), 'outcome.json': bytes } });
 
     saved.published.push(key);
-    fs.writeFileSync(this.file(saved.id), JSON.stringify({ record: saved.record, published: saved.published }));
+    await writeAtomicAsync(this.file(saved.id), JSON.stringify({ record: saved.record, published: saved.published }));
+  }
+
+  async *queued(preferredId) {
+    const preferred = preferredId && (await this.saved(preferredId));
+
+    if (preferred) yield preferred;
+
+    for await (const saved of this.local()) {
+      if (saved.id !== preferredId) yield saved;
+    }
   }
 
   flush(connection, preferredId) {
     const run = async () => {
       if (!connection) return;
 
-      const preferred = preferredId && this.saved(preferredId);
-      const records = [preferred, ...this.local().filter((saved) => saved.id !== preferredId)].filter(Boolean);
-
-      for (const saved of records) {
+      for await (const saved of this.queued(preferredId)) {
         try {
           await this.publishOne(connection, saved);
         } catch {
@@ -180,11 +191,11 @@ export class SkillOutcomes {
   }
 
   async publish(record, connection) {
-    const id = this.save(record);
+    const id = await this.save(record);
 
     await this.flush(connection, id);
 
-    const saved = this.saved(id);
+    const saved = await this.saved(id);
     const key = connection && `${connection.client.origin}/${connection.namespace}`;
 
     return { stored: true, published: !!key && !!saved?.published.includes(key) };
@@ -193,8 +204,21 @@ export class SkillOutcomes {
   async find(client, connection) {
     void this.flush(connection).catch(() => {});
 
-    const records = [...this.local().map((saved) => saved.record), ...(await remoteRecords(client))];
+    const remote = remoteRecords(client);
+    const records = new Map();
 
-    return [...new Map(records.map((record) => [digest(recordBytes(record)), record])).values()].slice(0, RECORDS_MAX);
+    for await (const saved of this.local()) {
+      records.set(saved.id, saved.record);
+
+      if (records.size >= RECORDS_MAX) break;
+    }
+
+    for (const record of await remote) {
+      if (records.size >= RECORDS_MAX) break;
+
+      records.set(digest(recordBytes(record)), record);
+    }
+
+    return [...records.values()];
   }
 }

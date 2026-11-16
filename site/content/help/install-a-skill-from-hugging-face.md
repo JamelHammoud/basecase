@@ -57,7 +57,7 @@ The list puts skills Basecase can install first, then uses reported installation
 
 If a file doesn't match `skill.json`, the install stops and a toast shows the name of the file. Legs with a different number of joints don't fit, and the toast says how many joints each one has.
 
-Installation results are saved on your computer. When you sign in, Basecase also publishes them under your own Hugging Face account. Failed Arena runs count as failures. Canceled attempts and infrastructure failures don’t affect ordering. Reports must match the source commit and current Arena version. Other people’s reports help order the list but don’t prove your installation.
+Installation results are saved on your computer. While signed in, Basecase also publishes them under your own Hugging Face account. Pending results publish when you next open **Install Skill** or finish an installation while signed in. Failed Arena runs count as failures. Canceled attempts and infrastructure failures don’t affect ordering. Reports must match the source commit and current Arena version. Other people’s reports help order the list but don’t prove your installation.
 
 The author's Arena evidence doesn't carry over, so your installed skill needs its own. Installed Walk and Settle candidates also face the same required starts and stops as locally trained candidates.
 

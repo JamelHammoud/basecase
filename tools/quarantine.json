@@ -112,14 +112,6 @@
     "reason": "Run 43844795005 left operatorCamera().feeding true through its unchanged 10000 ms poll, then reached the final empty-error assertion on retry with an unclosed VideoFrame warning. The existing wave quarantine under #995 has the same two symptoms. Feed completion and the remaining frame owner are not established. Preserve the salute, live camera, Escape shutdown, tile removal, ended track and empty-error assertions during tracing and equal-load measurements."
   },
   {
-    "file": "e2e/remoteTraining.e2e.test.ts",
-    "test": "configures a training computer and reattaches Stand after a studio restart without a second dispatch",
-    "issue": 1365,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Run 43844795005 observed zero initial train-start requests at line 26, then stalled locating Connect in configureRemoteComputer at line 111 on retry. The existing grouped recovery quarantine under #1365 already records absent dispatch and configuration stalls. The cause remains unestablished. Both recovery paths stay active on other platforms while #1365 traces configuration, dispatch, persistence and reattachment and measures baseline and candidate runs at equal load."
-  },
-  {
     "file": "e2e/fleet.e2e.test.ts",
     "test": "opens Fleet from Operate, restricts a site viewer and reopens persistent inventory",
     "issue": 1386,

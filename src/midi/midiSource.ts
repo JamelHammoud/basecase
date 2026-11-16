@@ -33,7 +33,7 @@ function play(event: MidiEvent) {
 export const midiInputSource: InputSource = {
   id: 'midi',
   read: ({ time }) => {
-    if (time !== undefined) player(time).forEach(play);
+    if (time !== undefined) player(time, play);
 
     return null;
   },

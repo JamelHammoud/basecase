@@ -33,3 +33,11 @@ Measured on an M-series Mac for a two-minute try (6,001 frames, 26 signals): the
 ## Try search runs in a worker
 
 `src/cases/trySearch/trySearch.perf.test.ts` builds 10,000 tries and fails a text query over 50 ms or More Like This over 200 ms. On an M5 Pro at a load average of 25: text queries took a median of 6.5 ms (p95 17.3 ms), More Like This 3.1 ms, the build 402 ms, and the 8.8 MB snapshot was written in 47 ms and read in 55 ms.
+
+## MIDI playback emits due events directly
+
+The only production consumer of `midiPlayer` is `midiSource`, which previously sliced the due range and immediately iterated it. Playback now invokes that consumer directly. Device input does not use the file player. No playback batch array is created, including frames between notes, empty songs and frames after completion.
+
+`src/midi/midiPlayer.test.ts` compares complete per-frame outputs with the former sliced calculation over 300 and 600 clock reads. Each fixture has 100 alternating note and control events, groups of three equal-time events, forward jumps and backward restarts. The former calculation creates 300 and 600 batch arrays respectively, including empty batches. The new delivery path creates zero batch arrays. These are source-derived allocation counts, not timings or a claim about complete simulation latency. Event objects and named input events retain their existing ownership and allocation.
+
+Boundary coverage includes repeated timestamps, the 1 ns due tolerance, simultaneous event order, original event identity, empty songs, completion and restart. The source integration test retains real input-bus delivery and null drive output. No browser flow or screen changes. No tests are quarantined by this refinement.

@@ -14,7 +14,10 @@ const arm = () => fixtureRobots().find((robot) => robot.id === 'arm-6dof')!;
 
 function fixtureCase(goal: GoalKind) {
   const robot = arm();
-  const built = buildCase({ goal, world: 'floor' }, builderRobot(buildRig(robot.joints, robot.parts), robot.parts));
+  const built = buildCase(
+    { goal, world: 'floor', values: { fixtureMassG: 35 } },
+    builderRobot(buildRig(robot.joints, robot.parts), robot.parts),
+  );
 
   if (!built.ok) throw new Error(built.problem);
 
@@ -47,10 +50,12 @@ describe('passive Case fixtures', () => {
       expect(result.model.joints).toHaveLength(robot.joints.length);
       expect(result.recording!.nu).toBe(robot.joints.length);
       expect(result.recording!.nq).toBe(result.recording!.nu + 1);
-      expect(Math.max(...result.trace.signals['fixture-travel'])).toBeGreaterThan(1);
+      expect(result.case.world.objects.find((object) => object.id === 'fixture')?.massG).toBe(35);
 
       const replayTravel = trySignals(scoring).signals['fixture-travel'];
 
+      expect(Math.max(...replayTravel)).toBeGreaterThan(20);
+      expect(Math.abs(replayTravel[0])).toBeLessThan(2);
       expect(Math.max(...replayTravel)).toBeCloseTo(Math.max(...result.trace.signals['fixture-travel']), 3);
       expect((await scoreTry(scoring)).passed).toBe(true);
       expect((await runCase(mj, kase, robot, { controller: 'limp' })).passed).toBe(false);

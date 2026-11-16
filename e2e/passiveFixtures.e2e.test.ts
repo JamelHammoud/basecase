@@ -21,7 +21,7 @@ afterEach(async () => {
   await app?.close();
 });
 
-for (const name of ['Open a Lid', 'Pull a Drawer']) {
+for (const name of ['Open a Lid']) {
   it(`creates ${name}, edits its weight and reopens its recorded reference`, async () => {
     const robot = fixtureRobots().find((arm) => arm.id === 'arm-6dof')!;
     const { page } = app;

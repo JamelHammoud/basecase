@@ -74,6 +74,61 @@ describe('forwardKinematics', () => {
   });
 });
 
+describe('solveIK residual reporting', () => {
+  it.each([0, 1, 40])('reports the accepted pose residuals after %i iterations', (iterations) => {
+    const { rig } = arm();
+    const root = { position: [10, 20, 30] as V3, rotation: [20, 30, 40] as V3 };
+    const targets = [
+      { partId: 'fore', point: [200, 0, 0] as V3, target: [120, 90, 30] as V3 },
+      { partId: 'upper', point: [50, 0, 0] as V3, target: [40, 40, 30] as V3, weight: 0.1 },
+      { partId: 'missing', point: [0, 0, 0] as V3, target: [10, 30, 30] as V3 },
+    ];
+    const result = solveIK(rig, { elbow: 20 }, targets, { iterations, root });
+    const posed = forwardKinematics(rig, { values: result.values, root });
+    const errors = targets.map((t) =>
+      new THREE.Vector3(...t.point)
+        .applyMatrix4(partMotion(rig, posed, t.partId) ?? posed.root)
+        .distanceTo(new THREE.Vector3(...t.target)),
+    );
+
+    expect(result.errors).toEqual(errors);
+    expect(result.maxError).toBe(Math.max(...errors));
+  });
+
+  it.each([300, 600])('transforms %i stationary targets once per solve', (size) => {
+    const rig = buildRig([], []);
+    const targets = Array.from({ length: size }, (_, i) => ({
+      partId: 'missing',
+      point: [i, 0, 0] as V3,
+      target: [i, i, 0] as V3,
+    }));
+    const transform = vi.spyOn(THREE.Vector3.prototype, 'applyMatrix4');
+
+    try {
+      const result = solveIK(rig, {}, targets);
+
+      expect(result.errors).toEqual(targets.map((_, i) => i));
+      expect(result.maxError).toBe(size - 1);
+      expect(transform).toHaveBeenCalledTimes(size);
+    } finally {
+      transform.mockRestore();
+    }
+  });
+
+  it('keeps empty and nonfinite residual summaries', () => {
+    const rig = buildRig([], []);
+
+    expect(solveIK(rig, {}, [])).toEqual({ values: {}, errors: [], maxError: 0 });
+
+    for (const value of [Infinity, NaN]) {
+      const result = solveIK(rig, {}, [{ partId: 'missing', point: [0, 0, 0], target: [value, 0, 0] }]);
+
+      expect(result.errors).toEqual([value]);
+      expect(result.maxError).toBe(value);
+    }
+  });
+});
+
 describe('solveIK', () => {
   it('reaches a reachable target', () => {
     const { rig } = arm();

@@ -118,6 +118,8 @@ Measurements and limits: [Robot shells performance evidence](../notes/performanc
 
 ## Performance: joints and kinematics
 
+- **IK reporting reuses accepted residuals.** `utils/kinematicsIk.ts` reports errors from the residual vectors retained with the accepted pose. Rejected trials never replace them. Convergence scans those vectors directly, and final reporting accumulates the maximum while building the returned errors. Neither maximum uses an argument spread or a temporary error array. `kinematics.test.ts` checks returned errors against independently transformed targets across iteration limits and root transforms, plus empty and nonfinite results and stationary-target transform counts. [Evidence](../notes/performance-joints.md#ik-reporting-reuses-accepted-residuals).
+
 Measurements and limits: [Joints and kinematics performance evidence](../notes/performance-joints.md).
 
 - **Xacro tokenization prepares its end once.** `utils/robotImport/xacroExpr.ts` finds the last non-whitespace character once per expression, then uses the sticky token cursor without slicing and trimming the remaining text per token. Properties, macro arguments, conditions, `${}` and `$(eval)` share this evaluator. The original input still determines the 4,000-character limit and error text. `xacroExpr.test.ts` covers Unicode whitespace, quoted spaces, malformed input, recovery after errors and the exact length boundary. [Evidence](../notes/performance-joints.md#xacro-tokenization-prepares-its-end-once).

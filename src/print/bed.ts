@@ -215,8 +215,11 @@ export interface BedFit {
   spot: Rect | null;
 }
 
+export const heightFits = (height: number, bed: Bed): boolean =>
+  Number.isFinite(height) && height > 0 && height <= bed.height + EPS;
+
 export function fitOnBed(w: number, d: number, h: number, bed: Bed): BedFit | null {
-  if (bed.unsupported || ![w, d, h].every((n) => Number.isFinite(n) && n > 0) || h > bed.height + EPS) return null;
+  if (bed.unsupported || ![w, d].every((n) => Number.isFinite(n) && n > 0) || !heightFits(h, bed)) return null;
 
   const straight = freeSpot({ w, d }, bed);
 

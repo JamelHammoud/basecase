@@ -166,7 +166,7 @@ describe('buildCatalog', () => {
     expect(two.height).toBe(220);
     expect(two.nozzles).toEqual([0.4, 0.6]);
     expect(two.obstacles).toHaveLength(2);
-    expect(two.brimClearance).toBeCloseTo(4.1);
+    expect(two.brimClearance).toBeCloseTo(18.1);
     expect(two.obstacles[0].zMax).toBe(4);
     expect(two.obstacles[1].zMin).toBe(35);
     expect(two.toolheadClearance).toEqual({ radius: 25, height: 20 });
@@ -175,7 +175,7 @@ describe('buildCatalog', () => {
       process: '0.20mm SPEED @Two',
       processes: [
         { name: '0.10mm SPEED @Two', layer: 0.1, brimClearance: 0 },
-        { name: '0.20mm SPEED @Two', layer: 0.2, brimClearance: 4.1 },
+        { name: '0.20mm SPEED @Two', layer: 0.2, brimClearance: 18.1 },
       ],
       filaments: { TPU: { name: 'Generic FLEX @Acme Two', density: undefined } },
     });

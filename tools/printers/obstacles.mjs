@@ -73,10 +73,14 @@ export function obstacleSettings(machine) {
 export function brimSettings(process) {
   if (process.brim_type === 'no_brim') return { brimClearance: 0 };
 
-  const width = Number(process.brim_width ?? 0);
+  const suppliedWidth = Number(process.brim_width ?? 0);
   const gap = Number(process.brim_object_gap ?? 0);
 
-  if (!Number.isFinite(width) || !Number.isFinite(gap) || width < 0 || gap < 0) return { obstacleUnsupported: true };
+  if (!Number.isFinite(suppliedWidth) || !Number.isFinite(gap) || suppliedWidth < 0 || gap < 0)
+    return { obstacleUnsupported: true };
+
+  const automatic = !process.brim_type || process.brim_type === 'auto_brim';
+  const width = automatic ? 18 : suppliedWidth;
 
   return { brimClearance: width > 0 ? width + gap : 0 };
 }

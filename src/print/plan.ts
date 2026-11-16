@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import type { PrinterSetup } from '../data/printers';
 import { sameDirection, type PrintPose, type PrintShape, type Vec3 } from '../three/printability';
 import type { PartPrint, PrintMaterial } from '../types/robotics';
-import { bedSizeText, fitOnBed, placementFits, type Bed } from './bed';
+import { bedSizeText, fitOnBed, heightFits, placementFits, type Bed } from './bed';
 import { sizeLabel } from '../utils/size';
 import { packPlates, type PackItem } from './pack';
 
@@ -94,7 +94,7 @@ function poseFit(pose: PrintPose, bed: Bed, print?: PartPrint) {
   const [w, d] = print.turned ? [pose.size[1], pose.size[0]] : pose.size;
   const rect = { x: print.at[0], y: print.at[1], w, d };
 
-  return pose.size[2] <= bed.height && placementFits(rect, bed) ? { yaw: print.turned ? 90 : 0, spot: rect } : null;
+  return heightFits(pose.size[2], bed) && placementFits(rect, bed) ? { yaw: print.turned ? 90 : 0, spot: rect } : null;
 }
 
 export function choosePose(shape: PrintShape, bed: Bed, print?: PartPrint): PrintCheck {

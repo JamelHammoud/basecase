@@ -181,3 +181,20 @@ describe('printer obstacle placement', () => {
     expect(changed.plates[0].hash).not.toBe(plan.plates[0].hash);
   });
 });
+
+describe('printer height validation', () => {
+  it.each([
+    [100.0000005, true],
+    [100.000002, false],
+    [0, false],
+    [-1, false],
+    [Number.NaN, false],
+    [Number.POSITIVE_INFINITY, false],
+  ])('uses the same height validation for automatic and fixed poses at %s mm', (height, fits) => {
+    const bed = bedOf(model());
+    const printShape = shape([10, 10, height]);
+
+    expect(choosePose(printShape, bed).fits).toBe(fits);
+    expect(choosePose(printShape, bed, { at: [0, 0], plate: 1 }).fits).toBe(fits);
+  });
+});

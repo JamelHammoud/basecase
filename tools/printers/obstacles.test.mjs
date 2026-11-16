@@ -75,12 +75,20 @@ describe('pinned Orca collision volume settings', () => {
 });
 
 describe('default-process brim settings', () => {
-  it('includes the supplied brim width and object gap conservatively for automatic brims', () => {
+  it('reserves the automatic brim upper bound even when the supplied width is smaller or absent', () => {
     expect(brimSettings({ brim_type: 'auto_brim', brim_width: '4', brim_object_gap: '0.1' })).toEqual({
+      brimClearance: 18.1,
+    });
+    expect(brimSettings({ brim_type: 'auto_brim', brim_width: '0' })).toEqual({ brimClearance: 18 });
+    expect(brimSettings({ brim_width: '4' })).toEqual({ brimClearance: 18 });
+    expect(brimSettings({})).toEqual({ brimClearance: 18 });
+  });
+
+  it('uses supplied manual brim widths and leaves explicit no-brim presets clear', () => {
+    expect(brimSettings({ brim_type: 'outer_only', brim_width: '4', brim_object_gap: '0.1' })).toEqual({
       brimClearance: 4.1,
     });
     expect(brimSettings({ brim_type: 'no_brim', brim_width: '4' })).toEqual({ brimClearance: 0 });
-    expect(brimSettings({})).toEqual({ brimClearance: 0 });
     expect(brimSettings({ brim_width: '-4' })).toEqual({ obstacleUnsupported: true });
   });
 });

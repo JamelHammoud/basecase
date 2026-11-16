@@ -45,7 +45,7 @@ Thin walls block Ready to build when they cover at least 100 mm² or 10% of the 
 
 For a full build, plates are packed per material, around the bed's clear areas. Parts the build guide needs first go on the first plates, and parts no step uses go last. A [repair plate](/help/repair-a-part) holds only one copy of the replacement part. Until a plate is sliced, its time and weight show with ≈. Once Bambu Studio or OrcaSlicer slices it, the plate shows the slicer's own time, grams, supports and warnings.
 
-Supported printer obstacles reserve conservative space for clips and docks, including supplied toolhead and brim clearance. Low clips reserve the same space as tall obstacles. A saved position that crosses this space fails fit and stays off exported plates. Basecase doesn't validate every slicer travel move.
+Supported printer obstacles reserve conservative space for clips and docks, including supplied toolhead and brim clearance. Automatic brims reserve 18 mm plus the brim-object gap, even when the configured width is smaller. Low clips reserve the same space as tall obstacles. A saved position that crosses this space fails fit and stays off exported plates. Basecase doesn't validate every slicer travel move.
 
 The Time check uses sliced times for matching plates with current labels and estimates for the rest. It divides print hours across your saved printers, counting at least one, then adds estimated assembly and servo setup. It doesn't assign plates to printers or account for when printers are free.
 

@@ -50,6 +50,8 @@ A Motor Kit candidate that fails isn't kept. Its row shows the weakest variant o
 
 For [several remote seeds](/help/train-several-seeds-on-another-computer), development evaluation selects one candidate before Arena. If that candidate fails, the other children don’t receive successive Arena trials.
 
+Cloning selection uses validation loss from the frozen dataset. For other skills, the studio compares a nominal rollout of each candidate's task contract. This comparison is separate from Arena's sealed variants.
+
 Walk and Settle candidates also face the required switches between Kit skills before they're kept. These checks use the same movement bounds as Routines. A failed switch names the movement that failed, separately from Arena's result. See [Prove a hand-off between skills](/help/prove-a-hand-off-between-skills) for the bounds.
 
 If a policy was trained from a Case's tries, its Case judges it instead. The policy runs the Case 32 times. Each run starts with joints up to 5° off and draws friction, masses, servo strength and delays of up to 20 ms the same way as in **Checks**. The bar is the same: 29 of 32. For steps, see [Train a policy from your tries](/help/train-a-policy-from-your-tries).

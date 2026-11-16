@@ -61,7 +61,9 @@ function saveArtifacts(dir, policy, resume) {
 }
 
 function checkedRuntime(files, hashes) {
-  if (Object.entries(files).some(([name, bytes]) => sha256(bytes) !== hashes[name]))
+  const runtime = Object.entries(hashes).filter(([name]) => /^(forge-train|libmujoco\.)/.test(name));
+
+  if (runtime.some(([name, hash]) => !files[name] || sha256(files[name]) !== hash))
     throw new Error('The frozen training runtime changed. Start training again.');
 
   return files;

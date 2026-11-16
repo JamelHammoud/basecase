@@ -39,8 +39,7 @@ export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 RAYON_NUM_THRE
 
 export function workerScript(slot = 0, grouped = false) {
   return `umask 077
-ulimit -f 65536
-export OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2
+prlimit --pid "$$" --fsize=${ARTIFACT_BYTES}:${ARTIFACT_BYTES} || { printf '1\\n' > exit; exit 0; }
 printf '%s\\n' "$$" > pid
 exec 8>../cpu-${slot === 1 ? 1 : 0}.lock
 flock 8

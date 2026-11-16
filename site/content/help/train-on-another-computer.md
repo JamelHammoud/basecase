@@ -13,7 +13,7 @@ covers:
 
 Train a skill on a Linux computer from the desktop studio and recover its locally checked policy after a restart.
 
-You can use one Linux x64 training computer with the desktop studio. The training computer must have glibc 2.35 or newer, OpenSSH, flock, taskset and GNU coreutils.
+You can use one Linux x64 training computer with the desktop studio. The training computer must have glibc 2.35 or newer, OpenSSH, flock, taskset, prlimit and GNU coreutils.
 Use an existing SSH identity that authenticates without an interactive password prompt. Read the training computer's SSH host public key through a trusted connection before you configure it.
 
 You can recover training runs for Motor Kit skills, taught skills, saved moves and dataset cloning. You run coaching, stress training and hand-off training on your computer.

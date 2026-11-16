@@ -14,6 +14,7 @@ covers:
 You can share a skill's training budget across seeds and return one candidate for local checking.
 
 Before you begin, [connect a Linux training computer](/help/train-on-another-computer) in the desktop studio.
+For a Stand run, use two attempts to compare starting seeds within its existing budget.
 You can use up to 4 attempts and run up to 2 trainers at once. The default is one attempt.
 Grouped attempts don’t publish live training snapshots.
 
@@ -30,10 +31,11 @@ Grouped attempts don’t publish live training snapshots.
 
 ![Stand showing aggregate progress for two training attempts](/help/train-on-another-computer/training.png)
 
+8. Wait for the skill's local result.
+
 The attempts share the configured time and iteration budgets. If you increase the number of attempts, each seed gets less training work.
-After all attempts finish, the studio uses development evaluation to select one candidate, then runs its usual local checks and Arena.
-For cloning, the studio uses validation loss from the frozen dataset. For other skills, it uses a nominal rollout of their task contract, separate from Arena's sealed variants.
+The studio selects one candidate for its local checks. See [Arena](/help/arena) for how it selects and judges the candidate.
 
 If you close the studio, reopen the same scene to recover the workflow. The studio keeps completed child attempts marked as completed.
-Use Stop to record cancellation for each child, including while disconnected.
+Click **Stop** to cancel the attempts, including while disconnected.
 If training or the selected candidate fails, the studio keeps the retained skill. If you change the design, the studio refuses the old result.

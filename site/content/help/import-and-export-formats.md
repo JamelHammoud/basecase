@@ -56,7 +56,6 @@ A mesh imported as a part that comes in smaller than 1 mm across is read as mete
 
 - A STEP or IGES file can be up to 200 MB and 1,000 bodies.
 - A robot zip can be up to 200 MB to download, and 600 MB once unzipped.
-- A manufacturing kit can contain up to 256 MB before compression.
 - A captured world drop can total up to 64 MB across 256 files, with 200,000 collider triangles and 1,000,000 splat points.
 
 ## Export
@@ -71,7 +70,6 @@ Every export is in the **Export** menu at the top right of the window.
 | **Cut Files** | `<scene>-cut-files.zip` | One DXF per [sheet part](/help/cut-parts-from-sheet), with its outline and holes in millimeters |
 | **STEP**, in the desktop app only | `<scene>.step` | Every visible solid part as its own body, in millimeters, Z up, as [Export a STEP file](/help/export-a-step-file) explains |
 | **Scene** | `<scene>.basecase` | The scene, including its imported worlds, to open in Basecase |
-| **Kit** | `<scene>-kit.zip` | Plates, an HTML build guide, packing and servo sheets, and a manifest, as [Export a robot kit](/help/export-a-robot-kit) explains |
 | **Robot Package** | `<scene>-robot.zip` | MJCF, URDF, meshes, joint map, policies and ROS 2 package files, listed in [Robot package contents](/help/robot-package-contents) |
 | **Copy as Markdown** | The clipboard | The scene as a Markdown spec: its goal and every part with its size |
 | **AirDrop** on a Mac, **USDZ Model** on Windows | `<scene>.usdz` | The solid parts as a USDZ model, which an iPhone or iPad opens in 3D |

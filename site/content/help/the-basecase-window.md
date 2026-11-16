@@ -41,7 +41,7 @@ From left to right, the title bar holds:
 - The **Scenes** menu, which lists every scene you've saved ([[⌘O]]).
 - A tab for each open scene. Click **+** to start a new one ([[⌘T]]).
 - **Undo** and **Redo** ([[⌘Z]] and [[⇧⌘Z]]).
-- **Export**, for STL, 3MF, scene files, robot packages, [manufacturing kits](/help/export-a-robot-kit) and DXF cut files for sheet parts.
+- **Export**, for STL, 3MF, scene files, robot packages and DXF cut files for sheet parts.
 - The inspector button, which shows or hides the right panel ([[⌘I]]).
 
 On Windows, click the **Menu** button at the far left to open the File, Edit, View, Window and Help menus. On a Mac, these menus are in the menu bar.

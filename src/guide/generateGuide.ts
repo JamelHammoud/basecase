@@ -23,7 +23,6 @@ export interface GenerateGuideInput {
   onProgress?: (p: GuideProgress) => void;
   onCover?: (dataUrl: string) => void;
   signal?: AbortSignal;
-  persist?: boolean;
   order?: () => Promise<CheckedOrder | null>;
 }
 
@@ -153,16 +152,10 @@ export async function generateGuide(input: GenerateGuideInput): Promise<Generate
 
   if (!rendered || input.signal?.aborted) return null;
 
-  const saved = await saveRendered(input, { id, html: rendered.html });
-  const record = recordOf({ id, rendered, input, order });
-
-  return { record, plan: rendered.plan, saved, html: rendered.html };
-}
-
-async function saveRendered(input: GenerateGuideInput, payload: { id: string; html: string }): Promise<boolean> {
-  if (input.persist === false) return false;
-
   input.onProgress?.({ share: 0.97, label: 'Saving PDF' });
 
-  return (await platformBridge.saveGuide(payload)).ok;
+  const saved = await platformBridge.saveGuide({ id, html: rendered.html });
+  const record = recordOf({ id, rendered, input, order });
+
+  return { record, plan: rendered.plan, saved: saved.ok, html: rendered.html };
 }

@@ -67,7 +67,7 @@ function weld(soup: Float32Array) {
   const welded = mergeVertices(geometry, 1e-3);
 
   return {
-    positions: (welded.getAttribute('position').array as Float32Array).slice(),
+    positions: welded.getAttribute('position').array as Float32Array,
     indices: new Uint32Array(welded.index!.array as ArrayLike<number>),
   };
 }

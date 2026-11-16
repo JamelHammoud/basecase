@@ -121,15 +121,24 @@ export function samplesOf(solid: ShapeSolid, maxSamples: number): Float32Array {
   const pos = solid.positions;
   const count = pos.length / 3;
   const step = Math.max(1, Math.floor(count / maxSamples));
-  const out: number[] = [];
+  let sampleCount = 0;
 
-  for (let i = 0; i < count; i += step) out.push(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]);
+  for (let i = 0; i < count; i += step) sampleCount++;
 
-  for (let t = 0; t + 2 < count && out.length / 3 < maxSamples * 1.5; t += 3 * step) {
-    for (let k = 0; k < 3; k++) out.push((pos[t * 3 + k] + pos[t * 3 + 3 + k] + pos[t * 3 + 6 + k]) / 3);
+  for (let t = 0; t + 2 < count && sampleCount < maxSamples * 1.5; t += 3 * step) sampleCount++;
+
+  const samples = new Float32Array(sampleCount * 3);
+  let at = 0;
+
+  for (let i = 0; i < count; i += step) {
+    samples[at++] = pos[i * 3];
+    samples[at++] = pos[i * 3 + 1];
+    samples[at++] = pos[i * 3 + 2];
   }
 
-  const samples = new Float32Array(out);
+  for (let t = 0; t + 2 < count && at < samples.length; t += 3 * step) {
+    for (let k = 0; k < 3; k++) samples[at++] = (pos[t * 3 + k] + pos[t * 3 + 3 + k] + pos[t * 3 + 6 + k]) / 3;
+  }
 
   solid.samples.set(maxSamples, samples);
 

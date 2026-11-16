@@ -57,4 +57,19 @@ it('reopens exact camera choices and recording identity and rejects damaged meas
     readStudyRecord({ ...study, current: { ...current, visibility: { ...visibility, times: [1, 0] } } }),
   ).toBeUndefined();
   expect(readStudyRecord({ ...study, visibility: { ...study.visibility, targets: [] } })).toBeUndefined();
+  expect(readStudyRecord({ ...study, visibility: undefined })).toBeUndefined();
+  expect(
+    readStudyRecord({ ...study, visibility: undefined, current: { ...current, visibility: undefined } }),
+  ).toBeUndefined();
+  expect(
+    readStudyRecord({ ...study, visibility: undefined, rows: [{ ...row, visibility: undefined }] }),
+  ).toBeUndefined();
+  expect(
+    readStudyRecord({
+      ...study,
+      visibility: undefined,
+      current: { ...current, visibility: undefined },
+      rows: [{ ...row, visibility: undefined }],
+    }),
+  ).toBeDefined();
 });

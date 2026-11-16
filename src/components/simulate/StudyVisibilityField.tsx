@@ -15,7 +15,7 @@ export function StudyVisibilityField({ study }: { study: Study }) {
           disabled={running}
           value={request?.tryId ?? ''}
           options={[
-            { value: '', label: 'Choose Try' },
+            { value: '', label: '' },
             ...recordings.map((recording) => ({
               value: recording.id,
               label: `${recording.caseName} ${recording.startedAt}`,

@@ -69,7 +69,7 @@ For another servo model, choose **Add Servo**.
 
 Each design keeps its check results, including failures. A design that couldn’t be measured stays in the table as **Failed**, with **Apply** disabled. Cost uses the bill of materials, including parts you own. Weight and runtime use the same calculations as Checks. Above the table, click **Checks**, **Cost** or **Weight** to sort the designs. With a Case, **Case passes** replaces **Checks**.
 
-Without a saved-try visibility comparison, each design gets 8 seeded Case runs with small changes in friction, weight, servo strength and delay. The same seeds run on every design. A Study tries up to 64 combinations. Larger spaces use a repeatable sample.
+With a Case and without a saved-try visibility comparison, each design gets 8 seeded Case runs with small changes in friction, weight, servo strength and delay. The same seeds run on every design. A Study tries up to 64 combinations. Larger spaces use a repeatable sample.
 
 The frontier marks designs that no other eligible design beats across cost, weight, runtime and available Case results. Designs with a failed check or a Case refusal stay visible but leave the frontier.
 

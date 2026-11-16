@@ -72,17 +72,15 @@ export function validVisibilityResult(value: unknown): boolean {
 }
 
 export function validVisibilityRecord(record: Record<string, unknown>): boolean {
-  if (record.visibility === undefined) return true;
+  if (!recordValue(record.current) || !Array.isArray(record.rows) || !record.rows.every(recordValue)) return false;
 
-  if (
-    !validVisibilityRequest(record.visibility) ||
-    !recordValue(record.current) ||
-    !recordValue(record.current.visibility)
-  )
-    return false;
+  const rows = record.rows;
+
+  if (record.visibility === undefined) return [record.current, ...rows].every((row) => row.visibility === undefined);
+
+  if (!validVisibilityRequest(record.visibility) || !recordValue(record.current.visibility)) return false;
 
   const key = record.current.visibility.key;
-  const rows = record.rows as Array<Record<string, unknown>>;
 
   return rows.every((row) => row.error || (recordValue(row.visibility) && row.visibility.key === key));
 }

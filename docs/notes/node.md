@@ -266,6 +266,76 @@ Reproduction uses `waitingSteps` and `claimNextStep` with inert GitHub boundarie
 
 Historical queue states at individual session starts were not retained. The snapshots have different timestamps and local inputs can change. Replaying the same queue for each historical invocation would invent readiness and completion. This replay establishes current eligibility refusal and fallback behavior only. It cannot establish completed-feature throughput, quality, allowance gains or a causal comparison. The baseline is available for later observations through the existing usage and digest reports, without adding a gate or observation wait. No quarantines change.
 
+## Complete task work accounting
+
+Issue #1514 extends the existing journal, publisher and usage report for arc #224. It does not change product-first dispatch, worker selection or #1286's CAD scene experiment. A successful invocation is still not evidence that a task shipped.
+
+### Retained evidence replay
+
+The replay selects the same 426 invocation identities whose starts precede 16 November 2026 at 05:36:55.934 UTC. Their JSON records were read again during this task. The original session snapshot is not retained separately. Three records now have finishes after that cutoff, and the earlier running states have been overwritten by completion. The replay uses their retained final measurements rather than inventing their earlier usage or status.
+
+The available all-pull cache was observed at 18:19:29.227 UTC and contains 1,064 pulls. It is newer than the original 05:39:47.830 UTC snapshot. Running the old join from `7ea1b1d1b` against these same records and this same cache yields 18 merged steps, 76 linked invocations and 350 unmatched invocations. The earlier dispatch note's 16 tasks, 67 linked and 359 unmatched remains the original observation. Later publication history accounts for that baseline difference.
+
+| Accounting partition | Invocations |
+| --- | ---: |
+| Matched merged work | 227 |
+| Matched unfinished work | 28 |
+| Explicit shared planning | 47 |
+| Genuinely unmatched | 124 |
+| Ambiguous | 0 |
+| Abandoned | 0 |
+| Running in the retained final records | 0 |
+| Total | 426 |
+
+The new join matches 255 invocations to tasks, alongside 47 shared planning invocations. It finds 78 merged task groups with retained work. Exact normalized branch names recover standalone refinements, and explicit step and pull names recover their attempts. The unmatched set contains 121 historical voice invocations and three refinements without a matching publication. Their missing origin or publication evidence stays unknown. Shared planning is classified from recorded lane names, with no allocation to downstream tasks. No historical relationship is written back to the journal.
+
+A fresh read-only GitHub history query supplies merge dates and titles for the comparison below. It returns the same 1,064 pulls, with 971 merged dates. It changes neither task linkage counts nor the publication state of the replay. Titles identify kinds for six tasks whose earlier cache lacked titles and whose retained sessions lacked a declared kind.
+
+### Equal completion windows
+
+The existing report's completion-window aggregation uses all 426 retained records and the dated history. It selects merges in two adjacent three-hour UTC windows. The first starts on 15 November at 23:36:55.934 and ends on 16 November at 02:36:55.934. The second ends at 05:36:55.934. These are equal observation windows, not treatment and control groups.
+
+| Measure | First three hours | Second three hours |
+| --- | ---: | ---: |
+| All merged pulls | 41 | 38 |
+| Feature pulls and observed feature completions | 2 | 4 |
+| Integration pulls | 4 | 1 |
+| Refinement pulls | 29 | 33 |
+| Merges without observed work | 4 | 0 |
+| Feature review invocations | 2 | 6 |
+| Feature published review outcomes | 2 unknown | 6 unknown |
+| Retained feature tokens per completion | 18,914,928 | 30,109,742.25 |
+| Retained feature session minutes per completion | 30.96 | 68.10 |
+
+Feature publication throughput is 0.67 and 1.33 per hour in these short windows. Integration throughput moves the other way. There is no recorded historical review outcome, so neither window establishes a review acceptance rate. New review invocations retain the runner's published outcome separately from the model's proposed verdict. Automatic reviews without an invocation remain outside this invocation-based measure.
+
+Retention starts only four minutes before the first window. Work before retention and historical voice origins are missing from both denominators' work totals. Session minutes sum concurrent invocations rather than delivery latency. The comparison includes retained final measurements for sessions that finished after the old cutoff. It cannot establish lifetime work, a weekly worst lane, a quality gain, a dispatch effect or subscription allowance per completion. Concurrent account quota changes cannot repair these gaps. Attribution alone establishes no allowance improvement, and shipping does not wait for another window.
+
+### Equal-size overhead
+
+Measurements ran on the macOS task host with Node v26.13.0, against the old join and report from `7ea1b1d1b` and this change. Each report input contains 426 invocations and 1,064 pulls. The full report measurement includes local file reads and aggregation, with a fresh local history cache and no network query. Each path warms once, then runs 21 times. Journal measurements warm once and run 11 times, rewriting 426 real temporary records per sample. The enriched payload adds stable work and task identities. The publication sample writes 426 receipts, including their pull URLs.
+
+| Operation | Prior median / maximum | Current median / maximum |
+| --- | ---: | ---: |
+| Task aggregation | 18.64 / 36.39 ms | 12.66 / 31.87 ms |
+| Full usage report | 28.85 / 45.21 ms | 23.67 / 52.32 ms |
+| 426 atomic session replacements | 144.11 / 293.87 ms | 114.84 / 147.56 ms |
+| 426 publication receipts | Absent | 134.37 / 167.43 ms |
+
+The receipt observation is about 0.32 ms per write. Session measurement compares journal payload overhead, not provider execution. Other worker activity varied during development measurements, so these observations are not a speedup claim or CI threshold. The join indexes branch and work identities and reuses resolved ancestry groups. The full report reuses its retained aggregation when the selected window contains every record. There is no new wait, check, service, scheduler, model call or publication retry.
+
+Reproduction uses `scratch/measure-provenance.mjs` with retained record and history snapshots. Full outputs are in `scratch/provenance-measurements.json` and `scratch/provenance-measurements-summary.json`. The script reads baseline modules through Git, writes benchmark journals only in a temporary directory and removes them afterward. These local evidence files are not committed.
+
+### Coverage and remaining limits
+
+`usageHistory.integration.test.mjs` uses temporary Git repositories, the real session journal, controlled agent execution, the durable delivery outbox and the production `usage.mjs json` command. It covers normal and borrowed feature work, standalone refinement, interrupted build and continuation, repeated revisions, rebuild, multi-step batch, abandoned publication, running work and failed publication followed by recovery. It also checks revision receipts across different worktrees, existing batch member lists, originating voice work, completion-window inclusion of earlier attempts, absent measurements and an unavailable history cache. The publisher boundary does not push or open real pulls. No browser surface applies.
+
+`usageProvenance.test.mjs` checks partition reconciliation, ambiguous competing relationships and explicit step allocation within a shared batch. Existing usage tests retain Codex and Claude cache accounting, formatting attempts and missing elapsed measurements. The report exposes invocation identities, provider and model subtotals, unknown merge dates, unobserved merges and shared batch members. Historical missing origins and measurements cannot be recovered by this implementation. No quarantine, deadline, retry or shared test policy changes.
+
+Review found that `--until` alone defaulted its start against the current clock, so a historical end could produce a reversed window. The default start now follows the selected end, and validation checks both effective bounds. The real JSON CLI fixture checks a historical end alone and rejects a future start alone. Review also found that `taskWork.byKind` omitted published outcomes even though `completionWindow.byKind` included them. Both now aggregate the same outcome totals. The integration fixture asserts both summaries. Duplicate closure previously wrote its outcome before the GitHub call, which could count an unsuccessful closure as published. `lanes/review.test.mjs` drives the lane with controlled execution and publication boundaries to check pass, blocker-derived fail, duplicate success and comment or closure failure. Failed publication leaves the outcome unknown. Market and retro sessions previously defaulted to shared even when their own pull requests merged. Their defaults now follow publication attribution, with coverage beside the shared lead case in `usageProvenance.test.mjs`. The retained replay above contains no market or retro sessions, so its partition counts are unaffected. The integration build fixture now declares its originating worker instead of inheriting the executing lane, which had added `review-3` to the exact worker assertion during review.
+
+Publication recovery previously set `publishedSha` to the prepared commit even when it found a closed pull and sent nothing. The existing pull lookup now includes its head commit in the same GitHub call. Recovery records that observed head, or null when absent. `deliver.test.mjs` checks a recovered merge and an unsent revision of a closed pull with different prepared and published commits. It preserves the existing no-push and no-create assertions.
+
 ## Changed browser test selection
 
 Issue #1362 repairs the existing selector and Check caller for arc #224. The [kit failure record](testing-build.md#manufacturing-kit-export) owns the nightly and pull request evidence. This change restores neither the kit feature nor its browser walkthrough, and changes no assertions, deadlines, retry settings or quarantine entries.

@@ -56,6 +56,7 @@ export function rebuild(pull, { comments, stuck, log }) {
     const result = checkedRun({
       cwd: worktree.dir,
       name: 'rebuild',
+      taskId: `pull:${pull.number}`,
       prompt: prompt(pull, { comments, stuck }),
       schema: SCHEMA,
       hours: 8,

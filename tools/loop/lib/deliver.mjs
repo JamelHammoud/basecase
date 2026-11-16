@@ -1,6 +1,7 @@
 import { claim } from './claim.mjs';
 import { createPull, editPull } from './github.mjs';
 import { completeDelivery, deliveryFor, saveDelivery } from './deliveryState.mjs';
+import { recordPublication } from './publicationJournal.mjs';
 import { fingerprint } from './sessionJournal.mjs';
 import { json, run } from './sh.mjs';
 
@@ -8,8 +9,8 @@ const defaults = () => ({ execute: run, readJson: json, create: createPull, edit
 
 function existingPull(entry, readJson) {
   const args = entry.number
-    ? ['pr', 'view', String(entry.number), '--json', 'url,state']
-    : ['pr', 'list', '--state', 'all', '--head', entry.branch, '--limit', '1', '--json', 'url,state'];
+    ? ['pr', 'view', String(entry.number), '--json', 'url,state,headRefOid']
+    : ['pr', 'list', '--state', 'all', '--head', entry.branch, '--limit', '1', '--json', 'url,state,headRefOid'];
   const found = readJson('gh', args, { cwd: entry.dir });
 
   return entry.number ? found : found?.[0];
@@ -45,6 +46,7 @@ export function deliver(saved, dependencies = {}) {
     const existing = existingPull(entry, services.readJson);
 
     if (existing?.url && (!entry.number || existing.state !== 'OPEN')) {
+      recordPublication(entry, existing.url, existing.headRefOid ?? null);
       completeDelivery(entry.branch);
 
       return existing.url;
@@ -54,6 +56,7 @@ export function deliver(saved, dependencies = {}) {
 
     if (!url) throw new Error('Pull request delivery returned no URL');
 
+    recordPublication(entry, url);
     completeDelivery(entry.branch);
 
     return url;

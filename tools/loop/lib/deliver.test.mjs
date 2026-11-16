@@ -8,6 +8,7 @@ const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'loop-delivery-'));
 vi.stubEnv('BASECASE_LOOP_DIR', directory);
 
 const { deliver } = await import('./deliver.mjs');
+const { publicationRecords } = await import('./publicationJournal.mjs');
 const { completeDelivery, hasPendingDelivery, pendingSteps, saveDelivery } = await import('./deliveryState.mjs');
 const { clearPath, close } = await import('./worktree.mjs');
 const entry = {
@@ -58,16 +59,29 @@ describe('durable delivery', () => {
     expect(hasPendingDelivery(entry.branch)).toBe(false);
   });
 
-  it('recognizes a successful request whose response was lost instead of publishing a duplicate', () => {
+  it.each([
+    { number: undefined, state: 'MERGED' },
+    { number: 42, state: 'CLOSED' },
+  ])('recognizes an existing $state pull without publishing a duplicate', ({ number, state }) => {
     const execute = vi.fn();
     const create = vi.fn();
+    const saved = { ...entry, number };
+    const found = { url: 'https://example.com/pull/42', state, headRefOid: 'published-head' };
 
-    saveDelivery(entry);
+    saveDelivery(saved);
     expect(
-      deliver(entry, { execute, create, readJson: () => [{ url: 'https://example.com/pull/42', state: 'MERGED' }] }),
+      deliver(saved, {
+        execute,
+        create,
+        readJson: () => (number ? found : [found]),
+      }),
     ).toBe('https://example.com/pull/42');
     expect(execute).not.toHaveBeenCalled();
     expect(create).not.toHaveBeenCalled();
+    expect(publicationRecords().find((record) => record.branch === entry.branch)).toMatchObject({
+      sha: 'verified-head',
+      publishedSha: 'published-head',
+    });
   });
 
   it('refuses to publish a different commit under the saved verification evidence', () => {

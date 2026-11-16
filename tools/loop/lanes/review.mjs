@@ -1,3 +1,4 @@
+import { updateSession } from '../lib/sessionJournal.mjs';
 import { creditProblems } from '../credit.mjs';
 import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
@@ -128,9 +129,10 @@ function judge({ pull, worktree, diff, copy, onMain, log }) {
 
   const original = duplicateTarget({ duplicateOf: result.output.duplicateOf, pull, ...others });
 
-  if (!original) return result.output;
+  if (!original) return { ...result.output, journalId: result.journalId };
 
   closePull(pull.number, `Closing as a duplicate of #${original}, which makes the same change.`);
+  updateSession(result.journalId, { reviewOutcome: 'duplicate' });
   log(`#${pull.number}: duplicate of #${original}; closed`);
 
   return null;
@@ -142,6 +144,7 @@ function report({ pull, head, judged, copy, fixed, log }) {
   const fixes = fixed ? `, fixed ${judged.fixed.length} in ${head.slice(0, 7)}` : '';
 
   commentOnPull(pull.number, reviewComment({ ...judged, verdict }, { sha: head, copy }));
+  updateSession(judged.journalId, { reviewOutcome: verdict });
   setReview(head, verdict === 'pass' ? 'success' : 'failure', judged.summary);
   log(`#${pull.number}: ${verdict}, ${blockers.length} blockers${fixes}`);
 }

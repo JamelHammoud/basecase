@@ -1,69 +1,104 @@
-import { indexByStep } from './stepPulls.mjs';
-import { sessionTotals } from './usageTotals.mjs';
+import { usageLinks } from './usageLinks.mjs';
+import { reviewOutcomeTotals, sessionTotals } from './usageTotals.mjs';
 
-const taskStep = (task) => Number(/^(?:loop-build-|step-)(\d+)(?:-|$)/.exec(task)?.[1]);
-const taskPull = (task) => Number(/^(?:revise|review|rebase)-(\d+)(?:-|$)/.exec(task)?.[1]);
-
-function linkedStep(record, index) {
-  const step = taskStep(record.task);
-
-  if (index.has(step)) return step;
-
-  const pullNumber = taskPull(record.task);
-  const matches = [...index].filter(([, pulls]) =>
-    pulls.some((pull) => pull.number === pullNumber || pull.headRefName?.replaceAll('/', '-') === record.task),
+const workBreakdown = (records, key) =>
+  Object.fromEntries(
+    Object.entries(Object.groupBy(records, (record) => record[key] ?? 'unknown')).map(([name, entries]) => [
+      name,
+      sessionTotals(entries),
+    ]),
   );
 
-  return matches.length === 1 ? matches[0][0] : null;
+function taskSummary(link, sessions) {
+  return {
+    ...link,
+    kind:
+      sessions.find((record) => record.taskKind)?.taskKind ??
+      sessions.find((record) => record.result?.kind)?.result.kind ??
+      link.kind,
+    workers: [...new Set(sessions.map((record) => record.worker).filter(Boolean))].sort(),
+    reviewAttempts: sessions.filter((record) => record.name === 'review').length,
+    reviewOutcomes: Object.fromEntries(
+      Object.entries(
+        Object.groupBy(
+          sessions.filter((record) => record.name === 'review'),
+          (record) => record.reviewOutcome ?? 'unknown',
+        ),
+      ).map(([verdict, entries]) => [verdict, entries.length]),
+    ),
+    invocations: sessions.map((record) => record.id ?? null),
+    providers: workBreakdown(sessions, 'provider'),
+    models: workBreakdown(sessions, 'model'),
+    ...sessionTotals(sessions),
+  };
 }
 
-export function taskUsage(records, pulls) {
-  const index = indexByStep(pulls ?? []);
+const partitionOf = (record, link) => {
+  if (record.state === 'running') return 'running';
+
+  return link.shared ? 'shared' : link.status;
+};
+
+export function taskUsage(records, pulls, publications = []) {
+  const resolve = usageLinks(pulls, publications);
+  const partitions = Object.fromEntries(
+    ['merged', 'unfinished', 'abandoned', 'running', 'shared', 'unattributed', 'ambiguous'].map((status) => [
+      status,
+      [],
+    ]),
+  );
   const groups = new Map();
-  const unattributed = [];
-  const unmerged = [];
+  const provenance = [];
 
   for (const record of records) {
-    const step = linkedStep(record, index);
+    const link = resolve(record);
+    const status = partitionOf(record, link);
 
-    if (!step) {
-      unattributed.push(record);
+    partitions[status].push(record);
+    provenance.push({
+      invocation: record.id ?? null,
+      taskId: record.taskId ?? null,
+      workId: record.workId ?? null,
+      continuedFrom: record.continuedFrom ?? null,
+      previousInvocation: record.previousInvocation ?? null,
+      provider: record.provider ?? null,
+      model: record.model ?? null,
+      worker: record.worker ?? null,
+      task: link.task ?? null,
+      status,
+      candidates: link.candidates,
+      steps: link.steps,
+      pulls: link.pulls,
+    });
 
-      continue;
-    }
+    if (!link.task || record.state === 'running') continue;
 
-    if (!index.get(step).some((pull) => pull.state === 'MERGED')) {
-      unmerged.push(record);
+    const group = groups.get(link.task) ?? { link, sessions: [] };
 
-      continue;
-    }
-
-    groups.set(step, [...(groups.get(step) ?? []), record]);
+    group.sessions.push(record);
+    groups.set(link.task, group);
   }
 
-  const tasks = [...groups]
-    .sort(([a], [b]) => a - b)
-    .map(([step, sessions]) => ({
-      task: `step:${step}`,
-      kind:
-        sessions.find((session) => session.taskKind)?.taskKind ??
-        sessions.find((session) => session.name === 'build' && session.result?.kind)?.result.kind ??
-        'unknown',
-      workers: [...new Set(sessions.map((session) => session.worker).filter(Boolean))].sort(),
-      reviewAttempts: sessions.filter((session) => session.name === 'review').length,
-      pulls: index
-        .get(step)
-        .map((pull) => pull.number)
-        .sort((a, b) => a - b),
-      ...sessionTotals(sessions),
-    }));
-  const mergedWork = sessionTotals([...groups.values()].flat());
+  const allTasks = [...groups.values()].map(({ link, sessions }) => taskSummary(link, sessions));
+  const tasks = allTasks.filter((task) => task.status === 'merged' && !task.shared);
+  const mergedWork = sessionTotals(partitions.merged);
   const perTask = (key) => (tasks.length && mergedWork[key] !== null ? mergedWork[key] / tasks.length : null);
 
   return {
     linkageAvailable: pulls !== null,
     mergedTasks: tasks.length,
     tasks,
+    pendingTasks: allTasks.filter((task) => task.status !== 'merged'),
+    sharedTasks: allTasks.filter((task) => task.shared),
+    provenance,
+    reconciliation: {
+      inputSessions: records.length,
+      accountedSessions: Object.values(partitions).reduce((sum, entries) => sum + entries.length, 0),
+      matched: provenance.filter((entry) => entry.task && entry.status !== 'ambiguous').length,
+      shared: partitions.shared.length,
+      unmatched: partitions.unattributed.length,
+      ambiguous: partitions.ambiguous.length,
+    },
     byKind: Object.fromEntries(
       Object.entries(Object.groupBy(tasks, (task) => task.kind)).map(([kind, completed]) => [
         kind,
@@ -71,6 +106,7 @@ export function taskUsage(records, pulls) {
           mergedTasks: completed.length,
           failedAttempts: completed.reduce((sum, task) => sum + task.failedAttempts, 0),
           reviewAttempts: completed.reduce((sum, task) => sum + task.reviewAttempts, 0),
+          reviewOutcomes: reviewOutcomeTotals(completed),
           tokensPerMergedTask: completed.every((task) => task.tokens !== null)
             ? completed.reduce((sum, task) => sum + task.tokens, 0) / completed.length
             : null,
@@ -82,7 +118,11 @@ export function taskUsage(records, pulls) {
     ),
     mergedWork,
     workPerMergedTask: { tokens: perTask('tokens'), milliseconds: perTask('milliseconds') },
-    unmerged: sessionTotals(unmerged),
-    unattributed: sessionTotals(unattributed),
+    unmerged: sessionTotals([...partitions.unfinished, ...partitions.abandoned]),
+    ...Object.fromEntries(
+      Object.entries(partitions)
+        .filter(([key]) => key !== 'merged')
+        .map(([key, entries]) => [key, sessionTotals(entries)]),
+    ),
   };
 }

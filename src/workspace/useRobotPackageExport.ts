@@ -26,7 +26,7 @@ export function useRobotPackageExport(core: WorkspaceCore) {
       }
 
       downloadBytes(made.zip, `${made.name}.zip`, 'application/zip');
-      showToast(`Exported ${made.name}`);
+      toasts.dismissToast();
     } catch (err) {
       showToast(`Couldn’t export the robot package. ${errorMessage(err)}`, { tone: 'error' });
     } finally {

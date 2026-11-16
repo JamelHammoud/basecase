@@ -90,11 +90,9 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
     const names = Object.fromEntries(parts.map((p) => [p.id, p.name]));
 
     download(`${file}-bom.csv`, bomToCsv(bom, names, money), 'text/csv');
-    onToast('Exported bill of materials');
   };
   const exportMarkdown = () => {
     download(`${file}-bom.md`, bomToMarkdown(bom, sceneName, money), 'text/markdown');
-    onToast('Exported bill of materials');
   };
   const savePrice = async (line: BomLine, record: PurchaseRecord | null) => {
     await savePurchase(line.key, withPrice(purchases[line.key], record));

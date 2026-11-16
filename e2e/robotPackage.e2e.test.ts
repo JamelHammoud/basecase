@@ -47,8 +47,15 @@ describe('robot package export', () => {
     await expect.poll(() => partCount(app.page)).toBe(arm.parts.length);
 
     await exportButton().click();
+
+    const delivered = app.page.waitForEvent('download', { timeout: 30000 });
+
     await robotPackageItem().click();
-    await expect.poll(() => app.page.getByText('Exported arm-robot').count(), { timeout: 30000 }).toBeGreaterThan(0);
+
+    const download = await delivered;
+
+    expect(download.suggestedFilename()).toBe('arm-robot.zip');
+    expect(await download.failure()).toBeNull();
 
     const made = (await app.page.evaluate(() =>
       (window as unknown as { __studio: Studio }).__studio.robotPackage(),

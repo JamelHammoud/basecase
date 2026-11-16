@@ -44,13 +44,26 @@ for (const goal of ['lid', 'drawer'] as const) {
         rig: buildRig(replay.joints, replay.parts),
         effector: replay.effector,
       };
+      const recording = contactReplayRecording(replay, native.cases[0], replay.model);
       const [verdict, baseline] = await Promise.all([
-        scoreTry({ ...scoring, recording: contactReplayRecording(replay, native.cases[0], replay.model) }),
+        scoreTry({ ...scoring, recording }),
         scoreTry({ ...scoring, recording: contactReplayRecording(replay, replay.expected, replay.model) }),
       ]);
 
       expect(verdict.passed).toBe(replay.wasmPassed);
       expect(Math.abs(verdict.margin - baseline.margin)).toBeLessThan(1e-6);
+      expect(
+        (
+          await scoreTry({
+            ...scoring,
+            recording: {
+              ...recording,
+              contacts: new Int32Array(),
+              contactOffsets: new Int32Array(recording.frames + 1),
+            },
+          })
+        ).passed,
+      ).toBe(false);
     });
   }
 }

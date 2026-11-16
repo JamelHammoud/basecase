@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Case } from '../../cases/schema';
 import type { V3 } from '../../utils/kinematics';
 import type { ScenePart } from '../../types/robotics';
+import type { State } from '../../skills/contract';
 import type { FixtureRobot } from './parts';
 
 export const PASSIVE_VARIANTS = [
@@ -57,6 +58,25 @@ function turnScene(kase: Case, robot: FixtureRobot) {
   };
 }
 
+function reversedTravel(state: State): State {
+  if ('all' in state) return { all: state.all.map(reversedTravel) };
+
+  if (!('atom' in state) || !('signal' in state.atom.expr) || state.atom.expr.signal !== 'fixture-travel') return state;
+
+  return { atom: { ...state.atom, cmp: '<', value: -state.atom.value } };
+}
+
+function reverseFixture(kase: Case) {
+  const joint = kase.world.objects.find((object) => object.joint)!.joint!;
+  const success = kase.task.contract.success;
+
+  if (!('hold_for' in success)) throw new Error('Fixture travel needs a hold contract.');
+
+  joint.axis = joint.axis.map((n) => -n) as V3;
+  joint.range = [-joint.range[1], 0];
+  success.hold_for.state = reversedTravel(success.hold_for.state);
+}
+
 export function passiveVariant(authored: Case, arm: FixtureRobot, variant: PassiveVariant) {
   const kase = structuredClone(authored);
   const joint = kase.world.objects.find((object) => object.joint)!.joint!;
@@ -73,19 +93,7 @@ export function passiveVariant(authored: Case, arm: FixtureRobot, variant: Passi
 
   if (variant === 'rotated') robot = turnScene(kase, robot);
 
-  if (variant === 'reversed') {
-    joint.axis = joint.axis.map((n) => -n) as V3;
-    joint.range = [-joint.range[1], 0];
-    kase.task.contract.success = {
-      hold_for: {
-        seconds: 0.2,
-        within: 'whole',
-        state: {
-          atom: { expr: { signal: 'fixture-travel' }, cmp: '<', value: joint.range[0] * 0.8, scale: -joint.range[0] },
-        },
-      },
-    };
-  }
+  if (variant === 'reversed') reverseFixture(kase);
 
   const passed = ['nominal', 'short', 'reversed', 'rotated'].includes(variant);
 

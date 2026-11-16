@@ -23,17 +23,18 @@ Test whether an arm can move a hinged lid or a sliding drawer through contact wi
 3. Under **Goal**, choose **Open a Lid** or **Pull a Drawer**.
 4. Set **Travel** to the hinge angle in degrees or the drawer distance in millimeters.
 5. Set **Weight** to the moving plate's weight in grams.
+
+   ![Open a Lid in New Case with travel, weight and resistance fields](/help/open-lids-and-pull-drawers/lid-builder.png)
+
+   ![Pull a Drawer in New Case with travel, weight and resistance fields](/help/open-lids-and-pull-drawers/drawer-builder.png)
+
 6. Click **Make Case**.
 7. In **Try**, click **Try Reference**.
 8. Under **Results**, click the saved try to reopen its recorded motion and verdict.
 
-![Open a Lid in New Case with travel, weight and resistance fields](/help/open-lids-and-pull-drawers/lid-builder.png)
+   ![The recorded lid try open on its timeline](/help/open-lids-and-pull-drawers/lid-replay.png)
 
-![The recorded lid try open on its timeline](/help/open-lids-and-pull-drawers/lid-replay.png)
-
-![Pull a Drawer in New Case with travel, weight and resistance fields](/help/open-lids-and-pull-drawers/drawer-builder.png)
-
-![The recorded drawer try open on its timeline](/help/open-lids-and-pull-drawers/drawer-replay.png)
+   ![The recorded drawer try open on its timeline](/help/open-lids-and-pull-drawers/drawer-replay.png)
 
 Use **Width**, **Depth** and **Height** to change the fixture's geometry. Use **Joint friction** and **Damping** to change its resistance. A heavier plate or higher resistance can make the same robot fail. The reference must keep handle contact while moving beyond 80% of the chosen travel.
 

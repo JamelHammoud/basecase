@@ -2,15 +2,13 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { backpressure, PRODUCERS } from './lib/flow.mjs';
-import { flowCounts } from './lib/flowCounts.mjs';
+import { dispatch } from './lib/dispatch.mjs';
 import { laneNames, laneModule } from './lib/lanes.mjs';
 import { commentOnIssue, createIssue, issues } from './lib/github.mjs';
 import { firstLine, isBad, LOAD_CHECK, markBad } from './lib/homeGuard.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS, LOOP_DIR } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 import { quietRequested } from '../../verify/lib/quiet.mjs';
-import { capacityHold, measure as measureCapacity } from './lib/capacity.mjs';
 import { UsageLimit } from './lib/usage.mjs';
 
 import { fetchGit } from './lib/gitFetch.mjs';
@@ -26,6 +24,7 @@ if (!LANES.includes(lane)) {
 const id = `${lane}-${slot}`;
 
 process.env.BASECASE_LOOP_LANE = lane;
+process.env.BASECASE_LOOP_WORKER = id;
 
 fs.mkdirSync(LOCKS, { recursive: true });
 fs.mkdirSync(LOGS, { recursive: true });
@@ -187,14 +186,9 @@ const gateHold = () =>
   !KEEPS_RUNNING_FOR_GATES.has(lane) && quietRequested() ? 'a Gatekeeper timed check needs a quiet machine' : null;
 
 async function runOnce() {
-  const { default: runLane, schedule } = await laneModule(lane);
-  const held =
-    gateHold() ??
-    (schedule.agent ? capacityHold({ lane, ...measureCapacity() }) : null) ??
-    (PRODUCERS.has(lane) ? backpressure(flowCounts(), lane) : null);
+  const module = await laneModule(lane);
 
-  if (held) log(`waiting: ${held}`);
-  else await runLane({ log, slot });
+  await dispatch({ lane, module, context: { log, slot }, gate: gateHold() });
 }
 
 const runsFromHome = path.resolve(import.meta.dirname, '..', '..') === path.resolve(HOME_CHECKOUT);

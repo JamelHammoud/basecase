@@ -1,7 +1,7 @@
 import { indexByStep } from './stepPulls.mjs';
 import { sessionTotals } from './usageTotals.mjs';
 
-const taskStep = (task) => Number(/^loop-build-(\d+)-/.exec(task)?.[1]);
+const taskStep = (task) => Number(/^(?:loop-build-|step-)(\d+)(?:-|$)/.exec(task)?.[1]);
 const taskPull = (task) => Number(/^(?:revise|review|rebase)-(\d+)(?:-|$)/.exec(task)?.[1]);
 
 function linkedStep(record, index) {
@@ -45,6 +45,12 @@ export function taskUsage(records, pulls) {
     .sort(([a], [b]) => a - b)
     .map(([step, sessions]) => ({
       task: `step:${step}`,
+      kind:
+        sessions.find((session) => session.taskKind)?.taskKind ??
+        sessions.find((session) => session.name === 'build' && session.result?.kind)?.result.kind ??
+        'unknown',
+      workers: [...new Set(sessions.map((session) => session.worker).filter(Boolean))].sort(),
+      reviewAttempts: sessions.filter((session) => session.name === 'review').length,
       pulls: index
         .get(step)
         .map((pull) => pull.number)
@@ -58,6 +64,22 @@ export function taskUsage(records, pulls) {
     linkageAvailable: pulls !== null,
     mergedTasks: tasks.length,
     tasks,
+    byKind: Object.fromEntries(
+      Object.entries(Object.groupBy(tasks, (task) => task.kind)).map(([kind, completed]) => [
+        kind,
+        {
+          mergedTasks: completed.length,
+          failedAttempts: completed.reduce((sum, task) => sum + task.failedAttempts, 0),
+          reviewAttempts: completed.reduce((sum, task) => sum + task.reviewAttempts, 0),
+          tokensPerMergedTask: completed.every((task) => task.tokens !== null)
+            ? completed.reduce((sum, task) => sum + task.tokens, 0) / completed.length
+            : null,
+          millisecondsPerMergedTask: completed.every((task) => task.milliseconds !== null)
+            ? completed.reduce((sum, task) => sum + task.milliseconds, 0) / completed.length
+            : null,
+        },
+      ]),
+    ),
     mergedWork,
     workPerMergedTask: { tokens: perTask('tokens'), milliseconds: perTask('milliseconds') },
     unmerged: sessionTotals(unmerged),

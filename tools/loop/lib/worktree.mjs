@@ -5,6 +5,8 @@ import { run } from './sh.mjs';
 import { hasPendingDelivery, hasPendingWorktree } from './deliveryState.mjs';
 import { hasRecovery } from './workRecovery.mjs';
 
+import { fetchGit } from './gitFetch.mjs';
+
 const git = (args, opts = {}) => run('git', args, { cwd: HOME_CHECKOUT, ...opts });
 
 const stamp = () => `${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')}-${process.pid}`;
@@ -31,7 +33,7 @@ export const linkModules = (dir) => {
 };
 
 export function openBranch(lane, slug, { timeout } = {}) {
-  git(['fetch', '-q', 'origin', 'main'], { timeout });
+  fetchGit(['-q', 'origin', 'main'], { timeout });
 
   const branch = `loop/${lane}/${safeSlug(slug)}-${stamp()}`;
   const dir = path.join(WORKTREES, branch.replaceAll('/', '-'));
@@ -44,7 +46,7 @@ export function openBranch(lane, slug, { timeout } = {}) {
 }
 
 export function openPullHead(number, sha) {
-  git(['fetch', '-q', 'origin', 'main', `pull/${number}/head`]);
+  fetchGit(['-q', 'origin', 'main', `pull/${number}/head`]);
 
   const dir = path.join(WORKTREES, `review-${number}-${sha.slice(0, 7)}`);
 

@@ -12,6 +12,8 @@ import { run } from '../lib/sh.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
 import { hasPendingDelivery } from '../lib/deliveryState.mjs';
 
+import { fetchGit } from '../lib/gitFetch.mjs';
+
 export const schedule = {
   agent: true,
   slots: 5,
@@ -98,7 +100,7 @@ function merged(pull, dir, log) {
 }
 
 function mergeMain(pull, log) {
-  git(['fetch', '-q', 'origin', 'main', pull.headRefName], HOME_CHECKOUT);
+  fetchGit(['-q', 'origin', 'main', pull.headRefName]);
 
   const dir = path.join(WORKTREES, `rebase-${pull.number}`);
 

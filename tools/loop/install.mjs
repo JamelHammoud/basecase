@@ -7,6 +7,8 @@ import { syncPlan } from './lib/flow.mjs';
 import { heldLocks, isAlive } from './lib/locks.mjs';
 import { run } from './lib/sh.mjs';
 
+import { fetchGit } from './lib/gitFetch.mjs';
+
 const LANES = await Promise.all(laneNames().map(async (name) => ({ name, ...(await laneModule(name)).schedule })));
 
 const JOBS = LANES.flatMap(({ name, slots, everySeconds }) =>
@@ -122,7 +124,7 @@ function ensureLabels() {
 function ensureHome() {
   if (fs.existsSync(HOME_CHECKOUT)) return;
 
-  run('git', ['fetch', '-q', 'origin', 'main', HOME_REF]);
+  fetchGit(['-q', 'origin', 'main', HOME_REF], { cwd: process.cwd() });
   run('git', ['worktree', 'add', '-q', '--detach', HOME_CHECKOUT, `origin/${HOME_REF}`]);
   run('npm', ['ci', '--no-audit', '--no-fund'], {
     cwd: HOME_CHECKOUT,

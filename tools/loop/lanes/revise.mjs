@@ -27,6 +27,8 @@ import { deliver } from '../lib/deliver.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
 import { keepStepLinks } from '../lib/stepLinks.mjs';
 
+import { fetchGit } from '../lib/gitFetch.mjs';
+
 export const schedule = {
   agent: true,
   slots: 10,
@@ -92,7 +94,7 @@ function evidence(pull, reason, comments) {
 }
 
 function checkout(pull) {
-  git(['fetch', '-q', 'origin', 'main', pull.headRefName], HOME_CHECKOUT);
+  fetchGit(['-q', 'origin', 'main', pull.headRefName]);
 
   const dir = path.join(WORKTREES, `revise-${pull.number}`);
 

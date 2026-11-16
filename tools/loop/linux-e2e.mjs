@@ -4,6 +4,8 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { run } from './lib/sh.mjs';
 
+import { fetchGit } from './lib/gitFetch.mjs';
+
 const IMAGE = 'node:26.13.0-bookworm';
 const ROOT = path.resolve(import.meta.dirname, '..', '..');
 const SETUP_TIMEOUT = 40 * 60 * 1000;
@@ -39,7 +41,7 @@ const git = (args, opts = {}) => run('git', args, { cwd: ROOT, ...opts });
 const docker = (args, opts = {}) => run('docker', args, opts);
 
 function openWorktree(ref, state) {
-  if (ref.startsWith('origin/')) git(['fetch', '-q', 'origin', ref.slice('origin/'.length)]);
+  if (ref.startsWith('origin/')) fetchGit(['-q', 'origin', ref.slice('origin/'.length)], { cwd: ROOT });
 
   state.dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bc-linux-')));
   git(['worktree', 'add', '-q', '--detach', state.dir, ref]);

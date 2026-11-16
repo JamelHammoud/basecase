@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import { store } from './store.mjs';
 import { run } from './sh.mjs';
 
+import { fetchGit } from './gitFetch.mjs';
+
 const recoveries = store('work-recovery', {});
 
 export const recoveryFor = (number) => {
@@ -24,7 +26,7 @@ export const recoveryReady = (entry, inputSignature) =>
   !entry || entry.attempts < 1 || entry.inputSignature !== inputSignature;
 
 export function refreshRecovery({ dir }, execute = run) {
-  execute('git', ['fetch', '-q', 'origin', 'main'], { cwd: dir });
+  fetchGit(['-q', 'origin', 'main'], { cwd: dir }, execute);
 
   const merged = execute('git', ['merge', '--no-edit', '--autostash', 'origin/main'], {
     cwd: dir,

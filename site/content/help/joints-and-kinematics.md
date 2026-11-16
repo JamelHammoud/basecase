@@ -28,6 +28,8 @@ covers:
   - src/utils/kinematics.ts
   - src/utils/kinematicsPrune.ts
   - src/utils/kinematicsLoop.ts
+  - src/utils/motionSkeleton.ts
+  - src/utils/motionSkeletonSource.ts
   - src/assembly/followers.ts
   - src/data/articulatedParts.ts
   - src/utils/robotImport/

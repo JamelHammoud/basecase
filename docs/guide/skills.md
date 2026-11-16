@@ -282,7 +282,7 @@ Move refusals read the latest Forge error after the worker finishes, preserving 
 - `recoveredSkill.test.ts` replays a real Kit worker with controlled Forge and Arena boundaries. It checks local evidence retention, local Arena refusal despite a remote ready claim, frozen seeds and scene edits both before recovery and during an active result.
 - `recoveryJudgmentReplay.test.ts` runs a multi-candidate Kit curriculum twice with controlled local judgment boundaries. It checks identical judgment sequences, candidate ranking and complete later warm-start jobs, with no judgment key in remote inputs. `localJudgments.test.ts` checks distinct draws within a workflow, exact replay and separation between workflows.
 - `trainerForgeRecovery.test.ts` checks stable call identities across runner recreation and malformed-policy refusal before evaluation.
-- `e2e/remoteTraining.e2e.test.ts` configures a fixture computer through Settings, trains Stand, reloads and reconnects to the same call through the existing progress and skill rows. Its remote boundary is controlled. It stops after reattachment and checks progress delivery and credential exclusion from saved scenes. Acceptance and refusal remain in the focused recovery tests above, without repeating Arena in the browser.
+- `e2e/remoteTraining.e2e.test.ts` configures a fixture computer through Settings, trains Stand, reloads and reconnects to the same call through the existing progress and skill rows. Its remote boundary is controlled. The robot loads before Settings so model preparation overlaps configuration. The Rename Scene action triggers autosave after the fixture load establishes a new scene baseline. The test verifies the saved name before reload, then checks reattachment, progress delivery and credential exclusion from saved scenes. Acceptance and refusal remain in the focused recovery tests above, without repeating Arena in the browser.
 
 Recovery limitations and evidence are recorded in [Skills testing evidence](../notes/testing-skills.md#remote-training-recovery).
 
@@ -310,7 +310,7 @@ Skill environments keep physical observation identities separate from actuator i
 
 ### Windows remote recovery coverage
 
-Both remote recovery walkthroughs are quarantined only on Windows through 28 November 2026 under #1365. Browser coverage stays active on Linux and macOS, with `seedWorkflows.test.ts`, `recoveredSkill.test.ts` and `seedSelection.test.ts` retaining selection, recovery and local verdict coverage on every platform. [Failure evidence and restoration conditions](../notes/testing-skills.md#windows-grouped-recovery-quarantine).
+The remaining single-attempt remote recovery walkthrough is quarantined only on Windows through 28 November 2026 under #1365. Browser coverage stays active on Linux and macOS, with `seedWorkflows.test.ts`, `recoveredSkill.test.ts` and `seedSelection.test.ts` retaining selection, recovery and local verdict coverage on every platform. [Failure evidence and restoration conditions](../notes/testing-skills.md#windows-grouped-recovery-quarantine).
 
 ### Limb matching work
 

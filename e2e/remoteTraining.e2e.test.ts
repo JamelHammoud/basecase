@@ -16,9 +16,9 @@ it('configures a training computer and reattaches Stand after a studio restart w
     const remote = await remoteTrainingFixture(app);
     const { page } = app;
 
+    await loadFixtureRobot(page, 'quad-servo');
     await configureRemoteComputer(page);
     await page.keyboard.press('Escape');
-    await loadFixtureRobot(page, 'quad-servo');
     await nameRemoteTrainingScene(page);
     await page.locator(shown('[role=tab]'), { hasText: 'Simulate' }).first().click();
     await remoteStandRow(page).getByRole('button', { name: 'Train', exact: true }).click();
@@ -26,6 +26,7 @@ it('configures a training computer and reattaches Stand after a studio restart w
     await remote.emit({ kind: 'progress', progress: { elapsedS: 15, budgetS: 120 } });
     await expect.poll(() => remoteStandRow(page).innerText()).toContain('Training');
     await expect.poll(() => remote.scene()?.parts.length ?? 0).toBeGreaterThan(0);
+    expect(remote.scene()?.name).toBe('Remote quadruped');
     expect(remote.starts[0].recoveryKey).toBeTruthy();
 
     await remote.reload();

@@ -39,6 +39,8 @@ The bill of materials gives sourced parts their own section, **Added by Agent**.
 
 Prices for sourced items stay estimates until you save the price you see with **Add Price**.
 
+Sourced parts keep manufacturer and supplier part numbers separately when the agent supplies them. A supplier record can also keep its ordering unit, conversion to pieces and source link. Missing facts stay blank in the spreadsheet, as described in [Export remaining purchases](/help/export-remaining-purchases).
+
 ## When a sourced part counts as real
 
 A finished robot uses only parts someone can look up. The **Real parts** check blocks a sourced part until it meets all four of these:

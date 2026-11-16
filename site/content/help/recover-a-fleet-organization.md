@@ -43,7 +43,7 @@ python3 -c 'import getpass,json; print(json.dumps({"password":getpass.getpass("N
 
 In PowerShell, use `$env:FLEET_RECOVERY_ORG` for the organization variable and `python` for the Python launcher. Use the same JSON format on Windows and Linux. The commands refuse interactive stdin, extra arguments and input exceeding 8 KiB. They print IDs or a refusal without printing the supplied password.
 
-During setup, you create one separate local account and a protected administrator role. You can run setup after someone has deleted the ordinary administrator. The email identifies the login but provides no proof of ownership. Setup does not promote existing accounts or match them by email.
+During setup, you create one separate local account and a protected administrator role. You can run setup after someone has deleted the ordinary administrator. The email identifies the login but provides no proof of ownership. Setup doesn’t promote existing accounts or match them by email.
 
 Your database access authorizes recovery. You don’t need an emailed code or an expiring recovery token. After you rotate the password, you can’t use the old password, and the service revokes all organization credentials. Issue replacement service tokens through the existing identity API after signing in.
 

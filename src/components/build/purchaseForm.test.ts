@@ -32,7 +32,12 @@ describe('purchase form', () => {
   });
 
   it('starts from a saved record', () => {
-    const record = { url: 'https://www.amazon.com/dp/B000000001', packQty: 2, priceUsd: 1209.5, checkedAt: '2026-01-02' };
+    const record = {
+      url: 'https://www.amazon.com/dp/B000000001',
+      packQty: 2,
+      priceUsd: 1209.5,
+      checkedAt: '2026-01-02',
+    };
 
     expect(initialPurchaseForm(line({ record, urlKind: 'product', url: 'x' }))).toMatchObject({
       url: record.url,
@@ -64,7 +69,9 @@ describe('purchase form', () => {
   });
 
   it('saves just the price', () => {
-    expect(purchaseRecord({ url: ' ', title: '', pack: 1, price: '$420.32', note: '' }, undefined, '2026-10-19')).toEqual({
+    expect(
+      purchaseRecord({ url: ' ', title: '', pack: 1, price: '$420.32', note: '' }, undefined, '2026-10-19'),
+    ).toEqual({
       url: undefined,
       title: undefined,
       packQty: 1,
@@ -103,5 +110,24 @@ describe('purchase form', () => {
     expect(formatPrice('1200', eur)).toBe('€1,200.00');
     expect(initialPurchaseForm(line({ record }), eur).price).toBe('€40.00');
     expect(initialPurchaseForm(line({ record })).price).toBe('$50.00');
+  });
+  it('preserves structured identities through editing, trims facts and retains their source', () => {
+    const identity = {
+      manufacturer: 'Maker',
+      mpn: 'EXACT',
+      supplier: 'DigiKey',
+      supplierPartNumber: 'EXACT-CT-ND',
+      orderingUnit: 'piece',
+      unitsPerOrder: 1,
+      sourceUrl: 'https://supplier.example/exact',
+    };
+    const record = { identity, url: identity.sourceUrl, packQty: 1, priceUsd: 5, checkedAt: '2026-11-16' };
+    const form = initialPurchaseForm(line({ record }));
+
+    expect(form.identity).toEqual(identity);
+    expect(purchaseRecord({ ...form, identity: { ...identity, mpn: ' EXACT ', supplier: '  ' } }).identity).toEqual({
+      ...identity,
+      supplier: undefined,
+    });
   });
 });

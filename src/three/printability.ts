@@ -211,8 +211,7 @@ function faceBuckets(tris: Float32Array) {
   return { buckets: [...buckets.values()], total };
 }
 
-function restsOn(tris: Float32Array, bucket: FaceBucket): boolean {
-  const n = bucket.normal.clone().normalize();
+function restsOn(tris: Float32Array, bucket: FaceBucket, n: THREE.Vector3): boolean {
   let extreme = -Infinity;
 
   for (let i = 0; i < tris.length; i += 3)
@@ -228,9 +227,11 @@ function faceDowns(tris: Float32Array): Vec3[] {
   const found: Vec3[] = [];
 
   for (const bucket of big) {
+    if (found.length >= MAX_FACES) break;
+
     const n = bucket.normal.clone().normalize();
 
-    if (found.length >= MAX_FACES || out.some((o) => o.dot(n) > SAME_DIR) || !restsOn(tris, bucket)) continue;
+    if (out.some((o) => o.dot(n) > SAME_DIR) || !restsOn(tris, bucket, n)) continue;
 
     out.push(n);
     found.push(n.toArray().map((x) => Math.round(x * 1e6) / 1e6) as Vec3);

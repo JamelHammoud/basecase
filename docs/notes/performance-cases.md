@@ -2,6 +2,10 @@
 
 Implementation: [Case facts and world geometry](../guide/cases.md#performance-case-facts-and-world-geometry). Shared requirements: [Performance](../guide/performance.md).
 
+## Arm discovery retains candidate chains
+
+`robotFit.test.ts` checks inherited and leaf arm tags, first-match ties, untagged fallback, edits and source preservation, alongside shoulder reach and guest binding coverage. A scratch comparison matched complete robot facts against the previous implementation on six fixtures with 10 or 20 four-joint branches, tagging no branch, the first branch or the last branch. For 20 eligible leaves, chain construction falls from 41 to 20 without an early tagged match, or to one when the first leaf is tagged. Measured parent-map reads for the complete fact calculation fall from 9,304 to 9,220 or 9,144 respectively. Gripper discovery and morphology retain their existing work. These are operation counts, without timing assertions or a claim about complete Case startup time.
+
 ## Case facts accumulate occupancy during classification
 
 `caseFacts.test.ts` compares complete facts across 120 generated worlds and repeated poses, including moving markers, overlap precedence, inclusive boundaries, reentry and score edits. With 20 markers and 100 or 200 movers, mover-id reads fall from 2,800 and 5,600 to 800 and 1,600. Classification still searches markers in order. These are operation counts without timing assertions or a claim about complete simulation time.

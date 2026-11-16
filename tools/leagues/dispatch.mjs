@@ -117,6 +117,9 @@ async function freeze(board) {
 
   if (operation === 'close') return { manifest, entries: closure.entries, closure };
 
+  if (manifest.engine.commit && manifest.engine.commit !== process.env.LEAGUE_RUNNER_COMMIT)
+    throw new Error('The replay runner commit does not match the League.');
+
   await fs.writeFile(closurePath, JSON.stringify(closure));
 
   const cache = new Map();
@@ -125,7 +128,7 @@ async function freeze(board) {
 
   const provenance = {
     repository: process.env.GITHUB_REPOSITORY ?? 'JamelHammoud/basecase',
-    commit: process.env.GITHUB_SHA ?? '0'.repeat(40),
+    commit: process.env.LEAGUE_RUNNER_COMMIT ?? process.env.GITHUB_SHA ?? '0'.repeat(40),
     runId: process.env.GITHUB_RUN_ID ?? 'fixture',
   };
   const frozen = await adjudicate({

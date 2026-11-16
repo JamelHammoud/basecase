@@ -9,7 +9,7 @@ import { openApp, openPlayTab, partCount, shown } from './harness';
 
 type Studio = { load: (scene: unknown) => void };
 
-it('opens Enter League through Share Robot and refuses a different pinned Case before entering', async () => {
+it('opens Enter League through Share Robot, refuses a different Case and copies a pinned submission', async () => {
   const app = await openApp({
     'hub-account': { signedIn: true, name: 'tester' },
     'hub-publish': { repo: 'tester/rover', url: '', revision: 'a'.repeat(40) },
@@ -31,6 +31,7 @@ it('opens Enter League through Share Robot and refuses a different pinned Case b
   };
 
   try {
+    await app.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
     await app.page.route('**/leagues/entry-check/board.json', (route) =>
       route.fulfill({ json: { manifest, entries: [] } }),
     );
@@ -58,6 +59,18 @@ it('opens Enter League through Share Robot and refuses a different pinned Case b
     await app.page.keyboard.type('Enter League');
     await app.page.keyboard.press('Enter');
     await app.page.getByRole('dialog', { name: 'Share Robot', exact: true }).waitFor();
+    manifest.case = kase;
+    manifest.caseHash = hashValue(kase);
+    manifest.contractHash = hashValue(kase.task.contract);
+    await app.page.getByRole('textbox', { name: 'League link' }).fill('/l/entry-check');
+    await app.page.getByRole('button', { name: 'Enter League', exact: true }).click();
+    await expect
+      .poll(() => app.page.getByRole('dialog', { name: 'Share Robot', exact: true }).innerText())
+      .toContain(`https://huggingface.co/datasets/tester/rover/tree/${'a'.repeat(40)}`);
+    expect(app.posts.filter((post) => post.route === 'hub-publish')).toHaveLength(3);
+    expect(await app.page.evaluate(() => navigator.clipboard.readText())).toBe(
+      `https://huggingface.co/datasets/tester/rover/tree/${'a'.repeat(40)}`,
+    );
   } finally {
     await app.close();
   }

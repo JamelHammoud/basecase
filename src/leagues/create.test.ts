@@ -8,6 +8,9 @@ it('opens a pinned League with no receipts and refuses past, unsupported or over
   const json = JSON.stringify(manifest);
 
   expect(createLeague(json, now, manifest.engine)).toEqual({ manifest, entries: [] });
+  expect(createLeague(json, now, { ...manifest.engine, commit: 'a'.repeat(40) }).manifest.engine.commit).toBe(
+    'a'.repeat(40),
+  );
   expect(() =>
     createLeague(JSON.stringify({ ...manifest, deadline: '2026-11-01T10:00:00' }), now, manifest.engine),
   ).toThrow('absolute date');

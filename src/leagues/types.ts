@@ -3,6 +3,7 @@ import type { Case } from '../cases/schema';
 export interface LeagueEngine {
   mujoco: string;
   runner: string;
+  commit?: string;
 }
 
 export interface LeagueManifest {

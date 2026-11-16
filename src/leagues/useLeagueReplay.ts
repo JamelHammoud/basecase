@@ -23,11 +23,16 @@ export function useLeagueReplay(entryId: string) {
     return dispose;
   }, [entryId]);
 
-  const run = (job: LeagueReplayJob) => {
+  const clear = () => {
     dispose();
-    setBusy(true);
+    setBusy(false);
     setResult(null);
     setError(null);
+  };
+
+  const run = (job: LeagueReplayJob) => {
+    clear();
+    setBusy(true);
 
     const worker = new Worker(new URL('./replay.worker.ts', import.meta.url), { type: 'module' });
     const finish = () => {
@@ -53,5 +58,5 @@ export function useLeagueReplay(entryId: string) {
     worker.postMessage(job);
   };
 
-  return { result, busy, error, run };
+  return { result, busy, error, run, clear };
 }

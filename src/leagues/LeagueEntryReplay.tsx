@@ -60,7 +60,16 @@ export function LeagueEntryReplay({
         <h2 className="text-[15px] font-medium">Seed</h2>
         <div className="flex flex-wrap gap-2">
           {seeds.map((value) => (
-            <Button key={value} variant={seed === value ? 'active' : 'secondary'} onClick={() => setSeed(value)}>
+            <Button
+              key={value}
+              variant={seed === value ? 'active' : 'secondary'}
+              onClick={() => {
+                if (seed === value) return;
+
+                replay.clear();
+                setSeed(value);
+              }}
+            >
               {value}
             </Button>
           ))}

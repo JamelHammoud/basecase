@@ -7,6 +7,8 @@ export function createLeague(json: string, now: string, engine: LeagueEngine) {
 
   const manifest = validateManifest(JSON.parse(json));
 
+  manifest.engine.commit ??= engine.commit;
+
   verifyManifest(manifest);
 
   if (!Number.isFinite(Date.parse(now)) || Date.parse(manifest.deadline) <= Date.parse(now))

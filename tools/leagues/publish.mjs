@@ -30,6 +30,7 @@ async function publishCreation() {
   createLeague(JSON.stringify(manifest), new Date().toISOString(), {
     mujoco: mj.mj_versionString(),
     runner: LEAGUE_RUNNER_VERSION,
+    commit: process.env.GITHUB_SHA,
   });
 
   if (current && (!current.frozenHash || current.manifest.id === manifest.id))
@@ -106,7 +107,7 @@ async function resultFile() {
 
   if (
     frozen.provenance.repository !== process.env.GITHUB_REPOSITORY ||
-    frozen.provenance.commit !== process.env.GITHUB_SHA ||
+    frozen.provenance.commit !== (manifest.engine.commit ?? process.env.GITHUB_SHA) ||
     frozen.provenance.runId !== process.env.GITHUB_RUN_ID
   )
     throw new Error('League replay provenance does not match this run.');

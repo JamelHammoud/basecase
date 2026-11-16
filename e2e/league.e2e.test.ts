@@ -34,6 +34,11 @@ describe('League board', () => {
     await expect.poll(() => page.getByTestId('league-replay-verdict').count()).toBe(1);
     expect(await page.getByTestId('league-replay-verdict').innerText()).toContain(failed.failed[0]);
     await expect.poll(() => page.getByTestId('gallery-replay').count()).toBe(1);
+    await page
+      .getByRole('button', { name: String(frozen.seeds.find((seed) => seed !== failed.seed)), exact: true })
+      .click();
+    expect(await page.getByTestId('league-replay-verdict').count()).toBe(0);
+    expect(await page.getByTestId('gallery-replay').count()).toBe(0);
     await page.getByRole('button', { name: 'Open Scene', exact: true }).click();
     await page.waitForURL(`${base}/`);
     await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio));

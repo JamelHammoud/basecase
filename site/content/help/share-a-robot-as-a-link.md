@@ -24,10 +24,13 @@ Send someone a link that opens your robot and its Case in their browser. They ca
 
 ![The Share Robot sheet with a copied robot link and the League link field](/help/share-a-robot-as-a-link/league.png)
 
-Sharing opens **Share Robot** with the copied link. To enter a competition, paste its link into **League link** and choose **Enter League**.
-The robot must use the League's pinned Case and contract. Enter League copies the immutable submission link and keeps it in the sheet.
-Send that link to the League publisher for a trusted CI receipt before the deadline.
-See [Replay a League](/help/replay-a-league).
+To enter a League, your robot must use its pinned Case and contract. You must get the publisher’s receipt before the deadline. Executable Case panels, Case logic and imported worlds can’t enter. Retained skills must use a network policy controller.
+
+5. In the **Share Robot** sheet, paste the League’s link into **League link**.
+6. Click **Enter League**.
+7. Send the copied submission link to the League publisher for admission.
+
+The sheet keeps the immutable submission link. To compare accepted entries, follow [Replay a League](/help/replay-a-league).
 
 If you haven't added a token, **Share Robot** opens **Accounts** instead. If the Hub refuses your token, click **Open** in the message and paste a new one.
 

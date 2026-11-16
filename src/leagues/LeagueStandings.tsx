@@ -1,5 +1,6 @@
 import { Button } from '../design-system';
-import { USD_MONEY } from '../utils/currency';
+import { negative } from '../../electron/minus.mjs';
+import { useMoney } from '../utils/useMoney';
 import type { LoadedLeague } from './boardLoader';
 
 const figures = new Intl.NumberFormat('en-US', { maximumSignificantDigits: 4 });
@@ -13,6 +14,7 @@ export function LeagueStandings({
   selected: string;
   onSelect: (id: string) => void;
 }) {
+  const money = useMoney();
   const entries =
     league.frozen?.standings.map((row) => league.entries.find((entry) => entry.id === row.entryId)!) ?? league.entries;
 
@@ -38,8 +40,10 @@ export function LeagueStandings({
                 </Button>
               </td>
               <td className="text-right">{row ? `${row.passes}/${row.outcomes.length}` : 'Unmeasured'}</td>
-              <td className="text-right">{row ? figures.format(row.score) : 'Unmeasured'}</td>
-              <td className="text-right">{row?.budget === null || !row ? 'Unpriced' : USD_MONEY.format(row.budget)}</td>
+              <td className="text-right">
+                {row ? negative(row.score, (value) => figures.format(value)) : 'Unmeasured'}
+              </td>
+              <td className="text-right">{row?.budget === null || !row ? 'Unpriced' : money.format(row.budget)}</td>
             </tr>
           );
         })}

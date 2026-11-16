@@ -26,6 +26,8 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      runner: ${{ steps.snapshot.outputs.runner }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,6 +39,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - name: Prepare immutable receipt or closure
+        id: snapshot
         env:
           LEAGUE_SOURCE: ${{ inputs.source }}
           LEAGUE_SUBMISSION: ${{ inputs.submission }}
@@ -84,7 +87,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ needs.prepare.outputs.runner }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -98,6 +101,7 @@ jobs:
       - name: Replay without publishing credentials
         env:
           LEAGUE_FIXTURE: ${{ inputs.operation == 'fixture' }}
+          LEAGUE_RUNNER_COMMIT: ${{ needs.prepare.outputs.runner }}
         run: node tools/leagues/dispatch.mjs replay scratch/league
       - uses: actions/upload-artifact@v4
         with:

@@ -105,6 +105,7 @@ export function verifyFrozen(
     frozen.manifestHash !== hashValue(manifest) ||
     frozen.closureHash !== hashValue(closure) ||
     hashValue(frozen.engine) !== hashValue(manifest.engine) ||
+    (manifest.engine.commit !== undefined && frozen.provenance.commit !== manifest.engine.commit) ||
     frozen.seedHash !== hashValue(seeds) ||
     hashValue(frozen.seeds) !== hashValue(seeds) ||
     hashValue(entries) !== hashValue(closure.entries)

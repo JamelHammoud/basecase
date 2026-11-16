@@ -1,17 +1,58 @@
 import { readFileSync } from 'node:fs';
 import loadMujoco from '@mujoco/mujoco';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { galleryBundleBytes } from '../gallery/galleryBundle';
 import { galleryBundleOf } from '../gallery/buildBundle';
 import { galleryBundles } from '../gallery/galleryEntries';
 import { fixtureRobots } from '../sim/fixtures/robots';
 import { presetCase } from '../cases/testing';
+import { forgetComponentMesh } from '../three/componentMeshes';
 import { adjudicate, closeLeague } from './adjudication';
 import { roverLeagueFixture } from './fixtures';
 import { replayLeagueSeed } from './replay';
 import { hashBytes, hashValue, verifyEntryBundle } from './validation';
 
 const provenance = { repository: 'JamelHammoud/basecase', commit: 'a'.repeat(40), runId: 'fixture' };
+
+it('loads catalog geometry before browser measurement and refuses a missing model instead of using a box', async () => {
+  const mj = await loadMujoco();
+  const { manifest, entries, bundles } = roverLeagueFixture();
+  const bundle = structuredClone(bundles[0]);
+  const componentId = 'feetech-sts3215';
+  const file = readFileSync(new URL(`../../public/parts/${componentId}.glb`, import.meta.url));
+  const mesh = Uint8Array.from(file).buffer;
+
+  bundle.robot.parts[0] = { ...bundle.robot.parts[0], kind: 'component', componentId };
+
+  const bytes = galleryBundleBytes(bundle);
+  const entry = { ...entries[0], bundleHash: hashBytes(bytes) };
+  const fetch = vi.fn(async () => new Response(mesh));
+
+  forgetComponentMesh(componentId);
+  vi.stubGlobal('fetch', fetch);
+
+  try {
+    const browser = await replayLeagueSeed(mj, manifest, entry, { bytes, seed: 1 });
+
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining(`${componentId}.glb`));
+    forgetComponentMesh(componentId);
+    vi.stubGlobal('fetch', async () => new Response('', { status: 404 }));
+    await expect(replayLeagueSeed(mj, manifest, entry, { bytes, seed: 1 })).rejects.toThrow('couldn’t load');
+
+    const adjudicated = await replayLeagueSeed(mj, manifest, entry, {
+      bytes,
+      seed: 1,
+      meshes: { [componentId]: mesh },
+    });
+
+    expect(browser.outcome).toEqual(adjudicated.outcome);
+    expect(browser.budget).toEqual(adjudicated.budget);
+  } finally {
+    forgetComponentMesh(componentId);
+    vi.unstubAllGlobals();
+  }
+});
 
 it('replays different rover bodies with held-back seeds and repeats every verdict and ranking', async () => {
   const mj = await loadMujoco();

@@ -14,6 +14,7 @@ async function create() {
   const board = createLeague(process.env.LEAGUE_MANIFEST ?? '', new Date().toISOString(), {
     mujoco: mj.mj_versionString(),
     runner: LEAGUE_RUNNER_VERSION,
+    commit: process.env.GITHUB_SHA,
   });
 
   await fs.mkdir(output, { recursive: true });
@@ -42,3 +43,10 @@ async function prepare() {
 }
 
 await prepare();
+
+const board = JSON.parse(await fs.readFile(path.join(output, 'board.json'), 'utf-8'));
+const runner = process.env.OPERATION === 'fixture' ? process.env.GITHUB_SHA : board.manifest.engine.commit;
+
+if (!/^[a-f0-9]{40}$/.test(runner ?? '')) throw new Error('The League needs a pinned runner commit.');
+
+if (process.env.GITHUB_OUTPUT) await fs.appendFile(process.env.GITHUB_OUTPUT, `runner=${runner}\n`);

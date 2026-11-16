@@ -48,6 +48,34 @@ const outcome = (seed: number, score = 1): LeagueOutcome => ({
 const provenance = { repository: 'JamelHammoud/basecase', commit: revision, runId: 'fixture' };
 
 describe('League admission and ranking', () => {
+  it('binds frozen evidence to the pinned runner commit rather than a later workflow checkout', async () => {
+    const pin = { ...manifest(), engine: { ...manifest().engine, commit: revision } };
+    const closure = closeLeague({
+      manifest: pin,
+      entries: [entry()],
+      now: '2026-11-02T00:00:00.000Z',
+      entropy: 'f'.repeat(64),
+    });
+    const frozen = await adjudicate({
+      manifest: pin,
+      closure,
+      provenance,
+      replay: async (_, seed) => ({ outcome: outcome(seed), budget: 12 }),
+    });
+
+    expect(validateManifest(pin).engine.commit).toBe(revision);
+    expect(() =>
+      verifyFrozen(pin, closure.entries, frozen, { expectedHash: hashValue(frozen), closure }),
+    ).not.toThrow();
+
+    const changed = { ...frozen, provenance: { ...provenance, commit: 'b'.repeat(40) } };
+
+    expect(() => verifyFrozen(pin, closure.entries, changed, { expectedHash: hashValue(changed), closure })).toThrow(
+      'does not match',
+    );
+    expect(() => validateManifest({ ...pin, engine: { ...pin.engine, commit: 'main' } })).toThrow('commit');
+  });
+
   it('pins a whole Case and contract and refuses executable content', () => {
     const pin = manifest();
 

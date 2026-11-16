@@ -14,7 +14,7 @@ hub_run_a_case: |
   Compare shared robots on one pinned Case and replay their measured seeds. See [Replay a League](/help/replay-a-league).
 ---
 
-You can compare shared robots on one Case, replay a measured seed, and open the selected robot in your browser’s studio.
+Compare shared robots on one Case and open a measured run in your browser’s studio.
 
 1. Open the [Rover sprint League](https://app.basecase.so/l/rover-sprint).
 2. Under **Robot**, click a robot’s name.
@@ -34,10 +34,6 @@ You can compare shared robots on one Case, replay a measured seed, and open the 
 
 The League’s CI adjudication determines the frozen standings. Replays in your browser remain provisional and don’t replace those standings.
 
-The ranking order is passes, the pinned score in its declared direction, lower Budget, and a stable entry identity.
-Budget uses catalog prices and measured geometry. If prices or geometry are missing, you’ll see **Unpriced** instead of a zero cost.
+Choose another **Seed** to clear the previous verdict, then click **Replay Seed** to measure it. If Budget shows **Unpriced**, the robot has missing prices or geometry.
 
-Each League pins its Case, contract, engine, deadline and ranking rules. You can’t submit executable Case panels, Case logic or imported worlds. Retained skills must use a network policy controller.
-
-To submit your robot before the deadline, follow [Share a robot as a link](/help/share-a-robot-as-a-link).
-You need a trusted CI receipt for your submission before the deadline to enter the frozen standings.
+To submit a robot, follow [Share a robot as a link](/help/share-a-robot-as-a-link).

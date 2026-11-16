@@ -50,7 +50,11 @@ export function validateManifest(input: unknown): LeagueManifest {
     case: parseCase(v.case),
     caseHash: leagueHash(v.caseHash, 'League Case'),
     contractHash: leagueHash(v.contractHash, 'League contract'),
-    engine: { mujoco: asString(engine.mujoco, 'MuJoCo'), runner: asString(engine.runner, 'League runner') },
+    engine: {
+      mujoco: asString(engine.mujoco, 'MuJoCo'),
+      runner: asString(engine.runner, 'League runner'),
+      ...(engine.commit === undefined ? {} : { commit: leagueRevision(engine.commit) }),
+    },
     ranking: {
       score: oneOf(['margin', 'score'])(ranking.score, 'League score'),
       direction: oneOf(['higher', 'lower'])(ranking.direction, 'League direction'),

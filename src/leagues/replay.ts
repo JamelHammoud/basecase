@@ -3,7 +3,7 @@ import { caseRunner } from '../cases/runCase';
 import { refuse } from '../cases/validate';
 import type { GalleryBundle } from '../gallery/galleryBundle';
 import { headlessParts } from '../three/headlessParts';
-import type { MeshFiles } from '../three/componentMeshes';
+import { componentMeshesReady, provideMeshFiles, type MeshFiles } from '../three/componentMeshes';
 import type { PolicySpec } from '../sim/policy';
 import { leagueBudget } from './leagueBudget';
 import type { LeagueEntry, LeagueManifest, LeagueOutcome } from './types';
@@ -43,7 +43,17 @@ export async function replayLeagueSeed(
     return refuse('League seed', 'is outside its limits');
 
   const bundle = verifyEntryBundle(manifest, entry, options.bytes);
-  const loaded = await headlessParts(bundle.robot.parts, bundle.robot.joints, options.meshes ?? {});
+
+  provideMeshFiles(options.meshes);
+
+  const components = bundle.robot.parts.flatMap((part) =>
+    part.kind === 'component' && part.componentId ? [part.componentId] : [],
+  );
+  const missing = await componentMeshesReady(components);
+
+  if (missing.length) return refuse('League robot', `couldn’t load ${missing.join(', ')}`);
+
+  const loaded = await headlessParts(bundle.robot.parts, bundle.robot.joints, {});
   const policy = retainedPolicy(bundle);
   const runner = caseRunner(
     mj,

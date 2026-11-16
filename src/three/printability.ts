@@ -242,11 +242,23 @@ function faceDowns(tris: Float32Array): Vec3[] {
 const R2_U = 0.7548776662;
 const R2_V = 0.569840291;
 
-function triangleSample(i: number): [number, number] {
+interface WallTriangle {
+  a: THREE.Vector3;
+  n: THREE.Vector3;
+  edgeB: THREE.Vector3;
+  edgeC: THREE.Vector3;
+}
+
+function wallSample(origin: THREE.Vector3, triangle: WallTriangle, i: number) {
   const u = (1 / 3 + i * R2_U) % 1;
   const v = (1 / 3 + i * R2_V) % 1;
+  const reflected = u + v > 1;
 
-  return u + v > 1 ? [1 - u, 1 - v] : [u, v];
+  origin
+    .copy(triangle.a)
+    .addScaledVector(triangle.edgeB, reflected ? 1 - u : u)
+    .addScaledVector(triangle.edgeC, reflected ? 1 - v : v)
+    .addScaledVector(triangle.n, -1e-3);
 }
 
 const MIN_WALL_RAYS = 4000;
@@ -281,6 +293,7 @@ function wallThickness(tris: Float32Array, bvh: MeshBVH) {
   const ray = new THREE.Ray();
   const edgeB = new THREE.Vector3();
   const edgeC = new THREE.Vector3();
+  const triangle = { a, n, edgeB, edgeC };
   let min = Infinity;
   let thinArea = 0;
   let acc = step / 2;
@@ -306,9 +319,7 @@ function wallThickness(tris: Float32Array, bvh: MeshBVH) {
     const rays = Math.round(weight / step);
 
     for (let i = 0; i < rays; i++) {
-      const [u, v] = triangleSample(i);
-
-      ray.origin.copy(a).addScaledVector(edgeB, u).addScaledVector(edgeC, v).addScaledVector(n, -1e-3);
+      wallSample(ray.origin, triangle, i);
 
       const hit = bvh.raycastFirst(ray, THREE.DoubleSide);
 

@@ -252,3 +252,13 @@ Review reproduced two missed selections. Vitest expands `styled %c text` to `sty
 The updated isolated run passes 12 tests across the three selector test files. Its generated fixture has 11 runtime cases, including the style placeholder. The additional CLI regression removes shared setup and renames its adjacent declaration together, then verifies the affected-file selection and all 11 executed cases. The report is `scratch/review-selector-report.json`, with output in `scratch/review-selector-isolated.log`.
 
 The standard `check:changed` run also passes during review, including formatting, ESLint, documentation and all 12 related tests in 2.71 seconds of test execution. A local dependency copy omitting the shared caches allowed discovery to complete without a repository configuration change. Its log is `scratch/review-check-final.log`.
+
+## Fleet authorization boundary
+
+The [Fleet service](../guide/fleet.md) uses one evaluator for direct resource reads, enumeration, exports, text assets, mutations and subscription snapshots. Fast tests exercise two organizations, nested sites, group grants, custom role replacement and deletion, deny overrides, attribute conditions, token ceilings, enrollment replay, session revocation and role changes on an open subscription.
+
+The transport test rejects a remote HTTP origin and a wildcard HTTP bind paired with a loopback origin. Request handling also checks the socket peer, preventing a remote request with a forged loopback Host. The service does not trust forwarded headers as proof of HTTPS. The studio connector's redirect refusal prevents bearer forwarding to another origin. Operator-owned configuration is its only source of addresses and credentials. Desktop bridge and trusted IPC implementations are unchanged.
+
+The initial integration run exposed JSON scope arrays being encoded as PostgreSQL arrays instead of JSON. Explicit JSON serialization fixed credential issuance. An export without any export grant initially returned an empty page, and now refuses the request. Allocating a new generation initially cleared the previous source timestamp. Status now stores its observation generation separately and keeps the last observation until a new generation publishes. The original persistence assertion remains intact.
+
+No SAML, SCIM, physical robot, remote identity provider or cross-host TLS deployment was exercised. TLS is required by the service configuration and connector validation outside loopback. The committed integration tests run against HTTP loopback. Registry performance and memory evidence are in [Fleet measurements](fleet.md).

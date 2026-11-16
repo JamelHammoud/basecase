@@ -17,23 +17,17 @@ export interface LoadEnv {
   crouch: CrouchModel;
 }
 
-const angles = (range: [number, number] = [-90, 90]) => {
-  const out: number[] = [];
-
-  for (let a = Math.min(...range); a <= Math.max(...range) + 1e-6; a += STEP_DEG) out.push(a);
-
-  return out;
-};
-
 const gravity = (grams: number): V3 => [0, (-grams / 1000) * G, 0];
 
-export function swingTorque(r: V3, a: V3, grams: number, range: [number, number] | undefined): number {
+export function swingTorque(r: V3, a: V3, grams: number, range: [number, number] = [-90, 90]): number {
+  const force = gravity(grams);
+  const end = Math.max(...range) + 1e-6;
   let swing = 0;
 
-  for (const t of angles(range)) {
+  for (let t = Math.min(...range); t <= end; t += STEP_DEG) {
     const rr = rotateAbout(r, a, t);
 
-    swing = Math.max(swing, Math.abs(dot(cross(rr, gravity(grams)), a)) / 1000);
+    swing = Math.max(swing, Math.abs(dot(cross(rr, force), a)) / 1000);
   }
 
   return swing;

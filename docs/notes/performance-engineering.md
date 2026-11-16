@@ -176,3 +176,15 @@ For N parallel horizontal joints, the previous grouping created 2N member arrays
 Existing `crouchAxes.test.ts` compares the full lever and knee results against the previous member-list calculation for 529 empty, mixed and reversed chains. It includes knee ties, level and parallel thresholds, zero and nonfinite axes, edited inputs and independent results. Its 30- and 60-joint cases retain source-axis read bounds. `engineeringCrouch.test.ts` retains complete report and crouch-torque coverage. No timeout, retry or quarantine changes apply.
 
 The existing [Servo torque and sizing](../../site/content/help/servo-torque-and-sizing.md) and [Checks in the Build tab](../../site/content/help/build-checks.md) articles still describe the same selected group, tie rule, crouch floor, verdicts and controls. No user action, label or screenshot state changes.
+
+## Swing torque streams angle samples
+
+The whole-app search found one swing-torque sampler, `utils/engineeringTorque.ts`. Engineering joint loads and skeleton sizing call it. Payload maps and motion sweeps use different sampling rules and do not call its angle-list builder.
+
+For S angle samples, the previous implementation allocated one S-entry angle list and S identical three-coordinate gravity vectors. The replacement retains no angle list and prepares one force vector per call. The default range from -90° to 90° has 37 samples, removing one 37-entry list and 36 gravity vectors. The maximum range endpoint is also calculated once instead of once per loop condition. Rotation and moment vectors remain per sample. These are source-derived operation counts, not measured timings or claims about complete Checks latency.
+
+`swingTorque.test.ts` compares exact maxima with the former buffered calculation for 270 combinations of ranges, axes and masses, then repeats after lever edits. Cases include default and reversed ranges, fractional endpoints around the tolerance, single samples, NaN ranges, zero axes, signed zero, negative masses, infinities and NaN. Inputs remain unchanged. Existing engineering and skeleton-sizing tests cover the consumers. No timeout, retry or quarantine changes apply.
+
+The existing Servo torque and sizing and Checks in the Build tab help articles describe the same load estimates, verdicts and actions. No controls, labels, help steps or screenshot states change.
+
+Changed-file verification on macOS arm64 with Node v26.13.0 passed formatting, lint, types, documentation, site copy and 1,794 related tests across 280 passing files. One existing file and test were skipped. The related run took 92.87 seconds. Logs remain in `scratch/check-swing.log`. Copy accounting is net zero. Preflight flagged the unchanged Servo torque and sizing article, which was checked against the preserved sampling and verdict behavior above.

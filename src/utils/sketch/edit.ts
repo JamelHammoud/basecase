@@ -214,6 +214,8 @@ export type ApplyKind = PairKind | 'horizontal' | 'vertical' | 'coincident';
 const onlyLines = (sketch: Sketch, ids: string[]) => ids.every((id) => entityOf(sketch, id)?.kind === 'line');
 
 export function applicableConstraints(sketch: Sketch, ids: string[]): ApplyKind[] {
+  if (ids.length === 0 || ids.length > 2) return [];
+
   const kinds = ids.map((id) => entityOf(sketch, id)?.kind ?? (pointOf(sketch, id) ? 'point' : null));
   const lines = kinds.filter((k) => k === 'line').length;
   const rounds = kinds.filter((k) => k === 'circle' || k === 'arc').length;

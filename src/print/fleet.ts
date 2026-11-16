@@ -87,9 +87,17 @@ interface NextPlate {
 }
 
 export function nextPlate({ plates, plateStatus, printer, scene, process }: NextPlate): Plate | null {
-  const open = plates.filter((p) => !BUSY.has(plateStatus(p).state) && offeredTo(p, printer, scene, process));
+  let next: Plate | null = null;
 
-  return open.sort((a, b) => a.number - b.number)[0] ?? null;
+  for (const plate of plates) {
+    if (next && plate.number >= next.number) continue;
+
+    if (BUSY.has(plateStatus(plate).state) || !offeredTo(plate, printer, scene, process)) continue;
+
+    next = plate;
+  }
+
+  return next;
 }
 
 const round = (v: number) => Math.round(v * 1e6) / 1e6;

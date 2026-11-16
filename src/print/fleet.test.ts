@@ -6,7 +6,7 @@ import { nextPlate, offeredTo, plateFootprint, plateOnBed, type FleetPrinter } f
 import { buildPrintPlan } from './plan';
 import { planInput } from './plan.fixtures';
 import type { PrinterStatus } from './printBridge';
-import { markForReprint, plateStatusLookup, printRecordFor, withRecord } from './tracker';
+import { markForReprint, plateStatusLookup, printRecordFor, withRecord, type PlateState } from './tracker';
 
 const mine = (id: string, modelId: string): MyPrinter => ({
   id,
@@ -114,6 +114,68 @@ describe('Start Next', () => {
 
     expect(first).toBe(base);
     expect(second).toBe(leg);
+  });
+
+  it('matches exhaustive selection for unordered plates, ties, statuses, materials and bed refusals', () => {
+    const states: PlateState[] = ['new', 'sent', 'printing', 'printed', 'failed'];
+    const sources = [base, leg, shell];
+    const mini = fleet('mini', 'bambu-lab-a1-mini');
+    const petg = fleet('petg', 'bambu-lab-a1-mini', {
+      state: 'idle',
+      trays: [{ slot: 0, type: 'PETG', color: '#fff' }],
+    });
+
+    for (let seed = 0; seed < 60; seed++) {
+      const plates = Array.from({ length: seed % 19 }, (_, index) => ({
+        ...sources[(index + seed) % sources.length],
+        number: (index * 7 + seed) % 11,
+        hash: String(index),
+      }));
+      const before = structuredClone(plates);
+      const plateStatus = (plate: (typeof plates)[number]) => ({
+        state: states[(Number(plate.hash) + seed) % states.length],
+      });
+      const target = [printer, mini, petg][seed % 3];
+      const expected = plates
+        .filter((plate) => !['sent', 'printing', 'printed'].includes(plateStatus(plate).state))
+        .filter((plate) => offeredTo(plate, target, scene))
+        .sort((a, b) => a.number - b.number)[0];
+
+      expect(nextPlate({ plates, plateStatus, printer: target, scene })).toBe(expected ?? null);
+      expect(plates).toEqual(before);
+    }
+  });
+
+  it('fits only candidates that can beat the current plate and reads current statuses on the next call', () => {
+    const mini = fleet('mini', 'bambu-lab-a1-mini');
+
+    for (const count of [300, 600]) {
+      let footprintReads = 0;
+      const plates = Array.from({ length: count }, (_, number) => ({
+        ...leg,
+        number,
+        get items() {
+          footprintReads++;
+
+          return leg.items;
+        },
+      }));
+
+      expect(nextPlate({ plates, plateStatus: () => ({ state: 'new' }), printer: mini, scene })).toBe(plates[0]);
+      expect(footprintReads).toBe(1);
+
+      footprintReads = 0;
+
+      expect(
+        nextPlate({
+          plates,
+          plateStatus: (plate) => ({ state: plate.number === 0 ? 'printed' : 'new' }),
+          printer: mini,
+          scene,
+        }),
+      ).toBe(plates[1]);
+      expect(footprintReads).toBe(1);
+    }
   });
 
   it('has nothing for a printer once every plate it can take is out', () => {

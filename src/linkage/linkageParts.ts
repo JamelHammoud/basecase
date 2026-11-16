@@ -52,14 +52,14 @@ const hasPoint = (l: PlacedFourBar) => l.point[0] !== 0 || l.point[1] !== 0;
 
 function barShape(name: BarName, at: Pivots, l: PlacedFourBar): { points: Vec2[]; z: number } {
   const layer = BAR.t + BAR.gap;
-  const shapes: Record<BarName, { points: Vec2[]; z: number }> = {
-    ground: { points: [at.a, at.d], z: 0 },
-    crank: { points: [at.a, at.b], z: layer },
-    rocker: { points: [at.d, at.c], z: layer },
-    coupler: { points: hasPoint(l) ? [at.b, at.c, at.p] : [at.b, at.c], z: 2 * layer },
-  };
 
-  return shapes[name];
+  if (name === 'ground') return { points: [at.a, at.d], z: 0 };
+
+  if (name === 'crank') return { points: [at.a, at.b], z: layer };
+
+  if (name === 'rocker') return { points: [at.d, at.c], z: layer };
+
+  return { points: hasPoint(l) ? [at.b, at.c, at.p] : [at.b, at.c], z: 2 * layer };
 }
 
 function barPorts(name: BarName, at: Pivots, l: PlacedFourBar): CadPort[] {
@@ -71,14 +71,14 @@ function barPorts(name: BarName, at: Pivots, l: PlacedFourBar): CadPort[] {
     kind: 'bore',
     diameterMm: BAR.pin,
   });
-  const byBar: Record<BarName, CadPort[]> = {
-    ground: [port('A', at.a, 0), port('D', at.d, 0)],
-    crank: [port('A', at.a, 0), port('B', at.b, top)],
-    rocker: [port('D', at.d, 0), port('C', at.c, top)],
-    coupler: [port('B', at.b, top), port('C', at.c, top), ...(hasPoint(l) ? [port('P', at.p, top)] : [])],
-  };
 
-  return byBar[name];
+  if (name === 'ground') return [port('A', at.a, 0), port('D', at.d, 0)];
+
+  if (name === 'crank') return [port('A', at.a, 0), port('B', at.b, top)];
+
+  if (name === 'rocker') return [port('D', at.d, 0), port('C', at.c, top)];
+
+  return [port('B', at.b, top), port('C', at.c, top), ...(hasPoint(l) ? [port('P', at.p, top)] : [])];
 }
 
 export function linkageCode(l: PlacedFourBar, theta: number, part: BarName): string {

@@ -2,6 +2,12 @@
 
 Implementation: [Print planning and labels](../guide/printing.md#performance-print-planning-and-labels). Shared requirements: [Performance](../guide/performance.md).
 
+## Project filaments retain material matches
+
+`print/projectJob.test.ts` compares filament order, colors and every object's assignment against the previous lookup rules over 80 generated tray lists. It covers mixed case and material suffixes, duplicate slots, external and negative slots, missing materials, malformed colors, copied objects, unchanged sources and edited tray order. Existing `print/project.test.ts` covers complete worker-written project archives and the single-material path.
+
+On four materials with one tray each in material order, the previous comparator and color construction read tray types 41 times in a local Node replay. Preparation now reads them ten times, once for each prefix visited during the four material searches. The test counts reads through tray getters and checks fresh preparation after an edit. Every object also replaces its ordered-material search with a map lookup. These are operation counts, without timing assertions or a claim about complete export speed. Tray lists and material counts are small. No browser flow, on-screen state or archive format changes.
+
 ## Welding rejects collapsed triangles as they arrive
 
 The shared welder removes the post-weld traversal and temporary JavaScript index list. For 30,000 triangles without collapsed faces, it removes 90,000 post-weld typed-index reads, 90,000 temporary list entries and the subsequent 90,000-entry typed-array copy. The existing index buffer becomes the result. For a mesh with half its triangles collapsed, the temporary 45,000-entry list is gone, while a typed copy of the retained prefix preserves exact buffer sizing. Welding still checks three indices per triangle during construction. These are structural operation counts, not wall-clock or complete export measurements.

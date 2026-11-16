@@ -396,3 +396,16 @@ The existing 2,000-sibling round-trip fixture now has six attributes per link, i
 For this fixture's 4,001 elements and 12,000 attributes, the previous source explicitly allocated 4,001 intermediate match lists retaining 12,000 match references before mapping. Direct iteration removes those lists and retains only the output tuples. Regular-expression match objects and result arrays still exist. These are source-derived allocation counts, not heap measurements or timings, and establish no complete-import latency claim. No timeout, retry, browser harness or quarantine changes apply.
 
 The existing help articles were checked against the change. [Import a robot](../../site/content/help/import-a-robot.md) retains its xacro entry points, defaults, include behavior, refusals and four screenshots. [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) retains imported joints, hierarchy and posing behavior. [A robot won't import from a link or folder](../../site/content/help/troubleshoot-app-robot-import-fails.md) retains its link eligibility, messages, mesh recovery and import limits. No action, label or visible state changed, so the articles and captures stay unchanged.
+
+
+## Alternating gaits partition foot indices once
+
+The whole-app search found one side-partition implementation, `utils/gait.ts`, shared by generated walk cycles and drive-class checks. Other phase paths use explicit phases or fixed defaults rather than dividing feet by position.
+
+The former partition created two full lists of records containing index, depth and side membership, then filtered each list. The new partition appends indices to two owned side lists in one traversal. Each list still sorts by foot depth. Equal depths retain input order, and feet on the midpoint remain on the right. Two explicit side comparisons preserve the previous exclusion when the midpoint is NaN. No partition survives the call.
+
+For a finite six-foot layout, the previous partition explicitly allocated twelve temporary records, two mapped arrays and two filtered arrays. The new partition allocates no per-foot records and uses two index lists inside one outer array. Midpoint coordinate arrays, phase output and both sorts remain. These are source-derived allocation counts, not engine heap measurements or timings. No complete gait-generation speedup is claimed.
+
+`gaitPhases.test.ts` checks a hand-calculated layout with tied depths and centerline feet, then compares the previous equations across 131 layouts and their nonempty edits. Cases include both source orders for sizes two through 64, empty and single-foot inputs, NaN and infinite coordinates. It also checks that inputs remain unchanged. Existing animation tests cover generated gait targets, while drive-class tests retain the six-foot tripod check. No timeout, retry or quarantine changes apply.
+
+[Animate a robot with a walk cycle or motion capture](../../site/content/help/animate-a-robot.md) retains the same walk creation, timing, playback and three screenshots. [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) retains its target-based motion, joint fields and robot selection. Both articles were read against the change. No action, label or visible state changes, so their prose and screenshots stay unchanged.

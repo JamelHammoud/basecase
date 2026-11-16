@@ -32,13 +32,16 @@ export function defaultPhases(n: number): number[] {
 export function alternatingPhases(points: V3[]): number[] {
   const middle = (Math.max(...points.map((p) => p[0])) + Math.min(...points.map((p) => p[0]))) / 2;
   const phases = new Array<number>(points.length).fill(0);
+  const sides: number[][] = [[], []];
 
-  [0, 1].forEach((side) => {
-    points
-      .map((p, i) => ({ i, z: p[2], onSide: side === 0 ? p[0] < middle : p[0] >= middle }))
-      .filter((p) => p.onSide)
-      .sort((a, b) => a.z - b.z)
-      .forEach((p, rank) => (phases[p.i] = (rank + side) % 2 === 0 ? 0 : 0.5));
+  points.forEach((point, index) => {
+    if (point[0] < middle) sides[0].push(index);
+
+    if (point[0] >= middle) sides[1].push(index);
+  });
+  sides.forEach((indices, side) => {
+    indices.sort((a, b) => points[a][2] - points[b][2]);
+    indices.forEach((index, rank) => (phases[index] = (rank + side) % 2 === 0 ? 0 : 0.5));
   });
 
   return phases;

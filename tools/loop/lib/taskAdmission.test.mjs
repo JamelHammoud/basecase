@@ -34,6 +34,18 @@ describe('task admission before publication', () => {
     expect(calls.voice).not.toHaveBeenCalled();
   });
 
+  it('rejects Windows diagnostic tasks before voice or publication even when they only declare CI', () => {
+    expect(
+      createIssue({
+        title: 'Make a Windows lifecycle failure deterministic',
+        body: 'Requires: windows-ci\n\nUse a Windows run on a branch and measure at least ten runs before and ten after at equal load.',
+        labels: ['loop:next'],
+      }),
+    ).toBeNull();
+    expect(calls.run).not.toHaveBeenCalled();
+    expect(calls.voice).not.toHaveBeenCalled();
+  });
+
   it('allows a Windows CI task and keeps an unsupported idea outside execution', () => {
     expect(
       createIssue({

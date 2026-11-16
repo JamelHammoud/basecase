@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest';
-import { taskRequirements, unavailableCapabilities, withRequirements } from './capabilities.mjs';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  availableCapabilities,
+  AVAILABLE,
+  taskRequirements,
+  unavailableCapabilities,
+  withRequirements,
+} from './capabilities.mjs';
 
 describe('executable work', () => {
   it('rejects a task needing an interactive Windows host while allowing Windows CI work', () => {
@@ -28,5 +34,55 @@ describe('executable work', () => {
       'unavailable-service',
     ]);
     expect(withRequirements(body, ['macos-host'])).toBe(body);
+  });
+});
+
+describe('Windows diagnostic requirements', () => {
+  it('gates legacy before/after Windows measurements separately from published-ref CI', () => {
+    const task = {
+      title: 'Make shutdown deterministic on Windows',
+      body: 'Requires: windows-ci\n\nUse a Windows run on a branch and measure at least ten runs before and ten after at equal load.',
+    };
+
+    expect(unavailableCapabilities(task)).toContain('windows-diagnostics');
+    expect(unavailableCapabilities(task, [...AVAILABLE, 'windows-diagnostics'])).toEqual([]);
+    expect(
+      unavailableCapabilities({
+        title: 'Repair Windows gallery navigation',
+        body: 'Collect at least ten baseline and ten fixed runs at equal load.',
+      }),
+    ).toContain('windows-diagnostics');
+  });
+
+  it('keeps ordinary Windows CI work and Linux-only measurements eligible', () => {
+    expect(
+      unavailableCapabilities({
+        title: 'Verify Windows compatibility',
+        body: 'Requires: windows-ci\nRun the regression checks on the published PR.',
+      }),
+    ).toEqual([]);
+    expect(
+      unavailableCapabilities({
+        title: 'Keep Linux and Windows compatible',
+        body: 'Requires: windows-ci, linux-container\n\nMeasure ten Linux runs before and ten after at equal load. Verify Windows compatibility in PR CI.',
+      }),
+    ).toEqual([]);
+  });
+
+  it('allows retained-log analysis and makes an explicitly configured Windows host diagnostic-capable', () => {
+    expect(
+      unavailableCapabilities({
+        title: 'Analyze Windows failures',
+        body: 'Requires: repository\n\nCompare ten baseline and ten fixed runs from existing logs.',
+      }),
+    ).toEqual([]);
+    vi.stubEnv('BASECASE_LOOP_CAPABILITIES', 'windows-host');
+
+    try {
+      expect(availableCapabilities()).toContain('windows-diagnostics');
+      expect(unavailableCapabilities({ requires: ['windows-diagnostics'] })).toEqual([]);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });

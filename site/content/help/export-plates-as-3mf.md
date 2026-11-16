@@ -41,6 +41,4 @@ If **Label parts** is on in Print mode, each part has its build guide letter cut
 
 You can also choose **Export 3MF Plates** from [[⌘K]]. It works in the web studio too, because it doesn't need a slicer.
 
-To include assembly instructions and packing lists with the plates, use [Export a robot kit](/help/export-a-robot-kit).
-
 To slice and send from Basecase instead, see [Print a robot's parts](/help/print-a-robots-parts).

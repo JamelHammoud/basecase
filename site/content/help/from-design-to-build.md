@@ -70,8 +70,6 @@ For flat structural parts, [Cut parts from sheet](/help/cut-parts-from-sheet) ex
 
 The build guide is a PDF of assembly steps. Basecase checks that the parts can go together in that order. The guide names each printed part with a letter, and Print mode cuts that letter into a hidden face of the part.
 
-To hand off plates, instructions and assembly packing lists together, [export a robot kit](/help/export-a-robot-kit). The archive records Checks freshness without changing the verdict.
-
 For a broken part, [Repair a part](/help/repair-a-part) plays the measured teardown, replacement and reassembly in Build Along. A printed replacement gets a one-part plate, even if its shape hasn't changed. Repair needs a measured removal path and proven reassembly order.
 
 To fit a weekend build into the hours available, [set a time budget](/help/set-a-time-budget) beside the money budget. The Time check adds printing, estimated assembly and servo setup. It fails over budget, warns above 90%, and remains a note without a budget.

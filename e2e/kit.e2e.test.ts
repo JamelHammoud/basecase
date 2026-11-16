@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { expect, inject, it } from 'vitest';
 import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { openKitScene } from './kitScene';
+import { stubKitGuideWorker } from './kitGuideWorker';
 import { kitArmScene } from '../src/kit/entry.fixtures';
 import { openApp, partCount } from './harness';
 import type { KitManifest } from '../src/kit/types';
@@ -13,6 +14,7 @@ it.each(['desktop', 'web'])(
 
     try {
       const scene = kitArmScene();
+      const guides = await stubKitGuideWorker(app.page);
 
       await openKitScene(app.page, scene, surface === 'web' ? inject('webUrl') : undefined);
 
@@ -59,6 +61,14 @@ it.each(['desktop', 'web'])(
       expect(manifest.servos[0].entry.servo?.variant).toBe('c001');
       expect(manifest.packing.some((row) => row.step !== null && row.module !== null)).toBe(true);
       expect(strFromU8(files['build-guide.html'])).toContain('Kit arm');
+      expect(guides).toHaveLength(1);
+      expect(guides[0].job.parts.map((part) => part.id)).toEqual(scene.parts.map((part) => part.id));
+      expect(guides[0].job.project.joints).toEqual(scene.project.joints);
+      expect(guides[0].job.order).toBeDefined();
+      expect(new Set([...guides[0].job.order!.assembly, ...guides[0].job.order!.unproven])).toEqual(
+        new Set(scene.parts.map((part) => part.id)),
+      );
+      expect(strFromU8(files['build-guide.html'])).toBe(guides[0].result.html);
 
       const plate = unzipSync(files[`plates/${manifest.printed[0].outputs[0].file}`]);
 

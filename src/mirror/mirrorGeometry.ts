@@ -37,13 +37,10 @@ function rewound(indices: number[]): number[] {
   return out;
 }
 
-function rewoundSoup(positions: number[]): number[] {
-  const out = positions.slice();
-
-  for (let t = 0; t + 8 < out.length; t += 9)
-    for (let c = 0; c < 3; c++) [out[t + 3 + c], out[t + 6 + c]] = [out[t + 6 + c], out[t + 3 + c]];
-
-  return out;
+function rewindSoup(positions: number[]): void {
+  for (let t = 0; t + 8 < positions.length; t += 9)
+    for (let c = 0; c < 3; c++)
+      [positions[t + 3 + c], positions[t + 6 + c]] = [positions[t + 6 + c], positions[t + 3 + c]];
 }
 
 export function mirrorCad(cad: NonNullable<ScenePart['cad']>, k: MirrorAxis): NonNullable<ScenePart['cad']> {
@@ -64,9 +61,10 @@ export function mirrorCad(cad: NonNullable<ScenePart['cad']>, k: MirrorAxis): No
 
 export function mirrorMesh(mesh: NonNullable<ScenePart['mesh']>, k: MirrorAxis): NonNullable<ScenePart['mesh']> {
   const positions = flipped(mesh.positions, k);
-  const out = mesh.indices.length
-    ? { ...mesh, positions, indices: rewound(mesh.indices) }
-    : { ...mesh, positions: rewoundSoup(positions) };
+
+  if (!mesh.indices.length) rewindSoup(positions);
+
+  const out = { ...mesh, positions, indices: mesh.indices.length ? rewound(mesh.indices) : mesh.indices };
 
   delete out.visual;
 
@@ -76,7 +74,11 @@ export function mirrorMesh(mesh: NonNullable<ScenePart['mesh']>, k: MirrorAxis):
 export function mirrorSculpt(sculpt: SculptMeshData, k: MirrorAxis): SculptMeshData {
   const positions = flipped(sculpt.positions, k);
 
-  if (!sculpt.indices?.length) return { ...sculpt, positions: rewoundSoup(positions) };
+  if (!sculpt.indices?.length) {
+    rewindSoup(positions);
+
+    return { ...sculpt, positions };
+  }
 
   return { ...sculpt, positions, indices: rewound(sculpt.indices) };
 }

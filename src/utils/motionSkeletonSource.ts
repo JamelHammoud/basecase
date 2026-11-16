@@ -79,13 +79,13 @@ export function motionLeaves(motion: Mocap, limbs?: string[]): string[] {
 }
 
 export function motionScale(motion: Mocap, heightMm: number): number {
-  const points = [...motion.rest.values()];
-  const spans = ['x', 'y', 'z'].map((axis) => {
-    const values = points.map((point) => point[axis as 'x' | 'y' | 'z']);
+  const bounds = new THREE.Box3();
 
-    return Math.max(...values) - Math.min(...values);
-  });
-  const height = spans[1] > 1e-9 ? spans[1] : Math.max(...spans);
+  for (const point of motion.rest.values()) bounds.expandByPoint(point);
+
+  const vertical = bounds.max.y - bounds.min.y;
+  const height =
+    vertical > 1e-9 ? vertical : Math.max(bounds.max.x - bounds.min.x, vertical, bounds.max.z - bounds.min.z);
 
   return heightMm / height;
 }

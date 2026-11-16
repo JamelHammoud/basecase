@@ -48,7 +48,7 @@ You tried to use something only the desktop app can do. The rest of the message 
 2. Install Basecase.
 3. Move your scenes over. Export each one from the web studio, then open it in the desktop app.
 
-In the web studio, the **Agent** tab reads “Build with the agent in the desktop app”. Settings doesn't have the **Agent**, **Printers** or **Accounts** panes, Checks don't have **Fix**, and you can't import STEP or IGES files.
+In the web studio, the **Agent** tab reads “Build with the agent in the desktop app”. Settings doesn't have the **Agent**, **Printers**, **Accounts** or **Training** panes, Checks don't have **Fix**, and you can't import STEP or IGES files.
 
 ## Your scenes are gone from the web studio
 

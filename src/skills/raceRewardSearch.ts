@@ -93,6 +93,7 @@ async function trainOne(run: Run, options: { entrant: Entrant; steps: number; se
     environment: task.environment,
     controller: { kind: 'policy', policy: outcome.policy, robot: kitRobot(task.model).key },
     save: input.save,
+    judgment: input.judgment,
     origin: () => ({ method: 'reward-search', cost: elapsedOf(clock) }),
   });
 

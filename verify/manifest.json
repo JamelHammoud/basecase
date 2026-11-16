@@ -114,6 +114,7 @@
   "verify/rehearsal/soak.test.ts": "e491b316ca3a2dfae714821ff756e4dbfe678bb41fdf33cdd3ef6fae5049ee9e",
   "verify/rehearsal/uiRules.test.ts": "9cfdf4d36ac4bc10364c7a3d25c58e99b335dc89b37f460f90733fd846f9a214",
   "verify/rehearsal/uiRules.ts": "6deee63225277308a52c9a00371ff57396abcae3790c660abfb57fa52fdb207a",
+  "verify/remoteTraining/transport.test.ts": "97e00ddade1bcf62b83afeb9912d888d89f16e171a85ca6a51e853a09ee75625",
   "verify/routines/acceptance.test.ts": "1a819a736b17a4992d89c629ebdf9b3025dfcc38b19575989e62054f6bdd7de4",
   "verify/routines/acceptance.ts": "f2206ec421ded0743ef5c60d1863b36ca1022766dd1d55edabce9ca096aa96ca",
   "verify/routines/agentLoop.ts": "db5ffdb3b908b2a637bfcf5ec65dceca2a879874fc8ebdb3e50834ab0b05352e",

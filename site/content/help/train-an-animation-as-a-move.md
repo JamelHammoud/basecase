@@ -14,6 +14,8 @@ covers:
 
 You can teach a legged robot to perform one of its animations, such as a sit, a bow or a dance step, under physics. Without training, the sim plays the animation as joint targets and the robot tips over.
 
+The desktop app can [train on another computer](/help/train-on-another-computer) over SSH. Reopen the scene after a restart to recover the move and its local evaluation.
+
 1. Give the robot an animation in the Pose tab. Choose **+** ▸ **Walk Cycle** or **+** ▸ **Import BVH**. Or ask the agent to animate it.
 2. Open the Simulate tab. Under Teach it to, the animation has its own row, listed by name after Stand, Walk, Get up and Settle.
 3. Click Train on that row. Forge learns a policy that follows the animation. While it trains, the row shows the trainer's message and how much of the time is used, and the robot on the canvas runs the newest snapshot. To learn more, see [Watch a skill learn while it trains](/help/watch-a-skill-learn).

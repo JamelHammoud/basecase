@@ -32,6 +32,8 @@ Describe what you want the robot to do in your own words, then approve the agent
 
 Teaching runs in the desktop app, with Claude, Codex or Gemini connected as the agent. With Offline chosen, **Teach** shows a message instead. You can teach the robot any goal it can be judged on in the simulation, so there's no list of tasks to pick from.
 
+You can [train on another computer](/help/train-on-another-computer) over SSH and recover the result after a restart. Arena still runs locally.
+
 1. Click **Simulate** at the top of the right panel.
 2. Under **Train**, type the goal into **Teach it to**. For example, "walk to the box".
 3. Click **Teach**. The **Agent** tab opens with `/train` and your goal.

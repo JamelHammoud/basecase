@@ -64,9 +64,9 @@ Standing stability checks that the center of mass sits over the outline of the r
 
 | Result | When |
 |---|---|
-| Pass | The robot can tilt more than 5° before it tips |
-| Warn | The robot tips between 2° and 5° of tilt, or rests on a line with no third contact |
-| Fail | The center of mass is outside the feet, or the robot tips at under 2° of tilt |
+| Pass | The robot can tilt at least 5° before it tips |
+| Warn | The robot tips at 2° to under 5° of tilt, or rests on a line with no third contact |
+| Fail | The center of mass is on or outside the feet's outline, or the robot tips at under 2° of tilt |
 
 A foot touches the ground wherever its mesh does. A ball touches at a single point, and a wheel touches along a line under its axle. If a robot stands on two wheels and nothing else, the check warns that the robot has to balance itself.
 

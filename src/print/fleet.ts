@@ -11,35 +11,41 @@ export interface FleetPrinter {
 
 const BUSY = new Set(['sent', 'printing', 'printed']);
 
-function itemFootprint(item: PlanItem): Rect {
-  const angle = (item.yaw * Math.PI) / 180;
-  const diagonal = item.yaw % 90 !== 0;
-  const w = diagonal ? Math.abs(Math.cos(angle)) * item.w + Math.abs(Math.sin(angle)) * item.d : item.w;
-  const d = diagonal ? Math.abs(Math.sin(angle)) * item.w + Math.abs(Math.cos(angle)) * item.d : item.d;
-
-  return { x: item.x + (item.w - w) / 2, y: item.y + (item.d - d) / 2, w, d };
-}
-
 export function plateFootprint(plate: Plate): Rect & { h: number } {
-  const footprints = plate.items.map(itemFootprint);
-  const x = Math.min(...footprints.map((it) => it.x));
-  const y = Math.min(...footprints.map((it) => it.y));
+  let x = Infinity;
+  let y = Infinity;
+  let right = -Infinity;
+  let back = -Infinity;
+  let h = -Infinity;
 
-  return {
-    x,
-    y,
-    w: Math.max(...footprints.map((it) => it.x + it.w)) - x,
-    d: Math.max(...footprints.map((it) => it.y + it.d)) - y,
-    h: Math.max(...plate.items.map((it) => it.h)),
-  };
+  for (const item of plate.items) {
+    const yaw = item.yaw;
+    const angle = (yaw * Math.PI) / 180;
+    const diagonal = yaw % 90 !== 0;
+    const c = diagonal ? Math.abs(Math.cos(angle)) : 0;
+    const s = diagonal ? Math.abs(Math.sin(angle)) : 0;
+    const w = diagonal ? c * item.w + s * item.d : item.w;
+    const d = diagonal ? s * item.w + c * item.d : item.d;
+    const left = item.x + (item.w - w) / 2;
+    const front = item.y + (item.d - d) / 2;
+
+    x = Math.min(x, left);
+    y = Math.min(y, front);
+    right = Math.max(right, left + w);
+    back = Math.max(back, front + d);
+    h = Math.max(h, item.h);
+  }
+
+  return { x, y, w: right - x, d: back - y, h };
 }
 
-export function spotOn(plate: Plate, bed: Bed): Rect | null {
-  const size = plateFootprint(plate);
+function footprintSpot(size: ReturnType<typeof plateFootprint>, bed: Bed): Rect | null {
   const fit = fitOnBed(size.w, size.d, size.h, bed);
 
   return fit?.yaw === 0 ? fit.spot : null;
 }
+
+export const spotOn = (plate: Plate, bed: Bed): Rect | null => footprintSpot(plateFootprint(plate), bed);
 
 export const reportedFilaments = (status: PrinterStatus | null) =>
   (status?.trays ?? []).map((t) => t.type.toUpperCase());
@@ -103,11 +109,11 @@ function moved(item: PlanItem, shift: Shift): PlanItem {
 }
 
 export function plateOnBed(plate: Plate, from: Bed, to: Bed): Plate | null {
-  const spot = spotOn(plate, to);
+  const at = plateFootprint(plate);
+  const spot = footprintSpot(at, to);
 
   if (!spot) return null;
 
-  const at = plateFootprint(plate);
   const bed: Shift['bed'] = [spot.x - at.x, spot.y - at.y];
   const world: Shift['world'] = [to.origin[0] - from.origin[0] + bed[0], to.origin[1] - from.origin[1] + bed[1]];
 

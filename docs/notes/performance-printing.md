@@ -2,6 +2,12 @@
 
 Implementation: [Print planning and labels](../guide/printing.md#performance-print-planning-and-labels). Shared requirements: [Performance](../guide/performance.md).
 
+## Fleet relocation retains plate bounds
+
+For a successful relocation of N items, the previous path measured the footprint twice. Each measurement allocated six N-entry arrays and N rectangle objects. It visited items once to build rectangles and once for heights, then visited rectangle fields through four mapped arrays and their extrema scans. Relocation now measures bounds in one item scan with five scalar extrema and reuses them for fitting and translation. Diagonal items also share absolute sine and cosine between both extents. The existing moved-item and matrix output allocations remain.
+
+`src/print/fleetFootprint.test.ts` compares 120 complete bounds, fit and relocation cases against the previous calculation. It covers negative and diagonal rotations, axis-aligned yaw, copied items, bed obstacles, margins, refused placements, empty plates, edited inputs and unchanged sources. Additional cases compare NaN, infinities and signed zero in each placement field. Getter instrumentation on successful 300- and 600-item relocations records 600 and 1,200 yaw reads, including the returned item copies. The previous two measurements plus returned copies required 1,500 and 3,000 reads. These are operation counts, without timing assertions or a claim about complete sending time. Existing fleet and obstacle tests cover eligibility and placement integration. No UI, workflow or browser coverage changes are needed.
+
 ## Project filaments retain material matches
 
 `print/projectJob.test.ts` compares filament order, colors and every object's assignment against the previous lookup rules over 80 generated tray lists. It covers mixed case and material suffixes, duplicate slots, external and negative slots, missing materials, malformed colors, copied objects, unchanged sources and edited tray order. Existing `print/project.test.ts` covers complete worker-written project archives and the single-material path.

@@ -61,6 +61,12 @@ The shared welder removes the post-weld traversal and temporary JavaScript index
 
 `print/componentGrouping.test.ts` checks membership, ordering, repeated joins, cycles, unchanged inputs and map-read budgets at 300 and 600 items. On the 600-item fixtures, total map reads fell from 721,798 to 4,792 for descending print joins, and from 368,996 to 10,198 for descending coplanar triangles. These are operation counts, without wall-clock assertions.
 
+## Wall probes use scalar sample coordinates
+
+The shared wall-thickness sampler no longer returns a temporary two-number array for each ray. A local replay compared complete printability reports and every support and wall cast coordinate against the previous implementation. Nine rotated and translated boxes combined 0.1, 1 and 10 scale factors with 1, 3 and 10 face subdivisions. Inputs used offset typed-array views and remained unchanged. Empty, degenerate and open triangle inputs also matched exactly.
+
+The six smaller boxes each cast 4,000 wall rays and the three largest each cast 20,000. Temporary sample-pair construction falls from those counts to zero. These are structural allocation counts, without heap measurements, timing assertions or a claim about complete printing time. The replay is session evidence rather than a committed test. Existing `src/three/printability.test.ts` retains thin-panel, dense-mesh, solid-block and blind-pocket coverage. `src/three/printSupport.test.ts` retains support-cost parity, exact support casts and separate wall workspace coverage. No UI or workflow changes require browser coverage.
+
 ## Printed-label fallback bounds scan interleaved coordinates
 
 The fallback grid now reads each triangle coordinate once and retains four extrema. For 300 and 600 triangles, the previous two filters visited 3,600 and 7,200 coordinates, copied 1,800 and 3,600 values into two typed arrays, then visited those copies twice for extrema. The new bounds scan reads 1,800 and 3,600 coordinates and allocates no coordinate arrays. These are structural operation counts, not timings or complete plate-writing measurements. Full-size centroid fits still bypass bounds preparation entirely.

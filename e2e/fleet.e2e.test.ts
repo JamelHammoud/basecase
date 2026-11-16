@@ -28,6 +28,11 @@ beforeAll(async () => {
   const site = await admin.create('site', { name: 'Ward A' });
   const other = await admin.create('site', { name: 'Ward B' });
   const robot = await admin.create('robot', { name: 'Delivery 01', parent: site.id });
+
+  await Promise.all(
+    Array.from({ length: 30 }, (_, index) => admin.create('robot', { name: `Ward robot ${index}`, parent: site.id })),
+  );
+
   const role = await admin.create('role', {
     name: 'Ward viewer',
     rules: [{ effect: 'allow', scope: site.id, actions: ['inventory.view'], conditions: {} }],
@@ -71,6 +76,9 @@ it('opens Fleet from Operate, restricts a site viewer and reopens persistent inv
   await fleetPage.getByLabel('Password', { exact: true }).fill('fleet-fixture-password');
   await fleetPage.getByRole('button', { name: 'Sign In', exact: true }).click();
   await expect.poll(() => fleetPage.getByText('Delivery 01', { exact: true }).count()).toBe(1);
+  await expect.poll(() => fleetPage.locator('tbody tr').count()).toBe(31);
+  await fleetPage.locator('tbody tr').last().scrollIntoViewIfNeeded();
+  expect(await fleetPage.getByRole('main').evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
   expect(await fleetPage.getByText('Ward A', { exact: true }).count()).toBeGreaterThan(0);
   expect(await fleetPage.getByText('Ward B', { exact: true }).count()).toBe(0);
 

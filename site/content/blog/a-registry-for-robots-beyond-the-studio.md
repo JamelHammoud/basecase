@@ -9,7 +9,7 @@ We built Basecase Fleet so your organization can keep a shared robot inventory a
 
 Consider a hospital with delivery robots in two wards. You need to see the inventory for Ward A without gaining access to Ward B. Two vendors may both call a model Acme. Closing a workstation’s connection shouldn’t erase either robot’s identity or change who can see it.
 
-In Basecase, you could connect to a fleet of robots through the studio. We use that controller to manage daemon sessions, assign policies and operate robots, with a limit of 32 connections. Raising the limit wouldn’t give an organization a shared registry. You would still lose a disconnected robot from the live list.
+In Basecase, you could connect to a fleet of robots through the studio. We use that controller to manage daemon sessions, assign policies and operate robots, with a limit of 32 connections. Raising the limit wouldn’t give an organization a shared registry. Disconnected units with retained incident history stay in the studio's list, but that history is local to one computer.
 
 We kept the controller and built a separate registry. Each organization, region, site and robot gets a durable identity, so you can reuse display names. You can include a third-party robot in the inventory without an editable CAD scene.
 
@@ -19,7 +19,7 @@ We chose custom roles for the first version because an administrator or viewer s
 
 We use the same evaluator to check direct reads, list results, exports, text assets, mutations and status subscriptions. A matching deny overrides grants from all roles. For service credentials, we intersect the credential’s scope ceiling with the issuing account’s current access.
 
-The service checks current credentials and roles before sending subscription data, so a connected browser doesn’t keep a permanent copy of its permissions. After a registry or credential change, the service resets the stream. The browser clears its inventory and requires a reload. You have to pause and reload, but you can’t retain information in an open inventory after your access changes.
+The service checks current credentials and roles before sending subscription data, so a connected browser doesn’t keep a permanent copy of its permissions. After a registry or credential change, the service resets the stream. The browser clears its inventory and requires a reload. You have to pause and reload before the inventory displays the resources you can still access.
 
 ## Observations need an identity of their own
 
@@ -29,7 +29,7 @@ We keep the last observation in PostgreSQL after disconnect. After 60 seconds wi
 
 ## Capacity has separate costs
 
-We test with an acceptance fixture containing 10,000 robots across 100 sites. In the fixture, we send 100-event batches, traverse 100-record pages and consume bounded subscription snapshots. We record ingest throughput, query latency, bytes, process memory and database relation sizes. We keep the measured results and their limits in the subsystem’s contributor guide.
+We test with an acceptance fixture containing 10,000 robots across 100 sites. In the fixture, we send 100-event batches, traverse 100-record pages and consume bounded subscription snapshots. We record ingest throughput, query latency, bytes, process memory and database relation sizes. We keep the measured results and their limits in the subsystem’s evidence note.
 
 These measurements cover registry operations on generated data. They don’t increase concurrent control capacity or prove a deployment with physical robots. The ten deployment fixtures represent inventory classes, including aerial, road, harbor and fixed appliances. We haven’t established operating outcomes for those deployments through these fixtures.
 

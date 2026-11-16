@@ -77,6 +77,55 @@ it('supports role CRUD, group grants, attribute conditions and deny overrides', 
   expect((await admin.call('GET', `role/${temporary.id}`)).status).toBe(403);
 });
 
+it('requires organization-level identity access for direct account, group and role reads', async () => {
+  const group = await admin.create('group', { name: 'Restricted group', members: [viewer.id], roles: [] });
+  const scopedRole = await admin.create('role', {
+    name: 'Scoped identity reader',
+    rules: [viewer.id, group.id, role.id].map((scope) => ({
+      effect: 'allow',
+      scope,
+      actions: ['iam.manage'],
+      conditions: {},
+    })),
+  });
+  const reader = await admin.enroll('scoped-identity@example.test', [scopedRole.id]);
+
+  for (const [kind, id] of [
+    ['account', viewer.id],
+    ['group', group.id],
+    ['role', role.id],
+  ]) {
+    expect((await reader.call('GET', `${kind}/${id}`)).status).toBe(403);
+    expect((await admin.call('GET', `${kind}/${id}`)).status).toBe(200);
+  }
+});
+
+it('honors identity resource denies on reads, enumeration, replacement and deletion', async () => {
+  const targets = await Promise.all(
+    ['account', 'group', 'role'].map(async (kind) => {
+      const item = await admin.create(kind, { name: 'Protected identity', roles: [], members: [], rules: [] });
+
+      return { kind, id: item.id };
+    }),
+  );
+  const deniedRole = await admin.create('role', {
+    name: 'Identity administrator with exclusions',
+    rules: [
+      { effect: 'allow', scope: '*', actions: ['iam.manage'], conditions: {} },
+      ...targets.map(({ id }) => ({ effect: 'deny', scope: id, actions: ['iam.manage'], conditions: {} })),
+    ],
+  });
+  const reader = await admin.enroll('denied-identity@example.test', [deniedRole.id]);
+
+  for (const { kind, id } of targets) {
+    expect((await reader.call('GET', `${kind}/${id}`)).status).toBe(403);
+    expect((await reader.call('PUT', `${kind}/${id}`, { name: 'Replaced', rules: [] })).status).toBe(403);
+    expect((await reader.call('DELETE', `${kind}/${id}`)).status).toBe(403);
+    expect((await reader.list(kind)).items.some((item) => item.id === id)).toBe(false);
+    expect((await admin.call('GET', `${kind}/${id}`)).status).toBe(200);
+  }
+});
+
 it('authenticates asset reads and subscriptions, and revokes a live subscription on role change', async () => {
   const asset = await admin.create('asset', {
     name: 'Identity',

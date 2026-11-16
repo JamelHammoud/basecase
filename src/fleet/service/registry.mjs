@@ -12,6 +12,12 @@ export const organization = (org) => ({
 });
 export const demand = (actor, action, resource) => insist(allowed(actor, action, resource), 403);
 
+function demandResource(actor, action, resource) {
+  if (administrative(resource.kind)) demand(actor, 'iam.manage', organization(actor.org));
+
+  demand(actor, action, resource);
+}
+
 const selection = `SELECT r.*,s.status,s.observed_at,s.received_at,s.generation,
  COALESCE((SELECT jsonb_object_agg(a.key,a.value ORDER BY array_position(r.ancestors,p.id)) FROM fleet_resources p CROSS JOIN LATERAL jsonb_each(COALESCE(p.data->'attributes','{}')) a WHERE p.org=r.org AND p.kind='site' AND p.id=ANY(r.ancestors)),'{}') AS site_attributes,
  (SELECT p.data->'attributes' FROM fleet_resources p WHERE p.org=r.org AND p.kind='robot' AND p.id=ANY(r.ancestors) LIMIT 1) AS robot_attributes
@@ -68,7 +74,7 @@ export async function readVisible(client, actor, kind, id) {
   const item = await readResource(client, actor.org, id);
 
   insist(item.kind === kind, 403);
-  demand(actor, administrative(kind) ? 'iam.manage' : 'inventory.view', item);
+  demandResource(actor, administrative(kind) ? 'iam.manage' : 'inventory.view', item);
 
   return visible(item);
 }
@@ -150,7 +156,7 @@ export async function createResource(client, actor, kind, body) {
   const ancestors = [...parent.ancestors, parent.id];
   const proposed = proposedResource({ org: actor.org, id, kind, ancestors }, data, parent);
 
-  demand(actor, action, administrative(kind) ? organization(actor.org) : proposed);
+  demandResource(actor, action, proposed);
   await checkReferences(client, actor, kind, data);
   await client.query('INSERT INTO fleet_resources(org,id,kind,parent,ancestors,data) VALUES ($1,$2,$3,$4,$5,$6)', [
     actor.org,
@@ -169,19 +175,15 @@ export async function updateResource(client, actor, options) {
   const current = await readResource(client, actor.org, id);
 
   insist(current.kind === kind && (body.parent === undefined || body.parent === current.parent));
-  demand(
-    actor,
-    administrative(kind) ? 'iam.manage' : 'inventory.manage',
-    administrative(kind) ? organization(actor.org) : current,
-  );
+  demandResource(actor, administrative(kind) ? 'iam.manage' : 'inventory.manage', current);
 
   const data = resourceData(kind, body);
   const parent = current.parent ? await readResource(client, actor.org, current.parent) : organization(actor.org);
 
-  demand(
+  demandResource(
     actor,
     administrative(kind) ? 'iam.manage' : 'inventory.manage',
-    administrative(kind) ? organization(actor.org) : proposedResource(current, data, parent),
+    proposedResource(current, data, parent),
   );
   await checkReferences(client, actor, kind, data);
   await client.query('UPDATE fleet_resources SET data=$3 WHERE org=$1 AND id=$2', [actor.org, id, data]);
@@ -193,11 +195,7 @@ export async function deleteResource(client, actor, kind, id) {
   const current = await readResource(client, actor.org, id);
 
   insist(current.kind === kind, 403);
-  demand(
-    actor,
-    administrative(kind) ? 'iam.manage' : 'inventory.manage',
-    administrative(kind) ? organization(actor.org) : current,
-  );
+  demandResource(actor, administrative(kind) ? 'iam.manage' : 'inventory.manage', current);
   await client.query('DELETE FROM fleet_resources WHERE org=$1 AND id=$2', [actor.org, id]);
 
   return { deleted: true };

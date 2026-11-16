@@ -26,7 +26,7 @@ export function FleetApp() {
   }
 
   return (
-    <main className="min-h-screen bg-[#121212] p-6 text-[14px] text-white/90">
+    <main className="h-full overflow-auto bg-[#121212] p-6 text-[14px] text-white/90">
       <header className="mx-auto mb-6 flex max-w-5xl items-center justify-between">
         <h1 className="text-[20px] font-semibold">Basecase Fleet</h1>
         {org && <Button onClick={() => void signOut()}>Sign Out</Button>}

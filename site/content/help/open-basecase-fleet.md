@@ -14,7 +14,7 @@ View the robots your account can access across a self-hosted organization's site
 
 You need a running Fleet service, an organization ID and an enrolled account. Fleet requires HTTPS outside loopback.
 
-1. In Play, choose **Operate**.
+1. In **Play**, choose **Operate**.
 2. In **Fleet address**, enter your service's address.
 3. Click **Open Fleet**.
 
@@ -31,7 +31,7 @@ You need a running Fleet service, an organization ID and an enrolled account. Fl
 
 ![The Ward A viewer's inventory with Delivery 01 marked stale](/help/open-basecase-fleet/inventory.png)
 
-You can view only the sites and robots your account can access. A robot marked Stale has no observation from the last 60 seconds. Disconnecting a robot leaves its identity in the inventory.
+You can view only the sites and robots your account can access. A robot marked **Stale** has no observation from the last 60 seconds. Disconnecting a robot leaves its identity in the inventory.
 
 You can press [[⌘K]] and choose **Open Fleet**. To open another page, use **Next Sites** or **Next Robots** when a page is available.
 

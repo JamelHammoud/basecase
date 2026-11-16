@@ -2,6 +2,12 @@
 
 Implementation: [Mesh preparation](../guide/canvas.md#performance-mesh-preparation). Shared requirements: [Performance](../guide/performance.md).
 
+## Edged lathes reuse profile rings
+
+Rounded and chamfered cylinder and tube builds previously constructed four rotated vertices per quad, across 48 quads per profile span. Two rings now hold 98 reusable vertex tuples per build. Profiles with 32 and 64 spans previously allocated 6,144 and 12,288 vertex tuples. Their sine and cosine calls fall from 12,288 and 24,576 per build to zero after 98 calls during module initialization. The final triangle output and normal generation are unchanged.
+
+`src/three/partMesh/edgedLathe.test.ts` compares exact triangle arrays with the former calculation for 46 profiles in both open and closed forms. Cases include axis endpoints, repeated points, tiny and negative radii, signed zero, empty inputs, single points and later edits. The 32- and 64-span cases verify no per-build sine or cosine calls. Existing `edgedGeometry.test.ts` checks complete rounded and chamfered cylinders and tubes alongside other basic shapes. These are structural allocation counts and tested operation counts, not wall-clock measurements or complete mesh-build speedup claims. No workflow, visible state or browser coverage changes.
+
 ## Screw recesses copy geometry directly
 
 `hardwareRecessGeometry.test.ts` compares exact buffers across 180 transformed indexed, expanded and interleaved meshes, threshold boundaries, nonfinite coordinates, normalized normals, empty inputs and later edits. It also compares complete CSG pieces for every recessed screw type and supported drive. Its 300- and 600-triangle fixtures reduce cleanup vector clones from 600 and 1,200 to zero, indexed expansions from one to zero, and group coordinate arrays from 1,800 and 3,600 to zero. These are operation counts and output comparisons, without timing assertions or a claim about complete hardware build time.

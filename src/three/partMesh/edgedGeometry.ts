@@ -8,6 +8,11 @@ type V3 = [number, number, number];
 
 const CREASE = THREE.MathUtils.degToRad(25);
 const LATHE_SEGMENTS = 48;
+const LATHE_DIRECTIONS = Array.from({ length: LATHE_SEGMENTS + 1 }, (_, i): Vec2 => {
+  const theta = (i / LATHE_SEGMENTS) * Math.PI * 2;
+
+  return [Math.sin(theta), Math.cos(theta)];
+});
 const DEFORM_LAYERS = 16;
 const MIN_AREA = 1e-9;
 const CACHE_SIZE = 64;
@@ -91,19 +96,34 @@ function densified(points: Vec2[], parts: number, closed: boolean): Vec2[] {
   });
 }
 
-function latheTriangles(profile: Vec2[], closed: boolean): number[] {
-  const out = new Triangles();
-  const at = ([u, y]: Vec2, i: number): V3 => {
-    const theta = (i / LATHE_SEGMENTS) * Math.PI * 2;
+function placeRing(ring: V3[], [u, y]: Vec2) {
+  for (let i = 0; i < ring.length; i++) {
+    ring[i][0] = u * LATHE_DIRECTIONS[i][0];
+    ring[i][1] = y;
+    ring[i][2] = u * LATHE_DIRECTIONS[i][1];
+  }
+}
 
-    return [u * Math.sin(theta), y, u * Math.cos(theta)];
-  };
+export function latheTriangles(profile: Vec2[], closed: boolean): number[] {
+  const out = new Triangles();
   const spans = closed ? profile.length : profile.length - 1;
 
-  for (let j = 0; j < spans; j++) {
-    const [p, q] = [profile[j], profile[(j + 1) % profile.length]];
+  if (spans <= 0) return out.values;
 
-    for (let i = 0; i < LATHE_SEGMENTS; i++) out.quad(at(p, i), at(p, i + 1), at(q, i + 1), at(q, i));
+  let low = LATHE_DIRECTIONS.map((): V3 => [0, 0, 0]);
+  let high = LATHE_DIRECTIONS.map((): V3 => [0, 0, 0]);
+
+  placeRing(low, profile[0]);
+
+  for (let j = 0; j < spans; j++) {
+    placeRing(high, profile[(j + 1) % profile.length]);
+
+    for (let i = 0; i < LATHE_SEGMENTS; i++) out.quad(low[i], low[i + 1], high[i + 1], high[i]);
+
+    const previous = low;
+
+    low = high;
+    high = previous;
   }
 
   return out.values;

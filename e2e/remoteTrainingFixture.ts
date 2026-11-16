@@ -3,7 +3,6 @@ import type { Page } from 'playwright-core';
 import type { TrainStartPayload } from '../src/utils/platform/types';
 import type { SavedSceneRecord } from '../src/types/robotics';
 import { shown, type App } from './harness';
-import { holdingPolicy } from '../src/skills/hubSkillFixtures';
 import type { TrainingComputerStatus } from '../src/remoteTraining/bridge';
 
 export const REMOTE_COMPUTER = {
@@ -17,46 +16,6 @@ const JOB_ID = 'policy-remote-fixture';
 
 interface EventsWindow {
   remoteTrainingEvent: (event: Record<string, unknown>) => void;
-}
-
-export async function controlRemoteVerdict(page: Page) {
-  const install = () => {
-    const NativeWorker = window.Worker;
-
-    const FixtureWorker = function (url: string | URL, options?: WorkerOptions) {
-      const worker = new NativeWorker(url, options);
-
-      if (!String(url).includes('skills.worker')) return worker;
-
-      const post = worker.postMessage.bind(worker);
-
-      worker.postMessage = (message, transfer) => {
-        if (message.type !== 'forge-result')
-          return post(message, { transfer: Array.isArray(transfer) ? transfer : transfer?.transfer });
-
-        worker.dispatchEvent(
-          new MessageEvent('message', {
-            data: {
-              type: 'kit',
-              outcome: {
-                kind: 'refused',
-                reason: 'Local Arena rejected the selected attempt.',
-                relaxation: null,
-                cost: { wallS: 0, steps: 24, forgeRuns: 2 },
-              },
-            },
-          }),
-        );
-      };
-
-      return worker;
-    };
-
-    Object.assign(window, { Worker: FixtureWorker });
-  };
-
-  await page.evaluate(install);
-  await page.addInitScript(install);
 }
 
 async function installEvents(page: Page) {
@@ -86,7 +45,7 @@ async function installEvents(page: Page) {
 export const remoteStandRow = (page: Page) =>
   page.locator(shown('[data-testid="skill-row"]'), { hasText: 'Stand' }).first();
 
-export async function configureRemoteComputer(page: Page, attempts = 1) {
+export async function configureRemoteComputer(page: Page) {
   await page.keyboard.press('Meta+k');
   await page.getByLabel('Search commands').fill('Training Settings');
   await page.keyboard.press('Enter');
@@ -101,7 +60,7 @@ export async function configureRemoteComputer(page: Page, attempts = 1) {
 
   await page
     .getByRole('tablist', { name: 'Attempts', exact: true })
-    .getByRole('tab', { name: String(attempts), exact: true })
+    .getByRole('tab', { name: '1', exact: true })
     .click();
   await page
     .getByRole('tablist', { name: 'Concurrent attempts', exact: true })
@@ -125,7 +84,6 @@ export async function remoteTrainingFixture(app: App) {
   const { page } = app;
   const starts: TrainStartPayload[] = [];
   const dispatched = new Set<string>();
-  const children = new Map<string, string[]>();
   let computer: TrainingComputerStatus = { selected: false };
   let scene: SavedSceneRecord | null = null;
   const state = () => ({ ...REMOTE_COMPUTER, key: undefined, keySaved: true, selected: true });
@@ -151,17 +109,8 @@ export async function remoteTrainingFixture(app: App) {
     starts.push(payload);
     dispatched.add(String(payload.recoveryKey));
 
-    const key = String(payload.recoveryKey);
-
-    if (!children.has(key))
-      children.set(
-        key,
-        Array.from({ length: computer.attempts ?? 1 }, (_, index) => `policy-remote-child-${index}`),
-      );
-
     await route.fulfill({ json: { jobId: JOB_ID } });
   });
-  await page.route('**/api/bridge/policy?*', (route) => route.fulfill({ json: holdingPolicy(starts[0].job) }));
   await page.route('**/api/bridge/save-scene', async (route) => {
     scene = route.request().postDataJSON() as SavedSceneRecord;
     await route.fulfill({ json: { ...scene, partCount: scene.parts.length } });
@@ -189,21 +138,8 @@ export async function remoteTrainingFixture(app: App) {
   return {
     starts,
     dispatched,
-    children,
     scene: () => scene,
     reload,
     emit,
-    complete: () =>
-      emit({
-        kind: 'done',
-        candidates: [0, 1].map((index) => ({
-          id: `policy-remote-child-${index}`,
-          seed: Number(starts[0].job.seed) + index,
-          fingerprint: { 'model.xml': 'fixture-input-hash' },
-          steps: 12,
-          development: null,
-          outcome: { kind: 'done', record: { id: `policy-remote-child-${index}`, trainedSteps: 12 } },
-        })),
-      }),
   };
 }

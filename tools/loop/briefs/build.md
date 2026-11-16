@@ -10,4 +10,6 @@ You take one step of an arc and ship it, the way a small team would in a day. Th
 5. **Count your copy:** `node tools/copy-diff.mjs` lists the user-facing strings your work adds, changes and removes. Cut what the §3d checklist would cut, and list each added string left in `copy` with why the screen needs it.
 6. **Check fast:** `npm run check:changed -- <files>`. CI runs everything else on the pull request.
 
+Repair owners can request focused Windows or Linux CI observations with `node tools/loop/diagnostic.mjs`, following the Loop guide's **Targeted CI diagnostics** contract. It dispatches only published revisions and appends evidence references to the same `scratch/task-handoff.json`. Publication stays with the existing runner. Keep each repair's tracing, measurements, assertions and quarantine removal in its own task.
+
 Answer with `kind` set to `feature`, `integration` or `refine`, whichever the step is. In `notes`, say what's left for the arc's next step.

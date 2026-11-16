@@ -1,9 +1,11 @@
 import { fingerprint } from './sessionJournal.mjs';
 import { store } from './store.mjs';
+import { windowsDiagnosticsReady } from './diagnosticReadiness.mjs';
 
 export const AVAILABLE = ['macos-host', 'linux-container', 'linux-ci', 'windows-ci', 'repository', 'web'];
 export const REQUIREMENTS = [
   ...AVAILABLE,
+  'windows-diagnostics',
   'windows-host',
   'physical-robot',
   'physical-printer',
@@ -17,7 +19,11 @@ const needsWindowsHost =
 const rejections = store('capability-rejections', {});
 
 export const availableCapabilities = () => [
-  ...new Set([...AVAILABLE, ...(process.env.BASECASE_LOOP_CAPABILITIES ?? '').split(',').filter(Boolean)]),
+  ...new Set([
+    ...AVAILABLE,
+    ...(windowsDiagnosticsReady() ? ['windows-diagnostics'] : []),
+    ...(process.env.BASECASE_LOOP_CAPABILITIES ?? '').split(',').filter(Boolean),
+  ]),
 ];
 
 export function taskRequirements(task) {

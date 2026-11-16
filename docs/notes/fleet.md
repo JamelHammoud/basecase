@@ -134,3 +134,10 @@ The authenticated HTTP import measurement uses the generated DXF preparation and
 The same complete capture populated 100 robots through authenticated status events and submitted a second pose batch without replacing the facility buffers. The browser map reported 100 retained markers and a 0.60 ms update, including coordinate placement, marker updates, label layout and render submission. This is one small-geometry, software-WebGL development sample. It excludes completed GPU presentation and is not a frame-rate or large-facility claim.
 
 An intermediate capture received HTTP 400 while publishing a local pose. Its registration wait tested only inequality with null, which also accepts an absent response field. The wait now requires a present registration object. The complete capture then passed with no timeout or retry changes. The refusal predicate of the intermediate request was not identified. A later documentation-only capture attempt timed out navigating the unbundled studio before reaching Fleet. Its log is `scratch/fleet-capture-published.log`. Existing successful captures are retained. Neither observation is a passing production-browser result.
+
+
+### Pull request 1396 CI dependency correction
+
+The 16 November changed-e2e run failed in `fleetSites.e2e.test.ts` setup before either browser test ran. `convertLocalFacility` could not find `uv`. The aggregate check failed because changed-e2e failed, while all three required fast jobs passed. Vite also reported delayed server shutdown after the setup failure.
+
+Check now installs `uv` with the same pinned setup action used by the unit job. Changed-e2e installs it only when the precise or fallback file list includes the facility walkthrough. Both nightly browser jobs install it because their shards include that walkthrough. This corrects a missing environment dependency without changing assertions, timeouts or retries. Browser execution remains owned by CI.

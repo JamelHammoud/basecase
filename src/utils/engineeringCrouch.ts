@@ -2,7 +2,7 @@ import type { AnimationKeyframe, RobotJoint } from '../types/robotics';
 import { MIN_CROUCH_DEG } from './actuatorRules';
 import { isLegJoint } from './engineeringBody';
 import { downstreamOf } from './engineeringMass';
-import { dot, norm } from './engineeringMath';
+import { dot, norm, type V3 } from './engineeringMath';
 import type { CheckContext } from './engineeringTypes';
 import { nameWords } from './jointNames';
 
@@ -22,17 +22,42 @@ const KNEE_WORD = /^[lr]?(knee|kfe|calf|shin)[lr]?\d*$/;
 
 const isKnee = (j: RobotJoint) => nameWords(j.name).some((w) => KNEE_WORD.test(w));
 
+interface PitchAxis {
+  joint: RobotJoint;
+  axis: V3;
+}
+
+function pitchScore(axes: PitchAxis[], axis: V3): number {
+  let count = 0;
+  let knee = false;
+
+  for (const candidate of axes) {
+    const parallel = Math.abs(dot(candidate.axis, axis)) >= PITCH_AXIS;
+
+    if (!parallel) continue;
+
+    count++;
+    knee ||= isKnee(candidate.joint);
+  }
+
+  return count * 4 + (knee ? 2 : 0) + Math.abs(axis[0]);
+}
+
 function pitchJoints(chain: RobotJoint[]): RobotJoint[] {
   const axes = chain.map((joint) => ({ joint, axis: norm(joint.axis) }));
   const sets = axes
     .filter(({ axis }) => Math.abs(axis[1]) < LEVEL_AXIS)
-    .map(({ axis }) => {
-      const members = axes.filter((k) => Math.abs(dot(k.axis, axis)) >= PITCH_AXIS).map((k) => k.joint);
+    .map(({ axis }) => ({ axis, score: pitchScore(axes, axis) }));
+  const winner = sets.sort((a, b) => b.score - a.score)[0];
+  const members: RobotJoint[] = [];
 
-      return { members, score: members.length * 4 + (members.some(isKnee) ? 2 : 0) + Math.abs(axis[0]) };
-    });
+  if (!winner) return members;
 
-  return sets.sort((a, b) => b.score - a.score)[0]?.members ?? [];
+  for (const candidate of axes) {
+    if (Math.abs(dot(candidate.axis, winner.axis)) >= PITCH_AXIS) members.push(candidate.joint);
+  }
+
+  return members;
 }
 
 interface Chain {

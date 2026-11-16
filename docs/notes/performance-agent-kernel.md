@@ -25,3 +25,9 @@ Implementation: [Agent and CAD kernel](../guide/agent.md#performance-agent-and-c
 ## The CAD kernel never touches the renderer or boot
 
 A first compile costs about 0.15 s more than the old forked process (opening the window); later ones match it (guide examples: OpenSCAD 0.06–2.1 s, replicad 0.06–0.25 s, either host).
+
+## Scene handoffs share approximate bounds
+
+`aiHandoff.test.ts` checks the JSON envelope, ordered part ids, contact descriptions in both exports, hidden parts, reference images, cutouts, reference axes, the inclusive 5 mm contact boundary, source preservation, later edits and empty scenes. Existing `annotationAttachments.test.ts` retains attachment and comment coverage. No quarantine applies.
+
+For 300 and 600 separated visible boxes, each with a counted width getter, handoff generation now reads widths 600 and 1,200 times. The previous path required 900 and 1,800 reads, once for each of envelope bounds, contact bounds and Markdown rows. Bounds records fall from two per visible part to one, and visible non-image filtering falls from three passes to one. These are operation and storage counts, without timing assertions or a claim about complete autosave time. The pairwise contact scan remains quadratic.

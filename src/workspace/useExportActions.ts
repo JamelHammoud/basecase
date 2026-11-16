@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { useKitExport } from './useKitExport';
 import { jobSpec } from '../print/job';
 import { buildAIHandoffPayload } from '../utils/aiHandoff';
 import { downloadBytes as download } from '../utils/downloadBytes';
@@ -27,6 +28,7 @@ export function useExportActions(core: WorkspaceCore) {
   const exportStep = useStepExport({ parts, scene, showToast, toasts });
   const exportRobotPackage = useRobotPackageExport(core);
   const exportCutFiles = useCutFileExport(core);
+  const exportKit = useKitExport(core);
 
   const exportStl = async () => {
     const viewport = viewportRef.current;
@@ -166,6 +168,7 @@ export function useExportActions(core: WorkspaceCore) {
     airDrop,
     copyBrief,
     exportRobotPackage,
+    exportKit,
     exportCutFiles,
     canExportParts: parts.length > 0,
     canExportStep: parts.some(isStepBody),

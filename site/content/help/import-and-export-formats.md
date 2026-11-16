@@ -70,6 +70,7 @@ Every export is in the **Export** menu at the top right of the window.
 | **Cut Files** | `<scene>-cut-files.zip` | One DXF per [sheet part](/help/cut-parts-from-sheet), with its outline and holes in millimeters |
 | **STEP**, in the desktop app only | `<scene>.step` | Every visible solid part as its own body, in millimeters, Z up, as [Export a STEP file](/help/export-a-step-file) explains |
 | **Scene** | `<scene>.basecase` | The scene, including its imported worlds, to open in Basecase |
+| **Kit** | `<scene>-kit.zip` | Plates, sheet DXF files, illustrated guide, packing, provenance and joint identities, listed in [Robot kit contents](/help/robot-kit-contents) |
 | **Robot Package** | `<scene>-robot.zip` | MJCF, URDF, meshes, joint map, policies and ROS 2 package files, listed in [Robot package contents](/help/robot-package-contents) |
 | **Copy as Markdown** | The clipboard | The scene as a Markdown spec: its goal and every part with its size |
 | **AirDrop** on a Mac, **USDZ Model** on Windows | `<scene>.usdz` | The solid parts as a USDZ model, which an iPhone or iPad opens in 3D |

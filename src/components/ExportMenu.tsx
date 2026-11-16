@@ -27,6 +27,7 @@ interface ExportMenuProps {
   onExportStep?: () => void;
   onExportScene: () => void;
   onExportRobot: () => void;
+  onExportKit: () => void;
   onAirDrop: () => void;
   onCopyMarkdown: () => void;
 }
@@ -43,6 +44,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
   onExportStep,
   onExportScene,
   onExportRobot,
+  onExportKit,
   onAirDrop,
   onCopyMarkdown,
 }) => {
@@ -78,6 +80,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         {onExportStep && (
           <MenuItem icon={<ShapeIcon />} label="STEP" disabled={!canExportStep} onSelect={run(onExportStep)} />
         )}
+        <MenuItem icon={<FileIcon />} label="Kit" disabled={!canExportRobot} onSelect={run(onExportKit)} />
         <MenuItem icon={<FileIcon />} label="Scene" onSelect={run(onExportScene)} />
         <MenuItem
           icon={<RobotsIcon />}

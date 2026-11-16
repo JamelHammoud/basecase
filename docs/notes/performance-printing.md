@@ -94,3 +94,55 @@ For five materials and 300 or 600 records, classification previously read materi
 A scratch Vitest replay compared indexed selections with the previous linear first-match lookup at 0, 1, 30, 300 and 600 parts and quotes. Reversed quote lists, repeated identities and missing ids returned the same quote objects. Instrumented part getters counted 45,150 and 180,300 identity reads for the previous 300-part and 600-part batches. Building the index required 300 and 600 identity reads. Each subsequent part lookup uses the map. These are operation counts, not timings or complete BOM latency measurements. Each consumer builds its own map, and no cache survives a call.
 
 `src/print/serviceQuotes.test.ts` checks complete BOM parity and request selection when saved quotes contain duplicate and deleted identities. It verifies that replacing the first quote changes both consumers on the next call, preserves stale pricing and leaves sources unchanged. Existing tests cover fresh quotes, refusals, copy and material changes, service switching and removed parts. No controls, screen states or workflow change, so help and browser coverage remain unchanged.
+
+## Manufacturing kit composition
+
+Measured on 16 November 2026 on macOS arm64, Apple M5 Pro with 24 GiB memory and Node 26.13.0. Scratch captures use the Vite production desktop and web bundles, `openApp`, Chrome software WebGL and the real Export ▸ Kit action. They read the browser-delivered ZIP from disk. No export worker, archive producer or download delivery is replaced.
+
+The current entry fixture has one exact STS3215 c001 as its stationary base and one printed moving arm. The repeated fixture has 39 solids, 19 printed instances with two copies each, 18 exact servos, seven modules and fifteen assembly steps. Inputs come from `kit/entry.fixtures.ts` and `kit/kit.fixtures.ts`. No printer or robot is involved.
+
+### Current archive and preparation measurements
+
+The final sampler includes `provenance.json` with the source scene, printer, bed, plate plan and file specification. Both archives delivered with empty app errors.
+
+| Observation | Small arm | Repeated modules |
+| --- | ---: | ---: |
+| Click to download | 4,536 ms | 23,866 ms |
+| Illustrated guide preparation | 4,145 ms | 14,899 ms |
+| Assembly search | 6 ms | 3,985 ms |
+| Plate writing | 4 ms | 6 ms |
+| Fresh joint-map preparation | 10 ms | 950 ms |
+| Archive composition and compression | 71 ms | 152 ms |
+| ZIP bytes | 543,386 | 1,320,892 |
+| Expanded bytes | 836,661 | 2,241,665 |
+| Illustrated guide HTML bytes | 791,388 | 1,910,187 |
+| Process-tree RSS before export | 1,249,591,296 | 1,415,577,600 |
+| Process-tree RSS after delivery | 2,109,931,520 | 2,699,853,824 |
+| Collected main-page heap before export | 17,206,364 | 19,087,476 |
+| Collected main-page heap after delivery | 19,955,444 | 23,469,388 |
+
+RSS sums the scratch worker and its descendants, including Chrome, renderer, GPU and worker memory. Shared pages can be counted more than once. This is retained process residency immediately after delivery, not peak memory or isolated archive-worker allocation. Main-page DevTools garbage collection does not collect every worker. The harness retains the last ZIP through its test hook, which normal production downloads do not retain. Browser graphics pools, geometry caches and allocator residency remain live. These measurements do not establish a stable memory reduction.
+
+### Diagnosis and removed rendering work
+
+The earlier three-part arm from `93e274222` delivered in 6,096 ms, including 5,662 ms of guide preparation and 54 ms of composition. Its ZIP was 715,162 bytes. The repeated fixture delivered in 34,455 ms, including 26,484 ms of guide preparation and 227 ms of composition. A web arm capture delivered in 9,815 ms, including 9,258 ms of guide preparation. Earlier observations missed their download deadline while preparation was active. These observations isolate guide latency rather than a failed compression or delivery call. Historical CI did not retain stage evidence, so its exact failed stage remains unknown.
+
+Kit guides now use one export-owned strict worker, terminated after rendering or interruption. A failed worker refuses local rendering. Normal saved PDF guides retain their shared worker and incremental caches. Source-ownership tests verify worker refusal, termination and unchanged PDF saving. A shader compilation failure stops rendering rather than leaving blank drawings in a completed guide.
+
+The drawing stage writes normal, ID and color textures in one geometry pass, sharing a depth buffer. A dedicated small visibility target avoids discarding full-page attachments between drawings. On the two-mesh real WebGL fixture, target disposals fell from six to zero and drawing calls from seven to three, including the composite quad. The composite shader removes four redundant nearest-neighbor lookups and per-fragment trigonometry. PNG bytes match the historical three-pass renderer and sixteen-neighbor shader from three views, including rotated geometry and ghosted overlaps. An additional view exposed a double-flipped back-face normal in the candidate pass. Correcting that normal made every strict comparison pass. Resolution, layout, view selection and assertions remain unchanged.
+
+### Download observations and limits
+
+Production captures after the rendering changes delivered the two-part entry in 3,203 ms on desktop and 7,458 ms on web. Both used the retained walkthrough's ten-second download wait and inspected guide, packing, exact c001 servo map and actual 3MF mesh, with empty app errors. These captures preceded the additive printer-plan provenance fields in the final sampler above.
+
+The last capture of the final archive missed the ten-second desktop download deadline. Completed boundary entries ended at assembly search, while the export progress remained active in guide preparation. No compression boundary or app error was recorded. This remains unresolved latency evidence, not a passing final walkthrough. Published Linux and Windows results must establish whether the retained short walkthroughs meet their unchanged deadlines. No retries, timeout increases or quarantine were added.
+
+Web fixtures seed their saved scene before startup through the existing IndexedDB migration and scene-restoration path. They assert no active Case and no first-launch rover request. Opening an empty database and then replacing the document previously allowed the startup rover Case to overlap preparation.
+
+These single observations use different startup conditions and scene sizes. They are not a controlled before/after benchmark, and no speed ratio is claimed. The operation counts and pixel parity establish removed rendering work independently of host contention. Maximum-size archives, full-size sourced CAD scenes and isolated worker allocation remain unmeasured. Source geometry and expanded archive limits are 256 MB, with at most 10,000 scene parts. Export does not certify printer output or physical assembly.
+
+### Outline sampling revision
+
+On the same macOS arm64 host and Node 26.13.0, the existing OffscreenCanvas test worker compared the prior direction-dispatch kernel with a uniform offset kernel. The scratch probe used the box and ghosted torus fixture at three camera angles. It warmed each kernel once at 512 × 512 output pixels, then timed one draw including PNG encoding. Supersampling remained two. The prior kernel took 43.0, 47.6 and 33.5 ms. The candidate took 36.8, 41.4 and 43.1 ms. All three PNG comparisons matched exactly.
+
+These single samples vary by view and do not establish a reliable wall-clock improvement. They also exclude whole-guide preparation, the robot fixture and CI contention. Structurally, the prepared offsets remove direction dispatch and the four rejected loop iterations per fragment. Full-strength ink stops further samples, which cannot improve that pixel. The final shader also selects ink color only once after finding the strongest edge. The retained parity checks compare against an independent frozen historical shader. No complete-download improvement is claimed from this probe. The CI download deadline remains unchanged.

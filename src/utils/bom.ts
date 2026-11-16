@@ -268,7 +268,8 @@ function tallyPart(t: PartTally, p: ScenePart, project: ProjectSettings, m: Mesh
   const printed = printedPart(p, m, project);
 
   t.printed.push(printed);
-  t.filamentG[printed.material] = (t.filamentG[printed.material] ?? 0) + printed.grams;
+  t.filamentG[printed.material] =
+    (t.filamentG[printed.material] ?? 0) + printed.grams * Math.max(1, p.print?.copies ?? 1);
 }
 
 function tallyParts(

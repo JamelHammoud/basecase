@@ -32,5 +32,12 @@ describe('robot computer package input', () => {
     expect(partTriangles).not.toHaveBeenCalled();
     expect(loadPolicy).not.toHaveBeenCalled();
     expect(buildModel).not.toHaveBeenCalled();
+
+    buildModel.mockResolvedValue({ ...job.model, joints: [] });
+
+    const fresh = await robotJointMapJob(core, true);
+
+    expect(fresh?.model.joints).toEqual([]);
+    expect(buildModel).toHaveBeenCalledOnce();
   });
 });

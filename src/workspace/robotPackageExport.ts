@@ -24,12 +24,12 @@ async function scenePolicies(core: WorkspaceCore): Promise<PackagedPolicy[]> {
   return found.filter((p): p is PackagedPolicy => !!p);
 }
 
-async function robotPackageInput(core: WorkspaceCore) {
+async function robotPackageInput(core: WorkspaceCore, fresh = false) {
   const { sim } = core.simTraining;
 
   if (!core.posing.hasRig) return null;
 
-  const model = sim.model ?? (await sim.buildModel());
+  const model = (!fresh && sim.model) || (await sim.buildModel());
   const input: JointMapInput = {
     name: model.robots.length === 1 ? model.robots[0].name : core.scene.sceneName,
     model: { joints: model.joints, robots: model.robots },
@@ -40,8 +40,8 @@ async function robotPackageInput(core: WorkspaceCore) {
   return { model, input };
 }
 
-export async function robotJointMapJob(core: WorkspaceCore): Promise<JointMapInput | null> {
-  return (await robotPackageInput(core))?.input ?? null;
+export async function robotJointMapJob(core: WorkspaceCore, fresh = false): Promise<JointMapInput | null> {
+  return (await robotPackageInput(core, fresh))?.input ?? null;
 }
 
 export async function robotPackageJob(core: WorkspaceCore): Promise<RobotPackageJob | null> {

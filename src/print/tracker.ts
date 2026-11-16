@@ -17,21 +17,11 @@ function stateOf(record: PrintRecord | undefined): PlateState {
   return record.state;
 }
 
-export function plateStatus(plate: Plate, records: PrintRecord[] = []): PlateStatus {
-  const ids = new Set(plate.items.map((item) => item.id));
-  const printed = printedKeys(records);
-  const record = latest(records).find(
-    (r) => r.hash === plate.hash || (r.state === 'reprint' && r.parts.some((p) => ids.has(p.id) && !printed.has(p.id))),
-  );
-
-  return { state: stateOf(record), record: record?.state === 'reprint' ? undefined : record };
-}
-
-export function printedKeys(records: PrintRecord[] = []): Map<string, string> {
+function keysFrom(records: PrintRecord[]): Map<string, string> {
   const keys = new Map<string, string>();
   const seen = new Set<string>();
 
-  for (const r of latest(records).filter((r) => r.state === 'printed' || r.state === 'reprint')) {
+  for (const r of records.filter((r) => r.state === 'printed' || r.state === 'reprint')) {
     for (const p of r.parts.filter((p) => !seen.has(p.id))) {
       seen.add(p.id);
 
@@ -40,6 +30,44 @@ export function printedKeys(records: PrintRecord[] = []): Map<string, string> {
   }
 
   return keys;
+}
+
+export const printedKeys = (records: PrintRecord[] = []) => keysFrom(latest(records));
+
+export type PlateStatusLookup = (plate: Plate) => PlateStatus;
+
+export function plateStatusLookup(records: PrintRecord[] = []): PlateStatusLookup {
+  const ordered = latest(records);
+  const printed = keysFrom(ordered);
+  const hashes = new Map<string, { record: PrintRecord; rank: number }>();
+  const replacements = new Map<string, { record: PrintRecord; rank: number }>();
+
+  ordered.forEach((record, rank) => {
+    const entry = { record, rank };
+    const { hash } = record;
+
+    if (!hashes.has(hash)) hashes.set(hash, entry);
+
+    if (record.state !== 'reprint') return;
+
+    for (const part of record.parts) {
+      if (!printed.has(part.id) && !replacements.has(part.id)) replacements.set(part.id, entry);
+    }
+  });
+
+  return (plate) => {
+    let found = hashes.get(plate.hash);
+
+    for (const item of plate.items) {
+      const replacement = replacements.get(item.id);
+
+      if (replacement && (!found || replacement.rank < found.rank)) found = replacement;
+    }
+
+    const record = found?.record;
+
+    return { state: stateOf(record), record: record?.state === 'reprint' ? undefined : record };
+  };
 }
 
 export function splitPrinted(parts: ScenePart[], records: PrintRecord[] = [], keyOf: (p: ScenePart) => string) {

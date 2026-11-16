@@ -1,5 +1,13 @@
 [
   {
+    "file": "e2e/fleet.e2e.test.ts",
+    "test": "opens Fleet from Operate, restricts a site viewer and reopens persistent inventory",
+    "issue": 1386,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Run 43844795005 completed the inventory walkthrough but failed its final error assertion with 78 ERR_NETWORK_CHANGED asset failures. Retry then timed out filling Organization ID after the shared browser had signed in and the viewer roles had been removed. The same Fleet test, browser, fixture, harness, lockfile and e2e configuration passed Linux run 43839831222 in 7945 ms. The initial network-change trigger is not established. Issue #1386 owns startup tracing, attempt isolation and equal-load measurements before restoration. Enrollment and non-Linux coverage remain active."
+  },
+  {
     "file": "e2e/caseCode.e2e.test.ts",
     "test": "passes pointer input through the HUD and stops driving before closing Run Case on Escape inside a code frame",
     "issue": 1377,

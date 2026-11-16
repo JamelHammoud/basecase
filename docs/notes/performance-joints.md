@@ -135,3 +135,28 @@ A scratch comparison on November 15, 2026 matched complete before and after gait
 `gaitTargets.test.ts` compares every ordered target with freshly constructed goals over 120 updates per foot in both orientation modes, checks signed zero, source preservation and target and destination identity. Another 600 updates perform zero ownership checks, and a subsequent ownership edit selects the new carrier without changing the earlier preparation. Existing `animation.test.ts` covers complete stance and swing geometry and rejected gait requests. No timing assertion or quarantine is added.
 
 Validation passed types, documentation and site copy for 279 pages. The related selection passed 224 files and 1,617 tests, with one existing skipped file and test. An initial lint finding required one blank line before the target update, which was corrected. Preflight flagged the unchanged `joints-and-kinematics` help article because it covers the contributor guide. Its joint fields, ownership, poses, IK and selected-robot descriptions remain true, so the article is unchanged.
+
+
+## Xacro XML tags match at the cursor
+
+The whole-app XML parser search found two suffix-based tag matchers, both in `utils/robotImport/xml.ts`. Opening and closing tags now use sticky regular expressions with `lastIndex` set before every match. They cannot skip malformed markup to find a later valid tag. Every xacro document and include uses this reader. The other XML readers use DOM parsing or full-input regular expressions already, so they need no equivalent change. No controls, help steps or screenshots change.
+
+`xml.test.ts` covers ordered attributes and siblings, namespaced tags, both quote styles, entities, text, comments, processing instructions, CDATA, self-closing tags, mismatches, missing roots, malformed tags and successful parsing after each failure. A 2,000-link fixture checks the full parsed tree. Existing xacro tests cover expansion, includes and refused input through the real import resolver.
+
+A scratch comparison matched complete trees or exact error messages for 600 valid and mutated documents. The benchmark compared complete XML parsing on Node v26.13.0, macOS arm64, Apple M5 Pro. Both implementations received five warmup batches, then 15 alternating measured batches of ten parses. Values below are median milliseconds per parse.
+
+| Links | Document characters | Before ms | After ms | Removed suffix slices per parse |
+| --- | --- | --- | --- | --- |
+| 100 | 8,105 | 0.120 | 0.117 | 702 |
+| 1,000 | 81,905 | 1.218 | 1.178 | 7,002 |
+| 5,000 | 413,905 | 6.791 | 6.847 | 35,002 |
+
+These local timings show no consistent latency improvement. The refinement removes suffix-string operations at both tag match sites, without claiming that engines copied the suffix characters or that total import time improves. Attribute and output strings still allocate. No timing assertion, retry, timeout or quarantine was added. The throwaway comparison and raw results remain in `scratch/xml-cursor.ts` and `scratch/xml-cursor-results.jsonl`.
+
+The three covered articles were reread against the final parser diff:
+
+- [Import a robot](../../site/content/help/import-a-robot.md): the import entry points, file selection, xacro properties, macros, defaults and package-local includes remain unchanged. `xacro.ts` uses the same parser for its root and included documents, and the parsed trees match. The four screenshots show controls this change does not edit.
+- [Joints and kinematics](../../site/content/help/joints-and-kinematics.md): no joint fields, hierarchy, ownership, poses, limits or simulation behavior change. `readModel.ts` still expands xacro before DOM parsing and joint extraction. The contributor guide addition describes tag matching only.
+- [Robot import troubleshooting](../../site/content/help/troubleshoot-app-robot-import-fails.md): link validation, fetches, mesh resolution and messages remain unchanged. The malformed-tag tests verify rejection at the current position, and the scratch comparison checks exact parser error messages. `xacro.ts` still wraps failures with the same file-specific import error.
+
+All steps, labels and screenshots remain accurate, so these articles are unchanged. Preflight reports unchanged covered articles mechanically and retains the three reminders after this verification.

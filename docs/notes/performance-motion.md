@@ -2,6 +2,16 @@
 
 Implementation: [Motion fitting and retargeting](../guide/joints-and-motion.md#performance-motion-fitting-and-retargeting). Shared requirements: [Performance](../guide/performance.md).
 
+## Motion scaling scans rest bounds directly
+
+The whole-app search for `motionScale` and rest-pose extent calculations found one motion-to-skeleton scale function. Both file import and the agent reach it through `motionSkeleton.ts`, which calls it during validation and chain preparation. Other height calculations measure different inputs.
+
+Each call previously copied n rest-point references, allocated three n-coordinate arrays and a three-span array, and scanned each coordinate array for both extrema. It now visits the map once and expands one local three.js box. Temporary storage is constant instead of proportional to n. The existing three.js primitive supplies the min and max operations, and direct subtraction avoids its empty-box size special case. There is no retained cache.
+
+`motionScale.test.ts` compares exact results with the previous calculation for 69 rest poses and six requested heights. Cases include empty, coincident, horizontal and nonfinite poses, signed zero, both sides of the vertical threshold, source preservation and later edits. A separate 160,000-point case checks the known scale without argument spreading. Existing motion fitting tests retain full BVH-to-skeleton coverage. These are code-derived storage counts and correctness checks, without timing assertions or a claim about complete fitting speed. No quarantine applies.
+
+This changes no user action, label or screen state. The motion import and fitting descriptions in [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) remain accurate, so that article and its screenshots remain unchanged.
+
 ## Robot landmarks select joint extrema without sorting
 
 `robotLandmarkSelection.test.ts` checks mapping, branching chains, edits, source preservation and complete landmark carriers. Its 300- and 600-joint fixtures require one depth read per joint for automatic mapping, one per eligible descendant for limb-end selection and one per named candidate for each head or torso selection. These are operation counts, without timing assertions or a claim about complete retargeting time.

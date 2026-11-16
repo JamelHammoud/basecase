@@ -11,7 +11,7 @@ export const picoRow = (page: Page) =>
   page.locator('li.group').filter({ hasText: 'Raspberry Pi Pico 2' }).filter({ visible: true });
 
 export async function openPurchasingRobot(page: Page) {
-  const scene = kitArmScene();
+  const scene = { ...kitArmScene(), id: 'purchasing-arm' };
 
   scene.name = 'Purchasing arm';
   scene.project = { ...scene.project, ...{ extras: [{ key: picoKey, qty: 3 }] } };

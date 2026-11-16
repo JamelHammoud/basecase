@@ -9,13 +9,13 @@ import {
   picoKey,
 } from './bomPurchasingSteps';
 
-it('downloads exact supplier quantities through Build, then saves, reopens and corrects the listing', async () => {
+it('downloads exact supplier quantities through Build, then reloads purchases and corrects the listing', async () => {
   const app = await openApp();
 
   try {
     const { page } = app;
 
-    await openPurchasingRobot(page);
+    const scene = await openPurchasingRobot(page);
 
     const dialog = await editPicoIdentity(page);
 
@@ -36,15 +36,8 @@ it('downloads exact supplier quantities through Build, then saves, reopens and c
       'Units per Order': '1',
       'Supplier Order Qty': '2',
     });
-    await expect.poll(() => app.posts.some((post) => post.route === 'save-scene')).toBe(true);
-
-    const scene = app.posts.filter((post) => post.route === 'save-scene').at(-1)!.body as {
-      id: string;
-      parts: unknown[];
-    };
-
     await page.route('**/api/bridge/scenes', (route) =>
-      route.fulfill({ json: [{ ...scene, partCount: scene.parts.length }] }),
+      route.fulfill({ json: [{ ...scene, updatedAt: '2026-11-16T00:00:00.000Z', partCount: scene.parts.length }] }),
     );
     await page.route(
       (url) => url.pathname === '/api/bridge/scene',

@@ -107,3 +107,26 @@ DigiKey's [MyLists page](https://www.digikey.com/en/mylists) documents file uplo
 The 16 November 2026 PR #1560 Linux Check failed at the first download's exact filename assertion. The fixture names its scene `Purchasing arm`, and Build uses the case-preserving `fileStem` helper. The browser delivered `Purchasing-arm-bom.csv`, while the test expected `purchasing-arm-bom.csv`. Both attempts failed at the same assertion. The aggregate Check then failed because `E2E_CHANGED` was `failure`, with all three required jobs successful.
 
 The helper now expects exactly `Purchasing-arm-bom.csv`. Download failure, CSV contents, saved-scene reload, corrected supplier number and application-error assertions remain intact. This is an incorrect expected value, not evidence of a timing failure. The reported 32.430 seconds includes both attempts and an 18.288-second first app startup. A server-close warning followed the assertion failures and does not explain the filename mismatch. No deadline, retry, quarantine or production filename behavior changes. Browser execution remains with CI, so the later workflow assertions are not established by this failed run.
+
+
+### Purchase reload fixture correction
+
+The next 16 November PR #1560 Linux Check reached the CSV content assertions, then failed both attempts waiting for a `save-scene` POST. The two attempts took 40.414 seconds together. The aggregate Check failed only because e2e-changed failed. All three required jobs passed. The server-close warning followed the assertion failure.
+
+`__studio.load` changes the scene id and establishes the autosave baseline. Listing and owned-stock controls save to the separate purchase store, so this workflow creates no subsequent scene edit to trigger autosave. The walkthrough now restores its explicitly identified scene fixture through the scene-read routes and reloads the page. It retains the exact CSV comparison after purchase-store reload, packaging correction, real download checks and empty application-error assertion. The unrelated scene-write poll is removed. `e2e/firstLaunch.e2e.test.ts` retains actual scene autosave and relaunch coverage, while `electron/backend/purchases.test.mjs` retains purchase disk reload coverage. No timeout, retry or quarantine changes. Browser execution remains with CI.
+
+
+### Covered help verification
+
+The eight preflight notices were checked against the complete supplier-handoff diff. Each article retains its steps, labels and referenced screenshot states:
+
+- `add-parts-from-the-catalog.md`: `components.ts` adds optional supplier types to component and variant interfaces. Catalog entries, tiles, search, sizing and placement controls are unchanged.
+- `count-the-parts-you-already-own.md`: `bom.ts` adds `lineIdentity` to each projected line. Owned splitting, prices, stock controls and cross-scene purchase storage are unchanged.
+- `from-design-to-build.md`: that same identity projection leaves BOM demand, purchase totals, manufacturing groups and readiness findings unchanged. The new export task is covered by `export-remaining-purchases.md`.
+- `joints-and-kinematics.md`: `robotics.ts` adds optional identity to `PurchaseRecord`, with no joint, kinematic, pose or actuator contract changes.
+- `parts-assemblies-and-mounting-ports.md`: the catalog guide adds purchasing provenance rules, component interfaces gain optional metadata and BOM lines project identity. Product geometry, Inspector Product facts, part kinds, assemblies and port behavior are unchanged.
+- `the-design-agent.md`: the agent guide documents optional supplier fields on the existing sourced-item tool. Catalog sourcing, scene edits, Checks, priorities, controls and agent limits are unchanged.
+- `troubleshoot-build-real-parts-check.md`: `sourcedItems.ts` gains optional supplier metadata and BOM projection gains identity. Source confirmation, placeholders, price controls and readiness messages are unchanged.
+- `weight-and-center-of-mass.md`: `supplies.ts` adds optional purchasing identity to its interface. Supply records, masses, density fallbacks, body fitting and stability calculations are unchanged.
+
+These are coverage-overlap notices, not stale help instructions. The articles remain unchanged under preflight's stated exception. No screenshot state needs replacement for these metadata additions.

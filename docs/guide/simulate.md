@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 8d. Simulate & Train (MuJoCo)
 
+Servo population spreads use `utils/gaussian.ts` to transform parameter covariance into dynamics covariance. Each covariance-row product is prepared once per output row, preserving the previous summation order without assuming symmetry. For the six dynamics terms and seven servo parameters, covariance-entry reads fall from 1,764 to 294. At twelve output rows they fall from 7,056 to 588. `gaussian.test.ts` checks exact arithmetic against the previous transform across 160 generated rectangular inputs, frozen inputs, later edits, nonfinite values and complete fitted servo spreads. These are operation counts, not complete training timings. The app still supplies no populations by default (§8k).
+
 MJCF body generation groups owned part ids once through `utils/kinematicsMembers.ts`, after `adoptEmbeddedParts` finishes. Every joint body reads only its group's ids and applies the existing solid-part filter. Child lists append into their existing arrays. Body order, names, geometry order and fixed-joint numbering stay unchanged. Weight and engineering checks share the owned-part grouping through `reality/bodyLayout.ts` (§8k). `mjcfMembers.test.ts` compares complete models with scan-based membership across fixture robots and edited visibility, roles, fixed joints, source order and embedded-part placement.
 
 Contact-replay capture fixtures use `electron/cad-kernel/pairKey.mjs` for unordered body names, preserving their null separator and lexical order without sorting each contact pair (§0f). The final contact list remains sorted.

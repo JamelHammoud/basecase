@@ -59,5 +59,8 @@ export function chiSquareQuantile(dof: number, level: number): number {
   return dof * (1 - k + z * Math.sqrt(k)) ** 3;
 }
 
-export const transformed = (a: Matrix, covariance: Matrix): Matrix =>
-  a.map((ai) => a.map((aj) => ai.reduce((s, x, p) => s + x * aj.reduce((t, y, q) => t + covariance[p][q] * y, 0), 0)));
+export function transformed(a: Matrix, covariance: Matrix): Matrix {
+  const products = a.map((aj) => covariance.map((row) => aj.reduce((sum, y, q) => sum + row[q] * y, 0)));
+
+  return a.map((ai) => products.map((product) => ai.reduce((sum, x, p) => sum + x * product[p], 0)));
+}

@@ -65,14 +65,14 @@ export function FleetSite({
             ]}
           />
           <FleetMap
-            key={facility.value.facility?.hash}
+            key={`map:${facility.value.facility?.hash}`}
             geometry={facility.value.geometry}
             robots={visible}
             onSelect={onSelect}
           />
           {site.canManage && (
             <RegistrationForm
-              key={facility.value.facility?.hash}
+              key={`registration:${facility.value.facility?.hash}`}
               path={facility.path}
               facility={facility.value.facility!.hash}
               registration={facility.value.registration ?? null}

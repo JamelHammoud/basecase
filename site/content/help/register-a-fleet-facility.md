@@ -43,7 +43,7 @@ In **Site**, choose **All sites** to select a robot or registered site on the gl
 
 You can import ASCII lines and straight lightweight polylines from DXF files. Flatten curves and blocks before exporting. You keep source elevations when you import GLB, glTF and OBJ files. You can import PLY point clouds, including recorded LiDAR maps exported as PLY. Use meshes with up to 200,000 triangles and maps with up to one million points.
 
-For a package with several USD layers, enter the starting filename in **Root file** before uploading. If you do not specify a root, include one USD or USDZ file in the package.
+For a package with several USD layers, enter the starting filename in **Root file** before uploading. If you don’t specify a root, include one USD or USDZ file in the package.
 
 For USD and USDZ imports, you use the file's stage units and up axis. For a USD stage without authored units, you use centimeters. In the converted twin, you can see the source metric and hashes. You see the geometry without source textures or articulated fixtures.
 
@@ -51,4 +51,4 @@ For USD and USDZ imports, you use the file's stage units and up axis. For a USD 
 
 You can declare comma-separated floor names in **Floor identities** before uploading. For DXF imports, you get default names from the layers. Use **Floor** to filter robot positions by the declared identity without cutting the facility mesh into floors.
 
-You can see reported or estimated positions. After 60 seconds, consider them stale. Without registration or position data, you cannot place the robot. If you replace a facility, you clear its registration. Register the new source before using its local robot positions.
+You can see reported or estimated positions. After 60 seconds, consider them stale. Without registration or position data, you can’t place the robot. If you replace a facility, you clear its registration. Register the new source before using its local robot positions.

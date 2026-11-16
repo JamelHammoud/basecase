@@ -151,3 +151,10 @@ An intermediate capture received HTTP 400 while publishing a local pose. Its reg
 The 16 November changed-e2e run failed in `fleetSites.e2e.test.ts` setup before either browser test ran. `convertLocalFacility` could not find `uv`. The aggregate check failed because changed-e2e failed, while all three required fast jobs passed. Vite also reported delayed server shutdown after the setup failure.
 
 Check now installs `uv` with the same pinned setup action used by the unit job. Changed-e2e installs it only when the precise or fallback file list includes the facility walkthrough. Both nightly browser jobs install it because their shards include that walkthrough. This corrects a missing environment dependency without changing assertions, timeouts or retries. Browser execution remains owned by CI.
+
+
+### Pull request 1396 facility replacement correction
+
+The next 16 November changed-e2e run reached both browser tests. The upload, registration, globe and reopen walkthrough passed in 1,775 ms. The USD replacement saved `facility.usda`, then its unchanged one-map assertion found three `fleet-facility` elements instead of one. The aggregate Check failed solely because changed-e2e failed. Vite again reported delayed shutdown after the assertion failure.
+
+`FleetSite` gave the map and registration form the same sibling key, the facility hash. Replacing the facility changed both duplicate keys at once. React cannot reconcile duplicate sibling keys reliably and can retain old children. Their keys now prefix the hash with `map:` and `registration:` respectively. Each replacement still remounts both components, disposes the old map and resets control points. The existing USD browser test retains its one-map assertion, source metadata checks, null registration check and empty latitude check. No test, timeout, retry or assertion was removed or relaxed. Browser execution remains with CI, so this correction does not claim a post-change browser pass.

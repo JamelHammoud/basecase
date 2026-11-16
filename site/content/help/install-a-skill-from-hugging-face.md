@@ -35,7 +35,9 @@ hub_the_design_agent: |
 
 Start your robot from a published skill that Basecase retrains on your robot and checks in Arena.
 
-Install Skill works in the desktop app, on legged robots. It takes Motor Kit skills: Stand, Walk, Get up and Settle. You don't need to sign in to Hugging Face to install a public skill.
+Install Skill works on legged robots in the desktop app and in browsers that support training. It takes Motor Kit skills: Stand, Walk, Get up and Settle. You don't need to sign in to Hugging Face to install a public skill.
+
+Browser downloads support regular Hub files. A download redirect the browser can’t inspect is refused. Use the desktop app for those repos.
 
 1. In Basecase, open your robot.
 2. In your robot's scene, open the **Simulate** tab.
@@ -57,10 +59,24 @@ The list puts skills Basecase can install first, then uses reported installation
 
 If a file doesn't match `skill.json`, the install stops and a toast shows the name of the file. Legs with a different number of joints don't fit, and the toast says how many joints each one has.
 
-Installation results are saved on your computer. While signed in, Basecase also publishes them under your own Hugging Face account. Pending results publish when you next open **Install Skill** or finish an installation while signed in. Failed Arena runs count as failures. Canceled attempts and infrastructure failures don’t affect ordering. Reports must match the source commit and current Arena version. Other people’s reports help order the list but don’t prove your installation.
+Browser installation results stay in this browser and survive reload. Desktop installation results are saved on your computer. On desktop, while signed in, Basecase also publishes them under your own Hugging Face account. Pending results publish when you next open **Install Skill** or finish an installation while signed in. Failed Arena runs count as failures. Canceled attempts and infrastructure failures don’t affect ordering. Reports must match the source commit and current Arena version. Other people’s reports help order the list but don’t prove your installation.
 
 The author's Arena evidence doesn't carry over, so your installed skill needs its own. Installed Walk and Settle candidates also face the same required starts and stops as locally trained candidates.
 
 If Arena refuses the candidate, its row shows "Refused in Arena" with its worst count. A failed start or stop names the switch and movement that failed. Basecase keeps the previous passing skill available, with the refusal above its Arena result. Without a previous skill, the row offers **Train** again.
+
+## On a shared robot page
+
+1. In the robot's Case card, click **Install Skill**.
+
+![The hexapod's Case card with Install Skill](/help/install-a-skill-from-hugging-face/gallery.png)
+
+2. In the published skills list, click **Install** beside a fitting skill.
+3. In the Case card, wait for the skill's row to show its Arena result.
+4. In the ready row, click **Try** or **Drive** to run the skill.
+
+5. In the Case card, click **Open Scene** to keep the skill in the studio.
+
+Walk uses **Drive**. Stand, Get up and Settle use **Try**.
 
 To learn what Arena checks, see [Arena](/help/arena).

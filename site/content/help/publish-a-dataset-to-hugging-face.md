@@ -71,6 +71,6 @@ To download an earlier published version, use its tag: `hf download <account>/to
 
 Your token stays in the app's main process, sealed on disk, and Basecase never passes it to the page you work in. That page only learns whether you're signed in and what your account name is.
 
-Publishing a ready skill uses the same token. See [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face).
+Publishing a ready skill uses the same token. Installing public skills needs no token, including in the web studio. See [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face).
 
 When you're signed in, Basecase also sends the token when it downloads a dataset or a skill, so you can import your own private datasets. To import one, see [Import robot data as tries](/help/import-robot-data-as-tries).

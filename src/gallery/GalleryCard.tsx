@@ -65,6 +65,11 @@ export const GalleryCard: React.FC<{
           )}
           {!docked && drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
           <TrainPart training={training} />
+          {training.offered && (
+            <Button variant="secondary" size="md" fullWidth onClick={training.openInstall}>
+              Install Skill
+            </Button>
+          )}
         </>
       )}
       <Button variant="secondary" size="md" fullWidth onClick={onOpenScene}>

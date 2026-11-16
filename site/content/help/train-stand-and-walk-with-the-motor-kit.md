@@ -74,9 +74,11 @@ Only one skill trains at a time. If you click **Train** on another, a message na
 
 ## In the browser
 
-The **Train** section appears only when the browser can train on the GPU. A skill you train in the browser is saved with the scene in that browser, so it's still there after you reload the page. Nothing trains until you click **Train**.
+The **Train** section appears only when the browser can train on the GPU. A skill you train in the browser is saved with the scene in that browser, so it's still there after you reload the page. Nothing trains until you click **Train** or install a published skill.
 
 When you open a gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), its Case card has **Train**, which trains Stand. Once the skill passes Arena, the robot uses it to stand. Click **Open Scene** to open the robot in the studio with Stand ready.
+
+The card also offers **Install Skill** to train from a published policy. After it passes, **Drive** runs Walk and **Try** runs the other skills. **Open Scene** carries the skill into the studio. See [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
 
 ![The hexapod's Case card with Stand ready](/help/train-stand-and-walk-with-the-motor-kit/gallery.png)
 

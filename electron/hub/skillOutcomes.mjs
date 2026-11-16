@@ -1,23 +1,18 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { readCapped } from '../publicFetch.mjs';
 import { writeAtomicAsync } from '../library/atomicFile.mjs';
-import { gitBlob } from './gitBlob.mjs';
+import { remoteRecords } from '../../src/hub/remoteOutcomes.mjs';
 import { checkedName, publishRepo } from './publishRepo.mjs';
 
 const RECORD_BYTES = 256 * 1024;
-const SEARCH_BYTES = 2 * 1024 * 1024;
 const RECORDS_MAX = 100;
 const LOCAL_RECORDS_MAX = 1000;
 const HASH = /^[a-f0-9]{64}$/;
-const COMMIT = /^[a-f0-9]{40}$/;
 const CARD =
   '---\nlibrary_name: basecase\ntags:\n- basecase-skill-outcome\n---\nReported skill installation outcome.\n';
 
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
-const boundedJson = async (response) =>
-  JSON.parse((await readCapped(response, SEARCH_BYTES, 'Hub outcomes')).toString());
 
 function recordBytes(record) {
   const text = JSON.stringify(record);
@@ -25,65 +20,6 @@ function recordBytes(record) {
   if (!text || Buffer.byteLength(text) > RECORD_BYTES) throw new Error('The installation outcome is too large.');
 
   return Buffer.from(text);
-}
-
-function repoId(value) {
-  const pieces = typeof value === 'string' ? value.split('/') : [];
-
-  if (pieces.length !== 2) throw new Error('An outcome repo needs an account and a name.');
-
-  return pieces.map(checkedName).join('/');
-}
-
-async function remoteRecord(client, raw) {
-  try {
-    const id = repoId(raw?.id);
-    const info = await boundedJson(await client.api(`/api/models/${id}/revision/main?blobs=true`));
-    const file = info.siblings?.find((entry) => entry.rfilename === 'outcome.json');
-
-    if (!COMMIT.test(info.sha) || !Number.isSafeInteger(file?.size) || file.size <= 0 || file.size > RECORD_BYTES)
-      return null;
-
-    const bytes = await client.download(`/${id}/resolve/${info.sha}/outcome.json`, {
-      maxBytes: RECORD_BYTES,
-      label: 'Installation outcome',
-    });
-    const matches = file.lfs ? file.lfs.sha256 === digest(bytes) : file.blobId === gitBlob(bytes);
-
-    if (!matches) return null;
-
-    const record = JSON.parse(bytes.toString());
-
-    recordBytes(record);
-
-    return record;
-  } catch {
-    return null;
-  }
-}
-
-async function remoteRecords(client) {
-  try {
-    const list = await boundedJson(
-      await client.api(`/api/models?filter=basecase-skill-outcome&limit=${RECORDS_MAX}&full=true`),
-    );
-
-    if (!Array.isArray(list)) return [];
-
-    const found = [];
-
-    for (let at = 0; at < Math.min(list.length, RECORDS_MAX); at += 4) {
-      found.push(
-        ...(
-          await Promise.all(list.slice(at, Math.min(at + 4, RECORDS_MAX)).map((raw) => remoteRecord(client, raw)))
-        ).filter(Boolean),
-      );
-    }
-
-    return found;
-  } catch {
-    return [];
-  }
 }
 
 export class SkillOutcomes {

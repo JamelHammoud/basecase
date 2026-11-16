@@ -21,6 +21,8 @@ const CONFIG = [
     'memories',
     'goals',
     'worktrees',
+    'multi_agent',
+    'multi_agent_v2',
   ].map((name) => `${name} = false`),
 ].join('\n');
 

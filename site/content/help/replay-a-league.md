@@ -32,12 +32,12 @@ You can compare shared robots on one Case, replay a measured seed, and open the 
 
 ![The selected League robot and Case restored in the browser’s studio](/help/replay-a-league/studio.png)
 
-The League’s CI adjudication determines the frozen standings. Replays in your browser remain provisional and do not replace those standings.
+The League’s CI adjudication determines the frozen standings. Replays in your browser remain provisional and don’t replace those standings.
 
 The ranking order is passes, the pinned score in its declared direction, lower Budget, and a stable entry identity.
 Budget uses catalog prices and measured geometry. If prices or geometry are missing, you’ll see **Unpriced** instead of a zero cost.
 
-Each League pins its Case, contract, engine, deadline and ranking rules. You cannot submit executable Case panels, Case logic or imported worlds. Retained skills must use a network policy controller.
+Each League pins its Case, contract, engine, deadline and ranking rules. You can’t submit executable Case panels, Case logic or imported worlds. Retained skills must use a network policy controller.
 
 To submit your robot before the deadline, follow [Share a robot as a link](/help/share-a-robot-as-a-link).
 You need a trusted CI receipt for your submission before the deadline to enter the frozen standings.

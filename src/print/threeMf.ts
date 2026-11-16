@@ -35,34 +35,33 @@ export function weld(tris: Float32Array): MeshData {
   const index = new Map<string, number>();
   const vertices: number[] = [];
   const indices = new Uint32Array(tris.length / 3);
+  let count = 0;
 
-  for (let v = 0; v < tris.length / 3; v++) {
-    const [x, y, z] = [tris[v * 3], tris[v * 3 + 1], tris[v * 3 + 2]];
-    const key = `${Math.round(x * QUANT)},${Math.round(y * QUANT)},${Math.round(z * QUANT)}`;
-    let id = index.get(key);
+  for (let t = 0; t < tris.length; t += 9) {
+    for (let corner = 0; corner < 3; corner++) {
+      const v = t + corner * 3;
+      const [x, y, z] = [tris[v], tris[v + 1], tris[v + 2]];
+      const key = `${Math.round(x * QUANT)},${Math.round(y * QUANT)},${Math.round(z * QUANT)}`;
+      let id = index.get(key);
 
-    if (id === undefined) {
-      id = vertices.length / 3;
-      index.set(key, id);
-      vertices.push(x, y, z);
+      if (id === undefined) {
+        id = vertices.length / 3;
+        index.set(key, id);
+        vertices.push(x, y, z);
+      }
+
+      indices[count + corner] = id;
     }
 
-    indices[v] = id;
+    const [a, b, c] = [indices[count], indices[count + 1], indices[count + 2]];
+
+    if (a !== b && b !== c && a !== c) count += 3;
   }
 
-  return { vertices: new Float32Array(vertices), indices: dropDegenerate(indices) };
-}
-
-function dropDegenerate(indices: Uint32Array): Uint32Array {
-  const out: number[] = [];
-
-  for (let t = 0; t < indices.length; t += 3) {
-    const [a, b, c] = [indices[t], indices[t + 1], indices[t + 2]];
-
-    if (a !== b && b !== c && a !== c) out.push(a, b, c);
-  }
-
-  return new Uint32Array(out);
+  return {
+    vertices: new Float32Array(vertices),
+    indices: count === indices.length ? indices : indices.slice(0, count),
+  };
 }
 
 const escapeXml = (s: string) =>

@@ -142,3 +142,29 @@ Review of #1275 ran `npm run check:changed -- docs/guide/loop.md tools/loop/lane
 The builder fixtures return a completed session and then throw from the publisher. They assert that recovery exists before cleanup, that the next invocation retains the session and receives the failure message, and that two publication failures permit only two model invocations on unchanged inputs. A separate fixture writes a real delivery record before throwing and verifies that builders leave the step to delivery without retaining another model recovery.
 
 The builder tests mock model execution, publication and worktree cleanup. They do not run a real failing commit hook or establish crash safety between operations. The recovery library tests separately exercise real Git merges and autostash conflicts. This review made no live recovery or throughput measurement and changed no quarantine conditions.
+
+## Copy occurrence accounting
+
+Issue #1300 refines the existing Copy job and review evidence for arc #224. The supplied +60 across 188 merged pull requests motivated reason coverage. It is not evidence that those strings were redundant. This change removes no product text and changes no app behavior.
+
+The fixed replay below compares each commit with its first parent. The baseline is the extractor and per-file budget from `9a8a02e26702e7384760d2b302340409fb15f198`, the task's starting `main`. Both implementations receive the same changed source contents. Counts below expand changed wording into one addition and one removal. The sample deliberately includes additions, no-copy geometry work, moved settings controls, deletions, renderer wording changes and native dialog wording changes.
+
+| Merged change | Pinned commit | Baseline + / − | Shipped + / − | Net |
+| --- | --- | --- | --- | --- |
+| #1293, passive joints | `9a8a02e26702` | 3 / 0 | 3 / 0 | +3 |
+| #1298, photo outline baselines | `0572673abbe9` | 0 / 0 | 0 / 0 | 0 |
+| #1280, SSH training | `d7cbda0933d5` | 14 / 3 | 11 / 0 | +11 |
+| #777, sketch output controls | `3539f9582623` | 0 / 3 | 0 / 3 | −3 |
+| #687, contractions | `5dac29e40e7b` | 2 / 2 | 2 / 2 | 0 |
+| #90, reference image captions | `983c1a25e0c5` | 0 / 3 | 0 / 3 | −3 |
+| #550, actionable errors | `8c0b01da448d` | 2 / 2 | 3 / 3 | 0 |
+
+Extraction differences: #550 now includes `electron/updates.mjs`'s dialog detail change from “Try again later.” at line 141 to “Check again in a minute.” at line 142. #1280 cancels three unchanged controls moved between files. That is occurrence matching, not an extraction change or a product copy reduction. All seven nets remain unchanged. The new JSX literal-child and mixed-fragment handling causes no difference in this sample.
+
+False positives: inspecting the reported source locations found none among these seven changes. This is a bounded sample, not an app-wide audit. Negative-control tests exclude native protocol objects, console and logger payloads, fixture files and catalog records. Existing renderer object keys remain a declared surface heuristic. Static extraction does not trace arbitrary helpers, imported constants, runtime strings or Electron role-generated labels. Those remain review's responsibility.
+
+Runtime measured on the task's macOS host with Node 26.13.0: load the seven pinned source pairs once, warm both extractors once, then alternate execution order over seven measured passes. Median baseline extraction and per-file accounting took 37.30 ms for the whole sample. Median shipped extraction and accounting took 39.03 ms. Reading source pairs through Git took 1.00 s separately. The additional native coverage and occurrence matching cost 1.73 ms across the sample. These are local observations, not a speedup claim or a CI threshold. Unsupported Electron files without a `dialog` identifier bypass parsing unless they are the explicit app-menu file. Each supported source is parsed once per side. No new job, model call, publication wait, retry or timeout was added.
+
+Reproduce the replay by passing each pinned commit and its first parent to `scannedSources`, then `diffCopy` and `copyOccurrences` from `tools/copy-diff.mjs`. For the baseline, load `tools/copy/{extract,budget,surfaces}.mjs` from the pinned starting revision and run its `isScanned`, `extractStrings` and per-file `diffStrings` on those same source pairs. Temporary scripts and complete source-location lists belong in `scratch/`.
+
+Current coverage lives in [Copy](../guide/copy.md#3d-checklist-before-shipping-any-ui-text) and [Loop](../guide/loop.md#review). `tools/copy/publication.test.mjs` uses a temporary Git repository with two added repeated renderer labels and native menu text. It runs the real budget command, rejects missing and partial reasons, accepts complete reasons, and checks identical review evidence. It exercises generated and revised pull bodies and mocked issue and pull voice responses without publishing or calling a model. `tools/copy/issuePublication.test.mjs` also drives ordinary issue creation with the publishing boundary and generator stubbed. There is no browser walkthrough because the app does not change. Linux and Windows observations remain with ordinary CI.

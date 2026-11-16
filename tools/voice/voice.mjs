@@ -1,3 +1,4 @@
+import { isCopyReasonLine } from '../copy/budget.mjs';
 import { runAgent } from '../loop/lib/agent.mjs';
 import { LOOP_DIR } from '../loop/lib/paths.mjs';
 import fs from 'node:fs';
@@ -56,7 +57,7 @@ export function plainPunctuation(text) {
     .map((line) => {
       if (line.trimStart().startsWith('```')) fenced = !fenced;
 
-      return fenced || line.trimStart().startsWith('```') ? line : plainLine(line);
+      return fenced || line.trimStart().startsWith('```') || isCopyReasonLine(line) ? line : plainLine(line);
     })
     .join('\n');
 }
@@ -65,7 +66,6 @@ const frontMatter = (text) => (text.startsWith('---') ? text.slice(0, text.index
 
 const MARKERS = [
   /(?:Closes|Rebuilds) #\d+/g,
-  /^copy: .*$/gm,
   /^(?:Request|Idea|Arc|Kind|Requires|Inputs): .*$/gm,
   /Depends on\*{0,2}[^\n]*/g,
   /\]\(([^)\s]+)\)/g,
@@ -91,6 +91,11 @@ export function restoreMenuPaths(before, after) {
 }
 
 export function keepsMarkers(before, after, kind) {
+  const lines = after.split('\n');
+  const reasons = before.split('\n').filter(isCopyReasonLine);
+
+  if (reasons.some((line) => !lines.includes(line))) return false;
+
   const bold = kind === 'help' ? [...before.matchAll(BOLD)].map(([found]) => found) : [];
 
   if (bold.some((label) => !after.includes(label))) return false;

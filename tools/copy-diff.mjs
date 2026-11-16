@@ -29,21 +29,36 @@ function pairByKind(removed, added) {
 }
 
 export function diffCopy(files) {
-  const result = { added: [], changed: [], removed: [] };
-
-  for (const { file, before = null, after = null, renamedFrom = file } of files) {
+  const local = files.map(({ file, renamedFrom = file, before = null, after = null }) => {
     const old = stringsOf(renamedFrom, before);
     const now = stringsOf(file, after);
-    const { added, removed } = diffStrings(old, now);
-    const paired = pairByKind(removed, added);
+
+    return { ...diffStrings(old, now), net: now.length - old.length };
+  });
+  const remaining = diffStrings(
+    local.flatMap((diff) => diff.removed),
+    local.flatMap((diff) => diff.added),
+  );
+  const result = { added: [], changed: [], removed: [] };
+
+  for (const { file, renamedFrom = file } of files) {
+    const paired = pairByKind(
+      remaining.removed.filter((item) => item.file === renamedFrom),
+      remaining.added.filter((item) => item.file === file),
+    );
 
     result.added.push(...paired.added);
     result.changed.push(...paired.changed);
     result.removed.push(...paired.removed);
   }
 
-  return { ...result, net: result.added.length - result.removed.length };
+  return { ...result, net: local.reduce((net, diff) => net + diff.net, 0) };
 }
+
+export const copyOccurrences = ({ added, changed, removed }) => ({
+  added: [...added, ...changed.map(({ after }) => after)],
+  removed: [...removed, ...changed.map(({ before }) => before)],
+});
 
 const signed = (n) => (n > 0 ? `+${n}` : String(n));
 

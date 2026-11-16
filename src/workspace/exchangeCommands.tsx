@@ -103,6 +103,18 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       run: exports.copyBrief,
     },
     ...(exports.canExportParts ? partExports : []),
+    ...(exports.canExportParts
+      ? [
+          {
+            id: 'export-schematic',
+            group: 'Scene',
+            label: 'Schematic',
+            icon: <FileIcon />,
+            keywords: 'export kicad electrical wiring requirements zip download',
+            run: () => void exports.exportSchematic(),
+          },
+        ]
+      : []),
     ...(IS_WEB_DEMO || !exports.canExportStep ? [] : [stepExport]),
     {
       id: 'export-image',

@@ -1,6 +1,7 @@
 import type { AnimationKeyframe, JointValues, RobotPoseState, RootOffset } from '../types/robotics';
-import { goalParts, goalTargets, roundTo, type BuiltAnimation, type PointOf } from './animationGoals';
-import { clampJoint, isMovable, preBend, solveIK, type IkTarget, type Rig, type V3 } from './kinematics';
+import { goalParts, roundTo, type BuiltAnimation, type PointOf } from './animationGoals';
+import { moveGaitTargets, prepareGaitTargets } from './gaitTargets';
+import { clampJoint, isMovable, preBend, solveIK, type Rig, type V3 } from './kinematics';
 import { lengthLabel } from './size';
 
 export interface GaitSpec {
@@ -76,6 +77,7 @@ interface GaitPlan extends GaitFeet {
   side0: number;
   footDirs: V3[] | null;
   keepOrientation: boolean;
+  targets: ReturnType<typeof prepareGaitTargets>;
 }
 
 function gaitFeet(rig: Rig, spec: GaitSpec, pointOf: PointOf): GaitFeet | string {
@@ -152,6 +154,11 @@ function gaitPlan(input: GaitInput, found: GaitFeet): GaitPlan {
     side0: Math.sign(points[0][0] - (Math.max(...xs) + Math.min(...xs)) / 2) || 1,
     footDirs: spec.footDirs?.length === n ? spec.footDirs : null,
     keepOrientation: spec.keepOrientation !== false,
+    targets: prepareGaitTargets(rig, {
+      ...found,
+      pointOf: input.pointOf,
+      keepOrientation: spec.keepOrientation !== false,
+    }),
   };
 }
 
@@ -175,28 +182,16 @@ function gaitRoot(plan: GaitPlan, ph: number): RootOffset {
   };
 }
 
-function gaitTargets(plan: GaitPlan, ph: number): IkTarget[] {
-  const targets: IkTarget[] = [];
-
-  plan.feet.forEach((f, i) => {
+function gaitTargets(plan: GaitPlan, ph: number) {
+  plan.feet.forEach((_, i) => {
     const { along, up } = footOffset(plan, (((ph - plan.phases[i]) % 1) + 1) % 1);
     const pt = plan.points[i];
     const dir = plan.footDirs?.[i] ?? plan.fwd;
-    const t = goalTargets(
-      plan.rig,
-      {
-        part: f,
-        target: [pt[0] + dir[0] * along, pt[1] + up, pt[2] + dir[2] * along],
-        point: pt,
-        keepOrientation: plan.keepOrientation,
-      },
-      plan.pointOf,
-    );
 
-    if (typeof t !== 'string') targets.push(...t);
+    moveGaitTargets(plan.targets.feet[i], [pt[0] + dir[0] * along, pt[1] + up, pt[2] + dir[2] * along]);
   });
 
-  return targets;
+  return plan.targets.all;
 }
 
 function gaitKeyframe(plan: GaitPlan, ph: number, values: JointValues, root: RootOffset): AnimationKeyframe {

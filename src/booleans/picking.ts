@@ -28,19 +28,39 @@ function probesOf(operand: ScenePart): THREE.Mesh[] {
   });
 }
 
-function closestHit(operand: ScenePart, raycaster: THREE.Raycaster, distance: number): number {
-  const gaps = probesOf(operand).flatMap((probe) =>
-    raycaster.intersectObject(probe, false).map((hit) => Math.abs(hit.distance - distance)),
-  );
+function closestHit(
+  operand: ScenePart,
+  raycaster: THREE.Raycaster,
+  distance: number,
+  hits: THREE.Intersection[],
+): number {
+  let gap = Infinity;
 
-  return gaps.length ? Math.min(...gaps) : Infinity;
+  for (const probe of probesOf(operand)) {
+    hits.length = 0;
+    raycaster.intersectObject(probe, false, hits);
+
+    for (const hit of hits) gap = Math.min(gap, Math.abs(hit.distance - distance));
+  }
+
+  return gap;
 }
 
 export function operandAt(part: BooleanPart, raycaster: THREE.Raycaster, distance: number): ScenePart | null {
-  const scored = part.boolean.operands.map((operand) => ({ operand, gap: closestHit(operand, raycaster, distance) }));
-  const best = scored.reduce((a, b) => (b.gap < a.gap ? b : a));
+  const hits: THREE.Intersection[] = [];
+  let best: ScenePart | null = null;
+  let bestGap = Infinity;
 
-  return Number.isFinite(best.gap) ? best.operand : null;
+  for (const operand of part.boolean.operands) {
+    const gap = closestHit(operand, raycaster, distance, hits);
+
+    if (best === null || gap < bestGap) {
+      best = operand;
+      bestGap = gap;
+    }
+  }
+
+  return Number.isFinite(bestGap) ? best : null;
 }
 
 export interface DrillQuery {

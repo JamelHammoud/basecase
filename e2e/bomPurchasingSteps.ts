@@ -73,7 +73,7 @@ export async function downloadPurchasingCsv(page: Page) {
 
   const file = await delivered;
 
-  expect(file.suggestedFilename()).toBe('purchasing-arm-bom.csv');
+  expect(file.suggestedFilename()).toBe('Purchasing-arm-bom.csv');
   expect(await file.failure()).toBeNull();
 
   return parseBomCsv(await readFile((await file.path())!, 'utf8'));

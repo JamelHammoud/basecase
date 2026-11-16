@@ -230,7 +230,7 @@ export function extractStrings(source, fileName = 'file.tsx') {
     const hits = native ? nativeStrings(node, { file: fileName, stringsOf }) : nodeStrings(node);
 
     for (const hit of hits.filter(() => !inLog(node))) {
-      found.set(hit.node.pos, {
+      found.set(hit.occurrence ?? hit.node.pos, {
         text: normalize(hit.text),
         kind: hit.kind,
         start: hit.start ?? hit.node.getStart(file),

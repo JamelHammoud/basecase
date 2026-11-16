@@ -1,21 +1,31 @@
 import ts from 'typescript';
 import { NATIVE_DIALOG_CALLS, NATIVE_DIALOG_KEYS, NATIVE_MENU_CALLS, NATIVE_MENU_FILE } from './surfaces.mjs';
 
+function bindsName(binding, text) {
+  if (ts.isIdentifier(binding)) return binding.text === text;
+
+  return binding.elements.some((entry) => ts.isBindingElement(entry) && bindsName(entry.name, text));
+}
+
 function initializerOf(node) {
   let scope = node.parent;
 
   while (scope) {
-    const parameter = scope.parameters?.some((entry) => ts.isIdentifier(entry.name) && entry.name.text === node.text);
+    const parameter = scope.parameters?.some((entry) => bindsName(entry.name, node.text));
+    const caught =
+      ts.isCatchClause(scope) && scope.variableDeclaration && bindsName(scope.variableDeclaration.name, node.text);
 
-    if (parameter) return null;
+    if (parameter || caught) return null;
 
     const statements = scope.statements ?? [];
-    const declarations = statements
+    const locals = statements
       .filter(ts.isVariableStatement)
       .flatMap((statement) => statement.declarationList.declarations);
-    const declaration = declarations.find((entry) => ts.isIdentifier(entry.name) && entry.name.text === node.text);
+    const loop =
+      scope.initializer && ts.isVariableDeclarationList(scope.initializer) ? scope.initializer.declarations : [];
+    const declaration = [...locals, ...loop].find((entry) => bindsName(entry.name, node.text));
 
-    if (declaration) return declaration.initializer ?? null;
+    if (declaration) return ts.isIdentifier(declaration.name) ? (declaration.initializer ?? null) : null;
 
     scope = scope.parent;
   }
@@ -29,7 +39,13 @@ export function nativeStrings(node, { file, stringsOf }) {
 
     return resolved && !ts.isIdentifier(resolved) ? stringsOf(resolved) : [];
   };
-  const tagged = (value, kind) => read(value).map((hit) => ({ ...hit, kind }));
+  const tagged = (value, kind) =>
+    read(value).map((hit) => ({
+      ...hit,
+      kind,
+      occurrence: `${value.pos}:${hit.node.pos}`,
+      start: ts.isIdentifier(value) ? value.getStart() : hit.node.getStart(),
+    }));
 
   if (file === NATIVE_MENU_FILE && ts.isPropertyAssignment(node) && node.name.getText() === 'label') {
     return tagged(node.initializer, 'label');

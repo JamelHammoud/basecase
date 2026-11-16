@@ -39,16 +39,22 @@ it('rejects missing occurrence reasons and preserves complete publication and re
   try {
     git('init', '-q', '-b', 'main');
     write('src/View.tsx', '<button>Close</button>');
+    write('electron/dialogs.mjs', 'const message = "Save scene?";\ndialog.showMessageBox({ message });');
     commit();
     git('checkout', '-qb', 'step');
     write('src/View.tsx', '<><button>Close</button><button>Close</button><button>Close</button></>');
     write('electron/app-menu.mjs', "item('Open Scene', 'open-scene');");
+    write(
+      'electron/dialogs.mjs',
+      'const message = "Save scene?";\ndialog.showMessageBox({ message });\ndialog.showMessageBox({ message });\ndialog.showMessageBox({ message });',
+    );
     commit();
 
     const occurrences = copyOccurrences(copyDiffOfRange({ cwd, base: 'main', head: 'HEAD' }));
     const copy = [
       { string: 'Close', why: 'Closes each independently opened panel' },
       { string: 'Open Scene', why: 'Opens the scene picker from the native menu' },
+      { string: 'Save scene?', why: 'Asks before each independent save operation' },
     ];
     const change = { kind: 'refine', summary: 'Summary', why: 'Why', checked: 'Checked', copy };
     const options = { branch: 'loop/copy-fixture', slug: 'example/basecase' };
@@ -61,12 +67,16 @@ it('rejects missing occurrence reasons and preserves complete publication and re
     expect(missing.status, missing.stderr).toBe(1);
     expect(partial.status, partial.stderr).toBe(1);
     expect(complete.status, complete.stderr).toBe(0);
-    expect(complete.stdout).toContain('Copy: +3 −0');
+    expect(complete.stdout).toContain('Copy: +5 −0');
     expect(copyProblems({ ...occurrences, copy })).toEqual([]);
     expect(copyProblems({ ...occurrences, copy: copy.slice(1) })).toHaveLength(2);
-    expect(review.net).toBe(3);
+    expect(copyProblems({ ...occurrences, copy: copy.slice(0, 2) })).toHaveLength(2);
+    expect(review.net).toBe(5);
     expect(review.text).toContain(complete.stdout.trim());
     expect(review.text.match(/why: Closes each independently opened panel/g)).toHaveLength(2);
+    expect(review.text.match(/why: Asks before each independent save operation/g)).toHaveLength(2);
+    expect(review.text).toContain('electron/dialogs.mjs:3');
+    expect(review.text).toContain('electron/dialogs.mjs:4');
     expect(revisedBody(body, change, options)).toContain(copyLines(copy));
 
     for (const kind of ['issue', 'pull']) {

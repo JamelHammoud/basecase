@@ -104,3 +104,60 @@ describe('occurrence accounting shared by budget and review', () => {
     ]);
   });
 });
+
+describe('native reference accounting', () => {
+  it('counts each native reference at its use while retaining conditional branches', () => {
+    const diff = diffCopy([
+      {
+        file: 'electron/dialogs.mjs',
+        after: [
+          'const message = found ? "Save scene?" : "Export scene?";',
+          'dialog.showMessageBox({ message, detail: message });',
+          'dialog.showMessageBox({ message });',
+          'dialog.showErrorBox(message, message);',
+        ].join('\n'),
+      },
+      {
+        file: 'electron/app-menu.mjs',
+        after: ['const label = "Open Scene";', 'item(label, "open-scene");', 'sent(label, "open-scene");'].join('\n'),
+      },
+    ]);
+    const added = copyOccurrences(diff).added;
+
+    expect(diff.net).toBe(12);
+    expect(added.map(({ text, line }) => [text, line])).toEqual([
+      ['Save scene?', 2],
+      ['Export scene?', 2],
+      ['Save scene?', 2],
+      ['Export scene?', 2],
+      ['Save scene?', 3],
+      ['Export scene?', 3],
+      ['Save scene?', 4],
+      ['Export scene?', 4],
+      ['Save scene?', 4],
+      ['Export scene?', 4],
+      ['Open Scene', 2],
+      ['Open Scene', 3],
+    ]);
+  });
+
+  it('does not resolve native references through shadowing bindings', () => {
+    const diff = diffCopy([
+      {
+        file: 'electron/dialogs.mjs',
+        after: [
+          'const message = "Outer message";',
+          'function parameter({ message }) { dialog.showMessageBox({ message }); }',
+          'function local(value) { const { message } = value; dialog.showMessageBox({ message }); }',
+          'try {} catch (message) { dialog.showMessageBox({ message }); }',
+          'for (const message of messages) { dialog.showMessageBox({ message }); }',
+          '{ const message = "Local message"; dialog.showMessageBox({ message }); }',
+        ].join('\n'),
+      },
+    ]);
+
+    expect(copyOccurrences(diff).added).toEqual([
+      { text: 'Local message', kind: 'message', line: 6, file: 'electron/dialogs.mjs', repeat: false },
+    ]);
+  });
+});

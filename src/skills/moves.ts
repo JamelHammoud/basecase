@@ -1,3 +1,4 @@
+import type { LocalJudgment } from './localJudgments';
 import type { MainModule } from '@mujoco/mujoco';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
@@ -8,6 +9,7 @@ import { solveWith, type RaceOutcome } from './race';
 import { routeTask } from './router';
 
 export interface MoveInput {
+  judgment?: LocalJudgment;
   mj: MainModule;
   design: string;
   model: SimModel;
@@ -15,6 +17,7 @@ export interface MoveInput {
   forge: ForgeRunner;
   save: SkillSave;
   signal?: AbortSignal;
+  seed?: number;
 }
 
 export interface MoveOutcome {

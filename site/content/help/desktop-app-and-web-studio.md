@@ -48,13 +48,14 @@ Some features work only in the desktop app. In the web studio, you see this inst
 | SimReady objects | “Download Basecase to insert SimReady models.” |
 | Training and teaching skills | “Download Basecase to train policies.”, except Motor Kit skills in a browser that can run them |
 | Training vision models | Train in the desktop app from an image dataset |
+| Training on another computer | Configure SSH in the desktop app |
 | **Play** ▸ **Operate** | Not shown |
 | STEP and IGES import | Meshes only: STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE |
 | Publishing a dataset to Hugging Face | Export only |
 | Roboflow imports | Download the dataset and import its folder or zip |
 | **Place on Map** | Not shown |
 
-In the web studio, Settings doesn't have the **Agent**, **Printers** or **Accounts** panes. There's no menu bar either. Press [[⌘K]] to run any command you'd find in the menus.
+In the web studio, Settings doesn't have the **Agent**, **Printers**, **Accounts** or **Training** panes. There's no menu bar either. Press [[⌘K]] to run any command you'd find in the menus.
 
 A blue strip at the top of the web studio links to the desktop download. If you close it, it won't come back in that browser.
 

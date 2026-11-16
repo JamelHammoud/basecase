@@ -1,3 +1,5 @@
+import { judgmentHex } from './localJudgments';
+import type { LocalJudgment } from './localJudgments';
 import type { MainModule } from '@mujoco/mujoco';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { PolicySpec } from '../sim/policy';
@@ -49,6 +51,7 @@ export interface KitWarm {
 }
 
 export interface KitInput extends KitContext {
+  judgment?: LocalJudgment;
   mj: MainModule;
   design: string;
   model: SimModel;
@@ -120,7 +123,13 @@ async function validate(run: Attempt, policy: PolicySpec): Promise<ValidationRep
 
   if (known) return known;
 
-  const report = await validationReport({ ...run.input, entry: run.entry, environment: run.environment, policy });
+  const report = await validationReport({
+    ...run.input,
+    entry: run.entry,
+    environment: run.environment,
+    policy,
+    salt: judgmentHex(run.input.judgment),
+  });
 
   run.reports.set(policy, report);
   run.clock.validationS += report.wallS;
@@ -180,7 +189,14 @@ async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>
 
   if (!slower.every((e) => e.passed)) {
     const { mj, model } = input;
-    const full = await runArena({ mj, model, contract: environment.contract, controller, environment });
+    const full = await runArena({
+      mj,
+      model,
+      contract: environment.contract,
+      controller,
+      environment,
+      salt: input.judgment?.(),
+    });
     const tried = [...slower, full];
     const score = arenaPasses(tried);
 

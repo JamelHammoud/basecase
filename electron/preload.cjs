@@ -104,6 +104,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     String(channel).startsWith('onshape:')
       ? ipcRenderer.invoke(channel, payload)
       : Promise.reject(new Error('Unknown Onshape call')),
+  remoteTrainingCall: (channel, payload) =>
+    ['remote-training:status', 'remote-training:configure', 'remote-training:clear'].includes(channel)
+      ? ipcRenderer.invoke(channel, payload)
+      : Promise.reject(new Error('Unknown remote training call')),
   roboflowCall: (channel, payload) =>
     String(channel).startsWith('roboflow:')
       ? ipcRenderer.invoke(channel, payload)

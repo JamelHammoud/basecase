@@ -1,3 +1,4 @@
+import { localJudgments } from './localJudgments';
 import type { MainModule } from '@mujoco/mujoco';
 import { trainHandoff, type HandoffResult, type HandoffTrainInput } from '../routines/handoffTraining';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -18,9 +19,9 @@ import { draftSkill, raceDraft, recheckSkill, type DraftInput, type DraftResult,
 
 export type SkillsJob =
   | { type: 'draft'; model: SimModel; design: string; request: DraftInput }
-  | { type: 'race'; model: SimModel; draft: SkillDraft; budgetSteps?: number }
-  | ({ type: 'kit'; model: SimModel; design: string; entry: TrainedEntry; warm?: KitWarm } & KitContext)
-  | { type: 'move'; model: SimModel; design: string; animation: RobotAnimation }
+  | { type: 'race'; model: SimModel; draft: SkillDraft; budgetSteps?: number; seed?: number }
+  | ({ type: 'kit'; model: SimModel; design: string; entry: TrainedEntry; warm?: KitWarm; seed?: number } & KitContext)
+  | { type: 'move'; model: SimModel; design: string; animation: RobotAnimation; seed?: number }
   | { type: 'recheck'; model: SimModel; design: string; skill: Skill; environment: Environment }
   | ({ type: 'handoff' } & Omit<HandoffTrainInput, 'mj' | 'forge' | 'save'>)
   | ({ type: 'coach-brief'; model: SimModel } & CoachSubjectJob)
@@ -58,6 +59,7 @@ export type SkillsReply =
 export type ReplyTo<K extends SkillsJob['type']> = Extract<SkillsReply, { type: K }>;
 
 export interface SkillPorts {
+  localSalt?: string;
   forge: ForgeRunner;
   save: SkillSave;
   signal?: AbortSignal;
@@ -66,14 +68,18 @@ export interface SkillPorts {
 
 export async function runSkillsJob(job: SkillsJob, ports: SkillPorts & { mj: MainModule }): Promise<SkillsReply> {
   const { mj, forge, save, signal, progress } = ports;
+  const judgment = localJudgments(ports.localSalt);
 
   if (job.type === 'draft') return { type: 'draft', result: await draftSkill({ mj, ...job }) };
 
-  if (job.type === 'race') return { type: 'race', outcome: await raceDraft({ mj, ...job, forge, save, signal }) };
+  if (job.type === 'race')
+    return { type: 'race', outcome: await raceDraft({ mj, ...job, forge, save, signal, judgment }) };
 
-  if (job.type === 'kit') return { type: 'kit', outcome: await trainKitEntry({ mj, ...job, forge, save, signal }) };
+  if (job.type === 'kit')
+    return { type: 'kit', outcome: await trainKitEntry({ mj, ...job, forge, save, signal, judgment }) };
 
-  if (job.type === 'move') return { type: 'move', outcome: await trainMove({ mj, ...job, forge, save, signal }) };
+  if (job.type === 'move')
+    return { type: 'move', outcome: await trainMove({ mj, ...job, forge, save, signal, judgment }) };
 
   if (job.type === 'handoff') return { type: 'handoff', result: await trainHandoff({ mj, ...job, forge, save }) };
 

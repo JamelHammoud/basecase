@@ -23,7 +23,7 @@ covers:
   - electron/main.mjs
 ---
 
-The agent, slicing, printing and training all run in the desktop app. To install it, you need one of these:
+The desktop app runs the agent, slicing and printing, and starts local or remote training. To install it, you need one of these:
 
 - A Mac with Apple silicon. There's no build for Intel Macs.
 - A PC with 64-bit Windows 11.

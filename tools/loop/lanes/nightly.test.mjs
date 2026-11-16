@@ -46,6 +46,7 @@ beforeEach(() => {
 });
 
 const RELEASE_ARTIFACTS = {
+  'forge-linux-x64': ['forge-linux-x64.json', 'forge-linux-x64.json.sha256'],
   mac: ['Basecase.dmg'],
   windows: ['Basecase-Setup.exe'],
   'robot-daemon-linux-arm64': ['robot-daemon-linux-arm64', 'robot-daemon-linux-arm64.sha256'],
@@ -61,7 +62,7 @@ function pendingRelease(failedJob) {
       return [{ databaseId: 42, status: 'completed', createdAt: '2026-11-14T13:01:00Z' }];
 
     return {
-      jobs: ['mac', 'windows', 'daemon-linux-arm64', 'daemon-linux-x64'].map((name) => ({
+      jobs: ['mac', 'windows', 'daemon-linux-arm64', 'daemon-linux-x64', 'forge-linux-x64'].map((name) => ({
         name,
         conclusion: name === failedJob ? 'failure' : 'success',
       })),

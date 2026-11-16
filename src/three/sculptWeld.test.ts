@@ -103,4 +103,16 @@ describe('Sculpt welding', () => {
     expect(geometry.getAttribute('normal')).toBeDefined();
     expect(geometry.getAttribute('uv')).toBeDefined();
   });
+
+  it.each([false, true])('preserves normalization with morphTargetsRelative=%s', (relative) => {
+    const geometry = new THREE.BufferGeometry();
+
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute([10, 20, 30, 14, 20, 30, 10, 26, 30], 3));
+    geometry.setIndex([0, 1, 2]);
+    geometry.morphAttributes.position = [new THREE.Float32BufferAttribute([1, 2, 3, 5, 6, 7, -1, -2, -3], 3)];
+    geometry.morphTargetsRelative = relative;
+
+    expect(weldAndNormalizeGeometry(geometry)).toEqual(clonedConversion(geometry));
+    expect(geometry.morphTargetsRelative).toBe(relative);
+  });
 });

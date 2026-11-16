@@ -9,6 +9,7 @@ export function weldAndNormalizeGeometry(rawGeo: THREE.BufferGeometry): SculptMe
 
   clean.attributes = { ...rawGeo.attributes };
   clean.morphAttributes = rawGeo.morphAttributes;
+  clean.morphTargetsRelative = rawGeo.morphTargetsRelative;
   clean.setIndex(rawGeo.index);
 
   clean.deleteAttribute('uv');

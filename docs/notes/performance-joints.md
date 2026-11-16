@@ -195,3 +195,20 @@ For 300 and 600 uniquely named joints with one actuator each, the previous match
 Local `check:changed` passed formatting, lint, documentation, site copy for 281 pages, types and all 269 tests in 37 related files. The related-test phase reported 2.08 seconds. Copy accounting reported zero added, changed or removed strings.
 
 The covered help articles were read against the final code and guide diff. [Import a robot](../../site/content/help/import-a-robot.md) still describes the same entry points, file selection, joint limits and passive imports. [Robot import troubleshooting](../../site/content/help/troubleshoot-app-robot-import-fails.md) keeps the same messages, mesh resolution and passive-joint advice. [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) keeps the same joint fields, hierarchy, poses and robot selection. No step, label or screenshot became inaccurate, so these articles remain unchanged.
+
+## Imported joints group link ownership once
+
+The whole-app search found repeated `partOfLink` ownership filtering only in `utils/robotImport/importRobot.ts`. Every source format reaches its shared `sceneJoints` builder. Preparation now retains one group entry per built part, keyed by its nearest movable joint or the null base owner. The existing owner cache still resolves fixed chains. Lookups copy their matching ids so parent and child arrays never alias. Geometry-free parent fallback still walks ancestors and retains its 50-step limit.
+
+On November 16, 2026, a scratch comparison extracted the before and after joint builders and counted entries yielded by the built-link map on macOS arm64 with Node 26.13.0. Synthetic chain and star fixtures use one base part and one part per revolute joint. Complete joint outputs matched with identical supplied rounding and limb classifiers.
+
+| Joints | Shape | Before link entries | After link entries |
+| --- | --- | --- | --- |
+| 300 | Chain | 180,600 | 301 |
+| 300 | Star | 180,600 | 301 |
+| 600 | Chain | 721,200 | 601 |
+| 600 | Star | 721,200 | 601 |
+
+These are operation counts, without timing assertions or a claim about complete import latency. Mesh loading, geometry conversion, published mass preparation, joint transforms and output-array copies remain. The index adds operation-local storage proportional to the built parts and their owners. It is rebuilt for each import.
+
+`utils/robotImport.test.ts` exercises actual local-file imports through parsing and geometry conversion. It checks ordered base and fixed-link groups, branching joints, fallback across a geometry-free joint, missing base geometry, repeated imports after source changes and independent output arrays. Its MJCF case checks two joints on one body, including the explicit predecessor and empty-owner fallback. Existing xacro import equivalence tests continue to cover the shared import pipeline. No UI, workflow or quarantine changes.

@@ -60,9 +60,16 @@ function robotGroups({ parts, joints, measures }: BodyInput, solids: ScenePart[]
   const rig = buildRig(joints, parts);
   const groups = rig.robots.map((r) => ({
     key: r.key,
-    joints: joints.filter((j) => rig.robotOf.get(j.id) === r.key),
+    joints: [] as RobotJoint[],
     parts: new Set(r.parts),
   }));
+  const byRobot = new Map(groups.map((g) => [g.key, g]));
+
+  for (const joint of joints) {
+    const key = rig.robotOf.get(joint.id);
+
+    if (key !== undefined) byRobot.get(key)?.joints.push(joint);
+  }
 
   for (const g of groups) g.joints.forEach((j) => j.actuators?.forEach((id) => g.parts.add(id)));
 

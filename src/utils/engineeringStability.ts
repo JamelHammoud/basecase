@@ -94,6 +94,22 @@ function bodyStability(ctx: CheckContext, b: RobotBody, byChild: WheelJoints): S
 
 export function stabilityOf(ctx: CheckContext): Stability | undefined {
   const byChild = wheelJoints(ctx.joints);
+  let worst: Stability | undefined;
+
+  for (const body of ctx.bodies) {
+    const current = bodyStability(ctx, body, byChild);
+
+    if (!current) continue;
+
+    if (Number.isNaN(current.marginMm)) return sortedStability(ctx, byChild);
+
+    if (!worst || current.marginMm < worst.marginMm) worst = current;
+  }
+
+  return worst;
+}
+
+function sortedStability(ctx: CheckContext, byChild: WheelJoints): Stability | undefined {
   const all = ctx.bodies.flatMap((b) => bodyStability(ctx, b, byChild) ?? []);
 
   return all.sort((x, y) => x.marginMm - y.marginMm)[0];

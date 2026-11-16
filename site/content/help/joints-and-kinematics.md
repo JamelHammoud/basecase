@@ -26,6 +26,7 @@ related:
 covers:
   - src/types/robotics.ts
   - src/utils/kinematics.ts
+  - src/utils/kinematicsIk.ts
   - src/utils/kinematicsRig.ts
   - src/utils/jointNames.ts
   - src/utils/kinematicsPrune.ts

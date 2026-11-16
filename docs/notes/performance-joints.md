@@ -2,6 +2,20 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## IK step limits accumulate during back-substitution
+
+The whole-app search found one mapped absolute-step maximum in `utils/kinematicsIk.ts`. All callers of `solveIK` share its trial construction. The independent solvers in `skills/anythingIk.ts`, `reality/leastSquares.ts` and `utils/linkageFitNormal.ts` do not use this step limiter.
+
+Back-substitution now accumulates the largest absolute component while writing the solved vector. The returned step holds that vector and one scalar. This replaces an n-element magnitude array with a two-field record and removes the subsequent magnitude and maximum traversals. The original delta vector remains independently owned. Elimination, division order, damping, rejection, joint clamping and proportional scaling stay unchanged. The maximum starts at negative infinity and propagates NaN, preserving the previous reduction semantics.
+
+For a successful 16-joint linear solve, source-derived counts remove one 16-entry magnitude array and two 16-component traversals. Six rejected trials remove six such arrays and 192 subsequent component visits. Sixteen absolute values and maximum comparisons still run per trial, now within back-substitution. These are operation and allocation counts, not timings or a claim about complete IK latency. The two-field result record is a new allocation per successful linear solve, including a subsequently rejected trial.
+
+`kinematics.test.ts` checks five two-slider requests with positive, negative and zero components, below, at and above the 15-unit limit. It checks both returned joint values and independently calculated residuals after one iteration. Existing tests cover mixed hinges and sliders, root transforms, joint limits, preferences, weighted targets, excluded joints, empty and nonfinite targets, retained accepted residuals and six rejected damping trials.
+
+A scratch comparison on November 16, 2026 matched 320 complete before and after solver results exactly. It varied starting angles, reachable and unreachable weighted targets, preferences, joint restrictions, root rotations and iteration limits of 0, 1, 4 and 40. The comparison and output are in `scratch/ik-step-parity.test.ts` and `scratch/ik-step-parity.log` for this session. No timing assertion, retry, timeout or quarantine change applies.
+
+[Joints and kinematics](../../site/content/help/joints-and-kinematics.md) still describes the same target reaching, joint ranges, torso stiffness and robot selection. Its coverage metadata now names `src/utils/kinematicsIk.ts` directly, matching its inverse kinematics description. [Pose a robot](../../site/content/help/pose-a-robot.md) keeps the same controls and actions. There is no visible state or workflow change, so their prose and screenshots remain accurate and unchanged.
+
 ## Import path sorting prepares depth once per candidate
 
 The whole-app search found depth-and-lexical path sorts in robot entry selection, XML peeks, xacro peeks and LeRobot root discovery. All four share `utils/pathsByDepth.ts`. Each sort splits each candidate once before comparing numeric depths. The rosbag2 first-shallowest reduction and GitHub search scoring do not sort paths and remain unchanged.

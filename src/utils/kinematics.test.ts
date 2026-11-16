@@ -238,6 +238,33 @@ describe('solveIK', () => {
   });
 });
 
+describe('IK trial step limits', () => {
+  it.each([
+    [3, -6],
+    [15, -15],
+    [30, -60],
+    [-90, 30],
+    [0, 45],
+  ])('scales the whole IK step for requested changes %i and %i', (x, y) => {
+    const parts = [part('base', [0, 0, 0]), part('upper', [0, 0, 0]), part('fore', [0, 0, 0])];
+    const joints = [
+      joint('x', { type: 'prismatic', parent: ['base'], child: ['upper'], axis: [1, 0, 0] }),
+      joint('y', { type: 'prismatic', parent: ['upper'], child: ['fore'], axis: [0, 1, 0] }),
+    ];
+    const rig = buildRig(joints, parts);
+    const target: V3 = [3 * x, 3 * y, 0];
+    const scale = Math.min(1, 15 / Math.max(Math.abs(x), Math.abs(y)));
+    const res = solveIK(rig, {}, [{ partId: 'fore', point: [0, 0, 0], target }], {
+      iterations: 1,
+      preferWeight: 0,
+    });
+
+    expect(res.values.x).toBeCloseTo(x * scale, 12);
+    expect(res.values.y).toBeCloseTo(y * scale, 12);
+    expect(res.maxError).toBeCloseTo(Math.hypot(target[0] - x * scale, target[1] - y * scale), 12);
+  });
+});
+
 describe('uniqueJointIds', () => {
   it('renames a repeated robot with a shared suffix', () => {
     const { joints } = arm();

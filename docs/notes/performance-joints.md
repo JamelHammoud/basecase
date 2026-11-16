@@ -2,6 +2,10 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## Planar diameter measures each unordered pair once
+
+[`planarDiameter.test.ts`](../../src/utils/planarDiameter.test.ts) compares ordered-pair results across generated clouds, edits, repeated points, extreme values and nonfinite coordinates. Four-bar fitting and resting foot-contact classification share the scan. At 12, 300 and 600 points, distance calls fall from 144, 90,000 and 360,000 to 78, 45,150 and 180,300. These are deterministic operation counts, independent of hardware, without timing assertions or a claim about complete fitting or classification time.
+
 ## Joint-axis clustering indexes shafts once per query
 
 `axisClusters.test.ts` compares the previous scan across 160 generated fixtures in both source orders and checks geometric thresholds, nonfinite inputs, edits, source preservation and independent output arrays. Its two-pass fixtures over 300 and 600 shafts reduce shaft-id reads from 180,000 and 720,000 to 600 and 1,200. These are operation counts without timing assertions or a claim about complete axis-discovery time.

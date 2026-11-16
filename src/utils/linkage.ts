@@ -14,6 +14,7 @@ import {
   type Vec2,
 } from './linkageKinematics';
 import { seededRandom, type Random } from './seededRandom';
+import { planarDiameter } from './planarDiameter';
 
 export type { FourBar, GrashofClass, PlacedFourBar, Vec2 } from './linkageKinematics';
 export { couplerCurve, couplerPoint, fourBarPose, linkAngles, placed } from './linkageKinematics';
@@ -200,9 +201,6 @@ function same(a: PlacedFourBar, b: PlacedFourBar, span: number): boolean {
   );
 }
 
-const pathSpan = (points: Vec2[]) =>
-  Math.max(...points.flatMap((a) => points.map((b) => Math.hypot(a[0] - b[0], a[1] - b[1]))));
-
 const CHECK_AT = 25;
 const WORST_SHARE = 100;
 const WORST_FLOOR = 1e-6;
@@ -269,7 +267,7 @@ export function synthesizeFourBar(points: Vec2[]): LinkageSolution[] {
     (p[0] - frame.center[0]) / frame.scale,
     (p[1] - frame.center[1]) / frame.scale,
   ]);
-  const span = pathSpan(points);
+  const span = planarDiameter(points);
   const kept: LinkageSolution[] = [];
 
   for (const solution of fits(targets, frame)

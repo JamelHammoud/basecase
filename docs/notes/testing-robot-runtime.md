@@ -64,3 +64,11 @@ The browser walkthrough opens Operate in two scene tabs before inspecting. It re
 The review validation passed `check:changed` for the code and test changes, including 47 related test files and 222 tests, types, lint, docs and site copy.
 
 The native fleet integration asserts that the arm fault precedes its recorded event, preserving the existing renderer replay binding while checking the incident against that same saved session. The disconnected incident browser fixture also asserts that its retained row has no Look rung. These assertions add no recording wait or retry.
+
+## Emulated G1
+
+Issue [#1440](https://github.com/JamelHammoud/basecase/issues/1440) reports that `connects the G1, climbs to Test and follows a posed right shoulder without writing the legs` took 40 seconds in [Check run 43864963744](https://github.com/JamelHammoud/basecase/actions/runs/43864963744). The browser story loaded a 29-joint humanoid, connected the JavaScript stand-in, climbed two rungs, started the full simulation and waited for its shoulder to follow. It did not exercise the native daemon or motor transport. The report provides the total duration, not a phase trace, so simulation startup is not established as the sole cause.
+
+The test file is deleted. Existing fast tests cover G1 recognition, writable ordering, right-shoulder addressing, leg exclusion, ladder availability and simulation intent ordering. Native `g1.rs` tests `the_emulated_g1_follows_an_arm_intent_round_trip`, `leg_joints_are_never_written` and `policy_rungs_stay_out_for_the_g1` retain the control behavior against the native emulator with a virtual clock. The G1 fixture remains because the micro-evaluation scenes import it.
+
+There is no longer a browser assertion combining G1 connection controls, hidden calibration controls, live simulation and fake telemetry. The shared Operate and ROS 2 browser walkthroughs remain, but do not establish that G1-specific combination. Removing the reported 40-second case removes its execution cost, with no measured claim about total shard speed. No timeout, retry or quarantine is added. Browser and native execution stay in CI.

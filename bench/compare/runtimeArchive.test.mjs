@@ -79,3 +79,35 @@ it('rejects provider refusals before grading or archiving', async () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+it('refuses an unapplied effort before grading or caching a Codex response', async () => {
+  vi.useFakeTimers();
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'compare-effort-'));
+  const scene = { parts: [], project: {} };
+  const grade = vi.fn();
+  const reply = { effort: 'high', modelUsage: [{ model: 'gpt-6.1-sol', token_count: { outputTokens: 1 } }] };
+  const slot = { post: async () => reply, api: async () => scene, onEvent: { current: null }, studio: { page: {} } };
+
+  try {
+    const work = runMicroOnce({
+      task: { id: 'effort', startScene: async () => scene, grade },
+      slot,
+      seed: 1,
+      effort: 'medium',
+      model: 'gpt-6.1-sol',
+      provider: 'codex',
+      verifyModel: { arg: 'gpt-6.1-sol', expectServed: 'gpt-6-1-sol' },
+      out: { dir, runsDir: dir, runName: 'effort', git: {} },
+    });
+    const check = expect(work).rejects.toMatchObject({ code: 'served' });
+
+    await vi.runAllTimersAsync();
+    await check;
+    expect(grade).not.toHaveBeenCalled();
+    expect(readIndex(dir)).toEqual([]);
+  } finally {
+    vi.useRealTimers();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

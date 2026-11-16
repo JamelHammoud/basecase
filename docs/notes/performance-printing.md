@@ -1,0 +1,44 @@
+# Print planning and labels performance
+
+Implementation: [Print planning and labels](../guide/printing.md#performance-print-planning-and-labels). Shared requirements: [Performance](../guide/performance.md).
+
+## Plate statuses share prepared print history
+
+`print/plateStatus.test.ts` compares the previous scan across 120 generated histories in both input orders, plus frozen inputs, repeated queries and later edits. With 100 and 200 records and unmatched plate queries, record-hash reads fall from 10,000 and 40,000 to 100 and 200. On all-replacement fixtures of those sizes, record-part-list reads fall from 20,000 and 80,000 to 200 and 400. These are operation counts without timing assertions or a claim about complete printing time.
+
+## Printed-label plane areas accumulate during grouping
+
+`labelFaces.test.ts` checks 80 transformed indexed boxes, exact threshold boundaries, disconnected faces, winding, degenerate triangles, typed-array views, edits and independent output buffers. On its 300- and 600-triangle rejected-plane fixtures, area measurements fall from 600 and 1,200 to 300 and 600. Retained faces also skip that area-only pass. These are operation counts without timing assertions or a claim about complete plate-writing time.
+
+## Printed-label samples locate triangles with binary lookup
+
+`labelSamples.test.ts` compares every coordinate across 360 generated face inputs, plus degenerate, nonfinite and edited geometry. `surfaceSampleIndex.test.ts` checks repeated boundaries, double precision, typed-array views and logarithmic read bounds. On equal-area 300- and 600-triangle fixtures, the 40 label searches reduce cumulative-area reads from 6,829 and 13,636 to 329 and 370. These are operation counts, without timing assertions or a claim about complete plate-writing time.
+
+## Printed-label fitting visits centers only as needed
+
+`labelFit.test.ts` compares 320 complete fits with exhaustive preparation across rectangles, holes, notches, rotations, rejected fits and later edits, and checks centroid ties and empty geometry. On 300- and 600-triangle square fans, triangle-coordinate reads for containment fall from more than 15,000 and 30,000 to at most six when the centroid fits at full size. These are operation bounds without timing assertions or a claim about complete plate-writing time.
+
+## Printed-label fitting prepares boundary segments once
+
+`labelBoundary.test.ts` compares 6,000 generated boundary queries with independent segment intervals and checks parallel, zero-length, reversed and touching edges, precision, state reset and source preservation. Its 300- and 600-edge fits read each source coordinate once. A scratch comparison matched 720 complete fits against the previous implementation across rectangles, notches, holes and subsequent edits. On subdivided 20 × 12 mm rectangles with AA labels, source-coordinate reads fell from 425,872 and 850,704 to 1,200 and 2,400. On shared macOS arm64 hardware with Node 26.13.0, median fit times fell from 2.85 ms and 5.52 ms to 0.59 ms and 0.62 ms. Measurements used 21 alternating ten-call batches after five warmup batches per implementation. These measure fitting alone, without CI timing assertions or a claim about complete plate writing time.
+
+## Fit coupons skip hosts that cannot win
+
+`fitCouponHosts.test.ts` compares complete coupons with exhaustive host selection across transforms, ties, disconnected geometry, the 0.5 mm contact tolerance, missing hosts and edited placements. Its 300- and 600-host fixtures reduce mesh-box queries from 300 and 600 to one each. These are operation counts, without timing assertions or a claim about complete fit-test time.
+
+## Diagonal bed fits retain polygon projections
+
+`bedProjection.test.ts` checks rotated, reflected, collapsed and nonfinite footprints, tolerance boundaries, source preservation and edited beds. Across two overlapping candidate footprints and 300 or 600 keep-outs, coordinate reads fall from 96,000 and 192,000 to 52,896 and 105,696. A scratch comparison matched 10,000 complete fits against the previous calculation, including 164 diagonal fits and 5,188 refusals. On shared macOS arm64 hardware with Node 26.13.0, batches of five passes over those fixtures took medians of 107.25 ms before and 89.51 ms after. Each used eleven alternating measurements after five warmups per implementation. These measure bed fitting alone, without CI timing assertions or a claim about complete print planning time.
+
+## Plate packing selects both orientations in one scan
+
+`packSpot.test.ts` checks 2,400 seeded queries, ties, tolerance boundaries, nonfinite values, source preservation, edits and result ownership. Its 300- and 600-rectangle fixtures reduce free-list visits from 600 and 1,200 to 300 and 600. A scratch comparison matched 500 complete layouts across 10,900 items, including build steps, fixed positions, pinned plates, keep-outs, gaps and diagonal placements. These are traversal counts and output comparisons, without timing assertions or a claim about complete packing time.
+
+## Print orientations share triangle calculations
+
+`printOrientation.test.ts` checks box contact areas, support hits and misses, angle and contact limits, tilted faces, degenerate triangles, source preservation, cache reuse and coordinate-read bounds for both batch paths. A scratch comparison matched complete reports on 30 transformed meshes and 90 manual-face requests exactly against the previous scorer. With ten candidates, 300- and 1,200-triangle fixtures reduced coordinate reads from 99,900 to 75,600 and from 399,600 to 302,400. Vector cross products fell from 7,602 to 4,902 and from 18,410 to 7,610, including BVH work. These are operation counts, without timing assertions.
+  Support queries also reuse one ray and its origin and direction vectors for the entire batch. `printSupport.test.ts` compares exact costs and cast coordinates against the previous per-query allocation on supported meshes. Its 10- and 20-subdivision roofs make 606 and 2,406 support queries, each using one ray instead of a new ray and centroid clone per query. Automatic scoring keeps this ray separate from wall-thickness sampling. Later batches and changed geometry use fresh workspaces. These are allocation counts, without timing assertions or a claim about complete print-planning time.
+
+## Print connected-component lookups compress their full paths
+
+`print/componentGrouping.test.ts` checks membership, ordering, repeated joins, cycles, unchanged inputs and map-read budgets at 300 and 600 items. On the 600-item fixtures, total map reads fell from 721,798 to 4,792 for descending print joins, and from 368,996 to 10,198 for descending coplanar triangles. These are operation counts, without wall-clock assertions.

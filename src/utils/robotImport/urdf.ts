@@ -154,6 +154,15 @@ function urdfMaterials(robot: Element) {
 
 function linkTree(links: Map<string, ModelLink>, raw: UrdfJoint[], root: string): ModelJoint[] {
   const joints: ModelJoint[] = [];
+  const byParent = new Map<string, UrdfJoint[]>();
+
+  for (const joint of raw) {
+    const siblings = byParent.get(joint.parent);
+
+    if (siblings) siblings.push(joint);
+    else byParent.set(joint.parent, [joint]);
+  }
+
   const walk = (link: string, world: THREE.Matrix4, depth: number) => {
     const l = links.get(link);
 
@@ -161,7 +170,7 @@ function linkTree(links: Map<string, ModelLink>, raw: UrdfJoint[], root: string)
 
     if (depth > 200) return;
 
-    for (const j of raw.filter((x) => x.parent === link)) {
+    for (const j of byParent.get(link) ?? []) {
       const jw = world.clone().multiply(j.origin);
 
       joints.push({

@@ -23,10 +23,11 @@ afterAll(() => {
 
 describe('isolated loop profile', () => {
   it('shares the subscription login while excluding personal connectors and API-key overrides', () => {
-    const env = codexHome({ OPENAI_API_KEY: 'test-key' });
+    const env = codexHome({ OPENAI_API_KEY: 'test-key', CODEX_API_KEY: 'test-codex-key' });
     const config = fs.readFileSync(path.join(env.CODEX_HOME, 'config.toml'), 'utf8');
 
     expect(env.OPENAI_API_KEY).toBe('');
+    expect(env.CODEX_API_KEY).toBe('');
     expect(fs.readFileSync(path.join(env.CODEX_HOME, 'auth.json'), 'utf8')).toBe('{"auth_mode":"chatgpt"}');
     expect(config).toContain('plugins = false');
     expect(config).not.toContain('personal-tool');

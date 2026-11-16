@@ -85,7 +85,7 @@ function rootProblems(guides) {
 }
 
 const guides = listFiles(`${GUIDE_DIR}/*.md`);
-const rules = [...listFiles('AGENTS.md'), ...listFiles('**/AGENTS.md'), ...guides];
+const rules = [...listFiles('AGENTS.md'), ...listFiles('**/AGENTS.md'), ...guides, ...listFiles('docs/notes/*.md')];
 const ruleFiles = [...new Set(rules)];
 const ids = sectionIds([ROOT_FILE, ...guides]);
 const problems = [

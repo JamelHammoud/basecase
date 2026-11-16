@@ -110,6 +110,7 @@ export function guardedSlot(slot, signal) {
 export function guardedOutput(out, signal, endsAt = Infinity) {
   return {
     ...out,
+    deadline: endsAt,
     get git() {
       signal.throwIfAborted();
 
@@ -131,7 +132,7 @@ async function runJob(job, slot, options) {
 
     if (result.timedOut) retire(slot);
 
-    if (err.code === 'served') {
+    if (['served', 'allowance'].includes(err.code)) {
       state.stop = 'served';
       state.detail = err.message;
     }

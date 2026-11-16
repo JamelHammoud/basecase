@@ -311,3 +311,17 @@ A real try (§8h) tracks only a ground robot's base, from a tag on its root link
 ### Parked
 
 Setup flows (the torque-off mirror, calibration capture, the plain failure guide, support bundle), signed Mac and Windows bundles, rustypot and LeRobot's bus as further conformance clients, bulk read and write, indirect addresses, operating modes other than position, and persisting ladder evidence across restarts (a restart climbs again).
+
+## Performance: calibration and body properties
+
+Measurements and limits: [Calibration and body properties performance evidence](../notes/performance-calibration.md).
+
+- **Body layouts index membership once.** `utils/kinematicsMembers.ts` groups owned parts for both MJCF body generation and `reality/bodyLayout.ts`. MJCF prepares membership after embedded-part adoption and retains its solid-part filtering. Its child groups append members without growing array copies. The Weight and engineering-check traversal also indexes joint children and robot roots, removing per-body joint scans. Both paths drop copied ownership-entry lists per body. Body order, names, origin references and part order stay unchanged. Indices end with the call, and result membership arrays remain independent. [Evidence](../notes/performance-calibration.md#body-layouts-index-membership-once).
+
+- **Body mass calculations resolve each robot's fit once.** `reality/bodyMasses.ts` retains calibration remapping and validation results for each robot during one calculation, including absent and rejected fits. Weight, engineering checks and Robot Package inertials share this path. Body order, repeated carriers, payload placement and mass arithmetic stay unchanged. Later calls rebuild the fits from current history and topology. [Evidence](../notes/performance-calibration.md#body-mass-calculations-resolve-each-robots-fit-once).
+
+- **Unweighted normal equations calculate one matrix half.** Servo and body calibration (`reality/leastSquares.ts`), mat homography (`cameras/mat/homography.ts`), scan matching (`dataLayers/mapMatch.ts`) and joint-axis circle fitting (`joints/cylinderFit.ts`) calculate upper entries and mirror them before solving. Each entry keeps its sample order. Weighted products retain their original multiplication order because exchanging their factors can change rounding. [Evidence](../notes/performance-calibration.md#unweighted-normal-equations-calculate-one-matrix-half).
+
+- **Body fitting prepares residual windows once.** `reality/bodyResiduals.ts` snapshots selected frame indices and measured joint positions for the fit and check halves. Friction search, solver probes and both held-out scores share that preparation. Each evaluation allocates one result buffer and no per-frame arrays. Servo fitting already prepares its own log windows in `fitServo.ts`. [Evidence](../notes/performance-calibration.md#body-fitting-prepares-residual-windows-once).
+
+- **Dense solvers scan matrix tails directly.** `utils/matrixScans.ts` selects pivot rows and accumulates solved terms without copying array tails. Calibration least squares, skill IK and stance weight sharing use it. Each solver retains its elimination order and singular-matrix policy. [Evidence](../notes/performance-calibration.md#dense-solvers-scan-matrix-tails-directly).

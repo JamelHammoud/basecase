@@ -6,6 +6,7 @@ import net from 'node:net';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
+import { prepareProvider } from './compare/provider.mjs';
 import { sseDataReader } from './run-events.mjs';
 
 export const here = path.dirname(fileURLToPath(import.meta.url));
@@ -263,7 +264,18 @@ async function openBrowser(ctx, signal) {
   return { browser, page };
 }
 
-export async function openStudio({ label, port, env = {}, givenApp, source, log = console.log, agent = true, signal }) {
+export async function openStudio({
+  label,
+  port,
+  env = {},
+  givenApp,
+  source,
+  log = console.log,
+  agent = true,
+  signal,
+  provider,
+  subscription,
+}) {
   signal?.throwIfAborted();
 
   const app = givenApp ? path.resolve(givenApp) : snapshotApp(label, source);
@@ -285,7 +297,7 @@ export async function openStudio({ label, port, env = {}, givenApp, source, log 
     }
 
     signal?.throwIfAborted();
-    await startVite({ app, port, env, base }, ctx);
+    await startVite({ app, port, env: { ...env, ...prepareProvider(app, provider, subscription) }, base }, ctx);
     log('dev server up');
 
     if (!givenApp) await postJson(`${base}/api/bridge/save-scene`, { id: 'scene-bench', name: 'Bench', parts: [] });

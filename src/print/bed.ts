@@ -16,6 +16,9 @@ export interface Bed {
   height: number;
   origin: Point2;
   keepOut: Rect[];
+  margin?: number;
+  unsupported?: boolean;
+  obstacleKey?: string;
 }
 
 const EPS = 1e-6;
@@ -83,14 +86,41 @@ function clipRect(r: Rect, to: Rect): Rect | null {
   return w > EPS && d > EPS ? { x, y, w, d } : null;
 }
 
-export function bedOf(model: PrinterModel): Bed {
+export function bedOf(model: PrinterModel, processName?: string): Bed {
   const box = inscribedRect(model.bed, bounds(model.bed));
-  const keepOut = model.keepOut
-    .map((poly) => clipRect(bounds(poly), box))
+  const process = model.presets?.processes.find((preset) => preset.name === processName);
+  const margin = process?.brimClearance ?? model.brimClearance ?? 0;
+  const radius = model.toolheadClearance?.radius ?? 0;
+  const obstacles = (model.obstacles ?? []).map((obstacle) => {
+    const rect = bounds(obstacle.polygon);
+
+    return { x: rect.x - radius, y: rect.y - radius, w: rect.w + radius * 2, d: rect.d + radius * 2 };
+  });
+  const keepOut = [...model.keepOut.map(bounds), ...obstacles]
+    .map((r) => clipRect({ x: r.x - margin, y: r.y - margin, w: r.w + margin * 2, d: r.d + margin * 2 }, box))
     .filter((r): r is Rect => !!r)
     .map((r) => ({ ...r, x: r.x - box.x, y: r.y - box.y }));
 
-  return { name: model.name, width: box.w, depth: box.d, height: model.height, origin: [box.x, box.y], keepOut };
+  return {
+    name: model.name,
+    width: box.w,
+    depth: box.d,
+    height: model.height,
+    origin: [box.x, box.y],
+    keepOut,
+    margin,
+    unsupported: model.obstacleUnsupported || process?.obstacleUnsupported,
+    obstacleKey:
+      model.obstacles?.length || model.obstacleUnsupported
+        ? JSON.stringify([
+            model.obstacles,
+            model.toolheadClearance,
+            margin,
+            model.obstacleUnsupported,
+            process?.obstacleUnsupported,
+          ])
+        : undefined,
+  };
 }
 
 export const overlaps = (a: Rect, b: Rect, gap = 0): boolean =>
@@ -99,19 +129,36 @@ export const overlaps = (a: Rect, b: Rect, gap = 0): boolean =>
   a.y < b.y + b.d + gap - EPS &&
   b.y < a.y + a.d + gap - EPS;
 
-const insideBed = (r: Rect, bed: Bed) =>
-  r.x >= -EPS && r.y >= -EPS && r.x + r.w <= bed.width + EPS && r.y + r.d <= bed.depth + EPS;
+const insideBed = (r: Rect, bed: Bed) => {
+  const margin = bed.margin ?? 0;
+
+  return (
+    r.x >= margin - EPS &&
+    r.y >= margin - EPS &&
+    r.x + r.w <= bed.width - margin + EPS &&
+    r.y + r.d <= bed.depth - margin + EPS
+  );
+};
+
+export const placementFits = (rect: Rect, bed: Bed): boolean =>
+  !bed.unsupported &&
+  [rect.x, rect.y, rect.w, rect.d].every(Number.isFinite) &&
+  rect.w > 0 &&
+  rect.d > 0 &&
+  insideBed(rect, bed) &&
+  !bed.keepOut.some((k) => overlaps(rect, k));
 
 function freeSpot(size: { w: number; d: number }, bed: Bed): Rect | null {
   const { w, d } = size;
-  const xs = [0, bed.width - w, ...bed.keepOut.flatMap((k) => [k.x + k.w, k.x - w])];
-  const ys = [0, bed.depth - d, ...bed.keepOut.flatMap((k) => [k.y + k.d, k.y - d])];
+  const margin = bed.margin ?? 0;
+  const xs = [margin, bed.width - margin - w, ...bed.keepOut.flatMap((k) => [k.x + k.w, k.x - w])];
+  const ys = [margin, bed.depth - margin - d, ...bed.keepOut.flatMap((k) => [k.y + k.d, k.y - d])];
 
   for (const x of xs)
     for (const y of ys) {
       const r = { x, y, w, d };
 
-      if (insideBed(r, bed) && !bed.keepOut.some((k) => overlaps(r, k))) return r;
+      if (placementFits(r, bed)) return r;
     }
 
   return null;
@@ -143,7 +190,11 @@ function diagonalFit(w: number, d: number, bed: Bed): BedFit | null {
 
   for (let deg = 5; deg < 90; deg += 5) {
     const poly = rotatedRect(w, d, deg, [bed.width / 2, bed.depth / 2]);
-    const inside = poly.every(([x, y]) => x >= -EPS && y >= -EPS && x <= bed.width + EPS && y <= bed.depth + EPS);
+    const margin = bed.margin ?? 0;
+    const inside = poly.every(
+      ([x, y]) =>
+        x >= margin - EPS && y >= margin - EPS && x <= bed.width - margin + EPS && y <= bed.depth - margin + EPS,
+    );
 
     if (!inside) continue;
 
@@ -165,7 +216,7 @@ export interface BedFit {
 }
 
 export function fitOnBed(w: number, d: number, h: number, bed: Bed): BedFit | null {
-  if (h > bed.height + EPS) return null;
+  if (bed.unsupported || ![w, d, h].every((n) => Number.isFinite(n) && n > 0) || h > bed.height + EPS) return null;
 
   const straight = freeSpot({ w, d }, bed);
 

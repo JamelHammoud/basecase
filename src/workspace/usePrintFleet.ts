@@ -13,6 +13,7 @@ import { reportsStatus, usePrintStatus } from './usePrintStatus';
 
 interface FleetOptions {
   printer: PrinterSetup;
+  process?: string;
   printers: MyPrinter[];
   parts: ScenePart[];
   plates: Plate[];
@@ -83,7 +84,9 @@ export function usePrintFleet(options: FleetOptions) {
   };
 
   const nextFor = (target: FleetPrinter) =>
-    isIdle(target) ? nextPlate({ plates: options.plates, records, printer: target, scene: printer }) : null;
+    isIdle(target)
+      ? nextPlate({ plates: options.plates, records, printer: target, scene: printer, process: options.process })
+      : null;
 
   return { sending, status: statusOf(printer), statusOf, fleet, sendPlate, nextFor };
 }

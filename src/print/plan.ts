@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import type { PrinterSetup } from '../data/printers';
 import { sameDirection, type PrintPose, type PrintShape, type Vec3 } from '../three/printability';
 import type { PartPrint, PrintMaterial } from '../types/robotics';
-import { bedSizeText, fitOnBed, type Bed } from './bed';
+import { bedSizeText, fitOnBed, placementFits, type Bed } from './bed';
 import { sizeLabel } from '../utils/size';
 import { packPlates, type PackItem } from './pack';
 
@@ -78,11 +78,30 @@ function splitNote(size: Vec3, bed: Bed) {
   return `${sizeLabel(sorted)} is larger than the ${bed.name} plate (${bedSizeText(bed)}). Split it into ${pieces} pieces along its longest side, joined with dowels or screws.`;
 }
 
+function fitFailure(size: Vec3, bed: Bed, print?: PartPrint): string {
+  if (bed.unsupported)
+    return 'This printer has obstacle geometry Basecase cannot check. Use the slicer to arrange this plate.';
+
+  if (bed.obstacleKey || bed.margin || print?.at)
+    return 'Keep the part and its brim inside the plate and clear of printer obstacles.';
+
+  return splitNote(size, bed);
+}
+
+function poseFit(pose: PrintPose, bed: Bed, print?: PartPrint) {
+  if (!print?.at || !print.plate) return fitOnBed(pose.size[0], pose.size[1], pose.size[2], bed);
+
+  const [w, d] = print.turned ? [pose.size[1], pose.size[0]] : pose.size;
+  const rect = { x: print.at[0], y: print.at[1], w, d };
+
+  return pose.size[2] <= bed.height && placementFits(rect, bed) ? { yaw: print.turned ? 90 : 0, spot: rect } : null;
+}
+
 export function choosePose(shape: PrintShape, bed: Bed, print?: PartPrint): PrintCheck {
   const forced = overridePose(shape, print?.down);
   const candidates = forced ? [forced] : shape.poses.filter((p) => !p.requested);
   const scored = candidates.map((pose) => {
-    const fit = fitOnBed(pose.size[0], pose.size[1], pose.size[2], bed);
+    const fit = poseFit(pose, bed, print);
 
     return { pose, fit, score: poseScore(pose, !!fit) };
   });
@@ -94,7 +113,7 @@ export function choosePose(shape: PrintShape, bed: Bed, print?: PartPrint): Prin
     size: pose.size,
     fits: !!fit,
     yaw: fit?.yaw,
-    fitNote: fit ? undefined : splitNote(pose.size, bed),
+    fitNote: fit ? undefined : fitFailure(pose.size, bed, print),
     overhangMm2: pose.overhangMm2,
     supportMm3: pose.supportMm3,
     contactMm2: pose.contactMm2,
@@ -230,7 +249,14 @@ export function buildPrintPlan(inputs: PlanInput[], setup: PrinterSetup, bed: Be
   for (const material of materials) {
     const group = { material, inputs: placeable.filter((i) => i.material === material) };
 
-    plates.push(...materialPlates(group, bed, plates.length + 1, `${setup.model.id}|${setup.nozzle}|${settings}`));
+    plates.push(
+      ...materialPlates(
+        group,
+        bed,
+        plates.length + 1,
+        `${setup.model.id}|${setup.nozzle}|${settings}${bed.obstacleKey ? `|${bed.obstacleKey}` : ''}`,
+      ),
+    );
   }
 
   plates.sort((a, b) => stepRank(a) - stepRank(b) || a.number - b.number);

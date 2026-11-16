@@ -71,6 +71,9 @@ const orcaProfiles = writeTree('orca', {
         printable_area: square(250, 210),
         printable_height: '220',
         printer_notes: 'PRINTER_MODEL_TWO',
+        bed_exclude_volumes: '0..4;0x0,12x0,12x8,0x8|35..80;180x180,210x180,210x210,180x210',
+        extruder_clearance_radius: '25',
+        extruder_clearance_height_to_rod: '20',
       },
       machine('Acme One', 'Acme One', { printable_area: square(999, 999), printable_height: '999' }),
       machine('Acme Two', 'Acme Two', {
@@ -81,13 +84,30 @@ const orcaProfiles = writeTree('orca', {
       machine('Acme Two 5T', 'Acme Two 5T', { inherits: 'fdm_machine_common', nozzle_diameter: ['0.4', '0.4'] }),
     ],
     process: [
-      { type: 'process', name: 'process_common', instantiation: 'false', layer_height: '0.2' },
+      {
+        type: 'process',
+        name: 'process_common',
+        instantiation: 'false',
+        layer_height: '0.2',
+        brim_type: 'auto_brim',
+        brim_width: '4',
+        brim_object_gap: '0.1',
+      },
       {
         type: 'process',
         name: '0.20mm SPEED @Two',
         inherits: 'process_common',
         instantiation: 'true',
         compatible_printers_condition: 'printer_notes=~/.*PRINTER_MODEL_TWO.*/ and nozzle_diameter[0]==0.4',
+      },
+      {
+        type: 'process',
+        name: '0.10mm SPEED @Two',
+        inherits: 'process_common',
+        layer_height: '0.1',
+        brim_type: 'no_brim',
+        instantiation: 'true',
+        compatible_printers: ['Acme Two 0.4 nozzle'],
       },
       {
         type: 'process',
@@ -145,10 +165,18 @@ describe('buildCatalog', () => {
     expect(two.bed[2]).toEqual([250, 210]);
     expect(two.height).toBe(220);
     expect(two.nozzles).toEqual([0.4, 0.6]);
+    expect(two.obstacles).toHaveLength(2);
+    expect(two.brimClearance).toBeCloseTo(4.1);
+    expect(two.obstacles[0].zMax).toBe(4);
+    expect(two.obstacles[1].zMin).toBe(35);
+    expect(two.toolheadClearance).toEqual({ radius: 25, height: 20 });
     expect(two.presets).toEqual({
       machine: 'Acme Two 0.4 nozzle',
       process: '0.20mm SPEED @Two',
-      processes: [{ name: '0.20mm SPEED @Two', layer: 0.2 }],
+      processes: [
+        { name: '0.10mm SPEED @Two', layer: 0.1, brimClearance: 0 },
+        { name: '0.20mm SPEED @Two', layer: 0.2, brimClearance: 4.1 },
+      ],
       filaments: { TPU: { name: 'Generic FLEX @Acme Two', density: undefined } },
     });
   });

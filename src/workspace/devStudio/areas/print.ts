@@ -1,4 +1,5 @@
 import { guideStepParts } from '../../../guide/guideSteps';
+import type { PrinterModel } from '../../../data/printers';
 import { jobSpec } from '../../../print/job';
 import { plateStatus } from '../../../print/tracker';
 import { base64Files } from '../base64Files';
@@ -26,6 +27,7 @@ export default function printStudio(studio: Studio) {
         printer: printer.model.id,
         madeBy: studio().core.docs.projectRef.current.madeBy ?? null,
         bed: report?.plan.bed ?? null,
+        placements: report?.plan.plates.flatMap((plate) => plate.items) ?? [],
       };
     },
     printPlates: () => {
@@ -38,6 +40,9 @@ export default function printStudio(studio: Studio) {
       };
     },
     plateFiles: () => plateFiles(studio()),
+    obstaclePrinter: (geometry: Partial<PrinterModel>) => {
+      Object.assign(printing().printer.model, geometry);
+    },
     labelNotes: () => printing().plates.notes,
     markPlatePrinted: (number: number) => {
       const current = printing();

@@ -6,6 +6,7 @@ type: troubleshooting
 covers:
   - src/wiring/wiringChecks.ts
   - src/wiring/routeAnalysis.ts
+  - src/wiring/routeSpecs.ts
   - src/wiring/cableStock.ts
   - src/wiring/routeMotion.ts
   - src/wiring/routeBound.ts

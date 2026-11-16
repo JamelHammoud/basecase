@@ -220,6 +220,31 @@ describe('buildGait', () => {
     expect(lifts.right_foot).toBeGreaterThan(5);
   });
 
+  it('animates only movable leg joints below the shared body', () => {
+    const { parts, rig: original } = biped();
+    const body = pitch('body', ['base', 'pelvis'], [0, 220, 0], [-30, 30]);
+    const joints = [
+      body,
+      ...original.joints.map((joint) => ({
+        ...joint,
+        type: joint.id.endsWith('ankle') ? ('fixed' as const) : joint.type,
+      })),
+    ];
+    const rig = buildRig(joints, parts);
+    const built = buildGait(
+      rig,
+      { feet: ['right_foot', 'left_foot'], samples: 8, keepOrientation: false },
+      { values: { body: 15 } },
+      { pointOf: pointOfParts(rig, parts), name: 'Walk' },
+    );
+
+    if (typeof built === 'string') throw new Error(built);
+
+    for (const keyframe of built.animation.keyframes) {
+      expect(Object.keys(keyframe.values)).toEqual(['right_knee', 'right_hip', 'left_knee', 'left_hip']);
+    }
+  });
+
   it('explains why it can’t walk', () => {
     const { parts, rig } = biped();
     const pointOf = pointOfParts(rig, parts);

@@ -2,6 +2,27 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## Import path sorting prepares depth once per candidate
+
+The whole-app search found depth-and-lexical path sorts in robot entry selection, XML peeks, xacro peeks and LeRobot root discovery. All four share `utils/pathsByDepth.ts`. Each sort splits each candidate once before comparing numeric depths. The rosbag2 first-shallowest reduction and GitHub search scoring do not sort paths and remain unchanged.
+
+On November 15, 2026, a scratch comparison on Node 26.13.0 counted slash-delimited `String.split` calls during complete robot entry selection and LeRobot root discovery. Repository fixtures reverse 300 or 600 paths, distribute them across eleven depths and permute their numeric names. Complete before and after results matched for XML, xacro, URDF and dataset fixtures.
+
+| Candidates | Discovery | Before splits | After splits |
+| --- | --- | --- | --- |
+| 300 | XML | 4,255 | 324 |
+| 300 | xacro | 4,471 | 492 |
+| 300 | URDF | 4,485 | 300 |
+| 300 | LeRobot | 4,184 | 300 |
+| 600 | XML | 9,623 | 624 |
+| 600 | xacro | 9,839 | 792 |
+| 600 | URDF | 10,153 | 600 |
+| 600 | LeRobot | 9,552 | 600 |
+
+These are operation counts without timing assertions or a claim about complete import latency. Each split still allocates its segments. Ranking adds one depth record per candidate, and sorting, lexical comparisons, retained-path arrays and file decoding remain. XML and xacro counts include subsequent candidate selection and filename parsing.
+
+`robotImport/entry.test.ts` checks the 24-file XML and 48-file xacro read limits, ordered shallowest choices and unchanged input, alongside existing description priority, include and scope cases. `datasets/import/sourceKind.test.ts` checks LeRobot root precedence across mixed formats, rotated inputs, added and removed roots and unrelated filenames. Existing reader tests cover complete dataset import. No UI state, workflow or quarantine changes.
+
 ## Xacro tokenization prepares its end once
 
 `xacroExpr.test.ts` covers arithmetic, short-circuiting, allowed functions and rejected syntax, plus leading, internal, trailing and Unicode whitespace, quoted spaces, whitespace-only input, invalid tokens after whitespace, recovery after failures and the original 4,000-character limit. Existing `xacro.test.ts` and `xacroImport.test.ts` cover expansion and imported robot equivalence.
@@ -94,3 +115,11 @@ These are source-derived allocation counts and result comparisons, without a tim
 `dampedSteps.test.ts` compares six damping trials with independent square-system solves and retains every output through subsequent trials. A dependent two-column system checks recovery after elimination fails at the second pivot, repeated zero damping and interleaving with another prepared system. Existing linkage tests cover complete synthesis, ordering and path scores.
 
 For five- and twelve-point paths, the normal system has 14 and 21 parameters. Its augmented Float64 matrix holds 210 and 462 values, or 1,680 and 3,696 bytes. Six trials previously allocated six elimination buffers. They now allocate one per prepared system, removing 8,400 and 18,480 bytes of matrix allocation in those six-trial cases. The equations still copy once per trial, and each successful solve still allocates its independent step. These are source-derived allocation counts, without timing assertions or a claim about complete synthesis speed.
+
+## Joint-axis pairs traverse source arrays directly
+
+The whole-app search found two suffix-copy pair enumerators in joint-axis discovery, both in `joints/jointCandidates.ts`: body matching in `linksOf` and shared-pin bore expansion in `joinsOf`. Both now use indexed traversal. Pair matching remains quadratic, and face fitting, clustering, candidate sorting and graph orientation are unchanged. No UI state or workflow changes.
+
+For 300 and 600 bodies, the previous traversal allocated 300 and 600 suffix arrays containing 44,850 and 179,700 copied body references. The new traversal allocates none. A shared-pin cluster of those sizes removes the same suffix copies plus 300 and 600 per-member mapped arrays, appending joins directly to its result. The required pair results still allocate. These are source-derived operation counts, without timing assertions or a claim about complete discovery speed.
+
+A scratch comparison matched complete previous and current discovery results in 70 cases. Fixtures include zero through six bores, absent pins, different pin positions in the input, reversed bore order, a two-link arm with a bolted bracket and subsequent replacement of a body by a box. `jointCandidates.test.ts` adds a four-bore shared-pin regression in both source orders, checking ordered candidates, unused faces, fixed pairs, source preservation and repeat calls. Existing tests cover single-bore joints, bolted connections and lone round faces. No quarantine applies.

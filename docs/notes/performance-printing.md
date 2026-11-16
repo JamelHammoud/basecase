@@ -81,6 +81,14 @@ Instrumented face-normal clone and normalization counts fell from 18 to 6 for ea
 
 The replay is session evidence, without a committed instrumentation test. Existing `src/three/printability.test.ts` covers solid blocks, dense and coarse thin panels and blind pockets. `src/three/printSupport.test.ts` covers exact support costs, ray coordinates, automatic and manual pose consistency and separate ray workspaces. No UI state or workflow changes require help or browser updates.
 
+## Print material groups are built once
+
+A local scratch replay compared complete plans and job specifications with the previous implementations over 100 seeded fixtures. The fixtures included five materials, build steps, skipped and unfit parts, copies, pinned placements and empty inputs. Every field matched, including hashes, matrices, local plate numbers, global plate numbers and file order. Source inputs remained unchanged. The replay is session evidence, without a committed parity harness.
+
+For five materials and 300 or 600 records, classification previously read material fields 1,800 or 3,600 times during planning, and 3,300 or 6,600 times during job preparation. The shared grouping scan reads them 300 or 600 times in either path. Job preparation also removes the second set of per-material filtered plate lists. These counts cover material classification only, excluding packing, file-item construction and serialization. They are operation counts, without timing assertions or a claim about complete planning or export speed. Material counts are small.
+
+`src/print/job.test.ts` checks file and slice-group agreement after build-order interleaving, copies, skipped and unfit inputs, reversed inputs, empty plans and subsequent input removal. Existing `plan.test.ts`, `obstacles.test.ts` and `project.test.ts` retain packing, placement and archive coverage. No controls, on-screen states or workflows change, so help and browser coverage remain unchanged.
+
 ## Manufacturing kit composition
 
 Measured on 15 November 2026 on macOS arm64, Apple M5 Pro, Node 26.13.0. The generated repeated-limb fixture has 38 solid parts, 19 printed instances, seven modules including five repeats, 18 exact STS3215 identities and two plates. No physical devices or external service were used.

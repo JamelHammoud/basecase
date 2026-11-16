@@ -61,6 +61,27 @@ function twoLinkArm(): Body[] {
 }
 
 describe('joint candidates', () => {
+  it('connects every bore on a shared pin in source order without changing the bodies', () => {
+    const bores = Array.from({ length: 4 }, (_, i) =>
+      body(`bore-${i}`, plate({ width: 20, from: 0, to: 50, z: [i * 10, i * 10 + 6], holes: [{ y: 30, r: 4.1 }] })),
+    );
+    const pin = body('pin', rod(3.9, 30, [-1, 37]));
+
+    for (const ordered of [bores, [...bores].reverse()]) {
+      const bodies = [ordered[0], pin, ...ordered.slice(1)];
+      const original = [...bodies];
+      const result = jointCandidates(bodies);
+
+      expect(result.fastened).toEqual([]);
+      expect(result.faces).toEqual([]);
+      expect(result.candidates.map(({ parent, child, pin: shaft }) => [parent, child, shaft])).toEqual(
+        ordered.slice(1).map((b) => [ordered[0].id, b.id, 'pin']),
+      );
+      expect(bodies).toEqual(original);
+      expect(jointCandidates(bodies)).toEqual(result);
+    }
+  });
+
   it('finds the pin joint of a two-link arm and nothing for its bolted bracket', () => {
     const { candidates, fastened } = jointCandidates(twoLinkArm());
 

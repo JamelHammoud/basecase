@@ -1,4 +1,5 @@
 import { imageSourceKind, type ImageSourceKind } from '../../vision/import/imageSourceKind';
+import { pathsByDepth } from '../../utils/pathsByDepth';
 
 export const INFO_FILE = 'meta/info.json';
 export const BAG_METADATA_FILE = 'metadata.yaml';
@@ -16,9 +17,9 @@ export const isBagName = (path: string) => /\.bag$/i.test(path);
 const isRecordingName = (path: string) => isMcapName(path) || isBagName(path);
 
 export function isLeRobotFolder(paths: string[]): string | null {
-  const infos = paths.filter(isInfoFile).sort((a, b) => depthOf(a) - depthOf(b) || a.localeCompare(b));
+  const infos = pathsByDepth(paths.filter(isInfoFile));
 
-  return infos.length ? infos[0].slice(0, -INFO_FILE.length).replace(/\/$/, '') : null;
+  return infos.length ? infos[0].path.slice(0, -INFO_FILE.length).replace(/\/$/, '') : null;
 }
 
 export function isRosbag2Folder(paths: string[]): string | null {

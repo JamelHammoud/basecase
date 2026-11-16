@@ -62,3 +62,54 @@ it('adds idle draw only for servos absent from the walk and reads later joint ed
     expect(batteryRuntimeMinutes(ctx)).toBeCloseTo(((0.8 * 2.2) / (average + addedIdle)) * 60, 12);
   }
 });
+
+it('reports the first highest-current measured joint across edits, ties and exceptional readings', () => {
+  const ctx = idleFixture(12);
+  const walk = ctx.input.walk as WalkSim;
+  const readings = [[], [0], [2, 7, 7, 1], [Infinity, Infinity, 3], [2, NaN, 7, 1], [NaN, 9, 4], [-3, -1, -2]];
+
+  for (const values of readings) {
+    walk.power!.joints = Object.fromEntries(values.map((avgA, i) => [`j${i}`, { avgA, peakA: i + 10 }]));
+
+    for (const ordered of [ctx.joints, [...ctx.joints].reverse()]) {
+      const input = { ...ctx, joints: ordered };
+      const before = structuredClone(input);
+      const expected = ordered
+        .filter((j) => walk.power!.joints[j.id])
+        .sort((a, b) => walk.power!.joints[b.id].avgA - walk.power!.joints[a.id].avgA)[0];
+      const row = powerRows(input).find((r) => r.check === 'Current and runtime')!;
+
+      expect(row.items?.[0]?.ids).toEqual(expected?.actuators);
+      expect(row.detail.includes('walking')).toBe(!!expected);
+      expect(input).toEqual(before);
+    }
+  }
+});
+
+it('reads walking current linearly while reporting the winning actuator', () => {
+  for (const count of [300, 600]) {
+    const ctx = idleFixture(count);
+    const walk = ctx.input.walk as WalkSim;
+    let reads = 0;
+
+    walk.power!.joints = Object.fromEntries(
+      ctx.joints.map((j, i) => [
+        j.id,
+        {
+          get avgA() {
+            reads++;
+
+            return (i * 37) % count;
+          },
+          peakA: i + 1,
+        },
+      ]),
+    );
+
+    const expected = ctx.joints.reduce((best, _, i) => ((i * 37) % count > (best * 37) % count ? i : best), 0);
+    const row = powerRows(ctx).find((r) => r.check === 'Current and runtime')!;
+
+    expect(row.items?.[0]?.ids).toEqual(ctx.joints[expected].actuators);
+    expect(reads).toBeLessThanOrEqual(count * 2 + 1);
+  }
+});

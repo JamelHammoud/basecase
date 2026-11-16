@@ -164,25 +164,38 @@ export interface ThreeMfProject {
 const metadata = (key: string, value: string | number) =>
   `<metadata key="${key}" value="${escapeXml(String(value))}"/>`;
 
-function modelSettings(input: ThreeMfInput): string {
-  const objects = input.objects.map(
-    (o) => `<object id="${o.id}">${metadata('name', o.name)}${metadata('extruder', o.filament ?? 1)}</object>`,
-  );
+function plateInstances(input: ThreeMfInput): Map<number, string[]> {
   const instanceCounts = new Map<number, number>();
-  const instances = input.items.map((it) => {
+  const byPlate = new Map<number, string[]>();
+
+  for (const plate of input.plates) {
+    if (!Number.isNaN(plate.number)) byPlate.set(plate.number, []);
+  }
+
+  for (const it of input.items) {
     const index = instanceCounts.get(it.objectId) ?? 0;
 
     instanceCounts.set(it.objectId, index + 1);
 
-    return { ...it, index };
-  });
+    const entries = byPlate.get(it.plate);
+
+    if (!entries) continue;
+
+    entries.push(
+      `<model_instance>${metadata('object_id', it.objectId)}${metadata('instance_id', index)}${metadata('identify_id', it.objectId)}</model_instance>`,
+    );
+  }
+
+  return byPlate;
+}
+
+function modelSettings(input: ThreeMfInput): string {
+  const objects = input.objects.map(
+    (o) => `<object id="${o.id}">${metadata('name', o.name)}${metadata('extruder', o.filament ?? 1)}</object>`,
+  );
+  const instances = plateInstances(input);
   const plates = input.plates.map((p) => {
-    const items = instances
-      .filter((it) => it.plate === p.number)
-      .map(
-        (it) =>
-          `<model_instance>${metadata('object_id', it.objectId)}${metadata('instance_id', it.index)}${metadata('identify_id', it.objectId)}</model_instance>`,
-      );
+    const items = instances.get(p.number) ?? [];
 
     return `<plate>${metadata('plater_id', p.number)}${metadata('plater_name', p.name)}${metadata('locked', 'false')}${items.join('')}</plate>`;
   });

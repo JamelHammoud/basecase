@@ -2,6 +2,29 @@
 
 Implementation: [Print planning and labels](../guide/printing.md#performance-print-planning-and-labels). Shared requirements: [Performance](../guide/performance.md).
 
+## 3MF project instances are grouped while numbered
+
+Repository search found one project membership serializer in `src/print/threeMf.ts`. Multi-material Open in Bambu Studio uses this writer through the analysis worker. Ordinary per-material exports do not write project membership. No other project membership implementation needs the change.
+
+Previously the writer copied every instance to attach its per-object index, then filtered the complete list for every declared plate. The writer now creates a list for each declared plate, numbers instances globally in input order and appends their XML directly to the matching list. Undeclared plates still consume copy indices without producing membership. NaN plate numbers remain unmatched, as with the previous strict equality filter. Repeated declared plates repeat the same membership in output. Each call owns fresh maps and lists.
+
+For N instances and P plates, membership preparation replaces N copied records and P × N membership comparisons with N map lookups. At 600 instances across 30 plates, that removes 600 record copies and replaces 18,000 comparisons with 600 lookups. Plate XML assembly, object serialization and ZIP compression remain. These are source-derived operation counts, not timings or a claim about complete export latency.
+
+`projectMembership.test.ts` compares complete archived metadata against the previous equations across 24 fixtures and their reordered and empty-plate edits. Fixtures cover interleaved object copies, undeclared and empty plates, duplicate plate declarations, signed zero, infinity and NaN. Inputs remain unchanged. Existing `project.test.ts` covers worker-produced archives, filament assignments, multi-plate plans, deterministic project bytes and legacy plate bytes. No timeout, retry or quarantine changes apply.
+
+The covered help articles [Export plates as 3MF](../../site/content/help/export-plates-as-3mf.md) and [Print a robot's parts](../../site/content/help/print-a-robots-parts.md) retain accurate steps, labels, file names, material assignments and screenshots. No user action or screen state changes, so no help edits or captures are needed.
+
+Changed-file validation passed formatting, lint, docs, site copy for 297 pages, types and all 379 tests across 59 selected files. The test phase took 11.84 seconds locally. The log is `scratch/check-project-membership.log`. Copy accounting reports zero added, changed or removed strings.
+
+The preflight follow-up reread all four covered articles against the final diff:
+
+- [Export plates as 3MF](../../site/content/help/export-plates-as-3mf.md) describes the per-material export path. That path does not call `modelSettings` without a project. Download names, plate layout, part names, orientation, labels, menu actions and its Export screenshot remain unchanged.
+- [The path from design to build](../../site/content/help/from-design-to-build.md) covers the print directory broadly. Readiness, BOM, assembly order, sheet exports, repair and time estimates do not use the changed membership grouping. Its descriptions remain accurate, and it has no screenshots.
+- [Print a robot's parts](../../site/content/help/print-a-robots-parts.md) includes the affected multi-material Open in Bambu Studio path. Copy indices still advance globally per object before membership lookup. Declared plates retain their input order and instances retain source order within each plate. Object names, extruders, matrices and project settings use unchanged serializers. Its filament, placement, copies and excluded-part claims remain accurate. The Print, Settings and Bambu project screenshots show unchanged controls and states.
+- [Printability estimates](../../site/content/help/printability-estimates.md) also covers the print directory broadly. Face choice, supports, walls, filament, packing, obstacles and time estimates are computed before project serialization and remain unchanged. Its descriptions remain accurate, and it has no screenshots.
+
+All four reminders explicitly permit accurate articles to remain unchanged. No step, label, claim or depicted state became obsolete, so the articles and their screenshots remain unchanged intentionally.
+
 ## Merge guide bounds accumulate as members are measured
 
 Repository search found one union stand-in for Merge's saved-step estimate, in `src/print/merge/mergeGuide.ts`. Both Print and the agent receive the shared planner's result. The existing `selectionBounds` helper measures each member and immediately folds its extrema into the result. This replaces retention of every member box followed by six coordinate projections and extrema scans. Each part is still measured once. Stand-in center arithmetic, dimensions, rotation, retained identity, removed hardware and guide planning stay unchanged.

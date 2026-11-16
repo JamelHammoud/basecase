@@ -33,16 +33,15 @@ const quatOf = (r?: V3) =>
     new THREE.Euler((r?.[0] ?? 0) * D2R, (r?.[1] ?? 0) * D2R, (r?.[2] ?? 0) * D2R, 'XYZ'),
   );
 
-function blendRoot(ks: AnimationKeyframe[], blend: Blend, u: number): RootOffset | undefined {
+const rootAxis = (keyframe: AnimationKeyframe, axis: number) => keyframe.root?.position?.[axis] ?? 0;
+
+function blendRoot(ks: AnimationKeyframe[], blend: Blend, u: number, smooth: boolean): RootOffset | undefined {
   if (ks.every((k) => !k.root)) return undefined;
 
   const position = [0, 1, 2].map((i) =>
-    blend(
-      ks[0].root?.position?.[i] ?? 0,
-      ks[1].root?.position?.[i] ?? 0,
-      ks[2].root?.position?.[i] ?? 0,
-      ks[3].root?.position?.[i] ?? 0,
-    ),
+    smooth
+      ? blend(rootAxis(ks[0], i), rootAxis(ks[1], i), rootAxis(ks[2], i), rootAxis(ks[3], i))
+      : lerp(rootAxis(ks[1], i), rootAxis(ks[2], i), u),
   ) as V3;
   const q = quatOf(ks[1].root?.rotation).slerp(quatOf(ks[2].root?.rotation), u);
   const e = new THREE.Euler().setFromQuaternion(q, 'XYZ');
@@ -92,23 +91,33 @@ export function sampleAnimation(anim: RobotAnimation, t: number): RobotPoseState
   const u = span > 0 ? Math.min(Math.max((time - a.t) / span, 0), 1) : 0;
   const n = ks.length;
   const at = (k: number) => (anim.loop ? ks[((k % n) + n) % n] : ks[Math.min(Math.max(k, 0), n - 1)]);
-  const blend = blendAt(u, anim.interpolation === 'smooth');
+  const smooth = anim.interpolation === 'smooth';
+  const blend = blendAt(u, smooth);
   const around = [at(i - 1), a, b, at(wraps ? 1 : i + 2)];
   const values: JointValues = {};
+  const channel = smooth
+    ? (id: string) => blendChannel(around, id, blend)
+    : (id: string) => lerp(a.values[id], b.values[id] ?? a.values[id], u);
 
   for (const id of Object.keys(a.values)) {
-    values[id] = blend(
-      around[0].values[id] ?? a.values[id],
-      a.values[id],
-      b.values[id] ?? a.values[id],
-      around[3].values[id] ?? a.values[id],
-    );
+    values[id] = channel(id);
   }
 
   return {
     values,
-    root: blendRoot(around, blend, u),
+    root: blendRoot(around, blend, u, smooth),
   };
+}
+
+function blendChannel(around: AnimationKeyframe[], id: string, blend: Blend) {
+  const a = around[1];
+
+  return blend(
+    around[0].values[id] ?? a.values[id],
+    a.values[id],
+    around[2].values[id] ?? a.values[id],
+    around[3].values[id] ?? a.values[id],
+  );
 }
 
 export interface KeyframeSpec {

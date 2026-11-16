@@ -60,6 +60,30 @@ const loadFor = (actuators: string[]): JointLoad => ({
 const pathIds = (paths: ReturnType<StrengthPaths['from']>) =>
   paths.map(({ part: p, inScrews, outScrews }) => [p.id, inScrews.map((c) => c.id), outScrews.map((c) => c.id)]);
 
+it('collects converging branches in screw order with independent results across searches', () => {
+  for (const count of [1, 8, 300, 600]) {
+    const branches = Array.from({ length: count }, (_, i) => `branch-${i}`);
+    const horn = chain('horn', ['servo', ...branches]);
+    const links = branches.map((id) => chain(id, [id, 'd']));
+    const end = chain('end', ['d', 'e']);
+    const screws = [horn, ...links, end];
+    const ctx = context(screws);
+
+    for (const id of branches) ctx.byPart.set(id, part(id));
+
+    const search = new StrengthPaths(ctx, screws);
+    const paths = search.from('servo', output);
+    const expected = [...branches.map((id) => [id, ['horn'], [id]]), ['d', branches, ['end']]];
+
+    expect(pathIds(paths)).toEqual(expected);
+    expect(pathIds(search.from('servo', output))).toEqual(expected);
+    expect(pathIds(paths)).toEqual(expected);
+    expect(paths.at(-1)!.inScrews).toEqual(links);
+    expect(paths.at(-1)!.inScrews[0]).toBe(links[0]);
+    expect(screws).toEqual([horn, ...links, end]);
+  }
+});
+
 describe('Strength load paths', () => {
   it('retains branching order, duplicate contacts, cycles and the three-hop limit', () => {
     const screws = [

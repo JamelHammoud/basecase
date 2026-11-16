@@ -10,7 +10,9 @@ export function findModels(repos: Map<string, FakeRepo>, url: URL) {
   return [...repos].flatMap(([id, repo]) => {
     const card = repo.files.get('README.md')?.toString() ?? '';
     const matches =
-      tag === 'basecase-skill' ? card.includes('- basecase-skill') : card.includes('library_name: basecase');
+      tag && tag !== 'basecase'
+        ? card.split('\n').some((line) => line.trim() === `- ${tag}`)
+        : card.includes('library_name: basecase');
 
     return repo.kind === 'model' && matches ? [{ id }] : [];
   });

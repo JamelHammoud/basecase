@@ -57,14 +57,17 @@ function linksOf(bodies: Body[]): AxisLink[] {
   const faces = new Map(bodies.map((b) => [b.id, roundFaces(b.index)]));
   const links: AxisLink[] = [];
 
-  bodies.forEach((a, i) => {
-    for (const b of bodies.slice(i + 1)) {
+  for (let i = 0; i < bodies.length; i++) {
+    const a = bodies[i];
+
+    for (let k = i + 1; k < bodies.length; k++) {
+      const b = bodies[k];
       const pairing = coaxialPair(faces.get(a.id)!, faces.get(b.id)!);
       const [shaft, bore] = pairing?.shaftOn === 'a' ? [a.id, b.id] : [b.id, a.id];
 
       if (pairing) links.push({ shaft, bore, pairing });
     }
-  });
+  }
 
   return links;
 }
@@ -78,16 +81,26 @@ function joinsOf(cluster: AxisLink[]): Join[] {
     return [{ a: bore, b: shaft, shaftOn: shaft, pairing, confidence: confidenceOf(pairing) }];
   }
 
-  return cluster.flatMap((x, i) =>
-    cluster.slice(i + 1).map((y) => ({
-      a: x.bore,
-      b: y.bore,
-      pin: first.shaft,
-      shaftOn: first.shaft,
-      pairing: x.pairing.engaged >= y.pairing.engaged ? x.pairing : y.pairing,
-      confidence: Math.min(confidenceOf(x.pairing), confidenceOf(y.pairing)),
-    })),
-  );
+  const joins: Join[] = [];
+
+  for (let i = 0; i < cluster.length; i++) {
+    const x = cluster[i];
+
+    for (let k = i + 1; k < cluster.length; k++) {
+      const y = cluster[k];
+
+      joins.push({
+        a: x.bore,
+        b: y.bore,
+        pin: first.shaft,
+        shaftOn: first.shaft,
+        pairing: x.pairing.engaged >= y.pairing.engaged ? x.pairing : y.pairing,
+        confidence: Math.min(confidenceOf(x.pairing), confidenceOf(y.pairing)),
+      });
+    }
+  }
+
+  return joins;
 }
 
 function sortedJoins(joins: Join[]) {

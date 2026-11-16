@@ -2,7 +2,10 @@ import crypto from 'node:crypto';
 import { eachLimited } from '../eachLimited.mjs';
 import { HUB_ENDPOINT, repoRoot } from './hubClient.mjs';
 
-const NAME = /^(?!.*(?:--|\.\.))[A-Za-z0-9](?:[A-Za-z0-9._-]{0,94}[A-Za-z0-9])?$/;
+import { checkedName } from '../../src/hub/skillDownloads.mjs';
+
+export { checkedName };
+
 const SEGMENT = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/;
 const VERSION_TAG = /^v\d+\.\d+$/;
 const DATASET_TAG = /^dataset-v\d{1,6}$/;
@@ -11,14 +14,6 @@ const PATH_MAX = 300;
 const BATCH = 200;
 const UPLOADS_AT_ONCE = 4;
 const KEPT = new Set(['.gitattributes', 'README.md']);
-
-export function checkedName(name) {
-  const value = String(name ?? '');
-
-  if (!NAME.test(value)) throw new Error(`“${value.slice(0, 100)}” can’t name a Hugging Face repo.`);
-
-  return value;
-}
 
 export function checkedTag(tag) {
   if (tag === undefined || tag === null) return null;
@@ -212,7 +207,8 @@ async function commitRevision(client, { repo, entries, existing }) {
   const stale = staleFiles(existing, entries);
 
   await uploadLfs(client, { repo, files: lfs });
-  await client.commit(repo, commitLines({ entries, modes, lfs, stale }));
+
+  const receipt = await client.commit(repo, commitLines({ entries, modes, lfs, stale }));
 
   const version = codebaseVersion(entries);
 
@@ -220,10 +216,13 @@ async function commitRevision(client, { repo, entries, existing }) {
 
   const gone = new Set(stale);
 
-  return [...new Set([...existing.filter((p) => !gone.has(p)), ...entries.map((e) => e.path)])];
+  return {
+    files: [...new Set([...existing.filter((p) => !gone.has(p)), ...entries.map((e) => e.path)])],
+    revision: receipt?.commitOid,
+  };
 }
 
-export async function publishRepo(client, { namespace, name, files, tag }) {
+export async function publishRepo(client, { namespace, name, files, tag, includeRevision = false }) {
   const repo = `${checkedName(namespace)}/${checkedName(name)}`;
   const entries = checkedFiles(files);
   const versionTag = checkedTag(tag);
@@ -231,11 +230,19 @@ export async function publishRepo(client, { namespace, name, files, tag }) {
   await client.createRepo(name);
 
   let existing = await client.listFiles(repo);
+  let revision;
 
-  for (const revision of revisions(entries))
-    existing = await commitRevision(client, { repo, entries: revision, existing });
+  for (const files of revisions(entries)) {
+    const committed = await commitRevision(client, { repo, entries: files, existing });
+
+    existing = committed.files;
+    revision = committed.revision;
+  }
 
   if (versionTag) await client.retag(repo, versionTag);
 
-  return { repo, url: repoUrl(client.origin, repo, client.kind) };
+  if (includeRevision && !/^[a-f0-9]{40}$/.test(revision ?? ''))
+    throw new Error('Hugging Face didn’t name a commit for the publication.');
+
+  return { repo, url: repoUrl(client.origin, repo, client.kind), ...(includeRevision ? { revision } : {}) };
 }

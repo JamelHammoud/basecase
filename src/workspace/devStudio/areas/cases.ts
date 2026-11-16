@@ -21,6 +21,7 @@ export default function casesStudio(studio: Studio) {
         codePanelsOf(kase?.console).map((p) => [p.id, codeReport(codePanelKey(kase!.id, p.id), p.source)]),
       );
     },
+    fixtureTravel: () => cases().timeline.scene?.trace.signals['fixture-travel'] ?? [],
     referenceTry: () => cases().attempt.reference(),
     passTries: async () => {
       const { docs } = studio().core;

@@ -5,6 +5,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { Rig, V3 } from '../utils/kinematics';
 import { evaluateContract, type Trace } from '../skills/contract';
 import { caseFactReader, caseSignalNames, sampleSignals } from './caseFacts';
+import { fixtureSignals } from './fixtureTravel';
 import { probeReader, type ProbeWorld } from './probes';
 import { robotFacts, type EndEffector } from './robotFit';
 import { CASE_FORMAT_VERSION, caseSlots, type Case } from './schema';
@@ -77,12 +78,23 @@ export const caseProbeWorld = ({
     ),
 });
 
-export const caseProbeReader = (scoring: Omit<TryScoring, 'recording'>) =>
-  probeReader(scoring.kase.task.probes, caseProbeWorld(scoring));
+export function caseProbeReader(scoring: Omit<TryScoring, 'recording'>) {
+  const reader = probeReader(scoring.kase.task.probes, caseProbeWorld(scoring));
+  const facts = caseFactReader(scoring.kase, scoring.model);
+  const names = new Set(fixtureSignals(scoring.kase.world.objects));
+
+  return {
+    sample(poses: Float64Array, out: Record<string, number[]>, contacts?: ArrayLike<number>) {
+      reader.sample(poses, out, contacts);
+
+      if (names.size) sampleSignals(facts.read(poses, 0), names, out);
+    },
+  };
+}
 
 export function trySignals({ recording, ...scoring }: TryScoring): Trace {
   const signals: Record<string, number[]> = {};
-  const reader = caseProbeReader(scoring);
+  const reader = probeReader(scoring.kase.task.probes, caseProbeWorld(scoring));
 
   const facts = caseFactReader(scoring.kase, scoring.model);
   const names = caseSignalNames(scoring.kase);

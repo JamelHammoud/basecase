@@ -17,6 +17,7 @@ export interface TryPlan<P, S> {
   validate: (policy: P) => Promise<number>;
   judge: (policy: P) => Promise<Judgement<S>>;
   aborted: () => boolean;
+  grouped?: () => boolean;
 }
 
 interface Tried<S> extends Judgement<S> {
@@ -77,6 +78,8 @@ async function runTry<P, S>(
     const candidate = await trainSeed(plan, tried.stages, { seed: from.seed + s, folder: from.folder });
 
     if (candidate) candidates.push(candidate);
+
+    if (plan.grouped?.()) break;
   }
 
   const chosen = await bestOf(plan, candidates);
@@ -96,6 +99,8 @@ export async function firstPassingTry<P, S>(plan: TryPlan<P, S>): Promise<S | nu
     seed += tried.seeds;
 
     if (result?.skill) return result.skill;
+
+    if (plan.grouped?.()) return null;
 
     if (result?.folder && result.score > best.score)
       Object.assign(best, { folder: result.folder, score: result.score });

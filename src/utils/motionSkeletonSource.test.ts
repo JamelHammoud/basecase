@@ -51,6 +51,49 @@ function branches(count: number) {
 }
 
 describe('motion source channels', () => {
+  it.each([100, 200])('assigns axis identities across %i endpoints with linear bone-list reads', (count) => {
+    const { motion, samples } = branches(count);
+    let reads = 0;
+
+    motion.bones = new Proxy(motion.bones, {
+      get(target, key, receiver) {
+        if (typeof key === 'string' && /^\d+$/.test(key)) reads++;
+
+        return Reflect.get(target, key, receiver);
+      },
+    });
+
+    const chains = motionChains(motion, samples, { scale: 1 });
+
+    expect(chains.map((chain) => chain.axes.map((axis) => axis.joint.id))).toEqual(
+      Array.from({ length: count }, (_, i) => [`motion_${i + 1}_0_z`, `motion_${i + 1}_${i + 1}_y`]),
+    );
+    expect(reads).toBeLessThan((count + 1) * 4);
+  });
+
+  it('keeps first duplicate indices, absent ancestors and refreshed bone ordering', () => {
+    const { motion, samples } = branches(2);
+
+    motion.bones = ['Arm1', 'Arm0', 'Arm1'];
+
+    const first = motionChains(motion, samples, { scale: 1 });
+
+    expect(first.map((chain) => chain.axes.map((axis) => axis.joint.id))).toEqual([
+      ['motion_0_-1_z', 'motion_0_0_y'],
+      ['motion_1_-1_z', 'motion_1_1_y'],
+      ['motion_0_-1_z', 'motion_0_0_y'],
+    ]);
+    motion.bones = ['Root', 'Arm0', 'Arm1'];
+
+    const second = motionChains(motion, samples, { scale: 1 });
+
+    expect(second.map((chain) => chain.axes.map((axis) => axis.joint.id))).toEqual([
+      ['motion_1_0_z', 'motion_1_1_y'],
+      ['motion_2_0_z', 'motion_2_2_y'],
+    ]);
+    expect(first[0].axes[0].joint.id).toBe('motion_0_-1_z');
+  });
+
   it.each([12, 24])('prepares shared channels once across %i endpoints', (count) => {
     const { motion, samples } = branches(count);
     const before = structuredClone(samples);

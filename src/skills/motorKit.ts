@@ -1,3 +1,5 @@
+import { judgmentHex } from './localJudgments';
+import type { LocalJudgment } from './localJudgments';
 import type { MainModule } from '@mujoco/mujoco';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { PolicySpec } from '../sim/policy';
@@ -18,6 +20,7 @@ import { worstEvidence } from './skillRecords';
 import { collapsedStart } from './kitStart';
 import { proveSkill } from './prove';
 import { loadKitLibrary } from '../routines/kitLibrary';
+import { seedDevelopment } from './seedDevelopment';
 
 export type { ForgeJob, ForgeOutcome, ForgeRunner, SkillSave } from './forgeRunner';
 export type { KitEntry } from './kitEnvironment';
@@ -39,6 +42,7 @@ export type KitOutcome =
       relaxation: { change: LadderChange; message: string } | null;
       cost: KitCost;
       evidence?: ArenaEvidence | null;
+      environment?: Environment;
       validation?: KitTransitionEvidence;
     };
 
@@ -48,6 +52,7 @@ export interface KitWarm {
 }
 
 export interface KitInput extends KitContext {
+  judgment?: LocalJudgment;
   mj: MainModule;
   design: string;
   model: SimModel;
@@ -103,12 +108,14 @@ function refusalFor(mj: MainModule, model: SimModel) {
 }
 
 interface Attempt {
+  grouped: boolean;
   input: KitInput;
   entry: TrainedEntry;
   environment: Environment;
   start: KitStart | null;
   clock: Clock;
-  best: { evidence: ArenaEvidence | null; score: number };
+  best: { evidence: ArenaEvidence | null; score: number; environment?: Environment };
+  evidenceEnvironments: WeakMap<ArenaEvidence, Environment>;
   reports: WeakMap<PolicySpec, ValidationReport>;
   validation: KitTransitionEvidence | null;
 }
@@ -118,7 +125,13 @@ async function validate(run: Attempt, policy: PolicySpec): Promise<ValidationRep
 
   if (known) return known;
 
-  const report = await validationReport({ ...run.input, entry: run.entry, environment: run.environment, policy });
+  const report = await validationReport({
+    ...run.input,
+    entry: run.entry,
+    environment: run.environment,
+    policy,
+    salt: judgmentHex(run.input.judgment),
+  });
 
   run.reports.set(policy, report);
   run.clock.validationS += report.wallS;
@@ -141,7 +154,15 @@ function failedStart(run: Attempt, report: ValidationReport) {
 }
 
 function noteEvidence(run: Attempt, evidence: readonly ArenaEvidence[], score: number) {
-  if (score > run.best.score) run.best = { evidence: worstEvidence(evidence) ?? null, score };
+  if (score <= run.best.score) return;
+
+  const worst = worstEvidence(evidence) ?? null;
+
+  run.best = {
+    evidence: worst,
+    score,
+    environment: worst ? (run.evidenceEnvironments.get(worst) ?? run.environment) : undefined,
+  };
 }
 
 async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>> {
@@ -160,11 +181,24 @@ async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>
   }
 
   const controller = { kind: 'policy' as const, policy, robot: kitRobot(input.model).key };
-  const slower = await slowerSpeedEvidence({ ...input, entry, environment, policy });
+  const slower = await slowerSpeedEvidence({
+    ...input,
+    entry,
+    environment,
+    policy,
+    onEvidence: (evidence, testedEnvironment) => run.evidenceEnvironments.set(evidence, testedEnvironment),
+  });
 
   if (!slower.every((e) => e.passed)) {
     const { mj, model } = input;
-    const full = await runArena({ mj, model, contract: environment.contract, controller, environment });
+    const full = await runArena({
+      mj,
+      model,
+      contract: environment.contract,
+      controller,
+      environment,
+      salt: input.judgment?.(),
+    });
     const tried = [...slower, full];
     const score = arenaPasses(tried);
 
@@ -207,7 +241,14 @@ async function train(run: Attempt, stage: KitStage, from: { seed: number; folder
     warmPolicy: from.folder ? null : input.warm?.policy,
     reverse: input.reverse,
   });
-  const outcome = await runCounted(input.forge, { name: job.name, xml: input.model.xml, job }, clock.tally);
+  const outcome = await runCounted(
+    input.forge,
+    { name: job.name, xml: input.model.xml, job },
+    clock.tally,
+    seedDevelopment({ mj: input.mj, model: input.model, environment: run.environment }),
+  );
+
+  run.grouped ||= !!outcome.candidates;
 
   return { policy: outcome.ok ? outcome.policy : null, folder: runFolder(outcome) };
 }
@@ -227,12 +268,14 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
   const starts = entry === 'velocity-tracking' || entry === 'settle-to-neutral';
   const skills = [...(starts ? await loadKitLibrary() : []), ...(input.skills ?? [])];
   const run: Attempt = {
+    grouped: false,
     input: { ...input, skills },
     entry,
     environment,
     start,
     clock,
     best: { evidence: null, score: -Infinity },
+    evidenceEnvironments: new WeakMap(),
     reports: new WeakMap(),
     validation: null,
   };
@@ -243,6 +286,7 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
     validate: async (policy: PolicySpec) => (await validate(run, policy)).score,
     judge: (policy: PolicySpec) => judge(run, policy),
     aborted: () => !!input.signal?.aborted,
+    grouped: () => run.grouped,
   });
 
   if (skill) return { kind: 'skill', skill, environment, cost: clock.cost() };
@@ -256,7 +300,7 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
     reason,
     relaxation: null,
     cost: clock.cost(),
-    evidence: validation ? null : run.best.evidence,
+    ...(validation ? { evidence: null } : { evidence: run.best.evidence, environment: run.best.environment }),
     ...(validation ? { validation } : {}),
   };
 }

@@ -60,4 +60,9 @@ RViz opens with the robot, and the Joint State Publisher window has a slider per
 
 The package isn't a LeRobot dataset, and the policies are in Basecase's own JSON format. To give LeRobot data it can load, [publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face) from a Case. Joint names match across the package and those datasets.
 
+Passive joints remain in the physical model. They have no servo ID or ROS command interface.
+Policies that command a now-passive joint stay out of the package.
+
 Every file in the zip is listed in [Robot package contents](/help/robot-package-contents).
+
+For plates and assembly packing lists, use [Export a robot kit](/help/export-a-robot-kit).

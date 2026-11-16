@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
 import { hubBridge } from '../hub/hubBridge';
-import { findSkills } from '../skills/findSkills';
+import { findSkills, prepareInstallOutcome, prepareSkillInstallation } from '../skills/findSkills';
+import { kitEnvironment } from '../skills/kitEnvironment';
 import type { RankedSkill } from '../skills/skillRank';
-import { installPlan, publishedSkillFiles, readPublishedSkill, skillLink, skillRepoName } from '../skills/hubSkill';
+import { publishedSkillFiles, skillLink, skillRepoName } from '../skills/hubSkill';
 import { KIT_LABELS, type SkillRow } from '../skills/skillRows';
 import { errorMessage } from '../utils/errorMessage';
 import { openLink } from '../utils/openLink';
@@ -10,8 +11,13 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { ShowToast } from './types';
 import type { SceneSkills } from './useSkills';
 
+export type SkillHubSkills = Pick<
+  SceneSkills,
+  'rows' | 'available' | 'busy' | 'buildModel' | 'install' | 'loadSkill' | 'environmentOf' | 'model'
+>;
+
 interface SkillHubOptions {
-  skills: SceneSkills;
+  skills: SkillHubSkills;
   showToast: ShowToast;
   openAccounts: () => void;
 }
@@ -30,7 +36,7 @@ export interface SkillHub {
 
 const canPublish = (row: SkillRow) => !IS_WEB_DEMO && row.state.kind === 'ready' && !!row.record;
 
-async function publishRow(skills: SceneSkills, row: SkillRow) {
+async function publishRow(skills: SkillHubSkills, row: SkillRow) {
   const skill = row.record ? await skills.loadSkill(row.record) : null;
   const environment = skills.environmentOf(row);
   const model = skills.model;
@@ -42,12 +48,19 @@ async function publishRow(skills: SceneSkills, row: SkillRow) {
   return hubBridge.publish({ name: skillRepoName(skill, model), files, kind: 'model' });
 }
 
-async function installFrom(skills: SceneSkills, link: string) {
-  const { repo, files } = await hubBridge.skillFiles(skillLink(link));
-  const published = readPublishedSkill(files);
+async function installFrom(skills: SkillHubSkills, link: string) {
+  const { repo, revision, files } = await hubBridge.skillFiles(skillLink(link));
   const model = await skills.buildModel();
-  const plan = installPlan(published, model);
-  const busy = skills.install(model, plan);
+  const { published, plan } = await prepareSkillInstallation(files, model);
+  const source = { repo, revision, skill: published.skill, schema: published.schema };
+  const environment = kitEnvironment(model, plan.entry);
+  const busy = skills.install(model, {
+    ...plan,
+    onOutcome: async (result) =>
+      hubBridge.publishSkillOutcome(
+        await prepareInstallOutcome({ source, model, ...result, environment: result.environment ?? environment }),
+      ),
+  });
 
   if (busy) throw new Error(busy);
 
@@ -132,7 +145,7 @@ export function useSkillHub({ skills, showToast, openAccounts }: SkillHubOptions
 
   return {
     publishable: skills.rows.filter(canPublish),
-    canInstall: !IS_WEB_DEMO && skills.available && !skills.busy,
+    canInstall: skills.available && !skills.busy,
     installOpen,
     candidates,
     finding,

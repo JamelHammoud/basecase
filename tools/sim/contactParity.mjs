@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { replayDifferences } from './contactReplayComparison.mjs';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -33,9 +34,10 @@ async function loadModules(files) {
 }
 
 async function fixtures(mj) {
-  const [{ contactScene, contactSliders }, { captureContactReplay }] = await loadModules([
+  const [{ contactScene, contactSliders }, { captureContactReplay }, { passiveReplays }] = await loadModules([
     '/src/sim/fixtures/contactRobots.ts',
     '/src/sim/fixtures/contactReplay.ts',
+    '/src/sim/fixtures/passiveReplay.ts',
   ]);
   const built = contactSliders(2);
   const sim = {
@@ -60,7 +62,7 @@ async function fixtures(mj) {
     { name: `sliders-${count}`, xml: contactSliders(count).xml, steps: 10 },
   ]);
 
-  return [...cases, capture.finish('captured-sliders', sim)];
+  return [...cases, capture.finish('captured-sliders', sim), ...passiveReplays(mj)];
 }
 
 function primeHistory(mj, model, data) {
@@ -142,22 +144,8 @@ function compareSnapshots(mj, given, expected) {
 }
 
 function compareReplay(given, native) {
-  let drift = 0;
-  let contactDifferences = 0;
+  const { drift, contactDifferences } = replayDifferences(given, native);
 
-  assert.equal(native.length, given.expected.length);
-  native.forEach((sample, index) => {
-    const expected = given.expected[index];
-
-    assert.equal(sample.step, expected.step);
-
-    if (JSON.stringify(sample.contacts) !== JSON.stringify(expected.contacts)) contactDifferences++;
-
-    for (const field of ['qpos', 'qvel', 'poses']) {
-      assert.equal(sample[field].length, expected[field].length);
-      drift = sample[field].reduce((worst, value, i) => Math.max(worst, Math.abs(value - expected[field][i])), drift);
-    }
-  });
   console.log(
     `${given.name}: ${given.controls.length} substeps, ${native.length} samples, ${contactDifferences} contact differences, state drift ${drift}`,
   );
@@ -169,8 +157,15 @@ function argumentsOf(args) {
   const files = [];
   let output = null;
   let handoff = false;
+  let passive = false;
 
   for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--passive') {
+      passive = true;
+
+      continue;
+    }
+
     if (args[i] === '--handoff') {
       handoff = true;
 
@@ -187,7 +182,7 @@ function argumentsOf(args) {
     assert.ok(output, 'Name an output file after --out');
   }
 
-  return { files, output, handoff };
+  return { files, output, handoff, passive };
 }
 
 assert.equal(pin, version, 'C and WASM package pins differ');
@@ -196,7 +191,7 @@ const uv = findOnPath('uv');
 
 assert.ok(uv, 'Install uv to run C MuJoCo parity');
 
-const { files, output, handoff } = argumentsOf(process.argv.slice(2));
+const { files, output, handoff, passive } = argumentsOf(process.argv.slice(2));
 const mj = await loadMujoco();
 const cases = [...(await fixtures(mj)), ...files.flatMap((file) => JSON.parse(fs.readFileSync(file, 'utf8')))];
 
@@ -204,6 +199,12 @@ if (handoff) {
   const [{ handoffContactReplays }] = await loadModules(['/src/sim/fixtures/handoffContactReplay.ts']);
 
   cases.push(...(await handoffContactReplays(mj)));
+}
+
+if (passive) {
+  const [{ passiveContactReplays }] = await loadModules(['/src/sim/fixtures/passiveContactReplay.ts']);
+
+  cases.push(...(await passiveContactReplays(mj)));
 }
 
 const native = JSON.parse(

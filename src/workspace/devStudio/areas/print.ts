@@ -1,6 +1,5 @@
 import { guideStepParts } from '../../../guide/guideSteps';
 import { jobSpec } from '../../../print/job';
-import { plateStatus } from '../../../print/tracker';
 import { base64Files } from '../base64Files';
 import type { Studio, StudioContext } from '../types';
 
@@ -43,7 +42,7 @@ export default function printStudio(studio: Studio) {
       const current = printing();
       const plate = current.report?.plan.plates.find((p) => p.number === number);
 
-      if (plate && plateStatus(plate, current.records).state !== 'printed') current.markPlate(plate, 'printed');
+      if (plate && current.plateStatus(plate).state !== 'printed') current.markPlate(plate, 'printed');
     },
     readySteps: () => {
       const { docs } = studio().core;

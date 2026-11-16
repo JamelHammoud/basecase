@@ -5,7 +5,6 @@ import { sameMachine } from '../../print/fleet';
 import type { Plate } from '../../print/plan';
 import type { PrintToolsStatus, SavedPrinter } from '../../print/printBridge';
 import { labelsOn } from '../../print/labels/partLetters';
-import { plateStatus } from '../../print/tracker';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 import type { Printing } from '../../workspace/usePrinting';
@@ -117,7 +116,7 @@ const SliceNotes: React.FC<{ printing: Printing; warnings: string[] }> = ({ prin
 );
 
 const PlateMarks: React.FC<{ printing: Printing; plate: Plate }> = ({ printing, plate }) => {
-  const state = plateStatus(plate, printing.records).state;
+  const state = printing.plateStatus(plate).state;
   const active = state === 'printing' || state === 'sent';
 
   return (
@@ -166,7 +165,7 @@ const PlateDetail: React.FC<PlateHandlers & { printing: Printing; plate: Plate; 
 }) => {
   const sliced = printing.freshSlice(plate);
   const { hours, grams, exact } = plateNumbers(plate, sliced);
-  const status = plateStatus(plate, printing.records);
+  const status = printing.plateStatus(plate);
 
   return (
     <Section title={`Plate ${plate.number}`}>

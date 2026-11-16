@@ -1,7 +1,13 @@
 import { normalize } from './extract.mjs';
 
-const SOURCE = /^src\/.+\.tsx?$/;
-const SKIPPED = [/\.d\.ts$/, /\.(test|spec|e2e)\.tsx?$/, /(^|\/)__tests__\//, /^src\/data\//, /(^|\/)fixtures?\//];
+const SOURCE = /^(?:src\/.+\.tsx?|electron\/.+\.[cm]?[jt]s)$/;
+const SKIPPED = [
+  /\.d\.ts$/,
+  /\.(test|spec|e2e)\.[cm]?[jt]sx?$/,
+  /(^|\/)__tests__\//,
+  /^src\/data\//,
+  /(^|\/)(?:__)?fixtures?(?:__)?\//,
+];
 
 export const isScanned = (file) => SOURCE.test(file) && !SKIPPED.some((pattern) => pattern.test(file));
 
@@ -34,13 +40,21 @@ export function diffStrings(base, head) {
 
 const LINE = /^\s*(?:[-*]\s+)?copy:\s*["“](.*)["”]\s*[—–-]+\s*(\S.*)$/i;
 
+export const isCopyReasonLine = (line) => LINE.test(line);
+
 export function parseJustifications(body = '') {
   const reasons = new Map();
 
-  for (const line of body.split(/\r?\n/)) {
+  for (const line of (body ?? '').split(/\r?\n/)) {
     const match = LINE.exec(line);
 
-    if (match) reasons.set(normalize(match[1]), match[2].trim());
+    if (!match) continue;
+
+    const text = normalize(match[1]);
+    const previous = reasons.get(text);
+    const why = match[2].trim();
+
+    reasons.set(text, previous ? `${previous} / ${why}` : why);
   }
 
   return reasons;
@@ -59,7 +73,7 @@ export function judge({ added, removed, body, banned }) {
     why: reasons.get(item.text) ?? null,
     banned: bannedIn(item.text, patterns),
   }));
-  const unjustified = net > 0 ? items.filter((item) => !item.why && !item.repeat) : [];
+  const unjustified = net > 0 ? items.filter((item) => !item.why) : [];
   const banning = items.filter((item) => item.banned.length > 0);
 
   return { net, items, unjustified, banning, ok: unjustified.length === 0 && banning.length === 0 };
@@ -70,7 +84,6 @@ const where = (item) => `${item.file}:${item.line}`;
 function itemLine(item) {
   const notes = [
     item.why ? `why: ${item.why}` : null,
-    item.repeat && !item.why ? 'repeats a string the file already has' : null,
     item.banned.length > 0 ? `banned ${item.banned.join(', ')}` : null,
   ].filter(Boolean);
 

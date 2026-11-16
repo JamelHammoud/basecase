@@ -3,6 +3,7 @@ import { DOT_MOVE_SECONDS, type BuilderRobot, type GoalKind, type GoalValues } f
 import type { WorldKind } from './caseWorlds';
 import { pickDefaults } from './pickGoal';
 import { handoffDefaults } from './handoffGoal';
+import { fixtureDefaults } from './fixtureGoals';
 import { terrainDefaults } from './terrain';
 
 const DOT_SPARE_SECONDS = 0.5;
@@ -53,6 +54,12 @@ export function goalDefaults(
   const legs = robot.facts.capabilities.includes('legs');
   const reach = robot.facts.reachMm;
   const base: GoalValues = {
+    fixtureWidthMm: 70,
+    fixtureDepthMm: 80,
+    fixtureTravel: 50,
+    fixtureMassG: 30,
+    fixtureFriction: 2,
+    fixtureDamping: 2,
     dots: 1,
     distanceMm: 900,
     heightMm: 0,
@@ -66,6 +73,8 @@ export function goalDefaults(
     ...terrainDefaults(robot, world),
   };
   const byKind: Record<GoalKind, Partial<GoalValues>> = {
+    lid: fixtureDefaults(robot, true),
+    drawer: fixtureDefaults(robot, false),
     reach: {},
     push: { radiusMm: 150, boxMm: boxFor(robot), seconds: legs ? 18 : 10 },
     path: { seconds: legs ? 22 : 13 },

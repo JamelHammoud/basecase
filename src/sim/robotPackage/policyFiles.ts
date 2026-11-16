@@ -1,7 +1,8 @@
 import type { PolicyRecord } from '../../types/robotics';
 import { eyeRays } from '../eyes';
-import type { SimModel } from '../mjcfTypes';
+import type { SimJoint, SimModel } from '../mjcfTypes';
 import type { PolicySpec } from '../policy';
+import { indexJoints } from '../../utils/robotImport/jointIndex';
 
 export interface PackagedPolicy {
   record: PolicyRecord;
@@ -30,7 +31,7 @@ function observation(spec: PolicySpec): ObservationTerm[] {
   ];
 }
 
-export function policySpecFile({ record, spec }: PackagedPolicy, model: Pick<SimModel, 'joints'>) {
+function policySpecFile({ record, spec }: PackagedPolicy, joints: ReadonlyMap<string, SimJoint>) {
   return {
     name: record.name,
     task: spec.task,
@@ -40,7 +41,7 @@ export function policySpecFile({ record, spec }: PackagedPolicy, model: Pick<Sim
     command: spec.command,
     observation: observation(spec),
     action: {
-      joints: spec.joints.map((id) => model.joints.find((j) => j.id === id)?.name ?? id),
+      joints: spec.joints.map((id) => joints.get(id)?.name ?? id),
       default_pose: spec.defaultPose,
       scale: spec.actionScale,
       target: 'default_pose + scale * clip(action, -1, 1)',
@@ -57,14 +58,21 @@ export function policySpecFile({ record, spec }: PackagedPolicy, model: Pick<Sim
 export const jsonBytes = (v: unknown) => new TextEncoder().encode(`${JSON.stringify(v, null, 2)}\n`);
 
 export function policyFiles(policies: PackagedPolicy[], model: Pick<SimModel, 'joints'>): Record<string, Uint8Array> {
-  return Object.fromEntries(
-    policies.flatMap((p) => {
-      const folder = `policies/${p.record.id.replace(/[^\w-]/g, '_')}`;
+  if (!policies.length) return {};
 
-      return [
-        [`${folder}/policy.json`, jsonBytes(p.spec)],
-        [`${folder}/spec.json`, jsonBytes(policySpecFile(p, model))],
-      ];
-    }),
+  const joints = indexJoints(model.joints);
+  const passive = new Set([...joints].filter(([, j]) => j.actuator < 0).map(([id]) => id));
+
+  return Object.fromEntries(
+    policies
+      .filter((p) => p.spec.joints.every((id) => !passive.has(id)))
+      .flatMap((p) => {
+        const folder = `policies/${p.record.id.replace(/[^\w-]/g, '_')}`;
+
+        return [
+          [`${folder}/policy.json`, jsonBytes(p.spec)],
+          [`${folder}/spec.json`, jsonBytes(policySpecFile(p, joints))],
+        ];
+      }),
   );
 }

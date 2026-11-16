@@ -3,16 +3,19 @@ import type { Skill } from './artifacts';
 import type { ForgeRunner, SkillSave } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
 import type { KitWarm } from './motorKit';
+import type { InstallCompleted } from './installRun';
 import type { SkillRunner } from './skillsClient';
 import type { SkillRecord } from './skillRecords';
 import type { SkillJob, SkillRefusal, SkillTarget } from './skillRows';
 import type { StressReport } from './skillsStress';
 import type { SnapshotRef, Snapshots } from './snapshots';
 import type { ForgeProgress } from './trainerForge';
+import type { RecoveryEntry, SkillRecovery } from './skillRecovery';
 import type { KitContext } from './kitTransitions';
 
 export interface ForgeFactoryOptions {
   background: boolean;
+  recoveryKey?: string;
   onProgress: (p: ForgeProgress) => void;
   onSnapshot?: (ref: SnapshotRef) => void;
   signal: AbortSignal;
@@ -31,9 +34,11 @@ export interface RuntimeDeps {
   onStress?: (target: SkillTarget, report: StressReport | null) => void;
   snapshots?: Snapshots;
   kitContext?: (model: SimModel) => Promise<KitContext>;
+  recovery?: SkillRecovery;
 }
 
 export interface KitInstall {
+  onOutcome?: InstallCompleted;
   entry: TrainedEntry;
   warm: KitWarm;
 }
@@ -51,6 +56,8 @@ export interface Run {
   message?: string;
   background: boolean;
   model?: SimModel;
+  recovered?: RecoveryEntry;
+  recoverable?: boolean;
   work: (forge: ForgeRunner, signal: AbortSignal) => Promise<void>;
 }
 

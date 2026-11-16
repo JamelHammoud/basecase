@@ -27,6 +27,7 @@ import { sessionSink } from './library/tryStore.mjs';
 import { registerDatasetHandlers } from './library/datasetRoutes.mjs';
 import { registerVisionTrainingHandlers } from './visionTraining/routes.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
+import { registerRemoteTrainingHandlers } from './remoteTraining/routes.mjs';
 import { registerRoboflowHandlers } from './roboflow/routes.mjs';
 import { registerEarthHandlers } from './earth/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
@@ -261,6 +262,7 @@ registerVisionTrainingHandlers(ipcMain, backend.visionTraining);
 registerOnshapeHandlers(ipcMain, backend.onshape);
 registerEarthHandlers(ipcMain, backend.earth);
 registerRoboflowHandlers(ipcMain, backend.roboflow);
+registerRemoteTrainingHandlers(ipcMain, backend.remoteTraining);
 registerShareHandlers(ipcMain);
 
 const robotBinary = daemonBinary({ resources: process.resourcesPath, fromSource, repo: workspaceRoot });

@@ -35,7 +35,8 @@ You tried to use something only the desktop app can do. The rest of the message 
 |---|---|
 | “Download Basecase to use the agent.” | Claude Code, Codex and Gemini run on your computer |
 | “Download Basecase to slice and print.” | Slicing, sending plates and testing printers |
-| “Download Basecase to train policies.” | Training a robot to walk or do a skill |
+| “Download Basecase to train policies.” | Training outside the browser Motor Kit |
+| “Download Basecase to connect a training computer.” | SSH training and grouped seed attempts |
 | “Download Basecase to train vision models.” | Fitting a model to labeled images |
 | “Download Basecase to save training runs.” | Saving vision training results |
 | “Download Basecase to insert SimReady models.” | Inserting SimReady models |
@@ -48,7 +49,7 @@ You tried to use something only the desktop app can do. The rest of the message 
 2. Install Basecase.
 3. Move your scenes over. Export each one from the web studio, then open it in the desktop app.
 
-In the web studio, the **Agent** tab reads “Build with the agent in the desktop app”. Settings doesn't have the **Agent**, **Printers** or **Accounts** panes, Checks don't have **Fix**, and you can't import STEP or IGES files.
+In the web studio, the **Agent** tab reads “Build with the agent in the desktop app”. Settings doesn't have the **Agent**, **Printers**, **Accounts** or **Training** panes, Checks don't have **Fix**, and you can't import STEP or IGES files.
 
 ## Your scenes are gone from the web studio
 
@@ -63,5 +64,7 @@ If you clear the browser's data and a scene goes with it, you can't get that sce
 ## What works without the desktop app
 
 Designing, Checks, the bill of materials and prices, Print mode's plate layout and 3MF export all run in your browser. Saving a scene to share works the same way in the web studio and the desktop app. For the steps, see [Share a scene](/help/share-a-scene).
+
+Motor Kit training and public skill installation work in browsers that support GPU training. See [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
 
 Camera detection also runs in your browser. Its first use downloads the model and saves a checked copy in browser storage. Clearing site data removes that copy too. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).

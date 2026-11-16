@@ -52,4 +52,4 @@ Publishing creates the repo on your account and names it after the robot and the
 
 The tag lets Install Skill find your published skill and rank it for the open robot. It also checks older repos tagged `basecase` for `skill.json`.
 
-To put the skill on another robot, see [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
+Public skills can also be installed in a supported browser without an account. To put the skill on another robot, see [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).

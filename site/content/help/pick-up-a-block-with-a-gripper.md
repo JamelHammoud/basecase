@@ -13,7 +13,7 @@ covers:
 
 You can make a Case where an arm lifts a block off the floor and sets it down on a spot, then drive the arm yourself or record tries for a dataset.
 
-1. Open a scene with an arm that has a gripper. The arm's last joint needs to carry two fingers, each on its own joint that slides or swings toward the other finger, with a range that lets the gripper close.
+1. Open a scene with an arm that has a gripper. The arm's last joint needs to carry two fingers, each on its own powered joint that slides or swings toward the other finger, with a range that lets the gripper close.
 2. Open **Play** ▸ **Cases** and click **New Case**.
 3. Choose **Pick Up a Block**. This option appears only for an arm with a gripper like the one in step 1.
 

@@ -1,6 +1,7 @@
 import type { WheelSetup } from './drive';
 import type { PolicySpec } from './policy';
 import { timeIndex } from '../utils/timeIndex';
+import { wheelSpeeds } from './wheelSpeeds';
 
 export type V3 = [number, number, number];
 
@@ -139,12 +140,6 @@ function briskShare(spec: RouteSpec, options: { speed: number; distance: number 
   return distance > brisk.band ? brisk.speed / speed : 0;
 }
 
-export function wheelSpeeds(wheels: WheelSetup[], command: V3): Record<string, number> {
-  return Object.fromEntries(
-    wheels.map((w) => [w.joint, (w.spin * (command[0] * 1000 - command[2] * w.lateralMm)) / Math.max(w.radiusMm, 1)]),
-  );
-}
-
 export interface RootAccess {
   qpos: ArrayLike<number>;
   rootQpos: number;
@@ -200,6 +195,7 @@ export class RouteRunner {
   private readonly rootQpos: number;
   private readonly wheels: WheelSetup[];
   private readonly actuators: number[];
+  private readonly speeds: Record<string, number> = Object.create(null);
 
   constructor(c: RouteController, options: { rootQpos: number; joints: Array<{ id: string; actuator: number }> }) {
     this.loop = new RouteLoop(c.route);
@@ -213,7 +209,7 @@ export class RouteRunner {
 
     if (policy) policy.command = command;
 
-    const speeds = wheelSpeeds(this.wheels, command);
+    const speeds = wheelSpeeds(this.wheels, command[0] * 1000, command[2], this.speeds);
 
     this.wheels.forEach((w, i) => {
       if (this.actuators[i] >= 0) data.ctrl[this.actuators[i]] = speeds[w.joint];

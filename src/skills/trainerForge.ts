@@ -1,9 +1,12 @@
-import { isPolicySpec } from '../sim/policy';
+import { isRunnablePolicy } from './policyCheck';
+import type { PolicySpec } from '../sim/policy';
 import type { PolicyRecord } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import type { ForgeJob, ForgeOutcome, ForgeRunner } from './forgeRunner';
 import { SNAPSHOT_EVERY_S, type SnapshotRef } from './snapshots';
 import { errorMessage } from '../utils/errorMessage';
+import type { SeedCandidate } from './seedSelection';
+import { remoteTrainingBridge } from '../remoteTraining/bridge';
 
 export interface ForgeProgress {
   share: number | null;
@@ -13,6 +16,7 @@ export interface ForgeProgress {
 export interface TrainerForgeOptions {
   workspaceId: string;
   background: boolean;
+  recoveryKey?: string;
   onProgress: (progress: ForgeProgress) => void;
   onSnapshot?: (ref: SnapshotRef) => void;
   signal?: AbortSignal;
@@ -24,7 +28,42 @@ export const userTrainingKey = (workspaceId: string) => `skill:${workspaceId}`;
 
 const failure = (stderr: string): ForgeOutcome => ({ ok: false, policy: null, events: [], stderr });
 
+function checkedTrainerPolicy(value: unknown): PolicySpec | null {
+  try {
+    return isRunnablePolicy(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 async function finished(ev: TrainEvent): Promise<ForgeOutcome> {
+  if (Array.isArray(ev.candidates)) {
+    const candidates: SeedCandidate[] = await Promise.all(
+      ev.candidates.map(async (candidate) => ({
+        id: candidate.id,
+        seed: candidate.seed,
+        fingerprint: candidate.fingerprint,
+        steps: candidate.steps,
+        development: candidate.development,
+        error: candidate.outcome.kind === 'error' ? candidate.outcome.message : undefined,
+        policy:
+          candidate.outcome.kind === 'done'
+            ? checkedTrainerPolicy(await platformBridge.getPolicy(candidate.id).catch(() => null))
+            : null,
+      })),
+    );
+
+    for (const candidate of candidates) void platformBridge.deletePolicy(candidate.id).catch(() => false);
+
+    return {
+      ok: ev.kind !== 'error',
+      policy: null,
+      candidates,
+      events: [{ type: 'done', steps: candidates.reduce((sum, candidate) => sum + candidate.steps, 0) }],
+      stderr: ev.kind === 'error' ? String(ev.message ?? 'Training stopped.') : '',
+    };
+  }
+
   if (ev.kind === 'error') return failure(String(ev.message ?? 'Training stopped.'));
 
   const record = ev.record as PolicyRecord;
@@ -32,9 +71,11 @@ async function finished(ev: TrainEvent): Promise<ForgeOutcome> {
 
   void platformBridge.deletePolicy(record.id).catch(() => false);
 
-  if (!isPolicySpec(spec)) return failure('The trainer saved no policy.');
+  const policy = checkedTrainerPolicy(spec);
 
-  return { ok: true, policy: spec, events: [{ type: 'done', steps: record.trainedSteps }], stderr: '', run: record.id };
+  if (!policy) return failure('The trainer saved no policy.');
+
+  return { ok: true, policy, events: [{ type: 'done', steps: record.trainedSteps }], stderr: '', run: record.id };
 }
 
 interface ProgressEvent {
@@ -50,7 +91,7 @@ export function trainingProgress(kind: unknown, event: ProgressEvent): ForgeProg
   const { elapsedS, budgetS } = event.progress ?? {};
   const share = typeof budgetS === 'number' && budgetS > 0 ? Math.min(1, Number(elapsedS ?? 0) / budgetS) : null;
 
-  return { share, message: 'Training' };
+  return { share, message: typeof event.message === 'string' ? event.message : 'Training' };
 }
 
 const progressOf = (ev: TrainEvent) => trainingProgress(ev.kind, ev as ProgressEvent);
@@ -65,9 +106,10 @@ export function snapshotOf(ev: TrainEvent): SnapshotRef | null {
   return { run: jobId, iteration: iteration as number, steps: steps as number };
 }
 
-function start(options: TrainerForgeOptions, job: ForgeJob): Promise<{ jobId: string | null }> {
+function start(options: TrainerForgeOptions, job: ForgeJob, index: number): Promise<{ jobId: string | null }> {
   const payload = {
     workspaceId: options.workspaceId,
+    ...(options.recoveryKey ? { recoveryKey: `${options.recoveryKey}:${index}` } : {}),
     xml: job.xml,
     job: { ...job.job, snapshotEveryS: SNAPSHOT_EVERY_S },
   };
@@ -83,16 +125,25 @@ function stop(options: TrainerForgeOptions) {
 }
 
 export function trainerForge(options: TrainerForgeOptions): ForgeRunner {
-  return (job) =>
+  let index = 0;
+
+  const runner: ForgeRunner = (job) =>
     new Promise<ForgeOutcome>((resolve) => {
       const early: TrainEvent[] = [];
       let jobId: string | null = null;
       let unsubscribe = () => {};
+      let settled = false;
       const settle = (outcome: Promise<ForgeOutcome> | ForgeOutcome) => {
+        if (settled) return;
+
+        settled = true;
         unsubscribe();
+        options.signal?.removeEventListener('abort', abort);
         resolve(outcome);
       };
       const handle = (ev: TrainEvent) => {
+        if (settled) return;
+
         const progress = progressOf(ev);
         const snapshot = snapshotOf(ev);
 
@@ -103,24 +154,38 @@ export function trainerForge(options: TrainerForgeOptions): ForgeRunner {
         if (ev.kind === 'done' || ev.kind === 'error') settle(finished(ev));
       };
 
+      const abort = () => {
+        if ((options.background || jobId !== null) && (!options.recoveryKey || options.signal?.reason !== 'detach'))
+          stop(options);
+
+        settle(failure('Stopped.'));
+      };
+
       unsubscribe = platformBridge.subscribeEvents((ev) => {
         if (ev.type !== 'train-progress') return;
 
-        if (jobId === null) early.push(ev);
+        if (jobId === null && early.length < 512) early.push(ev);
         else if (ev.jobId === jobId) handle(ev);
       });
-      options.signal?.addEventListener('abort', () => {
-        stop(options);
-        settle(failure('Stopped.'));
-      });
-      start(options, job).then(
+      options.signal?.addEventListener('abort', abort, { once: true });
+
+      if (options.signal?.aborted) return settle(failure('Stopped.'));
+
+      start(options, job, index++).then(
         (res) => {
           if (!res.jobId) return settle(failure('A newer design replaced this run.'));
 
           jobId = res.jobId;
+
+          if (options.signal?.aborted) return abort();
+
           early.filter((ev) => ev.jobId === jobId).forEach(handle);
         },
         (e: unknown) => settle(failure(errorMessage(e))),
       );
     });
+
+  runner.selected = remoteTrainingBridge.recordSelection;
+
+  return runner;
 }

@@ -41,6 +41,37 @@ function modelTable(stats) {
   );
 }
 
+const measuredCell = (value) => (value === null ? 'missing' : Math.round(value * 100) / 100);
+
+function workTable(stats) {
+  return table(
+    [
+      'model',
+      'work source',
+      'attempts',
+      'successful tasks',
+      'measurement',
+      'total',
+      'per successful task',
+      'missing attempts',
+    ],
+    stats.models.flatMap((model) =>
+      Object.entries(model.work).flatMap(([scope, work]) =>
+        ['tokens', 'cachedInputTokens', 'seconds', 'toolCalls'].map((metric) => [
+          model.model,
+          scope,
+          work.attempts,
+          work.successfulTasks,
+          metric,
+          measuredCell(work[metric].total),
+          measuredCell(work[metric].perSuccessfulTask),
+          work[metric].missing,
+        ]),
+      ),
+    ),
+  );
+}
+
 function taskTable(stats, [a, b]) {
   return table(
     ['task', a, b, 'gap'],
@@ -72,7 +103,7 @@ const harnessesText = ({ git, plan }) =>
     : `Commit ${commitOf(git)}, harness ${plan.harness}.`;
 
 function setupLine({ git, effort, plan }) {
-  return `${harnessesText({ git, plan })} Effort ${effort ?? 'agent default'}. ${plan.rounds} of ${plan.maxRounds} rounds over ${plan.tasks} tasks, ${plan.parallel} at a time, ${STOPS[plan.stop] ?? plan.stop}.`;
+  return `${harnessesText({ git, plan })} Provider ${plan.provider ?? 'claude'}. Effort ${effort ?? 'agent default'}. ${plan.rounds} of ${plan.maxRounds} rounds over ${plan.tasks} tasks, ${plan.parallel} at a time, ${STOPS[plan.stop] ?? plan.stop}.`;
 }
 
 const askedLine = (models, plan) =>
@@ -87,7 +118,7 @@ function spendLine(stats) {
   return `Spent ${money(spent)}${reused.length ? `; reused ${reused.join(' and ')} from earlier runs on the same harness` : ''}.`;
 }
 
-export function compareMarkdown({ stats, models, labels, effort, plan, git, error }) {
+export function compareMarkdown({ stats, models, labels, effort, plan, git, error, outcome }) {
   const [a, b] = labels;
   const ci = stats.ci ? `${signed(stats.ci[0])} to ${signed(stats.ci[1])}` : '—';
   const incomplete = ['deadline', 'slots', 'error', 'served', 'budget'].includes(plan.stop);
@@ -103,10 +134,21 @@ export function compareMarkdown({ stats, models, labels, effort, plan, git, erro
     ...(error ? ['', `Harness error: ${error}`] : []),
     '',
     `**${conclusion}**`,
+    ...(outcome
+      ? [
+          '',
+          `Harness outcome: ${outcome.outcome}. ${outcome.reason}`,
+          `Token reduction per successful task: ${cell(outcome.tokenReduction)}. 99% paired interval: ${outcome.tokenCi?.join(' to ') ?? 'unavailable'}. Duration increase per successful task: ${cell(outcome.durationIncrease)} seconds.`,
+        ]
+      : []),
     '',
     `Gap in pass rate (${a} − ${b}): ${signed(stats.meanDiff)}, 95% interval ${ci}. ${a} better on ${stats.wins} tasks, ${b} on ${stats.losses}, tied on ${stats.ties} (sign test p = ${cell(stats.signP)}).`,
     '',
     ...modelTable(stats),
+    '',
+    'Work includes failed, error and unavailable attempts. Successful tasks are distinct task ids with a pass. Reused baseline work was consumed in earlier runs. Cached input tokens are reported separately and already included in total tokens. Missing measurements leave per-success work unavailable.',
+    '',
+    ...workTable(stats),
     '',
     ...taskTable(stats, labels),
   ].join('\n');

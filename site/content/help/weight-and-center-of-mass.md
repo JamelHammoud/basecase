@@ -54,7 +54,7 @@ The Weight check never fails. If any part's weight is an estimate, the check sho
 
 ## Which parts are the robot
 
-Each robot counts its own parts, plus any solid within 50 mm of them. For example, a battery tucked inside the torso counts toward the robot. Anything farther away is treated as scenery, and so is every object that moves freely in Simulate.
+Each robot counts its own parts, including those carried by passive joints, plus any solid within 50 mm of them. For example, a battery tucked inside the torso counts toward the robot. Anything farther away is treated as scenery, and so is every object that moves freely in Simulate.
 
 Scenery isn't included in the weight, the leg loads or the footprint, and the Weight row shows how much it left out. Adding a table or a second robot to the scene doesn't change the results.
 
@@ -64,9 +64,9 @@ Standing stability checks that the center of mass sits over the outline of the r
 
 | Result | When |
 |---|---|
-| Pass | The robot can tilt more than 5° before it tips |
-| Warn | The robot tips between 2° and 5° of tilt, or rests on a line with no third contact |
-| Fail | The center of mass is outside the feet, or the robot tips at under 2° of tilt |
+| Pass | The robot can tilt at least 5° before it tips |
+| Warn | The robot tips at 2° to under 5° of tilt, or rests on a line with no third contact |
+| Fail | The center of mass is on or outside the feet's outline, or the robot tips at under 2° of tilt |
 
 A foot touches the ground wherever its mesh does. A ball touches at a single point, and a wheel touches along a line under its axle. If a robot stands on two wheels and nothing else, the check warns that the robot has to balance itself.
 

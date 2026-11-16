@@ -10,6 +10,10 @@ The nightly full suite failed on `main`. Merges keep landing, but no release goe
 
 The lane has one slot, so every failure that lands while you work waits for you. Aim to open your pull request within 30 minutes.
 
+For a focused Windows or Linux observation, use the runner command in the Loop guide's **Targeted CI diagnostics** section. Submit a published workload revision and exact full test name, then collect its durable ticket in this same repair context. The command owns dispatch and evidence retrieval, never publication. No local edits enter CI until the existing runner publishes them. Repeated before-and-after measurements still belong to the existing flake owner.
+
 Never skip or `.only` a test, raise a timeout, add a retry, or loosen an assertion to make Check pass. Deleting a flaky, slow or narrow test is fine when a faster test covers what users rely on (`docs/guide/running-and-testing.md`); say what covers it.
 
 Answer with `kind` set to `repair`. `cause` holds the class and the root cause; `checked` holds the evidence.
+
+Record current test coverage in the owning area guide and detailed failure evidence, measurements, gaps and quarantine conditions in its linked subsystem note under `docs/notes/`. Reuse existing notes. Keep shared test policy, selection, fixture ownership and browser harness contracts in `docs/guide/running-and-testing.md`. A subsystem repair leaves that shared guide and its navigation alone.

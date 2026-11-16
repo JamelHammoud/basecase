@@ -35,7 +35,7 @@ function chainOf(rig: Rig, leaf: RobotJoint): RobotJoint[] {
   for (let id: string | null | undefined = leaf.id; id; id = rig.parentOf.get(id)) {
     const joint = rig.byId.get(id);
 
-    if (joint && isMovable(joint)) chain.unshift(joint);
+    if (joint && isMovable(joint) && joint.actuation !== 'passive') chain.unshift(joint);
   }
 
   return chain;
@@ -70,13 +70,27 @@ function farthestCorner(part: ScenePart, from: V3): V3 {
   return [tip.x, tip.y, tip.z];
 }
 
-function armLeaf(joints: RobotJoint[], rig: Rig, byId: Map<string, ScenePart>): RobotJoint | null {
-  const candidates = leafJoints(joints, rig)
-    .filter((j) => !isWheelJoint(j, byId, rig))
-    .filter((j) => chainOf(rig, j).length >= MIN_ARM_JOINTS);
-  const tagged = candidates.filter((j) => chainOf(rig, j).some((c) => c.limb === 'arm'));
+interface ArmChain {
+  leaf: RobotJoint;
+  chain: RobotJoint[];
+}
 
-  return tagged[0] ?? candidates[0] ?? null;
+function armChain(joints: RobotJoint[], rig: Rig, byId: Map<string, ScenePart>): ArmChain | null {
+  let fallback: ArmChain | null = null;
+
+  for (const leaf of leafJoints(joints, rig)) {
+    if (isWheelJoint(leaf, byId, rig)) continue;
+
+    const chain = chainOf(rig, leaf);
+
+    if (chain.length < MIN_ARM_JOINTS) continue;
+
+    if (chain.some((j) => j.limb === 'arm')) return { leaf, chain };
+
+    fallback ??= { leaf, chain };
+  }
+
+  return fallback;
 }
 
 const ALONG_AXIS = 0.999;
@@ -124,17 +138,19 @@ function armFacts(joints: RobotJoint[], rig: Rig, byId: Map<string, ScenePart>, 
 
   const found = findGripper(rig, joints, byId);
   const jaws = new Set(found?.jaws.map((j) => j.joint));
-  const leaf = armLeaf(
+  const selected = armChain(
     joints.filter((j) => !jaws.has(j.id)),
     rig,
     byId,
   );
+  const leaf = selected?.leaf;
   const gripper = found && leaf?.id === found.palm ? found : null;
   const hand = leaf && handOf(rig, leaf, byId, gripper);
 
-  if (!leaf || !hand) return NO_ARM;
+  if (!selected || !leaf || !hand) return NO_ARM;
 
-  const chain = chainOf(rig, leaf);
+  const { chain } = selected;
+
   const swing = fromShoulder(chain, hand.point);
 
   return {
@@ -151,7 +167,7 @@ export function robotFacts(rig: Rig, parts: ScenePart[], robotKey?: string): Rob
   const byId = new Map(parts.map((p) => [p.id, p]));
   const joints = robot ? rig.joints.filter((j) => rig.robotOf.get(j.id) === robot.key) : [];
   const morphology = robot ? classifyRobot(robot, rig, byId) : 'fixed';
-  const wheels = joints.filter((j) => isWheelJoint(j, byId, rig)).map((j) => j.id);
+  const wheels = joints.filter((j) => j.actuation !== 'passive' && isWheelJoint(j, byId, rig)).map((j) => j.id);
   const arm = armFacts(joints, rig, byId, morphology);
   const capabilities: Capability[] = [
     ...(arm.endEffector ? (['arm'] as const) : []),

@@ -24,6 +24,8 @@ covers:
   - src/workspace/buildCommands.tsx
   - src/components/build/BuyRow.tsx
   - src/components/build/buyLine.ts
+  - src/utils/bomCategories.ts
+  - src/utils/bomFormat.ts
   - src/components/build/AddSupplyMenu.tsx
   - src/components/build/QtyEditor.tsx
   - src/components/PartDetails.tsx

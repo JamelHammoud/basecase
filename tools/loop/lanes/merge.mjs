@@ -2,6 +2,7 @@ import { closePullSteps } from '../lib/stepClosure.mjs';
 import { byRank, isRepair } from '../lib/rank.mjs';
 import { isBatch, ready } from '../lib/landing.mjs';
 import { hasLabel, isPaused, mergePull, openPulls, pullCheck, pullReview } from '../lib/github.mjs';
+import { hasPendingDelivery } from '../lib/deliveryState.mjs';
 
 export const schedule = {
   slots: 1,
@@ -11,6 +12,7 @@ export const schedule = {
 
 const landable = (pull) =>
   !isBatch(pull) &&
+  !hasPendingDelivery(pull.headRefName) &&
   ready({
     conflicting: pull.mergeable === 'CONFLICTING',
     revising: hasLabel(pull, 'loop:revising'),

@@ -9,6 +9,7 @@ covers:
   - src/wiring/cableStock.ts
   - src/wiring/routeMotion.ts
   - src/wiring/routeBound.ts
+  - src/wiring/routeMeasure.ts
 hub_troubleshoot_build_check_blocks_ready_to_build_order: 40
 hub_troubleshoot_build_check_blocks_ready_to_build: |
   ## Servo bus is red

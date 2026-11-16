@@ -1,13 +1,18 @@
-import { copyDiffOfRange, formatCopyDiff } from '../../copy-diff.mjs';
+import { copyDiffOfRange, copyOccurrences, formatCopyDiff } from '../../copy-diff.mjs';
+import { judge, report } from '../../copy/budget.mjs';
 import { json } from './sh.mjs';
 
 const NET = /^Copy: .*, net ([+-]?\d+)$/m;
 
-export function copyReport(dir, { base = 'origin/main', head = 'HEAD' } = {}) {
+export function copyReport(dir, { base = 'origin/main', head = 'HEAD', body } = {}) {
   try {
     const diff = copyDiffOfRange({ cwd: dir, base, head });
 
-    return { net: diff.net, text: formatCopyDiff(diff) };
+    const occurrences = copyOccurrences(diff);
+    const verdict = judge({ ...occurrences, body, banned: [] });
+    const evidence = body === undefined ? '' : `\n\nOccurrence reasons:\n${report(verdict, occurrences.removed)}`;
+
+    return { net: diff.net, text: formatCopyDiff(diff) + evidence };
   } catch (error) {
     return { net: null, text: `Copy: not counted (${error.message.split('\n')[0]})` };
   }
@@ -19,7 +24,7 @@ export const copyReviewNote = ({ net }) => {
   if (net === null) return UNCOUNTED_NOTE;
 
   return net > 0
-    ? 'This pull request adds more user-facing strings than it removes. Each added string needs a `copy:` line in the body naming why nothing on screen already says it; fail it with a blocker for every one whose reason is missing or does not hold up.'
+    ? 'This pull request adds more user-facing strings than it removes. Each added occurrence, including repeated controls and changed wording, needs a `copy:` line in the body naming why nothing on screen already says it; fail it with a blocker for every one whose reason is missing or does not hold up.'
     : 'It adds no more user-facing strings than it removes; still judge each added or changed string by the §3d checklist.';
 };
 

@@ -41,7 +41,7 @@ The **Build** tab tells you whether you can build the design. Its **Checks** run
 
 Each problem counts as a blocker or a note:
 
-- A **blocker** stops Ready to build. A screw that no driver can reach is a blocker, and so is a wall too thin to print or a servo too weak for its joint.
+- A **blocker** stops Ready to build. Examples include an unreachable screw, a wall too thin to print, a weak servo or a motor assigned to a passive joint.
 - A **note** turns a check amber but doesn't change the verdict. A part that needs a lot of support material gets a note.
 
 Only you can set a blocker aside, with **Ignore**. The agent can say it disagrees, and the row shows its reason. But the agent can't clear anything, and nothing it writes changes the verdict. [Checks in the Build tab](/help/build-checks) lists every check.
@@ -70,6 +70,8 @@ For flat structural parts, [Cut parts from sheet](/help/cut-parts-from-sheet) ex
 
 The build guide is a PDF of assembly steps. Basecase checks that the parts can go together in that order. The guide names each printed part with a letter, and Print mode cuts that letter into a hidden face of the part.
 
+To hand off plates, instructions and assembly packing lists together, [export a robot kit](/help/export-a-robot-kit). The archive records Checks freshness without changing the verdict.
+
 For a broken part, [Repair a part](/help/repair-a-part) plays the measured teardown, replacement and reassembly in Build Along. A printed replacement gets a one-part plate, even if its shape hasn't changed. Repair needs a measured removal path and proven reassembly order.
 
 To fit a weekend build into the hours available, [set a time budget](/help/set-a-time-budget) beside the money budget. The Time check adds printing, estimated assembly and servo setup. It fails over budget, warns above 90%, and remains a note without a budget.
@@ -79,6 +81,8 @@ To fit a weekend build into the hours available, [set a time budget](/help/set-a
 An imported Onshape robot can be ready to build with motions held fixed. Cylindrical mates keep their hinges, with their slides listed under **Fixed Mates** as notes. [Import an Onshape assembly as a robot](/help/import-an-onshape-assembly) explains which mates move and how to bring in changes.
 
 Print times and filament amounts are estimates until Print mode slices the plates. Basecase tests range of motion every 15°, so it can miss a clash narrower than that. Peak torque needs a trained walking policy and stays Not run without one. Falls stays Not run until the agent tips the robot over in the simulation.
+
+Printer obstacles reserve space for the full print height, even for low clips. Unsupported obstacle geometry leaves parts off the plates. [Printability estimates](/help/printability-estimates) explains these placement limits.
 
 Time keeps assembly and servo setup as estimates after slicing. It excludes delivery, failed prints and print service lead times.
 

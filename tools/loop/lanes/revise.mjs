@@ -5,7 +5,6 @@ import { CHANGE_SCHEMA } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import {
   checkRunFor,
-  editPull,
   editPullLabels,
   failedLog,
   isLoopComment,
@@ -23,8 +22,12 @@ import { entryFor, markLooked, recordAttempt } from '../lib/pullState.mjs';
 import { run } from '../lib/sh.mjs';
 import { voiceNewPages, voiced } from '../lib/voiceHook.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
+import { hasPendingDelivery, saveDelivery } from '../lib/deliveryState.mjs';
+import { deliver } from '../lib/deliver.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
 import { keepStepLinks } from '../lib/stepLinks.mjs';
+
+import { fetchGit } from '../lib/gitFetch.mjs';
 
 export const schedule = {
   agent: true,
@@ -62,7 +65,7 @@ const jamelComments = (comments) =>
   comments.filter((comment) => comment.author === OWNER_LOGIN && !isLoopComment(comment));
 
 function needFor(pull) {
-  if (!pull.headRefName.startsWith('loop/')) return null;
+  if (!pull.headRefName.startsWith('loop/') || hasPendingDelivery(pull.headRefName)) return null;
 
   const entry = entryFor(pull.number);
   const failing = pullReview(pull) === 'failure' || pullCheck(pull) === 'failure';
@@ -91,7 +94,7 @@ function evidence(pull, reason, comments) {
 }
 
 function checkout(pull) {
-  git(['fetch', '-q', 'origin', 'main', pull.headRefName], HOME_CHECKOUT);
+  fetchGit(['-q', 'origin', 'main', pull.headRefName]);
 
   const dir = path.join(WORKTREES, `revise-${pull.number}`);
 
@@ -111,7 +114,6 @@ function publishRevision(pull, { dir, output }) {
   git(['add', '-A'], dir);
   git(['commit', '-q', '-F', '-'], dir, { input: output.commitMessage });
   run('node', [path.join(HOME_CHECKOUT, 'tools', 'check-credit.mjs'), 'origin/main..HEAD'], { cwd: dir });
-  git(['push', '-q', 'origin', `HEAD:${pull.headRefName}`], dir);
 
   const kind = kindOf(pull.title);
   const landed = landedIn('origin/main...HEAD', dir);
@@ -121,10 +123,18 @@ function publishRevision(pull, { dir, output }) {
   const line =
     touched.length === 0 ? output.revision : `${output.revision} Protected paths: ${protectedList(touched)}.`;
 
-  editPull(pull.number, {
+  const entry = saveDelivery({
+    dir,
+    branch: pull.headRefName,
+    number: pull.number,
+    sha: git(['rev-parse', 'HEAD'], dir).out.trim(),
+    createdAt: Date.now(),
+    attempts: 0,
     title: kind ? pullTitle({ kind, title: output.title }) : pull.title,
     body: voiced(keepStepLinks(`${restated}${heading}\n- ${line}`, pull), 'pull'),
   });
+
+  deliver(entry);
 }
 
 function revisePull(pull, { reason, comments, jamelAt }, log) {

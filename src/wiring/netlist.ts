@@ -56,18 +56,31 @@ function chain({ adapter, servos, connector, byId }: ChainInput): BusChain {
   };
 }
 
+function byConnector<T>(items: T[], connectorOf: (item: T) => ConnectorType): Map<ConnectorType, T[]> {
+  const groups = new Map<ConnectorType, T[]>();
+
+  for (const item of items) {
+    const connector = connectorOf(item);
+    const group = groups.get(connector);
+
+    if (group) group.push(item);
+    else groups.set(connector, [item]);
+  }
+
+  return groups;
+}
+
 function busChains(parts: ScenePart[], joints: readonly RobotJoint[]): Pick<Netlist, 'buses' | 'unmatched'> {
   const byId = new Map(parts.map((p) => [p.id, p]));
   const order = busOrder(parts, joints);
   const adapters = parts.filter(isBusAdapter);
-  const connectorOf = (id: string) => busIn(byId.get(id)!)!.connector!;
-  const types = [...new Set(order.map((s) => connectorOf(s.id)))];
+  const servoGroups = byConnector(order, (servo) => busIn(byId.get(servo.id)!)!.connector!);
+  const adapterGroups = byConnector(adapters, (adapter) => portOf(adapter, 'bus-out')!.connector!);
   const buses: BusChain[] = [];
   const unmatched: string[] = [];
 
-  for (const connector of types) {
-    const servos = order.filter((s) => connectorOf(s.id) === connector);
-    const heads = adapters.filter((a) => portOf(a, 'bus-out')!.connector === connector);
+  for (const [connector, servos] of servoGroups) {
+    const heads = adapterGroups.get(connector) ?? [];
 
     if (!heads.length && adapters.length) unmatched.push(...servos.map((s) => s.id));
 

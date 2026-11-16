@@ -18,6 +18,30 @@ function writeNormal(view: DataView, at: number, t: ArrayLike<number>, i: number
   view.setFloat32(at + 8, nz / len, true);
 }
 
+function writeFacet(view: DataView, at: number, triangles: ArrayLike<number>, i: number) {
+  writeNormal(view, at, triangles, i);
+
+  for (let k = 0; k < 9; k++) view.setFloat32(at + 12 + k * 4, triangles[i + k], true);
+}
+
+export class StlWriter {
+  readonly bytes: Uint8Array;
+  private readonly view: DataView;
+  readonly triangle = new Float32Array(9);
+  private at = HEADER + 4;
+
+  constructor(count: number) {
+    this.bytes = new Uint8Array(HEADER + 4 + count * FACET);
+    this.view = new DataView(this.bytes.buffer);
+    this.view.setUint32(HEADER, count, true);
+  }
+
+  facet(): void {
+    writeFacet(this.view, this.at, this.triangle, 0);
+    this.at += FACET;
+  }
+}
+
 export function binaryStl(triangles: ArrayLike<number>): Uint8Array {
   const count = Math.floor(triangles.length / 9);
   const bytes = new Uint8Array(HEADER + 4 + count * FACET);
@@ -25,14 +49,7 @@ export function binaryStl(triangles: ArrayLike<number>): Uint8Array {
 
   view.setUint32(HEADER, count, true);
 
-  for (let f = 0; f < count; f++) {
-    const at = HEADER + 4 + f * FACET;
-    const i = f * 9;
-
-    writeNormal(view, at, triangles, i);
-
-    for (let k = 0; k < 9; k++) view.setFloat32(at + 12 + k * 4, triangles[i + k], true);
-  }
+  for (let f = 0; f < count; f++) writeFacet(view, HEADER + 4 + f * FACET, triangles, f * 9);
 
   return bytes;
 }

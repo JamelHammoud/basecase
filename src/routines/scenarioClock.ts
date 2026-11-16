@@ -16,17 +16,44 @@ export class VirtualClock {
 
   at(t: number, order: number, run: (t: number) => void) {
     const entry = { t, order, seq: this.seq++, run };
-    let lo = 0;
-    let hi = this.entries.length;
+    let at = this.entries.length;
 
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
+    this.entries.push(entry);
 
-      if (before(this.entries[mid], entry) < 0) lo = mid + 1;
-      else hi = mid;
+    while (at > 0) {
+      const parent = (at - 1) >> 1;
+
+      if (before(this.entries[parent], entry) <= 0) break;
+
+      this.entries[at] = this.entries[parent];
+      at = parent;
     }
 
-    this.entries.splice(lo, 0, entry);
+    this.entries[at] = entry;
+  }
+
+  private take(): Entry {
+    const next = this.entries[0];
+    const last = this.entries.pop()!;
+
+    if (!this.entries.length) return next;
+
+    let at = 0;
+
+    while (at * 2 + 1 < this.entries.length) {
+      const left = at * 2 + 1;
+      const right = left + 1;
+      const child = right < this.entries.length && before(this.entries[right], this.entries[left]) < 0 ? right : left;
+
+      if (before(last, this.entries[child]) <= 0) break;
+
+      this.entries[at] = this.entries[child];
+      at = child;
+    }
+
+    this.entries[at] = last;
+
+    return next;
   }
 
   every(periodMs: number, order: number, run: (t: number) => void) {
@@ -42,7 +69,7 @@ export class VirtualClock {
 
   runUntil(endMs: number) {
     while (this.entries.length && this.entries[0].t <= endMs) {
-      const next = this.entries.shift() as Entry;
+      const next = this.take();
 
       this.now = next.t;
       next.run(next.t);

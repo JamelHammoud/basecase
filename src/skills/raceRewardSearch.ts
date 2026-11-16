@@ -9,6 +9,9 @@ import { proveSkill } from './prove';
 import { robustnessReward } from './raceRobustness';
 import { elapsedOf, type RaceCandidate, type RaceClock, type RaceInput, type SolveResult } from './raceTypes';
 import { REWARD_SEARCH_STAGES } from './router';
+import { seedDevelopment } from './seedDevelopment';
+import { trainingJob } from '../sim/trainingJob';
+import { actuatorDefaults } from '../sim/actuatorChannels';
 
 const ENVS = 64;
 const HORIZON = 24;
@@ -49,10 +52,36 @@ const scoreOf = (evidence: ArenaEvidence) =>
   evidence.lowerBound + evidence.variants.reduce((s, v) => s + v.passes, 0) / 1000;
 
 interface Run {
+  grouped: boolean;
   input: RaceInput;
   clock: RaceClock;
   candidates: RaceCandidate[];
   budget: number;
+}
+
+function velocityJob(input: RaceInput, options: { source: string; seed: number; minutes: number }) {
+  const { model, environment } = input.task;
+  const command =
+    input.task.goal.kind === 'velocity' ? input.task.goal.command : ([0, 0, 0] as [number, number, number]);
+  const base = trainingJob(
+    model,
+    environment.robot,
+    { task: 'walk', command, minutes: options.minutes },
+    input.task.id,
+  );
+  const actions = new Set(environment.action.joints);
+
+  return {
+    ...base,
+    seed: options.seed,
+    reward: options.source,
+    joints: base.joints.filter((joint) => actions.has(joint.id)),
+    defaultPose: environment.action.joints.map(() => 0),
+    ctrlDefault: actuatorDefaults(model.joints, (joint) =>
+      joint.drive === 'velocity' ? 0 : base.ctrlDefault[joint.actuator],
+    ),
+    actionScale: environment.action.scale,
+  };
 }
 
 function jobFor(input: RaceInput, options: { source: string; steps: number; seed: number }) {
@@ -60,16 +89,19 @@ function jobFor(input: RaceInput, options: { source: string; steps: number; seed
   const command = task.goal.kind === 'velocity' ? task.goal.command : ([0, 0, 0] as const);
   const iterations = Math.max(1, Math.ceil(options.steps / (ENVS * HORIZON)));
   const minutes = Math.ceil(options.steps / SLOWEST_STEPS_PER_S / 60);
-  const base = kitJob(task.model, 'velocity-tracking', {
-    minutes,
-    seed: options.seed,
-    reward: options.source,
-    maxIterations: iterations,
-    eyes: eyesOf(task.environment),
-    startArea: task.environment.reset.startArea,
-  });
+  const base =
+    task.environment.action.kind === 'velocity'
+      ? velocityJob(input, { ...options, minutes })
+      : kitJob(task.model, 'velocity-tracking', {
+          minutes,
+          seed: options.seed,
+          reward: options.source,
+          maxIterations: iterations,
+          eyes: eyesOf(task.environment),
+          startArea: task.environment.reset.startArea,
+        });
 
-  return { ...base, name: `Race: ${task.id}`, command, commands: undefined, envs: ENVS };
+  return { ...base, name: `Race: ${task.id}`, command, commands: undefined, envs: ENVS, maxIterations: iterations };
 }
 
 async function trainOne(run: Run, options: { entrant: Entrant; steps: number; seed: number }) {
@@ -77,7 +109,15 @@ async function trainOne(run: Run, options: { entrant: Entrant; steps: number; se
   const { task } = input;
   const job = jobFor(input, { source: options.entrant.source, steps: options.steps, seed: options.seed });
   const tally: ForgeTally = { steps: 0, forgeRuns: 0 };
-  const outcome = await runCounted(input.forge, { name: job.name, xml: task.model.xml, job }, tally);
+  const outcome = await runCounted(
+    input.forge,
+    { name: job.name, xml: task.model.xml, job },
+    tally,
+    seedDevelopment({ mj: input.mj, model: task.model, environment: task.environment }),
+  );
+
+  run.grouped ||= !!outcome.candidates;
+
   const candidate: RaceCandidate = { reward: options.entrant.reward, steps: tally.steps, arenaPassed: null };
 
   clock.steps += tally.steps;
@@ -93,6 +133,7 @@ async function trainOne(run: Run, options: { entrant: Entrant; steps: number; se
     environment: task.environment,
     controller: { kind: 'policy', policy: outcome.policy, robot: kitRobot(task.model).key },
     save: input.save,
+    judgment: input.judgment,
     origin: () => ({ method: 'reward-search', cost: elapsedOf(clock) }),
   });
 
@@ -115,7 +156,7 @@ async function runStages(run: Run, field: Entrant[]) {
 
       const result = await trainOne(run, { entrant, steps: Math.min(stage.steps, left), seed: seed++ });
 
-      if (result.skill) return result;
+      if (result.skill || run.grouped) return result;
 
       why = result.why;
     }
@@ -140,8 +181,8 @@ export async function rewardSearch(input: RaceInput, clock: RaceClock): Promise<
 
   if (refused) return { skill: null, attempt: attempt(false, refused) };
 
-  const run: Run = { input, clock, candidates, budget: startSteps + (input.budgetSteps ?? Infinity) };
+  const run: Run = { input, clock, candidates, budget: startSteps + (input.budgetSteps ?? Infinity), grouped: false };
   const result = await runStages(run, entrants(input));
 
-  return { skill: result.skill, attempt: attempt(!!result.skill, result.why) };
+  return { skill: result.skill, attempt: { ...attempt(!!result.skill, result.why), terminal: run.grouped } };
 }

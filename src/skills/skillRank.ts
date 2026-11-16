@@ -7,6 +7,7 @@ import { hashOf } from './hash';
 import { isRunnablePolicy } from './policyCheck';
 import { isRobotSchema, type JointMap, type RobotSchema } from './robotSchema';
 import { skillFit } from './skillFit';
+import { reportedInstallScore } from './installOutcome';
 
 export type SkillCandidate = HubSkillCandidate;
 
@@ -17,6 +18,7 @@ export interface RankedSkill {
   fit: JointMap;
   distance: number | null;
   passes: number;
+  reportedScore: number;
 }
 
 const same = (a: unknown, b: unknown) => hashOf(a) === hashOf(b);
@@ -73,7 +75,7 @@ function anchorDistance(source: RobotSchema, target: RobotSchema, map: number[])
   return distances.reduce((sum, distance) => sum + distance, 0) / Math.max(1, distances.length);
 }
 
-function ranked(candidate: SkillCandidate, target: RobotSchema): RankedSkill | null {
+function ranked(candidate: SkillCandidate, target: RobotSchema, outcomes: unknown[]): RankedSkill | null {
   try {
     const skill: unknown = JSON.parse(candidate.files['skill.json']);
     const schema: unknown = JSON.parse(candidate.files['robot.json']);
@@ -88,6 +90,7 @@ function ranked(candidate: SkillCandidate, target: RobotSchema): RankedSkill | n
       name: skill.name,
       fit,
       distance: fit.ok ? anchorDistance(schema, target, fit.map) : null,
+      reportedScore: reportedInstallScore(outcomes, { ...candidate, skill, schema }, target),
       passes: skill.evidence!.variants.reduce((sum, v) => sum + v.passes, 0),
     };
   } catch {
@@ -97,12 +100,13 @@ function ranked(candidate: SkillCandidate, target: RobotSchema): RankedSkill | n
 
 const compareText = (a: string, b: string) => (a < b ? -1 : Number(a > b));
 
-export function rankSkills(candidates: SkillCandidate[], target: RobotSchema): RankedSkill[] {
+export function rankSkills(candidates: SkillCandidate[], target: RobotSchema, outcomes: unknown[] = []): RankedSkill[] {
   return candidates
-    .flatMap((candidate) => ranked(candidate, target) ?? [])
+    .flatMap((candidate) => ranked(candidate, target, outcomes) ?? [])
     .sort(
       (a, b) =>
         Number(b.fit.ok) - Number(a.fit.ok) ||
+        b.reportedScore - a.reportedScore ||
         (a.distance ?? 0) - (b.distance ?? 0) ||
         b.passes - a.passes ||
         compareText(a.repo, b.repo) ||

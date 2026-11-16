@@ -122,28 +122,30 @@ export function distanceToEdge(cells: Uint8Array, width: number, height: number)
 
   for (let i = width; i < width * (height - 1); i++) if (isEdge(cells, width, i)) d[i] = 0;
 
-  const step = (i: number, j: number, cost: number) => {
-    if (d[j] + cost < d[i]) d[i] = d[j] + cost;
-  };
-
   for (let y = 1; y < height - 1; y++)
     for (let x = 1; x < width - 1; x++) {
       const i = y * width + x;
+      const nearest = Math.min(
+        d[i - 1] + 1,
+        d[i - width] + 1,
+        d[i - width - 1] + Math.SQRT2,
+        d[i - width + 1] + Math.SQRT2,
+      );
 
-      step(i, i - 1, 1);
-      step(i, i - width, 1);
-      step(i, i - width - 1, Math.SQRT2);
-      step(i, i - width + 1, Math.SQRT2);
+      if (nearest < d[i]) d[i] = nearest;
     }
 
   for (let y = height - 2; y > 0; y--)
     for (let x = width - 2; x > 0; x--) {
       const i = y * width + x;
+      const nearest = Math.min(
+        d[i + 1] + 1,
+        d[i + width] + 1,
+        d[i + width + 1] + Math.SQRT2,
+        d[i + width - 1] + Math.SQRT2,
+      );
 
-      step(i, i + 1, 1);
-      step(i, i + width, 1);
-      step(i, i + width + 1, Math.SQRT2);
-      step(i, i + width - 1, Math.SQRT2);
+      if (nearest < d[i]) d[i] = nearest;
     }
 
   return d;

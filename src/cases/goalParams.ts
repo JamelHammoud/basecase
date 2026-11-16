@@ -10,7 +10,13 @@ export type ParamKey =
   | 'spacingMm'
   | 'seconds'
   | 'riseMm'
-  | 'inclineDeg';
+  | 'inclineDeg'
+  | 'fixtureWidthMm'
+  | 'fixtureDepthMm'
+  | 'fixtureTravel'
+  | 'fixtureMassG'
+  | 'fixtureFriction'
+  | 'fixtureDamping';
 
 export type GoalValues = Record<ParamKey, number>;
 

@@ -2,8 +2,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { comparison } from './fixtures/efficiency.mjs';
 
 const fixture = vi.hoisted(() => ({
+  model: 'claude-opus-5-5',
+  tasks: [{ id: 'A1' }],
   remove: vi.fn(),
   openSlotPool: vi.fn(),
   closeAppModules: vi.fn(),
@@ -21,7 +24,7 @@ vi.mock('../archive.mjs', async (importOriginal) => ({
 vi.mock('../slots.mjs', () => ({ openSlotPool: fixture.openSlotPool }));
 vi.mock('../micro/once.mjs', () => ({ runMicroOnce: fixture.runMicroOnce }));
 vi.mock('../micro/scenes.mjs', () => ({ closeAppModules: fixture.closeAppModules }));
-vi.mock('../micro/tasks/index.mjs', () => ({ selectTasks: () => [{ id: 'A1' }], runnable: () => true }));
+vi.mock('../micro/tasks/index.mjs', () => ({ selectTasks: () => fixture.tasks, runnable: () => true }));
 vi.mock('./against.mjs', async (importOriginal) => ({
   ...(await importOriginal()),
   checkoutRef: () => ({ label: 'main', commit: 'abc1234', remove: fixture.remove }),
@@ -29,8 +32,8 @@ vi.mock('./against.mjs', async (importOriginal) => ({
 vi.mock('./arms.mjs', async (importOriginal) => ({
   ...(await importOriginal()),
   againstArms: () => [
-    { label: 'working tree', model: 'claude-opus-5-5', harness: 'tree', git: { commit: 'abc1234', dirty: true } },
-    { label: 'main', model: 'claude-opus-5-5', harness: 'ref', git: { commit: 'abc1234', dirty: false } },
+    { label: 'working tree', model: fixture.model, harness: 'tree', git: { commit: 'abc1234', dirty: true } },
+    { label: 'main', model: fixture.model, harness: 'ref', git: { commit: 'abc1234', dirty: false }, cache: true },
   ],
 }));
 
@@ -102,3 +105,140 @@ describe('comparison command', () => {
     expect(fixture.runMicroOnce).not.toHaveBeenCalled();
   });
 });
+
+it.each(['codex', 'wrong snapshot', 'wrong response', 'claude allowance', 'efficiency', 'efficiency cache'])(
+  'checks %s through the comparison command',
+  async (scenario) => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    tree = fs.mkdtempSync(path.join(os.tmpdir(), 'compare-provider-test-'));
+
+    const provider = scenario === 'claude allowance' ? 'claude' : 'codex';
+
+    fixture.model = provider === 'claude' ? 'claude-opus-5-5' : 'gpt-6.1-sol';
+
+    const close = vi.fn();
+    const pool = { studios: [{ base: 'http://first' }, { base: 'http://second' }], slots: [{ post: vi.fn() }], close };
+    const exit = vi.spyOn(process, 'exit').mockImplementation(() => {});
+
+    fixture.openSlotPool.mockResolvedValue(pool);
+    fixture.runMicroOnce.mockResolvedValue({
+      grade: { status: 'pass' },
+      status: 'pass',
+      task: 'A1',
+      seed: 1,
+      servedBy: scenario === 'wrong response' ? 'claude-opus-5-5' : fixture.model,
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url) => ({
+        json: async () => ({
+          agentKind: scenario === 'wrong snapshot' && url.includes('second') ? 'claude' : provider,
+          models: [{ id: fixture.model, effortLevels: [{ id: 'medium' }] }],
+        }),
+      })),
+    );
+
+    if (scenario.startsWith('efficiency')) {
+      fixture.tasks = Array.from({ length: 6 }, (_, i) => ({ id: `T${i}` }));
+      fixture.runMicroOnce.mockImplementation(async ({ task, out }) => {
+        const arm = out.dir.includes('working-tree') ? 0 : 1;
+        const run = comparison().results.find(
+          (row) => row.task === task.id && row.model === (arm ? 'main' : 'working tree'),
+        );
+
+        return { ...run, grade: { status: run.status, checks: run.checks } };
+      });
+    }
+
+    if (scenario === 'efficiency cache') writeCachedSeeds(tree);
+
+    process.argv = [
+      process.execPath,
+      'bench/compare.mjs',
+      '--against',
+      'main',
+      '--model',
+      fixture.model,
+      '--effort',
+      'medium',
+      '--seeds',
+      '1',
+      ...(scenario === 'efficiency cache' ? [] : ['--no-cache']),
+      ...(scenario === 'claude allowance' ? ['--loop-allowance', '--parallel', '8'] : []),
+      '--runs-dir',
+      tree,
+      '--run',
+      'provider',
+    ];
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await import('../compare.mjs');
+
+    const result = JSON.parse(fs.readFileSync(path.join(tree, 'provider/results.json'), 'utf8'));
+
+    expect(result.provider).toBe(provider);
+    expect(result.effort).toBe('medium');
+    expect(close).toHaveBeenCalledTimes(2);
+    expect(fixture.remove).toHaveBeenCalledOnce();
+    expect(exit).toHaveBeenCalledOnce();
+
+    if (['codex', 'claude allowance'].includes(scenario)) {
+      expect(result.plan.stop).toBe('rounds');
+      expect(result.results).toHaveLength(2);
+      expect(fixture.openSlotPool.mock.calls.every(([options]) => options.provider === provider)).toBe(true);
+    }
+
+    if (scenario === 'claude allowance') {
+      expect(result.plan.parallel).toBe(1);
+      expect(fixture.openSlotPool.mock.calls.every(([options]) => options.parallel === 1)).toBe(true);
+      expect(fixture.runMicroOnce.mock.calls.every(([options]) => typeof options.turn === 'function')).toBe(true);
+    }
+
+    if (scenario.startsWith('efficiency')) expect(result.outcome.outcome).toBe('efficiency-win');
+
+    if (scenario === 'efficiency cache') {
+      const baseline = result.results.filter((run) => run.model === 'main');
+
+      expect(baseline.find((run) => run.task === 'T0')).toMatchObject({
+        seed: 1,
+        cached: 'seed-1',
+        tokens: { total: 200 },
+      });
+      expect(baseline.find((run) => run.task === 'T1')).toMatchObject({ seed: 1, tokens: { total: 200 } });
+      expect(fixture.runMicroOnce).toHaveBeenCalledTimes(11);
+    }
+
+    if (scenario === 'wrong snapshot') {
+      expect(result.plan.stop).toBe('error');
+      expect(fixture.runMicroOnce).not.toHaveBeenCalled();
+    }
+
+    if (scenario === 'wrong response') expect(result.plan.stop).toBe('served');
+
+    vi.unstubAllGlobals();
+    fixture.model = 'claude-opus-5-5';
+    fixture.tasks = [{ id: 'A1' }];
+  },
+);
+
+function writeCachedSeeds(dir) {
+  const baseline = comparison()
+    .results.filter((run) => run.model === 'main')
+    .slice(0, 2);
+  const rows = baseline.flatMap((run, i) =>
+    [2, 1].slice(0, i ? 1 : 2).map((seed) => ({
+      ...run,
+      seed,
+      kind: 'micro',
+      grade: run.status,
+      harness: 'ref',
+      model: fixture.model,
+      run: `seed-${seed}`,
+      at: seed === 2 ? '2026-11-01' : '2026-11-02',
+      tokens: { total: seed === 2 ? 1000 : 200 },
+    })),
+  );
+
+  fs.writeFileSync(path.join(dir, 'index.jsonl'), rows.map((row) => JSON.stringify(row)).join('\n'));
+}

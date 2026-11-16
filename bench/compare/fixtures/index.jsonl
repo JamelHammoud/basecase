@@ -1,0 +1,5 @@
+{"kind": "micro", "run": "attempt-1", "task": "A", "model": "candidate", "grade": "fail", "seconds": 2, "tokens": {"total": 10, "cacheRead": 2}, "toolCalls": 1, "at": "2026-11-15T00:00:00.000Z", "harness": "synthetic", "seed": 0}
+{"kind": "micro", "run": "attempt-2", "task": "A", "model": "candidate", "grade": "error", "seconds": 3, "tokens": {"total": 20, "cacheRead": 2}, "toolCalls": 1, "at": "2026-11-15T00:00:00.000Z", "harness": "synthetic", "seed": 1}
+{"kind": "micro", "run": "attempt-3", "task": "A", "model": "candidate", "grade": "pass", "seconds": 4, "tokens": {"total": 30, "cacheRead": 2}, "toolCalls": 1, "at": "2026-11-15T00:00:00.000Z", "harness": "synthetic", "seed": 2}
+{"kind": "micro", "run": "attempt-4", "task": "A", "model": "candidate", "grade": "pass", "seconds": 5, "tokens": {"total": 40, "cacheRead": 2}, "toolCalls": 1, "at": "2026-11-15T00:00:00.000Z", "harness": "synthetic", "seed": 3}
+{"kind": "micro", "run": "attempt-5", "task": "B", "model": "candidate", "grade": "pass", "seconds": 6, "tokens": {"total": 50, "cacheRead": 2}, "toolCalls": 1, "at": "2026-11-15T00:00:00.000Z", "harness": "synthetic", "seed": 4}

@@ -56,9 +56,13 @@ To set one problem aside, right-click its row and choose **Ignore**. To set asid
 
 Because the decision was yours, an ignored problem stays ignored when the parts change. The agent sees what you've ignored and leaves those problems alone. Everything you've set aside is listed under **Ignored**, below the list, and you can put any of it back from there.
 
+Ignoring a finding keeps the original measurement time.
+
 ## What Ready to build doesn't promise
 
 Checks measure the design as you modeled it. A strap or zip tie you'll add by hand isn't in the model, so its row is a note that you check yourself.
+
+Printer fit checks reserve conservative space around supported obstacles, including supplied toolhead and brim clearance. They don't validate every slicer travel move.
 
 Range of motion samples each joint every 15°, so a clash narrower than one step can fall between samples. Peak torque waits for a trained walk policy, and Falls waits until the agent tips the robot over. Prices stay estimates until you add the prices you see or a print service quotes the printed parts.
 

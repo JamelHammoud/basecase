@@ -1,3 +1,4 @@
+import { bedOf } from '../print/bed';
 import { assemblyReport, serviceableIds } from '../assembly/assemblyReport';
 import { rememberClamps } from '../assembly/clampCache';
 import { clampsOf } from '../assembly/followers';
@@ -88,7 +89,7 @@ export const projectFingerprint = (
     calibrations: activeVersions(project.servoCalibrations),
     bodyCalibrations: bodyPhysicsKey(project),
     goneMates: goneMateIds(project.joints),
-    printer: [printer.model.id, printer.nozzle, printer.model.bed, printer.model.height, printer.model.keepOut],
+    printer: [printer.model.id, printer.nozzle, bedOf(printer.model, project.printProcess)],
     purchases: jsonHash(world.purchases ?? {}),
     money: [world.money.code, world.money.ratesDate],
   });

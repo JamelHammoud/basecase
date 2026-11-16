@@ -1,0 +1,209 @@
+import { expect } from 'vitest';
+import type { Page } from 'playwright-core';
+import type { TrainStartPayload } from '../src/utils/platform/types';
+import type { SavedSceneRecord } from '../src/types/robotics';
+import { shown, type App } from './harness';
+import { holdingPolicy } from '../src/skills/hubSkillFixtures';
+import type { TrainingComputerStatus } from '../src/remoteTraining/bridge';
+
+export const REMOTE_COMPUTER = {
+  host: 'trainer.local',
+  user: 'robot',
+  key: '/keys/training identity',
+  hostKey: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE5nR94khA4laX50C1CbAgBhQNuRAkSLX9ASnWZvT2EW',
+};
+
+const JOB_ID = 'policy-remote-fixture';
+
+interface EventsWindow {
+  remoteTrainingEvent: (event: Record<string, unknown>) => void;
+}
+
+export async function controlRemoteVerdict(page: Page) {
+  const install = () => {
+    const NativeWorker = window.Worker;
+
+    const FixtureWorker = function (url: string | URL, options?: WorkerOptions) {
+      const worker = new NativeWorker(url, options);
+
+      if (!String(url).includes('skills.worker')) return worker;
+
+      const post = worker.postMessage.bind(worker);
+
+      worker.postMessage = (message, transfer) => {
+        if (message.type !== 'forge-result')
+          return post(message, { transfer: Array.isArray(transfer) ? transfer : transfer?.transfer });
+
+        worker.dispatchEvent(
+          new MessageEvent('message', {
+            data: {
+              type: 'kit',
+              outcome: {
+                kind: 'refused',
+                reason: 'Local Arena rejected the selected attempt.',
+                relaxation: null,
+                cost: { wallS: 0, steps: 24, forgeRuns: 2 },
+              },
+            },
+          }),
+        );
+      };
+
+      return worker;
+    };
+
+    Object.assign(window, { Worker: FixtureWorker });
+  };
+
+  await page.evaluate(install);
+  await page.addInitScript(install);
+}
+
+async function installEvents(page: Page) {
+  const install = () => {
+    const sources = new Set<{ onmessage: ((event: MessageEvent) => void) | null }>();
+
+    Object.assign(window, {
+      EventSource: class {
+        onmessage: ((event: MessageEvent) => void) | null = null;
+        constructor() {
+          sources.add(this);
+        }
+        close() {
+          sources.delete(this);
+        }
+      },
+      remoteTrainingEvent: (event: Record<string, unknown>) => {
+        for (const source of sources) source.onmessage?.(new MessageEvent('message', { data: JSON.stringify(event) }));
+      },
+    });
+  };
+
+  await page.evaluate(install);
+  await page.addInitScript(install);
+}
+
+export const remoteStandRow = (page: Page) =>
+  page.locator(shown('[data-testid="skill-row"]'), { hasText: 'Stand' }).first();
+
+export async function configureRemoteComputer(page: Page, attempts = 1) {
+  await page.keyboard.press('Meta+k');
+  await page.getByLabel('Search commands').fill('Training Settings');
+  await page.keyboard.press('Enter');
+
+  for (const [label, value] of [
+    ['Host', REMOTE_COMPUTER.host],
+    ['User', REMOTE_COMPUTER.user],
+    ['SSH identity', REMOTE_COMPUTER.key],
+    ['Host key', REMOTE_COMPUTER.hostKey],
+  ])
+    await page.getByLabel(label, { exact: true }).fill(value);
+
+  await page
+    .getByRole('tablist', { name: 'Attempts', exact: true })
+    .getByRole('tab', { name: String(attempts), exact: true })
+    .click();
+  await page
+    .getByRole('tablist', { name: 'Concurrent attempts', exact: true })
+    .getByRole('tab', { name: '2', exact: true })
+    .click();
+
+  await page.getByRole('button', { name: 'Connect', exact: true }).click();
+  await expect.poll(() => page.getByRole('button', { name: 'Use This Computer', exact: true }).count()).toBe(1);
+  expect(await page.getByLabel('SSH identity', { exact: true }).inputValue()).toBe('');
+}
+
+export async function nameRemoteTrainingScene(page: Page) {
+  await page.keyboard.press('Meta+k');
+  await page.getByLabel('Search commands').fill('Rename Scene');
+  await page.keyboard.press('Enter');
+  await page.getByLabel('Scene name', { exact: true }).fill('Remote quadruped');
+  await page.getByLabel('Scene name', { exact: true }).press('Enter');
+}
+
+export async function remoteTrainingFixture(app: App) {
+  const { page } = app;
+  const starts: TrainStartPayload[] = [];
+  const dispatched = new Set<string>();
+  const children = new Map<string, string[]>();
+  let computer: TrainingComputerStatus = { selected: false };
+  let scene: SavedSceneRecord | null = null;
+  const state = () => ({ ...REMOTE_COMPUTER, key: undefined, keySaved: true, selected: true });
+
+  await installEvents(page);
+  await page.route('**/api/bridge/remote-training-*', async (route) => {
+    const name = new URL(route.request().url()).pathname.split('/').pop();
+
+    if (name === 'remote-training-configure') {
+      const config = route.request().postDataJSON().arg;
+
+      expect(config).toMatchObject(REMOTE_COMPUTER);
+      computer = { ...state(), attempts: config.attempts, concurrency: config.concurrency };
+    }
+
+    if (name === 'remote-training-clear') computer = { selected: false };
+
+    await route.fulfill({ json: computer });
+  });
+  await page.route('**/api/bridge/train-start', async (route) => {
+    const payload = route.request().postDataJSON() as TrainStartPayload;
+
+    starts.push(payload);
+    dispatched.add(String(payload.recoveryKey));
+
+    const key = String(payload.recoveryKey);
+
+    if (!children.has(key))
+      children.set(
+        key,
+        Array.from({ length: computer.attempts ?? 1 }, (_, index) => `policy-remote-child-${index}`),
+      );
+
+    await route.fulfill({ json: { jobId: JOB_ID } });
+  });
+  await page.route('**/api/bridge/policy?*', (route) => route.fulfill({ json: holdingPolicy(starts[0].job) }));
+  await page.route('**/api/bridge/save-scene', async (route) => {
+    scene = route.request().postDataJSON() as SavedSceneRecord;
+    await route.fulfill({ json: { ...scene, partCount: scene.parts.length } });
+  });
+  await page.route('**/api/bridge/scenes', (route) =>
+    route.fulfill({ json: scene ? [{ ...scene, partCount: scene.parts.length }] : [] }),
+  );
+  await page.route(
+    (url) => url.pathname === '/api/bridge/scene',
+    (route) => route.fulfill({ json: scene }),
+  );
+
+  const emit = (event: Record<string, unknown>) =>
+    page.evaluate((payload) => (window as unknown as EventsWindow).remoteTrainingEvent(payload), {
+      type: 'train-progress',
+      jobId: JOB_ID,
+      workspaceId: starts.at(-1)?.workspaceId,
+      ...event,
+    });
+  const reload = async () => {
+    await page.reload();
+    await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio));
+  };
+
+  return {
+    starts,
+    dispatched,
+    children,
+    scene: () => scene,
+    reload,
+    emit,
+    complete: () =>
+      emit({
+        kind: 'done',
+        candidates: [0, 1].map((index) => ({
+          id: `policy-remote-child-${index}`,
+          seed: Number(starts[0].job.seed) + index,
+          fingerprint: { 'model.xml': 'fixture-input-hash' },
+          steps: 12,
+          development: null,
+          outcome: { kind: 'done', record: { id: `policy-remote-child-${index}`, trainedSteps: 12 } },
+        })),
+      }),
+  };
+}

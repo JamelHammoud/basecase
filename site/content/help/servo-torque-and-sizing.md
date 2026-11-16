@@ -26,12 +26,12 @@ covers:
   - src/utils/actuatorRules.ts
   - src/utils/engineeringTorque.ts
   - src/utils/engineeringTorqueRows.ts
+  - src/utils/worstJointLoad.ts
   - src/utils/engineeringCrouch.ts
   - src/utils/engineeringPeak.ts
   - src/utils/engineeringFalls.ts
   - src/utils/engineeringEnvelope.ts
   - src/utils/keySpecs.ts
-  - docs/guide/build.md
 ---
 
 Servo torque helps you pick servos that won't stall or overheat. It compares the torque each joint has to hold with the torque its servo gives at your supply voltage.

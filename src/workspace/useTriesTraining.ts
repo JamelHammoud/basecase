@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { filmImage } from '../cases/filmImage';
 import type { Case } from '../cases/schema';
 import type { Dataset } from '../datasets/datasetFile';
@@ -69,6 +69,33 @@ export function useTriesTraining(options: TriesTrainingOptions): TriesTraining {
     setTraining(null);
   };
 
+  const recoveredDone = useEffectEvent((datasetId: string | undefined, outcome: TriesOutcome) => {
+    const { runs, kept, problem } = outcome;
+
+    if (problem) showToast(problem, { tone: 'error' });
+
+    if (datasetId && runs && !runs.refusal)
+      setResult({ datasetId, passes: runs.passes, runs: runs.runs, kept, film: null });
+
+    setTraining(null);
+  });
+  const recoveryRobot = useEffectEvent(caseRobot);
+
+  useEffect(() => {
+    runtime.setRecoveryTries({
+      judge: async (kase, policy) => {
+        const robot = await recoveryRobot();
+
+        if (!robot) throw new Error('Open the robot to check the recovered policy.');
+
+        const verdict = await caseVerdict(robot, kase, TRIES_RUNS, { jointNoiseDeg: TRIES_JOINT_NOISE_DEG, policy });
+
+        return { runs: verdict.runs, robotModel: verdict.modelHash };
+      },
+      done: recoveredDone,
+    });
+  }, [runtime]);
+
   const start = async (dataset: Dataset, kase: Case) => {
     const robot = await caseRobot();
     const model = await sim.buildModel();
@@ -111,6 +138,7 @@ export function useTriesTraining(options: TriesTrainingOptions): TriesTraining {
     const refused = runtime.learnFromTries({
       model,
       kase,
+      datasetId: dataset.id,
       job: triesJob(
         model,
         kase,

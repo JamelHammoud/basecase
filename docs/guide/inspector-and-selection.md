@@ -134,3 +134,45 @@ There's no Shape tab. These panels appear in place of the Inspector only while t
 - Adding a part from Sketch or SVG closes the panel and shows the new part in the Inspector.
 - Both end in one Add button. To keep the result, use Save to Library on the new part (the bookmark in its Inspector header, or right-click); the model it saves inserts that same part again.
 - Combine lives in the multi-selection Inspector, the right-click menu and ⌘K; nothing floats over the canvas for a multi-selection.
+
+## Performance: mirror
+
+Measurements and limits: [Mirror performance evidence](../notes/performance-mirror.md).
+
+- **Mirror keeps one reflected coordinate buffer.** `mirror/mirrorGeometry.ts` reverses triangle-soup winding in the newly reflected positions for both imported and sculpted meshes. Source arrays remain untouched, and indexed meshes still reverse their index winding separately. `mirrorGeometry.test.ts` compares all three axes with the previous calculation, including empty and incomplete triangles, signed zero, independent outputs and double reflection. [Evidence](../notes/performance-mirror.md#mirror-keeps-one-reflected-coordinate-buffer).
+
+- **Mirror selects candidates without sorting.** `mirror/mirrorMates.ts`, `mirrorDatum.ts` and `mirrorPart.ts` scan for the nearest mate port or strongest eligible axis alignment. Mate matching also removes filtered candidate lists and per-candidate ranking records. First ties, the inclusive 1 mm mate tolerance, the 0.5 mm datum score band and direct symmetric-axis preference stay unchanged. Every Mirror entry point shares these selectors, and `mirror_parts` shares the datum and shape selectors. [Evidence](../notes/performance-mirror.md#mirror-selects-candidates-without-sorting).
+
+- **Catalog Mirror prepares compatible ports once.** `mirror/mirrorDatum.ts` groups ports by kind and exact thread for all three symmetry scores. It scans each prepared group directly for its minimum mismatch, removing repeated full-list filters and temporary distance arrays. Source order, output-centered offsets, the 0.5 mm score tie and local-axis alignment stay unchanged. Preparation ends with the call, so edited kinds, threads and positions read fresh values. [Evidence](../notes/performance-mirror.md#catalog-mirror-prepares-compatible-ports-once).
+
+## Performance: sketch
+
+Measurements and limits: [Sketch performance evidence](../notes/performance-sketch.md).
+
+- **Sketch arcs append samples directly to their destination.** `utils/sketch/profile.ts` shares one sampler between standalone arc previews and profile tracing. Forward and reverse traversal emit only the required points into the loop, without temporary edge arrays, reverse copies, slices or spread appends. Sampling angles and endpoint exclusion stay unchanged. Preview fills, Extrude, Revolve and edits to existing solids share profile tracing. `profileArcs.test.ts` checks exact samples and complete contours in both directions, full circles, short sweeps, zero radii, source preservation and later edits. [Evidence](../notes/performance-sketch.md#sketch-arcs-append-samples-directly).
+
+- **Sketch bounds accumulate coordinates directly.** `utils/sketch/bounds.ts` supplies one operation-local accumulator for profile bounds, projected face corners and view fitting. Extrude and Revolve share profile bounds, and Revolve derives its radius from the x extrema. Coordinate buffers, face-corner flattening and spread arguments are removed. Empty views, circle-center selection, signed zero and nonfinite extrema keep their existing behavior. `bounds.test.ts` checks parity, edits, solid output and 200,000-point bounds and framing. Existing `placement.test.ts` covers face picking and placed solids. [Evidence](../notes/performance-sketch.md#sketch-bounds-accumulate-coordinates-directly).
+
+- **Sketch constraint batches assign ids once.** `utils/sketch/edit.ts` scans points, entities and constraints once for the next constraint number, then appends the batch to one copied constraint list. Rectangles, line dimensions, circle dimensions and constraint commands share this helper for new and reopened sketches. Empty batches retain the input object. Id parsing, order and existing object references stay unchanged. Point and entity naming use the same scan without flattening the collections or spreading ids into `Math.max`. `constraintBatch.test.ts` checks complete output parity, mixed ids, later edits, source preservation and bounded id reads. [Evidence](../notes/performance-sketch.md#sketch-constraint-batches-assign-ids-once).
+
+- **SVG-to-Sketch conversion appends geometry once.** `utils/sketch/edit.ts` builds `polylineSketch` points and lines in one pair of result arrays, without copying prior loops or allocating per-loop geometry arrays. Every SVG-to-Sketch handoff uses this converter. Point and line ids remain sequential, each loop closes independently, and empty loops add nothing. Inputs stay untouched and each conversion owns its output. `polylineSketch.test.ts` checks mixed loops, winding, degenerate loops, later edits and many holes. [Evidence](../notes/performance-sketch.md#svg-to-sketch-conversion-appends-geometry-once).
+
+- **Sketch probes only dependent residual terms.** `utils/sketch/residualPlan.ts` records point and radius dependencies once per solve. Newton steps and the final rank check reuse them, leaving unrelated Jacobian entries at zero. Both coordinates remain dependencies of a point read. Residual order, probe size and derivative arithmetic stay unchanged. Nonfinite residuals and probe steps retain dense propagation. New sketches and reopened parts share this solver. [Evidence](../notes/performance-sketch.md#sketch-probes-only-dependent-residual-terms).
+
+- **Sketch profile tracing consumes incident lists once.** `utils/sketch/profile.ts` appends to endpoint lists without copying growing arrays and retains a cursor at each endpoint. Preview fills, profile selection and solid edits share this traversal. Branch order, reversed arcs, reference exclusion, open-chain consumption and duplicate-id behavior stay intact. Preparation ends with the call, so later edits and undo read current geometry. [Evidence](../notes/performance-sketch.md#sketch-profile-tracing-consumes-incident-lists-once).
+
+- **Sketch solves prepare entity references once.** `utils/sketch/solver.ts` builds its entity map and arc list with the variable layout, then reuses them throughout the solve. Residual probes read current variable values without rebuilding the map or searching all entities for arcs. [Evidence](../notes/performance-sketch.md#sketch-solves-prepare-entity-references-once).
+
+- **Sketch profiles measure each loop's area once.** `utils/sketch/profile.ts` retains the largest area while rejecting degenerate loops, instead of remeasuring both candidates at every comparison. The Sketch panel and solid creation, including edits, share this path. [Evidence](../notes/performance-sketch.md#sketch-profiles-measure-each-loops-area-once).
+
+- **Damping trials reuse unchanged matrix products.** Sketch and four-bar fitting prepare their weighted products or normal equations once per linearization, as IK and servo fitting already do. A rejected trial changes only damping, and an accepted step prepares the next system. [Evidence](../notes/performance-sketch.md#damping-trials-reuse-unchanged-matrix-products).
+
+- **Sketch deletion avoids repeated membership searches.** `utils/sketch/edit.ts` checks selected entity ids once for reference protection, then records discarded point ids while retaining fixed and used points. No retained-point search runs per source point. [Evidence](../notes/performance-sketch.md#sketch-deletion-avoids-repeated-membership-searches).
+
+## Performance: selection
+
+Measurements and limits: [Selection performance evidence](../notes/performance-selection.md).
+
+- **Align and Spread index the selection once.** `utils/selection.ts` filters unlocked parts through an id set shared by both commands. Align applies positions through a set of the selected part objects. Membership work is linear in scene and selection size, with Spread also sorting the selected parts by position. The Inspector, right-click menu and command palette use these same helpers.
+
+- **Selecting groups uses membership sets.** `expandToGroups` scans the scene twice, collecting selected group ids and then their missing members. Ordered additions, group toggles and drill-in detection also use sets, keeping membership work linear in scene and selection size. [Evidence](../notes/performance-selection.md#selecting-groups-uses-membership-sets).

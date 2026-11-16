@@ -2,9 +2,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { run } from './sh.mjs';
+import { continuationMatches, fingerprint, jsonLines } from './sessionJournal.mjs';
+import { codexHome } from './codexHome.mjs';
 
 export const CODEX_MODEL = process.env.CODEX_MODEL || 'gpt-6.1-sol';
-export const CODEX_EFFORT = process.env.CODEX_EFFORT || 'high';
+export const CODEX_EFFORT = process.env.CODEX_EFFORT || 'medium';
 
 const UNKNOWN_RESET_MS = 30 * 60 * 1000;
 const LIMIT_TEXT = /usage limit|hit your (?:usage |weekly |5-hour )?limit|rate limit reached|quota exceeded/i;
@@ -48,8 +50,17 @@ export function fromStrict(value, schema) {
   );
 }
 
-export const codexLimit = ({ out = '', err = '' }, now = Date.now()) =>
-  LIMIT_TEXT.test(`${out.slice(-4000)}\n${err.slice(-4000)}`) ? { until: now + UNKNOWN_RESET_MS } : null;
+export function codexLimit({ out = '', err = '' }, now = Date.now()) {
+  const events = jsonLines(out);
+  const finalTurn = events.findLast((event) => event.type === 'turn.completed' || event.type === 'turn.failed');
+
+  if (finalTurn?.type === 'turn.completed') return null;
+
+  const errors = events.filter((event) => event.type === 'error' || event.type === 'turn.failed');
+  const message = events.length ? errors.map((event) => JSON.stringify(event)).join('\n') : out;
+
+  return LIMIT_TEXT.test(`${message.slice(-4000)}\n${err.slice(-4000)}`) ? { until: now + UNKNOWN_RESET_MS } : null;
+}
 
 const accessArgs = (sandbox) => {
   if (!sandbox) return ['--dangerously-bypass-approvals-and-sandbox'];
@@ -59,48 +70,138 @@ const accessArgs = (sandbox) => {
   return ['--sandbox', writes ? 'workspace-write' : 'read-only', '-c', 'approval_policy="never"'];
 };
 
-export function runCodex({ cwd, brief, prompt, schema, hours, sandbox, env }) {
+export function codexArgs(options, files) {
+  const { cwd, sandbox, policy, continuation } = options;
+  const resumed = continuationMatches(continuation, options);
+  const start = resumed ? ['exec', 'resume', continuation.id] : ['exec', '-C', cwd];
+
+  return [
+    ...start,
+    '--model',
+    policy?.model || CODEX_MODEL,
+    '-c',
+    `model_reasoning_effort="${policy?.effort || CODEX_EFFORT}"`,
+    '-c',
+    'service_tier="default"',
+    ...(options.name === 'voice'
+      ? [
+          '-c',
+          'project_doc_max_bytes=0',
+          '-c',
+          'web_search="disabled"',
+          '--disable',
+          'shell_tool',
+          '--disable',
+          'unified_exec',
+          '--disable',
+          'code_mode_host',
+        ]
+      : []),
+    '--disable',
+    'apps',
+    '--disable',
+    'plugins',
+    '--disable',
+    'multi_agent',
+    '--disable',
+    'multi_agent_v2',
+    ...(sandbox ? accessArgs(sandbox) : ['--dangerously-bypass-approvals-and-sandbox']),
+    ...(sandbox ? ['--ephemeral'] : []),
+    '--skip-git-repo-check',
+    '--json',
+    '--output-schema',
+    files.schemaFile,
+    '-o',
+    files.outFile,
+    '-',
+  ];
+}
+
+export function codexSession(out, options) {
+  const events = jsonLines(out);
+  const started = events.find((event) => event.type === 'thread.started');
+  const resumed = continuationMatches(options.continuation, options);
+  const id = started?.thread_id ?? (resumed ? options.continuation.id : null);
+  const reportedUsage = events.findLast((event) => event.type === 'turn.completed')?.usage;
+  const previous = resumed ? (options.continuation.totalUsage ?? {}) : {};
+  const totalUsage = reportedUsage ?? (resumed ? options.continuation.totalUsage : undefined);
+  const usage =
+    reportedUsage &&
+    Object.fromEntries(
+      Object.entries(reportedUsage).map(([key, value]) => [key, Math.max(0, value - (previous[key] ?? 0))]),
+    );
+  const session =
+    id && !options.sandbox
+      ? {
+          id,
+          provider: 'codex',
+          totalUsage,
+          fingerprint: fingerprint({ cwd: options.cwd, brief: options.brief, schema: options.schema }),
+        }
+      : null;
+
+  return { session, usage };
+}
+
+function executeCodex(options, files, execute) {
+  const resumed = continuationMatches(options.continuation, options);
+  const response = execute(process.env.CODEX_BIN || 'codex', codexArgs(options, files), {
+    cwd: options.cwd,
+    env: codexHome(options.env),
+    input: resumed ? options.prompt : `${options.brief}\n\n---\n\n${options.prompt}`,
+    timeout: options.hours * 60 * 60 * 1000,
+    allowFail: true,
+  });
+  const metadata = codexSession(response.out, options);
+  const limited = codexLimit(response);
+
+  if (limited) return { ok: false, limited, ...metadata };
+
+  if (!response.ok) return { ok: false, error: response.err.slice(-1000), ...metadata };
+
+  try {
+    const answer = fs.readFileSync(files.outFile, 'utf8');
+
+    return { ok: true, output: fromStrict(JSON.parse(answer), options.schema), ...metadata };
+  } catch (error) {
+    return { ok: false, formatError: true, error: `Codex gave no usable answer: ${error.message}`, ...metadata };
+  }
+}
+
+export function runCodex(options, execute = run) {
+  if (options.sandbox?.tools.length > 0)
+    return { ok: false, error: 'Codex exec cannot enforce scoped tool allowlists' };
+
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-codex-'));
   const schemaFile = path.join(dir, 'schema.json');
   const outFile = path.join(dir, 'answer.json');
+  let result = { session: continuationMatches(options.continuation, options) ? options.continuation : null };
+  let formatRetried = false;
 
-  fs.writeFileSync(schemaFile, JSON.stringify(strictSchema(schema)));
+  fs.writeFileSync(schemaFile, JSON.stringify(strictSchema(options.schema)));
 
   try {
-    const args = [
-      '--search',
-      'exec',
-      '--model',
-      CODEX_MODEL,
-      '-c',
-      `model_reasoning_effort="${CODEX_EFFORT}"`,
-      ...accessArgs(sandbox),
-      '--ephemeral',
-      '--skip-git-repo-check',
-      '--output-schema',
-      schemaFile,
-      '-o',
-      outFile,
-      '-C',
-      cwd,
-      '-',
-    ];
-    const result = run(process.env.CODEX_BIN || 'codex', args, {
-      cwd,
-      env,
-      input: `${brief}\n\n---\n\n${prompt}`,
-      timeout: hours * 60 * 60 * 1000,
-      allowFail: true,
-    });
-    const limited = codexLimit(result);
+    result = executeCodex(options, { schemaFile, outFile }, execute);
 
-    if (limited) return { ok: false, limited, error: result.err.slice(-1000) };
+    if (!result.formatError || !result.session) return result;
 
-    const answer = fs.existsSync(outFile) ? fs.readFileSync(outFile, 'utf8') : '';
+    fs.rmSync(outFile, { force: true });
+    formatRetried = true;
 
-    return { ok: true, output: fromStrict(JSON.parse(answer), schema) };
+    const repaired = executeCodex(
+      {
+        ...options,
+        continuation: result.session,
+        prompt:
+          'Return your completed task answer again using the required JSON schema. Preserve the work already done. Do not repeat implementation or checks.',
+      },
+      { schemaFile, outFile },
+      execute,
+    );
+
+    return { ...repaired, formatRetried: true, previousUsage: result.usage };
   } catch (error) {
-    return { ok: false, error: `Codex gave no usable answer: ${error.message}` };
+    return { ...result, ok: false, formatRetried, error: `Codex gave no usable answer: ${error.message}` };
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

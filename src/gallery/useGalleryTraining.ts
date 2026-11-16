@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ComponentType } from 'react';
 import type { SkillActions } from '../components/simulate/SkillsList';
 import type { ForgeEvent } from '../forge/forgeWasm';
 import type { RobotMorphology } from '../sim/morphology';
@@ -6,6 +6,7 @@ import type { Simulation } from '../sim/useSimulation';
 import type { SkillRecord } from '../skills/skillRecords';
 import type { SkillRow } from '../skills/skillRows';
 import type { TabEngine } from '../skills/skillsPlatform';
+import type { GalleryInstallProps } from './GalleryInstallSkill';
 import type { GalleryTrainer } from './galleryTrainer';
 import type { GalleryTrained } from './galleryTrained';
 import { trainingOffered } from './trainingOffered';
@@ -41,6 +42,11 @@ export function useGalleryTraining({ slug, morphology, sim }: TrainingInput) {
   const offered = useOffered(morphology);
   const [rows, setRows] = useState<SkillRow[]>([]);
   const [starting, setStarting] = useState(false);
+  const [installer, setInstaller] = useState<{
+    Component: ComponentType<GalleryInstallProps>;
+    trainer: GalleryTrainer;
+    request: number;
+  } | null>(null);
   const [running, setRunning] = useState<RunningSkill | null>(null);
   const pending = useRef<Promise<GalleryTrainer> | null>(null);
   const loaded = useRef<GalleryTrainer | null>(null);
@@ -75,6 +81,16 @@ export function useGalleryTraining({ slug, morphology, sim }: TrainingInput) {
     });
   };
 
+  const openInstall = async () => {
+    const [trainer, module] = await Promise.all([load(), import('./GalleryInstallSkill')]);
+
+    setInstaller((previous) => ({
+      Component: module.GalleryInstallSkill,
+      trainer,
+      request: (previous?.request ?? 0) + 1,
+    }));
+  };
+
   const train = async (): Promise<SkillRecord | null> => {
     setStarting(true);
 
@@ -97,7 +113,7 @@ export function useGalleryTraining({ slug, morphology, sim }: TrainingInput) {
 
       if (record) void load().then((trainer) => run(trainer, record));
     },
-    onDrive: () => {},
+    onDrive: () => void simRef.current.drive.start(),
     onStop: () => loaded.current?.stop(),
   };
 
@@ -108,6 +124,19 @@ export function useGalleryTraining({ slug, morphology, sim }: TrainingInput) {
     running,
     actions,
     train,
+    velocity: () => loaded.current?.velocity() ?? Promise.resolve(null),
+    openInstall: () => void openInstall(),
+    installer,
+    installProps: installer
+      ? {
+          request: installer.request,
+          trainer: installer.trainer,
+          buildModel: () => simRef.current.buildModel({ alone: true }),
+          onInstalled: (record: SkillRecord) => {
+            if (!simRef.current.drive.active) void run(installer.trainer, record);
+          },
+        }
+      : null,
     events: (): ForgeEvent[] => loaded.current?.events() ?? [],
     carried: (): Promise<GalleryTrained | null> => loaded.current?.carried() ?? Promise.resolve(null),
     stubTabEngine: (engine: TabEngine | null) =>

@@ -28,6 +28,8 @@ covers:
   - src/utils/kinematics.ts
   - src/utils/kinematicsPrune.ts
   - src/utils/kinematicsLoop.ts
+  - src/utils/motionSkeleton.ts
+  - src/utils/motionSkeletonSource.ts
   - src/assembly/followers.ts
   - src/data/articulatedParts.ts
   - src/utils/robotImport/
@@ -47,7 +49,8 @@ Each joint has these fields:
 | Pivot and axis | The point the joint turns around, and the line it turns along. If the joint has a servo, both come from the servo's real output. |
 | Range | How far the joint can turn or slide in each direction. |
 | Limb | Head, torso, left arm, and so on. The Pose tab groups joints by limb. |
-| Servo | The actuator that drives the joint. Checks sizes it against the load. |
+| Servo | The actuator that drives a powered joint. Checks sizes it against the load. |
+| Actuation | Powered joints have motor control. Passive joints move through gravity, contact or another link. |
 
 ## Where joints come from
 

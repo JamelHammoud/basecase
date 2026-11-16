@@ -1,5 +1,6 @@
 import { BasecaseBackendService } from './backend-service.mjs';
 import { guardBridge } from './bridgeGuard.mjs';
+import { remoteTrainingPostRoutes } from './remoteTraining/routes.mjs';
 import { roboflowPostRoutes } from './roboflow/routes.mjs';
 import { earthPostRoutes } from './earth/routes.mjs';
 import { nodeKernelService } from './cad-kernel/nodeHost/client.mjs';
@@ -120,6 +121,7 @@ function postRoutes(backend) {
     ...onshapePostRoutes(backend.onshape),
     ...earthPostRoutes(backend.earth),
     ...roboflowPostRoutes(backend.roboflow),
+    ...remoteTrainingPostRoutes(backend.remoteTraining),
   ];
 }
 

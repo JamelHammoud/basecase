@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { validateWorldFixtures } from '../cases/fixtureValidation';
 import { partMatrix } from '../utils/kinematics';
 import { partEdges } from '../utils/partEdges';
 import { quatToMj, toMj } from './mjcfFrames';
@@ -28,7 +29,8 @@ export interface WorldEmit {
 
 function geomAttrs(item: WorldItem): string {
   const contact = CONTACT[item.behavior];
-  const friction = item.physics?.friction ? ` priority="1" friction="${f(item.physics.friction)} 0.02 0.002"` : '';
+  const friction =
+    item.physics?.friction !== undefined ? ` priority="1" friction="${f(item.physics.friction)} 0.02 0.002"` : '';
 
   if (item.behavior !== 'dynamic') return `${contact}${friction}`;
 
@@ -92,23 +94,66 @@ function worldGeom(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffse
   return `<geom name="${esc(name)}" ${shape} quat="${vec(turn)}" ${geomAttrs(item)}/>`;
 }
 
+function jointXml(item: WorldItem): string | null {
+  const joint = item.joint;
+
+  if (!joint || joint.locked) return null;
+
+  const unit = joint.type === 'revolute' ? Math.PI / 180 : 0.001;
+  const offset = joint.origin.map((n, i) => n - item.position[i]) as [number, number, number];
+  const axis = [joint.axis[0], -joint.axis[2], joint.axis[1]];
+  const range = joint.range.map((n) => n * unit);
+
+  return `<joint name="wj_${safeId(item.id)}" type="${joint.type === 'revolute' ? 'hinge' : 'slide'}" pos="${vec(toMj(offset))}" axis="${vec(axis)}" limited="true" solreflimit="0.004 1" range="${range.join(' ')}" damping="${f(joint.damping)}" frictionloss="${f(joint.frictionloss)}"/>`;
+}
+
 export function emitWorld(input: MjcfInput, assetOffset: number): WorldEmit {
   const out: WorldEmit = { lines: [], assets: [], bodies: [] };
+  const items = input.world ?? [];
 
-  (input.world ?? []).forEach((item, i) => {
-    const name = `w${i}_${safeId(item.id)}`;
+  validateWorldFixtures(items);
+
+  const names = new Map(items.map((item, i) => [item.id, `w${i}_${safeId(item.id)}`]));
+  const children = new Map<string | undefined, WorldItem[]>();
+
+  for (const item of items) {
+    const siblings = children.get(item.parent) ?? [];
+
+    siblings.push(item);
+    children.set(item.parent, siblings);
+  }
+
+  const emit = (item: WorldItem, parent?: WorldItem) => {
+    const name = names.get(item.id)!;
     const geom = worldGeom(item, input, out, assetOffset);
-
     const mocap = item.movable && item.behavior !== 'dynamic';
     const moves = item.movable ? { moves: { kind: mocap ? 'mocap' : 'free', rotation: item.rotation } as const } : {};
+    const position = item.position.map((n, i) => n - (parent?.position[i] ?? 0)) as [number, number, number];
+    const joint = jointXml(item);
 
-    out.bodies.push({ name, parts: [], world: [item.id], origin: item.position, ...moves });
-    out.lines.push(`    <body name="${esc(name)}" pos="${vec(toMj(item.position))}"${mocap ? ' mocap="true"' : ''}>`);
+    out.bodies.push({
+      name,
+      parts: [],
+      world: [item.id],
+      origin: item.position,
+      ...(parent ? { parent: names.get(parent.id) } : {}),
+      ...moves,
+    });
+    out.lines.push(`    <body name="${esc(name)}" pos="${vec(toMj(position))}"${mocap ? ' mocap="true"' : ''}>`);
 
-    if (item.behavior === 'dynamic') out.lines.push(`      <freejoint name="${esc(name)}"/>`);
+    if (joint) out.lines.push(`      ${joint}`);
 
-    out.lines.push(`      ${geom}`, '    </body>');
-  });
+    if (item.behavior === 'dynamic' && !item.parent && !item.joint)
+      out.lines.push(`      <freejoint name="${esc(name)}"/>`);
+
+    out.lines.push(`      ${geom}`);
+
+    for (const child of children.get(item.id) ?? []) emit(child, item);
+
+    out.lines.push('    </body>');
+  };
+
+  for (const item of children.get(undefined) ?? []) emit(item);
 
   return out;
 }

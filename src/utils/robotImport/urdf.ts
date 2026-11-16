@@ -125,6 +125,13 @@ function urdfJoint(j: Element): UrdfJoint | null {
     axis: new THREE.Vector3(ax, ay, az).normalize(),
     limit: urdfLimit(t, lim),
     effort: positiveAttr(lim, 'effort'),
+    ...(elem(j, 'basecase')?.getAttribute('actuation') === 'passive'
+      ? {
+          actuation: 'passive' as const,
+          damping: Number(elem(j, 'dynamics')?.getAttribute('damping') ?? 0),
+          frictionloss: Number(elem(j, 'dynamics')?.getAttribute('friction') ?? 0),
+        }
+      : {}),
     velocity: positiveAttr(lim, 'velocity'),
   };
 }
@@ -154,6 +161,15 @@ function urdfMaterials(robot: Element) {
 
 function linkTree(links: Map<string, ModelLink>, raw: UrdfJoint[], root: string): ModelJoint[] {
   const joints: ModelJoint[] = [];
+  const byParent = new Map<string, UrdfJoint[]>();
+
+  for (const joint of raw) {
+    const siblings = byParent.get(joint.parent);
+
+    if (siblings) siblings.push(joint);
+    else byParent.set(joint.parent, [joint]);
+  }
+
   const walk = (link: string, world: THREE.Matrix4, depth: number) => {
     const l = links.get(link);
 
@@ -161,7 +177,7 @@ function linkTree(links: Map<string, ModelLink>, raw: UrdfJoint[], root: string)
 
     if (depth > 200) return;
 
-    for (const j of raw.filter((x) => x.parent === link)) {
+    for (const j of byParent.get(link) ?? []) {
       const jw = world.clone().multiply(j.origin);
 
       joints.push({
@@ -173,6 +189,7 @@ function linkTree(links: Map<string, ModelLink>, raw: UrdfJoint[], root: string)
         axis: j.axis,
         limit: j.limit,
         effort: j.effort,
+        ...(j.actuation ? { actuation: j.actuation, damping: j.damping, frictionloss: j.frictionloss } : {}),
         velocity: j.velocity,
       });
       walk(j.child, jw, depth + 1);

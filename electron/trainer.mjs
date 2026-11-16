@@ -176,22 +176,22 @@ export class Trainer {
     };
   }
 
-  start({ workspaceId = 'main', xml, job, priority = PRIORITY.user }) {
+  prepare({ workspaceId = 'main', xml, job, priority = PRIORITY.user }, forge = this.forge) {
     if (this.jobs.has(workspaceId) || this.queue.some((q) => q.workspaceId === workspaceId))
       throw new Error('This scene is already training.');
 
-    const uv = this.forge ? null : findUv();
+    const uv = forge ? null : findUv();
 
-    if (!this.forge && !uv) throw new Error(`Training needs uv. Install it with: ${UV_INSTALL}`);
+    if (!forge && !uv) throw new Error(`Training needs uv. Install it with: ${UV_INSTALL}`);
 
     const { warmPolicy, ...plainJob } = job;
 
     if (warmPolicy != null && job.warmStart != null)
       throw new Error('A warm start takes an earlier run or a saved policy, not both.');
 
-    if (!this.forge && job.demos !== undefined) throw new Error('Training from tries needs Forge.');
+    if (!forge && job.demos !== undefined) throw new Error('Training from tries needs Forge.');
 
-    const policyText = warmPolicyText(warmPolicy, this.forge);
+    const policyText = warmPolicyText(warmPolicy, forge);
     const warmFrom = this.warmSource(job.warmStart);
     const id = newId();
     const dir = path.join(this.jobsDir, id);
@@ -201,7 +201,12 @@ export class Trainer {
     const warmStart = warmStartIn(dir, { from: warmFrom, policyText });
     const runJob = writeJobFolder(dir, { xml, job: { ...plainJob, warmStart } });
 
-    const entry = { workspaceId, job: runJob, id, dir, priority, uv };
+    return { workspaceId, job: runJob, id, dir, priority, uv };
+  }
+
+  start(request) {
+    const entry = this.prepare(request);
+    const { priority, id } = entry;
     const send = this.sender(entry);
 
     if (priority === PRIORITY.user) this.yieldKit();

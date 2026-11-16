@@ -89,6 +89,13 @@ const ROUTES: Record<string, Route> = {
     return bytes && { data: bytesToBase64(bytes) };
   },
   'hub-model-file': () => ({ web: true }),
+  'hub-find-skills': () => import('./webHub').then(({ webHub }) => webHub.call('find', undefined)),
+  'hub-skill-files': (body) =>
+    import('./webHub').then(({ webHub }) =>
+      webHub.call('files', body.arg as import('../../../hub/hubBridge').HubRepoRef),
+    ),
+  'hub-skill-outcomes': () => import('./webHub').then(({ webHub }) => webHub.call('outcomes', undefined)),
+  'hub-publish-skill-outcome': (body) => import('./webHub').then(({ webHub }) => webHub.call('saveOutcome', body.arg)),
   'acp-status': () => WEB_AGENT_STATUS,
   'sourced-parts': () => [],
   'sourced-mesh': () => ({ data: null }),
@@ -116,6 +123,10 @@ const ROUTES: Record<string, Route> = {
   'save-scene-preview': (b) => saveScenePreview(b as { id: string }),
   'delete-scene': (b) => deleteScene(String(b.sceneId)),
   'train-status': () => TRAINER,
+  'remote-training-status': () => ({ selected: false }),
+  'remote-training-configure': () => ({ error: 'Download Basecase to connect a training computer.' }),
+  'remote-training-clear': () => ({ selected: false }),
+  'remote-training-selection': () => ({ error: 'Download Basecase to connect a training computer.' }),
   'vision-training-status': () => ({ desktopOnly: true }),
   'vision-training-start': () => ({ error: 'Download Basecase to train vision models.' }),
   'vision-training-stop': () => null,

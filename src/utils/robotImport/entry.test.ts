@@ -39,6 +39,26 @@ const UNITREE_ROS = [
 ];
 
 describe('chooseEntry', () => {
+  it('keeps depth and lexical peek limits for XML and xacro in unsorted repositories', async () => {
+    for (const extension of ['xml', 'xacro']) {
+      const paths = Array.from({ length: 80 }, (_, i) => `${'nested/'.repeat(i % 4)}robot_${i}.${extension}`);
+      const original = [...paths];
+      const ordered = [...paths].sort((a, b) => a.split('/').length - b.split('/').length || a.localeCompare(b));
+      const read: string[] = [];
+      const limit = extension === 'xml' ? 24 : 48;
+      const result = await chooseEntry(paths, async (path) => {
+        read.push(path);
+
+        return extension === 'xml' ? SAMPLE.mjcf : xacro('robot');
+      });
+      const choices = ordered.filter((p) => !p.includes('/'));
+
+      expect(read).toEqual(ordered.slice(0, limit));
+      expect(result).toEqual({ choices });
+      expect(paths).toEqual(original);
+    }
+  });
+
   it('prefers the robot MJCF over its scene, its URDF and ROS package files', async () => {
     const robots = ['go2_description/mjcf/go2.xml', 'go2_description/mjcf/scene.xml'];
 

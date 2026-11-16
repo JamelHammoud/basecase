@@ -4,6 +4,7 @@ import { plural } from '../../electron/plural.mjs';
 import { angle } from './angle';
 import type { CheckRow, JointLoad } from './engineeringTypes';
 import { volts } from './electric';
+import { worstJointLoad } from './worstJointLoad';
 
 const share = (v: number | undefined) => (v === undefined ? '?' : v.toFixed(2));
 
@@ -41,18 +42,12 @@ interface TorqueSummary {
   legs: string;
 }
 
-function worstOf(loads: JointLoad[]): JointLoad | undefined {
-  const known = loads.filter((l) => l.stallShare !== undefined);
-
-  return known.sort((x, y) => y.stallShare! - x.stallShare!)[0];
-}
-
 function torqueDetail({ loads, fails, warns, unknown, legs }: TorqueSummary): string {
   if (fails.length) return `${plural(fails.length, 'joint')} overloaded`;
 
   if (warns.length) return `${plural(warns.length, 'joint')} with thin margins`;
 
-  const worst = worstOf(loads);
+  const worst = worstJointLoad(loads);
 
   if (!worst) return `No torque data for ${plural(unknown.length, 'joint')}`;
 

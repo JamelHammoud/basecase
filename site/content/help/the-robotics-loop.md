@@ -36,6 +36,8 @@ Basecase is a 3D CAD studio for robots, with an agent that designs alongside you
 
 MuJoCo is the physics engine that robotics labs use to test robots before they build them. Basecase runs it inside the app, on the same model it exports.
 
+You can also compare shared robots in [Leagues](/help/replay-a-league). Each League runs fixed robot revisions on one pinned Case. Frozen standings come from CI, and browser replays let you inspect a measured seed without changing the standings.
+
 ## How the stages loop
 
 If something fails in Engineer, Simulate or Train, you go back to Design. For example, if a knee servo has to hold more than 60% of its stall torque while the robot stands on one leg, the **Servo torque** check fails in the **Build** tab. To fix it, go back to Design and choose a stronger servo.
@@ -50,7 +52,8 @@ You can also [try a Case](/help/try-a-case-on-your-real-robot) with a real wheel
 
 - Design and Engineer are complete.
 - Simulate and Train are in active development.
-- Build covers the Checks, the bill of materials, the build guide, slicing and print service quotes.
+- The desktop app can [train on another computer](/help/train-on-another-computer) over SSH and recover the result after a restart. Arena judges it locally.
+- Build covers the Checks, the bill of materials, the build guide, slicing, print service quotes and [manufacturing kit export](/help/export-a-robot-kit).
 - Operate connects fleets of emulated robots with separate calibrations and faults, locally or over a private network. [Connect a robot computer](/help/connect-a-robot-computer) installs the daemon as a Linux user service and pairs it with the app. [Roll Out](/help/roll-out-a-skill-to-a-fleet) proves each unit's twin before sending its policy.
 
 **Note:** Basecase doesn't drive real motors, but it can watch a real robot through a camera.

@@ -63,7 +63,7 @@ This happens while the plate is slicing or sending, and when a printer is set up
 **Start Next** appears only beside a printer that reads Ready and has a plate left that it can print. Basecase doesn't offer a plate that:
 
 - Has already been sent, is printing or has printed
-- Is too big for the printer's bed
+- Is too big for the printer's bed or crosses its reserved obstacle space
 - Is in a material other than the filament the printer reports
 
 For the steps, see [Print plates on several printers](/help/print-plates-on-several-printers).
@@ -85,7 +85,7 @@ If the message ends with “Update the slicer or pick another printer.”, your 
 
 ## “No plates to print. Add printed parts first.”
 
-None of the parts in your scene are printed. Components, screws, stand-ins, [sheet parts](/help/cut-parts-from-sheet) and parts whose **Material** is **Off-the-shelf** stay off the print plates.
+No printed parts in the scene are eligible for a plate. Parts that fail fit or use unsupported printer obstacle geometry stay off the plates. Components, screws, stand-ins, [sheet parts](/help/cut-parts-from-sheet) and parts whose **Material** is **Off-the-shelf** stay off the print plates.
 
 ## “The slicer returned no plates. Slice again.”
 

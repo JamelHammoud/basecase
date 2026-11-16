@@ -72,12 +72,30 @@ async function scripted() {
   return { mj, kase, model: result.model, recording: result.recording! };
 }
 
-function runtimeWith(policy: PolicySpec) {
+function runtimeWith(policy: PolicySpec, grouped = false) {
   const save = vi.fn(() => Promise.resolve());
   const records: SkillRecord[] = [];
   const runtime = new SkillsRuntime({
     runner: () => Promise.reject(new Error('unused')),
-    forge: () => () => Promise.resolve({ ok: true, policy, events: [], stderr: '' }),
+    forge: () => () =>
+      Promise.resolve({
+        ok: true,
+        policy: grouped ? null : policy,
+        events: [],
+        stderr: '',
+        ...(grouped
+          ? {
+              candidates: [0, 1].map((index) => ({
+                id: `policy-clone-${index}`,
+                seed: index + 1,
+                policy,
+                fingerprint: { 'demos.json': 'frozen-dataset' },
+                steps: 12,
+                development: { kind: 'cloning-loss', score: -index },
+              })),
+            }
+          : {}),
+      }),
     save,
     loadSkill: () => Promise.resolve(null),
     onRecord: (r) => records.push(r),
@@ -87,10 +105,10 @@ function runtimeWith(policy: PolicySpec) {
   return { runtime, save, records };
 }
 
-async function learn(passes: number) {
+async function learn(passes: number, grouped = false) {
   const { kase, model, recording } = await scripted();
   const policy = holdPolicy(model);
-  const { runtime, save, records } = runtimeWith(policy);
+  const { runtime, save, records } = runtimeWith(policy, grouped);
   const outcomes: TriesOutcome[] = [];
   const job = triesJob(model, kase, [recording, recording]);
 
@@ -147,6 +165,16 @@ describe('training from tries', () => {
     expect(records).toEqual([]);
     expect(outcomes).toEqual([{ runs: runsOf(28), kept: false, problem: null }]);
   }, 30000);
+
+  it('selects one cloned arm policy by validation loss and records all seed work after local judgment', async () => {
+    const { records, outcomes } = await learn(29, true);
+
+    expect(outcomes[0].kept).toBe(true);
+    expect(records).toHaveLength(1);
+    expect(records[0].origin?.training?.selected).toBe('policy-clone-0');
+    expect(records[0].origin?.training?.attempts.map((attempt) => attempt.seed)).toEqual([1, 2]);
+    expect(records[0].origin?.cost.steps).toBe(24);
+  });
 
   it('keeps a pass as a ready skill for the Case, which Train lists', async () => {
     const { kase, model, save, records, outcomes } = await learn(29);

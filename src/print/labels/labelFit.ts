@@ -70,9 +70,21 @@ function tallest(
 function* candidateCenters(face: FlatFace): Generator<[number, number]> {
   if (insideFace(face, face.centroid)) yield face.centroid;
 
-  const xs = face.tris.filter((_, i) => i % 2 === 0);
-  const ys = face.tris.filter((_, i) => i % 2 === 1);
-  const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+
+  for (let i = 0; i < face.tris.length; i += 2) {
+    const x = face.tris[i];
+    const y = face.tris[i + 1];
+
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  }
+
   const grid: Array<[number, number]> = [];
 
   for (let i = 0; i <= GRID; i++)

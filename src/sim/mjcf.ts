@@ -1,8 +1,10 @@
 import * as THREE from 'three';
+import { assertJointActuation } from '../joints/actuation';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { RobotJoint, RobotPoseState, ScenePart } from '../types/robotics';
 import { partMasses } from '../utils/engineering';
 import { clampJoint, isMovable, partMatrix, robotPose, type Rig, type V3 } from '../utils/kinematics';
+import { ownedPartsByJoint } from '../utils/kinematicsMembers';
 import { effortOf } from './mjcfEffort';
 import { robotFingerprint } from './mjcfFingerprint';
 import { robotContactExclusions, robotContactMasks } from './mjcfContacts';
@@ -24,6 +26,7 @@ import { robotScans } from './lidar';
 import { classifyRobot, isWheelJoint } from './morphology';
 import { applyBodyFits } from '../reality/bodyModel';
 import { bodyFitForCalibration, bodyPayloads } from '../reality/bodyLayout';
+import { passiveJointXml } from './mjcfPassive';
 import { activeBodyCalibration } from '../reality/history';
 
 export { fromMj, quatFromMj, quatToMj, simDelta, simDeltas, toMj, worldDelta, worldDeltas } from './mjcfFrames';
@@ -37,6 +40,7 @@ interface BuildState {
   byId: Map<string, ScenePart>;
   masses: Map<string, PartMass>;
   contactMasks: Map<string, string>;
+  partsByJoint: Map<string, string[]>;
   assets: string[];
   bodies: SimBody[];
   simJoints: SimJoint[];
@@ -181,7 +185,7 @@ function estimatedJointAttrs(effort: number, revolute: boolean): string {
   return `damping="${f(effort * 0.02)}" armature="${f(armature)}" frictionloss="${f(effort * 0.01)}"`;
 }
 
-function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
+function poweredJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
   const { st } = rb;
   const axis = toMj(j.axis).map((v) => v * 1000);
   const revolute = j.type === 'revolute';
@@ -227,10 +231,12 @@ function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
   return jointLine;
 }
 
+function movableJointXml(rb: RobotBuild, joint: RobotJoint, name: string): string {
+  return joint.actuation === 'passive' ? passiveJointXml(rb, joint, name) : poweredJointXml(rb, joint, name);
+}
+
 function jointParts(st: BuildState, jointId: string): string[] {
-  return [...st.input.rig.ownerOf]
-    .filter(([pid, owner]) => owner === jointId && solidPart(st, pid))
-    .map(([pid]) => pid);
+  return (st.partsByJoint.get(jointId) ?? []).filter((id) => solidPart(st, id));
 }
 
 function emitJoint(rb: RobotBuild, j: RobotJoint, parent: BodySpec['parent'], indent: string): string[] {
@@ -253,7 +259,10 @@ function childrenByParent(rig: Rig, joints: RobotJoint[]): Map<string, RobotJoin
   for (const j of joints) {
     const parent = rig.parentOf.get(j.id) ?? '';
 
-    children.set(parent, [...(children.get(parent) ?? []), j]);
+    const members = children.get(parent) ?? [];
+
+    members.push(j);
+    children.set(parent, members);
   }
 
   return children;
@@ -375,6 +384,8 @@ ${st.actuatorXml.join('\n')}
 }
 
 export function buildMjcf(given: MjcfInput): SimModel {
+  assertJointActuation(given.rig.joints);
+
   const input = { ...given, rig: adoptEmbeddedParts(given.rig, given.parts, given.partTriangles) };
   const { parts, rig, project } = input;
   const st: BuildState = {
@@ -383,6 +394,7 @@ export function buildMjcf(given: MjcfInput): SimModel {
     masses: new Map(partMasses(parts, project, input.measures).map((m) => [m.id, m])),
     assets: [],
     contactMasks: robotContactMasks(rig.robots),
+    partsByJoint: ownedPartsByJoint(rig.ownerOf),
     bodies: [],
     simJoints: [],
     robots: [],

@@ -53,7 +53,7 @@ Each joint shows the most torque it needed, as a percentage of its servo's limit
 
 ## When the model is estimated
 
-**Build** ▸ **Checks** tells you when a joint's torque or servo response is estimated. **Torque estimates** lists the joints that don't have a servo from Parts. **Servo models** lists the servos that don't have a measured model.
+**Build** ▸ **Checks** tells you when a joint's torque or servo response is estimated. **Torque estimates** lists powered joints that don't have a servo from Parts. **Servo models** lists the servos that don't have a measured model.
 
 ![Checks with Torque estimates open on a joint without a servo](/help/run-a-simulation/checks.png)
 

@@ -5,18 +5,32 @@ import { robotSchema } from './robotSchema';
 import { kitRobot } from './kitModel';
 import type { RankedSkill } from './skillRank';
 import type { SKILL_RANK_HANDLERS } from './skillRankJob';
+import type { produceInstallOutcome } from './installOutcome';
 
 const ranking = workerClient<typeof SKILL_RANK_HANDLERS>(
   () => new Worker(new URL('./skillRank.worker.ts', import.meta.url), { type: 'module' }),
-  () => import('./skillRankJob').then((m) => m.SKILL_RANK_HANDLERS),
+  async () => {
+    if (typeof window !== 'undefined') throw new Error('Worker failed');
+
+    return (await import('./skillRankJob')).SKILL_RANK_HANDLERS;
+  },
 );
+
+export const prepareSkillInstallation = (files: Record<string, unknown>, model: SimModel) =>
+  ranking.call('prepareInstall', { files, model });
+
+export const prepareInstallOutcome = (options: Parameters<typeof produceInstallOutcome>[0]) =>
+  ranking.call('installOutcome', options);
 
 export async function findSkills(model: SimModel, query = ''): Promise<RankedSkill[]> {
   try {
     const robot = kitRobot(model);
     const target = robotSchema(model, { robot: robot.key, joints: robot.joints });
-    const candidates = await hubBridge.findSkills();
-    const ranked = await ranking.call('rank', { candidates, target });
+    const [candidates, outcomes] = await Promise.all([
+      hubBridge.findSkills(),
+      hubBridge.skillOutcomes().catch(() => []),
+    ]);
+    const ranked = await ranking.call('rank', { candidates, target, outcomes });
     const words = query.trim().toLowerCase().split(/\s+/);
 
     return ranked.filter((r) => words.every((word) => `${r.name} ${r.repo}`.toLowerCase().includes(word)));

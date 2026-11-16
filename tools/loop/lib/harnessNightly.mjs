@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { EFFICIENCY_OBJECTIVE } from '../../../bench/compare/outcome.mjs';
 import { readExperiments } from '../../../bench/experiments.mjs';
-import { DEFAULT_MODEL } from '../../../bench/compare/arms.mjs';
+import { benchmarkSelection } from './benchmarkPolicy.mjs';
 import { quietRequested } from '../../../verify/lib/quiet.mjs';
 import { CHANGE_SCHEMA, runAgent } from './agent.mjs';
 import { measure } from './capacity.mjs';
@@ -20,13 +21,32 @@ const RESERVE_MS = 30_000;
 const PROPOSAL_HOURS = 4 / 60;
 const RUNS = path.join(LOOP_DIR, 'state', 'harness', 'runs');
 
-function comparison({ worktree, base, name, split, milliseconds }) {
+function verifySelection(saved, selection) {
+  const models = saved.resolved ?? [];
+
+  if (
+    saved.provider !== selection.provider ||
+    saved.effort !== selection.effort ||
+    models.length !== 2 ||
+    models.some((model) => model.arg !== selection.model)
+  )
+    throw new Error('Comparison identity differs from the selected provider, model or effort.');
+}
+
+function comparison({ worktree, base, name, split, milliseconds, selection }) {
   const args = [
     'bench/compare.mjs',
     '--against',
     base,
     '--model',
-    DEFAULT_MODEL,
+    selection.model,
+    '--provider',
+    selection.provider,
+    '--effort',
+    selection.effort,
+    '--loop-allowance',
+    '--parallel',
+    selection.provider === 'claude' ? '1' : '8',
     `--${split}`,
     '--seeds',
     '1',
@@ -57,6 +77,8 @@ function comparison({ worktree, base, name, split, milliseconds }) {
     });
 
   const saved = JSON.parse(fs.readFileSync(resultsFile, 'utf8'));
+
+  verifySelection(saved, selection);
 
   if (!result.ok) {
     saved.plan = { ...saved.plan, stop: Date.now() - started >= milliseconds ? 'deadline' : 'error' };
@@ -124,7 +146,14 @@ function experiment({ log, candidate, release, started }) {
   const name = `nightly-${release}-${candidate.key.slice(0, 12)}`;
 
   try {
+    const selection = benchmarkSelection();
+
+    journal.update('state', (state) => ({
+      entries: state.entries.map((entry) => (entry.candidate === candidate.key ? { ...entry, selection } : entry)),
+    }));
+
     return runExperiment({
+      selection,
       candidate,
       release,
       ledger,
@@ -143,7 +172,7 @@ function experiment({ log, candidate, release, started }) {
               })
             : { ok: false, error: 'Experiment deadline expired before proposal.' },
         fingerprint: () => patchFingerprint(worktree.dir),
-        compare: (options) => comparison({ ...options, worktree, base, name }),
+        compare: (options) => comparison({ ...options, worktree, base, name, selection }),
         record: (entry) =>
           journal.update('state', (state) => ({
             entries: [...state.entries.filter((item) => item.candidate !== entry.candidate), entry],
@@ -183,8 +212,11 @@ export function nightlyHarness({ log, release = null }) {
     candidate: candidate.key,
     fingerprint: `candidate-${candidate.key}`,
     title: candidate.text,
-    evidence: [candidate.ref],
+    evidence: [candidate.ref, ...(candidate.evidence ?? [])],
+    waste: candidate.measured ?? null,
     verdict: 'error',
+    outcome: 'incomplete',
+    efficiencyObjective: EFFICIENCY_OBJECTIVE,
     at: new Date(started).toISOString(),
     lesson: 'error: The experiment started but did not finish recording a result.',
   };

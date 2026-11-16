@@ -19,6 +19,7 @@ import { isSmall } from '../lib/smallChange.mjs';
 import { run } from '../lib/sh.mjs';
 import { voiceNewPages } from '../lib/voiceHook.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
+import { hasPendingDelivery } from '../lib/deliveryState.mjs';
 
 export const schedule = {
   agent: true,
@@ -69,9 +70,9 @@ const reviewComment = ({ verdict, summary, findings, fixed = [] }, { sha, copy }
     fenced(copy.text),
   ].join('\n');
 
-function ontoMain(dir) {
+function ontoMain(dir, body) {
   const diff = run('git', ['diff', 'origin/main...HEAD'], { cwd: dir }).out.slice(0, MAX_DIFF);
-  const copy = copyReport(dir);
+  const copy = copyReport(dir, { body });
   const onMain = run('git', ['merge', '-q', '--no-edit', 'origin/main'], { cwd: dir, allowFail: true }).ok;
 
   if (!onMain) run('git', ['merge', '--abort'], { cwd: dir, allowFail: true });
@@ -152,7 +153,7 @@ function reviewPull(pull, log) {
   try {
     setReview(sha, 'pending', 'Reviewing');
 
-    const { diff, copy, onMain } = ontoMain(worktree.dir);
+    const { diff, copy, onMain } = ontoMain(worktree.dir, pull.body);
     const judged = judge({ pull, worktree, diff, copy, onMain, log });
 
     if (!judged) return;
@@ -197,6 +198,7 @@ export default function review({ log }) {
   fetchAll();
 
   const waiting = openPulls()
+    .filter((pull) => !hasPendingDelivery(pull.headRefName))
     .filter((pull) => {
       const state = pullReview(pull);
 

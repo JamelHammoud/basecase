@@ -57,9 +57,7 @@ function describeRelation(a: ScenePart, b: ScenePart): string {
   return `ALIGNMENT / PIVOT AXIS: "${axisPart.name}" passes through "${targetPart.name}" — align joint/bore along rotation (${axisPart.rotation.join('°, ')}°).`;
 }
 
-export function inferSpatialRelationships(parts: ScenePart[]): string[] {
-  const visibleParts = parts.filter((p) => p.visible && p.kind !== 'image_plane');
-  const bounds = visibleParts.map(getApproxBounds);
+function spatialRelationships(visibleParts: ScenePart[], bounds: BoxBounds[]): string[] {
   const relations: string[] = [];
 
   for (let i = 0; i < visibleParts.length; i++) {
@@ -72,10 +70,15 @@ export function inferSpatialRelationships(parts: ScenePart[]): string[] {
   return relations;
 }
 
-function envelope(parts: ScenePart[]): ProjectSummaryForAI['boundingBoxMm'] {
-  if (!parts.length) return { width: 0, height: 0, depth: 0 };
+export function inferSpatialRelationships(parts: ScenePart[]): string[] {
+  const visibleParts = parts.filter((p) => p.visible && p.kind !== 'image_plane');
 
-  const all = parts.map(getApproxBounds);
+  return spatialRelationships(visibleParts, visibleParts.map(getApproxBounds));
+}
+
+function envelope(all: BoxBounds[]): ProjectSummaryForAI['boundingBoxMm'] {
+  if (!all.length) return { width: 0, height: 0, depth: 0 };
+
   const span = (k: number) =>
     Math.round(
       all.reduce((m, b) => Math.max(m, b.max[k]), -Infinity) - all.reduce((m, b) => Math.min(m, b.min[k]), Infinity),
@@ -87,17 +90,17 @@ function envelope(parts: ScenePart[]): ProjectSummaryForAI['boundingBoxMm'] {
 function buildSpec(
   projectName: string,
   globalDesignGoal: string,
-  parts: ScenePart[],
+  visibleParts: ScenePart[],
   annotations: AnnotationAttachment[],
 ): ProjectSummaryForAI {
-  const visibleParts = parts.filter((p) => p.visible && p.kind !== 'image_plane');
+  const bounds = visibleParts.map(getApproxBounds);
 
   return {
     projectName,
     globalDesignGoal,
     units: 'mm',
     timestamp: new Date().toISOString(),
-    boundingBoxMm: envelope(visibleParts),
+    boundingBoxMm: envelope(bounds),
     parts: visibleParts.map((p) => ({
       id: p.id,
       name: p.name,
@@ -117,7 +120,7 @@ function buildSpec(
       dimensionsMm: p.dimensions,
       aiNote: p.note,
     })),
-    spatialRelationships: inferSpatialRelationships(visibleParts),
+    spatialRelationships: spatialRelationships(visibleParts, bounds),
     annotations: annotations.map(({ annotation: a, part, position: [x, y, z] }) => ({
       id: a.id,
       positionMm: { x: Math.round(x), y: Math.round(y), z: Math.round(z) },
@@ -248,7 +251,7 @@ export function buildAIHandoffPayload(
   const attachments = annotationAttachments(openNotes, parts);
   const referenceImages = parts.filter((p) => p.visible && p.kind === 'image_plane');
   const visibleParts = parts.filter((p) => p.visible && p.kind !== 'image_plane');
-  const spec = buildSpec(projectName, globalDesignGoal, parts, attachments);
+  const spec = buildSpec(projectName, globalDesignGoal, visibleParts, attachments);
   const { boundingBoxMm, spatialRelationships } = spec;
 
   const mdLines: string[] = [

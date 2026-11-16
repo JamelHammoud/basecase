@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { pairKey } from '../../../electron/cad-kernel/pairKey.mjs';
+import { emptyBounds, includePoint } from './bounds';
 import type { SketchPlane, Vec3 } from './placement';
 import type { Sketch, Vec2 } from './types';
 
@@ -160,18 +161,21 @@ export function faceOf(soup: ArrayLike<number>, pick: FacePick): Face | null {
   );
   const { n, u, v } = frameFor(seed.normal);
   const corner = new THREE.Vector3();
+  const bounds = emptyBounds();
   const planar = flat.map((t) =>
     [0, 3, 6].map((k): Vec2 => {
       corner.fromArray(soup, t.i + k);
 
-      return [corner.dot(u), corner.dot(v)];
+      const x = corner.dot(u);
+      const y = corner.dot(v);
+
+      includePoint(bounds, x, y);
+
+      return [x, y];
     }),
   );
-  const all = planar.flat();
-  const mid: Vec2 = [
-    (Math.min(...all.map((p) => p[0])) + Math.max(...all.map((p) => p[0]))) / 2,
-    (Math.min(...all.map((p) => p[1])) + Math.max(...all.map((p) => p[1]))) / 2,
-  ];
+  const { min, max } = bounds;
+  const mid: Vec2 = [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2];
   const origin = n.clone().multiplyScalar(seed.offset).addScaledVector(u, mid[0]).addScaledVector(v, mid[1]);
   const edges = mergeCollinear(boundary(planar)).map(([p, q]): [Vec2, Vec2] => [
     [p[0] - mid[0], p[1] - mid[1]],

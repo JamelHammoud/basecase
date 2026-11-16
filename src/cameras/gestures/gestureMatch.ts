@@ -30,30 +30,27 @@ export function frameGap(a: ArrayLike<number>, b: ArrayLike<number>): number {
 
 export class SpringMatch {
   private readonly example: GestureExample;
-  private previous: Float64Array;
-  private current: Float64Array;
+  private readonly costs: Float64Array;
 
   constructor(example: GestureExample) {
     this.example = example;
-    this.previous = new Float64Array(example.length + 1).fill(Number.POSITIVE_INFINITY);
-    this.current = new Float64Array(example.length + 1);
-    this.previous[0] = 0;
+    this.costs = new Float64Array(example.length + 1).fill(Number.POSITIVE_INFINITY);
+    this.costs[0] = 0;
   }
 
   step(frame: ArrayLike<number>): number {
     const m = this.example.length;
-    const prev = this.previous;
-    const cur = this.current;
+    const costs = this.costs;
+    let diagonal = 0;
 
-    cur[0] = 0;
+    for (let j = 1; j <= m; j++) {
+      const previous = costs[j];
 
-    for (let j = 1; j <= m; j++)
-      cur[j] = frameGap(frame, this.example[j - 1]) + Math.min(prev[j - 1], prev[j], cur[j - 1]);
+      costs[j] = frameGap(frame, this.example[j - 1]) + Math.min(diagonal, previous, costs[j - 1]);
+      diagonal = previous;
+    }
 
-    this.previous = cur;
-    this.current = prev;
-
-    return cur[m] / m;
+    return costs[m] / m;
   }
 }
 
@@ -63,10 +60,48 @@ export function bestMatch(example: GestureExample, stream: GestureExample): numb
   return Math.min(...stream.map((frame) => match.step(frame)));
 }
 
+function pairSpread(a: GestureExample, b: GestureExample): number {
+  if (!a.length || !b.length) return Math.max(bestMatch(a, b), bestMatch(b, a));
+
+  const forward = new Float64Array(a.length + 1).fill(Infinity);
+  const reverse = new Float64Array(a.length + 1);
+  let best = Infinity;
+
+  forward[0] = 0;
+
+  for (const frame of b) {
+    let forwardDiagonal = 0;
+    let reverseDiagonal = reverse[0];
+
+    reverse[0] = Infinity;
+
+    for (let i = 1; i <= a.length; i++) {
+      const forwardPrevious = forward[i];
+      const reversePrevious = reverse[i];
+      const gap = frameGap(frame, a[i - 1]);
+
+      forward[i] = gap + Math.min(forwardDiagonal, forwardPrevious, forward[i - 1]);
+      reverse[i] = gap + Math.min(reverseDiagonal, reverse[i - 1], reversePrevious);
+      forwardDiagonal = forwardPrevious;
+      reverseDiagonal = reversePrevious;
+    }
+
+    best = Math.min(best, forward[a.length] / a.length);
+  }
+
+  let reverseBest = Infinity;
+
+  for (let i = 1; i <= a.length; i++) reverseBest = Math.min(reverseBest, reverse[i] / b.length);
+
+  return Math.max(best, reverseBest);
+}
+
 export function matchThreshold(examples: GestureExample[]): number {
   let spread = 0;
 
-  for (const a of examples) for (const b of examples) if (a !== b) spread = Math.max(spread, bestMatch(a, b));
+  for (let i = 0; i < examples.length; i++)
+    for (let j = i + 1; j < examples.length; j++)
+      if (examples[i] !== examples[j]) spread = Math.max(spread, pairSpread(examples[i], examples[j]));
 
   return Math.max(MIN_THRESHOLD, spread * SPREAD_FACTOR);
 }

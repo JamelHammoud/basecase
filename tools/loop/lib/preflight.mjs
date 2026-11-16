@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { BANNED_COPY } from '../../../verify/rehearsal/uiRules.ts';
-import { diffStrings, judge } from '../../copy/budget.mjs';
-import { changedFiles, scannedSources, stringsOf } from '../../copy-diff.mjs';
+import { judge } from '../../copy/budget.mjs';
+import { changedFiles, copyDiffOfRange, copyOccurrences } from '../../copy-diff.mjs';
 import { runAgent } from './agent.mjs';
 import { ANNOUNCED, copyLines } from './pull.mjs';
 
@@ -130,11 +130,7 @@ function helpArticles(cwd) {
 }
 
 function addedAndRemoved(cwd) {
-  const diffs = scannedSources({ cwd }).map(({ file, renamedFrom, before, after }) =>
-    diffStrings(stringsOf(renamedFrom, before), stringsOf(file, after)),
-  );
-
-  return { added: diffs.flatMap((d) => d.added), removed: diffs.flatMap((d) => d.removed) };
+  return copyOccurrences(copyDiffOfRange({ cwd }));
 }
 
 export function preflight(cwd, { kind, copy }) {
@@ -159,11 +155,7 @@ export const followUpPrompt = ({ prompt, output, problems }) =>
 
 const shouldCheck = (result) => result.ok && result.output.changed && !result.output.abandon;
 
-export function checkedRun({ kind, log, ...session }) {
-  const first = runAgent(session);
-
-  if (!shouldCheck(first)) return first;
-
+function checkedChange(first, { kind, log, session }) {
   const problems = preflight(session.cwd, { kind: kind ?? first.output.kind, copy: first.output.copy });
 
   if (problems.length === 0) return first;
@@ -172,10 +164,34 @@ export function checkedRun({ kind, log, ...session }) {
 
   const second = runAgent({
     ...session,
-    prompt: followUpPrompt({ prompt: session.prompt, output: first.output, problems }),
+    continuation: first.session,
+    prompt: first.session
+      ? `The task is implemented. Fix these preflight findings in the same worktree, check the changed files, and return the complete answer with current copy reasons:\n${problems.map((problem) => `- ${problem}`).join('\n')}`
+      : followUpPrompt({ prompt: session.prompt, output: first.output, problems }),
   });
 
-  if (!second.ok) log(`preflight follow-up failed; publishing the first answer: ${String(second.error).slice(0, 300)}`);
+  if (!second.ok)
+    log(`preflight follow-up failed; preserving work for recovery: ${String(second.error).slice(0, 300)}`);
 
-  return second.ok ? second : first;
+  if (!second.ok) return second.session ? second : { ...second, session: first.session };
+
+  const remaining = preflight(session.cwd, { kind: kind ?? second.output.kind, copy: second.output.copy });
+
+  if (remaining.length > 0) log(`preflight: ${remaining.length} findings remain for independent review`);
+
+  return second;
+}
+
+export function checkedRun({ kind, log, ...session }) {
+  const first = runAgent(session);
+
+  if (!shouldCheck(first)) return first;
+
+  try {
+    return checkedChange(first, { kind, log, session });
+  } catch (error) {
+    if (first.session) error.session ??= first.session;
+
+    throw error;
+  }
 }

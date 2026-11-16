@@ -1,4 +1,4 @@
-import { SKILL_DOWNLOADS, SKILL_FILE_BYTES } from '../../electron/hub/skillRepo.mjs';
+import { SKILL_DOWNLOADS, SKILL_FILE_BYTES } from '../hub/skillDownloads.mjs';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { PolicySpec } from '../sim/policy';
 import { hubLink } from '../utils/robotImport/hub';

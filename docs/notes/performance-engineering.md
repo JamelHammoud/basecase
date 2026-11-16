@@ -2,6 +2,18 @@
 
 Implementation: [Engineering calculations](../guide/build.md#performance-engineering-calculations). Shared requirements: [Performance](../guide/performance.md).
 
+## Axis distances use scalar products
+
+A whole-app search found one tuple-based point-to-axis cross-product distance helper, `utils/engineeringMath.ts`. Servo alignment, wheel contacts, agent interface checks and planned-joint matching share it. The separate `three/analysis/lineDistance.ts` prepares a line projection with retained Three.js workspaces and already avoids per-query vectors. Its degenerate-line behavior differs and stays unchanged.
+
+The tuple helper previously allocated one offset vector and one cross-product vector per query. It now calculates those six scalar components directly and passes the same three products to `Math.hypot` in the same order. For 300 and 600 queries, temporary three-coordinate arrays fall from 600 and 1,200 to zero. These are source-derived allocation counts, not measured timings or complete Checks latency measurements. Axis normalization remains the caller's responsibility.
+
+`engineeringLineDistance.test.ts` compares exact outputs with the former calculation for 1,800 generated point, origin and axis combinations, 300 later edits and 448 exceptional combinations. It checks source preservation, nonunit and zero axes, signed zero, subnormal values, overflow, infinities and NaN. Existing engineering output, wheel-contact and agent interface tests retain consumer coverage. No timeout, retry or quarantine changes apply.
+
+No labels, controls, verdicts, user actions or screenshot states change. The existing Servo torque and sizing and Checks in the Build tab help articles remain accurate.
+
+Validation on macOS arm64 with Node v26.13.0 passed the corrected test's changed-file check, including formatting, lint, site copy, types and both tests. The initial four-file check passed documentation, site copy and types, but caught a test nesting limit that was then fixed. Its broad related selection completed in 202.61 seconds with 2,446 passing tests, 22 failures across ten files and one skipped file and test. The failures were 20 timeouts and two classroom count assertions reporting 15 rather than 20 after seed groups timed out. The timeout files were `classroom/grading.test.ts`, `cases/caseBuilder.test.ts`, `cases/contactProbes.test.ts`, `cases/slots.test.ts`, `cases/terrain.test.ts`, `cases/worldImportRuns.test.ts`, `reality/bodyFit.test.ts`, `strength/lightenPipeline.test.ts`, `skills/kitTransitions.test.ts` and `utils/armSizing.test.ts`, all under `src/`. Lighten reached 30 seconds and the others reached five seconds. This shared-host run is not evidence of clean broad-suite validation or a proven cause for those failures. No retries, timeout changes or quarantine entries were added. Logs remain in `scratch/check-axis-distance.log` and `scratch/check-axis-distance-correction.log`.
+
 ## Robot attachment bounds compare directly
 
 `engineeringReadings.test.ts` covers nearby unassigned parts, distant scenery, dynamic objects and independent robot loads through complete engineering reports. A scratch comparison matched complete body results against the previous implementation across 60 cases. Fixtures used all three axes, both directions, gaps of 0, 49.999, 50, 50.001 and 100 mm, reversed part order, dynamic exclusions and later bounds edits. It also checked that grouping preserved its inputs.
@@ -176,3 +188,23 @@ For N parallel horizontal joints, the previous grouping created 2N member arrays
 Existing `crouchAxes.test.ts` compares the full lever and knee results against the previous member-list calculation for 529 empty, mixed and reversed chains. It includes knee ties, level and parallel thresholds, zero and nonfinite axes, edited inputs and independent results. Its 30- and 60-joint cases retain source-axis read bounds. `engineeringCrouch.test.ts` retains complete report and crouch-torque coverage. No timeout, retry or quarantine changes apply.
 
 The existing [Servo torque and sizing](../../site/content/help/servo-torque-and-sizing.md) and [Checks in the Build tab](../../site/content/help/build-checks.md) articles still describe the same selected group, tie rule, crouch floor, verdicts and controls. No user action, label or screenshot state changes.
+
+## Swing torque streams angle samples
+
+The whole-app search found one swing-torque sampler, `utils/engineeringTorque.ts`. Engineering joint loads and skeleton sizing call it. Payload maps and motion sweeps use different sampling rules and do not call its angle-list builder.
+
+For S angle samples, the previous implementation allocated one S-entry angle list and S identical three-coordinate gravity vectors. The replacement retains no angle list and prepares one force vector per call. The default range from -90° to 90° has 37 samples, removing one 37-entry list and 36 gravity vectors. The maximum range endpoint is also calculated once instead of once per loop condition. Rotation and moment vectors remain per sample. These are source-derived operation counts, not measured timings or claims about complete Checks latency.
+
+`swingTorque.test.ts` compares exact maxima with the former buffered calculation for 270 combinations of ranges, axes and masses, then repeats after lever edits. Cases include default and reversed ranges, fractional endpoints around the tolerance, single samples, NaN ranges, zero axes, signed zero, negative masses, infinities and NaN. Inputs remain unchanged. Existing engineering and skeleton-sizing tests cover the consumers. No timeout, retry or quarantine changes apply.
+
+The existing Servo torque and sizing and Checks in the Build tab help articles describe the same load estimates, verdicts and actions. No controls, labels, help steps or screenshot states change.
+
+Changed-file verification on macOS arm64 with Node v26.13.0 passed formatting, lint, types, documentation, site copy and 1,794 related tests across 280 passing files. One existing file and test were skipped. The related run took 92.87 seconds. Logs remain in `scratch/check-swing.log`. Copy accounting is net zero. Preflight flagged the unchanged Servo torque and sizing article, which was checked against the preserved sampling and verdict behavior above.
+
+## Arm facing retains only target bearings
+
+A whole-app search for `facingYaw`, bearing lists and widest circular gaps found one arm-facing calculation. Size Arm to Targets and the agent's `size_arm` both call it through `sizeArm`. Other widest-gap calculations operate on different inputs.
+
+For n targets and k eligible bearings, the previous calculation allocated n coordinate pairs, an n-entry coordinate list, a k-entry filtered list, a k-entry bearing list and a k-entry gap list. It also scanned gaps for their maximum and then its first index. The new calculation retains only the k-entry bearing list and scans circular gaps once with scalar state. Sorting remains necessary and unchanged. At the supported eight-target limit with every target eligible, this removes eight coordinate pairs and four staging lists. These are code-derived allocation counts, not timings or complete arm-sizing latency measurements.
+
+`armFacing.test.ts` compares the previous arithmetic across generated layouts of one through eight targets, reversed order, duplicate targets, translated bases, wraparound, nonfinite coordinates and edits. Explicit expectations cover the inclusive 1 mm exclusion and first-gap ties. Existing `armSizing.test.ts` retains full reach, payload and servo-selection coverage. No quarantine or browser behavior changes. Help coverage was rechecked against both flagged articles. [Size an arm from the points it must reach](../../site/content/help/size-an-arm-to-its-targets.md) still correctly describes the selected guides, payload, origin placement, target-facing direction, servo choices and refusal state. [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) describes joint declarations, ownership, poses and IK, none of which this storage change alters. Both articles and the existing arm-sizing screenshots remain accurate and unchanged.

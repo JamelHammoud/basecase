@@ -46,17 +46,31 @@ const SERVO_G = 55;
 const DEG = 180 / Math.PI;
 
 export function facingYaw(base: ZUpVec, targets: ZUpVec[]): number {
-  const bearings = targets
-    .map((at) => [at[0] - base[0], at[1] - base[1]])
-    .filter(([x, y]) => Math.hypot(x, y) > 1)
-    .map(([x, y]) => Math.atan2(y, x) * DEG)
-    .sort((a, b) => a - b);
+  const bearings: number[] = [];
+
+  for (const at of targets) {
+    const x = at[0] - base[0];
+    const y = at[1] - base[1];
+
+    if (Math.hypot(x, y) > 1) bearings.push(Math.atan2(y, x) * DEG);
+  }
+
+  bearings.sort((a, b) => a - b);
 
   if (!bearings.length) return 0;
 
-  const gaps = bearings.map((b, i) => (i ? b - bearings[i - 1] : b + 360 - bearings[bearings.length - 1]));
-  const widest = gaps.indexOf(Math.max(...gaps));
-  const arc = 360 - gaps[widest];
+  let widest = 0;
+  let largest = bearings[0] + 360 - bearings[bearings.length - 1];
+
+  for (let i = 1; i < bearings.length; i++) {
+    const gap = bearings[i] - bearings[i - 1];
+
+    if (gap > largest) widest = i;
+
+    largest = Math.max(largest, gap);
+  }
+
+  const arc = 360 - largest;
 
   return Math.round(bearings[widest] + arc / 2 + 90);
 }

@@ -131,7 +131,10 @@ function publishRevision(pull, { dir, output }) {
     createdAt: Date.now(),
     attempts: 0,
     title: kind ? pullTitle({ kind, title: output.title }) : pull.title,
-    body: voiced(keepStepLinks(`${restated}${heading}\n- ${line}`, pull), 'pull'),
+    body: voiced(keepStepLinks(`${restated}${heading}\n- ${line}`, pull), 'pull', {
+      cwd: dir,
+      taskId: `pull:${pull.number}`,
+    }),
   });
 
   deliver(entry);

@@ -25,6 +25,14 @@ const missingMeasurement = (record, measured) =>
   !measured(record.usage, record.provider) ||
   ((record.previousUsage !== undefined || record.formatRetried) && !measured(record.previousUsage, record.provider));
 
+export const reviewOutcomeTotals = (tasks) =>
+  tasks.reduce((counts, task) => {
+    for (const [verdict, count] of Object.entries(task.reviewOutcomes))
+      counts[verdict] = (counts[verdict] ?? 0) + count;
+
+    return counts;
+  }, {});
+
 export function sessionTotals(records) {
   const missingUsage = records.filter((record) => missingMeasurement(record, measuredUsage)).length;
   const missingCachedInput = records.filter((record) => missingMeasurement(record, measuredCachedInput)).length;

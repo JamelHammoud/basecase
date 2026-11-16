@@ -175,6 +175,17 @@ The pull request's Check runs these unit tests on Linux only. Windows execution 
 
 The remaining-job log from the same Full Check also reports this declaration timing out on Ubuntu at the same 5,000 ms deadline. Its unit summary records 1 failed and 9,287 passed tests, with five existing skips, in 469.34 seconds. This establishes that the duplicate grading workload affected both platforms. Merged repair `1b94370d9` (#1476) already removes that declaration and retains its batch assertions in `batch.test.ts`, so the Ubuntu failure needs no second implementation or quarantine. The current Cases guide already describes the replacement coverage. This follow-up does not claim another local or hosted execution of that replacement.
 
+
+### Independent grading deadline
+
+[Check 43930391936](https://github.com/JamelHammoud/basecase/actions/runs/43930391936) at `7adf6a243fdb72c14daf544d2c0dd5514d096682` failed three Windows repeat-grading trials at 5,043, 5,005 and 5,019 ms against the existing 5,000 ms test deadline. Linux passed all 105 classroom grading tests at the same revision. Windows passed the twenty-submission matrix, whose physics was already divided into five-seed batches. Its cup batches took 2,229 to 2,898 ms, followed by a 334 ms engineering assertion. The Windows unit job reported five failures across classroom grading, browser selection and copy context, with 9,312 passed tests in 679.48 seconds. Logs are retained locally as `scratch/windows-unit.log` and `scratch/linux-unit.log`.
+
+Classification: a classroom test workload regression introduced by `1817ec4b9` (#1468) after the last full green run at `6be4b9dd8d0e4cf9f0d9c7ceef80166365e36d03`. Each repeat trial still included preparation, twenty physics seeds and engineering Checks inside one deadline, unlike the matrix. No Windows-specific logic defect or environment change is demonstrated. No single merge explains all five failures. A read-only reverse-application check against the original index conflicts with later classroom repairs and documentation, recorded in `scratch/classroom-revert-check.log`, so this change fixes the test workload forward.
+
+Each repeat session now uses the matrix's existing preparation, four five-seed batches and final engineering assertion. All three sessions remain independent and evaluate all twenty prescribed seeds. Exact result, budget, forged-score and changed-Case assertions remain, with added seed-order and terminated-worker assertions. Production grading, physics inputs, deadlines, retries and quarantine remain unchanged. Whole-request incompatible-robot and cancellation tests remain active. The repair does not measure a flake rate or claim native Windows candidate execution.
+
+The changed-file check passed formatting, ESLint, docs, site copy, TypeScript and all 127 related tests across the three affected files. Its related-test phase took 39.21 seconds on the shared macOS host. The log is `scratch/repair-check.log`. This is one correctness run, not native Windows verification or a repeated timing comparison.
+
 ## Study camera visibility
 
 Camera Study's owning behavior and current coverage are in [Cases](../guide/cases.md#studying-camera-visibility) and [Cameras](../guide/cameras.md#study-camera-visibility). [Camera evidence](testing-cameras.md#study-camera-visibility) records the generated render matrix, source-model placeholder failure, triangle-limit correction and production entry capture.

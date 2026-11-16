@@ -111,3 +111,28 @@ On November 16, 2026, `scratch/sculpt-normal-parity.mjs` compared the preceding 
 The [Sculpt a part](../../site/content/help/sculpt-a-part.md) article still describes the same actions, settings and geometry. No labels, visible states or workflow change, so it needs no edit or new capture.
 
 Changed-file validation passed formatting, lint, documentation, site copy for 295 pages, TypeScript and all 788 tests across 105 related files. The related run reported 38.10 seconds. Output remains in `scratch/check-sculpt-normals.log`. Copy accounting is net zero, and preflight reports no findings.
+
+## Prism corners share edge normal calculations
+
+A whole-app search found one outline corner builder, `three/partMesh/edgedProfile.ts`, called by the shared edged prism builder. Boxes, cubes, hexagonal prisms and wedges use it, including deformed variants. Cylinders and tubes use separate profile normals and do not repeat this edge calculation.
+
+Each edge previously calculated its length and divided its normal components twice, once for each adjacent corner. Corner preparation now carries the previous edge normal and retains the closing normal. Three-, four- and six-edge outlines fall from six, eight and twelve `Math.hypot` calls to three, four and six. These are tested operation counts, not timings or a claim about complete mesh build latency. Direction tuples remain independent across corners and calls, preserving editable chamfer results.
+
+`edgedProfile.test.ts` compares exact corner records against the former calculation for 66 outlines, both windings and both edge styles, before and after input edits. Cases include empty inputs, single points, two points, repeated points, signed zero, tiny edges and generated convex rings. Separate cases count normalizations for all three shipped outline sizes and check direction independence. Existing `edgedGeometry.test.ts` covers complete shape bounds, volumes, winding and deformation. No visible state, workflow, help article or browser coverage changes. No retry, timeout or quarantine changes apply.
+
+Changed-file validation passed formatting, lint, documentation, site copy for 295 pages and types. Its related run passed 101 files and 757 tests, with four 5,000 ms timeouts in unchanged tests. Three were the Carry a cup prescribed-seed batches in `classroom/grading.test.ts:50`, for seeds 1–5, 6–10 and 11–15. The fourth was `leagues/replay.test.ts:17`, loading catalog geometry before browser measurement. The run took 60.59 seconds. The cause of these timeouts was not established, and they remain unresolved without test budget or quarantine changes. The full log is `scratch/check-prism-normals.log`.
+
+Preflight requested a reread of [Round or bevel a part's edges](../../site/content/help/round-or-bevel-a-parts-edges.md). Its selection, Shape controls, size limits, deformation and screenshot states remain accurate because the corner records are unchanged. The article is intentionally unchanged.
+
+
+## GT2 teeth write directly into the shape
+
+Whole-app search found one toothed GT2 outline builder in `three/driveMesh.ts`, shared by catalog pulleys and toothed idlers. Each tooth previously allocated a four-entry list and four polar-coordinate pairs, then iterated them. It now emits the same four points directly into the Three.js shape. Angles, arithmetic order, winding, closure, bores and axial placement stay unchanged.
+
+The four catalog pulleys have 20, 36, 40 and 60 teeth. Their source-derived temporary-array counts fall from 100, 180, 200 and 300 to zero. The two toothed idlers have 30 and 40 teeth, removing 150 and 200 arrays. Across one build of each of these six catalog entries, 1,130 temporary arrays disappear. Three.js shape and geometry allocations remain. These are operation counts, without a wall-clock or heap measurement and without a claim about complete viewport latency.
+
+`three/driveMesh.test.ts` compares exact position, normal and UV buffers, indices and material groups against the former construction for all six catalog entries. The comparison includes bore extrusion and hub placement and checks that catalog inputs remain unchanged. Existing `hardwareMesh.test.ts` covers complete hardware bounds and centering. No timeout, retry or quarantine changes apply.
+
+The [Add parts from the catalog](../../site/content/help/add-parts-from-the-catalog.md) article retains the same actions, labels and screenshot states. This internal construction change preserves the geometry and changes no visible state or workflow, so no help edit or capture is needed.
+
+Changed-file validation passed formatting, lint, documentation, site copy for 295 pages and types. The related run passed 96 files and 760 tests, including both GT2 comparisons. Fourteen tests failed across eight unchanged files. Thirteen exceeded existing timeouts: `assembly/followers.test.ts:47`, `guide/repairPlan.test.ts:119`, `leagues/replay.test.ts:17` and `:57`, `cases/fixturePersistence.test.ts:64`, `study/meshFiles.test.ts:48`, `three/hardwareRecessGeometry.test.ts:97` and `:141`, all four prescribed-seed batches in `classroom/grading.test.ts:50`, and `strength/lightenPipeline.test.ts:103`. The classroom aggregate at `classroom/grading.test.ts:63` also observed seeds 1–15 instead of all twenty. The cause remains unestablished. The run reported 80.33 seconds, and the full log is `scratch/check-drive.log`. No test budget or quarantine changes were made. Copy accounting is net zero and preflight reports no findings.

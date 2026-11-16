@@ -426,7 +426,7 @@ The whole-app search found one side-partition implementation, `utils/gait.ts`, s
 
 The former partition created two full lists of records containing index, depth and side membership, then filtered each list. The new partition appends indices to two owned side lists in one traversal. Each list still sorts by foot depth. Equal depths retain input order, and feet on the midpoint remain on the right. Two explicit side comparisons preserve the previous exclusion when the midpoint is NaN. No partition survives the call.
 
-For a finite six-foot layout, the previous partition explicitly allocated twelve temporary records, two mapped arrays and two filtered arrays. The new partition allocates no per-foot records and uses two index lists inside one outer array. Midpoint coordinate arrays, phase output and both sorts remain. These are source-derived allocation counts, not engine heap measurements or timings. No complete gait-generation speedup is claimed.
+For a finite six-foot layout, the previous partition explicitly allocated twelve temporary records, two mapped arrays and two filtered arrays. The new partition allocates no per-foot records and uses two index lists inside one outer array. Phase output and both sorts remain. Midpoint coordinate arrays were subsequently removed by the bounds refinement below. These are source-derived allocation counts, not engine heap measurements or timings. No complete gait-generation speedup is claimed.
 
 `gaitPhases.test.ts` checks a hand-calculated layout with tied depths and centerline feet, then compares the previous equations across 131 layouts and their nonempty edits. Cases include both source orders for sizes two through 64, empty and single-foot inputs, NaN and infinite coordinates. It also checks that inputs remain unchanged. Existing animation tests cover generated gait targets, while drive-class tests retain the six-foot tripod check. No timeout, retry or quarantine changes apply.
 
@@ -520,3 +520,41 @@ The article's hierarchy, anchoring, deletion, Rest Pose, inverse kinematics and 
 On macOS arm64 with an Apple M5 Pro and Node 26.13.0, the residual microbenchmark used five warmup batches and 21 alternating measured batches of 10,000 evaluations. Five-point median time moved from 0.400 to 0.399 microseconds, and twelve-point time from 0.912 to 0.883 microseconds. These local timings establish no visible interaction improvement and are not CI thresholds. An exploratory scratch run combining this benchmark with repeated complete synthesis exceeded the scratch harness's five-second limit. The final scratch probe excludes repeated synthesis timing and passes without changing any timeout. Complete synthesis parity remains covered.
 
 Targeted validation passes formatting, lint, docs, site copy for 295 pages, TypeScript and all 119 tests across 17 related files. Copy accounting reports zero added, zero changed, zero removed and net zero. The validation log is `scratch/check-linkage-angles.log`. Preflight repeats a covered-file reminder for the kinematics article because its guide changed. The article was checked against the final diff and remains accurate, as the reminder permits.
+
+
+## Gaits resolve foot chains once
+
+A whole-app search for `swingJoints`, `legJoints` and `buildGait` found one gait joint-selection implementation. Pose walk cycles, agent animation and simulated drive-leg generation all reach it. Other chain queries belong to IK or target construction and retain their distinct inputs.
+
+Selection now resolves each foot's ownership and joint-chain map entry once. It gathers joint ids in their original first-encounter order, then appends movable joints that are absent from at least one foot chain. Previously every membership probe repeated both map lookups. Selection also built two candidate arrays and a shared-joint array before filtering its final output. Those three arrays and shared-joint deletions are gone. One foot-chain reference array replaces them, and the joint-id set and returned list remain.
+
+For six feet with two common body joints and three unique joints per foot, ownership and chain lookups each fall from 39 to six. The common joints require twelve membership probes. The eighteen unique joints require 21 probes because membership checks stop at the first missing foot. These are source-derived counts, without timing assertions or a claim about complete gait latency. IK still dominates generation.
+
+The local `scratch/gait-chains.test.ts` probe compares complete generated animations, notes and IK errors with the previous module in 24 configurations. It varies shared body joints, fixed ankles, foot order, repeated feet and both orientation modes. Every output matched exactly. `animation.test.ts` retains stance and swing geometry and rejected requests, and now checks ordered leg-only keyframe channels with a shared body and fixed ankles. No timeout, retry or quarantine changed.
+
+No user action, label or screen state changes. [Animate a robot with a walk cycle or motion capture](../../site/content/help/animate-a-robot.md) retains accurate steps and screenshots. [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) retains accurate joint, hierarchy and posing descriptions.
+
+
+The focused check passed formatting, ESLint, types and site copy. Its related-test selection reached 241 files: 231 passed, nine failed and one was skipped. There were 1,758 passing tests, 30 failures and one skipped test. The animation and gait tests passed. Twenty-eight failures hit the existing 5,000 ms deadline in Case simulation, classroom seed batches, league replay, Motor Kit transitions and native passive parity. Two classroom assertions then reported incomplete seed batches. Concurrent checks from other worktrees were active, but this run does not establish contention as the cause. The diagnostics are retained in `scratch/gait-check-failures.log`. No unrelated tests, deadlines or quarantine entries were changed, and the broad selection was not repeated.
+
+Preflight reported the unchanged Joints and kinematics help article because it covers the edited guide. The article was reread against the final code. Joint fields, import sources, hierarchy, posing, IK and selected-robot behavior remain accurate, and it has no screenshots to update. This reminder remains intentionally unresolved by an article edit.
+
+
+## Gaits measure foot bounds once
+
+The whole-app search found one gait planner and one alternating-phase implementation in `utils/gait.ts`. Pose walk cycles, agent animation and simulated drive-leg generation use this planner. Standalone phase checks use the same exported phase function. Other geometry bounds measure different inputs and remain unchanged.
+
+`gaitBounds` now scans feet once for minimum height and lateral extrema. The planner shares the resulting spread and midpoint across gait shape, root sway and automatic alternating phases. Previously ordinary preparation allocated two n-coordinate arrays and made seven n-entry traversals, including coordinate collection. Automatic alternating phases added two more n-coordinate arrays and four more traversals for the same midpoint. Those bounds calculations now use one traversal and one constant-size record. Phase partitioning and sorting remain separate. These are source-derived storage and traversal counts, without a timing or complete gait-speed claim.
+
+The minimum and maximum operations retain NaN, infinity and signed-zero behavior. Midpoint addition, spread subtraction, leg-height clamping and the first-foot sway sign retain their arithmetic order. There is no cross-call cache.
+
+`gaitBounds.test.ts` compares the previous equations across 136 layouts and their nonempty edits, including empty, coincident, signed-zero, overflowing and nonfinite coordinates. A 160,000-foot fixture checks the known bounds beyond argument-spread limits and counts exactly one source-list read per foot. Existing `gaitPhases.test.ts` checks side assignments and stable depth ties. Existing `animation.test.ts` checks stance, swing, ordered channels and rejected requests.
+
+A local scratch probe compared complete animations, notes and IK errors with the previous module in 24 configurations. It covered two, six and eight foot entries, both orientation modes, explicit and automatic phases, shape overrides and later geometry edits. Every result matched exactly. The fixture repeats the biped's foot carriers to exercise multiphase preparation, rather than representing independent six- or eight-leg mechanisms. Source and output remain in `scratch/gait-bounds-parity.test.ts` and `scratch/gait-bounds-parity.log`. No timeout, retry or quarantine changed.
+
+The help articles [Animate a robot with a walk cycle or motion capture](../../site/content/help/animate-a-robot.md) and [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) were checked against the change. Walk creation, default motion, joint fields, hierarchy, IK and selected-robot behavior remain unchanged. No user action, label or screen state changes, so their existing text and screenshots remain accurate.
+
+
+Validation passed formatting, lint, documentation links, site copy for 295 pages, types and 1,802 tests across 241 files. One file and test were skipped by the existing configuration. The related selection reached 242 files and finished in 82.76 seconds. The log is `scratch/check-gait-bounds.log`. Copy accounting reports zero additions, changes and removals.
+
+Preflight reports an unchanged covered-file reminder for Joints and kinematics because its guide changed. Every section remains accurate: joint fields and sources, hierarchy and four-bar behavior, design versus pose, IK and selected-robot operations are unchanged. It has no screenshots. The reminder requires checking the article and allows leaving accurate text unchanged, so no article edit is needed.

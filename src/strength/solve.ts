@@ -72,10 +72,9 @@ interface Solved {
   iterations: number;
 }
 
-function cellNear(grid: VoxelGrid, lines: ScrewLine[], slack: number) {
-  const probe = hexMesh(grid);
+function cellNear(probe: HexMesh, lines: ScrewLine[], slack: number) {
   const near = nodesNear(probe, lines, slack);
-  const byCell = new Uint8Array(grid.solid.length);
+  const byCell = new Uint8Array(probe.grid.solid.length);
 
   probe.cells.forEach((c, e) => {
     for (let a = 0; a < 8; a++) if (near[probe.nodes[e * 8 + a]]) byCell[c] = 1;
@@ -86,8 +85,9 @@ function cellNear(grid: VoxelGrid, lines: ScrewLine[], slack: number) {
 
 export function solveDisplacement(model: StrengthModel, grid: VoxelGrid): Solved | null {
   const slack = Math.max(...grid.h);
-  const loadCells = cellNear(grid, model.load.screws, slack);
-  const holdCells = cellNear(grid, model.holds, slack);
+  const probe = hexMesh(grid);
+  const loadCells = cellNear(probe, model.load.screws, slack);
+  const holdCells = cellNear(probe, model.holds, slack);
   const keep = connectedCells(grid, (c) => ({ load: !!loadCells[c], hold: !!holdCells[c] }));
   const mesh = hexMesh(grid, keep);
 

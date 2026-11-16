@@ -71,6 +71,20 @@ describe('date grouping', () => {
     expect(() => dateGroupLabel('unreadable', now)).toThrow(RangeError);
   });
 
+  it.each([300, 600])('formats each older calendar month once for %i entries', (count) => {
+    const dates = [new Date(2026, 10, 1), new Date(2026, 9, 1), new Date(2025, 9, 1)];
+    const items = Array.from({ length: count }, (_, index) =>
+      itemAt(String(index), dates[index % dates.length].getTime() + (index % 5) * DAY),
+    );
+    const prototype: { readonly format: unknown } = Intl.DateTimeFormat.prototype;
+    const format = vi.spyOn(prototype, 'format', 'get');
+    const groups = groupByDate(items, now);
+
+    expect(groups.map((group) => group.label)).toEqual(['November', 'October', 'October 2025']);
+    expect(groups.map((group) => group.items.length)).toEqual([count / 3, count / 3, count / 3]);
+    expect(format).toHaveBeenCalledTimes(3);
+  });
+
   it.each([new Date(2027, 0, 1, 15), new Date(2026, 2, 9, 15), new Date(2026, 10, 2, 15)])(
     'keeps elapsed-day cutoffs around calendar transitions at %s',
     (current) => {

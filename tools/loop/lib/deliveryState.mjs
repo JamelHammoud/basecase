@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { LOOP_DIR } from './paths.mjs';
+import { recordPublication } from './publicationJournal.mjs';
 import { fingerprint } from './sessionJournal.mjs';
 
 const directory = () => path.join(LOOP_DIR, 'state', 'deliveries');
@@ -14,6 +15,8 @@ export function saveDelivery(entry) {
 
   fs.writeFileSync(temporary, JSON.stringify(entry));
   fs.renameSync(temporary, file);
+
+  recordPublication(entry);
 
   return entry;
 }

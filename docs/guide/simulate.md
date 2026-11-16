@@ -102,6 +102,8 @@ Stages 3 and 4 of the robotics loop (§1); milestones in [docs/Robotics loop.md]
 
 ## Performance: simulation
 
+- **LiDAR specification patterns are prepared once.** `sim/lidar.ts` shares six fixed, non-global patterns across range, scan rate, sample rate, point rate and field-of-view reads. Field of view and angular resolution use the same degree-prefix pattern. Matching retains no cursor state, while every call reads current specification rows and returns its own result. [Evidence](../notes/performance-simulation.md#lidar-specification-patterns-are-prepared-once).
+
 - **LiDAR setup rejects unrelated parts before preparation.** `sim/lidar.ts` checks the catalog group before reading specification rows, then requires a usable LiDAR spec before searching body membership. MJCF generation shares this path for live and headless simulation. Valid sensors retain first-body ownership, source order, ray generation and the four-scan limit. [Evidence](../notes/performance-simulation.md#lidar-setup-rejects-unrelated-parts).
 
 - **Link mass centroids accumulate in one pass.** `utils/robotImport/urdfLinks.ts` sums link mass and three weighted coordinates together before the separate inertia pass. Robot Package and headless URDF exports share it. Payload order, per-coordinate addition order, minimum mass and inertia floors stay unchanged. Existing Robot Package, ROS package and body calibration tests retain export coverage. [Parity evidence](../notes/performance-motion.md#mass-centroids-accumulate-in-one-pass).
@@ -129,6 +131,8 @@ Case world bodies can form passive hinge and slide trees. `mjcfWorld.ts` emits e
 The Recorder already stores the complete qpos, qvel and body poses, so fixture motion needs no new recording format. Robot actuator counts and robot recording address lists stay unchanged. Cases expose signed fixture travel from relative body poses through their existing facts, contracts and console probes. See [Cases](cases.md#passive-lid-and-drawer-fixtures) for bounds and units.
 
 ## Testing coverage
+
+- **LiDAR specifications.** `src/sim/lidarSpec.test.ts` checks unit rejection, comma and decimal values, range separators, rate bounds, sample precedence, field-of-view precedence, defaults and ray limits through alternating repeated reads. It also checks unchanged inputs, fresh reads after edits and independent results.
 
 - **LiDAR selection.** `src/sim/lidarSelection.test.ts` checks every non-LiDAR catalog group without reading its spec rows, unrelated scenes without body membership reads, and valid sensors with duplicate owners, missing bodies, mixed parts and the scan limit. Existing `lidar.test.ts` covers catalog specifications, generated MJCF, real MuJoCo corridor scans and summary output.
 

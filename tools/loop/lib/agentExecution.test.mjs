@@ -17,7 +17,7 @@ vi.mock('./claude.mjs', () => ({
   sandboxArgs: () => [],
 }));
 vi.mock('./quota.mjs', () => ({ quotaSnapshot: () => mocks.quota, reserveOverflow: mocks.reserve }));
-vi.mock('./sessionJournal.mjs', () => ({ recordSession: mocks.journal }));
+vi.mock('./sessionJournal.mjs', async (original) => ({ ...(await original()), recordSession: mocks.journal }));
 vi.mock('./usage.mjs', () => ({
   codexPause: () => mocks.codexHeld,
   pause: () => mocks.claudeHeld,

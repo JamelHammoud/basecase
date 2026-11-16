@@ -66,4 +66,48 @@ describe('sheet boundary loop ordering', () => {
       ]),
     ).toBeUndefined();
   });
+
+  it('retains last point references at rounded shared endpoints', () => {
+    const points = ring(0, 2);
+    const edges = edgesOf(points).map(([a, b]): Edge => [[...a], [...b]]);
+    const last = edges[3][1];
+
+    last[0] += 0.00001;
+
+    const loop = loopsOf(edges)![0];
+
+    expect(loop).toEqual([last, edges[1][0], edges[2][0], edges[3][0]]);
+    expect(loop[0]).toBe(last);
+    expect(
+      loopsOf([
+        [
+          [0, 0],
+          [0, 0],
+        ],
+      ]),
+    ).toBeUndefined();
+    expect(loopsOf([...edges, [last, last]])).toBeUndefined();
+  });
+
+  it.each([300, 600])('stops reading a %i-edge branch at its third incident edge', (count) => {
+    let reads = 0;
+    const center: Point = [0, 0];
+    const edges: Edge[] = Array.from({ length: count }, (_, i) => {
+      const endpoint: Point = [i + 1, 1];
+
+      Object.defineProperty(endpoint, 0, {
+        get: () => {
+          reads++;
+
+          return i + 1;
+        },
+      });
+
+      return [center, endpoint];
+    });
+
+    expect(loopsOf(edges)).toBeUndefined();
+    expect(reads).toBe(3);
+    expect(center).toEqual([0, 0]);
+  });
 });

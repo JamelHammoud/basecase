@@ -18,7 +18,7 @@ Strength tells you whether each printed bracket between a servo and the next joi
 2. Click Build at the top of the right panel.
 3. In Checks, click Strength if it's closed. Each part shows its joint, the load on it, and how many times over it can carry that load. A part passes at 2× or more and fails under 1.3×.
 4. Keep Strength open and look at the canvas. Strength colors each checked part from blue where it's relaxed, through amber, to red where it would crack first.
-5. To print a part on the face where it's strongest, click Fix beside it. Strength checks that part again on its own and turns green when it passes.
+5. Beside the part in **Strength**, click **Fix** to use a stronger print face. Strength turns green if the new face passes.
 
 ![Strength open with L Bracket at 1.2× under 0.77 N·m, and the bracket red at its bend](/help/check-printed-parts-are-strong-enough/strength-fails.png)
 

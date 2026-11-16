@@ -44,6 +44,8 @@ Measurements and limits: [Scene storage and startup performance evidence](../not
 
 - **Dated lists prepare timestamps once.** `utils/dateGroups.ts` parses each item's update time once for sorting and labeling in both Scenes and Chat History. It prepares the local midnight and year once per grouping call. Equal timestamps retain source order, input arrays stay unchanged, and later calls read timestamp edits and calendar changes afresh. [Evidence](../notes/performance-workspace.md#dated-lists-prepare-timestamps-once).
 
+  Older entries reuse one formatted label per local calendar month and year within the call. Recent-day cutoffs still run before month lookup. `dateGroups.test.ts` covers distinct years, unchanged labels and formatting counts at 300 and 600 entries alongside the existing boundary and ownership checks.
+
 - **Insertion ranges scan scalar values.** `utils/centerSizeRange.ts` tracks the minimum and maximum of each axis without temporary coordinate arrays. Robot imports, articulated catalog parts, CAD body placement and agent robot-height reports share it. Existing-scene right edges reduce rotated or affine bounds without spreading scene counts into function arguments. [Evidence](../notes/performance-workspace.md#insertion-ranges-scan-scalar-values).
 
 - **Autosave never re-serializes unchanged parts.** `sceneJson` caches each part's JSON by object identity, slices the work across frames and sends one string (`saveSceneJson`).

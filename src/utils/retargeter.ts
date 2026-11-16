@@ -99,7 +99,7 @@ function rootRotation(st: Stream, raw: Human, given?: THREE.Quaternion): THREE.Q
 
   const now = bodyBasis(raw, st.body.keys);
 
-  return now && st.body.basis ? now.multiply(st.body.basis.clone().invert()) : null;
+  return now && st.body.basisInv ? now.multiply(st.body.basisInv) : null;
 }
 
 function frameRoot(st: Stream, raw: Human, given?: THREE.Quaternion): FrameRoot {

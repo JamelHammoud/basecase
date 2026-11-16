@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { pairKey } from '../../../electron/cad-kernel/pairKey.mjs';
 import { emptyBounds, includePoint } from './bounds';
+import { mergeCollinear, pointKey as keyOf } from './boundaryMerge';
 import type { SketchPlane, Vec3 } from './placement';
 import type { Sketch, Vec2 } from './types';
 
@@ -79,8 +80,6 @@ function frameFor(normal: THREE.Vector3) {
   return { n, u, v };
 }
 
-const keyOf = (p: Vec2) => `${Math.round(p[0] / KEY_STEP)},${Math.round(p[1] / KEY_STEP)}`;
-
 function boundary(triangles: Vec2[][]): Array<[Vec2, Vec2]> {
   const count = new Map<string, { edge: [Vec2, Vec2]; n: number }>();
 
@@ -97,54 +96,6 @@ function boundary(triangles: Vec2[][]): Array<[Vec2, Vec2]> {
   }
 
   return [...count.values()].filter((e) => e.n === 1).map((e) => e.edge);
-}
-
-const direction = ([p, q]: [Vec2, Vec2]) => {
-  const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
-
-  return [(q[0] - p[0]) / len, (q[1] - p[1]) / len];
-};
-
-function joinStep(edges: Array<[Vec2, Vec2]>): boolean {
-  for (let i = 0; i < edges.length; i++) {
-    for (let j = i + 1; j < edges.length; j++) {
-      const joined = joinPair(edges[i], edges[j]);
-
-      if (!joined) continue;
-
-      edges.splice(j, 1);
-      edges[i] = joined;
-
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function joinPair(a: [Vec2, Vec2], b: [Vec2, Vec2]): [Vec2, Vec2] | null {
-  const [ax, ay] = direction(a);
-  const [bx, by] = direction(b);
-
-  if (Math.abs(ax * by - ay * bx) > 1e-6) return null;
-
-  const pairs: Array<[Vec2, Vec2, Vec2, Vec2]> = [
-    [a[0], b[0], a[1], b[1]],
-    [a[0], b[1], a[1], b[0]],
-    [a[1], b[0], a[0], b[1]],
-    [a[1], b[1], a[0], b[0]],
-  ];
-  const shared = pairs.find(([p, q]) => keyOf(p) === keyOf(q));
-
-  return shared ? [shared[2], shared[3]] : null;
-}
-
-function mergeCollinear(edges: Array<[Vec2, Vec2]>) {
-  const out = [...edges];
-
-  while (joinStep(out));
-
-  return out;
 }
 
 export function faceOf(soup: ArrayLike<number>, pick: FacePick): Face | null {

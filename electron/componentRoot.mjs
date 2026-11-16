@@ -1,4 +1,4 @@
-export function componentRoot<T extends string | number>(parents: Map<T, T>, id: T): T {
+export function componentRoot(parents, id) {
   let root = id;
   let next = parents.get(root);
 
@@ -10,7 +10,7 @@ export function componentRoot<T extends string | number>(parents: Map<T, T>, id:
   let current = id;
 
   while (current !== root) {
-    const parent = parents.get(current)!;
+    const parent = parents.get(current);
 
     parents.set(current, root);
     current = parent;

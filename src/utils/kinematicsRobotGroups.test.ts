@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { buildRig } from './kinematicsRig';
 
@@ -129,5 +129,36 @@ describe('ordered robot groups', () => {
     }
 
     expect(buildReads).toBeLessThan(size * 20);
+  });
+
+  it.each([300, 600])('compresses shared-part component paths across %i root joints', (size) => {
+    const joints = Array.from({ length: size }, (_, i) =>
+      joint(`joint-${i}`, { parent: [`part-${i}`, `part-${i + 1}`], origin: [i, 0, 0] }),
+    );
+    const parts = Array.from({ length: size + 1 }, (_, i) => part(`part-${i}`));
+    const before = structuredClone({ joints, parts });
+    const spy = vi.spyOn(Map.prototype, 'get');
+    let rig: ReturnType<typeof buildRig>;
+    let reads: number;
+
+    try {
+      rig = buildRig(joints, parts);
+      reads = spy.mock.calls.length;
+    } finally {
+      spy.mockRestore();
+    }
+
+    expect(rig.robots).toEqual([
+      {
+        key: 'joint-0',
+        name: 'Robot',
+        joints: joints.map((j) => j.id),
+        parts: new Set(parts.map((p) => p.id)),
+        pivot: [(size - 1) / 2, 0, 0],
+      },
+    ]);
+    expect([...rig.robotOf.values()]).toEqual(new Array(size * 2 + 1).fill('joint-0'));
+    expect(reads).toBeLessThan(size * 65);
+    expect({ joints, parts }).toEqual(before);
   });
 });

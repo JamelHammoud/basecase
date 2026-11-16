@@ -62,7 +62,7 @@ Parts the agent modeled, imported meshes and sculpted parts are fully mirrored, 
 
 If all of a joint's moving parts are mirrored, the copies get a twin of that joint with the same range. The twin's hinge axis is mirrored, so setting both joints to the same angle moves the two sides as mirror images.
 
-A joint to a part you didn't mirror, such as the body, stays attached to that part. Mates move to the matching port on the other side.
+A joint to a part you didn't mirror, such as the body, stays attached to that part. A mate follows the copied target when you mirror both parts. Otherwise, it uses a matching port on the original target.
 
 ## Ask the agent
 

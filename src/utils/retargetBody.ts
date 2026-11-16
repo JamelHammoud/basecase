@@ -12,7 +12,7 @@ export interface RestBody {
   byHeight: boolean;
   hipsRest: THREE.Vector3;
   keys: BasisKeys | null;
-  basis: THREE.Quaternion | null;
+  basisInv: THREE.Quaternion | null;
 }
 
 const STEADY = 0.03;
@@ -91,7 +91,7 @@ export function restBody(rest: Human, robot: RobotLandmarks): RestBody {
     ...bodyScale(rest, robot),
     hipsRest: rest.get('hips') ?? new THREE.Vector3(),
     keys,
-    basis: bodyBasis(rest, keys),
+    basisInv: bodyBasis(rest, keys)?.invert() ?? null,
   };
 }
 

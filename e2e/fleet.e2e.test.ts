@@ -96,11 +96,17 @@ it('enrolls the invited account when the browser already has a Fleet session', a
   const account = await admin.create('account', { name: 'New viewer', roles: [] });
   const invitation = await admin.result<{ token: string }>('POST', 'invitations', {
     account: account.id,
-    email: 'new-viewer@example.test',
+    email: `${account.id}@example.test`,
   });
-  const page = await app.page.context().newPage();
+  const browser = app.page.context().browser();
+
+  if (!browser) throw new Error('Fleet enrollment requires a browser');
+
+  const context = await browser.newContext();
 
   try {
+    const page = await context.newPage();
+
     await page.goto(`${fixture.origin}/fleet`);
     await page.evaluate(
       async ({ org, email }) => {
@@ -122,6 +128,6 @@ it('enrolls the invited account when the browser already has a Fleet session', a
     expect(session.account).toBe(account.id);
     expect(new URL(page.url()).hash).toBe('');
   } finally {
-    await page.close();
+    await context.close();
   }
 });

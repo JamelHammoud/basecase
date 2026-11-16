@@ -55,3 +55,9 @@ The browser hook tests hold inventory replies across subscription resets and err
 The enrollment walkthrough and access-reset reload assertions are committed for CI. They were not run locally during review. The earlier local capacity figures above are unchanged and do not measure these corrections.
 
 The final review `check:changed` run passes on all 18 changed files, including formatting, lint, types, documentation, site copy and 120 tests across 22 files. Test execution took 4.44 seconds. The log is `scratch/review-check-final.log`. The shared dependency directory lacked the new PostgreSQL client, so review installed the locked client into scratch and used local dependency links without modifying the shared installation.
+
+## Pull request 1370 CI correction
+
+The 16 November Linux changed-e2e run passed the Operate inventory walkthrough in 6.55 seconds. Enrollment failed before browser navigation because `app.page.context().newPage()` tried to add a page to Playwright's single-page convenience context. Its automatic rerun then failed with HTTP 400 when issuing an invitation for the same email left by the first attempt. The enrollment test now owns an explicit browser context and closes it in `finally`. The email includes the newly created account UUID to avoid collisions across attempts. Enrollment assertions and timing budgets are unchanged. CI owns browser execution, so this correction has no local browser pass claim.
+
+The copy job independently failed because the pull request body omitted a reason for the existing Reload Fleet button. The answer now includes that reason. The aggregate check failed on those two jobs, while its three required fast jobs passed.

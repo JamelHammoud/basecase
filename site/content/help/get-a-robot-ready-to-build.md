@@ -69,7 +69,7 @@ To set a problem aside, right-click its row and choose **Ignore**. To set aside 
 
 ## Cases in Checks
 
-Each Case runs 20 times. On each run, Basecase changes friction, weight, servo strength, and servo delay a little, and starts a box, or anything else that moves, up to 15 mm from where it was placed. A Case's color shows how many runs it passed:
+Each Case runs 20 times. On each run, Basecase changes friction, weight, servo strength, and servo delay a little. Loose objects start up to 15 mm from where they were placed. Hinged lids, sliding drawers and their attached parts keep their starting positions. A Case's color shows how many runs it passed:
 
 - **Green:** 18 of 20 or more
 - **Amber:** 10 to 17

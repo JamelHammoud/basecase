@@ -62,3 +62,7 @@ Measurements and limits: [Scene storage and startup performance evidence](../not
 `app/firstLaunch.test.ts` retains saved-tab restoration and fresh-profile behavior, and `workspace/sceneDraft.test.ts` retains edit detection. The rover startup and keyboard driving tests remain active on every platform, and camera refusal runs on Linux and macOS.
 
 [Incident evidence and limits](../notes/testing-first-launch.md).
+
+### Passive fixture imports
+
+Portable scene decoding validates articulated Case records through `validateFixtureImports` before returning their project. Malformed pivots, axes, topology and physics values refuse the import. Existing rigid Case records retain their loading path. `src/cases/fixturePersistence.test.ts` checks both valid topology round trips and damaged fixture refusal in portable scenes and gallery bundles, along with robot undo and redo. [Case format](cases.md#passive-lid-and-drawer-fixtures) documents the bounds.

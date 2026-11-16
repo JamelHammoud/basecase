@@ -70,7 +70,7 @@ describe('a gripper', () => {
 
     expect(facts.gripper).toBeNull();
     expect(goalsFor(robotOf('arm-3dof')).map((g) => g.kind)).toEqual(['touch']);
-    expect(goalsFor(robotOf('arm-6dof')).map((g) => g.kind)).toEqual(['touch', 'pick']);
+    expect(goalsFor(robotOf('arm-6dof')).map((g) => g.kind)).toEqual(['touch', 'pick', 'lid', 'drawer']);
     expect(slotRefusal(pickCase().slot!, facts)).toBe('This Case needs a gripper. This robot has a fixed base.');
   });
 });

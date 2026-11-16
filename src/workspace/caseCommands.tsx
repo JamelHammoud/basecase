@@ -34,6 +34,7 @@ export const STAYS_IN_RUN = new Set([
   'drive-stop',
   'drive-respawn',
   'case-try',
+  'case-try-reference',
   'case-multiply',
   'case-add-panel',
   'case-export-dataset',
@@ -200,6 +201,27 @@ function studyCommands({ study }: WorkspaceCore): Command[] {
   ];
 }
 
+function referenceCommands(core: WorkspaceCore): Command[] {
+  const { cases } = core.simTraining;
+  const { tool } = core;
+
+  return cases.active?.reference.timeline.length && cases.attempt.phase === 'idle' && cases.realTry.phase === 'idle'
+    ? [
+        {
+          id: 'case-try-reference',
+          group: 'Simulate',
+          label: 'Try Reference',
+          icon: <RunIcon />,
+          keywords: 'case attempt reference',
+          run: () => {
+            tool.setRightTab('sim');
+            void cases.attempt.reference();
+          },
+        },
+      ]
+    : [];
+}
+
 export function caseCommands({ core }: CommandInputs): Command[] {
   const { simTraining, posing, tool } = core;
   const { sim, cases } = simTraining;
@@ -299,6 +321,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     drive,
     ...respawn,
     ...tryIt,
+    ...referenceCommands(core),
     ...caseRun,
     ...addPanelCommands(core),
     ...renameCommands(core),

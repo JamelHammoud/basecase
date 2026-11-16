@@ -48,6 +48,10 @@ The scene's imported world is missing, damaged or over its size limits. Basecase
 
 Ask the sender to reopen the original scene and export it again with **Export** ▸ **Scene**. The exported file must include the world's mesh, colliders and any textures or splat.
 
+## The message names a fixture
+
+A Case's hinge or slide has a damaged reference, axis, limit or physics value. Basecase refuses that fixture when opening the scene. Ask the sender to reopen the original scene and export it again with **Export** ▸ **Scene**.
+
 ## Double-clicking the file does nothing
 
 Basecase doesn't open `.basecase` files from Finder or File Explorer. To open one, drop the file on the canvas, or use **Open Scene File** in [[⌘K]].

@@ -211,15 +211,15 @@ export class MarkLayer {
 
   private distances(pixel: Point2, camera: THREE.Camera, size: ViewSize): Array<[string, number]> {
     const projected = new THREE.Vector3();
-    const toPixel = (p: THREE.Vector3): Point2 => {
+    const toPixel = (p: THREE.Vector3, out: Point2): void => {
       projected.copy(p).project(camera);
-
-      return [((projected.x + 1) / 2) * size.width, ((1 - projected.y) / 2) * size.height];
+      out[0] = ((projected.x + 1) / 2) * size.width;
+      out[1] = ((1 - projected.y) / 2) * size.height;
     };
 
     return [...this.entries].map(([id, entry]) => [
       id,
-      this.labelHit(entry, pixel) ? 0 : distanceToPolyline(pixel, entry.points.map(toPixel)),
+      this.labelHit(entry, pixel) ? 0 : distanceToPolyline(pixel, entry.points, toPixel),
     ]);
   }
 

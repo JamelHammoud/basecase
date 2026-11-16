@@ -126,6 +126,8 @@ Measurements and limits: [Sensor layers and mapping performance evidence](../not
 
 ## Performance: viewport rendering
 
+- **Mark hit tests stream projected endpoints.** `MarkLayer` shares projection across selection, hovering, drag start and erasing. `markMath.ts` retains two pixel endpoints per stroke instead of a projected point array. Label hits, nearest-hit ordering and the 10 px reach stay unchanged. Coverage and behavior are documented in [Toolbar and Settings](toolbar-and-settings.md#testing-coverage). [Evidence](../notes/performance-viewport.md#mark-hit-tests-stream-projected-endpoints).
+
 - **Ready part builds drain without shifting the queue.** `three/viewport/partLayer.ts` keeps pending build records in an insertion-ordered set and deletes each record before building it. Scene parts, loaded component replacements and worker-prepared meshes share this queue. Sync clears superseded records, and whole-scene reads append waiting records before draining. Time and upload budgets, build order and stale worker-result rejection stay unchanged. `partLayer.test.ts` checks ordered partial drains, zero and nonfinite budgets, replacement of unfinished work and complete drains. [Evidence](../notes/performance-viewport.md#ready-part-builds-drain-without-shifting-the-queue).
 
 Measurements and limits: [Viewport rendering performance evidence](../notes/performance-viewport.md).

@@ -22,23 +22,30 @@ function gatherFaceNormals(positions: number[], indices: number[], normals: Map<
   const a = new THREE.Vector3();
   const b = new THREE.Vector3();
   const c = new THREE.Vector3();
+  const triangle = new THREE.Triangle(a, b, c);
 
   for (let t = 0; t + 2 < indices.length; t += 3) {
-    const corners = [indices[t], indices[t + 1], indices[t + 2]];
-    const keys = corners.map(vertexKey);
-    const adjacent = keys
-      .map((key, k) => normals.get(pairKey(key, keys[(k + 1) % 3])))
-      .filter((list) => list !== undefined);
+    const ia = indices[t];
+    const ib = indices[t + 1];
+    const ic = indices[t + 2];
+    const ka = vertexKey(ia);
+    const kb = vertexKey(ib);
+    const kc = vertexKey(ic);
+    const ab = normals.get(pairKey(ka, kb));
+    const bc = normals.get(pairKey(kb, kc));
+    const ca = normals.get(pairKey(kc, ka));
 
-    if (!adjacent.length) continue;
+    if (!ab && !bc && !ca) continue;
 
-    a.fromArray(positions, corners[0] * 3);
-    b.fromArray(positions, corners[1] * 3);
-    c.fromArray(positions, corners[2] * 3);
+    a.fromArray(positions, ia * 3);
+    b.fromArray(positions, ib * 3);
+    c.fromArray(positions, ic * 3);
 
-    const normal = new THREE.Triangle(a, b, c).getNormal(new THREE.Vector3());
+    const normal = triangle.getNormal(new THREE.Vector3());
 
-    for (const list of adjacent) list.push(normal);
+    ab?.push(normal);
+    bc?.push(normal);
+    ca?.push(normal);
   }
 }
 

@@ -82,20 +82,31 @@ function centroid(sketch: Sketch): Vec2 {
   return [pts.reduce((s, p) => s + p.x, 0) / (pts.length || 1), pts.reduce((s, p) => s + p.y, 0) / (pts.length || 1)];
 }
 
-function outward(sketch: Sketch, at: Vec2, normal: Vec2): Vec2 {
-  const [cx, cy] = centroid(sketch);
+function outward([cx, cy]: Vec2, at: Vec2, normal: Vec2): Vec2 {
   const away = (at[0] - cx) * normal[0] + (at[1] - cy) * normal[1];
 
   return away < 0 ? [-normal[0], -normal[1]] : normal;
 }
 
-function anchorOf(sketch: Sketch, id: string, gap: number, at: PointLookup): { at: Vec2; normal: Vec2 } {
+function markGeometry(sketch: Sketch) {
+  let center: Vec2 | undefined;
+
+  return { at: pointLookup(sketch), center: () => (center ??= centroid(sketch)) };
+}
+
+type MarkGeometry = ReturnType<typeof markGeometry>;
+
+function anchorOf(sketch: Sketch, id: string, gap: number, geometry: MarkGeometry): { at: Vec2; normal: Vec2 } {
+  const { at } = geometry;
   const e = entityOf(sketch, id);
 
   if (!e) return { at: at(id), normal: [0, 1] };
 
   if (e.kind === 'line')
-    return { at: mid(at(e.a), at(e.b)), normal: outward(sketch, mid(at(e.a), at(e.b)), normalOf(at(e.a), at(e.b))) };
+    return {
+      at: mid(at(e.a), at(e.b)),
+      normal: outward(geometry.center(), mid(at(e.a), at(e.b)), normalOf(at(e.a), at(e.b))),
+    };
 
   const c = at(e.c);
   const r = radiusOf(at, e);
@@ -103,20 +114,22 @@ function anchorOf(sketch: Sketch, id: string, gap: number, at: PointLookup): { a
   return { at: [c[0], c[1] + r + gap], normal: [0, 1] };
 }
 
-function labelAt(sketch: Sketch, c: SketchConstraint, gap: number, at: PointLookup): Vec2 {
+function labelAt(sketch: Sketch, c: SketchConstraint, gap: number, geometry: MarkGeometry): Vec2 {
+  const { at } = geometry;
+
   if (c.kind === 'length') {
-    const { at: anchor, normal } = anchorOf(sketch, c.line, gap, at);
+    const { at: anchor, normal } = anchorOf(sketch, c.line, gap, geometry);
 
     return offset(anchor, normal, gap * 1.6);
   }
 
-  if (c.kind === 'radius') return anchorOf(sketch, c.entity, gap, at).at;
+  if (c.kind === 'radius') return anchorOf(sketch, c.entity, gap, geometry).at;
 
   if (c.kind === 'angle')
-    return offset(anchorOf(sketch, c.line, gap, at).at, anchorOf(sketch, c.line, gap, at).normal, -gap);
+    return offset(anchorOf(sketch, c.line, gap, geometry).at, anchorOf(sketch, c.line, gap, geometry).normal, -gap);
 
   if (c.kind === 'distance') {
-    const ends = [c.a, c.b].map((id) => (entityOf(sketch, id) ? anchorOf(sketch, id, gap, at).at : at(id)));
+    const ends = [c.a, c.b].map((id) => (entityOf(sketch, id) ? anchorOf(sketch, id, gap, geometry).at : at(id)));
 
     return mid(ends[0], ends[1]);
   }
@@ -136,13 +149,13 @@ const shownValue = (sketch: Sketch, c: SketchConstraint & { value: number }) =>
 const isDimension = (c: SketchConstraint): c is SketchConstraint & { value: number } => 'value' in c;
 
 export function dimensionLabels(sketch: Sketch, selected: string[], gap: number): DimensionLabel[] {
-  const at = pointLookup(sketch);
+  const geometry = markGeometry(sketch);
   const labels: DimensionLabel[] = sketch.constraints.filter(isDimension).map((c) => ({
     key: c.id,
     constraint: c.id,
     entity: dimensionEntity(c),
     value: shownValue(sketch, c),
-    at: labelAt(sketch, c, gap, at),
+    at: labelAt(sketch, c, gap, geometry),
   }));
   const loose = selected
     .map((id) => entityOf(sketch, id))
@@ -151,12 +164,12 @@ export function dimensionLabels(sketch: Sketch, selected: string[], gap: number)
   return [
     ...labels,
     ...loose.map((e) => {
-      const { at: anchor, normal } = anchorOf(sketch, e.id, gap, at);
+      const { at: anchor, normal } = anchorOf(sketch, e.id, gap, geometry);
 
       return {
         key: `measure-${e.id}`,
         entity: e.id,
-        value: measuredValue(at, e),
+        value: measuredValue(geometry.at, e),
         at: e.kind === 'line' ? offset(anchor, normal, gap * 1.6) : anchor,
       };
     }),
@@ -174,7 +187,7 @@ const GLYPH_TARGETS: Record<GlyphKind, (c: SketchConstraint) => string[]> = {
 };
 
 export function constraintGlyphs(sketch: Sketch, gap: number): Glyph[] {
-  const at = pointLookup(sketch);
+  const geometry = markGeometry(sketch);
   const stacked = new Map<string, number>();
   const glyphs: Glyph[] = [];
 
@@ -185,7 +198,7 @@ export function constraintGlyphs(sketch: Sketch, gap: number): Glyph[] {
 
     for (const target of GLYPH_TARGETS[kind](c)) {
       const n = stacked.get(target) ?? 0;
-      const { at: anchor, normal } = anchorOf(sketch, target, gap, at);
+      const { at: anchor, normal } = anchorOf(sketch, target, gap, geometry);
       const along: Vec2 = [normal[1], -normal[0]];
 
       stacked.set(target, n + 1);

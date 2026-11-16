@@ -140,6 +140,29 @@ describe('builder recovery attempts', () => {
   });
 });
 
+describe('builder capability discoveries', () => {
+  it('does not rediscover unavailable hardware after source changes and reopens an edited task immediately', () => {
+    const worktree = { dir: directory, branch: 'loop/build/49-feature' };
+
+    calls.steps = [queuedStep(49)];
+    calls.signature = 'source-a';
+    calls.openBranch.mockReturnValue(worktree);
+    calls.checkedRun.mockReturnValue({ ok: true, output: { changed: false, notes: 'Requires: physical-robot' } });
+    build({ log: vi.fn(), slot: 1 });
+    calls.signature = 'source-b';
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.checkedRun).toHaveBeenCalledOnce();
+    expect(calls.steps[0].labels).toEqual([{ name: 'loop:blocked' }]);
+
+    calls.steps[0].body += '\nVerify with the existing emulator instead of physical hardware.';
+    calls.checkedRun.mockReturnValue({ ok: false, error: 'stopped' });
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.checkedRun).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('builder task readiness', () => {
   it('keeps current declared dependencies blocking after declined inputs change', () => {
     const step = { ...queuedStep(45), body: `${queuedStep(45).body}\nDepends on #46.` };
@@ -167,6 +190,15 @@ describe('builder task readiness', () => {
 
   it('blocks a legacy task requiring unavailable hardware before opening a worktree', () => {
     calls.steps = [{ ...queuedStep(47), body: 'Requires: physical-robot\nInputs: `src/cameras/`' }];
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.steps[0].labels).toEqual([{ name: 'loop:blocked' }]);
+    expect(calls.checkedRun).not.toHaveBeenCalled();
+    expect(calls.openBranch).not.toHaveBeenCalled();
+  });
+
+  it('blocks legacy Windows diagnostics that only declare CI before opening a worktree', () => {
+    calls.steps = [{ ...queuedStep(50), body: 'Requires: windows-ci\nCapture Windows process traces.' }];
     build({ log: vi.fn(), slot: 1 });
 
     expect(calls.steps[0].labels).toEqual([{ name: 'loop:blocked' }]);

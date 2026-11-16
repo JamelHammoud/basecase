@@ -64,3 +64,5 @@ Passive joints remain in the physical model. They have no servo ID or ROS comman
 Policies that command a now-passive joint stay out of the package.
 
 Every file in the zip is listed in [Robot package contents](/help/robot-package-contents).
+
+For plates and assembly packing lists, use [Export a robot kit](/help/export-a-robot-kit).

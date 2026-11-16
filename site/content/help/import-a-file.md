@@ -81,6 +81,8 @@ You can also choose **File** ▸ **Import**, or press [[⌘K]]. Dropping GLB, gl
 
 Other part files dropped on the canvas appear at the drop point. If you drop a `.mid` file, it plays in a Case's tries instead. See [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
 
+A [manufacturing kit](/help/export-a-robot-kit) carries plates and assembly documents. Unzip it to import an individual plate's 3MF file. Use a [shared scene](/help/open-a-shared-scene) to keep editable joints and parts.
+
 ## Units and axes
 
 For meshes brought in as parts with **Import**, Basecase reads each format with these units and up axis:

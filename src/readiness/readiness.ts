@@ -208,7 +208,14 @@ export function readinessOf(
 }
 
 export const withDecisions = (r: Readiness, parts: ScenePart[], decisions?: ReadinessDecisions): Readiness =>
-  readinessOf(r.findings, { parts, decisions, fingerprint: r.fingerprint, rows: r.rows, wiring: r.wiring });
+  readinessOf(r.findings, {
+    parts,
+    decisions,
+    fingerprint: r.fingerprint,
+    rows: r.rows,
+    wiring: r.wiring,
+    now: new Date(r.checkedAt),
+  });
 
 function statusOf(s: { built: boolean; blockout: boolean; blocked: boolean }): Readiness['status'] {
   if (!s.built) return 'empty';

@@ -30,6 +30,15 @@ Stage 5 of the loop (§1). The plan, findings and what's still unverified: [docs
 
 - **Repair plates** (§8b): a valid printed repair records a `reprint` event in `project.prints`, preserving the old records and invalidating only that part's printed key. It survives save and reload. A later successful print clears the pending replacement. Print at Build Along's swap step scopes the existing report, packer, writer and send path to one copy of that part (`repairPrintParts`). The scoped copy ignores saved skip, copies and fixed plate placement, retains its print face and label choice, and disables merge suggestions. Face, rotation, placement and label edits apply to temporary repair settings. Copies and skip controls stay hidden, and closing Print discards these edits. No saved part settings change. The report stays empty until the matching scoped worker result returns, so an old full-scene plate cannot be sent during recalculation. Closing Print, opening normal Print or changing scenes clears the scope. Nothing starts a printer automatically.
 
+### Plates in a manufacturing kit
+
+Export ▸ Kit resolves the full scene's print plan, including parts already marked printed, through `printReportOf` and `jobSpec`. It uses the freshly generated guide's steps for packing order. The existing `lettersToWrite` and viewport `printThreeMf` paths write one 3MF per material, with the same labels as plate export. Label omissions are recorded in the kit manifest. Every printed identity must have output for its configured copy count. A skipped, missing or oversized part stops the export instead of disappearing.
+
+The manifest records material, infill, process selection, printer, plate membership and output references. Extra print copies appear in manufacturing output references while assembly demand stays one per scene instance. Sheet fabrication is refused explicitly and remains available through Cut Files. Kits contain manufacturing geometry, not sliced G-code.
+
+BOM preparation, reconciliation, fingerprints, CSV writing and ZIP compression run in a dedicated kit worker. Binary output transfers back to the renderer, and cancellation disposes the worker. A failed browser worker refuses export instead of doing compression on the interaction thread. The archive's uncompressed contents are capped at 256 MB. [Kit measurements](../notes/performance-printing.md#manufacturing-kit-composition) record preparation time and process memory, including what the fixture omits.
+
+
 ## Performance: print planning and labels
 
 Measurements and limits: [Print planning and labels performance evidence](../notes/performance-printing.md).

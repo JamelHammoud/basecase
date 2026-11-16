@@ -31,4 +31,6 @@ Imported worlds come with the scene, including their colliders, textures and opt
 
 You can also choose **File** ▸ **Open Scene File**, or drop the file on the canvas. Double-clicking a `.basecase` file in Finder or File Explorer doesn't open it in Basecase.
 
+A [manufacturing kit](/help/export-a-robot-kit) is a zip of plates and assembly documents. Use the `.basecase` scene file to keep editing the design.
+
 If the file won't open, see [Scene file doesn't open](/help/troubleshoot-scene-files).

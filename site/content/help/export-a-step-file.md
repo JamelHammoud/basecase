@@ -36,3 +36,5 @@ These parts arrive as exact solids, with true curves and flat faces:
 Catalog parts, imported meshes and everything else arrive as faceted solids built from their triangles, each simplified to about 6,000 triangles. A basic shape with filleted or chamfered edges is exported this way too. A sheet part whose thickness was changed along a tilted face also uses its triangles, preserving the stock thickness.
 
 If a part can't be included, a message tells you how many parts were left out.
+
+For printed plates, assembly instructions and packing lists together, use [Export a robot kit](/help/export-a-robot-kit).

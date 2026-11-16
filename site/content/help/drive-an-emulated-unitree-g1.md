@@ -29,4 +29,6 @@ You can move an emulated Unitree G1's waist and arms from the simulation, the sa
 
 6. Click Stop to hand the arms back to the G1's own controller. If the app stops sending commands, the daemon hands the arms back within 100 ms of noticing.
 
+For a fault or disconnect, [inspect the unit's retained problems](/help/inspect-fleet-problems). Acknowledging an incident doesn't hand control back to the app.
+
 In this build, a real G1 stays locked, so only the emulated G1 can connect.

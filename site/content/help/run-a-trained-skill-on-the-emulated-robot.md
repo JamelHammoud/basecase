@@ -48,7 +48,7 @@ The app sends the simulation's joint targets to the robot as often as every 25 m
 
 If something goes wrong:
 
-- After a fault, the app stops sending targets until you climb the **Ladder** again.
+- After a fault, the app stops sending targets until you climb the **Ladder** again. Acknowledging its [retained incident](/help/inspect-fleet-problems) doesn't resume targets.
 - If the simulation pauses, the robot keeps its last target.
 - If Basecase stops responding for about a second, the robot stops. An arm holds its position, and a legged robot stands still.
 

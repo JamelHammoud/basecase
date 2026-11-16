@@ -48,13 +48,13 @@ function observe(rec: Recording, event: RobotEvent, forward: Listener) {
 
   if (closing) rec.recorder?.close('disconnect');
 
-  if (closing) rec.recorder = null;
-
   if (event.event === 'link' && event.state === 'connected') rec.recorder = recorderFor(rec, event, forward);
 
   rec.state = applyRobotEvent(rec.state, event);
-  forward(event);
   rec.recorder?.event(event);
+  forward({ ...event, context: rec.recorder?.incidentContext() });
+
+  if (closing) rec.recorder = null;
 }
 
 function recordingsOf() {

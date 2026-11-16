@@ -62,7 +62,7 @@ Each emulated servo sits on its joint with its own hidden offset of up to 12°, 
 
 A robot with a leg joint connects as a legged robot, and anything else connects as an arm. This decides what **Stop** does: an arm holds where it is, and a legged robot walks to its standing pose first.
 
-To connect another unit of this design, press [[⌘K]] and choose **Connect Emulated Robot** again. Operate lists each unit separately. [Roll out a skill to a fleet of emulated robots](/help/roll-out-a-skill-to-a-fleet) covers per-unit twins and canaries.
+To connect another unit of this design, press [[⌘K]] and choose **Connect Emulated Robot** again. Operate lists each unit separately. A disconnected unit can keep a row for its [retained problems](/help/inspect-fleet-problems). That history doesn't mean the unit is connected. [Roll out a skill to a fleet of emulated robots](/help/roll-out-a-skill-to-a-fleet) covers per-unit twins and canaries.
 
 You can connect up to 32 servos on each unit. For a robot with more than that, **Connect Emulated Robot** doesn't appear.
 

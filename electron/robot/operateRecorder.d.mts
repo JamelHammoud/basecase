@@ -36,6 +36,12 @@ export function newOperateId(): string;
 export class OperateRecorder {
   constructor(options: RecorderOptions);
   setContext(ask: unknown): boolean;
+  incidentContext(): {
+    session: string | null;
+    sceneId: string | null;
+    modelHash: string | null;
+    policyHash: string | null;
+  };
   readRun(): RobotRun | null;
   setPolicy(hash: string | null): void;
   event(event: Record<string, unknown> & { event: string }): void;

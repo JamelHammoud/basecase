@@ -84,6 +84,7 @@ export class OperateRecorder {
     this.rung = 0;
     this.held = false;
     this.policyHash = null;
+    this.lastIncidentContext = null;
   }
 
   setContext(ask) {
@@ -94,6 +95,17 @@ export class OperateRecorder {
     if (context && this.session && !this.session.joints) this.session.joints = [...context.joints];
 
     return !!context;
+  }
+
+  incidentContext() {
+    if (!this.session && this.lastIncidentContext) return this.lastIncidentContext;
+
+    return {
+      session: this.session?.id ?? null,
+      sceneId: this.context?.sceneId ?? null,
+      modelHash: this.context?.modelHash ?? null,
+      policyHash: this.policyHash,
+    };
   }
 
   readRun() {
@@ -285,6 +297,7 @@ export class OperateRecorder {
 
     if (!session) return;
 
+    this.lastIncidentContext = this.incidentContext();
     this.session = null;
     this.flush(session);
 

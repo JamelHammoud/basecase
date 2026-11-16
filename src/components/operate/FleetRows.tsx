@@ -1,4 +1,7 @@
 import React from 'react';
+import { inspectUnitProblems, useFleetIncidents } from '../../robot/fleetIncidentStore';
+import type { FleetIncident } from '../../robot/fleetIncidents';
+import { unitEntry } from '../../robot/robotUnits';
 import { Button, MetaLine, RowActions } from '../../design-system';
 import { StatusDot } from '../../design-system/StatusDot';
 import type { RollOutState } from '../../fleet/rollOut';
@@ -12,12 +15,14 @@ const SHORT_VERSION = 7;
 
 const ROW_FILL = '#2a2a2a';
 
-function problemOf({ state }: UnitEntry): string | null {
+function problemOf({ state }: UnitEntry, incidents: FleetIncident[]): string | null {
   const newest = state.messages[0]?.text ?? null;
 
   if (state.link === 'lost') return newest ?? state.lostMessage ?? 'Robot disconnected';
 
-  return state.status?.fault_latched ? (newest ?? 'Robot stopped') : null;
+  if (state.status?.fault_latched) return newest ?? 'Robot stopped';
+
+  return incidents.find((i) => i.active || i.acknowledgedAt === null)?.message ?? null;
 }
 
 function twinCount(rollOut: RollOutState | null, unit: UnitEntry) {
@@ -30,10 +35,11 @@ interface UnitRowProps {
   unit: UnitEntry;
   selected: boolean;
   rollOut: RollOutState | null;
+  incidents: FleetIncident[];
 }
 
-function UnitRow({ unit, selected, rollOut }: UnitRowProps) {
-  const problem = problemOf(unit);
+function UnitRow({ unit, selected, rollOut, incidents }: UnitRowProps) {
+  const problem = problemOf(unit, incidents);
   const held = rollOut?.held[unit.unit];
   const failure = rollOut?.failures[unit.unit];
 
@@ -63,10 +69,26 @@ function UnitRow({ unit, selected, rollOut }: UnitRowProps) {
       </span>
       <MetaLine
         className="text-[12px] text-white/50 tabular-nums"
-        items={[rungLabel(unit.state.mode), unit.version?.slice(0, SHORT_VERSION), twinCount(rollOut, unit)]}
+        items={[
+          unit.state.link === 'connected' ? rungLabel(unit.state.mode) : null,
+          unit.version?.slice(0, SHORT_VERSION),
+          twinCount(rollOut, unit),
+        ]}
       />
       {held && <p className="text-[12px] text-white/50">{held}</p>}
       {failure && <p className="text-[12px] text-white/50">{failure}</p>}
+      {incidents.length > 0 && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={(event) => {
+            event.stopPropagation();
+            inspectUnitProblems(unit.unit);
+          }}
+        >
+          Inspect Problems
+        </Button>
+      )}
       {unit.hasPrevious && (
         <RowActions fill={ROW_FILL} className="inset-y-0 right-0 pr-1.5 rounded-r-lg">
           <Button
@@ -87,13 +109,27 @@ function UnitRow({ unit, selected, rollOut }: UnitRowProps) {
 export const FleetRows: React.FC = () => {
   const fleet: Fleet = useFleet();
   const rollOut = useRollOut();
+  const incidents = useFleetIncidents();
+  const retained = [...new Set(incidents.map((i) => i.unit))]
+    .filter((unit) => !fleet.units.some((u) => u.unit === unit))
+    .map((unit) => ({
+      ...unitEntry(unit),
+      state: { ...unitEntry(unit).state, name: incidents.find((i) => i.unit === unit)?.name },
+    }));
+  const rows = [...fleet.units, ...retained];
 
-  if (fleet.units.length === 0) return null;
+  if (rows.length === 0) return null;
 
   return (
     <div role="listbox" className="mb-3" data-testid="fleet">
-      {fleet.units.map((unit) => (
-        <UnitRow key={unit.unit} unit={unit} selected={unit.unit === fleet.selected} rollOut={rollOut} />
+      {rows.map((unit) => (
+        <UnitRow
+          key={unit.unit}
+          unit={unit}
+          selected={unit.unit === fleet.selected}
+          rollOut={rollOut}
+          incidents={incidents.filter((i) => i.unit === unit.unit)}
+        />
       ))}
     </div>
   );

@@ -11,20 +11,21 @@ function keptFault() {
     robot: { name: 'arm-3', modelHash: 'a'.repeat(64), joints: ARM.project.joints.map((joint) => joint.id) },
     frames: 2,
   };
+  const joints = ARM.project.joints.map((_, index) => index);
   const recording = encodeRecording({
     dt: 0.02,
     frames: 2,
-    nq: 3,
-    nv: 3,
-    nu: 3,
+    nq: joints.length,
+    nv: joints.length,
+    nu: joints.length,
     nbody: 0,
     t: new Float32Array([0, 0.02]),
-    ctrl: new Float32Array(6),
-    qpos: new Float64Array([0, 0, 0, 0.1, 0.2, 0.3]),
-    qvel: new Float32Array(6),
+    ctrl: new Float32Array(joints.length * 2),
+    qpos: new Float64Array([...joints.map(() => 0), ...joints.map((index) => (index + 1) / 10)]),
+    qvel: new Float32Array(joints.length * 2),
     poses: new Float32Array(),
-    jointQpos: new Int32Array([0, 1, 2]),
-    jointDof: new Int32Array([0, 1, 2]),
+    jointQpos: new Int32Array(joints),
+    jointDof: new Int32Array(joints),
   });
   const incidents = new FleetIncidents();
 
@@ -52,11 +53,14 @@ it('restores a fleet problem, acknowledges it and opens its exact kept try', asy
   try {
     await page.evaluate(async ({ manifest, recording, incidents }) => {
       localStorage.setItem('robot-fleet-incidents-v1', JSON.stringify(incidents));
-      await fetch('/api/bridge/tries-save', {
+
+      const response = await fetch('/api/bridge/tries-save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ arg: { manifest, recording } }),
       });
+
+      if (!response.ok) throw new Error('Could not seed the fleet incident recording');
     }, fixture);
     await page.reload();
     await page.waitForFunction(() => !!(window as unknown as { __studio?: unknown }).__studio);

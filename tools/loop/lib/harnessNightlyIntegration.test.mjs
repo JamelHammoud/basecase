@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { comparison } from '../../../bench/compare/fixtures/efficiency.mjs';
 
 const f = vi.hoisted(() => ({
   dir: '',
@@ -243,3 +244,36 @@ it('keeps completed tune evidence when held-out confirmation is interrupted', as
   expect(f.state.entries.at(-1).lesson).toContain('Held-out comparison');
   expect(f.close).toHaveBeenCalledOnce();
 });
+
+it.each(['win', 'regression', 'expired', 'interrupted'])(
+  'classifies paired efficiency %s through the nightly publication boundary',
+  async (scenario) => {
+    f.run.mockImplementation((command, args) => {
+      if (args[0] !== 'bench/compare.mjs') return shell(command, args);
+
+      if (args.includes('--heldout') && scenario === 'interrupted')
+        return { ok: false, out: '', err: 'Interrupted without report' };
+
+      const result = comparison();
+
+      if (args.includes('--heldout') && scenario === 'regression') result.results[0].checks[0].pass = false;
+
+      if (args.includes('--heldout') && scenario === 'expired') vi.setSystemTime(Date.now() + 30 * 60_000);
+
+      writeComparison(args, result);
+
+      return { ok: true, out: '' };
+    });
+
+    const { nightlyHarness } = await import('./harnessNightly.mjs');
+
+    nightlyHarness({ log: vi.fn(), release: 'v0.2.1' });
+    expect(commands()).toHaveLength(2);
+    expect(f.state.entries.at(-1).outcome).toBe(
+      { win: 'efficiency-win', regression: 'loss', expired: 'incomplete', interrupted: 'incomplete' }[scenario],
+    );
+    expect(f.publish).toHaveBeenCalledTimes(scenario === 'win' ? 1 : 0);
+    expect(f.state.entries.at(-1).lesson).toContain('Held-out comparison');
+    expect(fs.readFileSync(path.join(f.dir, 'bench/experiments.md'), 'utf8')).toContain('Held-out comparison');
+  },
+);

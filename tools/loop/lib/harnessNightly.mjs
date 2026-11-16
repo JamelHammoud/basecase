@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { EFFICIENCY_OBJECTIVE } from '../../../bench/compare/outcome.mjs';
 import { readExperiments } from '../../../bench/experiments.mjs';
 import { benchmarkSelection } from './benchmarkPolicy.mjs';
 import { quietRequested } from '../../../verify/lib/quiet.mjs';
@@ -214,6 +215,8 @@ export function nightlyHarness({ log, release = null }) {
     evidence: [candidate.ref, ...(candidate.evidence ?? [])],
     waste: candidate.measured ?? null,
     verdict: 'error',
+    outcome: 'incomplete',
+    efficiencyObjective: EFFICIENCY_OBJECTIVE,
     at: new Date(started).toISOString(),
     lesson: 'error: The experiment started but did not finish recording a result.',
   };

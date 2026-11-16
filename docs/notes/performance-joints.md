@@ -2,6 +2,21 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## Xacro tokenization prepares its end once
+
+`xacroExpr.test.ts` covers arithmetic, short-circuiting, allowed functions and rejected syntax, plus leading, internal, trailing and Unicode whitespace, quoted spaces, whitespace-only input, invalid tokens after whitespace, recovery after failures and the original 4,000-character limit. Existing `xacro.test.ts` and `xacroImport.test.ts` cover expansion and imported robot equivalence.
+
+On macOS arm64 with Node 26.13.0, a scratch comparison evaluated sums of 100 and 500 ones, with either no padding or 2,000 trailing spaces. Each implementation had two warmup batches and eleven alternating measured batches of 100 evaluations. Results matched the term count in every evaluation. Median milliseconds per complete evaluation were:
+
+| Terms | Trailing spaces | Before | After |
+| --- | --- | --- | --- |
+| 100 | 0 | 0.0311 | 0.0268 |
+| 100 | 2,000 | 0.3183 | 0.0311 |
+| 500 | 0 | 0.1301 | 0.1260 |
+| 500 | 2,000 | 1.5485 | 0.1304 |
+
+The previous tokenizer trimmed the remaining suffix before every token, repeatedly scanning the same trailing whitespace. The new tokenizer trims the end once and retains the original text for token reads and errors. These local shared-host measurements include parsing and evaluation, with no CI timing threshold or claim about complete robot import time. The padded expressions expose repeated work rather than representing a measured distribution of imported files.
+
 ## Planar diameter measures each unordered pair once
 
 [`planarDiameter.test.ts`](../../src/utils/planarDiameter.test.ts) compares ordered-pair results across generated clouds, edits, repeated points, extreme values and nonfinite coordinates. Four-bar fitting and resting foot-contact classification share the scan. At 12, 300 and 600 points, distance calls fall from 144, 90,000 and 360,000 to 78, 45,150 and 180,300. These are deterministic operation counts, independent of hardware, without timing assertions or a claim about complete fitting or classification time.
@@ -49,3 +64,9 @@ Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performanc
 ## Rig group adoption indexes groups once per pass
 
 `kinematicsGroups.test.ts` checks assignments and bounds group-property reads below 12,000 for 600 parts in one or 200 groups, with moving links and base-only mounts. The moving-link fixtures previously took 719,999 and 481,000 reads.
+
+## Four-bar derivative probes share residual storage
+
+`linkageClosure.test.ts` compares all path errors and nine penalties against the previous calculation across 200 generated trials and their edits. It also checks changed bounds and workspace lengths, independent result ownership, failed closures, tangencies and nonfinite inputs. Existing linkage pipeline tests cover complete synthesis and ranking.
+
+For five- and twelve-point paths, the Jacobian probes 14 and 21 parameters. The previous residual assembly constructed six arrays per probe: path errors, three other links, four links, mapped link penalties, bound penalties and the concatenated result. The new assembly constructs one residual workspace per Jacobian, replacing 84 and 126 arrays respectively. Decoded geometry, closure results and derivative columns still allocate. These are source-derived allocation counts, without timing assertions or a claim about complete synthesis time.

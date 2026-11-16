@@ -101,3 +101,14 @@ A nested-query fixture checks that a skip callback can run another collision que
 `facePieces.test.ts` counts 300 and 600 cross products for 300 and 600 accepted triangles, down from 600 and 1,200. Accepted triangles also need one square root instead of two. These are operation counts, not wall-clock or complete collision latency measurements. The checks run in Node on arm64 without a browser or GPU.
 
 The sphere fixture compares every emitted Float32 normal and area weight against the previous Three.js calculation. Existing cases cover reversed winding, the inclusive 0.5 mm² threshold, degenerate and empty geometry, the 12-split cap, 3,000-triangle stride selection, cached buffers and replacement geometry. Barycentric center arithmetic is unchanged. No user action or visible state changes, so help instructions and captures remain accurate.
+
+
+## Rotor selection uses its measured bodies
+
+Whole-app search found one moving-body selector in `three/analysis/rotorSplit.ts`, shared by joint sweeps and posed collision checks. Selection now traverses the existing measurement map directly. Its size supplies the connected-body count for split eligibility. Triangle membership is prepared once and passed to both classification and partitioning. Measurement arithmetic, center probes, inclusive thresholds, traversal order and shape caches stay unchanged.
+
+Previously each classification created five temporary lists: measured values, reaches, map entries, filtered entries and selected ids. It also constructed a second set by traversing every triangle body id when at least one moving body was selected. The new path retains only the selected-id set and uses the existing measurement map's size. Map iteration still creates entry tuples during selection. It does not change the measurement map or triangle-id buffer.
+
+The added fixtures contain 25 and 50 disconnected stator boxes plus one rotor box, giving 26 and 51 bodies and 312 and 612 triangles. Both compare complete ordered partitions against the previous classifier. On these fixtures, the removed membership-set construction visited 312 and 612 triangle ids. The removed reach lists held 26 and 51 entries each. These are code-derived operation and storage counts, without timing assertions, heap measurements or a claim about complete collision latency.
+
+`rotorSplit.test.ts` also covers empty geometry, 90 translated and scaled boundary cases, connected rigid fallback, interleaved triangles, independent output buffers, replacement geometry and cache identity. Empty geometry remains rigid. No timeout, retry or quarantine changes apply. No user action or visible state changes, so help instructions and screenshots remain accurate.

@@ -92,17 +92,20 @@ function measureBodies(
   return out;
 }
 
-function rotorBodies(solid: ShapeSolid, line: THREE.Line3): Set<number> {
-  const bodies = triangleBodies(solid.positions);
-  const distance = prepareLineDistance(line);
+function rotorBodies(solid: ShapeSolid, bodies: Uint32Array): Set<number> | null {
+  const distance = prepareLineDistance(outputLine(solid.positions));
   const measured = measureBodies(solid, bodies, distance);
-  const reach = Math.max(...[...measured.values()].map((b) => b.reach));
   const center = new THREE.Vector3();
-  const onAxis = (b: Body) => distance(b.box.getCenter(center));
+  const rotor = new Set<number>();
+  let reach = -Infinity;
 
-  return new Set(
-    [...measured].filter(([, b]) => onAxis(b) <= ON_AXIS_MM && b.reach <= MAX_ROTOR_REACH * reach).map(([id]) => id),
-  );
+  for (const body of measured.values()) reach = Math.max(reach, body.reach);
+
+  for (const [id, body] of measured) {
+    if (distance(body.box.getCenter(center)) <= ON_AXIS_MM && body.reach <= MAX_ROTOR_REACH * reach) rotor.add(id);
+  }
+
+  return rotor.size && rotor.size < measured.size ? rotor : null;
 }
 
 function partitionTriangles(positions: Float32Array, bodies: Uint32Array, rotorBodies: Set<number>): RotorSplit {
@@ -156,10 +159,9 @@ export function outputLine(positions: ArrayLike<number>): THREE.Line3 {
 export function splitRotor(solid: ShapeSolid): RotorSplit | null {
   if (splitCache.has(solid)) return splitCache.get(solid)!;
 
-  const rotor = rotorBodies(solid, outputLine(solid.positions));
   const bodies = triangleBodies(solid.positions);
-  const split =
-    rotor.size && rotor.size < new Set(bodies).size ? partitionTriangles(solid.positions, bodies, rotor) : null;
+  const rotor = rotorBodies(solid, bodies);
+  const split = rotor ? partitionTriangles(solid.positions, bodies, rotor) : null;
 
   splitCache.set(solid, split);
 

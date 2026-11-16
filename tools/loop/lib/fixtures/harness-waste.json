@@ -1,0 +1,19 @@
+{
+  "reads": [
+    ["get_scene", {}, "scene", "completed", 10],
+    ["get_scene", {}, "scene", "completed", 30],
+    ["get_scene", {}, "scene", "completed", 40]
+  ],
+  "checks": [
+    ["check_scene", {}, "same", "completed", 20],
+    ["check_scene", {}, "same", "completed", 70],
+    ["update_parts", {}, "changed", "completed", 10],
+    ["check_scene", {}, "same", "completed", 20]
+  ],
+  "failures": [
+    ["model_part", { "id": "x" }, "bad", "failed", 15],
+    ["update_parts", { "id": "x" }, "bad", "failed", 20],
+    ["model_part", { "id": "x" }, "bad", "failed", 25],
+    ["update_parts", { "id": "x" }, "bad", "failed", 30]
+  ]
+}

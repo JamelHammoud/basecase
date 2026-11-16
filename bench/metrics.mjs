@@ -59,7 +59,7 @@ function toolCounts(updates) {
 export function tokensOf(usage) {
   if (!usage || typeof usage !== 'object') return null;
 
-  const n = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  const n = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
 
   return {
     input: n(usage.inputTokens),

@@ -3,6 +3,11 @@ import path from 'node:path';
 import { LOOP_DIR } from './paths.mjs';
 import { quotaState } from './quota.mjs';
 import { weeklyForecast } from './agentPolicy.mjs';
+import { stepPullIndex } from './stepPulls.mjs';
+import { taskUsage } from './usageTasks.mjs';
+import { sessionTotals } from './usageTotals.mjs';
+
+export { cachedInputTokens, tokenCount } from './usageTotals.mjs';
 
 export function sessionRecords({ since = Date.now() - 24 * 60 * 60_000 } = {}) {
   const dir = path.join(LOOP_DIR, 'state', 'sessions');
@@ -23,16 +28,18 @@ export function sessionRecords({ since = Date.now() - 24 * 60 * 60_000 } = {}) {
     });
 }
 
-export const tokenCount = (usage) =>
-  (usage?.input_tokens ?? 0) +
-  (usage?.output_tokens ?? 0) +
-  (usage?.cache_read_input_tokens ?? 0) +
-  (usage?.cache_creation_input_tokens ?? 0);
-
-export const cachedInputTokens = (usage) => (usage?.cached_input_tokens ?? 0) + (usage?.cache_read_input_tokens ?? 0);
-
 export function usageReport({ since, now = Date.now() } = {}) {
   const sessions = sessionRecords({ since });
+  let pulls = null;
+
+  try {
+    const index = stepPullIndex();
+
+    if (index) pulls = [...new Map([...index.values()].flat().map((pull) => [pull.number, pull])).values()];
+  } catch {
+    pulls = null;
+  }
+
   const byLane = Object.groupBy(sessions, (session) => session.lane ?? session.name);
   const codex = quotaState('codex');
   const weekly = codex.windows.find((window) => window.minutes === 10080);
@@ -45,23 +52,16 @@ export function usageReport({ since, now = Date.now() } = {}) {
     quota: { codex, claude: quotaState('claude') },
     projectedWeeklyUsage: weekly ? weeklyForecast({ used: weekly.used, reset: weekly.reset, now }) : null,
     sessions: sessions.length,
+    completedSessions: sessions.filter((session) => session.state === 'completed').length,
+    taskWork: taskUsage(sessions, pulls),
     lanes: Object.fromEntries(
       Object.entries(byLane).map(([lane, records]) => [
         lane,
         {
-          sessions: records.length,
           completed: records.filter((record) => record.state === 'completed').length,
           failed: records.filter((record) => record.ok === false).length,
-          tokens: records.reduce(
-            (total, record) => total + tokenCount(record.usage) + tokenCount(record.previousUsage),
-            0,
-          ),
-          cachedInputTokens: records.reduce(
-            (total, record) => total + cachedInputTokens(record.usage) + cachedInputTokens(record.previousUsage),
-            0,
-          ),
+          ...sessionTotals(records),
           continued: records.filter((record) => record.continued).length,
-          milliseconds: records.reduce((total, record) => total + (record.durationMs ?? 0), 0),
         },
       ]),
     ),

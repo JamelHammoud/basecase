@@ -1,3 +1,5 @@
+import { workSummary } from './work.mjs';
+
 const graded = (r) => r.status === 'pass' || r.status === 'fail';
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 const sum = (xs) => xs.reduce((a, b) => a + b, 0);
@@ -62,6 +64,7 @@ function modelSummary(model, runs, tasks) {
 
   return {
     model,
+    work: workSummary(runs),
     runs: runs.length,
     graded: runs.filter(graded).length,
     errors: runs.filter((r) => r.status === 'error').length,

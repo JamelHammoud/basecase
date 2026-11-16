@@ -26,6 +26,9 @@ vi.mock('./store.mjs', () => ({
     },
   }),
 }));
+vi.mock('./benchmarkPolicy.mjs', () => ({
+  benchmarkSelection: () => ({ provider: 'codex', model: 'gpt-6.1-sol', effort: 'medium' }),
+}));
 vi.mock('./locks.mjs', () => ({ heldLocks: () => f.locks }));
 vi.mock('../../../verify/lib/quiet.mjs', () => ({ quietRequested: () => f.quiet }));
 vi.mock('./capacity.mjs', async (original) => ({
@@ -104,7 +107,14 @@ it.each(['error', 'winner'])('keeps the report and rejects a failed process with
   nightlyHarness({ log: vi.fn(), release: 'v0.2.1' });
 
   const { deps } = runExperiment.mock.calls[0][0];
-  const result = { plan: { stop }, results: [], error: 'Kernel preflight failed' };
+  const result = {
+    provider: 'codex',
+    effort: 'medium',
+    resolved: [{ arg: 'gpt-6.1-sol' }, { arg: 'gpt-6.1-sol' }],
+    plan: { stop },
+    results: [],
+    error: 'Kernel preflight failed',
+  };
 
   run.mockReturnValueOnce({ ok: false, err: 'exit 1' });
   vi.spyOn(fs, 'existsSync').mockReturnValue(true);

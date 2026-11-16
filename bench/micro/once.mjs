@@ -48,7 +48,18 @@ export function modelFields(result, { model, effort }) {
   };
 }
 
-export async function runMicroOnce({ slot, task, seed, out, model, effort, harness, verifyModel }) {
+export async function runMicroOnce({
+  slot,
+  task,
+  seed,
+  out,
+  model,
+  effort,
+  harness,
+  verifyModel,
+  provider,
+  turn = (_, execute) => execute(),
+}) {
   const dir = path.join(out.dir, task.id, `seed-${seed}`);
 
   fs.mkdirSync(dir, { recursive: true });
@@ -60,8 +71,15 @@ export async function runMicroOnce({ slot, task, seed, out, model, effort, harne
 
   const facts = await startFacts(task, { call: slot.call });
 
-  const { result, seconds } = await promptAgent({ slot, task, dir, model, effort });
-  const problem = verifyModel && runModelProblem(modelFields(result, { model, effort }), verifyModel);
+  const { result, seconds } = await turn({ provider, model, effort, task: task.id, deadline: out.deadline }, () =>
+    promptAgent({ slot, task, dir, model, effort }),
+  );
+  const identity = modelFields(result, { model, effort });
+  const effortProblem =
+    effort && identity.sessionEffort !== effort
+      ? `Asked for effort ${effort} but ${identity.sessionEffort ?? 'none'} was applied.`
+      : null;
+  const problem = verifyModel && (runModelProblem(identity, verifyModel) || effortProblem);
 
   if (problem) throw Object.assign(new Error(problem), { code: 'served' });
 
@@ -88,6 +106,7 @@ export async function runMicroOnce({ slot, task, seed, out, model, effort, harne
     heldOut: !!task.heldOut,
     grade: grade.status,
     harness: harness ?? null,
+    provider: provider ?? null,
     ...modelFields(result, { model, effort }),
     metrics: runMetrics(records, { result, seconds }),
   };
@@ -116,5 +135,6 @@ export async function runMicroOnce({ slot, task, seed, out, model, effort, harne
     tokens: summary.metrics.tokens,
     seconds,
     servedBy: summary.servedBy,
+    provider: provider ?? null,
   };
 }

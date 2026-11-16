@@ -23,11 +23,20 @@ function distanceToSegment([px, py]: Point2, [ax, ay]: Point2, [bx, by]: Point2)
   return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
 }
 
-export function distanceToPolyline(point: Point2, polyline: Point2[]): number {
+export function distanceToPolyline<T>(point: Point2, polyline: T[], project: (value: T, out: Point2) => void): number {
+  if (polyline.length < 2) return Infinity;
+
+  const a: Point2 = [0, 0];
+  const b: Point2 = [0, 0];
   let best = Infinity;
 
+  project(polyline[0], a);
+
   for (let i = 1; i < polyline.length; i++) {
-    best = Math.min(best, distanceToSegment(point, polyline[i - 1], polyline[i]));
+    project(polyline[i], b);
+    best = Math.min(best, distanceToSegment(point, a, b));
+    a[0] = b[0];
+    a[1] = b[1];
   }
 
   return best;

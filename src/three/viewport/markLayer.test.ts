@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { SceneMark } from '../../types/robotics';
 import { MarkLayer } from './markLayer';
 
@@ -45,6 +45,46 @@ describe('MarkLayer', () => {
 
     expect(layer.hits(onTop, camera, SIZE)).toEqual(['top']);
     expect(layer.hits(between, camera, SIZE)).toEqual([]);
+  });
+
+  it('shares streamed picking across selection and erasing, including ties and the reach boundary', () => {
+    const { layer, camera } = setup();
+
+    layer.sync([mark('first', 0), mark('tie', 0)]);
+
+    const center = pixelOf(new THREE.Vector3(), camera);
+    const edge: [number, number] = [center[0], center[1] + 10];
+    const outside: [number, number] = [center[0], center[1] + 10.001];
+    const source = layer.pointsOf('first')!;
+    const mapped = vi.spyOn(source, 'map');
+
+    try {
+      expect(layer.hitTest(edge, camera, SIZE)).toBe('first');
+      expect(layer.hits(edge, camera, SIZE)).toEqual(['first', 'tie']);
+      expect(layer.hitTest(outside, camera, SIZE)).toBeNull();
+      expect(layer.hits(outside, camera, SIZE)).toEqual([]);
+      expect(mapped).not.toHaveBeenCalled();
+    } finally {
+      mapped.mockRestore();
+      layer.dispose();
+    }
+  });
+
+  it('reads the current stroke, camera and viewport on each query', () => {
+    const { layer, camera } = setup();
+
+    layer.shift('top', new THREE.Vector3(50, -30, 0));
+    camera.position.set(200, 100, 500);
+    camera.lookAt(0, 0, 0);
+    camera.updateMatrixWorld();
+
+    const size = { width: 1600, height: 1200 };
+    const center = pixelOf(layer.centerOf('top')!, camera);
+    const pixel: [number, number] = [center[0] * 2, center[1] * 2];
+
+    expect(layer.hitTest(pixel, camera, size)).toBe('top');
+    expect(layer.hits(pixel, camera, size)).toEqual(['top']);
+    layer.dispose();
   });
 
   it('fades the marks being erased and restores the rest', () => {

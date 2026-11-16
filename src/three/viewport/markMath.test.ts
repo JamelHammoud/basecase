@@ -16,6 +16,11 @@ const circle = (r: number, n = 32, sweep = 1): Point2[] =>
     return [100 + r * Math.cos(a), 100 + r * Math.sin(a)];
   });
 
+const copyPoint = (point: Point2, out: Point2): void => {
+  out[0] = point[0];
+  out[1] = point[1];
+};
+
 describe('mark strokes', () => {
   it('tells a loop that circles something from a line', () => {
     expect(encloses(circle(40))).toBe(true);
@@ -51,9 +56,42 @@ describe('mark strokes', () => {
   it('finds how close a click is to a drawn stroke', () => {
     const loop = circle(40);
 
-    expect(distanceToPolyline([140, 100], loop)).toBeLessThan(1);
-    expect(distanceToPolyline([100, 100], loop)).toBeCloseTo(40, 0);
-    expect(distanceToPolyline([0, 0], [[0, 0]])).toBe(Infinity);
+    expect(distanceToPolyline([140, 100], loop, copyPoint)).toBeLessThan(1);
+    expect(distanceToPolyline([100, 100], loop, copyPoint)).toBeCloseTo(40, 0);
+    expect(distanceToPolyline([0, 0], [[0, 0]], copyPoint)).toBe(Infinity);
+  });
+
+  it('projects each point once through two reusable endpoints', () => {
+    for (const count of [400, 800]) {
+      const points = Array.from({ length: count }, (_, i) => ({ x: i, y: 20 }));
+      const endpoints = new Set<Point2>();
+      let projections = 0;
+      const project = (point: (typeof points)[number], out: Point2): void => {
+        endpoints.add(out);
+        projections++;
+        out[0] = point.x;
+        out[1] = point.y;
+      };
+
+      expect(distanceToPolyline([100, 30], points, project)).toBe(10);
+      expect(projections).toBe(count);
+      expect(endpoints.size).toBe(2);
+      expect(distanceToPolyline([100, 30], [], project)).toBe(Infinity);
+      expect(projections).toBe(count);
+    }
+  });
+
+  it('keeps repeated endpoints and reads subsequent point edits', () => {
+    const points: Point2[] = [
+      [0, 0],
+      [0, 0],
+      [100, 0],
+    ];
+
+    expect(distanceToPolyline([0, 10], points, copyPoint)).toBe(10);
+    expect(distanceToPolyline([110, 0], points, copyPoint)).toBe(10);
+    points[2] = [200, 0];
+    expect(distanceToPolyline([110, 0], points, copyPoint)).toBeCloseTo(0, 12);
   });
 
   it('records the camera direction a mark was drawn from as a look view', () => {

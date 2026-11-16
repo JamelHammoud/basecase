@@ -885,7 +885,7 @@ The operator-camera browser check runs on Linux, Windows and macOS. It opens Dri
 
 ### Code panel isolation
 
-`src/cases/console/codeDocument.test.ts` checks the complete deny-by-default CSP, its placement before panel code and the exact `allow-scripts` sandbox. `e2e/codeIsolation.e2e.test.ts` exercises browser enforcement of the production panel document, sandbox and parent-page CSP on every platform. It probes fetch, WebSocket, parent access, localStorage, cookies, IndexedDB and top/self navigation without loading the studio or simulation. `e2e/gallery.e2e.test.ts` additionally probes IndexedDB, cookies and Hub fetches through the shared `CodeFrame`, with its existing Windows quarantine. The separate studio isolation walkthrough has been removed.
+`src/cases/console/codeDocument.test.ts` checks the complete deny-by-default CSP, its placement before panel code and the exact `allow-scripts` sandbox. `e2e/codeIsolation.e2e.test.ts` exercises browser enforcement of the production panel document, sandbox and parent-page CSP on every platform. It probes fetch, WebSocket, parent access, localStorage, cookies, IndexedDB and top/self navigation without loading the studio or simulation. The WebSocket probe uses the native constructor and requires both its error and a `connect-src` violation naming its URL, so a network failure alone cannot satisfy it. `e2e/gallery.e2e.test.ts` additionally probes IndexedDB, cookies and Hub fetches through the shared `CodeFrame`, with its existing Windows quarantine. The separate studio isolation walkthrough has been removed.
 
 [Removal evidence and coverage limits](../notes/testing-case-code.md#code-panel-isolation).
 

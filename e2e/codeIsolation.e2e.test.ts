@@ -12,6 +12,10 @@ const mark = (name, value) => parent.postMessage({ probe: name, value }, '*');
 const probe = (name, run) => {
   try { run(); mark(name, 'allowed'); } catch { mark(name, 'blocked'); }
 };
+addEventListener('securitypolicyviolation', (event) => {
+  if (event.effectiveDirective === 'connect-src' && event.blockedURI === 'ws://code-isolation.test/socket')
+    mark('socketPolicy', 'blocked');
+});
 fetch('${ORIGIN}/fetch').then(() => mark('fetch', 'allowed'), () => mark('fetch', 'blocked'));
 try {
   const socket = new WebSocket('ws://code-isolation.test/socket');
@@ -60,11 +64,6 @@ it('enforces code panel network, storage, parent and navigation isolation withou
     return route.abort();
   });
 
-  await page.routeWebSocket('**/*', (socket) => {
-    requests.push(socket.url());
-    socket.close();
-  });
-
   try {
     await page.goto(`${ORIGIN}/`);
     await page.evaluate(
@@ -101,6 +100,7 @@ it('enforces code panel network, storage, parent and navigation isolation withou
       .toEqual({
         fetch: 'blocked',
         socket: 'blocked',
+        socketPolicy: 'blocked',
         top: 'blocked',
         parent: 'blocked',
         storage: 'blocked',

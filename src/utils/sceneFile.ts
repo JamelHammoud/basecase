@@ -1,3 +1,4 @@
+import { validateFixtureImports } from '../cases/fixtureImports';
 import { withValidStudy } from '../study/record';
 import type { Skill } from '../skills/artifacts';
 import { readSkillBundle } from '../skills/bundle';
@@ -149,6 +150,7 @@ export async function decodeSceneFile(bytes: Uint8Array): Promise<SharedScene> {
 
   const project = localProject(scene.project as ProjectSettings | undefined);
 
+  validateFixtureImports(project?.cases);
   sceneWorldAssets(project, assets);
 
   return {

@@ -85,8 +85,8 @@ function extrudeBody(profile: Profile, depth: number): Body | null {
 }
 
 function revolveBody(profile: Profile): Body | null {
-  const radius = Math.max(...profile.outer.map(([x]) => Math.abs(x)));
   const { min, max } = loopBounds(profile.outer);
+  const radius = Math.max(Math.abs(min[0]), Math.abs(max[0]));
   const height = max[1] - min[1];
 
   if (radius < MIN_SPAN || height < MIN_SPAN) return null;

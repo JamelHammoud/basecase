@@ -42,11 +42,24 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
   };
   const unitless = caseSignalNames(kase);
 
+  for (const object of kase.world.objects) {
+    if (object.joint?.type === 'prismatic') unitless.delete(`${object.id}-travel`);
+  }
+
   for (const probe of kase.task.probes) if (probe.kind) unitless.add(probe.signal);
 
   const object = (o: WorldObject): WorldObject => ({
     ...o,
     position: place(o.position),
+    ...(o.joint
+      ? {
+          joint: {
+            ...o.joint,
+            origin: place(o.joint.origin),
+            range: o.joint.range.map((n) => n * (o.joint!.type === 'prismatic' ? s : 1)) as [number, number],
+          },
+        }
+      : {}),
     size: o.size.map((x) => x * s) as V3,
     ...(o.massG !== undefined ? { massG: o.massG * s ** 3 } : {}),
     ...(o.points

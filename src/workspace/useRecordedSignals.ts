@@ -1,3 +1,4 @@
+import { probeSignals } from '../cases/fixtureTravel';
 import { useVisionScope, type VisionScope } from '../cameras/visionScope';
 import { sceneVisionSignals } from '../cameras/sceneVision';
 import { withVisionSignals } from '../cameras/visionBus';
@@ -54,7 +55,7 @@ export function timelineScene({ timeline, model, rig }: SceneInput, verdicts: Ve
     efforts: efforts.forces,
     world: scene ? caseProbeWorld(scene.scoring) : bareWorld(model, rig),
     trace: scene?.trace ?? null,
-    probes: scene?.scoring.kase.task.probes.map((p) => p.signal) ?? [],
+    probes: probeSignals(scene?.scoring.kase ?? null),
     trips: timeline.trips,
     verdicts,
   };

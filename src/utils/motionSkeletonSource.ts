@@ -127,18 +127,21 @@ function channelSamples(rotations: MotionFrames['rotations']) {
 
 function axisEntries(options: {
   motion: Mocap;
+  boneIndices: Map<string, number>;
   leaf: string;
   channelsOf: ReturnType<typeof channelSamples>;
   first: Map<string, THREE.Vector3>;
   scale: number;
 }): MotionAxis[] {
-  const { motion, leaf, channelsOf, first, scale } = options;
+  const { motion, boneIndices, leaf, channelsOf, first, scale } = options;
   const result: MotionAxis[] = [];
   const orientation = new THREE.Quaternion();
+  const leafIndex = boneIndices.get(leaf) ?? -1;
 
   for (const bone of ancestors(motion, leaf)) {
     const channels = channelsOf(bone);
     const position = pointOf(first, bone);
+    const boneIndex = boneIndices.get(bone) ?? -1;
 
     channels.forEach((channel) => {
       const axis = AXES[channel.axis].clone().applyQuaternion(orientation);
@@ -151,7 +154,7 @@ function axisEntries(options: {
 
       result.push({
         joint: {
-          id: `motion_${motion.bones.indexOf(leaf)}_${motion.bones.indexOf(bone)}_${channel.axis.toLowerCase()}`,
+          id: `motion_${leafIndex}_${boneIndex}_${channel.axis.toLowerCase()}`,
           name: `${bone} ${channel.axis.toLowerCase()}`,
           origin: tuple(position.clone().multiplyScalar(scale)),
           axis: axisTuple(axis),
@@ -173,10 +176,15 @@ export function motionChains(
 ): MotionChain[] {
   const { positions: frames, rotations } = samples;
   const channelsOf = channelSamples(rotations);
+  const boneIndices = new Map<string, number>();
+
+  motion.bones.forEach((bone, index) => {
+    if (!boneIndices.has(bone)) boneIndices.set(bone, index);
+  });
 
   return motionLeaves(motion, options.limbs).map((leaf) => ({
     name: motion.endSites?.parentOf.get(leaf) ?? leaf,
-    axes: axisEntries({ motion, leaf, channelsOf, first: frames[0], scale: options.scale }),
+    axes: axisEntries({ motion, boneIndices, leaf, channelsOf, first: frames[0], scale: options.scale }),
     tip: tuple(pointOf(frames[0], leaf).clone().multiplyScalar(options.scale)),
     targets: frames.map((frame) => tuple(pointOf(frame, leaf).clone().multiplyScalar(options.scale))),
   }));

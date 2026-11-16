@@ -16,6 +16,7 @@ import {
 } from './caseGoals';
 import { CASE_WORLDS, type CaseWorld, type WorldKind } from './caseWorlds';
 import { goalDefaults, touchRadius } from './goalDefaults';
+import { FIXTURE_GOALS } from './fixtureGoals';
 import { handoffGoal } from './handoffGoal';
 import { robotFacts, type RobotFacts } from './robotFit';
 import { groundRoute } from './groundRoute';
@@ -117,7 +118,7 @@ export function builderRobot(rig: Rig, parts: ScenePart[]): BuilderRobot {
   };
 }
 
-const GOALS: CaseGoal[] = [...CASE_GOALS, handoffGoal];
+const GOALS: CaseGoal[] = [...CASE_GOALS, handoffGoal, ...FIXTURE_GOALS];
 
 export const goalOf = (kind: GoalKind): CaseGoal | undefined => GOALS.find((g) => g.kind === kind);
 

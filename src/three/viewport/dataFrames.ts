@@ -107,37 +107,38 @@ function framePath(tree: TfTree, frame: string, at: number, links?: FrameAnchors
   return { frame: current, toFrame };
 }
 
-const rootOf = (tree: TfTree, frame: string) => {
+function depthFromRoot(tree: TfTree, frame: string, root: string) {
   let current = frame;
+  let depth = 0;
 
-  for (let hops = 0; hops <= tree.edges.size; hops++) {
+  for (; depth <= tree.edges.size; depth++) {
     const edge = tree.edges.get(current);
 
-    if (!edge) return current;
+    if (!edge) break;
 
     current = edge.parent;
   }
 
-  return current;
-};
-
-function sameTreeLink(tree: TfTree, root: string, links: FrameAnchors['links']): string | null {
-  const known = [...tree.edges.keys()];
-  const rooted = known.filter((f) => links.has(f) && rootOf(tree, f) === root);
-  const depth = (f: string) => chainLength(tree, f);
-
-  return rooted.sort((a, b) => depth(a) - depth(b))[0] ?? null;
+  return current === root ? depth : Infinity;
 }
 
-const chainLength = (tree: TfTree, frame: string) => {
-  let n = 0;
+function sameTreeLink(tree: TfTree, root: string, links: FrameAnchors['links']): string | null {
+  let nearest: string | null = null;
+  let nearestDepth = Infinity;
 
-  for (let current = frame; tree.edges.has(current) && n <= tree.edges.size; n++) {
-    current = tree.edges.get(current)!.parent;
+  for (const frame of tree.edges.keys()) {
+    if (!links.has(frame)) continue;
+
+    const depth = depthFromRoot(tree, frame, root);
+
+    if (depth >= nearestDepth) continue;
+
+    nearest = frame;
+    nearestDepth = depth;
   }
 
-  return n;
-};
+  return nearest;
+}
 
 export function knowsFrame(tree: TfTree, frame: string, anchors: FrameAnchors): boolean {
   return anchors.links.has(frame) || tree.edges.has(frame) || [...tree.edges.values()].some((e) => e.parent === frame);

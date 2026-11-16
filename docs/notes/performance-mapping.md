@@ -39,3 +39,9 @@ A fresh Node worker per existing fixture on an Apple M5 Pro, Node 26.13.0, match
 ## Recorded scan hits write directly into their output
 
 `quat.test.ts` checks product parity and output storage. `scanHits.test.ts` compares complete outputs with the previous calculation across 80 poses and layouts, range boundaries, sparse inputs, typed-array views and later edits. Existing `simTracks.test.ts` and `simMap.test.ts` retain MuJoCo replay and map coverage. On macOS arm64 with Node 26.13.0, 720-ray scans took median times of 0.0370 ms before and 0.0103 ms after with every ray returning, 0.0214 ms and 0.0069 ms with half returning, 0.0057 ms and 0.0028 ms with 10% returning, and 0.0021 ms and 0.0016 ms with none returning. Each comparison used four warmup batches and 21 alternating measured batches of 500 calls per implementation. These measure hit reconstruction alone, without CI timing assertions or a claim about complete playback or mapping time.
+
+## Sibling frame anchors use one selection scan
+
+`dataFrames.selection.test.ts` checks shallowest-link priority, first tree-entry ties despite reversed anchor order, disconnected roots and cycles, deleted anchors and unchanged input matrices. Existing frame tests retain interpolation, rotated sibling placement, unknown frames and base fallback coverage.
+
+A scratch comparison against the previous resolver matched complete matrices for 9,200 queries across 200 deterministic 40-edge graphs, including cycles, disconnected roots and unknown frames. On 300- and 600-link star trees, complete root resolution reduced edge reads from 1,201 and 2,401 to 603 and 1,203. The permanent tests assert these new counts. These are deterministic operation counts, independent of hardware, without timing assertions or a claim about complete rendering time. Parent walks remain proportional to candidate depth and are bounded on malformed cycles. No cross-call cache is introduced.

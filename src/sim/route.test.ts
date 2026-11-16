@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { limitedCommand, routeAt, routeCommand, wheelSpeeds, type RouteSpec } from './route';
+import { limitedCommand, routeAt, routeCommand, type RouteSpec } from './route';
 
 const spec = (over: Partial<RouteSpec> = {}): RouteSpec => ({
   keys: [
@@ -61,16 +61,5 @@ describe('route', () => {
     });
 
     expect(limited).toEqual([0.01, 0, 0.04]);
-  });
-
-  it('turns wheels by their side, radius and spin', () => {
-    const wheels = [
-      { joint: 'l', spin: 1, lateralMm: 85, radiusMm: 35 },
-      { joint: 'r', spin: -1, lateralMm: -85, radiusMm: 35 },
-    ];
-    const speeds = wheelSpeeds(wheels, [0.07, 0, 1]);
-
-    expect(speeds.l).toBeCloseTo((70 - 85) / 35);
-    expect(speeds.r).toBeCloseTo(-(70 + 85) / 35);
   });
 });

@@ -31,3 +31,19 @@ On shared macOS arm64 hardware with an Apple M5 Pro and Node 26.13.0, a scratch 
 ## Sketch deletion avoids repeated membership searches
 
 `sketch/removal.test.ts` compares 120 mixed selections with the previous cleanup and checks shared centers, every constraint kind, references, duplicate ids, source preservation and later edits. Its 300- and 600-line fixtures delete alternating lines. Entity-id reads fall from 22,800 and 90,600 to 599 and 1,199. Retained-point comparisons fall from 135,150 and 540,300 to zero. These are operation counts for deletion cleanup, without timing assertions or a claim about complete selection or rendering time.
+
+## Sketch constraint batches assign ids once
+
+The whole-app search found one constraint-creation helper, `utils/sketch/edit.ts`'s `withConstraints`. Rectangles, dimensioned lines and circles, dimension edits and constraint commands all call it. Solver updates replace existing constraints rather than assign new ids. SVG conversion creates no constraints.
+
+`constraintBatch.test.ts` compares complete results against the previous batch implementation across 100 fixtures with gaps, cross-collection prefixes, fractional, malformed, infinite and large numeric ids. It checks every constraint kind, empty-batch identity, source preservation, retained references, independent added objects, subsequent batches and later source edits. Existing edit and solver tests cover the callers. No quarantine applies.
+
+For six added constraints on fixtures with 300 and 600 items in each collection, counted existing-id reads fall from 7,200 and 14,400 to 900 and 1,800. The old append path copies 1,815 and 3,615 existing constraint entries across six growing lists. The new path copies 300 and 600 entries once. These are deterministic operation counts, without timing assertions or a claim about complete Sketch interaction time. Constraint solving remains unchanged.
+
+## Sketch bounds accumulate coordinates directly
+
+The whole-app search found coordinate buffers in `utils/sketch/profile.ts`, `utils/sketch/face.ts` and `components/studio/sketchView.ts`. Profile output and view fitting now accumulate extrema without coordinate arrays or spread arguments. Face placement includes each projected corner during projection, removing its flattened corner list and four coordinate arrays. Revolve derives its radius from the measured x extrema, removing a separate absolute-coordinate array and traversal. The operation-local accumulator retains `Math.min` and `Math.max` behavior for signed zero, NaN and infinities. Circle-center selection and empty-view behavior stay unchanged.
+
+`utils/sketch/bounds.test.ts` compares previous extrema and circle extents, including duplicate and missing centers, negative radii, source preservation and later edits. It checks Extrude and Revolve output on negative, positive and axis-crossing profiles. Its 200,000-point fixture checks profile bounds, view bounds, framing and containment without an argument-count limit. Existing `placement.test.ts` covers face picking, reference edges, placed planes and cutouts. No quarantine applies.
+
+On shared macOS arm64 hardware with an Apple M5 Pro and Node 26.13.0, a scratch benchmark compared the previous and new profile-bound calculations. It used ten warmups per implementation and 31 alternating ten-call batches, checking complete results before timing. Median times for 1,000, 10,000 and 50,000 points fell from 0.0215, 0.2162 and 1.0902 ms to 0.0179, 0.1634 and 0.8222 ms. The previous implementation threw `RangeError: Maximum call stack size exceeded` on 200,000 points. These are local bounds measurements, without CI timing assertions or a claim about complete Sketch interaction time. Circle-center searches, face triangulation and boundary merging remain unchanged.

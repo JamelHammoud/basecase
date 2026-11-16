@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { BANNED_COPY } from '../../../verify/rehearsal/uiRules.ts';
-import { diffStrings, judge } from '../../copy/budget.mjs';
-import { changedFiles, scannedSources, stringsOf } from '../../copy-diff.mjs';
+import { judge } from '../../copy/budget.mjs';
+import { changedFiles, copyDiffOfRange, copyOccurrences } from '../../copy-diff.mjs';
 import { runAgent } from './agent.mjs';
 import { ANNOUNCED, copyLines } from './pull.mjs';
 
@@ -130,11 +130,7 @@ function helpArticles(cwd) {
 }
 
 function addedAndRemoved(cwd) {
-  const diffs = scannedSources({ cwd }).map(({ file, renamedFrom, before, after }) =>
-    diffStrings(stringsOf(renamedFrom, before), stringsOf(file, after)),
-  );
-
-  return { added: diffs.flatMap((d) => d.added), removed: diffs.flatMap((d) => d.removed) };
+  return copyOccurrences(copyDiffOfRange({ cwd }));
 }
 
 export function preflight(cwd, { kind, copy }) {

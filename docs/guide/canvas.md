@@ -106,6 +106,8 @@ Measurements and limits: [Mesh preparation performance evidence](../notes/perfor
 
 Measurements and limits: [Sensor layers and mapping performance evidence](../notes/performance-mapping.md).
 
+- **Sibling frame anchors use one selection scan.** `three/viewport/dataFrames.ts` walks each anchored candidate's parent chain once to check its root and depth, retaining the shallowest matching link without candidate arrays or sorting. Equal depths retain tree insertion order. Bounded cycle traversal, root fallback and fresh anchor reads stay unchanged. All sensor drawing and mapping callers share this resolver. `dataFrames.selection.test.ts` checks depth priority, ties, disconnected cycles, anchor edits, source preservation and edge-read counts. [Evidence](../notes/performance-mapping.md#sibling-frame-anchors-use-one-selection-scan).
+
 - **Recorded mapping indexes sensor order once.** `dataLayers/mapFeed.ts` resolves timestamp ties through a call-local sensor-rank map. The Map overlay and Make World reconstruction share this ordering, preserving schema group order, topic order and duplicate-message order. [Evidence](../notes/performance-mapping.md#recorded-mapping-indexes-sensor-order-once).
 
 - **Scan reconstruction reuses sample workspaces per sweep.** `dataLayers/mapWorldCells.ts` retains one transformed point and, for laser and depth sweeps, three ray axes with prepared origin cells. Point clouds share the point workspace without tracing rays. The accumulator removes per-return typed-array views, point and cell arrays, ray-axis objects and validation callbacks. Transformation arithmetic, quantization, simultaneous crossings, endpoint exclusion and refusal budgets stay unchanged. [Evidence](../notes/performance-mapping.md#scan-reconstruction-reuses-sample-workspaces-per-sweep).
@@ -123,6 +125,8 @@ Measurements and limits: [Sensor layers and mapping performance evidence](../not
 - **Recorded scan hits write directly into their output.** `dataLayers/simTracks.ts` shares reconstruction between replayed LiDAR layers and combined recorded scan maps. A counting pass sizes the output exactly, and one rotation buffer replaces seven temporary arrays per returning ray. The shared `sim/quat.ts` rotation also avoids four temporary quaternion arrays for grabbing and other callers. Quaternion multiplication order stays unchanged, including non-unit quaternions. [Evidence](../notes/performance-mapping.md#recorded-scan-hits-write-directly-into-their-output).
 
 ## Performance: viewport rendering
+
+- **Ready part builds drain without shifting the queue.** `three/viewport/partLayer.ts` keeps pending build records in an insertion-ordered set and deletes each record before building it. Scene parts, loaded component replacements and worker-prepared meshes share this queue. Sync clears superseded records, and whole-scene reads append waiting records before draining. Time and upload budgets, build order and stale worker-result rejection stay unchanged. `partLayer.test.ts` checks ordered partial drains, zero and nonfinite budgets, replacement of unfinished work and complete drains. [Evidence](../notes/performance-viewport.md#ready-part-builds-drain-without-shifting-the-queue).
 
 Measurements and limits: [Viewport rendering performance evidence](../notes/performance-viewport.md).
 

@@ -1,5 +1,6 @@
 import ts from 'typescript';
-import { CALL_KEYS, CALLS, JSX_PROPS, OBJECT_KEYS } from './surfaces.mjs';
+import { nativeStrings } from './native.mjs';
+import { CALL_KEYS, CALLS, JSX_PROPS, NATIVE_MENU_FILE, OBJECT_KEYS } from './surfaces.mjs';
 
 export const SLOT = '{…}';
 
@@ -166,7 +167,7 @@ const isJsxParent = (node) => ts.isJsxElement(node) || ts.isJsxFragment(node);
 
 function childExpressionStrings(node) {
   const parent = node.parent;
-  const inChildren = parent && isJsxParent(parent) && node.expression && !isLiteral(unwrap(node.expression));
+  const inChildren = parent && isJsxParent(parent) && node.expression && jsxChildrenText(parent) === null;
 
   return inChildren ? tagged(stringsOf(node.expression), 'text') : [];
 }
@@ -201,13 +202,35 @@ function parse(source, fileName, parents = true) {
   return ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, parents, scriptKind);
 }
 
+function inLog(node) {
+  let parent = node.parent;
+
+  while (parent) {
+    const callee = ts.isCallExpression(parent) ? parent.expression : null;
+
+    if (callee && ts.isPropertyAccessExpression(callee) && /^(console|logger|log)$/.test(callee.expression.getText())) {
+      return true;
+    }
+
+    parent = parent.parent;
+  }
+
+  return false;
+}
+
 export function extractStrings(source, fileName = 'file.tsx') {
+  const native = fileName.startsWith('electron/');
+
+  if (native && fileName !== NATIVE_MENU_FILE && !/\bdialog\b/.test(source)) return [];
+
   const file = parse(source, fileName);
   const found = new Map();
 
   const visit = (node) => {
-    for (const hit of nodeStrings(node)) {
-      found.set(hit.node.pos, {
+    const hits = native ? nativeStrings(node, { file: fileName, stringsOf }) : nodeStrings(node);
+
+    for (const hit of hits.filter(() => !inLog(node))) {
+      found.set(hit.occurrence ?? hit.node.pos, {
         text: normalize(hit.text),
         kind: hit.kind,
         start: hit.start ?? hit.node.getStart(file),

@@ -2,6 +2,12 @@
 
 Implementation: [Cable routing](../guide/build.md#performance-cable-routing). Shared requirements: [Performance](../guide/performance.md).
 
+## Cable measurements use scalar distances
+
+`routeMeasure.test.ts` compares complete routed netlists on 24 scenes against the previous vector-based distance and path-length implementations. The fixtures vary placement, stationary and moving joints, direct and bracket-detoured paths, and passing and too-short stock choices. Inputs remain unchanged. Numeric comparisons include empty and singleton paths, signed zero, small coordinates, stock-length boundaries, overflow, infinity and NaN. `routeAnalysis.test.ts` retains power-lead, anchor, coupled-motion and refusal coverage.
+
+The existing 300- and 600-point motion-bound fixtures now assert 1,202 and 2,402 scalar distance calls and zero vector distance calls. The preceding implementation used two new vectors per distance call, so those queries avoid 2,404 and 4,804 vector constructions. Each sampled path also avoids two vectors per segment and one copied segment list. These are source-level allocation counts checked through distance-call spies, without timing assertions or a claim about complete routing latency. Visibility-search distances keep their existing `Math.hypot` arithmetic, since replacing either metric with the other can change floating-point results.
+
 ## Servo buses group connectors once
 
 `netlistGrouping.test.ts` checks mixed connector ordering, ordered adapter splits, duplicate actuator references, loose servos, surplus and missing adapters, empty scenes and unchanged inputs. Existing netlist tests cover cable quantities, power feeds, engineering findings and BOM output.

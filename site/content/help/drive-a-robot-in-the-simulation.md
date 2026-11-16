@@ -28,6 +28,7 @@ covers:
   - src/sim/driveAccess.ts
   - src/sim/useDrive.ts
   - src/sim/drive.ts
+  - src/sim/wheelSpeeds.ts
 ---
 
 Before you build a robot, you can drive it in MuJoCo to see how it moves. Steer an arm, a rover or a walking robot live with your keyboard or a gamepad.

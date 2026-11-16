@@ -78,19 +78,26 @@ export function traceOutline(mask: Mask, { mmPerPx, n = 20, z0 = 0 }: { mmPerPx:
 
   const cx = (box.x0 + box.x1 + 1) / 2;
   const toMm = (x: number, y: number): Point => [(x - cx) * mmPerPx, z0 + (box.y1 + 1 - y) * mmPerPx];
-  const ring: Point[] = [
-    ...spans.map((s) => toMm(s.right, s.y + 0.5)),
-    toMm(spans[spans.length - 1].right, box.y1 + 1),
-    toMm(spans[spans.length - 1].left, box.y1 + 1),
-    ...[...spans].reverse().map((s) => toMm(s.left, s.y + 0.5)),
-    toMm(spans[0].left, box.y0),
-    toMm(spans[0].right, box.y0),
-  ];
+  const ring: Point[] = [];
+
+  for (const span of spans) ring.push(toMm(span.right, span.y + 0.5));
+
+  ring.push(toMm(spans[spans.length - 1].right, box.y1 + 1), toMm(spans[spans.length - 1].left, box.y1 + 1));
+
+  for (let i = spans.length - 1; i >= 0; i--) ring.push(toMm(spans[i].left, spans[i].y + 0.5));
+
+  ring.push(toMm(spans[0].left, box.y0), toMm(spans[0].right, box.y0));
+
   const H = spans.length;
   const bandsMm = Array.from({ length: 10 }, (_, b) => {
-    const rows = spans.slice(Math.floor((b * H) / 10), Math.floor(((b + 1) * H) / 10));
+    const end = Math.floor(((b + 1) * H) / 10);
+    let widest = 0;
 
-    return r1(Math.max(0, ...rows.map((s) => s.right - s.left)) * mmPerPx);
+    for (let i = Math.floor((b * H) / 10); i < end; i++) {
+      widest = Math.max(widest, spans[i].right - spans[i].left);
+    }
+
+    return r1(widest * mmPerPx);
   });
 
   return {

@@ -12,11 +12,17 @@ import { lengthLabel } from '../utils/size';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
 import { plural } from '../../electron/plural.mjs';
 
-export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk' | 'pick' | 'handoff';
+export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk' | 'pick' | 'handoff' | 'lid' | 'drawer';
 
 export type { GoalParam, GoalValues, ParamKey } from './goalParams';
 
 const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
+  fixtureWidthMm: { key: 'fixtureWidthMm', label: 'Width', unit: 'mm', min: 10, max: 500, step: 5 },
+  fixtureDepthMm: { key: 'fixtureDepthMm', label: 'Depth', unit: 'mm', min: 10, max: 500, step: 5 },
+  fixtureTravel: { key: 'fixtureTravel', label: 'Travel', unit: 'mm', min: 1, max: 150, step: 5 },
+  fixtureMassG: { key: 'fixtureMassG', label: 'Weight', unit: 'g', min: 1, max: 10000, step: 5 },
+  fixtureFriction: { key: 'fixtureFriction', label: 'Joint friction', unit: 'mN', min: 0, max: 10000, step: 1 },
+  fixtureDamping: { key: 'fixtureDamping', label: 'Damping', unit: 'mN s/m', min: 0, max: 10000, step: 1 },
   dots: { key: 'dots', label: 'Dots', unit: '', min: 1, max: DOT_COUNT, step: 1 },
   distanceMm: { key: 'distanceMm', label: 'Distance', unit: 'mm', min: 0, max: 5000, step: 50 },
   heightMm: { key: 'heightMm', label: 'Height', unit: 'mm', min: 0, max: 2000, step: 10 },
@@ -84,7 +90,13 @@ export interface CaseGoal {
   bounds?: Partial<Record<ParamKey, Pick<GoalParam, 'min'>>>;
 }
 
-export const goalParam = (goal: CaseGoal, key: ParamKey): GoalParam => ({ ...GOAL_PARAMS[key], ...goal.bounds?.[key] });
+export const goalParam = (goal: CaseGoal, key: ParamKey): GoalParam => ({
+  ...GOAL_PARAMS[key],
+  ...(goal.kind === 'lid' && key === 'fixtureTravel' ? { unit: '°' } : {}),
+  ...(goal.kind === 'lid' && key === 'fixtureFriction' ? { unit: 'mN m' } : {}),
+  ...(goal.kind === 'lid' && key === 'fixtureDamping' ? { unit: 'mN m s/rad' } : {}),
+  ...goal.bounds?.[key],
+});
 
 const GOAL_BLUE = '#0d99ff';
 const BOX_GREY = '#c8a26a';
@@ -392,6 +404,8 @@ export function fallGuard(robot: BuilderRobot): { probe: CaseProbe; failure: Con
   };
 }
 
-const pickGoal = pickGoalWith([...REACH, { id: 'grip', label: 'Grip', input: 'grip' }]);
+export const GRIP: CaseControl[] = [...REACH, { id: 'grip', label: 'Grip', input: 'grip' }];
+
+const pickGoal = pickGoalWith(GRIP);
 
 export const CASE_GOALS: CaseGoal[] = [reachGoal, pushGoal, pathGoal, walkGoal, touchGoal, pickGoal];

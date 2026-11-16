@@ -58,6 +58,22 @@ function walkLoop(start: string, neighbors: Map<string, string[]>, points: Map<s
   return loop;
 }
 
+function addNeighbor(neighbors: Map<string, string[]>, key: string, next: string): boolean {
+  const list = neighbors.get(key);
+
+  if (!list) {
+    neighbors.set(key, [next]);
+
+    return true;
+  }
+
+  if (list.length === 2) return false;
+
+  list.push(next);
+
+  return true;
+}
+
 export function loopsOf(edges: Edge[]): Point[][] | undefined {
   const neighbors = new Map<string, string[]>();
   const points = new Map<string, Point>();
@@ -66,13 +82,15 @@ export function loopsOf(edges: Edge[]): Point[][] | undefined {
     const ka = pointKey(a);
     const kb = pointKey(b);
 
+    if (!addNeighbor(neighbors, ka, kb) || !addNeighbor(neighbors, kb, ka)) return undefined;
+
     points.set(ka, a);
     points.set(kb, b);
-    neighbors.set(ka, [...(neighbors.get(ka) ?? []), kb]);
-    neighbors.set(kb, [...(neighbors.get(kb) ?? []), ka]);
   }
 
-  if ([...neighbors.values()].some((list) => list.length !== 2)) return undefined;
+  for (const list of neighbors.values()) {
+    if (list.length !== 2) return undefined;
+  }
 
   const remaining = new Set(points.keys());
   const loops: Point[][] = [];

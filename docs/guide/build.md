@@ -322,6 +322,8 @@ Measurements and limits: [Cable routing performance evidence](../notes/performan
 
 ## Performance: sheet manufacturing
 
+- **Sheet boundary adjacency stays bounded.** `sheet/profileLoops.ts` appends to one neighbor list per rounded vertex and refuses the boundary immediately when a third incident endpoint arrives. The final degree check scans the map directly. Both sheet caps share this path through geometry-worker measurements and analysis reports. Endpoint order, last point references, rounding, loop ordering and refusal results stay unchanged. `profileLoops.test.ts` covers rounded endpoints, self-edges, open and branching boundaries, input preservation, edits and bounded branch reads. [Evidence](../notes/performance-sheet.md#sheet-boundary-adjacency-stays-bounded).
+
 Measurements and limits: [Sheet manufacturing performance evidence](../notes/performance-sheet.md).
 
 - **Sheet outline extents use one bounds scan.** `sheet/detectSheet.ts` reuses the lightweight `utils/sketch/bounds.ts` accumulator to measure both outline axes together. Geometry-worker measurements and analysis reports avoid four coordinate arrays and spread arguments for each candidate profile. The shorter-axis comparison, 0.002 mm allowance and complete returned profiles stay unchanged. Existing `detectSheet.test.ts` and `sheetProjection.test.ts` cover holes, concavity, tilt, rounded coordinates, moved meshes and refused solids. [Evidence](../notes/performance-sheet.md#sheet-outline-extents-use-one-bounds-scan).

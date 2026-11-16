@@ -101,6 +101,8 @@ A robot is posable once its degrees of freedom are declared. Posing never edits 
 
 ## Performance: onshape imports
 
+Onshape rigid groups share `electron/componentRoot.mjs` with rig and print grouping. Every traversed component link is compressed, preserving mate union direction and link naming. `electron/onshape/assemblyGroups.test.mjs` covers chained mates, occurrence order, input preservation and regrouping after edits. [Evidence](../notes/performance-joints.md#rig-component-lookups-compress-their-full-paths).
+
 Measurements and limits: [Onshape imports performance evidence](../notes/performance-onshape.md).
 
 - **Onshape updates index remaining joint identities.** `onshape/onshapeJointIds.ts` groups scene joints by mate id once, removing each reserved joint from its group. Both child-part matching and unique-mate fallback avoid copying and scanning unrelated remaining joints. Exact scoped ids retain priority over legacy bare ids, child matches reserve identities before fallback, and first ties and id suffixes stay unchanged. The index ends with the update. [Evidence](../notes/performance-onshape.md#onshape-updates-index-remaining-joint-identities).
@@ -174,6 +176,8 @@ Measurements and limits: [Joints and kinematics performance evidence](../notes/p
 - **Joint frame resolution shares mount transforms.** `resolveJoints` builds one matrix per used mount within each call, reusing it for every joint framed to that part. Unused mounts build no matrix, and no matrix is retained across calls. [Evidence](../notes/performance-joints.md#joint-frame-resolution-shares-mount-transforms).
 
 - **Rig group adoption indexes groups once per pass.** `utils/kinematicsRig.ts` summarizes each group's link owners before assigning unlisted parts, then summarizes robot components before adopting unlisted parts other than references into robots. An inferred owner only repeats its group's sole owner, so the first summary stays valid throughout adoption. Both passes take linear work in scene size, including one large group. [Evidence](../notes/performance-joints.md#rig-group-adoption-indexes-groups-once-per-pass).
+
+- **Rig component lookups compress their full paths.** The shared iterative `electron/componentRoot.mjs` lookup serves rig grouping, Onshape rigid groups, print merging and label-face grouping. Each lookup compresses every traversed link, preserving union root choices, insertion order and grouped-part adoption. `kinematicsRobotGroups.test.ts` covers shared-root chains, disconnected components and fresh grouping after edits. [Evidence](../notes/performance-joints.md#rig-component-lookups-compress-their-full-paths).
 
 ## Performance: motion fitting and retargeting
 

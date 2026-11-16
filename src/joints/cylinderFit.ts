@@ -177,16 +177,26 @@ function fitOnce(index: MeshIndex, tris: number[], axis: V3): Fit | null {
 
   if (!circle) return null;
 
-  const along = vertices.map((p) => dot(p, axis));
-  const lo = Math.min(...along);
-  const hi = Math.max(...along);
   const onAxis = add(scale(basis[0], circle.cx), scale(basis[1], circle.cy));
-  const center = add(onAxis, scale(axis, (lo + hi) / 2));
   const radialOf = (p: V3) => {
     const d = sub(p, onAxis);
 
     return sub(d, scale(axis, dot(d, axis)));
   };
+  const residuals = new Map<number, number>();
+  let lo = Infinity;
+  let hi = -Infinity;
+
+  for (let i = 0; i < ids.length; i++) {
+    const p = vertices[i];
+    const along = dot(p, axis);
+
+    lo = Math.min(lo, along);
+    hi = Math.max(hi, along);
+    residuals.set(ids[i], Math.abs(Math.hypot(...radialOf(p)) - circle.r));
+  }
+
+  const center = add(onAxis, scale(axis, (lo + hi) / 2));
   const outward = tris.reduce(
     (s, t) => s + index.areas[t] * dot(index.normal(t), unit(radialOf(centroid(index, t)))),
     0,
@@ -201,7 +211,7 @@ function fitOnce(index: MeshIndex, tris: number[], axis: V3): Fit | null {
       spanDeg: angularSpanDeg(index, tris, basis),
       convex: outward > 0,
     },
-    residuals: new Map(ids.map((v, i) => [v, Math.abs(Math.hypot(...radialOf(vertices[i])) - circle.r)])),
+    residuals,
   };
 }
 

@@ -177,21 +177,24 @@ const squaredNorm = (x: number, y: number) => x * x + y * y;
 
 function nearestDistance(p: Vec2, segments: CurveSegment[]): number {
   let best = Infinity;
+  let runnerUp = Infinity;
   let nearest: CurveSegment | undefined;
-  let tied = false;
 
   for (const segment of segments) {
     const squared = segmentDistance(p, segment, squaredNorm);
 
-    if (squared <= best) {
-      tied = squared === best;
+    if (squared < best) {
+      runnerUp = best;
       nearest = segment;
+    } else {
+      runnerUp = Math.min(runnerUp, squared);
     }
 
     best = Math.min(best, squared);
   }
 
-  if (nearest && !tied && best >= 1e-300 && Number.isFinite(best)) return segmentDistance(p, nearest);
+  if (nearest && best >= 1e-300 && Number.isFinite(best) && runnerUp - best > 8 * Number.EPSILON * best)
+    return segmentDistance(p, nearest);
 
   let distance = Infinity;
 

@@ -53,6 +53,23 @@ describe('nearest four-bar segment distances', () => {
     expect(hypot).toHaveBeenCalledTimes(1);
   });
 
+  it('retains the hypot minimum when distinct squared distances round in the opposite order', () => {
+    const a: Vec2 = [0.9999999999995, 9.999999999998333e-7];
+    const b: Vec2 = [0.9999999998195, 0.000018999999998856832];
+    const curve: Vec2[] = [a, [2 * a[0], 2 * a[1]], [2 * b[0], 2 * b[1]], b];
+    const point: Vec2 = [0, 0];
+
+    expect(a[0] * a[0] + a[1] * a[1]).toBeLessThan(b[0] * b[0] + b[1] * b[1]);
+    expect(Math.hypot(...a)).toBeGreaterThan(Math.hypot(...b));
+
+    for (const scale of [1e-149, 1e-100, 1, 1e100, 1e149]) {
+      const scaled = curve.map(([x, y]): Vec2 => [x * scale, y * scale]);
+
+      for (const ordered of [scaled, scaled.toReversed()])
+        expect(kinematics.curveDistance(ordered)(point)).toBe(referenceDistance(point, ordered));
+    }
+  });
+
   it('retains hypot arithmetic for squared-distance ties and extreme residuals', () => {
     const curves: Vec2[][] = [
       [

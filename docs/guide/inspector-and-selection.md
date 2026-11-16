@@ -149,7 +149,7 @@ Measurements and limits: [Mirror performance evidence](../notes/performance-mirr
 
 ## Performance: sketch
 
-- **Four-bar curve queries normalize only the nearest segment.** `utils/linkageKinematics.ts` compares squared residuals before evaluating the selected segment with `Math.hypot`. Tied minima, nonfinite results and squared distances below 1e-300 retain the original scan. Path-error scoring and polyline-following ranking share this query. `linkageDistance.test.ts` checks exact reference distances, complete fit results, degenerate curves, extreme residuals, edits and normalization counts. [Evidence](../notes/performance-sketch.md#four-bar-queries-normalize-only-the-nearest-segment).
+- **Four-bar curve queries normalize only the nearest segment.** `utils/linkageKinematics.ts` compares squared residuals before evaluating the selected segment with `Math.hypot`. Minima separated by at most eight times `Number.EPSILON` relative to the best squared distance, nonfinite results and squared distances below 1e-300 retain the original scan. Path-error scoring and polyline-following ranking share this query. `linkageDistance.test.ts` checks exact reference distances, complete fit results, degenerate curves, extreme residuals, nearly tied distances across scales and traversal orders, edits and normalization counts. [Evidence](../notes/performance-sketch.md#four-bar-queries-normalize-only-the-nearest-segment).
 
 Measurements and limits: [Sketch performance evidence](../notes/performance-sketch.md).
 

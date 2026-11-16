@@ -2,6 +2,14 @@
 
 Implementation: [Selection](../guide/inspector-and-selection.md#performance-selection). Shared requirements: [Performance](../guide/performance.md).
 
+## Rotated bounds calculate half extents directly
+
+`src/utils/selection.ts` removes six temporary arrays per ordinary rotated part: half sizes, mapped Euler angles, the matrix and its three rows. The returned extent tuple remains independently owned. Unrotated parts avoid the two size and angle arrays. Affine sheets still use `affineBounds`. A source search found no second Euler half-extent matrix implementation to change.
+
+On 16 November 2026, a scratch Vitest comparison ran on an Apple M5 Pro, macOS arm64 and Node v26.13.0. Each batch evaluated 2,048 parts 100 times with varied rotations and dimensions. After one warm-up batch per version, nine alternating batches had medians of 28.14 ms before and 9.87 ms after, a 64.9% reduction. Results contributed to a retained checksum. The comparison used the previous helper from git and asserted exact output parity for all fixture parts, plus zero, signed zero, infinite and NaN rotations. This isolates ordinary half-extent calculations, excluding rendering, affine sheets and browser interaction. Local timings are not CI results or an end-to-end latency claim.
+
+`selection.test.ts` now compares six mixed, negative, cardinal and multi-turn rotations with Three.js box bounds. Existing selection, alignment and sheet tests retain command and affine coverage. No user action, copy, control or visible state changes, so the existing Align and Spread help article remains accurate. No timing assertion, retry or quarantine is added.
+
 ## Selecting groups uses membership sets
 
 `workspace/selection.scale.test.ts` checks interleaved groups, selection order and every selection subset for click modifiers, with array-read budgets on 600-part fixtures. Group expansion previously took 271,500 reads and a fully selected group toggle through a click took 543,301 reads on those fixtures.

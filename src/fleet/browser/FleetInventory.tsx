@@ -15,7 +15,7 @@ export function FleetInventory({ org }: { org: string }) {
 
   return (
     <section className="mx-auto max-w-5xl space-y-4 rounded-xl bg-[#1f1f1f] p-3">
-      {inventory.error && <p role="alert">{inventory.error}</p>}
+      {inventory.error && <Button onClick={() => location.reload()}>Reload Fleet</Button>}
       <Select
         aria-label="Site"
         value={inventory.site}

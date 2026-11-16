@@ -5,8 +5,9 @@ import { FleetSignIn } from './FleetSignIn';
 import { FleetInventory } from './FleetInventory';
 
 export function FleetApp() {
+  const [enrolling] = useState(() => Boolean(new URLSearchParams(location.hash.slice(1)).get('token')));
   const [org, setOrg] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(enrolling);
 
   function loadSession() {
     void fleetRequest<{ org: string }>('me')
@@ -16,8 +17,8 @@ export function FleetApp() {
   }
 
   useEffect(() => {
-    loadSession();
-  }, []);
+    if (!enrolling) loadSession();
+  }, [enrolling]);
 
   async function signOut() {
     await fleetRequest('sessions/current', { method: 'DELETE' });

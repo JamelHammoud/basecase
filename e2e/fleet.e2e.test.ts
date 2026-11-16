@@ -8,6 +8,7 @@ import { openApp, openPlayTab, type App } from './harness';
 let app: App;
 let fixture: Awaited<ReturnType<typeof fleetFixture>>;
 let viewer: Awaited<ReturnType<Awaited<ReturnType<typeof fleetFixture>>['bootstrap']>>;
+let admin: typeof viewer;
 let foreignSite: string;
 let publisher: StudioPublisher;
 let loopback: Awaited<ReturnType<typeof attachLoopback>>;
@@ -22,7 +23,8 @@ beforeAll(async () => {
     },
   });
 
-  const admin = await fixture.bootstrap('Hospital');
+  admin = await fixture.bootstrap('Hospital');
+
   const site = await admin.create('site', { name: 'Ward A' });
   const other = await admin.create('site', { name: 'Ward B' });
   const robot = await admin.create('robot', { name: 'Delivery 01', parent: site.id });
@@ -81,6 +83,45 @@ it('opens Fleet from Operate, restricts a site viewer and reopens persistent inv
   await fixture.restart();
   await fleetPage.reload();
   await expect.poll(() => fleetPage.getByText('Delivery 01', { exact: true }).count()).toBe(1);
+  await admin.update('account', viewer.id, { name: 'Ward viewer', roles: [] });
+  await expect.poll(() => fleetPage.getByText('Delivery 01', { exact: true }).count()).toBe(0);
+  await fleetPage.getByRole('button', { name: 'Reload Fleet', exact: true }).click();
+  await expect.poll(() => fleetPage.getByRole('button', { name: 'Sign Out', exact: true }).count()).toBe(1);
+  expect(await fleetPage.getByText('Delivery 01', { exact: true }).count()).toBe(0);
   await fleetPage.close();
   expect(app.errors).toEqual([]);
+});
+
+it('enrolls the invited account when the browser already has a Fleet session', async () => {
+  const account = await admin.create('account', { name: 'New viewer', roles: [] });
+  const invitation = await admin.result<{ token: string }>('POST', 'invitations', {
+    account: account.id,
+    email: 'new-viewer@example.test',
+  });
+  const page = await app.page.context().newPage();
+
+  try {
+    await page.goto(`${fixture.origin}/fleet`);
+    await page.evaluate(
+      async ({ org, email }) => {
+        await fetch('/v1/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ org, email, password: 'fleet-fixture-password' }),
+        });
+      },
+      { org: viewer.org, email: viewer.email },
+    );
+    await page.goto(`${fixture.origin}/fleet/enroll#token=${invitation.token}`);
+    await page.getByLabel('Password', { exact: true }).fill('new-viewer-password');
+    await page.getByRole('button', { name: 'Enroll', exact: true }).click();
+    await expect.poll(() => page.getByRole('button', { name: 'Sign Out', exact: true }).count()).toBe(1);
+
+    const session = await page.evaluate(async () => (await fetch('/v1/me')).json());
+
+    expect(session.account).toBe(account.id);
+    expect(new URL(page.url()).hash).toBe('');
+  } finally {
+    await page.close();
+  }
 });

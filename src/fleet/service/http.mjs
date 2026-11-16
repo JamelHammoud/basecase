@@ -131,7 +131,7 @@ export async function startService(options) {
   await new Promise((resolve, reject) => {
     server.once('error', reject);
     server.listen(
-      options.port ?? Number(origin.port),
+      options.port ?? Number(origin.port || (origin.protocol === 'https:' ? 443 : 80)),
       options.host ?? origin.hostname.replace(/^\[|\]$/g, ''),
       resolve,
     );

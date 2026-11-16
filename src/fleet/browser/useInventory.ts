@@ -5,15 +5,18 @@ const EMPTY: RegistryPage = { items: [], next: null };
 
 export function useInventory(org: string) {
   const accessGeneration = useRef(0);
+  const accessBlocked = useRef(false);
   const [sites, setSites] = useState(EMPTY);
   const [robots, setRobots] = useState(EMPTY);
   const [site, setSite] = useState('');
   const [siteAfter, setSiteAfter] = useState('');
   const [robotAfter, setRobotAfter] = useState('');
   const [revision, setRevision] = useState(0);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(false);
 
   useEffect(() => {
+    if (accessBlocked.current) return;
+
     let active = true;
     const generation = accessGeneration.current;
     const query = new URLSearchParams({ after: robotAfter, site });
@@ -27,10 +30,16 @@ export function useInventory(org: string) {
 
         setSites(nextSites);
         setRobots(nextRobots);
-        setError('');
+        setError(false);
       })
       .catch(() => {
-        if (active && generation === accessGeneration.current) setError('Reload Fleet to check access.');
+        if (!active || generation !== accessGeneration.current) return;
+
+        accessBlocked.current = true;
+        accessGeneration.current += 1;
+        setSites(EMPTY);
+        setRobots(EMPTY);
+        setError(true);
       });
 
     return () => {
@@ -42,10 +51,11 @@ export function useInventory(org: string) {
     const stream = new EventSource(`/v1/${org}/subscribe`);
     const reset = () => {
       stream.close();
+      accessBlocked.current = true;
       accessGeneration.current += 1;
       setSites(EMPTY);
       setRobots(EMPTY);
-      setError('Reload Fleet to check access.');
+      setError(true);
     };
 
     stream.addEventListener('snapshot', () => setRevision((value) => value + 1));

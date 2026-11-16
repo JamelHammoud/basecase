@@ -240,3 +240,36 @@ it('exports only authorized inventory and excludes identity credentials', async 
   expect(serialized).not.toContain('password');
   expect((await exporter.list('robot')).items).toHaveLength(0);
 });
+
+it('paginates credential metadata so administrators can revoke credentials beyond the first page', async () => {
+  await fixture.pool.query(
+    `INSERT INTO fleet_credentials(hash,id,org,account,kind,expires)
+     SELECT gen_random_uuid()::text,gen_random_uuid(),$1,$2,'service',now()+interval '1 day'
+     FROM generate_series(1,105)`,
+    [admin.org, admin.id],
+  );
+
+  const seen = new Set();
+  let after = null;
+
+  do {
+    const page = await admin.result('GET', `credentials${after ? `?after=${after}` : ''}`);
+
+    expect(page.items.length).toBeLessThanOrEqual(100);
+
+    for (const item of page.items) {
+      expect(seen.has(item.id)).toBe(false);
+      expect(Object.keys(item).sort()).toEqual(['account', 'expires', 'id', 'kind']);
+      seen.add(item.id);
+    }
+
+    after = page.next;
+  } while (after);
+
+  const count = await fixture.pool.query('SELECT count(*)::int AS count FROM fleet_credentials WHERE org=$1', [
+    admin.org,
+  ]);
+
+  expect(seen.size).toBe(count.rows[0].count);
+  expect(seen.size).toBeGreaterThan(100);
+});

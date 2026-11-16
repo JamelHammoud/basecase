@@ -22,7 +22,7 @@ export async function publicApi(pool, method, path, body) {
 }
 
 async function identityApi(client, actor, options) {
-  const { method, parts, body } = options;
+  const { method, parts, body, query } = options;
   const [kind, id] = parts;
 
   demand(actor, 'iam.manage', organization(actor.org));
@@ -39,11 +39,11 @@ async function identityApi(client, actor, options) {
 
   if (kind === 'credentials' && method === 'GET') {
     const result = await client.query(
-      'SELECT id,account,kind,expires FROM fleet_credentials WHERE org=$1 ORDER BY id LIMIT 100',
-      [actor.org],
+      'SELECT id,account,kind,expires FROM fleet_credentials WHERE org=$1 AND ($2::uuid IS NULL OR id>$2) ORDER BY id LIMIT 100',
+      [actor.org, query.get('after') || null],
     );
 
-    return { items: result.rows };
+    return { items: result.rows, next: result.rowCount === 100 ? result.rows.at(-1).id : null };
   }
 
   insist(false, 404);

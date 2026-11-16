@@ -6,7 +6,7 @@ image: /changelog/open-basecase-fleet/cover.png
 
 You can keep robots from different vendors in Basecase Fleet, with shared organizations, nested sites and custom access roles. You host Fleet on your own PostgreSQL service.
 
-Open it from Operate or the command palette. As a viewer for a hospital's Ward A, you can see that ward's delivery robots. You can't access Ward B. Vendors with the same name have separate identities, and you don't need a CAD scene for a robot.
+Open it from Operate or the command palette. As a viewer for a hospital's Ward A, you can see that ward's delivery robots. You can't access Ward B. Robots with the same name have separate identities, and you don't need a CAD scene for a robot.
 
 You can use roles to grant individual actions within a site or robot scope and match their attributes. Explicit denies override grants. You clear connected inventories when you revoke a session or change a role. Viewing inventory doesn’t grant export or robot control.
 

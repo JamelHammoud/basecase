@@ -38,18 +38,12 @@ export function FleetSignIn({ onSignedIn }: { onSignedIn: () => void }) {
         <>
           <label className="block space-y-2">
             <span>Organization ID</span>
-            <TextInput
-              aria-label="Organization ID"
-              value={org}
-              onChange={(event) => setOrg(event.target.value)}
-              required
-            />
+            <TextInput value={org} onChange={(event) => setOrg(event.target.value)} required />
           </label>
           <label className="block space-y-2">
             <span>Email</span>
             <TextInput
               type="email"
-              aria-label="Email"
               autoComplete="username"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
@@ -62,7 +56,6 @@ export function FleetSignIn({ onSignedIn }: { onSignedIn: () => void }) {
         <span>Password</span>
         <TextInput
           type="password"
-          aria-label="Password"
           autoComplete={token ? 'new-password' : 'current-password'}
           minLength={14}
           maxLength={1024}

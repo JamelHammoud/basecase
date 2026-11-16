@@ -18,7 +18,7 @@ export function FleetLauncher() {
           if (checked) localStorage.setItem('fleet-address', checked);
         }}
       />
-      <Button fullWidth disabled={!fleetAddress(address)} title="Open Fleet" onClick={openFleet}>
+      <Button fullWidth disabled={!fleetAddress(address)} onClick={openFleet}>
         Open Fleet
       </Button>
     </div>

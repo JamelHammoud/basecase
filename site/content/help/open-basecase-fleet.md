@@ -35,11 +35,16 @@ You can view only the sites and robots your account can access. A robot marked S
 
 You can press [[⌘K]] and choose **Open Fleet**. To open another page, use **Next Sites** or **Next Robots** when a page is available.
 
-If access changes or the connection closes, the list clears. Reload Fleet to check access again. Click **Sign Out** to revoke the browser session.
+If access changes or the connection closes, the list clears. Click **Reload Fleet** to check access again. Click **Sign Out** to revoke the browser session.
 
 ![Fleet clears its inventory after the viewer's role changes](/help/open-basecase-fleet/access-reset.png)
 
-Open an enrollment link to access the password form. In **Password**, enter at least 14 characters, then click **Enroll**.
+## Enroll an account
+
+Open the enrollment link from your Fleet administrator. It opens the password form even when you are signed in to another account.
+
+1. In **Password**, enter at least 14 characters.
+2. Click **Enroll**.
 
 ![The enrollment form with a new password entered](/help/open-basecase-fleet/enroll.png)
 

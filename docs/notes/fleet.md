@@ -45,3 +45,13 @@ The loopback adapter test covers an authenticated protocol peer through the stud
 Remaining limits include API-only role administration, fixed parentage after identity creation, text-only assets, snapshots of at most 100 robots, 64 service subscriptions, 128 HTTP connections and no automatic reconnection after an access reset. Publisher state is bounded per robot and replaces pending observations with the newest value. Failed network requests are not retried or buffered on disk. Event identities are retained in PostgreSQL and grow with received unique observations from the current generation. No retention or backup policy is supplied.
 
 The ten deployment fixtures prove heterogeneous inventory identities and access, not scheduling, incident response, navigation, metrics attribution or deployment execution. No SAML, SCIM, paid service, remote TLS installation, mobile device or physical robot was used.
+
+## Review corrections
+
+The publisher failure probe in `scratch/review-probes.mjs` left one pending disconnect and no active request after an allocation failure. The publisher now processes each newer pending observation independently and discards an old generation before reconnect allocation. Fast regressions hold the failed request while queuing disconnect and fault transitions. They assert the transmitted status and generation without retries or timing waits.
+
+The browser hook tests hold inventory replies across subscription resets and errors, then invoke a later refresh. They also fail a request after loading rows. Both paths keep rows cleared until Reload Fleet. The listener test intercepts binding to check default HTTP and HTTPS ports without opening privileged ports or claiming a TLS deployment. The PostgreSQL integration traverses more than 100 credentials and checks complete, unique metadata pages without secret fields.
+
+The enrollment walkthrough and access-reset reload assertions are committed for CI. They were not run locally during review. The earlier local capacity figures above are unchanged and do not measure these corrections.
+
+The final review `check:changed` run passes on all 18 changed files, including formatting, lint, types, documentation, site copy and 120 tests across 22 files. Test execution took 4.44 seconds. The log is `scratch/review-check-final.log`. The shared dependency directory lacked the new PostgreSQL client, so review installed the locked client into scratch and used local dependency links without modifying the shared installation.

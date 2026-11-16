@@ -68,7 +68,7 @@ Groups use `POST /v1/<org>/group` with `name`, `members` containing account UUID
 
 ## Service credentials and observations
 
-`POST /v1/<org>/credentials` takes a `rules` array and returns a scoped service token. It expires after 30 days and can’t exceed its issuing account's current access. `DELETE /v1/<org>/credentials/<credential>` revokes a credential. These paths also support revoking browser sessions and unused invitations.
+`POST /v1/<org>/credentials` takes a `rules` array and returns a scoped service token. It expires after 30 days and can’t exceed its issuing account's current access. `GET /v1/<org>/credentials` returns credential metadata with at most 100 records and a `next` cursor. Pass that cursor as `after` to read another page. `DELETE /v1/<org>/credentials/<credential>` revokes a credential. These paths also support revoking browser sessions and unused invitations.
 
 The action names keep viewing, export, incident response, scheduling, deployment and robot control separate. Read the names and limits from `GET /v1/<org>/contracts`. The service doesn’t execute those robot operations.
 

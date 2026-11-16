@@ -114,19 +114,29 @@ export class StudioPublisher {
 
       this.pending.delete(robot);
 
-      if (update.reconnect || !this.generations.has(robot))
-        this.generations.set(robot, (await this.request(`generations/${robot}`, {})).generation);
-
-      await this.request('status', [
-        {
-          robot,
-          status: update.status,
-          observedAt: update.observedAt,
-          event: update.event,
-          generation: this.generations.get(robot),
-        },
-      ]);
+      try {
+        await this.sendUpdate(robot, update);
+      } catch {
+        continue;
+      }
     }
+  }
+
+  async sendUpdate(robot, update) {
+    if (update.reconnect) this.generations.delete(robot);
+
+    if (!this.generations.has(robot))
+      this.generations.set(robot, (await this.request(`generations/${robot}`, {})).generation);
+
+    await this.request('status', [
+      {
+        robot,
+        status: update.status,
+        observedAt: update.observedAt,
+        event: update.event,
+        generation: this.generations.get(robot),
+      },
+    ]);
   }
 
   dispose() {

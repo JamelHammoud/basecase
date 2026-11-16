@@ -19,8 +19,15 @@ const part = (o: Partial<ScenePart> & { id: string }): ScenePart => ({
 });
 
 describe('halfExtents', () => {
-  it('matches three.js bounds for a rotated part', () => {
-    const p = part({ id: 'a', rotation: [30, 45, 60] });
+  it.each<[number, number, number]>([
+    [30, 45, 60],
+    [-30, -45, -60],
+    [90, 0, 0],
+    [0, -90, 0],
+    [0, 0, 180],
+    [270, -450, 720],
+  ])('matches three.js bounds at rotation %s, %s, %s', (x, y, z) => {
+    const p = part({ id: 'a', rotation: [x, y, z] });
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(40, 10, 20));
 
     mesh.rotation.set(...(p.rotation.map((d) => THREE.MathUtils.degToRad(d)) as [number, number, number]), 'XYZ');

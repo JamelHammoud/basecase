@@ -13,10 +13,14 @@ export function halfExtents(p: ScenePart): [number, number, number] {
     return bounds.min.map((value, axis) => (bounds.max[axis] - value) / 2) as [number, number, number];
   }
 
-  const h = [p.dimensions.width / 2, p.dimensions.height / 2, p.dimensions.depth / 2];
-  const [x, y, z] = p.rotation.map((d) => (d * Math.PI) / 180);
+  const hx = p.dimensions.width / 2;
+  const hy = p.dimensions.height / 2;
+  const hz = p.dimensions.depth / 2;
+  const x = (p.rotation[0] * Math.PI) / 180;
+  const y = (p.rotation[1] * Math.PI) / 180;
+  const z = (p.rotation[2] * Math.PI) / 180;
 
-  if (x === 0 && y === 0 && z === 0) return [h[0], h[1], h[2]];
+  if (x === 0 && y === 0 && z === 0) return [hx, hy, hz];
 
   const a = Math.cos(x),
     b = Math.sin(x),
@@ -24,16 +28,11 @@ export function halfExtents(p: ScenePart): [number, number, number] {
     d = Math.sin(y),
     e = Math.cos(z),
     f = Math.sin(z);
-  const m = [
-    [c * e, -c * f, d],
-    [a * f + b * e * d, a * e - b * f * d, -b * c],
-    [b * f - a * e * d, b * e + a * f * d, a * c],
-  ];
 
-  return m.map((row) => Math.abs(row[0]) * h[0] + Math.abs(row[1]) * h[1] + Math.abs(row[2]) * h[2]) as [
-    number,
-    number,
-    number,
+  return [
+    Math.abs(c * e) * hx + Math.abs(-c * f) * hy + Math.abs(d) * hz,
+    Math.abs(a * f + b * e * d) * hx + Math.abs(a * e - b * f * d) * hy + Math.abs(-b * c) * hz,
+    Math.abs(b * f - a * e * d) * hx + Math.abs(b * e + a * f * d) * hy + Math.abs(a * c) * hz,
   ];
 }
 

@@ -88,3 +88,22 @@ ALTER TABLE fleet_status ADD COLUMN IF NOT EXISTS pose jsonb;
 ALTER TABLE fleet_status ADD COLUMN IF NOT EXISTS work jsonb;
 CREATE OR REPLACE TRIGGER fleet_facility_changed AFTER INSERT OR UPDATE OR DELETE ON fleet_facilities FOR EACH ROW EXECUTE FUNCTION fleet_changed();
 INSERT INTO fleet_schema(version) VALUES (2) ON CONFLICT DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS fleet_recovery (
+  org uuid PRIMARY KEY REFERENCES fleet_organizations(id),
+  id uuid NOT NULL,
+  role uuid NOT NULL,
+  FOREIGN KEY (org,id) REFERENCES fleet_resources(org,id) ON DELETE RESTRICT,
+  FOREIGN KEY (org,role) REFERENCES fleet_resources(org,id) ON DELETE RESTRICT
+);
+CREATE TABLE IF NOT EXISTS fleet_recovery_audit (
+  sequence bigserial PRIMARY KEY,
+  org uuid NOT NULL REFERENCES fleet_organizations(id),
+  actor text NOT NULL,
+  action text NOT NULL,
+  affected uuid NOT NULL,
+  occurred_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  outcome text NOT NULL CHECK (outcome IN ('success','refused'))
+);
+CREATE INDEX IF NOT EXISTS fleet_recovery_audit_page ON fleet_recovery_audit(org,sequence);
+INSERT INTO fleet_schema(version) VALUES (3) ON CONFLICT DO NOTHING;

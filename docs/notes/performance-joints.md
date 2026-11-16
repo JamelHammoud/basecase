@@ -460,3 +460,26 @@ The existing [Design a linkage from a path](../../site/content/help/design-a-lin
 Focused `check:changed` validation passed formatting, lint, documentation, site copy for 291 pages, TypeScript and 3,978 tests in 586 related files. One existing test file was skipped. The log is `scratch/check-link-angle.log`. Copy accounting is zero added, zero removed and net zero.
 
 The preflight follow-up rechecked both articles against the final diff. In the linkage task, `linkage.ts` changes only its angle-helper re-export. Its 5-to-12-point and 10-to-300-mm limits remain unchanged. `useSketchPath.ts`, `SketchPanel.tsx`, `LinkageChoices.tsx`, `SketchPathLayer.tsx` and `linkageParts.ts` retain the described drawing, history, preview, error labels, highlighting and insertion behavior. The existing points, linkages and inserted captures depict those unchanged states. In the joint concept, `kinematicsMotion.ts` still drives each loop member from the clamped crank value through `loopValue`, and `sim/mjcfLoops.ts` still uses that rotation for physical loop setup. The new scalar helper keeps the selected angle, wrapping and unreachable-closure fallback unchanged. The guide edit documents only discarded calculations. Neither article contains an obsolete step, label or screenshot, so both remain unchanged as the findings permit.
+
+## Robot pivot summaries share one scan
+
+A whole-app search found one robot identity and pivot summary in `utils/kinematicsRig.ts`. Pose, IK, simulation preparation and engineering calculations share it through `buildRig`. Other sorts choose policies, files or display order and have different selection rules.
+
+For P eligible pivots, the previous summary built two P-entry ID arrays, sorted one, then traversed the pivots three times for coordinate sums. The new summary selects the minimum ID and accumulates all three sums in one P-entry traversal. It retains the base-joint filter and the joint and robot display ordering. String comparison uses UTF-16 ordering, matching the previous default sort. Each coordinate keeps its original addition order and division. These are source-derived allocation and traversal counts, without timing assertions or a claim about complete rig construction speed.
+
+`kinematicsRobotGroups.test.ts` compares keys and pivots with the previous equations across 80 generated connected-root fixtures. It includes mixed-case, numeric and Unicode IDs, cancellation-sensitive sums, signed zero, infinite and NaN coordinates, excluded descendants, source preservation and repeated independent builds. Existing cases cover interleaved robots, duplicate names, shared parts, edits, undo and 300- and 600-root components. No timeout, retry or quarantine changes apply.
+
+No user action, label or screen state changes. The existing joints and kinematics help article retains accurate instructions and needs no new screenshot.
+
+Preflight flagged [Joints and kinematics](../../site/content/help/joints-and-kinematics.md), which covers the edited module and guide. The complete article was reread against the final diff and the downstream root-transform consumers. It remains unchanged intentionally:
+
+- “What a joint holds” and “Where joints come from” describe joint fields and import controls. The summary scan changes neither declarations nor entry points.
+- “How parts follow their joints” describes parent chains and ownership. `jointTree`, `partOwners`, `jointChains` and `connectedMembers` are unchanged. The same base joints enter the pivot summary.
+- “A pose never edits the design” and “Inverse kinematics” retain their behavior. `kinematicsMotion.ts` still constructs each root matrix from the same robot key and pivot. The change preserves coordinate addition order and division, without modifying pose application, measurement or solving.
+- “Several robots in one scene” still describes separate robots and selected-robot posing and import. `robotGroups` retains membership, `robotOf` assignment, display sorting and duplicate naming. The selected minimum ID is identical to the former default sort.
+
+The article contains no screenshots. No step, label, link or illustrated state became obsolete, so editing its prose or adding a capture would not correct any claim. The preflight command reports unchanged covered articles mechanically and retains this reminder after verification.
+
+Validation: the initial explicit changed-file run passed docs, site copy and types, but found a test-group length lint error and one timeout in unchanged `src/cases/slots.test.ts:113`. The related run finished with 587 files and 4,086 tests passing, one skipped file and test, and that single failure after 110.93 seconds. The failing MuJoCo handoff test exceeded its existing 5,000 ms budget at 5,070 ms. No cause was established, and no timeout, retry or quarantine was changed. The log is `scratch/check-pivot-summary.log`.
+
+After separating the new test group and formatting it, the final check on the changed test and documentation passed formatting, lint, docs, site copy for 295 pages, types and all eight robot-group tests. That run is `scratch/check-pivot-final.log`. The implementation was unchanged between these runs. Copy accounting reports zero added, changed or removed strings. Preflight retains only the reviewed help-coverage reminder above.

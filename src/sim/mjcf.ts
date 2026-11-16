@@ -27,6 +27,7 @@ import { classifyRobot, isWheelJoint } from './morphology';
 import { applyBodyFits } from '../reality/bodyModel';
 import { bodyFitForCalibration, bodyPayloads } from '../reality/bodyLayout';
 import { passiveJointXml } from './mjcfPassive';
+import { loopEquality, loopHinge, physicalLoops } from './mjcfLoops';
 import { activeBodyCalibration } from '../reality/history';
 
 export { fromMj, quatFromMj, quatToMj, simDelta, simDeltas, toMj, worldDelta, worldDeltas } from './mjcfFrames';
@@ -51,6 +52,8 @@ interface BuildState {
   worldXml: string[];
   actuatorXml: string[];
   lift: number;
+  equalityXml: string[];
+  loops: ReturnType<typeof physicalLoops>;
 }
 
 interface RobotBuild {
@@ -89,6 +92,7 @@ interface ActuatorSpecXml {
 
 const WHEEL_FULL_TORQUE_SPEED = 2;
 const DEFAULT_TIMESTEP = 0.002;
+const CLOSED_LOOP_TOLERANCE = 1e-12;
 
 type GeomRole = 'robot' | 'object' | 'scenery';
 
@@ -242,7 +246,10 @@ function jointParts(st: BuildState, jointId: string): string[] {
 function emitJoint(rb: RobotBuild, j: RobotJoint, parent: BodySpec['parent'], indent: string): string[] {
   const { st } = rb;
   const name = `j${st.simJoints.length}_${safeId(j.id)}`;
-  const inner = isMovable(j) ? [movableJointXml(rb, j, name)] : [];
+  const physical = j.loop ? loopHinge(j, rb.local, st.input.rig) : null;
+  const joint = physical?.joint ?? j;
+  const local = physical ? { ...rb.local, values: { ...rb.local.values, [j.id]: physical.initial } } : rb.local;
+  const inner = isMovable(joint) ? [movableJointXml({ ...rb, local }, joint, name)] : [];
   const body = { name: `b_${name}`, origin: j.origin };
   const lines = bodyXml(rb, { ...body, parent, joint: j.id, ids: jointParts(st, j.id), inner, indent });
 
@@ -311,6 +318,13 @@ function emitRobot(st: BuildState, robot: Rig['robots'][number]) {
   for (const c of rb.children.get('') ?? []) rootLines.push(...emitJoint(rb, c, rootBody, '      '));
 
   rootLines.push('    </body>');
+
+  const equality = loopEquality(
+    st.loops.filter((loop) => rig.robotOf.get(loop.driver.id) === robot.key),
+    st.bodies,
+  );
+
+  st.equalityXml.push(...equality);
   st.worldXml.push(...rootLines);
   st.robots.push({
     key: robot.key,
@@ -321,8 +335,9 @@ function emitRobot(st: BuildState, robot: Rig['robots'][number]) {
     joints: st.simJoints.filter((j) => j.robot === robot.key).map((j) => j.id),
     fingerprint: robotFingerprint({
       timestep: st.input.timestep ?? DEFAULT_TIMESTEP,
+      tolerance: st.loops.length ? CLOSED_LOOP_TOLERANCE : undefined,
       assets: st.assets.slice(assetsFrom),
-      body: rootLines,
+      body: [...rootLines, ...equality],
       actuators: st.actuatorXml.slice(actuatorsFrom),
     }),
   });
@@ -364,7 +379,7 @@ function emitObject(st: BuildState, ids: string[], index: number) {
 function mujocoXml(st: BuildState, timestep: number): string {
   return `<mujoco model="basecase">
   <compiler angle="radian" inertiafromgeom="true" boundmass="0.0005" boundinertia="1e-8"/>
-  <option timestep="${f(timestep)}" integrator="implicitfast"/>
+  <option timestep="${f(timestep)}" integrator="implicitfast"${st.loops.length ? ` tolerance="${CLOSED_LOOP_TOLERANCE}"` : ''}/>
   <default>
     <geom friction="0.9 0.02 0.002" solref="0.004 1" condim="3"/>
   </default>
@@ -376,7 +391,7 @@ ${st.assets.join('\n')}
 ${worldFloor(st.input)}
 ${st.worldXml.join('\n')}
   </worldbody>
-${robotContactExclusions(st.input.rig.robots, st.bodies)}  <actuator>
+${st.equalityXml.length ? `  <equality>\n${st.equalityXml.join('\n')}\n  </equality>\n` : ''}${robotContactExclusions(st.input.rig.robots, st.bodies)}  <actuator>
 ${st.actuatorXml.join('\n')}
   </actuator>
 </mujoco>
@@ -385,6 +400,8 @@ ${st.actuatorXml.join('\n')}
 
 export function buildMjcf(given: MjcfInput): SimModel {
   assertJointActuation(given.rig.joints);
+
+  const loops = physicalLoops(given.rig);
 
   const input = { ...given, rig: adoptEmbeddedParts(given.rig, given.parts, given.partTriangles) };
   const { parts, rig, project } = input;
@@ -403,6 +420,8 @@ export function buildMjcf(given: MjcfInput): SimModel {
     roots: {},
     worldXml: [],
     actuatorXml: [],
+    equalityXml: [],
+    loops,
     lift: input.posedFloor != null ? Math.max(0, -input.posedFloor) + 2 : 0,
   };
 

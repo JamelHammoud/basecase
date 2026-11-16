@@ -51,6 +51,6 @@ Instead of clicking each point, you can drag across the plane to draw the path i
 
 If no linkage fits your path, the plane's border turns red. Links stay between 10 and 300 mm long, so if your points are too far apart, you won't get a linkage.
 
-The linkage moves in Pose. Simulate doesn't model closed loops, so there the coupler moves with the crank as one rigid arm.
+The linkage moves in Pose and under physics. In Simulate, the coupler and rocker turn on passive hinges joined at their closing pin. See [Simulate a four-bar](/help/simulate-a-four-bar).
 
 To turn the crank, see [Pose a robot](/help/pose-a-robot). If you ask the agent for a mechanism that traces a path, it fits the same linkages.

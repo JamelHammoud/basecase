@@ -11,7 +11,7 @@ export function partMatrix(p: ScenePart): THREE.Matrix4 {
   return new THREE.Matrix4().compose(new THREE.Vector3(...p.position), q, new THREE.Vector3(1, 1, 1));
 }
 
-export function clampJoint(j: RobotJoint, v: number): number {
+export function clampJoint(j: Pick<RobotJoint, 'range'>, v: number): number {
   if (!Number.isFinite(v)) return 0;
 
   if (!j.range) return v;

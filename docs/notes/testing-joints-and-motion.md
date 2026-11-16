@@ -25,3 +25,9 @@ Issue [#1441](https://github.com/JamelHammoud/basecase/issues/1441) reports `off
 The narrow visibility test was deleted. The remaining browser test drives the command palette entry through leader creation, new-tab selection, joint mapping and printing plates. `src/leader/makeLeader.test.ts` retains eligibility and generation coverage. Context-menu wiring in `workspace/leaderCommands.tsx` has no dedicated browser assertion after this removal. No timeout, retry or quarantine changed. The remaining browser test was not timed locally, and this removal does not establish a new shard duration.
 
 The preflight coverage reminder for `site/content/help/joints-and-kinematics.md` was checked against this diff. The guide change records test coverage only. Joint fields, import routes, part following, pose behavior and multi-robot selection are unchanged, so the article’s claims and labels still hold. The article has no screenshots and needs no edit.
+
+## Closed Sketch linkage handoff
+
+CAD keeps the original fixed analytic `LoopClosure` records. The simulation writer derives passive hinges without modifying saved joints or undo history. Newly inserted servos now identify C001, because the catalog intentionally returns no actuator rating for a component whose variant is unspecified. Existing unspecified variants refuse simulation until selected rather than receiving an estimated replacement actuator.
+
+The generated ten-mechanism matrix, loaded-motion controls and recording round trips are owned by [simulation evidence](testing-simulate.md#closed-sketch-linkages). They compare physical coupler paths to CAD within 0.3 mm and closing pins within 0.15 mm. This work leaves the Windows insertion/history investigation, durable scene history and imported assembly constraints unchanged.

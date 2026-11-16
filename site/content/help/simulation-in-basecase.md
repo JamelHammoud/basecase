@@ -47,9 +47,9 @@ If the robot misbehaves in the simulation, fix the design. Basecase writes your 
 
 If a catalog servo with a published model drives a joint, the joint moves the way a bench test of that servo model says it does. Basecase models the STS3215 at 7.4 V and the XL330 at 5 V. [Study](/help/study-design-options) models each servo at the supply voltage it's trying. Each model covers the servo's gain and delay, back-EMF damping, and friction that grows with load.
 
-Every other powered joint gets an estimated servo. If the joint has a servo, Basecase sets its torque from that servo's stall torque. If it has none, Basecase sets the torque from the weight the joint holds.
+Other powered joints get an estimated servo, except a four-bar crank with an unspecified catalog variant. Ask the agent to replace that servo with the exact catalog variant you use, or insert the path again. If the joint has a servo, Basecase sets its torque from that servo's stall torque. If it has none, Basecase sets the torque from the weight the joint holds.
 
-Passive joints keep their physical motion and limits without a motor holding them. [Make a joint passive](/help/make-a-joint-passive) from its row in **Pose**.
+Passive joints keep their physical motion and limits without a motor holding them. Sketch four-bars use two passive hinges joined at their closing pin. See [Simulate a four-bar](/help/simulate-a-four-bar). [Make a joint passive](/help/make-a-joint-passive) from its row in **Pose**.
 
 To see which joints use estimates, open **Build** ▸ **Checks**:
 

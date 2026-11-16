@@ -78,7 +78,7 @@ If no joint lists a part, the part still moves when its whole group moves with a
 
 Each joint is anchored to the part it's mounted on. If you move the whole robot or undo a change, the joints stay in place.
 
-A four-bar linkage forms a closed loop. You pose only its crank, and the coupler and rocker turn along with it so the loop stays closed. Simulate doesn't simulate closed loops. Instead, the coupler moves with the crank as a single rigid arm.
+A four-bar linkage forms a closed loop. You pose only its crank, and the coupler and rocker turn along with it so the loop stays closed. In simulation, those two bars turn on passive hinges joined at their closing pin. See [Simulate a four-bar](/help/simulate-a-four-bar).
 
 If you delete all of a joint's moving parts, Basecase deletes the joint too. Empty joints stay while another joint depends on them, and Basecase deletes them when their last dependent is gone. Undo restores the parts and joints.
 

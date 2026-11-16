@@ -85,3 +85,19 @@ All paired checksums matched exactly. These shared-machine measurements cover in
 `src/routines/symbols.test.ts` compares 1,000 readings against the previous first-match algorithm, including duplicate seeds, empty strings, prototype-like names and Unicode. It also checks stable decoder-list identity, source preservation, compiler ids and isolation between runs. Existing generated-scenario coverage continues to exercise watcher and inference publication through the real WASM coordinator. No timing assertion was added.
 
 The local targeted check selected 133 related files. It passed 129 files and 773 tests, including symbol and Routine coverage. One file was skipped. Three Case physics tests exceeded their existing 5,000 ms limit: recorded object replay in `src/cases/handoffGoal.test.ts:235`, paired-arm Hand Off in `src/cases/slots.test.ts:113`, and hexapod Rough Ground in `src/cases/terrain.test.ts:165`. This run does not establish their baseline status. No timeout, retry, skip or quarantine was added, and no claim of a fully passing related run is made. Formatting, lint, documentation, site copy and types passed.
+
+## Closed Sketch linkages
+
+Measured on 16 November 2026, Apple M5 Pro, macOS arm64, Node 26.13.0, pinned MuJoCo 4.0.0 WASM. The production scene pipeline used the generated Sketch records, fixture box hulls, mesh measures, printed mass calculation, catalog C001 servo and measured fit. All repeated mechanisms shared one robot. Preparation includes linkage insertion records, rig, measures and MJCF. Seven preparations per size supplied the median. Stepping used the median of three 1,000-step runs, each covering two simulated seconds at 0.002 s. No timing assertion or UI performance claim follows from these Node measurements.
+
+| Mechanisms | Preparation ms | 1,000 WASM steps ms | Physics steps/s | Passive coordinates | Actuators | Equalities |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 1.478 | 13.158 | 75,998 | 2 | 1 | 1 |
+| 2 | 1.256 | 7.660 | 130,548 | 4 | 2 | 2 |
+| 16 | 6.070 | 41.799 | 23,924 | 32 | 16 | 16 |
+
+These were unisolated local measurements. JIT warmup and machine load make the two-mechanism stepping sample faster than the one-mechanism sample. They do not establish a scaling speedup. The former welded model had different degrees of freedom, so it is not a physical baseline for this capability.
+
+`forge/crates/forge-train/tests/closed_linkages.rs` reports C model loading plus equality refusal/native fallback startup, then 250 native steps, for each generated matrix member. Native Forge startup remains a CI observation because this host has no Rust toolchain. Local pinned C replay was measured through the existing Python oracle. Its process, loading and half-second trajectory took 135.8–146.8 ms after the first 326.7 ms invocation, including uv startup. These process times are not Forge fallback startup measurements. The existing `tools/sim/contactParity.mjs` comparison captures every applied control, integration state and body pose for ten half-second four-bar trajectories, with its existing 1e-6 maximum state drift bar.
+
+The final model uses solver tolerance 1e-12 for scenes containing a closure. At the default 1e-8 tolerance, the floating contact replay diverged by 7.1348e-6, above the unchanged 1e-6 bar. Tightening convergence reduced the measured worst drift to 8.5391e-10, with no contact differences across all ten mechanisms. The table above was remeasured with the final solver tolerance. No iteration cap or parity threshold changed.

@@ -1,3 +1,4 @@
+import type { LoopClosure } from '../types/loopClosure';
 import type { ServoFit } from '../data/components';
 import type { BodyFit } from '../reality/bodyTypes';
 import type { MeshMeasure } from '../three/meshMeasure';
@@ -33,6 +34,7 @@ export interface WorldItem extends ScenePart {
 }
 
 export interface SimJoint {
+  loop?: LoopClosure;
   id: string;
   name: string;
   type: 'revolute' | 'prismatic';

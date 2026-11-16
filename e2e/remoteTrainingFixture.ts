@@ -72,14 +72,6 @@ export async function configureRemoteComputer(page: Page) {
   expect(await page.getByLabel('SSH identity', { exact: true }).inputValue()).toBe('');
 }
 
-export async function nameRemoteTrainingScene(page: Page) {
-  await page.keyboard.press('Meta+k');
-  await page.getByLabel('Search commands').fill('Rename Scene');
-  await page.keyboard.press('Enter');
-  await page.getByLabel('Scene name', { exact: true }).fill('Remote quadruped');
-  await page.getByLabel('Scene name', { exact: true }).press('Enter');
-}
-
 export async function remoteTrainingFixture(app: App) {
   const { page } = app;
   const starts: TrainStartPayload[] = [];

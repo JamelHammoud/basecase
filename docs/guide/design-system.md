@@ -54,3 +54,9 @@ Measurements and limits: [Trace plots performance evidence](../notes/performance
 - **Plot ranges scan samples without copying them.** `design-system/tracePaths.ts` accumulates finite bounds directly from each trace's arrays for both axes, including explicit limits and zero. It retains only two bounds, regardless of recording length. All `TracePlot` callers share this path: console time and XY plots, try timeline lanes, calibration replay and torque envelopes. [Evidence](../notes/performance-plots.md#plot-ranges-scan-samples-without-copying-them).
 
 - **Plot sampling writes directly into paths.** `design-system/tracePaths.ts` emits index-spaced samples into SVG commands without complete point lists, per-column sets, nested bucket arrays or flattening. Console time plots, try timeline lanes and calibration replay share this path. The reduction threshold, temporal extrema order, first ties and missing-column pen lifts stay unchanged. [Evidence](../notes/performance-plots.md#plot-sampling-writes-directly-into-paths).
+
+## Performance: choice grid sizing
+
+`choiceLayout.ts` measures label code points directly and retains the widest string label during one grid scan. It creates no character arrays, filtered label lists or width lists. Hardware sizes, finishes, drives, brushes and world choices share this estimator. Glyph advances, per-glyph multiplication and addition order, unknown-code-point fallback, padding and wrapping stay unchanged. No measurements persist between calls.
+
+`choiceLayout.test.ts` covers calibrated labels and wrapping across panel widths, Unicode fallback, mixed React labels and empty-string padding. [Evidence and limits](../notes/performance-layout.md#choice-grid-sizing-scans-labels-directly).

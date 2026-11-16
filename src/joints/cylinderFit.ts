@@ -97,7 +97,13 @@ function planeBasis(axis: V3): [V3, V3] {
 }
 
 function angularSpanDeg(index: MeshIndex, tris: number[], [u, w]: [V3, V3]) {
-  const angles = tris.map((t) => Math.atan2(dot(index.normal(t), w), dot(index.normal(t), u))).sort((a, b) => a - b);
+  const angles = tris
+    .map((t) => {
+      const normal = index.normal(t);
+
+      return Math.atan2(dot(normal, w), dot(normal, u));
+    })
+    .sort((a, b) => a - b);
   let gap = angles[0] + 2 * Math.PI - angles[angles.length - 1];
 
   for (let i = 1; i < angles.length; i++) gap = Math.max(gap, angles[i] - angles[i - 1]);

@@ -26,7 +26,7 @@ function measuredFit(index: MeshIndex, minSpan = 30) {
   const found = fitCylinder(index, region, minSpan);
   const rounds = new Map<number, number>();
 
-  for (const [t] of normals.mock.calls) rounds.set(t, (rounds.get(t) ?? 0) + 0.25);
+  for (const [t] of normals.mock.calls) rounds.set(t, (rounds.get(t) ?? 0) + 1);
 
   const vertexRounds = new Map<number, number>();
 
@@ -34,18 +34,18 @@ function measuredFit(index: MeshIndex, minSpan = 30) {
     for (let k = 0; k < 3; k++) {
       const v = index.corners[t * 3 + k];
 
-      vertexRounds.set(v, Math.max(vertexRounds.get(v) ?? 0, count));
+      vertexRounds.set(v, Math.max(vertexRounds.get(v) ?? 0, count / 3));
     }
   }
 
   const uniqueReads = [...vertexRounds.values()].reduce((sum, count) => sum + count, 0);
-  const centroidReads = normals.mock.calls.length * 0.75;
+  const centroidReads = normals.mock.calls.length;
 
   expect(vertices).toHaveBeenCalledTimes(uniqueReads + centroidReads);
   expect(index.vertices).toEqual(before);
   expect(region).toEqual(Array.from({ length: index.triangles }, (_, i) => i));
 
-  return { found, rounds: Math.max(...rounds.values()) };
+  return { found, rounds: Math.max(...rounds.values()) / 3 };
 }
 
 describe('cylinder fit vertex reuse', () => {

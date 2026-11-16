@@ -1,4 +1,5 @@
-import { isPolicySpec } from '../sim/policy';
+import { isRunnablePolicy } from './policyCheck';
+import type { PolicySpec } from '../sim/policy';
 import type { PolicyRecord } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import type { ForgeJob, ForgeOutcome, ForgeRunner } from './forgeRunner';
@@ -13,6 +14,7 @@ export interface ForgeProgress {
 export interface TrainerForgeOptions {
   workspaceId: string;
   background: boolean;
+  recoveryKey?: string;
   onProgress: (progress: ForgeProgress) => void;
   onSnapshot?: (ref: SnapshotRef) => void;
   signal?: AbortSignal;
@@ -24,6 +26,14 @@ export const userTrainingKey = (workspaceId: string) => `skill:${workspaceId}`;
 
 const failure = (stderr: string): ForgeOutcome => ({ ok: false, policy: null, events: [], stderr });
 
+function checkedTrainerPolicy(value: unknown): PolicySpec | null {
+  try {
+    return isRunnablePolicy(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 async function finished(ev: TrainEvent): Promise<ForgeOutcome> {
   if (ev.kind === 'error') return failure(String(ev.message ?? 'Training stopped.'));
 
@@ -32,9 +42,11 @@ async function finished(ev: TrainEvent): Promise<ForgeOutcome> {
 
   void platformBridge.deletePolicy(record.id).catch(() => false);
 
-  if (!isPolicySpec(spec)) return failure('The trainer saved no policy.');
+  const policy = checkedTrainerPolicy(spec);
 
-  return { ok: true, policy: spec, events: [{ type: 'done', steps: record.trainedSteps }], stderr: '', run: record.id };
+  if (!policy) return failure('The trainer saved no policy.');
+
+  return { ok: true, policy, events: [{ type: 'done', steps: record.trainedSteps }], stderr: '', run: record.id };
 }
 
 interface ProgressEvent {
@@ -65,9 +77,10 @@ export function snapshotOf(ev: TrainEvent): SnapshotRef | null {
   return { run: jobId, iteration: iteration as number, steps: steps as number };
 }
 
-function start(options: TrainerForgeOptions, job: ForgeJob): Promise<{ jobId: string | null }> {
+function start(options: TrainerForgeOptions, job: ForgeJob, index: number): Promise<{ jobId: string | null }> {
   const payload = {
     workspaceId: options.workspaceId,
+    ...(options.recoveryKey ? { recoveryKey: `${options.recoveryKey}:${index}` } : {}),
     xml: job.xml,
     job: { ...job.job, snapshotEveryS: SNAPSHOT_EVERY_S },
   };
@@ -83,16 +96,25 @@ function stop(options: TrainerForgeOptions) {
 }
 
 export function trainerForge(options: TrainerForgeOptions): ForgeRunner {
+  let index = 0;
+
   return (job) =>
     new Promise<ForgeOutcome>((resolve) => {
       const early: TrainEvent[] = [];
       let jobId: string | null = null;
       let unsubscribe = () => {};
+      let settled = false;
       const settle = (outcome: Promise<ForgeOutcome> | ForgeOutcome) => {
+        if (settled) return;
+
+        settled = true;
         unsubscribe();
+        options.signal?.removeEventListener('abort', abort);
         resolve(outcome);
       };
       const handle = (ev: TrainEvent) => {
+        if (settled) return;
+
         const progress = progressOf(ev);
         const snapshot = snapshotOf(ev);
 
@@ -103,17 +125,23 @@ export function trainerForge(options: TrainerForgeOptions): ForgeRunner {
         if (ev.kind === 'done' || ev.kind === 'error') settle(finished(ev));
       };
 
+      const abort = () => {
+        if (!options.recoveryKey || options.signal?.reason !== 'detach') stop(options);
+
+        settle(failure('Stopped.'));
+      };
+
       unsubscribe = platformBridge.subscribeEvents((ev) => {
         if (ev.type !== 'train-progress') return;
 
-        if (jobId === null) early.push(ev);
+        if (jobId === null && early.length < 512) early.push(ev);
         else if (ev.jobId === jobId) handle(ev);
       });
-      options.signal?.addEventListener('abort', () => {
-        stop(options);
-        settle(failure('Stopped.'));
-      });
-      start(options, job).then(
+      options.signal?.addEventListener('abort', abort, { once: true });
+
+      if (options.signal?.aborted) return settle(failure('Stopped.'));
+
+      start(options, job, index++).then(
         (res) => {
           if (!res.jobId) return settle(failure('A newer design replaced this run.'));
 

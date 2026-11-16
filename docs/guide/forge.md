@@ -6,6 +6,22 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 Forge is Basecase's native trainer and batched physics, in `forge/`. It replaces Python for training, so nobody needs a terminal, uv or PyTorch to teach a robot.
 
+### Training on another computer
+
+Desktop Settings ▸ Training selects one Linux x64 computer reached with the system OpenSSH client. Motor Kit training, taught solver races, saved motions, frozen dataset cloning and their warm starts use that computer. **Use This Computer** restores local training. Automatic background Kit work remains local and keeps its existing queue and Gatekeeper lease. Coaching, stress training, hand-off training and legacy policy runs keep their local lifecycle because they have no durable workflow contract.
+
+Local and remote training share that queue. A foreground remote run yields local background Kit work and waits for its process to close. Pending remote jobs reserve the queue at backend startup. Stopping a queued remote job records its terminal outcome without dispatching it. Completed stages of the same workflow can replay while its current stage remains active.
+
+`electron/remoteTrainer.mjs` extends the existing `Trainer`, including its job-folder preparation, demonstration files, warm starts and policy storage. Before dispatch, it writes `remote-request.json` beside the generated `model.xml` and `job.json`. The request binds the workspace, workflow call identity and exact XML and job fingerprint. `electron/remoteTraining/` freezes the Linux runtime and input hashes in `remote.json` before uploading. SSH starts a detached process under the remote user's home directory. A persistent start marker makes a repeated dispatch idempotent when its acknowledgment was lost.
+
+The studio polls the same job after a lost connection. Closing the studio detaches its observer without stopping remote training. Recovery replays the saved skill workflow through the existing Forge boundary and local Arena. A repeated workflow call reattaches or returns its saved outcome, while changed inputs under the same identity are refused. Remote progress and completion messages never supply readiness evidence. Stop persists the stop request locally and writes the existing remote `stop` file, including after reconnection.
+
+Downloads accept only the fixed policy and resume artifacts with bounded size and verified hashes. Both files are validated before either becomes available locally, and each destination is replaced atomically. Logs are bounded to 1 MiB. The current workflow's stages remain available for replay alongside the newest eight other job folders. A downloaded policy still passes the existing local policy checks and Arena before a skill can be retained.
+
+The Linux bundle contains `forge-train` and the pinned MuJoCo shared library. The release publishes it for the studio's version. Source builds can stage it under `forge/dist-linux-x64/`. Linux jobs requesting Metal use Forge's existing explicit C MuJoCo fallback, so this path needs no GPU. Parallel seeds and hosted execution are outside this runner.
+
+Coverage: `electron/remoteTrainer.test.mjs` checks durable dispatch, restart reattachment, disconnection, Stop, input refusal, replay and remote process failure. Transport exploit and client tests live in `electron/remoteTraining/`. Linux CI runs `verify/remoteTraining/transport.test.ts` against an ephemeral sshd container, with CPU Forge training and local Arena. Windows CI runs the SSH client spawning and path tests. The workflow recovery and browser entry coverage are described in [Skills](skills.md#testing-coverage), with fixture failure evidence in [Skills test evidence](../notes/testing-skills.md#remote-training-recovery).
+
 - **C MuJoCo stays the compiler and oracle.** Forge links stock `libmujoco` to compile the generated MJCF and to check its own results. We never fork MuJoCo's C code. Forge's own engine is a reimplementation of MuJoCo's formulation for the subset Basecase generates.
 - **Same events as the Python trainer.** Forge prints the same JSON lines on stdout, so `electron/trainer.mjs` barely changes.
 - **Anything outside the subset routes to C MuJoCo, never silently.** The feature matrix refuses what it can't simulate exactly.

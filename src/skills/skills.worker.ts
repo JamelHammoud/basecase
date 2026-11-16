@@ -6,7 +6,7 @@ import { runSkillsJob, type SkillsJob, type SkillsReply } from './skillsJob';
 import { errorMessage } from '../utils/errorMessage';
 
 export type SkillsRequest =
-  | SkillsJob
+  | (SkillsJob & { localSalt?: string })
   | { type: 'forge-result'; call: number; outcome: ForgeOutcome }
   | { type: 'save-result'; call: number; error: string | null };
 
@@ -57,7 +57,9 @@ ctx.onmessage = async (ev: MessageEvent<SkillsRequest>) => {
 
     const progress = (share: number) => ctx.postMessage({ type: 'progress', share } satisfies SkillsMessage);
 
-    ctx.postMessage(await runSkillsJob(msg, { mj, forge, save, progress }));
+    const { localSalt, ...job } = msg;
+
+    ctx.postMessage(await runSkillsJob(job, { mj, forge, save, progress, localSalt }));
   } catch (e) {
     ctx.postMessage({ type: 'error', message: errorMessage(e) } satisfies SkillsMessage);
   }

@@ -9,6 +9,7 @@ import { skillRecord, type SkillRecord } from './skillRecords';
 import { triesSkill } from './triesTraining';
 
 export interface TriesPlan {
+  datasetId?: string;
   model: SimModel;
   kase: Case;
   job: ForgeJob;

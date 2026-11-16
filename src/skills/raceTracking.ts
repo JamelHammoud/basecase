@@ -32,6 +32,7 @@ export async function playMove(input: RaceInput, clock: RaceClock): Promise<Solv
     environment: task.environment,
     controller: { kind: 'animation', animation: task.goal.animation },
     save: input.save,
+    judgment: input.judgment,
     origin: () => ({ method: 'ik-or-motion-plan', cost: elapsedOf(clock) }),
   });
   const attempt = { method: 'ik-or-motion-plan' as const, passed: !!proof.skill, reason: proof.evidence.summary };
@@ -74,6 +75,7 @@ async function judge(run: Tracking, policy: PolicySpec): Promise<Judgement<Skill
     environment: task.environment,
     controller: { kind: 'policy', policy, robot: kitRobot(task.model).key },
     save: input.save,
+    judgment: input.judgment,
     origin: () => ({ method: 'tracking', cost: elapsedOf(clock) }),
   });
 
@@ -96,7 +98,7 @@ export async function trackMotion(input: RaceInput, clock: RaceClock, tries?: re
   const run: Tracking = { input, clock, tally: { steps: clock.steps, forgeRuns: 0 } };
   const skill = await firstPassingTry({
     tries: tries ?? moveSchedule(task.model),
-    firstSeed: freshSeed(),
+    firstSeed: input.seed ?? freshSeed(),
     train: (stage, from) => trainStage(run, stage, from),
     validate: () => Promise.resolve(0),
     judge: (policy: PolicySpec) => judge(run, policy),

@@ -30,6 +30,10 @@ import { designOf, SkillsRuntime, type KitInstall } from '../skills/skillsRuntim
 import { teachExamples } from '../skills/teachExamples';
 import type { ProjectSettings, RobotAnimation, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
+import { remoteTrainingBridge } from '../remoteTraining/bridge';
+import { SkillRecovery } from '../skills/skillRecovery';
+import { recoveryStore } from '../skills/recoveryStore';
+import { hashOf } from '../skills/hash';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { platformBridge } from '../utils/platformBridge';
 import { trainHandoff, useRoutineSkills, type HandoffJob } from './useRoutineSkills';
@@ -60,6 +64,13 @@ function useRuntime({ workspaceId, setProject, project, parts }: SkillsInput) {
     () =>
       new SkillsRuntime({
         runner: inSkillsWorker,
+        recovery: IS_WEB_DEMO
+          ? undefined
+          : new SkillRecovery({
+              workspaceId,
+              store: recoveryStore,
+              selected: async () => (await remoteTrainingBridge.status()).selected,
+            }),
         forge: platform.forge,
         save: platform.save,
         loadSkill: platform.loadSkill,
@@ -72,6 +83,7 @@ function useRuntime({ workspaceId, setProject, project, parts }: SkillsInput) {
   );
 
   useLayoutEffect(() => {
+    runtime.setRecoveryContext(hashOf({ animations: project.animations ?? [], cases: project.cases ?? [] }));
     runtime.setKitContext(async (model) => {
       const rows = skillRows({
         model,
@@ -92,6 +104,10 @@ function useRuntime({ workspaceId, setProject, project, parts }: SkillsInput) {
       };
     });
   }, [runtime, platform, project, parts]);
+
+  useLayoutEffect(() => {
+    runtime.invalidateRecovery();
+  }, [runtime, parts, project.joints, project.servoCalibrations, project.bodyCalibrations]);
 
   useEffect(() => () => runtime.dispose(), [runtime]);
 
@@ -139,9 +155,13 @@ function useSceneModel(input: SkillsInput, { runtime, platform, watch }: ModelWa
   useEffect(() => {
     if (!watch) return;
 
+    let live = true;
+
     debounce.run(() => {
       void buildModel().then(
         (built) => {
+          if (!live) return;
+
           const next = modelHashes(built);
           const rows = skillRows({
             model: built,
@@ -155,11 +175,16 @@ function useSceneModel(input: SkillsInput, { runtime, platform, watch }: ModelWa
             runtime.planBackground(built, backgroundTasks(rows));
 
           hashes.current = next;
+          void runtime.recover(built);
           setModel(built);
         },
         () => null,
       );
     });
+
+    return () => {
+      live = false;
+    };
   }, [
     watch,
     parts,
@@ -199,7 +224,12 @@ export function useSkills(input: SkillsInput) {
   const records = project.skills ?? [];
   const facts = robotFacts(rig, parts);
   const watch =
-    available && (facts.morphology === 'legged' || records.length > 0 || jobs.length > 0 || !!project.policies?.length);
+    available &&
+    (!IS_WEB_DEMO ||
+      facts.morphology === 'legged' ||
+      records.length > 0 ||
+      jobs.length > 0 ||
+      !!project.policies?.length);
   const model = useSceneModel(input, { runtime, platform, watch });
   const animations = project.animations ?? [];
   const rows: SkillRow[] = model

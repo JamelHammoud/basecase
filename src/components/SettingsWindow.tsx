@@ -11,6 +11,7 @@ import {
   KeyboardIcon,
   PackageIcon,
   PrinterIcon,
+  TrainIcon,
 } from '../design-system';
 import type { PrintersState } from '../app/usePrinters';
 import { AccountsPane } from './settings/AccountsPane';
@@ -18,6 +19,7 @@ import { AgentPane, type AgentPaneProps } from './settings/AgentPane';
 import { BuildPane, type BuildPrefs } from './settings/BuildPane';
 import { CanvasPane, type CanvasPaneProps } from './settings/CanvasPane';
 import { PrintersPane } from './settings/PrintersPane';
+import { TrainingPane } from './settings/TrainingPane';
 import { ShortcutsList } from './ShortcutsList';
 import { SETTINGS_PANES, type SettingsFocus, type SettingsPane } from '../app/settingsPanes';
 
@@ -26,6 +28,7 @@ const PANE_ICONS: Record<SettingsPane, React.ReactNode> = {
   agent: <BotIcon className="w-4 h-4" />,
   build: <PackageIcon className="w-4 h-4" />,
   printers: <PrinterIcon className="w-4 h-4" />,
+  training: <TrainIcon className="w-4 h-4" />,
   accounts: <HumanIcon className="w-4 h-4" />,
   shortcuts: <KeyboardIcon className="w-4 h-4" />,
 };
@@ -136,6 +139,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
               <PrintersPane key={props.printers.loaded ? 'loaded' : 'loading'} state={props.printers} />
             )}
             {current.id === 'accounts' && <AccountsPane focus={props.focus} />}
+            {current.id === 'training' && <TrainingPane />}
             {current.id === 'shortcuts' && <ShortcutsList sculptEnabled={props.sculptEnabled} />}
           </div>
         </div>

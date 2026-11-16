@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { LOOP_DIR } from './paths.mjs';
 
-export const SHARED_LANES = new Set(['lead', 'groom', 'ideas', 'market', 'digest', 'retro']);
+export const SHARED_LANES = new Set(['lead', 'groom', 'ideas', 'digest']);
 
 export const fingerprint = (value) => crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 

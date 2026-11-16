@@ -131,9 +131,8 @@ function judge({ pull, worktree, diff, copy, onMain, log }) {
 
   if (!original) return { ...result.output, journalId: result.journalId };
 
-  updateSession(result.journalId, { reviewOutcome: 'duplicate' });
-
   closePull(pull.number, `Closing as a duplicate of #${original}, which makes the same change.`);
+  updateSession(result.journalId, { reviewOutcome: 'duplicate' });
   log(`#${pull.number}: duplicate of #${original}; closed`);
 
   return null;

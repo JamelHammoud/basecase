@@ -53,13 +53,10 @@ function printJson() {
 
     return index < 0 ? undefined : Date.parse(args[index + 1]);
   };
-  const since = option('--since');
-  const now = option('--until');
+  const now = option('--until') ?? Date.now();
+  const since = option('--since') ?? now - 86_400_000;
 
-  if (
-    [since, now].some((value) => value !== undefined && !Number.isFinite(value)) ||
-    (since !== undefined && now !== undefined && since >= now)
-  )
+  if ([since, now].some((value) => !Number.isFinite(value)) || since >= now)
     throw new Error('Use ISO dates with --since before --until');
 
   console.log(JSON.stringify(usageReport({ since, now }), null, 2));

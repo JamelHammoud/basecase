@@ -21,6 +21,15 @@ const { deliver } = await import('./deliver.mjs');
 const cacheDir = path.join(root, 'state', 'cache');
 const pulls = [];
 const at = Date.now();
+const buildOptions = {
+  cwd: root,
+  name: 'build',
+  worker: 'build-1',
+  task: 'step-10',
+  system: 'Fixture',
+  prompt: 'Fixture',
+  schema: {},
+};
 
 function writeHistory(value) {
   fs.mkdirSync(cacheDir, { recursive: true });
@@ -96,6 +105,17 @@ function recordEarlierAndVoice(dir) {
   expect(voiceText('Fixture', { kind: 'pull', origin: { cwd: dir } })).toBe('Fixture');
 }
 
+function checkDateWindows() {
+  const until = at - 2 * 86_400_000;
+  const historical = report(['--until', new Date(until).toISOString()]);
+
+  expect(historical.completionWindow).toMatchObject({ since: until - 86_400_000, until });
+  expect(historical.sessions).toBe(0);
+  expect(() => report(['--since', new Date(at + 86_400_000).toISOString()])).toThrow(
+    'Use ISO dates with --since before --until',
+  );
+}
+
 afterAll(() => {
   fs.rmSync(root, { recursive: true, force: true });
   vi.unstubAllEnvs();
@@ -165,10 +185,9 @@ it('runs real journal, delivery recovery and JSON CLI over retained invocation h
 
   runner.mockReturnValueOnce({ ok: false, error: 'interrupted', session: { id: 'continued-thread' } });
 
-  const options = { cwd: root, name: 'build', task: 'step-10', system: 'Fixture', prompt: 'Fixture', schema: {} };
-  const failed = runAgent(options);
+  const failed = runAgent(buildOptions);
 
-  runAgent({ ...options, continuation: failed.session });
+  runAgent({ ...buildOptions, continuation: failed.session });
   invocation('revise-1', { name: 'revise' });
   invocation('revise-1', { name: 'revise' });
   updateSession(invocation('review-1-a', { name: 'review' }), { reviewOutcome: 'fail' });
@@ -210,6 +229,7 @@ it('runs real journal, delivery recovery and JSON CLI over retained invocation h
     workers: ['refine-2'],
     kind: 'feature',
   });
+  expect(result.byKind.feature).toMatchObject({ reviewAttempts: 2, reviewOutcomes: { fail: 1, pass: 1 } });
   expect(result.provenance.some((entry) => entry.continuedFrom === 'continued-thread')).toBe(true);
   expect(result.sharedTasks.find((task) => task.task === 'batch:11')).toMatchObject({
     sessions: 1,
@@ -230,6 +250,9 @@ it('runs real journal, delivery recovery and JSON CLI over retained invocation h
   });
   expect(window.taskWork.tasks.find((task) => task.task === 'pull:8')).toMatchObject({ sessions: 2, tokens: 30 });
   expect(window.retention.sessions).toBe(24);
+  expect(window.completionWindow.byKind.feature.reviewOutcomes).toEqual({ fail: 1, pass: 1 });
+
+  checkDateWindows();
   writeHistory(null);
   expect(report().taskWork).toMatchObject({ linkageAvailable: false, mergedTasks: 0 });
 });

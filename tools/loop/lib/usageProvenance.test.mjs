@@ -54,6 +54,23 @@ it('does not infer a merge from a successful exit or unavailable history', () =>
   });
 });
 
+it('attributes market and retro implementations to their own publications', () => {
+  const result = taskUsage(
+    [
+      session('market-work', 'pull:1', { name: 'market' }),
+      session('retro-work', 'pull:2', { name: 'retro' }),
+      session('planning', null, { name: 'lead' }),
+    ],
+    [
+      { number: 1, state: 'MERGED', title: 'Market: Research', body: '' },
+      { number: 2, state: 'MERGED', title: 'Loop: Improve dispatch', body: '' },
+    ],
+  );
+
+  expect(result).toMatchObject({ mergedTasks: 2, mergedWork: { sessions: 2 }, shared: { sessions: 1 } });
+  expect(result.tasks.map((task) => task.kind)).toEqual(['market', 'loop']);
+});
+
 it('keeps conflicting publication evidence ambiguous rather than choosing a task', () => {
   const result = taskUsage(
     [session('one', 'pull:1', { workId: 'work:conflict' })],

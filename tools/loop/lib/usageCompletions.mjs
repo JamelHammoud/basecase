@@ -1,3 +1,5 @@
+import { reviewOutcomeTotals } from './usageTotals.mjs';
+
 const within = (at, since, until) => at && Date.parse(at) >= since && Date.parse(at) < until;
 const average = (tasks, key) => {
   if (!tasks.length || tasks.some((task) => task[key] === null)) return null;
@@ -37,12 +39,7 @@ export function completionWindow(work, { since, until, pulls }) {
           completions: tasks.length,
           completionsPerDay: tasks.length / ((until - since) / 86_400_000),
           reviewAttempts: tasks.reduce((sum, task) => sum + task.reviewAttempts, 0),
-          reviewOutcomes: tasks.reduce((counts, task) => {
-            for (const [verdict, count] of Object.entries(task.reviewOutcomes))
-              counts[verdict] = (counts[verdict] ?? 0) + count;
-
-            return counts;
-          }, {}),
+          reviewOutcomes: reviewOutcomeTotals(tasks),
           tokensPerCompletion: average(tasks, 'tokens'),
           millisecondsPerCompletion: average(tasks, 'milliseconds'),
         },

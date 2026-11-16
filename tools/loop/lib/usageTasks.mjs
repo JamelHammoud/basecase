@@ -1,5 +1,5 @@
 import { usageLinks } from './usageLinks.mjs';
-import { sessionTotals } from './usageTotals.mjs';
+import { reviewOutcomeTotals, sessionTotals } from './usageTotals.mjs';
 
 const workBreakdown = (records, key) =>
   Object.fromEntries(
@@ -106,6 +106,7 @@ export function taskUsage(records, pulls, publications = []) {
           mergedTasks: completed.length,
           failedAttempts: completed.reduce((sum, task) => sum + task.failedAttempts, 0),
           reviewAttempts: completed.reduce((sum, task) => sum + task.reviewAttempts, 0),
+          reviewOutcomes: reviewOutcomeTotals(completed),
           tokensPerMergedTask: completed.every((task) => task.tokens !== null)
             ? completed.reduce((sum, task) => sum + task.tokens, 0) / completed.length
             : null,

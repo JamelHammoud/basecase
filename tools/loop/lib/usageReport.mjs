@@ -31,7 +31,7 @@ export function sessionRecords({ since = Date.now() - 24 * 60 * 60_000 } = {}) {
     });
 }
 
-export function usageReport({ since = Date.now() - 86_400_000, now = Date.now() } = {}) {
+export function usageReport({ now = Date.now(), since = now - 86_400_000 } = {}) {
   const retained = sessionRecords({ since: 0 });
   const sessions = retained.filter((record) => record.startedAt >= since && record.startedAt < now);
   let pulls;

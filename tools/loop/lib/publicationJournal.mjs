@@ -7,7 +7,7 @@ export const workIdentity = (cwd) => `work:${fingerprint(path.resolve(cwd))}`;
 
 const directory = () => path.join(LOOP_DIR, 'state', 'publications');
 
-export function recordPublication(entry, url) {
+export function recordPublication(entry, url, publishedSha = entry.sha) {
   const file = path.join(directory(), `${fingerprint(entry.branch)}.json`);
   const temporary = `${file}.${process.pid}.tmp`;
   const previous = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
@@ -27,7 +27,7 @@ export function recordPublication(entry, url) {
     ...(url
       ? {
           url,
-          publishedSha: entry.sha,
+          publishedSha,
           number: Number(/\/pull\/(\d+)$/.exec(url)?.[1]) || null,
           publishedAt: Date.now(),
         }

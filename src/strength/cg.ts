@@ -151,14 +151,19 @@ export function conjugateGradient(
       norm2 += r[i] * r[i];
     }
 
+    iterations++;
+    residual = Math.sqrt(norm2) / norm0;
+
+    const keepGoing = iterations < opts.maxIterations && residual > opts.tolerance;
+
+    if (!keepGoing) break;
+
     const next = precondition(inv, r, z);
     const beta = next / (rz || 1e-30);
 
     for (let i = 0; i < size; i++) p[i] = z[i] + beta * p[i];
 
     rz = next;
-    iterations++;
-    residual = Math.sqrt(norm2) / norm0;
   }
 
   return { u, iterations, residual };

@@ -879,6 +879,18 @@ Arm, gripper and wheel control discovery excludes passive joints. Live gait outp
 
 `src/sim/passiveMotion.test.ts` checks physical and control widths across ten mechanisms. `passiveJoints.test.ts` checks dataset action selection. [Evidence](../notes/testing-cases.md#passive-robot-joints).
 
+### Operate alerts
+
+Saved Cases in an open scene can raise retained fleet incidents through their existing task contract's named failures. This consumes `eventually` and `always` predicates over `whole` as immediate conditions, and `hold_for` over `whole` as continuous conditions with the declared seconds. It uses the shared contract evaluator and its strict positive margin, including `all`, `any`, `not`, absolute values and point geometry. Windowed formulas, sequences and delta expressions remain try-scoring rules. They do not raise live incidents.
+
+`useOperateAlerts`, mounted by `useRobotSync`, subscribes to the whole fleet, without depending on the selected Case or robot. Only telemetry whose recording context belongs to that scene is evaluated. `operateTelemetry` exposes supplied finite `joint.<id>.volts`, `.temp_c`, `.velocity` and `.effort` readings. `volts` is the minimum supplied joint voltage, present only when every reported joint supplies it. No battery percentage is inferred. Conditions on absent world or sensor facts stay unknown.
+
+`operateConditions.ts` uses the Case fact-age boundary of 500 ms. A missing input, stale capture, gap over that boundary or a replaced pending worker sample breaks continuity. Unknown never resolves an incident, including under negation. Fresh false recovers it, and a later sustained occurrence starts a new incident. Duplicate and reordered samples cannot extend duration. The condition worker keeps only continuity timestamps, without retaining an expanding trace. Configuration edits replace the worker and reset pending durations.
+
+Telemetry clocks use the minimum observed arrival offset, so an initially delayed packet cannot make later samples appear to come from the future. In-flight requests and pending samples stay bounded to 32 units during connection turnover. The worker retains the 32 most recently sampled units and resets continuity for an evicted unit. `useOperateAlerts.test.ts` covers delivery jitter and replaced pending work. `operateAlerts.worker.test.ts` covers eviction and duration using the real evaluator.
+
+Use the existing Case contract configuration rather than another rule format. `contractReads.ts` shares the existing signal traversal with saved-try judging. `operateConditions.test.ts` runs the voltage, duration, transient, freshness and unknown matrices against the real contract evaluator. [Evidence and limits](../notes/testing-cases.md#operate-alert-predicates).
+
 ### Passive fixture browser coverage
 
 `e2e/passiveFixtures.e2e.test.ts` retains New Case creation, a 35 g weight edit, a passing recorded reference and travel checks for both lid and drawer on Linux and macOS. Those two Windows cases are quarantined until 28 November 2026 under #1364. `src/cases/passiveFixtures.test.ts` retains real contact motion, recording round trips and limp and locked negative controls on every platform. [Incident evidence](../notes/testing-cases.md#windows-passive-fixture-recording).

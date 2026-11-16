@@ -54,6 +54,15 @@ A live try can start recording after the passive joint has settled against its c
 
 Recording assertions check nq and nv against physical DOFs and nu against the exact powered count, including zero-actuator robots. Control buffers have frames times nu entries. The dataset and demonstration feature schema still pairs powered joint positions with powered actions. Passive coordinates remain in the saved recording rather than acquiring fake actions. This does not change articulated Case fixture bindings or recording formats.
 
+## Operate alert predicates
+
+`operateConditions.test.ts` evaluates existing Case contract predicates against supplied voltage using the real contract WASM. Samples at 0, 400, 800 and 1,000 ms establish a one-second condition. A 100 ms transient followed by fresh healthy voltage creates no alert. A gap from 400 to 1,000 ms resets continuity. Stale and missing readings remain unknown, including under negation. Duplicate and reordered samples do not extend duration, and a reading exactly on the threshold follows the evaluator's strict margin rule.
+
+These tests cover whole-window immediate predicates and continuous `hold_for` conditions. Windowed and sequence formulas and delta expressions remain saved-try scoring rules. No simulation geometry or unsupplied sensor fact is fabricated for a live robot. The worker retains only continuity timestamps and bounded pending messages. Fleet persistence and the browser path are recorded in [Robot runtime evidence](testing-robot-runtime.md#retained-fleet-incidents).
+
+
+The telemetry subscription test supplies a first sample at 1,000 ms followed by a sample whose daemon clock advances 100 ms while arrival advances only 50 ms. The second sample remains fresh at 1,050 ms rather than being rejected as future data. It also replaces two pending samples and asserts a continuity reset. The worker test visits 33 units and then resumes the first at 400 ms intervals. Its duration starts again after eviction and reaches one second only at 2,400 ms. These are deterministic clock and operation observations, not throughput measurements.
+
 ## Windows passive fixture recording
 
 [Check run 43820519938](https://github.com/JamelHammoud/basecase/actions/runs/43820519938) at `017a5f2a7313ce68c18a51acc390cef00b7f2084` reached Drive on but saved zero tries at line 46 on both Windows attempts for both Open a Lid and Pull a Drawer. Linux passed at the same revision. Commit `37dccba61` introduced the walkthroughs after the last green run. Each attempt opens a fresh app. The log does not distinguish automatic finish, recording, scoring and persistence, so no product fix is claimed. Both Windows cases are quarantined until 28 November 2026 under [#1364](https://github.com/JamelHammoud/basecase/issues/1364).

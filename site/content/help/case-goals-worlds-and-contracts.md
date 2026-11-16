@@ -25,6 +25,8 @@ related:
   - make-a-case
   - arena
 covers:
+  - src/cases/operateConditions.ts
+  - src/workspace/useOperateAlerts.ts
   - src/cases/caseGoals.ts
   - src/cases/goalDefaults.ts
   - src/cases/caseWorlds.ts
@@ -157,3 +159,16 @@ A Case written on one arm runs on another by scaling its world to the new arm's 
 For [training images](/help/make-training-images), named object points, object pose variation, distractors and camera mount tolerance in millimeters scale too. Color classes and angular tolerances stay the same.
 
 Imported rooms and captured worlds keep their true size when you change robots.
+
+
+## Operate alerts
+
+A named failure in a saved Case can also raise a problem on a robot's Operate fleet row. Ask the agent to configure the Case's contract. For example, ask for a failure named Supply low when supplied voltage stays below 7 V for one second.
+
+Use `hold_for` with `within: "whole"` for a continuous condition. `eventually` and `always` with `window: "whole"` raise immediate incidents when their state holds. The live monitor reads the state again on each fresh sample. Windowed formulas, sequences and delta expressions remain try-scoring rules.
+
+The live readings are `joint.<id>.volts`, `joint.<id>.temp_c`, `joint.<id>.velocity` and `joint.<id>.effort`, when telemetry supplies them. `volts` is the minimum joint voltage, available only when every reported joint supplies voltage. These are readings from the robot, never estimated battery percentages.
+
+A reading older than 500 ms, a gap over 500 ms or a missing input breaks a pending duration. Missing data never counts as recovery, even inside a negated condition. Fresh healthy data recovers an active incident. Another occurrence starts a new incident.
+
+[Inspect fleet problems](/help/inspect-fleet-problems) to acknowledge an incident or open its kept try.

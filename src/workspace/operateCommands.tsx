@@ -1,3 +1,4 @@
+import { fleetIncidents, inspectUnitProblems } from '../robot/fleetIncidentStore';
 import type { Command } from '../components/CommandPalette';
 import { OperateIcon } from '../design-system';
 import { canCalibrate } from '../robot/calibrationSession';
@@ -132,6 +133,20 @@ function rollBackCommands(core: WorkspaceCore, showOperate: () => void): Command
     }));
 }
 
+function problemCommands(showOperate: () => void): Command[] {
+  return [...new Set(fleetIncidents.items.map((i) => i.unit))].map((unit) => ({
+    id: `inspect-problems-${unit}`,
+    group: 'Operate',
+    label: `Inspect Problems for ${unit}`,
+    icon: <OperateIcon />,
+    keywords: 'fleet alerts incidents fault acknowledge history',
+    run: () => {
+      showOperate();
+      inspectUnitProblems(unit);
+    },
+  }));
+}
+
 export function operateCommands(inputs: CommandInputs): Command[] {
   const { core } = inputs;
 
@@ -193,5 +208,6 @@ export function operateCommands(inputs: CommandInputs): Command[] {
     ...replayCommands(core),
     ...rollOutCommands(core, showOperate),
     ...rollBackCommands(core, showOperate),
+    ...problemCommands(showOperate),
   ];
 }

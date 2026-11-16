@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const fixture = vi.hoisted(() => ({
+  model: 'claude-opus-5-5',
   remove: vi.fn(),
   openSlotPool: vi.fn(),
   closeAppModules: vi.fn(),
@@ -29,8 +30,8 @@ vi.mock('./against.mjs', async (importOriginal) => ({
 vi.mock('./arms.mjs', async (importOriginal) => ({
   ...(await importOriginal()),
   againstArms: () => [
-    { label: 'working tree', model: 'claude-opus-5-5', harness: 'tree', git: { commit: 'abc1234', dirty: true } },
-    { label: 'main', model: 'claude-opus-5-5', harness: 'ref', git: { commit: 'abc1234', dirty: false } },
+    { label: 'working tree', model: fixture.model, harness: 'tree', git: { commit: 'abc1234', dirty: true } },
+    { label: 'main', model: fixture.model, harness: 'ref', git: { commit: 'abc1234', dirty: false } },
   ],
 }));
 
@@ -101,4 +102,77 @@ describe('comparison command', () => {
     expect(fixture.openSlotPool).not.toHaveBeenCalled();
     expect(fixture.runMicroOnce).not.toHaveBeenCalled();
   });
+});
+
+it.each(['codex', 'wrong snapshot', 'wrong response'])('checks %s through the comparison command', async (scenario) => {
+  vi.resetModules();
+  vi.clearAllMocks();
+  tree = fs.mkdtempSync(path.join(os.tmpdir(), 'compare-provider-test-'));
+  fixture.model = 'gpt-6.1-sol';
+
+  const close = vi.fn();
+  const pool = { studios: [{ base: 'http://first' }, { base: 'http://second' }], slots: [{ post: vi.fn() }], close };
+  const exit = vi.spyOn(process, 'exit').mockImplementation(() => {});
+
+  fixture.openSlotPool.mockResolvedValue(pool);
+  fixture.runMicroOnce.mockResolvedValue({
+    grade: { status: 'pass' },
+    status: 'pass',
+    task: 'A1',
+    seed: 1,
+    servedBy: scenario === 'wrong response' ? 'claude-opus-5-5' : fixture.model,
+  });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url) => ({
+      json: async () => ({
+        agentKind: scenario === 'wrong snapshot' && url.includes('second') ? 'claude' : 'codex',
+        models: [{ id: fixture.model, effortLevels: [{ id: 'medium' }] }],
+      }),
+    })),
+  );
+  process.argv = [
+    process.execPath,
+    'bench/compare.mjs',
+    '--against',
+    'main',
+    '--model',
+    fixture.model,
+    '--effort',
+    'medium',
+    '--seeds',
+    '1',
+    '--no-cache',
+    '--runs-dir',
+    tree,
+    '--run',
+    'provider',
+  ];
+  vi.spyOn(console, 'log').mockImplementation(() => {});
+
+  await import('../compare.mjs');
+
+  const result = JSON.parse(fs.readFileSync(path.join(tree, 'provider/results.json'), 'utf8'));
+
+  expect(result.provider).toBe('codex');
+  expect(result.effort).toBe('medium');
+  expect(close).toHaveBeenCalledTimes(2);
+  expect(fixture.remove).toHaveBeenCalledOnce();
+  expect(exit).toHaveBeenCalledOnce();
+
+  if (scenario === 'codex') {
+    expect(result.plan.stop).toBe('rounds');
+    expect(result.results).toHaveLength(2);
+    expect(fixture.openSlotPool.mock.calls.every(([options]) => options.provider === 'codex')).toBe(true);
+  }
+
+  if (scenario === 'wrong snapshot') {
+    expect(result.plan.stop).toBe('error');
+    expect(fixture.runMicroOnce).not.toHaveBeenCalled();
+  }
+
+  if (scenario === 'wrong response') expect(result.plan.stop).toBe('served');
+
+  vi.unstubAllGlobals();
+  fixture.model = 'claude-opus-5-5';
 });

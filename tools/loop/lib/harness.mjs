@@ -18,7 +18,7 @@ export function experimentHold({ locks, quiet, sessions, loadPerCore }) {
 
 const eligibleStop = (result) => ['winner', 'rounds', 'equivalent'].includes(result?.plan?.stop);
 
-function completeRows({ results, labels, resolved, stats, plan }) {
+function completeRows({ results, labels, resolved, stats, plan, provider }) {
   if (resolved?.length !== 2 || resolved[0].id !== resolved[1].id) return false;
 
   const keys = new Set(results.map((run) => `${run.model}/${run.task}/${run.seed}`));
@@ -28,6 +28,7 @@ function completeRows({ results, labels, resolved, stats, plan }) {
     keys.size === plan.tasks * plan.rounds * 2 &&
     results.every(
       (run) =>
+        (!provider || run.provider === provider) &&
         tasks.has(run.task) &&
         labels.includes(run.model) &&
         Number.isInteger(run.seed) &&
@@ -76,6 +77,7 @@ export function flushJournal(ledger, journal) {
 function saveOutcome(context, fields) {
   const { candidate, release, deps, ledger, journal, now } = context;
   const entry = {
+    selection: context.selection,
     candidate: candidate.key,
     title: fields.title ?? candidate.text,
     evidence: [candidate.ref],

@@ -3,6 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { argOption, defaultRunName, here, root } from './harness.mjs';
 import { gitInfo, readIndex } from './archive.mjs';
+import { runSerialGroups } from './compare/provider.mjs';
+import { comparisonProvider } from './compare/provider.mjs';
+import { benchmarkTurn } from '../tools/loop/lib/benchmarkPolicy.mjs';
 import { openSlotPool } from './slots.mjs';
 import { bounded, comparisonLimits, guardedOutput, runBoundedJobs } from './compare/runtime.mjs';
 import { runMicroOnce } from './micro/once.mjs';
@@ -81,6 +84,14 @@ try {
 }
 
 const { arms } = built;
+const provider = comparisonProvider(
+  args,
+  arms.map((arm) => arm.model),
+);
+const subscription = args.includes('--loop-allowance');
+
+for (const arm of arms) arm.provider = provider;
+
 const labels = arms.map((arm) => arm.label);
 const index = readIndex(runsDir);
 const perRunHistory = historicalRunCost(
@@ -138,7 +149,8 @@ const perApp = Number(argOption(args, 'per-app', 1));
 async function openPools() {
   if (!against) {
     const pool = await bounded(
-      (signal) => openSlotPool({ label: 'compare', port, parallel: opts.parallel, perApp, log, signal }),
+      (signal) =>
+        openSlotPool({ label: 'compare', port, parallel: opts.parallel, perApp, log, signal, provider, subscription }),
       {
         deadline,
         late: (pool) => pool.close(),
@@ -160,7 +172,18 @@ async function openPools() {
 
     const label = `compare-${dirOf(arm.label)}`;
     const pool = await bounded(
-      (signal) => openSlotPool({ label, port, parallel: sizes[i], perApp, source: arm.source, log, signal }),
+      (signal) =>
+        openSlotPool({
+          label,
+          port,
+          parallel: sizes[i],
+          perApp,
+          source: arm.source,
+          log,
+          signal,
+          provider,
+          subscription,
+        }),
       { deadline, late: (pool) => pool.close() },
     );
 
@@ -183,21 +206,46 @@ let failure = null;
 async function setup() {
   await openPools();
 
-  const status = await bounded(
-    async (signal) => {
-      const response = await fetch(`${pools[0].studios[0].base}/api/bridge/acp-status`, { signal });
+  const statuses = await Promise.all(
+    pools
+      .flatMap((pool) => pool.studios)
+      .map((studio) =>
+        bounded(
+          async (signal) => {
+            const response = await fetch(`${studio.base}/api/bridge/acp-status`, { signal });
 
-      return response.json();
-    },
-    { deadline },
+            return response.json();
+          },
+          { deadline },
+        ),
+      ),
   );
+
+  if (statuses.some((status) => status.agentKind !== provider))
+    throw new Error('An app snapshot connected to a different comparison provider.');
+
+  const status = statuses[0];
   const available = status.models ?? [];
 
   resolved = arms.map((arm) => resolveModel(arm.model, available));
+
   effort = sharedEffort(
     resolved.map((r) => available.find((m) => m.id === r.id)),
     wantedEffort,
   );
+
+  for (const current of statuses) {
+    const models = arms.map((arm) => resolveModel(arm.model, current.models ?? []));
+
+    if (models.some((model, i) => model.id !== resolved[i].id))
+      throw new Error('App snapshots resolved different comparison models.');
+
+    sharedEffort(
+      models.map((model) => current.models.find((item) => item.id === model.id)),
+      effort,
+    );
+  }
+
   caches = cachesAt(effort);
   log(`${resolved.map((r, i) => `${labels[i]}: ${r.arg} → ${r.id}`).join(', ')} at effort ${effort ?? 'default'}`);
   printPlan(effort);
@@ -244,6 +292,8 @@ async function liveRun({ task, seed, label }, slot, signal) {
       effort,
       harness: arm.harness,
       verifyModel: model,
+      provider,
+      ...(subscription ? { turn: benchmarkTurn } : {}),
     });
 
     signal.throwIfAborted();
@@ -274,7 +324,7 @@ const armSummary = () => arms.map(({ label, harness, git }) => ({ label, harness
 function writeResults(extra = {}) {
   fs.writeFileSync(
     path.join(outRoot, 'results.json'),
-    JSON.stringify({ labels, resolved, effort, arms: armSummary(), results, ...extra }, null, 1),
+    JSON.stringify({ labels, resolved, effort, provider, arms: armSummary(), results, ...extra }, null, 1),
   );
 }
 
@@ -287,19 +337,20 @@ function runLiveJobs(live) {
     bySlots.set(slots, [...(bySlots.get(slots) ?? []), job]);
   }
 
-  return Promise.all(
-    [...bySlots].map(([slots, jobs]) =>
-      runBoundedJobs({
-        slots,
-        jobs,
-        run: liveRun,
-        record: recordLive,
-        state,
-        deadline,
-        taskSeconds: opts.taskSeconds,
-      }),
-    ),
-  );
+  const runGroup = ([slots, jobs]) =>
+    runBoundedJobs({
+      slots,
+      jobs,
+      run: liveRun,
+      record: recordLive,
+      state,
+      deadline,
+      taskSeconds: opts.taskSeconds,
+    });
+
+  if (subscription && provider === 'claude') return runSerialGroups([...bySlots], runGroup);
+
+  return Promise.all([...bySlots].map(runGroup));
 }
 
 async function runRound(seed) {
@@ -322,6 +373,7 @@ function finish() {
   const stats = compareStats(results, labels);
   const plan = {
     ...opts,
+    provider,
     harness: arms[0].harness,
     arms: against ? armSummary() : null,
     rounds,

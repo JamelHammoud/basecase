@@ -13,3 +13,5 @@ The lane has one slot, so every failure that lands while you work waits for you.
 Never skip or `.only` a test, raise a timeout, add a retry, or loosen an assertion to make Check pass. Deleting a flaky, slow or narrow test is fine when a faster test covers what users rely on (`docs/guide/running-and-testing.md`); say what covers it.
 
 Answer with `kind` set to `repair`. `cause` holds the class and the root cause; `checked` holds the evidence.
+
+Record current test coverage in the owning area guide and detailed failure evidence, measurements, gaps and quarantine conditions in its linked subsystem note under `docs/notes/`. Reuse existing notes. Keep shared test policy, selection, fixture ownership and browser harness contracts in `docs/guide/running-and-testing.md`. A subsystem repair leaves that shared guide and its navigation alone.

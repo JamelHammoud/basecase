@@ -54,3 +54,11 @@ Measurements and limits: [Scene storage and startup performance evidence](../not
   - The browser lists `sceneSummaries` directly from IndexedDB, so listing scenes never clones every scene's parts and project. Saves read the previous preview and dimensions from the summary instead of cloning the old scene. Saves, previews and deletes keep the scene and summary together in one transaction (§5a). The version 4 upgrade reads old scenes one at a time to seed the summaries.
 
 - **Boot never waits on anything it doesn't need to draw.** The window opens before the agent connects (`connectAcpAgent` runs in parallel, and status reads `connecting` meanwhile, so nothing says “disconnected”). Anything that needs a session awaits that first connect (`AcpAgent.pending`) instead of starting a second. Only the active tab mounts at first; background tabs mount one per idle callback after its first frame (`useMountedTabs`), since each builds its own WebGL context, environment map and shaders. Events for a tab that hasn't mounted are dropped, not refused: on mount it adopts its runs from the journal and the bridge replays unanswered requests. [Evidence](../notes/performance-workspace.md#boot-never-waits-on-anything-it-doesnt-need-to-draw).
+
+## Testing coverage
+
+### First-launch relaunch
+
+`app/firstLaunch.test.ts` retains saved-tab restoration and fresh-profile behavior, and `workspace/sceneDraft.test.ts` retains edit detection. The rover startup and keyboard driving tests remain active on every platform, and camera refusal runs on Linux and macOS.
+
+[Incident evidence and limits](../notes/testing-first-launch.md).

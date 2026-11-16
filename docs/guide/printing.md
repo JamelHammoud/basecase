@@ -85,3 +85,5 @@ Measurements and limits: [Print planning and labels performance evidence](../not
 ### Browser assertion scope
 
 Print-service account tests match `API key` exactly so Roboflow’s separate field does not match.
+
+Printer settings leave Test Connection as the row's action name and show connection feedback beside it. Empty discovery retains No printers found and the existing Add Printer control. [Settings coverage and copy decisions](toolbar-and-settings.md#testing-coverage) records the unchanged browser paths and their gaps.

@@ -55,8 +55,6 @@ You can also click **Find on Network** in the same pane to list the Bambu Lab, K
 
 The Prusa CORE One, MK4, MK4S, MK3.5, MINI IS and XL slice with OrcaSlicer, so install OrcaSlicer before you slice for them. The XL in the list is the single-tool version. The 5-tool XL and printers with an MMU aren't listed.
 
-![Settings ▸ Printers with a Prusa CORE One sending through PrusaLink](/help/add-your-printer/printers.png)
-
 ## Connections
 
 | Send prints with | What happens | It needs |

@@ -191,7 +191,7 @@ export const PrintersPane: React.FC<{ state: PrintersState }> = ({ state }) => {
           {discovery.found.map((f) => (
             <FoundRow key={`${f.kind}:${f.host}`} found={f} onAdd={() => add(fromDiscovered(f))} />
           ))}
-          {discovery.found.length === 0 && <Row label="No printers found" hint="Add one by its address instead" />}
+          {discovery.found.length === 0 && <Row label="No printers found" />}
         </Group>
       )}
       <SlicersGroup state={state} />

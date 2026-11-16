@@ -32,8 +32,7 @@ export function FleetSite({
     }));
 
   return (
-    <section className="space-y-3" data-testid="fleet-site">
-      <h2 className="text-[16px] font-semibold">{site.name}</h2>
+    <section aria-label={site.name} className="space-y-3" data-testid="fleet-site">
       {site.canManage && (
         <FacilityUpload
           busy={facility.busy}

@@ -364,6 +364,8 @@ Measurements and limits: [Collision analysis performance evidence](../notes/perf
 
 ## Testing coverage
 
+`e2e/robotPackage.e2e.test.ts` waits for the actual Robot Package download and checks its filename and delivery failure, then checks the export confirmation and package contents. File exports retain success toasts because their results are outside the canvas, following [Copy](copy.md) §3b-13. [Copy evidence](../notes/testing-build.md#workflow-copy-cleanup).
+
 `kit/buildKit.test.ts` runs ten generated workflows through real BOM, guide planning, plate writing, sheet DXF and Robot Package producers. It covers rover, arm, hexapod, quadruped, pan-tilt camera, gripper, repeated modules, mixed servo variants and buses, multiple print materials and mixed sheet-and-printed construction. It checks owned stock, remaining purchases, packing, copy counts, wiring endpoints, joint identities and archive references. `kit/limits.test.ts` covers the source-size boundary, combined retained geometry and nested boolean and custom-model payloads. `workspace/kitExport.test.ts` covers missing catalog geometry, preparation errors, oversized source geometry, interrupted compression, cancellation and scene or printer edits. `workspace/robotPackageExport.test.ts` verifies the fresh-model option. `guide/generateGuide.test.ts` checks strict worker ownership, interruption and unchanged normal PDF saving.
 
 `guide/render/guideStage.test.ts` explicitly imports its worker fixture so related-test selection follows shader dependencies. It compares PNG bytes from three views against a frozen historical composite shader and three-pass renderer, alongside visibility, target reuse and compilation refusal.

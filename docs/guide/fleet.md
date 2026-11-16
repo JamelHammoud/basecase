@@ -94,7 +94,7 @@ Windows PostgreSQL commands write stdout and stderr to a fixture-owned file besi
 
 ### Sites and facility twins
 
-The Site selector opens a facility. All sites opens the globe. Registered site pins and the current robot page share the globe. Selecting a robot opens its timestamped position, status, current work and declared next work. Open Facility follows its site. The globe is a local WGS84 graticule without external tile imagery. Tile subpaths return 404. It never sends site data to a map provider.
+The Site selector opens a facility and supplies its visible name without a repeated facility heading. All sites opens the globe. Registered site pins and the current robot page share the globe. Selecting a robot opens its timestamped position, status, current work and declared next work. Open Facility follows its site. The globe is a local WGS84 graticule without external tile imagery. Tile subpaths return 404. It never sends site data to a map provider.
 
 `sites/facility.ts` reuses the Case GLB, glTF and OBJ readers, without `normalizeMesh`. Geometry becomes meters with Z up. Source units, axis, SHA-256 hashes and floor identities remain metadata. The upload accepts up to 256 local files totaling 32 MiB. The complete JSON request, including prepared geometry, must fit 64 MiB. Linked resources must accompany the upload. Nested file names and local dependencies are accepted by the API. Browser file selection supplies flat file names, so packages with nested dependencies should use USDZ or a self-contained GLB.
 

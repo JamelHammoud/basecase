@@ -71,3 +71,11 @@ The targeted changed-file check passed formatting, lint, types, documentation an
 ### Review source-size correction
 
 The source guard previously selected only the first CAD, mesh or sculpt payload on a part. Sculpt edits retain the earlier geometry, so an oversized sculpt could pass behind a small CAD payload. Geometry in boolean operands and custom-model nodes was also omitted. The guard now sums those retained and nested payloads before preparation, including CAD edges and contour and lathe profiles, using array lengths. `kit/limits.test.ts` checks the exact boundary and refusal when combined or nested geometry exceeds it without allocating oversized meshes. The existing workspace test verifies that oversized sources stop before catalog preparation. This corrects source accounting without changing the archive limit, browser deadlines or the recorded full-render coverage gap.
+
+## Workflow copy cleanup
+
+Fleet's Site selector supplies the selected site's visible name. The facility section uses that name as its accessible label without repeating a visible heading. The robot computer form keeps the User label and removes its arbitrary username example. Host and SSH key examples, installation requirements and pairing results remain.
+
+Export confirmations remain under [Copy](../guide/copy.md) §3b-13 because their results are outside the canvas. `downloadBytes` starts an anchor download and does not render a result in the studio. STL, image, scene, 3MF, USDZ, Kit, Robot Package and BOM exports retain their success toasts. The Robot Package and Kit help articles retain their success screenshots and instructions.
+
+`e2e/robotPackage.e2e.test.ts` checks the actual download's filename and failure status in addition to its existing success-toast and package-content assertions. Its download event uses the existing 30-second completion deadline. No assertion, timeout, retry or quarantine is weakened. Browser execution remains with CI.

@@ -30,6 +30,7 @@ related:
 covers:
   - src/components/studio/SketchPanel.tsx
   - src/components/studio/SketchCanvas.tsx
+  - src/components/studio/sketchView.ts
   - src/components/studio/useSketchDrawing.ts
   - src/components/studio/useSketchSelection.ts
   - src/components/studio/useSketchKeys.ts
@@ -39,6 +40,8 @@ covers:
   - src/components/SculptAndDrawStudio.tsx
   - src/components/ViewportToolbar.tsx
   - src/utils/sketch/solver.ts
+  - src/utils/sketch/bounds.ts
+  - src/utils/sketch/profile.ts
   - src/utils/sketch/face.ts
   - src/utils/sketch/placement.ts
   - src/utils/svgTo3DParser.ts

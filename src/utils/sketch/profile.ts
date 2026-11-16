@@ -1,3 +1,4 @@
+import { emptyBounds, includePoint } from './bounds';
 import type { Sketch, SketchArc, SketchCircle, SketchLine, Vec2 } from './types';
 
 export interface Profile {
@@ -169,8 +170,9 @@ export function sketchProfile(sketch: Sketch): Profile | null {
 }
 
 export function loopBounds(loop: Vec2[]) {
-  const xs = loop.map((p) => p[0]);
-  const ys = loop.map((p) => p[1]);
+  const bounds = emptyBounds();
 
-  return { min: [Math.min(...xs), Math.min(...ys)] as Vec2, max: [Math.max(...xs), Math.max(...ys)] as Vec2 };
+  for (const [x, y] of loop) includePoint(bounds, x, y);
+
+  return bounds;
 }

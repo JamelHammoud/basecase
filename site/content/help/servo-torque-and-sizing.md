@@ -26,6 +26,7 @@ covers:
   - src/utils/actuatorRules.ts
   - src/utils/engineeringTorque.ts
   - src/utils/engineeringTorqueRows.ts
+  - src/utils/worstJointLoad.ts
   - src/utils/engineeringCrouch.ts
   - src/utils/engineeringPeak.ts
   - src/utils/engineeringFalls.ts

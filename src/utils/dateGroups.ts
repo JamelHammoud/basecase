@@ -8,10 +8,11 @@ function calendarAt(now: Date) {
   return {
     startOfToday: new Date(year, now.getMonth(), now.getDate()).getTime(),
     year,
+    months: new Map<number, string>(),
   };
 }
 
-function labelAt(t: number, { startOfToday, year }: ReturnType<typeof calendarAt>): string {
+function labelAt(t: number, { startOfToday, year, months }: ReturnType<typeof calendarAt>): string {
   if (t >= startOfToday) return 'Today';
 
   if (t >= startOfToday - DAY) return 'Yesterday';
@@ -19,8 +20,17 @@ function labelAt(t: number, { startOfToday, year }: ReturnType<typeof calendarAt
   if (t >= startOfToday - 7 * DAY) return 'Previous 7 days';
 
   const d = new Date(t);
+  const dateYear = d.getFullYear();
+  const key = dateYear * 12 + d.getMonth();
+  const cached = months.get(key);
 
-  return (d.getFullYear() === year ? MONTH : MONTH_YEAR).format(d);
+  if (cached !== undefined) return cached;
+
+  const label = (dateYear === year ? MONTH : MONTH_YEAR).format(d);
+
+  months.set(key, label);
+
+  return label;
 }
 
 export function dateGroupLabel(iso: string, now: Date): string {

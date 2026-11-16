@@ -11,15 +11,22 @@ export interface Region {
 export function cropMask(mask: Mask, region?: Region): Mask {
   if (!region) return mask;
 
-  const x0 = Math.floor(region.x0 * mask.width),
-    x1 = Math.ceil(region.x1 * mask.width);
-  const y0 = Math.floor(region.y0 * mask.height),
-    y1 = Math.ceil(region.y1 * mask.height);
+  const x0 = Math.max(0, Math.floor(region.x0 * mask.width));
+  const x1 = Math.min(mask.width, Math.ceil(region.x1 * mask.width));
+  const y0 = Math.max(0, Math.floor(region.y0 * mask.height));
+  const y1 = Math.min(mask.height, Math.ceil(region.y1 * mask.height));
   const data = new Uint8Array(mask.data.length);
 
-  for (let y = Math.max(0, y0); y < Math.min(mask.height, y1); y++)
-    for (let x = Math.max(0, x0); x < Math.min(mask.width, x1); x++)
-      data[y * mask.width + x] = mask.data[y * mask.width + x];
+  if (x0 >= x1 || Number.isNaN(x0) || Number.isNaN(x1)) return { ...mask, data };
+
+  for (let y = y0; y < y1; y++) {
+    const start = y * mask.width + x0;
+    const end = Math.min(y * mask.width + x1, data.length);
+
+    if (start >= end) continue;
+
+    data.set(mask.data.subarray(start, end), start);
+  }
 
   return { ...mask, data };
 }

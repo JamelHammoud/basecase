@@ -14,6 +14,7 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 import { IS_MAC } from '../utils/os';
 import { useRobotPackageExport } from './useRobotPackageExport';
 import { errorMessage } from '../utils/errorMessage';
+import { plural } from '../../electron/plural.mjs';
 import { useCutFileExport } from './useCutFileExport';
 import { isSheetSolid } from './cutFileExport';
 
@@ -36,6 +37,7 @@ export function useExportActions(core: WorkspaceCore) {
 
     try {
       download(await viewport.exportStl(), `${fileSafe(scene.sceneName)}.stl`, 'model/stl');
+      showToast('Exported STL');
     } catch (err) {
       showToast(errorMessage(err), { tone: 'error' });
     }
@@ -54,6 +56,7 @@ export function useExportActions(core: WorkspaceCore) {
       a.href = dataUrl;
       a.download = name;
       a.click();
+      showToast('Exported image');
     } catch (err) {
       showToast(errorMessage(err), { tone: 'error' });
     }
@@ -92,6 +95,8 @@ export function useExportActions(core: WorkspaceCore) {
 
       if (bytes) download(bytes, `${fileSafe(scene.sceneName)}${single ? '' : `-${file.key}`}.3mf`, 'model/3mf');
     }
+
+    showToast(`Exported ${plural(report.plan.plates.length, 'plate')} as 3MF`);
   };
 
   const exportScene = async () => {
@@ -109,6 +114,7 @@ export function useExportActions(core: WorkspaceCore) {
       );
 
       download(bytes, `${fileSafe(scene.sceneName)}.${SCENE_FILE_EXTENSION}`, 'application/gzip');
+      showToast(`Exported ${scene.sceneName}`);
     } catch (err) {
       showToast(`Couldn’t export the scene. ${errorMessage(err)}`, { tone: 'error' });
     }
@@ -145,7 +151,7 @@ export function useExportActions(core: WorkspaceCore) {
 
       if (!shared) download(bytes, name, 'model/vnd.usdz+zip');
 
-      toasts.dismissToast();
+      showToast(`Exported ${scene.sceneName} as USDZ`);
     } catch (err) {
       showToast(`Couldn’t export USDZ. ${errorMessage(err)}`, { tone: 'error' });
     } finally {

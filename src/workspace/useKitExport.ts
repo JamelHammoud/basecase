@@ -29,7 +29,7 @@ export function useKitExport(core: WorkspaceCore) {
       const bytes = await exportKit(core, { signal: abort.signal, current: () => latest.current });
 
       downloadBytes(bytes, `${fileSafe(core.scene.sceneName)}-kit.zip`, 'application/zip');
-      core.toasts.dismissToast();
+      core.showToast(`Exported ${core.scene.sceneName}`);
     } catch (error) {
       if (abort.signal.aborted) core.toasts.dismissToast();
       else core.showToast(`Couldn’t export the kit. ${errorMessage(error)}`, { tone: 'error' });

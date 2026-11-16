@@ -39,9 +39,11 @@ Your scene must have movable joints. Assign one exact catalog actuator to each d
 
 Basecase saves the archive to your downloads. To discard the export, click **Cancel** in the progress toast.
 
+![The arm after the kit archive has downloaded](/help/export-a-robot-kit/exported.png)
 
 You can choose **Kit** from [[⌘K]]. You can use the same menu in the web studio.
 
+![The web studio after downloading the arm’s kit](/help/export-a-robot-kit/web-exported.png)
 
 You can export up to 256 MB before compression. If you edit the scene during preparation, Basecase discards the export. You won’t change readiness or program servos by exporting a kit.
 

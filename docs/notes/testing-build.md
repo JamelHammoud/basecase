@@ -72,44 +72,10 @@ The targeted changed-file check passed formatting, lint, types, documentation an
 
 The source guard previously selected only the first CAD, mesh or sculpt payload on a part. Sculpt edits retain the earlier geometry, so an oversized sculpt could pass behind a small CAD payload. Geometry in boolean operands and custom-model nodes was also omitted. The guard now sums those retained and nested payloads before preparation, including CAD edges and contour and lathe profiles, using array lengths. `kit/limits.test.ts` checks the exact boundary and refusal when combined or nested geometry exceeds it without allocating oversized meshes. The existing workspace test verifies that oversized sources stop before catalog preparation. This corrects source accounting without changing the archive limit, browser deadlines or the recorded full-render coverage gap.
 
-
 ## Workflow copy cleanup
 
-Issue #1490 consumes the existing `tools/copy-diff.mjs` report from `b6137663b` to the task's starting HEAD, with its bounded source context. Composition was then read directly. That range describes shipped changes since 9 November, rather than reproducing the issue's 182-merge baseline. No copy extractor or gate changes.
+Fleet's Site selector supplies the selected site's visible name. The facility section uses that name as its accessible label without repeating a visible heading. The robot computer form keeps the User label and removes its arbitrary username example. Host and SSH key examples, installation requirements and pairing results remain.
 
-| Pattern | Before | After | Information retained |
-|---|---|---|---|
-| File delivery repeated by a toast | STL, image, scene, 3MF, USDZ, Kit, Robot Package and both BOM formats downloaded a file and announced Exported again | The file download supplies success feedback. Long exports dismiss their progress toast | Filenames, output bytes, errors, cancellation, clipboard confirmation, AirDrop handoff and partial STEP warnings |
-| Selected site repeated as a heading | Choosing a named site left its selected option above an identical site heading | The selector supplies the site name | Site selector accessible name, facility filename, source units, axis, registration, floors and robot details |
-| Field label repeated by an arbitrary example | The robot computer User field showed the example robot beneath User | The visible label names the empty field | User accessible name, host example, platform key-path example, installation state and pairing result |
+Export confirmations remain under [Copy](../guide/copy.md) §3b-13 because their results are outside the canvas. `downloadBytes` starts an anchor download and does not render a result in the studio. STL, image, scene, 3MF, USDZ, Kit, Robot Package and BOM exports retain their success toasts. The Robot Package and Kit help articles retain their success screenshots and instructions.
 
-The Training pane stays unchanged. Its key-path hint explains that SSH identity takes an existing file path. Its host-key instruction requires an independent comparison. Attempts explains shared budget semantics. Train on distinguishes the selected destination from editable connection fields. These supply requirements, consequences and identity rather than repetition.
-
-Classroom also stays unchanged. Its name placeholder supplies the only visible cue for the name input. The assignment paragraph retains the reference-controller constraint, budget and fingerprint limitation. Grading results, errors and deletion confirmations remain. Training-image camera and class headings distinguish the two switch groups and remain.
-
-The existing Robot Package browser walkthrough now waits for the real download instead of the removed success toast, using the existing 30-second completion deadline. It checks the filename and download failure, then retains package contents, joint map and simulation XML assertions. Existing Kit, Build export, Fleet, classroom, remote training and network-connection walkthroughs retain their actions and outcome assertions. Browser execution belongs to CI. No browser sweep, retry, wait loop or deadline increase was added.
-
-`node tools/copy-diff.mjs HEAD` reports 0 added, 0 changed and 8 removed occurrences, net -8. Both BOM toast calls and the dynamic site heading are additional removals outside this extractor's counted surfaces. This is the current command's accounting, without changing its contract.
-
-Preflight flagged eleven existing help articles for source coverage. `export-a-robot-package.md` now describes progress dismissal and drops its obsolete success-toast image. `export-a-robot-kit.md` drops the redundant desktop and web success images and retains the menu screenshot and all actions. The other nine articles remain true: Count the parts you already own, Export an STL file, Export plates as 3MF, The path from design to build, Get a robot ready to build, Import and export formats, Open Basecase Fleet, Register a Fleet facility and Share a scene. Their steps do not depend on a removed toast, heading or example. No action, format, key, readiness verdict or instruction changed. Fleet's selected site also names its section for assistive navigation.
-
-The focused ten-file `check:changed` run passed formatting, lint, docs, types, site checks for 295 pages and 13 related tests across seven files. The final documentation and accessible-section check also passed all stages, including the same 13 related tests. No local browser execution or visual judgment was performed.
-
-
-### Covered help recheck
-
-The nine unchanged articles named by preflight were reread against the final diff for #1490. The table records why each stays unchanged under the command's explicit exception.
-
-| Article | Source boundary checked | Result |
-|---|---|---|
-| `count-the-parts-you-already-own.md` | `BuildPanel.saveOnHand` still saves the count and supplies Undo. Only `exportCsv` and `exportMarkdown` lose their success toast | Quantity editing, totals, On hand screenshots and Undo instructions remain applicable |
-| `export-an-stl-file.md` | `exportStl` still downloads the same viewport bytes with the same scene filename. Export menu availability is unchanged | STL actions, units, hidden-part handling and menu screenshot remain applicable |
-| `export-plates-as-3mf.md` | `export3mf` still writes the same job and downloads the same material files. Only the final toast is removed | Plate actions, filenames, orientation and menu screenshot remain applicable |
-| `from-design-to-build.md` | BuildPanel changes only the two BOM export callbacks | Readiness, purchasing, manufacturing and kit handoff descriptions remain applicable. This article has no screenshots |
-| `get-a-robot-ready-to-build.md` | ChecksSection wiring, focused checks, selection, fixing, ignoring and restoration are unchanged | All Check actions and referenced Check and Settings states remain applicable |
-| `import-and-export-formats.md` | `useExportActions` retains the same producers, filenames, share handoff and clipboard confirmation | The format table, units and image-capture behavior remain applicable. This article has no screenshots |
-| `open-basecase-fleet.md` | FleetInventory still supplies Site, selected site names, inventory, Reload Fleet and robot status. FleetSite preserves the selected name as its accessible section label | Entry, authentication, selection and access-recovery steps remain applicable. No step refers to the removed heading |
-| `register-a-fleet-facility.md` | FleetSite retains upload, registration, source metadata, floor filtering and map callbacks | Registration steps and illustrated controls remain applicable. The selected Site supplies the facility identity without the duplicate heading |
-| `share-a-scene.md` | `exportScene` still previews, encodes and downloads the same shared scene. Only its final toast is removed | Scene export steps, payload exclusions, filename example and menu screenshot remain applicable |
-
-No article asks the reader to find a removed success toast or site heading. No screenshot reference describes either as its subject. This recheck adds no article text merely to clear a source-coverage reminder, and does not change preflight or its checks.
+`e2e/robotPackage.e2e.test.ts` checks the actual download's filename and failure status in addition to its existing success-toast and package-content assertions. Its download event uses the existing 30-second completion deadline. No assertion, timeout, retry or quarantine is weakened. Browser execution remains with CI.

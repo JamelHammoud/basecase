@@ -36,8 +36,9 @@ Save a robot with movable joints as one zip for MuJoCo and ROS 2: its model, a U
 
 ![The Export menu with Robot Package](/help/export-a-robot-package/menu.png)
 
-A toast shows the progress and closes when Basecase sends `<scene>-robot.zip` to your downloads.
+A toast shows the progress, then names the package when it's saved. Basecase saves `<scene>-robot.zip` to your downloads.
 
+![The toast after the package is saved](/help/export-a-robot-package/exported.png)
 
 **Export Robot Package** is also in [[⌘K]]. Until the scene has a joint that turns or slides, the menu item is grayed out and the command is hidden.
 

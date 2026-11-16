@@ -55,6 +55,7 @@ describe('robot package export', () => {
     const download = await delivered;
 
     expect(download.suggestedFilename()).toBe('arm-robot.zip');
+    await expect.poll(() => app.page.getByText('Exported arm-robot').count(), { timeout: 30000 }).toBeGreaterThan(0);
     expect(await download.failure()).toBeNull();
 
     const made = (await app.page.evaluate(() =>

@@ -667,7 +667,7 @@ Linux and macOS retain the complete extraction, draw and undo walkthrough in `e2
 
 ### Training images coverage
 
-`src/vision/trainingImages.test.ts` checks visible-pixel labels, class selection, keypoints and deterministic frame identity. `src/vision/trainingImagesClient.test.ts` checks sequential persistence of 20 frames, finalization, class counts, dataset reuse and partial-batch failure. `src/vision/imageDataset.test.ts` checks all 20 images in both formats, matching image paths, one COCO annotation per image and exact COCO and YOLO boxes across splits. `src/vision/frameSet.test.ts` checks both formats' label and byte round trips. `e2e/trainingLabels.e2e.test.ts` and `e2e/trainingImageBounds.e2e.test.ts` retain real occlusion, depth, fisheye, keypoint, seeded variation and bounds coverage. These tests do not cover opening the training-image picker through the command palette.
+`src/vision/trainingImages.test.ts` checks visible-pixel labels, class selection, keypoints and deterministic frame identity. `src/vision/trainingImagesClient.test.ts` checks sequential persistence of 20 frames, finalization, class counts, dataset reuse and partial-batch failure. `src/vision/imageDataset.test.ts` checks all 20 images in both formats, matching image paths, one COCO annotation per image and exact COCO and YOLO boxes across splits. `src/vision/frameSet.test.ts` checks both formats' label and byte round trips. `e2e/trainingLabels.e2e.test.ts` and `e2e/trainingImageBounds.e2e.test.ts` retain real occlusion, depth, fisheye, keypoint, seeded variation and bounds coverage.
 
 [Incident evidence and limits](../notes/testing-vision.md).
 

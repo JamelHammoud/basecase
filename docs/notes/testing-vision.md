@@ -14,6 +14,8 @@ The reference-pick walkthrough in `e2e/labelFrames.e2e.test.ts` is quarantined o
 
 The combined palette, wrist-camera render and dataset-download walkthrough was deleted under [#1097](https://github.com/JamelHammoud/basecase/issues/1097) after taking 46 s in run 43715791435. Its quarantine entry for [#1033](https://github.com/JamelHammoud/basecase/issues/1033) was removed with it. The original generation stall remains unexplained.
 
+The retained tests do not cover opening the training-image picker through the command palette.
+
 ## Production inference worker
 
 `src/vision/inferenceWorker.test.ts` is quarantined through 28 November 2026 under [#1035](https://github.com/JamelHammoud/basecase/issues/1035). Run 43701002471 exceeded the unchanged 10 s `beforeAll` budget on Windows while opening its compiled-worker fixture, before the test ran. The file was added by `1ee6c8055` and passed on Linux at the same commit in 4.2 s. Run 43708315996 then exceeded the same setup budget on Linux, after passing in run 43705870784 in 3.7 s with unchanged fixture, inference runtime, dependencies and test configuration. The log does not identify whether bundling, Chrome launch or navigation stalled. The whole file is listed because its setup precedes individual-test quarantine hooks. Restoring it requires Linux and Windows setup traces and at least ten runs before and after at the same load on each platform.

@@ -6,6 +6,8 @@ Current coverage: [owning guide](../guide/skills.md#testing-coverage). Shared po
 
 The Sit training and Try walkthrough in `e2e/skills.e2e.test.ts` was removed under [#1141](https://github.com/JamelHammoud/basecase/issues/1141) after taking 39 s in run 43739315274. It supplied a clock policy but still ran the move solver and Arena before checking playback.
 
+The retained tests do not cover the complete Sit Train-to-Try sequence.
+
 ## Skill coaching
 
 The coaching browser test in `e2e/skills.e2e.test.ts` previously ran three training and Arena cycles and took 44 s in run 43642970706 (#860).

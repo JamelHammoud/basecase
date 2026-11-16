@@ -1,6 +1,7 @@
 import { sizeLabel } from '../utils/size';
 import type { Point2, PrinterModel } from '../data/printers';
 import { bedProjection, bedSeparated } from './bedProjection';
+import { polygonBounds } from './polygonBounds';
 
 export interface Rect {
   x: number;
@@ -22,15 +23,6 @@ export interface Bed {
 }
 
 const EPS = 1e-6;
-
-function bounds(points: Point2[]): Rect {
-  const xs = points.map((p) => p[0]);
-  const ys = points.map((p) => p[1]);
-  const x = Math.min(...xs);
-  const y = Math.min(...ys);
-
-  return { x, y, w: Math.max(...xs) - x, d: Math.max(...ys) - y };
-}
 
 export function insidePolygon([px, py]: Point2, poly: Point2[]): boolean {
   let inside = false;
@@ -87,16 +79,16 @@ function clipRect(r: Rect, to: Rect): Rect | null {
 }
 
 export function bedOf(model: PrinterModel, processName?: string): Bed {
-  const box = inscribedRect(model.bed, bounds(model.bed));
+  const box = inscribedRect(model.bed, polygonBounds(model.bed));
   const process = model.presets?.processes.find((preset) => preset.name === processName);
   const margin = process?.brimClearance ?? model.brimClearance ?? 0;
   const radius = model.toolheadClearance?.radius ?? 0;
   const obstacles = (model.obstacles ?? []).map((obstacle) => {
-    const rect = bounds(obstacle.polygon);
+    const rect = polygonBounds(obstacle.polygon);
 
     return { x: rect.x - radius, y: rect.y - radius, w: rect.w + radius * 2, d: rect.d + radius * 2 };
   });
-  const keepOut = [...model.keepOut.map(bounds), ...obstacles]
+  const keepOut = [...model.keepOut.map(polygonBounds), ...obstacles]
     .map((r) => clipRect({ x: r.x - margin, y: r.y - margin, w: r.w + margin * 2, d: r.d + margin * 2 }, box))
     .filter((r): r is Rect => !!r)
     .map((r) => ({ ...r, x: r.x - box.x, y: r.y - box.y }));

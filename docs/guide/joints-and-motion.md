@@ -215,6 +215,8 @@ Measurements and limits: [Motion fitting and retargeting performance evidence](.
 
 ## Testing coverage
 
+- **Leader arms.** `e2e/leader.e2e.test.ts` creates a leader through ⌘K and checks its new scene tab, follower joint mapping and printing plates. `src/leader/makeLeader.test.ts` checks fixed-base eligibility, joint preservation, forward-kinematics orientation, servo counts, follower mapping and gripper handling. The browser suite does not separately check context-menu visibility. [Removal evidence](../notes/testing-joints-and-motion.md#leader-context-menu).
+
 - **Windows linkage history.** All three tests share a scene: insertion needs the path test, and the coupler sweep needs insertion. `linkage/linkageParts.test.ts` checks servo assignment and posed coupler kinematics on two planes, and `workspace/docHistory.test.ts` checks undo and redo through background part updates. Linux and macOS retain the complete browser walkthrough. [Incident evidence](../notes/testing-joints-and-motion.md#windows-linkage-history).
 
 - **Motion picker.** `e2e/motionSkeleton.e2e.test.ts` opens a fresh app per test attempt. The existing-robot drop waits for `posing().hasRig`, because the parts ref changes before the rendered rig and cannot establish which motion sheet a drop will open. The picker test starts listening for `filechooser` before opening the command palette, then types Design From Motion and presses Enter. The test still selects a malformed BVH, checks its refusal and verifies the scene stays empty. [Motion picker measurements](../notes/motion-picker.md) records the trace, repeated runs and removed Linux quarantine for #994.

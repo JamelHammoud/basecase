@@ -12,6 +12,14 @@ The 300- and 600-angle fixtures reduce axis normalizations from 300 and 600 to o
 
 `lineDistance.test.ts` compares Three's unbounded projections across 12,000 seeded queries, degenerate lines, nonfinite values and independent preparations. Its 300- and 600-probe fixtures reduce dot products from 600 and 1,200 to 301 and 601. `rotorSplit.test.ts` compares complete partitions across 90 translated and scaled meshes near axis and reach limits, preserving source arrays and cached results. These are operation counts and result comparisons, without timing assertions or a claim about complete check time.
 
+## Rotor splits write both partitions directly
+
+Repository search found one shared rotor partition implementation, called by joint sweeps and posed output-rider collision checks. The previous splitter appended each partition to a JavaScript coordinate list, then copied it into a Float32 buffer. The replacement counts moving triangles from cached body ids and routes coordinates directly into two exact output buffers. Classification and cache lifetimes stay unchanged.
+
+`rotorSplit.test.ts` compares exact rotor and stator coordinates for interleaved case and horn triangles at 24, 600 and 1,200 triangles. It checks triangle order, source preservation, independent output buffers, replacement shapes and cached result identity. Existing generated meshes cover 90 classification cases near axis and reach boundaries, including rigid fallback.
+
+The 600- and 1,200-triangle fixtures remove temporary lists holding 5,400 and 10,800 coordinate entries, plus their conversion copies. The retained output buffers still total 21,600 and 43,200 bytes. Sizing reads body ids without reading mesh coordinates. These are structural storage and copy counts, without measured heap usage, timing assertions or a claim about complete collision-check latency. No controls, visible states or user workflow change.
+
 ## Coplanar contact scans reuse one triangle workspace
 
 `coplanarNormals.test.ts` compares contact reports with the allocating calculation across 200 transformed shape pairs, including reversed winding, different tessellations and changed placements. Its 300- and 600-sample fixtures retain one triangle and three corner vectors per scan instead of 300 and 600 triangles with 900 and 1,800 corner vectors. Repeated calls own separate workspaces and read edited normals. These are workspace counts, without timing assertions or a claim about complete collision-check time.

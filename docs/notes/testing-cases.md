@@ -6,6 +6,12 @@ Coverage: [cases](../guide/cases.md#testing-coverage). Shared contracts: [Runnin
 
 The overlapping default-layout walkthrough and its Windows quarantine were removed under [#1151](https://github.com/JamelHammoud/basecase/issues/1151). In run 43739315274 it took 40.949 s on Linux, including 23.279 s until studio readiness. The remaining custom-console walkthrough took 12.071 s and retains Run Case through ⌘K, live recording, timer and score updates, Reset and Esc. The log does not identify which startup stage caused the delay.
 
+## Live arm drive smoke test
+
+Issue [#1439](https://github.com/JamelHammoud/basecase/issues/1439) removes `drives an arm with W` from `e2e/drive.e2e.test.ts`. [Run 43864963744](https://github.com/JamelHammoud/basecase/actions/runs/43864963744) passed it in 65.661 s on Windows shard 4 and 3.873 s on Linux shard 4. These are reported test durations, not a local reproduction. The log does not isolate the slow startup stage, so no engine performance fix is claimed.
+
+The test started `arm-6dof`, asserted the arm drive class, held W for 800 ms, waited for simulation time above one second, checked no fall and stopped with Escape. It never asserted end-effector or joint movement. Existing real-MuJoCo tests in `driveClasses.test.ts` assert arm classification, forward end-effector displacement above 60 mm and idle or release drift below 5 mm. Key mapping tests, gripper release tests, the rover W browser walkthrough and the arm Pick Up a Block browser walkthrough remain active. There is no longer a standalone browser assertion for W on an arm, and no new quarantine or restoration condition is introduced. Browser runs remain with CI.
+
 ## Reference-startup quarantine
 
 The reference-startup walkthrough in `e2e/caseStartup.e2e.test.ts` remains quarantined on Windows through 28 November 2026 under [#1026](https://github.com/JamelHammoud/basecase/issues/1026). Run 43698588307 could not find Stop Try on the first attempt or click it after the clock advanced on retry. Each attempt opens a fresh app. Linux passed at the same commit in 8.5 s, and the preceding Windows run passed in 11.0 s. The recording phase or browser timing cause is not established. Restoring it requires Windows traces and at least ten runs before and after at the same load.

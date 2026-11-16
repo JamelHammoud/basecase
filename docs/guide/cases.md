@@ -759,6 +759,12 @@ Linux and macOS retain the complete extraction, draw and undo walkthrough in `e2
 
 [Incident evidence and limits](../notes/testing-cases.md).
 
+### Live arm drive coverage
+
+`src/sim/driveClasses.test.ts` checks arm drive classification, end-effector movement under forward velocity, idle holding and release position in real MuJoCo. Its key tests cover per-class mappings. `src/sim/driveGrip.test.ts` checks gripper keys and holding joints after release. `e2e/drive.e2e.test.ts` retains the rover W walkthrough through Drive and Escape, plus the arm's Pick Up a Block walkthrough through New Case, Try It, Space and a passed recorded try. The separate arm W smoke test is removed because it asserted elapsed time rather than arm movement.
+
+[Incident evidence and limits](../notes/testing-cases.md#live-arm-drive-smoke-test).
+
 ### Reference-startup coverage
 
 Each `e2e/caseStartup.e2e.test.ts` attempt opens a fresh app. `src/workspace/useCaseTry.test.ts` checks saved-Case startup ownership, `src/workspace/startupLease.test.ts` checks cancellation and superseded starts, and `src/cases/tryReplay.test.ts` checks reference recording and replay on every platform.

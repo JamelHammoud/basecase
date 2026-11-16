@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { simDeltas } from '../../../sim/mjcfFrames';
+import { findPort, worldPort } from '../../../agent/ports';
+import { decodeRecording, encodeRecording } from '../../../cases/recordingFile';
 import { worldDeltas } from '../../../sim/mjcf';
 import type { DriveCommand } from '../../../sim/driveTypes';
 import { inputEvents } from '../../../sim/inputEvents';
@@ -25,6 +28,51 @@ export default function simStudio(studio: Studio) {
   const sim = () => studio().core.simTraining.sim;
 
   return {
+    simRecordingFrame: () => sim().sought()?.frame,
+    simPins: () => {
+      const { core, posesRef } = studio();
+      const model = sim().model;
+      const deltas = model && posesRef.current ? simDeltas(model, posesRef.current) : new Map();
+
+      return Object.fromEntries(
+        core.docs.partsRef.current.flatMap((part) => {
+          const port = findPort(part, 'C');
+
+          if (!port) return [];
+
+          const at = new THREE.Vector3(...worldPort(part, port).position).applyMatrix4(
+            deltas.get(part.id) ?? new THREE.Matrix4(),
+          );
+
+          return [[part.id, at.toArray()]];
+        }),
+      );
+    },
+    recordSimulation: async (on: boolean) => {
+      if (on) {
+        sim().record();
+
+        return null;
+      }
+
+      const recording = await sim().stopRecording();
+
+      return recording ? Array.from(encodeRecording(recording)) : null;
+    },
+    replaySimulation: async (bytes: number[], frame: number) => {
+      const recording = decodeRecording(Uint8Array.from(bytes));
+
+      if (!recording) return;
+
+      sim().pause();
+      await sim().scrub(recording);
+
+      const at = frame < 0 ? recording.frames - 1 : frame;
+
+      sim().seek(at);
+
+      return at;
+    },
     simState: () => devSimState(studio().core, studio().jointsRef.current),
     simTool: (kind: string, payload: Payload) => studio().agent.requests.simTool(kind, payload),
     drive: (command: DriveCommand) => sim().drive.setKeys(command),

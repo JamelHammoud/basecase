@@ -26,7 +26,8 @@ Choosing **Passive** removes the joint's motor assignments. The joint keeps its 
 The motor parts stay in the scene.
 
 Simulation records the joint's motion. You can’t command it through live drive or training.
-You can pose it before starting simulation.
+You can pose it with its slider before starting simulation.
+[Sketch four-bars](/help/simulate-a-four-bar) derive their passive angles from the crank instead.
 
 Passive joints don’t model cables or tendons. They are simulated mechanisms with no claim of physical validation.
 

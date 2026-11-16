@@ -17,3 +17,9 @@ The actuation field lives in `src/types/joint.ts`, reexported from robotics.ts t
 The history integration test compresses and decodes a real scene, exercises pushHistory and travelProject in both directions, compares legacy omitted intent, imports MJCF and marked URDF, and refuses a contradictory tool record. Browser coverage changes actuation through Pose, undoes and redoes the edit, then checks falling motion and the absence of motors in the simulation package.
 
 In pull request #1293, Linux CI reported the failing browser test at 40.576 seconds with one retry. Reopening the export expected two tabs but retained one. The generic browser harness returns `{}` for both `save-scene` and `scene`, so it cannot persist and reopen the exported record. The redundant export and reopen phase was removed instead of adding storage stubs or extending its wait. `src/sim/passiveHistory.test.ts` retains real scene compression and reload coverage, including the complete joint declaration and document undo and redo. The revised browser path has not been timed locally. CI owns its execution.
+
+## Closed Sketch linkage handoff
+
+CAD keeps the original fixed analytic `LoopClosure` records. The simulation writer derives passive hinges without modifying saved joints or undo history. Newly inserted servos now identify C001, because the catalog intentionally returns no actuator rating for a component whose variant is unspecified. Existing unspecified variants refuse simulation until selected rather than receiving an estimated replacement actuator.
+
+The generated ten-mechanism matrix, loaded-motion controls and recording round trips are owned by [simulation evidence](testing-simulate.md#closed-sketch-linkages). They compare physical coupler paths to CAD within 0.3 mm and closing pins within 0.15 mm. This work leaves the Windows insertion/history investigation, durable scene history and imported assembly constraints unchanged.

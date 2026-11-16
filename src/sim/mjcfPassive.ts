@@ -19,6 +19,7 @@ export function passiveJointXml({ st, robot, local }: PassiveBuild, joint: Robot
 
   st.simJoints.push({
     id: joint.id,
+    ...(joint.loop ? { loop: joint.loop } : {}),
     name,
     type: revolute ? 'revolute' : 'prismatic',
     range: joint.range,

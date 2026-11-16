@@ -3,7 +3,7 @@ import { linkAngles } from './linkageKinematics';
 
 const wrapped = (deg: number) => ((((deg + 180) % 360) + 360) % 360) - 180;
 
-export function loopValue(j: RobotJoint, driverValue: number): number {
+export function loopValue(j: Pick<RobotJoint, 'loop'>, driverValue: number): number {
   const { fourBar, link } = j.loop!;
   const rest = linkAngles(fourBar, fourBar.theta);
   const now = linkAngles(fourBar, fourBar.theta + driverValue);

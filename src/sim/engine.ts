@@ -1,5 +1,6 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import type { RobotAnimation, RobotPoseState } from '../types/robotics';
+import { loopInitial } from './loopInitial';
 import { controlValues } from './controlValues';
 import { primeCtrlHistory } from './ctrlHistory';
 import * as THREE from 'three';
@@ -112,6 +113,7 @@ export class SimEngine {
   reset(initial: RobotPoseState = this.sim.initial) {
     const { mj, model, data } = this;
 
+    initial = loopInitial(this.sim, initial);
     mj.mj_resetData(model, data);
     this.sim.joints.forEach((j, i) => {
       const v = initial.values[j.id];

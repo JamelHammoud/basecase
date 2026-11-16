@@ -148,7 +148,7 @@ function barPart(id: string, name: BarName, frame: Frame, cad: AgentCadPayload):
 const TITLES: Record<BarName, string> = { ground: 'Ground', crank: 'Crank', coupler: 'Coupler', rocker: 'Rocker' };
 
 function servoOn(parts: ScenePart[], servoId: string, groundId: string): ScenePart {
-  const servo = specToPart({ id: servoId, catalog: `component:${CRANK_SERVO}` });
+  const servo = specToPart({ id: servoId, catalog: `component:${CRANK_SERVO}|c001` });
   const plan = planMate([...parts, servo], {
     part: servoId,
     port: 'output',

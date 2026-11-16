@@ -120,14 +120,17 @@ export function fitCircle(points: Array<[number, number]>): { cx: number; cy: nu
   for (const [px, py] of points) {
     const x = px - mx;
     const y = py - my;
-    const row = [x, y, 1];
     const rhs = -(x * x + y * y);
 
-    for (let i = 0; i < 3; i++) {
-      b[i] += row[i] * rhs;
-
-      for (let j = i; j < 3; j++) a[i][j] += row[i] * row[j];
-    }
+    b[0] += x * rhs;
+    b[1] += y * rhs;
+    b[2] += rhs;
+    a[0][0] += x * x;
+    a[0][1] += x * y;
+    a[0][2] += x;
+    a[1][1] += y * y;
+    a[1][2] += y;
+    a[2][2] += 1;
   }
 
   for (let i = 0; i < 3; i++) for (let j = 0; j < i; j++) a[i][j] = a[j][i];

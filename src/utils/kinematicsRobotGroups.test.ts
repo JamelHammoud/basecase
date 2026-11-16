@@ -29,6 +29,37 @@ const part = (id: string, group?: string): ScenePart => ({
   group: group === undefined ? undefined : { id: group, name: group },
 });
 
+describe('robot pivot summaries', () => {
+  it('preserves lexical keys and source-order pivot arithmetic across connected roots', () => {
+    const names = ['z', 'a', 'A', '10', '2', 'é', '😀', '\uE000', ''];
+    const values = [0, -0, 1e16, -1e16, 1, -3, Infinity, -Infinity, NaN];
+
+    for (let fixture = 0; fixture < 80; fixture++) {
+      const roots = Array.from({ length: 1 + (fixture % names.length) }, (_, i) =>
+        joint(`${names[(i + fixture) % names.length]}-${i}`, {
+          parent: ['base'],
+          origin: [values[(i + fixture) % values.length], i - fixture, (i % 3) / 10],
+        }),
+      );
+      const joints = roots.concat(joint('descendant', { parentJoint: roots[0].id, origin: [999, 999, 999] }));
+      const before = structuredClone(joints);
+      const rig = buildRig(joints, [part('base')]);
+      const expectedKey = roots.map((root) => root.id).sort()[0];
+      const expectedPivot = [0, 1, 2].map(
+        (axis) => roots.reduce((sum, root) => sum + root.origin[axis], 0) / roots.length,
+      );
+
+      expect(rig.robots).toHaveLength(1);
+      expect(rig.robots[0].key).toBe(expectedKey);
+      expect(rig.robots[0].pivot).toEqual(expectedPivot);
+      expect(rig.rootPivot).toEqual(expectedPivot);
+      expect([...rig.robotOf.values()].every((key) => key === expectedKey)).toBe(true);
+      expect(joints).toEqual(before);
+      expect(buildRig(joints, [part('base')])).toEqual(rig);
+    }
+  });
+});
+
 describe('ordered robot groups', () => {
   it('keeps depth order, base pivots, keys and duplicate names across interleaved robots', () => {
     const joints = [

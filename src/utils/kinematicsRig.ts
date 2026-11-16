@@ -282,7 +282,19 @@ function robotGroup(
 ) {
   const base = ids.filter((j) => !parentOf.get(j.id));
   const pivotOf = base.length ? base : ids;
-  const key = [...pivotOf.map((j) => j.id)].sort()[0];
+  let key = pivotOf[0].id;
+  let x = 0;
+  let y = 0;
+  let z = 0;
+
+  for (const joint of pivotOf) {
+    if (joint.id < key) key = joint.id;
+
+    x += joint.origin[0];
+    y += joint.origin[1];
+    z += joint.origin[2];
+  }
+
   const groups = new Set([...m.parts].map((id) => byPart.get(id)?.group?.name).filter(Boolean));
 
   return {
@@ -290,7 +302,7 @@ function robotGroup(
     name: groups.size === 1 ? [...groups][0]! : 'Robot',
     joints: ids.map((j) => j.id),
     parts: m.parts,
-    pivot: [0, 1, 2].map((i) => pivotOf.reduce((s, j) => s + j.origin[i], 0) / pivotOf.length) as V3,
+    pivot: [x / pivotOf.length, y / pivotOf.length, z / pivotOf.length] as V3,
   };
 }
 

@@ -12,6 +12,7 @@ import type { ShowToast, StudioShared } from './types';
 import type { SceneDocument } from './useSceneDocument';
 
 export interface SceneCaseSource {
+  sceneId?: string;
   workspaceId: string;
   sceneName: string;
   docs: Pick<SceneDocument, 'partsRef' | 'projectRef'>;

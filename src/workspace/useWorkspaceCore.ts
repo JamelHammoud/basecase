@@ -155,7 +155,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     kase: simTraining.cases.active,
     fingerprint: readiness.fingerprint,
     studio,
-    source: { workspaceId, sceneName: scene.sceneName, docs, viewportRef },
+    source: { workspaceId, sceneId: scene.sceneId, sceneName: scene.sceneName, docs, viewportRef },
     parts,
     project,
     showToast,

@@ -8,6 +8,8 @@ import type { StudyKnob, StudyRecord, StudyRow } from '../study/types';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { errorMessage } from '../utils/errorMessage';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
+import { loadStudyVisibility } from './studyVisibility';
+import { useStudyVisibility } from './useStudyVisibility';
 import { executeStudy, type StudyRequest } from './studyRun';
 import type { ShowToast } from './types';
 import type { SceneCaseSource } from './useCaseCompare';
@@ -44,8 +46,36 @@ export function studyKnobs(configured: StudyKnob[] | null, project: ProjectSetti
   return IS_WEB_DEMO ? knobs.filter((knob) => knob.kind !== 'dimension') : knobs;
 }
 
+function studyModeKnobs(knobs: StudyKnob[], visibility: boolean) {
+  return visibility ? knobs.filter((knob) => knob.kind === 'camera_pose' || knob.kind === 'camera_lens') : knobs;
+}
+
 function studyIsStale(shown: StudyRecord | null, liveKey: string) {
   return !!shown && shown.baseKey !== liveKey && !shown.rows.some((row) => row.sceneKey === liveKey);
+}
+
+function studyStaleness(shown: StudyRecord | null, liveKey: string, sourceStale: boolean) {
+  return sourceStale || studyIsStale(shown, liveKey);
+}
+
+async function validateStudySource(shown: StudyRecord, sceneId?: string): Promise<boolean> {
+  if (!shown.visibility) return true;
+
+  const session = await loadStudyVisibility({
+    request: shown.visibility,
+    base: { ...shown.base, measures: {}, triangles: {} },
+    candidates: shown.total,
+    sceneId,
+    caseId: shown.caseId,
+  });
+
+  try {
+    if (session.key !== shown.current.visibility?.key) throw new Error('Run Study again to apply a design.');
+
+    return true;
+  } finally {
+    session.dispose();
+  }
 }
 
 export function useStudy({ kase, parts, project, source, sim, showToast, onShow }: StudyOptions) {
@@ -54,39 +84,51 @@ export function useStudy({ kase, parts, project, source, sim, showToast, onShow 
   const [disabled, setDisabled] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
   const runId = useRef(0);
+  const abortRun = useRef<AbortController | null>(null);
 
   useEffect(
     () => () => {
       runId.current++;
+      abortRun.current?.abort();
     },
     [],
   );
 
-  const knobs = studyKnobs(configured, project, parts);
+  const visibility = useStudyVisibility({ project, parts, kase, sceneId: source.sceneId });
+  const availableKnobs = studyKnobs(configured, project, parts);
+  const knobs = studyModeKnobs(availableKnobs, !!visibility.request);
   const enabled = knobs.filter((knob) => !disabled.includes(knob.id)).map((knob) => knob.id);
   const shown = project.study ?? null;
   const savedCase = shown?.base.project.cases?.find((item) => item.id === shown.caseId);
   const liveKey = studyFingerprint(parts, project);
-  const stale = studyIsStale(shown, liveKey);
+  const stale = studyStaleness(shown, liveKey, visibility.stale);
   const reportError = (error: unknown) => showToast(errorMessage(error), { tone: 'error' });
   const previewing = useStudyPreview({ shown, disabled: stale || running, onError: reportError });
   const run = async (request: StudyRequest = {}): Promise<StudyRecord | string> => {
+    abortRun.current?.abort();
+
+    const controller = new AbortController();
     const turn = ++runId.current;
 
+    abortRun.current = controller;
+
     flushSync(previewing.reset);
-    setConfigured(knobs);
+    setConfigured(availableKnobs);
     setOpen(true);
     onShow();
     setRunning(true);
+    visibility.accept();
 
     try {
       return await executeStudy({
         request: {
           knobs: request.knobs ?? knobs.filter((k) => enabled.includes(k.id)),
           ...studyDefaults(request, kase),
+          visibility: request.visibility ?? visibility.request,
         },
         source,
         sim,
+        signal: controller.signal,
         stopped: () => runId.current !== turn,
         onRecord: (record) => source.docs.updateProjectNow((p) => ({ ...p, study: record })),
       });
@@ -97,6 +139,7 @@ export function useStudy({ kase, parts, project, source, sim, showToast, onShow 
 
   return {
     open,
+    visibility,
     knobs,
     enabled,
     running,
@@ -117,23 +160,28 @@ export function useStudy({ kase, parts, project, source, sim, showToast, onShow 
       setConfigured(next);
       setDisabled([]);
     },
-    edit: (next: StudyKnob) => setConfigured(knobs.map((k) => (k.id === next.id ? next : k))),
+    edit: (next: StudyKnob) => setConfigured(availableKnobs.map((k) => (k.id === next.id ? next : k))),
     enable: (id: string, on: boolean) => setDisabled((s) => (on ? s.filter((k) => k !== id) : [...s, id])),
     start: () => {
+      const turn = runId.current + 1;
+
       void run()
-        .then((result) => typeof result === 'string' && showToast(result, { tone: 'error' }))
-        .catch(reportError);
+        .then((result) => typeof result === 'string' && runId.current === turn && showToast(result, { tone: 'error' }))
+        .catch((error: unknown) => runId.current === turn && reportError(error));
     },
     stop: () => {
       runId.current++;
+      abortRun.current?.abort();
       previewing.reset();
       setRunning(false);
     },
     reset: () => {
       runId.current++;
+      abortRun.current?.abort();
       previewing.reset();
       setRunning(false);
       setConfigured(null);
+      visibility.reset();
       setDisabled([]);
       setOpen(false);
     },
@@ -142,6 +190,11 @@ export function useStudy({ kase, parts, project, source, sim, showToast, onShow 
       if (!shown || stale || row.error) return;
 
       const expected = studyFingerprint(source.docs.partsRef.current, source.docs.projectRef.current);
+
+      const sourceValid = await validateStudySource(shown, source.sceneId).catch(reportError);
+
+      if (!sourceValid) return;
+
       const next = await previewing.replay(shown, row.selection).catch(reportError);
 
       if (!next) return;

@@ -1,3 +1,4 @@
+import { validCameraLens, validCameraPose } from './cameraChoices';
 import type { StudyKnob } from './types';
 import { finiteValue, optionalString, recordValue, stringList, stringValue, vectorValue } from './recordValues';
 
@@ -8,7 +9,17 @@ const footValue = (value: unknown) =>
   (value.length === undefined || positive(value.length)) &&
   (value.width === undefined || positive(value.width));
 
+function validCameraKnob(value: Record<string, unknown>, values: unknown[]): boolean {
+  if (!stringValue(value.part)) return false;
+
+  if (value.kind === 'camera_pose') return values.every(validCameraPose);
+
+  return value.kind === 'camera_lens' && values.every(validCameraLens);
+}
+
 function validKnobFields(value: Record<string, unknown>, values: unknown[]): boolean {
+  if (String(value.kind).startsWith('camera_')) return validCameraKnob(value, values);
+
   if (value.kind === 'servo') return stringList(value.joints) && values.every(stringValue);
 
   if (value.kind === 'voltage') return values.every(positive);
@@ -33,5 +44,10 @@ function validKnob(value: unknown): boolean {
 export function validateStudyKnobs(value: unknown): value is StudyKnob[] {
   if (!Array.isArray(value) || value.length < 1 || value.length > 64 || !value.every(validKnob)) return false;
 
-  return new Set(value.map((knob) => knob.id)).size === value.length;
+  const cameras = value.filter((knob) => knob.kind === 'camera_pose' || knob.kind === 'camera_lens');
+
+  return (
+    new Set(value.map((knob) => knob.id)).size === value.length &&
+    new Set(cameras.map((knob) => `${knob.kind}:${knob.part}`)).size === cameras.length
+  );
 }

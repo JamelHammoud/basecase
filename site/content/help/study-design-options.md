@@ -69,10 +69,12 @@ For another servo model, choose **Add Servo**.
 
 Each design keeps its check results, including failures. A design that couldn’t be measured stays in the table as **Failed**, with **Apply** disabled. Cost uses the bill of materials, including parts you own. Weight and runtime use the same calculations as Checks. Above the table, click **Checks**, **Cost** or **Weight** to sort the designs. With a Case, **Case passes** replaces **Checks**.
 
-With a Case, each design gets 8 seeded runs with small changes in friction, weight, servo strength and delay. The same seeds run on every design. A Study tries up to 64 combinations. Larger spaces use a repeatable sample.
+Without a saved-try visibility comparison, each design gets 8 seeded Case runs with small changes in friction, weight, servo strength and delay. The same seeds run on every design. A Study tries up to 64 combinations. Larger spaces use a repeatable sample.
 
 The frontier marks designs that no other eligible design beats across cost, weight, runtime and available Case results. Designs with a failed check or a Case refusal stay visible but leave the frontier.
 
 The Study saves with the scene, and its workers can continue while you edit. Closing the scene or app ends the run. Its results describe the robot when the Study started. Other edits mark the results out of date and disable **Apply**. Run the Study again to measure those changes.
+
+For camera poses and lenses over a saved try, see [Compare camera placements](/help/compare-camera-placements). Those comparisons measure visibility without adding Case passes.
 
 **Apply** commits the complete design in one step. Press [[⌘Z]] to undo it. To compare robots with different layouts, see [Compare two robots on a Case](/help/compare-two-robots-on-a-case).

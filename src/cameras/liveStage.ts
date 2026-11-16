@@ -110,6 +110,8 @@ export class LiveStage {
 
   private readonly world: Layer;
 
+  private meshFiles?: MeshFiles;
+
   private model: SimModel | null = null;
 
   private views: CameraView[] = [];
@@ -164,7 +166,11 @@ export class LiveStage {
   ): Promise<boolean> {
     const ticket = this.sceneTicket;
 
-    provideMeshFiles(meshes);
+    if (meshes !== this.meshFiles) {
+      provideMeshFiles(meshes);
+      this.meshFiles = meshes;
+    }
+
     await loadPartMeshes([...this.parts.changed(parts), ...this.world.changed(world)]);
 
     if (ticket !== this.sceneTicket) return false;
@@ -262,6 +268,10 @@ export class LiveStage {
     this.renderer.setSize(width, height, false);
 
     const items = [...this.parts.items, ...this.world.items];
+
+    if (request.requireGeometry && items.some((item) => item.group.userData.placeholder))
+      throw new Error('Load every scene mesh before measuring camera visibility.');
+
     const variation = varyTrainingScene({
       scene: this.scene,
       items,
@@ -278,11 +288,17 @@ export class LiveStage {
     );
 
     try {
-      await this.captured.prepare(this.scene, this.lens, shot);
-      this.lens.render(this.scene, shot);
+      if (!request.labelsOnly) {
+        await this.captured.prepare(this.scene, this.lens, shot);
+        this.lens.render(this.scene, shot);
+      }
 
-      const jpeg = await trainingJpeg(this.canvas, request.seed, request.randomization?.noise);
-      const labels = this.captured.labels(() => this.labels.capture({ shot, items, width, height }));
+      const jpeg = request.labelsOnly
+        ? new Uint8Array()
+        : await trainingJpeg(this.canvas, request.seed, request.randomization?.noise);
+      const labels = this.captured.labels(() =>
+        this.labels.capture({ shot, items, width, height, isolate: request.isolate }),
+      );
       const keypoints = projectTrainingPoints({
         shot,
         width,

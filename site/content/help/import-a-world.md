@@ -49,7 +49,7 @@ A mesh without a splat shows its own colors or textures. Keep every linked file 
 
 The dropped files can total up to 64 MB, with up to 200,000 collider triangles and 1,000,000 splat points. Basecase reads the world as meters unless its largest extent is at least 1,000 units, which it reads as millimeters. It levels the largest upward-facing plane to the floor.
 
-The canvas, camera tiles and exported dataset videos show the imported splat, or the mesh when there is no splat. Depth follows the collider.
+The canvas, camera tiles and exported dataset videos show the imported splat, or the mesh when there is no splat. Depth and [camera visibility comparisons](/help/compare-camera-placements) follow the collider.
 
 ![The Scene camera tile beside a rover in Kitchen](/help/import-a-world/camera-tiles.png)
 

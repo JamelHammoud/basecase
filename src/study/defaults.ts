@@ -1,3 +1,5 @@
+import { partCameras } from '../datasets/cameras';
+import { partLens } from '../cameras/optics';
 import { dimensionRows, type DimensionRow } from '../agent/cadTune';
 import { COMPONENT_BY_ID } from '../data/components';
 import { isBattery, isFoot } from '../utils/designSweep';
@@ -53,6 +55,26 @@ export function defaultStudyKnobs(parts: ScenePart[], project: ProjectSettings):
 
     knobs.push(...dimensions);
   }
+
+  const cameraIds = new Set(partCameras(parts).map((view) => view.part));
+
+  for (const part of parts.filter((part) => cameraIds.has(part.id)))
+    knobs.push(
+      {
+        id: `camera-pose-${part.id}`,
+        label: `${part.name} pose`,
+        kind: 'camera_pose',
+        part: part.id,
+        values: [{ position: part.position, rotation: part.rotation }],
+      },
+      {
+        id: `camera-lens-${part.id}`,
+        label: `${part.name} lens`,
+        kind: 'camera_lens',
+        part: part.id,
+        values: [partLens(part)],
+      },
+    );
 
   return knobs;
 }

@@ -1,3 +1,5 @@
+import { validVisibilityRequest } from '../../study/visibilityPlan';
+import { StudyVisibilityField } from './StudyVisibilityField';
 import { useState } from 'react';
 import { Button, ProgressBar, Section } from '../../design-system';
 import type { Study } from '../../workspace/useStudy';
@@ -13,6 +15,7 @@ export function StudySection({ study }: { study: Study }) {
     <Section title="Study">
       {study.open && (
         <div className="flex flex-col gap-3 mb-3" data-testid="study-configure">
+          <StudyVisibilityField study={study} />
           {study.knobs.map((knob) => (
             <StudyKnobField
               key={knob.id}
@@ -30,7 +33,12 @@ export function StudySection({ study }: { study: Study }) {
             fullWidth
             variant="primary"
             size="md"
-            disabled={!study.running && (!study.enabled.length || problems.some((id) => study.enabled.includes(id)))}
+            disabled={
+              !study.running &&
+              (!study.enabled.length ||
+                problems.some((id) => study.enabled.includes(id)) ||
+                (!!study.visibility.request && !validVisibilityRequest(study.visibility.request)))
+            }
             onClick={study.running ? study.stop : study.start}
           >
             {study.running ? 'Stop Study' : 'Run Study'}

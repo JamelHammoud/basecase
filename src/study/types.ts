@@ -1,3 +1,6 @@
+import type { StudyVisibilityRequest } from './visibilityPlan';
+import type { StudyVisibilityResult } from './visibility';
+import type { Lens } from '../cameras/lens';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { CaseRuns } from '../cases/caseRuns';
 import type { PrinterSetup } from '../data/printers';
@@ -17,6 +20,8 @@ export type StudyKnob = KnobLabel &
     | { kind: 'battery_offset'; parts?: string[]; values: V3[] }
     | { kind: 'foot'; parts?: string[]; values: Array<{ length?: number; width?: number }> }
     | { kind: 'dimension'; part: string; name: string; values: number[] }
+    | { kind: 'camera_pose'; part: string; values: Array<{ position: V3; rotation: V3 }> }
+    | { kind: 'camera_lens'; part: string; values: Lens[] }
   );
 
 export type StudySelection = number[];
@@ -32,6 +37,7 @@ export interface StudyScene {
 }
 
 export interface StudyRow {
+  visibility?: StudyVisibilityResult;
   key: string;
   sceneKey: string;
   error?: string;
@@ -47,6 +53,7 @@ export interface StudyRow {
 }
 
 export interface StudyRecord {
+  visibility?: StudyVisibilityRequest;
   knobs: StudyKnob[];
   rows: StudyRow[];
   seed: number;

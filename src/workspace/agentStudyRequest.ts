@@ -1,3 +1,5 @@
+import { cameraKnobFrame } from '../study/cameraFrame';
+import { validVisibilityRequest } from '../study/visibilityPlan';
 import { validateStudyKnobs } from '../study/knobs';
 import { boundedInteger } from '../study/recordValues';
 import { toScene } from '../agent/agentScene';
@@ -11,7 +13,7 @@ import type { Study } from './useStudy';
 type Payload = Record<string, unknown>;
 
 export interface StudyContext {
-  cases: Cases;
+  cases: Pick<Cases, 'cases' | 'active'>;
   study: Pick<Study, 'run'>;
   setAction: (action: string) => void;
 }
@@ -70,8 +72,11 @@ export async function studyRequest(payload: Payload, ctx: StudyContext) {
   if (payload.seed !== undefined && !boundedInteger(payload.seed, 4294967295))
     return { ok: false, problem: 'Choose a seed from 0 to 4294967295.' };
 
+  if (payload.visibility !== undefined && !validVisibilityRequest(payload.visibility))
+    return { ok: false, problem: 'Choose a saved try, cameras, targets and 2 to 32 samples.' };
+
   const knobs = asked?.map((knob) =>
-    knob.kind === 'battery_offset' ? { ...knob, values: knob.values.map(toScene) } : knob,
+    knob.kind === 'battery_offset' ? { ...knob, values: knob.values.map(toScene) } : cameraKnobFrame(knob, 'scene'),
   );
   const kase = studyCase(payload, ctx, !!knobs);
 
@@ -84,6 +89,7 @@ export async function studyRequest(payload: Payload, ctx: StudyContext) {
     knobs,
     limit: payload.cap as number | undefined,
     seed: payload.seed as number | undefined,
+    visibility: payload.visibility,
   });
 
   return typeof result === 'string' ? { ok: false, problem: result } : studyReply(result, kase);

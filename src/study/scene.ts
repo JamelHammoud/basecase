@@ -1,3 +1,4 @@
+import { applyCameraChoice, assertCameraSelections } from './cameraChoices';
 import { supplyVolts } from '../cases/exploreDesigns';
 import { COMPONENT_BY_ID, componentSize } from '../data/components';
 import { isBattery, isFoot, sweepVariants, editMeasures, editTriangles, type Variant } from '../utils/designSweep';
@@ -80,6 +81,8 @@ function suppliedScene(scene: StudyScene, volts: number): StudyScene {
 }
 
 function applyKnob(scene: StudyScene, knob: StudyKnob, index: number): StudyScene {
+  if (knob.kind === 'camera_pose' || knob.kind === 'camera_lens') return applyCameraChoice(scene, knob, index);
+
   if (knob.kind === 'dimension') return scene;
 
   if (knob.kind === 'battery') return batterySwap(scene, knob, index);
@@ -175,6 +178,8 @@ export async function studyScene(
     )
   )
     throw new Error('The battery or regulator fixes the servo voltage. Choose its supplied voltage.');
+
+  assertCameraSelections(scene, knobs, selection);
 
   const original = new Map(base.parts.map((p) => [p.id, p]));
   const changed = scene.parts.filter((p) => p !== original.get(p.id)).map((p) => p.id);

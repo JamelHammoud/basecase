@@ -267,3 +267,9 @@ Measurements and limits: [Agent and CAD kernel performance evidence](../notes/pe
 ## Passive joint declarations
 
 `define_joints` accepts optional `actuation` (`powered` or `passive`), `damping` and `frictionloss`. Omitted actuation retains legacy powered behavior. Passive joints need an explicit axis and origin or a matching skeleton joint, and cannot name actuators. Resistance is nonnegative and finite in SI units. The shared declaration validator and MJCF builder refuse contradictory motor assignments. `src/sim/passiveHistory.test.ts` covers tool refusal and persistence.
+
+## Study camera choices
+
+`study_design` accepts `camera_pose` and `camera_lens` knobs through the same Study implementation as the panel. Each knob names a camera part with `part`. Pose values are `{ position, rotation }` with absolute agent-frame mm and XYZ degrees. Request handling converts both vectors to studio coordinates and replies convert them back. Lens values use the shared `{ model: 'pinhole', hfovDeg }` or `{ model: 'fisheye', fovDeg }` contract.
+
+An optional `visibility` request declares `tryId`, camera part IDs in `cameras`, `{ id, minPixels }` target identities in `targets`, and `samples`. Supply the recorded `case` and only camera knobs for this mode. Bounds and aggregation are in [Cameras](cameras.md#study-camera-visibility). Rows and compact replies retain per-camera target samples, intervals and the source content key. They do not return the saved try's Case passes for changed designs. Unknown captures remain unavailable. Recommend camera choices from measured simulated geometry without claiming detector accuracy, physical sensor performance or readiness. Apply remains the ordinary Study scene edit, and training-image generation consumes those scene fields.

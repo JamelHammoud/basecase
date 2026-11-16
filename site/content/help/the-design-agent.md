@@ -54,6 +54,8 @@ Matching the silhouette in a photo matters less than any of these.
 
 After each edit, the agent sees the same Checks as the **Build** tab. It never passes a check by narrowing a joint's range, hiding a part, deleting a part or editing a Case. If a check seems wrong, it tells you.
 
+Study measurements stay separate from the Build verdict. Only **Checks** in the **Build** tab say a design is ready.
+
 If an edit adds a blocker, the agent follows up on its own, up to twice per message. The follow-up shows in the chat as “Fix what the last change added: 2 problems.” above the new problems. To turn this off, go to **Settings** ▸ **Build**.
 
 ## What you keep control of

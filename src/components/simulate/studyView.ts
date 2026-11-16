@@ -1,3 +1,4 @@
+import { cameraKnobText, editCameraKnob } from '../../study/cameraText';
 import type { V3 } from '../../utils/kinematics';
 import type { StudyKnob, StudyRow } from '../../study/types';
 import { percent } from '../../../electron/percent.mjs';
@@ -12,6 +13,7 @@ export const STUDY_METRICS = [
   { value: 'tip', label: 'Tip angle' },
   { value: 'runtime', label: 'Runtime' },
   { value: 'passes', label: 'Case passes' },
+  { value: 'visibility', label: 'Target visibility' },
 ] as const;
 
 export type StudyMetric = (typeof STUDY_METRICS)[number]['value'];
@@ -20,6 +22,8 @@ export function metricText(value: number, metric: StudyMetric, money: (value: nu
   if (metric === 'cost') return money(value);
 
   if (metric === 'mass') return weight(value);
+
+  if (metric === 'visibility') return percent(value);
 
   if (metric === 'torque') return percent(value);
 
@@ -38,12 +42,15 @@ export function metricValue(row: StudyRow, metric: StudyMetric): number | undefi
     tip: row.metrics.tipDeg,
     runtime: row.runtimeMinutes,
     passes: row.runs?.passes,
+    visibility: row.visibility?.coverage,
   };
 
   return values[metric];
 }
 
 export function knobValuesText(knob: StudyKnob): string {
+  if (knob.kind === 'camera_pose' || knob.kind === 'camera_lens') return cameraKnobText(knob);
+
   if (knob.kind === 'foot') return footValuesText(knob);
 
   if (knob.kind === 'battery_offset') return knob.values.map((v) => v.join(' ')).join(', ');
@@ -109,6 +116,8 @@ export function editKnobValues(knob: StudyKnob, text: string): StudyKnob | null 
   const pieces = text.split(',').map((v) => v.trim());
 
   if (pieces.some((p) => !p)) return null;
+
+  if (knob.kind === 'camera_pose' || knob.kind === 'camera_lens') return editCameraKnob(knob, pieces);
 
   if (knob.kind === 'servo' || knob.kind === 'battery') return { ...knob, values: [...new Set(pieces)] };
 

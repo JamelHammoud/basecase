@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { diffStrings, isScanned } from './copy/budget.mjs';
+import { formatSourceContext, sourceContext } from './copy/context.mjs';
 import { extractStrings } from './copy/extract.mjs';
 
 export const stringsOf = (file, source) =>
@@ -67,14 +68,19 @@ export const copySummary = ({ added, changed, removed, net }) =>
 
 const at = ({ file, line }) => `${file}:${line}`;
 
-export function formatCopyDiff(diff) {
+export function formatCopyDiff(diff, { reasons, contextBudget } = {}) {
+  const missing = diff.net > 0 ? 'MISSING' : 'not required at this net';
+  const reason = (s) => (reasons ? `  (why: ${reasons.get(s.text) ?? missing})` : '');
   const lines = [
-    ...diff.added.map((s) => `+ "${s.text}"  ${at(s)}`),
-    ...diff.changed.map(({ before, after }) => `~ "${before.text}" → "${after.text}"  ${at(after)}`),
+    ...diff.added.map((s) => `+ "${s.text}"  ${at(s)}${reason(s)}`),
+    ...diff.changed.map(({ before, after }) => `~ "${before.text}" → "${after.text}"  ${at(after)}${reason(after)}`),
     ...diff.removed.map((s) => `- "${s.text}"  ${at(s)}`),
   ];
 
-  return [...lines, ...(lines.length > 0 ? [''] : []), copySummary(diff)].join('\n');
+  return (
+    [...lines, ...(lines.length > 0 ? [''] : []), copySummary(diff)].join('\n') +
+    formatSourceContext(diff.context, contextBudget)
+  );
 }
 
 function git(cwd, args, { allowFail = false } = {}) {
@@ -126,7 +132,22 @@ export function scannedSources({ cwd = process.cwd(), base = 'origin/main', head
     }));
 }
 
-export const copyDiffOfRange = (range = {}) => diffCopy(scannedSources(range));
+export function copyDiffOfRange(range = {}) {
+  const sources = scannedSources(range);
+  const diff = diffCopy(sources);
+
+  let context;
+
+  Object.defineProperty(diff, 'context', {
+    get() {
+      context ??= sourceContext(sources, copyOccurrences(diff).added);
+
+      return context;
+    },
+  });
+
+  return diff;
+}
 
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
 

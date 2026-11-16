@@ -93,10 +93,14 @@ const escapeRe = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export type WordMatcher = (text: string) => boolean;
 
 export const wordMatcher = (w: string): WordMatcher => {
+  if (w.length >= 3) return (text: string) => text.includes(w);
+
   const re = new RegExp(`(^|[^a-z0-9])${escapeRe(w)}`);
 
-  return (text: string) => (w.length >= 3 ? text.includes(w) : re.test(text));
+  return (text: string) => re.test(text);
 };
+
+const namedSizePatterns = NAMED_SIZES.map((size) => ({ size, pattern: new RegExp(`\\b${size.toLowerCase()}\\b`) }));
 
 export interface Scorable {
   name: string;
@@ -122,11 +126,11 @@ const takeSize = (rest: string): { size?: string; length?: number; rest: string 
     return { size: `M${m[1]}`, length: m[2] ? Number(m[2]) : undefined, rest: rest.replace(m[0], ' ') };
   }
 
-  const named = NAMED_SIZES.find((n) => new RegExp(`\\b${n.toLowerCase()}\\b`).test(rest));
+  const named = namedSizePatterns.find(({ pattern }) => pattern.test(rest));
 
   if (!named) return { rest };
 
-  return { size: named, rest: rest.replace(new RegExp(`\\b${named.toLowerCase()}\\b`), ' ') };
+  return { size: named.size, rest: rest.replace(named.pattern, ' ') };
 };
 
 export function parseSizeQuery(q: string): SizeQuery {

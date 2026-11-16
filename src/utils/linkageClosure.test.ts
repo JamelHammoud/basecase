@@ -103,7 +103,22 @@ describe('four-bar fit closure', () => {
       expect(x).toEqual(saved);
 
       x[3 + (i % 4)] += 0.5;
+      x[9 + (i % count)] += random() * 20 - 10;
       expect(residuals(x, problem)).toEqual(previousResiduals(x, problem));
+    }
+  });
+
+  it.each([0, 1, 2, 5, 12])('preserves decoded sweep penalties for %s targets', (count) => {
+    const links = { ground: 40, crank: 20, coupler: 50, rocker: 50 };
+
+    for (const direction of [1, -1] as const) {
+      const problem = problemFor(count, direction);
+      const x = encode(trial(links, Math.max(1, count), direction), direction);
+
+      for (const angle of [0, -0, -100, 100, Infinity, -Infinity, NaN]) {
+        x[9] = angle;
+        expect(residuals(x, problem)).toEqual(previousResiduals(x, problem));
+      }
     }
   });
 

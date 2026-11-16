@@ -2,6 +2,12 @@
 
 Implementation: [Sketch](../guide/inspector-and-selection.md#performance-sketch). Shared requirements: [Performance](../guide/performance.md).
 
+## SVG-to-Sketch conversion appends geometry once
+
+`utils/sketch/polylineSketch.test.ts` compares complete output with the previous converter across 200 deterministic mixed-loop fixtures and their reversed winding. It checks independent loop closure, empty loops, single points, repeated points, source preservation, later input and output edits, and 1,000 four-vertex loops. The whole-app search found one converter, called by `components/studio/useStudioDraft.ts` for SVG outlines and holes. Interactive point and entity additions edit existing sketches and keep their immutable update path.
+
+On shared macOS arm64 hardware with an Apple M5 Pro and Node 26.13.0, a scratch benchmark compared the previous and new converters. Each fixture used four vertices per loop, five warmups per implementation and 21 alternating three-call batches. Complete outputs matched before timing. Median conversion times for 500, 1,000 and 2,000 loops fell from 0.870, 2.777 and 9.540 ms to 0.034, 0.067 and 0.136 ms. The previous two growing-array spreads copied 998,000, 3,996,000 and 15,992,000 prior entries respectively, calculated from the loop sizes. The new converter copies no prior entries and appends one point and line per vertex. These are local converter measurements, without CI timing assertions or a claim about SVG parsing, constraint solving or complete interaction time. No quarantine applies.
+
 ## Sketch probes only dependent residual terms
 
 `residualPlan.test.ts` compares every derivative across 120 mixed sketches and checks edits, source preservation and independent dimensions. For 300 and 600 independent circle constraints, each Jacobian reduces constraint evaluations from 180,000 and 720,000 to 600 and 1,200. Preparation evaluates each constraint once. A scratch comparison matched 5,664 complete solves against the previous implementation, including dragged points. On shared macOS arm64 hardware with Node 26.13.0, median complete solves for 40 and 80 independent circles fell from 0.429 ms and 1.925 ms to 0.143 ms and 0.733 ms. Measurements used 21 alternating three-call batches after five warmups per implementation. These fixtures measure independent radius dimensions, without a CI timing assertion or a claim about complete pointer interaction time.

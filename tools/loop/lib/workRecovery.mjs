@@ -12,11 +12,11 @@ export const recoveryFor = (number) => {
   return entry.dir && fs.existsSync(entry.dir) ? entry : null;
 };
 
-export function saveRecovery(number, { worktree, inputSignature, session }) {
+export function saveRecovery(number, { worktree, inputSignature, session, reason }) {
   const previous = recoveryFor(number);
   const attempts = previous?.inputSignature === inputSignature ? (previous.attempts ?? 0) + 1 : 0;
 
-  return recoveries.save(number, { ...worktree, inputSignature, session, attempts, at: Date.now() });
+  return recoveries.save(number, { ...worktree, inputSignature, session, reason, attempts, at: Date.now() });
 }
 
 export const clearRecovery = (number) => recoveries.save(number, {});

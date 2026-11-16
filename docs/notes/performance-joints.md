@@ -247,6 +247,19 @@ The covered [Join two parts with a hinge or slider](../../site/content/help/join
 
 Local `check:changed` passed formatting, lint, documentation, site copy for 281 pages, types and all 285 tests in 47 related files. The related run reported 9.99 seconds. `copy-diff` reported zero added, changed or removed strings. Preflight flagged the unchanged Joints and kinematics article because it covers the edited guide. The full article was checked against the final change. Its fields, joint sources, hierarchy, pose behavior, IK and robot selection remain accurate, so the article stays unchanged under the finding's explicit allowance.
 
+## Coupler-only sampling omits full pose records
+
+The whole-app search for `fourBarPose` found two point-only consumers, `couplerSampler` and `couplerPoint`, both in `utils/linkageKinematics.ts`. The remaining callers in `linkageFrames.ts` and `linkageParts.ts` use the crank and coupler joints as well as the traced point. They still need full poses. Curve generation and both synthesis scoring passes share the prepared point sampler.
+
+Previously each successful point-only sample created a `{ b, c, p }` pose record by spreading the closure result, only to discard that record after placing `p`. Both consumers now share a local point calculation that calls the same closure and offset functions in the same order. Closure records and coordinate arrays remain. No additional cache or retained workspace is introduced.
+
+For a 720-interval fully closing curve, the source-derived count of discarded full-pose records falls from 721 to zero. A single successful `couplerPoint` call removes one record. Failed closures create no full-pose record in either version. These are allocation counts, without a timing assertion or a claim about complete synthesis latency.
+
+`utils/couplerSampling.test.ts` compares both consumers with placed full poses across 40 seeded shapes and 52 angles per shape. It checks exact coordinates, reverse sweeps, failed closure, nonfinite angles, source preservation, geometry edits and independently owned results. Existing linkage sampling tests cover complete curves and preview frames, while synthesis tests cover fitted results and ranking. No timeout, retry or quarantine changes.
+
+The [Design a linkage from a path](../../site/content/help/design-a-linkage-from-a-path.md) task and [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) concept remain accurate. Their controls, limits, coordinates, insertion, posing and simulation behavior do not change. The concept has no screenshots or numbered steps. Its four-bar explanation still matches `kinematicsLoop.ts`, which uses unchanged `linkAngles`, while preview bars and insertion still use unchanged `fourBarPose`. Joint fields, sources, hierarchy, deletion, modeled poses, IK and robot selection are outside the point-only sampling change. No help text or screenshot state needs an edit.
+
+Local `check:changed` passed formatting, lint, documentation, site copy for 285 pages, types and 3,852 related tests across 570 passing files. One existing file was skipped. The related run took 81.57 seconds. `copy-diff` reported net zero. Preflight flagged the unchanged Joints and kinematics article because it covers the edited guide. The full article was checked against the final code, including joint fields, sources, hierarchy, mount anchoring, deletion, posing, IK and robot selection. All remain accurate, so the article stays unchanged under the finding’s explicit allowance.
 
 ## Pose sections prepare naming rules once
 

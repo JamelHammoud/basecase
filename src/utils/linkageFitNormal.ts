@@ -71,9 +71,10 @@ function normalEquations(columns: Float64Array[], r: number[]): Float64Array {
 export function prepareNormalStep(columns: Float64Array[], residuals: number[]) {
   const n = columns.length;
   const normal = normalEquations(columns, residuals);
+  const damped = new Float64Array(normal.length);
 
   return (lambda: number): Float64Array | null => {
-    const damped = normal.slice();
+    damped.set(normal);
 
     for (let i = 0; i < n; i++) {
       const diagonal = i * (n + 1) + i;

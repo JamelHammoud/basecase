@@ -84,6 +84,8 @@ Each mounted scene workspace owns a `VisionScopeContext`. Camera inference, came
 
 Measurements and limits: [Panels and Layers performance evidence](../notes/performance-layout.md).
 
+- **Parts search retains robot and object text.** `insertSearch.ts` indexes each immutable `RobotEntry` once in a weak map and tokenizes the fixed object categories once at module load. Replacing a robot entry builds fresh search text, and ranking still uses the current input order. Default preset entries are shared between calls without supplied robots. `insertSearch.test.ts` covers repeated queries, replacement names and stable ranking after input reordering, alongside sized hardware, robot sources and object singular/plural matching. [Evidence](../notes/performance-layout.md#insertable-search-indices).
+
 - **Layers indexes groups once.** `layerRows.ts` builds each group's members in one pass, then uses those lists for expanded rows and search matches. It never scans the whole scene per group. [Evidence](../notes/performance-layout.md#layers-indexes-groups-once).
 
 - **Tries append into one list per robot.** `tryGroups` in `workspace/useTriesView.ts` serves Library, Tries mode and dataset members. It groups before sorting, appends without copying prior members and sorts each group newest first. Robot names keep locale order. Distinct names that compare equal keep the order of their first newest try, with timestamp ties resolved by input order. Equal-time tries keep input order and stored summaries remain unchanged. `useTriesView.test.ts` covers those ordering and ownership contracts. [Evidence](../notes/performance-layout.md#try-grouping).

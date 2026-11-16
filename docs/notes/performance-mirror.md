@@ -23,3 +23,13 @@ Imported and sculpted triangle soups previously copied the source positions for 
 ## Catalog Mirror prepares compatible ports once
 
 `mirrorDatum.test.ts` compares the previous scans across every catalog component, 120 mixed fixtures, ties, empty inputs and edits while preserving sources. Its 300- and 600-port fixtures reduce kind reads from 271,800 and 1,083,600 to at most 2,400 and 4,800. Geometry comparisons within a compatibility group remain quadratic. These are operation counts, without timing assertions or a claim about complete Mirror time.
+
+## Mirror side naming reuses compiled rules
+
+Whole-app search found one side-word replacement helper in `mirror/mirrorNames.ts`. Assembly Mirror uses it for part names, group names and joint ids and names. Agent Mirror uses it for part ids, names and group names. Skeleton declaration also uses the same rules to discover left/right, front/rear and front/back joint pairs. All callers now share four compiled expressions, created when the module loads. Skeleton pairing retains separate front/rear and front/back passes, while Mirror retains their sequential application.
+
+Previously each replacement constructed one expression per word pair. In the 300- and 600-query fixtures, each query mirrors one Front bracket name and swaps one left joint id. Expression constructions during those queries fall from 900 and 1,800 to zero. The module retains four expressions, replacing repeated transient construction. These are source-derived operation counts checked by a constructor spy, without timing, heap or complete Mirror latency claims.
+
+`mirrorNames.test.ts` compares repeated calls on all three axes with the preceding replacement calculation. It covers uppercase, title case, repeated matches, ASCII and non-ASCII boundaries, numeric suffixes, unmatched names, fallback names and the ordered front rules. Existing assembly, agent scene and skeleton tests cover integration. No timeout, retry or quarantine changes apply. The Mirror help article still describes the same naming, controls and steps, so no article edit or capture is needed.
+
+Changed-file validation passed formatting, lint, documentation, site copy for 295 pages, types and all 553 tests across 72 related files. The related run reported 36.89 seconds on the shared host. Output remains in `scratch/check-mirror-names.log`. Copy accounting is net zero. Preflight flagged [The design agent](../../site/content/help/the-design-agent.md) because it covers the edited agent guide. Reading the article against this change confirmed that its tasks, capability descriptions and controls remain accurate, so it needs no edit or capture.

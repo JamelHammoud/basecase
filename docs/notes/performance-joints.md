@@ -2,6 +2,18 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## Circle fitting accumulates fixed equations directly
+
+The whole-app search found one least-squares circle fitter constructing `[x, y, 1]` rows, in `joints/cylinderFit.ts`. Clicked round faces and automatic shaft-and-bore matching both use it. Other numeric solvers retain their own equations.
+
+Each vertex now contributes directly to six upper-triangle coefficients and three right-hand-side entries. Each sum retains vertex order and multiplication order. Multiplication by one becomes the original scalar, including signed zero and nonfinite values. Mean calculation, matrix mirroring, determinant refusal, solving and residual trimming remain unchanged.
+
+For 300 or 600 welded vertices in one fit, source-derived counts remove 300 or 600 three-element row arrays and their coefficient-index loops. The same nine sums still receive one contribution per vertex. Coordinate tuples, projected points, the normal matrix and solution remain allocated. These are allocation and operation counts, not measured timings or a claim about complete axis-discovery latency.
+
+`joints/cylinderCircle.test.ts` checks exact equality with the previous row-based equations on 160 translated, noisy and partial circles with 3 through 321 points. It also checks signed zero, small, infinite and NaN inputs, repeated points, insufficient points and source preservation. Existing cylinder and axis-finder tests cover fitting, distorted-patch trimming, clicked faces and shaft-and-bore discovery. No timing assertion, retry, timeout or quarantine changes apply.
+
+[Joints and kinematics](../../site/content/help/joints-and-kinematics.md) and [Join two parts with a hinge or slider](../../site/content/help/join-two-parts-with-a-hinge.md) were checked against this change. Their actions, labels and results remain accurate. No visible state or workflow changes, so their prose and screenshots remain unchanged.
+
 ## IK step limits accumulate during back-substitution
 
 The whole-app search found one mapped absolute-step maximum in `utils/kinematicsIk.ts`. All callers of `solveIK` share its trial construction. The independent solvers in `skills/anythingIk.ts`, `reality/leastSquares.ts` and `utils/linkageFitNormal.ts` do not use this step limiter.

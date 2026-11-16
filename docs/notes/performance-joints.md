@@ -2,6 +2,14 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## Cylinder span projections share one normal
+
+The app-wide search found one angular-span calculation reading the same triangle normal separately for its two planar projections, in `joints/cylinderFit.ts`. Both clicked-face fitting and automatic shaft-and-bore discovery use it. `MeshIndex.normal` returns a new three-number tuple on every read. Retaining the normal within the projection callback removes one read and tuple per triangle per fit, without a retained cache.
+
+The existing 64- and 128-segment open-cylinder fixtures have four height segments and 512 and 1,024 triangles. Total normal reads per complete fit fall from 2,048 to 1,536 and from 4,096 to 3,072. Normal moments and convexity still read their own normals. Both span projections retain their original arithmetic and evaluation order. These are source-derived operation and allocation counts, not timings or a claim about complete discovery speed.
+
+`src/joints/cylinderFit.test.ts` checks the reduced normal-read counts together with radius, length, center, axis, source preservation, repeated independent fits, trimming distorted patches and minimum-span refusal. Existing axis-finder and joint-candidate tests exercise both callers. No action, label or visible state changes, so the joint help articles and screenshots remain accurate without edits. No timeout, retry or quarantine changes apply.
+
 ## Circle fitting accumulates fixed equations directly
 
 The whole-app search found one least-squares circle fitter constructing `[x, y, 1]` rows, in `joints/cylinderFit.ts`. Clicked round faces and automatic shaft-and-bore matching both use it. Other numeric solvers retain their own equations.

@@ -21,7 +21,7 @@ function validatePart(part: ScenePart, job: KitJob) {
     throw new Error(`Kit export needs a manufacturing process for ${part.name}.`);
 }
 
-function validateCatalog(part: ScenePart) {
+function validateCatalog(part: Pick<ScenePart, 'componentId' | 'componentVariant' | 'name'>) {
   const component = COMPONENT_BY_ID[part.componentId!];
   const variant = component && componentVariant(component, part.componentVariant);
 
@@ -38,6 +38,12 @@ export function validateKit(job: KitJob, bom: Bom) {
     throw new Error('Update the build guide before exporting the kit.');
 
   for (const part of solids) validatePart(part, job);
+
+  for (const line of bom.lines.filter((line) => line.key.startsWith('component:'))) {
+    const [componentId, componentVariant] = line.key.slice('component:'.length).split('|');
+
+    validateCatalog({ componentId, componentVariant, name: line.name });
+  }
 
   if (bom.standIns.length || bom.unmeasured.length || bom.madeElsewhere.length)
     throw new Error('Replace stand-ins and unsupported fabrication before exporting the kit.');

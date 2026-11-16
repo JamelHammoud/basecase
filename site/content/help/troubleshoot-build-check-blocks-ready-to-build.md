@@ -64,7 +64,7 @@ Checks only see what's in the model, so they miss things like a strap that holds
 1. Right-click the problem's row.
 2. Choose **Ignore**.
 
-Ignoring changes the verdict without rerunning the measurement or changing its recorded time. A [manufacturing kit export](/help/export-a-robot-kit) keeps that time and records Checks freshness.
+Ignoring changes the verdict without rerunning the measurement or changing its recorded time.
 
 The problem moves to **Ignored**, below the list. To bring it back, click **Restore** there.
 

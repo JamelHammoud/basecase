@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { wiringNetlist } from '../wiring/netlist';
 import { kitFixture } from '../kit/kit.fixtures';
 import { guideFingerprint } from '../guide/guideFingerprint';
+import { resolvePrinter } from '../data/printers';
 import { exportKit, prepareKit } from './kitExport';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -157,4 +158,27 @@ describe('kit preparation snapshot', () => {
     await expect(prepareKit(core, run)).rejects.toThrow('scene changed');
     expect(calls.map).not.toHaveBeenCalled();
   });
+
+  it.each(['width', 'depth', 'height'] as const)(
+    'discards a custom printer %s edit during export',
+    async (dimension) => {
+      const { core, run, job } = context();
+      const saved = {
+        id: 'kit-printer',
+        modelId: 'custom',
+        nickname: 'Kit printer',
+        nozzle: 0.4,
+        custom: { width: 256, depth: 256, height: 256 },
+      };
+
+      core.printer = resolvePrinter(saved.id, [saved]);
+      calls.print.mockImplementation(async () => {
+        core.printer = resolvePrinter(saved.id, [{ ...saved, custom: { ...saved.custom, [dimension]: 100 } }]);
+
+        return job.print;
+      });
+      await expect(prepareKit(core, run)).rejects.toThrow('scene changed');
+      expect(calls.map).not.toHaveBeenCalled();
+    },
+  );
 });

@@ -5,6 +5,9 @@ import { hardwareKey } from '../utils/bom';
 import { robotPackageFiles } from '../sim/robotPackage/buildRobotPackage';
 import { fixturePackageJob } from '../sim/fixtures/robotPackage';
 import { readinessOf } from '../readiness/readiness';
+import { buildGuidePlan } from '../guide/guidePlan';
+import { approximateScene } from '../guide/guideScene';
+import { guideFingerprint } from '../guide/guideFingerprint';
 import { buildKit, kitManifest } from './buildKit';
 import { kitFixture, kitFixtureNames } from './kit.fixtures';
 
@@ -86,6 +89,32 @@ describe('manufacturing kit reconciliation', () => {
     expect(sum(manifest.packing.filter((line) => line.key === key).map((line) => line.qty))).toBe(1);
   });
 
+  it('packs an exact extra catalog version as unassigned demand', () => {
+    const job = kitFixture();
+    const key = 'component:feetech-sts3215|c018';
+
+    job.project.extras = [{ key, qty: 2 }];
+
+    const manifest = kitManifest(job);
+
+    expect(manifest.packing.find((row) => row.key === key)).toMatchObject({ qty: 2, partIds: [], step: null });
+    expect(manifest.purchases.find((row) => row.key === key)?.qty).toBe(2);
+  });
+
+  it('refuses a driven actuator absent from physical assembly demand', () => {
+    const job = kitFixture();
+    const part = job.parts.find((part) => part.id === job.project.joints?.[0].actuators?.[0])!;
+
+    part.role = 'cutout';
+    job.guide.plan = buildGuidePlan(
+      approximateScene(job.name, job.parts, job.project.joints ?? []),
+      job.project.material,
+    );
+    job.guide.fingerprint = guideFingerprint(job.name, job.parts, job.project);
+
+    expect(() => buildKit(job)).toThrow('one exact actuator identity');
+  });
+
   it.each([
     'guide',
     'geometry',
@@ -94,6 +123,7 @@ describe('manufacturing kit reconciliation', () => {
     'sheet',
     'duplicate file',
     'extra identity',
+    'extra version',
     'step coverage',
   ] as const)('refuses missing or unsupported %s', (fault) => {
     const job = kitFixture();
@@ -111,6 +141,8 @@ describe('manufacturing kit reconciliation', () => {
     if (fault === 'duplicate file') job.spec.files.push(job.spec.files[0]);
 
     if (fault === 'extra identity') job.project.extras = [{ key: 'supply:missing', qty: 1 }];
+
+    if (fault === 'extra version') job.project.extras = [{ key: 'component:feetech-sts3215', qty: 1 }];
 
     if (fault === 'step coverage') job.guide.plan.steps = [];
 

@@ -27,6 +27,7 @@ function servoSheet(job: KitJob): KitManifest['servos'] {
     if (
       ids.length !== 1 ||
       !part?.componentId ||
+      part.role !== 'solid' ||
       !entry.servo ||
       assigned.has(partId) ||
       entry.servo.componentId !== part.componentId ||

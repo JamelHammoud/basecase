@@ -19,6 +19,10 @@ covers:
   - src/workspace/kitExport.ts
   - src/workspace/useKitExport.ts
   - src/guide/generateGuide.ts
+hub_checks_and_blockers: |
+  ## Checks in a manufacturing kit
+
+  A [manufacturing kit](/help/export-a-robot-kit) records the original measurement time and whether the Checks match the exported design.
 ---
 
 Save plates, assembly instructions, packing quantities and matching joint identities in one manufacturing archive.

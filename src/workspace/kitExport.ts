@@ -19,6 +19,7 @@ export interface KitRun {
 export function kitGuard(core: WorkspaceCore, run: KitRun) {
   const name = core.scene.sceneName;
   const id = core.scene.sceneId;
+  const printer = JSON.stringify(core.printer);
 
   return () => {
     run.signal.throwIfAborted();
@@ -30,9 +31,7 @@ export function kitGuard(core: WorkspaceCore, run: KitRun) {
       current.docs.projectRef.current !== core.project ||
       current.scene.sceneId !== id ||
       current.scene.sceneName !== name ||
-      current.printer.id !== core.printer.id ||
-      current.printer.nozzle !== core.printer.nozzle ||
-      current.printer.model.id !== core.printer.model.id
+      JSON.stringify(current.printer) !== printer
     )
       throw new Error('The scene changed during export. Export the kit again.');
   };

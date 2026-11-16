@@ -2,6 +2,14 @@
 
 Implementation: [Engineering calculations](../guide/build.md#performance-engineering-calculations). Shared requirements: [Performance](../guide/performance.md).
 
+## Assembly time tallies accepted parts directly
+
+`assemblyTimes.test.ts` compares complete per-step results against the previous calculation across 160 generated step lists and their later visibility edits. It checks source preservation, screws, inserts, ordinary parts, hidden and reference parts, pivot axes, missing ids, empty steps and repeats within and across steps. Existing `engineeringTime.test.ts` retains full budget, slicing, printer-count and servo-setup coverage.
+
+A scratch comparison passed explicit steps to the old and new `assemblyTimes` functions and counted calls to `Array.prototype.map` and `filter`. With 300 built parts in 30 ten-part steps, calls fell from 153 to one. With 600 built parts in 60 steps, calls fell from 303 to one. Complete results matched. Each step still owns its output id array. The removed temporary arrays are the two built-part staging lists and four per step, or 122 and 242 in these fixtures. The part index also no longer constructs a two-element entry array per built part.
+
+Counts were measured with Vitest on macOS arm64. These are operation and allocation counts, without timing assertions or a claim about complete Checks time. Guide planning, membership rules, allowances and within-step duplicate treatment are unchanged.
+
 ## Motion boundaries scan without sorting
 
 `engineeringSweep.test.ts` compares complete motion finding items against the previous filter-and-sort calculation across 100 generated clash lists and their later edits. Coverage includes reversed and one-sided ranges, first-pair ties, published-joint depth and floor exclusions, no collisions, signed zeros, infinities and NaN angles. The existing engineering pipeline tests retain range sampling and slide verdict coverage.

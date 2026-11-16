@@ -21,16 +21,31 @@ export interface TimeInput {
 export const TIME_MINUTES = { step: 1, part: 2, fastener: 0.5, insert: 1.5, servo: 5 };
 
 export function assemblyTimes(parts: ScenePart[], project: ProjectSettings, steps = guideStepParts(parts, project)) {
-  const byId = new Map(parts.filter(isBuilt).map((p) => [p.id, p]));
+  const byId = new Map<string, ScenePart>();
+
+  for (const part of parts) {
+    if (isBuilt(part)) byId.set(part.id, part);
+  }
+
   const counted = new Set<string>();
 
   return steps.map((ids, index) => {
-    const fresh = ids.filter((id) => byId.has(id) && !counted.has(id)).map((id) => byId.get(id)!);
+    const fresh: string[] = [];
+    let fasteners = 0;
+    let inserts = 0;
 
-    fresh.forEach((p) => counted.add(p.id));
+    for (const id of ids) {
+      const part = byId.get(id);
 
-    const fasteners = fresh.filter(isFastener).length;
-    const inserts = fresh.filter(isInsert).length;
+      if (!part || counted.has(id)) continue;
+
+      fresh.push(part.id);
+      fasteners += Number(isFastener(part));
+      inserts += Number(isInsert(part));
+    }
+
+    for (const id of fresh) counted.add(id);
+
     const pieces = fresh.length - fasteners - inserts;
     const minutes =
       TIME_MINUTES.step +
@@ -38,7 +53,7 @@ export function assemblyTimes(parts: ScenePart[], project: ProjectSettings, step
       fasteners * TIME_MINUTES.fastener +
       inserts * TIME_MINUTES.insert;
 
-    return { step: index + 1, minutes, fasteners, inserts, ids: fresh.map((p) => p.id) };
+    return { step: index + 1, minutes, fasteners, inserts, ids: fresh };
   });
 }
 

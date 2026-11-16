@@ -161,11 +161,11 @@ function tellDirection(text) {
 }
 
 function announcePause(error) {
-  log(`Codex and protected Claude overflow are unavailable until ${localTime(error.until)}`);
+  log(`Agent work in ${lane} is waiting until ${localTime(error.until)}`);
 
   if (error.started)
     tellDirection(
-      `Codex and protected Claude overflow are unavailable until ${localTime(error.until)}. Merging and tidying keep running. They retry when capacity is available; \`node tools/loop/usage.mjs resume\` restarts them at once.`,
+      `Agent work in ${lane} is waiting until ${localTime(error.until)}. Other lanes keep running when their required capacity is available. \`node tools/loop/usage.mjs resume\` clears stored provider holds. Quota and tool restrictions still apply.`,
     );
 }
 

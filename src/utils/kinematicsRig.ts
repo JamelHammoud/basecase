@@ -81,7 +81,14 @@ function depthOf(tree: JointTree, j: RobotJoint): number {
 function jointTree(joints: RobotJoint[]): JointTree {
   const childOf = new Map<string, RobotJoint[]>();
 
-  for (const j of joints) for (const id of j.child) childOf.set(id, [...(childOf.get(id) ?? []), j]);
+  for (const j of joints) {
+    for (const id of j.child) {
+      const owners = childOf.get(id);
+
+      if (owners) owners.push(j);
+      else childOf.set(id, [j]);
+    }
+  }
 
   const tree: JointTree = {
     byId: new Map(joints.map((j) => [j.id, j])),

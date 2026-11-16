@@ -27,3 +27,18 @@ For the 12-joint quadruped and 18-joint hexapod, the complete package pipeline r
 ## Fixed simulation schedules advance by cursor
 
 A local Node 26.13.0 measurement on shared macOS hardware consumed 40,000 events across 4,001 ticks, including the initial copy and sort. After three warmups, the median of nine runs was 2,135.40 ms with `shift()` and 1.96 ms with the cursor. This measures scheduling alone, not physics, and adds no CI timing assertion.
+
+## Wheel mixing writes directly into its output
+
+Manual rover driving and route playback were the two differential-wheel mixers in the app. Both built an outer entry array and one pair array per wheel on every tick. Route playback also discarded its speed record after writing controls. The shared mixer now writes each wheel speed into a record directly. Manual output remains a fresh snapshot, while each route runner owns one reusable speed record. No output record escapes route playback.
+
+A local Node 26.13.0 comparison on an Apple M5 Pro, macOS arm64, mixed 100,000 changing forward and turn commands for four and six wheels. Wheel sides alternated at ±85 mm, spin alternated and radii started at 35 mm. The command used sine for forward speed and cosine for turn. Each variant received three warmups, followed by nine interleaved runs. The table gives median elapsed milliseconds, including command generation and output checksum accumulation.
+
+| Wheels | Previous entry arrays | Direct manual snapshots | Reused route record |
+| --- | --- | --- | --- |
+| 4 | 15.71 ms | 7.41 ms | 4.16 ms |
+| 6 | 21.15 ms | 11.74 ms | 5.18 ms |
+
+All variants produced exactly equal accumulated wheel-speed checksums. Across 100,000 ticks, the four-wheel mixer removes 500,000 temporary arrays and the six-wheel mixer removes 700,000. Route playback additionally replaces 100,000 speed records with one runner-owned record. These are source-derived allocation counts. Timings measure only mixing on a shared local machine, not MuJoCo physics, complete driving latency or CI performance. No timing assertion was added.
+
+`src/sim/wheelSpeeds.test.ts` retains exact numeric parity with the old calculation and covers output ownership, unusual ids, radius clamping and repeated route control writes. The integration comparisons cover manual speed ramping and clamping, route turns, duplicate wheel ids, untouched controls and passive and missing actuator bindings. Existing real-physics drive tests remain unchanged.

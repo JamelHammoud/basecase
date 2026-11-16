@@ -2,6 +2,12 @@
 
 Implementation: [Sheet manufacturing](../guide/build.md#performance-sheet-manufacturing). Shared requirements: [Performance](../guide/performance.md).
 
+## Sheet outline extents use one bounds scan
+
+The thickness-to-width check previously mapped each outline axis twice, once for its maximum and once for its minimum. It now accumulates both axes together through the existing lightweight Sketch bounds primitive. A candidate with N outline vertices needs N outline visits instead of 4N, without four N-element coordinate arrays or spread arguments. Two fixed bound pairs replace the axis list and mapped extent pair, with one bounds object added. Scalar minimum and maximum counts stay unchanged.
+
+A local source replay compared the previous and current detectors across 72 generated plates varying holes, concavity, tilt, wall subdivisions, scale and translation. Complete profiles matched exactly and source triangles stayed unchanged. Both versions also refused a pocket, open caps, empty input and nonfinite input. Array-map instrumentation on the four-corner plate counted five fewer mapped arrays and eighteen fewer mapped elements across complete detection. These are operation counts, without a timing assertion or a claim about total detection speed. The replay lives in session scratch files rather than the test suite. Existing `src/sheet/detectSheet.test.ts` and `src/sheet/sheetProjection.test.ts` retain the detector coverage. No browser interaction, manufacturing rule or screen changes.
+
 ## Sheet face normal workspace
 
 Face preparation previously cloned two vertices per triangle to form its edge cross product. One clone became the retained normal, and the other was discarded. The detector now creates each normal directly and reuses one second-edge vector per call. Direct vertex loading also removes each triangle's temporary offset array and mapping callback. Retained vertices and normals remain independent.

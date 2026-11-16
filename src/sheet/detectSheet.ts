@@ -3,6 +3,7 @@ import type { SheetProfile } from '../types/sheet';
 import { canonicalLoop, inside, loopsOf } from './profileLoops';
 import { CapBoundary } from './capBoundary';
 import { pairKey } from '../../electron/cad-kernel/pairKey.mjs';
+import { emptyBounds, includePoint } from '../utils/sketch/bounds';
 
 const TOLERANCE_MM = 0.002;
 const ANGLE_TOLERANCE = 0.003;
@@ -121,6 +122,14 @@ function capEdges(faces: Face[], normal: Vector3, bounds: ReturnType<typeof proj
   return { bottom: bottom.edges(), top: top.edges() };
 }
 
+function outlineWidth(outline: SheetProfile['outline']): number {
+  const extent = emptyBounds();
+
+  for (const [x, y] of outline) includePoint(extent, x, y);
+
+  return Math.min(extent.max[0] - extent.min[0], extent.max[1] - extent.min[1]);
+}
+
 function profileAlong(faces: Face[], normal: Vector3): SheetProfile | undefined {
   const bounds = projectedBounds(faces, normal);
   const { low, high } = bounds;
@@ -146,11 +155,7 @@ function profileAlong(faces: Face[], normal: Vector3): SheetProfile | undefined 
   if (upper.length !== lower.length || !upper.every((loop) => lower.some((other) => sameLoop(loop, other))))
     return undefined;
 
-  const extent = [0, 1].map(
-    (axis) => Math.max(...outline.map((p) => p[axis])) - Math.min(...outline.map((p) => p[axis])),
-  );
-
-  if (thicknessMm > Math.min(...extent) + TOLERANCE_MM) return undefined;
+  if (thicknessMm > outlineWidth(outline) + TOLERANCE_MM) return undefined;
 
   holes.sort((a, b) => a[0][0] - b[0][0] || a[0][1] - b[0][1]);
 

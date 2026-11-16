@@ -2,6 +2,7 @@ import { checkMask, decodeVisionMasks, pickSubject, trimToModelWidth, type Visio
 import { maskProfileOf, type Mask, type Profile } from './silhouetteProfile';
 import { percent } from '../../electron/percent.mjs';
 import { borderPixels, floodPixels } from './pixelFlood';
+import { pixelColorDistanceSquared } from './pixelColorDistance';
 
 export type { Profile } from './silhouetteProfile';
 
@@ -80,7 +81,7 @@ export function floodMaskOf({ data, width: w, height: h }: ImageData): { mask?: 
 
   if (spread > 14) return { reason: 'the background isn’t plain (busy scene or gradient)' };
 
-  const mask = floodBackground(border, w, h, (i) => dist(i) > 12);
+  const mask = floodBackground(border, w, h, (i) => pixelColorDistanceSquared(data, i * 4, med) > 12 * 12);
 
   return { mask: { data: mask, width: w, height: h } };
 }

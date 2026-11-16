@@ -2,6 +2,21 @@
 
 Implementation: [Image comparison](../guide/agent.md#performance-image-comparison). Shared requirements: [Performance](../guide/performance.md).
 
+## Photo foreground thresholds compare squared distances
+
+Repository searches found two RGB-distance threshold paths: `imagePixelAnalysis.ts` foreground classification and `silhouette.ts` background flooding. Both now compare the squared distance with the squared cutoff. The silhouette border-spread calculation retains `Math.hypot` because it averages actual distances. Pixel coordinates and background colors are bounded byte values, and corner averages have quarter-byte precision.
+
+`imagePixelAnalysis.test.ts` checks strict color-distance and alpha cutoffs through complete image analysis, including transparent backgrounds and unchanged input bytes. Existing `silhouette.test.ts` checks its strict distance cutoff, independent channel variation, spread boundaries, border weighting and narrow images. A scratch comparison matched complete analysis results and silhouette masks on 600 seeded images with sizes from 8 × 8 to 32 × 32. The images include fractional corner averages, transparent backgrounds, partial alpha and both plain and busy borders.
+
+On uniform opaque images, a scratch spy counted calls to `Math.hypot` across each complete pipeline:
+
+| Image | Analysis before | Analysis after | Silhouette before | Silhouette after |
+| --- | --- | --- | --- | --- |
+| 128 × 128 | 16,397 | 13 | 16,896 | 512 |
+| 256 × 256 | 65,549 | 13 | 66,560 | 1,024 |
+
+The remaining analysis calls belong to outline simplification. The remaining silhouette calls measure border spread. These are operation counts, without a timing assertion or a claim about complete photo-tool latency. The scratch counter initially omitted outline simplification's 13 calls from its expected totals. Correcting that expectation left the measured reduction at one call per classified pixel. The comparison lives in `scratch/photoThresholds.test.ts` during implementation and is not committed.
+
 ## Traced contours avoid temporary row lists
 
 `outlineTrace.ts` removes two mapped edge lists, one reversed row copy and ten pairs of sliced rows and mapped widths per nonempty trace. That removes 23 temporary arrays containing five times the occupied-row count in total entries. Ring points and sampling buffers remain owned by each call.

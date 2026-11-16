@@ -1,6 +1,7 @@
 import type { AnalyzedImageFeatures } from './imageTo3DAnalyzer';
 import { borderPixels, floodPixels } from './pixelFlood';
 import { simplifyPolygon } from './simplifyPolygon';
+import { pixelColorDistanceSquared } from './pixelColorDistance';
 
 type Point = [number, number];
 
@@ -32,12 +33,12 @@ function cornerBackground(data: Uint8ClampedArray, grid: number): [number, numbe
 }
 
 function scanForeground(data: Uint8ClampedArray, grid: number): ForegroundScan {
-  const [bgR, bgG, bgB, bgA] = cornerBackground(data, grid);
-  const hasAlphaBackground = bgA < 128;
+  const background = cornerBackground(data, grid);
+  const hasAlphaBackground = background[3] < 128;
   const isForeground = (i: number) =>
     hasAlphaBackground
       ? data[i + 3] > 90
-      : data[i + 3] > 90 && Math.hypot(data[i] - bgR, data[i + 1] - bgG, data[i + 2] - bgB) > 38;
+      : data[i + 3] > 90 && pixelColorDistanceSquared(data, i, background) > 38 * 38;
   const scan: ForegroundScan = {
     mask: new Uint8Array(grid * grid),
     fgCount: 0,

@@ -112,7 +112,6 @@ A scratch comparison matched complete power rows and battery runtimes against th
 
 Measurements used Vitest on macOS arm64 with Node v26.13.0. These are array-operation counts, not timings or complete Checks latency measurements. Measured-joint filtering and hungriest-joint sorting remain unchanged. No controls or help steps changed.
 
-
 ## Battery cost advice selects one compatible pack
 
 A whole-app search for `premiumPick` and `sameBattery` found one battery premium selector. Agent add and update results reach it through `agentCostRequests.ts`. Actuator advice already takes the first match from a shared price-ordered catalog, whose other callers need that ordering. Battery supply planning ranks different electrical criteria and remains separate.
@@ -120,3 +119,13 @@ A whole-app search for `premiumPick` and `sameBattery` found one battery premium
 For N catalog entries and K electrically compatible alternatives, the previous selector allocated a K-entry filtered component list, K price records and a further price-filtered list before sorting. The replacement visits N entries once and retains only successive cheapest qualifying records. It removes three temporary arrays and candidate sorting. Compatibility checks and price reads retain source order. These are code-derived traversal and allocation counts, not timings or complete agent-response measurements.
 
 `premiumBattery.test.ts` checks voltage, capacity, continuous current, bare cells, absent prices, NaN prices, the strict half-price boundary, first equal-price ties, reordered catalogs, edited prices and unchanged source records. Existing `premiumPick.test.ts` retains real-catalog actuator advice and formatted text coverage. No quarantine or timing assertion applies. User actions, output text and screen states are unchanged, so help instructions and screenshots remain accurate.
+
+## Standing stability retains one result
+
+The whole-app search found one lowest-margin stability selector, `utils/engineeringStability.ts`. Build and agent engineering reports both consume it through `runEngineering`. Ordinary calculations no longer build a result list, allocate a temporary empty array per excluded body through `flatMap`, or sort the body results. Geometry measurement still runs for each eligible body. Equal margins keep the first body. A NaN margin falls back to the previous calculation and stable sort, including remeasurement, to preserve exceptional ordering.
+
+`engineeringStability.test.ts` compares complete selection results with individually measured, sorted bodies for sizes zero through 79, reversed source order and later center-of-mass edits. It covers massless and contactless exclusions, negative and tied margins, source preservation and nonfinite coordinates. Existing `engineeringContacts.test.ts` and `engineeringWheelContacts.test.ts` cover full report rows and support geometry.
+
+A scratch comparison loaded the previous implementation from git and matched complete results for 300 and 600 bodies. Every body used a 200 mm square foot, 100 g mass and center of mass `[(i * 37) % count, i + 1, 0]`. Instrumenting only the body-result sort measured one sort with 2,017 comparisons before for 300 bodies and one with 4,500 comparisons for 600. Both new runs made zero body-result sort calls. The replacement makes 299 and 599 margin comparisons respectively. Support-hull sorting is unchanged.
+
+Measurements used scratch Vitest on macOS arm64 with Node v26.13.0. These are operation counts, not timings or complete Checks latency measurements. The logs are in `scratch/stability-counts.jsonl`. No timing assertion, quarantine or browser test was added. No controls, help steps or screenshot states changed. The existing Weight and center of mass and Build checks articles remain accurate.

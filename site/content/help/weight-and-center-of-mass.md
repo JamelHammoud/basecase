@@ -56,11 +56,13 @@ The Weight check never fails. If any part's weight is an estimate, the check sho
 
 Each robot counts its own parts, including those carried by passive joints, plus any solid within 50 mm of them. For example, a battery tucked inside the torso counts toward the robot. Anything farther away is treated as scenery, and so is every object that moves freely in Simulate.
 
-Scenery isn't included in the weight, the leg loads or the footprint, and the Weight row shows how much it left out. Adding a table or a second robot to the scene doesn't change the results.
+Scenery isn't included in the weight, the leg loads or the footprint, and the Weight row shows how much it left out.
 
 ## Standing stability
 
 Standing stability checks that the center of mass sits over the outline of the robot's feet. It reports how far inside the outline the center of mass is, and how far the robot can tilt before it tips over.
+
+With several robots, the check reports the lowest margin. A center of mass outside the feet's outline has a negative margin.
 
 | Result | When |
 |---|---|

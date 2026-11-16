@@ -20,6 +20,15 @@ export function FleetMappings({
   onChange: (mappings: GroupMapping[]) => void;
 }) {
   const [pending, setPending] = useState<number | null>(null);
+  const knownRoles = new Set(roles.map((role) => role.id));
+  const unlistedRoles = [...new Set(mappings.flatMap((mapping) => mapping.roles))].filter(
+    (role) => !knownRoles.has(role),
+  );
+  const options = [
+    { value: '', label: 'Choose Role' },
+    ...roles.map((role) => ({ value: role.id, label: role.name })),
+    ...unlistedRoles.map((role) => ({ value: role, label: role })),
+  ];
 
   return (
     <fieldset className="space-y-3">
@@ -35,18 +44,23 @@ export function FleetMappings({
               onChange(mappings.map((item, at) => (at === index ? { ...item, group: event.target.value } : item)))
             }
           />
-          <Select
-            aria-label="Fleet role"
-            value={mapping.roles[0] ?? ''}
-            options={[
-              { value: '', label: 'Choose Role' },
-              ...roles.map((role) => ({ value: role.id, label: role.name })),
-            ]}
-            onChange={(event) =>
-              onChange(mappings.map((item, at) => (at === index ? { ...item, roles: [event.target.value] } : item)))
-            }
-          />
-          <Button type="button" onClick={() => setPending(index)}>
+          <div className="min-w-0 flex-1 space-y-2">
+            {(mapping.roles.length ? mapping.roles : ['']).map((role, roleIndex) => (
+              <Select
+                key={roleIndex}
+                aria-label="Fleet role"
+                value={role}
+                options={options}
+                onChange={(event) => {
+                  const nextRoles = [...mapping.roles];
+
+                  nextRoles[roleIndex] = event.target.value;
+                  onChange(mappings.map((item, at) => (at === index ? { ...item, roles: nextRoles } : item)));
+                }}
+              />
+            ))}
+          </div>
+          <Button type="button" variant="danger" onClick={() => setPending(index)}>
             Delete
           </Button>
         </div>

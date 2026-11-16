@@ -131,6 +131,7 @@ export async function enroll(pool, body) {
     const found = result.rows[0];
 
     insist(found, 401);
+    await localLoginAllowed(client, found.org, found.account);
     await client.query('UPDATE fleet_passwords SET password=$3 WHERE org=$1 AND account=$2', [
       found.org,
       found.account,

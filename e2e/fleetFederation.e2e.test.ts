@@ -29,6 +29,7 @@ afterAll(async () => {
 
 it('configures two Fleet providers, signs in with distinct site scopes and removes live access through SCIM', async () => {
   const admin = await fixture.bootstrap('Federated hospital');
+  const additionalRole = await admin.create('role', { name: 'Additional viewer', rules: [] });
   const entries: { idp: typeof first; role: FleetResource; robot: FleetResource; name: string }[] = [];
 
   for (const [index, idp] of [first, second].entries()) {
@@ -67,7 +68,30 @@ it('configures two Fleet providers, signs in with distinct site scopes and remov
       await expect.poll(() => page.getByRole('button', { name: entry.name, exact: true }).count()).toBe(1);
     }
 
+    const configured = await admin.list('connections');
+    const firstProvider = configured.items.find((item: { name: string }) => item.name === entries[0].name);
+
+    if (!firstProvider) throw new Error('Configured provider is missing');
+
+    await admin.update('connections', firstProvider.id, {
+      ...firstProvider,
+      mappings: [{ group: 'ward', roles: [entries[0].role.id, additionalRole.id] }],
+    });
+    await page.reload();
+    await page.getByRole('button', { name: 'Access', exact: true }).click();
+    await page.getByRole('button', { name: entries[0].name, exact: true }).click();
+    expect(await page.getByRole('combobox', { name: 'Fleet role' }).count()).toBe(2);
+    await page.getByRole('combobox', { name: 'Fleet role' }).first().selectOption(additionalRole.id);
+    await page.getByRole('combobox', { name: 'Fleet role' }).first().selectOption(entries[0].role.id);
+    await page.getByRole('button', { name: 'Save Provider' }).click();
+    await expect.poll(() => page.getByLabel('Provider name', { exact: true }).inputValue()).toBe('');
+
     const providers = await admin.list('connections');
+
+    expect(providers.items.find((item) => item.id === firstProvider.id)).toHaveProperty('mappings', [
+      { group: 'ward', roles: [entries[0].role.id, additionalRole.id] },
+    ]);
+
     const provider = providers.items.find((item: { name: string }) => item.name === entries[1].name);
 
     if (!provider) throw new Error('Configured provider is missing');

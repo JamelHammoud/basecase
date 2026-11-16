@@ -43,7 +43,9 @@ async function connection(name, key = firstKey) {
 }
 
 async function exchange(provider, options = {}) {
-  const start = await fetch(`${fixture.origin}/v1/${admin.org}/sso/${provider.id}/start`, { redirect: 'manual' });
+  const start =
+    options.start ??
+    (await fetch(`${fixture.origin}/v1/${admin.org}/sso/${provider.id}/start`, { redirect: 'manual' }));
   const request = authRequest(start.headers.get('location'));
   const xml = responseXml({ ...request, issuer: provider.issuer, key: options.key ?? firstKey, ...options });
   const send = () =>
@@ -110,6 +112,25 @@ it('applies group grants and removal, rollover and disabling without linking loc
   expect((await fixture.anonymous(`/${admin.org}/sso/${provider.id}/start`)).status).toBe(403);
 });
 
+it('preserves live inventory on repeated SSO and resets it when asserted grants change', async () => {
+  const provider = await connection('repeat-session');
+  const robot = await admin.create('robot', { name: 'Repeat-session robot', parent: site.id });
+  const session = await exchange(provider);
+  const subscription = await session.client.subscribe();
+
+  try {
+    expect((await subscription.next()).event).toBe('snapshot');
+    expect((await exchange(provider, { groups: ['ward', 'ward'] })).response.status).toBe(303);
+    await admin.generation(robot.id);
+    expect((await subscription.next()).event).toBe('snapshot');
+    expect((await exchange(provider, { groups: [] })).response.status).toBe(303);
+    expect((await subscription.next()).event).toBe('reset');
+    expect((await session.client.list('site')).items).toEqual([]);
+  } finally {
+    await subscription.close();
+  }
+});
+
 it('rejects replay, expiration, audience and recipient confusion and forged signatures', async () => {
   const provider = await connection('exploits');
   const maliciousStart = await fetch(`${fixture.origin}/v1/${admin.org}/sso/${provider.id}/start`, {
@@ -123,6 +144,14 @@ it('rejects replay, expiration, audience and recipient confusion and forged sign
 
   expect(valid.response.status).toBe(303);
   expect((await valid.send()).status).toBe(400);
+
+  const otherFlow = await fetch(`${fixture.origin}/v1/${admin.org}/sso/${provider.id}/start`, {
+    redirect: 'manual',
+  });
+  const otherRequest = authRequest(otherFlow.headers.get('location'));
+
+  expect((await exchange(provider, { request: otherRequest.request })).response.status).toBe(400);
+  expect((await exchange(provider, { start: otherFlow })).response.status).toBe(303);
 
   for (const options of [
     { expiry: -60000 },
@@ -249,6 +278,17 @@ it('rejects queued authority after SCIM commits and prevents SSO from issuing ro
   const session = await exchange(provider);
 
   expect((await session.client.call('GET', 'account')).status).toBe(200);
+
+  const identity = await fixture.pool.query('SELECT account FROM fleet_federated WHERE org=$1 AND connection=$2', [
+    admin.org,
+    provider.id,
+  ]);
+  const invitation = await admin.create('invitations', {
+    account: identity.rows[0].account,
+    email: 'federated-enrollment@example.test',
+  });
+
+  expect((await fixture.enroll(invitation.token, 'federated-local-password')).status).toBe(401);
   expect(
     (
       await session.client.call('POST', 'credentials', {
@@ -344,7 +384,16 @@ it('keeps password recovery and other tenants usable under enforcement and revok
     });
 
   expect((await login(admin.email, 'fleet-fixture-password')).status).toBe(401);
-  expect((await login('recovery@example.test', 'local-recovery-password')).status).toBe(200);
+
+  const recoveryLogin = await login('recovery@example.test', 'local-recovery-password');
+
+  expect(recoveryLogin.status).toBe(200);
+
+  const local = fleetClient(fixture, { org: admin.org, token: (await recoveryLogin.json()).token });
+  const account = await local.create('account', { name: 'Enforced local', roles: [] });
+  const invitation = await local.create('invitations', { account: account.id, email: 'enforced@example.test' });
+
+  expect((await fixture.enroll(invitation.token, 'enforced-local-password')).status).toBe(401);
   expect((await other.call('GET', 'site')).status).toBe(200);
   expect((await exchange(provider, { groups: ['Administrator', role.id] })).response.status).toBe(303);
   expect(

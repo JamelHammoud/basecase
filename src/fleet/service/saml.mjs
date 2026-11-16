@@ -90,7 +90,7 @@ function verifiedProfile(profile, options) {
 
   insist(groups.length <= 100);
 
-  return { subject: text(subject.textContent, 1024), groups };
+  return { subject: text(subject.textContent, 1024), groups: [...new Set(groups)].sort() };
 }
 
 function cache(client, connection) {
@@ -126,10 +126,11 @@ function cache(client, connection) {
   };
 }
 
-function samlClient(client, connection, origin) {
+function samlClient(client, connection, origin, requestId) {
   const callback = `${origin}/v1/${connection.org}/sso/${connection.id}/acs`;
   const issuer = `${origin}/v1/${connection.org}/sso/${connection.id}`;
   const saml = new SAML({
+    ...(requestId ? { generateUniqueId: () => requestId } : {}),
     issuer,
     audience: issuer,
     callbackUrl: callback,
@@ -161,14 +162,15 @@ export async function startSso(pool, options) {
 
     const count = await client.query('SELECT count(*) FROM fleet_saml_cache WHERE org=$1', [options.org]);
 
-    insist(Number(count.rows[0].count) < 10000, 429);
+    insist(Number(count.rows[0].count) + 2 <= 10000, 429);
 
     const relay = randomBytes(32).toString('base64url');
     const browser = randomBytes(32).toString('base64url');
-    const { saml } = samlClient(client, connection, options.origin);
+    const request = `_${randomBytes(32).toString('hex')}`;
+    const { saml } = samlClient(client, connection, options.origin, request);
     const location = await saml.getAuthorizeUrlAsync(relay, undefined, {});
 
-    await cache(client, connection).saveAsync(`flow:${relay}`, hash(browser));
+    await cache(client, connection).saveAsync(`flow:${relay}`, JSON.stringify({ browser: hash(browser), request }));
 
     return { location, browser };
   });
@@ -183,23 +185,28 @@ export async function finishSso(pool, options) {
     const browser = text(options.browser, 128);
     const expected = await cache(client, connection).consumeAsync(`flow:${relay}`);
 
-    insist(expected === hash(browser));
+    insist(expected);
+
+    const flow = JSON.parse(expected);
+
+    insist(flow.browser === hash(browser));
 
     const encoded = text(options.body.SAMLResponse, 131072);
     const xml = Buffer.from(encoded, 'base64').toString('utf8');
     const { saml, callback } = samlClient(client, connection, options.origin);
     const request = envelope(xml, callback);
+
+    insist(request === flow.request);
+
     const result = await saml.validatePostResponseAsync({ SAMLResponse: encoded });
     const identity = verifiedProfile(result.profile, { issuer: connection.issuer, callback, request });
     const account = await federatedAccount(client, connection, identity.subject);
 
     insist(account.active);
-    await client.query('UPDATE fleet_federated SET groups=$4 WHERE org=$1 AND connection=$2 AND subject=$3', [
-      connection.org,
-      connection.id,
-      identity.subject,
-      JSON.stringify(identity.groups),
-    ]);
+    await client.query(
+      'UPDATE fleet_federated SET groups=$4 WHERE org=$1 AND connection=$2 AND subject=$3 AND NOT provisioned AND groups IS DISTINCT FROM $4::jsonb',
+      [connection.org, connection.id, identity.subject, JSON.stringify(identity.groups)],
+    );
 
     return issueCredential(client, {
       org: connection.org,

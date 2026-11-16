@@ -182,3 +182,16 @@ The related run completed in 165.53 seconds: 557 files passed, three failed and 
 - `skills/kitTransitions.test.ts`: hexapod walk to settle, and hexapod turn-away to walk with a −90 degree turn.
 
 These files are unchanged. No baseline replay was run, so this is evidence of local timeouts rather than proof they also fail before the change. The complete output is in `scratch/root-related-direct.log`. Full local validation is therefore not green despite the focused regression tests passing. There is no new quarantine or proposed timeout increase.
+
+
+## MJCF actuator attachment indexes names once
+
+The whole-app search found one MJCF actuator-to-joint name matcher, in `utils/robotImport/mjcf.ts::applyActuators`. All MJCF import entry points reach it through `readModel.ts`, after include expansion. URDF transmission handling and runtime actuator addressing use different inputs and are outside this attachment operation. No controls, instructions or screenshots change.
+
+For 300 and 600 uniquely named joints with one actuator each, the previous matcher performed 45,150 and 180,300 joint-name comparisons. It also read each actuator's joint attribute that many times. The new matcher visits 300 and 600 joints to build a first-match index, then performs 300 and 600 attribute reads and map lookups. Index storage is linear in unique joint names and belongs to one parse. Imports without actuators return before building it. These are source-derived operation counts, without timing assertions or a claim about complete import latency. XML parsing, geometry, transforms and the actuator list still allocate.
+
+`mjcfActuators.test.ts` checks joint-level effort precedence, motor control range and gear, default-class force ranges, first nonzero effort across multiple actuator sections, passive resistance, unknown references, missing and empty names, duplicate first matches and generated fixed-joint names. Wide 300- and 600-joint models check ordered attachment with reversed actuator lists. Editing an actuator reference and parsing again checks fresh attachment and independence of earlier outputs. Existing robot import and passive history tests exercise the surrounding pipelines. No retry, timeout or quarantine changes.
+
+Local `check:changed` passed formatting, lint, documentation, site copy for 281 pages, types and all 269 tests in 37 related files. The related-test phase reported 2.08 seconds. Copy accounting reported zero added, changed or removed strings.
+
+The covered help articles were read against the final code and guide diff. [Import a robot](../../site/content/help/import-a-robot.md) still describes the same entry points, file selection, joint limits and passive imports. [Robot import troubleshooting](../../site/content/help/troubleshoot-app-robot-import-fails.md) keeps the same messages, mesh resolution and passive-joint advice. [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) keeps the same joint fields, hierarchy, poses and robot selection. No step, label or screenshot became inaccurate, so these articles remain unchanged.

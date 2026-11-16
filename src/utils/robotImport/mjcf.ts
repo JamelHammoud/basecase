@@ -219,8 +219,19 @@ function actuatorEffort(ctx: MjContext, act: Element): number {
 }
 
 function applyActuators(ctx: MjContext, mj: Element) {
-  for (const act of elems(mj, 'actuator').flatMap((x) => [...x.children])) {
-    const j = ctx.joints.find((k) => k.name === act.getAttribute('joint'));
+  const actuators = elems(mj, 'actuator').flatMap((x) => [...x.children]);
+
+  if (!actuators.length) return;
+
+  const byName = new Map<string, ModelJoint>();
+
+  for (const joint of ctx.joints) {
+    if (!byName.has(joint.name)) byName.set(joint.name, joint);
+  }
+
+  for (const act of actuators) {
+    const name = act.getAttribute('joint');
+    const j = name === null ? undefined : byName.get(name);
 
     if (!j) continue;
 

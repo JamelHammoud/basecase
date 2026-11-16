@@ -169,6 +169,8 @@ Measurements and limits: [Joints and kinematics performance evidence](../notes/p
 
 ## Performance: motion fitting and retargeting
 
+- **Motion clip grounding prepares soles once.** `utils/mocapGround.ts` resolves sole owners once per imported clip and reuses one transform vector across frames. Human ankle and posed sole minima accumulate directly without temporary height arrays or argument spreads. Every BVH retarget import shares this pass. Root fallback, strict contact thresholds, correction rounding and source frame order stay unchanged. `mocapGround.test.ts` compares complete corrected frames with the previous equations across changing clips, missing owners and nonfinite heights, and bounds ownership reads per call. Existing `mocapRetarget.test.ts` snapshots cover full and trimmed in-place imports. [Evidence](../notes/performance-motion.md#motion-clip-grounding-prepares-soles-once).
+
 - **Ancestor chains append before reversing.** `utils/motionSkeletonSource.ts` and `utils/skeletonSizing.ts` collect ancestors from leaf to root with append operations, then reverse the owned arrays once. Motion axis order, cycle termination, leg boundaries and descendant order stay unchanged. Payload checks and Case arm discovery use the same construction pattern. `motionSkeletonSource.test.ts` checks root-first axes through 1, 16 and 64 links, repeated calls and unchanged ancestry. Existing skeleton hierarchy and sizing tests cover long leg chains and calculated loads. [Evidence](../notes/performance-motion.md#ancestor-chains-append-before-reversing).
 
 Measurements and limits: [Motion fitting and retargeting performance evidence](../notes/performance-motion.md).

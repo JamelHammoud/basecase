@@ -119,6 +119,12 @@ function faceData(positions: Float32Array): Faces {
 
 export const solidFromPositions = (positions: Float32Array) => new ShapeSolid(positions);
 
+function steppedCount(limit: number, step: number): number {
+  if (limit <= 0) return 0;
+
+  return Math.max(1, Math.ceil(limit / step)) || 1;
+}
+
 export function samplesOf(solid: ShapeSolid, maxSamples: number): Float32Array {
   const cached = solid.samples.get(maxSamples);
 
@@ -127,13 +133,12 @@ export function samplesOf(solid: ShapeSolid, maxSamples: number): Float32Array {
   const pos = solid.positions;
   const count = pos.length / 3;
   const step = Math.max(1, Math.floor(count / maxSamples));
-  let sampleCount = 0;
-
-  for (let i = 0; i < count; i += step) sampleCount++;
-
-  for (let t = 0; t + 2 < count && sampleCount < maxSamples * 1.5; t += 3 * step) sampleCount++;
-
-  const samples = new Float32Array(sampleCount * 3);
+  const vertices = steppedCount(count, step);
+  const centroids =
+    vertices < maxSamples * 1.5
+      ? Math.min(steppedCount(count - 2, 3 * step), Math.ceil(maxSamples * 1.5) - vertices)
+      : 0;
+  const samples = new Float32Array((vertices + centroids) * 3);
   let at = 0;
 
   for (let i = 0; i < count; i += step) {

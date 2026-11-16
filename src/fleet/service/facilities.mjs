@@ -1,3 +1,5 @@
+import { transaction } from './database.mjs';
+import { lockIdentity } from './recoveryProtection.mjs';
 import { Worker } from 'node:worker_threads';
 import { authenticate } from './identity.mjs';
 import { demand, readResource } from './registry.mjs';
@@ -82,14 +84,21 @@ export async function facilityRequest(options) {
 
   const mode = { convert: 'convert', registration: 'registration' }[subpath] ?? 'import';
   const prepared = await jobs.prepare(request, mode);
-  const current = await authenticate(pool, token);
 
-  demand(current, action, await readResource(pool, actor.org, id));
+  return transaction(pool, (client) => commitFacility(client, { actor, token, action, id, mode, prepared }));
+}
+
+async function commitFacility(client, { actor, token, action, id, mode, prepared }) {
+  await lockIdentity(client, actor.org);
+
+  const current = await authenticate(client, token);
+
+  demand(current, action, await readResource(client, actor.org, id));
 
   if (mode === 'convert') return { raw: prepared.encoded };
 
   if (mode === 'registration') {
-    const result = await pool.query(
+    const result = await client.query(
       "UPDATE fleet_facilities SET registration=$3 WHERE org=$1 AND site=$2 AND summary->>'hash'=$4",
       [actor.org, id, prepared.registration, prepared.facility],
     );
@@ -99,7 +108,7 @@ export async function facilityRequest(options) {
     return { data: { registration: prepared.registration } };
   }
 
-  await pool.query(
+  await client.query(
     'INSERT INTO fleet_facilities(org,site,summary,geometry,source) VALUES ($1,$2,$3,$4,$5) ON CONFLICT(org,site) DO UPDATE SET summary=EXCLUDED.summary,geometry=EXCLUDED.geometry,source=EXCLUDED.source,registration=NULL',
     [actor.org, id, prepared.summary, prepared.content, prepared.source],
   );

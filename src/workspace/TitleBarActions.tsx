@@ -65,6 +65,7 @@ export function TitleBarActions({
           onExportScene={() => void exports.exportScene()}
           onExportRobot={() => void exports.exportRobotPackage()}
           onExportKit={() => void exports.exportKit()}
+          onExportSchematic={() => void exports.exportSchematic()}
           onAirDrop={() => void exports.airDrop()}
           onCopyMarkdown={exports.copyBrief}
         />

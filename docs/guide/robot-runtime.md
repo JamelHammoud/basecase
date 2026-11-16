@@ -347,6 +347,12 @@ Measurements and limits: [Calibration and body properties performance evidence](
 
 `src/sim/passiveJoints.test.ts` checks exact servo layouts and robot-package map sizes for ten mechanisms, including a powered shoulder with a passive wrist and two passive fingers beside a powered joint. [Evidence](../notes/testing-robot-runtime.md#passive-robot-joints).
 
+### Fleet publisher
+
+Operate's Open Fleet button and command open the self-hosted [Fleet workspace](fleet.md). Its address is saved on this computer, independently of scenes and live `FleetRows`. `RobotFleet` optionally forwards current-link identity and status observations through `electron/fleet/studioPublisher.mjs`. Operator-owned credentials never enter renderer events. Publisher failures cannot block a robot command. Disconnect preserves the registry identity and publishes offline status. The live daemon connection cap remains 32.
+
+`tools/fleet/adapter.test.mjs` exercises the real authenticated loopback network link, the publisher's scoped service token and persistent disconnect status. `e2e/fleet.e2e.test.ts` drives the Operate entry into the site-filtered browser registry. [Evidence](../notes/testing-robot-runtime.md#fleet-publisher) records the coverage boundary.
+
 ### Retained fleet incidents
 
 `src/robot/fleetIncidents.ts` collects faults and unexpected connection losses before the page store handles selection. `FleetRows` keeps a row for each unit with retained history, including disconnected units. Only connected rows show a ladder rung. The visible Inspect Problems action needs no tooltip repeating its label and row name. Inspect Problems opens that unit's incidents. The command palette has the same entry per unit. Open Try passes the incident's exact saved try id to the existing timeline through `openIncidentTry` in `workspace/robotReplay.ts`. A missing or deleted recording leaves the incident readable and reports Try unavailable.

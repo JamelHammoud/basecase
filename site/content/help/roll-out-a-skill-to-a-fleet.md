@@ -35,7 +35,9 @@ hub_the_design_agent: |
 
 Send a skill to several emulated robots, after Arena proves it on each robot's calibrated twin.
 
-A fleet holds up to 32 robots in the desktop app. Roll Out sends saved network policies to emulated Feetech and Dynamixel units.
+Operate connects up to 32 robots at once in the desktop app. Roll Out sends saved network policies to emulated Feetech and Dynamixel units.
+
+View shared organization inventory through [Open Basecase Fleet](/help/open-basecase-fleet). The registry keeps identities after disconnect and has its own capacity limits.
 
 ## Connect and calibrate the units
 

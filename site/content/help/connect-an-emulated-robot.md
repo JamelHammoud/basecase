@@ -33,7 +33,7 @@ covers:
 
 You can run the robot in your scene against emulated servos. It goes through the same control program and safety checks that a real robot will use.
 
-Every servo is emulated, and no released build of Basecase can drive real motors. Operate is available only in the desktop app.
+Every servo is emulated, and no released build of Basecase can drive real motors. Operate's live robot controls are available only in the desktop app.
 
 1. Open a scene with a robot that has joints.
 2. Click **Play** in the view rail.
@@ -65,6 +65,8 @@ A robot with a leg joint connects as a legged robot, and anything else connects 
 To connect another unit of this design, press [[⌘K]] and choose **Connect Emulated Robot** again. Operate lists each unit separately. A disconnected unit can keep a row for its [retained problems](/help/inspect-fleet-problems). That history doesn't mean the unit is connected. [Roll out a skill to a fleet of emulated robots](/help/roll-out-a-skill-to-a-fleet) covers per-unit twins and canaries.
 
 You can connect up to 32 servos on each unit. For a robot with more than that, **Connect Emulated Robot** doesn't appear.
+
+View organization-wide inventory through [Open Basecase Fleet](/help/open-basecase-fleet). Its robot identities remain in the registry after you disconnect a studio unit.
 
 ## What's locked
 

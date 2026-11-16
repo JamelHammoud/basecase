@@ -253,6 +253,16 @@ The updated isolated run passes 12 tests across the three selector test files. I
 
 The standard `check:changed` run also passes during review, including formatting, ESLint, documentation and all 12 related tests in 2.71 seconds of test execution. A local dependency copy omitting the shared caches allowed discovery to complete without a repository configuration change. Its log is `scratch/review-check-final.log`.
 
+## Fleet authorization boundary
+
+The [Fleet service](../guide/fleet.md) uses one evaluator for direct resource reads, enumeration, exports, text assets, mutations and subscription snapshots. Fast tests exercise two organizations, nested sites, group grants, custom role replacement and deletion, deny overrides, attribute conditions, token ceilings, enrollment replay, session revocation and role changes on an open subscription.
+
+The transport test rejects a remote HTTP origin and a wildcard HTTP bind paired with a loopback origin. Request handling also checks the socket peer, preventing a remote request with a forged loopback Host. The service does not trust forwarded headers as proof of HTTPS. The studio connector's redirect refusal prevents bearer forwarding to another origin. Operator-owned configuration is its only source of addresses and credentials. Desktop bridge and trusted IPC implementations are unchanged.
+
+The initial integration run exposed JSON scope arrays being encoded as PostgreSQL arrays instead of JSON. Explicit JSON serialization fixed credential issuance. An export without any export grant initially returned an empty page, and now refuses the request. Allocating a new generation initially cleared the previous source timestamp. Status now stores its observation generation separately and keeps the last observation until a new generation publishes. The original persistence assertion remains intact.
+
+No SAML, SCIM, physical robot, remote identity provider or cross-host TLS deployment was exercised. TLS is required by the service configuration and connector validation outside loopback. The committed integration tests run against HTTP loopback. Registry performance and memory evidence are in [Fleet measurements](fleet.md).
+
 ## Nightly Windows static check duplication
 
 [Check run 43831610288](https://github.com/JamelHammoud/basecase/actions/runs/43831610288) at `129c2956` cancelled the Windows unit job at 08:44:31 UTC, fifteen minutes after setup began. `npm run check` began at 08:31:17. Typechecking began at 08:35:39 and Vitest at 08:36:34, leaving 7 minutes 57 seconds for unit tests. There was no stalled final test identified. Tests were still completing normally at cancellation, including the mask test's separate 6.207-second failure. The final aggregate `check` only reported the unit and browser failures and requires no assertion change.

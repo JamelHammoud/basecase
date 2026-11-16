@@ -23,7 +23,7 @@ Optional diagnostics preserve the completed tool result when they fail. Catch in
 
 ### Architecture
 
-Animation summaries count channels with the same `animationJointIds` collector as Pose joint filtering. It accumulates names directly without flattening every keyframe’s keys. Coverage and limits are in [Joints and motion](joints-and-motion.md#performance-joints-and-kinematics).
+Animation summaries count channels with `animationJointIds`. It accumulates names directly without flattening every keyframe’s keys. Coverage and limits are in [Joints and motion](joints-and-motion.md#performance-joints-and-kinematics).
 
 `find_skills` searches published Hub skills for the open robot on desktop. Its optional `query` filters skill names and repos. It returns `{ skills }` with each candidate's `repo`, pinned `revision`, `name`, `fit` (`ok` and either a joint `map` or a refusal `problem`), mean limb-anchor `distance` (null when refused), and total source Arena `passes`. `src/skills/findSkills.ts` provides the same validated order as Install Skill: installation compatibility first, anchor distance next, Arena passes last, with deterministic repo and revision ties. Discovery and installation use the same actuated position joints and refuse unsupported skill types and camera or clock policies with the same reasons. Offline search returns an empty list. Finding a skill does not train it or claim it works on this robot. Installation still warm-starts training and requires fresh Arena evidence (§8i). Payload tests live in `electron/cad-mcp/findSkills.test.mjs` and `src/workspace/agentFindSkills.test.ts`.
 

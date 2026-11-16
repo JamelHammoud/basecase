@@ -84,3 +84,34 @@ it('draws a registered site without inventing a position for its unreported robo
   expect(markerPosition({ ...common, kind: 'site' }, false)?.length()).toBeGreaterThan(0.99);
   expect(markerPosition({ ...common, kind: 'robot' }, false)).toBeNull();
 });
+
+it('projects a nested facility pose into the viewed facility without replacing its source frame', () => {
+  const viewed = registerControls(siteControls);
+  const nested = registerControls({
+    ...siteControls,
+    controls: siteControls.controls.map((control) => ({ ...control, altitudeM: control.altitudeM + 10 })),
+  });
+  const robot: RegistryItem = {
+    id: 'nested-robot',
+    name: 'Delivery',
+    parent: 'ward',
+    status: 'online',
+    stale: false,
+    observedAt: null,
+    registration: nested,
+    facility: { name: 'Ward', hash: 'a'.repeat(64) },
+    pose: {
+      frame: 'facility',
+      facility: 'a'.repeat(64),
+      pointM: [0, 0, 2],
+      quality: 'reported',
+      observedAt: new Date().toISOString(),
+    },
+  };
+  const local = markerPosition(robot, true, viewed);
+
+  expect(local?.x).toBeCloseTo(0, 3);
+  expect(local?.y).toBeCloseTo(0, 3);
+  expect(local?.z).toBeCloseTo(12, 3);
+  expect(robotPosition(robot)?.altitudeM).toBeCloseTo(32, 2);
+});

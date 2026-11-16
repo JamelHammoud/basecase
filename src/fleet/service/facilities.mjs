@@ -109,9 +109,9 @@ export async function facilityRequest(options) {
 
 function facilityRead(record, subpath) {
   if (subpath === 'geometry') {
-    insist(record, 404);
-
-    return { raw: record.geometry };
+    return {
+      raw: `{"facility":${JSON.stringify(record?.summary ?? null)},"registration":${JSON.stringify(record?.registration ?? null)},"geometry":${record?.geometry ?? 'null'}}`,
+    };
   }
 
   insist(!subpath, 404);

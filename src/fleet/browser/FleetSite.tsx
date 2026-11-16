@@ -5,6 +5,7 @@ import { FleetMap } from './FleetMap';
 import { FacilityUpload } from './FacilityUpload';
 import { RegistrationForm } from './RegistrationForm';
 import { useFacility } from './useFacility';
+import { facilityRevision } from './facilityClient';
 
 export function FleetSite({
   org,
@@ -19,15 +20,15 @@ export function FleetSite({
   onSelect: (id: string) => void;
   onChanged: () => void;
 }) {
-  const facility = useFacility(org, site.id, site.facility?.hash);
+  const facility = useFacility(org, site.id, facilityRevision(site.facility), site.registration);
+  const sourceRevision = facilityRevision(facility.value?.facility);
   const [floor, setFloor] = useState('');
   const visible = robots
     .filter((robot) => !floor || robot.pose?.floor === floor)
     .map((robot) => ({
       ...robot,
-      registration: facility.value?.registration,
-      facility: facility.value?.facility,
-      facilitySite: site.id,
+      registration: robot.facilitySite === site.id ? facility.value?.registration : robot.registration,
+      facility: robot.facilitySite === site.id ? facility.value?.facility : robot.facility,
     }));
 
   return (
@@ -65,19 +66,21 @@ export function FleetSite({
             ]}
           />
           <FleetMap
-            key={`map:${facility.value.facility?.hash}`}
+            key={`map:${facility.version}`}
             geometry={facility.value.geometry}
+            registration={facility.value.registration}
             robots={visible}
             onSelect={onSelect}
           />
           {site.canManage && (
             <RegistrationForm
-              key={`registration:${facility.value.facility?.hash}`}
+              key={`registration:${facility.version}:${JSON.stringify(facility.value.registration)}`}
               path={facility.path}
               facility={facility.value.facility!.hash}
               registration={facility.value.registration ?? null}
               onSaved={(value) => {
-                facility.setRegistration(value);
+                if (sourceRevision) facility.setRegistration(value, sourceRevision);
+
                 onChanged();
               }}
             />

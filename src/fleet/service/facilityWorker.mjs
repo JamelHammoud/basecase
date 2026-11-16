@@ -1,5 +1,5 @@
 import { parentPort, workerData } from 'node:worker_threads';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { checkedPackage, convertLocalFacility } from '../../../electron/simready/localFacility.mjs';
 import { checkedRegistration } from '../sites/registration.mjs';
 
@@ -59,6 +59,7 @@ async function prepare() {
   const summary = {
     name: geometry.name,
     hash,
+    revision: randomUUID(),
     sources,
     metersPerUnit: geometry.metersPerUnit,
     up: geometry.up,

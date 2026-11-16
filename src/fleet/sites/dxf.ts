@@ -9,8 +9,7 @@ export function readFloorplan(bytes: Uint8Array) {
 
   for (let i = 0; i + 1 < rows.length; i += 2) pairs.push([Number(rows[i].trim()), rows[i + 1].trim()]);
 
-  const headerIndex = pairs.findIndex(([code, value]) => code === 9 && value === '$INSUNITS');
-  const units = headerIndex < 0 ? null : DXF_UNITS[Number(pairs[headerIndex + 1]?.[1])];
+  const units = floorplanUnits(pairs);
   const lines: number[] = [];
   const floors = new Set<string>();
   let entity: [number, string][] = [];
@@ -35,6 +34,16 @@ export function readFloorplan(bytes: Uint8Array) {
   if (!lines.length) throw new Error('Export DXF lines or lightweight polylines');
 
   return { lines, floors: [...floors], units };
+}
+
+function floorplanUnits(pairs: [number, string][]) {
+  const headerIndex = pairs.findIndex(([code, value]) => code === 9 && value === '$INSUNITS');
+  const unitCode = headerIndex < 0 ? 0 : Number(pairs[headerIndex + 1]?.[1]);
+  const units = unitCode === 0 ? null : DXF_UNITS[unitCode];
+
+  if (units === undefined) throw new Error('Export DXF with supported units');
+
+  return units;
 }
 
 function appendEntity(entity: [number, string][], lines: number[], floors: Set<string>) {

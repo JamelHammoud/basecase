@@ -1,46 +1,75 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { fleetRequest } from './client';
-import { prepareFacilityRequest } from './facilityClient';
+import { facilityRevision, prepareFacilityRequest } from './facilityClient';
 import type { FacilityResult } from './facilityClient';
 import type { FacilityOptions } from '../sites/facilityTypes';
 import type { Registration } from '../sites/registration.mjs';
 
-export function useFacility(org: string, site: string, revision?: string) {
+export function useFacility(org: string, site: string, revision?: string, registration?: Registration | null) {
   const active = useRef<AbortController | null>(null);
   const [value, setValue] = useState<FacilityResult | null>(null);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [version, setVersion] = useState(0);
   const path = `${org}/site/${site}/facility`;
+  const registrationRevision = JSON.stringify(registration ?? null);
 
-  const currentHash = useEffectEvent(() => value?.facility?.hash);
+  const currentRevision = useEffectEvent(() => facilityRevision(value?.facility));
 
   useEffect(() => {
     const controller = new AbortController();
 
     active.current = controller;
 
-    if (!site || (revision && currentHash() === revision)) return () => controller.abort();
+    const unchanged = Boolean(revision && currentRevision() === revision);
+    const pending = unchanged
+      ? fleetRequest<Omit<FacilityResult, 'geometry'>>(path, { signal: controller.signal }).then((metadata) => ({
+          metadata,
+        }))
+      : prepareFacilityRequest({ path: `/v1/${path}`, operation: 'load' }, controller.signal).then((loaded) => ({
+          loaded,
+        }));
 
-    void fleetRequest<Omit<FacilityResult, 'geometry'>>(path, { signal: controller.signal })
-      .then(async (metadata) => {
-        if (!metadata.facility) return;
+    void pending
+      .then((result) => {
+        if (controller.signal.aborted) return;
 
-        const loaded = await prepareFacilityRequest({ path: `/v1/${path}`, operation: 'load' }, controller.signal);
+        setBusy(false);
 
-        if (!controller.signal.aborted) setValue({ ...metadata, ...loaded });
+        if ('loaded' in result) {
+          setValue(result.loaded);
+          setVersion((value) => value + 1);
+
+          return;
+        }
+
+        setValue((current) =>
+          current &&
+          current.facility?.hash === result.metadata.facility?.hash &&
+          current.facility?.revision === result.metadata.facility?.revision
+            ? { ...current, registration: result.metadata.registration }
+            : current,
+        );
       })
       .catch(() => {
-        if (!controller.signal.aborted) setError(true);
+        if (controller.signal.aborted) return;
+
+        setBusy(false);
+        setError(true);
       });
 
-    return () => controller.abort();
-  }, [path, site, revision]);
+    return () => {
+      controller.abort();
+      active.current?.abort();
+    };
+  }, [path, revision, registrationRevision]);
 
   async function upload(files: File[], options: FacilityOptions) {
-    const controller = active.current;
+    active.current?.abort();
 
-    if (!controller || controller.signal.aborted) return false;
+    const controller = new AbortController();
 
+    active.current = controller;
     setBusy(true);
     setError(false);
 
@@ -53,14 +82,14 @@ export function useFacility(org: string, site: string, revision?: string) {
       if (controller.signal.aborted) return false;
 
       setValue(loaded);
-      setBusy(false);
+      setVersion((value) => value + 1);
 
       return true;
     } catch {
-      setError(true);
+      if (!controller.signal.aborted) setError(true);
+    } finally {
+      if (active.current === controller) setBusy(false);
     }
-
-    setBusy(false);
 
     return false;
   }
@@ -69,10 +98,13 @@ export function useFacility(org: string, site: string, revision?: string) {
     value,
     error,
     busy,
+    version,
     upload,
     path,
-    setRegistration(registration: Registration) {
-      setValue((current) => (current ? { ...current, registration } : current));
+    setRegistration(registration: Registration, revision: string) {
+      setValue((current) =>
+        current && facilityRevision(current.facility) === revision ? { ...current, registration } : current,
+      );
     },
   };
 }

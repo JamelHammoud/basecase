@@ -28,6 +28,7 @@ export interface PreparedGeometry extends Omit<FacilityGeometry, 'positions' | '
 export interface FacilitySummary {
   name: string;
   hash: string;
+  revision?: string;
   metersPerUnit: number;
   up: 'Y' | 'Z';
   floors: string[];

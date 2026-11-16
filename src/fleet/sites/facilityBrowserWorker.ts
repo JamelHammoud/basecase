@@ -72,18 +72,25 @@ async function importFacility(request: Request) {
   return { ...saved, geometry: typedGeometry(geometry) };
 }
 
+async function loadFacility(path: string) {
+  const saved = await responseJson(await fetch(`${path}/geometry`));
+
+  return { ...saved, geometry: saved.geometry ? typedGeometry(saved.geometry) : null };
+}
+
 self.onmessage = async (event: MessageEvent<Request>) => {
   try {
     const request = event.data;
-    const result =
-      request.operation === 'import'
-        ? await importFacility(request)
-        : { geometry: typedGeometry(await responseJson(await fetch(`${request.path}/geometry`))) };
+    const result = request.operation === 'import' ? await importFacility(request) : await loadFacility(request.path);
     const geometry = result.geometry;
 
     self.postMessage(
       { result },
-      { transfer: [geometry.positions.buffer, geometry.indices.buffer, geometry.lines.buffer, geometry.points.buffer] },
+      {
+        transfer: geometry
+          ? [geometry.positions.buffer, geometry.indices.buffer, geometry.lines.buffer, geometry.points.buffer]
+          : [],
+      },
     );
   } catch {
     self.postMessage({ error: 'Fleet facility request refused' });

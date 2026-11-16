@@ -33,10 +33,18 @@ export function FleetRobot({ robot, now, onOpen }: { robot: RegistryItem; now: n
             <dd>{robot.pose.floor}</dd>
           </>
         )}
-        <dt>Current work</dt>
-        <dd>{robot.work?.current}</dd>
-        <dt>Declared next work</dt>
-        <dd>{robot.work?.next}</dd>
+        {robot.work?.current && (
+          <>
+            <dt>Current work</dt>
+            <dd>{robot.work.current}</dd>
+          </>
+        )}
+        {robot.work?.next && (
+          <>
+            <dt>Declared next work</dt>
+            <dd>{robot.work.next}</dd>
+          </>
+        )}
       </dl>
       {robot.facilitySite && <Button onClick={onOpen}>Open Facility</Button>}
     </section>

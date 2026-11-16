@@ -86,6 +86,9 @@ it('refuses unknown units, remote dependencies and oversized source data', async
   ).rejects.toThrow();
   await expect(prepareFacility([file('factory.dxf', dxf)], JSON.parse('{"units":"auto","up":"Z"}'))).rejects.toThrow();
   await expect(
+    prepareFacility([file('miles.dxf', dxf.replace('$INSUNITS\n70\n4', '$INSUNITS\n70\n3'))], { units: 'm', up: 'Z' }),
+  ).rejects.toThrow('supported units');
+  await expect(
     prepareFacility([{ name: 'huge.obj', bytes: new Uint8Array(64 * 1024 * 1024 + 1) }], { units: 'm', up: 'Y' }),
   ).rejects.toThrow();
 });

@@ -4,7 +4,11 @@ import type { Registration } from '../sites/registration.mjs';
 export interface FacilityResult {
   facility?: FacilitySummary;
   registration?: Registration | null;
-  geometry: PreparedGeometry;
+  geometry: PreparedGeometry | null;
+}
+
+export function facilityRevision(facility?: Pick<FacilitySummary, 'hash' | 'revision'> | null) {
+  return facility?.revision ?? facility?.hash;
 }
 
 export function prepareFacilityRequest(

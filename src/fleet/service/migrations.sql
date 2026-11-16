@@ -86,4 +86,5 @@ CREATE TABLE IF NOT EXISTS fleet_facilities (
 );
 ALTER TABLE fleet_status ADD COLUMN IF NOT EXISTS pose jsonb;
 ALTER TABLE fleet_status ADD COLUMN IF NOT EXISTS work jsonb;
+CREATE OR REPLACE TRIGGER fleet_facility_changed AFTER INSERT OR UPDATE OR DELETE ON fleet_facilities FOR EACH ROW EXECUTE FUNCTION fleet_changed();
 INSERT INTO fleet_schema(version) VALUES (2) ON CONFLICT DO NOTHING;

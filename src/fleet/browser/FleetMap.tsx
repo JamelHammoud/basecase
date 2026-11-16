@@ -3,15 +3,18 @@ import { Button } from '../../design-system';
 import type { PreparedGeometry } from '../sites/facilityTypes';
 import { createMapStage, type MapLabel } from './mapStage';
 import type { RegistryItem } from './client';
+import type { Registration } from '../sites/registration.mjs';
 
 export function FleetMap({
   geometry,
   robots,
   onSelect,
+  registration = null,
 }: {
   geometry: PreparedGeometry | null;
   robots: RegistryItem[];
   onSelect: (id: string) => void;
+  registration?: Registration | null;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const stage = useRef<ReturnType<typeof createMapStage> | null>(null);
@@ -30,7 +33,7 @@ export function FleetMap({
     };
   }, [geometry]);
 
-  useEffect(() => stage.current?.update(robots), [robots, geometry]);
+  useEffect(() => stage.current?.update(robots, registration), [robots, geometry, registration]);
 
   return (
     <div

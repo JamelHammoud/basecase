@@ -5,6 +5,7 @@ import { robotPosition } from './robotPosition';
 import type { PreparedGeometry } from '../sites/facilityTypes';
 import type { RegistryItem } from './client';
 import { arrangeMapLabels } from './mapLabels';
+import type { Registration } from '../sites/registration.mjs';
 
 export interface MapLabel {
   id: string;
@@ -84,7 +85,7 @@ export function createMapStage(options: {
   controls.addEventListener('change', draw);
 
   return {
-    update(next: RegistryItem[]) {
+    update(next: RegistryItem[], registration: Registration | null = null) {
       const started = performance.now();
 
       robots = next;
@@ -99,7 +100,7 @@ export function createMapStage(options: {
       }
 
       for (const robot of next) {
-        const location = markerPosition(robot, Boolean(geometry));
+        const location = markerPosition(robot, Boolean(geometry), registration);
         let marker = markers.get(robot.id);
 
         if (!marker) {
@@ -142,7 +143,7 @@ export function createMapStage(options: {
   };
 }
 
-export function markerPosition(robot: RegistryItem, local: boolean) {
+export function markerPosition(robot: RegistryItem, local: boolean, registration: Registration | null = null) {
   const pose = robot.pose;
 
   if (robot.kind === 'site' && !pose && robot.registration && !local) {
@@ -169,9 +170,9 @@ export function markerPosition(robot: RegistryItem, local: boolean) {
 
   if (!local) return ecef.multiplyScalar(1 / 6378137);
 
-  if (!robot.registration) return null;
+  if (!registration) return null;
 
-  return ecef.applyMatrix4(new THREE.Matrix4().fromArray(robot.registration.matrix).invert());
+  return ecef.applyMatrix4(new THREE.Matrix4().fromArray(registration.matrix).invert());
 }
 
 function addGlobe(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {

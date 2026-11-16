@@ -131,3 +131,19 @@ async function uploadFacility(file: { name: string; mimeType: string; buffer: Bu
   await app.page.getByRole('button', { name: 'Upload Facility', exact: true }).click();
   await (await chooser).setFiles(file);
 }
+
+it('clears entered controls when replacing a facility with identical source bytes', async () => {
+  const source = { name: 'factory.dxf', mimeType: 'application/dxf', buffer: Buffer.from(factoryDxf) };
+
+  await app.page.getByLabel('Source units', { exact: true }).selectOption('mm');
+  await uploadFacility(source);
+  await expect.poll(() => app.page.getByText('factory.dxf', { exact: true }).count()).toBe(1);
+  await expect
+    .poll(() => app.page.getByRole('button', { name: 'Upload Facility', exact: true }).isEnabled())
+    .toBe(true);
+  await expect.poll(() => app.page.getByTestId('fleet-facility').count()).toBe(1);
+  await app.page.getByLabel('Latitude 1', { exact: true }).fill('42');
+  await uploadFacility(source);
+  await expect.poll(() => app.page.getByLabel('Latitude 1', { exact: true }).inputValue()).toBe('');
+  expect(await app.page.getByTestId('fleet-facility').count()).toBe(1);
+});

@@ -18,7 +18,7 @@ function demandResource(actor, action, resource) {
   demand(actor, action, resource);
 }
 
-const selection = `SELECT r.*,s.status,s.observed_at,s.received_at,s.generation,s.pose,s.work,CASE WHEN facility.site IS NULL THEN NULL ELSE jsonb_build_object('hash',facility.summary->'hash','name',facility.summary->'name') END AS facility,facility.registration,facility.site AS facility_site,
+const selection = `SELECT r.*,s.status,s.observed_at,s.received_at,s.generation,s.pose,s.work,CASE WHEN facility.site IS NULL THEN NULL ELSE jsonb_build_object('hash',facility.summary->'hash','name',facility.summary->'name','revision',facility.summary->'revision') END AS facility,facility.registration,facility.site AS facility_site,
  COALESCE((SELECT jsonb_object_agg(a.key,a.value ORDER BY array_position(r.ancestors,p.id)) FROM fleet_resources p CROSS JOIN LATERAL jsonb_each(COALESCE(p.data->'attributes','{}')) a WHERE p.org=r.org AND p.kind='site' AND p.id=ANY(r.ancestors)),'{}') AS site_attributes,
  (SELECT p.data->'attributes' FROM fleet_resources p WHERE p.org=r.org AND p.kind='robot' AND p.id=ANY(r.ancestors) LIMIT 1) AS robot_attributes
  FROM fleet_resources r LEFT JOIN fleet_status s ON s.org=r.org AND s.robot=r.id

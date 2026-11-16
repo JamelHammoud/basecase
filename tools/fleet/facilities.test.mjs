@@ -63,7 +63,9 @@ it('persists the source hash and explicit registration independently of facility
   const restored = await viewer.result('GET', `site/${site.id}/facility/geometry`);
 
   expect(reopened.registration.controls).toEqual(controls.controls);
-  expect(restored.lines).toEqual(geometry.lines);
+  expect(restored.geometry.lines).toEqual(geometry.lines);
+  expect(restored.facility.hash).toBe(reopened.facility.hash);
+  expect(restored.registration).toEqual(reopened.registration);
   expect(reopened.facility.hash).toBe(imported.facility.hash);
   expect(
     (await admin.call('PUT', `site/${site.id}/facility/registration`, { ...controls, facility: 'b'.repeat(64) }))
@@ -179,4 +181,37 @@ it('reserves at most two preparation workers before reading large request bodies
   await expect(jobs.prepare(request(), 'import')).rejects.toMatchObject({ status: 503 });
   release();
   await Promise.all([first, second]);
+});
+
+it('refreshes open inventories on facility writes without closing their subscription', async () => {
+  const stream = await admin.subscribe();
+
+  try {
+    expect((await stream.next()).event).toBe('snapshot');
+
+    const imported = await admin.result('PUT', `site/${site.id}/facility`, { files, geometry });
+
+    expect((await stream.next()).event).toBe('snapshot');
+    await admin.result('PUT', `site/${site.id}/facility/registration`, {
+      ...controls,
+      facility: imported.facility.hash,
+    });
+    expect((await stream.next()).event).toBe('snapshot');
+
+    const loaded = await admin.result('GET', `site/${site.id}/facility/geometry`);
+
+    expect(loaded.facility.hash).toBe(imported.facility.hash);
+    expect(loaded.registration.controls).toEqual(controls.controls);
+    expect(loaded.geometry.lines).toEqual(geometry.lines);
+
+    const replaced = await admin.result('PUT', `site/${site.id}/facility`, { files, geometry });
+
+    expect((await stream.next()).event).toBe('snapshot');
+    expect(replaced.facility.hash).toBe(imported.facility.hash);
+    expect(replaced.facility.revision).not.toBe(imported.facility.revision);
+    expect(replaced.registration).toBeNull();
+    expect((await admin.result('GET', `site/${site.id}`)).facility.revision).toBe(replaced.facility.revision);
+  } finally {
+    await stream.close();
+  }
 });

@@ -105,17 +105,16 @@ export function couplerPoint(l: PlacedFourBar, thetaDeg: number): Vec2 | null {
   return point && placed(l, point);
 }
 
-export function linkAngles(l: Links, thetaDeg: number): { coupler: number; rocker: number } | null {
+export function linkAngle(l: Links, thetaDeg: number, link: 'coupler' | 'rocker'): number | null {
   const closed = closure(l, toRadians(thetaDeg));
 
   if (!closed) return null;
 
   const { b, c } = closed;
 
-  return {
-    coupler: toDegrees(Math.atan2(c[1] - b[1], c[0] - b[0])),
-    rocker: toDegrees(Math.atan2(c[1], c[0] - l.ground)),
-  };
+  return link === 'rocker'
+    ? toDegrees(Math.atan2(c[1], c[0] - l.ground))
+    : toDegrees(Math.atan2(c[1] - b[1], c[0] - b[0]));
 }
 
 export function grashofClass(l: FourBar): GrashofClass {

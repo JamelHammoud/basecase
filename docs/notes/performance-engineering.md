@@ -49,3 +49,9 @@ Getter-count fixtures assign joint `i` the share `(i * 37) % length`, then compa
 ## Planar hulls share one traversal
 
 `convexHull.test.ts` checks outline order, enclosure, source preservation and degenerate inputs. `supportMargin.test.ts` checks signed distances and the single-contact refusal.
+
+## Torque percentiles select one rank
+
+`torquePercentile.test.ts` compares the previous sorting formula with 160 sample lengths in generated, ascending, descending and constant order. It covers eleven quantiles, later edits, input preservation, signed zeros, infinities, NaN and sparse samples. Walk and fall callers retain their settling, heating and contact windows. Partition work is capped before a sorting fallback, so unfavorable pivots cannot cause unbounded quadratic partitioning. Exceptional samples keep stable sorting because comparator equality can preserve their source order.
+
+A scratch Vitest benchmark on macOS arm64, Node v26.13.0, generated sample `i` as `((i * 73) % 127) / 10`. After 20 warm-up calls per implementation, 100 calls at the 99th percentile took 0.606 ms before and 0.445 ms after for 60 samples, 57.164 ms and 7.135 ms for 560 samples, and 672.421 ms and 15.753 ms for 10,000 samples. These are single local aggregate timings with concurrent related tests, not CI budgets or complete simulation measurements. Two larger scratch batches exceeded Vitest's five-second timeout, so the measurement batch was shortened without changing any timeout. The final scratch run passed. No timing assertion was added.

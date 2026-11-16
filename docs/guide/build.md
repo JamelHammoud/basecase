@@ -180,6 +180,8 @@ Measurements and limits: [Strength and Lighten performance evidence](../notes/pe
 
 ## Performance: engineering calculations
 
+- **Torque percentiles select one rank.** Walking peak torque and fall impact checks share `utils/peakTorque.ts`'s percentile calculation. It partitions one copied sample buffer instead of fully sorting ordinary numeric samples. Partition work is bounded by four times the sample count before reverting to sorting. NaN, sparse samples and negative zero retain the previous stable sorting path. Nearest-rank clamping, empty results and input ownership stay unchanged. `torquePercentile.test.ts` compares generated orders, duplicates, edits and exceptional inputs against the previous calculation, and checks both callers' sample windows. [Evidence](../notes/performance-engineering.md#torque-percentiles-select-one-rank).
+
 Measurements and limits: [Engineering calculations performance evidence](../notes/performance-engineering.md).
 
 - **Motion boundaries scan without sorting.** `utils/engineeringJoints.ts` finds each direction’s nearest clash and last clear sample with linear scans. Build and agent engineering reports share this path. First-pair ties, strict sample boundaries, floor exclusions, depth thresholds and published-joint warnings stay unchanged. `engineeringSweep.test.ts` compares findings against the previous sorting calculation across generated ranges, edited inputs, tied pairs and nonfinite angles. [Evidence](../notes/performance-engineering.md#motion-boundaries-scan-without-sorting).

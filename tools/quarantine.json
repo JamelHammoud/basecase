@@ -65,6 +65,14 @@
   },
   {
     "file": "e2e/caseCode.e2e.test.ts",
+    "test": "streams a camera to code at the asked size and rate, cheaply on the main thread, and stops with the Case",
+    "issue": 1410,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43856125616 failed the unchanged mean main-thread handoff budget at line 374 on both Windows attempts, measuring 2.403 and 2.182 ms against less than 2 ms. The preceding Windows run 43851640785 passed in 12.043 s with unchanged test body, camera pipeline, code bridge, harness, dependency lock and e2e configuration. A single zero-retry Windows diagnostic at the exact failing commit passed in run 43858111193, confirming intermittency. Dimensions and rate checks passed before the failure. Scheduling and actual callback work are not distinguished. Issue #1410 owns Windows tracing and equal-load before-and-after measurements. Linux and macOS retain the walkthrough, while cameraStream, streamPace, feedWorker and codeWorld tests retain routing, pacing, ownership and teardown coverage."
+  },
+  {
+    "file": "e2e/caseCode.e2e.test.ts",
     "test": "passes pointer input through the HUD and stops driving before closing Run Case on Escape inside a code frame",
     "issue": 1377,
     "until": "2026-11-28",

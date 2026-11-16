@@ -53,6 +53,8 @@ The independent verifier, on the WASM `SimEngine`. `runArena({ mj, model, contra
 - **Contact signals read `data.contact` once per read and free it.** Every read of that getter allocates a new list in the WASM heap. Reading it per contact without freeing it ran out of 2 GB after about 20,000 reads, which crashed any contract with a contact signal (`arenaSignals.test.ts`).
 - **Delay** wraps `mj_step` through `sim/controlDelay.ts`, shared with live physics settings (§8d). Its ring reuses control snapshots after startup, holds the first command until full and clears before each try. **Divergence** turns off MuJoCo's auto-reset and fails the try on a bad-state warning, and a NaN trace fails the contract.
 
+Resting foot-contact spread uses `utils/planarDiameter.ts`, shared with four-bar fitting, without constructing a quadratic distance array. It reads the first two contact coordinates and retains the 0.01 m flat-foot threshold, zero floor and nonfinite results. The scan visits each unordered pair once, including self pairs.
+
 ### Method Router (`router.ts`)
 
 `routeTask(analysis)` is pure and walks the plan's rungs in order: unverifiable, IK or motion plan, tracking (built for moves, below), Routine, LQR or MPC (12 state values or fewer, no rich contact), tracking RL with a reset curriculum, reward search (6 candidates at 5M steps, 2 at 25M, 1 at 100M, up to 3 rounds, warm-started after the first), ask for a demo, then not found with design relaxations. It returns the method, the rung and the reason. The ask-for-demo rung's solver is Train from Tries (§8h): a person's passed tries of a Case are the demo, and the skill it keeps records `ask-for-demo` as its method. The router doesn't send drafts to it, since a draft carries no Case.

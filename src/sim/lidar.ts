@@ -68,9 +68,11 @@ function samplesOf(info: ComponentInfo, rateHz: number, fovDeg: number): number 
 }
 
 export function lidarSpec(info: ComponentInfo): LidarSpec | null {
+  if (info.group !== 'LiDAR') return null;
+
   const rangeM = rangeOf(info);
 
-  if (info.group !== 'LiDAR' || !rangeM) return null;
+  if (!rangeM) return null;
 
   const rateHz = rateOf(info);
   const fovDeg = fovOf(info);
@@ -111,9 +113,12 @@ function sensorFrame(part: ScenePart) {
 
 export function buildScan(bodies: SimBody[], part: ScenePart): Eye | null {
   const spec = partLidar(part);
+
+  if (!spec) return null;
+
   const body = bodies.find((b) => b.parts.includes(part.id));
 
-  if (!spec || !body) return null;
+  if (!body) return null;
 
   const { origin, forward, left } = sensorFrame(part);
   const dirs = scanAngles(spec).flatMap((deg) => {

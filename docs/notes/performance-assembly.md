@@ -49,3 +49,7 @@ Implementation: [Assembly and repair planning](../guide/build.md#performance-ass
 ## Removal units index mutual blockers once per plan
 
 `removalUnits.test.ts` compares every directed three-part graph, including duplicate, self and unknown blockers, and checks group priority, hardware, source preservation and geometry edits. Complete plans for 150 and 300 interlocked parts have local-move read budgets of 6,825 and 24,900. The previous planner read those moves 292,750 and 2,295,500 times on the same fixtures. Ordinary removal passes still revisit the remaining parts, so the complete planner is not linear. These are operation counts and budgets, without timing assertions.
+
+## Minimum teardown prunes dependency sets directly
+
+`minimalClosures.test.ts` compares ordered results and retained set identities against the previous pruning algorithm for all 512 ordered triples of subsets of three dependencies. It also checks empty frontiers, empty closures, duplicate alternatives, nonadjacent dominated entries, source preservation and later edits. Nested fixtures with 300 and 600 alternatives reduce set-iterator starts from 598 and 1,198 to 299 and 599. The new pruning code creates no subset-copy arrays or superset lists and performs no splice searches. These are operation counts, without timing assertions or a claim about complete repair-planning time. The Cartesian combination of prerequisite alternatives remains unchanged and can still grow combinatorially.

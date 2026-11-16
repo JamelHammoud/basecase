@@ -8,8 +8,8 @@ import { publish } from '../lib/pull.mjs';
 import { stepPullIndex, stepStatus } from '../lib/stepPulls.mjs';
 import { recordDecline } from '../lib/stepState.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
-import { eligibleTask, unavailableCapabilities } from '../lib/capabilities.mjs';
-import { pendingSteps } from '../lib/deliveryState.mjs';
+import { eligibleTask, taskKey, unavailableCapabilities } from '../lib/capabilities.mjs';
+import { hasPendingWorktree, pendingSteps } from '../lib/deliveryState.mjs';
 import { taskInputSignature } from '../lib/taskInputs.mjs';
 import { clearRecovery, recoveryFor, refreshRecovery, saveRecovery } from '../lib/workRecovery.mjs';
 import { inputsReady, recoverySignature } from '../lib/taskReadiness.mjs';
@@ -68,20 +68,37 @@ const waitingSteps = () => {
   return buildOrder(candidates, { compare: byPriorityThenAge, openSteps });
 };
 
+function reconsideration({ missing, inputSignature, waitFor, until }) {
+  if (missing.length > 0)
+    return `Waiting for ${missing.join(', ')}. A builder reconsiders when those capabilities become available or the task definition changes.`;
+
+  if (inputSignature)
+    return 'A builder reconsiders when its declared source inputs, task definition or available capabilities change, or its named dependencies close.';
+
+  const dependency = waitFor.length > 0 ? `until ${waitFor.map((number) => `#${number}`).join(', ')} close, and ` : '';
+  const retry = new Date(until).toISOString().slice(0, 16).replace('T', ' ');
+
+  return `A builder picks it up again ${dependency}after ${retry} UTC at the earliest.`;
+}
+
 function decline(step, reason, inputSignature) {
   const openNumbers = openPullNumbers();
   const waitFor = [...reason.matchAll(/#(\d+)/g)].map((m) => Number(m[1])).filter((n) => openNumbers.has(n));
-  const missing = unavailableCapabilities({ body: reason });
-  const entry = recordDecline(step.number, { now: Date.now(), waitFor, inputSignature, missing });
-  const until = waitFor.length > 0 ? `until ${waitFor.map((n) => `#${n}`).join(', ')} close` : '';
-  const retry = new Date(entry.until).toISOString().slice(0, 16).replace('T', ' ');
+  const missing = unavailableCapabilities({ title: step.title, body: reason });
+  const entry = recordDecline(step.number, {
+    now: Date.now(),
+    waitFor,
+    inputSignature,
+    taskHead: taskKey(step),
+    missing,
+  });
 
-  if (inputSignature && waitFor.length === 0)
+  if (missing.length > 0 || (inputSignature && waitFor.length === 0))
     editIssueLabels(step.number, { add: ['loop:blocked'], remove: [NEXT, BUILDING] });
 
   commentOnIssue(
     step.number,
-    `Not built this time: ${reason}\n\n${inputSignature ? 'A builder reconsiders this when its declared source inputs, requirements or available capabilities change, or its named dependencies close.' : `A builder picks it up again ${until ? `${until}, and ` : ''}after ${retry} UTC at the earliest.`}`,
+    `Not built this time: ${reason}\n\n${reconsideration({ missing, inputSignature, waitFor, until: entry.until })}`,
   );
 }
 
@@ -96,24 +113,40 @@ function claimNextStep() {
 }
 
 function recoveryContext(step, inputSignature, recovery) {
-  if (!recovery || recovery.inputSignature === recoverySignature(step, inputSignature)) return '';
+  if (!recovery) return '';
 
-  return refreshRecovery(recovery);
+  const failure = recovery.reason ? `The previous attempt stopped: ${recovery.reason}` : '';
+  const refreshed =
+    recovery.inputSignature === recoverySignature(step, inputSignature) ? '' : refreshRecovery(recovery);
+
+  return [failure, refreshed].filter(Boolean).join('\n\n');
 }
 
-function retainFailedSession(step, inputSignature, worktree, session) {
+function retainFailedSession(step, inputSignature, worktree, { session, reason }) {
   if (!session || !worktree) return;
 
   saveRecovery(step.number, {
     worktree,
     inputSignature: recoverySignature(step, inputSignature),
     session,
+    reason: String(reason ?? '').slice(-6000),
   });
+}
+
+function retainPublicationFailure(step, { inputSignature, worktree, session, error }) {
+  if (worktree && hasPendingWorktree(worktree.dir)) {
+    clearRecovery(step.number);
+
+    return;
+  }
+
+  retainFailedSession(step, inputSignature, worktree, { session: error.session ?? session, reason: error });
 }
 
 function buildStep(step, { log, slot }) {
   let inputSignature;
   let worktree;
+  let continuation;
   const giveBack = (result) => {
     editIssueLabels(step.number, { add: [NEXT], remove: [BUILDING] });
 
@@ -127,6 +160,7 @@ function buildStep(step, { log, slot }) {
     const recovery = recoveryFor(step.number);
 
     worktree = recovery ?? openBranch('build', `${step.number}-${slot}-${step.title}`);
+    continuation = recovery?.session;
 
     const prompt = [
       `Build this step, issue #${step.number}: ${step.title}\n\n${step.body}`,
@@ -141,14 +175,15 @@ function buildStep(step, { log, slot }) {
       schema: CHANGE_SCHEMA,
       hours: 12,
       log,
-      continuation: recovery?.session,
+      continuation,
     });
 
-    const failedSession = result.session ?? recovery?.session;
+    continuation = result.session ?? continuation;
 
-    if (!result.ok) retainFailedSession(step, inputSignature, worktree, failedSession);
+    if (!result.ok)
+      retainFailedSession(step, inputSignature, worktree, { session: continuation, reason: result.error });
 
-    if (result.ok) clearRecovery(step.number);
+    if (result.ok && !result.output.changed) clearRecovery(step.number);
 
     if (!result.ok || !result.output.changed) {
       giveBack(result);
@@ -161,6 +196,7 @@ function buildStep(step, { log, slot }) {
     const taken = latest ? stepStatus(latest, step.number) : 'none';
 
     if (taken !== 'none') {
+      clearRecovery(step.number);
       log(`#${step.number}: another pull request for this step is ${taken} now; not publishing a second`);
 
       return;
@@ -173,9 +209,11 @@ function buildStep(step, { log, slot }) {
     };
     const url = publish(change, { ...worktree, onDuplicate });
 
+    clearRecovery(step.number);
+
     if (url) log(`#${step.number}: opened ${url}`);
   } catch (error) {
-    retainFailedSession(step, inputSignature, worktree, error.session);
+    retainPublicationFailure(step, { inputSignature, worktree, session: continuation, error });
     giveBack();
 
     throw error;

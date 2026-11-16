@@ -10,6 +10,7 @@ const calls = vi.hoisted(() => ({
   close: vi.fn(),
   release: vi.fn(),
   refresh: vi.fn(() => 'Refreshed main inputs.'),
+  publish: vi.fn(),
   signature: 'source-a',
   steps: [],
 }));
@@ -30,7 +31,7 @@ vi.mock('../lib/github.mjs', () => ({
   openPulls: () => [],
 }));
 vi.mock('../lib/preflight.mjs', () => ({ checkedRun: calls.checkedRun }));
-vi.mock('../lib/pull.mjs', () => ({ publish: vi.fn() }));
+vi.mock('../lib/pull.mjs', () => ({ publish: calls.publish }));
 vi.mock('../lib/stepPulls.mjs', () => ({ stepPullIndex: () => new Map(), stepStatus: () => 'none' }));
 vi.mock('../lib/taskInputs.mjs', () => ({ taskInputSignature: () => calls.signature }));
 vi.mock('../lib/worktree.mjs', () => ({ openBranch: calls.openBranch, close: calls.close }));
@@ -42,6 +43,7 @@ vi.mock('../lib/workRecovery.mjs', async (importOriginal) => ({
 const { default: build } = await import('./build.mjs');
 const { recoveryFor, saveRecovery } = await import('../lib/workRecovery.mjs');
 const { recordDecline } = await import('../lib/stepState.mjs');
+const { completeDelivery, hasPendingWorktree, saveDelivery } = await import('../lib/deliveryState.mjs');
 
 const queuedStep = (number) => ({
   number,
@@ -52,10 +54,102 @@ const queuedStep = (number) => ({
   createdAt: '2026-01-01T00:00:00Z',
 });
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+  vi.clearAllMocks();
+  calls.publish.mockReset();
+});
 afterAll(() => {
   fs.rmSync(directory, { recursive: true, force: true });
   vi.unstubAllEnvs();
+});
+
+describe('builder publication recovery', () => {
+  it('bounds repeated publication failures for unchanged inputs', () => {
+    const worktree = { dir: directory, branch: 'loop/build/52-feature' };
+    const session = { provider: 'codex', id: 'publication-thread' };
+    const failure = new Error('Commit hook failed.');
+
+    calls.steps = [queuedStep(52)];
+    calls.openBranch.mockReturnValue(worktree);
+    calls.checkedRun.mockReturnValue({
+      ok: true,
+      session,
+      output: { changed: true, title: 'Feature', kind: 'feature' },
+    });
+    calls.publish.mockImplementation(() => {
+      throw failure;
+    });
+
+    for (let attempt = 0; attempt < 2; attempt++) expect(() => build({ log: vi.fn(), slot: 1 })).toThrow(failure);
+
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.checkedRun).toHaveBeenCalledTimes(2);
+    expect(calls.openBranch).toHaveBeenCalledOnce();
+    expect(recoveryFor(52)).toMatchObject({ attempts: 1, session, ...worktree });
+  });
+
+  it('hands prepared publication failures to delivery without retaining another model recovery', () => {
+    const worktree = { dir: directory, branch: 'loop/build/53-feature' };
+    const session = { provider: 'codex', id: 'delivery-thread' };
+    const failure = new Error('GitHub push failed.');
+
+    calls.steps = [queuedStep(53)];
+    calls.openBranch.mockReturnValue(worktree);
+    calls.checkedRun.mockReturnValue({
+      ok: true,
+      session,
+      output: { changed: true, title: 'Feature', kind: 'feature' },
+    });
+    calls.publish.mockImplementationOnce(() => {
+      saveDelivery({ ...worktree, body: 'Closes #53.' });
+
+      throw failure;
+    });
+
+    expect(() => build({ log: vi.fn(), slot: 1 })).toThrow(failure);
+    expect(recoveryFor(53)).toBeNull();
+    expect(hasPendingWorktree(directory)).toBe(true);
+
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.checkedRun).toHaveBeenCalledOnce();
+    completeDelivery(worktree.branch);
+  });
+
+  it('retains completed work after a commit failure and resumes with the failure details', () => {
+    const worktree = { dir: directory, branch: 'loop/build/51-feature' };
+    const session = { provider: 'codex', id: 'completed-thread' };
+    const failure = new Error('Commit hook rejected a fixture path.');
+
+    calls.steps = [queuedStep(51)];
+    calls.openBranch.mockReturnValue(worktree);
+    calls.checkedRun.mockReturnValue({
+      ok: true,
+      session,
+      output: { changed: true, title: 'Feature', kind: 'feature' },
+    });
+    calls.publish.mockImplementationOnce(() => {
+      throw failure;
+    });
+    calls.close.mockImplementationOnce(() => {
+      expect(recoveryFor(51)).toMatchObject({ session, ...worktree });
+    });
+
+    expect(() => build({ log: vi.fn(), slot: 1 })).toThrow(failure);
+    expect(calls.steps[0].labels).toEqual([{ name: 'loop:next' }]);
+    expect(recoveryFor(51)).toMatchObject({ session, reason: String(failure), ...worktree });
+
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.checkedRun.mock.calls[1][0]).toMatchObject({
+      continuation: session,
+      prompt: expect.stringContaining(failure.message),
+    });
+    expect(calls.openBranch).toHaveBeenCalledOnce();
+    expect(calls.release).toHaveBeenCalledTimes(2);
+    expect(recoveryFor(51)).toBeNull();
+  });
 });
 
 describe('builder recovery attempts', () => {
@@ -140,6 +234,29 @@ describe('builder recovery attempts', () => {
   });
 });
 
+describe('builder capability discoveries', () => {
+  it('does not rediscover unavailable hardware after source changes and reopens an edited task immediately', () => {
+    const worktree = { dir: directory, branch: 'loop/build/49-feature' };
+
+    calls.steps = [queuedStep(49)];
+    calls.signature = 'source-a';
+    calls.openBranch.mockReturnValue(worktree);
+    calls.checkedRun.mockReturnValue({ ok: true, output: { changed: false, notes: 'Requires: physical-robot' } });
+    build({ log: vi.fn(), slot: 1 });
+    calls.signature = 'source-b';
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.checkedRun).toHaveBeenCalledOnce();
+    expect(calls.steps[0].labels).toEqual([{ name: 'loop:blocked' }]);
+
+    calls.steps[0].body += '\nVerify with the existing emulator instead of physical hardware.';
+    calls.checkedRun.mockReturnValue({ ok: false, error: 'stopped' });
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.checkedRun).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('builder task readiness', () => {
   it('keeps current declared dependencies blocking after declined inputs change', () => {
     const step = { ...queuedStep(45), body: `${queuedStep(45).body}\nDepends on #46.` };
@@ -167,6 +284,15 @@ describe('builder task readiness', () => {
 
   it('blocks a legacy task requiring unavailable hardware before opening a worktree', () => {
     calls.steps = [{ ...queuedStep(47), body: 'Requires: physical-robot\nInputs: `src/cameras/`' }];
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.steps[0].labels).toEqual([{ name: 'loop:blocked' }]);
+    expect(calls.checkedRun).not.toHaveBeenCalled();
+    expect(calls.openBranch).not.toHaveBeenCalled();
+  });
+
+  it('blocks legacy Windows diagnostics that only declare CI before opening a worktree', () => {
+    calls.steps = [{ ...queuedStep(50), body: 'Requires: windows-ci\nCapture Windows process traces.' }];
     build({ log: vi.fn(), slot: 1 });
 
     expect(calls.steps[0].labels).toEqual([{ name: 'loop:blocked' }]);

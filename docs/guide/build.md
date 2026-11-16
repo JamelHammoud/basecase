@@ -180,7 +180,11 @@ Measurements and limits: [Strength and Lighten performance evidence](../notes/pe
 
 ## Performance: engineering calculations
 
+- **Torque percentiles select one rank.** Walking peak torque and fall impact checks share `utils/peakTorque.ts`'s percentile calculation. It partitions one copied sample buffer instead of fully sorting ordinary numeric samples. Partition work is bounded by four times the sample count before reverting to sorting. NaN, sparse samples and negative zero retain the previous stable sorting path. Nearest-rank clamping, empty results and input ownership stay unchanged. `torquePercentile.test.ts` compares generated orders, duplicates, edits and exceptional inputs against the previous calculation, and checks both callers' sample windows. [Evidence](../notes/performance-engineering.md#torque-percentiles-select-one-rank).
+
 Measurements and limits: [Engineering calculations performance evidence](../notes/performance-engineering.md).
+
+- **Assembly time tallies accepted parts directly.** `utils/engineeringTime.ts` indexes built parts without filtered or mapped staging lists. Each guide step collects its output ids and counts fasteners and inserts in one traversal, without temporary part lists or category arrays. The counted set advances after the step, preserving within-step repeats, source order and exclusion of parts used in earlier steps. Build's Time check is the only caller of `assemblyTimes`. `assemblyTimes.test.ts` compares complete estimates against the previous calculation across mixed steps, excluded parts, missing ids, repeats and later visibility edits. [Evidence](../notes/performance-engineering.md#assembly-time-tallies-accepted-parts-directly).
 
 - **Motion boundaries scan without sorting.** `utils/engineeringJoints.ts` finds each direction’s nearest clash and last clear sample with linear scans. Build and agent engineering reports share this path. First-pair ties, strict sample boundaries, floor exclusions, depth thresholds and published-joint warnings stay unchanged. `engineeringSweep.test.ts` compares findings against the previous sorting calculation across generated ranges, edited inputs, tied pairs and nonfinite angles. [Evidence](../notes/performance-engineering.md#motion-boundaries-scan-without-sorting).
 
@@ -209,6 +213,8 @@ Measurements and limits: [Engineering calculations performance evidence](../note
 ## Performance: assembly and repair planning
 
 Measurements and limits: [Assembly and repair planning performance evidence](../notes/performance-assembly.md).
+
+- **Minimum teardown prunes dependency sets directly.** Both alternative-path pruning and combined-prerequisite pruning in `assembly/minimumTeardown.ts` use `minimalClosures.ts`. Set comparisons reject impossible sizes before iterating and stop at the first missing member. The retained frontier compacts in place instead of collecting supersets and repeatedly searching and splicing them. First-equal ties, survivor order and source sets stay intact. `minimalClosures.test.ts` checks exhaustive ordered triples, nonadjacent removals, input edits and iteration counts. Existing service-depth and repair-plan tests exercise the complete search. [Evidence](../notes/performance-assembly.md#minimum-teardown-prunes-dependency-sets-directly).
 
 - **Assembly diagnostics select one candidate without sorting.** `assembly/blockerChoice.ts` serves stuck-part blockers, blocked service exits, enclosure splits and lip warnings. It removes copied candidate lists, split-blocker flattening and temporary lip-ranking records. First-match ties, solid-before-lip priority and report text stay unchanged. [Evidence](../notes/performance-assembly.md#assembly-diagnostics-select-one-candidate-without-sorting).
 
@@ -239,6 +245,8 @@ Measurements and limits: [Assembly and repair planning performance evidence](../
 ## Performance: cable routing
 
 Measurements and limits: [Cable routing performance evidence](../notes/performance-wiring.md).
+
+- **Servo buses group connectors once.** `wiring/netlist.ts` groups ordered servos and scene-ordered adapters by connector within each netlist call. Bus construction reads those groups without rescanning unrelated connectors. First-servo connector order, rounded adapter splits, loose servos and unmatched reporting stay unchanged. BOM, Checks, the agent and Build Along share this netlist. `netlistGrouping.test.ts` covers mixed buses, adapter order, duplicate actuator references, loose servos, surplus adapters, missing adapters, empty scenes and input preservation. [Evidence](../notes/performance-wiring.md#servo-buses-group-connectors-once).
 
 - **Cable-clearance queries reuse their interval.** `wiring/routeCollision.ts` clips one query-local accumulator against the six box planes, replacing up to six returned interval arrays with one. Connector exits, anchors, detour corners and visibility edges share this path across rest and sampled motion. [Evidence](../notes/performance-wiring.md#cable-clearance-queries-reuse-their-interval).
 

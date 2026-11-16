@@ -253,7 +253,7 @@ export function leadPrompt(world, { merged, copyLine, worst, conflicts = [] }) {
   const direction = [world.direction?.body, ...world.comments.map((c) => c.body)].filter(Boolean).join('\n\n---\n\n');
 
   return [
-    `## Available execution capabilities\n${availableCapabilities().join(', ')}\nEvery step declares requires. Windows CI can verify Windows changes. There is no interactive Windows host, physical robot, printer, iOS device, or CUDA GPU unless listed. Propose only work that can be fully implemented and verified using available capabilities. Keep unsupported work out of the executable queue.`,
+    `## Available execution capabilities\n${availableCapabilities().join(', ')}\nEvery step declares requires. Windows CI can verify published pull request changes. It has no prepublication diagnostic inputs for controlled baseline and candidate runs or Windows process traces. Such work requires windows-diagnostics, which is unavailable unless listed. There is no interactive Windows host, physical robot, printer, iOS device, or CUDA GPU unless listed. Propose only work that can be fully implemented and verified using available capabilities. Keep unsupported work out of the executable queue.`,
     `## Direction from Jamel (newest last)\n\n${direction || 'None yet.'}`,
     listing("New requests from Jamel: plan these first, every one, citing the request's number", world.requests),
     listing("Jamel's requests already in progress", world.tracked),

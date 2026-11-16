@@ -49,3 +49,58 @@ describe('step backoff', () => {
     expect(stepWaiting(entry, { now: 1, openNumbers: new Set([42]), inputSignature: 'source-b' })).toBe(false);
   });
 });
+
+describe('missing execution capabilities', () => {
+  it('waits for a known missing capability even when unrelated source inputs change', () => {
+    const entry = recordDecline(13, {
+      now: 0,
+      waitFor: [],
+      inputSignature: 'a',
+      taskHead: 'task-a',
+      missing: ['windows-diagnostics'],
+    });
+
+    expect(
+      stepWaiting(entry, { now: 9e9, openNumbers: new Set(), inputSignature: 'b', taskHead: 'task-a', available: [] }),
+    ).toBe(true);
+    expect(
+      stepWaiting(entry, {
+        now: 1,
+        openNumbers: new Set(),
+        inputSignature: 'a',
+        taskHead: 'task-a',
+        available: ['windows-diagnostics'],
+      }),
+    ).toBe(false);
+    expect(
+      stepWaiting(entry, { now: 1, openNumbers: new Set(), inputSignature: 'a', taskHead: 'task-b', available: [] }),
+    ).toBe(false);
+  });
+
+  it('keeps a named dependency blocking after a missing capability becomes available', () => {
+    const entry = recordDecline(14, { now: 0, waitFor: [99], taskHead: 'task-a', missing: ['windows-diagnostics'] });
+    const context = { now: 1, taskHead: 'task-a', available: ['windows-diagnostics'] };
+
+    expect(stepWaiting(entry, { ...context, openNumbers: new Set([99]) })).toBe(true);
+    expect(stepWaiting(entry, { ...context, openNumbers: new Set() })).toBe(false);
+  });
+
+  it('keeps named dependencies blocking when capability availability changes the source fingerprint', () => {
+    const entry = recordDecline(15, {
+      now: 0,
+      waitFor: [99],
+      taskHead: 'task-a',
+      inputSignature: 'source-without-diagnostics',
+      missing: ['windows-diagnostics'],
+    });
+    const context = {
+      now: 1,
+      taskHead: 'task-a',
+      inputSignature: 'source-with-diagnostics',
+      available: ['windows-diagnostics'],
+    };
+
+    expect(stepWaiting(entry, { ...context, openNumbers: new Set([99]) })).toBe(true);
+    expect(stepWaiting(entry, { ...context, openNumbers: new Set() })).toBe(false);
+  });
+});

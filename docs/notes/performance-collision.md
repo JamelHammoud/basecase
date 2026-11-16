@@ -64,9 +64,9 @@ These are operation counts, without timing assertions or a claim about complete 
 
 ## Containment samples write into their final buffer
 
-`solidSamples.test.ts` compares exact Float32 output against the previous buffered calculation across 16 coordinate counts and 11 budgets. Cases include empty and incomplete triangles, fractional budgets, vertex-stride transitions, centroid limits, unchanged sources and independent caches for replacement shapes and different budgets.
+`solidSamples.test.ts` compares exact Float32 output against the previous buffered calculation across 16 coordinate counts and 16 budgets. Cases include empty and incomplete triangles, fractional, zero, negative and nonfinite budgets, vertex-stride transitions, centroid limits, unchanged sources and independent caches for replacement shapes and different budgets.
 
-For a 1,200-vertex shape, budgets of 300 and 600 produce 400 and 800 samples. Previously these retained temporary JavaScript lists of 1,200 and 2,400 coordinate entries, then copied every entry into Float32 storage. The sampler now allocates only the final 4,800-byte and 9,600-byte buffers. Its sizing pass walks selected indices without reading coordinates or retaining entries. Cache hits still return the existing buffer. These are storage and copy counts, without timing assertions or a claim about complete collision-check time. Existing analysis and servo-sweep tests cover the surrounding collision pipeline.
+For a 1,200-vertex shape, budgets of 300 and 600 produce 400 and 800 samples. Previously these retained temporary JavaScript lists of 1,200 and 2,400 coordinate entries, then copied every entry into Float32 storage. The sampler now allocates only the final 4,800-byte and 9,600-byte buffers. Sizing now calculates vertex and centroid counts directly from their loop bounds, preserving the initial iteration for a nonfinite stride. It removes both preliminary counting loops. At those budgets this eliminates 400 and 800 counting iterations per uncached shape. Filling still visits each selected sample once. Cache hits still return the existing buffer. These are storage and copy counts, without timing assertions or a claim about complete collision-check time. Existing analysis and servo-sweep tests cover the surrounding collision pipeline.
 
 ## Crossing vectors are built only for selected probes
 

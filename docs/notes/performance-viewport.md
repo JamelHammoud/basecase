@@ -2,6 +2,14 @@
 
 Implementation: [Viewport rendering](../guide/canvas.md#performance-viewport-rendering). Shared requirements: [Performance](../guide/performance.md).
 
+## Line batches retain transform storage
+
+`LineBatch.setMatrix` previously cloned a Matrix4 and its 16-element array on every transform update. It now clones once when an instance first receives a matrix, then copies later values into that snapshot. Removal deletes the snapshot. The matrix texture and visibility behavior stay unchanged.
+
+`src/three/viewport/lineBatch.test.ts` exercises 300 and 600 instances through eight poses, alternating visibility. Both sizes exceed the initial 256-instance texture capacity. Initial creation still clones 300 and 600 matrices. Subsequent poses clone zero, down from 2,400 and 4,800 matrices and the same number of element arrays under the previous implementation. These are asserted clone counts and source-derived array counts, not timings. The tests run on the CPU without WebGL.
+
+The lifecycle test reads uploaded Float32 matrix values and checks independent instances, movement while hidden, restoration after source mutation, removal and reuse of an instance id. Existing `partBatches.test.ts` covers shared edge batching and movement through PartLayer. This changes no workflow or visible state, so help instructions remain applicable. GPU rendering, texture-upload costs and complete interaction latency are outside these checks.
+
 ## Mark hit tests stream projected endpoints
 
 Mark selection, hover, drag start and erasing share `MarkLayer.distances`. Previously each unlabeled stroke query constructed a projected point array and one pixel tuple per point. The distance scan now holds two pixel tuples per stroke and projects directly into them. The query's projection vector and the returned mark-distance list remain unchanged.

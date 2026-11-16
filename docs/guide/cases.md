@@ -127,6 +127,8 @@ A run the robot faulted on becomes a Case the design must pass from then on (§8
 
 ### Captured and generated worlds
 
+Fleet facility imports reuse the GLB, glTF and OBJ readers but preserve the source elevations and use explicit site registration. They do not call Case floor normalization or register simulation collision assets in `worldAssets.ts`. A Case's levelled floor cannot locate a facility in the world. The [Fleet guide](fleet.md#sites-and-facility-twins) owns that separate placement and its import coverage.
+
 Dropping one GLB, glTF or OBJ collider, with an optional SPZ or PLY Gaussian splat, uses the same canvas import route as RoomPlan. `worldImport.ts` reads only the files in that drop, including linked resources inside accompanying folders with their relative paths preserved. RoomPlan files stay separate from other files in the drop. Scene, robot, recording, motion and SVG files keep their existing import routes even alongside JSON or mesh files. A splat on its own is refused with a request for a collider. The file's name becomes the World choice in New Case. Its ground goals are Reach a Spot, Push a Box, Follow a Path and, on legs, Walk Without Falling.
 
 - **Size and floor:** the mesh reader normalizes the imported frame into the studio's millimetres and Y-up frame. Metre files keep their true size. A source extent of at least 1,000 units selects millimetres, otherwise metres. Explicit reader units override that rule. Values within 0.001 mm of zero are snapped to zero after levelling. The largest upward-facing plane defines the floor and is levelled to zero. The same transform is applied to the splat. Imported Cases omit the slot's reach and anchor, so another robot never rescales the capture.

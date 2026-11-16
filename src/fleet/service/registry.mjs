@@ -18,10 +18,11 @@ function demandResource(actor, action, resource) {
   demand(actor, action, resource);
 }
 
-const selection = `SELECT r.*,s.status,s.observed_at,s.received_at,s.generation,
+const selection = `SELECT r.*,s.status,s.observed_at,s.received_at,s.generation,s.pose,s.work,CASE WHEN facility.site IS NULL THEN NULL ELSE jsonb_build_object('hash',facility.summary->'hash','name',facility.summary->'name','revision',facility.summary->'revision') END AS facility,facility.registration,facility.site AS facility_site,
  COALESCE((SELECT jsonb_object_agg(a.key,a.value ORDER BY array_position(r.ancestors,p.id)) FROM fleet_resources p CROSS JOIN LATERAL jsonb_each(COALESCE(p.data->'attributes','{}')) a WHERE p.org=r.org AND p.kind='site' AND p.id=ANY(r.ancestors)),'{}') AS site_attributes,
  (SELECT p.data->'attributes' FROM fleet_resources p WHERE p.org=r.org AND p.kind='robot' AND p.id=ANY(r.ancestors) LIMIT 1) AS robot_attributes
- FROM fleet_resources r LEFT JOIN fleet_status s ON s.org=r.org AND s.robot=r.id`;
+ FROM fleet_resources r LEFT JOIN fleet_status s ON s.org=r.org AND s.robot=r.id
+ LEFT JOIN fleet_facilities facility ON facility.org=r.org AND facility.site=r.id`;
 
 function presented(row) {
   const siteAttributes = { ...row.site_attributes, ...(row.kind === 'site' ? row.data.attributes : {}) };
@@ -37,6 +38,11 @@ function presented(row) {
     attributes: row.data.attributes ?? {},
     siteAttributes,
     robotAttributes: row.robot_attributes,
+    pose: row.pose ?? null,
+    work: row.work ?? null,
+    facility: row.facility ?? null,
+    registration: row.registration ?? null,
+    facilitySite: row.facility_site ?? null,
     status: row.status ?? 'unknown',
     observedAt,
     receivedAt: row.received_at?.toISOString() ?? null,
@@ -59,8 +65,8 @@ export async function readResources(client, org, ids) {
   return result.rows.map(presented);
 }
 
-function visible(item) {
-  const publicFields = { ...item };
+function visible(item, actor) {
+  const publicFields = { ...item, canManage: Boolean(actor && allowed(actor, 'inventory.manage', item)) };
 
   delete publicFields.content;
   delete publicFields.ancestors;
@@ -76,7 +82,7 @@ export async function readVisible(client, actor, kind, id) {
   insist(item.kind === kind, 403);
   demandResource(actor, administrative(kind) ? 'iam.manage' : 'inventory.view', item);
 
-  return visible(item);
+  return visible(item, actor);
 }
 
 export async function listResources(client, actor, options) {
@@ -120,7 +126,7 @@ export async function listResources(client, actor, options) {
 function addVisible(items, actor, action, row) {
   const item = presented(row);
 
-  if (allowed(actor, action, item)) items.push(visible(item));
+  if (allowed(actor, action, item)) items.push(visible(item, actor));
 }
 
 async function checkReferences(client, actor, kind, data) {
@@ -167,7 +173,7 @@ export async function createResource(client, actor, kind, body) {
     data,
   ]);
 
-  return visible(await readResource(client, actor.org, id));
+  return visible(await readResource(client, actor.org, id), actor);
 }
 
 export async function updateResource(client, actor, options) {
@@ -188,7 +194,7 @@ export async function updateResource(client, actor, options) {
   await checkReferences(client, actor, kind, data);
   await client.query('UPDATE fleet_resources SET data=$3 WHERE org=$1 AND id=$2', [actor.org, id, data]);
 
-  return visible(await readResource(client, actor.org, id));
+  return visible(await readResource(client, actor.org, id), actor);
 }
 
 export async function deleteResource(client, actor, kind, id) {

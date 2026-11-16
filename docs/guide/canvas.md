@@ -172,3 +172,7 @@ Measurements and limits: [Viewport rendering performance evidence](../notes/perf
 - **Map tiles stream by distance and draw on demand** (§12). The Earth layer updates the tiles renderer only inside `RenderLoop.beforeRender`, so tiles load and refine only when a frame draws; a tile arriving asks for one redraw (`needs-update`, `needs-render`), and nothing renders once the view and the loads settle. Screen-space error picks each tile's detail from the canvas camera, so a tile near the camera loads finer and the rest stay coarse. Draco decoding runs in `DRACOLoader`'s workers, and `3d-tiles-renderer` loads as its own chunk the first time a scene has a place.
 
 - **No canvas reallocation during panel animations.** `CanvasSizer` keeps the canvas centred in its card, grows the drawing buffer once and shrinks it only after the size settles, and redraws synchronously after a resize so there's never a blank frame.
+
+### Fleet globe and facility views
+
+Fleet's browser map uses the same `WGS84_ELLIPSOID` ECEF and ENU contracts as the studio Earth layer. `fleet/browser/mapStage.ts` draws a local graticule and registered facility geometry, without using the desktop Google tile bridge. Its coordinates remain meters with Z up. The studio Earth layer still maps ENU into scene millimeters with Y up. [Fleet](fleet.md#explicit-registration-and-positions) owns registration, pose freshness, altitude, current-page bounds and browser coverage. Its geometry buffers are prepared in workers and its map renders only on changes.

@@ -101,3 +101,69 @@ A focused [Windows diagnostic](https://github.com/JamelHammoud/basecase/actions/
 The log and code do not establish whether binary discovery, `initdb`, `pg_ctl`, schema setup or service startup stalled. Only `tools/fleet/registry.test.mjs` is quarantined on Windows through 28 November 2026 under [#1401](https://github.com/JamelHammoud/basecase/issues/1401), labelled `loop:fix`, `loop:next` and `loop:priority`. The whole file is filtered because its setup runs before individual-test quarantine hooks. Linux and macOS keep the ten-class inventory acceptance. Windows retains scoped CRUD, enrollment, subscriptions and restart persistence through the service suite, real robot connection publication through the adapter suite, and 10,000 identities across the same ten classes through the scale suite. The combined ten-class creation and vendor-identity assertion is temporarily absent from regular Windows execution and remains in quarantine observations.
 
 Restoration requires identifying and fixing the responsible startup stage, retaining isolated real PostgreSQL and HTTP behavior, tracing cancellation and cleanup, and at least ten baseline and ten candidate Windows observations at equal load with retries disabled. Keep all ten classes, duplicate vendor names with distinct identities, two vendors at one site, stale unobserved state and the `robot.control` contract assertion. No deadline, retry, fixture or assertion was changed in this repair. Repair did not measure flake rates. The durable ticket, manifest, selected-test report and job log are retained under `scratch/diagnostics/c918d359-b627-4fbb-9e14-a852876faba7/`, with the full-run evidence in `scratch/failed-revision-windows.log` and `scratch/failed-revision-linux.log`.
+
+## Facility placement and imports
+
+The site import and registration implementation lives in the [Fleet guide](../guide/fleet.md#sites-and-facility-twins). It reuses the existing Case mesh readers and pinned SimReady converter without calling Case floor levelling. No foundation, sensor, ROS, schedule or design-version format is replaced.
+
+### Generated acceptance matrix
+
+| Fixture | Evidence |
+| --- | --- |
+| Millimeter DXF factory | `sites/facility.test.ts` checks the 0.001 metric, layer identity and an unchanged 3 m source elevation |
+| Meter GLB warehouse | The existing generated GLB passes through the shared glTF parser and ENU conversion |
+| OBJ workshop | Explicit Y-up conversion preserves a 4 m source height |
+| Centimeter USD facility | Production usd-core conversion checks the unauthored 0.01 metric and transformed world coordinates |
+| Z-up USDZ facility | Generated local archive checks authored units and the unchanged 3 m source height |
+| Multilevel hospital | A 12 m OBJ level remains elevated, and the robot-position test retains Level 2 identity |
+| Registered LiDAR corridor | PLY point-cloud import retains measured elevations, and the shared registration path places local points |
+| Drone altitude | Registration tests preserve 130 m ellipsoid height without floor clamping |
+| Harbor vessel | Registration tests preserve a negative height and estimated confidence |
+| Antimeridian crossing | Two control points straddle ±180° and retain a continuous ECEF placement through serialization |
+
+The HTTP integration runs the actual DXF preparation before upload, refuses registration against another facility hash and also retains source hashes, restarts the service, reopens registration and geometry, publishes timestamped stale poses and declared work, and refuses unregistered local poses. Denied site reads, another organization, revoked accounts, incompatible datums, missing vertical offsets, hostile paths and tile subpaths are refused. Browser position tests hide a pose after the facility hash changes. Dense label layout retains only the visible grid slots, with inventory rows available for overflow.
+
+The real converter tests accept local sublayers and refuse absolute, escaping and remote layers and textures. Sdf's pinned Python bindings cannot return `subLayerOffsets` through generic `GetInfo`. The validator skips that nonasset numeric field, checks composition dependencies through `GetCompositionAssetDependencies`, and inspects other authored values. [OpenUSD documents](https://openusd.org/dev/api/class_sdf_layer.html) that `GetExternalAssetDependencies` alone omits references, payloads and sublayers. The hostile-layer tests assert the dependency refusal, so an unrelated conversion failure cannot satisfy them. Value clips and expression paths are refused. The package reader is not an operating-system sandbox. The Python process has a deadline and source, output and triangle caps. `localLimits.py` applies a 3 GiB address-space ceiling on Linux and a 3 GiB process-memory job limit on Windows before parsing supplied layers. macOS has no OS memory ceiling. A subprocess probe requests 4 GiB and requires refusal on Linux and Windows, while format conversions still run on every platform. Cold runtime installation and native-module initialization are not performance promises. The converter fixture installs and imports the pinned reader once before its independent conversions. Test timeouts and retry settings are unchanged.
+
+### Local measurements on 16 November 2026
+
+Apple M5 Pro, 24 GiB host memory, Node 26.13.0. `sites/measurements.test.ts` records a generated OBJ import, a 100-position batch and 200 dense labels without timing thresholds. The final fixture contains 19,998 noncollinear triangles in 592,751 source bytes. Its import took 77.61 ms. The 100-position batch took 0.46 ms, and dense label placement took 0.64 ms. A preceding collinear fixture was replaced, without using its timing as a comparison baseline. These are local observations, not production or shared-runner budgets.
+
+The documentation capture used `openApp` and the real Fleet service with PostgreSQL 18 in Docker. Selecting a tiny generated DXF reached the first map draw submission in 243.40 ms. Local USD reached that state in 1,294.36 ms, with runtime packages already available in the local uv cache. The probe waits for the map renderer to submit a frame, rather than only for its element to appear. These development-server observations do not measure completed GPU presentation or production-bundle latency. The capture produced the registration, globe selection, facility and USD images without judging their appearance. Its log is `scratch/fleet-capture-complete.log`, and its local timing artifact is `scratch/fleet-browser-measurements.json`.
+
+The development reverse proxy reported HMR WebSocket errors and an expected unauthenticated `/v1/me` response before sign-in. Vite also reported delayed shutdown after the capture passed. Those are capture-harness observations, not a clean production browser or packaged-app pass. The committed e2e checks remain for Linux and Windows CI.
+
+Each browser preparation allocates one worker, transfers four geometry buffers and terminates. Each service preparation allocates one worker, with at most two active jobs and no pending queue. USD uses one environment-preparation process followed by one Python converter process. The environment belongs to the service account's cache. Pose updates retain the facility buffers and the existing single subscription. These allocation counts follow the actual paths, rather than a measured worker census under many simultaneous browser sessions.
+
+Remaining limits are the current inventory page on the globe, labels bounded by screen space, one facility asset per site, yaw-only registration, explicit vertical offsets, untextured geometry, flattened DXF entities, point-cloud PLY, no value clips and no live Nucleus. No live GPS driver, ROS client, physical robot, device, remote service installation or scheduler was tested. The two browser robots use the foundation's real status envelopes with generated replay observations.
+
+
+The authenticated HTTP import measurement uses the generated DXF preparation and the real PostgreSQL write. Its 166-byte source and 296-byte normalized geometry took 57.41 ms end to end. Worker parsing, validation and hashing took 0.61 ms after worker module loading. The worker reported 9,330,888 used heap bytes and one allocated worker. That heap includes imported modules and job state. It is not service RSS, Python memory or a large-asset capacity result. The artifact is `scratch/fleet-service-measurements.json`.
+
+
+The same complete capture populated 100 robots through authenticated status events and submitted a second pose batch without replacing the facility buffers. The browser map reported 100 retained markers and a 0.60 ms update, including coordinate placement, marker updates, label layout and render submission. This is one small-geometry, software-WebGL development sample. It excludes completed GPU presentation and is not a frame-rate or large-facility claim.
+
+An intermediate capture received HTTP 400 while publishing a local pose. Its registration wait tested only inequality with null, which also accepts an absent response field. The wait now requires a present registration object. The complete capture then passed with no timeout or retry changes. The refusal predicate of the intermediate request was not identified. A later documentation-only capture attempt timed out navigating the unbundled studio before reaching Fleet. Its log is `scratch/fleet-capture-published.log`. Existing successful captures are retained. Neither observation is a passing production-browser result.
+
+
+### Pull request 1396 CI dependency correction
+
+The 16 November changed-e2e run failed in `fleetSites.e2e.test.ts` setup before either browser test ran. `convertLocalFacility` could not find `uv`. The aggregate check failed because changed-e2e failed, while all three required fast jobs passed. Vite also reported delayed server shutdown after the setup failure.
+
+Check now installs `uv` with the same pinned setup action used by the unit job. Changed-e2e installs it only when the precise or fallback file list includes the facility walkthrough. Both nightly browser jobs install it because their shards include that walkthrough. This corrects a missing environment dependency without changing assertions, timeouts or retries. Browser execution remains owned by CI.
+
+
+### Pull request 1396 facility replacement correction
+
+The next 16 November changed-e2e run reached both browser tests. The upload, registration, globe and reopen walkthrough passed in 1,775 ms. The USD replacement saved `facility.usda`, then its unchanged one-map assertion found three `fleet-facility` elements instead of one. The aggregate Check failed solely because changed-e2e failed. Vite again reported delayed shutdown after the assertion failure.
+
+`FleetSite` gave the map and registration form the same sibling key, the facility hash. Replacing the facility changed both duplicate keys at once. React cannot reconcile duplicate sibling keys reliably and can retain old children. Their keys now prefix the hash with `map:` and `registration:` respectively. Each replacement still remounts both components, disposes the old map and resets control points. The existing USD browser test retains its one-map assertion, source metadata checks, null registration check and empty latitude check. No test, timeout, retry or assertion was removed or relaxed. Browser execution remains with CI, so this correction does not claim a post-change browser pass.
+
+
+### Pull request 1396 review corrections
+
+The facility view overwrote every descendant robot's source registration and hash with the viewed site's frame. A robot in a nested facility could disappear on a hash mismatch or use the wrong transform. Local projection now locates each pose through its own registered frame before applying the inverse of the viewed facility's registration. A generated nested-facility test retains the 10 m registration offset and the robot's 2 m local height.
+
+Facility metadata and geometry previously came from separate requests, which could straddle a replacement. The geometry endpoint now returns one row's summary, registration and geometry together. Uploads abort older loads and navigation aborts active uploads. Facility writes notify the existing subscription without closing it. Registration updates refresh metadata while retaining the geometry buffers and refuse a mismatched source hash or import revision. A late registration response cannot update a replaced import. HTTP and hook tests cover these boundaries.
+
+Hash-only component keys also retained entered controls when identical source bytes replaced a facility. Each import has a distinct revision while its content hash remains stable for identical sources. Subscribed browsers can therefore detect identical-source replacements. Load versions remount both components on each successful replacement, and registration changes reset the form independently. The browser walkthrough now checks identical-source replacement as well as USD replacement. Browser execution remains with CI. Selected robot details omit work labels when the source supplies no work. DXF imports refuse unsupported `$INSUNITS` values instead of silently treating them as the selected unit, with a miles-as-meters regression case in the import test.

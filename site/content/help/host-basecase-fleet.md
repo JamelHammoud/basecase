@@ -87,4 +87,14 @@ The studio allocates a connection generation and publishes timestamped observati
 
 Store credentials outside scenes and exports. Inventory pages contain at most 100 records. Subscriptions contain at most 100 robots and 256 KiB per snapshot. Registry capacity is separate from the studio's 32 live robot connections.
 
+## Facility imports
+
+Site viewers can read a registered facility. Uploads, registration and local USD conversion require `inventory.manage` on that site. Original source files, hashes and registration stay in PostgreSQL alongside the prepared geometry.
+
+Install uv on the service host for local USD exports. Conversion uses the pinned reader in `electron/simready/` and prepares an environment in the service account's Basecase cache. Set `FLEET_USD_ENV_DIRECTORY` to choose another environment directory. Runtime installation can access the package registry. Asset dependencies must come from the uploaded package.
+
+The service admits two preparations at once, with no pending queue. Source files must total at most 32 MiB across 256 files. The complete upload request must fit 64 MiB. USD conversion has a five-minute total deadline. Linux limits its address space to 3 GiB, and Windows applies a 3 GiB process-memory job limit. macOS keeps the byte, geometry and deadline caps without an OS memory ceiling.
+
+Steps are in [Register a Fleet facility](/help/register-a-fleet-facility).
+
 Use [Open Basecase Fleet](/help/open-basecase-fleet) to open the inventory as an enrolled account.

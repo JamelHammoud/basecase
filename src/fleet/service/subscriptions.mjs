@@ -49,7 +49,7 @@ export async function subscriptions(pool) {
         credential: actor.credential,
         response,
         async refresh(kind) {
-          if (kind !== 'fleet_status') {
+          if (!['fleet_status', 'fleet_facilities'].includes(kind)) {
             send(response, 'reset', {});
             response.end();
 

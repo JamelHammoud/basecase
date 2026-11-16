@@ -98,6 +98,12 @@ The studio publisher reads its origin and token only from an operator-selected l
 
 `tools/fleet/authorization.test.mjs`, `service.test.mjs` and `adapter.test.mjs` cover authorization matrices, cross-organization references, revoked credentials, protected assets, live subscription invalidation, hostile origins, oversized batches and insecure remote transports. [Boundary evidence](../notes/node.md#fleet-authorization-boundary) records the tests and limits.
 
+### Fleet facility assets
+
+Facility metadata, geometry, source hashes, registration and conversion require site authorization through the existing Fleet evaluator. Authentication and authorization precede the large-body read, and writes recheck authority after preparation. At most two 64 MiB request preparations run at once. Source packages are capped at 32 MiB and 256 files. Large JSON and geometry validation run in bounded JavaScript workers. Registry enumeration exposes no geometry and no registration through robot-only grants. Tile subpaths are refused and the globe has no external tile requests.
+
+Local USD imports use the pinned SimReady process and inspect package dependencies before stage composition. The [SimReady guide](simready.md#local-fleet-facilities) records resolution, deadlines and the absence of an OS sandbox, the Linux and Windows memory limits and the macOS memory gap. `electron/simready/localFacility.test.mjs` checks traversal, oversize packages, absolute and remote layer references, escaped textures and valid local sublayers. `tools/fleet/facilities.test.mjs` covers authorization, cross-organization requests, revocation, unknown registration, incompatible vertical frames and refused tiles. [Fleet evidence](../notes/fleet.md#facility-placement-and-imports) keeps their limits together.
+
 ### Fleet incident history
 
 Fleet incidents consume the existing robot event channel. No command, IPC handler, HTTP route, deployment interface or recording format is added. Acknowledgment writes only local incident state. It cannot issue a robot command or clear a daemon latch. Existing command validation, motor locks, control precedence and ladder checks continue to own motion.

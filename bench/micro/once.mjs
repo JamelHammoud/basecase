@@ -133,6 +133,7 @@ export async function runMicroOnce({
     grade,
     costUsd: summary.metrics.costUsd,
     tokens: summary.metrics.tokens,
+    toolCalls: summary.metrics.toolCalls,
     seconds,
     servedBy: summary.servedBy,
     provider: provider ?? null,

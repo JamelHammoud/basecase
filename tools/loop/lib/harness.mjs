@@ -80,9 +80,10 @@ function saveOutcome(context, fields) {
     selection: context.selection,
     candidate: candidate.key,
     title: fields.title ?? candidate.text,
-    evidence: [candidate.ref],
     at: new Date(now()).toISOString(),
     ...fields,
+    evidence: [...new Set([candidate.ref, ...(candidate.evidence ?? []), ...(fields.evidence ?? [])])],
+    waste: candidate.measured ?? null,
     fingerprint: fields.fingerprint ?? `candidate-${candidate.key}`,
     lesson: `${fields.verdict}: ${fields.lesson}\nRelease: ${release}.`,
   };

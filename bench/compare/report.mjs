@@ -41,6 +41,37 @@ function modelTable(stats) {
   );
 }
 
+const measuredCell = (value) => (value === null ? 'missing' : Math.round(value * 100) / 100);
+
+function workTable(stats) {
+  return table(
+    [
+      'model',
+      'work source',
+      'attempts',
+      'successful tasks',
+      'measurement',
+      'total',
+      'per successful task',
+      'missing attempts',
+    ],
+    stats.models.flatMap((model) =>
+      Object.entries(model.work).flatMap(([scope, work]) =>
+        ['tokens', 'cachedInputTokens', 'seconds', 'toolCalls'].map((metric) => [
+          model.model,
+          scope,
+          work.attempts,
+          work.successfulTasks,
+          metric,
+          measuredCell(work[metric].total),
+          measuredCell(work[metric].perSuccessfulTask),
+          work[metric].missing,
+        ]),
+      ),
+    ),
+  );
+}
+
 function taskTable(stats, [a, b]) {
   return table(
     ['task', a, b, 'gap'],
@@ -107,6 +138,10 @@ export function compareMarkdown({ stats, models, labels, effort, plan, git, erro
     `Gap in pass rate (${a} − ${b}): ${signed(stats.meanDiff)}, 95% interval ${ci}. ${a} better on ${stats.wins} tasks, ${b} on ${stats.losses}, tied on ${stats.ties} (sign test p = ${cell(stats.signP)}).`,
     '',
     ...modelTable(stats),
+    '',
+    'Work includes failed, error and unavailable attempts. Successful tasks are distinct task ids with a pass. Reused baseline work was consumed in earlier runs. Cached input tokens are reported separately and already included in total tokens. Missing measurements leave per-success work unavailable.',
+    '',
+    ...workTable(stats),
     '',
     ...taskTable(stats, labels),
   ].join('\n');

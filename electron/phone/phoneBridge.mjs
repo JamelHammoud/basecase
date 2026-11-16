@@ -7,7 +7,11 @@ function streamEvents(phone, res) {
   res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
   res.flushHeaders();
 
-  const unsubscribe = phone.subscribe((event) => res.write(`data: ${JSON.stringify(event)}\n\n`));
+  const send = (event) => res.write(`data: ${JSON.stringify(event)}\n\n`);
+  const unsubscribe = phone.subscribe(send);
+  const state = phone.state();
+
+  if (state.status === 'connected') send({ type: 'phone', state: 'connected', name: state.name });
 
   res.on('close', unsubscribe);
 }

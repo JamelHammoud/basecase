@@ -220,18 +220,26 @@ function walkedCurrent(ctx: CheckContext): ServoDraw | undefined {
   if (!walked.length) return undefined;
 
   const driven = new Set<string>();
+  let joint = walked[0];
+  let unordered = false;
 
   for (const j of walked) {
+    const current = walk.power.joints[j.id].avgA;
+
+    unordered ||= Number.isNaN(current);
+
+    if (current > walk.power.joints[joint.id].avgA) joint = j;
+
     for (const id of j.actuators ?? []) driven.add(id);
   }
+
+  if (unordered) joint = walked.sort((a, b) => walk.power!.joints[b.id].avgA - walk.power!.joints[a.id].avgA)[0];
 
   let idleA = 0;
 
   for (const p of ctx.servos) {
     if (!driven.has(p.id)) idleA += actuatorFor(p)?.idleA ?? IDLE_A;
   }
-
-  const joint = [...walked].sort((a, b) => walk.power!.joints[b.id].avgA - walk.power!.joints[a.id].avgA)[0];
 
   return {
     peak: walk.power.peakA + idleA * 2,

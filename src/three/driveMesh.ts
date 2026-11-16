@@ -73,20 +73,15 @@ function teethShape(p: Gt2Pulley, bore: number): THREE.Shape {
 
   for (let i = 0; i < p.teeth; i++) {
     const a = i * step;
-    const pts: Array<[number, number]> = [
-      [R, a],
-      [R, a + step * 0.5],
-      [r, a + step * 0.62],
-      [r, a + step * 0.88],
-    ];
+    const x = Math.cos(a) * R;
+    const y = Math.sin(a) * R;
 
-    for (const [rad, ang] of pts) {
-      const x = Math.cos(ang) * rad;
-      const y = Math.sin(ang) * rad;
+    if (i === 0) s.moveTo(x, y);
+    else s.lineTo(x, y);
 
-      if (i === 0 && ang === a) s.moveTo(x, y);
-      else s.lineTo(x, y);
-    }
+    s.lineTo(Math.cos(a + step * 0.5) * R, Math.sin(a + step * 0.5) * R);
+    s.lineTo(Math.cos(a + step * 0.62) * r, Math.sin(a + step * 0.62) * r);
+    s.lineTo(Math.cos(a + step * 0.88) * r, Math.sin(a + step * 0.88) * r);
   }
 
   s.closePath();

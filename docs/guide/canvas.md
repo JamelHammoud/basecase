@@ -84,6 +84,8 @@ Coplanar contact scans (`three/analysis/collide.ts`) reuse one triangle and its 
 
 ## Performance: mesh preparation
 
+GT2 pulleys and toothed idlers share `three/driveMesh.ts`. Tooth construction writes its four polar points directly into the shape, without per-tooth coordinate lists. `driveMesh.test.ts` compares complete tooth geometry attributes, indices and material groups against the former construction for every catalog size, including bores and hub placement. [Evidence](../notes/performance-geometry.md#gt2-teeth-write-directly-into-the-shape).
+
 Rounded and chamfered boxes, cubes, hexagonal prisms and wedges share `three/partMesh/edgedProfile.ts`. Corner preparation calculates each outline edge normal once, carries it to the next corner and reuses the closing edge at the last corner. Chamfer directions retain independent tuples. `edgedProfile.test.ts` compares former corner outputs across winding, degeneracy and later edits, and counts one normalization per edge. Existing `edgedGeometry.test.ts` covers complete shape bounds, volume, winding and deformation. [Evidence](../notes/performance-geometry.md#prism-corners-share-edge-normal-calculations).
 
 Sculpt reads stored vertex normals only for Inflate and Carve, including inverted strokes. Flatten, Smooth, Pinch and Grab skip those reads in both direct and mirrored strokes. `sculptStroke.test.ts` covers all six brushes, displacement, falloff, untouched vertices, input preservation, mirrored output and attribute-read counts. [Evidence](../notes/performance-geometry.md#sculpt-reads-only-needed-vertex-normals).

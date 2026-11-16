@@ -77,3 +77,19 @@ On macOS arm64 with Node 26.13.0, a scratch comparison cropped the middle 80% of
 The cropper replaces per-pixel JavaScript copies with one native typed-array copy and one temporary buffer view per selected row. It still allocates a zeroed output the size of the source buffer. These local shared-host measurements cover cropping alone, without a CI timing threshold or a claim about complete photo-tool time.
 
 The initial parity fixture compared 90 crops at 300 × 400 through recursive assertions and exceeded the five-second test limit at 7.19 seconds. The retained suite uses a 31 × 43 mask for that shape, preserving all region cases. Larger masks stay in the on-demand benchmark. No timeout was raised.
+
+## Corner-radius floods retain pixel indices
+
+Repository searches found one inward corner flood, shared by standalone `cornerRadii` and both masks in `fitTarget`. It now queues pixel indices and tests fixed exclusive boundaries before offering inward neighbors. The visited set, neighbor order, radius formula and pixel classification stay unchanged. Empty masks and zero reach still return zero radii.
+
+`targetCornerRadii.test.ts` compares an independent row-reachability calculation on 96 generated masks across six shapes from 1 × 1 to 31 × 23. It covers all corner directions, nonbinary pixels, offset buffer views, input preservation, empty masks and edits to a single occupied pixel. Existing `targetFit.test.ts` checks rounded rectangles, complete target-fit metrics and exactly one queue removal per open corner pixel. A scratch comparison also matched 400 complete corner measurements against the previous implementation.
+
+On macOS arm64, Apple M5 Pro and Node 26.13.0, a cross-shaped mask used a seven-pixel central bar on each axis. Counting coordinate arrays passed to the stack and timing complete `cornerRadii` calls gave:
+
+| Square mask | Coordinate arrays before | After | Median ms before | After |
+| --- | --- | --- | --- | --- |
+| 64 × 64 | 3,249 | 0 | 0.10347 | 0.08112 |
+| 128 × 128 | 14,641 | 0 | 0.50966 | 0.42843 |
+| 256 × 256 | 62,001 | 0 | 2.92770 | 2.02576 |
+
+Four warmup batches preceded fifteen alternating measured batches of thirty calls per implementation. Allocation counting ran separately from timing. The scalar stack and visited set remain allocated per corner. These shared-host timings measure corner-radius estimation alone, without a CI timing assertion or a claim about complete comparison time. The temporary comparison and output live in `scratch/cornerBench.test.ts` and `scratch/cornerBench.json` during implementation and are not committed.

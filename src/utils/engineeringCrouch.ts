@@ -1,4 +1,4 @@
-import type { RobotJoint } from '../types/robotics';
+import type { AnimationKeyframe, RobotJoint } from '../types/robotics';
 import { MIN_CROUCH_DEG } from './actuatorRules';
 import { isLegJoint } from './engineeringBody';
 import { downstreamOf } from './engineeringMass';
@@ -96,15 +96,29 @@ function chainLevers(ctx: CheckContext, chain: RobotJoint[], out: CrouchModel) {
   out.knees.add(pitch[flatFoot ? pitch.length - 2 : pitch.length - 1].id);
 }
 
+function minimumKneeAngle(keyframes: AnimationKeyframe[], id: string): number | undefined {
+  let minimum: number | undefined;
+
+  for (const frame of keyframes) {
+    const value = frame.values[id];
+
+    if (typeof value !== 'number') continue;
+
+    minimum = Math.min(minimum ?? Infinity, Math.abs(value));
+  }
+
+  return minimum;
+}
+
 function gaitCrouch(ctx: CheckContext, knees: Set<string>): number | undefined {
   const gaits = (ctx.project.animations ?? []).filter((a) => a.source === 'gait' || /walk|gait/i.test(a.name));
   let best: number | undefined;
 
   for (const a of gaits)
     for (const id of knees) {
-      const values = a.keyframes.map((k) => k.values[id]).filter((v): v is number => typeof v === 'number');
+      const minimum = minimumKneeAngle(a.keyframes, id);
 
-      if (values.length) best = Math.max(best ?? 0, Math.min(...values.map(Math.abs)));
+      if (minimum !== undefined) best = Math.max(best ?? 0, minimum);
     }
 
   return best;

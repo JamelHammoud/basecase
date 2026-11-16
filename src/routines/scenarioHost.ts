@@ -1,3 +1,4 @@
+import { Symbols } from './symbols';
 import type { RoutineVisionFacts } from './visionFacts';
 import type { CoordinatorRun, RawEvent } from './coordinator';
 import type { Plan, PlanOp, PlanWatcher } from './planTypes';
@@ -37,6 +38,7 @@ export class ScenarioHost {
   feed: FactFeed | null = null;
   vision: RoutineVisionFacts | null = null;
   private readonly decoder: TraceDecoder;
+  private readonly symbolTable: Symbols;
   private readonly visionWaits = new Map<number, () => void>();
   private readonly cancelled = new Set<number>();
   private readonly doNodes = new Map<number, string>();
@@ -53,19 +55,14 @@ export class ScenarioHost {
     this.scenario = scenario;
     this.run = run;
     this.clock = clock;
-    this.symbols = [...plan.symbols];
+    this.symbolTable = new Symbols(plan.symbols);
+    this.symbols = this.symbolTable.list;
     this.decoder = new TraceDecoder(plan, this.symbols);
     this.baseSkill = plan.skills[plan.base.skill]?.id ?? '';
   }
 
   intern(name: string): number {
-    const known = this.symbols.indexOf(name);
-
-    if (known >= 0) return known;
-
-    this.symbols.push(name);
-
-    return this.symbols.length - 1;
+    return this.symbolTable.id(name);
   }
 
   record(event: TraceEvent) {

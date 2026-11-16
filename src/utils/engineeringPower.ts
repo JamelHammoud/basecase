@@ -219,9 +219,18 @@ function walkedCurrent(ctx: CheckContext): ServoDraw | undefined {
 
   if (!walked.length) return undefined;
 
-  const driven = new Set(walked.flatMap((j) => j.actuators ?? []));
-  const idle = ctx.servos.filter((p) => !driven.has(p.id)).map((p) => actuatorFor(p)?.idleA ?? IDLE_A);
-  const idleA = idle.reduce((s, a) => s + a, 0);
+  const driven = new Set<string>();
+
+  for (const j of walked) {
+    for (const id of j.actuators ?? []) driven.add(id);
+  }
+
+  let idleA = 0;
+
+  for (const p of ctx.servos) {
+    if (!driven.has(p.id)) idleA += actuatorFor(p)?.idleA ?? IDLE_A;
+  }
+
   const joint = [...walked].sort((a, b) => walk.power!.joints[b.id].avgA - walk.power!.joints[a.id].avgA)[0];
 
   return {

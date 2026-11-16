@@ -1,0 +1,139 @@
+name: League adjudication
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: choice
+        options: [fixture, create, admit, adjudicate]
+        default: fixture
+        required: true
+      source:
+        description: Trusted League owner/repo@commit
+        type: string
+      manifest:
+        description: Pinned League manifest JSON for create
+        type: string
+      submission:
+        description: Entry owner/repo@commit for admit
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: league-publication
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      runner: ${{ steps.snapshot.outputs.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Prepare immutable receipt or closure
+        id: snapshot
+        env:
+          LEAGUE_SOURCE: ${{ inputs.source }}
+          LEAGUE_SUBMISSION: ${{ inputs.submission }}
+          LEAGUE_MANIFEST: ${{ inputs.manifest }}
+          OPERATION: ${{ inputs.operation }}
+        run: node tools/leagues/prepare.mjs scratch/league
+      - uses: actions/upload-artifact@v4
+        with:
+          name: league-snapshot
+          path: |
+            scratch/league/board.json
+            scratch/league/source.json
+          retention-days: 90
+          overwrite: true
+  publish-snapshot:
+    if: inputs.operation != 'fixture'
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - uses: actions/download-artifact@v4
+        with:
+          name: league-snapshot
+          path: scratch/league
+      - name: Publish trusted receipt or closure
+        env:
+          HF_TOKEN: ${{ secrets.LEAGUE_HF_TOKEN }}
+          OPERATION: ${{ inputs.operation }}
+          LEAGUE_SOURCE: ${{ inputs.source }}
+        run: node tools/leagues/publish.mjs scratch/league
+  replay:
+    if: always() && needs.prepare.result == 'success' && (inputs.operation == 'fixture' || needs.publish-snapshot.result == 'success') && (inputs.operation == 'fixture' || inputs.operation == 'adjudicate')
+    needs: [prepare, publish-snapshot]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.runner }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - uses: actions/download-artifact@v4
+        with:
+          name: league-snapshot
+          path: scratch/league
+      - name: Replay without publishing credentials
+        env:
+          LEAGUE_FIXTURE: ${{ inputs.operation == 'fixture' }}
+          LEAGUE_RUNNER_COMMIT: ${{ needs.prepare.outputs.runner }}
+        run: node tools/leagues/dispatch.mjs replay scratch/league
+      - uses: actions/upload-artifact@v4
+        with:
+          name: league-results
+          path: |
+            scratch/league/board.json
+            scratch/league/results.json
+            scratch/league/source.json
+          retention-days: 90
+          overwrite: true
+  publish-results:
+    if: inputs.operation == 'adjudicate'
+    needs: replay
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - uses: actions/download-artifact@v4
+        with:
+          name: league-results
+          path: scratch/league
+      - name: Publish complete frozen standings
+        env:
+          HF_TOKEN: ${{ secrets.LEAGUE_HF_TOKEN }}
+          OPERATION: ${{ inputs.operation }}
+          LEAGUE_SOURCE: ${{ inputs.source }}
+        run: node tools/leagues/publish.mjs scratch/league

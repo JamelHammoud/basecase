@@ -10,6 +10,7 @@ import { publishSharedRobot, sharedRobotBundle, storedSkill } from './shareRobot
 import type { ShowToast } from './types';
 import type { SceneSkills } from './useSkills';
 import { errorMessage } from '../utils/errorMessage';
+import { useLeagueEntry, type LeagueEntryControl } from './useLeagueEntry';
 
 interface ShareRobotOptions {
   scene: { sceneId: string; sceneName: string };
@@ -30,6 +31,7 @@ export interface ShareRobot {
   sharing: boolean;
   link: string | null;
   share: () => void;
+  league: LeagueEntryControl;
 }
 
 export function useShareRobot(options: ShareRobotOptions): ShareRobot {
@@ -39,8 +41,8 @@ export function useShareRobot(options: ShareRobotOptions): ShareRobot {
   const busy = useRef(false);
   const canShare = !IS_WEB_DEMO && options.hasRobot && !!kase;
 
-  const publish = async () => {
-    const bundle = await sharedRobotBundle({
+  const bundle = () =>
+    sharedRobotBundle({
       ...scene,
       parts,
       project,
@@ -52,11 +54,15 @@ export function useShareRobot(options: ShareRobotOptions): ShareRobot {
       skillRows: skills.rows,
       loadSkill: storedSkill,
     });
-    const copied = await publishSharedRobot(bundle);
+  const league = useLeagueEntry({ bundle, showToast, openAccounts });
+
+  const publish = async () => {
+    const copied = await publishSharedRobot(await bundle());
 
     await navigator.clipboard.writeText(copied);
     setLink(copied);
     showToast('Link copied');
+    league.show();
   };
 
   const share = async () => {
@@ -81,6 +87,7 @@ export function useShareRobot(options: ShareRobotOptions): ShareRobot {
     canShare,
     sharing,
     link,
+    league,
     share: () => {
       if (!canShare || busy.current) return;
 

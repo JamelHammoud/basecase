@@ -84,7 +84,7 @@ Coplanar contact scans (`three/analysis/collide.ts`) reuse one triangle and its 
 
 ## Performance: mesh preparation
 
-Sculpt tessellation (`three/sculptEngine.ts`) writes each subdivision pass into its final Float32 position buffer. New Sculpt parts, conversion from existing parts and Subdivide share this path. Triangle order, double-precision midpoint arithmetic before storage, source preservation and the inclusive 8,000-triangle pass limit stay unchanged. `sculptTessellation.test.ts` compares the former buffered calculation across indexed, nonindexed and interleaved geometry, pass counts, later edits, exceptional coordinates and limit boundaries. [Evidence](../notes/performance-geometry.md#sculpt-tessellation-writes-directly-into-final-storage).
+Sculpt tessellation (`three/sculptEngine.ts`) writes each subdivision pass into its final Float32 position buffer. Conversion from existing parts and Subdivide share this path. New clay presets build their geometry directly without tessellation. Triangle order, double-precision midpoint arithmetic before storage, source preservation and the inclusive 8,000-triangle pass limit stay unchanged. `sculptTessellation.test.ts` compares the former buffered calculation across indexed, nonindexed and interleaved geometry, pass counts, later edits, exceptional coordinates and limit boundaries. Its exact coordinate scans check array types, lengths, NaN and signed zero without deep traversal of large typed arrays. [Evidence](../notes/performance-geometry.md#sculpt-tessellation-writes-directly-into-final-storage).
 
 Measurements and limits: [Mesh preparation performance evidence](../notes/performance-geometry.md).
 

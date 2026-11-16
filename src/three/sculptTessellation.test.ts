@@ -33,15 +33,26 @@ function bufferedTessellation(geometry: THREE.BufferGeometry, passes: number) {
   return current;
 }
 
+function expectCoordinates(actual: ArrayLike<number>, expected: ArrayLike<number>) {
+  expect(actual.constructor).toBe(expected.constructor);
+  expect(actual).toHaveLength(expected.length);
+
+  for (let index = 0; index < actual.length; index++) {
+    if (Object.is(actual[index], expected[index])) continue;
+
+    expect(actual[index], `coordinate ${index}`).toBe(expected[index]);
+  }
+}
+
 function expectParity(geometry: THREE.BufferGeometry, passes: number) {
   const original = geometry.clone();
   const actual = tessellateGeometryForSculpting(geometry, passes);
   const expected = bufferedTessellation(geometry, passes);
 
-  expect(actual.getAttribute('position').array).toEqual(expected.getAttribute('position').array);
+  expectCoordinates(actual.getAttribute('position').array, expected.getAttribute('position').array);
   expect(actual.index).toEqual(expected.index);
   expect(Object.keys(actual.attributes)).toEqual(Object.keys(expected.attributes));
-  expect(geometry.getAttribute('position').array).toEqual(original.getAttribute('position').array);
+  expectCoordinates(geometry.getAttribute('position').array, original.getAttribute('position').array);
   expect(geometry.index).toEqual(original.index);
   expect(actual.getAttribute('position').array).not.toBe(geometry.getAttribute('position').array);
 
@@ -74,7 +85,7 @@ describe('Sculpt tessellation', () => {
 
       geometry.getAttribute('position').setXYZ(0, -120.125, 1e-8, 50.25);
       expectParity(geometry, 2);
-      expect(before.getAttribute('position').array).toEqual(retained);
+      expectCoordinates(before.getAttribute('position').array, retained);
     }
   });
 

@@ -88,3 +88,9 @@ Validation of this change passed formatting, lint, documentation, site copy and 
 A scratch comparison matched complete synthesis results exactly against the previous implementation for four paths: a five-point line, a twelve-point transformed coupler curve, a wavy path and an out-of-range path. This includes returned geometry, crank ranges, maximum and RMS errors, transmission angles and candidate order. Existing `linkage.test.ts` covers recovered curves, error bounds, deterministic ordering, unreachable targets and point-count limits. `linkageDistance.test.ts` covers complete synthesis against independent segment-distance calculations.
 
 These are source-derived allocation counts and result comparisons, without a timing assertion or a claim about complete synthesis speed. The sampled curves used for nearest-segment scoring remain necessary and are retained.
+
+## Four-bar damping trials reuse their elimination buffer
+
+`dampedSteps.test.ts` compares six damping trials with independent square-system solves and retains every output through subsequent trials. A dependent two-column system checks recovery after elimination fails at the second pivot, repeated zero damping and interleaving with another prepared system. Existing linkage tests cover complete synthesis, ordering and path scores.
+
+For five- and twelve-point paths, the normal system has 14 and 21 parameters. Its augmented Float64 matrix holds 210 and 462 values, or 1,680 and 3,696 bytes. Six trials previously allocated six elimination buffers. They now allocate one per prepared system, removing 8,400 and 18,480 bytes of matrix allocation in those six-trial cases. The equations still copy once per trial, and each successful solve still allocates its independent step. These are source-derived allocation counts, without timing assertions or a claim about complete synthesis speed.

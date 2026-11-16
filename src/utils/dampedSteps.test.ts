@@ -106,6 +106,7 @@ describe('prepared damping steps', () => {
       residuals,
     );
     const preparedReads = columns.map((column) => column.reads());
+    const retained: Array<{ result: Float64Array; saved: number[] }> = [];
 
     for (const damping of DAMPING) {
       const a = source.map((column, p) =>
@@ -120,7 +121,10 @@ describe('prepared damping steps', () => {
       const actual = step(damping)!;
 
       expected.forEach((value, i) => expect(actual[i]).toBeCloseTo(value, 12));
+      retained.push({ result: actual, saved: Array.from(actual) });
     }
+
+    for (const { result, saved } of retained) expect(Array.from(result)).toEqual(saved);
 
     expect(columns.map((column) => column.reads())).toEqual(preparedReads);
     expect(columns.map(({ array }) => Array.from({ length: array.length }, (_, i) => array[i]))).toEqual(source);
@@ -137,5 +141,29 @@ describe('prepared damping steps', () => {
     expect(Array.from(linkage(1)!)).toEqual([-0]);
     expect(sketch(0)).toBeNull();
     expect(linkage(0)).toBeNull();
+  });
+
+  it('resets partial elimination after a singular trial and isolates prepared systems', () => {
+    const columns = [Float64Array.of(1, 2), Float64Array.of(2, 4)];
+    const step = prepareNormalStep(columns, [3, -1]);
+    const other = prepareNormalStep([Float64Array.of(2, -1)], [1, 4]);
+    const original = other(1)!;
+    const saved = Array.from(original);
+
+    for (const damping of [1, 0, 10, 0, 1]) {
+      const expected = solveSquare(
+        [
+          [5 + damping * (5 + 1e-9), 10],
+          [10, 20 + damping * (20 + 1e-9)],
+        ],
+        [-1, -2],
+      );
+      const actual = step(damping);
+
+      expect(actual === null).toBe(expected === null);
+      expected?.forEach((value, i) => expect(actual![i]).toBeCloseTo(value, 12));
+      expect(other(1)).toEqual(original);
+      expect(Array.from(original)).toEqual(saved);
+    }
   });
 });

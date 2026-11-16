@@ -116,13 +116,15 @@ function span(h: Human): number {
   return box.getSize(new THREE.Vector3()).length();
 }
 
-function mean(window: Human[]): Human {
+function mean(window: Human[], first: number): Human {
   const out: Human = new Map();
 
-  for (const k of window[0].keys()) {
+  for (const k of window[first].keys()) {
     const sum = new THREE.Vector3();
 
-    for (const h of window) sum.add(h.get(k)!);
+    for (let i = first; i < window.length; i++) sum.add(window[i].get(k)!);
+
+    for (let i = 0; i < first; i++) sum.add(window[i].get(k)!);
 
     out.set(k, sum.divideScalar(window.length));
   }
@@ -140,12 +142,10 @@ function withinTolerance(h: Human, avg: Human, tol: number): boolean {
   return true;
 }
 
-function steadyMean(window: Human[]): Human | null {
-  const last = window[window.length - 1];
-
+function steadyMean(window: Human[], first: number, last: Human): Human | null {
   if (!hasSides(last) || !window.every((h) => sameKeys(h, last))) return null;
 
-  const avg = mean(window);
+  const avg = mean(window, first);
   const tol = STEADY * span(avg);
 
   return window.every((h) => withinTolerance(h, avg, tol)) ? avg : null;
@@ -153,12 +153,18 @@ function steadyMean(window: Human[]): Human | null {
 
 export function calibrator(frames: number): (h: Human) => Human | null {
   const window: Human[] = [];
+  let first = 0;
 
   return (h) => {
-    window.push(h);
+    if (window.length < frames) {
+      window.push(h);
 
-    if (window.length > frames) window.shift();
+      return window.length === frames ? steadyMean(window, first, h) : null;
+    }
 
-    return window.length === frames ? steadyMean(window) : null;
+    window[first] = h;
+    first = (first + 1) % window.length;
+
+    return window.length === frames ? steadyMean(window, first, h) : null;
   };
 }

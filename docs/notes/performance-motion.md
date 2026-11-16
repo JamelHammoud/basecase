@@ -112,3 +112,16 @@ The final focused check passed formatting, ESLint, docs, site copy, types and al
 - [Import a robot](../../site/content/help/import-a-robot.md) describes import sources, robot selection, insertion, retained link data and archive limits. The changed `linkInertial` routine prepares exported inertials, without changing import parsing, controls or the four illustrated import states.
 - [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) describes joint fields, import paths, skeleton torque margins, hierarchy, posing and IK. Centroid preparation preserves the sizing outputs behind those margins. Joint declarations, simulation eligibility and posing are untouched. This article has no screenshots.
 - [A robot won't import from a link or folder](../../site/content/help/troubleshoot-app-robot-import-fails.md) describes link validation, missing descriptions and meshes, archive limits and passive-joint behavior. Neither centroid change affects those errors or their recovery steps. This article has no screenshots.
+
+
+## Live calibration retains a circular pose window
+
+A whole-app search for `calibrator` and `steadyMean` found one live rest-pose window, shared by all `createRetargeter` streams without an explicit rest pose. Other rolling histories retain different signals and have separate expiry rules.
+
+After a window fills, each incoming pose now replaces one reference and advances the oldest-frame index. Previously it appended a reference and shifted the full window. At the default ten frames, this removes nine retained-reference moves per incoming frame. Storage remains ten frame references. Means still accumulate in chronological order through two contiguous ranges, without per-landmark modulo operations. Key order still comes from the oldest frame, and side-pair validation still uses the newest frame.
+
+These are code-derived operation counts, without timing assertions or a claim about complete retargeting speed. Mean construction and stability checks still visit the entire window. `retargetBody.test.ts` compares 400 rolling results with fresh chronological windows of one, two, three and ten frames. The 100-frame source includes moving outliers, changing keys and reversed map insertion order, and checks unchanged source vectors. Existing tests cover expiry, shoulder-only frames, nonfinite positions, threshold boundaries and owned result vectors. No quarantine applies.
+
+This changes no user action, label or screen state. Motion capture help steps and screenshots remain accurate.
+
+Preflight flagged [Joints and kinematics](../../site/content/help/joints-and-kinematics.md), which covers the edited guide. Its joint fields, import paths, hierarchy, posing and IK descriptions were checked against this diff and remain accurate. It describes no live-calibration steps or screenshots, so it remains unchanged intentionally.

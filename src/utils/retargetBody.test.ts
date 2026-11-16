@@ -13,6 +13,34 @@ function frame(offset = 0): Human {
 const coordinates = (h: Human) => [...h].map(([k, p]) => [k, p.toArray()]);
 
 describe('live rest-pose calibration', () => {
+  it('matches fresh chronological windows through repeated wraps and changing keys', () => {
+    const samples = Array.from({ length: 100 }, (_, i) => {
+      const sample = frame(i % 17 === 0 ? 0.5 : Math.sin(i) / 100);
+
+      if (i % 13 === 0) sample.delete('hips');
+
+      return i % 2 ? new Map([...sample].reverse()) : sample;
+    });
+    const before = samples.map(coordinates);
+
+    for (const count of [1, 2, 3, 10]) {
+      const rolling = calibrator(count);
+
+      for (let i = 0; i < samples.length; i++) {
+        const fresh = calibrator(count);
+        let expected: Human | null = null;
+
+        for (const sample of samples.slice(Math.max(0, i - count + 1), i + 1)) expected = fresh(sample);
+
+        const actual = rolling(samples[i]);
+
+        expect(actual && coordinates(actual)).toEqual(expected && coordinates(expected));
+      }
+    }
+
+    expect(samples.map(coordinates)).toEqual(before);
+  });
+
   it('returns the steady window mean with owned vectors and unchanged source frames', () => {
     const samples = [frame(-1 / 128), frame(1 / 64), frame(1 / 256)];
     const before = samples.map(coordinates);

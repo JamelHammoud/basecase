@@ -2,6 +2,14 @@
 
 Implementation: [Image comparison](../guide/agent.md#performance-image-comparison). Shared requirements: [Performance](../guide/performance.md).
 
+## Traced contours avoid temporary row lists
+
+`outlineTrace.ts` removes two mapped edge lists, one reversed row copy and ten pairs of sliced rows and mapped widths per nonempty trace. That removes 23 temporary arrays containing five times the occupied-row count in total entries. Ring points and sampling buffers remain owned by each call.
+
+`outlineTrace.test.ts` checks single-row winding and caps with exact coordinates, scale, offset, sparse-row bands, source preservation and independent results. A scratch comparison matched complete outputs against the previous implementation on 1,000 generated masks. Widths ranged from 1 to 29 pixels and heights from 1 to 43, with empty rows, nonbinary pixels, four scales, four sample counts and seven offsets.
+
+On macOS arm64, Apple M5 Pro and Node 26.13.0, a filled 40 × 600 mask sampled at 24 points took median times of 0.03058 ms before and 0.02618 ms after. Five warmup batches preceded 21 alternating measured batches of 1,000 traces. The temporary arrays held 3,000 entries per call before the change. These shared-host measurements cover tracing alone, without a CI timing assertion or a claim about complete photo-tool time. The throwaway comparison is `scratch/outlineComparison.test.ts` during implementation and isn't committed.
+
 ## Outline distances propagate one minimum per cell
 
 `targetDistance.test.ts` compares every binary pattern on nine grids through twelve cells, 160 generated masks and later edits, long diagonals, source views, independent outputs and both comparison paths. On empty 300 × 10 and 600 × 10 masks, distance-buffer reads fall from 38,144 and 76,544 to 23,840 and 47,840, with no writes added. These are operation counts without timing assertions or a claim about complete comparison time.

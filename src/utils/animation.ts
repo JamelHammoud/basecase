@@ -227,8 +227,20 @@ export function buildKeyframes(
   return { keyframes: out, notes: run.notes, ikError: run.ikError };
 }
 
+export function animationJointIds(keyframes: readonly AnimationKeyframe[]): Set<string> {
+  const ids = new Set<string>();
+
+  for (const keyframe of keyframes) {
+    for (const id in keyframe.values) {
+      if (Object.hasOwn(keyframe.values, id)) ids.add(id);
+    }
+  }
+
+  return ids;
+}
+
 export function animatedJoints(anim: RobotAnimation, joints: RobotJoint[]): RobotJoint[] {
-  const ids = new Set(anim.keyframes.flatMap((k) => Object.keys(k.values)));
+  const ids = animationJointIds(anim.keyframes);
 
   return joints.filter((j) => ids.has(j.id));
 }

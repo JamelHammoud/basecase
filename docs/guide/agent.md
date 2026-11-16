@@ -215,6 +215,8 @@ Camera shots from `simulate` and `operate` receive the active Case's captured-wo
 
 Measurements and limits: [Image comparison performance evidence](../notes/performance-image-comparison.md).
 
+- **Photo regions copy contiguous rows.** `utils/outlineTrace.ts` clamps and rounds region bounds once, then copies each selected row with typed-array operations. `trace_outline` and `photo_scale` share this cropper. Coordinates, mask dimensions, zeroed pixels outside the region and independent output ownership stay unchanged. `cropMask.test.ts` compares pixel copies across generated regions, clipping, empty regions, nonbinary pixels, buffer views, incomplete buffers and source edits. [Evidence](../notes/performance-image-comparison.md#photo-regions-copy-contiguous-rows).
+
 - **Outline distances propagate one minimum per cell.** `utils/targetFit.ts` shares its distance transform across sketch-target and camera-fit gaps. Each sweep reads four neighbors once and writes only their improving minimum, removing four helper calls and repeated distance reads per cell. Edge seeds, sweep order, diagonal costs and Float32 outputs stay unchanged. [Evidence](../notes/performance-image-comparison.md#outline-distances-propagate-one-minimum-per-cell).
 
 - **Photo outlines simplify through index ranges.** `utils/simplifyPolygon.ts` writes retained points into one output array without copying recursive subarrays or concatenating intermediate results. Image attachments share this path through `imagePixelAnalysis.ts`, the only point-list simplifier in the app. Point order, point references, tolerance comparisons and the four-point cutoff stay unchanged. [Evidence](../notes/performance-image-comparison.md#photo-outlines-simplify-through-index-ranges).

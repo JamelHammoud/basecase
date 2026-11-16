@@ -195,3 +195,26 @@ For 300 and 600 uniquely named joints with one actuator each, the previous match
 Local `check:changed` passed formatting, lint, documentation, site copy for 281 pages, types and all 269 tests in 37 related files. The related-test phase reported 2.08 seconds. Copy accounting reported zero added, changed or removed strings.
 
 The covered help articles were read against the final code and guide diff. [Import a robot](../../site/content/help/import-a-robot.md) still describes the same entry points, file selection, joint limits and passive imports. [Robot import troubleshooting](../../site/content/help/troubleshoot-app-robot-import-fails.md) keeps the same messages, mesh resolution and passive-joint advice. [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) keeps the same joint fields, hierarchy, poses and robot selection. No step, label or screenshot became inaccurate, so these articles remain unchanged.
+
+
+## Cylinder fits collect welded corners directly
+
+The whole-app search for welded corner collection found one `cornersOf` implementation, in `joints/cylinderFit.ts`. Clicked-face fitting and automatic shaft-and-bore discovery both reach it through `axisFinder.ts`. Other set-and-flatten expressions collect robot membership, signals or catalog ids rather than triangle corners and are outside this preparation.
+
+For T triangles, each fitting round previously created T three-entry corner arrays, T three-entry index arrays and one flattened 3T-entry list before constructing the deduplicating set. Collection now inserts each corner directly into that set. The set and returned unique-id array remain necessary. First-occurrence order, circle arithmetic and refit behavior stay unchanged. These are source-derived allocation counts, without a claim about total discovery latency.
+
+A local isolated collection benchmark on November 16, 2026 used Node v26.13.0 on macOS arm64 with an Apple M5 Pro. Synthetic connected triangle indices reused welded vertices and visited triangles in reverse order. Complete ordered outputs matched for empty, 512-, 4,096- and 32,768-triangle inputs. Both implementations received three warmup batches, followed by nine alternating measured batches. The new function was loaded from the working source through Node type stripping.
+
+| Triangles | Collections per batch | Previous median ms | Direct median ms |
+| --- | --- | --- | --- |
+| 512 | 195 | 8.442 | 2.131 |
+| 4,096 | 24 | 7.993 | 2.466 |
+| 32,768 | 4 | 11.650 | 4.163 |
+
+These timings exclude mesh indexing, circle fitting and discovery. Other work was running on the host. No CI timing assertion applies. The script and raw output remain in `scratch/cylinder-corners.mjs` and `scratch/cylinder-corners-results.jsonl`.
+
+`joints/cylinderFit.test.ts` checks first-seen welded vertex order through reversed and repeated triangle lists, repeated independent results and unchanged input lists. Existing tests check complete cylinder dimensions, residual reuse after distorted-patch trimming and minimum angular-span rejection. Axis-finder and joint-candidate tests cover both callers. No timeout, retry or quarantine changes.
+
+The covered [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) article was reread against the final code and guide diff. Its joint-field table, import links and joint creation entry points remain accurate. The direct collector preserves first-seen vertex order before circle fitting, so fitted axes and acceptance thresholds remain unchanged. Hierarchy, mount anchoring, deletion, modeled poses, IK and robot selection use unchanged code. The article has no screenshots. No instruction or label became inaccurate, so it remains unchanged as the preflight finding permits.
+
+The [Join two parts with a hinge or slider](../../site/content/help/join-two-parts-with-a-hinge.md) task was also checked. Both clicked-face and automatic shaft-and-bore fitting reach the same collector, with unchanged entry points and acceptance rules. Its steps, labels and screenshot states remain accurate, so no article or screenshot edit is needed.

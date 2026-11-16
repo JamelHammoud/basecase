@@ -154,9 +154,15 @@ export function fitCircle(points: Array<[number, number]>): { cx: number; cy: nu
   return r2 > 0 ? { cx: cx + mx, cy: cy + my, r: Math.sqrt(r2) } : null;
 }
 
-const cornersOf = (index: MeshIndex, tris: number[]) => [
-  ...new Set(tris.flatMap((t) => [0, 1, 2].map((k) => index.corners[t * 3 + k]))),
-];
+function cornersOf(index: MeshIndex, tris: number[]): number[] {
+  const ids = new Set<number>();
+
+  for (const t of tris) {
+    for (let k = 0; k < 3; k++) ids.add(index.corners[t * 3 + k]);
+  }
+
+  return [...ids];
+}
 
 interface Fit {
   cylinder: Cylinder;

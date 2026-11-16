@@ -29,18 +29,31 @@ export interface PickKeys {
 const newestFirst = (a: TrySummary, b: TrySummary) => b.startedAt.localeCompare(a.startedAt);
 
 export function tryGroups(tries: TrySummary[]): TryGroup[] {
-  const groups = new Map<string, TrySummary[]>();
+  const groups = new Map<string, TryGroup & { newestIndex: number }>();
 
-  for (const t of tries) {
-    const list = groups.get(t.robot);
+  for (let index = 0; index < tries.length; index++) {
+    const t = tries[index];
+    const group = groups.get(t.robot);
 
-    if (list) list.push(t);
-    else groups.set(t.robot, [t]);
+    if (!group) {
+      groups.set(t.robot, { robot: t.robot, tries: [t], newestIndex: index });
+
+      continue;
+    }
+
+    if (newestFirst(t, tries[group.newestIndex]) < 0) group.newestIndex = index;
+
+    group.tries.push(t);
   }
 
-  return [...groups]
-    .map(([robot, list]) => ({ robot, tries: list.sort(newestFirst) }))
-    .sort((a, b) => a.robot.localeCompare(b.robot));
+  return [...groups.values()]
+    .sort(
+      (a, b) =>
+        a.robot.localeCompare(b.robot) ||
+        newestFirst(tries[a.newestIndex], tries[b.newestIndex]) ||
+        a.newestIndex - b.newestIndex,
+    )
+    .map(({ robot, tries: list }) => ({ robot, tries: list.sort(newestFirst) }));
 }
 
 export function picked(

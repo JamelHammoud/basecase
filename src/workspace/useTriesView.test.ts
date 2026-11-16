@@ -24,6 +24,22 @@ const summary = (id: string, robot: string, startedAt: string): TrySummary => ({
 });
 
 describe('shared Library, Tries and dataset grouping', () => {
+  it.each(['2026-11-02', '2026-11-03'])(
+    'orders locale-equivalent robot names by their first newest try with timestamp %s',
+    (startedAt) => {
+      const composed = 'Café';
+      const decomposed = 'Cafe\u0301';
+      const tries = [
+        summary('old', composed, '2026-11-01'),
+        summary('decomposed', decomposed, '2026-11-03'),
+        summary('composed', composed, startedAt),
+      ];
+
+      expect(composed.localeCompare(decomposed)).toBe(0);
+      expect(tryGroups(tries).map((group) => group.robot)).toEqual([decomposed, composed]);
+    },
+  );
+
   it('orders robots and their tries without changing stored order or equal-time order', () => {
     const oldRover = summary('old', 'Rover', '2026-11-01');
     const arm = summary('arm', 'Arm', '2026-11-03');

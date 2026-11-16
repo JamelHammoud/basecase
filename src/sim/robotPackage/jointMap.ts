@@ -6,6 +6,7 @@ import type { ServoFamily } from '../../robot/robotState';
 import { servoLayout, type ServoLayout } from '../../robot/sceneRobot';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../../types/robotics';
 import type { SimJoint, SimModel } from '../mjcfTypes';
+import { indexJoints } from '../../utils/robotImport/jointIndex';
 
 export const ZERO_COUNTS = 2048;
 
@@ -67,8 +68,9 @@ export function jointMap({ model, project, parts, name }: JointMapInput): JointM
   const layout = servoLayout(project.joints ?? []);
   const calibrations = activeCalibrations(project.servoCalibrations);
   const mounts = activeMounts(project.servoCalibrations);
+  const simJoints = indexJoints(model.joints);
   const joints = layout.movable.map((j, i): JointMapEntry => {
-    const sim = model.joints.find((s) => s.id === j.id);
+    const sim = simJoints.get(j.id);
 
     return {
       id: layout.ids[i],

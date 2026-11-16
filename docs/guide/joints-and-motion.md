@@ -120,6 +120,8 @@ Measurements and limits: [Robot shells performance evidence](../notes/performanc
 
 Measurements and limits: [Joints and kinematics performance evidence](../notes/performance-joints.md).
 
+- **URDF export indexes joint identities.** `utils/robotImport/urdfWriter.ts` prepares model and scene joint indices once per write through `jointIndex.ts`. First duplicate matches, missing-joint behavior and output order stay unchanged. Robot Package's joint map and policies share the same indexing helper. Coverage and measurements belong to [Simulation](simulate.md#performance-simulation).
+
 - **Joint-axis clustering indexes shafts once per query.** `joints/axisClusters.ts` searches only clusters belonging to the current shaft, removing scans across unrelated shafts. Automatic joint-axis discovery shares this path, retaining global cluster creation order, member order, first-match representatives and collinearity arithmetic. No index survives a query. [Evidence](../notes/performance-joints.md#joint-axis-clustering-indexes-shafts-once-per-query).
 
 - **Joint declarations index batch ids once.** `joints/merge.ts` serves rig and skeleton declarations, including hand-made and mirrored joints through `withJoints`. It retains old order and object references before appending the complete incoming batch, without searching that batch per existing joint. Skeleton change reporting also indexes prior joints once, preserving the first duplicate match. [Evidence](../notes/performance-joints.md#joint-declarations-index-batch-ids-once).

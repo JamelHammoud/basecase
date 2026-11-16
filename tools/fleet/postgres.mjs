@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import net from 'node:net';
 import { randomBytes } from 'node:crypto';
+import { postgresCommand } from './postgresCommand.mjs';
 
 const execute = promisify(execFile);
 
@@ -25,13 +26,15 @@ async function windowsPostgres() {
   const versions = (await readdir(root)).sort().reverse();
   const bin = path.join(root, versions[0], 'bin');
   const directory = await mkdtemp(path.join(os.tmpdir(), 'basecase-fleet-pg-'));
+  const data = path.join(directory, 'data');
   const port = await freePort();
-  const run = (name, args) => execute(path.join(bin, `${name}.exe`), args, { windowsHide: true });
+  const run = (name, args) =>
+    postgresCommand(path.join(bin, `${name}.exe`), args, path.join(directory, 'commands.log'));
 
-  await run('initdb', ['-D', directory, '-U', 'postgres', '-A', 'trust', '--no-locale']);
+  await run('initdb', ['-D', data, '-U', 'postgres', '-A', 'trust', '--no-locale']);
   await run('pg_ctl', [
     '-D',
-    directory,
+    data,
     '-l',
     path.join(directory, 'server.log'),
     '-o',
@@ -43,7 +46,7 @@ async function windowsPostgres() {
   return {
     url: `postgres://postgres@127.0.0.1:${port}/postgres`,
     async close() {
-      await run('pg_ctl', ['-D', directory, '-m', 'immediate', '-w', 'stop']);
+      await run('pg_ctl', ['-D', data, '-m', 'immediate', '-w', 'stop']);
       await rm(directory, { recursive: true, force: true });
     },
   };

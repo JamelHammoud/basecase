@@ -1,5 +1,29 @@
 [
   {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for nominal",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43844795005 exceeded the unchanged 5000 ms budget at 5009 ms, while its other 15 variants passed. Focused Windows diagnostic 43847288865 passed the same nominal test at the same revision in 4451.1547 ms with one worker and no retries. The responsible capture, native startup or scoring stage is not established. Issue #1390 owns tracing and equal-load baseline and candidate measurements before restoration."
+  },
+  {
+    "file": "e2e/inputs.e2e.test.ts",
+    "test": "fires a gesture its Case was taught from three examples and ends camera capture on Escape",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43844795005 left operatorCamera().feeding true through its unchanged 10000 ms poll, then reached the final empty-error assertion on retry with an unclosed VideoFrame warning. The existing wave quarantine under #995 has the same two symptoms. Feed completion and the remaining frame owner are not established. Preserve the salute, live camera, Escape shutdown, tile removal, ended track and empty-error assertions during tracing and equal-load measurements."
+  },
+  {
+    "file": "e2e/remoteTraining.e2e.test.ts",
+    "test": "configures a training computer and reattaches Stand after a studio restart without a second dispatch",
+    "issue": 1365,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43844795005 observed zero initial train-start requests at line 26, then stalled locating Connect in configureRemoteComputer at line 111 on retry. The existing grouped recovery quarantine under #1365 already records absent dispatch and configuration stalls. The cause remains unestablished. Both recovery paths stay active on other platforms while #1365 traces configuration, dispatch, persistence and reattachment and measures baseline and candidate runs at equal load."
+  },
+  {
     "file": "e2e/fleet.e2e.test.ts",
     "test": "opens Fleet from Operate, restricts a site viewer and reopens persistent inventory",
     "issue": 1386,
@@ -29,7 +53,7 @@
     "issue": 1365,
     "until": "2026-11-28",
     "platform": "win32",
-    "reason": "Run 43831610288 observed one train-start request instead of two after reload at line 75 on the first Windows attempt, then stalled clicking Concurrent attempts on retry. Linux passed at the same commit. Windows passed both recovery tests in run 43824172798 with unchanged training code and fixture. Issue #1365 already owns tracing model reconstruction, journal persistence and worker reattachment, followed by equal-load measurements. The single-attempt browser path remains active."
+    "reason": "Run 43831610288 observed one train-start request instead of two after reload at line 75 on the first Windows attempt, then stalled clicking Concurrent attempts on retry. Linux passed at the same commit. Windows passed both recovery tests in run 43824172798 with unchanged training code and fixture. Issue #1365 already owns tracing model reconstruction, journal persistence and worker reattachment, followed by equal-load measurements. Both browser paths remain active on Linux and macOS."
   },
   {
     "file": "e2e/passiveFixtures.e2e.test.ts",

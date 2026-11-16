@@ -43,6 +43,34 @@ beforeEach(() => {
 });
 
 describe('returning a remote Forge result', () => {
+  it('keeps actual work when every child fails', async () => {
+    vi.mocked(platformBridge.trainStart).mockImplementationOnce(async () => {
+      listener({
+        type: 'train-progress',
+        kind: 'error',
+        jobId: 'policy-remote',
+        message: 'Every training attempt failed.',
+        candidates: [7, 11].map((steps, index) => ({
+          id: `policy-child-${index}`,
+          seed: index,
+          steps,
+          fingerprint: {},
+          development: null,
+          outcome: { kind: 'error', message: 'Child failed' },
+        })),
+      });
+
+      return { jobId: 'policy-remote' };
+    });
+
+    const outcome = await trainerForge({ workspaceId: 'scene', background: false, onProgress: () => {} })(job);
+
+    expect(outcome.ok).toBe(false);
+    expect(outcome.events).toEqual([{ type: 'done', steps: 18 }]);
+    expect(outcome.stderr).toBe('Every training attempt failed.');
+    expect(platformBridge.getPolicy).not.toHaveBeenCalled();
+  });
+
   it('reuses the workflow and call identity across a studio restart', async () => {
     vi.mocked(platformBridge.getPolicy).mockResolvedValue(holdingPolicy(job.job));
 

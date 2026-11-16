@@ -5,6 +5,8 @@ import { AgentKeys } from '../backend/agentKeys.mjs';
 import { checkedComputer, runSsh, sshArguments } from './config.mjs';
 import { linuxBundle, sha256 } from './bundle.mjs';
 import { ARTIFACT_BYTES, dispatchScript, inputManifest, pollScript, remoteDirectory, stopScript } from './scripts.mjs';
+import { seedSettings } from './seeds.mjs';
+import { recordSeedSelection } from './selection.mjs';
 
 const INPUTS = ['model.xml', 'job.json', 'demos.json', 'warm-policy.json', 'warm/policy.json', 'warm/resume.json'];
 const MAX_INPUT_BYTES = 192 * 1024 * 1024;
@@ -50,6 +52,19 @@ function decodedFile(file) {
   JSON.parse(bytes.toString('utf8'));
 
   return bytes;
+}
+
+function saveArtifacts(dir, policy, resume) {
+  atomic(path.join(dir, 'policy.json'), policy);
+
+  if (resume) atomic(path.join(dir, 'resume.json'), resume);
+}
+
+function checkedRuntime(files, hashes) {
+  if (Object.entries(files).some(([name, bytes]) => sha256(bytes) !== hashes[name]))
+    throw new Error('The frozen training runtime changed. Start training again.');
+
+  return files;
 }
 
 function readEvents(log) {
@@ -98,11 +113,11 @@ export class RemoteTraining {
   status() {
     const saved = this.configuration();
 
-    if (!saved) return { selected: false, keySaved: false };
+    if (!saved) return { selected: false, keySaved: false, ...seedSettings() };
 
     const { host, user, hostKey } = saved.computer;
 
-    return { selected: saved.selected, host, user, hostKey, keySaved: true };
+    return { selected: saved.selected, host, user, hostKey, keySaved: true, ...seedSettings(saved) };
   }
 
   async configure(request) {
@@ -111,12 +126,14 @@ export class RemoteTraining {
     const saved = this.configuration()?.computer;
     const reuse =
       saved && saved.host === request?.host && saved.user === request?.user && saved.hostKey === request?.hostKey;
-    const computer = checkedComputer({ ...request, key: request?.key || (reuse ? saved.key : '') });
+    const { attempts, concurrency, ...connection } = request ?? {};
+    const settings = seedSettings({ attempts, concurrency });
+    const computer = checkedComputer({ ...connection, key: request?.key || (reuse ? saved.key : '') });
     const machine = await this.execute(computer, 'set -eu\nuname -sm\n');
 
     if (machine.trim() !== 'Linux x86_64') throw new Error('Choose an x64 Linux training computer.');
 
-    this.keys.set(CONFIG, JSON.stringify({ selected: true, computer }));
+    this.keys.set(CONFIG, JSON.stringify({ selected: true, computer, ...settings }));
 
     return this.status();
   }
@@ -127,6 +144,10 @@ export class RemoteTraining {
     if (saved) this.keys.set(CONFIG, JSON.stringify({ ...saved, selected: false }));
 
     return this.status();
+  }
+
+  recordSelection(value) {
+    return recordSeedSelection(path.join(this.libraryDir, 'training'), value);
   }
 
   async execute(computer, input, maxBytes) {
@@ -152,13 +173,15 @@ export class RemoteTraining {
     atomic(path.join(dir, 'remote.json'), JSON.stringify({ ...descriptor, dir: undefined }));
   }
 
-  async prepare({ id, dir, workspaceId, fingerprint }) {
-    if (dir !== this.jobDirectory(id) || typeof workspaceId !== 'string' || typeof fingerprint !== 'string')
-      throw new Error('The remote training job identity is malformed.');
+  async runtimeFor(frozen) {
+    if (frozen) {
+      const files = inputFiles(
+        this.jobDirectory(frozen.id),
+        Object.keys(frozen.inputHashes).filter((name) => /^(forge-train|libmujoco\.)/.test(name)),
+      );
 
-    const saved = this.configuration();
-
-    if (!saved?.selected || !this.secrets?.available()) throw new Error('Choose a training computer in Settings.');
+      return checkedRuntime(files, frozen.inputHashes);
+    }
 
     this.bundlePromise ??= this.bundle().catch((error) => {
       this.bundlePromise = null;
@@ -166,7 +189,19 @@ export class RemoteTraining {
       throw error;
     });
 
-    const runtime = await this.bundlePromise;
+    return this.bundlePromise;
+  }
+
+  async prepare({ id, dir, workspaceId, fingerprint, frozen, slot = 0, grouped = false }) {
+    if (dir !== this.jobDirectory(id) || typeof workspaceId !== 'string' || typeof fingerprint !== 'string')
+      throw new Error('The remote training job identity is malformed.');
+
+    const saved = this.configuration();
+
+    if ((!saved?.selected && !frozen) || !this.secrets?.available())
+      throw new Error('Choose a training computer in Settings.');
+
+    const runtime = await this.runtimeFor(frozen);
 
     inputManifest(Object.fromEntries(Object.entries(runtime).map(([name, bytes]) => [name, sha256(bytes)])));
 
@@ -183,8 +218,11 @@ export class RemoteTraining {
       workspaceId,
       fingerprint,
       inputHashes,
+      cloning: JSON.parse(files['job.json'].toString('utf8')).algo === 'bc',
+      slot: slot === 1 ? 1 : 0,
+      grouped: grouped === true,
       state: 'prepared',
-      computer: this.secrets.encrypt(JSON.stringify(saved.computer)),
+      computer: frozen?.computer ?? this.secrets.encrypt(JSON.stringify(saved.computer)),
     };
 
     this.save(descriptor);
@@ -246,19 +284,19 @@ export class RemoteTraining {
 
     if (reply.state === 'done' && reply.code === 0) {
       const policy = decodedFile(reply['policy.json']);
-      const resume = decodedFile(reply['resume.json']);
+      const resume = descriptor.cloning ? null : decodedFile(reply['resume.json']);
       const dir = this.jobDirectory(descriptor.id);
 
-      atomic(path.join(dir, 'policy.json'), policy);
-      atomic(path.join(dir, 'resume.json'), resume);
+      saveArtifacts(dir, policy, resume);
     }
 
-    await downloadSnapshots({
-      descriptor,
-      events,
-      execute: (...args) => this.execute(...args),
-      computer: this.computer(descriptor),
-    });
+    if (!descriptor.grouped)
+      await downloadSnapshots({
+        descriptor,
+        events,
+        execute: (...args) => this.execute(...args),
+        computer: this.computer(descriptor),
+      });
 
     return { state: reply.code ? 'failed' : reply.state, code: reply.code, events, stderr };
   }

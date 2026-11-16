@@ -16,6 +16,7 @@ keywords:
 related:
   - publish-a-skill-to-hugging-face
   - arena
+  - train-several-seeds-on-another-computer
 covers:
   - src/components/InstallSkillSheet.tsx
   - src/workspace/useSkillHub.ts

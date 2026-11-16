@@ -16,6 +16,7 @@ import {
 import type { Environment } from './environment';
 import type { SkillSave } from './forgeRunner';
 import type { KitTransitionEvidence } from './kitTransitions';
+import { selectionOf } from './seedSelection';
 
 export interface ProveInput {
   judgment?: LocalJudgment;
@@ -56,7 +57,9 @@ export async function proveSkill(input: ProveInput): Promise<Proof> {
     ...withEvidence(draft, evidence, environment),
     ...(input.kitValidation ? { kitValidation: input.kitValidation } : {}),
   };
-  const skill: Skill = input.origin ? { ...proven, origin: input.origin() } : proven;
+  const training = controller.kind === 'policy' ? selectionOf(controller.policy) : undefined;
+  const origin = input.origin?.();
+  const skill: Skill = origin ? { ...proven, origin: { ...origin, ...(training ? { training } : {}) } } : proven;
 
   await input.save(skillFiles(skillHash(skill)).skill, JSON.stringify(skill));
 

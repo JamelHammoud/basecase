@@ -6,7 +6,7 @@ import type { ForgeJob, ForgeOutcome } from './forgeRunner';
 import { holdingPolicy, readyStand } from './hubSkillFixtures';
 import { seededRecoveryJob } from './recoverSkill';
 import { recoveryFingerprint, SkillRecovery, type RecoveryEntry } from './skillRecovery';
-import type { SkillRecord } from './skillRecords';
+import { skillRecord, type SkillRecord } from './skillRecords';
 import type { SkillRunner } from './skillsClient';
 import { runSkillsJob } from './skillsJob';
 import { SkillsRuntime, type ForgeFactory } from './skillsRuntime';
@@ -22,7 +22,7 @@ beforeAll(async () => {
 
 beforeEach(() => vi.clearAllMocks());
 
-function recovered(passed: boolean, cleanupFails = false) {
+function recovered(passed: boolean, cleanupFails = false, grouped = false) {
   const evidence = {
     ...readyStand(model, 'quad').evidence!,
     passed,
@@ -30,6 +30,8 @@ function recovered(passed: boolean, cleanupFails = false) {
     saltCommitment: 'local-salt',
   };
   const records: SkillRecord[] = [];
+  const previous = skillRecord(readyStand(model, 'quad'), { kit: 'stand' });
+  let retained = previous;
   const refusals: string[] = [];
   const entry: RecoveryEntry = {
     id: 'workflow',
@@ -57,20 +59,36 @@ function recovered(passed: boolean, cleanupFails = false) {
       deletePrefix: async () => {},
     },
   });
-  const forge = vi.fn<(job: ForgeJob) => Promise<ForgeOutcome>>(async (job) => ({
-    ok: true,
-    policy: holdingPolicy(job.job),
-    events: [{ type: 'done', ready: true }],
-    stderr: '',
-    run: 'policy-remote',
-  }));
+  const forge = vi.fn<(job: ForgeJob) => Promise<ForgeOutcome>>(async (job) => {
+    const policy = holdingPolicy(job.job);
+    const candidates = [0, 1].map((index) => ({
+      id: `policy-child-${index}`,
+      seed: 123 + index,
+      fingerprint: { 'model.xml': 'frozen-design' },
+      policy,
+      steps: 10,
+      development: null,
+    }));
+
+    return {
+      ok: true,
+      policy: grouped ? null : policy,
+      events: [{ type: 'done', steps: 20, ready: true }],
+      stderr: '',
+      run: 'policy-remote',
+      ...(grouped ? { candidates } : {}),
+    };
+  });
   const runtime = new SkillsRuntime({
     recovery,
     runner: ((job, ports) => runSkillsJob(job, { ...ports, mj })) as SkillRunner,
     forge: () => forge,
     save: async () => {},
     loadSkill: async () => null,
-    onRecord: (record) => records.push(record),
+    onRecord: (record) => {
+      records.push(record);
+      retained = record;
+    },
     onChange: () => {},
     onRefused: (_target, refusal) => {
       if (refusal) refusals.push(refusal.line);
@@ -79,7 +97,7 @@ function recovered(passed: boolean, cleanupFails = false) {
 
   vi.mocked(runArena).mockResolvedValue(evidence);
 
-  return { runtime, records, refusals, forge, recovery, stored: () => stored };
+  return { runtime, records, refusals, forge, recovery, stored: () => stored, previous, retained: () => retained };
 }
 
 describe('local judgment after remote recovery', () => {
@@ -120,6 +138,27 @@ describe('local judgment after remote recovery', () => {
     expect(state.refusals.join(' ')).toContain('Arena');
   });
 
+  it('retains grouped provenance after recovery and stops after the selected candidate fails Arena', async () => {
+    for (const passed of [true, false]) {
+      const state = recovered(passed, false, true);
+      const arenaCalls = vi.mocked(runArena).mock.calls.length;
+
+      await state.runtime.recover(model);
+      await state.runtime.settled();
+      expect(state.forge).toHaveBeenCalledOnce();
+      expect(vi.mocked(runArena).mock.calls.length - arenaCalls).toBe(1);
+      expect(state.records).toHaveLength(Number(passed));
+
+      if (!passed) expect(state.retained()).toBe(state.previous);
+
+      if (passed) {
+        expect(state.records[0].origin?.training?.selected).toBe('policy-child-0');
+        expect(state.records[0].origin?.training?.attempts.map((attempt) => attempt.seed)).toEqual([123, 124]);
+        expect(state.records[0].origin?.cost.steps).toBe(20);
+      }
+    }
+  });
+
   it('refuses both an old recovery and a design changed while the remote job finishes', async () => {
     const stale = { ...model, xml: model.xml.replace('damping="', 'damping="9') };
     const before = recovered(true);
@@ -128,7 +167,8 @@ describe('local judgment after remote recovery', () => {
     expect(before.forge).not.toHaveBeenCalled();
     expect(before.refusals.join(' ')).toContain('design changed');
 
-    const active = recovered(true);
+    const active = recovered(true, false, true);
+    const completed = active.forge.getMockImplementation()!;
     let finish = (_outcome: ForgeOutcome) => {};
     const result = new Promise<ForgeOutcome>((resolve) => {
       finish = resolve;
@@ -143,9 +183,10 @@ describe('local judgment after remote recovery', () => {
     await active.runtime.recover(model);
     await vi.waitFor(() => expect(job).toBeDefined());
     await active.runtime.recover(stale);
-    finish({ ok: true, policy: holdingPolicy(job!.job), events: [], stderr: '', run: 'policy-remote' });
+    finish(await completed(job!));
     await active.runtime.settled();
     expect(active.records).toHaveLength(0);
+    expect(active.retained()).toBe(active.previous);
     expect(active.refusals.join(' ')).toContain('design changed');
   });
 

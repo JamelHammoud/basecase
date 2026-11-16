@@ -17,7 +17,7 @@ covers:
 
 While Forge trains a skill, you can watch its snapshots on the canvas, then replay the saved snapshots once Basecase keeps the skill.
 
-**Note:** Snapshots need the desktop app. If you train in the browser, you see only the training progress.
+**Note:** Snapshots need a single attempt in the desktop app. Browser training and [grouped remote seeds](/help/train-several-seeds-on-another-computer) show progress without live snapshots.
 
 1. Click **Simulate** at the top of the right panel.
 2. Under **Train**, click **Train** on a skill, such as **Stand**.

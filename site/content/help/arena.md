@@ -18,6 +18,7 @@ related:
   - case-goals-worlds-and-contracts
   - coach-a-skill
   - stress-a-skill
+  - train-several-seeds-on-another-computer
 covers:
   - src/skills/arena.ts
   - src/skills/artifacts.ts
@@ -46,6 +47,8 @@ A skill passes when, in every variant, the share of passing tries is at least 75
 The skill's row shows its weakest variant, for example "31 of 32 tries, at least 86%". The percentage is the confidence bound, not the raw share of passing tries.
 
 A Motor Kit candidate that fails isn't kept. Its row shows the weakest variant of its best try, for example "Refused in Arena: 20 of 32 tries". For Walk, this includes the runs at half speed and standing still. If a move trained from an animation fails, it isn't kept either, and its row says why. An earlier passing skill stays ready, with the refusal above its Arena result.
+
+For [several remote seeds](/help/train-several-seeds-on-another-computer), development evaluation selects one candidate before Arena. If that candidate fails, the other children don’t receive successive Arena trials.
 
 Walk and Settle candidates also face the required switches between Kit skills before they're kept. These checks use the same movement bounds as Routines. A failed switch names the movement that failed, separately from Arena's result. See [Prove a hand-off between skills](/help/prove-a-hand-off-between-skills) for the bounds.
 

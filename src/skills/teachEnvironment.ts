@@ -26,6 +26,7 @@ export interface DraftInput {
 }
 
 const ARM_ACTION_SCALE = 0.25;
+const ROVER_ACTION_SCALE = 6;
 const CONTROL_DT = 0.02;
 const TRACE_DT = 0.02;
 const MIN_SECONDS = 0.5;
@@ -83,8 +84,26 @@ function defaultSignals(floating: boolean, joints: string[]): Record<string, Sig
   return { time: { kind: 'time' }, ...base, ...Object.fromEntries(positions) };
 }
 
-export function draftEnvironment(model: SimModel, input: DraftInput): Environment {
+const velocityGoal = (model: SimModel, input: DraftInput) =>
+  input.goal.kind === 'velocity' && model.robots[0]?.morphology === 'wheeled';
+
+const actionScale = (floating: boolean) => (floating ? KIT_ACTION_SCALE : ARM_ACTION_SCALE);
+
+function taskRobot(model: SimModel, input: DraftInput) {
   const robot = kitRobot(model);
+
+  if (!velocityGoal(model, input)) return robot;
+
+  const joints = model.joints.filter(
+    (joint) => joint.robot === robot.key && joint.actuator >= 0 && joint.drive === 'velocity',
+  );
+
+  return { ...robot, joints: joints.map((joint) => joint.id) };
+}
+
+export function draftEnvironment(model: SimModel, input: DraftInput): Environment {
+  const robot = taskRobot(model, input);
+  const velocity = velocityGoal(model, input);
   const reward = input.rewards?.[0];
 
   return {
@@ -97,9 +116,9 @@ export function draftEnvironment(model: SimModel, input: DraftInput): Environmen
       ...(input.eye ? [{ kind: 'depth-eye' as const, eye: input.eye }] : []),
     ],
     action: {
-      kind: 'position-offset',
+      kind: velocity ? 'velocity' : 'position-offset',
       joints: robot.joints,
-      scale: robot.floating ? KIT_ACTION_SCALE : ARM_ACTION_SCALE,
+      scale: velocity ? ROVER_ACTION_SCALE : actionScale(robot.floating),
       controlDt: CONTROL_DT,
     },
     reset: {
@@ -129,7 +148,7 @@ export function draftGoal(goal: DraftGoal): RaceGoal {
 }
 
 export function draftAnalysis(model: SimModel, input: DraftInput): TaskAnalysis {
-  const robot = kitRobot(model);
+  const robot = taskRobot(model, input);
   const hints = input.analysis ?? {};
 
   return {

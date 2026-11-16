@@ -53,7 +53,7 @@ To train a skill:
 ![The Train section with Stand, Walk, Get up and Settle](/help/train-stand-and-walk-with-the-motor-kit/rows.png)
 
 3. Click **Train** on the skill you want.
-4. Wait while the row shows the trainer's message and a progress bar. As the skill trains, the robot on the canvas runs its newest snapshot.
+4. Wait while the row shows the trainer's message and a progress bar. A single attempt also runs its newest snapshot on the canvas. [Several remote seeds](/help/train-several-seeds-on-another-computer) show aggregate progress without live snapshots.
 
 ![Stand training at 25%](/help/train-stand-and-walk-with-the-motor-kit/training.png)
 
@@ -68,7 +68,7 @@ You can also train **Walk** with **Teach It to Move**, under **Control**.
 
 If a skill fails Arena or a required start or stop, Basecase keeps the previous passing skill. An Arena refusal shows its count, such as "Refused in Arena: 20 of 32 tries". A failed start or stop names the movement that failed. An earlier passing skill stays ready, with the refusal on its row. Without one, the row offers **Train** so you can try again.
 
-Walk also has to start from Settle, turn left and right in place, and start again after a turn. A refused row names the switch and movement that failed. Basecase uses the failed stance in its next training stage, within the same training budget. The switch checks are shown in [Build a Routine](/help/build-a-routine).
+Walk also has to start from Settle, turn left and right in place, and start again after a turn. A refused row names the switch and movement that failed. Local training and single remote attempts use the failed stance in their next stage, within the same training budget. Grouped attempts end after the selected candidate fails. The switch checks are shown in [Build a Routine](/help/build-a-routine).
 
 Only one skill trains at a time. If you click **Train** on another, a message names the one that's training. When training can't start, its row says why, such as "Training needs uv".
 
@@ -93,7 +93,7 @@ These times come from the desktop app on an M5 Pro Mac:
 
 In Chrome on the same Mac, Stand took about two and a quarter minutes.
 
-If Walk fails Arena on its first try, it retrains from its best result. That can take up to 30 minutes on four or six legs, and up to 45 minutes on two.
+During local training or a single remote attempt, Walk retrains from its best result after an Arena refusal. That can take up to 30 minutes on four or six legs, and up to 45 minutes on two.
 
 On a Mac with Apple silicon, Stand and Walk train on the GPU. On Windows they train on the CPU, and the times above don't apply there.
 
@@ -103,7 +103,7 @@ Walk follows the speed and turn you command. Its top speed is 0.2 m/s on four or
 
 ## One job at a time
 
-The app runs one training job at a time and queues the rest.
+The app trains one skill at a time and queues the rest. A skill can use several seed attempts on the selected Linux computer.
 
 Training you start yourself goes to the front of the queue and pauses any Motor Kit job that's retraining in the background. The paused job says "Paused for other training. Starts again after it."
 

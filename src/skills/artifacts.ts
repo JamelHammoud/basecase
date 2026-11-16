@@ -5,6 +5,7 @@ import type { Contract } from './contract';
 import type { ActionSpec, Environment, ObservationTerm } from './environment';
 import { environmentHash } from './environment';
 import { hashOf, isHash } from './hash';
+import type { SeedSelection } from './seedSelection';
 
 export const SKILL_FORMAT = 'basecase-skill';
 export const SKILL_VERSION = 1;
@@ -52,6 +53,7 @@ export interface ArenaEvidence {
 export interface SkillOrigin {
   method: Method | 'motor-kit';
   cost: { wallS: number; steps: number };
+  training?: SeedSelection;
 }
 
 export interface Skill {

@@ -18,7 +18,7 @@ The desktop app can [train on another computer](/help/train-on-another-computer)
 
 1. Give the robot an animation in the Pose tab. Choose **+** ▸ **Walk Cycle** or **+** ▸ **Import BVH**. Or ask the agent to animate it.
 2. Open the Simulate tab. Under Teach it to, the animation has its own row, listed by name after Stand, Walk, Get up and Settle.
-3. Click Train on that row. Forge learns a policy that follows the animation. While it trains, the row shows the trainer's message and how much of the time is used, and the robot on the canvas runs the newest snapshot. To learn more, see [Watch a skill learn while it trains](/help/watch-a-skill-learn).
+3. Click Train on that row. Forge learns a policy that follows the animation. While it trains, the row shows the trainer's message and how much of the time is used. A single attempt also plays the newest snapshot on the canvas. [Several remote seeds](/help/train-several-seeds-on-another-computer) show aggregate progress without live snapshots. To learn more, see [Watch a skill learn while it trains](/help/watch-a-skill-learn).
 4. Wait while the row shows Checking in Arena… Arena runs the move 96 times with randomized friction, masses, servo strength and delays. The move passes only if the joints stay with the animation and the robot doesn't fall or wander off.
 5. When the row shows its Arena result, such as 32 of 32 tries, click Try. The move plays in the sim from the start.
 

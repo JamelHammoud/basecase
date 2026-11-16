@@ -10,6 +10,7 @@ import { moveJob } from './moveJob';
 import { moveSchedule } from './moveSchedule';
 import { proveSkill } from './prove';
 import { elapsedOf, type RaceClock, type RaceInput, type SolveResult } from './raceTypes';
+import { seedDevelopment } from './seedDevelopment';
 
 const SEED_SPAN = 1_000_000;
 
@@ -41,6 +42,7 @@ export async function playMove(input: RaceInput, clock: RaceClock): Promise<Solv
 }
 
 interface Tracking {
+  grouped: boolean;
   input: RaceInput;
   clock: RaceClock;
   tally: ForgeTally;
@@ -57,7 +59,14 @@ async function trainStage(run: Tracking, stage: KitStage, from: { seed: number; 
     delayRamp: stage.delayRamp,
     warmStart: from.folder,
   });
-  const outcome = await runCounted(input.forge, { name: job.name, xml: task.model.xml, job }, tally);
+  const outcome = await runCounted(
+    input.forge,
+    { name: job.name, xml: task.model.xml, job },
+    tally,
+    seedDevelopment({ mj: input.mj, model: task.model, environment: task.environment }),
+  );
+
+  run.grouped ||= !!outcome.candidates;
 
   clock.steps = tally.steps;
 
@@ -95,7 +104,7 @@ export async function trackMotion(input: RaceInput, clock: RaceClock, tries?: re
 
   if (problems.length) return failed(clock, 'tracking', problems.join(' '));
 
-  const run: Tracking = { input, clock, tally: { steps: clock.steps, forgeRuns: 0 } };
+  const run: Tracking = { input, clock, tally: { steps: clock.steps, forgeRuns: 0 }, grouped: false };
   const skill = await firstPassingTry({
     tries: tries ?? moveSchedule(task.model),
     firstSeed: input.seed ?? freshSeed(),
@@ -103,8 +112,19 @@ export async function trackMotion(input: RaceInput, clock: RaceClock, tries?: re
     validate: () => Promise.resolve(0),
     judge: (policy: PolicySpec) => judge(run, policy),
     aborted: () => !!input.signal?.aborted,
+    grouped: () => run.grouped,
   });
   const reason = skill ? 'Arena passed the trained move.' : 'No policy passed Arena within the training budget.';
 
-  return { skill, attempt: { method: 'tracking', passed: !!skill, cost: elapsedOf(clock), reason, candidates: [] } };
+  return {
+    skill,
+    attempt: {
+      method: 'tracking',
+      passed: !!skill,
+      cost: elapsedOf(clock),
+      reason,
+      candidates: [],
+      terminal: run.grouped,
+    },
+  };
 }

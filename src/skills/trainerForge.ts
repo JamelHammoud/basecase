@@ -5,6 +5,8 @@ import { platformBridge } from '../utils/platformBridge';
 import type { ForgeJob, ForgeOutcome, ForgeRunner } from './forgeRunner';
 import { SNAPSHOT_EVERY_S, type SnapshotRef } from './snapshots';
 import { errorMessage } from '../utils/errorMessage';
+import type { SeedCandidate } from './seedSelection';
+import { remoteTrainingBridge } from '../remoteTraining/bridge';
 
 export interface ForgeProgress {
   share: number | null;
@@ -35,6 +37,33 @@ function checkedTrainerPolicy(value: unknown): PolicySpec | null {
 }
 
 async function finished(ev: TrainEvent): Promise<ForgeOutcome> {
+  if (Array.isArray(ev.candidates)) {
+    const candidates: SeedCandidate[] = await Promise.all(
+      ev.candidates.map(async (candidate) => ({
+        id: candidate.id,
+        seed: candidate.seed,
+        fingerprint: candidate.fingerprint,
+        steps: candidate.steps,
+        development: candidate.development,
+        error: candidate.outcome.kind === 'error' ? candidate.outcome.message : undefined,
+        policy:
+          candidate.outcome.kind === 'done'
+            ? checkedTrainerPolicy(await platformBridge.getPolicy(candidate.id).catch(() => null))
+            : null,
+      })),
+    );
+
+    for (const candidate of candidates) void platformBridge.deletePolicy(candidate.id).catch(() => false);
+
+    return {
+      ok: ev.kind !== 'error',
+      policy: null,
+      candidates,
+      events: [{ type: 'done', steps: candidates.reduce((sum, candidate) => sum + candidate.steps, 0) }],
+      stderr: ev.kind === 'error' ? String(ev.message ?? 'Training stopped.') : '',
+    };
+  }
+
   if (ev.kind === 'error') return failure(String(ev.message ?? 'Training stopped.'));
 
   const record = ev.record as PolicyRecord;
@@ -62,7 +91,7 @@ export function trainingProgress(kind: unknown, event: ProgressEvent): ForgeProg
   const { elapsedS, budgetS } = event.progress ?? {};
   const share = typeof budgetS === 'number' && budgetS > 0 ? Math.min(1, Number(elapsedS ?? 0) / budgetS) : null;
 
-  return { share, message: 'Training' };
+  return { share, message: typeof event.message === 'string' ? event.message : 'Training' };
 }
 
 const progressOf = (ev: TrainEvent) => trainingProgress(ev.kind, ev as ProgressEvent);
@@ -98,7 +127,7 @@ function stop(options: TrainerForgeOptions) {
 export function trainerForge(options: TrainerForgeOptions): ForgeRunner {
   let index = 0;
 
-  return (job) =>
+  const runner: ForgeRunner = (job) =>
     new Promise<ForgeOutcome>((resolve) => {
       const early: TrainEvent[] = [];
       let jobId: string | null = null;
@@ -155,4 +184,8 @@ export function trainerForge(options: TrainerForgeOptions): ForgeRunner {
         (e: unknown) => settle(failure(errorMessage(e))),
       );
     });
+
+  runner.selected = remoteTrainingBridge.recordSelection;
+
+  return runner;
 }

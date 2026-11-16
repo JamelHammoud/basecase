@@ -110,6 +110,17 @@ describe('durable remote training', () => {
     expect(f.service.descriptors()).toEqual([]);
   });
 
+  it('downloads a cloning policy without requiring a PPO resume artifact', async () => {
+    const f = fixture();
+    const descriptor = await prepared(f);
+
+    descriptor.cloning = true;
+    f.responses.push(reply({ state: 'done', 'policy.json': artifact('{"policy":1}') }));
+    expect((await f.service.poll(descriptor)).state).toBe('done');
+    expect(fs.existsSync(path.join(descriptor.dir, 'policy.json'))).toBe(true);
+    expect(fs.existsSync(path.join(descriptor.dir, 'resume.json'))).toBe(false);
+  });
+
   it('refuses corrupted or oversized artifacts before replacing either local file', async () => {
     const f = fixture();
     const descriptor = await prepared(f);

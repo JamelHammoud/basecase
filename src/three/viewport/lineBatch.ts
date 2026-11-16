@@ -161,7 +161,10 @@ export class LineBatch {
   }
 
   setMatrix(instance: number, matrix: THREE.Matrix4): void {
-    this.stored.set(instance, matrix.clone());
+    const stored = this.stored.get(instance);
+
+    if (stored) stored.copy(matrix);
+    else this.stored.set(instance, matrix.clone());
 
     if (!this.hidden.has(instance)) this.writeMatrix(instance, matrix);
   }

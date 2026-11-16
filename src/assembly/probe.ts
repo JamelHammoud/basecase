@@ -56,6 +56,18 @@ export function ringAround(centre: THREE.Vector3, axis: THREE.Vector3, radius: n
   });
 }
 
+export function hasThreeContacts(points: THREE.Vector3[], touches: (point: THREE.Vector3) => boolean): boolean {
+  let contacts = 0;
+
+  for (const point of points) {
+    if (touches(point)) contacts++;
+
+    if (contacts === 3) return true;
+  }
+
+  return false;
+}
+
 export interface Frame {
   origin: THREE.Vector3;
   axis: THREE.Vector3;

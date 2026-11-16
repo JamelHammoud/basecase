@@ -2,6 +2,16 @@
 
 Implementation: [Assembly and repair planning](../guide/build.md#performance-assembly-and-repair-planning). Shared requirements: [Performance](../guide/performance.md).
 
+## Screw-head contact thresholds stop at three
+
+`ringContacts.test.ts` compares every eight-point contact pattern with the previous full-count verdict. It checks that queries visit the original points in order and stop at the third contact, or visit the whole ring when fewer than three match. Later edits, independent calls, short rings and source preservation are covered. The remaining sleeve-host ranking needs exact counts and retains its full traversal.
+
+A scratch comparison matched complete fastener traces across 160 generated scenes, then matched another 160 traces after role edits and reversed placement order. Fixtures vary host width overlap and height, countersunk heads, washers, separate hardware seats, rotation and translation. Instrumenting exported `insideSolid` and `isNear` calls across the first 160 traces reduced queries from 19,301 to 18,406. Internal calls made within those functions are not counted. The two threshold checks no longer allocate filtered contact lists. Fully matching eight-point rings now need three predicate calls instead of eight.
+
+Measurements used Vitest on macOS arm64 with Node v26.13.0. These are query counts and output comparisons, without timing assertions or a claim about complete assembly-check latency. Controls, report text and help steps are unchanged.
+
+The changed-file check passed formatting, lint, docs, site copy and types. Related selection ran 64 test files with 385 passing tests and one failure. `electron/print/project.test.mjs`'s Bambu Studio compatibility case exceeded its existing 5,000 ms timeout. That case creates and round-trips a multi-material 3MF through the installed slicer, without invoking fastener tracing. Its shared analysis-worker import brings it into related selection. No retry, timeout change or quarantine was added.
+
 ## Assembly diagnostics select one candidate without sorting
 
 `blockerChoice.test.ts` compares 500 generated fixtures against stable sorting, checks source preservation and edits, and exercises report lines and blocked service results. Its 300- and 600-choice fixtures require one blocker-count read per direction, two per lip candidate and two per split plane. These are operation counts without timing assertions or a claim about complete assembly-check time.

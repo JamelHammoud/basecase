@@ -44,6 +44,27 @@ function status() {
     );
 }
 
+function printJson() {
+  quotaSnapshot('codex');
+
+  const args = process.argv.slice(3);
+  const option = (name) => {
+    const index = args.indexOf(name);
+
+    return index < 0 ? undefined : Date.parse(args[index + 1]);
+  };
+  const since = option('--since');
+  const now = option('--until');
+
+  if (
+    [since, now].some((value) => value !== undefined && !Number.isFinite(value)) ||
+    (since !== undefined && now !== undefined && since >= now)
+  )
+    throw new Error('Use ISO dates with --since before --until');
+
+  console.log(JSON.stringify(usageReport({ since, now }), null, 2));
+}
+
 const [command = 'status'] = process.argv.slice(2);
 
 if (command === 'resume') {
@@ -52,6 +73,5 @@ if (command === 'resume') {
   console.log('Provider limit holds cleared. Codex remains the default.');
 } else if (command === 'status') status();
 else if (command === 'json') {
-  quotaSnapshot('codex');
-  console.log(JSON.stringify(usageReport(), null, 2));
+  printJson();
 } else console.log('Usage: node tools/loop/usage.mjs <status|json|resume>');

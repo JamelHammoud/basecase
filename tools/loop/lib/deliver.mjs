@@ -1,6 +1,7 @@
 import { claim } from './claim.mjs';
 import { createPull, editPull } from './github.mjs';
 import { completeDelivery, deliveryFor, saveDelivery } from './deliveryState.mjs';
+import { recordPublication } from './publicationJournal.mjs';
 import { fingerprint } from './sessionJournal.mjs';
 import { json, run } from './sh.mjs';
 
@@ -45,6 +46,7 @@ export function deliver(saved, dependencies = {}) {
     const existing = existingPull(entry, services.readJson);
 
     if (existing?.url && (!entry.number || existing.state !== 'OPEN')) {
+      recordPublication(entry, existing.url);
       completeDelivery(entry.branch);
 
       return existing.url;
@@ -54,6 +56,7 @@ export function deliver(saved, dependencies = {}) {
 
     if (!url) throw new Error('Pull request delivery returned no URL');
 
+    recordPublication(entry, url);
     completeDelivery(entry.branch);
 
     return url;

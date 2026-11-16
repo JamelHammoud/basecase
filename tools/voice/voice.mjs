@@ -1,4 +1,5 @@
 import { isCopyReasonLine } from '../copy/budget.mjs';
+import { workIdentity } from '../loop/lib/publicationJournal.mjs';
 import { runAgent } from '../loop/lib/agent.mjs';
 import { LOOP_DIR } from '../loop/lib/paths.mjs';
 import fs from 'node:fs';
@@ -141,7 +142,7 @@ export function voicePrompt(kind) {
     .join('\n\n');
 }
 
-export function voiceText(text, { kind, generate = runAgent }) {
+export function voiceText(text, { kind, generate = runAgent, origin }) {
   const cwd = path.join(LOOP_DIR, 'state', 'voice-workspace');
 
   fs.mkdirSync(cwd, { recursive: true });
@@ -150,6 +151,10 @@ export function voiceText(text, { kind, generate = runAgent }) {
     const result = generate({
       cwd,
       name: 'voice',
+      task: origin?.cwd ? path.basename(origin.cwd) : undefined,
+      workId: origin?.cwd ? workIdentity(origin.cwd) : undefined,
+      taskId: origin?.taskId,
+      shared: !origin,
       system: voicePrompt(kind),
       prompt: text,
       hours: 1,
@@ -180,7 +185,7 @@ export function rewriteFile(file, { cwd = process.cwd(), generate } = {}) {
 
   if (/^type: reference$/m.test(frontMatter(before))) return false;
 
-  const after = voiceText(before, { kind, generate });
+  const after = voiceText(before, { kind, generate, origin: { cwd } });
 
   if (!after || after.trim() === before.trim()) return false;
 

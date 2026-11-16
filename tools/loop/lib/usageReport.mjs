@@ -4,7 +4,9 @@ import { LOOP_DIR } from './paths.mjs';
 import { quotaState } from './quota.mjs';
 import { accountBurn } from './accountBurn.mjs';
 import { weeklyForecast } from './agentPolicy.mjs';
-import { stepPullIndex } from './stepPulls.mjs';
+import { pullHistory } from './stepPulls.mjs';
+import { publicationRecords } from './publicationJournal.mjs';
+import { completionWindow } from './usageCompletions.mjs';
 import { taskUsage } from './usageTasks.mjs';
 import { sessionTotals } from './usageTotals.mjs';
 
@@ -29,18 +31,19 @@ export function sessionRecords({ since = Date.now() - 24 * 60 * 60_000 } = {}) {
     });
 }
 
-export function usageReport({ since, now = Date.now() } = {}) {
-  const sessions = sessionRecords({ since });
-  let pulls = null;
+export function usageReport({ since = Date.now() - 86_400_000, now = Date.now() } = {}) {
+  const retained = sessionRecords({ since: 0 });
+  const sessions = retained.filter((record) => record.startedAt >= since && record.startedAt < now);
+  let pulls;
 
   try {
-    const index = stepPullIndex();
-
-    if (index) pulls = [...new Map([...index.values()].flat().map((pull) => [pull.number, pull])).values()];
+    pulls = pullHistory();
   } catch {
     pulls = null;
   }
 
+  const publications = publicationRecords();
+  const retainedWork = taskUsage(retained, pulls, publications);
   const byLane = Object.groupBy(sessions, (session) => session.lane ?? session.name);
   const codex = quotaState('codex');
   const weekly = codex.windows.find((window) => window.minutes === 10080);
@@ -60,8 +63,14 @@ export function usageReport({ since, now = Date.now() } = {}) {
     }),
     projectedWeeklyUsage: weekly ? weeklyForecast({ used: weekly.used, reset: weekly.reset, now }) : null,
     sessions: sessions.length,
+    publications,
     completedSessions: sessions.filter((session) => session.state === 'completed').length,
-    taskWork: taskUsage(sessions, pulls),
+    taskWork: sessions.length === retained.length ? retainedWork : taskUsage(sessions, pulls, publications),
+    retention: {
+      since: retained.length ? Math.min(...retained.map((record) => record.startedAt)) : null,
+      sessions: retained.length,
+    },
+    completionWindow: completionWindow(retainedWork, { since, until: now, pulls }),
     lanes: Object.fromEntries(
       Object.entries(byLane).map(([lane, records]) => [
         lane,

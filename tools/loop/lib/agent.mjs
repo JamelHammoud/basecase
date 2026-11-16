@@ -5,7 +5,8 @@ import { runCodex } from './codex.mjs';
 import { runClaude, withoutGithub } from './claude.mjs';
 import { policyFor, primaryAvailable, primaryReserve } from './agentPolicy.mjs';
 import { quotaSnapshot, reserveOverflow } from './quota.mjs';
-import { recordSession } from './sessionJournal.mjs';
+import { recordSession, SHARED_LANES } from './sessionJournal.mjs';
+import { workIdentity } from './publicationJournal.mjs';
 import { codexPause, isActive, pause, resumeCodex, startCodexPause, startPause, UsageLimit } from './usage.mjs';
 
 export { sandboxArgs } from './claude.mjs';
@@ -20,6 +21,29 @@ export const brief = (name) =>
     ...(TELLING.has(name) ? [fs.readFileSync(path.join(BRIEFS, 'telling.md'), 'utf8')] : []),
   ].join('\n\n');
 
+const inferredTask = (options) => {
+  const step = /^(?:step-|loop-build-)(\d+)(?:-|$)/.exec(options.task ?? path.basename(options.cwd));
+  const pull = /^(?:review|revise|rebase)-(\d+)(?:-|$)/.exec(options.task ?? path.basename(options.cwd));
+
+  if (step) return `step:${step[1]}`;
+
+  return pull ? `pull:${pull[1]}` : undefined;
+};
+
+function invocationIdentity(options) {
+  const workId = options.workId ?? workIdentity(options.cwd);
+
+  return {
+    worker: options.worker ?? process.env.BASECASE_LOOP_WORKER ?? process.env.BASECASE_LOOP_LANE ?? options.name,
+    taskKind: options.taskKind,
+    workId,
+    taskId: options.taskId ?? inferredTask(options) ?? workId,
+    continuedFrom: options.continuation?.id ?? null,
+    previousInvocation: options.previousInvocation ?? null,
+    shared: options.shared ?? SHARED_LANES.has(options.name),
+  };
+}
+
 function measured(provider, options, execute) {
   const quotaBefore = quotaSnapshot(provider);
   const startedAt = Date.now();
@@ -27,8 +51,9 @@ function measured(provider, options, execute) {
     provider,
     name: options.name,
     lane: options.name,
-    worker: options.worker ?? process.env.BASECASE_LOOP_WORKER ?? process.env.BASECASE_LOOP_LANE ?? options.name,
-    taskKind: options.taskKind,
+    ...invocationIdentity(options),
+    model: provider === 'codex' ? options.policy.model : options.policy.claudeModel,
+    effort: provider === 'codex' ? options.policy.effort : options.policy.claudeEffort,
     task: options.task ?? path.basename(options.cwd),
     startedAt,
     state: 'running',
@@ -42,12 +67,6 @@ function measured(provider, options, execute) {
     ...pending,
     id,
     state: 'completed',
-    lane: options.name,
-    provider,
-    name: options.name,
-    model: provider === 'codex' ? options.policy.model : options.policy.claudeModel,
-    effort: provider === 'codex' ? options.policy.effort : options.policy.claudeEffort,
-    startedAt,
     finishedAt,
     durationMs: finishedAt - startedAt,
     ok: result.ok,
@@ -57,7 +76,6 @@ function measured(provider, options, execute) {
     previousUsage: result.previousUsage,
     limited: Boolean(result.limited),
     formatRetried: Boolean(result.formatRetried),
-    task: options.task ?? path.basename(options.cwd),
     quotaBefore,
     quotaAfter,
     result: result.output
@@ -67,6 +85,7 @@ function measured(provider, options, execute) {
           title: result.output.title,
           checked: result.output.checked,
           notes: result.output.notes,
+          verdict: result.output.verdict,
         }
       : null,
     error: result.error?.slice(0, 1000),
@@ -89,7 +108,11 @@ function overflow(options, primary) {
   if (!release) throw new UsageLimit(nextAvailability());
 
   try {
-    const result = measured('claude', { ...options, continuation: null }, runClaude);
+    const result = measured(
+      'claude',
+      { ...options, continuation: null, previousInvocation: primary?.journalId },
+      runClaude,
+    );
 
     if (result.limited) {
       startPause(result.limited.until);
@@ -133,6 +156,9 @@ export function runAgent({
   system,
   task,
   taskKind,
+  taskId,
+  workId,
+  shared,
   worker,
 }) {
   const policy = policyFor(name);
@@ -147,6 +173,9 @@ export function runAgent({
     policy,
     task,
     taskKind,
+    taskId,
+    workId,
+    shared,
     worker,
     brief: system ?? brief(name),
   };

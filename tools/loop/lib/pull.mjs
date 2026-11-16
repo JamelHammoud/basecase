@@ -174,7 +174,7 @@ export function publish(change, { dir, branch, extra, onDuplicate }) {
     dir,
     branch,
     title,
-    body: voiced(body, 'pull'),
+    body: voiced(body, 'pull', { cwd: dir }),
     label: `loop:${change.kind}`,
     sha: git(['rev-parse', 'HEAD'], dir).out.trim(),
     createdAt: Date.now(),

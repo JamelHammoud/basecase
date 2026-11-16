@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { prepareNormalStep } from './linkageFitNormal';
-import { solveSquare, type Matrix } from './sketch/linalg';
+import { solveSquareInPlace, type Matrix } from './sketch/linalg';
 import { prepareLeastNorm } from './sketch/leastNorm';
 
 const DAMPING = [0, 1e-10, 1e-3, 1, 100, 1e-3];
@@ -15,7 +15,7 @@ function uncachedLeastNorm(j: Matrix, weights: number[], residuals: number[], da
       return sum;
     }),
   );
-  const y = solveSquare(a, residuals);
+  const y = solveSquareInPlace(a, residuals);
 
   if (!y) return null;
 
@@ -40,6 +40,30 @@ function counted<T extends number[] | Float64Array>(values: T) {
 
   return { array, reads: () => reads };
 }
+
+it('keeps sketch trials independent after pivoting and partially singular elimination', () => {
+  const j = [
+    [1, 2],
+    [2, 4],
+  ];
+  const weights = [1, 1];
+  const residuals = [3, -1];
+  const before = structuredClone({ j, weights, residuals });
+  const step = prepareLeastNorm(j, weights, residuals);
+  const other = prepareLeastNorm([[2, -1]], [1, 2], [4]);
+  const independent = other(1)!;
+  const retained = step(1)!;
+  const saved = [...retained];
+
+  for (const damping of [0, 1e-3, 10, 0, 1]) {
+    expect(step(damping)).toEqual(uncachedLeastNorm(j, weights, residuals, damping));
+    expect(other(1)).toEqual(independent);
+    expect(retained).toEqual(saved);
+  }
+
+  expect(step(0)).toBeNull();
+  expect({ j, weights, residuals }).toEqual(before);
+});
 
 describe('prepared damping steps', () => {
   it.each([1, 1e-12, 1e12])('preserves sketch arithmetic with a variable weight of %d', (weight) => {
@@ -117,7 +141,7 @@ describe('prepared damping steps', () => {
         }),
       );
       const rhs = source.map((column) => -column.reduce((sum, v, i) => sum + v * residuals[i], 0));
-      const expected = solveSquare(a, rhs)!;
+      const expected = solveSquareInPlace(a, rhs)!;
       const actual = step(damping)!;
 
       expected.forEach((value, i) => expect(actual[i]).toBeCloseTo(value, 12));
@@ -151,7 +175,7 @@ describe('prepared damping steps', () => {
     const saved = Array.from(original);
 
     for (const damping of [1, 0, 10, 0, 1]) {
-      const expected = solveSquare(
+      const expected = solveSquareInPlace(
         [
           [5 + damping * (5 + 1e-9), 10],
           [10, 20 + damping * (20 + 1e-9)],

@@ -1,4 +1,4 @@
-import { solveSquare, type Matrix } from './linalg';
+import { solveSquareInPlace, type Matrix } from './linalg';
 
 function weightedProducts(j: Matrix, weights: number[]) {
   const diagonal = j.map((row) => weights.map((w, c) => row[c] * w * row[c]));
@@ -24,7 +24,7 @@ export function prepareLeastNorm(j: Matrix, weights: number[], residuals: number
     const damped = matrix.map((row, p) =>
       row.map((value, q) => (p === q ? diagonal[p].reduce((sum, term) => sum + term, damping) : value)),
     );
-    const y = solveSquare(damped, residuals);
+    const y = solveSquareInPlace(damped, residuals);
 
     if (!y) return null;
 

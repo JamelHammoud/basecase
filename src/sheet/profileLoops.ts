@@ -86,7 +86,12 @@ export function loopsOf(edges: Edge[]): Point[][] | undefined {
     loops.push(loop);
   }
 
-  return loops.sort((a, b) => Math.abs(polygonArea(b)) - Math.abs(polygonArea(a)));
+  if (loops.length < 2) return loops;
+
+  return loops
+    .map((points) => ({ points, area: Math.abs(polygonArea(points)) }))
+    .sort((a, b) => b.area - a.area)
+    .map(({ points }) => points);
 }
 
 export function inside(point: Point, polygon: Point[]): boolean {

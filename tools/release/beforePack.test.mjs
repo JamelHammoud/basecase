@@ -39,6 +39,22 @@ afterEach(() => {
   for (const dir of projects.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
 });
 
+it('ships the shared Hub runtime modules imported by the desktop backend', () => {
+  const { files } = JSON.parse(fs.readFileSync(path.join(repo, 'package.json'), 'utf8')).build;
+  const included = files.filter((pattern) => !pattern.startsWith('!'));
+  const excluded = files.filter((pattern) => pattern.startsWith('!')).map((pattern) => pattern.slice(1));
+  const modules = fs.readdirSync(path.join(repo, 'src', 'hub')).filter((name) => name.endsWith('.mjs'));
+
+  expect(modules.length).toBeGreaterThan(0);
+
+  for (const name of modules) {
+    const modulePath = `src/hub/${name}`;
+
+    expect(included.some((pattern) => path.matchesGlob(modulePath, pattern)), modulePath).toBe(true);
+    expect(excluded.some((pattern) => path.matchesGlob(modulePath, pattern)), modulePath).toBe(false);
+  }
+});
+
 describe('packaging stages the robot daemon', () => {
   it('runs before every electron-builder pack, so electron-builder --dir ships the daemon too', () => {
     const build = JSON.parse(fs.readFileSync(path.join(repo, 'package.json'), 'utf8')).build;

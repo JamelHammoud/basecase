@@ -174,6 +174,25 @@ describe('Codex execution', () => {
   });
 });
 
+describe('Codex delegation', () => {
+  it.each(['build', 'refine', 'review', 'voice'])(
+    'disables nested delegation for %s starts and continuations',
+    (name) => {
+      const original = options({ name });
+      const continuation = {
+        provider: 'codex',
+        id: 'thread',
+        fingerprint: fingerprint({ cwd: original.cwd, brief: original.brief, schema }),
+      };
+      const files = { schemaFile: 'schema.json', outFile: 'answer.json' };
+
+      for (const context of [original, { ...original, continuation }]) {
+        expect(codexArgs(context, files).join(' ')).toContain('--disable multi_agent --disable multi_agent_v2');
+      }
+    },
+  );
+});
+
 describe('Codex limit recovery', () => {
   it('does not repeat a completed task after recovering from a provider limit', () => {
     const out = [

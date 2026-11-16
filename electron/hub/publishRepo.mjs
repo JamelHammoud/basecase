@@ -2,7 +2,10 @@ import crypto from 'node:crypto';
 import { eachLimited } from '../eachLimited.mjs';
 import { HUB_ENDPOINT, repoRoot } from './hubClient.mjs';
 
-const NAME = /^(?!.*(?:--|\.\.))[A-Za-z0-9](?:[A-Za-z0-9._-]{0,94}[A-Za-z0-9])?$/;
+import { checkedName } from '../../src/hub/skillDownloads.mjs';
+
+export { checkedName };
+
 const SEGMENT = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/;
 const VERSION_TAG = /^v\d+\.\d+$/;
 const DATASET_TAG = /^dataset-v\d{1,6}$/;
@@ -11,14 +14,6 @@ const PATH_MAX = 300;
 const BATCH = 200;
 const UPLOADS_AT_ONCE = 4;
 const KEPT = new Set(['.gitattributes', 'README.md']);
-
-export function checkedName(name) {
-  const value = String(name ?? '');
-
-  if (!NAME.test(value)) throw new Error(`“${value.slice(0, 100)}” can’t name a Hugging Face repo.`);
-
-  return value;
-}
 
 export function checkedTag(tag) {
   if (tag === undefined || tag === null) return null;

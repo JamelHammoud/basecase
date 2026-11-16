@@ -2,6 +2,7 @@ import { expect, it, vi } from 'vitest';
 import { observeInstall } from './installRun';
 import type { KitOutcome } from './motorKit';
 import { readyStand } from './hubSkillFixtures';
+import { kitEnvironment } from './kitEnvironment';
 import { fixtureModel } from './fixtureModels';
 
 const skill = readyStand(fixtureModel('quad-servo'), 'quad');
@@ -61,3 +62,22 @@ it.each([undefined, refused.evidence])(
     expect(completed).toHaveBeenCalledWith({ status: 'infrastructure' });
   },
 );
+
+it('refuses a completed policy after Stop and reports cancellation once', async () => {
+  const controller = new AbortController();
+  const completed = vi.fn();
+  const passed = {
+    kind: 'skill',
+    skill,
+    environment: kitEnvironment(fixtureModel('quad-servo'), 'stand'),
+    cost: refused.cost,
+  };
+  const work = async () => {
+    controller.abort();
+
+    return { ...passed, kind: 'skill' as const };
+  };
+
+  await expect(observeInstall({ signal: controller.signal, completed, work })).rejects.toThrow('Stopped.');
+  expect(completed).toHaveBeenCalledExactlyOnceWith({ status: 'cancelled' });
+});

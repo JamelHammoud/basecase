@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { LOOP_DIR } from './paths.mjs';
 import { quotaState } from './quota.mjs';
+import { accountBurn } from './accountBurn.mjs';
 import { weeklyForecast } from './agentPolicy.mjs';
 import { stepPullIndex } from './stepPulls.mjs';
 import { taskUsage } from './usageTasks.mjs';
@@ -50,6 +51,13 @@ export function usageReport({ since, now = Date.now() } = {}) {
     weeklyTarget: 90,
     emergencyReserve: 10,
     quota: { codex, claude: quotaState('claude') },
+    accountBurn: accountBurn({
+      current: codex,
+      samples: sessions
+        .filter((session) => session.provider === 'codex')
+        .flatMap((session) => [session.quotaBefore, session.quotaAfter]),
+      now,
+    }),
     projectedWeeklyUsage: weekly ? weeklyForecast({ used: weekly.used, reset: weekly.reset, now }) : null,
     sessions: sessions.length,
     completedSessions: sessions.filter((session) => session.state === 'completed').length,

@@ -30,6 +30,8 @@ describe('isolated loop profile', () => {
     expect(env.CODEX_API_KEY).toBe('');
     expect(fs.readFileSync(path.join(env.CODEX_HOME, 'auth.json'), 'utf8')).toBe('{"auth_mode":"chatgpt"}');
     expect(config).toContain('plugins = false');
+    expect(config).toContain('multi_agent = false');
+    expect(config).toContain('multi_agent_v2 = false');
     expect(config).not.toContain('personal-tool');
     expect(fs.readFileSync(path.join(source, 'config.toml'), 'utf8')).toContain('personal-tool');
   });

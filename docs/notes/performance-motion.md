@@ -65,3 +65,11 @@ The three help articles flagged by preflight were reread against the final ances
 - [Joints and kinematics](../../site/content/help/joints-and-kinematics.md): `ancestors` returns the same root-first bone names and stops at the same repeated name. Motion axes and their accumulated orientations are unchanged. The guide addition describes implementation work only, preserving the article's hierarchy and Design From Motion descriptions.
 
 Preflight reports unchanged covered articles without comparing their claims. These three reminders remain in its output after verification. No article was edited solely to suppress a reminder.
+
+## Motion channels unwrap directly from sampled frames
+
+The whole-app search found one angle-unwrapping routine, in `utils/motionSkeletonSource.ts`. File imports and the agent both reach it through `motionChains`. This changes source-channel preparation, while fitted trajectory summaries and live retargeting keep their existing calculations.
+
+The sampler reads each channel directly from the sampled frames, appending its continuous angle and accumulating minimum and maximum in the same pass. Shared endpoint chains still reuse one channel array per bone. For C channels and F frames, this removes C temporary raw-angle arrays containing C × F entries and two later extrema scans containing 2 × C × F visits. The retained channel values and sampled frame maps remain necessary. These are code-derived storage and traversal counts, without a timing assertion or a claim about complete fitting time.
+
+`motionChannelSamples.test.ts` compares exact unwrapped values and static-channel exclusion with the previous arithmetic across 100 seeded clips and ten boundary fixtures. It covers seam crossings, positive and negative half turns, multiple revolutions, signed zero, missing and nonfinite samples, unchanged source data, changed clips and independent results. Its 160,000-frame fixture checks the shared chain output beyond the old argument-spread limit. On local macOS arm64 with Node 26.13.0, the previous `Math.max(...values)` range calculation throws `RangeError: Maximum call stack size exceeded` at that size. Existing `motionSkeletonSource.test.ts` covers shared endpoint channels, orientation and current bone identities. No quarantine applies.

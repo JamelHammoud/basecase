@@ -34,7 +34,7 @@ export async function subscriptions(pool) {
   });
 
   return {
-    async open({ request, response, token, actor }) {
+    async open({ request, response, token, actor, client = pool }) {
       insist(streams.size < 64, 503);
       response.writeHead(200, {
         'Content-Type': 'text/event-stream',
@@ -83,7 +83,7 @@ export async function subscriptions(pool) {
       streams.add(stream);
       response.on('close', () => streams.delete(stream));
       request.on('error', () => response.end());
-      send(response, 'snapshot', await listResources(pool, actor, { kind: 'robot' }));
+      send(response, 'snapshot', await listResources(client, actor, { kind: 'robot' }));
     },
     async close() {
       for (const stream of streams) stream.response.end();

@@ -107,3 +107,65 @@ CREATE TABLE IF NOT EXISTS fleet_recovery_audit (
 );
 CREATE INDEX IF NOT EXISTS fleet_recovery_audit_page ON fleet_recovery_audit(org,sequence);
 INSERT INTO fleet_schema(version) VALUES (3) ON CONFLICT DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS fleet_connections (
+  org uuid NOT NULL REFERENCES fleet_organizations(id) ON DELETE CASCADE,
+  id uuid NOT NULL,
+  issuer text NOT NULL,
+  revision uuid NOT NULL,
+  data jsonb NOT NULL,
+  PRIMARY KEY (org,id),
+  UNIQUE (org,issuer)
+);
+CREATE TABLE IF NOT EXISTS fleet_federated (
+  org uuid NOT NULL,
+  connection uuid NOT NULL,
+  subject text NOT NULL,
+  account uuid NOT NULL,
+  active boolean NOT NULL DEFAULT true,
+  provisioned boolean NOT NULL DEFAULT false,
+  deleted boolean NOT NULL DEFAULT false,
+  groups jsonb NOT NULL DEFAULT '[]',
+  PRIMARY KEY (org,connection,subject),
+  UNIQUE (org,account),
+  FOREIGN KEY (org,connection) REFERENCES fleet_connections(org,id),
+  FOREIGN KEY (org,account) REFERENCES fleet_resources(org,id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS fleet_saml_cache (
+  org uuid NOT NULL,
+  connection uuid NOT NULL,
+  revision uuid NOT NULL,
+  key text NOT NULL,
+  value text NOT NULL,
+  expires timestamptz NOT NULL,
+  PRIMARY KEY (org,connection,key),
+  FOREIGN KEY (org,connection) REFERENCES fleet_connections(org,id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS fleet_scim_tokens (
+  org uuid NOT NULL,
+  connection uuid NOT NULL,
+  hash text NOT NULL UNIQUE,
+  expires timestamptz NOT NULL,
+  PRIMARY KEY (org,connection),
+  FOREIGN KEY (org,connection) REFERENCES fleet_connections(org,id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS fleet_scim_groups (
+  org uuid NOT NULL,
+  connection uuid NOT NULL,
+  id uuid NOT NULL,
+  external_id text NOT NULL,
+  name text NOT NULL,
+  members uuid[] NOT NULL,
+  PRIMARY KEY (org,connection,id),
+  UNIQUE (org,connection,external_id),
+  FOREIGN KEY (org,connection) REFERENCES fleet_connections(org,id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS fleet_federation_policy (
+  org uuid PRIMARY KEY REFERENCES fleet_organizations(id) ON DELETE CASCADE,
+  enforced boolean NOT NULL DEFAULT false
+);
+ALTER TABLE fleet_credentials ADD COLUMN IF NOT EXISTS connection uuid;
+CREATE OR REPLACE TRIGGER fleet_connection_changed AFTER INSERT OR UPDATE OR DELETE ON fleet_connections FOR EACH ROW EXECUTE FUNCTION fleet_changed();
+CREATE OR REPLACE TRIGGER fleet_federated_changed AFTER UPDATE OR DELETE ON fleet_federated FOR EACH ROW EXECUTE FUNCTION fleet_changed();
+CREATE OR REPLACE TRIGGER fleet_scim_group_changed AFTER INSERT OR UPDATE OR DELETE ON fleet_scim_groups FOR EACH ROW EXECUTE FUNCTION fleet_changed();
+INSERT INTO fleet_schema(version) VALUES (4) ON CONFLICT DO NOTHING;

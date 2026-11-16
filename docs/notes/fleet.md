@@ -214,3 +214,36 @@ The first related check exposed an incorrect edit in `authenticate` while moving
 `e2e/fleetRecovery.e2e.test.ts` owns the browser acceptance on Linux and Windows CI. It loses the ordinary administrator, invokes the exact local command, restarts the service and signs into the existing Fleet screen. It checks the organization ID, original robot UUID, old token refusal and a durable recovery event. No timeout, retry, quarantine or CI policy changes are made by this step.
 
 Documentation captures use the existing browser harness. An initial scratch capture accidentally used Vitest's unit default of five seconds and expired before Fleet navigation. An attempted merge with the browser config also concatenated its test includes, so that run was stopped and the capture-only include was assigned explicitly. The next openApp capture hit its existing 30-second studio navigation deadline before reaching Fleet. A standalone Fleet capture then used the same Chrome launcher and real service directly, avoiding unrelated studio boot. It captured the existing sign-in state without a password and the recovered original inventory in 9.42 seconds. Vite reported delayed shutdown afterward. These are documentation captures, not CI browser acceptance results. No timeout or retry was raised and no visual judgment is claimed.
+
+## Federation and provisioning
+
+Issue #1341 adds adapters to the existing identity evaluator, browser shell and audited local recovery. The acceptance matrix uses real PostgreSQL and HTTP endpoints and locally generated RSA keys. The first backend changed-file run passed 73 related tests across 13 files in 12.82 seconds. It also reported three lint errors, corrected in subsequent edits. This earlier pass predates the final recovery and provisioning tests and is not final-input evidence.
+
+| Requested configuration | Evidence |
+| --- | --- |
+| One provider | Signed SP-initiated exchange and site enumeration |
+| Two subsidiaries | Separate configured issuers and account UUIDs |
+| Partner provider | Third independent issuer in the same organization |
+| Same email across issuers | Local account and external accounts never link by email |
+| Same subject across issuers | Equal persistent subjects retain different accounts |
+| Group grants | Existing evaluator grants only the configured site's inventory |
+| Group removal | SCIM membership replacement removes existing-session grants |
+| Certificate rollover | Old and new keys accepted together, old signer refused after removal |
+| Disabled provider | Sessions revoked and new initiation refused |
+| SCIM deactivation while subscribed | Real Users endpoint deletes credentials and resets the subscription |
+
+Exploit exchanges cover consumed responses, expired assertions, mismatched audiences, recipients and issuers, forged signatures, XML entities and assertion wrapping. Configuration rejects metadata URLs, executable sign-in URLs, foreign role references and the protected recovery role. Additional integration coverage holds a real HTTP request after its final authentication query, deactivates its account through SCIM and requires the queued mutation and subscription handshake to reauthenticate and fail. A mapped identity administrator cannot issue service credentials from an SSO session.
+
+Two local node:26-alpine containers completed signed protocol exchanges with separate keys and HTTP 303 session redirects in a focused scratch run. The run passed in 9.78 seconds. Its retained local artifacts are `scratch/fleet-container-2.log` and `scratch/fleet-container-evidence.json`. The initial attempt tried to mount dependencies inside a read-only parent bind and failed before an exchange. Mounting the two fixture source files separately corrected that setup error. Windows runs the same IdP server directly in Node because its CI host supplies native PostgreSQL rather than Docker.
+
+Two overlapping intermediate related-test invocations encountered existing PostgreSQL setup deadlines, and one recovery subprocess case reached its existing five-second test budget. Their logs are `scratch/fleet-check-2.log` and `scratch/fleet-check-3.log`. No timeout, retry, assertion or quarantine was changed. Validation runs were made sequential afterward. The first browser capture also created a role after loading Access, so that role was absent from the already-loaded selector. The capture now reloads provider configuration after creating its fixture roles. The committed browser test creates roles before opening Access.
+
+The committed browser acceptance is `e2e/fleetFederation.e2e.test.ts`. It configures two providers through Access, completes signed browser redirects, checks disjoint site inventories and deactivates the active account through SCIM. CI owns its execution on Linux and Windows. Documentation captures use the same Chrome launcher and real service with container IdPs. Capture results and final exact-input check results are retained in `scratch/task-handoff.json` rather than inferred from earlier passes. No real robot, paid IdP tenant or production identity provider was used.
+
+
+The complete documentation capture passed in 15.59 seconds using two local IdP containers, the real Fleet service and headless Chrome. It retained two different account UUIDs, separate harbor inventories and an HTTP 201 JIT adoption with SCIM deactivation. Its artifacts are `scratch/fleet-capture-3.log` and `scratch/fleet-browser-evidence.json`. An earlier capture signed out the same administrator session used by its setup API client, so the later token issuance correctly returned 401. Both the capture and committed browser test now obtain the organization provisioning token before signing out that administrator. The screenshots show configured access, provider discovery, both site scopes and the deactivated empty inventory. They were captured for documentation without visual judgment.
+
+The next changed-file run passed all 88 related tests across 20 files in 14.82 seconds, along with formatting, lint, documentation, 302 site pages and types. That pass predates the final subscription handshake serialization, so it is intermediate evidence. The new handshake uses the transaction's client for its initial snapshot instead of borrowing another pool connection while retaining the identity lock. This prevents pool exhaustion when multiple handshakes wait together.
+
+
+Final backend and browser-source validation passed 88 related tests in 20 files in 6.33 seconds, including the queued write and subscription handshake after complete cached authentication. Formatting, lint, documentation, 302 site pages and types passed in the same changed-file check. The log is `scratch/fleet-final-check-3.log`. Subsequent edits affect help prose only and have their own changed-file check. The installation article was checked against the dependency-only package changes. Its platform, installer and runtime download instructions remain true, so it is unchanged. The preflight help advisory for that broad package cover is retained with this verification rather than forcing an unrelated article edit.

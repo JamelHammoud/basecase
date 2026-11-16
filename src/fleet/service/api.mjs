@@ -1,3 +1,4 @@
+import { federationAdmin } from './federationConfig.mjs';
 import { enroll, invite, login, serviceCredential } from './identity.mjs';
 import { generation, ingest } from './ingest.mjs';
 import {
@@ -52,6 +53,8 @@ async function identityApi(client, actor, options) {
 export async function authenticatedApi(client, actor, options) {
   const { method, parts, body, query } = options;
   const [kind, id] = parts;
+
+  if (['connections', 'federation-policy'].includes(kind)) return federationAdmin(client, actor, options);
 
   if (['invitations', 'credentials'].includes(kind)) return identityApi(client, actor, options);
 

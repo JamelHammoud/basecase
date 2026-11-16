@@ -1,5 +1,6 @@
 import { createHash, randomBytes, randomUUID, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
+import { federationRoles, localLoginAllowed } from './federationIdentity.mjs';
 import { ACTIONS } from './authorization.mjs';
 import { transaction } from './database.mjs';
 import { auditedIdentityTransaction, lockIdentity, protectRecovery } from './recoveryProtection.mjs';
@@ -29,7 +30,7 @@ export async function issueCredential(client, options) {
   const expires = new Date(Date.now() + options.duration);
 
   await client.query(
-    'INSERT INTO fleet_credentials(hash,id,org,account,kind,ceiling,expires) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+    'INSERT INTO fleet_credentials(hash,id,org,account,kind,ceiling,expires,connection) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
     [
       hash(token),
       id,
@@ -38,6 +39,7 @@ export async function issueCredential(client, options) {
       options.kind,
       options.ceiling ? JSON.stringify(options.ceiling) : null,
       expires,
+      options.connection ?? null,
     ],
   );
 
@@ -98,6 +100,8 @@ export async function login(pool, body) {
     ]);
 
     insist(current.rows[0]?.password === found.password, 401);
+
+    await localLoginAllowed(client, org, found.account);
 
     return issueCredential(client, { org, account: found.account, kind: 'session', duration: 12 * 3600000 });
   });
@@ -169,6 +173,8 @@ export async function authenticate(pool, token) {
 
   insist(credential, 401);
 
+  const federatedRoles = await federationRoles(pool, credential);
+
   const groups = await pool.query(
     "SELECT data FROM fleet_resources WHERE org=$1 AND kind='group' AND data->'members' ? $2 LIMIT 101",
     [credential.org, credential.account],
@@ -176,7 +182,13 @@ export async function authenticate(pool, token) {
 
   insist(groups.rowCount <= 100, 403);
 
-  const roles = [...new Set([...(credential.data.roles ?? []), ...groups.rows.flatMap((item) => item.data.roles)])];
+  const roles = [
+    ...new Set([
+      ...(credential.data.roles ?? []),
+      ...federatedRoles,
+      ...groups.rows.flatMap((item) => item.data.roles),
+    ]),
+  ];
 
   insist(roles.length <= 256, 403);
 
@@ -191,10 +203,13 @@ export async function authenticate(pool, token) {
     credential: credential.id,
     rules: found.rows.flatMap((item) => item.data.rules),
     ceiling: credential.ceiling,
+    connection: credential.connection,
   };
 }
 
 export async function serviceCredential(client, actor, body) {
+  insist(!actor.connection, 403);
+
   return issueCredential(client, {
     org: actor.org,
     account: actor.account,

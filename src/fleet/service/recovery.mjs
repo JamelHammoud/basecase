@@ -91,6 +91,8 @@ export async function recover(pool, options) {
 
     await client.query('UPDATE fleet_passwords SET password=$3 WHERE org=$1 AND account=$2', [org, account, password]);
     await client.query('DELETE FROM fleet_credentials WHERE org=$1', [org]);
+    await client.query('DELETE FROM fleet_scim_tokens WHERE org=$1', [org]);
+    await client.query('DELETE FROM fleet_saml_cache WHERE org=$1', [org]);
     await recoveryAudit(client, { org, actor, action: 'recovery.use', affected: account, outcome: 'success' });
 
     return { org, account };

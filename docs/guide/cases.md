@@ -699,7 +699,7 @@ Each `e2e/visionTraining.e2e.test.ts` attempt opens a fresh app and Library. Bot
 
 ### Windows gallery navigation
 
-Windows retains rover driving and Open Scene, and Linux and macOS retain all five tests. `gallery/gallery.test.ts` and `gallery/sharedRobot.test.ts` retain route and shared-bundle validation, while `cases/console/codeDocument.test.ts` and `cases/console/codeBridge.test.ts` retain sandbox policy and input-bridge checks.
+Windows retains Open Scene, and Linux and macOS retain all five tests. The Windows rover-driving walkthrough is quarantined through 28 November 2026 under [#1403](https://github.com/JamelHammoud/basecase/issues/1403). `gallery/gallery.test.ts` and `gallery/sharedRobot.test.ts` retain route and shared-bundle validation, while `cases/console/codeDocument.test.ts` and `cases/console/codeBridge.test.ts` retain sandbox policy and input-bridge checks.
 
 [Incident evidence and limits](../notes/testing-gallery.md).
 
@@ -831,7 +831,7 @@ Each test attempt in `e2e/dataImport.e2e.test.ts` opens a fresh app and temporar
 
 ### Rendered vision
 
-The operator-camera browser check remains active, along with the rendered feed's pixel-transfer, pacing and inference pipeline tests. `src/cameras/recordedCamera.test.ts` covers recorded-frame delivery to inference and paused seeks, while `src/vision/tryFrameVideo.test.ts` covers real MP4 decoding and clip offsets.
+The operator-camera browser check remains active on Windows and macOS. Its Linux walkthrough is quarantined after a visible-face-box failure through 28 November 2026 under [#1404](https://github.com/JamelHammoud/basecase/issues/1404). `src/cameras/operator/liveVision.test.ts` retains estimator-frame transfer and ownership, `src/vision/engine.test.ts` retains real pixel-sensitive WASM inference, `src/cameras/visionSignals.test.ts` retains signal behavior, and `src/components/cameras/DetectionBoxes.test.ts` retains normalized overlay markup. The rendered feed's pixel-transfer, pacing and inference pipeline tests remain active. `src/cameras/recordedCamera.test.ts` covers recorded-frame delivery to inference and paused seeks, while `src/vision/tryFrameVideo.test.ts` covers real MP4 decoding and clip offsets.
 
 [Incident evidence and limits](../notes/testing-vision.md).
 

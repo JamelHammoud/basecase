@@ -1,5 +1,21 @@
 [
   {
+    "file": "e2e/gallery.e2e.test.ts",
+    "test": "drive a rover in the browser, at real time, under the web demo",
+    "issue": 1403,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43851640785 reached rover movement but measured RTF 0.8791354659462937 against the unchanged greater-than-0.9 assertion at line 140. Retry exhausted the unchanged 30000 ms navigation deadline at line 106. The preceding run 43847119378 passed this Windows test only on retry in 86.627 s and Linux passed in 4.808 s, with unchanged gallery, camera, browser test, dependencies and e2e configuration. Failed pages remain in the shared browser because they close only after success. Neither the initial throughput cause nor the later navigation stall is established. Issue #1403 owns tracing and equal-load baseline and candidate measurements, coordinated with gallery navigation owner #1139. Other platforms retain rover driving and Windows retains Open Scene."
+  },
+  {
+    "file": "e2e/vision.e2e.test.ts",
+    "test": "runs Find Faces on real fake-camera pixels while the body estimator uses its pose fixture",
+    "issue": 1404,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Run 43851640785 passed live readiness, the face signal, yunet model id and 640 by 480 dimensions, then exhausted the unchanged 10000 ms visible face-box poll at lines 73 through 77 on both Linux attempts. The preceding run 43847119378 passed on Linux in 14.353 s and Windows in 13.520 s with unchanged camera code, fixture, overlay, dependencies and e2e configuration. The log does not report whether the visible count was zero or duplicated. Each attempt owns a fresh app. Issue #1404 owns scope, result, tile and overlay tracing and equal-load baseline and candidate measurements. Windows and macOS coverage remain active."
+  },
+  {
     "file": "src/vision/tryFrameVideo.test.ts",
     "test": "",
     "issue": 1400,

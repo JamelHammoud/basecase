@@ -2,6 +2,7 @@ import type { AssemblyGeometry } from './assemblyGeometry';
 import { AXES } from './moveBlockers';
 import { clampingScrews, indexFasteners, type FastenerIndex } from './fastenerIndex';
 import type { RemovalPlan, RemovalStep } from './removalOrder';
+import { minimalClosures } from './minimalClosures';
 
 type Closure = Set<number>;
 
@@ -13,23 +14,6 @@ interface Search {
   target: string;
   memo: Map<number, Closure[]>;
   fasteners: FastenerIndex;
-}
-
-const subset = (a: Closure, b: Closure) => [...a].every((id) => b.has(id));
-
-function minimal(sets: Closure[]): Closure[] {
-  const kept: Closure[] = [];
-
-  for (const candidate of sets) {
-    if (kept.some((other) => subset(other, candidate))) continue;
-
-    const supersets = kept.filter((other) => subset(candidate, other));
-
-    supersets.forEach((other) => kept.splice(kept.indexOf(other), 1));
-    kept.push(candidate);
-  }
-
-  return kept;
 }
 
 function prerequisites(s: Search, step: RemovalStep): string[][] {
@@ -72,7 +56,7 @@ function combine(s: Search, index: number, ids: number[]): Closure[] {
   for (const id of ids) {
     const options = closures(s, id);
 
-    choices = minimal(choices.flatMap((choice) => options.map((option) => new Set([...choice, ...option]))));
+    choices = minimalClosures(choices.flatMap((choice) => options.map((option) => new Set([...choice, ...option]))));
   }
 
   return choices;
@@ -89,7 +73,7 @@ function closures(s: Search, index: number): Closure[] {
 
     return ids ? combine(s, index, ids) : [];
   });
-  const result = minimal(candidates);
+  const result = minimalClosures(candidates);
 
   s.memo.set(index, result);
 

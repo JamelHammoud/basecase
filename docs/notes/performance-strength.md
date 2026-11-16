@@ -74,3 +74,11 @@ A 100 × 18 × 9 mm solid PLA bracket at 0.5 target mass, 1.5 mm wall and 500 N�
 ## Lighten expands each retained coarse cell once
 
 `lightenFineGrid.test.ts` compares complete grids across 40 sparse, anisotropic and singleton-axis fixtures at four prefix counts, checks empty grids, source preservation, edits and independent buffers, and compares six complete mass searches with child-to-parent lookup. On 300- and 600-cell fixtures, membership lookups fall from 2,400 and 4,800 to 300 and 600 per build. These are operation counts, without timing assertions or a claim about complete Lighten latency.
+
+## Elastic setup uses scalar block offsets
+
+A whole-app search found block-Jacobi diagonal inversion and support pinning together only in `strength/cg.ts`. Both Strength and Lighten use that solver. Scalar row and block arguments remove one temporary record per sparse block. Direct indexed inverse reads and writes remove one typed-array view and one nine-number array per node.
+
+A scratch comparison matched complete displacement arrays, iteration counts and residuals exactly in 64 cases across four materials, dense and sparse meshes, opposite support faces and four iteration limits. On 300- and 600-cell meshes, instrumented Float64 subarray calls fell from 484 and 847 to zero. Inverse `set` calls, each previously receiving a temporary nine-number array, also fell from 484 and 847 to zero. Those meshes contain 9,610 and 18,259 sparse blocks, respectively, whose pinning no longer constructs index records. Record counts follow the visited sparse blocks rather than a runtime allocation profiler.
+
+`cg.test.ts` retains known-displacement and independent-residual checks and adds independently pinned axes plus the view and inverse-copy assertions. These are operation counts and numerical comparisons, without timing assertions or a claim about complete Strength or Lighten latency. Scratch source and results remain local in `scratch/cg-setup.test.ts` and `scratch/cg-setup-results.json`.

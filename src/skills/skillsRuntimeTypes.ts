@@ -3,6 +3,7 @@ import type { Skill } from './artifacts';
 import type { ForgeRunner, SkillSave } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
 import type { KitWarm } from './motorKit';
+import type { InstallCompleted } from './installRun';
 import type { SkillRunner } from './skillsClient';
 import type { SkillRecord } from './skillRecords';
 import type { SkillJob, SkillRefusal, SkillTarget } from './skillRows';
@@ -34,6 +35,7 @@ export interface RuntimeDeps {
 }
 
 export interface KitInstall {
+  onOutcome?: InstallCompleted;
   entry: TrainedEntry;
   warm: KitWarm;
 }

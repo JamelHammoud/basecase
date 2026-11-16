@@ -7,6 +7,8 @@ import type { TrainedEntry } from './kitEnvironment';
 import type { KitOutcome, KitWarm } from './motorKit';
 import { errorMessage } from '../utils/errorMessage';
 import type { BackgroundTask } from './kitPlan';
+import type { InstallCompleted } from './installRun';
+import { runRuntimeKit } from './runtimeKit';
 import type { RaceOutcome } from './race';
 import type { ForgeFactory, JobRow, KitInstall, RaceReport, Run, RuntimeDeps } from './skillsRuntimeTypes';
 import type { SkillPorts, SkillsJob } from './skillsJob';
@@ -28,14 +30,8 @@ import { raceSummary } from './teach';
 import type { Environment } from './environment';
 import { runTries, type TriesPlan } from './triesRun';
 
-export type {
-  ForgeFactory,
-  ForgeFactoryOptions,
-  JobRow,
-  KitInstall,
-  RaceReport,
-  RuntimeDeps,
-} from './skillsRuntimeTypes';
+export type { ForgeFactory, ForgeFactoryOptions, JobRow } from './skillsRuntimeTypes';
+export type { KitInstall, RaceReport, RuntimeDeps } from './skillsRuntimeTypes';
 
 export const designOf = (model: SimModel) => model.robots[0]?.key ?? 'scene';
 
@@ -140,14 +136,13 @@ export class SkillsRuntime {
   installKit(model: SimModel, install: KitInstall): string | null {
     if (this.user) return BUSY;
 
-    const { entry, warm } = install;
-
     this.running = this.start({
-      target: `kit:${entry}`,
-      label: KIT_LABELS[entry],
+      target: `kit:${install.entry}`,
+      label: KIT_LABELS[install.entry],
       background: false,
       model,
-      work: (forge, signal) => this.kitWork(model, entry, { forge, signal, warm }),
+      work: (forge, signal) =>
+        this.kitWork(model, install.entry, { forge, signal, warm: install.warm }, install.onOutcome),
     });
 
     return null;
@@ -322,17 +317,16 @@ export class SkillsRuntime {
     model: SimModel,
     entry: TrainedEntry,
     ports: { forge: ForgeRunner; signal: AbortSignal; warm?: KitWarm },
+    completed?: InstallCompleted,
   ) {
-    const { warm, ...rest } = ports;
-    const context = this.deps.kitContext ? await this.deps.kitContext(model) : {};
-
-    if (ports.signal.aborted) return;
-
-    const reply = await this.deps.runner(
-      { type: 'kit', model, design: designOf(model), entry, ...context, ...(warm ? { warm } : {}) },
-      { ...this.ports(), ...rest },
-    );
-    const { outcome } = reply;
+    const outcome = await runRuntimeKit({
+      model,
+      entry,
+      ports,
+      completed,
+      infrastructure: () => this.forgeErrors.has(`kit:${entry}`),
+      deps: this.deps,
+    });
 
     const target: SkillTarget = `kit:${entry}`;
 

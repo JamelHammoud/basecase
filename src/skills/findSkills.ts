@@ -15,8 +15,11 @@ export async function findSkills(model: SimModel, query = ''): Promise<RankedSki
   try {
     const robot = kitRobot(model);
     const target = robotSchema(model, { robot: robot.key, joints: robot.joints });
-    const candidates = await hubBridge.findSkills();
-    const ranked = await ranking.call('rank', { candidates, target });
+    const [candidates, outcomes] = await Promise.all([
+      hubBridge.findSkills(),
+      hubBridge.skillOutcomes().catch(() => []),
+    ]);
+    const ranked = await ranking.call('rank', { candidates, target, outcomes });
     const words = query.trim().toLowerCase().split(/\s+/);
 
     return ranked.filter((r) => words.every((word) => `${r.name} ${r.repo}`.toLowerCase().includes(word)));

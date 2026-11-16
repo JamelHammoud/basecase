@@ -53,9 +53,11 @@ Install Skill works in the desktop app, on legged robots. It takes Motor Kit ski
 
 You can also right-click a row under **Train** and choose **Install Skill**. In **Install Skill**, you can paste a repo link into the field and press [[↩]] instead.
 
-The list puts skills Basecase can install first, then compares limb positions, then the source's Arena passes. Skills it can't install appear last with their reason. Repos whose policy or Arena evidence doesn't match `skill.json` are left out. If the Hub can't be reached, the list is empty and you can still enter a link.
+The list puts skills Basecase can install first, then uses reported installation results on similar robot bodies, limb positions and the source's Arena passes. Skills it can't install appear last with their reason. Repos whose policy or Arena evidence doesn't match `skill.json` are left out. If the Hub can't be reached, the list is empty and you can still enter a link.
 
 If a file doesn't match `skill.json`, the install stops and a toast shows the name of the file. Legs with a different number of joints don't fit, and the toast says how many joints each one has.
+
+Installation results are saved on your computer. While signed in, Basecase also publishes them under your own Hugging Face account. Pending results publish when you next open **Install Skill** or finish an installation while signed in. Failed Arena runs count as failures. Canceled attempts and infrastructure failures don’t affect ordering. Reports must match the source commit and current Arena version. Other people’s reports help order the list but don’t prove your installation.
 
 The author's Arena evidence doesn't carry over, so your installed skill needs its own. Installed Walk and Settle candidates also face the same required starts and stops as locally trained candidates.
 

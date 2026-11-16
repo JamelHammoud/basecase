@@ -39,6 +39,7 @@ export type KitOutcome =
       relaxation: { change: LadderChange; message: string } | null;
       cost: KitCost;
       evidence?: ArenaEvidence | null;
+      environment?: Environment;
       validation?: KitTransitionEvidence;
     };
 
@@ -108,7 +109,8 @@ interface Attempt {
   environment: Environment;
   start: KitStart | null;
   clock: Clock;
-  best: { evidence: ArenaEvidence | null; score: number };
+  best: { evidence: ArenaEvidence | null; score: number; environment?: Environment };
+  evidenceEnvironments: WeakMap<ArenaEvidence, Environment>;
   reports: WeakMap<PolicySpec, ValidationReport>;
   validation: KitTransitionEvidence | null;
 }
@@ -141,7 +143,15 @@ function failedStart(run: Attempt, report: ValidationReport) {
 }
 
 function noteEvidence(run: Attempt, evidence: readonly ArenaEvidence[], score: number) {
-  if (score > run.best.score) run.best = { evidence: worstEvidence(evidence) ?? null, score };
+  if (score <= run.best.score) return;
+
+  const worst = worstEvidence(evidence) ?? null;
+
+  run.best = {
+    evidence: worst,
+    score,
+    environment: worst ? (run.evidenceEnvironments.get(worst) ?? run.environment) : undefined,
+  };
 }
 
 async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>> {
@@ -160,7 +170,13 @@ async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>
   }
 
   const controller = { kind: 'policy' as const, policy, robot: kitRobot(input.model).key };
-  const slower = await slowerSpeedEvidence({ ...input, entry, environment, policy });
+  const slower = await slowerSpeedEvidence({
+    ...input,
+    entry,
+    environment,
+    policy,
+    onEvidence: (evidence, testedEnvironment) => run.evidenceEnvironments.set(evidence, testedEnvironment),
+  });
 
   if (!slower.every((e) => e.passed)) {
     const { mj, model } = input;
@@ -233,6 +249,7 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
     start,
     clock,
     best: { evidence: null, score: -Infinity },
+    evidenceEnvironments: new WeakMap(),
     reports: new WeakMap(),
     validation: null,
   };
@@ -256,7 +273,7 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
     reason,
     relaxation: null,
     cost: clock.cost(),
-    evidence: validation ? null : run.best.evidence,
+    ...(validation ? { evidence: null } : { evidence: run.best.evidence, environment: run.best.environment }),
     ...(validation ? { validation } : {}),
   };
 }

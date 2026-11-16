@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { hubBridge } from '../hub/hubBridge';
 import { findSkills } from '../skills/findSkills';
+import { produceInstallOutcome } from '../skills/installOutcome';
+import { kitEnvironment } from '../skills/kitEnvironment';
 import type { RankedSkill } from '../skills/skillRank';
 import { installPlan, publishedSkillFiles, readPublishedSkill, skillLink, skillRepoName } from '../skills/hubSkill';
 import { KIT_LABELS, type SkillRow } from '../skills/skillRows';
@@ -43,11 +45,19 @@ async function publishRow(skills: SceneSkills, row: SkillRow) {
 }
 
 async function installFrom(skills: SceneSkills, link: string) {
-  const { repo, files } = await hubBridge.skillFiles(skillLink(link));
+  const { repo, revision, files } = await hubBridge.skillFiles(skillLink(link));
   const published = readPublishedSkill(files);
   const model = await skills.buildModel();
   const plan = installPlan(published, model);
-  const busy = skills.install(model, plan);
+  const source = { repo, revision, skill: published.skill, schema: published.schema };
+  const environment = kitEnvironment(model, plan.entry);
+  const busy = skills.install(model, {
+    ...plan,
+    onOutcome: (result) =>
+      hubBridge.publishSkillOutcome(
+        produceInstallOutcome({ source, model, ...result, environment: result.environment ?? environment }),
+      ),
+  });
 
   if (busy) throw new Error(busy);
 

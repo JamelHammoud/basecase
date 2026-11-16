@@ -89,6 +89,8 @@ const ROUTES: Record<string, Route> = {
     return bytes && { data: bytesToBase64(bytes) };
   },
   'hub-model-file': () => ({ web: true }),
+  'hub-skill-outcomes': () => [],
+  'hub-publish-skill-outcome': () => ({ stored: false, published: false }),
   'acp-status': () => WEB_AGENT_STATUS,
   'sourced-parts': () => [],
   'sourced-mesh': () => ({ data: null }),

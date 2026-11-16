@@ -23,6 +23,7 @@ export interface HubRepoRef {
 
 export interface HubSkillFiles {
   repo: string;
+  revision: string;
   files: Record<string, string>;
 }
 
@@ -71,5 +72,8 @@ export const hubBridge = {
   skillFiles: (ref: HubRepoRef) => call<HubSkillFiles>('hub:skill-files', ref),
   modelFile: (ref: VisionModelFile) => call<{ url: string }>('hub:model-file', ref),
   findSkills: () => call<HubSkillCandidate[]>('hub:find-skills'),
+  publishSkillOutcome: (record: unknown) =>
+    call<{ stored: boolean; published: boolean }>('hub:publish-skill-outcome', record),
+  skillOutcomes: () => call<unknown[]>('hub:skill-outcomes'),
   datasetFiles: (ref: HubRepoRef) => call<HubDatasetFiles>('hub:dataset-files', ref),
 };

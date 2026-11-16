@@ -9,6 +9,7 @@ import { HUB_ENDPOINT, HubClient } from './hubClient.mjs';
 import { checkedName, checkedTag, publishRepo } from './publishRepo.mjs';
 import { SKILL_DOWNLOADS, SKILL_FILE_BYTES } from './skillRepo.mjs';
 import { SkillSearch } from './skillSearch.mjs';
+import { SkillOutcomes } from './skillOutcomes.mjs';
 
 const TOKEN = 'huggingface';
 const NAME = 'huggingface-name';
@@ -60,6 +61,7 @@ export class HubAccount {
     this.endpoint = endpoint;
     this.outbound = outbound;
     this.skillSearch = new SkillSearch();
+    this.outcomes = new SkillOutcomes(libraryDir);
   }
 
   client(token, again, kind) {
@@ -105,8 +107,10 @@ export class HubAccount {
 
   async skillFiles({ owner, repo, rev } = {}) {
     const id = `${checkedName(owner)}/${checkedName(repo)}`;
-    const branch = encodeURIComponent(checkedRevision(rev));
     const client = this.client(this.keys.get(TOKEN) ?? undefined, 'Install again', 'model');
+    const requested = checkedRevision(rev);
+    const revision = /^[a-f0-9]{40}$/.test(requested) ? requested : await client.revisionSha(id, requested);
+    const branch = encodeURIComponent(revision);
     const files = {};
 
     for (const path of SKILL_DOWNLOADS) {
@@ -118,7 +122,7 @@ export class HubAccount {
       files[path] = bytes.toString('utf-8');
     }
 
-    return { repo: id, files };
+    return { repo: id, revision, files };
   }
 
   async modelFile(model) {
@@ -135,6 +139,24 @@ export class HubAccount {
 
   findSkills() {
     return this.skillSearch.find(this.client(this.keys.get(TOKEN) ?? undefined, 'Install again', 'model'));
+  }
+
+  outcomeConnection() {
+    const token = this.keys.get(TOKEN);
+    const namespace = this.keys.get(NAME);
+
+    return token && namespace ? { client: this.client(token, undefined, 'model'), namespace } : null;
+  }
+
+  publishSkillOutcome(record) {
+    return this.outcomes.publish(record, this.outcomeConnection());
+  }
+
+  skillOutcomes() {
+    return this.outcomes.find(
+      this.client(this.keys.get(TOKEN) ?? undefined, 'Install again', 'model'),
+      this.outcomeConnection(),
+    );
   }
 
   async datasetFiles({ owner, repo, rev } = {}) {

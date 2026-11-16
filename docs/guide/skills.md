@@ -250,7 +250,11 @@ Measurements and limits: [Skill feasibility and moves performance evidence](../n
 
 - **Feasibility shares body topology per model.** `skills/feasibilityBodies.ts` prepares subtree intervals, ordered robot members and leaves once when `openKin` compiles a model. Foot discovery no longer rebuilds membership for each possible leaf. Mass calculations, joint chains, link scaling and payload ancestry reuse the index, while positions and masses remain live. [Evidence](../notes/performance-skills.md#feasibility-shares-body-topology-per-model).
 
+- **Rover routes prepare compiled geometry radii once.** `skills/wheelBodyRadii.ts` collects the largest geometry size per body in one pass. `anythingRoute.ts` reuses these radii for every powered velocity joint, without per-wheel geometry lists or size copies. The 1 mm minimum, wheel order, spin and lateral offsets stay unchanged. Empty wheel lists skip preparation. The scene-based manual drive setup uses part dimensions instead of compiled geometry. [Evidence](../notes/performance-skills.md#rover-routes-prepare-compiled-geometry-radii-once).
+
 ## Testing coverage
+
+- **Compiled rover wheel setup.** `wheelBodyRadii.test.ts` compares complete wheel setups against the previous geometry scan on differential and four-wheel MuJoCo rovers and an arm. It covers reversed joint order, passive joints, empty bodies, multiple geometries, the radius floor, nonfinite sizes, edits and geometry-owner read counts.
 
 - **Pose animation training.** `src/skills/skillRows.test.ts` checks Sit discovery, passing evidence and invalidation after animation edits. `src/skills/skillsRuntime.test.ts` checks move training, record creation and snapshot retention with a supplied runner. `src/skills/moveEnvironment.test.ts` checks the 51-frame reference, one-shot clock, Forge job and real MuJoCo rollouts where holding still fails and following the clock passes. The remaining browser tests retain Train entry, training snapshots and saved snapshot playback. [Incident evidence](../notes/testing-skills.md#pose-animation-training).
 

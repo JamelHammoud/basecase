@@ -85,6 +85,8 @@ Each mounted scene workspace owns a `VisionScopeContext`. Camera inference, came
 
 Measurements and limits: [Panels and Layers performance evidence](../notes/performance-layout.md).
 
+- **Parts search reuses named size patterns.** `catalogSearch.ts` prepares the fixed hardware size patterns once, preserving catalog order and word boundaries. Parts and robot word matchers build a boundary pattern only for words shorter than three characters. Longer words use literal substring matching directly. `catalogSearch.test.ts` covers repeated named queries, size priority, boundaries and literal punctuation alongside exact hardware and ranking. [Evidence](../notes/performance-layout.md#parts-search-patterns).
+
 - **Parts search retains robot and object text.** `insertSearch.ts` indexes each immutable `RobotEntry` once in a weak map and tokenizes the fixed object categories once at module load. Replacing a robot entry builds fresh search text, and ranking still uses the current input order. Default preset entries are shared between calls without supplied robots. `insertSearch.test.ts` covers repeated queries, replacement names and stable ranking after input reordering, alongside sized hardware, robot sources and object singular/plural matching. [Evidence](../notes/performance-layout.md#insertable-search-indices).
 
 - **Layers indexes groups once.** `layerRows.ts` builds each group's members in one pass, then uses those lists for expanded rows and search matches. It never scans the whole scene per group. [Evidence](../notes/performance-layout.md#layers-indexes-groups-once).

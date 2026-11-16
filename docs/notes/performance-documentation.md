@@ -54,3 +54,44 @@ The preservation check compares 203 migrated blocks’ whitespace-separated toke
 All 11 pairs that still share an area-guide file edit separate subsystem sections and merge cleanly. No sampled change needs a central-guide edit. Existing subsystems also reuse their evidence notes, so they need no root-index or navigation change.
 
 This is a documentation-placement replay, not a measured reduction in production rebases or CI runs. Same-subsystem edits can still conflict. Shared requirement or navigation changes can still conflict. The result does not claim that all 76 reported events would disappear. Runtime behavior, acceptance tests and performance budgets are unchanged.
+
+## Testing documentation ownership replay
+
+Issue [#1245](https://github.com/JamelHammoud/basecase/issues/1245) reports 26 conflicts in `docs/guide/running-and-testing.md`. On 15 November 2026, the available conflict records reproduce that count exactly: 26 resolution records naming that path across 18 pull requests. Their timestamps range from 14 November at 17:37 UTC to 15 November at 17:53 UTC. Repeated resolutions of the same pull request count separately, as they do in the loop's digest. This sample is separate from the performance replay above.
+
+### Sample and ownership
+
+The table maps each recorded pull request's testing-guide edits to the resulting documentation owners. The linked notes retain detailed incident evidence. Their owning area guides retain coverage facts. A historical edit may touch both an area record and a shared contract.
+
+| Pull request | Recorded events | Documentation edit and resulting owner |
+| --- | ---: | --- |
+| [#767](https://github.com/JamelHammoud/basecase/pull/767) | 1 | The shared `perf:booleans` command description remains in [Running and testing](../guide/running-and-testing.md). |
+| [#837](https://github.com/JamelHammoud/basecase/pull/837) | 1 | The web IndexedDB running contract and `import.meta.glob` harness caveat remain shared. This pull request closed without merging. |
+| [#894](https://github.com/JamelHammoud/basecase/pull/894) | 1 | Camera inference and scene-isolation coverage belongs in [Cameras](../guide/cameras.md#testing-coverage). This pull request closed without merging. Its proposed coverage is not added by this migration. |
+| [#941](https://github.com/JamelHammoud/basecase/pull/941) | 1 | [Servo and mixed-servo calibration](testing-robot-runtime.md#servo-calibration) move to Robot runtime. The `__studio.calibrate` harness contract remains shared. Merged commit `0332b274d`. |
+| [#943](https://github.com/JamelHammoud/basecase/pull/943) | 4 | [Calibration](testing-robot-runtime.md#servo-calibration) and [zero and direction](testing-robot-runtime.md#servo-zero-and-direction) move to Robot runtime. Merged commit `6468bdf46`. |
+| [#945](https://github.com/JamelHammoud/basecase/pull/945) | 2 | [Build Along](testing-build.md#build-along) moves to Build. Merged commit `e07827607`. |
+| [#946](https://github.com/JamelHammoud/basecase/pull/946) | 1 | [Skill coaching](testing-skills.md#skill-coaching) moves to Skills. Merged commit `48de8f120`. |
+| [#949](https://github.com/JamelHammoud/basecase/pull/949) | 4 | [Gallery training](testing-gallery.md#gallery-training) moves to Cases. Merged commit `e5e928523`. |
+| [#953](https://github.com/JamelHammoud/basecase/pull/953) | 1 | [Mark labels](testing-toolbar-and-settings.md#mark-labels) move to Toolbar and Settings. Merged commit `06295262d`. |
+| [#956](https://github.com/JamelHammoud/basecase/pull/956) | 1 | [Try labels](testing-datasets.md#try-labels) move to Cases and its dataset evidence. Merged commit `d9db47f2f`. |
+| [#957](https://github.com/JamelHammoud/basecase/pull/957) | 1 | [Multiply](testing-datasets.md#multiply) moves to Cases and its dataset evidence. Merged commit `58c7260af`. |
+| [#1007](https://github.com/JamelHammoud/basecase/pull/1007) | 1 | Captured-world coverage moves to [Cases](../guide/cases.md#testing-coverage), retaining the existing [world-render measurements](world-render-setup.md). Merged commit `84aa2146d`. |
+| [#1076](https://github.com/JamelHammoud/basecase/pull/1076) | 1 | Recorded-video coverage moves to [Cases](../guide/cases.md#testing-coverage), retaining the existing [setup measurements](recorded-video-worker-setup.md). The shared offscreen-worker harness contract stays central. Merged commit `52138ae11`. |
+| [#1107](https://github.com/JamelHammoud/basecase/pull/1107) | 1 | [Rendered vision](testing-vision.md#rendered-vision) moves to Cases. Merged commit `72d0d08b3`. |
+| [#1108](https://github.com/JamelHammoud/basecase/pull/1108) | 1 | [Build Along and Cable reach](testing-build.md#build-along) move to Build. Merged commit `b29229fbb`. |
+| [#1157](https://github.com/JamelHammoud/basecase/pull/1157) | 2 | [Pose animation training](testing-skills.md#pose-animation-training) moves to Skills. Merged commit `08d4ffe8b`. |
+| [#1162](https://github.com/JamelHammoud/basecase/pull/1162) | 1 | [Dataset versions](testing-datasets.md#dataset-versions) move to Cases. Live-route and common browser-harness cleanup remain shared. Merged commit `aa054400e`. |
+| [#1164](https://github.com/JamelHammoud/basecase/pull/1164) | 1 | [Live cameras](testing-cameras.md#live-cameras), [Case startup and console coverage](testing-cases.md#default-console-coverage) and [captured worlds](testing-worlds.md#captured-worlds) move to their Cameras and Cases owners. Merged commit `a42873277`. |
+
+### Method and limits
+
+Read the loop's `state/conflicts/*.json` records and select each `resolutions` entry whose `files` contains `docs/guide/running-and-testing.md`. Keep the pull request number and count every selected entry, without deduplicating repeated attempts. These records store a timestamp and paths, not conflicted hunks or both original merge inputs.
+
+For the 16 merged pull requests, inspect `git show --format= --unified=0 <merged-commit> -- docs/guide/running-and-testing.md` at the commits listed above. For the two closed pull requests, inspect their final diffs with `gh pr diff 837` and `gh pr diff 894`. Map every changed documentation block to the retained shared contract or migrated area record. Use the migration base `aca46b9e4` to locate the current form of records that later repairs already changed. Do not restore obsolete assertions, quarantine states or either closed feature proposal.
+
+This is an ownership replay of all 26 recorded events, not a reconstruction of historical merges. Thirteen pull requests, accounting for 21 recorded events, have only subsystem coverage or incident edits in their inspected testing-guide diffs. Those edits would no longer require a central-guide change. Five pull requests, accounting for five events, still change shared instructions or harness contracts: #767, #837, #941, #1076 and #1162. Three of those also have subsystem edits that move.
+
+Collisions can remain within an owner. The actual inspected diffs for #941 and #943 both change the Servo calibration record. Those for #945 and #1108 both change the Build Along record. Moving them preserves that overlap in the Robot runtime and Build files. Skills, Cameras and Cases also receive multiple sampled edits, sometimes to different records. Shared-contract edits still share the testing guide. Whether any such overlap produces a textual conflict depends on the original base, edit timing and surrounding changes.
+
+The recorded paths cannot identify which hunk caused each event. Final merged diffs can include revisions made after an earlier conflict, and closed pull requests never became shipped behavior. Therefore the 21 relocated event-bearing edits are not 21 proven avoided conflicts. No pairwise merge count, production rebase reduction, CI saving or observed merge-time improvement is claimed. Runtime paths, tests, assertions and quarantine entries are unchanged by this placement work.

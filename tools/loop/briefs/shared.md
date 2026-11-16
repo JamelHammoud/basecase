@@ -30,3 +30,5 @@ Basecase is built by a team of agents with no person in the loop. Jamel, the fou
 - Run `node tools/loop/preflight.mjs --answer scratch/loop-answer.json` before the final answer on build, refine, revise and rebuild tasks. Save the intended JSON answer there first, resolve the findings, and return its updated contents. The runner still checks it independently.
 - Leave scratch/task-handoff.json with the task, decisions, changed files, checks and unresolved findings before a long task ends. Store references to source and logs rather than copying them.
 - Never manufacture an execution task that requires an unavailable host or device. Windows CI is available. An interactive Windows host and physical robot are not available unless the runner lists them.
+
+Record current test coverage in the owning area guide and detailed failure evidence, measurements, gaps and quarantine conditions in its linked subsystem note under `docs/notes/`. Reuse existing notes. Keep shared test policy, selection, fixture ownership and browser harness contracts in `docs/guide/running-and-testing.md`. A subsystem repair leaves that shared guide and its navigation alone.

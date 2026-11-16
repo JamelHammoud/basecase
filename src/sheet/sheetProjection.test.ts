@@ -25,10 +25,12 @@ describe('sheet projection reuse', () => {
     const dot = vi.spyOn(Vector3.prototype, 'dot');
     const clone = vi.spyOn(Vector3.prototype, 'clone');
     const normalize = vi.spyOn(Vector3.prototype, 'normalize');
+    const toArray = vi.spyOn(Vector3.prototype, 'toArray');
     const profile = detectSheet(triangles);
     const projections = dot.mock.calls.length;
     const clones = clone.mock.calls.length;
     const normalizations = normalize.mock.calls.length;
+    const coordinateArrays = toArray.mock.calls.length;
 
     expect(profile).toEqual({
       thicknessMm: 3,
@@ -46,6 +48,7 @@ describe('sheet projection reuse', () => {
     expect(projections).toBeLessThanOrEqual((triangles.length / 9) * 4 + 32);
     expect(clones).toBeLessThanOrEqual(32);
     expect(normalizations).toBeLessThanOrEqual(triangles.length / 9 + 14);
+    expect(coordinateArrays).toBeLessThanOrEqual(14);
   });
 
   it('keeps profiles through reversed winding and face order, and measures moved vertices afresh', () => {

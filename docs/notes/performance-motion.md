@@ -18,6 +18,12 @@ Implementation: [Motion fitting and retargeting](../guide/joints-and-motion.md#p
 
 `motionSkeletonSource.test.ts` checks branching chains, seam crossings, static rotations, limb selection, source preservation and changed samples across calls. The 12- and 24-endpoint fixtures each require nine shared-root rotation lookups. A scratch comparison matched the previous complete chain output exactly in 63 cases across eight BVH fixtures, three scales and endpoint selections. On the nine-frame shared-torso fixture, torso rotation lookups fell from 20 to 10. These are operation counts, without timing assertions.
 
+## Motion fitting indexes bone positions once
+
+The branching fixture in `motionSkeletonSource.test.ts` has one shared root, one moving root channel, one static root channel and one moving channel per endpoint. Each clip has four frames. A proxy counts numeric reads from the source bone list, including endpoint selection and index preparation. At 100 and 200 endpoints, the previous implementation read 15,651 and 61,301 entries. The indexed implementation reads 202 and 402. The committed test allows fewer than four reads per source bone and checks every generated axis identity.
+
+The same test covers duplicate names, missing ancestors and changed source ordering between calls. Existing cases cover static-channel orientation, seam crossings, selected limbs, shared channels and source preservation. A scratch comparison matched complete chain outputs against the previous implementation for all seven BVH generators in `motionSkeleton.fixtures.ts`, at scales 0.1, 1 and 100 with four limb selections, totaling 84 comparisons. Both branching fixture outputs also matched exactly. These are operation counts and result comparisons, without timing assertions or a claim about total fitting speed. The index retains one entry per distinct bone name for one call.
+
 ## Ordered motion samples use binary lookup
 
 The lookup test bounds a 65,536-key search to 17 timestamp reads, and motion sampling tests bound the full animation and route calls without wall-clock assertions.

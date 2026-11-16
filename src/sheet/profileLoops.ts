@@ -119,9 +119,12 @@ export function inside(point: Point, polygon: Point[]): boolean {
     const a = polygon[i];
     const b = polygon[j];
     const crosses = a[1] > point[1] !== b[1] > point[1];
+
+    if (!crosses) continue;
+
     const atX = ((b[0] - a[0]) * (point[1] - a[1])) / (b[1] - a[1]) + a[0];
 
-    if (crosses && point[0] < atX) result = !result;
+    if (point[0] < atX) result = !result;
   }
 
   return result;

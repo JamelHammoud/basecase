@@ -55,3 +55,16 @@ The whole-app search found both growing neighbor-list copies in `sheet/profileLo
 A scratch replay compared complete loop results with the previous implementation across 2,000 deterministic ring graphs, varying edge count, winding, missing edges, extra branches and self-edges. All results matched and input edges stayed unchanged. Source and replay live in `scratch/profileLoops-before.ts` and `scratch/sheet-loop-parity.test.ts`. Existing detector and projection tests cover complete sheet profiles. No quarantine applies.
 
 The local changed-file check selected 131 related files. Of 952 tests, 945 passed and seven failed outside sheet coverage. Bambu Studio archive loading and league catalog-geometry replay exceeded 5,000 ms. Four classroom Carry a cup seed batches exceeded 5,000 ms, and their aggregate observed 15 runs instead of 20. Static checks and types passed. These failures do not establish a sheet regression or a clean full related-test run. No timeouts, retries, quarantine entries or unrelated tests were changed.
+
+
+## Sheet hole containment intersects only crossing edges
+
+A whole-app search found eager horizontal intersection arithmetic only in `sheet/profileLoops.ts`. Printing's `insidePolygon` and annotation selection's `pointInPolygon` already short-circuit on the height test. Silhouette scanline crossing uses its own inclusive boundary rules. Those consumers need no changes. The sheet helper serves hole validation in the shared detector, reached by geometry-worker measurements and analysis reports.
+
+`src/sheet/inside.test.ts` compares the previous calculation over eight outlines, both windings and 121 query coordinates per winding. Cases include horizontal edges, vertices, concavity, repeated points, self-intersections, empty and degenerate outlines, signed zero, infinities and NaN. It checks source preservation and later edits. Existing `detectSheet.test.ts` and `sheetProjection.test.ts` retain complete profile coverage, including tilted and concave plates with through holes.
+
+Instrumented rectangles with 300 and 600 edges have two height crossings for an interior query. Horizontal coordinate reads fall from 900 and 1,800 in the previous calculation to six. An above-outline query reads none, instead of 900 or 1,800. Source-derived intersection divisions fall from 300 and 600 to two for the interior query, and to zero above the outline. Every edge still receives its height comparison. These are deterministic operation counts, without wall-clock or complete detection latency claims. No cache, timeout, retry or quarantine changes apply.
+
+No user action, label, visible state or manufacturing rule changes. Existing sheet help steps and screenshots remain accurate.
+
+Changed-file validation passed formatting, lint, documentation, site copy for 295 pages, types and all 955 tests across 132 related files. The related run reported 49.75 seconds. The full log is `scratch/check-sheet-inside.log`. Copy accounting is net zero and preflight reports no findings. The [Cut parts from sheet](../../site/content/help/cut-parts-from-sheet.md) article still describes the same material assignment, qualifying geometry and exported outlines, so it remains unchanged.

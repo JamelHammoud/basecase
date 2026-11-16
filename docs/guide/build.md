@@ -324,6 +324,8 @@ Measurements and limits: [Cable routing performance evidence](../notes/performan
 
 ## Performance: sheet manufacturing
 
+- **Sheet hole containment intersects only crossing edges.** `sheet/profileLoops.ts` rejects edges whose endpoints lie on the same side of the query height before calculating their horizontal intersection. Geometry-worker sheet measurements and analysis reports share this helper. Strict boundary comparisons, winding parity and fresh reads after edits stay unchanged. `inside.test.ts` compares the former calculation across concave, repeated, degenerate and nonfinite boundaries and checks coordinate-read counts. Existing detector and projection tests cover complete profiles with holes. [Evidence](../notes/performance-sheet.md#sheet-hole-containment-intersects-only-crossing-edges).
+
 - **Sheet boundary adjacency stays bounded.** `sheet/profileLoops.ts` appends to one neighbor list per rounded vertex and refuses the boundary immediately when a third incident endpoint arrives. The final degree check scans the map directly. Both sheet caps share this path through geometry-worker measurements and analysis reports. Endpoint order, last point references, rounding, loop ordering and refusal results stay unchanged. `profileLoops.test.ts` covers rounded endpoints, self-edges, open and branching boundaries, input preservation, edits and bounded branch reads. [Evidence](../notes/performance-sheet.md#sheet-boundary-adjacency-stays-bounded).
 
 Measurements and limits: [Sheet manufacturing performance evidence](../notes/performance-sheet.md).

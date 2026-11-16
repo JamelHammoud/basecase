@@ -22,6 +22,10 @@ Implementation: [Case facts and world geometry](../guide/cases.md#performance-ca
 
 `groundObstacles.test.ts` checks strict boundaries, rotation and parallel thresholds, all four clearance levels, obstacle order, duplicate ids, source preservation, edits and empty or push-only routes. Both 10- and 20-waypoint fixtures prepare one footprint. A seeded scratch comparison matched 300 complete routes, 6,000 occupancy queries and 30 room starts against the previous implementation. A 20-waypoint detour fixture reduced footprint calculations from 320 to one. A blocked room-center search reduced them from 147 to one. These are operation counts, without timing assertions.
 
+## Ground routes append detours directly
+
+A seeded scratch comparison matched 300 complete ordered routes against the previous implementation and checked input preservation. Fixtures had 1 to 12 obstacles and 1 to 8 waypoints, including push targets. The largest result contained 166 route points. On alternating 10- and 20-waypoint fixtures around one block, the old recursion created 40 and 80 path arrays, copied 30 and 60 entries into parent paths, then created 10 and 20 mapped arrays. Direct appending removes those arrays and copies while retaining the final route and its point objects. Side-selection geometry and footprint preparation still allocate as before. These are operation counts, without timing assertions or a claim about complete Case startup time. `groundRoute.test.ts` retains a two-obstacle nested detour with speed, push identity and source-preservation assertions.
+
 ## Captured world parsing
 
 `e2e/worldImport.e2e.test.ts` covers attachment of the rendered world.

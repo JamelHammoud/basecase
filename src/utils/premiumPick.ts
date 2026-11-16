@@ -48,10 +48,17 @@ function batteryPremium(id: string): PremiumPick | undefined {
 
   if (!battery || battery.cell || usd === undefined) return undefined;
 
-  const cheaper = COMPONENTS.filter((c) => c.id !== id && c.battery && sameBattery(battery, c.battery))
-    .map((c) => ({ key: keyOf(c.id), name: c.name, usd: unitUsd(keyOf(c.id)) }))
-    .filter((c): c is { key: string; name: string; usd: number } => c.usd !== undefined && c.usd * PREMIUM < usd)
-    .sort((a, b) => a.usd - b.usd)[0];
+  let cheaper: PremiumPick['cheaper'] | undefined;
+
+  for (const c of COMPONENTS) {
+    if (c.id === id || !c.battery || !sameBattery(battery, c.battery)) continue;
+
+    const candidateKey = keyOf(c.id);
+    const candidateUsd = unitUsd(candidateKey);
+
+    if (candidateUsd !== undefined && candidateUsd * PREMIUM < usd && (!cheaper || candidateUsd < cheaper.usd))
+      cheaper = { key: candidateKey, name: c.name, usd: candidateUsd };
+  }
 
   return (
     cheaper && { key, name: COMPONENT_BY_ID[id].name, usd, cheaper, why: 'the same voltage, capacity and current' }

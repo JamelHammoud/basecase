@@ -23,3 +23,11 @@ The previous sort recalculated both polygon areas on every comparison. When mult
 ## Sheet detection and cut files
 
 `sheetProjection.test.ts` checks profiles, reversed winding, reordered faces, moved meshes, unchanged inputs and dot-product budgets. On plates with 2,404 and 4,804 triangles, vector dot products fell from 21,678 and 43,278 to 9,637 and 19,237. These are operation counts for detection, without wall-clock assertions.
+
+## Sheet candidate directions normalize after selection
+
+Candidate grouping previously copied and normalized its running weighted sum after every additional face. Those intermediate directions were never read. Grouping now retains the weighted sum and normalizes only selected groups after area ranking. Single-face groups retain the original normal and need no weighted sum. Both geometry-worker measurement routes and analysis reports use this detector.
+
+A local Node source replay instrumented `Vector3.prototype.normalize` across complete detection. The existing hole-free plates with 300 and 600 wall subdivisions contain 2,404 and 4,804 triangles. Normalization calls fell from 4,806 and 9,606 to 2,408 and 4,808. These are operation counts, without timing assertions or a claim about complete detection time.
+
+The replay returned exactly equal profiles for 48 combinations of holes, concavity, tilt, wall subdivisions and coordinates rounded to 0.001 mm. It also preserved refusal for a pocket, open caps, empty input and nonfinite input. `sheetProjection.test.ts` retains a normalization budget alongside complete profile assertions, source preservation, reordered and reversed faces, edits and degenerate padding. Existing `detectSheet.test.ts` checks tilted and rounded profiles, holes, stock thickness and refusal cases. No browser interaction, manufacturing rule or screen changes.

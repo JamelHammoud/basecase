@@ -52,3 +52,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Scenes: ⌘T new, ⌘W close, ⇧⌘T reopen, ⌃Tab / ⇧⌘] next, ⌃⇧Tab / ⇧⌘[ previous, ⌘1–⌘9 (§5a).
   - **Copy, cut and paste** work on the clipboard events (the Edit menu's native roles, so text fields keep native editing). Copied parts live in memory, shared by every tab; the system clipboard holds only a marker type (`application/x-basecase-parts`), so ⌘V pastes parts only while nothing newer was copied, and a pasted image still becomes a reference plane. Pastes keep names, get new ids and groups, and drop `jointId`; Duplicate names its copy as §3b-17 says (`duplicateParts`). In the same scene each paste steps 15 mm (like Duplicate); after a cut or in another scene the first paste lands in place. Cut reads “Cut ⟨name⟩ · Undo”.
   - Every new command gets a palette entry, and a tooltip shortcut when it has one.
+
+### Case reference command
+
+An open Case with reference commands offers **Try Reference** in the Try section and the command palette while both simulated and real tries are idle. It starts `CaseTry.reference`, which records the reference through the ordinary drive and try pipeline. The command stays inside a running Case console, like Try It. It adds no keyboard shortcut.

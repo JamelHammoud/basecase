@@ -49,6 +49,7 @@ const EXPECTED_NAMES = [
   'feedPose',
   'feedVoice',
   'fitBody',
+  'fixtureTravel',
   'fleet',
   'fleetModel',
   'frameLabels',

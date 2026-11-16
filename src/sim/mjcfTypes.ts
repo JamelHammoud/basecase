@@ -3,6 +3,7 @@ import type { BodyFit } from '../reality/bodyTypes';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, RobotPoseState, ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
+import type { PassiveJoint } from './passiveJoint';
 import type { Eye } from './eyes';
 import type { RobotMorphology } from './morphology';
 
@@ -24,6 +25,8 @@ export interface SimBody {
 export type WorldBehavior = 'static' | 'dynamic' | 'marker';
 
 export interface WorldItem extends ScenePart {
+  parent?: string;
+  joint?: PassiveJoint;
   behavior: WorldBehavior;
   movable?: boolean;
   convexVertices?: Float32Array;

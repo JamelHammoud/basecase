@@ -56,7 +56,7 @@ export function tessellateGeometryForSculpting(geo: THREE.BufferGeometry, passes
 
     if (triCount > 8000) break;
 
-    const newCoords: number[] = [];
+    const newPositions = new THREE.BufferAttribute(new Float32Array(Math.ceil(triCount) * 36), 3);
     const vA = new THREE.Vector3();
     const vB = new THREE.Vector3();
     const vC = new THREE.Vector3();
@@ -75,49 +75,23 @@ export function tessellateGeometryForSculpting(geo: THREE.BufferGeometry, passes
       mBC.addVectors(vB, vC).multiplyScalar(0.5);
       mCA.addVectors(vC, vA).multiplyScalar(0.5);
 
-      newCoords.push(
-        vA.x,
-        vA.y,
-        vA.z,
-        mAB.x,
-        mAB.y,
-        mAB.z,
-        mCA.x,
-        mCA.y,
-        mCA.z,
-        mAB.x,
-        mAB.y,
-        mAB.z,
-        vB.x,
-        vB.y,
-        vB.z,
-        mBC.x,
-        mBC.y,
-        mBC.z,
-        mCA.x,
-        mCA.y,
-        mCA.z,
-        mBC.x,
-        mBC.y,
-        mBC.z,
-        vC.x,
-        vC.y,
-        vC.z,
-        mAB.x,
-        mAB.y,
-        mAB.z,
-        mBC.x,
-        mBC.y,
-        mBC.z,
-        mCA.x,
-        mCA.y,
-        mCA.z,
-      );
+      newPositions.setXYZ(t * 12 + 0, vA.x, vA.y, vA.z);
+      newPositions.setXYZ(t * 12 + 1, mAB.x, mAB.y, mAB.z);
+      newPositions.setXYZ(t * 12 + 2, mCA.x, mCA.y, mCA.z);
+      newPositions.setXYZ(t * 12 + 3, mAB.x, mAB.y, mAB.z);
+      newPositions.setXYZ(t * 12 + 4, vB.x, vB.y, vB.z);
+      newPositions.setXYZ(t * 12 + 5, mBC.x, mBC.y, mBC.z);
+      newPositions.setXYZ(t * 12 + 6, mCA.x, mCA.y, mCA.z);
+      newPositions.setXYZ(t * 12 + 7, mBC.x, mBC.y, mBC.z);
+      newPositions.setXYZ(t * 12 + 8, vC.x, vC.y, vC.z);
+      newPositions.setXYZ(t * 12 + 9, mAB.x, mAB.y, mAB.z);
+      newPositions.setXYZ(t * 12 + 10, mBC.x, mBC.y, mBC.z);
+      newPositions.setXYZ(t * 12 + 11, mCA.x, mCA.y, mCA.z);
     }
 
     const nextGeo = new THREE.BufferGeometry();
 
-    nextGeo.setAttribute('position', new THREE.Float32BufferAttribute(newCoords, 3));
+    nextGeo.setAttribute('position', newPositions);
     current = nextGeo;
   }
 

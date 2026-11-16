@@ -16,7 +16,7 @@ Recorded world reconstruction shares `dataLayers/mapWorldBoxes.ts` across planar
 
 Coplanar collision face sampling (`three/analysis/shapeSolid.ts`) writes subdivided centers through one reusable vector into each shape’s cached buffers. Those buffers hold centers, normals and area weights. Sampling retains its barycentric order, minimum area, stride and subdivision cap (§0f).
 
-Visibility surface sampling (`three/analysis/visibility.ts`) shares the cumulative-area binary lookup in `utils/surfaceSampleIndex.ts` with printed-label sampling. The lookup retains the first matching boundary, including repeated areas. Visibility keeps its existing seed, 4,000 samples per part and shape-local sample cache.
+Visibility surface sampling (`three/analysis/visibility.ts`) shares the cumulative-area binary lookup in `utils/surfaceSampleIndex.ts` with printed-label sampling. The lookup retains the first matching boundary, including repeated areas. Visibility keeps its existing seed, 4,000 samples per part and shape-local sample cache. World placement writes these samples directly into one combined Float32 buffer through one reusable vector, preserving sample and owner order. [Coverage and evidence](../notes/performance-collision.md#visible-share-projections-reuse-one-workspace).
 
 Imported Case visuals (`three/viewport/importedWorld.ts`) attach to `stage.worldRoot` alongside the world PartLayer. Embedded mesh textures use the imported sampler settings. Spark receives splat bytes directly and schedules redraws through `onDirty` after worker loading or sorting completes. Moving the same world retains its buffers. Closing or replacing it disposes textures, splats and the renderer, and rejects stale asynchronous loads. Collision pieces stay hidden.
 

@@ -5,6 +5,7 @@ import { MotionDesignSheet } from '../components/MotionDesignSheet';
 import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
 import { InstallSkillSheet } from '../components/InstallSkillSheet';
+import { ShareRobotHost } from './ShareRobotHost';
 import { MatchJointsSheet } from '../components/MatchJointsSheet';
 import { PlaceOnMapSheet } from '../components/PlaceOnMapSheet';
 import { platformBridge } from '../utils/platformBridge';
@@ -90,7 +91,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
   const desktop = platformBridge.isElectron();
   const { robots, pose, arm, data } = actions;
   const { motionInputRef } = pose;
-  const { skillHub } = core.simTraining;
+  const { skillHub, share } = core.simTraining;
   const installing = active && skillHub.installOpen;
 
   return (
@@ -118,6 +119,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
         />
       </ErrorBoundary>
       <MatchJointsHost active={active} data={data} />
+      <ShareRobotHost active={active} share={share} />
       <ErrorBoundary region="Install Skill" resetKey={installing} onClose={skillHub.closeInstall}>
         <InstallSkillSheet
           open={installing}

@@ -13,3 +13,11 @@ The overlapping hexapod browser test was removed after taking 39 s in run 436429
 ## Shared Case code panels
 
 The duplicate Run Case sequence was removed after the combined test took 33 s in run 43715791435 ([#1085](https://github.com/JamelHammoud/basecase/issues/1085)).
+
+## Leagues
+
+Review found that browser replay passed no mesh files into `headlessParts`, which awaited only supplied file keys. Catalog components could therefore be measured as placeholder boxes while their downloads ran. Replay now loads all referenced catalog meshes before building or measuring and refuses a failed download. The real replay test compares browser-fetched geometry with adjudication-supplied geometry and exercises a failed model download.
+
+The original workflow checked out the latest dispatch commit for adjudication despite the manifest’s fixed runner version label. Creation now binds `engine.commit`, replay checks out that commit, and frozen verification refuses provenance from another commit. The shipped fixture retains its versioned local runner and seeded measurements.
+
+The browser tests cover a failed seed, clearing stale verdicts when selecting another seed, Open Scene preservation, mismatched-Case refusal and a successful immutable submission through the palette. Browser tests were updated for CI and were not run locally during review. No live Hub publication or workflow dispatch was performed.

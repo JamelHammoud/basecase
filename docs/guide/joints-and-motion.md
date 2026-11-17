@@ -132,6 +132,8 @@ Measurements and limits: [Robot shells performance evidence](../notes/performanc
 
 ## Performance: joints and kinematics
 
+Four-bar seed generation in `utils/linkage.ts` draws ground, coupler and rocker lengths directly, without temporary index or length arrays. Sketch Path and agent synthesis share this generator. Random draw order, rejection arithmetic and accepted shapes stay unchanged. Existing `linkage.test.ts` covers deterministic synthesis, path recovery, ranking and unreachable paths. [Seed parity and allocation evidence](../notes/performance-joints.md#four-bar-seeds-draw-link-lengths-directly).
+
 Cylinder fitting passes Jacobi row indices directly to each rotation, without constructing a pair list per eigensolve. Scan-matching normal estimation uses the same calling pattern. Both retain their own arithmetic, convergence cutoffs and sweep caps. Existing cylinder-fitting, axis-finder and joint-candidate tests cover clicked and automatic axis discovery. [Shared parity and allocation evidence](../notes/performance-mapping.md#jacobi-rotations-use-scalar-row-indices).
 
 - **Inserted four-bars prepare their bar rotation once.** `linkage/linkageParts.ts` calculates the CAD-to-scene Euler rotation with the insertion frame, then gives each printed bar its own copy. Sketch Path and agent insertion share this builder. Matrix multiplication order, servo mating, lift and joint declarations stay unchanged. `linkageParts.test.ts` covers coupler motion, mounting and independent rotation arrays on ground and tilted planes. [Evidence](../notes/performance-joints.md#inserted-four-bars-prepare-their-bar-rotation-once).

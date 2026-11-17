@@ -60,11 +60,12 @@ const between = (random: Random, lo: number, hi: number) => lo + (hi - lo) * ran
 function randomShape(random: Random): Omit<FitLinkage, 'origin' | 'angle' | 'thetas'> {
   for (;;) {
     const crank = between(random, 0.2, 1);
-    const [ground, coupler, rocker] = [0, 1, 2].map(() => crank * between(random, 1.3, 4.5));
-    const links = [ground, coupler, rocker];
-    const longest = Math.max(...links);
+    const ground = crank * between(random, 1.3, 4.5);
+    const coupler = crank * between(random, 1.3, 4.5);
+    const rocker = crank * between(random, 1.3, 4.5);
+    const longest = Math.max(ground, coupler, rocker);
 
-    if (crank + longest < links.reduce((s, v) => s + v, 0) - longest) {
+    if (crank + longest < ground + coupler + rocker - longest) {
       return {
         ground,
         crank,

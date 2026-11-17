@@ -257,13 +257,17 @@ export const analysisHandlers = {
     const liveKeys = new Set(keys);
     const liveGeometries = new Set(geometryIds);
 
-    for (const key of [...specs.keys()].filter((k) => !liveKeys.has(k))) {
+    for (const key of specs.keys()) {
+      if (liveKeys.has(key)) continue;
+
       specs.delete(key);
       solids.get(key)?.dispose();
       solids.delete(key);
     }
 
-    for (const id of [...geometries.keys()].filter((g) => !liveGeometries.has(g))) geometries.delete(id);
+    for (const id of geometries.keys()) {
+      if (!liveGeometries.has(id)) geometries.delete(id);
+    }
 
     return reply({ shapes: specs.size, geometries: geometries.size });
   },

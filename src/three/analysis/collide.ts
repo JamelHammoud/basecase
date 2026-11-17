@@ -155,6 +155,7 @@ function coplanarArea(from: Placed, onto: Placed) {
     n = new THREE.Vector3(),
     m = new THREE.Vector3();
   let area = 0;
+  let normalFace = -1;
 
   for (let i = 0; i < areas.length; i++) {
     c.fromArray(centers, i * 3).applyMatrix4(toOnto);
@@ -165,9 +166,14 @@ function coplanarArea(from: Placed, onto: Placed) {
 
     if (!h) continue;
 
+    if (h.faceIndex !== normalFace) {
+      triangleNormal(onto.solid, h.faceIndex, m, triangle);
+      normalFace = h.faceIndex;
+    }
+
     n.fromArray(normals, i * 3).transformDirection(toOnto);
 
-    if (triangleNormal(onto.solid, h.faceIndex, m, triangle).dot(n) > 0.95) area += areas[i];
+    if (m.dot(n) > 0.95) area += areas[i];
   }
 
   return area;

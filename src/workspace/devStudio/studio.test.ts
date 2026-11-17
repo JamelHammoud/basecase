@@ -75,6 +75,7 @@ const EXPECTED_NAMES = [
   'partTriangles',
   'parts',
   'passTries',
+  'pauseKitBackground',
   'phone',
   'pickFiles',
   'plantHandoff',

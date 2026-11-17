@@ -12,6 +12,7 @@ import type { SnapshotRef, Snapshots } from './snapshots';
 import type { ForgeProgress } from './trainerForge';
 import type { RecoveryEntry, SkillRecovery } from './skillRecovery';
 import type { KitContext } from './kitTransitions';
+import type { LocalKitPreparation } from './localKitSource';
 
 export interface ForgeFactoryOptions {
   background: boolean;
@@ -34,6 +35,8 @@ export interface RuntimeDeps {
   onStress?: (target: SkillTarget, report: StressReport | null) => void;
   snapshots?: Snapshots;
   kitContext?: (model: SimModel) => Promise<KitContext>;
+  kitSources?: () => readonly SkillRecord[];
+  prepareKitWarm?: (input: LocalKitPreparation) => Promise<KitWarm | undefined>;
   recovery?: SkillRecovery;
 }
 

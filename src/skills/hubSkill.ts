@@ -148,21 +148,34 @@ export function readPublishedSkill(files: Record<string, unknown>): PublishedSki
 }
 
 export function installPlan(published: PublishedSkill, model: SimModel): InstallPlan {
-  const entry = kitEntryOf(published.skill);
+  return mapKitSkill(published.skill, published.schema, model);
+}
+
+export function mapKitSkill(skill: PublishedSkill['skill'], schema: RobotSchema, model: SimModel): InstallPlan {
+  const entry = kitEntryOf(skill);
   const robot = kitRobot(model);
-  const mapped = skillFit(
-    published.skill,
-    published.schema,
-    robotSchema(model, { robot: robot.key, joints: robot.joints }),
-  );
+  const mapped = skillFit(skill, schema, robotSchema(model, { robot: robot.key, joints: robot.joints }));
 
   if (!mapped.ok) throw new Error(mapped.problem);
 
   const job = kitJob(model, entry, { minutes: 1, seed: 1 });
-  const policy = mappedPolicy(published.skill.controller.policy, mapped.map, {
+  const policy = mappedPolicy(skill.controller.policy, mapped.map, {
     joints: job.joints.map((j) => j.id),
     defaultPose: job.defaultPose,
   });
 
-  return { entry, warm: { from: skillHash(published.skill), policy } };
+  return {
+    entry,
+    warm: {
+      from: skillHash(skill),
+      policy: {
+        ...policy,
+        robot: job.robotName,
+        task: entry === 'velocity-tracking' ? 'walk' : 'stand',
+        command: job.command,
+        actionScale: job.actionScale,
+        controlDt: job.controlDt,
+      },
+    },
+  };
 }

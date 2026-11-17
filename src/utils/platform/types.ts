@@ -112,6 +112,8 @@ export interface KeptSnapshot {
 }
 
 export interface TrainerStatus {
+  engine?: 'forge' | 'python';
+  local?: { ready: boolean; engine: 'forge' | 'python' };
   uv: boolean;
   uvInstall?: string;
   ready: boolean;

@@ -56,3 +56,9 @@ function fieldsFit(spec: PolicySpec) {
 export function isRunnablePolicy(value: unknown): value is PolicySpec {
   return isPolicySpec(value) && fieldsFit(value) && layersFit(value);
 }
+
+export function isTrainablePolicy(value: unknown): value is PolicySpec {
+  if (!isRunnablePolicy(value) || value.activation !== 'elu' || value.layers.length !== 4) return false;
+
+  return [256, 128, 64].every((width, index) => value.layers[index].out === width);
+}

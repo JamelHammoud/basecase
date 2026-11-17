@@ -34,6 +34,7 @@ export function runtimeForge(options: {
   };
 
   runner.selected = forge.selected;
+  runner.canWarm = forge.canWarm;
 
   return runner;
 }

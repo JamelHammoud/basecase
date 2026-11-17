@@ -6,6 +6,7 @@ import { kitRobot } from './kitModel';
 import type { RankedSkill } from './skillRank';
 import type { SKILL_RANK_HANDLERS } from './skillRankJob';
 import type { produceInstallOutcome } from './installOutcome';
+import type { LocalKitPreparation } from './localKitSource';
 
 const ranking = workerClient<typeof SKILL_RANK_HANDLERS>(
   () => new Worker(new URL('./skillRank.worker.ts', import.meta.url), { type: 'module' }),
@@ -18,6 +19,8 @@ const ranking = workerClient<typeof SKILL_RANK_HANDLERS>(
 
 export const prepareSkillInstallation = (files: Record<string, unknown>, model: SimModel) =>
   ranking.call('prepareInstall', { files, model });
+
+export const prepareLocalKitPolicy = (input: LocalKitPreparation) => ranking.call('prepareLocalKit', input);
 
 export const prepareInstallOutcome = (options: Parameters<typeof produceInstallOutcome>[0]) =>
   ranking.call('installOutcome', options);

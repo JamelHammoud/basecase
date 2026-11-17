@@ -78,7 +78,7 @@ Arena tells you whether a skill passes. To find where it starts to fail, see [St
 
 ## When a skill goes stale
 
-A skill is tied to the design it passed on, and what happens after a change depends on what changed. For Motor Kit skills, **Recheck** runs Arena again without any training. For a skill you taught in words, **Recheck** asks the agent again.
+A skill is tied to the design it passed on, and what happens after a change depends on what changed. For Motor Kit skills, **Recheck** tests the saved policy in Arena. If it fails, Basecase retrains the skill. For a skill you taught in words, **Recheck** asks the agent again.
 
 | Change | What happens |
 |---|---|
@@ -86,6 +86,8 @@ A skill is tied to the design it passed on, and what happens after a change depe
 | A mass, a size or a joint's range | The row shows **Recheck** |
 | A joint added or removed, or its type or axis changed | The row shows **Train**: the skill must be trained again |
 
-When you move a skill to another design, its training starts from the old one, but its Arena result never carries over. A skill you [install from Hugging Face](/help/install-a-skill-from-hugging-face) doesn't bring its result either. Arena judges it again on your robot.
+After an edit, **Train** can start from a compatible saved **Stand** policy in the desktop app with Forge. Other local mappings train from scratch. Supported robots are listed in [Retrain an edited robot](/help/retrain-an-edited-robot).
+
+The source's Arena result never carries over. A skill you [install from Hugging Face](/help/install-a-skill-from-hugging-face) doesn't bring its result either. Arena judges it again on your robot.
 
 The same contract code judges Case tries. To learn how a contract reads, see [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts).

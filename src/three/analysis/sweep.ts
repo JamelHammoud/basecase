@@ -49,10 +49,12 @@ function lowestY(p: Placed) {
   return low + e[13];
 }
 
-export function lowestPart(placed: Placed[]): { id: string; y: number } | null {
+export function lowestPart(placed: Placed[], included?: ReadonlySet<string>): { id: string; y: number } | null {
   let low: { id: string; y: number } | null = null;
 
   for (const p of placed) {
+    if (included && !included.has(p.id)) continue;
+
     if (low && p.box.min.y >= low.y) continue;
 
     const y = lowestY(p);
@@ -63,8 +65,8 @@ export function lowestPart(placed: Placed[]): { id: string; y: number } | null {
   return low;
 }
 
-function floorHit(moved: Placed[], angle: number): SweepHit | null {
-  const low = lowestPart(moved);
+function floorHit(placed: Placed[], moving: ReadonlySet<string>, angle: number): SweepHit | null {
+  const low = lowestPart(placed, moving);
 
   return low && low.y < -1 ? { a: low.id, b: 'floor', depthMm: Math.round(-low.y * 10) / 10, angle } : null;
 }
@@ -82,10 +84,7 @@ export function sweepClashes(scene: Placed[], spec: SweepSpec): SweepHit[] {
     const posed = placed.map((p) =>
       movingSet.has(p.id) ? place(p.id, p.solid, rotation.clone().multiply(p.matrix)) : p,
     );
-    const floor = floorHit(
-      posed.filter((p) => movingSet.has(p.id)),
-      angle,
-    );
+    const floor = floorHit(posed, movingSet, angle);
 
     if (floor) out.push({ ...floor, a: ownerOf(floor.a) });
 

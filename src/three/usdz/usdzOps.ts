@@ -48,15 +48,17 @@ function flipWinding(index: Uint32Array) {
 
 function bakedGeometry(source: UsdzGeometry, matrix: THREE.Matrix4) {
   const geometry = new THREE.BufferGeometry();
-  const index = source.index ? source.index.slice() : sequentialIndex(source.positions.length / 3);
+  const reflected = matrix.determinant() < 0;
+  const index = reflected ? (source.index?.slice() ?? sequentialIndex(source.positions.length / 3)) : source.index;
 
   geometry.setAttribute('position', new THREE.BufferAttribute(source.positions.slice(), 3));
 
   if (source.normals) geometry.setAttribute('normal', new THREE.BufferAttribute(source.normals.slice(), 3));
 
-  if (matrix.determinant() < 0) flipWinding(index);
+  if (reflected && index) flipWinding(index);
 
-  geometry.setIndex(new THREE.BufferAttribute(index, 1));
+  if (index) geometry.setIndex(new THREE.BufferAttribute(index, 1));
+
   geometry.applyMatrix4(matrix);
 
   if (!source.normals) geometry.computeVertexNormals();

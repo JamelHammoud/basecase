@@ -12,6 +12,8 @@ A scratch comparison matched complete row starts, columns and destination tables
 
 The scoped `check:changed` passed formatting, ESLint, documentation, all 323 site pages and TypeScript. Related selection passed 467 tests across 64 files in 50.97 seconds. No timeout, retry or quarantine changed.
 
+The merged-tree review run passed the same static checks and all Strength tests. Related selection passed 463 tests and failed four across 64 files in 81.10 seconds. Each failure exceeded its existing 5,000 ms limit: the unsliced multi-material Bambu archive in `electron/print/project.test.mjs`, cup-carry seeds 1 through 5 in `classroom/grading.test.ts`, the scene chest-chore case in `cases/fixtureWorkflow.test.ts` and catalog geometry loading in `leagues/replay.test.ts`. Other sections below record prior timeout observations in these same tests. This run does not establish that the lookup change caused them, and the complete command cannot be reported as passing. The review log remains local in `scratch/review-1644-check.log`. No timeout, retry or quarantine changed.
+
 ## Elastic solves stop before preparing unused directions
 
 A whole-app search found one block-Jacobi conjugate-gradient implementation in `strength/cg.ts`, called by Strength displacement solving and every Lighten optimization load case. The final completed iteration now checks its residual and iteration limit before preconditioning the residual or constructing the next direction. It removes one preconditioner pass and one direction-update pass from every solve that performs at least one iteration. Initial setup remains unchanged, including solves that perform no iterations.

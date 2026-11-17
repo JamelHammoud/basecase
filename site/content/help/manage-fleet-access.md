@@ -91,7 +91,7 @@ You can view up to 100 records per page. Use **Next Page** for another page and 
 
 You can revoke sessions, service credentials and unused invitations. If you revoke a session, Fleet clears its open inventory and refuses further requests.
 
-To issue a service credential, configure its **Rules** in **Credentials** and click **Issue Credential**. Copy **Service token** before leaving the page. You can use it for 30 days, within the issuing account's current access. You can't issue service credentials from SSO sessions.
+To issue a service credential, configure its **Rules** in **Credentials** and click **Issue Credential**. Copy **Service token** before changing the credential page or leaving **Credentials**. You can use it for 30 days, within the issuing account's current access. You can't issue service credentials from SSO sessions.
 
 You keep your draft after an ordinary validation failure. If Fleet denies an administrative action or revokes your session, it clears Access and stops writes. You can't edit, delete, invite or add protected recovery accounts and roles to grants.
 

@@ -73,7 +73,7 @@ export function FleetCredentials({ org }: { org: string }) {
       </table>
       <PageNavigation after={after} next={page.next} disabled={busy || revoking} onChange={setAfter} />
       {(error || failure) && <p role="alert">{error || failure}</p>}
-      <FleetCredentialIssue org={org} onIssued={() => setVersion((value) => value + 1)} />
+      <FleetCredentialIssue key={after} org={org} onIssued={() => setVersion((value) => value + 1)} />
       <ConfirmDialog
         isOpen={pending !== null}
         title={`Delete ${pending?.id ?? ''}?`}

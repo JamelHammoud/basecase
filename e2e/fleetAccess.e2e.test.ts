@@ -163,3 +163,43 @@ it('preserves unfamiliar role meaning after validation and reload, then clears e
     await browser.close();
   }
 });
+
+it('issues a scoped service credential and clears its token and draft when paging credentials', async () => {
+  const admin = await fixture.bootstrap('Credential pages');
+
+  await fixture.pool.query(
+    `INSERT INTO fleet_credentials(hash,id,org,account,kind,ceiling,expires)
+     SELECT gen_random_uuid()::text,gen_random_uuid(),$1,$2,'service','[]'::jsonb,now()+interval '1 day'
+     FROM generate_series(1,101)`,
+    [admin.org, admin.id],
+  );
+
+  const browser = await launchChrome();
+
+  try {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    await context.addCookies([{ name: 'fleet_session', value: admin.token, url: `${fixture.origin}/v1` }]);
+    await page.goto(`${fixture.origin}/fleet`);
+    await page.getByRole('button', { name: 'Access', exact: true }).click();
+    await page.getByLabel('Resource', { exact: true }).selectOption('credentials');
+    await page.getByRole('button', { name: 'Add Rule', exact: true }).click();
+    await page.getByLabel('inventory.view', { exact: true }).check();
+    await page.getByRole('button', { name: 'Issue Credential', exact: true }).click();
+
+    const token = await page.getByLabel('Service token', { exact: true }).inputValue();
+    const response = await fetch(`${fixture.origin}/v1/me`, { headers: { Authorization: `Bearer ${token}` } });
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).canManage).toBe(false);
+    await page.getByRole('button', { name: 'Next Page', exact: true }).click();
+    await expect.poll(() => page.getByLabel('Service token', { exact: true }).count()).toBe(0);
+    expect(await page.getByLabel('inventory.view', { exact: true }).count()).toBe(0);
+    await page.getByRole('button', { name: 'First Page', exact: true }).click();
+    expect(await page.getByLabel('Service token', { exact: true }).count()).toBe(0);
+    expect(await page.pageErrors({ filter: 'all' })).toEqual([]);
+  } finally {
+    await browser.close();
+  }
+});

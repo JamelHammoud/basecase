@@ -12,6 +12,6 @@ You can give roles explicit allows and denies for multiple actions, choose organ
 
 Invitations expire after 24 hours, and you can use each one once. You can see enrollment links only after issuing invitations. Leaving the editor clears the links. You can view credential metadata in the lists and must confirm before revoking a credential. Operators with existing sessions use their current grants and lose access if you revoke their sessions.
 
-You need organization-wide identity administration to manage access. You cannot bypass protections for local recovery identities or SSO enforcement.
+You need organization-wide identity administration to manage access. You can't bypass protections for local recovery identities or SSO enforcement.
 
 Steps are in [Manage Fleet access](/help/manage-fleet-access).

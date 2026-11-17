@@ -19,7 +19,12 @@ export const strokeOf = (height: number) => Math.min(1.4, Math.max(0.8, height *
 const padOf = (height: number) => strokeOf(height) + LABEL_MM.wall;
 
 function inTriangle(tris: Float32Array, i: number, [x, y]: [number, number]): boolean {
-  const [ax, ay, bx, by, cx, cy] = [tris[i], tris[i + 1], tris[i + 2], tris[i + 3], tris[i + 4], tris[i + 5]];
+  const ax = tris[i];
+  const ay = tris[i + 1];
+  const bx = tris[i + 2];
+  const by = tris[i + 3];
+  const cx = tris[i + 4];
+  const cy = tris[i + 5];
   const d1 = (x - bx) * (ay - by) - (ax - bx) * (y - by);
   const d2 = (x - cx) * (by - cy) - (bx - cx) * (y - cy);
   const d3 = (x - ax) * (cy - ay) - (cx - ax) * (y - ay);
@@ -39,7 +44,8 @@ export function labelBox(spot: Pick<LabelSpot, 'at' | 'height' | 'turned'>, widt
   const pad = padOf(spot.height);
   const along = (width * spot.height) / 2 + pad;
   const across = spot.height / 2 + pad;
-  const [hx, hy] = spot.turned ? [across, along] : [along, across];
+  const hx = spot.turned ? across : along;
+  const hy = spot.turned ? along : across;
 
   return { minX: spot.at[0] - hx, maxX: spot.at[0] + hx, minY: spot.at[1] - hy, maxY: spot.at[1] + hy };
 }
@@ -55,7 +61,8 @@ function tallest(
 
   if (!fits(LABEL_MM.minHeight)) return 0;
 
-  let [lo, hi] = [LABEL_MM.minHeight, LABEL_MM.maxHeight];
+  let lo = LABEL_MM.minHeight;
+  let hi = LABEL_MM.maxHeight;
 
   for (let i = 0; i < SEARCH_STEPS; i++) {
     const mid = (lo + hi) / 2;

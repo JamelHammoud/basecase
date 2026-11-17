@@ -26,6 +26,70 @@ afterAll(() => {
   vi.unstubAllEnvs();
 });
 
+describe('metadata delivery', () => {
+  it('delivers a body correction and invalidates review without touching Git', () => {
+    const revision = { ...entry, number: 42, metadataOnly: true };
+    const execute = vi.fn();
+    const review = vi.fn();
+    const edit = vi.fn(() => expect(review).toHaveBeenCalledOnce());
+
+    saveDelivery(revision);
+    expect(
+      deliver(revision, {
+        execute,
+        review,
+        edit,
+        readJson: () => ({ url: 'https://example.com/pull/42', state: 'OPEN', headRefOid: entry.sha }),
+      }),
+    ).toBe('https://example.com/pull/42');
+    expect(execute).not.toHaveBeenCalled();
+    expect(review).toHaveBeenCalledWith(entry.sha, 'error', 'Pull request details revised. Review them again');
+    expect(edit).toHaveBeenCalledWith(42, { title: entry.title, body: entry.body });
+    expect(hasPendingDelivery(entry.branch)).toBe(false);
+  });
+
+  it('retains failed metadata delivery for recovery without rerunning its author', () => {
+    const revision = { ...entry, number: 42, metadataOnly: true };
+    const execute = vi.fn();
+    const review = vi.fn();
+    const edit = vi.fn(() => {
+      throw new Error('edit failed');
+    });
+    const readJson = vi.fn(() => ({ url: 'https://example.com/pull/42', state: 'OPEN', headRefOid: entry.sha }));
+    const dependencies = { execute, review, edit, readJson };
+
+    saveDelivery(revision);
+    expect(() => deliver(revision, dependencies)).toThrow('edit failed');
+    expect(hasPendingDelivery(entry.branch)).toBe(true);
+    expect(edit).toHaveBeenCalledOnce();
+    edit.mockImplementation(() => {});
+    expect(deliver(revision, dependencies)).toBe('https://example.com/pull/42');
+    expect(execute).not.toHaveBeenCalled();
+    expect(hasPendingDelivery(entry.branch)).toBe(false);
+  });
+
+  it('discards stale metadata when the remote head changes so the new head can be handled', () => {
+    const revision = { ...entry, number: 42, metadataOnly: true };
+    const execute = vi.fn();
+    const review = vi.fn();
+    const edit = vi.fn();
+
+    saveDelivery(revision);
+    expect(
+      deliver(revision, {
+        execute,
+        review,
+        edit,
+        readJson: () => ({ url: 'https://example.com/pull/42', state: 'OPEN', headRefOid: 'another-head' }),
+      }),
+    ).toBeNull();
+    expect(edit).not.toHaveBeenCalled();
+    expect(review).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
+    expect(hasPendingDelivery(entry.branch)).toBe(false);
+  });
+});
+
 describe('durable delivery', () => {
   it('preserves the pending worktree when another lane tries to clear or close it', () => {
     const marker = path.join(directory, 'retained-work');

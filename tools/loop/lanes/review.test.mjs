@@ -6,12 +6,17 @@ const mocks = vi.hoisted(() => ({
   closePull: vi.fn(),
   update: vi.fn(),
   status: vi.fn(),
+  reviewState: vi.fn(),
+  pullReview: vi.fn(),
+  comments: vi.fn(),
+  patch: vi.fn(),
+  resolve: vi.fn(),
 }));
 
 vi.mock('../lib/agent.mjs', () => ({ runAgent: mocks.agent }));
 vi.mock('../lib/sessionJournal.mjs', () => ({ updateSession: mocks.update }));
 vi.mock('../lib/claim.mjs', () => ({ claim: () => () => {} }));
-vi.mock('../lib/branches.mjs', () => ({ fetchAll: () => {}, ownPatchId: vi.fn(), resolveSha: vi.fn() }));
+vi.mock('../lib/branches.mjs', () => ({ fetchAll: () => {}, ownPatchId: mocks.patch, resolveSha: mocks.resolve }));
 vi.mock('../lib/copy.mjs', () => ({ copyReport: () => ({ text: 'Copy: 0' }) }));
 vi.mock('../lib/reviewPrompt.mjs', () => ({ reviewPrompt: () => 'Review fixture' }));
 vi.mock('../lib/inFlight.mjs', () => ({
@@ -30,9 +35,9 @@ vi.mock('../lib/github.mjs', () => ({
   setReview: mocks.status,
   openPulls: () => [{ number: 2, headRefOid: 'abcdef123', title: 'Refine: Fixture', body: '' }],
   pullCheck: () => 'success',
-  pullReview: () => null,
-  pullComments: () => [],
-  reviewState: vi.fn(),
+  pullReview: mocks.pullReview,
+  pullComments: mocks.comments,
+  reviewState: mocks.reviewState,
 }));
 
 const { default: review } = await import('./review.mjs');
@@ -40,11 +45,32 @@ const runReview = () => review({ log: () => {} });
 
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.pullReview.mockReturnValue(null);
+  mocks.comments.mockReturnValue([]);
   mocks.agent.mockReturnValue({
     ok: true,
     journalId: 'invocation',
     output: { verdict: 'pass', summary: 'Fixture', findings: [] },
   });
+});
+
+it.each([null, 'error'])('handles an unchanged patch with review state %s', (state) => {
+  mocks.pullReview.mockReturnValue(state);
+  mocks.comments.mockReturnValue([{ body: '### Review: changes needed (1234567)' }]);
+  mocks.resolve.mockReturnValue('123456789');
+  mocks.patch.mockReturnValue('same-patch');
+  mocks.reviewState.mockReturnValue('failure');
+  runReview();
+
+  if (state === null) {
+    expect(mocks.agent).not.toHaveBeenCalled();
+    expect(mocks.status).toHaveBeenCalledWith('abcdef123', 'failure', expect.stringContaining('Carried over'));
+
+    return;
+  }
+
+  expect(mocks.agent).toHaveBeenCalledOnce();
+  expect(mocks.status).toHaveBeenLastCalledWith('abcdef123', 'success', 'Fixture');
 });
 
 it.each(['pass', 'fail'])('records the published %s outcome after the comment succeeds', (verdict) => {

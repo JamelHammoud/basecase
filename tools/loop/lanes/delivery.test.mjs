@@ -46,4 +46,16 @@ describe('delivery lane', () => {
     expect(mocks.deliver).not.toHaveBeenCalled();
     expect(mocks.close).not.toHaveBeenCalled();
   });
+
+  it('offers a discarded metadata worktree for cleanup when delivery returns no URL', () => {
+    const entry = { branch: 'loop/repair/metadata', number: 3 };
+
+    mocks.entries = [entry];
+    mocks.claim.mockReturnValue(() => {});
+    mocks.deliver.mockReturnValue(null);
+
+    delivery({ log: vi.fn() });
+
+    expect(mocks.close).toHaveBeenCalledExactlyOnceWith(entry);
+  });
 });

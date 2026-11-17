@@ -1,11 +1,11 @@
 import { claim } from './claim.mjs';
-import { createPull, editPull } from './github.mjs';
+import { createPull, editPull, setReview } from './github.mjs';
 import { completeDelivery, deliveryFor, saveDelivery } from './deliveryState.mjs';
 import { recordPublication } from './publicationJournal.mjs';
 import { fingerprint } from './sessionJournal.mjs';
 import { json, run } from './sh.mjs';
 
-const defaults = () => ({ execute: run, readJson: json, create: createPull, edit: editPull });
+const defaults = () => ({ execute: run, readJson: json, create: createPull, edit: editPull, review: setReview });
 
 function existingPull(entry, readJson) {
   const args = entry.number
@@ -16,7 +16,19 @@ function existingPull(entry, readJson) {
   return entry.number ? found : found?.[0];
 }
 
+function sendMetadata(entry, existing, services) {
+  if (!entry.number || existing?.headRefOid !== entry.sha)
+    throw new Error('Pull request head changed since metadata verification');
+
+  services.review(entry.sha, 'error', 'Pull request details revised. Review them again');
+  services.edit(entry.number, { title: entry.title, body: entry.body });
+
+  return existing.url;
+}
+
 function send(entry, existing, services) {
+  if (entry.metadataOnly) return sendMetadata(entry, existing, services);
+
   const head = services.execute('git', ['rev-parse', 'HEAD'], { cwd: entry.dir }).out.trim();
 
   if (head !== entry.sha) throw new Error('Pending delivery changed since verification');
@@ -29,6 +41,9 @@ function send(entry, existing, services) {
 
   return existing?.url;
 }
+
+const staleMetadata = (entry, existing) =>
+  entry.metadataOnly && existing?.headRefOid && existing.headRefOid !== entry.sha;
 
 export function deliver(saved, dependencies = {}) {
   const services = { ...defaults(), ...dependencies };
@@ -50,6 +65,12 @@ export function deliver(saved, dependencies = {}) {
       completeDelivery(entry.branch);
 
       return existing.url;
+    }
+
+    if (staleMetadata(entry, existing)) {
+      completeDelivery(entry.branch);
+
+      return null;
     }
 
     const url = send(entry, existing, services);

@@ -56,7 +56,7 @@ const withProtected = (body, files = []) =>
     ? body
     : `${body}\n\n## Protected paths\n\n${protectedList(files)}. The reason for each is in Why; review fails one without it.`;
 
-const ADDED_SECTIONS = { screenshots: 'Screenshots', copy: 'Copy', changelog: 'Changelog' };
+const ADDED_SECTIONS = { why: 'Why', screenshots: 'Screenshots', copy: 'Copy', changelog: 'Changelog' };
 
 const withAddedSections = (template, values) =>
   Object.entries(ADDED_SECTIONS)

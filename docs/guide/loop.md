@@ -39,6 +39,7 @@ Performance refinements put implementation facts in the owning area’s guide an
 **Only a pull request's own change starts new work; catching up with `main` never does.** Without this rule, lanes chase each other: each merge of `main` is a new head, a new head wipes the review, and the revise lane never sees a verdict to answer. So:
 
 - **Review carries over** to a head whose own lines (`git diff -U0` from its merge base with `main`, compared by `git patch-id`) match the last reviewed head. Context lines don't count, so `main` editing around the change doesn't either; a conflict resolution that changes the pull request's lines gets a fresh review.
+- **A title or body correction gets review on the same head.** Revise delivers metadata without a commit or push when its worktree has no source edits. It pins delivery to the remote head it revised, marks review as needing another pass before editing, and keeps failed delivery in the existing outbox. If the remote head has moved, it discards that stale metadata so the new head can be handled. Review handles the error state afresh instead of carrying an older verdict over. A local merge of `main` alone stays local. Source revisions keep the commit, credit check and push path.
 - **Rebase refreshes a failed Check once per head.** If the refreshed head fails too, the failure is the pull request's own and goes to revise. A pull request whose review failed isn't refreshed: revise merges `main` when it revises.
 - **Revise skips a pull request that conflicts with `main`** (checked locally with `git merge-tree`) until rebase resolves it.
 - **A builder that deliberately declines a step or reports a demonstrated block** posts why on the step. Build sessions report a structured outcome, so unfinished implementation never becomes a dependency decision. When its source inputs can be identified, it waits for those inputs to change or the pull requests the reason names to close. Other steps wait 30 minutes, doubling with each decline up to a day, and until those pull requests close.
@@ -130,6 +131,10 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 | `loop`, `update`, `market` | `Loop: …`, `Update: …`, `Market: …` | `loop.md` | left out |
 
 `.github/release.yml` groups the release notes by those labels.
+
+Every kind preserves the answer's `why` field. If its template has no place for that field, the shared body renderer adds a Why section. Revision also adds that section to older bodies that lack it, so repair and fix rationales survive publication without changing each template.
+
+`lib/pull.test.mjs` covers reason preservation and replacement across every kind and missing sections in legacy repair and fix bodies. `lib/revision.test.mjs` exercises metadata and source publication through the real body renderer. `lib/deliver.test.mjs` covers metadata delivery without Git, remote-head refusal and durable recovery after an edit fails. `lanes/review.test.mjs` checks fresh review after a metadata correction alongside ordinary patch carryover. These are fast runner tests with controlled publication boundaries. [Metadata repair evidence](../notes/node.md#pull-request-metadata-repair) records the failure and verification limits.
 
 ### A change, start to finish
 

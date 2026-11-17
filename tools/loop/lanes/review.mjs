@@ -178,6 +178,8 @@ const lastReviewedSha = (pull) =>
     .at(-1);
 
 function carryOver(pull, log) {
+  if (pullReview(pull) === 'error') return false;
+
   const short = lastReviewedSha(pull);
   const reviewed = short ? resolveSha(short) : null;
 

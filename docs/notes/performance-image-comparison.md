@@ -109,3 +109,24 @@ On macOS arm64, Apple M5 Pro and Node 26.13.0, a central rectangular subject occ
 | 1568 × 1568 | 2,458,624 | 98,596 | 4.83568 | 3.52247 |
 
 Both versions retain the whole-subject scan. The baseline uses the previous scale implementation and cropper with the current full-mask bounds helper. These shared-host measurements cover scale calculation alone, without CI timing assertions or a claim about complete photo-tool latency. The temporary comparison and results live in `scratch/photoScaleBench.mjs` and `scratch/photoScaleBench.json` during implementation.
+
+
+## Binary mask bounds stop at row edges
+
+Repository searches found two shared binary-mask extent scans, `maskRows` and `maskBounds`, plus annotation `maskBox` with its own per-pixel box calculation. All three now search from each row's ends and skip the interior once both edges are known. Annotation boxes reuse `maskBounds` after their existing dimension validation. Foreground color totals, area calculations and RGBA thumbnail alpha bounds have different input or measurement requirements and keep their existing scans.
+
+`maskEdges.test.ts` compares all 5,050 binary masks across widths one through four and heights one through three with an independent full scan. It checks row records, full bounds and annotation boxes. Additional cases cover regional limits, fractional sampling, nonbinary pixels, incomplete buffer views, later edits and unchanged source bytes. Existing regional tests retain clipping, reversed and nonfinite selections. Existing row tests retain profile, tracing and target-fit coverage.
+
+Proxy-counted reads for each of the three extent consumers on 300 × 300 masks are:
+
+| Foreground | Previous pixel reads | Current pixel reads |
+| --- | --- | --- |
+| Filled | 90,000 | 600 |
+| One occupied column | 90,000 | 90,000 |
+| Empty | 90,000 | 90,000 |
+
+The filled 40 × 300 and 40 × 600 profile and trace fixtures now read 600 and 1,200 pixels, replacing the 12,000 and 24,000 reads recorded for the earlier shared-scan implementation. Searches allocate no intermediate mask or per-row result. These are operation counts, without a timing assertion or a claim about complete photo-tool or labeling latency.
+
+Validation used `check:changed` on the six code and test files and the three owning documentation files. Formatting, lint, documentation, site copy and types passed. The final related run passed 730 tests across 120 files. The new exhaustive and read-count tests passed.
+
+The final run failed three unchanged tests. `deleteTone.test.ts` reports missing danger variants on Delete buttons in `BoardHoleFields.tsx`, `BoardKeepoutFields.tsx` and `BoardPlacementFields.tsx`, which are unchanged from the starting revision. `targetDistance.test.ts` timed out in its generated Float32 distance comparison, and the 1,000-image case in `evidenceResources.test.ts` timed out while restoring frozen evidence. Both hit their existing 5,000 ms deadline and passed in the earlier related run. No deadline, retry or quarantine was changed. The implementation-session log is `scratch/mask-check.log`. Browser tests were left to CI because this changes no interaction or visible state.

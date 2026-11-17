@@ -1,4 +1,5 @@
 import type { Mask, MaskBox } from './silhouetteProfile';
+import { maskRowLeft, maskRowRight } from './maskRowEdges';
 
 export interface MaskRow {
   y: number;
@@ -11,18 +12,12 @@ export function maskRows({ data, width, height }: Mask): { box: MaskBox; rows: M
   const rows: MaskRow[] = [];
 
   for (let y = 0; y < height; y++) {
-    let left = -1;
-    let right = -1;
-
-    for (let x = 0; x < width; x++) {
-      if (!data[y * width + x]) continue;
-
-      if (left < 0) left = x;
-
-      right = x + 1;
-    }
+    const offset = y * width;
+    const left = maskRowLeft(data, offset, 0, width - 1);
 
     if (left < 0) continue;
+
+    const right = maskRowRight(data, offset, width - 1, left) + 1;
 
     rows.push({ y, left, right });
     box.x0 = Math.min(box.x0, left);

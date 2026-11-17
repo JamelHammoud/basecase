@@ -111,7 +111,9 @@ function rowDetail(lines: FallLine[], fails: FallLine[], warns: FallLine[]): str
 
   if (warns.length) return `${plural(warns.length, 'joint')} near the limit in a fall (estimate)`;
 
-  const worst = [...lines].sort((a, b) => b.multiple - a.multiple)[0];
+  const worst = lines.some((line) => Number.isNaN(line.multiple))
+    ? [...lines].sort((a, b) => b.multiple - a.multiple)[0]
+    : lines[0];
 
   return `Worst: ${jointLabel(worst.load.joint)}, ${multipleText(worst)} (estimate)`;
 }

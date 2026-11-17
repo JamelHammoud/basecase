@@ -389,3 +389,15 @@ Local Node integration samples on macOS, 17 November 2026, produced the followin
 | fixed-appliance | 1670.91 | 36761 | 18790 | 107247 | 473120768 | 113268560 |
 
 The local documentation capture downloaded the edited-carrier diagnostic archive with matching design and board bindings. Electrical preparation took 851.97 ms and archive composition took 161.77 ms in that captured development-server run. Illustrated guide output used the existing controlled fixture. These observations do not establish native fabrication latency or cross-platform delivery results. The capture retained `scratch/captured-electrical-kit.zip` and `scratch/capture-summary.json`. The detailed matrix samples are retained in `scratch/kit-electrical-measurements.json`.
+
+## Passing Falls summaries reuse ranked impacts
+
+A whole-app search found one redundant impact ranking in `utils/engineeringFalls.ts`. `fallsRow` sorts impacts before passing them to `rowDetail`, which previously copied and sorted the same list again for passing results. Build and agent reports share this helper. Peak torque prepares unsorted lines and still needs its separate ranking, so it is outside this refinement.
+
+On November 17, 2026, `scratch/falls-order-parity.mjs` compared the old and new selectors across all 137,256 ordered lists of one through six entries drawn from negative infinity, -1, signed zeros, 1, infinity and NaN. Every selected object matched. The second stable sort changed the first entry in 1,228 NaN-containing cases, so those inputs retain the original fallback. The probe checks selection arithmetic independently of the simulation. A second probe, `scratch/falls-detail-parity.cjs`, transpiled the old and changed `rowDetail` bodies from git and the worktree. All 411,768 comparisons matched across passing, warning and failing summaries, with deterministic formatting dependencies.
+
+For a passing report with J ranked impacts and no NaN multiple, this removes one J-entry copied list and one redundant sort. A linear NaN scan remains. These are code-derived operation and allocation counts, not measured timings or a claim about complete Checks latency. Failing and warning reports return before this selection, as before.
+
+Existing `engineeringFalls.test.ts` exercises the real simulation and engineering pipeline, including full verdicts, worst joints, directions and replay targets. No control, text, visible state or user action changes. Existing help instructions and screenshots remain accurate.
+
+Preflight flagged the unchanged help articles `build-checks.md`, `check-what-a-fall-does-to-the-servos.md`, `servo-torque-and-sizing.md` and `troubleshoot-build-check-blocks-ready-to-build.md`. Their labels, steps, thresholds, replay actions and screenshots still match the code. They remain unchanged because selection results and visible states are preserved.

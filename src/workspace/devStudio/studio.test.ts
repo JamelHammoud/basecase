@@ -145,6 +145,7 @@ const EXPECTED_NAMES = [
   'tryLanes',
   'tryWorld',
   'visionBackendState',
+  'visionConditionImport',
   'visionTraining',
   'worldAt',
   'worldState',

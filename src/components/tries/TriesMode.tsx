@@ -165,6 +165,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({
         <div ref={body} className="px-[12px] pb-6 flex flex-col gap-4">
           {mode.dataset && (
             <DatasetImages
+              key={`${sceneId}:${active}:${mode.dataset.id}:${mode.dataset.selectedVersion ?? 'working'}`}
               dataset={mode.dataset}
               onOpen={mode.dataset.selectedVersion === undefined ? onOpenFrames : undefined}
             />

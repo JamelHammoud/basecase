@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FrameSet } from './frameSet';
 import type { FrameBytes, FrameSetBackend, FrameSetManifest } from './frameSetStoreTypes';
+import { manifestOf } from './frameSetStoreTypes';
+import { frameSetHash } from './frameSet';
 
 const stored = vi.hoisted(() => ({
   manifests: new Map<string, FrameSetManifest>(),
   frames: new Map<string, FrameBytes>(),
   reads: [] as string[],
+  writes: [] as string[],
+  onRead: null as (() => void) | null,
 }));
 
 vi.mock('./desktopFrameSets', () => ({
@@ -15,11 +19,13 @@ vi.mock('./desktopFrameSets', () => ({
     manifest: async (id) => stored.manifests.get(id) ?? null,
     frame: async (id, frameId) => {
       stored.reads.push(frameId);
+      stored.onRead?.();
 
       return structuredClone(stored.frames.get(`${id}:${frameId}`) ?? null);
     },
     jpeg: async (id, frameId) => stored.frames.get(`${id}:${frameId}`)?.jpeg ?? null,
     saveFrame: async (id, frameId, bytes) => {
+      stored.writes.push(frameId);
       stored.frames.set(`${id}:${frameId}`, structuredClone(bytes));
     },
     saveManifest: async (manifest, sourceId) => {
@@ -36,8 +42,15 @@ vi.mock('./desktopFrameSets', () => ({
   } satisfies FrameSetBackend,
 }));
 
-const { saveFrameSet, loadFrameSet, loadTrainingFrame, saveTrainingFrame, finalizeFrameSet, listFrameSets } =
-  await import('./frameSetStore');
+const {
+  saveFrameSet,
+  saveFrameSetMetadata,
+  loadFrameSet,
+  loadTrainingFrame,
+  saveTrainingFrame,
+  finalizeFrameSet,
+  listFrameSets,
+} = await import('./frameSetStore');
 const fixture = (): FrameSet => ({
   version: 1,
   id: 'set-1',
@@ -63,6 +76,8 @@ beforeEach(() => {
   stored.manifests.clear();
   stored.frames.clear();
   stored.reads.length = 0;
+  stored.writes.length = 0;
+  stored.onRead = null;
 });
 
 describe('the frame set library', () => {
@@ -150,5 +165,60 @@ describe('the frame set library', () => {
 
     expect(await loadFrameSet(set.id)).toBeNull();
     expect(stored.reads).toHaveLength(before);
+  });
+});
+
+describe('metadata-only image writes', () => {
+  it('keeps metadata writes scoped to their original set even when frame ids repeat', async () => {
+    const original = fixture();
+    const other = { ...fixture(), id: 'other-set' };
+
+    await saveFrameSet(original);
+    await saveFrameSet(other);
+    stored.writes.length = 0;
+
+    await expect(
+      saveFrameSetMetadata(manifestOf({ ...original, conditions: ['night'] }), manifestOf(other)),
+    ).rejects.toThrow('changed');
+    expect(stored.manifests.get(original.id)?.conditions).toBeUndefined();
+    expect(stored.manifests.get(other.id)?.conditions).toBeUndefined();
+    expect(stored.writes).toEqual([]);
+  });
+  it('streams verified frame hashes without rewriting image blobs and preserves the canonical hash', async () => {
+    const original = fixture();
+
+    await saveFrameSet(original);
+    stored.writes.length = 0;
+
+    const next = {
+      ...original,
+      conditions: ['night'],
+      frames: original.frames.map((frame) => ({ ...frame, conditions: ['night'] })),
+    };
+    const hash = await saveFrameSetMetadata(manifestOf(next), manifestOf(original));
+
+    expect(hash).toBe(await frameSetHash(next));
+    expect(stored.writes).toEqual([]);
+    expect(stored.reads).toEqual(['f1', 'f2']);
+    expect(await loadFrameSet(next.id)).toEqual(next);
+  });
+
+  it.each(['before', 'during'])('refuses a source changed %s metadata hashing without overwriting it', async (when) => {
+    const original = fixture();
+
+    await saveFrameSet(original);
+    stored.writes.length = 0;
+
+    const changed = () => stored.manifests.set(original.id, { ...manifestOf(original), name: 'Changed source' });
+
+    if (when === 'before') changed();
+    else stored.onRead = changed;
+
+    const next = { ...original, conditions: ['night'] };
+
+    await expect(saveFrameSetMetadata(manifestOf(next), manifestOf(original))).rejects.toThrow('changed');
+    expect(stored.manifests.get(original.id)?.name).toBe('Changed source');
+    expect(stored.manifests.get(original.id)?.conditions).toBeUndefined();
+    expect(stored.writes).toEqual([]);
   });
 });

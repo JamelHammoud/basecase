@@ -401,3 +401,28 @@ For a passing report with J ranked impacts and no NaN multiple, this removes one
 Existing `engineeringFalls.test.ts` exercises the real simulation and engineering pipeline, including full verdicts, worst joints, directions and replay targets. No control, text, visible state or user action changes. Existing help instructions and screenshots remain accurate.
 
 Preflight flagged the unchanged help articles `build-checks.md`, `check-what-a-fall-does-to-the-servos.md`, `servo-torque-and-sizing.md` and `troubleshoot-build-check-blocks-ready-to-build.md`. Their labels, steps, thresholds, replay actions and screenshots still match the code. They remain unchanged because selection results and visible states are preserved.
+
+
+## Screw depth checks prepare each hole once
+
+A whole-app search found one screw-depth port ranking in `readiness/buildChecks.ts`. `workspace/runReadiness.ts` and `study/grade.ts` share it. Previously each sort comparison transformed both hole ports again, and the selected hole was transformed once more. Candidate preparation now retains each qualifying hole's axial reach alongside its offset. The stable sort and selected finding reuse that number. No cache survives the check.
+
+On November 17, 2026, a scratch parity probe transpiled the previous and changed helper bodies with the installed TypeScript compiler. It compared complete finding records across 640 synthetic cases using the real world-port transform. Fixtures covered zero through twenty holes, translated and rotated parts, pitch-circle offsets, missing depths, depth ties and forty cases with nonfinite or signed-zero screw-tip coordinates. All results matched. The probe's port provider and finding formatter were controlled, so it supplements rather than replaces the existing real-catalog tests.
+
+Two twenty-hole fixtures reduced world-port transformations from 111 and 83 to twenty each. An off-axis twelve-hole fixture retained twelve transforms. With H candidate holes and C sort comparisons, a matching query previously performed H + 2C + 1 transforms. It now performs H. Axial reach is computed once per matching hole instead of twice per comparator plus once for the winner. The existing candidate lists and stable sort remain. These are operation counts, not timings or complete Checks latency measurements. Source and results remain in `scratch/thread-preparation.test.ts`, `scratch/thread-preparation-results.json` and `scratch/thread-preparation.log`.
+
+Existing `readiness/buildChecks.test.ts` checks real-catalog finding keys for safe depth, excessive depth and a missed pattern. No control, label, user action or visible state changes. No timeout, retry or quarantine changes apply.
+
+The seven help articles covering this file remain unchanged after checking their claims against the final code:
+
+| Article | Why its instructions and illustrated states remain accurate |
+| --- | --- |
+| [The path from design to build](../../site/content/help/from-design-to-build.md) | Blocker classification, readiness decisions, background scheduling and purchasing behavior are unchanged. This refinement does not establish a new end-to-end verdict timing. |
+| [Import an Onshape assembly as a robot](../../site/content/help/import-an-onshape-assembly.md) | `fixedMateFindings` and `goneMateFindings` are unchanged. Import, update, Pose and mate-note controls have no changes. |
+| [Find, hide and lock parts in Layers](../../site/content/help/organize-parts-in-layers.md) | `hiddenFindings` and scene visibility filtering are unchanged. The hidden-part count, row actions and rename controls retain their behavior. |
+| [Parts, assemblies and mounting ports](../../site/content/help/parts-assemblies-and-mounting-ports.md) | Hole offsets retain the 1 mm tolerance and pitch-circle adjustment. The selected hole retains its depth and 0.25 mm margin. The same screw positions produce the same blockers. |
+| [Parts the agent sources](../../site/content/help/parts-the-agent-sources.md) | `sourcingFindings` and referenceability requirements are unchanged. Sourcing, catalog placement and purchase controls are unaffected. |
+| [A part is too big to print or has thin walls](../../site/content/help/troubleshoot-build-part-wont-print.md) | `unprintableFindings` and clear-material detection are unchanged. Printability, plate arrangement and printed-label controls are unaffected. |
+| [Real parts check lists placeholders or unchecked parts](../../site/content/help/troubleshoot-build-real-parts-check.md) | Sourcing findings, stand-in handling and saved-price confirmation are unchanged. Fix, Add Price and Save retain their labels and actions. |
+
+No illustrated state changes, so the existing screenshots remain current. The preflight coverage notices are resolved by these article checks rather than unrelated edits to published instructions.

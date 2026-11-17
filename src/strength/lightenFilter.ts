@@ -12,12 +12,17 @@ function offsetsFor(h: V3, radius: number): Array<[number, number, number, numbe
   const steps = h.map((value) => Math.ceil(radius / value));
   const out: Array<[number, number, number, number]> = [];
 
-  for (let dz = -steps[2]; dz <= steps[2]; dz++)
-    for (let dy = -steps[1]; dy <= steps[1]; dy++)
-      for (let dx = -steps[0]; dx <= steps[0]; dx++)
-        out.push([dx, dy, dz, radius - Math.hypot(dx * h[0], dy * h[1], dz * h[2])]);
+  const appendRow = (dy: number, dz: number) => {
+    for (let dx = -steps[0]; dx <= steps[0]; dx++) {
+      const weight = radius - Math.hypot(dx * h[0], dy * h[1], dz * h[2]);
 
-  return out.filter(([, , , weight]) => weight > 0);
+      if (weight > 0) out.push([dx, dy, dz, weight]);
+    }
+  };
+
+  for (let dz = -steps[2]; dz <= steps[2]; dz++) for (let dy = -steps[1]; dy <= steps[1]; dy++) appendRow(dy, dz);
+
+  return out;
 }
 
 export function densityFilter(mesh: HexMesh, radius: number): DensityFilter {

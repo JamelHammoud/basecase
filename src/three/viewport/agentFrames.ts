@@ -53,7 +53,9 @@ const pick = (box: THREE.Box3, axis: 'x' | 'y' | 'z', high: boolean) => (high ? 
 function cornerSegments(box: THREE.Box3): number[] {
   const size = box.getSize(new THREE.Vector3()).multiplyScalar(CORNER_SHARE);
 
-  return CORNERS.flatMap(([hx, hy, hz]) => {
+  const segments: number[] = [];
+
+  for (const [hx, hy, hz] of CORNERS) {
     const x = pick(box, 'x', hx);
     const y = pick(box, 'y', hy);
     const z = pick(box, 'z', hz);
@@ -61,23 +63,28 @@ function cornerSegments(box: THREE.Box3): number[] {
     const dy = hy ? -size.y : size.y;
     const dz = hz ? -size.z : size.z;
 
-    return [x, y, z, x + dx, y, z, x, y, z, x, y + dy, z, x, y, z, x, y, z + dz];
-  });
+    segments.push(x, y, z, x + dx, y, z, x, y, z, x, y + dy, z, x, y, z, x, y, z + dz);
+  }
+
+  return segments;
 }
 
 function edgeSegments(box: THREE.Box3): number[] {
-  return CORNERS.flatMap(([hx, hy, hz]) => {
-    const from = [pick(box, 'x', hx), pick(box, 'y', hy), pick(box, 'z', hz)];
-    const ends: number[][] = [];
+  const segments: number[] = [];
 
-    if (!hx) ends.push([box.max.x, from[1], from[2]]);
+  for (const [hx, hy, hz] of CORNERS) {
+    const x = pick(box, 'x', hx);
+    const y = pick(box, 'y', hy);
+    const z = pick(box, 'z', hz);
 
-    if (!hy) ends.push([from[0], box.max.y, from[2]]);
+    if (!hx) segments.push(x, y, z, box.max.x, y, z);
 
-    if (!hz) ends.push([from[0], from[1], box.max.z]);
+    if (!hy) segments.push(x, y, z, x, box.max.y, z);
 
-    return ends.flatMap((end) => [...from, ...end]);
-  });
+    if (!hz) segments.push(x, y, z, x, y, box.max.z);
+  }
+
+  return segments;
 }
 
 function paddedBounds(objects: THREE.Object3D[]): THREE.Box3 {

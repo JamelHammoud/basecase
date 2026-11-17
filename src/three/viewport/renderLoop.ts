@@ -45,14 +45,16 @@ function fitKeyLight(stage: Stage, distance: number): void {
 function followCamera(stage: Stage, fitLight: boolean): boolean {
   const { camera, orbit, fillLight, grid, keyLight } = stage;
   const distance = camera.position.distanceTo(orbit.target);
-  const lightWas = keyLight.position.clone();
+  const lightX = keyLight.position.x;
+  const lightY = keyLight.position.y;
+  const lightZ = keyLight.position.z;
   const spanWas = keyLight.shadow.camera.right;
 
   grid.update(camera, orbit.target);
 
   if (fitLight) fitKeyLight(stage, distance);
 
-  fillLight.position.copy(camera.position).add(camera.up.clone().multiplyScalar(distance * 0.35));
+  fillLight.position.copy(camera.position).addScaledVector(camera.up, distance * 0.35);
   fillLight.target.position.copy(orbit.target);
   fillLight.target.updateMatrixWorld();
 
@@ -63,7 +65,12 @@ function followCamera(stage: Stage, fitLight: boolean): boolean {
     camera.updateProjectionMatrix();
   }
 
-  return !keyLight.position.equals(lightWas) || keyLight.shadow.camera.right !== spanWas;
+  return (
+    keyLight.position.x !== lightX ||
+    keyLight.position.y !== lightY ||
+    keyLight.position.z !== lightZ ||
+    keyLight.shadow.camera.right !== spanWas
+  );
 }
 
 export class RenderLoop {

@@ -80,22 +80,42 @@ function frameFor(normal: THREE.Vector3) {
   return { n, u, v };
 }
 
-function boundary(triangles: Vec2[][]): Array<[Vec2, Vec2]> {
-  const count = new Map<string, { edge: [Vec2, Vec2]; n: number }>();
+type BoundaryEdges = Map<string, { edge: [Vec2, Vec2]; n: number }>;
 
-  for (const tri of triangles) {
-    for (let k = 0; k < 3; k++) {
-      const p = tri[k];
-      const q = tri[(k + 1) % 3];
-      const key = pairKey(keyOf(p), keyOf(q));
-      const seen = count.get(key);
+function countEdge(count: BoundaryEdges, p: Vec2, q: Vec2) {
+  const key = pairKey(keyOf(p), keyOf(q));
+  const seen = count.get(key);
 
-      if (seen) seen.n += 1;
-      else count.set(key, { edge: [p, q], n: 1 });
-    }
+  if (seen) seen.n += 1;
+  else count.set(key, { edge: [p, q], n: 1 });
+}
+
+function boundary(soup: ArrayLike<number>, tris: Tri[], u: THREE.Vector3, v: THREE.Vector3) {
+  const count: BoundaryEdges = new Map();
+  const bounds = emptyBounds();
+  const corner = new THREE.Vector3();
+  const project = (i: number): Vec2 => {
+    corner.fromArray(soup, i);
+
+    const x = corner.dot(u);
+    const y = corner.dot(v);
+
+    includePoint(bounds, x, y);
+
+    return [x, y];
+  };
+
+  for (const tri of tris) {
+    const a = project(tri.i);
+    const b = project(tri.i + 3);
+    const c = project(tri.i + 6);
+
+    countEdge(count, a, b);
+    countEdge(count, b, c);
+    countEdge(count, c, a);
   }
 
-  return [...count.values()].filter((e) => e.n === 1).map((e) => e.edge);
+  return { edges: [...count.values()].filter((e) => e.n === 1).map((e) => e.edge), bounds };
 }
 
 export function faceOf(soup: ArrayLike<number>, pick: FacePick): Face | null {
@@ -111,24 +131,11 @@ export function faceOf(soup: ArrayLike<number>, pick: FacePick): Face | null {
     (t) => t.normal.dot(seed.normal) > SAME_NORMAL && Math.abs(t.offset - seed.offset) < KEY_STEP,
   );
   const { n, u, v } = frameFor(seed.normal);
-  const corner = new THREE.Vector3();
-  const bounds = emptyBounds();
-  const planar = flat.map((t) =>
-    [0, 3, 6].map((k): Vec2 => {
-      corner.fromArray(soup, t.i + k);
-
-      const x = corner.dot(u);
-      const y = corner.dot(v);
-
-      includePoint(bounds, x, y);
-
-      return [x, y];
-    }),
-  );
+  const { edges: outline, bounds } = boundary(soup, flat, u, v);
   const { min, max } = bounds;
   const mid: Vec2 = [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2];
   const origin = n.clone().multiplyScalar(seed.offset).addScaledVector(u, mid[0]).addScaledVector(v, mid[1]);
-  const edges = mergeCollinear(boundary(planar)).map(([p, q]): [Vec2, Vec2] => [
+  const edges = mergeCollinear(outline).map(([p, q]): [Vec2, Vec2] => [
     [p[0] - mid[0], p[1] - mid[1]],
     [q[0] - mid[0], q[1] - mid[1]],
   ]);

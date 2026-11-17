@@ -184,6 +184,19 @@ it.each([300, 600])('retains a non-manifold edge shared by %s faces without reta
   const normals = vi.spyOn(THREE.Triangle.prototype, 'getNormal');
 
   expect(creaseEdgesOnly([...edge, ...reverse, ...edge], positions, faces)).toEqual([...edge, ...reverse, ...edge]);
-  expect(normals).toHaveBeenCalledTimes(count);
+  expect(normals).toHaveBeenCalledTimes(2);
   expect(new Set(normals.mock.calls.map(([target]) => target)).size).toBe(1);
+});
+
+it('calculates a later face normal when another requested edge still needs it', () => {
+  const positions = folded(0);
+  const boundary = [0, 0, 0, 0, 0, 10];
+  const requested = [...edge, ...boundary];
+  const faces = [...indices, 0, 1, 4, 0, 4, 5];
+  const normals = vi.spyOn(THREE.Triangle.prototype, 'getNormal');
+
+  positions.push(0, 0, 10, 0, 10, 10);
+
+  expect(creaseEdgesOnly(requested, positions, faces)).toEqual(requested);
+  expect(normals).toHaveBeenCalledTimes(4);
 });

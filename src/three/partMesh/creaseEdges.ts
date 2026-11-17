@@ -31,6 +31,8 @@ function appendNormal(edge: EdgeFaces | undefined, normal: THREE.Vector3) {
 const pointKey = (x: number, y: number, z: number) =>
   `${Math.round(x * 100)},${Math.round(y * 100)},${Math.round(z * 100)}`;
 
+const needsNormal = (edge: EdgeFaces | undefined) => edge !== undefined && edge.count < 2;
+
 function classifyFaceEdges(positions: number[], indices: number[], facesByEdge: Map<string, EdgeFaces>) {
   const vertexKeys = new Map<number, string>();
   const vertexKey = (i: number) => {
@@ -63,11 +65,13 @@ function classifyFaceEdges(positions: number[], indices: number[], facesByEdge: 
 
     if (!ab && !bc && !ca) continue;
 
-    a.fromArray(positions, ia * 3);
-    b.fromArray(positions, ib * 3);
-    c.fromArray(positions, ic * 3);
+    if (needsNormal(ab) || needsNormal(bc) || needsNormal(ca)) {
+      a.fromArray(positions, ia * 3);
+      b.fromArray(positions, ib * 3);
+      c.fromArray(positions, ic * 3);
 
-    triangle.getNormal(normal);
+      triangle.getNormal(normal);
+    }
 
     appendNormal(ab, normal);
     appendNormal(bc, normal);

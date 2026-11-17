@@ -159,6 +159,9 @@ function floodHole(start: number, mask: Uint8Array, visited: Uint8Array, grid: n
 
 function detectHoles(scan: ForegroundScan, f: Frame): HoleCenter[] {
   const { mask, minX, maxX, minY, maxY } = scan;
+
+  if (maxX - minX < 2 || maxY - minY < 2) return [];
+
   const visited = markOutside(mask, f.grid);
   const holes: HoleCenter[] = [];
 

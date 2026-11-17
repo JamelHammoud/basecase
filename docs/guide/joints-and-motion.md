@@ -281,3 +281,7 @@ The Library's optional assembly joint payload uses `RobotJoint` declarations. Ca
 The existing `LoopClosure` scene format remains the source of dimensions, crank start angle and link role. CAD posing continues to use the analytic open branch. `clampJoint` and `loopValue` accept the fields they actually read, so generated simulation records share those calculations without synthetic scene joints. New insertions identify the crank servo's C001 variant, giving the existing catalog and measured fit paths an exact actuator choice.
 
 The ten-mechanism production matrix in `src/sim/closedLinkages.test.ts` compares slow physical coupler paths with CAD to 0.3 mm, and shared pins to 0.15 mm. `closedControls.test.ts` checks initial pose, reset, edits and refusals. `closedContract.test.ts` checks loaded motion and seeded failures. [Simulation evidence](../notes/testing-simulate.md#closed-sketch-linkages) records what was executed and its limits. This does not extend imported assembly constraints or change scene history.
+
+## Mesh import preparation
+
+Robot mesh collection retains a single prepared triangle geometry directly instead of merging it into another copy. OBJ, Collada, FBX, 3MF and glTF share this collector. Multiple pieces retain their existing merge order. `three/mergeGeometryParts.test.ts` compares the collector through its glTF boundary with the former output for one and three meshes, empty results and unchanged source attributes. Loader parsing itself is outside that test. [Shared preparation contract](canvas.md#performance-mesh-preparation).

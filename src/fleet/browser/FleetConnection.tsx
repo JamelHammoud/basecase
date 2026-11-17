@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Button, Switch, TextArea, TextInput } from '../../design-system';
-import { fleetRequest } from './client';
+import { useAccessRequest } from './accessSession';
 import { FleetMappings, type AccessRole, type GroupMapping } from './FleetMappings';
 
 export interface Connection {
@@ -13,6 +13,9 @@ export interface Connection {
   enabled: boolean;
 }
 
+const signingCertificates = (value: string) =>
+  value.match(/-----BEGIN (?:CERTIFICATE|PUBLIC KEY)-----[\s\S]+?-----END (?:CERTIFICATE|PUBLIC KEY)-----/g) ?? [];
+
 export function FleetConnection({
   org,
   connection,
@@ -24,6 +27,7 @@ export function FleetConnection({
   roles: AccessRole[];
   onSaved: () => void;
 }) {
+  const fleetRequest = useAccessRequest();
   const [draft, setDraft] = useState(connection);
   const [certificates, setCertificates] = useState(connection.certificates.join('\n'));
   const [error, setError] = useState('');
@@ -36,10 +40,7 @@ export function FleetConnection({
     setError('');
 
     try {
-      const certs =
-        certificates.match(
-          /-----BEGIN (?:CERTIFICATE|PUBLIC KEY)-----[\s\S]+?-----END (?:CERTIFICATE|PUBLIC KEY)-----/g,
-        ) ?? [];
+      const certs = signingCertificates(certificates);
 
       await fleetRequest(`${org}/connections${draft.id ? `/${draft.id}` : ''}`, {
         method: draft.id ? 'PUT' : 'POST',
@@ -54,6 +55,8 @@ export function FleetConnection({
   }
 
   async function rotateToken() {
+    setBusy(true);
+    setToken('');
     setError('');
 
     try {
@@ -65,6 +68,8 @@ export function FleetConnection({
       setToken(result.token);
     } catch {
       setError('Check the provider settings and role grants.');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -118,7 +123,7 @@ export function FleetConnection({
           Save Provider
         </Button>
         {draft.id && (
-          <Button type="button" disabled={!draft.enabled} onClick={() => void rotateToken()}>
+          <Button type="button" disabled={busy || !draft.enabled} onClick={() => void rotateToken()}>
             Rotate SCIM Token
           </Button>
         )}

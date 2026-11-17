@@ -89,13 +89,7 @@ async function resourceApi(client, actor, options) {
 
   if (subpath === 'content') return assetContent(client, actor, { method, kind, id });
 
-  if (method === 'GET' && !id)
-    return listResources(client, actor, {
-      kind,
-      action: administrative(kind) ? 'iam.manage' : 'inventory.view',
-      site: query.get('site') || null,
-      after: query.get('after') || null,
-    });
+  if (method === 'GET' && !id) return listResources(client, actor, enumerationOptions(kind, query));
 
   if (method === 'GET') return readVisible(client, actor, kind, id);
 
@@ -106,6 +100,16 @@ async function resourceApi(client, actor, options) {
   if (method === 'DELETE' && id) return deleteResource(client, actor, kind, id);
 
   insist(false, 404);
+}
+
+function enumerationOptions(kind, query) {
+  return {
+    kind,
+    action: administrative(kind) ? 'iam.manage' : 'inventory.view',
+    summary: administrative(kind) && query.get('summary') === '1',
+    site: query.get('site') || null,
+    after: query.get('after') || null,
+  };
 }
 
 async function assetContent(client, actor, { method, kind, id }) {

@@ -121,7 +121,10 @@ export async function listResources(client, actor, options) {
     }
   }
 
-  return { items, next: exhausted && items.length < limit ? null : cursor };
+  return {
+    items: options.summary ? items.map(({ id, kind, name }) => ({ id, kind, name })) : items,
+    next: exhausted && items.length < limit ? null : cursor,
+  };
 }
 
 function addVisible(items, actor, action, row) {

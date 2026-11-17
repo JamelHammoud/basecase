@@ -197,3 +197,16 @@ Repository searches for `cornerSegments`, `edgeSegments` and `agent-frames` foun
 Per changed focused frame, the previous bracket builder created eight temporary 18-coordinate lists. The outline builder created eight source-point lists, eight endpoint containers, twelve endpoint lists, twelve segment lists and eight flattened corner lists. Both output lists still exist, and Three.js still prepares its GPU attributes. These are source-derived allocation counts, not heap measurements or timings. Unchanged bounds already skip both builders.
 
 `agentFrames.test.ts` compares complete bracket and outline coordinates against the former calculation for 60 translated, rotated, reflected and collapsed-axis poses. It checks all three emphasis states, unchanged bounds without geometry writes, missing targets, restoration and disposal. Rendering and GPU timing are outside this unit check. No user action, label or visible result changes, so help instructions and screenshots remain accurate.
+
+
+## Frame-label hover streams projections
+
+Repository searches for `nearestFrame`, `FrameLabel` and `projectPoints` found one frame-label hover path in `three/viewport/frameLabel.ts`, installed by `stageOverlays.ts` for studio viewports. Other projection callers produce measurements, marks, guide positions or Case trails rather than frame labels. Their output lists remain in use.
+
+The frame picker now projects each matrix origin and immediately compares its screen distance with the current winner. Each label instance retains one vector and two screen coordinates. For N frames, each pointer move previously constructed two arrays, N coordinate triples, N projected-point objects and one projection vector. Those temporary constructions fall to zero within projection and selection. The pointer object and DOM rectangle read remain. These are source-derived allocation counts, without heap or timing measurements and without a claim about full pointer latency.
+
+`src/three/viewport/framePicker.test.ts` compares exact winners and winning coordinates with the previous projection-list calculation across 120 queries over 64 frames. Camera position, view direction and both container and canvas sizes change between queries. Separate cases cover the inclusive 12-pixel boundary, later-frame ties, behind-camera and far-plane clipping, empty queries and recovery. Source matrices remain unchanged. Across 300 queries in each of two picker instances with three frames, a restored spy observes 1,800 projections using exactly two vector destinations.
+
+DOM event delivery, label painting and GPU rendering remain outside this unit coverage. No user action, label or visible result changes, so help instructions and screenshots remain accurate. No timeout, retry or quarantine changes apply.
+
+Local `check:changed` validation on November 17, 2026 passed formatting, lint, documentation, site copy for 330 pages, TypeScript and all nine related tests across four files. Vitest reported 372 ms for the related run. The log is `scratch/check-frame-picker.log`. Copy diff reports zero added, changed or removed user-facing strings.

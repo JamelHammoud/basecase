@@ -35,8 +35,8 @@ interface State {
   pairs?: string[][];
 }
 
-const live = (s: State, ids: Iterable<string>) => [...ids].filter((id) => s.tracked.has(id) && s.present.has(id));
-const clear = (s: State, ids: Iterable<string>) => live(s, ids).length === 0;
+const live = (s: State, id: string) => s.tracked.has(id) && s.present.has(id);
+const clear = (s: State, ids: string[]) => !ids.some((id) => live(s, id));
 const majorsOf = (s: State) => Object.keys(s.g.moves);
 const chainsOf = (s: State) => s.g.chains.screws;
 
@@ -104,9 +104,11 @@ function candidateUnits(s: State): string[][] {
 }
 
 function crossesUnit(s: State, unit: Set<string>, c: FastenerChain) {
-  const stack = live(s, c.stack);
-
-  return s.present.has(c.id) && stack.some((h) => unit.has(h)) && stack.some((h) => !unit.has(h));
+  return (
+    s.present.has(c.id) &&
+    c.stack.some((h) => live(s, h) && unit.has(h)) &&
+    c.stack.some((h) => live(s, h) && !unit.has(h))
+  );
 }
 
 function unitFree(s: State, unit: Set<string>): boolean {
@@ -116,7 +118,9 @@ function unitFree(s: State, unit: Set<string>): boolean {
     return unit.has(b) || (!!chain && chain.stack.every((h) => unit.has(h) || !s.present.has(h)));
   };
 
-  return AXES.some((_, k) => [...unit].every((m) => live(s, s.g.moves[m].local[k] ?? []).every(insideUnit)));
+  return AXES.some((_, k) =>
+    [...unit].every((m) => (s.g.moves[m].local[k] ?? []).every((id) => !live(s, id) || insideUnit(id))),
+  );
 }
 
 function removeUnit(s: State): boolean {

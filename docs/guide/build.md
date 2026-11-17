@@ -334,6 +334,8 @@ Measurements and limits: [Assembly and repair planning performance evidence](../
 
 - **Removal and repair index screw relationships.** `assembly/fastenerIndex.ts` indexes screw ids and the parts each stack clamps once per operation. Removal order, service depth, minimum teardown, repair directions, insert preparation and reassembly proof use those lookups. Related screws keep source order, and no index survives the operation. [Evidence](../notes/performance-assembly.md#removal-and-repair-index-screw-relationships).
 
+Removal clearance checks stop at the first live blocker. `assembly/removalOrder.ts` tests screw paths, part paths, unit paths and cross-unit fastener stacks directly instead of collecting live-id lists. Diagnostic blocker lists still retain every tracked entry in source order. `fastenerPlanning.test.ts` covers early stopping, complete diagnostics and changed blockers, while `removalUnits.test.ts` covers groups, internal screws, hosted hardware and edited geometry. [Evidence](../notes/performance-assembly.md#removal-clearance-stops-when-the-verdict-settles).
+
 - **Removal units index mutual blockers once per plan.** `assembly/removalUnits.ts` collects each remaining part's local neighbors when `planRemoval` first needs a unit search. Reciprocal membership finds pairs without comparing every part with every other part. Pair order matches the old source traversal, and groups still precede pairs of the same size. Later searches filter removed members from those pairs. [Evidence](../notes/performance-assembly.md#removal-units-index-mutual-blockers-once-per-plan).
 
 ## Performance: cable routing

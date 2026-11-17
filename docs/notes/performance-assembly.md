@@ -87,3 +87,13 @@ Repository search found the remaining cloned ray origins in `assembly/splitTest.
 No user action, label or visible state changes, so help instructions and screenshots remain accurate. No browser walkthrough, timeout or quarantine changes.
 
 The November 17 targeted code check selected 57 related files. Its first run reported 428 passing tests, a reference-fixture direction-aliasing error in the new test, and two unrelated 5-second timeouts. The reference now uses `Ray.set` to copy its direction, matching the original implementation. The corrected test-only `check:changed` passed both tests in 1.05 seconds, and final formatting and lint checks passed. The other failures were `classroom/grading.test.ts` for the cup-carrying seed batch `[1, 2, 3, 4, 5]` and the scene case in `cases/fixtureWorkflow.test.ts`. Both run simulation workflows outside the changed split probes. Their timeouts remain unresolved, with no retry, timeout increase or quarantine added. Documentation checks passed and the copy diff is zero.
+
+## Removal clearance stops when the verdict settles
+
+Repository search found all boolean uses of the live-blocker list in `assembly/removalOrder.ts`. Screw and part clearance now use `some`, unit clearance uses `every`, and cross-unit fastening checks test each side directly. These predicates short-circuit without allocating filtered live-id lists. Cross-unit checks can still scan a stack twice. Diagnostic lists remain complete, including repeated entries.
+
+On November 17, 2026, `scratch/removal-parity.test.ts` matched complete plans against the previous implementation for 500 seeded six-part scenes, then matched another 500 plans after geometry and stack edits. Cases include groups, unknown blockers, self blockers, multiple driver paths and internal screws. It also checked source preservation. On 300- and 600-entry blocked screw paths, indexed blocker reads fall from 600 and 1,200 to 301 and 601, including the unchanged full diagnostic traversal. `fastenerPlanning.test.ts` retains those read budgets and checks that replacing the blocker list makes the screw and part removable. These are operation counts, not timings or complete planner latency claims.
+
+No user action, label or visible state changes. Existing help instructions and screenshots remain accurate.
+
+The targeted check passed formatting, lint, documentation, types and all 463 tests across 60 related files. Its site-copy phase failed on the unchanged `site/content/changelog/2026-11-17-export-electronics-with-a-robot-kit.md`, line 15, which uses “does not” where the copy rule requires “doesn’t”. No publication text, timeout or quarantine was changed. Copy diff is zero and loop preflight reports no findings.

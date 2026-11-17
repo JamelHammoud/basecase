@@ -5,6 +5,8 @@ import { withModel, withoutModel } from '../utils/modelList';
 import { platformBridge } from '../utils/platformBridge';
 import { copyName, modelId, stamp } from './helpers';
 import { sceneModel } from './libraryModels';
+import { canCaptureCaseFixture } from '../cases/fixtureAssembly';
+import { captureFixtureInWorker } from '../cases/fixtureCaptureClient';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 function useLibraryModels({ studio, showToast }: WorkspaceCore) {
@@ -69,12 +71,14 @@ export function useLibraryActions(core: WorkspaceCore) {
     const single = mode === 'selected' && selectedParts.length === 1 ? selectedPart : null;
 
     try {
-      const model = await sceneModel({
-        sourceParts,
-        single,
-        sceneName: scene.sceneName,
-        screenshot: () => viewportRef.current?.captureScreenshot(),
-      });
+      const joints = core.project.joints ?? [];
+      const screenshot = () => viewportRef.current?.captureScreenshot();
+      const model = canCaptureCaseFixture(sourceParts, joints)
+        ? await captureFixtureInWorker(
+            { parts: sourceParts, joints, name: single?.name ?? scene.sceneName },
+            screenshot,
+          )
+        : await sceneModel({ sourceParts, joints, single, sceneName: scene.sceneName, screenshot });
 
       saveModel(model);
       setIsLeftOpen(true);

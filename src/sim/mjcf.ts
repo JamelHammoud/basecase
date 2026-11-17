@@ -27,6 +27,7 @@ import { classifyRobot, isWheelJoint } from './morphology';
 import { applyBodyFits } from '../reality/bodyModel';
 import { bodyFitForCalibration, bodyPayloads } from '../reality/bodyLayout';
 import { passiveJointXml } from './mjcfPassive';
+import { jointSpringAttrs } from './passiveJoint';
 import { loopEquality, loopHinge, physicalLoops } from './mjcfLoops';
 import { activeBodyCalibration } from '../reality/history';
 
@@ -201,7 +202,7 @@ function poweredJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
   const servo = wheel ? null : fittedServo({ j, ...scene, calibrated });
   const { effort, source } = servo ? { effort: servo.forceNm, source: 'servo' as const } : effortOf(j, scene);
   const rangeAttr = range ? ` range="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : '';
-  const jointLine = `<joint name="${name}" type="${revolute ? 'hinge' : 'slide'}" axis="${vec(axis)}"${rangeAttr} ${servo ? fittedJointAttrs(servo) : estimatedJointAttrs(effort, revolute)}/>`;
+  const jointLine = `<joint name="${name}" type="${revolute ? 'hinge' : 'slide'}" axis="${vec(axis)}"${rangeAttr} ${servo ? fittedJointAttrs(servo) : estimatedJointAttrs(effort, revolute)}${jointSpringAttrs(j)}/>`;
   const ctrlrange = range ? ` ctrlrange="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : '';
 
   st.actuatorXml.push(

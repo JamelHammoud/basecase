@@ -24,7 +24,7 @@ Both arms must have grippers and be open in separate scene tabs.
 2. In the first arm's tab, open **Play** ▸ **Cases** and click **New Case**.
 3. Choose **Hand Off to a Spot**.
 
-![The New Case card with Hand Off to a Spot chosen](/help/put-two-robots-in-one-case/new-case.png)
+![The Distance, Height, Radius and Time fields for a two-arm handoff Case](/help/put-two-robots-in-one-case/new-case.png)
 
 4. Set **Distance** for the transfer's distance ahead, **Height** for its height, **Radius** for placement tolerance, and **Time** for the try's length.
 5. Click **Make Case**.

@@ -86,3 +86,5 @@ A Roboflow or Hugging Face image dataset link, or a COCO, YOLO or Pascal VOC fol
 To learn how the joints work after you import a robot, see [Joints and kinematics](/help/joints-and-kinematics).
 
 MJCF joints without actuators import as passive joints. They move under gravity or contact without motor control.
+
+Declared joint springs keep their stiffness and rest position. Missing resistance stays an estimate. To reuse a passive assembly, follow [Reuse an assembly in Cases](/help/reuse-an-assembly-in-cases).

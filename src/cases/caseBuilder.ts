@@ -1,5 +1,5 @@
 import { roverForward } from '../sim/driveSetup';
-import type { ScenePart } from '../types/robotics';
+import type { CustomModelDefinition, ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
 import { partBounds } from '../utils/selection';
 import {
@@ -17,6 +17,9 @@ import {
 import { CASE_WORLDS, type CaseWorld, type WorldKind } from './caseWorlds';
 import { goalDefaults, touchRadius } from './goalDefaults';
 import { FIXTURE_GOALS } from './fixtureGoals';
+import { HOUSEHOLD_GOALS } from './householdGoals';
+import { fixtureFitsGoal, fixtureHinge } from './householdKinds';
+import { chestGoal } from './chestGoal';
 import { handoffGoal } from './handoffGoal';
 import { robotFacts, type RobotFacts } from './robotFit';
 import { groundRoute } from './groundRoute';
@@ -36,6 +39,7 @@ import {
 } from './importedWorld';
 
 export interface CaseSpec {
+  fixture?: CustomModelDefinition;
   goal: GoalKind;
   world: WorldKind;
   values?: Partial<GoalValues>;
@@ -118,7 +122,7 @@ export function builderRobot(rig: Rig, parts: ScenePart[]): BuilderRobot {
   };
 }
 
-const GOALS: CaseGoal[] = [...CASE_GOALS, handoffGoal, ...FIXTURE_GOALS];
+const GOALS: CaseGoal[] = [...CASE_GOALS, handoffGoal, ...FIXTURE_GOALS, ...HOUSEHOLD_GOALS, chestGoal];
 
 export const goalOf = (kind: GoalKind): CaseGoal | undefined => GOALS.find((g) => g.kind === kind);
 
@@ -241,6 +245,9 @@ function choose(spec: CaseSpec, robot: BuilderRobot): { goal: CaseGoal; world: C
       .map((w) => w.kind)
       .join(', ')}.`;
 
+  if (spec.fixture && !fixtureFitsGoal(spec.fixture, goal.kind))
+    return `Choose a ${fixtureHinge(goal.kind) ? 'hinge' : 'slider'} fixture.`;
+
   return { goal, world };
 }
 
@@ -316,7 +323,8 @@ function caseJson(draft: Draft): unknown {
   };
 }
 
-export function specValues(spec: CaseSpec, robot: BuilderRobot): GoalValues | null {
+export function specValues(spec: CaseSpec, sourceRobot: BuilderRobot): GoalValues | null {
+  const robot = { ...sourceRobot, fixture: spec.fixture, fixtureEdits: spec.values };
   const chosen = choose(spec, robot);
   const spots = typeof chosen === 'string' ? [] : spotsOf(spec, chosen, robot);
 
@@ -330,7 +338,8 @@ export function specValues(spec: CaseSpec, robot: BuilderRobot): GoalValues | nu
   return tripTimed(values, { goal, world: world.kind, spots, robot, given: spec.values }).values;
 }
 
-export function buildCase(spec: CaseSpec, robot: BuilderRobot): BuiltCase {
+export function buildCase(spec: CaseSpec, sourceRobot: BuilderRobot): BuiltCase {
+  const robot = { ...sourceRobot, fixture: spec.fixture, fixtureEdits: spec.values };
   const chosen = choose(spec, robot);
   const spots = typeof chosen === 'string' ? chosen : spotsOf(spec, chosen, robot);
 

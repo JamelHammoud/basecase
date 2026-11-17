@@ -34,6 +34,12 @@ export const readPassiveJoint: Reader<PassiveJoint> = (value, where) => {
     range,
     damping: bounded(asNumber(v.damping, where), 0, 1000, `${where}.damping`),
     frictionloss: bounded(asNumber(v.frictionloss, where), 0, 1000, `${where}.frictionloss`),
+    ...(v.stiffness === undefined
+      ? {}
+      : { stiffness: bounded(asNumber(v.stiffness, where), 0, 1e6, `${where}.stiffness`) }),
+    ...(v.springref === undefined
+      ? {}
+      : { springref: bounded(asNumber(v.springref, where), range[0], range[1], `${where}.springref`) }),
     ...(v.locked === undefined ? {} : { locked: optional(asBoolean, v.locked, `${where}.locked`) }),
   };
 };

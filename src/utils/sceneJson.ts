@@ -1,3 +1,4 @@
+import { historyLiteral } from '../workspace/versionClient';
 import type { ScenePart } from '../types/robotics';
 import { timeSlicer } from './yieldToMain';
 import type { ProjectSettings } from '../types/robotics';
@@ -63,16 +64,19 @@ async function projectJson(project: ProjectSettings): Promise<string> {
 }
 
 export async function sceneJson(payload: { parts: ScenePart[] } & Record<string, unknown>): Promise<string> {
-  const { parts, project, ...rest } = payload;
+  const { parts, project, history, ...rest } = payload;
   const items = await partsJson(parts);
   const settings = project ? `"project":${await projectJson(project as ProjectSettings)}` : '';
   const assets = sceneWorldAssets(project as ProjectSettings | undefined);
   const assetEntries = Object.entries(assets).map(
     ([hash, asset]) => `${JSON.stringify(hash)}:${worldAssetJson(asset)}`,
   );
-  const head = JSON.stringify(rest);
+  const metadata = Object.fromEntries(Object.entries(rest).filter(([key]) => key !== 'worldAssets'));
+  const head = JSON.stringify(metadata);
   const fields = [head.slice(1, -1), settings, `"parts":${items}`].filter(Boolean).join(',');
   const assetsJson = assetEntries.length ? `,"worldAssets":{${assetEntries.join(',')}}` : '';
 
-  return `{${fields}${assetsJson}}`;
+  const historyJson = typeof history === 'string' ? `,"history":${await historyLiteral(history)}` : '';
+
+  return `{${fields}${assetsJson}${historyJson}}`;
 }

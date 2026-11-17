@@ -7,6 +7,7 @@ import type { PartMass } from '../engineeringTypes';
 import type { V3 } from '../kinematics';
 import { linkInertial, placedParts, type LinkInertial, type LinkPayload, type PlacedPart } from './urdfLinks';
 import { indexJoints } from './jointIndex';
+import { jointSpringAttrs } from '../../sim/passiveJoint';
 
 export interface UrdfInput {
   name: string;
@@ -136,6 +137,16 @@ interface JointLink {
   at: V3;
 }
 
+function jointPhysicsXml(sim?: SimJoint, scene?: RobotJoint): string[] {
+  const spring = scene ? jointSpringAttrs(scene) : '';
+  const passive = sim?.actuator === -1;
+  const marker = passive || spring ? [`    <basecase${passive ? ' actuation="passive"' : ''}${spring}/>`] : [];
+
+  if (!passive) return marker;
+
+  return [...marker, `    <dynamics damping="${f(scene?.damping ?? 0)}" friction="${f(scene?.frictionloss ?? 0)}"/>`];
+}
+
 function jointXml(st: WriteState, link: JointLink, body?: SimBody) {
   const sim = body?.joint ? st.simJoints.get(body.joint) : undefined;
   const scene = body?.joint ? st.sceneJoints.get(body.joint) : undefined;
@@ -152,11 +163,7 @@ function jointXml(st: WriteState, link: JointLink, body?: SimBody) {
     lines.push(`    <axis xyz="${vec([axis.x, axis.y, axis.z])}"/>`, `    ${limitXml(sim, scene)}`);
   }
 
-  if (sim?.actuator === -1)
-    lines.push(
-      '    <basecase actuation="passive"/>',
-      `    <dynamics damping="${f(scene?.damping ?? 0)}" friction="${f(scene?.frictionloss ?? 0)}"/>`,
-    );
+  lines.push(...jointPhysicsXml(sim, scene));
 
   st.joints.push(...lines, '  </joint>');
 }

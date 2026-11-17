@@ -36,6 +36,6 @@ Test whether an arm can move a hinged lid or a sliding drawer through contact wi
 
    ![The recorded drawer try open on its timeline](/help/open-lids-and-pull-drawers/drawer-replay.png)
 
-Use **Width**, **Depth** and **Height** to change the fixture's geometry. Use **Joint friction** and **Damping** to change its resistance. A heavier plate or higher resistance can make the same robot fail. The reference must keep handle contact while moving beyond 80% of the chosen travel.
+Use **Width**, **Depth** and **Height** to change the fixture's geometry. Use **Joint friction** and **Damping** to change its resistance. **Lower stop**, **Return spring** and **Rest position** set the opposite stop and passive return force. To use your own assembly or compose opening with block placement and closure, see [Reuse an assembly in Cases](/help/reuse-an-assembly-in-cases). A heavier plate or higher resistance can make the same robot fail. The reference must keep handle contact while moving beyond 80% of the chosen travel.
 
 Choose **Try It** to drive the robot yourself. Follow the steps in [Try a Case](/help/try-a-case).

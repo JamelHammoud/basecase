@@ -1,3 +1,4 @@
+import type { CompletedVersionRun } from './sceneVersions';
 import type { ScenePart } from '../types/robotics';
 import type { RunEdits } from './agentLanes';
 
@@ -17,4 +18,16 @@ export function revertEdits(parts: ScenePart[], edits: RunEdits): ScenePart[] {
   const restored = Object.values(edits).filter((p): p is ScenePart => !!p && !present.has(p.id));
 
   return [...kept, ...restored];
+}
+
+export function completedEdits(runs: Record<string, CompletedVersionRun>, laneKey: string, chatId: string | null) {
+  const direct = runs[laneKey];
+
+  if (direct && (!direct.chatId || direct.chatId === chatId)) return { key: laneKey, parts: direct.parts ?? [] };
+
+  const match = Object.entries(runs)
+    .reverse()
+    .find(([, run]) => (chatId ? run.chatId === chatId : run.run === laneKey));
+
+  return match ? { key: match[0], parts: match[1].parts ?? [] } : null;
 }

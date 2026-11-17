@@ -113,6 +113,8 @@ In the desktop app, Basecase checks each Motor Kit skill you've trained against 
 
 If you change a color or name, the skill stays ready. Changing mass or size, including a body fit or rollback, reruns Arena without training when the proved physics no longer matches. If you change a joint, it trains the skill again. Skills you haven't trained stay untrained until you start them.
 
+On supported robots, Stand can start retraining from a compatible policy already saved in this scene. The source stays unchanged, and the edited robot needs fresh Arena evidence. The supported layouts and steps are in [Retrain an edited robot](/help/retrain-an-edited-robot).
+
 If a ready skill moves in a way you don't want, such as a Walk that drags its feet, see [Coach how a ready skill moves](/help/coach-a-skill). To find the floor or load where a ready skill starts to fail, see [Stress a skill to find where it breaks](/help/stress-a-skill). To share a ready skill, follow [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face), or start from someone else's with [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
 
 [Arena](/help/arena) lists what Arena checks. To teach a robot anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).

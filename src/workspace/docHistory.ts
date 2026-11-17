@@ -44,6 +44,7 @@ function supplyFor(next: Snapshot | undefined, project: ProjectSettings): Partia
     ...(next && 'tether' in next ? { tether: project.tether } : {}),
     ...(next?.consoles ? { consoles: consolesOf(project.cases, Object.keys(next.consoles)) } : {}),
     ...(next?.routines ? { routines: routinesView(project) } : {}),
+    ...(next?.project ? { project } : {}),
   };
 }
 
@@ -60,19 +61,29 @@ function restoredProject(to: Snapshot, here: Snapshot, cases: Case[] | undefined
 export interface HistoryStep {
   direction: HistoryDirection;
   codeOnly?: boolean;
+  scene?: Snapshot['scene'];
 }
 
-export function travelProject(d: DocState, project: ProjectSettings, { direction, codeOnly = false }: HistoryStep) {
+export function travelProject(
+  d: DocState,
+  project: ProjectSettings,
+  { direction, codeOnly = false, scene }: HistoryStep,
+) {
   const next = nextStep(d, direction);
 
   if (codeOnly && !next?.consoles) return null;
 
-  const here: Snapshot = { parts: d.parts, ...trackedOf(project), ...supplyFor(next, project) };
+  const here: Snapshot = {
+    parts: d.parts,
+    ...trackedOf(project),
+    ...supplyFor(next, project),
+    ...(next?.scene ? { scene } : {}),
+  };
   const moved = stepHistory(d, here, direction);
 
   if (!moved) return null;
 
-  const restored = { ...project, ...restoredProject(moved.to, here, project.cases) };
+  const restored = { ...(moved.to.project ?? project), ...restoredProject(moved.to, here, project.cases) };
   const { routines } = moved.to;
 
   return { ...moved, here, project: routines ? writeRoutines(restored, routines) : restored };

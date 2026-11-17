@@ -31,6 +31,7 @@ export interface WorldItem extends ScenePart {
   behavior: WorldBehavior;
   movable?: boolean;
   convexVertices?: Float32Array;
+  collisionHulls?: Float32Array[];
 }
 
 export interface SimJoint {

@@ -3,6 +3,7 @@ import { clampJoint } from '../utils/kinematics';
 import type { SimJoint } from './mjcfTypes';
 import { toMj } from './mjcfFrames';
 import { f, vec } from './mjcfText';
+import { jointSpringAttrs } from './passiveJoint';
 
 interface PassiveBuild {
   st: { simJoints: SimJoint[]; initialValues: Record<string, number> };
@@ -35,5 +36,5 @@ export function passiveJointXml({ st, robot, local }: PassiveBuild, joint: Robot
 
   if (initial) st.initialValues[joint.id] = clampJoint(joint, initial);
 
-  return `<joint name="${name}" type="${revolute ? 'hinge' : 'slide'}" axis="${vec(toMj(joint.axis).map((v) => v * 1000))}"${range} damping="${f(damping)}" frictionloss="${f(frictionloss)}"/>`;
+  return `<joint name="${name}" type="${revolute ? 'hinge' : 'slide'}" axis="${vec(toMj(joint.axis).map((v) => v * 1000))}"${range} damping="${f(damping)}" frictionloss="${f(frictionloss)}"${jointSpringAttrs(joint)}/>`;
 }

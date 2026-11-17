@@ -61,4 +61,4 @@ A blue strip at the top of the web studio links to the desktop download. If you 
 
 ## Moving a scene between them
 
-The web studio and the desktop app don't share storage. To move a scene from one to the other, [share it as a file](/help/share-a-scene), then [open the shared scene](/help/open-a-shared-scene) in the other.
+The web studio and the desktop app don't share storage. To move a scene from one to the other, [share it as a file](/help/share-a-scene), then [open the shared scene](/help/open-a-shared-scene) in the other. The file carries the current design. Saved versions and branch links stay in the original browser or desktop app.

@@ -34,14 +34,11 @@ const TOUCH_MM = 0.5;
 const DOWN: Vec3 = [0, -1, 0];
 
 const overlapVolume = (a: THREE.Box3, b: THREE.Box3) => {
-  const box = a.clone().intersect(b);
+  const x = Math.min(a.max.x, b.max.x) - Math.max(a.min.x, b.min.x);
+  const y = Math.min(a.max.y, b.max.y) - Math.max(a.min.y, b.min.y);
+  const z = Math.min(a.max.z, b.max.z) - Math.max(a.min.z, b.min.z);
 
-  return box.isEmpty()
-    ? 0
-    : box
-        .getSize(new THREE.Vector3())
-        .toArray()
-        .reduce((v, s) => v * s, 1);
+  return x < 0 || y < 0 || z < 0 ? 0 : x * y * z;
 };
 
 function holds(host: Placed, fit: Placed): boolean {

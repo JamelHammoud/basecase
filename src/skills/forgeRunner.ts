@@ -18,6 +18,7 @@ export interface ForgeOutcome {
 
 export type ForgeRunner = ((job: ForgeJob) => Promise<ForgeOutcome>) & {
   selected?: (selection: SeedSelection) => Promise<void>;
+  canWarm?: () => Promise<boolean>;
 };
 
 export type SkillSave = (path: string, text: string) => Promise<void>;

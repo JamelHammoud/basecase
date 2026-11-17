@@ -5,6 +5,9 @@ import { pickDefaults } from './pickGoal';
 import { handoffDefaults } from './handoffGoal';
 import { fixtureDefaults } from './fixtureGoals';
 import { terrainDefaults } from './terrain';
+import { householdDefaults } from './householdGoals';
+import { fixtureValueSupplied } from './fixtureValueSource';
+import { fixtureModelValues } from './reusedFixture';
 
 const DOT_SPARE_SECONDS = 0.5;
 const TOUCH_SECONDS = 4;
@@ -54,6 +57,9 @@ export function goalDefaults(
   const legs = robot.facts.capabilities.includes('legs');
   const reach = robot.facts.reachMm;
   const base: GoalValues = {
+    fixtureLowerStop: 0,
+    fixtureStiffness: 0,
+    fixtureSpringref: 0,
     fixtureWidthMm: 70,
     fixtureDepthMm: 80,
     fixtureTravel: 50,
@@ -75,6 +81,24 @@ export function goalDefaults(
   const byKind: Record<GoalKind, Partial<GoalValues>> = {
     lid: fixtureDefaults(robot, true),
     drawer: fixtureDefaults(robot, false),
+    cupboard: householdDefaults(robot, 'cupboard'),
+    door: householdDefaults(robot, 'door'),
+    lever: householdDefaults(robot, 'lever'),
+    knob: householdDefaults(robot, 'knob'),
+    button: householdDefaults(robot, 'button'),
+    bin: householdDefaults(robot, 'bin'),
+    gate: householdDefaults(robot, 'gate'),
+    chest: {
+      ...fixtureDefaults(robot, true),
+      distanceMm: Math.round(reach * 0.32),
+      heightMm: 60,
+      fixtureWidthMm: 90,
+      fixtureDepthMm: 140,
+      fixtureTravel: 80,
+      fixtureMassG: 5,
+      fixtureFriction: 4,
+      seconds: 27,
+    },
     reach: {},
     push: { radiusMm: 150, boxMm: boxFor(robot), seconds: legs ? 18 : 10 },
     path: { seconds: legs ? 22 : 13 },
@@ -84,7 +108,23 @@ export function goalDefaults(
     handoff: handoffDefaults(robot),
   };
 
-  const values = { ...base, ...byKind[kind] };
+  const supplied = robot.fixture ? fixtureModelValues(robot.fixture, chosen) : {};
+  const values = {
+    ...base,
+    ...byKind[kind],
+    ...Object.fromEntries(Object.entries(supplied).filter(([, value]) => value !== undefined)),
+  };
+
+  if (robot.fixture && fixtureValueSupplied(robot.fixture, 'fixtureMassG') === false) {
+    const width = chosen.fixtureWidthMm ?? values.fixtureWidthMm;
+    const depth = chosen.fixtureDepthMm ?? values.fixtureDepthMm;
+
+    values.fixtureMassG = Math.max(
+      0.1,
+      (((values.fixtureMassG * width) / values.fixtureWidthMm) * depth) / values.fixtureDepthMm,
+    );
+  }
+
   const around = SLOWER.has(world) ? AROUND_SECONDS[legs ? 'legs' : 'wheels'] : 0;
 
   return { ...values, seconds: values.seconds + around };

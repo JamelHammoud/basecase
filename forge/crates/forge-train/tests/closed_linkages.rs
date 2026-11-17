@@ -105,3 +105,39 @@ fn generated_sketch_loops_keep_passive_coordinates_and_train_on_native_fallback(
         arena["lowerBound"].as_f64().expect("bound") >= 0.75
     );
 }
+
+#[test]
+fn passive_fixture_springs_return_on_c_mujoco_for_every_accelerated_backend() {
+    let path = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("fixture-spring.xml");
+
+    fs::write(
+        &path,
+        r#"<mujoco><option timestep="0.002" gravity="0 0 0"/><worldbody><body>
+        <joint name="fixture" type="slide" axis="0 0 1" range="0 0.02" limited="true" stiffness="2" springref="0.005" damping="0.2"/>
+        <geom type="box" size="0.01 0.01 0.01" mass="0.01"/>
+        </body></worldbody></mujoco>"#,
+    )
+    .expect("write spring fixture");
+
+    let model = Model::load(&path).expect("C MuJoCo accepts a passive return spring");
+
+    assert_eq!(model.nu(), 0);
+    assert_eq!(model.nq(), 1);
+
+    for backend in [Backend::Simd, Backend::Metal, Backend::Wgpu] {
+        let engine = Engine::choose(&model, backend, false);
+
+        assert!(matches!(engine, Engine::Mujoco { refusal: Some(ref why) } if why.contains("spring")));
+
+        let mut data = Data::new(&model);
+
+        data.qpos()[0] = 0.01;
+        data.forward(&model);
+
+        for _ in 0..2000 {
+            data.step(&model);
+        }
+
+        assert!((data.qpos()[0] - 0.005).abs() < 0.0001);
+    }
+}

@@ -27,6 +27,7 @@ export interface SceneTabsProps {
   onClose: (id: string) => void;
   onCloseOthers: (id: string) => void;
   onCloseRight: (id: string) => void;
+  onHistory?: (id: string) => void;
   onDuplicate: (id: string) => void;
   onRename: (id: string, name: string) => void;
   renaming: string | null;
@@ -70,6 +71,7 @@ export const SceneTabs: React.FC<SceneTabsProps> = ({
   onCloseOthers,
   onCloseRight,
   onDuplicate,
+  onHistory,
   onRename,
   renaming,
   onRenaming: setRenaming,
@@ -144,6 +146,7 @@ export const SceneTabs: React.FC<SceneTabsProps> = ({
     canReopen,
     onRename: setRenaming,
     onDuplicate,
+    onHistory,
     onNew,
     onReopen,
     onClose,

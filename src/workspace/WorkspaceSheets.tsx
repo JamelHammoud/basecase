@@ -1,3 +1,4 @@
+import { SceneHistorySheet } from './SceneHistorySheet';
 import { TrainingImagesSheet } from '../components/cases/TrainingImagesSheet';
 import { LightenSheet } from '../components/LightenSheet';
 import { ArmSizingSheet } from '../components/ArmSizingSheet';
@@ -102,6 +103,16 @@ function FleetIncidentsHost({ active, core }: Pick<WorkspaceSheetsProps, 'active
   );
 }
 
+function SceneHistoryHost({ active, core }: Pick<WorkspaceSheetsProps, 'active' | 'core'>) {
+  if (!active || !core.versions.open) return null;
+
+  return (
+    <ErrorBoundary region="Scene history" onClose={core.versions.close}>
+      <SceneHistorySheet core={core} />
+    </ErrorBoundary>
+  );
+}
+
 export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps) {
   const { posing, guide } = core;
   const desktop = platformBridge.isElectron();
@@ -112,6 +123,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
 
   return (
     <>
+      <SceneHistoryHost active={active} core={core} />
       {active && guide.viewing && (
         <ErrorBoundary key={guide.viewing.key} region="Build guide" onClose={guide.closeViewer}>
           <GuideViewer

@@ -174,6 +174,7 @@ export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
     const inserted = made.parts.length === 1 ? [withPlacement(made.parts[0], place)] : made.parts;
 
     commitParts((prev) => [...prev, ...inserted]);
+    docs.updateProjectNow((project) => ({ ...project, joints: [...(project.joints ?? []), ...made.joints] }));
     setSelectedIds(inserted.map((p) => p.id));
 
     if (missingShapes) {

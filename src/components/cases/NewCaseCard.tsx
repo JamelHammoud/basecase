@@ -6,6 +6,10 @@ import { Button, ChoiceGrid, FieldRow, NumberInput } from '../../design-system';
 import type { CaseBuilder } from '../../workspace/useCaseBuilder';
 import { RoomTargetPicker } from './RoomTargetPicker';
 import { useRoomTargetPick } from './useRoomTargetPick';
+import { fixtureFitsGoal } from '../../cases/householdKinds';
+import { fixtureValueTitle } from '../../cases/fixtureValueSource';
+import { useCaseDraft } from './useCaseDraft';
+import { CaseFixtureChoice } from './CaseFixtureChoice';
 
 const MAX_WORLD_COLUMNS = 3;
 
@@ -19,7 +23,9 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
   const initialWorld: WorldKind = builder.room ? 'room' : 'floor';
   const [chosenWorld, setWorld] = useState<WorldKind>(builder.imported ? 'imported' : initialWorld);
   const [given, setGiven] = useState<Partial<GoalValues>>({});
+  const [fixtureId, setFixtureId] = useState('');
   const goal = builder.goals.find((g) => g.kind === goalKind) ?? builder.goals[0];
+  const fixture = builder.fixtures.find((model) => model.id === fixtureId && fixtureFitsGoal(model, goal.kind));
   const worlds = worldsFor(goal.kind, builder.robot, builder.room, builder.imported);
   const world = worlds.some((w) => w.kind === chosenWorld) ? chosenWorld : 'floor';
   const spots = useRoomTargetPick({
@@ -29,11 +35,11 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
     values: goalValues(goal, builder.robot, given, world),
   });
   const chosen = spots.chosen;
-  const spec = { goal: goal.kind, world, values: given, targets: chosen };
+  const spec = { goal: goal.kind, world, values: given, targets: chosen, fixture };
   const values =
     specValues({ ...spec, room: builder.room, imported: builder.imported }, builder.robot) ??
     goalValues(goal, builder.robot, given, world);
-  const preview = builder.preview(spec);
+  const preview = useCaseDraft(builder, spec);
   const fields = caseFields(goal, values, world).filter((key) => !(key === 'distanceMm' && chosen[0]));
 
   const pickGoal = (kind: GoalKind) => {
@@ -48,7 +54,7 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
   };
 
   const create = () => {
-    if (builder.create(spec).ok) onCreated();
+    if (preview.ok && builder.create(spec, preview).ok) onCreated();
   };
 
   return (
@@ -77,6 +83,15 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
           options={worlds.map((w) => ({ value: w.kind, label: w.name }))}
         />
       )}
+      <CaseFixtureChoice
+        kind={goal.kind}
+        models={builder.fixtures}
+        value={fixtureId}
+        onChange={(id) => {
+          setFixtureId(id);
+          setGiven({});
+        }}
+      />
       {world === 'imported' && builder.imported?.asset.world.reconstruction?.estimates.floor && (
         <p className="text-[12.5px] leading-snug text-white/60">Estimated floor and 1 m obstacle height</p>
       )}
@@ -86,17 +101,20 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
         )}
         {fields.map((key) => {
           const param = goalParam(goal, key);
+          const title = fixtureValueTitle(fixture, key, given, param.label);
 
           return (
             <FieldRow key={key} label={param.label}>
               <NumberInput
                 value={values[key]}
+                aria-label={param.label}
+                title={title}
                 unit={param.unit}
                 min={param.min}
                 max={param.max}
                 step={param.step}
-                precision={0}
-                onChange={(v) => setGiven((g) => ({ ...g, [key]: v }))}
+                precision={key.startsWith('fixture') ? 3 : 0}
+                onChange={(v) => setGiven((g) => (Object.is(g[key], v) ? g : { ...g, [key]: v }))}
               />
             </FieldRow>
           );

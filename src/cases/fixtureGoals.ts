@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { V3 } from '../utils/kinematics';
 import { GRIP, type CaseGoal, type BuilderRobot, type GoalPlan, type GoalValues } from './caseGoals';
 import type { ReferenceCommand, WorldObject } from './schema';
+import { fixtureHandle, reusedFixture } from './reusedFixture';
 
 const OPEN = [0, 0];
 const SHUT = [0, 1];
@@ -56,6 +57,8 @@ function frameObjects(robot: BuilderRobot, v: GoalValues, lid: boolean): WorldOb
 }
 
 function objectsFor(robot: BuilderRobot, v: GoalValues, lid: boolean): WorldObject[] {
+  if (robot.fixture) return reusedFixture(robot.fixture, robot, v);
+
   const [x, , z] = robot.facts.anchor;
   const depth = v.fixtureDepthMm;
   const hinge: V3 = [x, v.heightMm, z + v.distanceMm + depth];
@@ -71,9 +74,12 @@ function objectsFor(robot: BuilderRobot, v: GoalValues, lid: boolean): WorldObje
       type: lid ? 'revolute' : 'prismatic',
       origin: hinge,
       axis: lid ? [1, 0, 0] : [0, 0, -1],
-      range: [0, v.fixtureTravel],
+      range: [v.fixtureLowerStop, v.fixtureTravel],
       damping: v.fixtureDamping / 1000,
       frictionloss: v.fixtureFriction / 1000,
+      ...(v.fixtureStiffness || v.fixtureSpringref
+        ? { stiffness: v.fixtureStiffness / 1000, springref: v.fixtureSpringref }
+        : {}),
     },
   };
 
@@ -89,9 +95,14 @@ function objectsFor(robot: BuilderRobot, v: GoalValues, lid: boolean): WorldObje
   ];
 }
 
-function reference(robot: BuilderRobot, objects: WorldObject[], v: GoalValues, lid: boolean): ReferenceCommand[] {
+export function fixtureReference(
+  robot: BuilderRobot,
+  objects: WorldObject[],
+  v: GoalValues,
+  lid: boolean,
+): ReferenceCommand[] {
   const fixture = objects[0];
-  const handle = objects[1];
+  const handle = fixtureHandle(objects);
   const grip = new THREE.Vector3(...handle.position);
   const pivot = new THREE.Vector3(...fixture.joint!.origin);
   const travel = v.fixtureTravel * 1.2;
@@ -108,9 +119,9 @@ function reference(robot: BuilderRobot, objects: WorldObject[], v: GoalValues, l
       ? grip
           .clone()
           .sub(pivot)
-          .applyAxisAngle(new THREE.Vector3(1, 0, 0), (travel * fraction * Math.PI) / 180)
+          .applyAxisAngle(new THREE.Vector3(...fixture.joint!.axis), (travel * fraction * Math.PI) / 180)
           .add(pivot)
-      : grip.clone().add(new THREE.Vector3(0, 0, -travel * fraction));
+      : grip.clone().addScaledVector(new THREE.Vector3(...fixture.joint!.axis), travel * fraction);
 
     timeline.push({ at: 3.5 + i * STEP_SECONDS, target: target.toArray() as V3, aux: SHUT });
   }
@@ -118,7 +129,7 @@ function reference(robot: BuilderRobot, objects: WorldObject[], v: GoalValues, l
   return timeline;
 }
 
-function fixturePlan(robot: BuilderRobot, v: GoalValues, lid: boolean): GoalPlan {
+export function fixturePlan(robot: BuilderRobot, v: GoalValues, lid: boolean): GoalPlan {
   const objects = objectsFor(robot, v, lid);
 
   return {
@@ -130,7 +141,9 @@ function fixturePlan(robot: BuilderRobot, v: GoalValues, lid: boolean): GoalPlan
       anchor: robot.facts.anchor,
     },
     objects,
-    probes: [{ signal: 'handle-contact', kind: 'contact', from: 'end-effector', to: { object: 'handle' } }],
+    probes: [
+      { signal: 'handle-contact', kind: 'contact', from: 'end-effector', to: { object: fixtureHandle(objects).id } },
+    ],
     success: {
       hold_for: {
         seconds: 0.2,
@@ -150,21 +163,24 @@ function fixturePlan(robot: BuilderRobot, v: GoalValues, lid: boolean): GoalPlan
         },
       },
     },
-    timeline: reference(robot, objects, v, lid),
+    timeline: fixtureReference(robot, objects, v, lid),
     controls: GRIP,
-    route: { from: robot.pivot, to: objects[1].position, halfWidth: v.fixtureWidthMm },
+    route: { from: robot.pivot, to: fixtureHandle(objects).position, halfWidth: v.fixtureWidthMm },
   };
 }
 
-const params: CaseGoal['params'] = [
+export const fixtureParams: CaseGoal['params'] = [
   'distanceMm',
   'heightMm',
   'fixtureWidthMm',
   'fixtureDepthMm',
   'fixtureTravel',
+  'fixtureLowerStop',
   'fixtureMassG',
   'fixtureFriction',
   'fixtureDamping',
+  'fixtureStiffness',
+  'fixtureSpringref',
   'seconds',
 ];
 
@@ -174,7 +190,7 @@ export const FIXTURE_GOALS: CaseGoal[] = [
     name: 'Open a Lid',
     needs: ['gripper'],
     bounds: { heightMm: { min: 20 } },
-    params,
+    params: fixtureParams,
     plan: (robot, values) => fixturePlan(robot, values, true),
   },
   {
@@ -182,7 +198,7 @@ export const FIXTURE_GOALS: CaseGoal[] = [
     name: 'Pull a Drawer',
     needs: ['gripper'],
     bounds: { heightMm: { min: 20 } },
-    params,
+    params: fixtureParams,
     plan: (robot, values) => fixturePlan(robot, values, false),
   },
 ];

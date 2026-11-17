@@ -147,6 +147,10 @@ function sceneJoint(b: JointBuild, j: ModelJoint): RobotJoint {
     limb: limbOf(j.name),
     effortNm: j.effort,
     ...(j.actuation ? { actuation: j.actuation, damping: j.damping, frictionloss: j.frictionloss } : {}),
+    ...(j.stiffness === undefined ? {} : { stiffness: j.stiffness }),
+    ...(j.springref === undefined
+      ? {}
+      : { springref: j.type === 'prismatic' ? j.springref * 1000 : (j.springref * 180) / Math.PI }),
     velocity: velocity === undefined ? undefined : round(velocity),
     published: b.name,
   };

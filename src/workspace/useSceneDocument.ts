@@ -57,6 +57,8 @@ function useProjectCommits(commitProject: CommitProject, projectRef: RefObject<P
   'use memo';
 
   return {
+    commitVersion: (parts: ScenePart[], project: ProjectSettings, scene: Snapshot['scene']) =>
+      commitProject({ project: projectRef.current, scene }, () => project, parts),
     commitDesign: (parts: ScenePart[], tether: Tether | undefined) =>
       commitProject({ tether: projectRef.current.tether }, (p) => ({ ...p, tether }), parts),
     commitStudy: (parts: ScenePart[], project: ProjectSettings) =>
@@ -198,6 +200,8 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     setProjectNow(moved.project);
 
     if (moved.to.pose !== moved.here.pose) restorePose(moved.to.pose);
+
+    return moved.to.scene;
   };
 
   const clearDocument = () => {

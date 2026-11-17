@@ -73,9 +73,6 @@ export function outlineCorners(outline: Outline, edges: PartEdges): Corner[] {
   });
 }
 
-export const contourAt = (corners: Corner[], reach: number): Vec2[] =>
-  corners.flatMap(({ center, dirs }) => dirs.map((d): Vec2 => [center[0] + d[0] * reach, center[1] + d[1] * reach]));
-
 export function edgeLayers(height: number, edges: PartEdges, middle: number): Array<[number, number]> {
   const flat = height / 2 - edges.mm;
   const steps = edges.kind === 'chamfer' ? 1 : QUARTER_STEPS;

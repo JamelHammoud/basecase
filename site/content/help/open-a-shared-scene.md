@@ -19,7 +19,9 @@ covers:
   - src/workspace/exchangeCommands.tsx
 ---
 
-You can open a `.basecase` file someone sent you as a scene of your own. The scene keeps its parts, joints and comments.
+You can open a `.basecase` file someone sent you as a scene of your own. The scene keeps its current parts, joints and comments.
+
+Saved versions and branch links stay with the sender.
 
 1. Press [[⌘K]].
 2. Choose **Open Scene File**.

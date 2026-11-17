@@ -6,6 +6,7 @@ import type { ScenePart } from '../../types/robotics';
 import { buildPartGroup, releasePartGroup } from '../buildPartMesh';
 import { prepareParts } from '../partMesh/prepare';
 import { buildBed, disposeTree, lightScene, plateToScene } from './plateScene';
+import { PlatePointer } from './platePointer';
 
 export interface PlateHit {
   id: string;
@@ -37,6 +38,7 @@ export class PlateView {
   private version = 0;
 
   private canvas: HTMLCanvasElement;
+  private pointer: PlatePointer;
 
   constructor(container: HTMLElement) {
     const canvas = document.createElement('canvas');
@@ -44,6 +46,7 @@ export class PlateView {
     canvas.className = 'block w-full h-full';
     container.appendChild(canvas);
     this.canvas = canvas;
+    this.pointer = new PlatePointer(canvas, this.camera);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -165,21 +168,8 @@ export class PlateView {
     this.invalidate();
   }
 
-  private ray(clientX: number, clientY: number) {
-    const rect = this.canvas.getBoundingClientRect();
-    const ndc = new THREE.Vector2(
-      ((clientX - rect.left) / rect.width) * 2 - 1,
-      -((clientY - rect.top) / rect.height) * 2 + 1,
-    );
-    const raycaster = new THREE.Raycaster();
-
-    raycaster.setFromCamera(ndc, this.camera);
-
-    return raycaster;
-  }
-
   pick(clientX: number, clientY: number): PlateHit | null {
-    const hits = this.ray(clientX, clientY).intersectObjects(
+    const hits = this.pointer.ray(clientX, clientY).intersectObjects(
       this.shown.map((s) => s.group),
       true,
     );
@@ -200,9 +190,7 @@ export class PlateView {
   }
 
   bedPoint(clientX: number, clientY: number): THREE.Vector3 | null {
-    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-
-    return this.ray(clientX, clientY).ray.intersectPlane(plane, new THREE.Vector3());
+    return this.pointer.bedPoint(clientX, clientY);
   }
 
   dragOffset(id: string, dx: number, dz: number) {

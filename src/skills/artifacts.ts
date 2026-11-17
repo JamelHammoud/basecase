@@ -81,9 +81,11 @@ const VISUAL_ELEMENTS = /<(light|camera)\b[^>]*\/>\s*|<visual>[\s\S]*?<\/visual>
 const VISUAL_ATTRIBUTES = /\s(rgba|material|texture|texcoord|group)="[^"]*"/g;
 const ACTUATOR_SECTION = /<actuator>[\s\S]*?<\/actuator>/;
 const STRUCTURE_TAG = /<(body|freejoint|joint)\b([^>]*?)\/?>|<\/body>/g;
-const ATTRIBUTE = (name: string) => new RegExp(`\\s${name}="([^"]*)"`);
+const NAME_ATTRIBUTE = /\sname="([^"]*)"/;
+const TYPE_ATTRIBUTE = /\stype="([^"]*)"/;
+const AXIS_ATTRIBUTE = /\saxis="([^"]*)"/;
 
-const attribute = (attrs: string, name: string) => ATTRIBUTE(name).exec(attrs)?.[1] ?? '';
+const attribute = (attrs: string, pattern: RegExp) => pattern.exec(attrs)?.[1] ?? '';
 
 export const physicalXml = (xml: string) => xml.replace(VISUAL_ELEMENTS, '').replace(VISUAL_ATTRIBUTES, '');
 
@@ -92,9 +94,9 @@ function structure(xml: string): string[] {
     if (!tag) return '/body';
 
     if (tag === 'joint')
-      return `joint ${attribute(attrs, 'name')} ${attribute(attrs, 'type')} ${attribute(attrs, 'axis')}`;
+      return `joint ${attribute(attrs, NAME_ATTRIBUTE)} ${attribute(attrs, TYPE_ATTRIBUTE)} ${attribute(attrs, AXIS_ATTRIBUTE)}`;
 
-    return `${tag} ${attribute(attrs, 'name')}${whole.endsWith('/>') && tag === 'body' ? ' /' : ''}`;
+    return `${tag} ${attribute(attrs, NAME_ATTRIBUTE)}${whole.endsWith('/>') && tag === 'body' ? ' /' : ''}`;
   });
 }
 

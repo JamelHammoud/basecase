@@ -204,3 +204,9 @@ The dense 300- and 600-part fixtures emit 44,850 and 179,700 pairs. Previously a
 `collisionPairs.test.ts` retains exhaustive focus and straddle subset comparisons against the previous planner, skip rules, missing ids, ordered results, touching and padded bounds, empty boxes, source preservation, nested calls and later bounds edits. Existing collision and sweep tests exercise complete reports through the same loop. No user action or visible state changes, so help articles and screenshots remain accurate. No retries, timeouts or quarantines change.
 
 Validation on November 17, 2026: `check:changed` passed formatting, lint, docs, site copy, TypeScript and all 733 tests in 96 related files. The final test-only check passed all nine pair-planner tests in 107 ms after replacing the dense fixture’s call-history mock with a scalar counter. Copy diff reports zero additions, changes or removals. Logs are session-local in `scratch/refine-check.log` and `scratch/refine-test-check.log`.
+
+## Seeded triangle samples keep scalar coordinates
+
+Visible-share sampling uses seed 1 and 4,000 points per nonzero-area solid. A deterministic replay counts 1,996 reflected points, each previously creating a temporary two-coordinate array. Reflection now assigns both scalars directly. Cached samples skip this preparation as before. These are source-level array counts, without heap measurements or a timing claim.
+
+Existing `visibility.test.ts` retains exact-share checks across overlapping, rotated, scaled, far-translated and tied geometry, plus empty meshes and unchanged local caches. Printed-label and kernel samplers use the same scalar reflection pattern. No UI, workflow or browser coverage changes apply.

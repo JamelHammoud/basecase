@@ -388,6 +388,9 @@ Measurements and limits: [Sheet manufacturing performance evidence](../notes/per
 
 ## Performance: collision analysis
 
+Seeded visible-share sampling reflects barycentric coordinates with scalar assignments, without temporary pairs. Random consumption, Float32 sample caches and interpolation order stay unchanged. Existing `visibility.test.ts` checks exact shares across overlapping and transformed geometry. [Sampling evidence](../notes/performance-collision.md#seeded-triangle-samples-keep-scalar-coordinates).
+
+
 - **Containment samples write into their final buffer.** `three/analysis/shapeSolid.ts` calculates selected vertex and centroid counts from stride and budget before allocating one exact Float32 buffer, without preliminary counting loops. The fill reads each selected coordinate directly, without a growing JavaScript coordinate list or its final copy. Interference, posed checks, output-riding cases and joint sweeps share this sampler. Vertex-first ordering, stride, centroid budget, float32 rounding and per-shape, per-budget caches stay unchanged. `solidSamples.test.ts` compares the previous buffered calculation across stride and budget boundaries, zero and nonfinite budgets, incomplete geometry, independent shapes and cache reuse. [Evidence](../notes/performance-collision.md#containment-samples-write-into-their-final-buffer).
 
 Measurements and limits: [Collision analysis performance evidence](../notes/performance-collision.md).

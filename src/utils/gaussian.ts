@@ -23,16 +23,20 @@ export function cholesky(matrix: Matrix, jitter = 1e-12): Matrix | null {
 
 export function mahalanobis(lower: Matrix, offset: readonly number[]): number {
   const solved: number[] = [];
+  let distance = 0;
 
   for (let i = 0; i < offset.length; i++) {
     let sum = offset[i];
 
     for (let k = 0; k < i; k++) sum -= lower[i][k] * solved[k];
 
-    solved.push(sum / lower[i][i]);
+    const value = sum / lower[i][i];
+
+    solved.push(value);
+    distance += value * value;
   }
 
-  return solved.reduce((s, v) => s + v * v, 0);
+  return distance;
 }
 
 export function standardNormal(random: Random): number {

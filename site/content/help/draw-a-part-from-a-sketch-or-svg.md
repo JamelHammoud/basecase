@@ -27,6 +27,7 @@ keywords:
 related:
   - save-a-model-to-the-library
   - cut-join-and-intersect-parts
+  - keep-a-sketch-on-a-face
 covers:
   - src/components/studio/SketchPanel.tsx
   - src/components/studio/SketchCanvas.tsx
@@ -82,6 +83,8 @@ More ways to draw:
 While you draw, a point snaps onto an existing point and a line snaps level or upright. A small glyph by the pointer shows which snap applies, and the sketch keeps it as a constraint. Points also snap to the grid until you turn off **Snap to grid**.
 
 The new part is called Sketch. Rename it and pick its color in the Inspector. Click **Save to Library**, the bookmark in the part's Inspector header, to keep a copy in the Library as well.
+
+A sketch made on a supported rectangular face follows later edits to that part. [Keep a sketch on a face](/help/keep-a-sketch-on-a-face) covers resizing, moving and replacing its support.
 
 ## Change a sketched part
 

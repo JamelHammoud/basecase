@@ -142,3 +142,20 @@ For T coplanar triangles, the previous projection allocated one outer list, T th
 On November 16, 2026, `scratch/face-projection.test.ts` compared complete ordered faces with the preceding implementation for 960 queries across 120 transformed, subdivided box and extruded-outline fixtures. Cases include holes, six normal directions, clicked vertices, empty input, input preservation, reference-sketch output and later vertex edits. All results matched. The session log is `scratch/face-projection.log`. Existing `placement.test.ts` covers face planes, both pick modes, reference outlines, solid placement and cutouts. `boundaryMerge.test.ts` retains mixed-boundary and degeneracy coverage. No quarantine changes.
 
 The face-selection steps and screenshot in [Draw a part from a sketch or SVG](../../site/content/help/draw-a-part-from-a-sketch-or-svg.md) remain accurate. No control, output or visible state changes, so no article edit or screenshot is needed.
+
+## Sketch support preparation
+
+Measured on macOS with headless Chrome and the existing software GL harness on 16 November 2026. The documentation capture served the current source through Vite's development server and called the production geometry worker and document-result implementation. These are warm function measurements, not cold app startup or a production-bundle viewport benchmark. One warm-up preceded twelve recorded requests for one feature and an eight-feature chain. Every recorded request completed with no support finding.
+
+| Scope | Main preparation median / max | Worker median / max | Worker round trip median / max | Main commit median / max |
+| --- | --- | --- | --- | --- |
+| One feature | 0.045 / 0.12 ms | 0.2375 / 0.86 ms | 0.3225 / 1.055 ms | 0.01 / 0.04 ms |
+| Eight-feature chain | 0.3525 / 0.615 ms | 1.5575 / 4.03 ms | 1.8775 / 4.475 ms | 0.025 / 0.055 ms |
+
+One feature prepared one source and counted 864 coordinate bytes. Its UTF-8 input was 2,527 bytes and its retained result was 1,809 bytes. The chain prepared eight sources and counted 35,136 coordinate bytes. Its input was 15,157 bytes and its retained result was 14,455 bytes. The coordinate counter charges eight bytes per number, conservatively counting the Float32 triangle soup at twice its buffer size. Prepared soups are operation-local and are not retained after the result.
+
+Chrome DevTools collected garbage before and after each twelve-request series. Main-page used heap grew by 29,672 bytes for one feature and 39,084 bytes for the chain. Geometry-worker used heap grew by 193,600 and 148,992 bytes respectively. Main and worker backing storage did not grow in either series. These observations include runtime and DevTools overhead and do not prove zero heap growth or a peak-memory bound. Retained result bytes above are the serialized design records, not the whole browser heap.
+
+The implementation retains one active request and only the latest pending immutable document reference per workspace. Fingerprint and validation caches are weak maps. Jobs are bounded by 128 supported parts, sixteen levels, 512 sketch items, a 2 MiB input-value budget and 512 KiB per source record. Source node counts and profile sampling are checked before building geometry. Mesh coordinate counts are checked before exporting the triangle soup, and total retained prepared coordinates are capped at 16 MiB. Oversized jobs produce a finding before serialization to the worker. Freshness hashes only the records and sources participating in Sketch support, rather than serializing unrelated boolean geometry.
+
+The documentation capture's first cold navigation hit the existing 30-second deadline while Vite compiled the module graph. The scratch capture setup then fetched each transformed module once before browser navigation. That preparation covered 2,588 modules in 20.23 seconds, with no failed response. The capture then opened the studio in 4.879 seconds. No app timeout, test retry or CI deadline changed. This scratch prewarming is not a shipped startup change.

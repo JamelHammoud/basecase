@@ -28,6 +28,7 @@ export function BoardPlacementFields({
         <IconButton
           icon={<DeleteIcon />}
           title="Delete"
+          variant="danger"
           onClick={() =>
             confirmAction({
               title: `Delete ${boardProduct(placement.productId)?.mpn ?? placement.productId}?`,

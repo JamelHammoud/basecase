@@ -58,6 +58,19 @@ export interface PartSketch {
   mode: SketchMode;
   depth: number;
   anchor: Vec2;
+  support?: SketchSupport;
+}
+
+export interface SketchSupport {
+  version: 1;
+  kind: 'planar-rectangle';
+  partId: string;
+  normal: [number, number, number];
+  frame: import('./placement').SketchPlane;
+  corners: string[];
+  fingerprint: string;
+  issue?: import('./support').SupportFailure;
+  attempt?: string;
 }
 
 export const EMPTY_SKETCH: Sketch = { points: [], entities: [], constraints: [] };

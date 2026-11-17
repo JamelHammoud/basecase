@@ -25,3 +25,5 @@ You need a part you cut with **Subtract**, as in [Cut, join and intersect parts]
 ![The Servo Pocket moved 8 mm to the left, with the pocket in the plate following it](/help/edit-a-cut/moved.png)
 
 To select the whole part, click the result once, the same way you leave a group. When you move the result, the parts inside it move with it.
+
+A cutout made with a [supported sketch](/help/keep-a-sketch-on-a-face) follows its original supporting part when that part changes. Edit its sketch dimensions to preserve the offset through later support changes.

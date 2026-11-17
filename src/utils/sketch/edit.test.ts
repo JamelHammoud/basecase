@@ -44,7 +44,7 @@ describe('sketch edits', () => {
     expect(applicableConstraints(lines, ['l1'])).toEqual(['horizontal', 'vertical']);
     expect(applicableConstraints(lines, ['l1', 'l2'])).toEqual(['parallel', 'perpendicular', 'equal']);
     expect(applicableConstraints(withCircle.sketch, ['l1', withCircle.circle])).toEqual(['tangent']);
-    expect(applicableConstraints(lines, ['p1', 'l2'])).toEqual(['coincident']);
+    expect(applicableConstraints(lines, ['p1', 'l2'])).toEqual(['coincident', 'distance']);
   });
 
   it('makes a circle tangent to a line', () => {

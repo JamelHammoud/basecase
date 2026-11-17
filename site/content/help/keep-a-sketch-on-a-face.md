@@ -1,0 +1,62 @@
+---
+title: Keep a sketch on a face
+date: 2026-11-16
+collection: design
+type: task
+order: 7
+keywords:
+  - sketch support
+  - attached sketch
+  - mounting plate
+  - battery pocket
+  - reference edge
+related:
+  - draw-a-part-from-a-sketch-or-svg
+  - checks-and-blockers
+covers:
+  - src/utils/sketch/support.ts
+  - src/utils/sketch/supportRegeneration.ts
+  - src/workspace/useSketchSession.ts
+  - src/workspace/useSketchSupportSelection.ts
+  - src/workspace/useSketchSupportResults.ts
+  - src/components/studio/SketchSupportButton.tsx
+  - src/readiness/sketchSupports.ts
+hub_checks_and_blockers: |
+  **Sketch** keeps a blocker while a supporting face is missing, ambiguous or outside the supported shape, or its constraints can’t solve. The previous solid stays visible. [Keep a sketch on a face](/help/keep-a-sketch-on-a-face) shows how to replace the support.
+---
+
+Keep a mounting feature attached while you resize or move its supporting part.
+
+You can attach a sketch to a single rectangular planar face of a box, generated CAD part or sketch solid. You can’t use curved, split or competing parallel faces as supports. Ground sketches and older sketches without a saved support stay independent.
+
+1. On the canvas, click the face that will support the feature.
+2. In [[⌘K]], choose **Sketch**.
+3. Under **Outline**, click **Rectangle**.
+4. On the sketch plane, click the first corner and move toward the opposite corner.
+5. Type the width, press [[Tab]], type the height, then press [[↩]].
+6. Under **Output**, set **T** to the thickness in millimeters.
+7. Click **Add**.
+
+![A dimensioned mounting feature on the generated rover deck](/help/keep-a-sketch-on-a-face/mount.png)
+
+8. On the canvas, click the supporting part.
+9. Under **Size**, change **H** to resize its thickness.
+10. Under **Position**, change **X** to move it.
+
+![The mounting feature follows the thicker rover deck after it moves](/help/keep-a-sketch-on-a-face/changed.png)
+
+To add an edge offset before you click **Add**, click **Rectangle** to put the tool down. Select a corner, hold [[⇧]] and click a dashed edge, then click **Distance**. Click the new dimension and enter its offset in millimeters.
+
+Coordinates stay in millimeters relative to the face's center. If you constrain a sketch to a dashed reference edge, you keep that constraint as the outline changes. You can undo or redo changes to the source and its regenerated features as a group. You keep these references when you export and reopen the scene.
+
+If a support disappears or can’t resolve, expand **Sketch** in **Checks** to read the cause. You can see the last solid, but you need to resolve the issue to clear the blocker.
+
+![Checks identifies the mounting feature whose supporting part was removed](/help/keep-a-sketch-on-a-face/missing.png)
+
+To replace a support, double-click the feature, click **Select Face**, then click the replacement face on the canvas. Press [[Esc]] to cancel the selection.
+
+![The reopened feature offers Select Face](/help/keep-a-sketch-on-a-face/select-face.png)
+
+![The feature follows its explicitly chosen replacement deck](/help/keep-a-sketch-on-a-face/resolved.png)
+
+If you duplicate a support and its feature, you keep their relationship within the copy. If you copy the feature alone, you get an independent sketch at its copied position.

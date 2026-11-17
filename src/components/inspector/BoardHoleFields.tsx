@@ -49,6 +49,7 @@ export function BoardHoleFields({
         <IconButton
           icon={<DeleteIcon />}
           title="Delete"
+          variant="danger"
           onClick={() => confirmAction({ title: 'Delete mounting hole and hardware?', onConfirm: onDelete })}
         />
       </div>

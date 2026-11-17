@@ -181,3 +181,31 @@ describe('face subdivision', () => {
     expect(original.faces.centers).toEqual(before);
   });
 });
+
+describe('face area rejection', () => {
+  it.each([300, 600])('rejects tiny faces before square roots across %i triangles', (count) => {
+    const heights = [0, 1 - 2 ** -24, 1, 1 + 2 ** -23];
+    const positions = rounded(
+      Array.from({ length: count }, (_, i) => [0, 0, 0, 1, 0, 0, 0, heights[i % heights.length], 0]).flat(),
+    );
+    const before = positions.slice();
+    const accepted = rounded(
+      Array.from({ length: count / 4 }, () => [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, heights[3], 0]).flat(),
+    );
+    const expected = new ShapeSolid(accepted).faces;
+    const sqrt = vi.spyOn(Math, 'sqrt');
+    let faces;
+
+    try {
+      faces = new ShapeSolid(positions).faces;
+
+      expect(sqrt).toHaveBeenCalledTimes(count);
+    } finally {
+      sqrt.mockRestore();
+    }
+
+    expect(faces).toEqual(expected);
+    expect(positions).toEqual(before);
+    expect(new ShapeSolid(positions.slice()).faces).toEqual(expected);
+  });
+});

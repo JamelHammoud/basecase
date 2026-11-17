@@ -2,6 +2,14 @@
 
 Implementation: [Mirror](../guide/inspector-and-selection.md#performance-mirror). Shared requirements: [Performance](../guide/performance.md).
 
+## Catalog Mirror accumulates fallback datum extents directly
+
+Whole-app search found one port-based datum offset helper in `mirror/mirrorDatum.ts`, shared by scene Mirror and agent mirroring. Each fallback axis previously mapped all port coordinates into a temporary list and spread that list into separate minimum and maximum scans. It now retains both extrema in one source traversal. The output-port search remains first, preserving its first-match shortcut.
+
+For 60 and 120 ports without an eligible output, the three candidate axes previously allocated three coordinate lists containing 180 and 360 entries in total. They now allocate zero coordinate lists. The six extrema traversals of those lists are gone. These are source-derived allocation and traversal counts, without timing, heap or complete Mirror latency claims. Pairwise symmetry scoring is unchanged and remains quadratic within compatible port groups.
+
+Existing `mirrorDatum.test.ts` compares complete datum choices against the previous mapped-extrema calculation across every catalog component in four local directions and 120 generated mixed-port fixtures. It covers output-axis eligibility, source reordering, edits, empty and singleton inputs, score-band boundaries and source preservation. Existing Mirror tests cover placement, joints and mates. No controls, labels, user steps or rendered states change, so the Mirror help article and screenshots remain accurate.
+
 ## Assembly Mirror indexes scene identities once
 
 Assembly Mirror previously used request-array membership for every scene part, then searched the scene again for every mate target. It now prepares a selection set and a first-match source map once per call. The map has at most one entry per scene id and ends with the operation. Port matching and joint anchoring keep their existing work.

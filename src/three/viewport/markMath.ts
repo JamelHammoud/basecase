@@ -14,15 +14,41 @@ export function strokeLength(points: Point2[]): number {
   return length;
 }
 
-function distanceToSegmentSquared([px, py]: Point2, [ax, ay]: Point2, [bx, by]: Point2): number {
+type NearestSegment = { x: number; y: number; squared: number };
+
+function retainNearestOffset(nearest: NearestSegment, x: number, y: number): void {
+  if (Number.isNaN(nearest.squared)) return;
+
+  const xSquared = x * x;
+  const ySquared = y * y;
+  const margin = nearest.squared * Number.EPSILON * 8;
+  const bound = nearest.squared < Number.MIN_VALUE / Number.EPSILON ? Infinity : nearest.squared + margin;
+
+  if (Math.max(xSquared, ySquared) > bound) return;
+
+  const squared = xSquared + ySquared;
+  const ordinary = squared >= Number.MIN_VALUE / Number.EPSILON && Number.isFinite(squared);
+  const clearlyCloser = ordinary && (nearest.squared === Infinity || squared < nearest.squared - margin);
+  const sameOffsets = Math.abs(x) === Math.abs(nearest.x) && Math.abs(y) === Math.abs(nearest.y);
+
+  if (sameOffsets || (ordinary && squared > nearest.squared + margin)) return;
+
+  if (!clearlyCloser && Math.hypot(x, y) >= Math.hypot(nearest.x, nearest.y)) return;
+
+  nearest.x = x;
+  nearest.y = y;
+  nearest.squared = squared;
+}
+
+function distanceToSegment([px, py]: Point2, a: Point2, b: Point2, nearest: NearestSegment): void {
+  const [ax, ay] = a;
+  const [bx, by] = b;
   const dx = bx - ax;
   const dy = by - ay;
   const lengthSq = dx * dx + dy * dy;
   const t = lengthSq ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lengthSq)) : 0;
-  const x = px - (ax + t * dx);
-  const y = py - (ay + t * dy);
 
-  return x * x + y * y;
+  retainNearestOffset(nearest, px - (ax + t * dx), py - (ay + t * dy));
 }
 
 export function distanceToPolyline<T>(point: Point2, polyline: T[], project: (value: T, out: Point2) => void): number {
@@ -30,18 +56,18 @@ export function distanceToPolyline<T>(point: Point2, polyline: T[], project: (va
 
   const a: Point2 = [0, 0];
   const b: Point2 = [0, 0];
-  let best = Infinity;
+  const nearest: NearestSegment = { x: Infinity, y: Infinity, squared: Infinity };
 
   project(polyline[0], a);
 
   for (let i = 1; i < polyline.length; i++) {
     project(polyline[i], b);
-    best = Math.min(best, distanceToSegmentSquared(point, a, b));
+    distanceToSegment(point, a, b, nearest);
     a[0] = b[0];
     a[1] = b[1];
   }
 
-  return Math.sqrt(best);
+  return Math.hypot(nearest.x, nearest.y);
 }
 
 export function viewAngles([x, y, z]: [number, number, number]): string {

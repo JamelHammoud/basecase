@@ -111,13 +111,14 @@ function cutEdges(contact: EdgeContact): MaskCheck['cut'] {
 
 export function checkMask(mask: Mask): MaskCheck {
   const share = maskArea(mask) / (mask.width * mask.height);
-  const contact = edgeContact(mask);
 
   if (share > MAX_SUBJECT_SHARE) {
     return { share, refused: `the mask covers ${percent(share)} of the photo, so it has taken in background` };
   }
 
   if (share < MIN_SUBJECT_SHARE) return { share, refused: 'the subject is too small in the photo to measure' };
+
+  const contact = edgeContact(mask);
 
   if (contact.border > MAX_BORDER_SHARE) {
     return { share, refused: `the mask touches ${percent(contact.border)} of the photo’s edge` };

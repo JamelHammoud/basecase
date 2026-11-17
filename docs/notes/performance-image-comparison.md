@@ -2,6 +2,16 @@
 
 Implementation: [Image comparison](../guide/agent.md#performance-image-comparison). Shared requirements: [Performance](../guide/performance.md).
 
+## Photo mask area rejections skip border contact
+
+Whole-app search found one mask acceptance validator, `utils/photoMask.ts`'s `checkMask`. Both photo reference masks in `silhouette.ts` and sketch-target requests in `workspace/agentTargetRequest.ts` use it. Border measurement now follows the occupied-area refusals. Masks below 1% or above 60% occupancy never need border measurements. Exactly 1% and 60% still proceed to border checks. Refusal priority, messages, cut-edge flags and accepted outputs stay unchanged.
+
+`photoMask.test.ts` instruments numeric border reads separately from native area iteration. On a 20 × 20 mask, empty, three-pixel, 241-pixel and full-mask fixtures now make zero border reads instead of 80. The four-pixel and 240-pixel boundary fixtures retain all 80 border reads. The dense fixtures also touch the frame, verifying that area refusal retains priority. Tests check occupancy, refusal category, accepted cut flags and unchanged source bytes. These are operation counts, without timing thresholds or a claim about complete photo-tool latency. The full area scan remains unchanged. No timeout, retry or quarantine changes.
+
+The photo attachment instructions in [Requests that get good results](../../site/content/help/requests-that-get-good-results.md) still describe the same inputs and comparison behavior. This changes no action, label or visible state, so the article and screenshots remain unchanged.
+
+Scoped validation passed formatting, lint, docs, site copy, types and all 69 related tests across ten files. The log is `scratch/refine-check.log`. Copy diff reports net zero. Preflight also flagged [The design agent](../../site/content/help/the-design-agent.md) because it covers the owning guide. Rechecked its photo inputs, catalog selection, Checks, scene history and user controls against this change. No claim, label or visible state changes, and the article has no screenshot to replace, so it remains unchanged.
+
 ## Image outlines share fixed sampling directions
 
 Repository searches found one radial image-outline sampler and one twelve-point detected-hole contour builder, both in `imagePixelAnalysis.ts`. Both now read one table of 48 directions prepared at module initialization. Hole contours use every fourth entry, whose angle matches the previous twelve-sample calculation. Output point arrays remain independent of the table.

@@ -9,9 +9,10 @@ import type { TrainingEvaluation, TrainingEvaluationInput } from './types';
 import { comparisonImages } from './inspection';
 import { verifyEvidence } from './evidence';
 import { inspectionImage, type InspectionImageInput } from './inspectionImage';
-import { frozenImageGroups, type ImageGroup } from './conditionEvaluation';
+import { frozenImageGroups, type ImageGroup, type ImageGroupSupport } from './conditionEvaluation';
 import { conditionGroupJob } from './conditionGroupJob';
 import { inspectionContext } from './inspectionContext';
+import { errorMessage } from '../../utils/errorMessage';
 
 const inspection = inspectionContext();
 
@@ -36,13 +37,13 @@ export const evaluationJobs = {
       (image) => [candidate.get(image.candidate)!, incumbent.get(image.incumbent)!] as const,
     );
 
-    const groups = frozenImageGroups(input.candidate);
+    const groups = inspectionGroups(input.candidate);
 
     inspection.remember(token, input);
 
     return reply({
       indices,
-      groups,
+      ...groups,
       unlabeled: input.candidate.snapshot.filter((sample) => !sample.groups?.labels.length).length,
     });
   },
@@ -68,3 +69,11 @@ export const evaluationJobs = {
   evaluate: async (input: TrainingEvaluationInput) =>
     reply({ report: await evaluateTraining(input), sets: input.sets }, preparationTransfer(input.sets)),
 };
+
+function inspectionGroups(report: TrainingEvaluation): { groups: ImageGroupSupport[]; groupProblem: string } {
+  try {
+    return { groups: frozenImageGroups(report), groupProblem: '' };
+  } catch (error) {
+    return { groups: [], groupProblem: errorMessage(error) };
+  }
+}

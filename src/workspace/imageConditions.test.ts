@@ -29,4 +29,15 @@ describe('image condition edits', () => {
     expect(() => applyFrameConditions(set, { ids: ['one'], name: 'night', remove: false })).toThrow();
     expect(set.frames[0].conditions).toHaveLength(8);
   });
+
+  it('leaves identities and declarations unchanged when removing absent membership', () => {
+    const set = metricSet();
+
+    expect(applyFrameConditions(set, { ids: ['one'], name: 'night', remove: true })).toBe(set);
+    expect(set).not.toHaveProperty('conditions');
+    expect(set.frames[0]).not.toHaveProperty('conditions');
+    set.conditions = Array.from({ length: 32 }, (_, index) => `condition-${index}`);
+    expect(applyFrameConditions(set, { ids: ['one'], name: 'night', remove: true })).toBe(set);
+    expect(set.conditions).toHaveLength(32);
+  });
 });

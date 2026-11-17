@@ -7,6 +7,37 @@ import { evaluateTraining } from './metrics';
 import { metricResult } from './metricsFixtures';
 import { evaluationJobs } from './evaluationJobs';
 import { inspectionContextKey } from './inspectionContext';
+import { imageGroupsHash } from './evidence';
+import { sha256 } from '../../cases/tries';
+
+describe('condition inspection limits', () => {
+  it('preserves ordinary image inspection when the frozen source inventory exceeds the group limit', async () => {
+    const report = await metricReport();
+
+    report.snapshot.push(
+      ...Array.from({ length: 256 }, (_, index) => ({
+        ...report.snapshot[0],
+        frameId: `training-${index}`,
+        source: `image:source-${index}`,
+        split: 'train' as const,
+      })),
+    );
+    report.evidence!.groupsHash = await imageGroupsHash(report.snapshot);
+    report.evidence!.hash = await sha256(JSON.stringify({ ...report.evidence, hash: '' }));
+
+    const reports = { candidate: report, incumbent: report };
+
+    try {
+      const { result } = await evaluationJobs.inspectionIndex(reports);
+
+      expect(result.indices).toEqual([[0, 0]]);
+      expect(result.groups).toEqual([]);
+      expect(result.groupProblem).toBe('Compare at most 32 conditions, 64 cameras and 256 sources.');
+    } finally {
+      evaluationJobs.releaseInspection(inspectionContextKey(reports));
+    }
+  });
+});
 
 describe('condition request ownership', () => {
   it('loads frozen bytes through the presentation port and uses the shared scorer', async () => {

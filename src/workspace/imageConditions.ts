@@ -18,7 +18,7 @@ interface ConditionEdit {
 export const editImageConditions = (input: ConditionEdit) =>
   editLabelMetadataBatch(async (save) => {
     const edits = selectedConditionEdits(input);
-    const names = new Set<string>([input.name]);
+    const names = new Set<string>(input.remove ? [] : [input.name]);
 
     const manifests = new Map<string, Awaited<ReturnType<typeof loadFrameSetManifest>>>();
 
@@ -43,7 +43,9 @@ export const editImageConditions = (input: ConditionEdit) =>
 
       if (!stored) throw new Error('Choose a saved image dataset.');
 
-      await save(applyFrameConditions(stored, { ids, name: input.name, remove: input.remove }), stored);
+      const next = applyFrameConditions(stored, { ids, name: input.name, remove: input.remove });
+
+      if (next !== stored) await save(next, stored);
     }
   });
 

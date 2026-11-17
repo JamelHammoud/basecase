@@ -22,6 +22,7 @@ export function useVisionInspection(reports: VisionInspectionReports, selected: 
     images: ComparisonImage[];
     groups: ImageGroupSupport[];
     unlabeled: number;
+    groupProblem: string;
     problem: string;
   } | null>(null);
   const [loaded, setLoaded] = useState<{
@@ -35,7 +36,7 @@ export function useVisionInspection(reports: VisionInspectionReports, selected: 
 
     evaluationWorker
       .call('inspectionIndex', { candidate, incumbent })
-      .then(({ indices, groups, unlabeled }) => {
+      .then(({ indices, groups, unlabeled, groupProblem }) => {
         if (!live) return;
 
         const images = indices.map(([next, previous]) => ({
@@ -43,7 +44,7 @@ export function useVisionInspection(reports: VisionInspectionReports, selected: 
           incumbent: incumbent.evidence!.frames[previous],
         }));
 
-        setIndex({ candidate, incumbent, images, groups, unlabeled, problem: '' });
+        setIndex({ candidate, incumbent, images, groups, unlabeled, groupProblem, problem: '' });
       })
       .catch((error: unknown) => {
         if (live)
@@ -53,6 +54,7 @@ export function useVisionInspection(reports: VisionInspectionReports, selected: 
             images: [],
             groups: [],
             unlabeled: 0,
+            groupProblem: '',
             problem: errorMessage(error),
           });
       });

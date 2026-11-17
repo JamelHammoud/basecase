@@ -77,15 +77,18 @@ export function applyFrameConditions<T extends Pick<TrainingFrame, 'id' | 'condi
 
   const ids = new Set(edit.ids);
   const available = new Set(set.frames.map((frame) => frame.id));
-  const conditions = [...new Set([...(set.conditions ?? []), edit.name])];
+  const conditions = edit.remove ? set.conditions : [...new Set([...(set.conditions ?? []), edit.name])];
 
-  if (conditions.length > MAX_CONDITIONS || edit.ids.some((id) => !available.has(id)))
+  if ((conditions?.length ?? 0) > MAX_CONDITIONS || edit.ids.some((id) => !available.has(id)))
     throw new Error('Choose existing images and at most 32 conditions.');
 
   const frames = set.frames.map((frame) => {
     if (!ids.has(frame.id)) return frame;
 
     const labels = frame.conditions ?? [];
+
+    if (edit.remove && !labels.includes(edit.name)) return frame;
+
     const next = edit.remove ? labels.filter((name) => name !== edit.name) : [...new Set([...labels, edit.name])];
 
     if (next.length > MAX_FRAME_CONDITIONS) throw new Error('Assign at most eight conditions to each image.');
@@ -93,5 +96,7 @@ export function applyFrameConditions<T extends Pick<TrainingFrame, 'id' | 'condi
     return { ...frame, conditions: next };
   });
 
-  return { ...set, conditions, frames };
+  if (frames.every((frame, index) => frame === set.frames[index]) && conditions === set.conditions) return set;
+
+  return { ...set, ...(conditions !== undefined ? { conditions } : {}), frames };
 }

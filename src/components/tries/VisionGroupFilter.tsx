@@ -15,12 +15,14 @@ export function VisionGroupFilter({
 }: {
   metric: TrainingMetric;
   classId: number | null;
-  index: { groups: ImageGroupSupport[]; unlabeled: number; problem?: string } | null;
+  index: { groups: ImageGroupSupport[]; unlabeled: number; groupProblem?: string; problem?: string } | null;
   group: ImageGroup | null;
   comparison: { result?: ConditionComparison; problem?: string } | null;
   onChange: (group: ImageGroup | null) => void;
 }) {
   if (!index || index.problem) return null;
+
+  if (index.groupProblem) return <p role="status">{index.groupProblem}</p>;
 
   if (!index.groups.length) return <p role="status">Condition comparison is unavailable for this saved evidence.</p>;
 

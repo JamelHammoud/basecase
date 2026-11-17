@@ -84,5 +84,17 @@ describe('condition dataset persistence', () => {
     expect(reopened.imageMembers![0].hash).not.toBe(members[0].hash);
     expect(updated[0].frames[0].conditions).toEqual(['night']);
     expect(updated[1].frames[0].conditions).toBeUndefined();
+
+    const beforeRemoval = structuredClone([...saved.manifests.values()]);
+    const beforeDatasets = structuredClone([...saved.datasets.values()]);
+
+    await editImageConditions({
+      members: reopened.imageMembers!,
+      selected: [{ frameSetId: sets[1].id, frameId: 'one' }],
+      name: 'absent',
+      remove: true,
+    });
+    expect([...saved.manifests.values()]).toEqual(beforeRemoval);
+    expect([...saved.datasets.values()]).toEqual(beforeDatasets);
   });
 });

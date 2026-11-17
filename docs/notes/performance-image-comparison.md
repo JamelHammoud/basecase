@@ -12,6 +12,8 @@ The photo attachment instructions in [Requests that get good results](../../site
 
 Scoped validation passed formatting, lint, docs, site copy, types and all 69 related tests across ten files. The log is `scratch/refine-check.log`. Copy diff reports net zero. Preflight also flagged [The design agent](../../site/content/help/the-design-agent.md) because it covers the owning guide. Rechecked its photo inputs, catalog selection, Checks, scene history and user controls against this change. No claim, label or visible state changes, and the article has no screenshot to replace, so it remains unchanged.
 
+Pull request #1700's Ubuntu unit job on 17 November 2026 exhausted its fifteen-minute job budget during checkout. The initial shallow fetch started at 20:27:54 UTC and was cancelled at 20:42:52 UTC. Dependency installation and tests never started. The aggregate Check failed because this required job was cancelled. This log provides no evidence of a slow or failing test, so the revision keeps the implementation, tests, workflow and timeouts unchanged. Local revision validation is recorded in `scratch/revise-1700-check.log`. The hosted checkout failure remains unverified locally.
+
 ## Image outlines share fixed sampling directions
 
 Repository searches found one radial image-outline sampler and one twelve-point detected-hole contour builder, both in `imagePixelAnalysis.ts`. Both now read one table of 48 directions prepared at module initialization. Hole contours use every fourth entry, whose angle matches the previous twelve-sample calculation. Output point arrays remain independent of the table.

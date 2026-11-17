@@ -55,7 +55,10 @@ it('merges a selected branch edit through Scene History and preserves each indep
     await page.getByRole('button', { name: 'Merge Parts', exact: true }).click();
     await expect.poll(() => partCount(page)).toBe(1);
     expect(await bracketX(page)).toBe(20);
-    await page.getByRole('button', { name: 'Close', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Scene history', exact: true })
+      .getByRole('button', { name: 'Close', exact: true })
+      .click();
     await command(page, 'Camera alternative');
     await expect.poll(() => bracketX(page)).toBe(0);
     expect(await partCount(page)).toBe(1);

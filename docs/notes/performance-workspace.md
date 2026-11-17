@@ -87,7 +87,7 @@ All twelve articles in the table above were read again against the final feature
 
 `WorkspaceSheets.tsx` retains `FleetIncidentsHost` and adds a separate `SceneHistoryHost`. `RightTabPanels.tsx` changes Revert availability inside the Agent conversation, leaving teaching controls and skill freshness unchanged. `TitleBarTabs.tsx` passes the new history action without changing the title-bar positions or existing controls. `tabModel.ts` adds history and fingerprint fields without changing `sceneRobots` or the eight-tab limit. `useSceneLibrary.ts` changes duplication, while portable import still uses `decodeSceneFile` and a fresh scene id. A duplicate has a fresh id, so Case console values remain separate under `caseStoreKey`.
 
-The agent guide's checkpoint section changes recovery, already covered by the updated undo article linked from the design-agent hub. The twelve articles make no claim that checkpoints remove. Their referenced image files exist, and their described screenshot states use the unchanged controls above. No article text, screenshot or publication date needs replacement. Preflight still emits the same twelve read reminders because it checks changed paths rather than recording this assessment.
+The agent guide's checkpoint section changes recovery, already covered by the updated undo article linked from the design-agent hub. The twelve articles make no claim that checkpoints remove. All 14 distinct image references across these twelve articles exist under `site/public/`, including the Case console hub images. Their described screenshot states use the unchanged controls above. The locator-correction revision reread each article against these same code changes and retained every step, label, screenshot reference and publication date. No article text, screenshot or publication date needs replacement. Preflight still emits the same twelve read reminders because it checks changed paths rather than recording this assessment.
 
 
 ### Version review corrections
@@ -99,3 +99,10 @@ The agent guide's checkpoint section changes recovery, already covered by the up
 The focused browser declarations replace the removed branch merge story. Their runtime has not been measured locally, and no timeout, poll limit, retry or quarantine setting changed.
 
 The named recovery declaration passed in 33,359 ms in the earlier CI observation. It is split into a save, edit, close and reopen check and a restore and reload check with a prebuilt saved graph. The original persistence and restoration assertions remain across those declarations. No local browser duration is claimed for the split.
+
+
+### Scoped history dismissal correction
+
+The next changed-browser CI run passed named-version close and reopen in 18,411 ms, restore and reload in 9,413 ms, and branch-menu creation in 11,334 ms. The selected-merge declaration reached its one-part target and retained the bracket at x = 20. It then failed at line 58 because the unscoped Close locator matched both a workspace panel and the Scene history dialog. Its 15,249 ms report includes one configured retry. The aggregate Check failed because this browser job failed, with all three required jobs and copy successful.
+
+The dismissal now resolves Close inside the named Scene history dialog. The source-retention assertions and all merge assertions remain intact. This is a deterministic locator correction, with no timeout, retry, quarantine or assertion change. Browser execution remains with CI.

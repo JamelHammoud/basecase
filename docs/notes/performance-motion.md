@@ -157,3 +157,16 @@ The 100- and 200-endpoint fixtures in `motionSkeletonSource.test.ts` use request
 Complete-chain comparisons cover omitted and empty selections, exact names with case and punctuation, sided and unsided arm aliases, unmatched and punctuation-only requests, endpoint owners and edited selections between calls. Existing cases retain shared channel, source preservation and ordered axis coverage. No quarantine applies.
 
 No user action, label or screen state changes. [Design a robot from a motion clip](../../site/content/help/design-a-robot-from-motion.md) retains accurate instructions and screenshots.
+
+
+## BVH playback groups rotation channels once
+
+A whole-app search for `bvhRotations`, `MOTION` and `Frame Time:` found one raw BVH rotation reader, in `utils/mocapChannels.ts`. `parseBvh` supplies it to both motion fitting and imported motion retargeting. The three.js position sampler remains separate.
+
+Import now groups axis and source-column records by bone name once. Sampling builds each bone's fresh rotation list directly. For B bones with three rotation channels each, one frame previously made 3B result-map reads and 3B writes. It now makes no result-map reads and B writes. The prepared groups live with their parsed clip. Result maps, lists and rotation records remain independent across samples. Source-column offsets, bone insertion order and duplicate-name channel order stay unchanged.
+
+A local macOS arm64 run on Apple M5 Pro with Node v26.13.0 compared the previous and current samplers on generated 100-frame clips with three rotation channels per bone. Each implementation had two warmup batches, then 11 alternating measured batches of 10,000 samples. Median times were 14.862 ms before and 7.539 ms after for 30 bones, and 59.769 ms before and 28.890 ms after for 120 bones. Complete outputs matched at seven times covering ordinary frames, rounding, clamping and NaN. These isolated sampling measurements exclude file parsing, position sampling and fitting, and establish no complete import timing or CI budget. The probe and raw results stay in `scratch/bvh-channel-groups.mjs` and `scratch/bvh-channel-groups-results.json`.
+
+`mocapChannels.test.ts` checks mixed translation and rotation channels, nonstandard axis order, repeated bone names, translation-only bones, signed zero, nonfinite and missing values, frame rounding and clamping, changed imports and independent sampled outputs. Existing motion fitting and retargeting tests exercise the shared reader through complete BVH pipelines. No quarantine applies.
+
+No label, action or screen state changes. The covered [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) article retains its joint fields, hierarchy, posing and motion-fitting instructions. Motion import and animation help steps and screenshots remain accurate.

@@ -469,5 +469,85 @@
     "issue": 803,
     "until": "2026-11-28",
     "reason": "The test sends the arm's commands from Node against the simulation's clock, so when the page stalls under load they land after the 9 s Case ends. It passed 4 of 10 runs in CI's Linux setup on main, and 2 of 10 before #767."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for resisted",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exceeded the unchanged 5000 ms deadline for the resisted lid. Previous Check 44170110654 passed resisted in 4372 ms and reversed in 2100 ms with unchanged parity, capture and native replay sources. The responsible capture, uv provisioning, native startup, replay or scoring stage remains unknown. Shared native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. Other platforms, rotated lid and all eight drawer comparisons remain active."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for reversed",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exceeded the unchanged 5000 ms deadline for the reversed lid. Previous Check 44170110654 passed resisted in 4372 ms and reversed in 2100 ms with unchanged parity, capture and native replay sources. The responsible capture, uv provisioning, native startup, replay or scoring stage remains unknown. Shared native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. Other platforms, rotated lid and all eight drawer comparisons remain active."
+  },
+  {
+    "file": "src/sim/fixtures/closedParity.test.ts",
+    "test": "replays pump in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 timed out at 5010 ms against the unchanged 5000 ms deadline. Previous Check 44170110654 passed the same pump replay in about 621 ms with drift 1.5501488981328748e-14 and zero contact differences. The replay test and shared nativeContactReplay helper are unchanged. Provisioning, native startup and execution are not distinguished. Existing native fixture owner #1390 owns this shared helper investigation, tracing and equal-load baseline and candidate measurements. All other nine mechanisms and all other platforms remain active with the same numerical and contact assertions."
+  },
+  {
+    "file": "tools/fleet/access.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Run 44175369818 exhausted the unchanged 10000 ms beforeAll deadline before the access assertions ran. Previous Check 44170110654 passed access in 9986 ms and federation in 10764 ms including their assertions, with unchanged fixtures and service sources. Docker startup, schema migration, HTTP startup and identity setup are not distinguished. Existing shared fixture owner #1401 tracks setup tracing, cleanup and equal-load baseline and candidate measurements across platforms. Whole-file exclusion is required because beforeAll precedes per-test filtering. macOS retains the full matrix and other Fleet coverage stays active."
+  },
+  {
+    "file": "tools/fleet/federation.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Run 44175369818 exhausted the unchanged 10000 ms beforeAll deadline before the federation assertions ran. Previous Check 44170110654 passed access in 9986 ms and federation in 10764 ms including their assertions, with unchanged fixtures and service sources. Docker startup, schema migration, HTTP startup and identity setup are not distinguished. Existing shared fixture owner #1401 tracks setup tracing, cleanup and equal-load baseline and candidate measurements across platforms. Whole-file exclusion is required because beforeAll precedes per-test filtering. macOS retains the full matrix and other Fleet coverage stays active."
+  },
+  {
+    "file": "tools/fleet/service.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exhausted the unchanged 10000 ms beforeAll deadline before any of eleven HTTP service cases ran. Previous Check 44170110654 passed this file in 6293 ms with unchanged fixtures and service sources. Native cluster startup, migrations, HTTP startup and identity preparation are not distinguished. Existing shared fixture owner #1401 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. macOS retains the complete service matrix. Authorization, recovery, facilities, adapters, scale and browser checks remain active on Windows."
+  },
+  {
+    "file": "e2e/boardRouting.e2e.test.ts",
+    "test": "routes the imported rover from Board and downloads source-bound fabrication before undoing the route",
+    "issue": 1620,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exhausted the unchanged 30000 ms electrical-validate response wait in boardRoutingWalkthrough.ts:66 after Route Board. The log does not distinguish router provisioning, export preparation, routing, validation or stale-source refusal. Shared board delivery and native validation owner #1620 tracks production-path tracing, cancellation, cleanup and equal-load baseline and candidate measurements. Linux retains the walkthrough and fast routing, reconciliation, fabrication and source-guard tests stay active. No timeout or assertion changes."
+  },
+  {
+    "file": "e2e/drawings.e2e.test.ts",
+    "test": "imports a rover, exports its plate through Drawings, edits it in the Inspector and reconciles Kit drawing identities",
+    "issue": 1611,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exhausted the unchanged 30000 ms download wait on the first Drawings export at line 59 after import and selection. Preparation, worker replies, source guards, errors and browser delivery are not distinguished. Existing manufacturing export owner #1611 tracks the shared drawing producer used by standalone and Kit exports, production-path tracing and equal-load baseline and candidate measurements. Linux retains the complete walkthrough. Fast drawing geometry, artifact, source-identity, interruption and Kit reconciliation matrices stay active on Windows."
+  },
+  {
+    "file": "e2e/kitElectrical.e2e.test.ts",
+    "test": "downloads the routed carrier through Export Kit",
+    "issue": 1611,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exhausted the unchanged 30000 ms download wait for the routed carrier. Both variants failed while the ordinary Kit walkthroughs passed. Electrical preparation, drawing and guide producers, worker replies, source guards and delivery are not distinguished. Existing manufacturing export owner #1611 tracks these additional real Kit paths, production-path tracing, cleanup and equal-load baseline and candidate measurements. Linux retains both walkthroughs. Fast ten-design electrical Kit, hash, source freshness, fabrication refusal and export cancellation coverage stays active on Windows."
+  },
+  {
+    "file": "e2e/kitElectrical.e2e.test.ts",
+    "test": "downloads the edited carrier through Export Kit",
+    "issue": 1611,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exhausted the unchanged 30000 ms download wait for the edited carrier. Both variants failed while the ordinary Kit walkthroughs passed. Electrical preparation, drawing and guide producers, worker replies, source guards and delivery are not distinguished. Existing manufacturing export owner #1611 tracks these additional real Kit paths, production-path tracing, cleanup and equal-load baseline and candidate measurements. Linux retains both walkthroughs. Fast ten-design electrical Kit, hash, source freshness, fabrication refusal and export cancellation coverage stays active on Windows."
   }
 ]

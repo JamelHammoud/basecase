@@ -61,6 +61,22 @@ describe('quarantine list', () => {
     expect(activeEntries(list, '2026-11-20')).toEqual([]);
   });
 
+  it('keeps disjoint platform quarantines without excluding an unaffected host', () => {
+    const list = [entry({ test: '', platform: 'win32' }), entry({ test: '', platform: 'linux' })];
+
+    expect(validateQuarantine(list, { exists })).toEqual([]);
+    expect(quarantineExclude(list, '2026-11-12', 'win32')).toEqual(['e2e/smoke.e2e.test.ts']);
+    expect(quarantineExclude(list, '2026-11-12', 'linux')).toEqual(['e2e/smoke.e2e.test.ts']);
+    expect(quarantineExclude(list, '2026-11-12', 'darwin')).toEqual([]);
+    expect(validateQuarantine([...list, entry({ test: '' })], { exists })).toEqual([
+      'Entry 3 repeats an earlier entry',
+    ]);
+    expect(validateQuarantine([entry({ test: '' }), ...list], { exists })).toEqual([
+      'Entry 2 repeats an earlier entry',
+      'Entry 3 repeats an earlier entry',
+    ]);
+  });
+
   it('excludes whole files that are still quarantined', () => {
     const list = [entry({ test: '' }), entry({ test: '', file: 'src/b.test.ts', until: '2026-01-01' }), entry()];
 

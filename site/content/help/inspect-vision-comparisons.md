@@ -27,7 +27,7 @@ covers:
 
 Compare candidate and incumbent predictions with the reviewed labels on the exact images used for evaluation.
 
-For older attempts without saved predictions, you can view the aggregate results. You can inspect images without changing labels, splits or the retained model. You can open unchanged source recordings with up to four camera videos, each up to 64 MiB.
+For older attempts without saved predictions, you can view the aggregate results. You can inspect images without changing labels, splits or the retained model. Source recordings and individual camera videos can be up to 64 MiB. Each source can have up to four camera videos.
 
 1. In **Library**, under **Datasets**, open the image dataset.
 2. Under the training attempt, click **Inspect Images**.
@@ -41,13 +41,13 @@ For older attempts without saved predictions, you can view the aggregate results
 
 ![The incumbent overlay showing a missed cup on the same frozen image](/help/inspect-vision-comparisons/incumbent.png)
 
-Open **Matching rules** to view the task's thresholds. Use the hashes to identify both model files and the frozen test set.
+7. In the comparison, open **Matching rules** to view the task's thresholds. The hashes identify both model files and the frozen test set.
 
 For an image from a recorded try, click **Open Source Try** to open the try at the image's recorded timestamp.
 
 ![The source try open at the frozen image's recorded frame](/help/inspect-vision-comparisons/source.png)
 
-Click **Open Original Image** to open the matching current image in the existing label editor. You can't open missing or changed source content. You can edit current labels without changing the historical comparison.
+In the comparison, click **Open Original Image** to open the matching current image in the existing label editor. You can't open missing or changed source content. You can edit current labels without changing the historical comparison.
 
 You can also press [[⌘K]] and choose **Inspect Images** while the dataset is open.
 

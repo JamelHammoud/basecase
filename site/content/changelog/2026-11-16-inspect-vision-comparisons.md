@@ -4,7 +4,7 @@ date: 2026-11-16
 image: /changelog/inspect-vision-comparisons/cover.png
 ---
 
-You can compare candidate and incumbent predictions on the frozen images behind a training result. Open an image dataset from Library and choose **Inspect Images** on an attempt with saved predictions.
+You can compare candidate and incumbent predictions on the frozen images behind a training result.
 
 A model can improve its overall score while missing a person in one camera. You can't identify that image from the aggregate score. Use the class and failure filters to find images in the comparison and inspect their reviewed labels, candidate gains and regressions.
 

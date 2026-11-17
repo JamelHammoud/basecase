@@ -1,6 +1,6 @@
 import { unpackImageSnapshot } from '../imageSnapshot';
 import type { FrameSet, ImageAnnotation, TrainingFrame } from '../frameSet';
-import { labelGeometry } from '../labelEdits';
+import { labelGeometry, type LabelGeometry } from '../labelEdits';
 import { detectionPixels } from '../prelabelsGeometry';
 import type { VisionDetection, VisionResult } from '../types';
 import type { FrozenImageSample } from '../../datasets/snapshotImages';
@@ -16,16 +16,22 @@ export interface InspectionImageInput {
   task: TrainingTask;
 }
 
+function maskLabels(input: LabelGeometry): ImageAnnotation[] {
+  if (!input.pixels?.some(Boolean)) return [];
+
+  return [labelGeometry(input)];
+}
+
 function detectionLabel(input: {
   detection: VisionDetection;
   frame: TrainingFrame;
   task: TrainingTask;
   index: number;
-}): ImageAnnotation {
+}): ImageAnnotation[] {
   const { detection, frame, task, index } = input;
   const category = task.classes.find((entry) => entry.name === detection.label)!;
   const names = [...new Set(task.classes.flatMap((entry) => entry.keypoints ?? []))];
-  const keypoints = (detection.keypoints ?? []).flatMap(([x, y], at) => {
+  const keypoints = (task.kind === 'keypoints' ? (detection.keypoints ?? []) : []).flatMap(([x, y], at) => {
     if (!names[at] || !category.keypoints?.includes(names[at])) return [];
 
     return [{ name: names[at], x: x * frame.width, y: y * frame.height, visible: true }];
@@ -33,7 +39,7 @@ function detectionLabel(input: {
   const instance = `prediction-${index}`;
 
   if (task.kind === 'segment')
-    return labelGeometry({
+    return maskLabels({
       width: frame.width,
       height: frame.height,
       instance,
@@ -44,14 +50,16 @@ function detectionLabel(input: {
 
   const [x, y, width, height] = detection.box.map((value, at) => value * (at % 2 === 0 ? frame.width : frame.height));
 
-  return {
-    instance,
-    classId: category.id,
-    box: [x, y, width, height],
-    mask: { size: [frame.height, frame.width], counts: [frame.width * frame.height] },
-    polygons: [[x, y, x + width, y, x + width, y + height, x, y + height]],
-    keypoints,
-  };
+  return [
+    {
+      instance,
+      classId: category.id,
+      box: [x, y, width, height],
+      mask: { size: [frame.height, frame.width], counts: [frame.width * frame.height] },
+      polygons: [[x, y, x + width, y, x + width, y + height, x, y + height]],
+      keypoints,
+    },
+  ];
 }
 
 function predictionLabels(result: VisionResult, frame: TrainingFrame, task: TrainingTask) {
@@ -60,7 +68,7 @@ function predictionLabels(result: VisionResult, frame: TrainingFrame, task: Trai
   return result.detections.flatMap((detection, index) => {
     if (task.kind === 'segment' && !detection.mask) return [];
 
-    return [detectionLabel({ detection, frame, task, index })];
+    return detectionLabel({ detection, frame, task, index });
   });
 }
 
@@ -85,7 +93,12 @@ export async function inspectionImage(input: InspectionImageInput) {
         ? annotation.polygons
         : [[x, y, x + width, y, x + width, y + height, x, y + height]];
 
-    return { ...annotation, polygons, classId: category.id };
+    return {
+      ...annotation,
+      polygons,
+      classId: category.id,
+      keypoints: input.task.kind === 'keypoints' ? annotation.keypoints : [],
+    };
   });
 
   return {

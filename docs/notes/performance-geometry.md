@@ -2,6 +2,18 @@
 
 Implementation: [Mesh preparation](../guide/canvas.md#performance-mesh-preparation). Shared requirements: [Performance](../guide/performance.md).
 
+## Hexagonal outlines prepare fixed directions once
+
+`utils/partEdges.ts` shares `hexOutline` between hexagonal edge limits and beveled mesh construction. A source search for six-corner angle construction found this shared helper as the only application implementation. Plain hexagonal meshes retain Three.js cylinder construction, which also prepares caps, normals and UVs.
+
+The former helper calculated six sines and six cosines for every outline. The helper now prepares those twelve values once per module, retaining the original `(k * Math.PI) / 3` expression. Dimension-dependent multiplication still happens on each request, and callers receive independent arrays.
+
+`src/utils/partEdges.test.ts` compares exact coordinates and edge limits against the former implementation across square, stretched, thin and large dimensions, plus zero, signed zero, negative and nonfinite widths. It compares complete fillet and chamfer triangle arrays with one and sixteen middle layers. Mutating a returned outline cannot change another result.
+
+The operation-count fixture requests 100 outlines and 100 hexagonal edge limits with changing dimensions. Previously those 200 helper calls required 1,200 sine and 1,200 cosine evaluations. Spies now observe zero calls after module preparation. These are deterministic operation counts, not wall-clock measurements or a viewport speed claim. Existing `three/partMesh/edgedGeometry.test.ts` retains full-shape bounds, volume, winding and deformation coverage. No browser flow or visible output changes.
+
+Local validation on macOS with Node 26.13.0 passed formatting, lint, docs, site copy and types. The changed-file selector ran 390 related files in 121.87 seconds, with 2,632 tests passing, three failing and one skipped. All four new outline tests passed. The three failures exceeded the existing 5,000 ms deadline: `cases/handoffGoal.test.ts` recorded trajectory replay, `cases/terrain.test.ts` hexapod Rough Ground walking, and `skills/kitTransitions.test.ts` hexapod walk to settle. No assertion failure was reported. These timeouts were not reproduced on an unchanged baseline, so they remain unresolved validation findings. No deadline, retry or quarantine setting changed.
+
 ## Edged lathes reuse profile rings
 
 Rounded and chamfered cylinder and tube builds previously constructed four rotated vertices per quad, across 48 quads per profile span. Two rings now hold 98 reusable vertex tuples per build. Profiles with 32 and 64 spans previously allocated 6,144 and 12,288 vertex tuples. Their sine and cosine calls fall from 12,288 and 24,576 per build to zero after 98 calls during module initialization. The final triangle output and normal generation are unchanged.

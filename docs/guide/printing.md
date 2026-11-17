@@ -102,4 +102,4 @@ Fit-coupon overlap scoring reads the two boxes' extrema directly, without clonin
 
 Print-service account tests match `API key` exactly so Roboflow’s separate field does not match.
 
-Printer settings leave Test Connection as the row's action name and show connection feedback beside it. Empty discovery retains No printers found and the existing Add Printer control. [Settings coverage and copy decisions](toolbar-and-settings.md#testing-coverage) records the unchanged browser paths and their gaps.
+Printer settings leave Test Connection as the row's action name and show connection feedback beside it. Empty discovery leaves the On this network heading above an empty list. The existing Add Printer control remains available. [Settings coverage and copy decisions](toolbar-and-settings.md#testing-coverage) records the unchanged browser paths and their gaps.

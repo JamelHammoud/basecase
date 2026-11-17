@@ -659,6 +659,8 @@ Saved world assets restore in `worldAssetRestore.worker.ts`: base64 decoding, bu
 
 ## Performance: vision training
 
+- **YOLO rows place coordinates directly.** `vision/import/yoloRead.ts` parses the class id separately and writes numeric coordinates into their final array positions. Detection, segmentation and pose imports share this path, without shifting every coordinate after parsing. Numeric validation order, class lookup, coordinate limits and complete imported frames stay unchanged. Existing image-source, reader-fidelity and keypoint-reader tests cover these formats and refusals. [Evidence](../notes/performance-vision-training.md#yolo-rows-place-coordinates-directly).
+
 Measurements and limits: [Vision training performance evidence](../notes/performance-vision-training.md).
 
 - **Saved image splits partition frames once.** `vision/imageSplit.ts` appends frame ids directly to their saved train, validation or test list. COCO, YOLO and image metadata packages share this path. Frame order and saved-assignment priority over per-frame declarations stay unchanged. Generated splits keep their existing seeded ordering. `imageSplit.test.ts` checks partition parity, fresh assignments, independent outputs, bounded assignment reads and both package round trips. [Evidence](../notes/performance-vision-training.md#saved-image-splits-partition-frames-once).

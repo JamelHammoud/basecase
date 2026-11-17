@@ -58,11 +58,12 @@ function yoloPoints(cells: number[], context: YoloContext, category: ImageClass)
 }
 
 function yoloAnnotation(line: string, context: YoloContext, index: number) {
-  const cells = line
-    .trim()
-    .split(/\s+/)
-    .map((v) => number(Number(v)));
-  const classId = cells.shift()!;
+  const tokens = line.trim().split(/\s+/);
+  const classId = number(Number(tokens[0]));
+  const cells = new Array<number>(tokens.length - 1);
+
+  for (let i = 1; i < tokens.length; i++) cells[i - 1] = number(Number(tokens[i]));
+
   const category = context.classes[classId] ?? refuseImage();
 
   if (cells.length > IMAGE_LIMITS.points || cells.some((v) => v < 0) || !Number.isInteger(classId)) refuseImage();

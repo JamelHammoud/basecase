@@ -50,4 +50,4 @@ Open the enrollment link from your Fleet administrator. It opens the password fo
 
 ![The enrollment form with a new password entered](/help/open-basecase-fleet/enroll.png)
 
-See [Host Basecase Fleet](/help/host-basecase-fleet) for service setup and role administration.
+See [Manage Fleet access](/help/manage-fleet-access) for accounts, roles, groups and credential revocation. [Host Basecase Fleet](/help/host-basecase-fleet) covers service setup.

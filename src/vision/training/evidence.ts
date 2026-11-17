@@ -6,6 +6,7 @@ import { validatePrediction } from './metricsValidation';
 import type { TrainingEvaluation, TrainingEvaluationInput } from './types';
 import type { EvidencePrediction, ImageDiagnostics, PredictionEvidence } from './evidenceTypes';
 import type { FrozenImageSample } from '../../datasets/snapshotImages';
+import { isFrozenImageSample } from '../../datasets/snapshotTypes';
 
 export const EVIDENCE_MAX_FRAMES = 1000;
 export const EVIDENCE_MAX_BYTES = 3 * 1024 * 1024;
@@ -13,6 +14,13 @@ export const EVIDENCE_MAX_BYTES = 3 * 1024 * 1024;
 const evidenceSize = (evidence: PredictionEvidence) => new TextEncoder().encode(JSON.stringify(evidence)).byteLength;
 const key = (sample: FrozenImageSample) => `${sample.frameSetId}:${sample.frameId}`;
 const count = (value: number) => Number.isSafeInteger(value) && value >= 0;
+
+export async function imageGroupsHash(snapshot: FrozenImageSample[]) {
+  if (snapshot.length > 10_000 || !snapshot.every(isFrozenImageSample))
+    throw new Error('Check the frozen image groups.');
+
+  return sha256(JSON.stringify(snapshot));
+}
 
 export function checkEvidenceFrameCount(size: number) {
   if (size > EVIDENCE_MAX_FRAMES) throw new Error('Compare at most 1,000 frozen real test images.');
@@ -81,7 +89,14 @@ export async function buildEvidence({
   diagnostics: ImageDiagnostics[][];
 }): Promise<PredictionEvidence> {
   const predictions = new Map(input.predictions.map((entry) => [`${entry.frameSetId}:${entry.frameId}`, entry.result]));
-  const evidence: PredictionEvidence = { version: 1, hash: '', modelHash: input.modelHash, testHash, frames: [] };
+  const evidence: PredictionEvidence = {
+    version: 1,
+    hash: '',
+    modelHash: input.modelHash,
+    testHash,
+    groupsHash: await imageGroupsHash(input.snapshot),
+    frames: [],
+  };
   let bytes = evidenceSize(evidence) + 64;
 
   realTest.forEach((sample, index) => {
@@ -113,6 +128,9 @@ export async function verifyEvidence(report: TrainingEvaluation) {
 
   if (evidence && evidence.hash !== (await sha256(JSON.stringify({ ...evidence, hash: '' }))))
     throw new Error('The saved prediction evidence changed.');
+
+  if (evidence?.groupsHash !== undefined && evidence.groupsHash !== (await imageGroupsHash(report.snapshot)))
+    throw new Error('The frozen image groups changed.');
 }
 
 function validDiagnostics(actual: ImageDiagnostics, expected: ImageDiagnostics): boolean {
@@ -202,6 +220,7 @@ export function validateEvidence(report: TrainingEvaluation): void {
     evidence.version !== 1 ||
     evidence.modelHash !== report.modelHash ||
     evidence.testHash !== report.testHash ||
+    (evidence.groupsHash !== undefined && !/^[a-f0-9]{64}$/.test(evidence.groupsHash)) ||
     !Array.isArray(evidence.frames) ||
     evidence.frames.length !== report.realTest.length ||
     evidence.frames.length > EVIDENCE_MAX_FRAMES ||

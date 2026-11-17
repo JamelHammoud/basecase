@@ -4,6 +4,9 @@ import { evaluationWorker } from '../../vision/training/evaluationWorker';
 import type { ComparisonImage } from '../../vision/training/inspection';
 import type { TrainingEvaluation } from '../../vision/training/types';
 import type { inspectionImage } from '../../vision/training/inspectionImage';
+import type { ImageGroupSupport } from '../../vision/training/conditionEvaluation';
+import { inspectionContextKey } from '../../vision/training/inspectionContext';
+import { errorMessage } from '../../utils/errorMessage';
 
 export interface VisionInspectionReports {
   candidate: TrainingEvaluation;
@@ -13,7 +16,15 @@ export type InspectionImage = Awaited<ReturnType<typeof inspectionImage>>;
 
 export function useVisionInspection(reports: VisionInspectionReports, selected: ComparisonImage | null) {
   const { candidate, incumbent } = reports;
-  const [index, setIndex] = useState<{ images: ComparisonImage[]; problem: string } | null>(null);
+  const [index, setIndex] = useState<{
+    candidate: TrainingEvaluation;
+    incumbent: TrainingEvaluation;
+    images: ComparisonImage[];
+    groups: ImageGroupSupport[];
+    unlabeled: number;
+    groupProblem: string;
+    problem: string;
+  } | null>(null);
   const [loaded, setLoaded] = useState<{
     selection: ComparisonImage;
     image?: InspectionImage;
@@ -25,7 +36,7 @@ export function useVisionInspection(reports: VisionInspectionReports, selected: 
 
     evaluationWorker
       .call('inspectionIndex', { candidate, incumbent })
-      .then((indices) => {
+      .then(({ indices, groups, unlabeled, groupProblem }) => {
         if (!live) return;
 
         const images = indices.map(([next, previous]) => ({
@@ -33,14 +44,24 @@ export function useVisionInspection(reports: VisionInspectionReports, selected: 
           incumbent: incumbent.evidence!.frames[previous],
         }));
 
-        setIndex({ images, problem: '' });
+        setIndex({ candidate, incumbent, images, groups, unlabeled, groupProblem, problem: '' });
       })
-      .catch(() => {
-        if (live) setIndex({ images: [], problem: 'Prediction evidence is unavailable' });
+      .catch((error: unknown) => {
+        if (live)
+          setIndex({
+            candidate,
+            incumbent,
+            images: [],
+            groups: [],
+            unlabeled: 0,
+            groupProblem: '',
+            problem: errorMessage(error),
+          });
       });
 
     return () => {
       live = false;
+      void evaluationWorker.call('releaseInspection', inspectionContextKey({ candidate, incumbent })).catch(() => {});
     };
   }, [candidate, incumbent]);
 
@@ -77,5 +98,8 @@ export function useVisionInspection(reports: VisionInspectionReports, selected: 
     };
   }, [selected, candidate.task]);
 
-  return { index, loaded: loaded?.selection === selected ? loaded : null };
+  return {
+    index: index?.candidate === candidate && index.incumbent === incumbent ? index : null,
+    loaded: loaded?.selection === selected ? loaded : null,
+  };
 }

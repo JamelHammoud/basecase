@@ -9,13 +9,15 @@ export function FleetApp() {
   const [enrolling] = useState(() => Boolean(new URLSearchParams(location.hash.slice(1)).get('token')));
   const [managesAccess, setManagesAccess] = useState(false);
   const [access, setAccess] = useState(false);
+  const [credential, setCredential] = useState('');
   const [org, setOrg] = useState<string | null>(null);
   const [ready, setReady] = useState(enrolling);
 
   function loadSession() {
-    void fleetRequest<{ org: string; canManage: boolean }>('me')
+    void fleetRequest<{ org: string; canManage: boolean; credential: string }>('me')
       .then((session) => {
         setOrg(session.org);
+        setCredential(session.credential);
         setManagesAccess(session.canManage);
       })
       .catch(() => setOrg(null))
@@ -45,7 +47,7 @@ export function FleetApp() {
       </header>
       {ready && (
         <ErrorBoundary region="Fleet">
-          {org && access ? <FleetAccess org={org} /> : null}
+          {org && access ? <FleetAccess key={`${org}:${credential}`} org={org} /> : null}
           {org && !access ? <FleetInventory key={org} org={org} /> : null}
           {!org && <FleetSignIn onSignedIn={loadSession} />}
         </ErrorBoundary>

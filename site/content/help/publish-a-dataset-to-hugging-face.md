@@ -55,6 +55,8 @@ Datasets with tries also get a `v2.1` tag holding a LeRobot v2.1 copy that inclu
 
 Image datasets put COCO files in `coco/` and YOLO files in `yolo/` on the main branch. Their dataset card links both formats and carries the `basecase-image-dataset` tag. A dataset with both tries and images includes both image folders alongside its LeRobot files. See [Make training images](/help/make-training-images).
 
+Canonical image packages preserve supplied condition definitions and membership. See [Compare vision models by condition](/help/compare-vision-conditions).
+
 ## Publishing again
 
 If you publish the same dataset again, Basecase updates the folders included in the export. Tries rewrite `data/`, `videos/` and `meta/`, while images rewrite `coco/` and `yolo/` and the image dataset's `README.md` card. Folders outside that export stay as they are.

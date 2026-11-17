@@ -126,3 +126,42 @@ describe('retaining a vision candidate', () => {
     expect(() => compareTraining({ ...identity, candidate: wrongCount })).toThrow('evaluation');
   });
 });
+
+describe('saved condition membership', () => {
+  it.each(['snapshot', 'realTest'] as const)('rejects malformed saved %s group membership', async (inventory) => {
+    const candidate = await metricReport();
+    const groups = candidate.snapshot[0].groups!;
+    const malformed = [
+      { ...groups, declared: Array.from({ length: 33 }, (_, index) => `condition-${index}`) },
+      { ...groups, declared: ['night'], labels: ['day'] },
+      { ...groups, camera: '' },
+      { ...groups, declared: ['x'.repeat(65)] },
+      { ...groups, declared: ['night'], labels: ['night', 'night'] },
+      {
+        ...groups,
+        declared: Array.from({ length: 9 }, (_, index) => `condition-${index}`),
+        labels: Array.from({ length: 9 }, (_, index) => `condition-${index}`),
+      },
+    ];
+
+    for (const membership of malformed) {
+      const report = structuredClone(candidate);
+
+      report[inventory][0].groups = membership;
+      expect(() => compareTraining({ ...identity, candidate: report })).toThrow('evaluation');
+    }
+  });
+
+  it('bounds the complete inventory when saved evidence binds image groups', async () => {
+    const candidate = await metricReport();
+
+    candidate.snapshot.push(
+      ...Array.from({ length: 10_000 }, (_, index) => ({
+        ...candidate.snapshot[0],
+        frameId: `training-${index}`,
+        split: 'train' as const,
+      })),
+    );
+    expect(() => compareTraining({ ...identity, candidate })).toThrow('evaluation');
+  });
+});

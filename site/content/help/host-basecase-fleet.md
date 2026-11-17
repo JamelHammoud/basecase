@@ -36,7 +36,7 @@ Outside loopback, set `FLEET_ORIGIN` to the service's HTTPS origin, `FLEET_TLS_C
 
 ## Accounts and roles
 
-Role and local account administration uses the version 1 JSON API. The browser provides enrollment, sign-in, inventory and sign-out. Its access settings configure identity providers and provisioning tokens. Administration requires organization-level `iam.manage`.
+Accounts, roles, groups and credential revocation are available in the browser through [Manage Fleet access](/help/manage-fleet-access). The version 1 JSON API remains available for automation. Access also configures identity providers and provisioning tokens. Administration requires organization-level `iam.manage`.
 
 `POST /v1/sessions` takes `org`, `email` and `password` and returns a session token. Send it as `Authorization: Bearer <token>` for subsequent API calls. Session tokens expire after 12 hours.
 
@@ -58,7 +58,7 @@ Create a custom role with `POST /v1/<org>/role`:
 }
 ```
 
-`GET`, `PUT` and `DELETE /v1/<org>/role/<role>` read, replace or delete that role. List roles with `GET /v1/<org>/role`. A site's scope includes its descendants. `*` scopes the entire organization. Explicit denies override grants, and access is denied without a grant.
+`GET`, `PUT` and `DELETE /v1/<org>/role/<role>` read, replace or delete that role. List roles with `GET /v1/<org>/role`. Account, group and role lists accept `summary=1` for authorized UUID, kind and name summaries. Read a selected identity through its ID path for its full definition. A site's scope includes its descendants. `*` scopes the entire organization. Explicit denies override grants, and access is denied without a grant.
 
 Conditions match string attributes. For example, `"conditions": { "site": { "country": ["US"] }, "robot": { "vendor": ["Acme"] } }` requires both attributes. Nested sites inherit attributes from their ancestors, with nearer values taking precedence.
 

@@ -6,6 +6,10 @@ import { Button, Modal, Select, Spinner } from '../../design-system';
 import { filterComparisonImages, type ComparisonImage, type InspectionFinding } from '../../vision/training/inspection';
 import { VisionInspectionDetail } from './VisionInspectionDetail';
 import { useVisionInspection, type VisionInspectionReports } from './useVisionInspection';
+import { useConditionComparison } from './useConditionComparison';
+import { VisionGroupFilter } from './VisionGroupFilter';
+import type { ImageGroup } from '../../vision/training/conditionEvaluation';
+import { sampleKey } from '../../vision/training/evaluationIdentity';
 
 interface Props {
   reports: VisionInspectionReports;
@@ -14,7 +18,7 @@ interface Props {
 }
 
 const FINDINGS = [
-  { value: 'all', label: 'All Images' },
+  { value: 'all', label: 'All Findings' },
   { value: 'misses', label: 'Misses' },
   { value: 'false-positives', label: 'False Positives' },
   { value: 'improvements', label: 'Candidate Improvements' },
@@ -25,9 +29,11 @@ export function VisionInspection({ reports, onClose, navigation }: Props) {
   const [classId, setClassId] = useState<number | null>(null);
   const [finding, setFinding] = useState<InspectionFinding>('all');
   const [selected, setSelected] = useState<ComparisonImage | null>(null);
+  const [group, setGroup] = useState<ImageGroup | null>(null);
   const { index, loaded } = useVisionInspection(reports, selected);
   const actions = useInspectionNavigation({ navigation, onClose });
-  const images = filterComparisonImages(index?.images ?? [], { classId, finding });
+  const comparison = useConditionComparison(reports, index ? group : null);
+  const images = filterComparisonImages(groupImages(index, group), { classId, finding });
   const task = reports.candidate.task;
   const rules = {
     detect:
@@ -78,6 +84,17 @@ export function VisionInspection({ reports, onClose, navigation }: Props) {
             }}
           />
         </div>
+        <VisionGroupFilter
+          metric={task.metric}
+          classId={classId}
+          index={index}
+          group={group}
+          comparison={comparison}
+          onChange={(next) => {
+            setGroup(next);
+            setSelected(null);
+          }}
+        />
         {!index && <Spinner />}
         {index?.problem && <p role="status">{index.problem}</p>}
         <div className="grid grid-cols-[220px_1fr] gap-3">
@@ -105,4 +122,13 @@ export function VisionInspection({ reports, onClose, navigation }: Props) {
       </div>
     </Modal>
   );
+}
+
+function groupImages(index: ReturnType<typeof useVisionInspection>['index'], group: ImageGroup | null) {
+  if (!group) return index?.images ?? [];
+
+  const membership = index?.groups.find((item) => item.kind === group.kind && item.name === group.name);
+  const keys = new Set(membership?.keys ?? []);
+
+  return index?.images.filter((image) => keys.has(sampleKey(image.candidate.sample))) ?? [];
 }

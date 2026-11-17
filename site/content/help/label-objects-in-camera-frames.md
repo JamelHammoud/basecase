@@ -72,4 +72,6 @@ Select a label and choose **Track Forward** to carry it into the next 30 frames 
 
 Open the saved dataset in **Library** and click **Label Objects** under an image to edit it again. To use **Label Objects** from a saved version, choose **Working Dataset** in **Dataset version** first. [Export Dataset](/help/export-a-lerobot-dataset) includes the image labels as COCO and YOLO packages.
 
+To group whole images by a supplied condition such as `night`, follow [Compare vision models by condition](/help/compare-vision-conditions).
+
 From a [vision model comparison](/help/inspect-vision-comparisons), click **Open Original Image** to edit the matching current image. Changed or missing originals stay unavailable. Edits leave the comparison's frozen labels unchanged.

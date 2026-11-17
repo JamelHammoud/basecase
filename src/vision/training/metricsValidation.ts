@@ -1,5 +1,6 @@
 import type { TrainingTask, TrainingEvaluationInput } from './types';
 import type { VisionDetection, VisionResult } from '../types';
+import { isFrozenImageSample } from '../../datasets/snapshotTypes';
 
 export const trainingMetrics = {
   detect: 'box-map',
@@ -115,6 +116,16 @@ export function validatePrediction(result: VisionResult, task: TrainingTask): vo
 
 export function validateEvaluationInput(input: TrainingEvaluationInput): void {
   validateTrainingTask(input.task);
+
+  if (
+    !Array.isArray(input.snapshot) ||
+    input.snapshot.length > 10_000 ||
+    !input.snapshot.every(isFrozenImageSample) ||
+    !Array.isArray(input.predictions)
+  )
+    throw new Error('Check the frozen image evaluation.');
+
+  if (input.predictions.length > 1000) throw new Error('Compare at most 1,000 frozen real test images.');
 
   if (!/^[a-f0-9]{64}$/.test(input.modelHash) || !Number.isSafeInteger(input.modelBytes) || input.modelBytes < 1)
     throw new Error('Check the trained model hash and byte count.');

@@ -26,6 +26,8 @@ Fit a model to your labeled images in the desktop app and compare it with the cu
 
 Your images must have separate training and validation groups. Basecase reserves an eligible real recording group for testing before freezing the working dataset.
 
+To find failures within declared conditions, cameras or sources, follow [Compare vision models by condition](/help/compare-vision-conditions).
+
 1. In **Library**, open an image dataset under **Datasets**. To bring in labeled images, follow [Import an image dataset](/help/import-an-image-dataset).
 2. In **Vision task**, choose **Detect Objects**, **Segment Objects**, **Find Keypoints** or **Classify Images**.
 3. In **Latency limit**, enter the maximum inference time in milliseconds.

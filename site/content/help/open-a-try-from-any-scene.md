@@ -19,7 +19,9 @@ covers:
   - src/workspace/viewCommands.tsx
   - src/components/LibraryPanel.tsx
   - src/components/library/TriesSection.tsx
-  - src/components/tries/
+  - src/components/tries/TriesMode.tsx
+  - src/components/tries/TryTile.tsx
+  - src/components/tries/useTriesKeys.ts
   - src/workspace/useTriesView.ts
   - src/workspace/useCaseRun.ts
   - src/cases/tryStore/

@@ -145,3 +145,15 @@ These are code-derived operation counts, without timing assertions or a claim ab
 This changes no user action, label or screen state. Motion capture help steps and screenshots remain accurate.
 
 Preflight flagged [Joints and kinematics](../../site/content/help/joints-and-kinematics.md), which covers the edited guide. Its joint fields, import paths, hierarchy, posing and IK descriptions were checked against this diff and remain accurate. It describes no live-calibration steps or screenshots, so it remains unchanged intentionally.
+
+## Motion limb requests normalize once per selection
+
+A whole-app search for `motionLeaves`, `includeLimb` and the compact-name expression found one endpoint-selection implementation. Both validation and chain generation in `motionSkeleton.ts` call it, covering file import and agent fitting. Bone landmark matching uses different naming rules and remains separate.
+
+Requested limb names now normalize once before endpoint filtering, rather than up to three times per request for every eligible endpoint. The prepared list belongs to one call. Endpoint names still normalize only when filtering is active, and endpoint-owner resolution, limb classification, matching and output order retain their preceding rules.
+
+The 100- and 200-endpoint fixtures in `motionSkeletonSource.test.ts` use requests `missing` and `ARM`. Source request reads fall from 200 and 400 to two in each case. Code-derived request normalization counts fall from 500 and 1,000 to two. Endpoint-name normalization remains one per eligible endpoint. These are operation counts, without timing assertions or a claim about total fitting speed.
+
+Complete-chain comparisons cover omitted and empty selections, exact names with case and punctuation, sided and unsided arm aliases, unmatched and punctuation-only requests, endpoint owners and edited selections between calls. Existing cases retain shared channel, source preservation and ordered axis coverage. No quarantine applies.
+
+No user action, label or screen state changes. [Design a robot from a motion clip](../../site/content/help/design-a-robot-from-motion.md) retains accurate instructions and screenshots.

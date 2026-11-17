@@ -3,6 +3,7 @@ import { canonicalTest } from './metrics';
 import { validateTrainingTask } from './metricsValidation';
 import { classFailureRate } from './metricsFailures';
 import type { ClassEvaluation, TrainingEvaluation } from './types';
+import { validImageGroups } from '../conditions';
 
 const unit = (value: number) => Number.isFinite(value) && value >= 0 && value <= 1;
 const count = (value: number) => Number.isSafeInteger(value) && value >= 0;
@@ -20,7 +21,8 @@ function validSample(sample: FrozenImageSample): boolean {
     hash(sample.hash) &&
     hash(sample.content) &&
     ['train', 'validation', 'test'].includes(sample.split) &&
-    (sample.explicit === undefined || ['train', 'validation', 'test'].includes(sample.explicit))
+    (sample.explicit === undefined || ['train', 'validation', 'test'].includes(sample.explicit)) &&
+    (sample.groups === undefined || validImageGroups(sample.groups))
   );
 }
 
@@ -29,6 +31,7 @@ function validTest(report: TrainingEvaluation): boolean {
   const ids = new Set(report.realTest.map(sampleKey));
 
   return (
+    (!report.evidence?.groupsHash || report.snapshot.length <= 10_000) &&
     report.snapshot.every(validSample) &&
     report.realTest.every(validSample) &&
     snapshot.size === report.snapshot.length &&

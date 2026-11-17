@@ -4,7 +4,7 @@ import type { RobotJoint, ScenePart } from '../../types/robotics';
 import { prettyJointName } from '../kinematics';
 import { applyPublishedMass, buildLinkParts, linkGeometries, type MeshFiles } from './linkParts';
 import { parseMeshFile as parsePositions } from '../meshFile';
-import type { MeshGeometry, Model, ModelJoint } from './model';
+import type { Model, ModelJoint } from './model';
 import { catalogFrame, limbOf, publishedData, round, S, type PublishedData } from './published';
 import { readModel } from './readModel';
 import type { Resolver, Source } from './sources';
@@ -36,10 +36,15 @@ async function parseMeshFile(data: ArrayBuffer, path: string): Promise<THREE.Buf
 
 async function loadMeshFiles(model: Model, resolver: Resolver, say: Say, notes: string[]): Promise<MeshFiles> {
   const files: MeshFiles = new Map();
-  const meshRefs = [...model.links.values()]
-    .flatMap((l) => l.visuals.map((v) => v.geometry))
-    .filter((g): g is MeshGeometry => g.type === 'mesh');
-  const unique = [...new Set(meshRefs.map((g) => g.file))];
+  const names = new Set<string>();
+
+  for (const link of model.links.values()) {
+    for (const { geometry } of link.visuals) {
+      if (geometry.type === 'mesh') names.add(geometry.file);
+    }
+  }
+
+  const unique = [...names];
   let done = 0;
 
   await eachLimited(unique, 6, async (file) => {

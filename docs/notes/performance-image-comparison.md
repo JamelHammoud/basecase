@@ -2,6 +2,14 @@
 
 Implementation: [Image comparison](../guide/agent.md#performance-image-comparison). Shared requirements: [Performance](../guide/performance.md).
 
+## Image outlines share fixed sampling directions
+
+Repository searches found one radial image-outline sampler and one twelve-point detected-hole contour builder, both in `imagePixelAnalysis.ts`. Both now read one table of 48 directions prepared at module initialization. Hole contours use every fourth entry, whose angle matches the previous twelve-sample calculation. Output point arrays remain independent of the table.
+
+The existing image-analysis tests cover color and alpha boundaries, source preservation, enclosed holes, open background channels, detected centers and dimensions. Their two-hole case now checks every rounded hole coordinate. A scratch comparison matched complete previous and current analysis results for 100 generated images across 40, 48 and 56-pixel square grids, varying hole radii, foreground colors and image aspects.
+
+After module initialization, those two-hole fixtures made 144 sine and cosine calls per image before this change and zero afterward. The shared table costs 96 calls once per module load. The scratch probe counts calls separately from result assertions, with results in `scratch/imageDirections-results.json` during implementation. These are operation counts, without timing assertions or a claim about complete image-import latency. No interaction, screen state or help instructions change.
+
 ## Photo trimming retains column mass
 
 Repository searches found one column-mass calculation for photo trimming, in `photoMask.ts`, called by the shared `referenceMask` pipeline in `silhouette.ts`. Column heights now accumulate their area and horizontal first moment as they are emitted. The trim fraction reuses that area. The height list remains necessary for selecting thin columns, and each accepted trim still copies the source pixels.
@@ -32,6 +40,14 @@ The remaining analysis calls belong to outline simplification. The remaining sil
 `outlineTrace.test.ts` checks single-row winding and caps with exact coordinates, scale, offset, sparse-row bands, source preservation and independent results. A scratch comparison matched complete outputs against the previous implementation on 1,000 generated masks. Widths ranged from 1 to 29 pixels and heights from 1 to 43, with empty rows, nonbinary pixels, four scales, four sample counts and seven offsets.
 
 On macOS arm64, Apple M5 Pro and Node 26.13.0, a filled 40 × 600 mask sampled at 24 points took median times of 0.03058 ms before and 0.02618 ms after. Five warmup batches preceded 21 alternating measured batches of 1,000 traces. The temporary arrays held 3,000 entries per call before the change. These shared-host measurements cover tracing alone, without a CI timing assertion or a claim about complete photo-tool time. The throwaway comparison is `scratch/outlineComparison.test.ts` during implementation and isn't committed.
+
+## Outline resampling emits rounded points directly
+
+`outlineTrace.ts` now rounds each interpolated coordinate when it emits the sampled point. It removes the temporary unrounded point list and the final mapping pass. For N samples, this removes one outer array and N coordinate-pair arrays, plus N callback invocations. At the tool's 12 to 32 samples, that removes 13 to 33 arrays per trace. The contour ring and cumulative segment lengths remain operation-local allocations. These are allocation counts derived from the code, without timing measurements or a claim about complete tracing latency.
+
+Repository searches covered resampling in outline tracing, Sketch linkage strokes, recorded joints, Case base traces and try-search signatures. Photo-outline tracing is the only path that rounds resampled millimeter coordinate pairs. Other resamplers produce unrounded coordinates or scalar signatures with distinct precision requirements.
+
+The existing `outlineTrace.test.ts` checks exact single-row points, winding, caps, scale, offset, sparse-row bands and source preservation. A scratch comparison matched 3,600 complete results against the previous implementation across 120 generated masks. It used offset buffer views, nonbinary pixels, empty masks, six sample counts from zero to 32, five scales including zero and negative values, and positive and negative offsets. Source storage stayed unchanged. The throwaway comparison is `scratch/outline-rounding.test.ts` during implementation. No interaction or visible output changes, so no help article or browser walkthrough changes.
 
 ## Outline distances propagate one minimum per cell
 

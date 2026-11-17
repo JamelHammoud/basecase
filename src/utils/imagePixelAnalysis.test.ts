@@ -90,6 +90,18 @@ describe('image flood analysis', () => {
       { xNorm: 0.207, zNorm: -0.207, radiusNorm: 0.078 },
     ]);
     expect(result.contour.holes).toHaveLength(2);
+    expect(result.contour.holes).toEqual(
+      result.detectedHoleCenters.map(({ xNorm, zNorm, radiusNorm }) =>
+        Array.from({ length: 12 }, (_, index) => {
+          const angle = (index / 12) * Math.PI * 2;
+
+          return [
+            Math.round((xNorm + Math.cos(angle) * radiusNorm) * 1000) / 1000,
+            Math.round((zNorm + Math.sin(angle) * radiusNorm) * 1000) / 1000,
+          ];
+        }),
+      ),
+    );
     expect(result.dominantColor).toBe('#000000');
     expect(result.suggestedDimensions).toEqual({ width: 70, height: 10, depth: 70, thickness: 4 });
   });

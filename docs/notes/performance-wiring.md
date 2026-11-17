@@ -43,3 +43,14 @@ A scratch comparison matched complete netlists against the previous implementati
 ## Cable detours share local point coordinates
 
 `routeClearance.test.ts` checks oriented obstacles, duplicate obstacle ids, growing and shrinking envelopes, epsilon boundaries, lazy preparation, anchored detours, edits and source preservation. A scratch comparison matched 300 seeded routes against the previous implementation. On an anchored route around four boxes, coordinate transforms fell from 1,450 to 236. This is an operation count, without a timing assertion or a claim about total wiring latency.
+
+
+## Detour labels reject distant corners
+
+The whole-app search for `routeTopology` and its corner-distance predicate found one shared matcher, consumed by `routeAnalysis.ts` for bus and power routes. It rejects a corner when any coordinate gap reaches the existing 1e-9 mm tolerance. The remaining candidates retain the original strict `Math.hypot` distance comparison, including diagonal rejection. Corner construction, label sorting, duplicate labels and interior-point order are unchanged.
+
+`routeTopology.test.ts` compares complete topology output with the preceding implementation across 768 interior points around ordinary, duplicate and rotated obstacle corners. Offsets cover all axes and diagonals below, at and above tolerance, plus NaN and infinity. It also checks obstacle-order independence and source preservation. Existing tests retain direct-route laziness, obstacle edits and complete detour routing.
+
+The test's 300- and 600-obstacle fixtures each have one matching interior point. Spying on `Math.hypot` measures 2,400 and 4,800 calls before, respectively, and one after in each fixture. These are local operation counts, without timing assertions or a claim about complete routing latency. The comparison still scans all corners and adds up to three scalar coordinate checks per candidate.
+
+No action, label or visible state changes. The existing cable-routing help steps and capture remain accurate.

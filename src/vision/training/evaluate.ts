@@ -56,7 +56,7 @@ export async function evaluateVisionModel(
       {
         task,
         sets,
-        snapshot: prepared.samples,
+        snapshot: prepared.evaluationSamples,
         realSourceIds: prepared.realSourceIds,
         predictions,
         modelHash: manifest.model.sha256,

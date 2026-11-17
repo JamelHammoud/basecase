@@ -4,7 +4,7 @@ import { parseBvh } from './mocap';
 import type { Mocap, MocapRotation } from './mocapBones';
 import { sharedTorsoBvh, wrappedHingeBvh } from './motionSkeleton.fixtures';
 import { motionWithEndSites } from './motionSkeletonEnds';
-import { motionChains } from './motionSkeletonSource';
+import { motionChains, motionLeaves } from './motionSkeletonSource';
 import { sampleMotionFrames, type MotionFrames } from './motionSkeletonValidation';
 
 function sample(motion: Mocap): MotionFrames {
@@ -49,6 +49,52 @@ function branches(count: number) {
 
   return { motion, samples: { positions: rotations.map(() => positions), rotations } };
 }
+
+describe('motion limb selection', () => {
+  it('preserves limb aliases, endpoint owners and fresh selections across complete chains', () => {
+    const motion = motionWithEndSites(parseBvh(sharedTorsoBvh()));
+    const samples = sample(motion);
+    const all = motionChains(motion, samples, { scale: 1 });
+    const limbs = ['LEFT hand'];
+
+    for (const selection of [undefined, [], limbs, ['Left ARM'], ['right-arm'], ['arm'], ['missing'], ['!!!']]) {
+      const selected = all.filter(({ name }) => {
+        if (!selection?.length) return true;
+
+        const value = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        return selection.some((item) => {
+          const requested = item.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+          return value === requested || (requested.includes('arm') && value.includes(requested.replace('arm', '')));
+        });
+      });
+
+      expect(motionChains(motion, samples, { scale: 1, limbs: selection })).toEqual(selected);
+    }
+
+    expect(limbs).toEqual(['LEFT hand']);
+    limbs[0] = 'right ARM';
+    expect(motionChains(motion, samples, { scale: 1, limbs })).toEqual(all.filter(({ name }) => name === 'RightHand'));
+  });
+
+  it.each([100, 200])('reads each requested limb once across %i endpoints', (count) => {
+    const { motion } = branches(count);
+    const selection = ['missing', 'ARM'];
+    let reads = 0;
+    const limbs = new Proxy(selection, {
+      get(target, key, receiver) {
+        if (typeof key === 'string' && /^\d+$/.test(key)) reads++;
+
+        return Reflect.get(target, key, receiver);
+      },
+    });
+
+    expect(motionLeaves(motion, limbs)).toEqual(motion.bones.slice(1));
+    expect(reads).toBe(selection.length);
+    expect(selection).toEqual(['missing', 'ARM']);
+  });
+});
 
 describe('motion source channels', () => {
   it.each([1, 16, 64])('keeps root-first axes through %i ancestor links', (count) => {

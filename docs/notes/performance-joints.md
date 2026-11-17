@@ -2,6 +2,18 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## Robot imports collect unique mesh filenames directly
+
+The app-wide search found one mesh-request collector in `utils/robotImport/importRobot.ts`. URDF, MJCF, expanded xacro and converted model imports all reach it through `readModel`. Onshape exports and SimReady visual loading have separate request contracts and do not collect filenames from this model structure.
+
+Previously the collector copied the link list, mapped every link's visuals to geometry arrays, flattened them, filtered mesh geometry, mapped filenames and deduplicated them. It now inserts mesh filenames into a set directly, then builds the existing bounded-concurrency queue. First-occurrence order, exact filename identity, six-task concurrency, parsing, progress messages and failure notes stay unchanged. The set belongs to one import.
+
+For 300 links with five visuals each, four of them meshes sharing two filenames, source-derived array constructions fall from 305 to one. The removed arrays retain 5,700 intermediate references in total: 300 links, 1,500 mapped geometries, 1,500 flattened geometries, 1,200 filtered meshes and 1,200 filenames. Both versions retain the set and two-entry queue. These are allocation counts from the code, not heap measurements or timings. Parsing and geometry preparation costs remain outside this comparison.
+
+`importMeshes.test.ts` runs real URDF folder imports with one and eight links. Each link has two references to one readable STL with different transforms, one box and two references to one missing STL. It checks one STL read, all 36 triangles per link, all imported parts, no movable joints, two progress updates and one missing-file note. Existing archive, GitHub, Hugging Face, xacro and spring round-trip tests cover downstream imports. No user action or visible state changes, so the existing import and troubleshooting help articles remain accurate without replacement screenshots.
+
+The three covered articles were checked against the final collector diff. [Import a robot](../../site/content/help/import-a-robot.md) retains its source-selection steps, menu labels, shelf actions and four screenshots because no entry point or import result changes. [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) retains its joint fields, import guarantees, hierarchy and posing explanations because mesh request collection changes no joint or part ownership. [A robot won't import from a link or folder](../../site/content/help/troubleshoot-app-robot-import-fails.md) retains its refusal messages, missing-file explanation and recovery steps because deduplication, failure notes and partial import behavior are preserved. The latter two articles contain no screenshots. Preflight mechanically flags these unchanged articles, but its instruction expressly allows retaining accurate content. None needs a prose or image edit for this change.
+
 ## MJCF frame traversal appends directly to its output
 
 The whole-app search found one MJCF frame-child traversal in `utils/robotImport/mjcfFrames.ts`. All three importer call sites share it: geometry inside bodies, child bodies and world-root bodies. `skeletonTree.ts` has an unrelated hierarchy method with the same name. No other MJCF frame-child collector needs this change.
@@ -693,3 +705,15 @@ No article step, label, limit or visible state becomes inaccurate. All three art
 A numeric fold probe on November 17, 2026 used Node 26.13.0 on macOS arm64. Each batch called both extrema 100,000 times on `sin(i)` lists. Two warmup batches preceded nine measured batches, alternating which implementation ran first. Median before/after batch times for 2, 8, 32 and 128 arguments were 7.918/2.047, 11.717/6.002, 26.899/21.873 and 103.484/87.301 ms. Checksums matched. The probe includes numeric conversion and both extrema, without parsing, expansion, mesh loading or a CI timing assertion. Script and raw results are `scratch/xacro-extrema-bench.mjs` and `scratch/xacro-extrema-bench.json` in the implementation session. An earlier callback-based fold regressed at 32 and 128 arguments, so the final fold uses direct native calls selected by the built-in's fixed maximum flag.
 
 Final scoped validation passed formatting, ESLint, docs, site copy for 323 pages, types and all 352 related tests across 47 files. The related run took 3.59 seconds. The log is `scratch/check-xacro-extrema-final.log`. Copy accounting reports net zero strings.
+
+## Inserted four-bars prepare their bar rotation once
+
+Whole-app search found one CAD-to-scene bar rotation calculation in `linkage/linkageParts.ts`. Sketch Path insertion in `workspace/useSketchSession.ts`, agent insertion in `linkage/agentLinkage.ts` and closed-linkage simulation fixtures share this builder. The calculation now belongs to the insertion frame, rather than each bar. Each part still receives an independent rotation array. Preparation ends with the call, so later insertions read current placement.
+
+For every four-bar insertion, rotation preparation falls from four calls to one. This removes three matrix inversions, three matrix multiplications, six Matrix4 clones, three Euler objects and three Euler extractions. These are source-derived operation and allocation counts, not heap or latency measurements. Other CAD, servo and joint calculations remain. No complete insertion speedup is claimed.
+
+`linkageParts.test.ts` retains coupler-curve, servo mounting, lift, joint-range and CAD-recipe coverage on ground and tilted planes. Added coverage checks independent bar rotation arrays and fresh arrays across insertions. No timeout, retry or quarantine changes apply.
+
+Rechecked [Design a linkage from a path](../../site/content/help/design-a-linkage-from-a-path.md) and [Simulate a four-bar](../../site/content/help/simulate-a-four-bar.md) against the changed builder. Insertion still creates the same four bars, crank servo, mounting and joint sweep. Simulation declarations and controls are untouched. Every step, label and screenshot remains accurate, so neither article needs an edit or new capture. No user action or visible state changes.
+
+Also rechecked [Joints and kinematics](../../site/content/help/joints-and-kinematics.md), which covers the contributor guide. Its joint fields, sources, hierarchy, hardware following, mounting and closed-loop explanation remain accurate. This change only moves repeated rotation preparation within the existing insertion builder. The article has no screenshots and needs no edit.

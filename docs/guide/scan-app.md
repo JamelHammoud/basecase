@@ -27,4 +27,4 @@ Open `ios/BasecaseScan.xcodeproj` in Xcode 16 or later, pick your team under Sig
 
 Run them with `sh ios/test.sh`, which picks the first available iPhone simulator and runs `xcodebuild test` without signing (extra arguments pass through to `xcodebuild`).
 
-Check's `ios` job runs the same on macOS when a pull request touches `ios/` or that fixture (§0e). RoomPlan's scanning can't run on the simulator or CI; only the plan, the start and the file are tested.
+Check's `ios` job runs the same on `macos-26-intel` when a pull request touches `ios/`, that fixture or `check.yml`, and in the nightly suite (§0e). The explicit Intel runner avoids the arm64 capacity failure recorded in the [CI evidence](../notes/node.md#ios-runner-capacity). The existing XCTests, simulator selection and twenty-minute job limit stay unchanged. RoomPlan's scanning can't run on the simulator or CI. Only the plan, the start and the file are tested.

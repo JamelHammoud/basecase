@@ -41,6 +41,7 @@ export interface FleetClient {
 export interface FleetFixture {
   origin: string;
   databaseUrl: string;
+  readonly pool: { query(text: string, values?: unknown[]): Promise<unknown> };
   bootstrap(name: string): Promise<FleetClient>;
 
   restart(): Promise<void>;

@@ -1,5 +1,5 @@
 import { authenticate } from './identity.mjs';
-import { listResources } from './registry.mjs';
+import { demand, listResources, organization } from './registry.mjs';
 import { insist } from './validation.mjs';
 
 function send(response, event, data) {
@@ -34,8 +34,11 @@ export async function subscriptions(pool) {
   });
 
   return {
-    async open({ request, response, token, actor, client = pool }) {
+    async open({ request, response, token, actor, client = pool, access = false }) {
       insist(streams.size < 64, 503);
+
+      if (access) demand(actor, 'iam.manage', organization(actor.org));
+
       response.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-store',
@@ -49,7 +52,9 @@ export async function subscriptions(pool) {
         credential: actor.credential,
         response,
         async refresh(kind) {
-          if (!['fleet_status', 'fleet_facilities'].includes(kind)) {
+          if (access && ['fleet_status', 'fleet_facilities'].includes(kind)) return;
+
+          if (!access && !['fleet_status', 'fleet_facilities'].includes(kind)) {
             send(response, 'reset', {});
             response.end();
 
@@ -67,7 +72,7 @@ export async function subscriptions(pool) {
               pending = false;
 
               const current = await authenticate(pool, token);
-              const page = await listResources(pool, current, { kind: 'robot' });
+              const page = await snapshot(pool, current, access);
 
               send(response, 'snapshot', page);
             }
@@ -83,7 +88,7 @@ export async function subscriptions(pool) {
       streams.add(stream);
       response.on('close', () => streams.delete(stream));
       request.on('error', () => response.end());
-      send(response, 'snapshot', await listResources(client, actor, { kind: 'robot' }));
+      send(response, 'snapshot', await snapshot(client, actor, access));
     },
     async close() {
       for (const stream of streams) stream.response.end();
@@ -92,4 +97,12 @@ export async function subscriptions(pool) {
       listener.release();
     },
   };
+}
+
+async function snapshot(client, actor, access) {
+  if (!access) return listResources(client, actor, { kind: 'robot' });
+
+  demand(actor, 'iam.manage', organization(actor.org));
+
+  return {};
 }

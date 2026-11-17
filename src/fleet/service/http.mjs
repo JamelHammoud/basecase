@@ -123,7 +123,14 @@ async function dispatch(options) {
 
       const current = await authenticate(client, token);
 
-      return stream.open({ request, response, token, actor: current, client });
+      return stream.open({
+        request,
+        response,
+        token,
+        actor: current,
+        client,
+        access: url.searchParams.get('access') === '1',
+      });
     });
 
   const result = await auditedIdentityTransaction(pool, async (client) => {

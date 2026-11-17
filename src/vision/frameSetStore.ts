@@ -34,6 +34,41 @@ export async function saveFrameSet(set: FrameSet): Promise<void> {
   await backend.saveManifest(manifest);
 }
 
+export async function saveFrameSetMetadata(set: FrameSetManifest, expected: FrameSetManifest): Promise<string> {
+  const manifest = await jobs.call('header', set);
+
+  checkedFrameId(manifest.id);
+  await checkMetadataSource(manifest.id, expected);
+
+  const hashes: string[] = [];
+
+  for (const frame of manifest.frames) {
+    const bytes = await backend.frame(manifest.id, checkedFrameId(frame.id));
+
+    if (!bytes) throw new Error('The dataset is missing an image.');
+
+    const transfer = [...new Set([bytes.jpeg.buffer, bytes.depth.buffer])].filter(
+      (buffer): buffer is ArrayBuffer => buffer instanceof ArrayBuffer,
+    );
+
+    hashes.push(await jobs.call('hashStoredFrame', { frame, classes: manifest.classes, bytes }, transfer));
+  }
+
+  const hash = await jobs.call('hashManifest', { set: manifest, hashes });
+
+  await checkMetadataSource(manifest.id, expected);
+  await backend.saveManifest(manifest);
+
+  return hash;
+}
+
+async function checkMetadataSource(id: string, expected: FrameSetManifest) {
+  const current = await backend.manifest(checkedFrameId(id));
+
+  if (expected.id !== id || JSON.stringify(current) !== JSON.stringify(expected))
+    throw new Error('The image dataset changed. Select the images again.');
+}
+
 export async function saveTrainingFrame(id: string, frame: TrainingFrame, classes: ImageClass[]): Promise<void> {
   checkedFrameId(id);
   checkedFrameId(frame.id);

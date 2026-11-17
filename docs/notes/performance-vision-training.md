@@ -2,6 +2,21 @@
 
 Implementation: [Vision training](../guide/cases.md#performance-vision-training). Shared requirements: [Performance](../guide/performance.md).
 
+## Frozen condition rescoring
+
+`conditionResources.test.ts` uses generated 2 by 2 JPEGs, reviewed rectangular annotations and retained predictions. One warmup precedes one measured comparison at each size. Candidate and incumbent share the same correct predictions in this resource fixture. Both pass through frozen-content verification, annotation restoration and the existing task scorer. No inference runs. The helper returns support and metrics, without retaining another evidence archive.
+
+The following observations were recorded on 17 November 2026 with Node 26.13.0, macOS 27.0.1 and an arm64 Apple M5 Pro with 24 GiB RAM. Other loop work and related tests were active. They are not production-browser measurements or timing assertions.
+
+| Real test images | Rescore both reports | Evidence bytes per model | Returned result bytes | Heap-used difference |
+| --- | --- | --- | --- | --- |
+| 4 | 2.364 ms | 2,743 | 769 | 177,464 bytes |
+| 1,000 | 106.845 ms | 604,225 | 19,609 | -1,721,224 bytes |
+
+Heap-used difference is the V8 heap-used difference after collection, with source content and reports already retained. It includes the returned result and runtime caches. The negative 1,000-image difference reflects other reclaimed heap, so retained allocation at that size is inconclusive. These differences are not peak memory. They exclude image buffers, workers, WASM, GPU allocations and other processes. One observation per size does not establish throughput or a scaling ratio. Host contention and collection make timings and heap differences variable. The fixture asserts complete support, both scores and a 64 KiB returned-output ceiling for its two-class data, without asserting time or heap use.
+
+The helper limits selected work before loading content to 32 million image and predicted-mask pixels, 20,000 reviewed objects and 2 million annotation/prediction pairs. Stored archives and their expanded entries each share a 64 MiB byte budget. Expanded entry lengths are charged before allocation. Dimensions must match retained predictions before another image is kept. Existing per-image archive, evidence and real-test limits remain active. These observations cover helper execution only. The shipped presentation retains one verified comparison in the existing evaluation worker. Group requests send its identity instead of cloning both reports again, with one frozen-content request at a time through a MessagePort. Cancellation releases an outstanding request and revokes presentation. These resource observations exclude that transport and browser rendering. The documentation capture records workflow correctness separately, without a browser timing claim.
+
 ## Saved image splits partition frames once
 
 `src/vision/imageSplit.ts` removes three filtered frame lists and two full frame traversals from saved split partitioning. Each frame's saved assignment is read once, and its id goes directly into its destination list. Searching the app found this repeated saved-partition construction only in this shared helper. COCO, YOLO and image metadata exports all use it. Generated splits and their seeded ordering are unchanged.
@@ -47,7 +62,7 @@ The host was an arm64 Apple M5 Pro with 24 GiB RAM, macOS 27.0.1 and Node 26.13.
 | 4 | 0.100 ms | 2.360 ms | 2.269 ms | 2,663 | 8,240 bytes |
 | 1,000 | 6.787 ms | 21.081 ms | 13.582 ms | 604,145 | 1,310,800 bytes |
 
-Retained heap is the V8 heap-used difference after collection, with source images and predictions already retained. It includes diagnostics and evidence objects. It excludes image buffers, WASM, GPU memory and other processes. Small heap differences and timings are sensitive to collection and concurrent host activity. Verifying one model's evidence and preparing its first frozen display image took 90.717 ms and 10.566 ms respectively, without IPC, storage latency or rendering.
+Heap-used difference is the V8 heap-used difference after collection, with source images and predictions already retained. It includes diagnostics and evidence objects. It excludes image buffers, WASM, GPU memory and other processes. Small heap differences and timings are sensitive to collection and concurrent host activity. Verifying one model's evidence and preparing its first frozen display image took 90.717 ms and 10.566 ms respectively, without IPC, storage latency or rendering.
 
 The browser resource capture used the actual Library entry, controlled training completion with real inference, ordinary persistence, both-model verification and first-image selection. It asserted 4 and 1,000 retained test-image rows. These fixtures have one class, unlike the two-class worker fixtures above, so their serialized sizes differ. The local harness served the development app because production bundles were absent. These are not production-bundle performance claims.
 

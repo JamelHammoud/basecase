@@ -13,10 +13,15 @@ function ballOffsets(h: V3, radius: number): V3[] {
   const reach = h.map((value) => Math.ceil(radius / value));
   const offsets: V3[] = [];
 
-  for (let k = -reach[2]; k <= reach[2]; k++)
-    for (let j = -reach[1]; j <= reach[1]; j++) for (let i = -reach[0]; i <= reach[0]; i++) offsets.push([i, j, k]);
+  const appendRow = (j: number, k: number) => {
+    for (let i = -reach[0]; i <= reach[0]; i++) {
+      if (Math.hypot(i * h[0], j * h[1], k * h[2]) <= radius) offsets.push([i, j, k]);
+    }
+  };
 
-  return offsets.filter(([i, j, k]) => Math.hypot(i * h[0], j * h[1], k * h[2]) <= radius);
+  for (let k = -reach[2]; k <= reach[2]; k++) for (let j = -reach[1]; j <= reach[1]; j++) appendRow(j, k);
+
+  return offsets;
 }
 
 function offsetCell(grid: FineGrid, cell: number, offset: V3): number {

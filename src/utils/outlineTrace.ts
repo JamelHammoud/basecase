@@ -56,7 +56,7 @@ function resample(points: Point[], n: number): Point[] {
       b = points[(k + 1) % points.length];
     const t = (at - lengths[k]) / Math.max(1e-9, lengths[k + 1] - lengths[k]);
 
-    out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+    out.push([r1(a[0] + (b[0] - a[0]) * t), r1(a[1] + (b[1] - a[1]) * t)]);
   }
 
   return out;
@@ -101,7 +101,7 @@ export function traceOutline(mask: Mask, { mmPerPx, n = 20, z0 = 0 }: { mmPerPx:
   });
 
   return {
-    points: resample(ring, n).map(([x, z]) => [r1(x), r1(z)] as Point),
+    points: resample(ring, n),
     widthMm: r1((box.x1 - box.x0 + 1) * mmPerPx),
     heightMm: r1((box.y1 - box.y0 + 1) * mmPerPx),
     bandsMm,

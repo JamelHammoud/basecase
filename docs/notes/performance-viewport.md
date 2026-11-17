@@ -36,6 +36,14 @@ At the drawing limit of 400 points, this removes the 400-element projected list 
 
 `markMath.test.ts` checks one projection per point and exactly two reused output tuples at both sizes. It also covers repeated endpoints, empty or single-point input and subsequent point edits. `markLayer.test.ts` checks selection and eraser output, first-hit ties, the inclusive 10 px boundary, current camera and viewport reads, and dragged positions. A spy on the stroke's `map` method confirms both selection and eraser queries avoid the previous mapped projection. Label rendering and GPU frame time are outside this check's scope.
 
+## Mark hit tests reject distant segments before measuring length
+
+Whole-app search found one projected mark-to-segment distance loop, in `three/viewport/markMath.ts`. Selection, hovering, drag start and erasing reach it through `MarkLayer.distances`. Segment projection and clamping stay unchanged. Squared coordinate offsets bound the squared Euclidean distance from below. A bound above the best squared distance plus an eight-epsilon margin skips the sum. Remaining candidates compare squared distances and retain the nearest offsets for one final `Math.hypot`. Near ties and squared overflow or underflow use the original exact comparison. [Combined normalization evidence](performance-annotations.md#mark-picking-normalizes-only-the-nearest-distance) records the numerical guards and storage.
+
+`markMath.test.ts` compares exact outputs with the previous loop across 400-point curved strokes in both orders, repeated points, empty and single-point strokes, extreme finite scales and nonfinite projections. On horizontal strokes of 400 and 800 points with the pointer ten pixels above the first endpoint, `Math.hypot` calls fall from 399 and 799 to one each. The test asserts those counts through a restored spy. These are operation counts, not timings or a claim about complete pointer latency. Reversing both horizontal fixtures makes successive segments improve the nearest distance and still requires only one normalization. Near ties and extreme scales can require additional exact comparisons.
+
+Existing `markLayer.test.ts` covers selection and eraser output, first-hit ties, the inclusive 10 px boundary, dragged positions and current camera and viewport reads. GPU rendering is outside these checks. No action, label or visible state changes, so the existing mark help instructions and screenshots remain applicable. No browser walkthrough, timeout, retry or quarantine changes apply.
+
 ## Captured-world camera rendering stays in workers
 
 On demand, `node tools/perf/worldVideosBench.mjs` measures rendering and encoding a 10 s, 30 fps, two-camera kitchen episode against Open Floor, including stage creation. It prints both times and fails above a 3× ratio. Timing never runs in Check.

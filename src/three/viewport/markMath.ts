@@ -22,8 +22,9 @@ function retainNearestOffset(nearest: NearestSegment, x: number, y: number): voi
   const xSquared = x * x;
   const ySquared = y * y;
   const margin = nearest.squared * Number.EPSILON * 8;
+  const bound = nearest.squared < Number.MIN_VALUE / Number.EPSILON ? Infinity : nearest.squared + margin;
 
-  if (xSquared > nearest.squared + margin || ySquared > nearest.squared + margin) return;
+  if (Math.max(xSquared, ySquared) > bound) return;
 
   const squared = xSquared + ySquared;
   const ordinary = squared >= Number.MIN_VALUE / Number.EPSILON && Number.isFinite(squared);

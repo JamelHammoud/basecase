@@ -195,6 +195,33 @@ describe('mark segment distance bounds', () => {
     }
   });
 
+  it('compares underflowed bounds exactly and preserves NaN after a finite candidate', () => {
+    for (const [first, second] of [
+      [1.5e-162, 1.6e-162],
+      [2.6e-162, 3.55e-162],
+    ]) {
+      const underflow: Point2[] = [
+        [first, first],
+        [first, first],
+        [second, 0],
+        [second, 0],
+      ];
+
+      expect(previousDistance([0, 0], underflow)).toBe(second);
+      expect(distanceToPolyline([0, 0], underflow, copyPoint)).toBe(second);
+    }
+
+    for (const endpoint of [
+      [100, NaN],
+      [NaN, 100],
+    ] satisfies Point2[]) {
+      const stroke: Point2[] = [[0, 0], [0, 0], [100, 0], endpoint];
+
+      expect(previousDistance([0, 10], stroke)).toBeNaN();
+      expect(distanceToPolyline([0, 10], stroke, copyPoint)).toBeNaN();
+    }
+  });
+
   it('normalizes once for distant segments and successively closer segments', () => {
     const hypot = vi.spyOn(Math, 'hypot');
 

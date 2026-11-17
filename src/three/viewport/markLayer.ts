@@ -39,7 +39,6 @@ function markLine(points: ArrayLike<number>, style: LineStyle): Line2 {
   const line = new Line2(geometry, material);
 
   geometry.setPositions(Array.from(points));
-  line.computeLineDistances();
   line.renderOrder = style.order ?? MARK_ORDER;
   line.frustumCulled = false;
   line.raycast = () => {};

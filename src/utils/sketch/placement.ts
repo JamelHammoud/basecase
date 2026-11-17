@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { CustomModelSubNode, PartDimensions, ScenePart } from '../../types/robotics';
-import { loopBounds, sketchProfile, type Profile } from './profile';
+import { loopArea, loopBounds, sketchProfile, type Profile } from './profile';
 import type { PartSketch, Sketch, SketchMode, Vec2 } from './types';
 
 export type Vec3 = [number, number, number];
@@ -50,8 +50,11 @@ function rotationOf(basis: THREE.Matrix4): Vec3 {
 const planePoint = (plane: SketchPlane, [x, y]: Vec2, lift: number) =>
   v3(plane.origin).addScaledVector(v3(plane.u), x).addScaledVector(v3(plane.v), y).addScaledVector(v3(plane.n), lift);
 
-const normalized = (loop: Vec2[], center: Vec2, span: Vec2): Array<[number, number]> =>
-  loop.map(([x, y]) => [(x - center[0]) / span[0], -(y - center[1]) / span[1]]);
+function normalized(loop: Vec2[], center: Vec2, span: Vec2, clockwise: boolean): Vec2[] {
+  const points: Vec2[] = loop.map(([x, y]) => [(x - center[0]) / span[0], -(y - center[1]) / span[1]]);
+
+  return loopArea(points) < 0 === clockwise ? points : points.reverse();
+}
 
 interface Body {
   dims: PartDimensions;
@@ -76,8 +79,8 @@ function extrudeBody(profile: Profile, depth: number): Body | null {
     node: {
       nodeType: 'contour_extrude',
       contour: {
-        outerLoop: normalized(profile.outer, center, span),
-        holes: profile.holes.map((h) => normalized(h, center, span)),
+        outerLoop: normalized(profile.outer, center, span, true),
+        holes: profile.holes.map((h) => normalized(h, center, span, false)),
         bevel: false,
       },
     },

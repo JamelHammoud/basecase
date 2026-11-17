@@ -48,6 +48,8 @@ Only you can set a blocker aside, with **Ignore**. The agent can say it disagree
 
 A classroom result doesn't grant **Ready to build**. Open the submitted robot and use its fresh **Build** checks, as described in [Grade a class](/help/grade-a-class).
 
+A sketch with an unresolved supporting face stays blocked even while its previous solid remains visible. [Keep a sketch on a face](/help/keep-a-sketch-on-a-face) covers replacing that reference.
+
 ## What you buy
 
 Basecase builds the **Bill of materials** from the scene. It counts components by part, and screws and nuts by their exact size. Printed parts become grams of filament for each material, and Basecase rounds filament up to whole spools with 15% to spare. If you don't have a printer, Slant 3D can quote each printed part instead.

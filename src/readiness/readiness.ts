@@ -6,6 +6,7 @@ import type { CheckStatus, CheckSummary, Finding, Readiness, ReadinessDecisions,
 import { READINESS_CHECKS, ruleFinding } from './wording';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
+import { sketchSupportFindings, supportedSketchEvidence } from './sketchSupports';
 
 const round = (v: number) => Math.round(v * 10) / 10;
 
@@ -44,7 +45,15 @@ function readingsLine(p: ScenePart): string {
 }
 
 export function readinessFingerprint(parts: ScenePart[], extra: unknown): string {
-  return hashText([...parts.map((p) => `${partLine(p)}|${readingsLine(p)}`).sort(), JSON.stringify(extra)].join('\n'));
+  return hashText(
+    [
+      ...parts.map((p) => `${partLine(p)}|${readingsLine(p)}`).sort(),
+      JSON.stringify(extra),
+      supportedSketchEvidence(parts),
+    ]
+      .filter(Boolean)
+      .join('\n'),
+  );
 }
 
 export const UNSETTLED_FINGERPRINT = '';
@@ -177,6 +186,8 @@ export function readinessOf(
     now?: Date;
   },
 ): Readiness {
+  findings = [...findings.filter((f) => f.rule !== 'sketch-support'), ...sketchSupportFindings(ctx.parts)];
+
   const ignored = ctx.decisions?.ignored ?? {};
   const rules = ctx.decisions?.ignoredRules ?? {};
   const disputes = ctx.decisions?.disputes ?? {};

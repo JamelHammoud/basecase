@@ -1,3 +1,4 @@
+import { sketchSupportCommands } from './sketchSupportCommands';
 import { classroomCommands } from './classroomCommands';
 import type { Command } from '../components/CommandPalette';
 import {
@@ -315,6 +316,7 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...buildCommands(inputs),
   ...simCommands(inputs),
   ...createCommands(inputs),
+  ...sketchSupportCommands(inputs.core),
   ...toolCommands(inputs),
   ...poseCommands(inputs),
   ...skeletonCommands(inputs),

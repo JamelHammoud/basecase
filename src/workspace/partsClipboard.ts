@@ -1,3 +1,4 @@
+import { copiedSketchSupports } from '../utils/sketch/supportCopies';
 import { freshOperandIds } from '../booleans/parts';
 import type { ScenePart } from '../types/robotics';
 import { newId } from './helpers';
@@ -38,10 +39,12 @@ export function takePaste(workspaceId: string): ScenePart[] | null {
     return groupMap.get(group.id);
   };
 
-  return clip.parts.map(({ jointId: _joint, ...p }) => ({
+  const copies = clip.parts.map(({ jointId: _joint, ...p }) => ({
     ...freshOperandIds(p, () => newId()),
     id: newId(),
     group: copyGroup(p.group),
     position: [p.position[0] + step, p.position[1], p.position[2] + step] as Vec3,
   }));
+
+  return copiedSketchSupports(clip.parts, copies);
 }

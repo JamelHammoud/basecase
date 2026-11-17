@@ -26,6 +26,7 @@ import {
   type HistoryStep,
 } from './docHistory';
 import { useBooleanResults } from './useBooleanResults';
+import { useSketchSupportResults } from './useSketchSupportResults';
 import { projectFromSeed } from './helpers';
 import type { CommitParts, DocState, Snapshot, WorkspaceSeed } from './types';
 import { mountedBoardParts } from '../wiring/boardMounts';
@@ -102,6 +103,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
   };
 
   useBooleanResults(doc.parts, docRef, writeDoc);
+  useSketchSupportResults(doc.parts, docRef, writeDoc);
 
   const restoreJoints = (joints: RobotJoint[] | undefined) => updateProjectNow((p) => ({ ...p, joints }));
   const tracked = () => trackedOf(projectRef.current);

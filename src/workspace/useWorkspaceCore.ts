@@ -179,7 +179,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     selectedIds,
     setSelectedIds,
     selection,
-    sketching: useSketchSession({ docs, viewportRef, selectedIds, setSelectedIds, tool }),
+    sketching: useSketchSession({ docs, viewportRef, selectedIds, setSelectedIds, tool, showToast }),
     annotations,
     marks,
     measure,

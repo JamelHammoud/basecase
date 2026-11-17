@@ -18,7 +18,7 @@ You can put a servo on a bracket, a board on a plate or a camera on its mount by
 1. Select the part and press [[V]] for Move. Or start dragging a part from Parts or the Library onto the canvas.
 2. Drag it toward the part it mounts on. White dots appear on the holes, horns, bores and faces that fit each other. For example, the servo's horn fits a hole circle of the same size and thread, its output shaft fits a matching bore, and M2 holes fit M2 holes.
 3. Bring a dot within about 8 mm of its partner. The pair turns blue and the part jumps into place, turned so the two line up.
-4. Let go. The part stays mated. If you move the part it's mounted on, or the agent remodels that part, the mated part moves with it. To undo the snap and the mate together, press [[⌘Z]].
+4. Let go. The part stays mated. If you move or resize the part it's mounted on, or the agent remodels that part, the mated part moves with it. To undo the snap and the mate together, press [[⌘Z]].
 
 ![A servo dragged toward a bracket, with dots on the ports that fit](/help/snap-parts-together-by-their-mounting-holes/near.png)
 

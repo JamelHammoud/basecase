@@ -43,6 +43,7 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 
 | Check | What it looks at | Problems it can report |
 |---|---|---|
+| Sketch | Saved sketch supports and current reference geometry | Missing, ambiguous or unsupported faces, unsolved constraints and regeneration limits. Previous geometry stays visible while blocked. |
 | Parts attached | Whether each part is held by something | “These parts aren’t attached to anything, so they’d fall loose.” |
 | Screws | Every screw, insert and the hole it goes into | Screws ending in air, with no hole, too long, too short, off their holes or too deep. Empty inserts. Holes too small for an insert. Thin walls around an insert |
 | Assembly | Whether a build order exists | “A screwdriver can’t reach these screws, in any build order.” and “These parts can’t be put in place, in any build order.” |

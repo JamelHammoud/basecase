@@ -143,7 +143,6 @@ On November 16, 2026, `scratch/face-projection.test.ts` compared complete ordere
 
 The face-selection steps and screenshot in [Draw a part from a sketch or SVG](../../site/content/help/draw-a-part-from-a-sketch-or-svg.md) remain accurate. No control, output or visible state changes, so no article edit or screenshot is needed.
 
-
 ## SVG extraction appends accepted contours directly
 
 Whole-app search found sampling and short-contour filtering together only in `utils/svgTo3DParser.ts`. Its consumers are the Import SVG panel and studio draft restoration. Previews, extrusion and Edit in Sketch receive the same parsed contours. Filled holes formerly used a mapped list followed by a filtered result. Fallback outlines used a mapped list per source path, a flattened list, a filtered list and the final shape list. Accepted points now append directly to the retained lists. Sampled point arrays and final contour records still allocate.
@@ -151,3 +150,20 @@ Whole-app search found sampling and short-contour filtering together only in `ut
 For P fallback paths containing S subpaths, the change removes P + 2 staging arrays and two full traversals of subpath references. For 300 and 600 paths, that is 302 and 602 arrays. Each filled shape with holes also loses one mapped staging array. These are source-derived allocation counts, not measured heap usage or timings. Sampling and normalization costs remain unchanged.
 
 `svgTo3DParser.test.ts` covers real filled contours with holes, sizing, overrides and empty input. The fallback case forces the loader's empty-shape branch and checks order across multiple paths, exclusion of a short contour from bounds, sampled point count and source preservation. Actions, output geometry and visible states stay unchanged. Rechecking the [Sketch and SVG help article](../../site/content/help/draw-a-part-from-a-sketch-or-svg.md) found that its initial 64 mm size applies to the longer outline side, rather than always its width. The article corrects that sentence. Its steps, labels and screenshots still apply, so no new capture is needed. No timeout, retry or quarantine changes.
+
+## Sketch support preparation
+
+Measured on macOS with headless Chrome and the existing software GL harness on 16 November 2026. The documentation capture served the current source through Vite's development server and called the production geometry worker and document-result implementation. These are warm function measurements, not cold app startup or a production-bundle viewport benchmark. One warm-up preceded twelve recorded requests for one feature and an eight-feature chain. Every recorded request completed with no support finding.
+
+| Scope | Main preparation median / max | Worker median / max | Worker round trip median / max | Main commit median / max |
+| --- | --- | --- | --- | --- |
+| One feature | 0.045 / 0.12 ms | 0.2375 / 0.86 ms | 0.3225 / 1.055 ms | 0.01 / 0.04 ms |
+| Eight-feature chain | 0.3525 / 0.615 ms | 1.5575 / 4.03 ms | 1.8775 / 4.475 ms | 0.025 / 0.055 ms |
+
+One feature prepared one source and counted 864 coordinate bytes. Its UTF-8 input was 2,527 bytes and its retained result was 1,809 bytes. The chain prepared eight sources and counted 35,136 coordinate bytes. Its input was 15,157 bytes and its retained result was 14,455 bytes. The coordinate counter charges eight bytes per number, conservatively counting the Float32 triangle soup at twice its buffer size. Prepared soups are operation-local and are not retained after the result.
+
+Chrome DevTools collected garbage before and after each twelve-request series. Main-page used heap grew by 29,672 bytes for one feature and 39,084 bytes for the chain. Geometry-worker used heap grew by 193,600 and 148,992 bytes respectively. Main and worker backing storage did not grow in either series. These observations include runtime and DevTools overhead and do not prove zero heap growth or a peak-memory bound. Retained result bytes above are the serialized design records, not the whole browser heap.
+
+The implementation retains one active request and only the latest pending immutable document reference per workspace. Fingerprint and validation caches are weak maps. Jobs are bounded by 128 supported parts, sixteen levels, 512 sketch items, a 2 MiB input-value budget and 512 KiB per source record. Source node counts and profile sampling are checked before building geometry. Mesh coordinate counts are checked before exporting the triangle soup, and total retained prepared coordinates are capped at 16 MiB. Oversized jobs produce a finding before serialization to the worker. Freshness hashes only the records and sources participating in Sketch support, rather than serializing unrelated boolean geometry.
+
+The documentation capture's first cold navigation hit the existing 30-second deadline while Vite compiled the module graph. The scratch capture setup then fetched each transformed module once before browser navigation. That preparation covered 2,588 modules in 20.23 seconds, with no failed response. The capture then opened the studio in 4.879 seconds. No app timeout, test retry or CI deadline changed. This scratch prewarming is not a shipped startup change.

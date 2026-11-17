@@ -15,6 +15,8 @@ import { localTriangles } from './meshMeasure';
 import { worldCollision } from './worldCollision';
 import type { WorldItem } from '../sim/mjcfTypes';
 import type { ScenePart } from '../types/robotics';
+import { regenerateSketchParts } from './sketchSupportOps';
+import { sketchFace, type SketchFaceJob } from './sketchFaceOps';
 
 type Vec3 = [number, number, number];
 
@@ -171,6 +173,9 @@ async function parseMesh({ data, path }: ParseMeshJob): Promise<Float32Array | n
 const transferLines = (lines: Float32Array) => reply(lines, [lines.buffer]);
 
 export const geometryHandlers = {
+  sketchFace: (job: SketchFaceJob) => reply(sketchFace(job)),
+  sketchSupports: ({ parts, force }: { parts: ScenePart[]; force: string[] }) =>
+    reply(regenerateSketchParts(parts, force)),
   worldCollision: async (part: WorldItem) => {
     const hulls = await worldCollision(part);
 

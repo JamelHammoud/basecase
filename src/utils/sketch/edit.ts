@@ -1,3 +1,4 @@
+import { pointConstraints, selectedDistance } from './distanceConstraint';
 import { solveSketch, type Drag } from './solver';
 import type { PairKind, Sketch, SketchConstraint, SketchEntity, SketchPoint, Vec2 } from './types';
 
@@ -209,7 +210,7 @@ export function setDimension(sketch: Sketch, entity: string, value: number): Ske
   return solved(withConstraints(sketch, [added]), anchorPoint(sketch, entity));
 }
 
-export type ApplyKind = PairKind | 'horizontal' | 'vertical' | 'coincident';
+export type ApplyKind = PairKind | 'horizontal' | 'vertical' | 'coincident' | 'distance';
 
 const onlyLines = (sketch: Sketch, ids: string[]) => ids.every((id) => entityOf(sketch, id)?.kind === 'line');
 
@@ -231,11 +232,13 @@ export function applicableConstraints(sketch: Sketch, ids: string[]): ApplyKind[
 
   if (lines === 1 && rounds === 1) return ['tangent'];
 
-  return points >= 1 ? ['coincident'] : [];
+  return points >= 1 ? pointConstraints(sketch, ids, { points, lines }) : [];
 }
 
 const pairConstraint = (kind: ApplyKind, ids: string[], sketch: Sketch): NewConstraint => {
   if (kind === 'horizontal' || kind === 'vertical') return { kind, line: ids[0] };
+
+  if (kind === 'distance') return { kind, a: ids[0], b: ids[1], value: selectedDistance(sketch, ids) };
 
   if (kind === 'coincident') {
     const [p, q] = pointOf(sketch, ids[0]) ? ids : [ids[1], ids[0]];
@@ -249,7 +252,7 @@ const pairConstraint = (kind: ApplyKind, ids: string[], sketch: Sketch): NewCons
 export function addConstraint(sketch: Sketch, kind: ApplyKind, ids: string[]): Sketch | null {
   if (!applicableConstraints(sketch, ids).includes(kind)) return null;
 
-  if (kind !== 'coincident' && kind !== 'tangent' && kind !== 'equal' && !onlyLines(sketch, ids)) return null;
+  if (!['coincident', 'tangent', 'equal', 'distance'].includes(kind) && !onlyLines(sketch, ids)) return null;
 
   return solved(withConstraints(sketch, [pairConstraint(kind, ids, sketch)]));
 }

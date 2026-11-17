@@ -65,7 +65,10 @@ function selectedBrowserShard(shard) {
   ]);
 
   return {
-    native: files.includes('boardRouted.e2e.test.ts') || files.includes('boardRouting.e2e.test.ts'),
+    native:
+      files.includes('boardRouted.e2e.test.ts') ||
+      files.includes('boardRouting.e2e.test.ts') ||
+      files.includes('kitElectrical.e2e.test.ts'),
     routing: files.includes('boardRouting.e2e.test.ts'),
   };
 }

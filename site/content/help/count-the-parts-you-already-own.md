@@ -55,7 +55,7 @@ To put the old count back, click **Undo** in the toast. To clear a count, type 0
 - Basecase doesn't take parts off your count when you build a robot, so update the count yourself after a build.
 - The Budget check and **Buy All** leave out the parts you own.
 
-Connectors added by a [board placement](/help/fit-an-electronics-board) use the same catalog product’s on-hand count as connectors placed separately.
+Connectors added by a [board placement](/help/fit-an-electronics-board) use the same catalog product’s on-hand count as connectors placed separately. A [robot kit](/help/export-a-robot-kit) still packs every connector the assembly needs, including the ones you own.
 
 Classroom grading uses the full design cost, without subtracting the teacher's on-hand inventory. See [Grade a class](/help/grade-a-class).
 

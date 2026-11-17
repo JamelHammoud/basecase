@@ -17,3 +17,29 @@ export function electricalSourceJson(value: unknown, indent?: number): string {
     indent,
   );
 }
+
+export function checkElectricalSize(files: Record<string, string>, maxBytes: number) {
+  if (!Number.isFinite(maxBytes)) return;
+
+  let bytes = 0;
+
+  for (const text of Object.values(files)) {
+    if (text.length + bytes > maxBytes) throw new Error('Kit export exceeds 256 MB.');
+
+    for (const character of text) {
+      const point = character.codePointAt(0)!;
+
+      bytes += utf8Width(point);
+    }
+
+    if (bytes > maxBytes) throw new Error('Kit export exceeds 256 MB.');
+  }
+}
+
+function utf8Width(point: number) {
+  if (point < 0x80) return 1;
+
+  if (point < 0x800) return 2;
+
+  return point < 0x10000 ? 3 : 4;
+}

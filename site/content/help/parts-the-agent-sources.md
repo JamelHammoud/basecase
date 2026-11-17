@@ -39,6 +39,8 @@ The bill of materials gives sourced parts their own section, **Added by Agent**.
 
 Prices for sourced items stay estimates until you save the price you see with **Add Price**.
 
+A generated carrier uses PCB fabrication rather than a purchased module line. Sourced modules mounted on it keep their own bill-of-materials identities. Its manufacturing files belong in the [robot kit](/help/export-a-robot-kit).
+
 Sourced parts keep manufacturer and supplier part numbers separately when the agent supplies them. A supplier record can also keep its ordering unit, conversion to pieces and source link. Missing facts stay blank in the spreadsheet, as described in [Export remaining purchases](/help/export-remaining-purchases).
 
 ## When a sourced part counts as real

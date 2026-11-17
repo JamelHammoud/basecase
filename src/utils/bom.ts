@@ -251,6 +251,9 @@ type PartTally = Pick<Bom, 'printed' | 'standIns' | 'unmeasured' | 'madeElsewher
 };
 
 function tallyPart(t: PartTally, p: ScenePart, project: ProjectSettings, m: MeshMeasure | undefined) {
+  if (p.id === project.electronicsBoard?.partId)
+    return t.madeElsewhere.push({ id: p.id, name: p.name, process: 'PCB fabrication' });
+
   const key = boughtKey(p);
 
   if (key) return addCount(t.counts, key, 1, [p.id].filter(Boolean));

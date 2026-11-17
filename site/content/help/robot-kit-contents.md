@@ -26,6 +26,14 @@ The files in a manufacturing kit archive connect assembly demand, remaining purc
 | `drawings/*.svg` | Editable vector sheets from the same drawing preparation |
 | `drawings/*.stl` | Matching source geometry in millimeters, Z up, before guide-letter cuts on print plates |
 | `drawings/drawings.json` | Source identity, geometry and file hashes, projection matrices, quantities, datums and numerical allowances |
+| `electrical/robot.kicad_sch` | Current editable schematic for a generated carrier |
+| `electrical/robot.kicad_pcb` | Editable board source, including diagnostic routed sources when rejected |
+| `electrical/placement.json` | Placement identities, terminals, physical geometry evidence and unresolved requirements |
+| `electrical/source.json` | Electrical inputs and geometry identities bound to the source fingerprint |
+| `electrical/requirements.json` | Actual unresolved electrical and board requirements, with available validator status |
+| `electrical/validation.json` | Native validation evidence when validation ran |
+| `electrical/manifest.json` | Source, board and geometry fingerprints and SHA-256 hashes of electrical artifacts |
+| `electrical/fabrication/*` | Gerbers and drill files included only after the existing native acceptance path accepts them |
 | `kit.json` | Design fingerprint, guide plan, packing, purchases, print settings, wiring endpoints, sheet outputs, output references and Checks |
 
 ## Packing and purchases
@@ -41,6 +49,16 @@ The manifest's `purchases` list keeps total demand, owned quantities and remaini
 Each printed part points to its material's 3MF file and plate number. Additional print copies appear in those output references and in unassigned packing rows. Filament demand includes those copies. The manifest records materials, infill, process selection, printer and label omissions. Files contain manufacturing geometry rather than sliced G-code.
 
 The servo sheet uses the exact entries in `joint_map.json`, including names, bus IDs and catalog variants. The sheet records identities and doesn’t program servos.
+
+## Carrier boards
+
+A generated carrier appears once in `fabricated`, with process `PCB`, and retains its ordinary scene identity in the guide and packing list. Its box geometry is excluded from FDM plates and sheet cutting. Mechanical drawing preparation excludes the carrier because its manufacturing geometry lives in the electrical sources.
+
+Connector demand is assigned to the carrier’s guide step. Reused catalog modules and mounting hardware retain their own demand. Owned stock reduces purchases, without reducing packing quantities.
+
+The kit’s `electrical` record binds the electrical manifest hash to its design fingerprint and names the carrier identity. `fabrication` is `included` or `missing`. Missing fabrication doesn’t make diagnostic sources a complete board manufacturing package. Unrouted, stale and unsupported sources retain their requirements. No soldering or commissioning plan is included.
+
+Native software validation establishes neither electrical performance nor physical fit. Checks remains the build-readiness verdict.
 
 ## Checks and limits
 

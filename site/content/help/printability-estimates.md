@@ -57,6 +57,8 @@ To compare that total with the hours available, [Set a time budget](/help/set-a-
 
 A printed part meant to be clear, such as one named “Front Glass”, blocks the build. A printer can't make clear parts. A part bigger than the plate blocks it too. **Parts** in Print mode says how many pieces to split it into.
 
+Generated carrier boards leave print plates and filament totals. Their manufacturing files belong in the [robot kit](/help/export-a-robot-kit).
+
 Parts assigned a sheet material leave printability checks, plates and filament totals. For a flat clear panel, see [Cut parts from sheet](/help/cut-parts-from-sheet) to use acrylic.
 
 When a part is flagged, [A part is too big to print or has thin walls](/help/troubleshoot-build-part-wont-print) has the fixes.

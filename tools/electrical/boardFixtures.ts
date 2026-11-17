@@ -9,7 +9,7 @@ import { mountedBoardParts } from '../../src/wiring/boardMounts';
 import { boardComponents } from '../../src/wiring/boardComponents';
 import { reconcileRoutedBoard } from '../../src/wiring/boardReconcile.mjs';
 
-export async function boardFixture(
+export async function boardFixtureInput(
   scene: WiringFixture,
   configure?: (definition: ReturnType<typeof defineBoard>) => void,
 ) {
@@ -35,6 +35,15 @@ export async function boardFixture(
     project: { ...scene.project, electronicsBoard: board },
     meshFiles: Object.fromEntries(meshes),
   };
+
+  return { input, board };
+}
+
+export async function boardFixture(
+  scene: WiringFixture,
+  configure?: (definition: ReturnType<typeof defineBoard>) => void,
+) {
+  const { input, board } = await boardFixtureInput(scene, configure);
   const made = await electricalPackage(input);
   const reopened = await electricalPackage({
     ...JSON.parse(JSON.stringify({ parts: input.parts, project: input.project })),

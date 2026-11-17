@@ -4,7 +4,7 @@ import { downloadBytes } from '../utils/downloadBytes';
 import { errorMessage } from '../utils/errorMessage';
 import { useLatestRef } from '../utils/useLatestRef';
 import { fileSafe } from './helpers';
-import { exportKit } from './kitExport';
+import { exportKitResult } from './kitExport';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 export function useKitExport(core: WorkspaceCore) {
@@ -30,13 +30,21 @@ export function useKitExport(core: WorkspaceCore) {
     });
 
     try {
-      const bytes = await exportKit(core, { signal: abort.signal, current: () => latest.current, drawingOptions });
+      const result = await exportKitResult(core, {
+        signal: abort.signal,
+        current: () => latest.current,
+        drawingOptions,
+      });
 
-      downloadBytes(bytes, `${fileSafe(core.scene.sceneName)}-kit.zip`, 'application/zip');
-      core.showToast(`Exported ${core.scene.sceneName}`);
+      downloadBytes(result.bytes, `${fileSafe(core.scene.sceneName)}-kit.zip`, 'application/zip');
+      core.showToast(
+        result.electrical?.fabrication === 'missing'
+          ? 'Exported kit without PCB fabrication. Read electrical/requirements.json.'
+          : `Exported ${core.scene.sceneName}`,
+      );
     } catch (error) {
       if (abort.signal.aborted) core.toasts.dismissToast();
-      else core.showToast(`Couldn’t export the kit. ${errorMessage(error)}`, { tone: 'error' });
+      else core.showToast(errorMessage(error), { tone: 'error' });
     } finally {
       active.current = null;
     }

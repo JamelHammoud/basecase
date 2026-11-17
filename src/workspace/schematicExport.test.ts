@@ -118,3 +118,50 @@ it.each(['supply', 'parts', 'cancel'])('refuses %s changes during native board v
   await expect(schematicExport(core, run)).rejects.toThrow();
   expect(work.dispose).toHaveBeenCalled();
 });
+
+it.each(['cancel', 'placement', 'routing evidence'] as const)(
+  'discards Kit electrical work after %s',
+  async (fault) => {
+    const { kitElectricalExport } = await import('./schematicExport');
+    const { core, run, controller } = context();
+    const { board, part } = defineBoard(core, 'board');
+
+    core.parts = [...core.parts, part];
+    core.project = { ...core.project, electronicsBoard: board };
+    core.docs.partsRef.current = core.parts;
+    core.docs.projectRef.current = core.project;
+    work.build.mockImplementationOnce(async () => ({ files: {}, sourceFingerprint: 'source', request: null }));
+    work.build.mockImplementationOnce(async () => {
+      if (fault === 'cancel') controller.abort();
+
+      if (fault === 'placement')
+        core.docs.projectRef.current = { ...core.project, electronicsBoard: { ...board, side: 'bottom' } };
+
+      if (fault === 'routing evidence')
+        core.docs.projectRef.current = {
+          ...core.project,
+          electronicsBoard: {
+            ...board,
+            routed: {
+              schema: 1,
+              pcb: '',
+              hash: '',
+              sourceFingerprint: '',
+              rules: null,
+              evidence: {
+                key: 'changed',
+                version: null,
+                issues: ['board-validator'],
+                report: null,
+                metrics: { cliMs: 0, outputBytes: 0 },
+              },
+            },
+          },
+        };
+
+      return { files: {}, manifest: {} };
+    });
+    await expect(kitElectricalExport(core, run, 'design')).rejects.toThrow();
+    expect(work.dispose).toHaveBeenCalled();
+  },
+);

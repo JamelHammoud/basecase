@@ -105,3 +105,7 @@ Fit-coupon overlap scoring reads the two boxes' extrema directly, without clonin
 Print-service account tests match `API key` exactly so Roboflow’s separate field does not match.
 
 Printer settings leave Test Connection as the row's action name and show connection feedback beside it. Empty discovery leaves the On this network heading above an empty list. The existing Add Printer control remains available. [Settings coverage and copy decisions](toolbar-and-settings.md#testing-coverage) records the unchanged browser paths and their gaps.
+
+### Carrier boards in Kit
+
+A generated carrier belongs to PCB fabrication. Kit excludes its scene box from print plates, sheet cut files and mechanical drawing preparation. Its editable manufacturing sources and accepted fabrication output live in `electrical/`, bound to the same design as the plates. Other manufactured parts continue through the existing drawing and plate producers. Designs without a carrier retain the mechanical-only archive. Total connector and mounting demand remains in packing even when purchases are covered by stock. [Kit contents](../../site/content/help/robot-kit-contents.md) describes the archive and its diagnostic limits. [Build](build.md#electronics-in-manufacturing-kits) owns electrical preparation and coverage. Electrical size contributes to the existing 256 MB expanded archive limit before composition or compression.

@@ -34,7 +34,15 @@ export function kitDrawings(job: KitJob, prepared: PreparedDrawings) {
     sheet.partIds.forEach((id) => bound.add(id));
   }
 
-  if (job.parts.some((part) => part.role === 'solid' && !boughtKey(part) && !bound.has(part.id)))
+  if (
+    job.parts.some(
+      (part) =>
+        part.id !== job.project.electronicsBoard?.partId &&
+        part.role === 'solid' &&
+        !boughtKey(part) &&
+        !bound.has(part.id),
+    )
+  )
     throw new Error('Include every fabricated part in the kit drawings.');
 
   return {

@@ -42,6 +42,8 @@ This part comes from somewhere other than your printer, like a CNC-machined or l
 
 Flat parts with only through features can use [Cut parts from sheet](/help/cut-parts-from-sheet) instead. Older CNC Aluminum and Laser-Cut Acrylic/Carbon parts join **Sheet** automatically when their geometry qualifies. Parts with pockets keep the source blocker.
 
+A generated carrier’s PCB fabrication classification doesn’t clear this blocker. [Exporting a robot kit](/help/export-a-robot-kit) preserves the Checks verdict.
+
 1. Click **Fix** on the problem to have the agent find a maker for it.
 2. Or, if you'll print the part yourself, set its **Material** in the Inspector to **Printed PLA / PETG**.
 

@@ -94,4 +94,4 @@ Time keeps assembly and servo setup as estimates after slicing. It excludes deli
 
 Open the Build tab and follow [Get a robot ready to build](/help/get-a-robot-ready-to-build).
 
-Export the handoff as one archive with [Export a robot kit](/help/export-a-robot-kit). It keeps packing demand separate from remaining purchases and preserves the Checks verdict.
+Export the handoff as one archive with [Export a robot kit](/help/export-a-robot-kit). It keeps packing demand separate from remaining purchases and preserves the Checks verdict. A generated carrier adds electrical sources and available validation evidence, with fabrication output only after native acceptance.

@@ -1,3 +1,5 @@
+import { boardPurchases } from '../wiring/boardPurchases';
+import type { ElectronicsBoard } from '../wiring/boardTypes';
 import type { GuidePlan } from '../guide/guideTypes';
 import type { BomLine } from '../utils/bom';
 import type { PackingRow } from './types';
@@ -5,8 +7,10 @@ import type { PackingRow } from './types';
 export function packDemand(
   lines: Array<Pick<BomLine, 'key' | 'name' | 'qty' | 'unit' | 'partIds'>>,
   guide: GuidePlan,
+  board?: ElectronicsBoard,
 ): PackingRow[] {
   const first = new Map<string, { module: string; step: number; index: number }>();
+  const boardCounts = new Map(boardPurchases(board).map((item) => [item.key, item.qty]));
 
   guide.steps.forEach((step, index) => {
     for (const id of step.partIds) {
@@ -33,7 +37,13 @@ export function packDemand(
       row.partIds.push(...partIds);
       rows.set(index, row);
     };
-    const ids = line.unit === 'pcs' ? line.partIds : [];
+    const boardQty = boardCounts.get(line.key) ?? 0;
+    const ids =
+      line.unit === 'pcs'
+        ? line.partIds.flatMap((id) =>
+            id === board?.partId && boardQty ? Array.from({ length: boardQty }, () => id) : [id],
+          )
+        : [];
 
     if (ids.length > line.qty) throw new Error(`Kit quantities disagree for ${line.name}.`);
 

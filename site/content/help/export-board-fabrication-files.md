@@ -41,6 +41,6 @@ The example uses declared limits of 0.2 mm clearance, 0.25 mm track width and 0.
 
 The package includes seven Gerbers, separate plated and non-plated Excellon drills, the Gerber job, and the editable routed board. You can find file hashes in `manifest.json` and the native report with its source binding in `validation.json`.
 
-Basecase leaves fabrication files out if you have missing inputs, stale source, DRC violations, incomplete connections, schematic mismatches or board-fit blockers. You can still access the editable board and requirements.
+Basecase leaves fabrication files out if you have missing inputs, stale source, DRC violations, incomplete connections, schematic mismatches or board-fit blockers. You can still access the editable board and requirements. [Export a robot kit](/help/export-a-robot-kit) packages those electrical files with the same design’s mechanical outputs.
 
 You can't use DRC to establish current capacity, thermal performance or physical electrical behavior. Unknown electrical requirements remain blockers in **Checks**. Exporting fabrication files doesn't mean the whole robot is ready to build.

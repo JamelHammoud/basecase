@@ -171,23 +171,28 @@ describe('kit preparation snapshot', () => {
     }
   });
 
-  it.each(['parts', 'project', 'name', 'scene'] as const)('discards an edit to %s during export', async (field) => {
-    const { core, run } = context();
+  it.each(['parts', 'project', 'name', 'scene', 'stock'] as const)(
+    'discards an edit to %s during export',
+    async (field) => {
+      const { core, run } = context();
 
-    calls.print.mockImplementation(async () => {
-      if (field === 'parts') core.docs.partsRef.current = [...core.parts];
+      calls.print.mockImplementation(async () => {
+        if (field === 'parts') core.docs.partsRef.current = [...core.parts];
 
-      if (field === 'project') core.docs.projectRef.current = { ...core.project, material: 'PETG' };
+        if (field === 'project') core.docs.projectRef.current = { ...core.project, material: 'PETG' };
 
-      if (field === 'scene') core.scene = { ...core.scene, sceneId: 'other' };
+        if (field === 'stock') calls.purchases.mockReturnValue({ 'component:jst-b3b-eh-a': { onHand: 1 } });
 
-      if (field === 'name') core.scene = { ...core.scene, sceneName: 'Edited' };
+        if (field === 'scene') core.scene = { ...core.scene, sceneId: 'other' };
 
-      return kitFixture().print;
-    });
-    await expect(prepareKit(core, run)).rejects.toThrow('scene changed');
-    expect(calls.map).not.toHaveBeenCalled();
-  });
+        if (field === 'name') core.scene = { ...core.scene, sceneName: 'Edited' };
+
+        return kitFixture().print;
+      });
+      await expect(prepareKit(core, run)).rejects.toThrow('scene changed');
+      expect(calls.map).not.toHaveBeenCalled();
+    },
+  );
 
   it.each(['width', 'depth', 'height'] as const)(
     'discards a custom printer %s edit during export',

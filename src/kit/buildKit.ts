@@ -1,3 +1,4 @@
+import { checkedKitElectrical } from './electrical';
 import { kitDrawings, checkedKitDrawings } from './drawings';
 import { registerSourced } from '../data/sourcedItems';
 import { servoLayout } from '../robot/sceneRobot';
@@ -73,6 +74,9 @@ export function kitManifest(job: KitJob): KitManifest {
   }));
   const demand = [
     ...bom.lines.filter((line) => line.category !== 'Printed parts'),
+    ...job.parts
+      .filter((part) => part.id === job.project.electronicsBoard?.partId)
+      .map((part) => ({ key: itemKeyOf(part), name: part.name, qty: 1, unit: 'pcs' as const, partIds: [part.id] })),
     ...printed.map((part) => ({
       key: part.key,
       name: part.name,
@@ -89,8 +93,12 @@ export function kitManifest(job: KitJob): KitManifest {
     guide: job.guide.plan,
     guideEvidence: { fingerprint: job.guide.fingerprint, orderTimedOut: !!job.guide.orderTimedOut },
     purchases: bom.lines,
-    packing: packDemand(demand, job.guide.plan),
+    packing: packDemand(demand, job.guide.plan, job.project.electronicsBoard),
     printed,
+    electrical: job.electrical?.manifest,
+    fabricated: job.project.electronicsBoard
+      ? [{ partId: job.project.electronicsBoard.partId, process: 'PCB', qty: 1 }]
+      : undefined,
     servos: servoSheet(job),
     wiring: job.wiring,
     drawings: job.drawings ? kitDrawings(job, job.drawings).manifest : undefined,
@@ -117,10 +125,16 @@ export async function buildKit(job: KitJob): Promise<Uint8Array> {
   checkKitSource(job.parts);
 
   const sourceBytes =
-    Object.values(job.files).reduce((sum, bytes) => sum + bytes.byteLength, 0) + job.guide.html.length * 2;
+    [
+      ...Object.values(job.files),
+      ...Object.values(job.electrical?.files ?? {}),
+      ...Object.values(job.drawings?.files ?? {}),
+    ].reduce((sum, bytes) => sum + bytes.byteLength, 0) +
+    job.guide.html.length * 2;
 
   if (sourceBytes > KIT_MAX_BYTES) throw new Error('Kit export exceeds 256 MB.');
 
+  const electrical = await checkedKitElectrical(job);
   const manifest = kitManifest(job);
   const drawings = await checkedKitDrawings(job);
   const text = new TextEncoder();
@@ -137,6 +151,7 @@ export async function buildKit(job: KitJob): Promise<Uint8Array> {
     ]),
   ]);
   const files = {
+    ...electrical,
     ...drawings.files,
     ...Object.fromEntries(Object.entries(job.files).map(([name, bytes]) => [`plates/${name}.3mf`, bytes])),
     ...Object.fromEntries(kitSheets(job).map((sheet) => [sheet.file, text.encode(sheet.dxf)])),

@@ -23,6 +23,7 @@ jobs:
       lerobot: ${{ steps.filter.outputs.lerobot }}
       vision: ${{ steps.filter.outputs.vision }}
       daemon: ${{ steps.filter.outputs.daemon }}
+      electrical: ${{ steps.filter.outputs.electrical }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -34,7 +35,7 @@ jobs:
         env:
           EVENT: ${{ github.event_name }}
         run: |
-          if [ "$EVENT" != pull_request ]; then printf 'app=true\nros=true\nios=true\nlerobot=true\nvision=true\ndaemon=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ "$EVENT" != pull_request ]; then printf 'app=true\nros=true\nios=true\nlerobot=true\nvision=true\ndaemon=true\nelectrical=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
           files=$(git diff --name-only HEAD^1 HEAD)
           pattern='^(electron/|forge/|hw/|build/|tools/forge/|tools/native/|e2e/app/|\.github/workflows/|package\.json$|package-lock\.json$|vitest\.app\.config\.ts$)'
           if grep -qE "$pattern" <<< "$files"; then echo "app=true"; else echo "app=false"; fi >> "$GITHUB_OUTPUT"
@@ -48,6 +49,13 @@ jobs:
           if grep -qE "$vision" <<< "$files"; then echo "vision=true"; else echo "vision=false"; fi >> "$GITHUB_OUTPUT"
           daemon='^(hw/|verify/hw/|\.github/workflows/(check|release)\.yml$)'
           if grep -qE "$daemon" <<< "$files"; then echo "daemon=true"; else echo "daemon=false"; fi >> "$GITHUB_OUTPUT"
+          electrical='^(src/wiring/|src/workspace/([^/]*Schematic|schematic)[^/]*|src/utils/(engineeringPower|powerSources|servoAmps)\.ts$|src/data/(components|connectorPorts|componentPorts|supplies|sourcedItems)\.ts$|tools/electrical/|e2e/schematic\.e2e\.test\.ts$|\.github/workflows/(electrical|check)\.yml$|package(-lock)?\.json$)'
+          if grep -qE "$electrical" <<< "$files"; then echo "electrical=true"; else echo "electrical=false"; fi >> "$GITHUB_OUTPUT"
+
+  electrical:
+    needs: changes
+    if: needs.changes.outputs.electrical == 'true'
+    uses: ./.github/workflows/electrical.yml
 
   daemon-arm64:
     needs: changes
@@ -447,7 +455,23 @@ jobs:
   check:
     if: always()
     needs:
-      [changes, static, unit, e2e, e2e-changed, e2e-windows, app, ros, ios, lerobot, vision, daemon-arm64, credit, copy]
+      [
+        changes,
+        static,
+        unit,
+        e2e,
+        e2e-changed,
+        e2e-windows,
+        app,
+        ros,
+        ios,
+        lerobot,
+        vision,
+        daemon-arm64,
+        electrical,
+        credit,
+        copy,
+      ]
     runs-on: ubuntu-latest
     steps:
       - name: Pass only when every job that had to run passed
@@ -470,6 +494,8 @@ jobs:
           VISION_NEEDED: ${{ needs.changes.outputs.vision }}
           DAEMON: ${{ needs.daemon-arm64.result }}
           DAEMON_NEEDED: ${{ needs.changes.outputs.daemon }}
+          ELECTRICAL: ${{ needs.electrical.result }}
+          ELECTRICAL_NEEDED: ${{ needs.changes.outputs.electrical }}
           WINDOWS_E2E: ${{ needs.e2e-windows.result }}
           COPY: ${{ needs.copy.result }}
           EVENT: ${{ github.event_name }}
@@ -486,6 +512,9 @@ jobs:
           want_changed=success
           [ "$FULL" = true ] && want_changed=skipped
           [ "$E2E_CHANGED" = "$want_changed" ] || exit 1
+          want_electrical=skipped
+          [ "$ELECTRICAL_NEEDED" = true ] && want_electrical=success
+          [ "$ELECTRICAL" = "$want_electrical" ] || exit 1
           want_app=skipped
           [ "$FULL" = true ] && [ "$APP_NEEDED" = true ] && want_app=success
           [ "$APP" = "$want_app" ] || exit 1

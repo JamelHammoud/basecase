@@ -1,3 +1,4 @@
+import type { PurchaseIdentity } from './purchasing';
 import type { SheetFields } from './sheet';
 import type { Case } from '../cases/schema';
 import type { Routine, TransitionProof } from '../routines/schema';
@@ -301,6 +302,7 @@ export interface EnteredPrice {
 }
 
 export interface PurchaseRecord {
+  identity?: PurchaseIdentity;
   url?: string;
   asin?: string;
   title?: string;

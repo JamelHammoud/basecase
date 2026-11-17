@@ -2,6 +2,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
 import {
   currentDesign,
+  modelHashes,
   skillFreshness,
   skillHash,
   type ArenaEvidence,
@@ -19,6 +20,7 @@ import type { SnapshotRef } from './snapshots';
 import type { TwinVerdict } from '../fleet/twinArena';
 import { plural } from '../../electron/plural.mjs';
 import { percent } from '../../electron/percent.mjs';
+import { robotSchema, type RobotSchema } from './robotSchema';
 
 export interface MoveTag {
   animation: string;
@@ -49,6 +51,8 @@ export interface SkillRecord {
   hash: string;
   name: string;
   kit: TrainedEntry | null;
+  kitSource?: RobotSchema;
+  warmStartFrom?: string;
   move?: MoveTag | null;
   case?: CaseTag | null;
   coach?: CoachTag | null;
@@ -62,6 +66,17 @@ export interface SkillRecord {
   createdAt: string;
 }
 
+function kitSource(skill: Skill, model?: SimModel): RobotSchema | undefined {
+  if (!model || !skill.evidence?.passed || skill.origin?.method !== 'motor-kit') return;
+
+  const hashes = modelHashes(model);
+  const sameModel = Object.entries(hashes).every(([key, value]) => value === skill.binding[key as keyof typeof hashes]);
+
+  if (!sameModel) return;
+
+  return robotSchema(model, { joints: skill.action.joints });
+}
+
 export function skillRecord(
   skill: Skill,
   options: {
@@ -71,14 +86,18 @@ export function skillRecord(
     coach?: CoachTag;
     goal?: string | null;
     environment?: Environment | null;
+    model?: SimModel;
   },
 ): SkillRecord {
   const rebuilt = !!options.kit || !!options.move;
+  const source = options.kit ? kitSource(skill, options.model) : undefined;
 
   return {
     hash: skillHash(skill),
     name: skill.name,
     kit: options.kit,
+    ...(source ? { kitSource: source } : {}),
+    ...(skill.warmStartFrom ? { warmStartFrom: skill.warmStartFrom } : {}),
     ...(options.move ? { move: options.move } : {}),
     ...(options.case ? { case: options.case } : {}),
     ...(options.coach ? { coach: options.coach } : {}),

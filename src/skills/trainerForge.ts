@@ -186,6 +186,14 @@ export function trainerForge(options: TrainerForgeOptions): ForgeRunner {
     });
 
   runner.selected = remoteTrainingBridge.recordSelection;
+  runner.canWarm = async () => {
+    if (options.recoveryKey && !options.background) return true;
+
+    const status = await platformBridge.trainStatus();
+    const target = options.background ? status.local : status;
+
+    return target?.ready === true && target.engine === 'forge';
+  };
 
   return runner;
 }

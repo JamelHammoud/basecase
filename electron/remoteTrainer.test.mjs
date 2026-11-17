@@ -47,6 +47,21 @@ const flush = async () => {
   await new Promise((resolve) => setImmediate(resolve));
 };
 
+describe('local training capability under remote selection', () => {
+  it('reports the actual local runner without inheriting remote readiness or engine', () => {
+    const { trainer } = fixture();
+
+    trainer.forge = null;
+    expect(trainer.status()).toMatchObject({
+      ready: true,
+      engine: 'forge',
+      local: { ready: false, engine: 'python' },
+    });
+    trainer.forge = 'fixture-forge';
+    expect(trainer.status().local).toEqual({ ready: true, engine: 'forge' });
+  });
+});
+
 describe('the shared remote training queue', () => {
   it('keeps training without a durable workflow on the local runner', () => {
     const { trainer, service } = fixture();

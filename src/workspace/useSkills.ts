@@ -42,6 +42,7 @@ import { useSkillStress } from './useSkillStress';
 import { trainingProblem } from './trainingProblem';
 import { scriptedDrive } from '../routines/physicsDrive';
 import { KIT_SKILL_NAMES } from '../routines/physicsBody';
+import { prepareLocalKitPolicy } from '../skills/findSkills';
 
 const BUILD_DEBOUNCE_MS = 1500;
 const KIT_CONTEXT_NAMES = new Set<string>(Object.values(KIT_SKILL_NAMES));
@@ -74,6 +75,7 @@ function useRuntime({ workspaceId, setProject, project, parts }: SkillsInput) {
         forge: platform.forge,
         save: platform.save,
         loadSkill: platform.loadSkill,
+        prepareKitWarm: prepareLocalKitPolicy,
         snapshots: platform.snapshots,
         onRecord: (record) => setProject((p) => ({ ...p, skills: withRecord(p.skills ?? [], record) })),
         onChange: setJobs,
@@ -83,6 +85,7 @@ function useRuntime({ workspaceId, setProject, project, parts }: SkillsInput) {
   );
 
   useLayoutEffect(() => {
+    runtime.setKitSources(() => (IS_WEB_DEMO ? [] : (project.skills ?? [])));
     runtime.setRecoveryContext(hashOf({ animations: project.animations ?? [], cases: project.cases ?? [] }));
     runtime.setKitContext(async (model) => {
       const rows = skillRows({

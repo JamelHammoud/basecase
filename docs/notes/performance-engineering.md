@@ -243,3 +243,25 @@ For F floor contacts and K downstream contacts, the previous calculation filtere
 The existing [Servo torque and sizing](../../site/content/help/servo-torque-and-sizing.md) and [Checks in the Build tab](../../site/content/help/build-checks.md) articles still describe the same stance estimates, verdicts and actions. No user action, label or screenshot state changes, so both articles remain unchanged.
 
 Validation on macOS arm64 passed 1,841 related tests across 291 files, with one existing file and test skipped. That run took 64.82 seconds. Its initial formatting and type findings were confined to the new test fixture. After correction, changed-file checks passed formatting, lint, documentation, site copy for 297 pages, types and the focused comparison test. Logs remain in `scratch/check-stance.log` and `scratch/check-stance-correction.log`. Copy accounting is net zero. Preflight flagged the unchanged torque help article, checked above.
+
+## Electrical package preparation
+
+Preparation runs in a dedicated worker. The interaction thread snapshots electrical inputs and dispatches the job, then delivers the ZIP. Mesh, sculpt, CAD and torque-sample payloads are omitted from the snapshot. Export does not await geometric cable routing, which belongs to the existing wiring measurement pipeline. The first production walkthrough exposed that unnecessary dependency by exceeding the existing download deadline on 180 modules. Removing the routing wait allowed both sizes to complete without changing any deadline or retry.
+
+The pure package producer was measured on a shared macOS arm64 host with Node 26.13.0. Scenes contained one Waveshare adapter, C001 servos, ordinary joints and a declared 6 V, 20 A tether. One warmup preceded five preparations per size. Timing includes projection, canonical source hashing, schematic and library serialization and ZIP compression.
+
+| Servos | Connector and requirement endpoints | ZIP bytes | Median preparation | Range |
+| --- | --- | --- | --- | --- |
+| 1 | 7 | 11,672 | 1.81 ms | 1.39–2.77 ms |
+| 180 | 365 | 157,458 | 45.30 ms | 40.01–49.12 ms |
+
+These are Node producer measurements, not renderer or CI latency. The repeated-module preparation exceeds a frame budget, so worker ownership is required rather than a scheduling delay. Browser measurements below use the production desktop harness and separate interaction-thread snapshot, synchronous dispatch and delivery work from total asynchronous preparation. They are local observations, not timing assertions.
+
+| Production fixture | Snapshot | Synchronous dispatch | Delivery | Total async preparation |
+| --- | --- | --- | --- | --- |
+| one-servo | 0.38 ms | 0.15 ms | 1.32 ms | 124.94 ms |
+| 180-servos | 0.09 ms | 0.29 ms | 1.17 ms | 144.06 ms |
+
+The production walkthrough delivered both ZIPs without download failures or app errors. The small scene includes selected source, fuse-holder and switch metadata. The repeated scene uses 180 servo modules without joints to isolate export work. Total preparation includes worker startup and asynchronous waiting, not continuous interaction-thread execution. These single browser samples do not establish a latency distribution or a whole-page frame profile.
+
+The measurement source and logs remain in `scratch/electrical/measure.ts`, `final-measure.jsonl`, `interaction-measurements.json` and `final-capture.log`. [Build](../guide/build.md#electrical-projection) describes worker ownership and [test evidence](testing-build.md#electrical-projection) records validation limits.

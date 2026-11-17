@@ -44,7 +44,9 @@ export function saveSkill(libraryDir, { hash, text }) {
 export function getSkill(libraryDir, hash) {
   const file = skillFile(libraryDir, hash);
 
-  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+  if (!fs.existsSync(file) || fs.statSync(file).size > MAX_SKILL_BYTES) return null;
+
+  return readJsonOrNull(file);
 }
 
 const keptSnapshotFile = (libraryDir, { skill, run, iteration }) =>

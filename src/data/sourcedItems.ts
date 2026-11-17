@@ -1,3 +1,4 @@
+import type { SupplierIdentity } from '../types/purchasing';
 import type { Port } from '../types/ports';
 import { registerCatalogComponent } from './catalog';
 import {
@@ -42,6 +43,7 @@ export interface SourcedMesh {
 }
 
 export interface SourcedItem {
+  supplierIdentity?: SupplierIdentity;
   id: string;
   kind: SourcedKind;
   name: string;

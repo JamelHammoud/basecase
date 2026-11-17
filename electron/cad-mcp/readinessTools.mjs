@@ -80,6 +80,15 @@ export const addSourcedItem = {
         .max(500)
         .optional()
         .describe('How many to add to the BOM, when no scene part carries it'),
+      supplierIdentity: z
+        .object({
+          supplier: z.string().max(80).optional(),
+          supplierPartNumber: z.string().max(160).optional(),
+          orderingUnit: z.string().max(80).optional(),
+          unitsPerOrder: z.number().positive().optional(),
+          sourceUrl: z.string().url().optional(),
+        })
+        .optional(),
       price: PRICE.optional(),
       sources: z.array(SOURCE).max(20).describe('A source for each number you rely on'),
     },

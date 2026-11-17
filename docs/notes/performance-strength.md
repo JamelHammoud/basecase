@@ -2,6 +2,14 @@
 
 Implementation: [Strength and Lighten](../guide/build.md#performance-strength-and-lighten). Shared requirements: [Performance](../guide/performance.md).
 
+## Elastic solves stop before preparing unused directions
+
+A whole-app search found one block-Jacobi conjugate-gradient implementation in `strength/cg.ts`, called by Strength displacement solving and every Lighten optimization load case. The final completed iteration now checks its residual and iteration limit before preconditioning the residual or constructing the next direction. It removes one preconditioner pass and one direction-update pass from every solve that performs at least one iteration. Initial setup remains unchanged, including solves that perform no iterations.
+
+A scratch comparison matched complete displacement arrays, iteration counts and residuals exactly in 374 cases against the previous solver. Cases cover four materials, dense and sparse meshes, opposite support faces, zero and fractional iteration limits, strict threshold equality, changed forces, nonfinite forces and NaN tolerances. The 300- and 600-cell fixtures contain 1,560 and 3,060 displacement unknowns. At limits of 1, 7 and 100 iterations, each solve removes 4,680 and 9,180 inverse coefficient reads, respectively. The removed vector passes visit 3,120 and 6,120 scalar entries in total. These are structural counts from the loops and fixture dimensions, without a runtime profiler, timing assertions or a claim about complete Strength or Lighten latency.
+
+`cg.test.ts` retains independently calculated displacement and residual coverage across all four materials, changed loads, source preservation, partial supports and empty or unloaded systems. Its stopping test also checks exact threshold equality and identical output when convergence and the iteration cap stop at the same iteration. Scratch source and complete comparison results remain local in `scratch/cg-stop.test.ts` and `scratch/cg-stop-results.json`.
+
 ## Lighten measures reconstructed pieces once
 
 `lightenPieces.test.ts` compares 120 generated fixtures in both orders, subsequent edits, zero-volume ties and real Manifold decomposition, with one volume call per piece at 300 and 600 pieces. On native Manifold cube fixtures of those sizes, selection and the returned volume required 4,149 and 9,489 volume calls before, and 300 and 600 after. On macOS arm64 with Node 26.13.0, median selection times fell from 0.27376 ms and 0.66528 ms to 0.01907 ms and 0.04087 ms. Each comparison used four warmup batches and 21 alternating measured batches of 100 calls per implementation. These measure selection alone, without CI timing assertions or a claim about complete Lighten time.

@@ -2,6 +2,16 @@
 
 Implementation: [Viewport rendering](../guide/canvas.md#performance-viewport-rendering). Shared requirements: [Performance](../guide/performance.md).
 
+## Solid marks omit dash preparation
+
+A whole-app search found one `computeLineDistances` call, in `three/viewport/markLayer.ts`. Its shared builder creates saved annotation strokes, live drawing previews and selection halos. None enables dashed materials. The installed Three.js `LineMaterial` reads distance attributes only under `USE_DASH`. Removing the call therefore removes unused preparation across every caller without changing line geometry or rendering inputs used by solid lines.
+
+For N points, Three.js previously visited N − 1 segments, calculated that many Euclidean distances and allocated an eight-byte distance pair per segment. Each line also created one interleaved buffer and two attribute wrappers. At 300 and 600 points, each build removes 299 and 599 distance calculations and 2,392 and 4,792 bytes of distance storage. One build of each of the three line states removes 897 and 1,797 calculations and 7,176 and 14,376 bytes. These are source-derived operation and allocation counts, without wall-clock, heap or complete drawing latency measurements. Position buffers and other line allocations remain.
+
+`src/three/viewport/markLayer.test.ts` checks all three states at both sizes with exact Float32 endpoints, solid materials, absent dash attributes, movement, deselection, preview removal and disposal. Existing cases cover picking, erasing, ties, reach boundaries, camera changes and viewport changes. GPU rendering is outside this unit coverage. No timeout, retry or quarantine changes apply.
+
+No action, label or visible state changes. The [Comment and mark up the scene](../../site/content/help/comment-and-mark-up-the-scene.md) instructions and screenshots remain applicable, so no help edit or capture is needed.
+
 ## Part-isolated captures index requested ids once
 
 The whole-app search found the repeated isolation membership scan in `three/viewport/captures.ts`. Both `captureViews` and `fitCapture.ts` use `hideForViews`, so agent views and silhouette fitting share the refinement. Each request indexes its nonempty id list once, then checks scene children through the set. No index survives the call.

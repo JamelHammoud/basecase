@@ -9,7 +9,11 @@ import { pipeline } from 'node:stream/promises';
 const run = (command, args) => {
   const result = spawnSync(command, args, { encoding: 'utf8', windowsHide: true, maxBuffer: 4 * 1024 * 1024 });
 
-  if (result.status !== 0) throw new Error(`${command}: ${result.stderr}`);
+  if (result.error) throw new Error(`${command}: ${result.error.message}`, { cause: result.error });
+
+  if (result.status !== 0) {
+    throw new Error(`${command}: exit ${result.status}, signal ${result.signal ?? 'none'}\n${result.stderr}`);
+  }
 
   return result.stdout;
 };
@@ -38,7 +42,7 @@ async function windowsCli() {
 
   if (hash.digest('hex') !== expected) throw new Error('KiCad installer checksum differs.');
 
-  run(installer, ['/S', `/D=${folder}`]);
+  run(installer, ['/S', '/currentuser', `/D=${folder}`]);
 
   const executable = path.join(folder, 'bin', 'kicad-cli.exe');
 

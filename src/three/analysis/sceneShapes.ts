@@ -17,7 +17,7 @@ function geometryId(g: THREE.BufferGeometry) {
   return `${g.uuid}@${version}`;
 }
 
-function meshesOf(object: THREE.Object3D, frameInverse: THREE.Matrix4) {
+function meshesOf(object: THREE.Object3D, frameInverse: THREE.Matrix4, transform: THREE.Matrix4) {
   const meshes: Array<{ geometry: THREE.BufferGeometry; matrix: number[] }> = [];
 
   object.traverse((o) => {
@@ -27,7 +27,7 @@ function meshesOf(object: THREE.Object3D, frameInverse: THREE.Matrix4) {
 
     meshes.push({
       geometry: mesh.geometry,
-      matrix: frameInverse.clone().multiply(mesh.matrixWorld).toArray().map(round),
+      matrix: transform.multiplyMatrices(frameInverse, mesh.matrixWorld).elements.map(round),
     });
   });
 
@@ -38,12 +38,13 @@ export function snapshotShapes(objects: Array<{ id: string; object: THREE.Object
   const instances: Instance[] = [];
   const shapes = new Map<string, ShapeSpec>();
   const geometries = new Map<string, THREE.BufferGeometry>();
+  const transform = new THREE.Matrix4();
 
   for (const { id, object } of objects) {
     object.updateWorldMatrix(true, true);
 
     const frame = rigidFrame(object).matrix;
-    const meshes = meshesOf(object, frame.clone().invert());
+    const meshes = meshesOf(object, frame.clone().invert(), transform);
 
     if (!meshes.length) continue;
 

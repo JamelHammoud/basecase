@@ -48,8 +48,20 @@ interface Frame {
   scale: number;
 }
 
+function meanPoint(points: Vec2[]): Vec2 {
+  let x = 0;
+  let y = 0;
+
+  for (const point of points) {
+    x += point[0];
+    y += point[1];
+  }
+
+  return [x / points.length, y / points.length];
+}
+
 function frameOf(points: Vec2[]): Frame {
-  const center: Vec2 = [0, 1].map((k) => points.reduce((s, p) => s + p[k], 0) / points.length) as Vec2;
+  const center = meanPoint(points);
   const scale = Math.max(...points.map((p) => Math.hypot(p[0] - center[0], p[1] - center[1])));
 
   return { center, scale: scale || 1 };
@@ -86,15 +98,17 @@ function localPoints(shape: Omit<FitLinkage, 'origin' | 'angle'>): Vec2[] {
 }
 
 function similarity(from: Vec2[], to: Vec2[]) {
-  const mean = (ps: Vec2[]): Vec2 => [0, 1].map((k) => ps.reduce((s, p) => s + p[k], 0) / ps.length) as Vec2;
-  const [fc, tc] = [mean(from), mean(to)];
+  const fc = meanPoint(from);
+  const tc = meanPoint(to);
   let dot = 0;
   let cross = 0;
   let norm = 0;
 
   from.forEach((f, i) => {
-    const [ax, ay] = [f[0] - fc[0], f[1] - fc[1]];
-    const [bx, by] = [to[i][0] - tc[0], to[i][1] - tc[1]];
+    const ax = f[0] - fc[0];
+    const ay = f[1] - fc[1];
+    const bx = to[i][0] - tc[0];
+    const by = to[i][1] - tc[1];
 
     dot += ax * bx + ay * by;
     cross += ax * by - ay * bx;
@@ -103,7 +117,8 @@ function similarity(from: Vec2[], to: Vec2[]) {
 
   const angle = Math.atan2(cross, dot);
   const scale = Math.hypot(dot, cross) / (norm || 1);
-  const [cos, sin] = [Math.cos(angle) * scale, Math.sin(angle) * scale];
+  const cos = Math.cos(angle) * scale;
+  const sin = Math.sin(angle) * scale;
 
   return { angle, scale, origin: [tc[0] - (fc[0] * cos - fc[1] * sin), tc[1] - (fc[0] * sin + fc[1] * cos)] as Vec2 };
 }

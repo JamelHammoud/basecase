@@ -129,13 +129,24 @@ export function childrenOf(
   angles: MjAngles,
   at = new THREE.Matrix4(),
 ): Array<{ el: Element; frame: THREE.Matrix4 }> {
-  return [...el.children].flatMap((c) => {
-    if (c.tagName === tag) return [{ el: c, frame: at }];
+  const out: Array<{ el: Element; frame: THREE.Matrix4 }> = [];
+  const visit = (parent: Element, transform: THREE.Matrix4) => {
+    for (const c of parent.children) {
+      if (c.tagName === tag) {
+        out.push({ el: c, frame: transform });
 
-    if (c.tagName !== 'frame') return [];
+        continue;
+      }
 
-    const frame = placement((k) => c.getAttribute(k) ?? undefined, angles);
+      if (c.tagName !== 'frame') continue;
 
-    return childrenOf(c, tag, angles, at.clone().multiply(frame));
-  });
+      const frame = placement((k) => c.getAttribute(k) ?? undefined, angles);
+
+      visit(c, transform.clone().multiply(frame));
+    }
+  };
+
+  visit(el, at);
+
+  return out;
 }

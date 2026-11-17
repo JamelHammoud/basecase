@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { useDrawingExport } from './useDrawingExport';
 import { useKitExport } from './useKitExport';
 import { jobSpec } from '../print/job';
 import { buildAIHandoffPayload } from '../utils/aiHandoff';
@@ -19,6 +20,15 @@ import { useCutFileExport } from './useCutFileExport';
 import { isSheetSolid } from './cutFileExport';
 import { useSchematicExport } from './useSchematicExport';
 
+function exportAvailability(parts: WorkspaceCore['parts'], hasRig: boolean) {
+  return {
+    canExportParts: parts.length > 0,
+    canExportStep: parts.some(isStepBody),
+    canExportRobot: hasRig,
+    canExportCutFiles: parts.some(isSheetSolid),
+  };
+}
+
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
 export function useExportActions(core: WorkspaceCore) {
@@ -29,6 +39,7 @@ export function useExportActions(core: WorkspaceCore) {
   const exportStep = useStepExport({ parts, scene, showToast, toasts });
   const exportCutFiles = useCutFileExport(core);
   const exportKit = useKitExport(core);
+  const drawings = useDrawingExport(core, exportKit);
 
   const exportStl = async () => {
     const viewport = viewportRef.current;
@@ -168,13 +179,12 @@ export function useExportActions(core: WorkspaceCore) {
     airDrop,
     copyBrief,
     exportRobotPackage: useRobotPackageExport(core),
-    exportKit,
+    exportKit: drawings.openKit,
+    drawings,
+    exportDrawings: drawings.openDrawings,
     exportSchematic: useSchematicExport(core),
     exportCutFiles,
-    canExportParts: parts.length > 0,
-    canExportStep: parts.some(isStepBody),
-    canExportRobot: posing.hasRig,
-    canExportCutFiles: parts.some(isSheetSolid),
+    ...exportAvailability(parts, posing.hasRig),
   };
 }
 

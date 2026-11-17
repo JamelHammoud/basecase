@@ -42,7 +42,12 @@ function guideWorkerFixture() {
     try {
       if (data.op !== 'render') throw new Error('Expected guide rendering.');
 
-      const response = await fetch('/__kit-guide', { method: 'POST', body: JSON.stringify(data.payload.job) });
+      const response = await fetch('/__kit-guide', {
+        method: 'POST',
+        body: JSON.stringify(data.payload.job, (_key, value: unknown) =>
+          ArrayBuffer.isView(value) ? Array.from(value as unknown as ArrayLike<number>) : value,
+        ),
+      });
 
       if (!response.ok) throw new Error(await response.text());
 

@@ -65,7 +65,11 @@ async function parseVisual(bytes: ArrayBuffer): Promise<Map<string, VisualPiece[
     const name = topNode(mesh, gltf.scene).name;
 
     geometry.userData.shared = true;
-    nodes.set(name, [...(nodes.get(name) ?? []), { geometry, material }]);
+
+    const pieces = nodes.get(name);
+
+    if (pieces) pieces.push({ geometry, material });
+    else nodes.set(name, [{ geometry, material }]);
   });
 
   return nodes;

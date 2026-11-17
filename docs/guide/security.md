@@ -143,6 +143,11 @@ The 64 MiB history budget bounds JSON before parsing. Graph readers bound versio
 
 `sceneRecovery.test.mjs`, `sceneVersions.test.ts` and `webSceneHistory.test.ts` cover corrupt records, forged hash paths, invalid metadata and aborted writes. The graph and resource contract is in [Scene tabs](scene-tabs.md#versions-linked-branches-and-selective-merge), with [storage evidence](../notes/performance-workspace.md#scene-version-codec-and-atomic-replacement).
 
+### Toolchain glob matching
+
+The root `picomatch` override resolves every transitive consumer to the exact `@ryotsu/picomatch@4.0.7-a` release. Upstream 4.0.7 is affected by [CVE-2026-112366](https://github.com/advisories/GHSA-fc5q-39xc-vjpf) and has no patched release. The lockfile pins the fork's registry tarball and integrity. Its runtime files were compared with upstream before adoption. It collapses redundant single-branch wildcard repetition and treats unsupported complex repeated forms literally. It also includes upstream fixes for POSIX bracket negation and punctuation, newline globstars and globstars beside literal extensions. No dependency install script or audit exclusion is added. Keep the default repeated-extglob safeguard enabled. Captured substrings and unsupported complex patterns can differ from upstream.
+
+`tools/security/globDependencies.test.mjs` feeds sixteen hostile pattern and input pairs through the installed package in one bounded subprocess, using default, Windows and capture options. It compares supported repetition against the existing safeguard opt-out across 156 short inputs and five option sets, checks escaped and literal stars, and exercises the real `tinyglobby` file selector with braces, extglobs, dotfiles, nested paths, negations and ignores. These are dependency compatibility and exploit tests, with no browser surface. Replace the override only with a validated upstream fix that passes the same coverage and the unchanged dependency audit. [Failure evidence and verification limits](../notes/node.md#shared-picomatch-audit-stall) record the adoption.
 
 ## Local board routing
 

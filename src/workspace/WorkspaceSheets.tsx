@@ -1,3 +1,4 @@
+import { DrawingExportHost } from './DrawingExportHost';
 import { SceneHistorySheet } from './SceneHistorySheet';
 import { TrainingImagesSheet } from '../components/cases/TrainingImagesSheet';
 import { LightenSheet } from '../components/LightenSheet';
@@ -123,6 +124,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
 
   return (
     <>
+      <DrawingExportHost active={active} core={core} exports={actions.exports} />
       <SceneHistoryHost active={active} core={core} />
       {active && guide.viewing && (
         <ErrorBoundary key={guide.viewing.key} region="Build guide" onClose={guide.closeViewer}>

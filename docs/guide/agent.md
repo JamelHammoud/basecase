@@ -219,6 +219,8 @@ Camera shots from `simulate` and `operate` receive the active Case's captured-wo
 
 Measurements and limits: [Image comparison performance evidence](../notes/performance-image-comparison.md).
 
+- **Photo trimming accumulates column mass while measuring heights.** `utils/photoMask.ts` retains area and the horizontal first moment during its column scan. Trimming reuses that area for the removed fraction, eliminating three reductions over the height list. Pixel summation order, center, thin-column thresholds and output ownership stay unchanged. `photoTrim.test.ts` compares the previous calculation across sparse, asymmetric and nonbinary masks, invalid aspects, offset views and input edits. Existing `photoMask.test.ts` covers removal of a background sliver through profile measurement. [Evidence](../notes/performance-image-comparison.md#photo-trimming-retains-column-mass).
+
 - **Photo foreground thresholds compare squared RGB distances.** `utils/pixelColorDistance.ts` shares the calculation between image analysis and silhouette flooding. The strict cutoffs remain 38 and 12, with image analysis retaining its alpha rules and corner-average background. Silhouette border spread still averages actual distances and keeps its cutoff of 14. `imagePixelAnalysis.test.ts` covers color and alpha boundaries, and `silhouette.test.ts` covers color-distance and border-spread boundaries. Existing image flood tests cover enclosed holes and open channels. [Evidence](../notes/performance-image-comparison.md#photo-foreground-thresholds-compare-squared-distances).
 
 - **Traced contours write directly from occupied rows.** `utils/outlineTrace.ts` appends right edges forward and left edges backward into one ring. Width bands scan their occupied-row ranges without slices or mapped width lists. Winding, caps, sampling, rounding and sparse-row band boundaries stay unchanged. `outlineTrace.test.ts` covers single-row contour coordinates, scale, offset, sparse bands, source preservation and independent results. Repository searches found no other occupied-row contour builder. [Evidence](../notes/performance-image-comparison.md#traced-contours-avoid-temporary-row-lists).
@@ -248,6 +250,8 @@ Measurements and limits: [Image comparison performance evidence](../notes/perfor
 - **Photo border medians use fixed histograms.** `utils/silhouette.ts` counts RGB border samples into three 256-bin arrays instead of copying and sorting three channel arrays. It keeps the upper median, doubled corner samples, spread threshold and color-distance threshold. [Evidence](../notes/performance-image-comparison.md#photo-border-medians-use-fixed-histograms).
 
 ## Performance: agent and cad kernel
+
+- **Freehand attachment bounds scan strokes directly.** `components/agent/sketch/sketchStrokes.ts` measures the drawing without flattening strokes or constructing coordinate lists. Attach Sketch uses this frame for PNG export. The 16px margin, 96px minimum frame, centering and empty-drawing result stay unchanged. `sketchStrokes.test.ts` covers prior-result parity, later edits, nonfinite coordinates, source preservation and long drawings with bounded coordinate reads. [Evidence](../notes/performance-agent-kernel.md#freehand-attachment-bounds-scan-strokes-directly).
 
 Measurements and limits: [Agent and CAD kernel performance evidence](../notes/performance-agent-kernel.md).
 

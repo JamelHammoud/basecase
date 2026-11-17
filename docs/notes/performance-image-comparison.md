@@ -2,6 +2,14 @@
 
 Implementation: [Image comparison](../guide/agent.md#performance-image-comparison). Shared requirements: [Performance](../guide/performance.md).
 
+## Photo trimming retains column mass
+
+Repository searches found one column-mass calculation for photo trimming, in `photoMask.ts`, called by the shared `referenceMask` pipeline in `silhouette.ts`. Column heights now accumulate their area and horizontal first moment as they are emitted. The trim fraction reuses that area. The height list remains necessary for selecting thin columns, and each accepted trim still copies the source pixels.
+
+For a nonempty mask spanning W columns, the previous calculation visited 3W height entries through three reductions after measuring the columns. The current calculation visits none through reductions. At widths 300 and 1568 this removes 900 and 4704 height-entry visits respectively. These are counts derived from the loops, without timing measurements or a claim about complete photo-tool latency. The full pixel scan and trim writes are unchanged.
+
+`photoTrim.test.ts` compares complete outputs with the previous calculation across 720 mask and aspect combinations. It covers narrow dimensions, empty columns, asymmetric and nonbinary masks, offset buffer views, invalid aspects, source preservation, input edits and independent output ownership. Existing `photoMask.test.ts` checks the resulting silhouette profile after background-sliver removal. The interaction and visible output stay unchanged, so no help article or browser walkthrough changes.
+
 ## Photo foreground thresholds compare squared distances
 
 Repository searches found two RGB-distance threshold paths: `imagePixelAnalysis.ts` foreground classification and `silhouette.ts` background flooding. Both now compare the squared distance with the squared cutoff. The silhouette border-spread calculation retains `Math.hypot` because it averages actual distances. RGB channels are byte values, and corner-average background channels have quarter-byte precision.

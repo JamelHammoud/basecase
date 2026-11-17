@@ -54,6 +54,16 @@ Inflate, Carve, Flatten, Pinch and Grab no longer collect affected indices and f
 
 `src/three/sculptStroke.test.ts` checks all six brush results, untouched vertices, symmetry and stroke input preservation. Its 300- and 600-vertex fixtures affect 200 and 400 vertices. For each of the five independent brushes, position reads including normal recomputation fall from 800 and 1,600 to 600 and 1,200. Each stroke also removes two growing arrays with 200 or 400 entries apiece and the corresponding center additions. The read counts are asserted, and array and center counts follow from the removed code. These are operation counts, without timing assertions or a complete interaction speedup claim. Stroke start and drag share this path. No workflow or visible state changes, so help instructions and browser coverage stay unchanged.
 
+## Sculpt prepares strength blends once per stroke
+
+A whole-app search for the four strength expressions found them only in `three/sculptStroke.ts`. Flatten, Smooth, Pinch and Grab all use that engine for stroke start and drag, including mirrored strokes. Their multiplier and cap depend only on brush kind and strength, so the engine now prepares one blend per stroke instead of recalculating it for every affected vertex. Inflate and Carve prepare no blend clamp. Displacement multiplication order and Smooth's center calculation stay unchanged.
+
+The retained `sculptStroke.test.ts` fixtures contain 300 and 600 vertices with 200 and 400 affected vertices. For each of the four brushes, strength multiplication and clamp counts fall from 200 and 400 to one per stroke. The test asserts the clamp count and displacement at strengths 0, 0.5 and 3, covering zero, ordinary and capped blends. Existing tests cover falloff, symmetry, untouched vertices, normals and input preservation.
+
+A local scratch comparison against the pre-change module checked exact complete Float32 position and normal buffers for 432 stroke applications. It covered all six brushes at strengths -0.5, 0, 0.5, 1, 2 and 5, with symmetry and inversion both on and off, and three consecutive strokes on each 20 by 16 sphere fixture. All buffers matched. These are operation counts and output comparisons, not interaction timings or CI results. No user workflow or visible state changes, so help instructions and screenshots remain current.
+
+The local scoped check on this change selected 239 related test files. Static checks passed, and 225 test files passed. Thirteen files failed with 24 failed tests, and one file was skipped. Failures included five-second simulation deadlines in Case construction, contact probes, household chores, handoff, slots, terrain, imported worlds, league replay and passive parity. Lighten's pipeline exceeded its 30-second deadline. Map-world setup exceeded its ten-second hook deadline. Classroom carry-cup seed batches exceeded five seconds, leaving both grading assertions at 15 runs instead of 20. These failures remain unresolved and were not reproduced against the base revision. No deadlines, retries or quarantine entries changed. The focused `check:changed` on `sculptStroke.test.ts` passed all 28 tests in 170 ms, along with formatting, lint, site copy and types. A separate scoped check passed for the two documentation files.
+
 ## Shaders are compiled before they're needed
 
 On software GL, each program's link blocks the main thread, and the idle callbacks' 2 s timeout let them run mid-work: driving the G1 with the camera on 2 CPUs, warm-up held the main thread for 20 to 850 ms at a time for about 12 s after the command, and 92% of a 35 s window under heavy load.
@@ -119,3 +129,15 @@ Previously each redraw cloned the key light position for change detection and th
 These are deterministic clone counts and source-derived previous counts, without timings, heap measurements or a complete frame latency claim. The tests use real Three.js cameras and lights with renderer, orbit integration and grid boundaries stubbed. GPU rendering and browser navigation are outside this coverage. No timeout, retry or quarantine changes apply. No user action, label or visible state changes, so help instructions and screenshots remain accurate.
 
 Local `check:changed` validation on November 17, 2026 passed formatting, lint, documentation, site copy, TypeScript and all 12 related tests across six files. Copy diff reports zero added, changed or removed user-facing strings.
+
+## Wheel panning reads camera basis coordinates directly
+
+Whole-app search found one wheel-pan implementation in `three/viewport/wheel.ts`. Pan Scroll and Shift-scroll share it through `listenToWheel`, including studio viewports and part previews. The pan calculation now reads the first two camera-matrix columns directly and adds the scalar offset to the camera and orbit target. It no longer constructs right, up, unused forward and offset vectors. Zoom and orbit paths keep their existing calculations.
+
+The affine determinant check retains Three.js's identity-basis fallback for singular matrices. Reading columns alone changed a `(2, 3, 0)` camera scale with horizontal and vertical offsets of 2 and 3 from `(2, 3, 0)` to `(4, 9, 0)`. The direct calculation preserves the former offset without vectors.
+
+For 300 and 600 events in each of two viewports, this removes 2,400 and 4,800 temporary vector constructions. These are source-derived allocation counts, without timing or heap measurements and without a claim about complete interaction latency. No retained workspace is added.
+
+`src/three/viewport/wheel.test.ts` compares exact camera and target coordinates with the previous vector calculation after every event. It varies rotation, scale, distance and positive, negative and zero deltas across independent viewports, including zero scales that exercise the singular-matrix fallback. It covers Pan Scroll and Shift-scroll, unchanged camera matrices, one orbit update per event, default prevention and listener removal. A spy verifies that panning no longer calls `extractBasis`. Browser event delivery, orbit integration and GPU rendering remain outside this focused test. No retry, timeout or quarantine changes apply.
+
+No user action, label or visible state changes, so existing navigation help and screenshots remain accurate.

@@ -2,6 +2,26 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## MJCF frame traversal appends directly to its output
+
+The whole-app search found one MJCF frame-child traversal in `utils/robotImport/mjcfFrames.ts`. All three importer call sites share it: geometry inside bodies, child bodies and world-root bodies. `skeletonTree.ts` has an unrelated hierarchy method with the same name. No other MJCF frame-child collector needs this change.
+
+Previously every visited container copied its children and used `flatMap` to collect results. Each matching child created a singleton list, and every unrelated child created an empty list. Nested results were copied into each ancestor's result array. The traversal now iterates children directly and appends records into one output. It retains frame matrices, matching records and recursive visits. A query-local visitor closure replaces the per-container callback closures. Transform multiplication order and shared matrix references within a frame stay unchanged.
+
+For a chain of 32 frames ending in 300 matching children with no unrelated children, source-derived array constructions fall from 366 to one. That includes 33 child snapshots, 33 result arrays and 300 singleton arrays before the change. Appended result references fall from 9,900 to 300. Frame placement and the 300 result records still allocate. These are allocation and traversal counts, without timing measurements or a claim about complete import latency. Traversal remains recursive.
+
+`mjcfFrames.test.ts` compares the preceding traversal at depths zero, one, eight and 32 for geometry, body, frame and absent tags. It checks exact matrices, element identity, source transform preservation, independent result arrays and fresh placement after attribute and angle edits. Its parser integration checks nested world and body frames, visual-local placements, joint-world placements, sibling order and excluded containers. Existing robot import and actuator tests cover downstream conversion. No timeout, retry or quarantine changes apply.
+
+The three covered help articles were reread against the final traversal diff and its importer call sites:
+
+- [Import a robot](../../site/content/help/import-a-robot.md): source selection, Import Robot, Choose Folder, canvas drops and shelf controls are untouched. Matching children keep their order and transforms, so imported parts and joint placement retain the documented behavior. Its four screenshots show unchanged controls and states.
+- [Joints and kinematics](../../site/content/help/joints-and-kinematics.md): joint fields, passive springs, ownership, hierarchy, posing, IK and selected-robot behavior remain unchanged. The guide addition describes collection storage only. The article has no screenshots.
+- [A robot won't import from a link or folder](../../site/content/help/troubleshoot-app-robot-import-fails.md): link validation, description selection, mesh errors and passive actuation handling remain untouched. The traversal preserves the same matching and excluded elements, so it introduces no new failure or recovery action. The article has no screenshots.
+
+No step, label or screenshot becomes inaccurate in this refinement. All three articles remain unchanged under preflight's explicit allowance for accurate covered articles. Its reminders remain mechanically present because coverage detection does not inspect whether prose became untrue.
+
+Changed-file validation passed formatting, ESLint, documentation links, site copy for 323 pages, types and all 332 tests across 46 related files. The related-test run took 2.39 seconds. The log is `scratch/check-mjcf-frames.log`. Copy accounting reports net zero. Preflight reports the three unchanged covered articles above, whose accurate text is intentionally retained under its stated allowance.
+
 ## Pose deltas classify each shared transform once
 
 The app-wide search found one tolerant identity classifier used by `poseDeltas`, in `utils/kinematicsMotion.ts`. Pose editing, agent posing, robot ghosts, silhouette preparation and recorded-scene floor extraction call this shared helper. Each part attached to a joint reads the same joint matrix, and base parts share their robot's root matrix.
@@ -620,3 +640,56 @@ The three covered help articles were reread against the final selector, its diff
 No article step, label or screenshot becomes inaccurate in this refinement. The articles remain unchanged under preflight's explicit allowance for accurate covered articles. The three automated reminders remain present because preflight detects file coverage, not whether prose became untrue.
 
 Focused validation passed formatting, ESLint, documentation, site copy for 314 pages, types and all 307 related tests across 41 files. Copy accounting reports zero added, changed and removed strings. The check log is `scratch/check-xacro-final.log`.
+
+## Translation-only animation roots omit rotation work
+
+A whole-app search for `sampleAnimation`, `blendRoot`, `quatOf` and quaternion slerp found one shared root animation interpolator in `utils/animation.ts`. Pose playback, simulation controllers, motion references and agent pose checks all use it. The viewport data-frame slerp handles recorded quaternion poses, where both rotations are supplied, and does not share this missing-channel case.
+
+Each sampled span with a root but no endpoint rotation previously constructed two quaternions and three Euler objects. It called `setFromEuler` twice, slerp once and `setFromQuaternion` once. Those constructions and calls are now omitted. The returned rotation tuple remains independently owned and preserves the identity conversion's `[-0, 0, -0]` values. Explicit rotations, including explicit zero rotations, still use the original quaternion calculation. These are source-derived allocation and operation counts, without a timing claim about complete playback.
+
+`animationRoot.test.ts` checks linear and smooth sampling against the preceding quaternion calculation. It checks absent endpoint roots with outer support roots, the loop seam, independent results and rotation edits after translation-only samples. Spies assert zero quaternion preparation and Euler conversion calls for two consecutive translation-only samples in each mode. Existing animation tests cover clamping, sparse channels and smooth interpolation. No timeout, retry or quarantine changes apply.
+
+The covered articles were reread against the final sampler diff, the owning guide and the animation controls:
+
+- [Animate a robot with a walk cycle or motion capture](../../site/content/help/animate-a-robot.md): Walk Cycle and Import BVH still use the same add control. Playback, scrubbing, pause, Loop, Rename and Delete still use the same handlers in `AnimationsSection.tsx`. The sampler preserves positions and identity rotations, and leaves explicit rotations, span selection and loop timing unchanged. BVH matching, In place, Frame rate and import feedback are untouched. The existing `menu.png`, `retarget.png` and `loop.png` screenshots describe those unchanged controls and states.
+- [Joints and kinematics](../../site/content/help/joints-and-kinematics.md): the guide change describes an internal animation shortcut. It changes no joint field, import, hierarchy, mount, passive linkage, empty-joint deletion, design-versus-pose mapping, IK or robot selection behavior. Every section remains accurate. This article has no screenshots.
+
+Neither article has a step, label or screenshot made inaccurate by the refinement. Both remain unchanged under preflight's explicit allowance for accurate covered articles. Its two coverage reminders remain mechanically present because the detector checks touched paths rather than the accuracy of unchanged prose.
+
+Changed-file validation passed formatting, ESLint, documentation, site copy for 321 pages and types after formatting corrections. The initial related run passed 1,982 tests with one existing skip across 260 selected files in 96.85 seconds. The final run passed 1,981 tests with one existing skip, but the existing `src/cases/slots.test.ts` Hand Off to a Spot test exceeded its 5,000 ms timeout. Its source is unchanged. All new rotation cases passed in both runs. Logs are `scratch/check-animation-root.log` and `scratch/check-animation-root-final.log`. This is an unresolved validation finding, without a retry, timeout change or quarantine. Copy accounting reports net zero strings.
+
+## Fastener assignment shares joint reaches
+
+Repository-wide searches found one follower assignment implementation in `assembly/followers.ts`. `assembly/rigJoints.ts` and `utils/useFastenerRig.ts` use it for verification, poses and simulation. All three public assignment functions share the same preparation helpers.
+
+Combined attachment previously built downstream sets three times per joint, collected explicitly listed IDs three times and assigned moving hardware twice. It now does each once. Standalone fixed-side assignment previously prepared downstream sets and listed IDs twice, and now prepares them once. No preparation survives the call. Carrier and mount ranking, first ties, direct-before-indirect ordering, listed-part exclusions and output ownership stay unchanged.
+
+The 30- and 60-joint fixtures in `followerPreparation.test.ts` assert 30 and 60 downstream calculations per combined call, down from 90 and 180. Standalone mount calls fall from 60 and 120 calculations to 30 and 60. These are operation counts, without timing assertions or a claim about complete rig-build latency. Each downstream calculation still traverses the joint graph, and carrier selection still visits candidates.
+
+The new test covers deepest carriers, first ties, servo exclusions, fixed sides, indirect followers, independent robots, empty clamps, source preservation and later edits. Existing `followers.test.ts` retains real range-of-motion and rig-membership coverage. No user action, label or visible state changes, so help instructions and screenshots remain accurate.
+
+On November 17, 2026, `scratch/follower-parity.test.ts` matched ordered carrier maps, ordered mount maps and complete followed joints against the preceding implementation for 160 generated rigs. It repeated each comparison after joint-order, child and actuator edits and checked source preservation. The comparison passed in 890 ms on macOS arm64. This is a test-run duration, not an assignment benchmark.
+
+Preflight identified [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) as a covered article. Its hardware paragraph now distinguishes moving links from fixed mounts and names the separate nut and insert relationships. These are the existing ownership rules preserved by the refinement. Hierarchy, mount anchoring, posing, joint deletion, IK and per-robot selection remain unchanged. The article has no screenshots, and no visible state changes require new captures.
+
+Changed-file validation passed formatting, ESLint, docs, site copy for 323 pages and types. Related selection passed 471 tests across 63 files, including the follower tests, and failed two unchanged tests at their existing 5,000 ms timeouts. The failures were `classroom/grading.test.ts`'s Carry a cup valid submission for seeds 1 through 5 and `cases/fixtureWorkflow.test.ts`'s reused chest scene workflow. The related run took 75.04 seconds. No baseline comparison establishes their cause. They remain unresolved validation findings, without retries, timeout changes or quarantine. Logs are `scratch/check-followers.log`, `scratch/check-followers-docs.log` and `scratch/follower-parity.log`. Copy accounting reports net zero strings.
+
+## Xacro extrema consume numeric arguments directly
+
+A repository-wide search found two numeric argument maps in `utils/robotImport/xacroExpr.ts`, for `min` and `max`. Properties, macro arguments, conditions, `${}` and `$(eval)` all reach this evaluator through xacro expansion. Local folders, archives and linked robot descriptions share the expansion path. The `math.` aliases use the same built-ins.
+
+Each extremum call previously allocated a numeric array of the argument count and spread it into the native function. The shared accumulator removes that array and the spread call. A 32-argument call removes one 32-element numeric array. It still converts every argument in order and performs one binary native extremum call per argument. Parser tokens, thunks and the evaluated argument list remain allocated. These are source-derived allocation counts, without a latency measurement or a claim about complete import speed.
+
+`xacroExpr.test.ts` compares both built-ins with the previous mapped calculation across 32 generated numeric lists and seven edge-case lists. It covers empty inputs, booleans, both signed-zero orders, infinities, NaN, nested extrema, math aliases and the first rejected string after a nonfinite result. Existing expression, expansion and robot-import tests retain parsing, scope and import coverage. No timeout, retry or quarantine changes apply.
+
+The three preflight coverage reminders were checked against the final accumulator and guide diff:
+
+- [Import a robot](../../site/content/help/import-a-robot.md) still describes the same sheet, description selection, local import and shelf actions. Xacro properties, macros and defaults produce the same values, while unsupported expressions still stop import. Its `link.png`, `choose.png`, `robots.png` and `imported.png` captures show controls and states untouched by numeric accumulation.
+- [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) still describes the same imported axes, limits, torque limits and passive springs. No joint declaration, ownership, hierarchy, posing, IK or robot selection code changes. The contributor guide adds only an internal evaluator fact. This article has no screenshots.
+- [A robot won't import from a link or folder](../../site/content/help/troubleshoot-app-robot-import-fails.md) retains every message and recovery action. Link validation, mesh loading, file selection, zip limits, XML errors and passive-joint handling are untouched. The evaluator still rejects the first string argument even after NaN or infinity. This article has no screenshots.
+
+No article step, label, limit or visible state becomes inaccurate. All three articles remain unchanged under preflight's explicit allowance for accurate covered articles. Its coverage reminders remain mechanically present because the detector checks touched paths rather than whether prose became untrue.
+
+A numeric fold probe on November 17, 2026 used Node 26.13.0 on macOS arm64. Each batch called both extrema 100,000 times on `sin(i)` lists. Two warmup batches preceded nine measured batches, alternating which implementation ran first. Median before/after batch times for 2, 8, 32 and 128 arguments were 7.918/2.047, 11.717/6.002, 26.899/21.873 and 103.484/87.301 ms. Checksums matched. The probe includes numeric conversion and both extrema, without parsing, expansion, mesh loading or a CI timing assertion. Script and raw results are `scratch/xacro-extrema-bench.mjs` and `scratch/xacro-extrema-bench.json` in the implementation session. An earlier callback-based fold regressed at 32 and 128 arguments, so the final fold uses direct native calls selected by the built-in's fixed maximum flag.
+
+Final scoped validation passed formatting, ESLint, docs, site copy for 323 pages, types and all 352 related tests across 47 files. The related run took 3.59 seconds. The log is `scratch/check-xacro-extrema-final.log`. Copy accounting reports net zero strings.

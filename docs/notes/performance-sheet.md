@@ -90,3 +90,22 @@ Instrumented rectangles with 300 and 600 edges have two height crossings for an 
 No user action, label, visible state or manufacturing rule changes. Existing sheet help steps and screenshots remain accurate.
 
 Changed-file validation passed formatting, lint, documentation, site copy for 295 pages, types and all 955 tests across 132 related files. The related run reported 49.75 seconds. The full log is `scratch/check-sheet-inside.log`. Copy accounting is net zero and preflight reports no findings. The [Cut parts from sheet](../../site/content/help/cut-parts-from-sheet.md) article still describes the same material assignment, qualifying geometry and exported outlines, so it remains unchanged.
+
+## Mechanical drawings
+
+Drawing geometry, hashing, feature measurement, projection, source STL writing, layout and compression run in an export-owned worker. Standalone preparation builds only selected solids and never requests assembly order. Kit uses the same producer and transfers both plate and drawing buffers to its compressor. Source edits, scene switches, cancellation and completion release operation-owned worker state.
+
+Jobs admit at most 256 selected records, 100,000 triangles per part and 250,000 per job. Three views retain at most 12,000 edge intervals each and 36,000 across the job. BVH-assisted projected clipping stops at ten million triangle visits per view. A sheet has at most 128 feature dimensions. Expanded drawing output, including source STLs, is limited to 64 MB. Names are limited to 256 characters. There is no cross-export drawing cache. Shape preparation and projection happen once per new sheet after source identity and material reconciliation. Repeated records still prepare and fingerprint their geometry, but share projection, document pages and source STL output.
+
+One local observation used an Apple M5 Pro, macOS arm64, Node 26.13.0 and headless Chrome through the existing Vite capture harness. The fixture is an 80 × 60 × 3 mm deck with four 4 mm through holes. Frame is Part, front plane XY and scale 1:1. The repeated job uses 128 distinct records with the same geometry and material, translated 100 mm apart. Both jobs produce one sheet, with quantities 1 and 128.
+
+| Records | Projection ms | Geometry preparation ms | Layout ms | Compression ms | Main work ms | Dispatch ms | ZIP bytes | Isolated process peak MiB |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 36.09 | 56.74 | 3.54 | 13.81 | 0.31 | 0.24 | 30,939 | 122.56 |
+| 128 | 36.72 | 303.55 | 3.60 | 14.50 | 0.47 | 0.38 | 31,290 | 161.38 |
+
+Browser stage times come from the actual disposable drawing worker. Geometry preparation includes projection and source STL generation. Main work sums synchronous input validation and dispatch work, excluding inventory I/O and worker execution. Dispatch is its worker handoff component. Bounded Performance entries retain only the newest main, dispatch and full preparation measurements. The two jobs' full elapsed times were 327.37 ms and 599.23 ms. Those include source snapshot hashing and worker startup in a development-server session that already exported the rover. They do not establish production cold-start latency. These are single observations on a shared host, not timing assertions or speed comparisons.
+
+Peak memory is the operating system's maximum resident set for a fresh Node process running the same worker pipeline and input. It includes Node, imported code, source records, geometry and output. It is a conservative process footprint, not a browser per-isolate heap measurement. The benchmark bundle resolves asset URLs and production environment constants locally, without substituting geometry or export functions. Browser and isolated-process output sizes agree. The source STL frame is the existing millimeter, Z-up convention.
+
+Raw evidence is retained in `scratch/drawing-browser-benchmark.json`, `scratch/drawing-capture-resume.log`, `scratch/drawing-benchmark-simple-resume.log` and `scratch/drawing-benchmark-repeated-resume.log`. The scratch benchmark sources and capture configuration identify the inputs. These measurements add no runtime gate, timeout, retry or scheduling delay.

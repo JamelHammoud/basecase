@@ -15,6 +15,11 @@ export const EDGE_KINDS: ReadonlySet<PartKind> = new Set<PartKind>([
 
 const JUST_UNDER = 0.98;
 const MIN_EDGE_MM = 0.01;
+const HEX_DIRECTIONS = Array.from({ length: 6 }, (_, k): [number, number] => {
+  const theta = (k * Math.PI) / 3;
+
+  return [Math.sin(theta), Math.cos(theta)];
+});
 
 export function tubeRadii({ width, depth, thickness = 4 }: PartDimensions): { outer: number; inner: number } {
   const outer = Math.min(width, depth) / 2;
@@ -24,11 +29,7 @@ export function tubeRadii({ width, depth, thickness = 4 }: PartDimensions): { ou
 }
 
 export function hexOutline({ width, depth }: PartDimensions): Outline {
-  return Array.from({ length: 6 }, (_, k) => {
-    const theta = (k * Math.PI) / 3;
-
-    return [(width / 2) * Math.sin(theta), (depth / 2) * Math.cos(theta)];
-  });
+  return HEX_DIRECTIONS.map(([x, z]) => [(width / 2) * x, (depth / 2) * z]);
 }
 
 export const wedgeOutline = ({ width, height }: PartDimensions): Outline => [

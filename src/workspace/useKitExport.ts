@@ -1,3 +1,4 @@
+import type { DrawingOptions } from '../sheet/drawingTypes';
 import { useEffect, useRef } from 'react';
 import { downloadBytes } from '../utils/downloadBytes';
 import { errorMessage } from '../utils/errorMessage';
@@ -12,9 +13,12 @@ export function useKitExport(core: WorkspaceCore) {
   const latest = useLatestRef(core);
   const active = useRef<AbortController | null>(null);
 
-  useEffect(() => () => active.current?.abort(), []);
+  useEffect(
+    () => () => active.current?.abort(),
+    [core.parts, core.project, core.scene.sceneId, core.scene.sceneName, core.active],
+  );
 
-  return async () => {
+  return async (drawingOptions?: DrawingOptions) => {
     if (active.current) return;
 
     const abort = new AbortController();
@@ -26,7 +30,7 @@ export function useKitExport(core: WorkspaceCore) {
     });
 
     try {
-      const bytes = await exportKit(core, { signal: abort.signal, current: () => latest.current });
+      const bytes = await exportKit(core, { signal: abort.signal, current: () => latest.current, drawingOptions });
 
       downloadBytes(bytes, `${fileSafe(core.scene.sceneName)}-kit.zip`, 'application/zip');
       core.showToast(`Exported ${core.scene.sceneName}`);

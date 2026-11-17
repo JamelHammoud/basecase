@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ShapeSolid } from './shapeSolid';
-import { prepareLineDistance } from './lineDistance';
+import { prepareLineDistanceSquared } from './lineDistance';
 
 export interface RotorSplit {
   stator: ShapeSolid;
@@ -64,26 +64,26 @@ function triangleBodies(positions: Float32Array): Uint32Array {
 
 interface Body {
   box: THREE.Box3;
-  reach: number;
+  reachSquared: number;
 }
 
 function measureBodies(
   solid: ShapeSolid,
   bodies: Uint32Array,
-  distance: (point: THREE.Vector3) => number,
+  distanceSquared: (point: THREE.Vector3) => number,
 ): Map<number, Body> {
   const out = new Map<number, Body>();
   const p = new THREE.Vector3();
 
   for (let i = 0; i < solid.positions.length; i += 9) {
     const id = bodies[i / 9];
-    const body = out.get(id) ?? { box: new THREE.Box3(), reach: 0 };
+    const body = out.get(id) ?? { box: new THREE.Box3(), reachSquared: 0 };
     const end = Math.min(i + 9, solid.positions.length);
 
     for (let v = i; v < end; v += 3) {
       p.fromArray(solid.positions, v);
       body.box.expandByPoint(p);
-      body.reach = Math.max(body.reach, distance(p));
+      body.reachSquared = Math.max(body.reachSquared, distanceSquared(p));
     }
 
     out.set(id, body);
@@ -93,16 +93,22 @@ function measureBodies(
 }
 
 function rotorBodies(solid: ShapeSolid, bodies: Uint32Array): Set<number> | null {
-  const distance = prepareLineDistance(outputLine(solid.positions));
-  const measured = measureBodies(solid, bodies, distance);
+  const distanceSquared = prepareLineDistanceSquared(outputLine(solid.positions));
+  const measured = measureBodies(solid, bodies, distanceSquared);
   const center = new THREE.Vector3();
   const rotor = new Set<number>();
-  let reach = -Infinity;
+  let reachSquared = -Infinity;
 
-  for (const body of measured.values()) reach = Math.max(reach, body.reach);
+  for (const body of measured.values()) reachSquared = Math.max(reachSquared, body.reachSquared);
+
+  const maxReach = Math.sqrt(reachSquared);
 
   for (const [id, body] of measured) {
-    if (distance(body.box.getCenter(center)) <= ON_AXIS_MM && body.reach <= MAX_ROTOR_REACH * reach) rotor.add(id);
+    if (
+      Math.sqrt(distanceSquared(body.box.getCenter(center))) <= ON_AXIS_MM &&
+      Math.sqrt(body.reachSquared) <= MAX_ROTOR_REACH * maxReach
+    )
+      rotor.add(id);
   }
 
   return rotor.size && rotor.size < measured.size ? rotor : null;

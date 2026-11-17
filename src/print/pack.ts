@@ -70,7 +70,7 @@ function freshPlacement(space: PlateSpace, item: PackItem, gap: number, bed: Bed
 
 function placeLoose(spaces: PlateSpace[], item: PackItem, gap: number, bed: Bed): Placement | null {
   for (let plate = Math.max(0, (item.startPlate ?? 1) - 1); ; plate++) {
-    for (let p = 0; p < plate; p++) spaces[p] ??= newPlate(bed, gap);
+    for (let p = spaces.length; p < plate; p++) spaces[p] ??= newPlate(bed, gap);
 
     const fresh = !spaces[plate];
 
@@ -102,7 +102,7 @@ function placeFixed(spaces: PlateSpace[], item: PackItem, gap: number, bed: Bed)
 
   if (!inside || fixed.plate < 1) return null;
 
-  for (let p = 0; p < fixed.plate; p++) spaces[p] ??= newPlate(bed, gap);
+  for (let p = spaces.length; p < fixed.plate; p++) spaces[p] ??= newPlate(bed, gap);
 
   occupy(spaces[fixed.plate - 1], { ...rect, w: w + gap, d: d + gap });
 

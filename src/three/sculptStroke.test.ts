@@ -54,6 +54,40 @@ describe('sculpt brush workspace', () => {
     stroke.geo.dispose();
   });
 
+  it.each([
+    ['flatten', 1, 0.65],
+    ['smooth', 0.75, 0.45],
+    ['pinch', 0.5, 0.3],
+    ['grab', 1, 1.1],
+  ] as const)('prepares %s strength once across affected vertices and preserves its cap', (brush, limit, factor) => {
+    const minimum = vi.spyOn(Math, 'min');
+
+    for (const strength of [0, 0.5, 3]) {
+      for (const triangles of [100, 200]) {
+        const stroke = input(brush, triangles);
+        const blend = Math.min(limit, strength * factor);
+        const expected: Record<string, number[]> = {
+          flatten: [0, 2 - blend, 0],
+          smooth: [0.25 * blend, 2 - 0.5 * blend, 0],
+          pinch: [0, 2 - blend + strength * 0.07, 0],
+          grab: [blend, 2 - 0.5 * blend, 1.5 * blend],
+        };
+
+        stroke.settings.strength = strength;
+        minimum.mockClear();
+        sculptStroke(stroke);
+        expect(minimum).toHaveBeenCalledTimes(1);
+        expect(minimum).toHaveBeenCalledWith(limit, strength * factor);
+
+        const positions = Array.from(stroke.geo.getAttribute('position').array);
+
+        expected[brush].forEach((value, axis) => expect(positions[3 + axis]).toBeCloseTo(value, 6));
+        expect(positions.slice(6, 9)).toEqual(POINTS.slice(6));
+        stroke.geo.dispose();
+      }
+    }
+  });
+
   it.each(BRUSHES)('keeps %s vector cloning independent of affected vertex count', (brush) => {
     const clone = vi.spyOn(THREE.Vector3.prototype, 'clone');
 

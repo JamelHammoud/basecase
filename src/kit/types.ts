@@ -1,3 +1,5 @@
+import type { PreparedDrawings } from '../sheet/drawingsClient';
+import type { DrawingManifest } from '../sheet/drawingTypes';
 import type { PartSheet } from '../types/sheet';
 import type { Netlist } from '../wiring/netlist';
 import type { GuidePlan } from '../guide/guideTypes';
@@ -24,6 +26,8 @@ export interface KitJob {
   checks: Readiness | null;
   checksFingerprint: string;
   labelNotes?: Record<string, string>;
+  drawings?: PreparedDrawings;
+  designFingerprint?: string;
 }
 
 export interface PackingRow {
@@ -52,6 +56,7 @@ export interface KitManifest {
   purchases: BomLine[];
   packing: PackingRow[];
   printed: Array<PrintedPart & { key: string; outputs: PrintedOutput[] }>;
+  drawings?: DrawingManifest;
   sheets: Array<PartSheet & { partId: string; file: string }>;
   wiring?: Netlist;
   servos: Array<{ partId: string; entry: JointMapEntry }>;

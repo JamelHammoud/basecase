@@ -22,6 +22,10 @@ The files in a manufacturing kit archive connect assembly demand, remaining purc
 | `plates/<material>.3mf` | Manufacturing geometry arranged on plates, one file per material |
 | `provenance.json` | Source parts, project, owned inventory, measurements, printer and plate plans, and design fingerprint |
 | `sheets/<index>/<name>.dxf` | Each sheet part’s outline and holes in millimeters |
+| `drawings/drawings.pdf` | Dimensioned orthographic views with declared units and scale |
+| `drawings/*.svg` | Editable vector sheets from the same drawing preparation |
+| `drawings/*.stl` | Matching source geometry in millimeters, Z up, before guide-letter cuts on print plates |
+| `drawings/drawings.json` | Source identity, geometry and file hashes, projection matrices, quantities, datums and numerical allowances |
 | `kit.json` | Design fingerprint, guide plan, packing, purchases, print settings, wiring endpoints, sheet outputs, output references and Checks |
 
 ## Packing and purchases
@@ -42,6 +46,6 @@ The servo sheet uses the exact entries in `joint_map.json`, including names, bus
 
 Checks retain their original measurement time and are recorded as current, stale or not run. Exporting neither changes readiness nor proves physical fit. Unproven steps remain marked, and the manifest records an assembly search that reached its time limit.
 
-Missing sheet profiles and identities stop export. Hidden solids, missing geometry, omitted printable output and duplicate plate filenames also stop export. Archive contents are limited to 256 MB before compression. A scene can contain at most 10,000 parts for kit export.
+Missing sheet profiles and identities stop export. Hidden solids, missing geometry, omitted printable output and duplicate plate filenames also stop export. Archive contents are limited to 256 MB before compression. Drawing preparation limits a kit to 256 scene parts. Drawings occupy at most 64 MB before compression.
 
 Steps are in [Export a robot kit](/help/export-a-robot-kit).

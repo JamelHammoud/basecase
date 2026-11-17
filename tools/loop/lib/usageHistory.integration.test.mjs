@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { afterAll, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'loop-provenance-'));
 
@@ -18,6 +18,7 @@ const { runAgent } = await import('./agent.mjs');
 const { voiceText } = await import('../../voice/voice.mjs');
 const { saveDelivery, hasPendingDelivery } = await import('./deliveryState.mjs');
 const { deliver } = await import('./deliver.mjs');
+const { usageReport } = await import('./usageReport.mjs');
 const cacheDir = path.join(root, 'state', 'cache');
 const pulls = [];
 const at = Date.now();
@@ -63,7 +64,6 @@ function publish(number, body, options = {}) {
   const dir = path.join(root, `repo-${number}`);
 
   fs.mkdirSync(dir, { recursive: true });
-  execFileSync('git', ['init', '-q', dir]);
 
   const branch = `loop/refine/${number}`;
   const entry = saveDelivery({ dir, branch, body, sha: 'verified', label: `loop:${options.taskKind ?? 'refine'}` });
@@ -82,7 +82,6 @@ function revisePublication(entry, services) {
   const dir = path.join(root, 'revision-8');
 
   fs.mkdirSync(dir, { recursive: true });
-  execFileSync('git', ['init', '-q', dir]);
 
   const revision = saveDelivery({ ...entry, dir, number: 8, sha: 'revised' });
 
@@ -105,16 +104,31 @@ function recordEarlierAndVoice(dir) {
   expect(voiceText('Fixture', { kind: 'pull', origin: { cwd: dir } })).toBe('Fixture');
 }
 
-function checkDateWindows() {
-  const until = at - 2 * 86_400_000;
-  const historical = report(['--until', new Date(until).toISOString()]);
+beforeAll(() => {
+  fs.mkdirSync(path.join(root, 'state', 'quota'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'state', 'quota', 'codex.json'), JSON.stringify({ at, windows: [] }));
+  writeHistory([]);
+});
 
-  expect(historical.completionWindow).toMatchObject({ since: until - 86_400_000, until });
-  expect(historical.sessions).toBe(0);
-  expect(() => report(['--since', new Date(at + 86_400_000).toISOString()])).toThrow(
-    'Use ISO dates with --since before --until',
-  );
-}
+it('uses the selected CLI end date for its default start and rejects reversed date windows', () => {
+  const until = at - 2 * 86_400_000;
+  const sessions = [
+    invocation('date-window-end', { startedAt: until }),
+    invocation('date-window-after', { startedAt: at }),
+  ];
+
+  try {
+    const historical = report(['--until', new Date(until).toISOString()]);
+
+    expect(historical.completionWindow).toMatchObject({ since: until - 86_400_000, until });
+    expect(historical.sessions).toBe(0);
+    expect(() => report(['--since', new Date(at + 86_400_000).toISOString()])).toThrow(
+      'Use ISO dates with --since before --until',
+    );
+  } finally {
+    for (const id of sessions) fs.rmSync(path.join(root, 'state', 'sessions', `${id}.json`));
+  }
+});
 
 afterAll(() => {
   fs.rmSync(root, { recursive: true, force: true });
@@ -122,9 +136,6 @@ afterAll(() => {
 });
 
 it('runs real journal, delivery recovery and JSON CLI over retained invocation histories', () => {
-  fs.mkdirSync(path.join(root, 'state', 'quota'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'state', 'quota', 'codex.json'), JSON.stringify({ at, windows: [] }));
-
   const cases = [
     [1, 'Closes #10.', 'MERGED'],
     [2, 'Closes #11.', 'MERGED'],
@@ -158,7 +169,7 @@ it('runs real journal, delivery recovery and JSON CLI over retained invocation h
       expect(hasPendingDelivery(entry.branch)).toBe(true);
       writeHistory(pulls);
 
-      const beforeRecovery = report();
+      const beforeRecovery = usageReport();
 
       expect(beforeRecovery.taskWork).toMatchObject({ mergedTasks: 3, unfinished: { sessions: 1 } });
       expect(beforeRecovery.publications.find((item) => item.branch === entry.branch)).toMatchObject({ number: null });
@@ -198,7 +209,7 @@ it('runs real journal, delivery recovery and JSON CLI over retained invocation h
   runAgent({ cwd: root, name: 'refine', system: 'Fixture', prompt: 'Fixture', schema: {} });
   writeHistory(pulls);
 
-  const full = report();
+  const full = report(['--since', new Date(at - 1).toISOString(), '--until', new Date(at + 86_400_000).toISOString()]);
   const result = full.taskWork;
 
   expect(full.publications.find((entry) => entry.number === 8)).toMatchObject({
@@ -237,22 +248,14 @@ it('runs real journal, delivery recovery and JSON CLI over retained invocation h
   });
   expect(result.sharedTasks[0]).toMatchObject({ steps: [12, 13], sessions: 1 });
 
-  const window = report([
-    '--since',
-    new Date(at - 1).toISOString(),
-    '--until',
-    new Date(at + 86_400_000).toISOString(),
-  ]);
-
-  expect(window.completionWindow.tasks.find((task) => task.task === 'pull:8')).toMatchObject({
+  expect(full.completionWindow.tasks.find((task) => task.task === 'pull:8')).toMatchObject({
     sessions: 3,
     tokens: 45,
   });
-  expect(window.taskWork.tasks.find((task) => task.task === 'pull:8')).toMatchObject({ sessions: 2, tokens: 30 });
-  expect(window.retention.sessions).toBe(24);
-  expect(window.completionWindow.byKind.feature.reviewOutcomes).toEqual({ fail: 1, pass: 1 });
+  expect(full.taskWork.tasks.find((task) => task.task === 'pull:8')).toMatchObject({ sessions: 2, tokens: 30 });
+  expect(full.retention.sessions).toBe(24);
+  expect(full.completionWindow.byKind.feature.reviewOutcomes).toEqual({ fail: 1, pass: 1 });
 
-  checkDateWindows();
   writeHistory(null);
-  expect(report().taskWork).toMatchObject({ linkageAvailable: false, mergedTasks: 0 });
+  expect(usageReport().taskWork).toMatchObject({ linkageAvailable: false, mergedTasks: 0 });
 });

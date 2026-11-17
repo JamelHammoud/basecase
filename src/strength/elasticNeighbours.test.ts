@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { elasticPattern } from './elasticPattern';
+import { blockAt, elasticPattern } from './elasticPattern';
 import { hexMesh } from './mesh';
 import type { V3 } from './material';
 
@@ -36,6 +36,30 @@ function referencePattern(nodes: Int32Array, count: number) {
 }
 
 describe('elastic neighbor collection', () => {
+  it('finds only exact columns inside each sorted row, including empty rows and missing columns', () => {
+    const rows = Array.from({ length: 28 }, (_, row) => Array.from({ length: row }, (_, col) => row + col * 2));
+    const rowStart = new Int32Array(rows.length + 1);
+
+    rows.forEach((row, i) => (rowStart[i + 1] = rowStart[i] + row.length));
+
+    const source = Int32Array.from([-99, ...rows.flat(), -99]);
+    const cols = source.subarray(1, source.length - 1);
+    const saved = source.slice();
+
+    for (let row = 0; row < rows.length; row++) {
+      for (let col = -1; col <= 82; col++) {
+        const local = rows[row].indexOf(col);
+
+        expect(blockAt({ rowStart, cols }, row, col)).toBe(local < 0 ? -1 : rowStart[row] + local);
+      }
+    }
+
+    expect(source).toEqual(saved);
+    cols[0] = 100;
+    expect(blockAt({ rowStart, cols }, 1, 1)).toBe(-1);
+    expect(blockAt({ rowStart, cols }, 1, 100)).toBe(0);
+  });
+
   it('matches set connectivity across dense, sparse, disconnected and singleton-axis grids', () => {
     for (let seed = 0; seed < 120; seed++) {
       const n: V3 = [1 + (seed % 5), 1 + (Math.floor(seed / 5) % 4), 1 + (Math.floor(seed / 20) % 3)];

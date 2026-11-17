@@ -39,6 +39,27 @@ describe('xacro expressions', () => {
     expect(run("1 if side == 'right' else -1")).toBe(-1);
   });
 
+  it('preserves numeric extrema across empty, boolean, nonfinite and signed-zero arguments', () => {
+    const inputs: XacroValue[][] = [[], [true], [false, true], [0, -0], [-0, 0], [Infinity, -Infinity], [NaN, 2]];
+
+    for (let seed = 0; seed < 32; seed++) {
+      inputs.push(Array.from({ length: seed }, (_, i) => Math.sin(seed * 17 + i) * 100));
+    }
+
+    for (const values of inputs) {
+      const lookup = (name: string) => values[Number(name.slice(1))];
+      const names = values.map((_, i) => `v${i}`).join(',');
+      const numbers = values.map(Number);
+
+      expect(evaluate(`min(${names})`, lookup, { computed: 0 })).toBe(Math.min(...numbers));
+      expect(evaluate(`math.max(${names})`, lookup, { computed: 0 })).toBe(Math.max(...numbers));
+    }
+
+    expect(() => run("min(0 / 0, 'first', 'second')")).toThrow('Not a number: first');
+    expect(() => run("max(1 / 0, 'first', 'second')")).toThrow('Not a number: first');
+    expect(run('max(min(4, 2), min(3, 1))')).toBe(2);
+  });
+
   it('leaves the branch it doesn’t take unevaluated', () => {
     expect(run('width if True else missing')).toBeCloseTo(0.2);
   });

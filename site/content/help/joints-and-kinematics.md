@@ -78,7 +78,9 @@ A skeleton holds the planned joint layout before parts are connected. Design Fro
 
 Joints form a tree that starts at the robot's base and branches outward. Each part moves with the deepest joint that lists it as moving. For example, a hand moves with the wrist, and so it also moves with the elbow and the shoulder.
 
-If no joint lists a part, the part still moves when its whole group moves with a joint. Screws, nuts, and inserts follow the parts they clamp, so you don't need to list them in any joint.
+If no joint lists a part, the part still moves when its whole group moves with a joint.
+
+Screws follow either the moving link or its fixed mount. Nuts follow their screw, and inserts follow their host. You don't need to list them in any joint.
 
 Each joint is anchored to the part it's mounted on. If you move the whole robot or undo a change, the joints stay in place.
 

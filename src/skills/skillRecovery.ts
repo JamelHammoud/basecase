@@ -34,12 +34,13 @@ export function recoveryModel(request: RecoveryRequest): SimModel {
 }
 
 export const recoveryFingerprint = (model: SimModel) => hashOf(modelHashes(model));
+export const DESIGN_CHANGED = 'The design changed. Start training on the current design.';
 
 export class ChangedRecovery extends Error {
   entry: RecoveryEntry;
 
   constructor(entry: RecoveryEntry) {
-    super('The design changed. Start training on the current design.');
+    super(DESIGN_CHANGED);
     this.entry = entry;
   }
 }
@@ -125,7 +126,7 @@ export class SkillRecovery {
       this.active.context !== this.context ||
       (this.currentFingerprint !== null && this.activeFingerprint !== this.currentFingerprint)
     )
-      throw new Error('The design changed. Start training on the current design.');
+      throw new Error(DESIGN_CHANGED);
   }
 
   discard() {

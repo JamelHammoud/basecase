@@ -65,6 +65,7 @@ export class RemoteTrainer extends Trainer {
 
     return {
       ...local,
+      local: { ready: local.ready, engine: local.engine },
       ...(this.remote.selected() ? { uv: true, ready: true, engine: 'forge' } : {}),
       running: [...local.running, ...this.remoteRuns.keys()],
     };

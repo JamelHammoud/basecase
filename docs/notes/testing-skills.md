@@ -2,6 +2,102 @@
 
 Current coverage: [owning guide](../guide/skills.md#testing-coverage). Shared policy and harness contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
 
+## Edited robot local sources
+
+The desktop studio enables automatic local Stand reuse for floating legged models with three powered joints per leg and source-to-target leg counts 4 to 4, 6 to 6 and 6 to 5. First robots and other mappings retain the cold path. Controlled Forge and Arena results establish orchestration only. Native comparisons below qualify this limited scope, without a universal learning-speed claim.
+
+The generated mapping matrix covers lengthened and shortened legs, widened hip spacing, torso mass, a fixed payload, changed limits, default stance, added and removed limbs, joint ordering and catalog STS3215 c001 to c018 replacements on quadruped, hexapod and biped fixtures. A biped reduced to one leg is classified as fixed and refuses reuse. The source list is scoped by its caller. Generated robot keys identify the first root joint, so adding or removing a root limb can change that key within one scene. Selection prefers a matching key but allows compatible references already in the scene.
+
+The first candidate check ran 56 related files. It passed 306 assertions and failed six mappings because selection incorrectly treated a changed robot key as another scene. Removing that identity assumption left one refusal, the one-legged biped, which the test now checks as unsupported. These observations concern source selection, not learned outcomes. Subsequent focused results are retained in the task handoff.
+
+On the available 18-core macOS host, Forge 0.1.0 with MuJoCo 4.0.0 trained the unedited quad-servo Stand through the production desktop Trainer and ordinary Motor Kit Arena path. Seed 3101 retained a skill in 127.9408 seconds, using one 120-second Forge input, 7,667,712 reported steps and one Arena decision. The Forge process took 120.3706 seconds. Initial load averages were 19.25, 14.95 and 17.03. This is one source preparation run, not a cold-versus-warm comparison.
+
+A preliminary held-out lengthened-leg comparison uses seed 3102 on Metal. Both retained outcomes passed 32 of 32 in every Arena variant and again in a separate independent Arena run.
+
+| Input | Retained seconds | Seconds through independent Arena | Reported training steps | Forge inputs | Arena attempts before retention |
+| --- | ---: | ---: | ---: | --- | ---: |
+| Cold | 148.7580 | 168.1350 | 7,544,832 | 2 minutes | 1 |
+| Local warm | 298.1654 | 320.0611 | 13,541,376 | 15 seconds, then 4 minutes | 2 |
+
+Each schedule retained one outcome from one completed fixture and seed. Cold passed its only training attempt. Warm failed its initial Arena decision before using the existing four-minute trial. The warm target retained source hash `9a1f05654e53f6598e58e93122237d0e600594177d67cca783ae5636f95543df`. The 15-second replacement added no trial or verifier pass to the schedule. The observed failed attempt used one of the ordinary trials.
+
+The one-minute load was 40.07 before cold, 53.55 between cold and warm, and 62.25 after warm. These are unequal loaded conditions, not the required same-load comparison. One fixture and one seed cannot establish a pass rate or a useful median. The observed warm time was longer, so the remaining experiment was stopped rather than enabling a scope from this sample. The next widened-hip cold input had started. Its last recorded progress was 26.8414 seconds and 1,916,928 steps before cancellation. That interrupted input is excluded from the completed pair and retained as additional spent work, not a failed learned outcome.
+
+The preliminary source callback parses a cached artifact string. Warm preparation took 58.2169 ms, including parsing, selection, hashing and mapping, but excluding the source file read and bridge transport. It cannot qualify the requested end-to-end loading measurement. Arena thresholds and independent verification remain unchanged. Raw events, complete outcomes, job inputs and the interruption record are retained through `scratch/task-handoff.json` for continuation, without publishing local artifact paths.
+
+### One-minute input, native Metal observations
+
+The retained implementation replaces only the first Stand input with one minute. Ordinary cold Stand starts with two minutes. Both keep the existing four-minute remaining trial, seeds, randomization and Arena thresholds. Source artifacts remain byte-for-byte unchanged. A poor warm result can consume the remaining ordinary trial, as the preliminary failure above demonstrates.
+
+Measurements use the production desktop Trainer, Forge and `trainKitEntry`, with real generated models and the ordinary Arena retention boundary. The retention timer starts before metadata selection, the production `getSkill` file read, validation and mapping. It ends after the target artifact is saved. A separate independent Arena then judges each retained controller on its target environment. That additional verification is included in the second timing column below and is not added to the product schedule.
+
+The Mac has 18 cores. These comparisons use Metal's default 1,024 environments, the same source per robot family and identical target fixture, seed and backend within each pair. Mode order reverses for the second seed. Only one measurement-owned Forge process runs at once. Other loop work shares the host, so instantaneous load is not controlled. Observed one-minute load ranged from 3.06 to 13.16 during the quadruped cohort and 5.27 to 28.72 during the hexapod cohort. Pairing and reversing order reduce order bias, but do not establish equal instantaneous host load.
+
+The original quad source is the seed 3101 artifact above. The hexapod source uses seed 5200, retained in 130.6254 seconds and 5,406,720 training steps. Its Forge input took 121.6396 seconds. The hex source hash is `bd911781f81897c21650706ee014e965fe90d7adacfb3c8e28dd9bd0ddf732f2`. Each source used one two-minute input and one Arena decision. These one-time source costs are separate from edit timings and apply before either edit schedule. They are not charged repeatedly to warm targets.
+
+| Family and edit | Seed | Cold retention seconds | Warm retention seconds | Cold through independent Arena | Warm through independent Arena | Cold steps | Warm steps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Quad, lengthen legs | 4201 | 127.5722 | 68.9202 | 134.8076 | 77.9325 | 7,348,224 | 4,153,344 |
+| Quad, shorten legs | 4201 | 127.0648 | 72.5979 | 133.6819 | 81.0250 | 7,544,832 | 4,104,192 |
+| Quad, widen hips | 4201 | 127.5464 | 76.9175 | 134.2460 | 89.3452 | 7,323,648 | 4,128,768 |
+| Quad, lengthen legs | 4202 | 129.9812 | 67.7737 | 138.7721 | 74.8984 | 7,176,192 | 4,153,344 |
+| Quad, shorten legs | 4202 | 128.3431 | 74.9476 | 135.7250 | 85.5952 | 7,323,648 | 4,128,768 |
+| Quad, widen hips | 4202 | 128.1407 | 70.0367 | 135.2105 | 80.4091 | 7,544,832 | 4,153,344 |
+| Hex, lengthen legs | 5201 | 149.5298 | 69.6539 | 165.8445 | 78.3104 | 5,480,448 | 2,531,328 |
+| Hex, remove limb | 5201 | 140.0472 | 68.3378 | 149.9521 | 82.4773 | 6,094,848 | 2,850,816 |
+| Hex, lengthen legs | 5202 | 137.0896 | 84.0786 | 151.4802 | 105.6361 | 5,677,056 | 2,482,176 |
+| Hex, remove limb | 5202 | 142.2969 | 76.2100 | 153.8507 | 90.8873 | 5,996,544 | 2,826,240 |
+
+All 10 cold and 10 warm outcomes retained, with no failed attempt in this cohort. Every retained outcome also passed the separate independent Arena. Every schedule used one Forge input and one Arena decision before retention. Quad median retention fell from 127.8565 to 71.3173 seconds, and independent-inclusive median from 135.0090 to 80.7171 seconds. Hex medians were 141.1720 versus 72.9319 seconds and 152.6654 versus 86.6823 seconds respectively.
+
+Quad cold and warm work totaled 44,261,376 and 24,821,760 reported training steps. Hex totals were 23,248,896 and 10,690,560. Summed edit retention clocks were 768.6484 versus 431.1936 seconds for quad, and 568.9635 versus 298.2803 for hex. Including separate independent verification, sums were 812.4431 versus 489.2055 and 621.1275 versus 357.3111. These totals include failed attempts, of which this cohort had none. The earlier 15-second failure and interrupted input remain reported separately, rather than disappearing from the experiment history.
+
+A final-code preparation replay with real file reads matched every measured mapped-policy hash, including the six-to-five action and observation mapping. Final preparation medians and transport limits are in [Skills performance evidence](performance-skills.md#local-source-preparation). Native job inputs, source hashes, per-stage steps, Arena results and raw event logs remain referenced by the task handoff.
+
+Ten pairs across two source policies give limited uncertainty coverage. All-passing small samples do not establish equal population pass rates. Mass, payload, servo, joint-limit and default-stance edits have generated mapping and orchestration coverage, not separate native learning comparisons. Added limbs, bipeds, other limb counts, branching, incompatible chain depths, camera and clock observations remain outside automatic reuse. Existing mapping can support some of those structural edits for explicit installation, but local activation does not extrapolate the timing result to them.
+
+The fast acceptance checks also caught a sparse-array chain-depth admission bug and a non-native one-layer policy fixture. The mapper now refuses missing depths, and local preparation requires the existing native actor architecture. A biped default-stance fixture initially placed opposing joint offsets and failed real feasibility. The fixture now supplies a symmetric crouch and retains the successful training assertion. No feasibility or Arena threshold changed. Runtime coverage also proves that a passing physics-only Recheck makes no Forge request, while a failed Recheck can use the same warm retraining path. Backend coverage catches remote-selected Forge status masking an unavailable local Python runner. Separate local capability keeps that background request cold.
+
+### Native CPU observations
+
+The CPU comparison keeps the same retained Metal-trained source artifacts, normal Kit training and Arena paths. Each pair uses the same generated target and seed. Native Forge runs C MuJoCo with 64 environments and four requested physics threads. The learner retains its normal threading. Only the backend and physics-thread setting differ from the Metal cohort. Mode order reverses between seeds 6201 and 6202. One-minute host load ranged from 10.10 to 22.82, including other loop checks. The host was shared, not isolated.
+
+| Family and edit | Seed | Cold retention seconds | Warm retention seconds | Cold through independent Arena | Warm through independent Arena | Cold steps | Warm steps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Quad, lengthen legs | 6201 | 132.9248 | 71.0084 | 144.2925 | 81.6552 | 2,018,304 | 1,022,976 |
+| Hex, remove limb | 6201 | 150.1282 | 74.2675 | 165.2191 | 85.4206 | 1,847,808 | 1,029,120 |
+| Quad, lengthen legs | 6202 | 131.4714 | 74.4423 | 141.1759 | 95.4207 | 2,165,760 | 1,247,232 |
+| Hex, remove limb | 6202 | 131.2795 | 68.4513 | 140.6637 | 75.8366 | 1,214,976 | 1,047,552 |
+
+All four cold and four warm outcomes retained and independently passed. There were no failed trials in this CPU cohort. Every schedule consumed one Forge input and one Arena decision before retention, followed by the separately measured independent Arena. Median retention was 132.1981 seconds cold and 72.6380 warm. Independent-inclusive medians were 142.7342 and 83.5379 seconds. Total cold and warm training work was 7,246,848 and 4,346,880 steps. Summed retention clocks were 545.8038 and 288.1696 seconds, or 591.3512 and 338.3331 including independent verification. Median warm source preparation was 30.0845 ms, including real file IO.
+
+An additional six-to-six CPU pair lengthens the hexapod's legs with seed 6301. Cold ran before warm, with the same source and backend settings.
+
+| Input | Retention seconds | Seconds through independent Arena | Training steps | Forge inputs | Arena decisions before retention |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Cold | 142.6743 | 164.8531 | 1,359,360 | 1 | 1 |
+| Warm | 71.1384 | 83.6673 | 875,520 | 1 | 1 |
+
+Both retained and independently passed, with no failed trial. Warm preparation took 40.7473 ms. One-minute load moved from 10.60 before cold to 31.00 between modes, then 16.03 after warm. This single pair adds native CPU execution coverage for the six-to-six mapping. It does not establish its population success rate or remove the shared-load uncertainty. Across the two CPU cohorts and Metal cohorts, all 15 cold and 15 warm schedules retained, with no observed loss of retained outcomes under the same existing upper budgets.
+
+These are macOS native CPU observations, not Windows or Linux execution or remote transport measurements. Cross-platform dispatch and frozen recovery are covered by controlled integration tests and CI. A remote computer's speed is not inferred from these timings. All schedules use the same existing upper budget, with the warm schedule spending one minute less on its first input. No saved minute is reallocated into another training run.
+
+The documentation capture drove the existing Stand row and saved four states without judging their appearance. It passed in 40.28 seconds using controlled training and retention boundaries, not native learning. The initial leg-delete action left focus on the Inspect tab. Focusing the canvas before selecting and deleting fixed that action without changing assertions. Local development serving also hit the harness's existing 30-second navigation limit during dependency optimization. The scratch capture isolates its Vite cache and warms static imports before opening the app. No committed harness timeout, retry or test policy changed. Its first scratch config accidentally inherited the full browser include pattern and was stopped. The corrected config selects only the capture file. CI owns execution of the committed browser walkthrough.
+
+The explicit changed-file check passed formatting, lint, documentation, types, all 304 site pages and 515 assertions in 76 related test files. A subsequent focused check after adding local-versus-remote capability and Recheck coverage passed 78 assertions across 17 related files. The copy report found zero added, changed or removed UI strings. Final documentation-only changes receive their own changed-file check. Preflight rechecking corrected Arena’s stale-skill explanation to qualify automatic Stand reuse and describe retraining after a failed Recheck. Its existing steps and twin screenshot remain accurate. Install Skill, publishing, teaching, design-agent, animation and remote-training articles retain accurate workflows, controls and screenshots and were left unchanged.
+
+### Removed edited-robot browser walkthrough
+
+The six unchanged help articles flagged by preflight were checked against the feature diff. `install-a-skill-from-hugging-face.md` still describes explicit installation, which retains its ordinary training budget and requires fresh target evidence. `publish-a-skill-to-hugging-face.md` still describes the same export files and controls. `teach-a-robot-a-skill.md` and `train-an-animation-as-a-move.md` describe taught and animation jobs, which do not use automatic local Stand selection. `the-design-agent.md` retains the same agent capabilities and controls. `train-on-another-computer.md` retains the same configuration, dispatch, restart and local Arena steps. Freezing a mapped Stand input changes recovery internals without changing those steps. Their labels and screenshots remain accurate, so none needs an edit.
+
+Pull request #1568's Linux changed-browser Check failed both attempts at the leg-deletion assertion, before dispatching training. The supplied log reports 18 parts remaining instead of 16 at line 78. The file took 33,857 ms, including its configured retry. The aggregate Check failed because this browser job failed. The log does not establish why the requested three-part selection deleted only one part, or demonstrate a training defect.
+
+The unreliable deletion walkthrough was removed rather than adding waits, retries or a weaker assertion. `localKitWorker.test.ts` retains the hexapod limb-removal case through real model generation, source mapping, MuJoCo feasibility and the production worker. It checks the dispatched policy, source hash, fresh target evidence, artifact saving and unchanged source. `localKitRuntime.test.ts` retains foreground and background dispatch, record retention, trial budgets and frozen recovery coverage. Forge and Arena outcomes are controlled in these tests. They do not cover the browser's scene deletion followed by the saved Stand row's Train button.
+
+The focused `e2e/editedKit.e2e.test.ts` starts with an edited hexapod fixture and its source reference. It clicks Train in the saved Stand row, uses production source preparation through the ranking worker, and checks the mapped policy, one-minute initial input, fresh target artifact and unchanged source. Only training and retention are controlled. The test avoids canvas selection and deletion, without adding a wait, retry or timeout. CI owns browser execution, and this revision makes no browser speedup claim.
+
+Review found that Recheck could start fallback training on an old model after an edit during source loading or Arena. Its design revision now stays fixed from the initial request through fallback training and snapshot retention. `localKitRuntime.test.ts` checks edits during preparation, source loading and Arena, plus Stop during Arena, and refuses both dispatch and retention after cancellation. The changed-file check passed 135 assertions in 28 related files, types, lint, formatting, documentation and 308 site pages. Browser tests were not run locally.
+
 ## Pose animation training
 
 The Sit training and Try walkthrough in `e2e/skills.e2e.test.ts` was removed under [#1141](https://github.com/JamelHammoud/basecase/issues/1141) after taking 39 s in run 43739315274. It supplied a clock policy but still ran the move solver and Arena before checking playback.

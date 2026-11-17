@@ -136,7 +136,7 @@ function limbsOf(schema: RobotSchema): Limb[] | null {
     limb.joints[joint.depth - 1] = i;
   }
 
-  return limbs.every((l) => l.joints.length > 0 && l.joints.every((j) => j !== undefined)) ? limbs : null;
+  return limbs.every((l) => l.joints.length > 0 && Array.from(l.joints).every((j) => j !== undefined)) ? limbs : null;
 }
 
 const distance = (a: [number, number], b: [number, number]) => Math.hypot(a[0] - b[0], a[1] - b[1]);

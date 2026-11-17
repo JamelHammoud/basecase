@@ -47,7 +47,7 @@ function validEvidence(evidence: ArenaEvidence, skill: Skill) {
   );
 }
 
-function validSkill(skill: unknown, schema: RobotSchema): skill is Skill {
+export function isProvenSkill(skill: unknown, schema: RobotSchema): skill is Skill {
   return (
     isSkill(skill) &&
     skill.controller.kind === 'policy' &&
@@ -80,7 +80,7 @@ function ranked(candidate: SkillCandidate, target: RobotSchema, outcomes: unknow
     const skill: unknown = JSON.parse(candidate.files['skill.json']);
     const schema: unknown = JSON.parse(candidate.files['robot.json']);
 
-    if (!isRobotSchema(schema) || !validSkill(skill, schema)) return null;
+    if (!isRobotSchema(schema) || !isProvenSkill(skill, schema)) return null;
 
     const fit = skillFit(skill, schema, target);
 

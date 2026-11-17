@@ -7,11 +7,11 @@ import { gridSpec, labelColors, paintFlat } from './labelCapture';
 import type { ViewportContext } from './viewportContext';
 
 const VIEW_DIRECTIONS: Record<string, THREE.Vector3> = {
-  iso: new THREE.Vector3(0.9, 0.7, 1.2),
-  front: new THREE.Vector3(0, 0.08, 1),
-  back: new THREE.Vector3(0, 0.08, -1),
-  side: new THREE.Vector3(1, 0.08, 0),
-  top: new THREE.Vector3(0, 1, 0.001),
+  iso: new THREE.Vector3(0.9, 0.7, 1.2).normalize(),
+  front: new THREE.Vector3(0, 0.08, 1).normalize(),
+  back: new THREE.Vector3(0, 0.08, -1).normalize(),
+  side: new THREE.Vector3(1, 0.08, 0).normalize(),
+  top: new THREE.Vector3(0, 1, 0.001).normalize(),
 };
 
 export class Hider {
@@ -34,7 +34,7 @@ export function viewDirection(view: string): THREE.Vector3 {
   const custom = /^az:(-?[\d.]+),el:(-?[\d.]+)$/.exec(view);
 
   if (!custom) {
-    return (VIEW_DIRECTIONS[view] ?? VIEW_DIRECTIONS.iso).clone().normalize();
+    return (VIEW_DIRECTIONS[view] ?? VIEW_DIRECTIONS.iso).clone();
   }
 
   const az = THREE.MathUtils.degToRad(Number(custom[1]));

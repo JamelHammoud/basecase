@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { encodeBitmap } from '../../utils/imageEncode';
-import { captureScreenshot, Hider, hideForViews } from './captures';
+import { captureScreenshot, Hider, hideForViews, viewDirection } from './captures';
 import type { ViewportContext } from './viewportContext';
 
 vi.mock('../../utils/imageEncode', () => ({ encodeBitmap: vi.fn(), encodeLabelled: vi.fn() }));
@@ -49,6 +49,54 @@ beforeEach(() => {
 });
 
 afterEach(() => vi.unstubAllGlobals());
+
+describe('capture directions', () => {
+  it('retains exact preset directions and independent results without repeated normalization', () => {
+    const presets = [
+      { view: 'iso', source: new THREE.Vector3(0.9, 0.7, 1.2) },
+      { view: 'front', source: new THREE.Vector3(0, 0.08, 1) },
+      { view: 'back', source: new THREE.Vector3(0, 0.08, -1) },
+      { view: 'side', source: new THREE.Vector3(1, 0.08, 0) },
+      { view: 'top', source: new THREE.Vector3(0, 1, 0.001) },
+      { view: 'unknown', source: new THREE.Vector3(0.9, 0.7, 1.2) },
+    ].map(({ view, source }) => ({ view, expected: source.normalize() }));
+    const normalize = vi.spyOn(THREE.Vector3.prototype, 'normalize');
+
+    try {
+      for (let i = 0; i < 100; i++) {
+        for (const { view, expected } of presets) {
+          const direction = viewDirection(view);
+
+          expect(direction).toEqual(expected);
+          direction.set(100, -200, 300);
+        }
+      }
+
+      expect(normalize).not.toHaveBeenCalled();
+    } finally {
+      normalize.mockRestore();
+    }
+  });
+
+  it.each([
+    { az: 0, el: 0 },
+    { az: 90, el: 45 },
+    { az: -135, el: -60 },
+    { az: 360, el: 100 },
+    { az: 12.5, el: -100 },
+  ])('preserves custom azimuth $az and clamped elevation $el', ({ az, el }) => {
+    const azimuth = THREE.MathUtils.degToRad(az);
+    const elevation = THREE.MathUtils.degToRad(Math.max(-89, Math.min(89, el)));
+
+    expect(viewDirection(`az:${az},el:${el}`)).toEqual(
+      new THREE.Vector3(
+        Math.sin(azimuth) * Math.cos(elevation),
+        Math.sin(elevation),
+        Math.cos(azimuth) * Math.cos(elevation),
+      ),
+    );
+  });
+});
 
 describe('current-view captures', () => {
   it('copies the rendered frame and restores helpers before the worker finishes encoding', async () => {

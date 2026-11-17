@@ -313,6 +313,14 @@ On November 17, 2026, `scratch/stl-coordinate-reads.mjs` transpiled the precedin
 
 Scoped changed-file validation passed formatting, lint, documentation, site copy for 321 pages, TypeScript and all 423 related tests across 63 files. The related run reported 11.95 seconds. Complete output is in `scratch/check-stl-corners.log`. Copy accounting is net zero and preflight reports no findings.
 
+### STL byte-comparison timeout repair
+
+The full-suite run [44126366964](https://github.com/JamelHammoud/basecase/actions/runs/44126366964) at `64df273282d6266ba438c5b4cb14a4afcf049e20` reported one failed Linux unit test, `binary STL encoding > preserves complete file bytes across ordinary, degenerate and nonfinite facets`. It exceeded the unchanged 5,000 ms test budget. Classification is flaky under load, with excessive byte-comparison work in the test. Commit `6cc836b214d4edd416cccb63440749aa3f88d5b4` introduced this fixture matrix after the last green full-suite revision, `348373decd8013d264fc3e2e9fe1f8b298051b34`. The unmodified test passed locally. No platform branch, timer, I/O or random fixture is involved.
+
+Vitest 5.0.5 generic equality traverses each Uint8Array through its iterable matcher. The parity matrix performs 96 complete-file comparisons, totaling 551,664 compared bytes. Node 26.13.0 strict equality compares Uint8Array byte lengths and contents through its native byte comparator. The repair uses that strict assertion for byte equality and inequality, retaining every fixture, independent reference encoding, whole-file comparison and output-ownership assertion. Production STL encoding stays unchanged.
+
+On the local macOS arm64 host with Node 26.13.0, one unmodified changed-file check passed both tests and reported 629 ms for its Vitest run. One initial native-assertion check passed both tests and reported 112 ms. These are single scoped observations on a shared host, including Vitest overhead. They establish reduced comparison work without measuring a flake rate or claiming Linux CI timing. No fixture, assertion, timeout, retry or quarantine is removed or relaxed. Existing scene and posed-STL tests continue to cover transforms and placement.
+
 ## Build-guide contact solids extract only positions
 
 Repository search found `guide/render/guideMeasure.ts` as the only caller of `worldGeometry`. Its BVH and contact probes need positions alone. This completes use of the existing direct triangle extractor at the remaining legacy geometry-conversion wrapper. Other object measurements already use `worldTriangles` or `localTriangles`.

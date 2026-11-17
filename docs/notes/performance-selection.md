@@ -37,3 +37,12 @@ On 16 November 2026 UTC, a scratch Vitest comparison ran on an Apple M5 Pro, mac
 For a selection of 64 distinct parts, bounds measurements fall from 128 to 64. Ordinary rotated parts read dimensions 448 times before and 256 times after, including the read from copying each output part. Affine sheets read dimensions 192 times before and 128 times after. These are operation counts derived from the previous path, with the new counts asserted by `src/utils/selectionAlignment.test.ts`. They are not timings or an end-to-end latency claim. A single unlocked part still needs one measurement.
 
 The test covers all three axes and all three anchors on 64-part rotated and affine fixtures, duplicate and missing ids, locked parts, untouched references, source preservation, repeated object references and fresh dimensions after edits. Existing `selection.test.ts` and `sheetSelection.test.ts` retain coverage of origin alignment, rounding, mixed selections and rendered sheet bounds. No browser behavior, control, copy, timeout or quarantine changes.
+
+
+## Marquee reuses its ray-grid workspace
+
+A whole-app search of `setFromCamera` found one rectangular selection ray grid, in `src/three/viewport/marquee.ts`. Plate and ordinary pointer picking cast individual rays. Mark projection already consumes retained coordinates. This change covers the complete marquee grid without changing those separate paths.
+
+Each selection still casts 49 rays in the same column-first order. Coordinate vectors fall from 49 to 1, intersection result arrays from 49 to 1, and mapped ID arrays from 49 to 0. The intermediate collected ID list and its final traversal are removed. Each probe clears the shared hit array before raycasting, then adds selectable IDs directly to the existing set. Three.js still owns individual intersection records and sorts each probe by distance. These are structural allocation counts, not timings or an end-to-end latency claim.
+
+`marquee.test.ts` drives the installed pointer listeners against real Three.js planes and an orthographic camera. Large planes have no vertices inside the rectangle, so selection requires the ray grid. Coverage includes every overlapping selectable surface, first-hit order, duplicate elimination, locked and hidden parts, missing scene records, edited geometry, subsequent drags, empty results and coordinate and intersection-array identity across all probes. No action, control, copy or visible state changes, so existing selection help remains accurate. No timeout, retry or quarantine changes.

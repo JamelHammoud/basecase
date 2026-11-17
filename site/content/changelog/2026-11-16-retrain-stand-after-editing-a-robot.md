@@ -4,9 +4,9 @@ date: 2026-11-16
 image: /changelog/retrain-stand-after-editing-a-robot/cover.png
 ---
 
-You can retrain Stand from a compatible policy your robot has proved. Edit the robot, then use the existing Train action.
+You can retrain Stand from a compatible policy your robot has proved, using the existing Train action after an edit. This requires the desktop app with Forge.
 
-You can reuse policies in the desktop app with Forge. This works for four-leg and six-leg robots that keep their leg count and have three powered joints per leg. You can also use a six-leg source to train a five-leg target.
+This works for four-leg and six-leg robots that keep their leg count and have three powered joints per leg. You can also use a six-leg source to train a five-leg target.
 
 Before this change, you had to train from scratch after removing a hexapod leg. Basecase selects one compatible source from the scene's saved skills, maps it onto the edited robot and trains from that input. Basecase leaves the source file unchanged.
 

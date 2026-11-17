@@ -14,7 +14,7 @@ import type { ForgeFactory, JobRow, KitInstall, RaceReport, Run, RuntimeDeps } f
 import type { SkillPorts, SkillsJob } from './skillsJob';
 import { SkillCoach } from './skillsCoach';
 import { SkillStress } from './skillsStress';
-import { moveTag, recordEnvironment, refusedLine, skillRecord, type SkillRecord } from './skillRecords';
+import { refusedLine, skillRecord, type SkillRecord } from './skillRecords';
 import { KIT_LABELS, refusalModel, type SkillTarget } from './skillRows';
 import { NO_SNAPSHOT_STORE, NO_SNAPSHOTS, trailRefs, type SnapshotRef, type Snapshots } from './snapshots';
 import type { DraftInput, DraftReport, DraftResult } from './teach';
@@ -24,8 +24,8 @@ import { recoverableWorker, seededRecoveryJob, type RecoveryTriesPorts } from '.
 import { recoveredRun } from './recoveredRun';
 import { SkillsRuntimeJobs } from './skillsRuntimeJobs';
 import { runMoveWork } from './runtimeMove';
-import type { RecoverableSkillJob } from './skillRecovery';
-import { DESIGN_CHANGED } from './skillRecovery';
+import { DESIGN_CHANGED, type RecoverableSkillJob } from './skillRecovery';
+import { runRuntimeRecheck } from './runtimeRecheck';
 import { runTries, type TriesPlan } from './triesRun';
 
 export type { ForgeFactory, ForgeFactoryOptions, JobRow } from './skillsRuntimeTypes';
@@ -162,14 +162,10 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
   }
 
   trainKit(model: SimModel, entry: TrainedEntry): string | null {
-    return this.startKit(model, { entry });
+    return this.installKit(model, { entry });
   }
 
-  installKit(model: SimModel, install: KitInstall): string | null {
-    return this.startKit(model, install);
-  }
-
-  private startKit(model: SimModel, install: Omit<KitInstall, 'warm'> & { warm?: KitWarm }): string | null {
+  installKit(model: SimModel, install: Omit<KitInstall, 'warm'> & { warm?: KitWarm }): string | null {
     if (this.user) return BUSY;
 
     const revision = this.designRevision;
@@ -205,12 +201,14 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
   recheck(model: SimModel, task: BackgroundTask): string | null {
     if (this.user) return BUSY;
 
+    const revision = this.designRevision;
+
     this.running = this.start({
       target: task.target,
       label: task.label,
       background: false,
       model,
-      work: (forge, signal) => this.recheckWork(model, task, { forge, signal }),
+      work: (forge, signal) => this.recheckWork(model, task, { forge, signal, revision }),
     });
 
     return null;
@@ -375,11 +373,7 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
     completed?: InstallCompleted,
   ) {
     const revision = ports.revision ?? this.designRevision;
-    const assertCurrent = () => {
-      ports.signal.throwIfAborted();
-
-      if (revision !== this.designRevision) throw new Error(DESIGN_CHANGED);
-    };
+    const assertCurrent = () => this.assertDesignCurrent(revision, ports.signal);
     const outcome = await runRuntimeKit({
       model,
       entry,
@@ -424,29 +418,39 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
     if (!signal.aborted) this.deps.onRefused?.(target, { line, model: refusalModel(model) });
   }
 
-  private retrain(model: SimModel, task: BackgroundTask, ports: { forge: ForgeRunner; signal: AbortSignal }) {
+  private retrain(
+    model: SimModel,
+    task: BackgroundTask,
+    ports: { forge: ForgeRunner; signal: AbortSignal; revision?: number },
+  ) {
     if (task.move) return this.moveWork(model, task.move, ports);
 
     return task.entry ? this.kitWork(model, task.entry, ports) : Promise.resolve();
   }
 
-  private async recheckWork(model: SimModel, task: BackgroundTask, ports: { forge: ForgeRunner; signal: AbortSignal }) {
-    const skill = await this.deps.loadSkill(task.record.hash);
-    const environment = recordEnvironment(task.record, model, task.move ? [task.move] : []);
+  private assertDesignCurrent(revision: number, signal: AbortSignal) {
+    signal.throwIfAborted();
 
-    if (!skill || !environment) return this.retrain(model, task, ports);
+    if (revision !== this.designRevision) throw new Error(DESIGN_CHANGED);
+  }
 
-    const job = { type: 'recheck' as const, model, design: designOf(model), skill, environment };
-    const reply = await this.deps.runner(job, { ...this.ports(), ...ports });
+  private recheckWork(
+    model: SimModel,
+    task: BackgroundTask,
+    ports: { forge: ForgeRunner; signal: AbortSignal; revision?: number },
+  ) {
+    const revision = ports.revision ?? this.designRevision;
+    const assertCurrent = () => this.assertDesignCurrent(revision, ports.signal);
 
-    if (!reply.skill) return this.retrain(model, task, ports);
-
-    const move = task.move ? moveTag(task.move.id, environment) : undefined;
-
-    await this.keep(
-      task.target,
-      skillRecord(reply.skill, { kit: task.entry, move, coach: task.record.coach ?? undefined, model }),
-    );
+    return runRuntimeRecheck({
+      model,
+      task,
+      ports: { ...this.ports(), ...ports },
+      deps: this.deps,
+      assertCurrent,
+      retrain: () => this.retrain(model, task, { ...ports, revision }),
+      keep: (record) => this.keep(task.target, record, assertCurrent),
+    });
   }
 
   protected async drainBackground() {

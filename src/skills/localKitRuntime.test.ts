@@ -254,6 +254,42 @@ describe('warm source priority and retention', () => {
 });
 
 describe('warm source cancellation and recovery', () => {
+  it.each(['prepare', 'load', 'arena', 'stop'])(
+    'rejects a changed or stopped Recheck before retraining during %s',
+    async (phase) => {
+      const state = setup();
+      const model = kitEditModels('quad-servo').find((edit) => edit.name === 'torso mass')!.model;
+
+      state.load.mockImplementation(async () => {
+        if (phase === 'load') state.runtime.invalidateRecovery();
+
+        return source;
+      });
+      vi.mocked(runArena).mockImplementation(async () => {
+        if (phase === 'arena') state.runtime.invalidateRecovery();
+
+        if (phase === 'stop') state.runtime.stopUser();
+
+        return { ...readyStand(model, model.robots[0].key).evidence!, passed: false };
+      });
+      state.runtime.recheck(model, {
+        target: 'kit:stand',
+        label: 'Stand',
+        kind: 'recheck',
+        entry: 'stand',
+        move: null,
+        record: oldRecord,
+      });
+
+      if (phase === 'prepare') state.runtime.invalidateRecovery();
+
+      await state.runtime.settled();
+      expect(state.forge).not.toHaveBeenCalled();
+      expect(state.kept).toHaveLength(0);
+      expect(state.requests.every((request) => request.type === 'recheck')).toBe(true);
+    },
+  );
+
   it('does not retain a warm result after Stop or an edit during loading or training', async () => {
     for (const phase of ['load', 'train', 'stop']) {
       const state = setup();

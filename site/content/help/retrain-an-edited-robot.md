@@ -14,9 +14,9 @@ covers:
   - src/workspace/useSkills.ts
 ---
 
-Use a saved Stand policy to start training after changing a supported robot, then get fresh Arena evidence for the new design.
+In the desktop app with Forge, use a saved Stand policy to retrain an edited robot, then get fresh Arena evidence.
 
-You can reuse a policy in the desktop app with Forge. For Stand, you can reuse a policy if your four-leg or six-leg robot keeps its leg count and has three powered joints per leg. You can use a six-leg source to train a five-leg target. For other mappings and Motor Kit entries, you train from scratch.
+For Stand, you can reuse a policy if your four-leg or six-leg robot keeps its leg count and has three powered joints per leg. You can use a six-leg source to train a five-leg target. For other mappings and Motor Kit entries, you train from scratch.
 
 In this example, you remove one leg from a hexapod with a saved Stand skill.
 
@@ -34,15 +34,13 @@ In this example, you remove one leg from a hexapod with a saved Stand skill.
 
 ![Stand retraining on the edited robot](/help/retrain-an-edited-robot/training.png)
 
-6. After the row shows its Arena result, click **Try**.
+6. In the **Stand** row, click **Try** when it appears.
 
 ![Stand retained with fresh evidence for the edited robot](/help/retrain-an-edited-robot/retained.png)
 
 Basecase may have started background training on desktop after the edit. If you see progress in the row, wait for training to finish.
 
-For most mass, size, stance and joint-limit edits, you’ll see **Recheck** first. With Recheck, you repeat Arena without training. If Arena rejects the policy, you can retrain using a compatible saved source.
-
-Basecase selects a source from the scene's saved references and keeps the source artifact unchanged. For the first training input that reuses a policy, Basecase uses one minute in place of the usual two-minute Stand input. Basecase runs the remaining trials within the existing budget and uses the Arena result to decide whether to keep the new skill.
+For most mass, size, stance and joint-limit edits, you’ll see **Recheck** first. **Recheck** runs Arena on the saved policy. If the policy fails, Basecase retrains it and can start from a compatible saved source.
 
 For older skills without a saved source layout, you can still use playback and recheck, but you retrain from scratch. You train from scratch if source files are missing or incompatible.
 

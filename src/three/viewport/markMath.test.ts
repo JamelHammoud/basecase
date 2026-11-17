@@ -111,6 +111,26 @@ describe('mark strokes', () => {
     expect(distanceToPolyline([110, 0], points, copyPoint)).toBeCloseTo(0, 12);
   });
 
+  it('measures diagonal projections, endpoint clamps and the nearest segment in either direction', () => {
+    const points: Point2[] = [
+      [0, 0],
+      [10, 10],
+      [10, 30],
+    ];
+    const cases: Array<[Point2, number]> = [
+      [[4, 6], Math.SQRT2],
+      [[-3, -4], 5],
+      [[13, 34], 5],
+      [[13, 20], 3],
+      [[10, 10], 0],
+    ];
+
+    for (const [point, expected] of cases) {
+      expect(distanceToPolyline(point, points, copyPoint)).toBeCloseTo(expected, 12);
+      expect(distanceToPolyline(point, points.toReversed(), copyPoint)).toBeCloseTo(expected, 12);
+    }
+  });
+
   it('records the camera direction a mark was drawn from as a look view', () => {
     expect(viewAngles([0, 0, 1])).toBe('az:0,el:0');
     expect(viewAngles([1, 0, 0])).toBe('az:90,el:0');
@@ -144,6 +164,19 @@ describe('mark segment distance bounds', () => {
         [1e200, 0],
       ],
       [
+        [2e-200, 0],
+        [1e-200, 0],
+      ],
+      [
+        [2e200, 0],
+        [1e200, 0],
+      ],
+      [
+        [1, 1],
+        [1, 1 + Number.EPSILON],
+        [1, 1],
+      ],
+      [
         [0, 0],
         [Infinity, NaN],
         [0, 0],
@@ -162,7 +195,7 @@ describe('mark segment distance bounds', () => {
     }
   });
 
-  it('rejects segments outside the nearest distance before calculating their lengths', () => {
+  it('normalizes once for distant segments and successively closer segments', () => {
     const hypot = vi.spyOn(Math, 'hypot');
 
     try {
@@ -171,6 +204,9 @@ describe('mark segment distance bounds', () => {
 
         hypot.mockClear();
         expect(distanceToPolyline([0, 10], points, copyPoint)).toBe(10);
+        expect(hypot).toHaveBeenCalledTimes(1);
+        hypot.mockClear();
+        expect(distanceToPolyline([0, 10], points.toReversed(), copyPoint)).toBe(10);
         expect(hypot).toHaveBeenCalledTimes(1);
       }
     } finally {

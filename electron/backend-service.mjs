@@ -1,3 +1,4 @@
+import { ElectricalBoards } from './electrical/service.mjs';
 import path from 'node:path';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
 import { TryStore } from './library/tryStore.mjs';
@@ -435,6 +436,12 @@ export class BasecaseBackendService {
     this.datasetStore ??= new DatasetStore({ dir: path.join(this.libraryDir, 'datasets') });
 
     return this.datasetStore;
+  }
+
+  get electrical() {
+    this.electricalService ??= new ElectricalBoards();
+
+    return this.electricalService;
   }
 
   get visionTraining() {

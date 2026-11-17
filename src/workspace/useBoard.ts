@@ -1,3 +1,4 @@
+import { useRoutedBoard } from './useRoutedBoard';
 import { useRef } from 'react';
 import { electricalClient } from '../wiring/electricalClient';
 import { electricalSnapshot } from '../wiring/electricalSnapshot';
@@ -13,6 +14,7 @@ export function useBoard(core: WorkspaceCore) {
   'use memo';
 
   const busy = useRef(false);
+  const importBoard = useRoutedBoard(core);
   const select = (id: string) => {
     core.setSelectedIds([id]);
     core.tool.openRightTab('inspector');
@@ -60,14 +62,26 @@ export function useBoard(core: WorkspaceCore) {
     await prepare('define');
   };
   const update = (board: ElectronicsBoard) => {
+    const project = core.docs.projectRef.current;
+    const currentParts = core.docs.partsRef.current;
+    const before = project.electronicsBoard;
+
+    if (
+      electricalSourceJson({ ...before, routed: undefined }) === electricalSourceJson({ ...board, routed: undefined })
+    ) {
+      core.docs.commitBoard(currentParts, board);
+
+      return;
+    }
+
     const parts = reconcileBoardHardware({
-      parts: core.docs.partsRef.current,
-      before: core.docs.projectRef.current.electronicsBoard,
+      parts: currentParts,
+      before,
       after: board,
     });
 
     core.docs.commitBoard(mountedBoardParts(parts, board), board);
   };
 
-  return { define, select, update, arrange: () => prepare('place') };
+  return { define, select, update, importBoard, arrange: () => prepare('place') };
 }

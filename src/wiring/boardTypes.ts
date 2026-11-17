@@ -37,6 +37,7 @@ export interface BoardKeepout {
 
 export interface ElectronicsBoard {
   schema: 1;
+  routed?: import('./boardRoutingTypes').BoardRoutedSource;
   partId: string;
   outline: 'rectangle';
   side: 'top' | 'bottom';

@@ -27,6 +27,7 @@ export function BoardPlacementFields({
       actions={
         <IconButton
           icon={<DeleteIcon />}
+          variant="danger"
           title="Delete"
           variant="danger"
           onClick={() =>

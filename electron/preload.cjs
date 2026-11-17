@@ -92,6 +92,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     String(channel).startsWith('tries:')
       ? ipcRenderer.invoke(channel, payload)
       : Promise.reject(new Error('Unknown tries call')),
+  electricalCall: (channel, payload) =>
+    ['electrical:validate', 'electrical:cancel'].includes(channel)
+      ? ipcRenderer.invoke(channel, payload)
+      : Promise.reject(new Error('Unknown electrical call')),
   visionTrainingCall: (channel, payload) =>
     String(channel).startsWith('vision-training:')
       ? ipcRenderer.invoke(channel, payload)

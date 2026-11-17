@@ -31,6 +31,8 @@ The Printing check flags parts your printer can't make as drawn. It measures eac
 
 With **Made by a Service** chosen, parts are still measured against the printer you chose before it.
 
+For routed-board clearance, track-width or drill findings, see [Export board fabrication files](/help/export-board-fabrication-files).
+
 ## The part crosses a printer obstacle
 
 A part or its brim crosses the plate edge or the reserved space around a clip or tool dock.

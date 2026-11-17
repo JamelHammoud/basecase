@@ -1,3 +1,4 @@
+import { electricalPostRoutes } from './electrical/routes.mjs';
 import { BasecaseBackendService } from './backend-service.mjs';
 import { guardBridge } from './bridgeGuard.mjs';
 import { remoteTrainingPostRoutes } from './remoteTraining/routes.mjs';
@@ -118,6 +119,7 @@ function postRoutes(backend) {
     ...tryPostRoutes(backend.tries),
     ...datasetPostRoutes(backend.datasets),
     ...visionTrainingPostRoutes(backend.visionTraining),
+    ...electricalPostRoutes(backend.electrical),
     ...onshapePostRoutes(backend.onshape),
     ...earthPostRoutes(backend.earth),
     ...roboflowPostRoutes(backend.roboflow),
@@ -172,11 +174,17 @@ function handlePost({ routes, url, req, res }) {
 
     length += chunk.length;
 
-    if (url.startsWith('/vision-training-') && length > 24 * 1024 * 1024) {
+    if ((url.startsWith('/vision-training-') || url.startsWith('/electrical-')) && length > 24 * 1024 * 1024) {
       refused = true;
       body = '';
       res.statusCode = 413;
-      res.end(JSON.stringify({ error: 'The training request is too large' }));
+      res.end(
+        JSON.stringify({
+          error: url.startsWith('/electrical-')
+            ? 'The board request is too large'
+            : 'The training request is too large',
+        }),
+      );
 
       return;
     }

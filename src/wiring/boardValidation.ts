@@ -1,3 +1,4 @@
+import { validRoutedRecord } from './boardRoutingRecord';
 import type { ElectronicsBoard } from './boardTypes';
 import type { ScenePart } from '../types/robotics';
 
@@ -76,7 +77,8 @@ export function validBoardDefinition(value: unknown): value is ElectronicsBoard 
     nonnegative(value.edgeClearanceMm) &&
     entries(value.holes, hole, 128) &&
     entries(value.keepouts, keepout, 128) &&
-    entries(value.placements, placement, 256)
+    entries(value.placements, placement, 256) &&
+    (value.routed === undefined || validRoutedRecord(value.routed))
   );
 }
 

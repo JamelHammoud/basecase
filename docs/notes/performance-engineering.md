@@ -282,3 +282,22 @@ These are Node producer measurements, not renderer or CI latency. The repeated-m
 The production walkthrough delivered both ZIPs without download failures or app errors. The small scene includes selected source, fuse-holder and switch metadata. The repeated scene uses 180 servo modules without joints to isolate export work. Total preparation includes worker startup and asynchronous waiting, not continuous interaction-thread execution. These single browser samples do not establish a latency distribution or a whole-page frame profile.
 
 The measurement source and logs remain in `scratch/electrical/measure.ts`, `final-measure.jsonl`, `interaction-measurements.json` and `final-capture.log`. [Build](../guide/build.md#electrical-projection) describes worker ownership and [test evidence](testing-build.md#electrical-projection) records validation limits.
+
+## Routed-board reconciliation
+
+A macOS host probe on Node v26.13.0 compared the ten generated boards with their KiCad 9.0.6 native-save derivatives. Each fixture received ten warmups and 100 measured comparisons. The compiled production comparison code ran in Node, without a renderer or worker transport. Inputs ranged from 7,034 to 11,898 UTF-8 bytes. Median times ranged from 0.223 to 0.496 ms, and per-fixture p95 ranged from 0.290 to 0.682 ms.
+
+The comparison probe sampled JavaScript heap use after each comparison and forced GC before and after each fixture's measured group. Peak sampled heap increases ranged from 4,125,208 to 8,523,880 bytes. Post-GC heap differences ranged from -4,288 to 233,200 bytes. These include allocator and runtime effects and aren't an app retained-memory bound. Sources and results remain in `scratch/board-format-probe.ts` and `scratch/board-reconcile-measurements.jsonl`.
+
+The completed dual-bus production fixture contains 5,444 imported UTF-8 bytes. A separate macOS Node probe warmed the production import and export preparation once, then measured ten iterations with real prepared geometry. Import includes decoding, geometry preparation, current electrical projection, source comparison and hashing. Export preparation repeats current geometry and projection and constructs the native request. These producers run in the electrical worker in the app.
+
+| Phase | Median | Range |
+| --- | --- | --- |
+| Import preparation | 261.23 ms | 249.09–306.74 ms |
+| Export preparation | 258.84 ms | 246.40–298.08 ms |
+
+After ten iterations and forced GC, JavaScript heap use rose 319,824 bytes and RSS rose 4,636,672 bytes. These are process-level retained differences, not a maximum-input memory bound. Two subsequent native service jobs completed with zero retained active jobs. Their post-GC heap difference was -38,784 bytes and RSS difference was -1,294,336 bytes. Worker disposal releases its parsed trees and native reply. The scene intentionally retains the exact routed source and validation report.
+
+The warm macOS native DRC, parity and fabrication run took 1,909.20 ms and produced 8,346 bytes across ten fabrication files. The full ZIP was 37,988 bytes. An earlier macOS acceptance run took 8,370.88 ms, while the Linux container acceptance run took 3,652.91 ms. These are individual observations on a shared host, not comparative platform benchmarks or timing assertions. Native version startup, file IO and process launches are included. A real CLI cancellation scheduled after 100 ms completed with an empty isolated directory in 107.15 ms total. Abort-to-cleanup took 2.30 ms. The probe awaited actual process close before inspecting the directory.
+
+The reader bounds bytes, depth, nodes and atoms before reconciliation. Canonicalization sorts bounded trees without recursively escaping nested JSON strings. Parsing, geometry, hashing, ZIP creation and native processing stay off the interaction thread. The board preview key excludes routed text, rules and evidence, preserving prepared geometry when those records change. The native service bounds two concurrent jobs, worker heaps, process deadlines and output bytes. Source and logs remain in `scratch/measure-routed.ts`, `scratch/routed-measurements.jsonl` and `scratch/routed-measurements-errors.log`. The 37.29-second browser documentation capture exercises native import, export and stale findings, but does not establish a renderer frame profile or an 8 MiB latency bound.

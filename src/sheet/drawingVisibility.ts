@@ -24,40 +24,40 @@ function clip(interval: Interval, start: number, end: number): boolean {
   return interval[0] < interval[1];
 }
 
-function weights(point: Vector3, triangle: Triangle, axes: ProjectionAxes) {
-  const x = point.getComponent(axes.u) - triangle.a.getComponent(axes.u);
-  const y = point.getComponent(axes.v) - triangle.a.getComponent(axes.v);
-  const bx = triangle.b.getComponent(axes.u) - triangle.a.getComponent(axes.u);
-  const by = triangle.b.getComponent(axes.v) - triangle.a.getComponent(axes.v);
-  const cx = triangle.c.getComponent(axes.u) - triangle.a.getComponent(axes.u);
-  const cy = triangle.c.getComponent(axes.v) - triangle.a.getComponent(axes.v);
+function hiddenInterval(triangle: Triangle, a: Vector3, b: Vector3, axes: ProjectionAxes): Interval | null {
+  const originU = triangle.a.getComponent(axes.u);
+  const originV = triangle.a.getComponent(axes.v);
+  const bx = triangle.b.getComponent(axes.u) - originU;
+  const by = triangle.b.getComponent(axes.v) - originV;
+  const cx = triangle.c.getComponent(axes.u) - originU;
+  const cy = triangle.c.getComponent(axes.v) - originV;
   const determinant = bx * cy - by * cx;
 
   if (Math.abs(determinant) < 1e-12) return null;
 
-  const b = (x * cy - y * cx) / determinant;
-  const c = (bx * y - by * x) / determinant;
-
-  return [1 - b - c, b, c];
-}
-
-function hiddenInterval(triangle: Triangle, a: Vector3, b: Vector3, axes: ProjectionAxes): Interval | null {
-  const first = weights(a, triangle, axes);
-  const last = weights(b, triangle, axes);
-
-  if (!first || !last) return null;
-
+  const firstX = a.getComponent(axes.u) - originU;
+  const firstY = a.getComponent(axes.v) - originV;
+  const lastX = b.getComponent(axes.u) - originU;
+  const lastY = b.getComponent(axes.v) - originV;
+  const firstB = (firstX * cy - firstY * cx) / determinant;
+  const firstC = (bx * firstY - by * firstX) / determinant;
+  const firstA = 1 - firstB - firstC;
+  const lastB = (lastX * cy - lastY * cx) / determinant;
+  const lastC = (bx * lastY - by * lastX) / determinant;
+  const lastA = 1 - lastB - lastC;
   const interval: Interval = [0, 1];
 
-  for (let i = 0; i < 3; i++) {
-    if (!clip(interval, first[i], last[i])) return null;
-  }
+  if (!clip(interval, firstA, lastA) || !clip(interval, firstB, lastB) || !clip(interval, firstC, lastC)) return null;
 
-  const depths = [triangle.a, triangle.b, triangle.c].map((p) => p.getComponent(axes.depth));
-  const depthAt = (w: number[], p: Vector3) =>
-    w.reduce((sum, value, i) => sum + value * depths[i], 0) - p.getComponent(axes.depth) - DRAWING_LIMITS.toleranceMm;
+  const depthA = triangle.a.getComponent(axes.depth);
+  const depthB = triangle.b.getComponent(axes.depth);
+  const depthC = triangle.c.getComponent(axes.depth);
+  const firstDepth =
+    firstA * depthA + firstB * depthB + firstC * depthC - a.getComponent(axes.depth) - DRAWING_LIMITS.toleranceMm;
+  const lastDepth =
+    lastA * depthA + lastB * depthB + lastC * depthC - b.getComponent(axes.depth) - DRAWING_LIMITS.toleranceMm;
 
-  return clip(interval, depthAt(first, a), depthAt(last, b)) ? interval : null;
+  return clip(interval, firstDepth, lastDepth) ? interval : null;
 }
 
 export function edgeVisibility(solid: ShapeSolid, axes: ProjectionAxes) {

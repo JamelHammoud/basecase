@@ -2,6 +2,14 @@
 
 Implementation: [Image comparison](../guide/agent.md#performance-image-comparison). Shared requirements: [Performance](../guide/performance.md).
 
+## Image outlines share fixed sampling directions
+
+Repository searches found one radial image-outline sampler and one twelve-point detected-hole contour builder, both in `imagePixelAnalysis.ts`. Both now read one table of 48 directions prepared at module initialization. Hole contours use every fourth entry, whose angle matches the previous twelve-sample calculation. Output point arrays remain independent of the table.
+
+The existing image-analysis tests cover color and alpha boundaries, source preservation, enclosed holes, open background channels, detected centers and dimensions. Their two-hole case now checks every rounded hole coordinate. A scratch comparison matched complete previous and current analysis results for 100 generated images across 40, 48 and 56-pixel square grids, varying hole radii, foreground colors and image aspects.
+
+After module initialization, those two-hole fixtures made 144 sine and cosine calls per image before this change and zero afterward. The shared table costs 96 calls once per module load. The scratch probe counts calls separately from result assertions, with results in `scratch/imageDirections-results.json` during implementation. These are operation counts, without timing assertions or a claim about complete image-import latency. No interaction, screen state or help instructions change.
+
 ## Photo trimming retains column mass
 
 Repository searches found one column-mass calculation for photo trimming, in `photoMask.ts`, called by the shared `referenceMask` pipeline in `silhouette.ts`. Column heights now accumulate their area and horizontal first moment as they are emitted. The trim fraction reuses that area. The height list remains necessary for selecting thin columns, and each accepted trim still copies the source pixels.

@@ -1,6 +1,8 @@
 import * as THREE from 'three';
-import { expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { listenToWheel, type CameraRig } from './wheel';
+
+afterEach(() => vi.restoreAllMocks());
 
 function fixture(panScroll: boolean) {
   const camera = new THREE.PerspectiveCamera();
@@ -59,6 +61,62 @@ it.each([300, 600])('preserves exact pan motion across %i events in independent 
       basisReads.mockRestore();
     }
   }
+
+  for (const current of fixtures) {
+    current.stop();
+    current.canvas.dispatchEvent(new Event('wheel'));
+    expect(current.update).toHaveBeenCalledTimes(count);
+  }
+});
+
+function previousOrbit(camera: THREE.PerspectiveCamera, target: THREE.Vector3, event: WheelEvent) {
+  const offset = camera.position.clone().sub(target);
+  const spherical = new THREE.Spherical().setFromVector3(offset);
+
+  spherical.theta -= event.deltaX * 0.0055;
+  spherical.phi = Math.max(0.08, Math.min(Math.PI - 0.08, spherical.phi - event.deltaY * 0.0055));
+  spherical.makeSafe();
+  offset.setFromSpherical(spherical);
+
+  return target.clone().add(offset);
+}
+
+it.each([300, 600])('reuses independent orbit workspaces across %i events without changing motion', (count) => {
+  const fixtures = [fixture(false), fixture(false)];
+  const workspaces = new Set<unknown>();
+  const offsets = new Set<THREE.Vector3>();
+  const sample = vi.spyOn(THREE.Spherical.prototype, 'setFromVector3');
+
+  for (let frame = 0; frame < count; frame++) {
+    for (const [index, current] of fixtures.entries()) {
+      const { camera, target, canvas, update } = current;
+      const event = Object.assign(new Event('wheel', { cancelable: true }), {
+        deltaX: frame % 7 === 0 ? 0 : Math.sin(frame) * 100,
+        deltaY: frame % 11 === 0 ? Math.cos(frame) * 10000 : Math.cos(frame) * 100,
+      }) as WheelEvent;
+
+      target.set(index + frame / 17, -frame / 23, index - frame / 31);
+
+      if (frame % 19 === 0) camera.position.copy(target);
+      else camera.position.addScalar(index + 1);
+
+      const beforeTarget = target.toArray();
+      const expected = previousOrbit(camera, target, event);
+
+      sample.mockClear();
+      canvas.dispatchEvent(event);
+      expect(sample).toHaveBeenCalledTimes(1);
+      workspaces.add(sample.mock.contexts[0]);
+      offsets.add(sample.mock.calls[0][0]);
+      expect(camera.position.toArray()).toEqual(expected.toArray());
+      expect(target.toArray()).toEqual(beforeTarget);
+      expect(event.defaultPrevented).toBe(true);
+      expect(update).toHaveBeenCalledTimes(frame + 1);
+    }
+  }
+
+  expect(workspaces.size).toBe(2);
+  expect(offsets.size).toBe(2);
 
   for (const current of fixtures) {
     current.stop();

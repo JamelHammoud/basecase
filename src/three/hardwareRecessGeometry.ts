@@ -7,21 +7,24 @@ export function cleanRecessGeometry(g: THREE.BufferGeometry): THREE.BufferGeomet
   const count = idx ? idx.count : pos.count;
   const p: number[] = [];
   const n: number[] = [];
-  const a = new THREE.Vector3();
-  const b = new THREE.Vector3();
-  const c = new THREE.Vector3();
+  const corners = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+  const indices = [0, 0, 0];
+  const ab = new THREE.Vector3();
+  const ac = new THREE.Vector3();
 
   for (let i = 0; i < count; i += 3) {
-    a.fromBufferAttribute(pos, idx ? idx.getX(i) : i);
-    b.fromBufferAttribute(pos, idx ? idx.getX(i + 1) : i + 1);
-    c.fromBufferAttribute(pos, idx ? idx.getX(i + 2) : i + 2);
+    for (let j = 0; j < 3; j++) {
+      indices[j] = idx ? idx.getX(i + j) : i + j;
+      corners[j].fromBufferAttribute(pos, indices[j]);
+    }
 
-    if (b.sub(a).cross(c.sub(a)).lengthSq() < 1e-12) continue;
+    if (ab.subVectors(corners[1], corners[0]).cross(ac.subVectors(corners[2], corners[0])).lengthSq() < 1e-12) continue;
 
     for (let j = 0; j < 3; j++) {
-      const v = idx ? idx.getX(i + j) : i + j;
+      const v = indices[j];
+      const corner = corners[j];
 
-      p.push(pos.getX(v), pos.getY(v), pos.getZ(v));
+      p.push(corner.x, corner.y, corner.z);
       n.push(nor.getX(v), nor.getY(v), nor.getZ(v));
     }
   }

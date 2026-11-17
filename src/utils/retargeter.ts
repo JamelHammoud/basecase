@@ -127,11 +127,14 @@ function frameRoot(st: Stream, raw: Human, given?: THREE.Quaternion): FrameRoot 
 }
 
 function lowestAnkle(raw: Human): number {
-  const ankles = (['leftAnkle', 'rightAnkle'] as Keypoint[])
-    .map((k) => raw.get(k)?.y)
-    .filter((v): v is number => v !== undefined);
+  const left = raw.get('leftAnkle')?.y;
+  const right = raw.get('rightAnkle')?.y;
 
-  return ankles.length ? Math.min(...ankles) : 0;
+  if (left === undefined) return right ?? 0;
+
+  if (right === undefined) return left;
+
+  return Math.min(left, right);
 }
 
 function posedLandmark(robot: RobotLandmarks, k: Keypoint, posed: PosedRig): THREE.Vector3 | null {

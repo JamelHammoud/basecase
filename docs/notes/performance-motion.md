@@ -2,6 +2,16 @@
 
 Implementation: [Motion fitting and retargeting](../guide/joints-and-motion.md#performance-motion-fitting-and-retargeting). Shared requirements: [Performance](../guide/performance.md).
 
+## Frame ankle minima use direct landmark reads
+
+A whole-app search for `lowestAnkle` and ankle-height lists found one per-frame human ankle minimum in `utils/retargeter.ts`. Live mocap and BVH import share `createRetargeter`. Imported-clip grounding consumes these heights later and already accumulates its cross-frame minimum directly.
+
+The previous calculation allocated a two-key array, a two-entry mapped-height array and a filtered array for every emitted frame. Direct left and right map reads now remove all three arrays, retaining the same two map lookups. At 30 frames per second this removes 90 temporary arrays per second per stream. These are code-derived allocation counts, without a timing assertion or a claim about complete retargeting speed.
+
+`retargeter.test.ts` exercises all 64 ordered pairs from eight heights through one initialized stream: missing, negative, positive, positive zero, negative zero, positive infinity, negative infinity and NaN. It compares the reported height with the previous equations using `Object.is`, checks source preservation and retains upper-body root behavior. Existing tests compare complete stepped BVH output with batch retargeting, and `mocapRetarget.test.ts` retains complete full-body and trimmed in-place snapshots. No quarantine applies.
+
+The covered [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) and [Animate a robot with a walk cycle or motion capture](../../site/content/help/animate-a-robot.md) articles retain accurate import, matching and playback instructions. This changes no label, action or screen state, so their prose and screenshots remain unchanged.
+
 ## Motion scaling scans rest bounds directly
 
 The whole-app search for `motionScale` and rest-pose extent calculations found one motion-to-skeleton scale function. Both file import and the agent reach it through `motionSkeleton.ts`, which calls it during validation and chain preparation. Other height calculations measure different inputs.

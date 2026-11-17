@@ -29,6 +29,33 @@ const LEGS = /hip|knee|ankle/;
 const ARM = (side: string) => new RegExp(`^${side}_(shoulder|elbow|wrist)`);
 
 describe('createRetargeter', () => {
+  it('reports ankle minima through tracking loss, nonfinite heights and recovery', () => {
+    const { rig, pointOf } = humanoid();
+    const m = mocap();
+    const rt = createRetargeter({ rig, pointOf, rest: keypointFrame(m, m.rest), upperBody: true });
+    const heights = [undefined, -12, 25, 0, -0, Infinity, -Infinity, NaN];
+    let t = 0;
+
+    for (const left of heights) {
+      for (const right of heights) {
+        const frame: Record<string, V3> = {};
+        const present = [left, right].filter((v): v is number => v !== undefined);
+        const expected = present.length ? Math.min(...present) : 0;
+
+        if (left !== undefined) frame.leftAnkle = [0, left, 0];
+
+        if (right !== undefined) frame.rightAnkle = [0, right, 0];
+
+        const before = structuredClone(frame);
+        const step = rt.step(frame, t++)!;
+
+        expect(Object.is(step.lowestAnkle, expected)).toBe(true);
+        expect(frame).toEqual(before);
+        expect(step.root).toEqual({ position: [0, 0, 0], rotation: [0, 0, 0] });
+      }
+    }
+  });
+
   it('steps a clip frame by frame to the batch keyframes', () => {
     const { rig, pointOf } = humanoid();
     const m = mocap();

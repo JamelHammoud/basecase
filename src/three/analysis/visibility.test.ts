@@ -96,20 +96,25 @@ describe('visible shares', () => {
     }
   });
 
-  it.each([1, 2])('prepares bounds once and reads projection limits outside the sample loop for %i meshes', (count) => {
-    const solid = boxSolid();
-    const matrices = Array.from({ length: count }, (_, i) => matrix(i * 10, 0, 0, i));
-    const before = sharesFor(matrices, solid);
-    const samples = solid.samples.get(-4000)!;
-    const saved = samples.slice();
-    const bounds = vi.spyOn(THREE.Box3.prototype, 'setFromArray');
-    const components = vi.spyOn(THREE.Vector3.prototype, 'getComponent');
-    const copies = vi.spyOn(Float32Array.prototype, 'set');
+  it.each([1, 2])(
+    'accumulates rounded bounds during placement and reads projection limits once for %i meshes',
+    (count) => {
+      const solid = boxSolid();
+      const matrices = Array.from({ length: count }, (_, i) => matrix(i * 10, 0, 0, i));
+      const before = sharesFor(matrices, solid);
+      const samples = solid.samples.get(-4000)!;
+      const saved = samples.slice();
+      const bounds = vi.spyOn(THREE.Box3.prototype, 'setFromArray');
+      const reloads = vi.spyOn(THREE.Vector3.prototype, 'fromArray');
+      const components = vi.spyOn(THREE.Vector3.prototype, 'getComponent');
+      const copies = vi.spyOn(Float32Array.prototype, 'set');
 
-    expect(sharesFor(matrices, solid)).toEqual(before);
-    expect(bounds).toHaveBeenCalledTimes(1);
-    expect(components).toHaveBeenCalledTimes(20);
-    expect(copies).not.toHaveBeenCalled();
-    expect(samples).toEqual(saved);
-  });
+      expect(sharesFor(matrices, solid)).toEqual(before);
+      expect(bounds).not.toHaveBeenCalled();
+      expect(reloads).toHaveBeenCalledTimes(count * 4000);
+      expect(components).toHaveBeenCalledTimes(20);
+      expect(copies).not.toHaveBeenCalled();
+      expect(samples).toEqual(saved);
+    },
+  );
 });

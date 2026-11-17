@@ -48,25 +48,28 @@ function labelTexture(text: string, color: string): { texture: THREE.CanvasTextu
 }
 
 export function topCenterOnScreen(points: THREE.Vector3[], camera: THREE.Camera, out: THREE.Vector3): THREE.Vector3 {
-  const projected = new THREE.Vector3();
-  const top = new THREE.Vector3(0, -Infinity, 0);
+  let topY = -Infinity;
+  let topZ = 0;
   let left = Infinity;
   let right = -Infinity;
 
   for (const p of points) {
-    projected.copy(p).project(camera);
+    out.copy(p).project(camera);
 
-    if (projected.z > 1) continue;
+    if (out.z > 1) continue;
 
-    left = Math.min(left, projected.x);
-    right = Math.max(right, projected.x);
+    left = Math.min(left, out.x);
+    right = Math.max(right, out.x);
 
-    if (projected.y > top.y) top.copy(projected);
+    if (out.y > topY) {
+      topY = out.y;
+      topZ = out.z;
+    }
   }
 
-  if (!Number.isFinite(top.y)) return out.copy(points[0]);
+  if (!Number.isFinite(topY)) return out.copy(points[0]);
 
-  return out.set((left + right) / 2, top.y, top.z).unproject(camera);
+  return out.set((left + right) / 2, topY, topZ).unproject(camera);
 }
 
 export class MarkLabel {
@@ -75,6 +78,10 @@ export class MarkLabel {
   readonly widthPx: number;
 
   private rect: LabelRect | null = null;
+
+  private readonly size = new THREE.Vector2();
+
+  private readonly screen = new THREE.Vector3();
 
   constructor(text: string, color: string, points: THREE.Vector3[]) {
     const { texture, widthPx } = labelTexture(clipped(text), color);
@@ -107,7 +114,7 @@ export class MarkLabel {
   }
 
   private place(renderer: THREE.WebGLRenderer, camera: THREE.Camera, points: THREE.Vector3[]): void {
-    const size = renderer.getSize(new THREE.Vector2());
+    const size = renderer.getSize(this.size);
     const focal = camera.projectionMatrix.elements[5];
     const anchor = topCenterOnScreen(points, camera, this.sprite.position);
     const perPx = 2 / (size.y * focal);
@@ -116,7 +123,7 @@ export class MarkLabel {
     this.sprite.updateMatrixWorld();
     this.sprite.modelViewMatrix.multiplyMatrices(camera.matrixWorldInverse, this.sprite.matrixWorld);
 
-    const screen = anchor.clone().project(camera);
+    const screen = this.screen.copy(anchor).project(camera);
     const x = ((screen.x + 1) / 2) * size.x;
     const y = ((1 - screen.y) / 2) * size.y;
 

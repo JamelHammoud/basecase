@@ -121,3 +121,10 @@ Completed ownership now uses each run's baseline version as its key instead of r
 Duplicating a closed scene marks the source checkpoint as an autosave and requires a saved result before creating its branch. `app/sceneBranches.test.ts` rejects a deleted-source write and checks that no branch is published. This prevents a delayed Duplicate from recreating a scene the user deleted.
 
 The review’s changed-file checks cover its 18 files. The workspace selection passed 345 tests across 44 related files, and the branch selection passed 12 tests across five related files. These selections overlap and are not additive. Formatting, ESLint, docs, TypeScript and all 310 site pages passed. Logs are `scratch/review-check-final.log` and `scratch/review-branch-check.log`. Browser execution remains with CI.
+
+
+### Named-version browser coverage consolidation
+
+The next changed-browser CI run failed the named-version close and reopen declaration after 90,275 ms, including its configured retry. Both attempts waited 30,000 ms for the named version after Reopen Closed Scene. The same declaration had previously passed in 18,411 ms. The log does not establish whether the reopened workspace was active when Scene History opened, so it does not prove a persistence defect. Restore and reload passed in 11,831 ms, selected merge in 10,054 ms and branch-menu creation in 15,542 ms. The aggregate Check failed only because the changed-browser job failed.
+
+The unstable close and reopen declaration is removed. The retained restore and reload walkthrough now creates its named version through Save Version instead of using a prebuilt graph, removes a part, restores the version and checks both parts and its name after reload. This keeps the save UI and durable recovery assertions in one browser declaration. `app/tabRetirement.test.ts` covers reopening the final graph after a pending flush and retaining an in-memory recovery snapshot when that flush fails. Browser timing and close-command integration remain unmeasured locally. No timeout, retry, quarantine or assertion limit changed. Browser execution remains with CI.

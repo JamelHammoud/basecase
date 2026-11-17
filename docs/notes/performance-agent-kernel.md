@@ -45,3 +45,13 @@ Preflight's coverage reminder for [The design agent](../../site/content/help/the
 ## Scene version capture
 
 Agent prompts await a durable per-lane baseline before sending work. Completion, Stop, adopted-run completion and tab closure use the same serialized workspace capture queue. Canonical serialization and hashing run in a worker, while ordinary scene serialization retains its immutable-part cache. Normal autosave and previews omit history and preserve its stored reference. Shared content and local fixture measurements are owned by [Scene storage and startup](performance-workspace.md#scene-version-codec-and-atomic-replacement).
+
+## Freehand attachment bounds scan strokes directly
+
+A whole-app search for `sketchFrame`, `sketchStrokes` and `centredSpan` found one freehand attachment frame helper, called by `sketchFile` for Attach Sketch PNG export. Live drawing uses the shared stroke tracer but does not calculate a crop. The separate CAD Sketch bounds helpers handle different geometry and already accumulate bounds.
+
+For N drawing points, the previous helper allocated one flattened N-entry point list and four N-entry coordinate lists. It read each x and y twice. The direct scan removes all five lists and reads each coordinate once, keeping constant auxiliary storage. These are code-derived allocation and read counts, not timings or a claim about complete PNG encoding speed.
+
+`sketchStrokes.test.ts` compares complete frames with the previous buffered calculation across 80 generated multi-stroke drawings, then repeats after edits with signed zero and nonfinite values. It checks source preservation. A 200,000-point drawing checks its exact frame and 400,000 coordinate reads, where the previous calculation needed 800,000 reads and spread an oversized argument list. Existing tests retain empty, single-point, margin and stroke tracing coverage. No quarantine applies.
+
+The attachment workflow, visible crop and controls do not change. [Attach photos, files and sketches](../../site/content/help/attach-photos-files-and-sketches.md) was checked against `SketchPad`, `useSketch`, `sketchFile` and the final bounds helper. Attach Sketch, Color, Done and Back retain their actions, and export still attaches `Sketch.png`. Photo and folder handling are untouched. [The design agent](../../site/content/help/the-design-agent.md) was checked against the guide diff, which adds only performance implementation and coverage facts. Its sketch input, modeling, Checks, undo and steering descriptions remain accurate. Neither article contains a screenshot to revise. Both articles stay unchanged because no step, label or visible state changed.

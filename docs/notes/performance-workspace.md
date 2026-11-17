@@ -2,6 +2,16 @@
 
 Implementation: [Scene storage and startup](../guide/scene-tabs.md#performance-scene-storage-and-startup). Shared requirements: [Performance](../guide/performance.md).
 
+## Close selection without copied tab ranges
+
+On 17 November 2026, the shared `nextActiveAfterClose` selector changed from two sliced ranges and a reversed prefix to direct directional searches. Repository search found one implementation and one production caller, `app/useTabActions.ts`. Single-tab closure and the grouped close commands use that caller. Tabs, controls, shortcuts, selection order and help steps are unchanged.
+
+For eight tabs, closing the active fourth tab while both neighbors survive previously allocated two arrays containing seven tab references. It reversed three references and queried both neighboring candidates even though the right candidate already won. The direct search allocates no range arrays and checks only the right neighbor. A surviving active tab still returns before any neighbor search. Closing every tab still selects the caller's replacement blank tab.
+
+These are source-level operation counts, not timings or a claim of perceptible latency reduction. The tab limit is eight, so the removed work is small. `app/tabModel.test.ts` checks 2,048 combinations of closing subsets and active positions against the survivor-order contract, alongside the existing close, replacement, naming, reorder, shortcut and restore checks. No production profile or browser timing was taken. CI owns browser execution.
+
+The three help articles covering `tabModel.ts` were checked against this change. [Open, rename and close scene tabs](../../site/content/help/open-rename-and-close-tabs.md) retains the same close, Undo, reopen, naming and keyboard actions. [Put two robots in one Case](../../site/content/help/put-two-robots-in-one-case.md) uses the unchanged `sceneRobots` discovery path, and closing a robot tab still removes that robot from discovery. [Scene file doesn't open](../../site/content/help/troubleshoot-scene-files.md) retains the same import errors and eight-tab limit. Their steps, labels and depicted states remain accurate, so the articles and screenshots need no edits. The path-based preflight reminders still appear because those articles are unchanged.
+
 ## Dated lists prepare timestamps once
 
 `dateGroups.test.ts` checks exact recent cutoffs, month and year labels, timezone offsets, calendar transitions, stable ties, source preservation and unreadable timestamps. Its 300- and 600-item fixtures require exactly 300 and 600 parses and one calendar preparation each. These are operation counts, without timing assertions or a claim about complete list rendering time.

@@ -117,13 +117,16 @@ export function nextActiveAfterClose({ list, ids, activeId, remaining }: NextAct
   if (!ids.includes(activeId)) return activeId;
 
   const from = list.findIndex((t) => t.id === activeId);
-  const after = list.slice(from + 1).find((t) => !ids.includes(t.id));
-  const before = list
-    .slice(0, from)
-    .reverse()
-    .find((t) => !ids.includes(t.id));
 
-  return (after ?? before ?? remaining[0]).id;
+  for (let i = from + 1; i < list.length; i++) {
+    if (!ids.includes(list[i].id)) return list[i].id;
+  }
+
+  for (let i = from - 1; i >= 0; i--) {
+    if (!ids.includes(list[i].id)) return list[i].id;
+  }
+
+  return remaining[0].id;
 }
 
 export function closedMessage(remember: ClosedTab[], stoppedAgent: boolean): string {

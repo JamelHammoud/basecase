@@ -1,9 +1,8 @@
 import { afterAll, beforeAll, expect, inject, it } from 'vitest';
 import { fleetFixture } from '../tools/fleet/fixture.mjs';
 import { recoveryCommand } from '../tools/fleet/recoveryCommand.mjs';
-import { openApp, type App } from './harness';
+import { launchChrome } from './harness';
 
-let app: App;
 let fixture: Awaited<ReturnType<typeof fleetFixture>>;
 
 beforeAll(async () => {
@@ -15,11 +14,9 @@ beforeAll(async () => {
       response.end(Buffer.from(await result.arrayBuffer()));
     },
   });
-  app = await openApp();
 });
 
 afterAll(async () => {
-  await app?.close();
   await fixture?.close();
 });
 
@@ -35,14 +32,10 @@ it('recovers the existing Fleet through the local command and signs in after res
   expect((await admin.call('GET', 'robot')).status).toBe(401);
   await fixture.restart();
 
-  const browser = app.page.context().browser();
-
-  if (!browser) throw new Error('Fleet recovery requires a browser');
-
-  const context = await browser.newContext();
+  const browser = await launchChrome();
 
   try {
-    const page = await context.newPage();
+    const page = await browser.newPage();
 
     await page.goto(`${fixture.origin}/fleet`);
     await page.getByRole('textbox', { name: 'Organization ID' }).fill(admin.org);
@@ -60,9 +53,8 @@ it('recovers the existing Fleet through the local command and signs in after res
     expect(JSON.parse(audit.stdout).items.some((item: { action: string }) => item.action === 'recovery.use')).toBe(
       true,
     );
+    expect(await page.pageErrors({ filter: 'all' })).toEqual([]);
   } finally {
-    await context.close();
+    await browser.close();
   }
-
-  expect(app.errors).toEqual([]);
 });

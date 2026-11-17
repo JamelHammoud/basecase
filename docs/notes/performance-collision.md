@@ -165,3 +165,11 @@ The 300- and 600-triangle fixtures cover all 12 subdivision levels equally, emit
 `facePieces.test.ts` compares complete Float32 center buffers exactly against the previous nested-loop calculation for both fixture sizes. It checks translated faces, every subdivision level, independent replacement shapes and source preservation. Existing cases cover winding, small and degenerate faces, the area threshold, stride, subdivision cap, normals, weights and cached outputs. No user action, label or visible state changes, so help instructions and screenshots remain accurate. No timeout, retry or quarantine changes apply.
 
 The November 17, 2026 related selection passed 117 files and 832 tests. Its initial lint phase rejected excessive nesting in the reference helper. Splitting that helper removed the lint error. The final focused `check:changed` run passed formatting, lint, docs, site copy, types and the face-subdivision tests. Session logs are in `scratch/refine-check.log` and `scratch/refine-final-check.log`.
+
+## Crossing selection visits only retained indices
+
+`crossingsOf` in `three/analysis/crossing.ts` is the sole gather-and-select implementation. Collision reports and joint sweeps request 24 depth probes through `collide.ts`. Selection now calculates the result count from the existing stride and slice budget, then reads each retained record directly. Gathering, the 2,048-record cap and geometric calculations stay unchanged.
+
+For the existing 300- and 600-crossing fixtures, selection visits 24 indices instead of testing 300 and 600 indices with remainder operations. It removes the filtered and sliced intermediate lists. At the 2,048-crossing cap, the 24-result budget retains indices 0 through 1,955 in steps of 85. These are structural operation counts, without timing assertions or a claim about complete collision-check latency.
+
+`crossing.test.ts` compares complete selected results against the former filter-and-slice calculation. Budgets cover exact and oversized counts, zero, positive and negative fractions, negative counts, NaN and both infinities. Existing tests cover empty gathers, traversal order, gathering limits, transformed geometry and independent output vectors. No user action or visible state changes, so help instructions and screenshots remain accurate. No timeout, retry or quarantine changes apply.

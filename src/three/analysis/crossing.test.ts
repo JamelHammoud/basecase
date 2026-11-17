@@ -223,7 +223,24 @@ it.each([300, 600])('builds vectors only for retained results across %i crossing
   found[0].into.set(0, 0, 0);
   expect(gather(pairs, 24)).toEqual(all.filter((_, i) => i % stride === 0).slice(0, 24));
 
-  for (const keep of [1, 23, 25, count + 1, 0, -1, 2.5, NaN, Infinity]) {
+  for (const keep of [
+    1,
+    23,
+    24,
+    25,
+    count - 1,
+    count,
+    count + 1,
+    0,
+    -1,
+    -2.5,
+    -count,
+    0.5,
+    2.5,
+    NaN,
+    Infinity,
+    -Infinity,
+  ]) {
     const step = Math.max(1, Math.floor(count / keep));
 
     expect(gather(pairs, keep)).toEqual(all.filter((_, i) => i % step === 0).slice(0, keep));

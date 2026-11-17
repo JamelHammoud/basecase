@@ -144,12 +144,18 @@ export function crossingsOf(A: Placed, B: Placed, keep: number): Crossing[] {
   });
 
   const stride = Math.max(1, Math.floor(found.length / keep));
+  const available = Math.ceil(found.length / stride);
+  const count = keep < 0 ? Math.max(0, available + Math.ceil(keep)) : Math.min(available, Math.floor(keep));
+  const selected: Crossing[] = [];
 
-  return found
-    .filter((_, i) => i % stride === 0)
-    .slice(0, keep)
-    .map(({ x, y, z, dx, dy, dz }) => ({
+  for (let i = 0; i < count; i++) {
+    const { x, y, z, dx, dy, dz } = found[i * stride];
+
+    selected.push({
       point: new THREE.Vector3(x, y, z),
       into: new THREE.Vector3(dx, dy, dz),
-    }));
+    });
+  }
+
+  return selected;
 }

@@ -1,3 +1,4 @@
+import { kitElectricalExport } from './schematicExport';
 import { drawingsClient } from '../sheet/drawingsClient';
 import type { DrawingOptions } from '../sheet/drawingTypes';
 import { provenOrderOf } from '../assembly/provenOrder';
@@ -26,6 +27,7 @@ export function kitGuard(core: WorkspaceCore, run: KitRun) {
   const name = core.scene.sceneName;
   const id = core.scene.sceneId;
   const printer = JSON.stringify(core.printer);
+  const purchases = knownPurchases();
 
   return () => {
     run.signal.throwIfAborted();
@@ -33,6 +35,7 @@ export function kitGuard(core: WorkspaceCore, run: KitRun) {
     const current = run.current();
 
     if (
+      knownPurchases() !== purchases ||
       current.active !== active ||
       current.docs.partsRef.current !== core.parts ||
       current.docs.projectRef.current !== core.project ||
@@ -88,7 +91,7 @@ export async function prepareKit(core: WorkspaceCore, run: KitRun) {
         source: { id: core.scene.sceneId, name, fingerprint: '' },
         sourceSnapshot: { parts, project },
         purchases,
-        parts,
+        parts: parts.filter((part) => part.id !== project.electronicsBoard?.partId),
         options: run.drawingOptions ?? { frame: 'part', plane: 'xy', scale: 0.2 },
       });
     } finally {
@@ -96,6 +99,12 @@ export async function prepareKit(core: WorkspaceCore, run: KitRun) {
       drawingClient.dispose();
     }
   });
+
+  guard();
+
+  const electrical = project.electronicsBoard
+    ? await stage('Electronics', () => kitElectricalExport(core, run, drawings.manifest.source.fingerprint))
+    : undefined;
 
   guard();
 
@@ -154,6 +163,7 @@ export async function prepareKit(core: WorkspaceCore, run: KitRun) {
 
   return {
     name,
+    electrical,
     drawings,
     designFingerprint: drawings.manifest.source.fingerprint,
     parts,
@@ -178,6 +188,10 @@ export async function prepareKit(core: WorkspaceCore, run: KitRun) {
 }
 
 export async function exportKit(core: WorkspaceCore, run: KitRun): Promise<Uint8Array> {
+  return (await exportKitResult(core, run)).bytes;
+}
+
+export async function exportKitResult(core: WorkspaceCore, run: KitRun) {
   const guard = kitGuard(core, run);
   const client = kitClient();
   const stop = () => client.dispose();
@@ -193,13 +207,17 @@ export async function exportKit(core: WorkspaceCore, run: KitRun): Promise<Uint8
       client.call(
         'build',
         job,
-        [...Object.values(job.files), ...Object.values(job.drawings.files)].map((file) => file.buffer as ArrayBuffer),
+        [
+          ...Object.values(job.files),
+          ...Object.values(job.drawings.files),
+          ...Object.values(job.electrical?.files ?? {}),
+        ].map((file) => file.buffer as ArrayBuffer),
       ),
     );
 
     guard();
 
-    return bytes;
+    return { bytes, electrical: job.electrical?.manifest };
   } finally {
     run.signal.removeEventListener('abort', stop);
     client.dispose();

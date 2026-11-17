@@ -95,3 +95,20 @@ it('selects the installed local KiCad container for Linux conversion and browser
   ]);
   expect(native.append).toHaveBeenCalledWith('github-env', 'BASECASE_KICAD_DOCKER=1\n');
 });
+
+it('installs KiCad for the Kit electrical browser shard without selecting the router', async () => {
+  const argv = process.argv;
+
+  process.argv = [...argv, '--browser-shard', '2/5'];
+  native.spawn.mockReturnValueOnce({ status: 0, stdout: 'e2e/kitElectrical.e2e.test.ts\n' });
+
+  try {
+    await import('./installCli.mjs');
+
+    expect(native.spawn.mock.calls[0][1]).toContain('--filesOnly');
+    expect(native.spawn.mock.calls.at(-1)[1]).toEqual(['version']);
+    expect(native.append).toHaveBeenCalledWith('github-env', expect.stringContaining('BASECASE_KICAD_CLI='));
+  } finally {
+    process.argv = argv;
+  }
+});

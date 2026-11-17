@@ -11,7 +11,10 @@ import type { ProjectSettings, Purchases, ScenePart } from '../types/robotics';
 import type { BomLine, PrintedPart } from '../utils/bom';
 import type { PrintReport } from '../utils/printReport';
 
+import type { KitElectrical, KitElectricalManifest } from './electrical';
+
 export interface KitJob {
+  electrical?: KitElectrical;
   name: string;
   parts: ScenePart[];
   project: ProjectSettings;
@@ -59,6 +62,8 @@ export interface KitManifest {
   drawings?: DrawingManifest;
   sheets: Array<PartSheet & { partId: string; file: string }>;
   wiring?: Netlist;
+  electrical?: KitElectricalManifest;
+  fabricated?: Array<{ partId: string; process: 'PCB'; qty: number }>;
   servos: Array<{ partId: string; entry: JointMapEntry }>;
   settings: Pick<ProjectSettings, 'material' | 'infillPct' | 'printProcess'>;
   printer: PrintReport['plan']['printer'];

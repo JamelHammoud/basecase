@@ -5,7 +5,7 @@ import { zipSync, type Zippable } from 'three/examples/jsm/libs/fflate.module.js
 import { electricalProjection } from './electrical';
 import { ELECTRICAL_PIN_MAPS } from './electricalPinMaps';
 import { electricalSchematic } from './electricalSchematic';
-import { electricalSourceJson } from './electricalSource';
+import { electricalSourceJson, checkElectricalSize } from './electricalSource';
 import type { ElectricalInput } from './electricalTypes';
 import { electricalFacts } from './electricalFacts';
 import { POWER_MODULES } from './electricalModules';
@@ -19,7 +19,7 @@ async function fingerprint(text: string) {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-export async function electricalPackage(input: ElectricalInput) {
+export async function electricalSources(input: ElectricalInput, maxBytes = Infinity) {
   const routed = input.project.electronicsBoard?.routed;
 
   input = routingInput(input);
@@ -37,6 +37,9 @@ export async function electricalPackage(input: ElectricalInput) {
     moduleMaps: POWER_MODULES,
     ...board?.source,
   });
+
+  checkElectricalSize({ 'source.json': source }, maxBytes);
+
   const sourceFingerprint = await fingerprint(source);
   const { schematic, library } = electricalSchematic(board?.schematic ?? projection);
   const report = {
@@ -68,7 +71,15 @@ export async function electricalPackage(input: ElectricalInput) {
       `(property "BasecaseSource" "${sourceFingerprint}"))\n`,
     );
 
+  checkElectricalSize(files, maxBytes);
   await retainBoardSource({ routed, files, sourceFingerprint });
+  checkElectricalSize(files, maxBytes);
+
+  return { files, sourceFingerprint };
+}
+
+export async function electricalPackage(input: ElectricalInput) {
+  const { files, sourceFingerprint } = await electricalSources(input);
 
   return electricalArchive(files, sourceFingerprint);
 }

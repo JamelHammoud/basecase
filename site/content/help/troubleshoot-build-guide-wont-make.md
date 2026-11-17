@@ -25,6 +25,8 @@ Two things stop most build guides: the scene has nothing to build, or the last r
 
 The guide shows the parts you'd build, which are the visible parts that aren't cutouts. If your scene has only hidden parts and cutouts, the guide has nothing to draw.
 
+A visible generated carrier appears among fabricated boards. It stays in the assembly guide without a 3D printer requirement.
+
 1. Show the parts you want in the guide.
 2. Check that none of them are cutouts.
 

@@ -27,6 +27,27 @@ export async function checkRoutedFixture(fixture, cli) {
 
   const archive = await fixture.finish(clean);
   const repeated = await fixture.finish(again);
+  const kit = unzipSync(await fixture.kit(clean));
+  const kitManifest = JSON.parse(strFromU8(kit['kit.json']));
+  const kitEvidence = JSON.parse(strFromU8(kit['electrical/manifest.json']));
+
+  assert.equal(kitManifest.electrical.fabrication, 'included');
+  assert.equal(kitManifest.electrical.designFingerprint, kitManifest.design.fingerprint);
+  assert.equal(kitEvidence.sourceFingerprint, request.sourceFingerprint);
+  assert.equal(kitEvidence.boardHash, request.boardHash);
+  assert.equal(kitEvidence.geometryFingerprint, request.geometryFingerprint);
+  assert.deepEqual(kitManifest.fabricated, [{ partId: 'board', process: 'PCB', qty: 1 }]);
+  assert.ok(!kitManifest.printed.some((part) => part.id === 'board'));
+  assert.equal(kitManifest.purchases.find((line) => line.key === 'component:jst-b3b-eh-a').toBuy, 1);
+  assert.equal(
+    kitManifest.packing.filter((row) => row.key === 'component:jst-b3b-eh-a').reduce((n, row) => n + row.qty, 0),
+    2,
+  );
+
+  for (const [name, hash] of Object.entries(kitEvidence.hashes))
+    assert.equal(createHash('sha256').update(kit[`electrical/${name}`]).digest('hex'), hash);
+
+  for (const [name, text] of Object.entries(clean.files)) assert.equal(strFromU8(kit[`electrical/${name}`]), text);
 
   assert.deepEqual(archive.bytes, repeated.bytes);
 

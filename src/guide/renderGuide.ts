@@ -116,7 +116,14 @@ async function renderWith(renderer: GuideRenderer, job: GuideJob, events: GuideJ
   if (isCancelled()) return null;
 
   const plan = buildGuidePlan(
-    { title, parts, joints: project.joints ?? [], ...geometry, order: job.order },
+    {
+      title,
+      boardPartId: project.electronicsBoard?.partId,
+      parts,
+      joints: project.joints ?? [],
+      ...geometry,
+      order: job.order,
+    },
     project.material,
   );
 

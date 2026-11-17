@@ -7,7 +7,7 @@ export function kitSheets(job: KitJob) {
   return job.parts.flatMap((part, index) => {
     const setting = sheetOf(part, job.measures[part.id]?.sheet);
 
-    if (part.role !== 'solid' || !setting) return [];
+    if (part.id === job.project.electronicsBoard?.partId || part.role !== 'solid' || !setting) return [];
 
     const profile = job.measures[part.id]?.sheet;
 

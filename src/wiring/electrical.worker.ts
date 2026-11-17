@@ -1,3 +1,5 @@
+import { KIT_MAX_BYTES } from '../kit/limits';
+import { electricalKitFiles } from '../kit/electrical';
 import { acceptBoardRoute } from './boardRouteAcceptance';
 import { prepareBoardRoute } from './boardRoutePreparation';
 import { importRoutedSource, importRoutedText } from './boardRoutedSource';
@@ -11,10 +13,19 @@ import { electricalPackage } from './electricalPackage';
 import type { ElectricalInput } from './electricalTypes';
 
 serve({
+  kit: async (input: Parameters<typeof electricalKitFiles>[0]) => {
+    const result = await electricalKitFiles(input);
+
+    return reply(
+      result,
+      Object.values(result.files).map((bytes) => bytes.buffer),
+    );
+  },
   acceptRoute: async (input: Parameters<typeof acceptBoardRoute>[0]) => reply(await acceptBoardRoute(input)),
   importText: async (input: Parameters<typeof importRoutedText>[0]) => reply(await importRoutedText(input)),
   prepareRoute: async (input: ElectricalInput) => reply(await prepareBoardRoute(input)),
   importBoard: async (input: Parameters<typeof importRoutedSource>[0]) => reply(await importRoutedSource(input)),
+  prepareKit: async (input: ElectricalInput) => reply(await prepareBoardExport(input, KIT_MAX_BYTES)),
   prepareExport: async (input: ElectricalInput) => reply(await prepareBoardExport(input)),
   finishExport: async (input: Parameters<typeof finishBoardExport>[0]) => {
     const { bytes, sourceFingerprint } = await finishBoardExport(input);

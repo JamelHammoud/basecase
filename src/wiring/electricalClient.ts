@@ -1,3 +1,4 @@
+import { KIT_MAX_BYTES } from '../kit/limits';
 import type { ElectronicsBoard } from './boardTypes';
 import { workerClient } from '../utils/workerRpc';
 import type { ElectricalInput, ElectricalProjection } from './electricalTypes';
@@ -12,6 +13,10 @@ export interface SchematicResult {
 }
 
 type Handlers = {
+  kit: (
+    input: Parameters<typeof import('../kit/electrical').electricalKitFiles>[0],
+  ) => Promise<{ result: import('../kit/electrical').KitElectrical }>;
+
   acceptRoute: (
     input: Parameters<typeof import('./boardRouteAcceptance').acceptBoardRoute>[0],
   ) => Promise<{ result: ElectronicsBoard }>;
@@ -25,6 +30,7 @@ type Handlers = {
   importBoard: (
     input: Parameters<typeof import('./boardRoutedSource').importRoutedSource>[0],
   ) => Promise<{ result: Awaited<ReturnType<typeof import('./boardRoutedSource').importRoutedSource>> }>;
+  prepareKit: (input: ElectricalInput) => Promise<{ result: import('./boardRoutingPackage').PreparedBoardExport }>;
   prepareExport: (input: ElectricalInput) => Promise<{ result: import('./boardRoutingPackage').PreparedBoardExport }>;
   finishExport: (
     input: Parameters<typeof import('./boardExportPreparation').finishBoardExport>[0],
@@ -53,13 +59,16 @@ async function localHandlers(): Promise<Handlers> {
   const { timedBoardPlacement } = await import('./boardPlacement');
   const { defineBoard } = await import('./boardDefinition');
   const { boardPreview } = await import('./boardPreview');
+  const { electricalKitFiles } = await import('../kit/electrical');
   const { electricalPackage } = await import('./electricalPackage');
 
   return {
+    kit: async (input) => ({ result: await electricalKitFiles(input) }),
     acceptRoute: async (input) => ({ result: await acceptBoardRoute(input) }),
     importText: async (input) => ({ result: await importRoutedText(input) }),
     prepareRoute: async (input) => ({ result: await prepareBoardRoute(input) }),
     importBoard: async (input) => ({ result: await importRoutedSource(input) }),
+    prepareKit: async (input) => ({ result: await prepareBoardExport(input, KIT_MAX_BYTES) }),
     prepareExport: async (input) => ({ result: await prepareBoardExport(input) }),
     finishExport: async (input) => ({ result: await finishBoardExport(input) }),
     preview: async (input) => ({ result: boardPreview(input) }),

@@ -107,7 +107,7 @@ export async function finishBoardFiles(prepared: PreparedBoardExport, result: Bo
   const files = { ...prepared.files };
   const { request } = prepared;
 
-  if (!request || !result) return files;
+  if (!request || !result) return withBoardManifest(files, prepared);
 
   if (result.key !== (await boardEvidenceKey(request))) throw new Error(boardImportMessage('board-stale-routing'));
 
@@ -138,6 +138,16 @@ export async function finishBoardFiles(prepared: PreparedBoardExport, result: Bo
 
   if (!result.issues.length && result.version === BOARD_CLI_VERSION) Object.assign(files, result.files);
 
+  return withBoardManifest(files, prepared, result);
+}
+
+async function withBoardManifest(
+  files: Record<string, string>,
+  prepared: PreparedBoardExport,
+  result?: BoardNativeResult,
+) {
+  const source = JSON.parse(files['source.json']);
+  const request = prepared.request;
   const hashes = Object.fromEntries(
     await Promise.all(Object.entries(files).map(async ([name, text]) => [name, await boardDigest(text)])),
   );
@@ -146,10 +156,11 @@ export async function finishBoardFiles(prepared: PreparedBoardExport, result: Bo
     {
       schema: 1,
       sourceFingerprint: prepared.sourceFingerprint,
-      boardHash: request.boardHash,
-      geometryFingerprint: request.geometryFingerprint,
-      validationKey: result.key,
-      fabricationRules: request.rules,
+      boardHash: request?.boardHash ?? (await boardDigest(files['robot.kicad_pcb'])),
+      geometryFingerprint:
+        request?.geometryFingerprint ?? (await boardDigest(electricalSourceJson(source.boardGeometry))),
+      validationKey: result?.key,
+      fabricationRules: request?.rules,
       hashes,
     },
     2,

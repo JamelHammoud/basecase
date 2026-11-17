@@ -190,10 +190,17 @@ function paginate(blocks: Block[], firstOffset: number): string[] {
 
 export function catalogueBodies(doc: GuideDoc): string[] {
   const printed = doc.plan.items.filter((i) => i.kind === 'printed');
+  const fabricated = doc.plan.items.filter((i) => i.kind === 'fabricated');
   const bought = doc.plan.items.filter((i) => i.kind === 'bought');
   const hardware = doc.plan.items.filter((i) => i.kind === 'hardware');
   const printedQty = printed.reduce((n, i) => n + i.qty, 0);
   const blocks = [
+    ...cardBlocks(doc, fabricated, 'Fabricated boards', [
+      plural(
+        fabricated.reduce((n, i) => n + i.qty, 0),
+        'part',
+      ),
+    ]),
     ...cardBlocks(doc, printed, 'Printed parts', [plural(printedQty, 'part'), esc(doc.meta.material)]),
     ...cardBlocks(doc, bought, 'Bought parts', [
       plural(

@@ -364,3 +364,28 @@ Existing `payload.test.ts` covers complete Payload rows, stronger actuators, inj
 Preflight identified [Get a robot ready to build](../../site/content/help/get-a-robot-ready-to-build.md) through its `covers` entry. Its Payload step, full-reach and close-in readings, dot-cloud state and screenshots remain accurate because the selected hand point is unchanged. The article is intentionally unchanged.
 
 Changed-file validation passed formatting, lint, documentation, site copy for 329 pages and TypeScript. Related selection passed 294 files and 1,971 tests, with one existing file and test skipped, in 119.97 seconds. The follow-up documentation-only check passed after recording the help-article finding. Complete output remains in `scratch/payload-center-check.log`. Copy accounting is net zero.
+
+## Electronics in manufacturing kits
+
+Electrical preparation uses the existing electrical worker and native acceptance path. Kit obtains the design fingerprint from the already prepared drawing manifest instead of hashing the scene on the interaction thread. Source preparation no longer compresses a throwaway standalone electrical ZIP before native export preparation. Kit transfers electrical file buffers into its compression worker and checks all expanded file sizes before hashing or compression. UTF-8 source bytes are counted before encoding. Archive composition reuses the electrical artifact manifest rather than preparing electrical geometry again.
+
+The ten-design Kit integration matrix reports preparation milliseconds, final archive bytes, the compressed bytes added by electrical artifact entries, retained electrical buffer bytes, and sampled RSS and heap. Preparation includes real source, mechanical drawing, guide planning, plate, archive and assertion work. The archive-byte comparison removes electrical entries while retaining the same `kit.json`, so it isolates artifact contribution and excludes the Kit electrical-reference metadata. Memory is sampled before preparation, after electrical preparation and after archive parsing. It is a process-level sample including test fixtures and shared geometry caches, not an isolated worker peak or a production UI benchmark.
+
+Cancellation tests discard interrupted preparation and compression, dispose owned workers and refuse delivery after scene, inventory, placement or routing-evidence replacement. Native validation receives the existing abort signal. Browser illustration remains controlled by the existing fixture. Neither that fixture nor these timings measure full illustrated-guide latency.
+
+Local Node integration samples on macOS, 17 November 2026, produced the following observations in the final broad related-test run. They are development/test-process measurements with shared catalog caches and fixture box geometry for the mechanical pieces, not production full-guide timings. RSS and heap are sampled retained-process values, not continuously measured peaks.
+
+| Design | Preparation ms | Archive bytes | Added artifact bytes | Electrical buffers bytes | Sampled RSS bytes | Sampled heap bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| tethered-so101 | 2787.97 | 45302 | 24461 | 203182 | 438976512 | 134804832 |
+| battery-rover | 1629.98 | 46397 | 25988 | 169184 | 426967040 | 133719096 |
+| quadruped | 1951.39 | 54027 | 30677 | 317100 | 427147264 | 134229368 |
+| hexapod | 1990.79 | 62832 | 37007 | 453156 | 414777344 | 75604560 |
+| pan-tilt-camera | 2624.75 | 40122 | 20667 | 132990 | 438878208 | 126768504 |
+| gripper | 1712.70 | 39675 | 20399 | 114847 | 438960128 | 127218400 |
+| mixed-voltage | 2240.07 | 43957 | 22852 | 171859 | 452853760 | 137248984 |
+| dual-bus-arm | 2953.67 | 50402 | 28345 | 217268 | 452853760 | 137698792 |
+| sensor-rich-inspection | 3619.83 | 46618 | 24434 | 186117 | 473088000 | 112775272 |
+| fixed-appliance | 1670.91 | 36761 | 18790 | 107247 | 473120768 | 113268560 |
+
+The local documentation capture downloaded the edited-carrier diagnostic archive with matching design and board bindings. Electrical preparation took 851.97 ms and archive composition took 161.77 ms in that captured development-server run. Illustrated guide output used the existing controlled fixture. These observations do not establish native fabrication latency or cross-platform delivery results. The capture retained `scratch/captured-electrical-kit.zip` and `scratch/capture-summary.json`. The detailed matrix samples are retained in `scratch/kit-electrical-measurements.json`.

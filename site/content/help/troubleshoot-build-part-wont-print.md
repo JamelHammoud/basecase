@@ -27,11 +27,11 @@ covers:
   - src/components/inspector/types.ts
 ---
 
-The Printing check flags parts your printer can't make as drawn. It measures each part against the printer you chose in Print mode.
+The Printing check flags parts your printer can't make as drawn. It measures printed parts against the printer you chose in Print mode.
 
 With **Made by a Service** chosen, parts are still measured against the printer you chose before it.
 
-For routed-board clearance, track-width or drill findings, see [Export board fabrication files](/help/export-board-fabrication-files).
+Generated carriers stay off print plates. For routed-board clearance, track-width or drill findings, see [Export board fabrication files](/help/export-board-fabrication-files).
 
 ## The part crosses a printer obstacle
 

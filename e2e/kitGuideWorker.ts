@@ -10,7 +10,11 @@ const PIXEL =
 
 export function kitGuideReply(job: GuideJob): RenderedGuide {
   const plan = buildGuidePlan(
-    { ...approximateScene(job.title, job.parts, job.project.joints ?? []), order: job.order },
+    {
+      ...approximateScene(job.title, job.parts, job.project.joints ?? []),
+      boardPartId: job.project.electronicsBoard?.partId,
+      order: job.order,
+    },
     job.project.material,
   );
   const drawing = { dataUrl: PIXEL, width: 128, height: 128, arrows: [], points: [] };

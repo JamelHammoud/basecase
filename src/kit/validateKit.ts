@@ -13,6 +13,8 @@ function validatePart(part: ScenePart, job: KitJob) {
   if (!isBuilt(part) || !measure || !Number.isFinite(measure.volumeMm3) || measure.volumeMm3 <= 0)
     throw new Error(`Kit export needs solid geometry for ${part.name}.`);
 
+  if (part.id === job.project.electronicsBoard?.partId && job.electrical) return;
+
   if (sheetOf(part, measure.sheet)) return;
 
   if (part.componentId) validateCatalog(part);
@@ -45,7 +47,11 @@ export function validateKit(job: KitJob, bom: Bom) {
     validateCatalog({ componentId, componentVariant, name: line.name });
   }
 
-  if (bom.standIns.length || bom.unmeasured.length || bom.madeElsewhere.length)
+  if (
+    bom.standIns.length ||
+    bom.unmeasured.length ||
+    bom.madeElsewhere.some((part) => part.id !== job.project.electronicsBoard?.partId)
+  )
     throw new Error('Replace stand-ins and unsupported fabrication before exporting the kit.');
 
   validateOutputs(job, bom);

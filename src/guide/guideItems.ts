@@ -121,7 +121,7 @@ export function firstUseOrder(steps: GuideStep[], parts: ScenePart[]): string[] 
   return order;
 }
 
-export function buildItems(parts: ScenePart[], order: string[]): GuideItem[] {
+export function buildItems(parts: ScenePart[], order: string[], boardPartId?: string): GuideItem[] {
   const groups = new Map<string, ScenePart[]>();
 
   for (const p of parts) {
@@ -138,7 +138,7 @@ export function buildItems(parts: ScenePart[], order: string[]): GuideItem[] {
 
     if (!members) return [];
 
-    const kind = kindOfKey(key);
+    const kind = members.some((part) => part.id === boardPartId) ? 'fabricated' : kindOfKey(key);
     const label = kind === 'hardware' ? String(101 + numbers++) : letterLabel(letters++);
 
     return [

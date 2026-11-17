@@ -221,7 +221,7 @@ jobs:
           echo "fallback=$(jq -r '.fallbackFiles | join(" ")' <<< "$found")" >> "$GITHUB_OUTPUT"
           echo "pattern=$(jq -r '.pattern' <<< "$found")" >> "$GITHUB_OUTPUT"
       - name: Prepare KiCad for the routed board walkthrough
-        if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/boardRouted.e2e.test.ts') || contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/boardRouting.e2e.test.ts') }}
+        if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/boardRouted.e2e.test.ts') || contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/boardRouting.e2e.test.ts') || contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/kitElectrical.e2e.test.ts') }}
         run: node tools/electrical/installCli.mjs
       - name: Install native board routing tools for selected walkthrough
         if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/boardRouting.e2e.test.ts') }}

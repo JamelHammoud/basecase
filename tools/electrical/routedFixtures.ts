@@ -1,3 +1,4 @@
+import { nativeKitFixture } from '../../src/kit/nativeKit.fixtures';
 import { finishBoardExport } from '../../src/wiring/boardExportPreparation';
 import type { BoardNativeResult } from '../../src/wiring/boardRoutingTypes';
 import { electricalScenes } from '../../src/wiring/electricalFixtures';
@@ -71,5 +72,12 @@ export async function completedRoutedFixture() {
   const input = { ...base.snapshot, project: { ...base.snapshot.project, electronicsBoard: board } };
   const prepared = await prepareBoardExport(input);
 
-  return { input, base, pcb, prepared, finish: (result: BoardNativeResult) => finishBoardExport({ prepared, result }) };
+  return {
+    input,
+    base,
+    pcb,
+    prepared,
+    kit: (result: BoardNativeResult) => nativeKitFixture(input, prepared, result),
+    finish: (result: BoardNativeResult) => finishBoardExport({ prepared, result }),
+  };
 }

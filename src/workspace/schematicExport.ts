@@ -1,3 +1,6 @@
+import type { KitElectrical } from '../kit/electrical';
+import type { SchematicResult } from '../wiring/electricalClient';
+import type { BoardNativeResult } from '../wiring/boardRoutingTypes';
 import { validateNativeBoard } from '../wiring/boardNativeClient';
 import { electricalClient } from '../wiring/electricalClient';
 import { electricalSnapshot, electricalWalk } from '../wiring/electricalSnapshot';
@@ -10,7 +13,16 @@ export interface SchematicRun {
   current: () => WorkspaceCore;
 }
 
-export async function schematicExport(core: WorkspaceCore, run: SchematicRun) {
+export function schematicExport(core: WorkspaceCore, run: SchematicRun) {
+  return runElectricalExport(core, run) as Promise<SchematicResult & { validation?: BoardNativeResult }>;
+}
+
+export function kitElectricalExport(core: WorkspaceCore, run: SchematicRun, designFingerprint: string) {
+  return runElectricalExport(core, run, designFingerprint) as Promise<KitElectrical>;
+}
+
+async function runElectricalExport(core: WorkspaceCore, run: SchematicRun, designFingerprint?: string) {
+  const kit = designFingerprint !== undefined;
   const original = { parts: core.parts, project: core.project, id: core.scene.sceneId, name: core.scene.sceneName };
   const guard = () => {
     run.signal.throwIfAborted();
@@ -46,9 +58,10 @@ export async function schematicExport(core: WorkspaceCore, run: SchematicRun) {
     guard();
 
     const dispatchStart = performance.now();
-    const pending = input.project.electronicsBoard?.routed
-      ? client.call('prepareExport', { ...input, meshFiles })
-      : client.call('build', { ...input, meshFiles });
+    const pending =
+      kit || input.project.electronicsBoard?.routed
+        ? client.call(kit ? 'prepareKit' : 'prepareExport', { ...input, meshFiles })
+        : client.call('build', { ...input, meshFiles });
 
     performance.measure('schematic:dispatch', { start: dispatchStart });
 
@@ -60,6 +73,18 @@ export async function schematicExport(core: WorkspaceCore, run: SchematicRun) {
       'request' in prepared && prepared.request ? await validateNativeBoard(prepared.request, run.signal) : null;
 
     guard();
+
+    if (kit && 'request' in prepared) {
+      const result = await client.call('kit', {
+        prepared,
+        result: native,
+        designFingerprint: designFingerprint!,
+      });
+
+      guard();
+
+      return result;
+    }
 
     const result = 'request' in prepared ? await client.call('finishExport', { prepared, result: native }) : prepared;
 

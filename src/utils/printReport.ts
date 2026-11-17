@@ -147,7 +147,10 @@ export interface PrintContext {
 }
 
 export async function printReportOf(parts: ScenePart[], ctx: PrintContext, fetchShapes: PrintShapes) {
-  await loadPrintShapes(parts, fetchShapes);
+  await loadPrintShapes(
+    parts.filter((part) => part.id !== ctx.project.electronicsBoard?.partId),
+    fetchShapes,
+  );
 
   return buildPrintReport(parts, ctx);
 }
@@ -155,7 +158,7 @@ export async function printReportOf(parts: ScenePart[], ctx: PrintContext, fetch
 export const printSettingsKey = (project: ProjectSettings) => `${project.printProcess ?? ''}|${project.infillPct}`;
 
 export function buildPrintReport(parts: ScenePart[], ctx: PrintContext): PrintReport {
-  const printed = parts.filter((p) => isPrinted(p) && !p.print?.skip);
+  const printed = parts.filter((p) => p.id !== ctx.project.electronicsBoard?.partId && isPrinted(p) && !p.print?.skip);
 
   return reportFromShapes(
     printed.flatMap((part) => {

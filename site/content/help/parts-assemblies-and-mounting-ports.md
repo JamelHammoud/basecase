@@ -45,6 +45,7 @@ What a part is made from decides whether you can resize it, whether it's printed
 | Agent part | Modeled by the agent in CAD code | Yes |
 | Imported mesh | Import, including STEP and IGES bodies | Yes |
 | Robot link | Import Robot or **Parts** ▸ **Robots** | No |
+| Generated carrier | Board definition in the scene | No, PCB fabrication |
 
 Shapes, agent parts and imported meshes start as printed parts. For a flat part with only through features, choose **Cut from Sheet** under **Manufacturing** to use aluminum, carbon fiber or acrylic. Other material choices stay under **Appearance**. Components keep the maker's exact size, so you can't resize them. To change the size of hardware, use its **Size** and **Length** choices.
 

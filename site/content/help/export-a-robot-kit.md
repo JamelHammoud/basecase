@@ -25,9 +25,9 @@ hub_checks_and_blockers: |
   A [manufacturing kit](/help/export-a-robot-kit) records the original measurement time and whether the Checks match the exported design.
 ---
 
-Save plates, assembly instructions, packing quantities and matching joint identities in one manufacturing archive.
+Save mechanical files, carrier-board sources, packing quantities and matching joint identities in one manufacturing archive.
 
-Your scene must have movable joints. Assign one exact catalog actuator to each driven joint. Sheet parts must have a measured flat profile with through holes. You can’t export unsupported fabrication.
+Your scene must have movable joints. Assign one exact catalog actuator to each driven joint. Sheet parts must have a measured flat profile with through holes. Other unsupported fabrication stops export. A carrier board can export diagnostic sources when fabrication files are missing.
 
 1. At the top right, click **Export**.
 2. Choose **Kit**.
@@ -51,7 +51,15 @@ You can choose **Kit** from [[⌘K]]. You can use the same menu in the web studi
 
 ![The web studio after downloading the rover’s kit](/help/export-a-robot-kit/web-exported.png)
 
+A generated carrier adds an `electrical` folder. Read `electrical/requirements.json` before using its board files. If fabrication output is missing, the export confirmation says so.
+
+![The Kit drawing options for the dual-bus arm with its carrier board](/help/export-a-robot-kit/electrical-options.png)
+
+![The exported Kit confirmation reporting missing PCB fabrication](/help/export-a-robot-kit/electrical-diagnostic.png)
+
 The drawings folder includes PDF, editable SVG, matching source STL files and source identities. Print plates can also include guide-letter cuts. Drawing preparation supports up to 256 scene parts and 64 MB of drawing output. You can export up to 256 MB before compression. If you edit the scene during preparation, Basecase discards the export. You won’t change readiness or program servos by exporting a kit.
+
+Electrical and mechanical files share the kit’s design fingerprint. PCB fabrication files require current native KiCad validation. That validation establishes neither electrical performance nor assembly fit. Checks remains the build-readiness verdict.
 
 For file names, packing quantities and Checks freshness, see [Robot kit contents](/help/robot-kit-contents).
 

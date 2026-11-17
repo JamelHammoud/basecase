@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compareDesigns, mergeDesigns } from './versionMerge';
+import { compareDesigns, mergeDesigns, snapshotMatches } from './versionMerge';
 import {
   versionJoint as joint,
   versionPart as part,
@@ -8,6 +8,15 @@ import {
 } from './sceneVersions.fixtures';
 
 const changed = (id: string) => `part:${id}`;
+
+it('invalidates a captured comparison when another checkpoint changes either history without editing the design', () => {
+  const design = scene([part('body')]);
+  const current = { ...design, history: 'compared graph' };
+
+  expect(snapshotMatches(current, design, 'compared graph')).toBe(true);
+  expect(snapshotMatches({ ...current, history: 'new named version' }, design, 'compared graph')).toBe(false);
+  expect(snapshotMatches(current, { ...design, parts: [part('body', 10)] }, 'compared graph')).toBe(false);
+});
 
 describe('design comparison and dependency-closed three-way merge', () => {
   it('compares grippers by addition and removal and leg lengths by changed geometry', () => {
@@ -101,6 +110,23 @@ it('keeps independently edited existing parent parts while merging their depende
 
   expect(merged.conflicts).toEqual([]);
   expect(merged.scene?.parts.find((part) => part.id === 'body')?.position[0]).toBe(30);
+});
+
+it('includes the joints of newly required assembly members without importing edits attached to existing parents', () => {
+  const base = scene([part('body'), part('leg')], [joint('leg-joint', 'body', 'leg')]);
+  const camera = { ...part('camera'), mirrorOf: { id: 'arm', axis: 'x' as const } };
+  const theirs = scene(
+    [...base.parts, part('arm'), camera],
+    [{ ...base.project.joints![0], damping: 9 }, joint('shoulder', 'body', 'arm'), joint('wrist', 'arm', 'camera')],
+  );
+  const merged = mergeDesigns({ base, ours: base, theirs, selected: ['part:camera'] });
+
+  expect(merged.conflicts).toEqual([]);
+  expect(merged.dangling).toEqual([]);
+  expect(merged.required).toContain('joint:shoulder');
+  expect(merged.required).toContain('joint:wrist');
+  expect(merged.scene?.project.joints?.find((entry) => entry.id === 'leg-joint')).toEqual(base.project.joints![0]);
+  expect(merged.scene?.parts).toHaveLength(4);
 });
 
 it('requires an explicit incoming choice before restoring a required part deleted in the target', () => {

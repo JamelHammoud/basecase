@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useRef } from 'react';
 import type { ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
+import { errorMessage } from '../utils/errorMessage';
 import { chatTitle } from './acpTranscript';
 import type { AgentLane } from './agentLanes';
 import { completedEdits, recordEdit } from './runEdits';
@@ -85,7 +86,7 @@ export function useLaneControls(options: LaneControlOptions) {
   return {
     stop,
     stopAll: () => lanes.lanes.filter((l) => l.busy).forEach((l) => stop(l.id)),
-    revert: () => void core.versions.perform(revert),
+    revert: () => void revert().catch((error: unknown) => showToast(errorMessage(error), { tone: 'error' })),
     recordEdit: (id: string, partId: string, before: ScenePart | null) =>
       updateLane(id, (l) => ({ ...l, edits: recordEdit(l.edits, partId, before) })),
     stopFollowing: () => lanes.lanes.forEach((l) => (flagsOf(l.id).follow = false)),

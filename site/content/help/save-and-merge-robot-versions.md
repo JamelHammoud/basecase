@@ -12,6 +12,8 @@ covers:
 
 Save a named version of your design, create a branch to try an alternative and merge selected changes without losing either scene.
 
+For a camera mount trial, a separate branch lets you merge the mount without replacing working leg geometry.
+
 Portable scene exports leave out history and branch links. Versions keep references to local artifacts, but can’t recreate missing files.
 
 ## Save and restore

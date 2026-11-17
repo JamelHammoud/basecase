@@ -268,16 +268,16 @@ export async function compareVersions(request: VersionComparisonRequest) {
 
   if (!request.apply || !merge.scene) return { comparison, merge, view: null };
 
-  await checkedScene(merge.scene);
+  const scene = await checkedScene(merge.scene);
 
-  const captured = captureVersion(graph, merge.scene, {
+  const captured = captureVersion(graph, scene, {
     label: 'Merged design',
     at: new Date().toISOString(),
     parents: [graph.head!],
     merged: { source: otherHead!, units: merge.required },
   });
 
-  return { comparison, merge, view: viewOf(captured, merge.scene) };
+  return { comparison, merge, view: viewOf(captured, scene) };
 }
 
 export const versionHandlers = {

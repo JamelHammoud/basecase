@@ -13,6 +13,7 @@ import type { VersionRequest, VersionView } from './versionOperations';
 import type { VersionScene } from './sceneVersions';
 import type { SceneDocument } from './useSceneDocument';
 import type { StudioShared, WorkspaceSeed } from './types';
+import { snapshotMatches } from './versionMerge';
 
 export interface VersionOptions {
   seed?: WorkspaceSeed;
@@ -22,15 +23,45 @@ export interface VersionOptions {
   studio: StudioShared;
 }
 
+async function persistVersion(
+  next: VersionView,
+  design: VersionScene,
+  metadata: { sceneId: string; sceneName: string; chatId?: string },
+) {
+  await queueSceneWrite(metadata.sceneId, async () => {
+    const json = await sceneJson({
+      ...design,
+      id: metadata.sceneId,
+      name: metadata.sceneName,
+      chatId: metadata.chatId,
+      history: next.history,
+      autosave: true,
+    });
+    const saved = await platformBridge.saveSceneJson(json);
+
+    if (!saved) throw new Error('Open the original scene to change its history.');
+
+    sceneStore.upsert(saved);
+  });
+}
+
 export function useSceneVersions(options: VersionOptions) {
   const latest = useLatestRef(options);
   const [history, setHistory] = useState(options.seed?.history);
   const historyRef = useRef(history);
   const chatIdRef = useRef<string | undefined>(options.seed?.chat?.chatId ?? undefined);
   const chain = useRef<Promise<unknown>>(Promise.resolve());
+  const generation = useRef(0);
   const [view, setView] = useState<VersionView | null>(null);
   const [open, setOpen] = useState(false);
   const { busy, problem, perform } = useVersionActivity();
+  const serialize = <T>(operation: () => Promise<T>): Promise<T> => {
+    const pending = chain.current.then(operation);
+
+    chain.current = pending.catch(() => {});
+
+    return pending;
+  };
 
   const snapshot = (): VersionScene => {
     const { docs, scene, annotations } = latest.current;
@@ -50,45 +81,49 @@ export function useSceneVersions(options: VersionOptions) {
     setView(next);
   };
 
-  const persist = async (next: VersionView, design: VersionScene) => {
-    const { scene } = latest.current;
-    const json = await sceneJson({
-      ...design,
-      id: scene.sceneId,
-      name: scene.sceneName,
-      chatId: chatIdRef.current,
-      history: next.history,
-      autosave: true,
-    });
-
-    sceneStore.upsert(await queueSceneWrite(scene.sceneId, () => platformBridge.saveSceneJson(json)));
-  };
+  const persist = (next: VersionView, design: VersionScene) =>
+    persistVersion(next, design, { ...latest.current.scene, chatId: chatIdRef.current });
 
   const request = (details: Omit<VersionRequest, 'history' | 'scene'>) => {
-    const design = snapshot();
     const sceneId = latest.current.scene.sceneId;
+    const started = generation.current;
+    const assertCurrent = () => {
+      if (latest.current.scene.sceneId !== sceneId || generation.current !== started)
+        throw new Error('Open the original scene to change its history.');
+    };
     const run = async () => {
+      assertCurrent();
+
+      const design = snapshot();
       const next = await versionRequest({ ...details, history: historyRef.current, scene: await sceneJson(design) });
 
-      if (latest.current.scene.sceneId !== sceneId) throw new Error('Open the original scene to change its history.');
-
-      publish(next);
+      assertCurrent();
+      rememberHistory(next.history, next.quoted);
 
       if (details.action !== 'view') await persist(next, next.scene ?? design);
 
+      assertCurrent();
+
+      if (next.scene) await apply(next.scene, design);
+
+      publish(next);
+
       return { ...next, captured: design };
     };
-    const pending = chain.current.then(run);
 
-    chain.current = pending.catch(() => {});
-
-    return pending;
+    return serialize(run);
   };
 
-  const apply = async (design: VersionScene) => {
+  const apply = async (design: VersionScene, expected = snapshot()) => {
+    const sceneId = latest.current.scene.sceneId;
+    const started = generation.current;
+
     await restoreWorldAssets(design.worldAssets);
 
     const { docs, scene, annotations } = latest.current;
+
+    if (scene.sceneId !== sceneId || generation.current !== started || !snapshotMatches(snapshot(), expected))
+      throw new Error('The design changed. Compare again.');
 
     docs.commitVersion(design.parts, design.project, {
       globalGoal: scene.globalGoal,
@@ -99,11 +134,7 @@ export function useSceneVersions(options: VersionOptions) {
   };
 
   const restore = async (id: string) => {
-    const next = await request({ action: 'restore', id });
-
-    if (!next.scene) return;
-
-    await apply(next.scene);
+    await request({ action: 'restore', id });
   };
 
   const branch = async (id?: string): Promise<WorkspaceSeed> => {
@@ -130,10 +161,12 @@ export function useSceneVersions(options: VersionOptions) {
     apply,
     persist,
     publish,
+    serialize,
     request,
     perform,
     branch,
     reset: (value?: string) => {
+      generation.current += 1;
       historyRef.current = value;
       setHistory(value);
       setView(null);
@@ -145,11 +178,7 @@ export function useSceneVersions(options: VersionOptions) {
     close: () => setOpen(false),
     capture: (label: string) => request({ action: 'capture', label }),
     restore,
-    revert: async (run: string, selected: string[]) => {
-      const next = await request({ action: 'revert', run, selected });
-
-      if (next.scene) await apply(next.scene);
-    },
+    revert: (run: string, selected: string[]) => request({ action: 'revert', run, selected }),
     ...useVersionRunActions({ historyRef, chatIdRef, request }),
     flush: () => chain.current,
   };

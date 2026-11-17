@@ -106,7 +106,11 @@ function FleetIncidentsHost({ active, core }: Pick<WorkspaceSheetsProps, 'active
 function SceneHistoryHost({ active, core }: Pick<WorkspaceSheetsProps, 'active' | 'core'>) {
   if (!active || !core.versions.open) return null;
 
-  return <SceneHistorySheet core={core} />;
+  return (
+    <ErrorBoundary region="Scene history" onClose={core.versions.close}>
+      <SceneHistorySheet core={core} />
+    </ErrorBoundary>
+  );
 }
 
 export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps) {

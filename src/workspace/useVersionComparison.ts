@@ -31,10 +31,15 @@ interface Compared {
   conflictKeys: string[];
 }
 
-function snapshotsStillCurrent(core: WorkspaceCore, target: string, captured: VersionScene[]) {
+function snapshotsStillCurrent(core: WorkspaceCore, target: string, compared: Compared) {
   const ids = [core.workspaceId, target];
+  const histories = [compared.request.history, compared.request.otherHistory];
 
-  return ids.every((id, index) => snapshotMatches(core.studio.handleOf(id)?.snapshot(), captured[index]));
+  return ids.every((id, index) => {
+    const current = core.studio.handleOf(id)?.snapshot();
+
+    return snapshotMatches(current, compared.snapshots[index], histories[index]);
+  });
 }
 
 function fingerprintsStillCurrent(core: WorkspaceCore, target: string, captured: string[]) {
@@ -85,7 +90,9 @@ export function useVersionComparison(core: WorkspaceCore) {
     if (
       !a ||
       !b ||
-      !snapshotsStillCurrent(core, picked, [ours, theirs]) ||
+      ![core.workspaceId, picked].every((id, index) =>
+        snapshotMatches(core.studio.handleOf(id)?.snapshot(), [ours, theirs][index]),
+      ) ||
       !fingerprintsStillCurrent(core, picked, fingerprints)
     )
       throw new Error('The design changed. Compare again.');
@@ -124,30 +131,31 @@ export function useVersionComparison(core: WorkspaceCore) {
     });
   };
 
-  const merge = async () => {
-    if (!compared) return;
+  const merge = () =>
+    core.versions.serialize(async () => {
+      if (!compared) return;
 
-    if (
-      !snapshotsStillCurrent(core, compared.target, compared.snapshots) ||
-      !fingerprintsStillCurrent(core, compared.target, compared.fingerprints)
-    )
-      throw new Error('The design changed. Compare again.');
+      if (
+        !snapshotsStillCurrent(core, compared.target, compared) ||
+        !fingerprintsStillCurrent(core, compared.target, compared.fingerprints)
+      )
+        throw new Error('The design changed. Compare again.');
 
-    const result = await compareVersionRequest({ ...compared.request, selected, resolutions, apply: true });
+      const result = await compareVersionRequest({ ...compared.request, selected, resolutions, apply: true });
 
-    if (!result.view?.scene) return;
+      if (!result.view?.scene) return;
 
-    if (
-      !snapshotsStillCurrent(core, compared.target, compared.snapshots) ||
-      !fingerprintsStillCurrent(core, compared.target, compared.fingerprints)
-    )
-      throw new Error('The design changed. Compare again.');
+      if (
+        !snapshotsStillCurrent(core, compared.target, compared) ||
+        !fingerprintsStillCurrent(core, compared.target, compared.fingerprints)
+      )
+        throw new Error('The design changed. Compare again.');
 
-    await core.versions.apply(result.view.scene);
-    core.versions.publish(result.view);
-    await core.versions.persist(result.view, result.view.scene);
-    setCompared(null);
-  };
+      await core.versions.apply(result.view.scene, compared.snapshots[0]);
+      await core.versions.persist(result.view, result.view.scene);
+      core.versions.publish(result.view);
+      setCompared(null);
+    });
 
   return {
     choices,

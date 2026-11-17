@@ -49,13 +49,18 @@ const same = (a: unknown, b: unknown) => canonicalJson(a) === canonicalJson(b);
 
 export const designFingerprint = sceneVersionFingerprint;
 
-export function snapshotMatches(current: Partial<VersionScene> | undefined, captured: VersionScene): boolean {
+export function snapshotMatches(
+  current: (Partial<VersionScene> & { history?: string }) | undefined,
+  captured: VersionScene,
+  history?: string,
+): boolean {
   return (
     !!current &&
     current.parts === captured.parts &&
     current.project === captured.project &&
     current.annotations === captured.annotations &&
-    current.globalGoal === captured.globalGoal
+    current.globalGoal === captured.globalGoal &&
+    (history === undefined || current.history === history)
   );
 }
 
@@ -143,7 +148,8 @@ function includeSkeletonFrames(
   }
 }
 
-function selectedClosure(request: MergeRequest, base: Units, theirs: Units) {
+function selectedClosure(request: MergeRequest, units: { base: Units; ours: Units; theirs: Units }) {
+  const { base, ours, theirs } = units;
   const selected = new Set(request.selected.filter((key) => !evidenceFields.has(key.slice('project:'.length))));
   const edits = new Set(selected);
   const combined = new Map([...base, ...theirs]);
@@ -152,29 +158,31 @@ function selectedClosure(request: MergeRequest, base: Units, theirs: Units) {
 
   for (const [key, ids] of oldRefs) refs.set(key, new Set([...(refs.get(key) ?? []), ...ids]));
 
-  for (const [key, ids] of refs) {
-    const changed = !same(base.get(key), theirs.get(key));
-    const attached =
-      (key.startsWith('joint:') || key.startsWith('project:')) && [...ids].some((id) => selected.has(id));
-
-    if (!changed || !attached) continue;
-
-    selected.add(key);
-    edits.add(key);
-  }
-
   includeSkeletonFrames(request, { selected, edits });
 
   const queue = [...selected];
+  const include = (key: string, edit: boolean) => {
+    const changed = !selected.has(key) || (edit && !edits.has(key));
+
+    selected.add(key);
+
+    if (edit) edits.add(key);
+
+    if (changed) queue.push(key);
+  };
 
   for (let at = 0; at < queue.length; at++) {
-    const refsOf = refs.get(queue[at]) ?? [];
+    const key = queue[at];
+    const refsOf = refs.get(key) ?? [];
 
-    for (const id of refsOf) {
-      if (selected.has(id)) continue;
+    for (const id of refsOf) include(id, false);
 
-      selected.add(id);
-      queue.push(id);
+    if (!edits.has(key) && ours.has(key)) continue;
+
+    for (const [dependent, ids] of refs) {
+      const attached = dependent.startsWith('joint:') || dependent.startsWith('project:');
+
+      if (attached && ids.has(key) && !same(base.get(dependent), theirs.get(dependent))) include(dependent, true);
     }
   }
 
@@ -286,7 +294,7 @@ export function mergeDesigns(request: MergeRequest): DesignMerge {
 
   for (const [key, value] of Object.entries(request.baseByUnit ?? {})) units.base.set(key, value);
 
-  const { selected, edits } = selectedClosure(request, units.base, units.theirs);
+  const { selected, edits } = selectedClosure(request, units);
   const result = new Map(units.ours);
   const conflicts: string[] = [];
 

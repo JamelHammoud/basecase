@@ -292,3 +292,47 @@ it('reopens completed ownership by chat and reverts only that lane after another
   expect(reverted.scene?.parts.find((p) => p.id === 'arm')?.position[0]).toBe(0);
   expect(reverted.scene?.parts.find((p) => p.id === 'camera')?.position[0]).toBe(40);
 });
+
+it('uses the validated scene for the merged version and its working design', async () => {
+  const base = scene([part('body')]);
+  const original = await capture(base);
+  const incoming = scene([part('body'), { ...part('camera'), imageDataUrl: 'https://example.com/tracker.png' }]);
+  const branch = await capture(incoming, original.history);
+  const merged = await compareVersions({
+    history: original.history,
+    otherHistory: branch.history,
+    ours: JSON.stringify(base),
+    theirs: JSON.stringify(incoming),
+    selected: ['part:camera'],
+    apply: true,
+  });
+
+  expect(merged.view?.scene?.parts.find((entry) => entry.id === 'camera')).not.toHaveProperty('imageDataUrl');
+  expect(restoreVersion(readVersionGraph(merged.view!.history))).toEqual(merged.view!.scene);
+  expect(incoming.parts[1].imageDataUrl).toBe('https://example.com/tracker.png');
+});
+
+it('refuses an agent revert that would overwrite a later edit and preserves its recoverable history', async () => {
+  const initial = scene([part('arm')]);
+  const begin = await versionOperation({ action: 'begin', scene: JSON.stringify(initial), run: 'lane-a' });
+  const completed = await versionOperation({
+    action: 'finish',
+    history: begin.history,
+    scene: JSON.stringify(scene([part('arm', 20)])),
+    run: 'lane-a',
+    selected: ['arm'],
+  });
+  const later = scene([part('arm', 40)]);
+
+  await expect(
+    versionOperation({
+      action: 'revert',
+      history: completed.history,
+      scene: JSON.stringify(later),
+      run: 'lane-a',
+      selected: ['arm'],
+    }),
+  ).rejects.toThrow('Open Scene History');
+  expect(restoreVersion(readVersionGraph(completed.history)).parts[0].position[0]).toBe(20);
+  expect(later.parts[0].position[0]).toBe(40);
+});

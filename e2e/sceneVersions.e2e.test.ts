@@ -3,6 +3,8 @@ import { expect, inject, it } from 'vitest';
 import type { Page } from 'playwright-core';
 import { exposeTestHooks, launchChrome, partCount, shown } from './harness';
 import type { ScenePart } from '../src/types/robotics';
+import { captureVersion, emptyVersionGraph } from '../src/workspace/sceneVersions';
+import { versionScene } from '../src/workspace/sceneVersions.fixtures';
 
 const part = (id: string): ScenePart => ({
   id,
@@ -59,7 +61,7 @@ async function removeCamera(page: Page) {
   await expect.poll(() => partCount(page)).toBe(1);
 }
 
-it('names a version, edits and closes the robot, then reopens and restores the version', async () => {
+it('retains a named version after editing, closing and reopening its scene', async () => {
   const browser = await launchChrome();
   const page = await browser.newPage();
 
@@ -74,6 +76,36 @@ it('names a version, edits and closes the robot, then reopens and restores the v
     await removeCamera(page);
     await command(page, 'Close Scene');
     await command(page, 'Reopen Closed Scene');
+    await command(page, 'Scene History');
+    await page.getByRole('button', { name: 'Before camera edit', exact: true }).waitFor();
+    expect(await partCount(page)).toBe(1);
+  } finally {
+    await browser.close();
+  }
+});
+
+it('restores a saved version through Scene History and retains it after reload', async () => {
+  const browser = await launchChrome();
+  const page = await browser.newPage();
+  const original = versionScene([part('bracket'), part('camera')]);
+  const graph = captureVersion(emptyVersionGraph(), original, { label: 'Before camera edit', at: '2026-11-16' });
+
+  try {
+    await exposeTestHooks(page);
+    await seedVersionProfile(page, inject('webUrl'), [
+      {
+        ...original,
+        id: 'version-arm',
+        name: 'Arm bracket',
+        parts: [original.parts[0]],
+        partCount: 1,
+        updatedAt: '2026-11-16',
+        history: JSON.stringify(graph),
+      },
+    ]);
+    await page.goto(inject('webUrl'));
+    await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio));
+    await expect.poll(() => partCount(page)).toBe(1);
     await command(page, 'Scene History');
     await page.getByRole('button', { name: 'Before camera edit', exact: true }).click();
     await page.getByRole('button', { name: 'Restore', exact: true }).click();

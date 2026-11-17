@@ -6,7 +6,7 @@ image: /changelog/save-robot-versions/cover.png
 
 You can save named robot versions, branch alternatives and merge selected edits into another scene. You can recover both designs and their histories.
 
-Open Scene History from the scene tab's menu or the command palette. Use Duplicate to create a linked branch through the same history.
+Scene History opens from the scene tab's menu or the command palette. Duplicate creates a linked branch through the same history.
 
 Try a camera mount on a robot with working leg geometry. Keep the trial separate, then merge the mount and its dependencies back into the original scene.
 

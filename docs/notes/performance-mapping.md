@@ -55,3 +55,16 @@ A local scratch probe compared complete eigenvalues and eigenvectors exactly aga
 Existing `mapMatch.test.ts` checks complete matching, sparse neighborhoods, workspace ownership and unchanged inputs. `joints/cylinderFit.test.ts`, `joints/axisFinder.test.ts` and `joints/jointCandidates.test.ts` retain cylinder refitting, picked axes and automatic shaft-and-bore coverage. No action, label or visible state changes, so help steps and screenshots remain accurate. No timeout, retry or quarantine changes apply.
 
 Preflight identified [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) through its coverage metadata. The complete article remains accurate: joint fields, joint sources, part following, anchoring, deletion, modeled poses, IK and robot selection are unchanged. The implementation only replaces internal rotation-call arguments. The article has no screenshots, and its text remains unchanged. The coverage reminder therefore remains informational after this check.
+
+
+## Earth attribution retains its formatted text
+
+A whole-app search found one visible-tile copyright aggregator, in `three/viewport/earthLayer.ts`. Its state reader, visibility handler and tile-credit events now share cached text. Each nonempty credit event invalidates the text after changing counts. Replacing the renderer clears both counts and text. The cache holds one string per Earth layer and never retains old tile metadata.
+
+`earthAttribution.test.ts` drives the real layer with a controlled tile renderer. It checks frequency ranking, stable insertion-order ties, whitespace, duplicate names, removal and reinsertion, missing copyrights, notifications, hidden updates, renderer replacement and independent layers. The existing `earthLayer.test.ts` retains real tile loading, surface sampling, movement, capture exclusion and hiding coverage.
+
+For 100 visibility events with two credits each and two state reads after every event, the test measures 100 sorting calls. The previous source performs 400 sorts for the same fixture, two per event and one per state read. Each avoided rebuild also removes its copied entry list, mapped name list and join. The hidden-update and show sequence adds one rebuild, which the test checks separately. These are deterministic operation counts, not timings or a claim about whole-map loading time. Every count change still rebuilds once, even if its final formatted order is unchanged.
+
+No action, label or visible state changes. Help steps and screenshots remain accurate. No timeout, retry or quarantine changes apply.
+
+Preflight identified [Place a robot on a map](../../site/content/help/place-a-robot-on-a-map.md) through its coverage metadata. Its key setup, placement, height, attribution, hide or show and distance-limit instructions remain accurate. Attribution content and visibility are unchanged, so its three screenshot states remain accurate and the article stays unchanged. The remaining preflight finding is this coverage reminder.

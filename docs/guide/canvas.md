@@ -259,6 +259,8 @@ Measurements and limits: [Viewport rendering performance evidence](../notes/perf
 
 - **Map tiles stream by distance and draw on demand** (§12). The Earth layer updates the tiles renderer only inside `RenderLoop.beforeRender`, so tiles load and refine only when a frame draws; a tile arriving asks for one redraw (`needs-update`, `needs-render`), and nothing renders once the view and the loads settle. Screen-space error picks each tile's detail from the canvas camera, so a tile near the camera loads finer and the rest stay coarse. Draco decoding runs in `DRACOLoader`'s workers, and `3d-tiles-renderer` loads as its own chunk the first time a scene has a place.
 
+- **Earth attribution retains its formatted text.** `earthLayer.ts` invalidates the cached string when visible-tile credit counts change and clears it when replacing the tile renderer. Event comparisons, state reads and hide or show share that string. Frequency ranking, insertion-order ties and notification suppression stay unchanged. `earthAttribution.test.ts` checks ordering, duplicate names, removals, hidden updates, renderer replacement, independent layers and rebuild counts. [Evidence](../notes/performance-mapping.md#earth-attribution-retains-its-formatted-text).
+
 - **No canvas reallocation during panel animations.** `CanvasSizer` keeps the canvas centred in its card, grows the drawing buffer once and shrinks it only after the size settles, and redraws synchronously after a resize so there's never a blank frame.
 
 ### Fleet globe and facility views

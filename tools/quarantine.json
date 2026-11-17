@@ -1,5 +1,29 @@
 [
   {
+    "file": "tools/fleet/access.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44164732083 exhausted the unchanged 10000 ms beforeAll budget, skipping all six access cases. Same-revision Windows diagnostic 44167889998 passed the generated authorization matrix with one worker and retries disabled in a 6391 ms process. Native cluster initialization, migrations and identity setup are not distinguished. Existing Fleet fixture owner #1401 owns this shared setup incident, stage tracing, cleanup and equal-load baseline and candidate measurements. Other platforms and fast access-scope tests remain active. Whole-file filtering is required because setup precedes individual-test filtering."
+  },
+  {
+    "file": "tools/fleet/federation.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44164732083 exhausted the unchanged 10000 ms beforeAll budget, skipping all eight federation cases. Same-revision Windows diagnostic 44167931061 passed the signed identity-isolation case with one worker and retries disabled in an 8443 ms process. Native cluster initialization, migrations and identity setup are not distinguished. Existing Fleet fixture owner #1401 owns shared setup tracing, cleanup and equal-load baseline and candidate measurements. Other platforms and authorization, recovery and browser coverage remain active. Whole-file filtering is required because setup precedes individual-test filtering."
+  },
+  {
+    "file": "src/guide/render/guideStage.test.ts",
+    "test": "",
+    "issue": 1400,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44164732083 exhausted the unchanged 15000 ms beforeAll budget, skipping all three guide pixel and draw-call cases. Last full green 43948835889 passed this file in 9642 ms. Same-revision Windows diagnostic 44167880896 passed view 0 with one worker and retries disabled in a 10786 ms process. Bundle, server, Chrome launch and worker readiness stages are not distinguished. Existing shared OffscreenCanvas setup owner #1400 owns stage tracing, cancellation, cleanup and equal-load baseline and candidate measurements. Other platforms and fast guide planning, generation and worker-ownership coverage remain active. Whole-file filtering is required because setup precedes individual-test filtering."
+  },
+  {
     "file": "e2e/board.e2e.test.ts",
     "test": "defines, edits and locks the generated rover board, exports its PCB and reopens the same placement",
     "issue": 1620,

@@ -54,22 +54,19 @@ async function windowsCli() {
 }
 
 function selectedBrowserShard(shard) {
-  const files = run(process.execPath, [
-    'node_modules/vitest/vitest.mjs',
-    'list',
-    '--config',
-    'vitest.e2e.config.ts',
-    '--filesOnly',
-    '--shard',
-    shard,
-  ]);
+  const files = run(process.execPath, ['tools/electrical/browserShard.mjs', shard]);
+  const selected = files
+    .trim()
+    .split(/\r?\n/u)
+    .filter(Boolean)
+    .map((file) => path.basename(file));
 
   return {
     native:
-      files.includes('boardRouted.e2e.test.ts') ||
-      files.includes('boardRouting.e2e.test.ts') ||
-      files.includes('kitElectrical.e2e.test.ts'),
-    routing: files.includes('boardRouting.e2e.test.ts'),
+      selected.includes('boardRouted.e2e.test.ts') ||
+      selected.includes('boardRouting.e2e.test.ts') ||
+      selected.includes('kitElectrical.e2e.test.ts'),
+    routing: selected.includes('boardRouting.e2e.test.ts'),
   };
 }
 

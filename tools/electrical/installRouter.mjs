@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { findOnPath } from '../../electron/executables.mjs';
+import { findOnPath, IS_WINDOWS } from '../../electron/executables.mjs';
 import { ROUTER_VERSION, ROUTER_HASH, verifyRoutingRuntime } from '../../electron/electrical/routeTools.mjs';
 
 const releases = {
@@ -38,7 +38,8 @@ async function download(url, file, expected) {
 }
 
 function extract(archive, directory) {
-  const command = findOnPath('tar');
+  const searchPath = IS_WINDOWS ? path.join(process.env.SystemRoot ?? 'C:\\Windows', 'System32') : process.env.PATH;
+  const command = findOnPath('tar', searchPath);
 
   if (!command) throw new Error('board-router');
 
@@ -49,7 +50,9 @@ function extract(archive, directory) {
     maxBuffer: 1024 * 1024,
   });
 
-  if (result.error || result.status !== 0) throw new Error('board-router');
+  if (result.error || result.status !== 0) {
+    throw new Error(`board-router: ${result.error?.message ?? result.stderr?.toString() ?? result.status}`);
+  }
 }
 
 export async function installBoardRouter(directory) {

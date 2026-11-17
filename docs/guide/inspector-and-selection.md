@@ -137,6 +137,8 @@ There's no Shape tab. These panels appear in place of the Inspector only while t
 
 ## Performance: mirror
 
+Catalog datum matching uses position error as a lower bound on position plus axis error. A candidate farther away than the best complete mismatch skips its axis distance. Equal positional errors still evaluate the axis. All Mirror controls and `mirror_parts` share this scorer. `mirrorDatum.test.ts` checks every catalog part against the complete calculation, score-band boundaries, edits and distance-call counts. [Evidence](../notes/performance-mirror.md#catalog-datum-matching-prunes-axis-distances).
+
 Measurements and limits: [Mirror performance evidence](../notes/performance-mirror.md).
 
 - **Mirror side naming reuses compiled rules.** `mirror/mirrorNames.ts` prepares four word-pair expressions at module load for assembly and agent part, group and joint naming. Skeleton pairing shares those rules, retaining its separate front/rear and front/back passes. Case, word boundaries, sequential replacements and fallback names stay unchanged. `mirrorNames.test.ts` checks repeated-call parity and zero expression construction during naming queries. Existing assembly, agent scene and skeleton tests cover integration. [Evidence](../notes/performance-mirror.md#mirror-side-naming-reuses-compiled-rules).

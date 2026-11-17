@@ -29,9 +29,12 @@ class Triangles {
     const vx = c[0] - a[0];
     const vy = c[1] - a[1];
     const vz = c[2] - a[2];
-    const area = Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx);
+    const nx = uy * vz - uz * vy;
+    const ny = uz * vx - ux * vz;
+    const nz = ux * vy - uy * vx;
+    const largest = Math.max(Math.abs(nx), Math.abs(ny), Math.abs(nz));
 
-    if (area > MIN_AREA) this.values.push(...a, ...b, ...c);
+    if (largest > MIN_AREA || Math.hypot(nx, ny, nz) > MIN_AREA) this.values.push(...a, ...b, ...c);
   }
 
   quad(a: V3, b: V3, c: V3, d: V3) {

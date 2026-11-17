@@ -25,26 +25,32 @@ interface PlateSpace {
 const contains = (a: Rect, b: Rect) =>
   b.x >= a.x - EPS && b.y >= a.y - EPS && b.x + b.w <= a.x + a.w + EPS && b.y + b.d <= a.y + a.d + EPS;
 
-function splitFree(free: Rect, used: Rect): Rect[] {
-  if (!overlaps(free, used)) return [free];
+function appendFree(out: Rect[], rect: Rect): void {
+  if (rect.w > EPS && rect.d > EPS) out.push(rect);
+}
 
-  const out: Rect[] = [];
+function splitFree(out: Rect[], free: Rect, used: Rect): void {
+  if (!overlaps(free, used)) {
+    out.push(free);
 
-  if (used.x > free.x) out.push({ ...free, w: used.x - free.x });
+    return;
+  }
+
+  if (used.x > free.x) appendFree(out, { ...free, w: used.x - free.x });
 
   if (used.x + used.w < free.x + free.w)
-    out.push({ ...free, x: used.x + used.w, w: free.x + free.w - used.x - used.w });
+    appendFree(out, { ...free, x: used.x + used.w, w: free.x + free.w - used.x - used.w });
 
-  if (used.y > free.y) out.push({ ...free, d: used.y - free.y });
+  if (used.y > free.y) appendFree(out, { ...free, d: used.y - free.y });
 
   if (used.y + used.d < free.y + free.d)
-    out.push({ ...free, y: used.y + used.d, d: free.y + free.d - used.y - used.d });
-
-  return out.filter((r) => r.w > EPS && r.d > EPS);
+    appendFree(out, { ...free, y: used.y + used.d, d: free.y + free.d - used.y - used.d });
 }
 
 function occupy(space: PlateSpace, used: Rect) {
-  const split = space.free.flatMap((f) => splitFree(f, used));
+  const split: Rect[] = [];
+
+  for (const free of space.free) splitFree(split, free, used);
 
   space.free = split.filter((r, i) => !split.some((o, j) => j !== i && contains(o, r) && (!contains(r, o) || j < i)));
 }

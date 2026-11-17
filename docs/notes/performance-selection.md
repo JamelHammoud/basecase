@@ -2,6 +2,14 @@
 
 Implementation: [Selection](../guide/inspector-and-selection.md#performance-selection). Shared requirements: [Performance](../guide/performance.md).
 
+## Boolean groups prepare frame rotations once
+
+Whole-app search found one shared boolean frame follower, `src/booleans/frames.ts`, called by `editWithOperands`. It handles result movement, rotation and resizing across gizmo, Inspector and agent edits. Each changed group now prepares its source-frame inverse and target-relative rotation once, rather than once per operand. Nested groups prepare their own transforms. Scaling uses the operand's own quaternion for local orientation, keeping the shared inverse unchanged. Multiplication association, rounding and dimension formulas stay unchanged.
+
+For a changed group with 32 operands, inverse calculations fall from 32 to 1, and target-relative quaternion products fall from 32 to 1. Quaternion clones fall from 64 to 33. These are structural operation counts, not timings or an end-to-end latency claim. `frames.test.ts` asserts one inversion for the 32-operand fixture and no additional inversion when synchronizing the unchanged result.
+
+The same test compares complete results with the former transform arithmetic for Union, Subtract and Intersect, with mixed operand rotations, nested groups, nonuniform resizing and subsequent edits. It checks untouched source records and retained dimension references for rigid movement. Existing `booleans.test.ts` covers edits through `editWithOperands`, geometry evaluation, saved results and move-only hash stability. No visible state, user action, copy, browser test, timing gate or quarantine changes.
+
 ## Rotated bounds calculate half extents directly
 
 `src/utils/selection.ts` removes six temporary arrays per ordinary rotated part: half sizes, mapped Euler angles, the matrix and its three rows. The returned extent tuple remains independently owned. Unrotated parts avoid the two size and angle arrays. Affine sheets still use `affineBounds`. A source search found no second Euler half-extent matrix implementation to change.

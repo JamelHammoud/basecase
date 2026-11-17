@@ -1,14 +1,13 @@
 import * as THREE from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 
-type Faces = { centers: Float32Array; normals: Float32Array; areas: Float32Array };
+type Faces = { centers: Float32Array; normals: Float32Array; areas: Float32Array; surfaceArea: number };
 
 export class ShapeSolid {
   readonly box: THREE.Box3;
   readonly samples = new Map<number, Float32Array>();
   private tree: MeshBVH | null = null;
   private faceData: Faces | null = null;
-  private sampledArea: number | null = null;
 
   readonly positions: Float32Array;
 
@@ -36,9 +35,7 @@ export class ShapeSolid {
   }
 
   get surfaceArea(): number {
-    this.sampledArea ??= this.faces.areas.reduce((s, x) => s + x, 0);
-
-    return this.sampledArea;
+    return this.faces.surfaceArea;
   }
 
   dispose(): void {
@@ -78,6 +75,7 @@ function faceData(positions: Float32Array): Faces {
   const centers: number[] = [];
   const normals: number[] = [];
   const areas: number[] = [];
+  let surfaceArea = 0;
   const a = new THREE.Vector3(),
     b = new THREE.Vector3(),
     c = new THREE.Vector3(),
@@ -104,17 +102,23 @@ function faceData(positions: Float32Array): Faces {
 
     const splits = Math.min(MAX_FACE_SPLITS, Math.ceil(Math.sqrt(area / FACE_PIECE_MM2)));
     const start = centers.length;
-    const weight = (area * step) / (splits * splits);
+    const weight = Math.fround((area * step) / (splits * splits));
 
     pieceCenters(tri, splits, centers, center);
 
     for (let i = start; i < centers.length; i += 3) {
       normals.push(n.x, n.y, n.z);
       areas.push(weight);
+      surfaceArea += weight;
     }
   }
 
-  return { centers: new Float32Array(centers), normals: new Float32Array(normals), areas: new Float32Array(areas) };
+  return {
+    centers: new Float32Array(centers),
+    normals: new Float32Array(normals),
+    areas: new Float32Array(areas),
+    surfaceArea,
+  };
 }
 
 export const solidFromPositions = (positions: Float32Array) => new ShapeSolid(positions);

@@ -14,13 +14,15 @@ export function strokeLength(points: Point2[]): number {
   return length;
 }
 
-function distanceToSegment([px, py]: Point2, [ax, ay]: Point2, [bx, by]: Point2): number {
+function distanceToSegmentSquared([px, py]: Point2, [ax, ay]: Point2, [bx, by]: Point2): number {
   const dx = bx - ax;
   const dy = by - ay;
   const lengthSq = dx * dx + dy * dy;
   const t = lengthSq ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lengthSq)) : 0;
+  const x = px - (ax + t * dx);
+  const y = py - (ay + t * dy);
 
-  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+  return x * x + y * y;
 }
 
 export function distanceToPolyline<T>(point: Point2, polyline: T[], project: (value: T, out: Point2) => void): number {
@@ -34,12 +36,12 @@ export function distanceToPolyline<T>(point: Point2, polyline: T[], project: (va
 
   for (let i = 1; i < polyline.length; i++) {
     project(polyline[i], b);
-    best = Math.min(best, distanceToSegment(point, a, b));
+    best = Math.min(best, distanceToSegmentSquared(point, a, b));
     a[0] = b[0];
     a[1] = b[1];
   }
 
-  return best;
+  return Math.sqrt(best);
 }
 
 export function viewAngles([x, y, z]: [number, number, number]): string {

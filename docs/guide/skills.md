@@ -253,6 +253,8 @@ The gate judges Kit skills twice with the unchanged `runArena` (its files and th
 
 ## Performance: skill feasibility and moves
 
+- **Support margins scan hull edges directly.** `skills/feasibilityStance.ts` accumulates segment distance and strict containment in one hull traversal, without edge tuples, a distance list or argument spreading. Containment stops testing sides after the first rejection while distance still measures every edge. Feasibility and its relaxation attempts share this path. `supportMargin.test.ts` compares the previous calculation across varied contacts, reordered inputs and nonfinite queries, alongside boundary and degenerate-contact checks. [Evidence](../notes/performance-skills.md#support-margins-scan-hull-edges-directly).
+
 - **IK solves share direct determinants.** Feasibility and solver-race IK use `utils/solve3.ts`, shared with cylinder circle fitting. It removes replacement-column matrices while preserving determinant arithmetic and each caller's singularity policy. `solve3.test.ts` compares exact results with the previous copying equations across dense, damped, singular and nonfinite systems. Existing reach and solver-race tests retain integration coverage. [Shared evidence](../notes/performance-joints.md#three-dimensional-solves-use-direct-determinants).
 
 Measurements and limits: [Skill feasibility and moves performance evidence](../notes/performance-skills.md).

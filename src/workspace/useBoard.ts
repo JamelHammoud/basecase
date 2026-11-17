@@ -1,4 +1,5 @@
 import { useBoardRouting } from './useBoardRouting';
+import { boardPlacementDefinition } from '../wiring/boardRoutingRecord';
 import { useRoutedBoard } from './useRoutedBoard';
 import { useRef } from 'react';
 import { electricalClient } from '../wiring/electricalClient';
@@ -86,8 +87,4 @@ export function useBoard(core: WorkspaceCore) {
   };
 
   return { define, select, update, importBoard, route, arrange: () => prepare('place') };
-}
-
-function boardPlacementDefinition(board: ElectronicsBoard | undefined) {
-  return { ...board, routed: undefined, routing: undefined, fabrication: undefined };
 }

@@ -33,6 +33,20 @@ export async function boardRoutingWalkthrough(capture?: (page: Page, state: stri
     await page.getByRole('textbox', { name: 'Routing source', exact: true }).fill('https://example.com/design');
     await page.getByRole('textbox', { name: 'Dielectric material', exact: true }).fill('FR4');
 
+    const loss = page.getByRole('textbox', { name: 'Dielectric loss tangent', exact: true });
+
+    expect(await loss.inputValue()).toBe('');
+    expect(await loss.locator('..').innerText()).toBe('');
+    expect(
+      await page.getByRole('textbox', { name: 'Dielectric permittivity', exact: true }).locator('..').innerText(),
+    ).toBe('');
+    await loss.fill('0');
+    await loss.press('Enter');
+    expect(
+      (await page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord())).project.electronicsBoard
+        ?.routing?.lossTangent,
+    ).toBe(0);
+
     for (const [label, value] of [
       ['Track width', '0.4'],
       ['Copper clearance', '0.25'],

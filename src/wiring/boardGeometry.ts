@@ -1,4 +1,4 @@
-import { routingInput } from './boardRoutingRecord';
+import { boardPlacementDefinition } from './boardRoutingRecord';
 import { BoxGeometry, ExtrudeGeometry, Matrix4, Path, Shape } from 'three';
 import { collide, place, type Placed } from '../three/analysis/collide';
 import { solidFromPositions } from '../three/analysis/shapeSolid';
@@ -22,10 +22,8 @@ export interface BoardGeometry {
 }
 
 export function boardGeometryKey(input: ElectricalInput) {
-  const board = routingInput(input).project.electronicsBoard;
-
   return hashText(
-    electricalSourceJson({ board: { ...board, fabrication: undefined, routing: undefined }, parts: input.parts }),
+    electricalSourceJson({ board: boardPlacementDefinition(input.project.electronicsBoard), parts: input.parts }),
   );
 }
 

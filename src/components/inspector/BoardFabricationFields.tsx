@@ -29,33 +29,25 @@ export function BoardFabricationFields({
           onChange={(event) => update({ source: event.target.value })}
         />
       </FieldRow>
-      <NumberInput
-        label="Minimum clearance"
-        value={rules.clearanceMm ?? 0}
-        min={0}
-        max={10}
-        precision={3}
-        step={0.01}
-        onChange={(value, live) => !live && update({ clearanceMm: value > 0 ? value : null })}
-      />
-      <NumberInput
-        label="Minimum track width"
-        value={rules.trackWidthMm ?? 0}
-        min={0}
-        max={10}
-        precision={3}
-        step={0.01}
-        onChange={(value, live) => !live && update({ trackWidthMm: value > 0 ? value : null })}
-      />
-      <NumberInput
-        label="Minimum drill"
-        value={rules.drillMm ?? 0}
-        min={0}
-        max={10}
-        precision={3}
-        step={0.01}
-        onChange={(value, live) => !live && update({ drillMm: value > 0 ? value : null })}
-      />
+      {(
+        [
+          ['clearanceMm', 'Minimum clearance'],
+          ['trackWidthMm', 'Minimum track width'],
+          ['drillMm', 'Minimum drill'],
+        ] as const
+      ).map(([key, label]) => (
+        <FieldRow key={key} label={label} group>
+          <NumberInput
+            aria-label={label}
+            value={rules[key]}
+            min={0}
+            max={10}
+            precision={3}
+            step={0.01}
+            onChange={(value, live) => !live && update({ [key]: value > 0 ? value : null })}
+          />
+        </FieldRow>
+      ))}
     </Section>
   );
 }

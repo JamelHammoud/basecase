@@ -5,6 +5,8 @@ import { prepareBoardRoute } from './boardRoutePreparation';
 import { boardRouteFindings } from './boardRouteFindings';
 import { validBoardDefinition } from './boardValidation';
 import { boardGeometryKey } from './boardGeometry';
+import { boardPlacementDefinition } from './boardRoutingRecord';
+import { electricalSourceJson } from './electricalSource';
 import { encodeSceneFile, decodeSceneFile } from '../utils/sceneFile';
 
 const fabrication = { source: 'https://example.com/process', clearanceMm: 0.2, trackWidthMm: 0.25, drillMm: 0.3 };
@@ -35,6 +37,12 @@ it('retains pre-route manufacturing declarations through ordinary scene encoding
   expect(boardGeometryKey({ parts, project })).toBe(
     boardGeometryKey({ parts, project: { ...project, electronicsBoard: definition.board } }),
   );
+  expect(electricalSourceJson(boardPlacementDefinition(board))).toBe(
+    electricalSourceJson(boardPlacementDefinition(definition.board)),
+  );
+  expect(
+    electricalSourceJson(boardPlacementDefinition({ ...board, edgeClearanceMm: board.edgeClearanceMm + 1 })),
+  ).not.toBe(electricalSourceJson(boardPlacementDefinition(board)));
 });
 
 it('keeps special requirements unresolved even when a board has imported copper', () => {

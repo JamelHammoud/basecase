@@ -3,10 +3,11 @@ import type { ScenePart } from '../types/robotics';
 import type { ElectronicsBoard } from '../wiring/boardTypes';
 import { electricalClient } from '../wiring/electricalClient';
 import { electricalSourceJson } from '../wiring/electricalSource';
+import { boardPlacementDefinition } from '../wiring/boardRoutingRecord';
 
 export function useBoardPreview(parts: ScenePart[], board: ElectronicsBoard | undefined) {
   const host = parts.find((part) => part.id === board?.partId);
-  const definition = board ? { ...board, routed: undefined } : undefined;
+  const definition = boardPlacementDefinition(board);
   const key = electricalSourceJson(definition);
   const latestDefinition = useEffectEvent(() => definition);
   const [preview, setPreview] = useState<{

@@ -1,5 +1,6 @@
 import type { ElectricalInput } from './electricalTypes';
 import type { BoardRoutedSource } from './boardRoutingTypes';
+import type { ElectronicsBoard } from './boardTypes';
 
 const object = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object' && !Array.isArray(value);
@@ -91,4 +92,8 @@ export function routingInput(input: ElectricalInput): ElectricalInput {
   delete definition.routed;
 
   return { ...input, project: { ...input.project, electronicsBoard: definition } };
+}
+
+export function boardPlacementDefinition(board: ElectronicsBoard | undefined) {
+  return board ? { ...board, routed: undefined, routing: undefined, fabrication: undefined } : undefined;
 }

@@ -12,6 +12,6 @@ Until now, after placing a rover's headers and regulator, you had to transfer fi
 
 You can route on two copper layers with straight tracks and through vias. You need KiCad 9.0.6 and the pinned local routing tools. If the board has existing copper, missing declarations or unsupported special requirements, you can't start routing and the board stays unchanged. If you cancel routing or edit the scene, you discard unfinished results.
 
-You still export through **Schematic**. Before you can include fabrication files, Basecase reruns native DRC, connectivity and schematic parity checks. You can edit routed copper after saving and reopening the scene. You still need to resolve unknown loads and electrical requirements in **Checks**.
+You still export through **Schematic**. Before you can include fabrication files, Basecase reruns native DRC, connectivity and schematic parity checks. You can reopen a saved scene and export its copper for editing in KiCad. You still need to resolve unknown loads and electrical requirements in **Checks**.
 
 Steps are in [Route a carrier board](/help/route-a-carrier-board).

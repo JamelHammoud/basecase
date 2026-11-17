@@ -15,13 +15,13 @@ const empty: BoardRoutePlan = {
   special: '',
 };
 const dimensions = [
-  ['trackWidthMm', 'Track width'],
-  ['clearanceMm', 'Copper clearance'],
-  ['viaDiameterMm', 'Via diameter'],
-  ['viaDrillMm', 'Via drill'],
-  ['copperMm', 'Copper thickness'],
-  ['epsilonR', 'Dielectric permittivity'],
-  ['lossTangent', 'Dielectric loss tangent'],
+  ['trackWidthMm', 'Track width', 'mm'],
+  ['clearanceMm', 'Copper clearance', 'mm'],
+  ['viaDiameterMm', 'Via diameter', 'mm'],
+  ['viaDrillMm', 'Via drill', 'mm'],
+  ['copperMm', 'Copper thickness', 'mm'],
+  ['epsilonR', 'Dielectric permittivity', ''],
+  ['lossTangent', 'Dielectric loss tangent', ''],
 ] as const;
 
 export function BoardRoutingFields({
@@ -46,17 +46,19 @@ export function BoardRoutingFields({
           onChange={(event) => update({ source: event.target.value })}
         />
       </FieldRow>
-      {dimensions.map(([key, label]) => (
-        <NumberInput
-          key={key}
-          label={label}
-          value={plan[key] ?? 0}
-          min={0}
-          max={100}
-          precision={4}
-          step={0.01}
-          onChange={(value, live) => !live && update({ [key]: value })}
-        />
+      {dimensions.map(([key, label, unit]) => (
+        <FieldRow key={key} label={label} group>
+          <NumberInput
+            aria-label={label}
+            value={plan[key]}
+            unit={unit}
+            min={0}
+            max={100}
+            precision={4}
+            step={0.01}
+            onChange={(value, live) => !live && update({ [key]: value })}
+          />
+        </FieldRow>
       ))}
       <FieldRow label="Dielectric material">
         <TextInput

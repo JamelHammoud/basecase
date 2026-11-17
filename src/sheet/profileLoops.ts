@@ -37,7 +37,13 @@ export function canonicalLoop(loop: Point[], positive: boolean): Point[] {
     return p[0] < q[0] - 0.0001 || (Math.abs(p[0] - q[0]) < 0.0001 && p[1] < q[1]) ? i : best;
   }, 0);
 
-  return [...points.slice(start), ...points.slice(0, start)];
+  if (start === 0) return points;
+
+  const rotated: Point[] = new Array(points.length);
+
+  for (let i = 0; i < points.length; i++) rotated[i] = points[(start + i) % points.length];
+
+  return rotated;
 }
 
 function walkLoop(start: string, neighbors: Map<string, string[]>, points: Map<string, Point>): Point[] | undefined {

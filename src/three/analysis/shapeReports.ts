@@ -60,16 +60,17 @@ export function printReportOf(solid: ShapeSolid, downs: Vec3[] = []): ShapeRepor
 
 const BASE_BAND_MM = 1;
 
-const worldAxis = (e: ArrayLike<number>, pos: Float32Array, i: number, a: number) =>
-  e[a] * pos[i] + e[4 + a] * pos[i + 1] + e[8 + a] * pos[i + 2] + e[12 + a];
-
 function baseOutline(pos: Float32Array, e: ArrayLike<number>, lowY: number): Array<[number, number]> {
   const points: Array<[number, number]> = [];
 
   for (let i = 0; i < pos.length; i += 3) {
-    if (worldAxis(e, pos, i, 1) > lowY + BASE_BAND_MM) continue;
+    const x = pos[i];
+    const y = pos[i + 1];
+    const z = pos[i + 2];
 
-    points.push([worldAxis(e, pos, i, 0), worldAxis(e, pos, i, 2)]);
+    if (e[1] * x + e[5] * y + e[9] * z + e[13] > lowY + BASE_BAND_MM) continue;
+
+    points.push([e[0] * x + e[4] * y + e[8] * z + e[12], e[2] * x + e[6] * y + e[10] * z + e[14]]);
   }
 
   return convexHull(points);
@@ -83,8 +84,12 @@ export function worldMeasure(solid: ShapeSolid, matrix: THREE.Matrix4): MeshMeas
   const max: [number, number, number] = [-Infinity, -Infinity, -Infinity];
 
   for (let i = 0; i < pos.length; i += 3) {
+    const x = pos[i];
+    const y = pos[i + 1];
+    const z = pos[i + 2];
+
     for (let a = 0; a < 3; a++) {
-      const v = worldAxis(e, pos, i, a);
+      const v = e[a] * x + e[4 + a] * y + e[8 + a] * z + e[12 + a];
 
       min[a] = Math.min(min[a], v);
       max[a] = Math.max(max[a], v);

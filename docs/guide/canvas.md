@@ -86,6 +86,8 @@ Coplanar contact scans (`three/analysis/collide.ts`) reuse one triangle and its 
 
 ## Performance: mesh preparation
 
+USDZ export (`three/usdz/usdzOps.ts`) shares source index buffers across ordinary mesh instances and leaves triangle soups nonindexed. Only reflected instances allocate private indices and reverse triangle winding. Positions and supplied normals remain private because placement and floor centering mutate them. `usdzOps.test.ts` runs the real exporter over repeated indexed and nonindexed instances, checking archive winding, normals, placement, buffer ownership and unchanged source data. [Evidence](../notes/performance-geometry.md#usdz-prepares-indices-only-for-reflected-instances).
+
 Robot-link simplification (`three/geometryOps.ts`) retains the position buffer produced by `mergeVertices`, without copying it again. Welding owns that buffer independently of the source soup. `simplifyMesh.test.ts` checks exact coordinates and simplified indices against the former path, source subarrays, repeated calls and transferable output ownership. [Evidence](../notes/performance-geometry.md#robot-link-simplification-retains-welded-position-storage).
 
 GT2 pulleys and toothed idlers share `three/driveMesh.ts`. Tooth construction writes its four polar points directly into the shape, without per-tooth coordinate lists. `driveMesh.test.ts` compares complete tooth geometry attributes, indices and material groups against the former construction for every catalog size, including bores and hub placement. [Evidence](../notes/performance-geometry.md#gt2-teeth-write-directly-into-the-shape).

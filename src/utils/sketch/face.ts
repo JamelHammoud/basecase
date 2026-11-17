@@ -66,9 +66,13 @@ function containing(soup: ArrayLike<number>, tris: Tri[], point: THREE.Vector3):
 }
 
 function outermost(tris: Tri[], normal: THREE.Vector3): Tri | null {
-  const facing = tris.filter((t) => t.normal.dot(normal) > SAME_NORMAL);
+  let best: Tri | null = null;
 
-  return facing.reduce<Tri | null>((best, t) => (!best || t.offset > best.offset ? t : best), null);
+  for (const tri of tris) {
+    if (tri.normal.dot(normal) > SAME_NORMAL && (!best || tri.offset > best.offset)) best = tri;
+  }
+
+  return best;
 }
 
 function frameFor(normal: THREE.Vector3) {

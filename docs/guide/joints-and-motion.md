@@ -305,3 +305,5 @@ The ten-mechanism production matrix in `src/sim/closedLinkages.test.ts` compares
 ## Mesh import preparation
 
 Robot mesh collection retains a single prepared triangle geometry directly instead of merging it into another copy. OBJ, Collada, FBX, 3MF and glTF share this collector. Multiple pieces retain their existing merge order. `three/mergeGeometryParts.test.ts` compares the collector through its glTF boundary with the former output for one and three meshes, empty results and unchanged source attributes. Loader parsing itself is outside that test. [Shared preparation contract](canvas.md#performance-mesh-preparation).
+
+The position-only collector borrows source indices until triangle expansion, while cloned positions receive placement. `three/positionIndices.test.ts` checks complete outputs, source preservation and index-clone counts through the glTF boundary. [Shared preparation contract](canvas.md#performance-mesh-preparation).

@@ -22,7 +22,7 @@ function meshGeometries(scene: THREE.Object3D): THREE.BufferGeometry[] {
     const geometry = new THREE.BufferGeometry();
 
     geometry.setAttribute('position', mesh.geometry.getAttribute('position').clone());
-    geometry.setIndex(mesh.geometry.getIndex()?.clone() ?? null);
+    geometry.setIndex(mesh.geometry.index);
     geometry.applyMatrix4(mesh.matrixWorld);
     out.push(geometry.index ? geometry.toNonIndexed() : geometry);
   });

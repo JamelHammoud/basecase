@@ -182,32 +182,37 @@ export class Marquee {
       if (this.selectable(id) && objectTouches(object, camera, canvas, box)) found.add(id);
     }
 
-    this.rayGrid(box, canvas).forEach((id) => found.add(id));
+    this.rayGrid(box, canvas, found);
 
     return [...found];
   }
 
-  private rayGrid(box: Rect, canvas: DOMRect): string[] {
+  private rayGrid(box: Rect, canvas: DOMRect, found: Set<string>): void {
     const raycaster = partRaycaster();
     const meshes = partMeshes(this.ctx.stage);
-    const ids: string[] = [];
+    const ndc = new THREE.Vector2();
+    const hits: THREE.Intersection[] = [];
 
     for (let gx = 0; gx <= GRID_STEPS; gx++) {
       for (let gy = 0; gy <= GRID_STEPS; gy++) {
         const sx = box.minX + ((box.maxX - box.minX) * gx) / GRID_STEPS;
         const sy = box.minY + ((box.maxY - box.minY) * gy) / GRID_STEPS;
 
-        raycaster.setFromCamera(
-          new THREE.Vector2((sx / canvas.width) * 2 - 1, -(sy / canvas.height) * 2 + 1),
-          this.ctx.stage.camera,
-        );
-        raycaster
-          .intersectObjects(meshes, false)
-          .map((hit) => hit.object.userData.partId as string | undefined)
-          .forEach((id) => this.selectable(id) && ids.push(id!));
+        ndc.set((sx / canvas.width) * 2 - 1, -(sy / canvas.height) * 2 + 1);
+        raycaster.setFromCamera(ndc, this.ctx.stage.camera);
+        hits.length = 0;
+        raycaster.intersectObjects(meshes, false, hits);
+
+        this.addHits(hits, found);
       }
     }
+  }
 
-    return ids;
+  private addHits(hits: THREE.Intersection[], found: Set<string>): void {
+    for (const hit of hits) {
+      const id = hit.object.userData.partId as string | undefined;
+
+      if (id && this.selectable(id)) found.add(id);
+    }
   }
 }

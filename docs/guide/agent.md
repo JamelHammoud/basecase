@@ -217,6 +217,8 @@ Camera shots from `simulate` and `operate` receive the active Case's captured-wo
 
 ## Performance: image comparison
 
+- **Overlap alignment stops at a perfect match.** `utils/viewFit.ts` and `utils/targetFit.ts` stop their camera rotation/scale and target translation searches at the first intersection-over-union score of one. No later candidate can improve that score. Strict winner comparisons preserve the first matching candidate, and partial or empty overlaps retain the complete search. Raster placement, output ownership and fit details stay unchanged. `viewFitAlignment.test.ts` checks exhaustive-search parity and pixel reads for first-scale and second-scale perfect matches. `targetAlignment.test.ts` retains exhaustive translation comparisons, centered matches, boundary offsets and zero-score ties. [Evidence](../notes/performance-image-comparison.md#overlap-alignment-stops-at-a-perfect-match).
+
 - **Image hole detection skips foreground without an interior.** `utils/imagePixelAnalysis.ts` returns no holes before allocating visited pixels or flooding the background when either foreground bounding-box span is below two pixels. Empty masks and one- or two-pixel-wide subjects cannot supply a candidate inside both bounds. Foreground color, dimensions and outline preparation remain unchanged. `imagePixelAnalysis.test.ts` checks empty, point, row, column and two-pixel bands, source preservation, zero flood removals and the smallest accepted enclosed hole. [Evidence](../notes/performance-image-comparison.md#thin-image-subjects-skip-hole-floods).
 
 Measurements and limits: [Image comparison performance evidence](../notes/performance-image-comparison.md).

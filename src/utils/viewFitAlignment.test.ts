@@ -79,6 +79,22 @@ function countedMask(source: Mask) {
 }
 
 describe('camera alignment preparation', () => {
+  it.each([
+    [3, 3, 1],
+    [64, 48, 2],
+  ])('stops after a perfect fit at %i by %i after %i candidates', (width, height, candidates) => {
+    const source = mask(width, height, 71);
+    const photo = countedMask(source);
+    const before = source.data.slice();
+    const rolls = [0, ...ROLLS];
+    const actual = alignModel(photo.mask, source, rolls);
+
+    expect(actual).toEqual(referenceAlignment(source, source, rolls));
+    expect(actual.iou).toBe(1);
+    expect(photo.reads()).toBe(source.data.length * (1 + 2 * candidates));
+    expect(source.data).toEqual(before);
+  });
+
   it('matches fresh raster scoring across dimensions, rotations and source edits', () => {
     for (let seed = 1; seed <= 60; seed++) {
       const photo = mask(9 + (seed % 13), 8 + (seed % 17), seed);

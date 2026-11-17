@@ -34,7 +34,7 @@ The targeted `check:changed` run selected 78 related files. Collision coverage p
 
 ## Coplanar comparisons reuse sampled surface area
 
-`shapeSolid.test.ts` checks subdivision, sampling stride, discarded faces, empty shapes, source preservation and replacement geometry. Its 300- and 600-face fixtures reduce summed entries across repeated queries from 90,000 and 360,000 to 300 and 600. These are operation counts, without timing assertions or a claim about complete collision-check time.
+`shapeSolid.test.ts` checks subdivision, sampling stride, discarded faces, empty shapes, source preservation and replacement geometry. Its 300- and 600-face fixtures now require no area-buffer reduction across repeated queries. The former cached implementation reduced 300 and 600 entries once before retaining its total. These are operation counts, without timing assertions or a claim about complete collision-check time.
 
 ## Triangle crossings reuse query storage
 
@@ -124,3 +124,11 @@ Previously each classification created five temporary lists: measured values, re
 The added fixtures contain 25 and 50 disconnected stator boxes plus one rotor box, giving 26 and 51 bodies and 312 and 612 triangles. Both compare complete ordered partitions against the previous classifier. On these fixtures, the removed membership-set construction visited 312 and 612 triangle ids. The removed reach lists held 26 and 51 entries each. These are code-derived operation and storage counts, without timing assertions, heap measurements or a claim about complete collision latency.
 
 `rotorSplit.test.ts` also covers empty geometry, 90 translated and scaled boundary cases, connected rigid fallback, interleaved triangles, independent output buffers, replacement geometry and cache identity. Empty geometry remains rigid. No timeout, retry or quarantine changes apply. No user action or visible state changes, so help instructions and screenshots remain accurate.
+
+## Surface totals accumulate during face emission
+
+Repository search found one sampled surface-total implementation in `three/analysis/shapeSolid.ts`. Coplanar comparisons use it to choose the smaller sampled surface, including collision reports and Study grading. Face emission now rounds each weight with `Math.fround` and adds it to the retained total in sample order. This matches the previous Float32-buffer reduction exactly. Empty and discarded-only shapes retain a zero total. Replacement shapes own fresh buffers and totals.
+
+On November 16, 2026, the 300- and 600-face fixtures eliminate the subsequent 300- and 600-entry reductions. The same additions occur inside the existing emission loop. The per-shape nullable total field is removed, and the face record owns its total alongside its buffers. These are source-derived traversal counts, without timing assertions, heap measurements or a claim about complete check latency.
+
+`shapeSolid.test.ts` compares totals exactly with independently summed stored Float32 weights across boxes, spheres, subdivision, stride, discarded faces and empty geometry. It checks independent replacement shapes and zero reductions across repeated queries. Existing face sampling and coplanar report tests cover the surrounding pipeline. No user action, label or visible state changes, so help articles and screenshots remain accurate. No timeout, retry or quarantine changes apply.

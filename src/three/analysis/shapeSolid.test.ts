@@ -40,14 +40,14 @@ describe('sampled surface area', () => {
     expect(solids[4].surfaceArea).toBe(0.5);
   });
 
-  it.each([0, 300, 600])('sums %i sampled faces only once across repeated area queries', (count) => {
+  it.each([0, 300, 600])('retains the total of %i sampled faces without a later reduction', (count) => {
     const positions = new Float32Array(Array.from({ length: count }, () => [0, 0, 0, 1, 0, 0, 0, 1, 0]).flat());
     const solid = new ShapeSolid(positions);
     const sum = vi.spyOn(solid.faces.areas, 'reduce');
 
     for (let query = 0; query < Math.max(2, count); query++) expect(solid.surfaceArea).toBe(count / 2);
 
-    expect(sum).toHaveBeenCalledTimes(1);
+    expect(sum).not.toHaveBeenCalled();
     sum.mockRestore();
     solid.dispose();
   });

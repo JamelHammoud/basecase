@@ -8,8 +8,10 @@ const native = vi.hoisted(() => ({
   append: vi.fn(),
   remove: vi.fn(),
   digest: vi.fn(),
+  selected: vi.fn(),
 }));
 
+vi.mock('./browserTools.mjs', () => ({ selectedBrowserTools: native.selected }));
 vi.mock('node:child_process', () => ({ spawnSync: native.spawn }));
 vi.mock('node:crypto', () => ({ createHash: () => ({ update: vi.fn(), digest: native.digest }) }));
 vi.mock('node:fs/promises', () => ({
@@ -100,14 +102,31 @@ it('installs KiCad for the Kit electrical browser shard without selecting the ro
   const argv = process.argv;
 
   process.argv = [...argv, '--browser-shard', '2/5'];
-  native.spawn.mockReturnValueOnce({ status: 0, stdout: 'e2e/kitElectrical.e2e.test.ts\n' });
+  native.selected.mockResolvedValue({ native: true, routing: false });
 
   try {
     await import('./installCli.mjs');
 
-    expect(native.spawn.mock.calls[0][1]).toContain('--filesOnly');
+    expect(native.selected).toHaveBeenCalledWith('2/5');
     expect(native.spawn.mock.calls.at(-1)[1]).toEqual(['version']);
     expect(native.append).toHaveBeenCalledWith('github-env', expect.stringContaining('BASECASE_KICAD_CLI='));
+  } finally {
+    process.argv = argv;
+  }
+});
+
+it('leaves unrelated browser shards without native downloads or environment changes', async () => {
+  const argv = process.argv;
+
+  process.argv = [...argv, '--browser-shard', '1/6'];
+  native.selected.mockResolvedValue({ native: false, routing: false });
+
+  try {
+    await import('./installCli.mjs');
+
+    expect(fetch).not.toHaveBeenCalled();
+    expect(native.spawn).not.toHaveBeenCalled();
+    expect(native.append).not.toHaveBeenCalled();
   } finally {
     process.argv = argv;
   }

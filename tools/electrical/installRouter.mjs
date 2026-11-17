@@ -38,7 +38,10 @@ async function download(url, file, expected) {
 }
 
 function extract(archive, directory) {
-  const command = findOnPath('tar');
+  const systemRoot = process.env.SystemRoot ?? process.env.SYSTEMROOT;
+  const searchPath =
+    process.platform === 'win32' ? path.join(systemRoot ?? 'C:\\Windows', 'System32') : process.env.PATH;
+  const command = findOnPath('tar', searchPath);
 
   if (!command) throw new Error('board-router');
 
@@ -49,7 +52,9 @@ function extract(archive, directory) {
     maxBuffer: 1024 * 1024,
   });
 
-  if (result.error || result.status !== 0) throw new Error('board-router');
+  if (result.error || result.status !== 0) {
+    throw new Error(`board-router: ${command}: ${result.error?.message ?? result.stderr.toString()}`);
+  }
 }
 
 export async function installBoardRouter(directory) {

@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
+import { selectedBrowserTools } from './browserTools.mjs';
 
 const run = (command, args) => {
   const result = spawnSync(command, args, { encoding: 'utf8', windowsHide: true, maxBuffer: 4 * 1024 * 1024 });
@@ -53,31 +54,11 @@ async function windowsCli() {
   await fsp.rm(installer);
 }
 
-function selectedBrowserShard(shard) {
-  const files = run(process.execPath, [
-    'node_modules/vitest/vitest.mjs',
-    'list',
-    '--config',
-    'vitest.e2e.config.ts',
-    '--filesOnly',
-    '--shard',
-    shard,
-  ]);
-
-  return {
-    native:
-      files.includes('boardRouted.e2e.test.ts') ||
-      files.includes('boardRouting.e2e.test.ts') ||
-      files.includes('kitElectrical.e2e.test.ts'),
-    routing: files.includes('boardRouting.e2e.test.ts'),
-  };
-}
-
 async function main() {
   const shard = process.argv[process.argv.indexOf('--browser-shard') + 1];
 
   const selected = process.argv.includes('--browser-shard')
-    ? selectedBrowserShard(shard)
+    ? await selectedBrowserTools(shard)
     : { native: true, routing: false };
 
   if (!selected.native) return;

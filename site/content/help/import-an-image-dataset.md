@@ -80,6 +80,8 @@ A Hugging Face download can contain up to 2,000 files and 1 GB in total, and ima
 
 COCO imports keep boxes, polygons, run-length masks and named keypoints. YOLO imports keep detection boxes, segmentation polygons and pose keypoints. Pascal VOC imports keep boxes. Boxes and polygons become masks sampled at pixel centers, so their saved outlines follow image pixels. JPEG bytes stay as they are, while PNG images are converted to JPEG.
 
+Each YOLO label row starts with a class ID. Class IDs start at zero and follow the YAML class names.
+
 In YOLO YAML, each split must name one directory, image or image-list text file. Lists of directories aren’t supported.
 
 A published Basecase dataset can contain images and recorded tries together. Import keeps both when the tries fit the robot in the open scene.

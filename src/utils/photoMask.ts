@@ -126,8 +126,10 @@ export function checkMask(mask: Mask): MaskCheck {
   return { share, cut: cutEdges(contact) };
 }
 
-function columnHeights(mask: Mask, box: MaskBox): number[] {
+function columnMass(mask: Mask, box: MaskBox) {
   const heights: number[] = [];
+  let area = 0;
+  let moment = 0;
 
   for (let x = box.x0; x <= box.x1; x++) {
     let n = 0;
@@ -135,15 +137,11 @@ function columnHeights(mask: Mask, box: MaskBox): number[] {
     for (let y = box.y0; y <= box.y1; y++) n += mask.data[y * mask.width + x];
 
     heights.push(n);
+    area += n;
+    moment += n * (x - box.x0);
   }
 
-  return heights;
-}
-
-function massCentre(heights: number[]): number {
-  const total = heights.reduce((s, v) => s + v, 0);
-
-  return total ? heights.reduce((s, v, i) => s + v * i, 0) / total : heights.length / 2;
+  return { heights, area, centre: area ? moment / area : heights.length / 2 };
 }
 
 export function trimToModelWidth(mask: Mask, modelAspect: number): { mask: Mask; trimmed: number } {
@@ -153,8 +151,7 @@ export function trimToModelWidth(mask: Mask, modelAspect: number): { mask: Mask;
 
   const H = box.y1 - box.y0 + 1;
   const half = (modelAspect * H * TRIM_SLACK) / 2;
-  const heights = columnHeights(mask, box);
-  const centre = massCentre(heights);
+  const { heights, area, centre } = columnMass(mask, box);
   const data = mask.data.slice();
   let removed = 0;
 
@@ -165,8 +162,6 @@ export function trimToModelWidth(mask: Mask, modelAspect: number): { mask: Mask;
 
     removed += h;
   });
-
-  const area = heights.reduce((s, v) => s + v, 0);
 
   return { mask: { ...mask, data }, trimmed: area ? removed / area : 0 };
 }

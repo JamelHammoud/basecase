@@ -2,9 +2,8 @@ import { afterAll, beforeAll, expect, inject, it } from 'vitest';
 import type { FleetResource } from '../tools/fleet/fixture.mjs';
 import { fleetFixture } from '../tools/fleet/fixture.mjs';
 import { localIdp } from '../tools/fleet/localIdp.mjs';
-import { openApp, type App } from './harness';
+import { launchChrome } from './harness';
 
-let app: App;
 let fixture: Awaited<ReturnType<typeof fleetFixture>>;
 let first: Awaited<ReturnType<typeof localIdp>>;
 let second: Awaited<ReturnType<typeof localIdp>>;
@@ -19,11 +18,9 @@ beforeAll(async () => {
     },
   });
   [first, second] = await Promise.all([localIdp(), localIdp()]);
-  app = await openApp();
 });
 
 afterAll(async () => {
-  await app?.close();
   await Promise.all([fixture?.close(), first?.close(), second?.close()]);
 });
 
@@ -43,13 +40,10 @@ it('configures two Fleet providers, signs in with distinct site scopes and remov
     entries.push({ idp, role, robot, name: `Subsidiary ${index + 1}` });
   }
 
-  const browser = app.page.context().browser();
-
-  if (!browser) throw new Error('Fleet federation requires a browser');
-
-  const context = await browser.newContext();
+  const browser = await launchChrome();
 
   try {
+    const context = await browser.newContext();
     const page = await context.newPage();
 
     await context.addCookies([{ name: 'fleet_session', value: admin.token, url: `${fixture.origin}/v1` }]);
@@ -125,9 +119,8 @@ it('configures two Fleet providers, signs in with distinct site scopes and remov
     expect(user.status).toBe(201);
     await expect.poll(() => page.getByText(entries[1].robot.name, { exact: true }).count()).toBe(0);
     expect(await page.evaluate(async () => (await fetch('/v1/me')).status)).toBe(401);
+    expect(await page.pageErrors({ filter: 'all' })).toEqual([]);
   } finally {
-    await context.close();
+    await browser.close();
   }
-
-  expect(app.errors).toEqual([]);
 });

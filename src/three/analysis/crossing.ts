@@ -99,10 +99,9 @@ function crossingOf(
 
   if (LINE.lengthSq() < PARALLEL) return null;
 
-  LINE.normalize();
-
   if (!cuts.a.set(a, b.a, NORMAL_B) || !cuts.b.set(b, a.a, NORMAL_A)) return null;
 
+  LINE.normalize();
   cuts.a.span(LINE);
   cuts.b.span(LINE);
 

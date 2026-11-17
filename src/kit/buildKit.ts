@@ -1,3 +1,4 @@
+import { kitDrawings, checkedKitDrawings } from './drawings';
 import { registerSourced } from '../data/sourcedItems';
 import { servoLayout } from '../robot/sceneRobot';
 import { itemKeyOf } from '../guide/guideItems';
@@ -92,6 +93,7 @@ export function kitManifest(job: KitJob): KitManifest {
     printed,
     servos: servoSheet(job),
     wiring: job.wiring,
+    drawings: job.drawings ? kitDrawings(job, job.drawings).manifest : undefined,
     sheets: kitSheets(job).map(({ dxf: _dxf, ...sheet }) => sheet),
     settings: {
       material: job.project.material,
@@ -111,7 +113,7 @@ function checkFreshness(job: KitJob): KitManifest['checks']['freshness'] {
   return job.checks.fingerprint && job.checks.fingerprint === job.checksFingerprint ? 'current' : 'stale';
 }
 
-export function buildKit(job: KitJob): Uint8Array {
+export async function buildKit(job: KitJob): Promise<Uint8Array> {
   checkKitSource(job.parts);
 
   const sourceBytes =
@@ -120,6 +122,7 @@ export function buildKit(job: KitJob): Uint8Array {
   if (sourceBytes > KIT_MAX_BYTES) throw new Error('Kit export exceeds 256 MB.');
 
   const manifest = kitManifest(job);
+  const drawings = await checkedKitDrawings(job);
   const text = new TextEncoder();
   const servos = kitCsv([
     ['part_id', 'joint', 'name', 'bus_id', 'family', 'component_id', 'variant'],
@@ -134,6 +137,7 @@ export function buildKit(job: KitJob): Uint8Array {
     ]),
   ]);
   const files = {
+    ...drawings.files,
     ...Object.fromEntries(Object.entries(job.files).map(([name, bytes]) => [`plates/${name}.3mf`, bytes])),
     ...Object.fromEntries(kitSheets(job).map((sheet) => [sheet.file, text.encode(sheet.dxf)])),
     'kit.json': jsonBytes(manifest),

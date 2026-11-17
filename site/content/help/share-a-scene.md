@@ -27,7 +27,7 @@ You can send a whole design to someone as a single .basecase file. They can open
 3. Choose **Scene**.
 4. Send the `.basecase` file that Basecase saved. Basecase names the file after the scene, in lowercase with dashes. For example, `robot-arm.basecase`.
 
-![The Export menu with Scene](/help/share-a-scene/menu.png)
+![Scene in the rover's Export menu](/help/share-a-scene/menu.png)
 
 The file includes the parts, joints, poses, comments, Cases, Routines, [Study](/help/study-design-options) settings and results, and the scene's goal. Imported worlds come with their collider meshes, textures and optional splats, so the recipient doesn't need the original capture files. Print history, the print service and its quotes, trained policies, Case tries, taught skills, the build guide and your chat with the agent stay on your computer and aren't in the file. To learn why, see [Scenes, files and the Library](/help/scenes-files-and-the-library).
 

@@ -12,10 +12,21 @@ import {
 } from '../design-system';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { SHARE_LABEL } from '../utils/os';
+import type { ExportActions } from './useExportActions';
 import type { CommandInputs } from './sceneCommands';
 
+function drawingCommand(exports: ExportActions): Command {
+  return {
+    id: 'export-drawings',
+    group: 'Scene',
+    label: 'Drawings',
+    icon: <FileIcon />,
+    keywords: 'export mechanical dimensions orthographic pdf svg workshop',
+    run: exports.exportDrawings,
+  };
+}
+
 export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
-  const { studio } = core;
   const { exports, files } = actions;
   const robotPackage: Command = {
     id: 'export-robot-package',
@@ -34,6 +45,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
     run: () => void exports.exportStep(),
   };
   const partExports: Command[] = [
+    drawingCommand(exports),
     {
       id: 'export',
       group: 'Scene',
@@ -59,7 +71,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       label: 'Open Scene File',
       icon: <FolderOpenIcon />,
       keywords: 'import basecase share friend shared received',
-      run: () => void studio.openSceneFile(),
+      run: () => void core.studio.openSceneFile(),
     },
     {
       id: 'export-scene',

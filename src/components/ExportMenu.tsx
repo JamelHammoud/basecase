@@ -24,6 +24,7 @@ interface ExportMenuProps {
   onExportStl: () => void;
   onExport3mf: () => void;
   onExportCutFiles: () => void;
+  onExportDrawings: () => void;
   onExportStep?: () => void;
   onExportScene: () => void;
   onExportRobot: () => void;
@@ -42,6 +43,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
   onExportStl,
   onExport3mf,
   onExportCutFiles,
+  onExportDrawings,
   onExportStep,
   onExportScene,
   onExportRobot,
@@ -82,6 +84,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         {onExportStep && (
           <MenuItem icon={<ShapeIcon />} label="STEP" disabled={!canExportStep} onSelect={run(onExportStep)} />
         )}
+        <MenuItem icon={<FileIcon />} label="Drawings" disabled={!canExportParts} onSelect={run(onExportDrawings)} />
         <MenuItem icon={<FileIcon />} label="Kit" disabled={!canExportRobot} onSelect={run(onExportKit)} />
         <MenuItem icon={<FileIcon />} label="Schematic" disabled={!canExportParts} onSelect={run(onExportSchematic)} />
         <MenuItem icon={<FileIcon />} label="Scene" onSelect={run(onExportScene)} />

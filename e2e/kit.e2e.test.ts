@@ -33,6 +33,11 @@ it.each(['desktop', 'web'])(
 
       await app.page.getByRole('menuitem', { name: 'Kit', exact: true }).click();
 
+      await app.page
+        .getByRole('dialog', { name: 'Kit', exact: true })
+        .getByRole('button', { name: 'Export', exact: true })
+        .click();
+
       const download = await delivered.catch(async (error: unknown) => {
         const evidence = await app.page.evaluate(() => ({
           screen: document.body.innerText,

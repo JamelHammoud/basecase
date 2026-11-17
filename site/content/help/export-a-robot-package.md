@@ -34,7 +34,7 @@ Save a robot with movable joints as one zip for MuJoCo and ROS 2: its model, a U
 1. Click **Export** at the top right.
 2. Choose **Robot Package**.
 
-![The Export menu with Robot Package](/help/export-a-robot-package/menu.png)
+![The rover's Export menu with Robot Package enabled](/help/export-a-robot-package/menu.png)
 
 A toast shows the progress, then names the package when it's saved. Basecase saves `<scene>-robot.zip` to your downloads.
 

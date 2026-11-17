@@ -7,6 +7,13 @@ type Point = [number, number];
 
 type HoleCenter = AnalyzedImageFeatures['detectedHoleCenters'][number];
 
+const OUTLINE_DIRECTIONS: Point[] = Array.from({ length: 48 }, (_, index) => {
+  const angle = (index / 48) * Math.PI * 2;
+
+  return [Math.cos(angle), Math.sin(angle)];
+});
+const HOLE_DIRECTIONS = OUTLINE_DIRECTIONS.filter((_, index) => index % 4 === 0);
+
 function rgbToHex(r: number, g: number, b: number): string {
   const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
 
@@ -108,13 +115,9 @@ function furthestOnRay(mask: Uint8Array, f: Frame, cos: number, sin: number): nu
 function radialOutline(scan: ForegroundScan, f: Frame): Point[] {
   if (!(scan.fgCount > 35 && scan.fgCount < f.grid * f.grid * 0.94)) return [...FALLBACK_OUTLINE];
 
-  const numAngles = 48;
   const points: Point[] = [];
 
-  for (let aIdx = 0; aIdx < numAngles; aIdx++) {
-    const theta = (aIdx / numAngles) * Math.PI * 2;
-    const cos = Math.cos(theta);
-    const sin = Math.sin(theta);
+  for (const [cos, sin] of OUTLINE_DIRECTIONS) {
     const furthestR = furthestOnRay(scan.mask, f, cos, sin);
     const pxNorm = Math.max(-0.49, Math.min(0.49, (cos * furthestR) / f.spanX));
     const pzNorm = Math.max(-0.49, Math.min(0.49, -(sin * furthestR) / f.spanY));
@@ -187,15 +190,12 @@ function holeCenter({ pixels, xSum, ySum }: { pixels: number; xSum: number; ySum
 }
 
 function holeLoop(h: HoleCenter): Point[] {
-  const segs = 12;
   const loop: Point[] = [];
 
-  for (let i = 0; i < segs; i++) {
-    const a = (i / segs) * Math.PI * 2;
-
+  for (const [cos, sin] of HOLE_DIRECTIONS) {
     loop.push([
-      Math.round((h.xNorm + Math.cos(a) * h.radiusNorm) * 1000) / 1000,
-      Math.round((h.zNorm + Math.sin(a) * h.radiusNorm) * 1000) / 1000,
+      Math.round((h.xNorm + cos * h.radiusNorm) * 1000) / 1000,
+      Math.round((h.zNorm + sin * h.radiusNorm) * 1000) / 1000,
     ]);
   }
 

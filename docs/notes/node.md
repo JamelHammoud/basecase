@@ -16,6 +16,10 @@ Regression coverage uses the real template renderer and controlled publication s
 
 The changed-file check passed formatting, ESLint, documentation validation and 163 related tests across 15 files. Its complete log is `scratch/doctor-check.log`. The tests use controlled GitHub boundaries and do not publish, exercise hosted Windows or claim a repaired failure rate. The rejected-date CLI fixture writes an expected error to stderr while its assertion passes.
 
+Review found that retaining the attempted head after a successful metadata correction prevented revise from handling fresh findings on that same head. It would wait for the existing 30-minute health nudge. Successful metadata delivery now clears only that head's revision marker. Failed or stale delivery retains the marker, and the cumulative attempt count and Check-refresh history stay intact. Delivery tests use the real pull-state store to cover those transitions without publishing.
+
+The review's five-file changed check passed formatting, ESLint, documentation validation and 153 related tests across 13 files. Its log is `scratch/review-1724-check.log`. This confirms the controlled state transitions, without measuring hosted publication or elapsed recovery time.
+
 ## iOS runner capacity
 
 Class: environment. In [Check 44148543842](https://github.com/JamelHammoud/basecase/actions/runs/44148543842), revision `8216505a9c447e4d74b8ecd1865a4f8eda8bc238`, the [iOS job](https://github.com/JamelHammoud/basecase/actions/runs/44148543842/job/134270417181) never acquired a runner. Its job metadata has runner id zero, an empty runner name and no steps. GitHub recorded it from 18:30:36 to 18:52:19 UTC on November 17, 2026, a 21-minute 43-second interval. The failure annotation says the hosted runner did not acquire the job after multiple attempts. Three notices identify capacity constraints for macOS arm64 runners. There is no job log to inspect. The aggregate reported `IOS: abandoned`, while the API records `cancelled`. The other 27 executed jobs succeeded, and two jobs were correctly skipped. The aggregate was the only job with a failure conclusion.

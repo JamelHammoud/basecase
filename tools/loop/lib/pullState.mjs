@@ -39,6 +39,9 @@ export const nudge = (number, head) =>
 export const recordConflictFail = (number) =>
   pulls.update(number, (entry) => ({ conflictFails: entry.conflictFails + 1 })).conflictFails;
 
+export const clearAttemptedHead = (number, head) =>
+  pulls.update(number, (entry) => ({ heads: entry.heads.filter((seen) => seen !== head) }));
+
 export const recordAttempt = (number, { head, jamelAt }) =>
   pulls.update(number, (entry) => ({
     heads: [...new Set([...entry.heads, head])].slice(-20),

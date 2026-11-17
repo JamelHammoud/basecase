@@ -9,6 +9,7 @@ vi.stubEnv('BASECASE_LOOP_DIR', directory);
 
 const { deliver } = await import('./deliver.mjs');
 const { publicationRecords } = await import('./publicationJournal.mjs');
+const { entryFor, markRefreshed, recordAttempt } = await import('./pullState.mjs');
 const { completeDelivery, hasPendingDelivery, pendingSteps, saveDelivery } = await import('./deliveryState.mjs');
 const { clearPath, close } = await import('./worktree.mjs');
 const entry = {
@@ -27,12 +28,16 @@ afterAll(() => {
 });
 
 describe('metadata delivery', () => {
-  it('delivers a body correction and invalidates review without touching Git', () => {
+  it('delivers a body correction and allows another revision after fresh review without touching Git', () => {
     const revision = { ...entry, number: 42, metadataOnly: true };
     const execute = vi.fn();
     const review = vi.fn();
     const edit = vi.fn(() => expect(review).toHaveBeenCalledOnce());
+    const attempts = entryFor(42).attempts;
+    const refreshed = entryFor(42).refreshed;
 
+    recordAttempt(42, { head: entry.sha, jamelAt: '' });
+    markRefreshed(42, entry.sha);
     saveDelivery(revision);
     expect(
       deliver(revision, {
@@ -46,6 +51,7 @@ describe('metadata delivery', () => {
     expect(review).toHaveBeenCalledWith(entry.sha, 'error', 'Pull request details revised. Review them again');
     expect(edit).toHaveBeenCalledWith(42, { title: entry.title, body: entry.body });
     expect(hasPendingDelivery(entry.branch)).toBe(false);
+    expect(entryFor(42)).toMatchObject({ heads: [], attempts: attempts + 1, refreshed: [...refreshed, entry.sha] });
   });
 
   it('retains failed metadata delivery for recovery without rerunning its author', () => {
@@ -58,14 +64,17 @@ describe('metadata delivery', () => {
     const readJson = vi.fn(() => ({ url: 'https://example.com/pull/42', state: 'OPEN', headRefOid: entry.sha }));
     const dependencies = { execute, review, edit, readJson };
 
+    recordAttempt(42, { head: entry.sha, jamelAt: '' });
     saveDelivery(revision);
     expect(() => deliver(revision, dependencies)).toThrow('edit failed');
     expect(hasPendingDelivery(entry.branch)).toBe(true);
     expect(edit).toHaveBeenCalledOnce();
+    expect(entryFor(42).heads).toContain(entry.sha);
     edit.mockImplementation(() => {});
     expect(deliver(revision, dependencies)).toBe('https://example.com/pull/42');
     expect(execute).not.toHaveBeenCalled();
     expect(hasPendingDelivery(entry.branch)).toBe(false);
+    expect(entryFor(42).heads).not.toContain(entry.sha);
   });
 
   it('discards stale metadata when the remote head changes so the new head can be handled', () => {
@@ -74,6 +83,7 @@ describe('metadata delivery', () => {
     const review = vi.fn();
     const edit = vi.fn();
 
+    recordAttempt(42, { head: entry.sha, jamelAt: '' });
     saveDelivery(revision);
     expect(
       deliver(revision, {
@@ -87,6 +97,7 @@ describe('metadata delivery', () => {
     expect(review).not.toHaveBeenCalled();
     expect(execute).not.toHaveBeenCalled();
     expect(hasPendingDelivery(entry.branch)).toBe(false);
+    expect(entryFor(42).heads).toContain(entry.sha);
   });
 });
 

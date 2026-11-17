@@ -2,6 +2,7 @@ import { claim } from './claim.mjs';
 import { createPull, editPull, setReview } from './github.mjs';
 import { completeDelivery, deliveryFor, saveDelivery } from './deliveryState.mjs';
 import { recordPublication } from './publicationJournal.mjs';
+import { clearAttemptedHead } from './pullState.mjs';
 import { fingerprint } from './sessionJournal.mjs';
 import { json, run } from './sh.mjs';
 
@@ -22,6 +23,7 @@ function sendMetadata(entry, existing, services) {
 
   services.review(entry.sha, 'error', 'Pull request details revised. Review them again');
   services.edit(entry.number, { title: entry.title, body: entry.body });
+  clearAttemptedHead(entry.number, entry.sha);
 
   return existing.url;
 }

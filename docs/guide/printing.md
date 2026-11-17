@@ -40,6 +40,9 @@ Guide visibility probes retain a separate small ID render target. They no longer
 
 ## Performance: print planning and labels
 
+Seeded printed-label sampling keeps barycentric coordinates in scalars, including triangle reflection. It creates only the returned point tuples. `labelSamples.test.ts` compares every coordinate with the historical sampler across generated, degenerate, nonfinite and edited faces. [Sampling evidence](../notes/performance-printing.md#seeded-triangle-samples-keep-scalar-coordinates).
+
+
 Print-mode pointer queries (`three/plates/platePointer.ts`) retain one raycaster, normalized coordinate vector and bed plane per view. Part picking, Lay on Face and bed dragging share this workspace. Every query rereads the canvas bounds and camera, while returned bed points remain independent. `platePointer.test.ts` compares exact rays, mesh hits and bed points against fresh workspaces through camera and canvas changes, independent views, misses and parallel rays. It also checks workspace identity and retained output points. [Evidence](../notes/performance-printing.md#print-mode-pointer-queries-retain-one-workspace).
 
 Print-service STL transform lookup in `print/plan.ts` searches each plate directly and stops at its first matching item. It preserves plate and copy order without flattening every plate's items for each quoted part. Missing parts receive a fresh scene-to-bed mapping as before. Existing `posedStl.test.ts` covers the off-plate transform, and `serviceQuotes.test.ts` retains quote and BOM pipeline coverage. [Parity and operation counts](../notes/performance-printing.md#print-service-transform-lookup-stops-at-the-first-match).

@@ -259,6 +259,9 @@ Measurements and limits: [Image comparison performance evidence](../notes/perfor
 
 ## Performance: agent and cad kernel
 
+Kernel surface sampling in `cad-kernel/meshQuery.mjs` passes barycentric coordinates as scalars and reflects them without temporary pairs. Seeds, triangle selection, point arithmetic and normals stay unchanged. `meshQuery.test.mjs` checks complete seeded points against an independent area scan and the previous interpolation. [Sampling evidence](../notes/performance-agent-kernel.md#seeded-triangle-samples-keep-scalar-coordinates).
+
+
 - **Freehand attachment bounds scan strokes directly.** `components/agent/sketch/sketchStrokes.ts` measures the drawing without flattening strokes or constructing coordinate lists. Attach Sketch uses this frame for PNG export. The 16px margin, 96px minimum frame, centering and empty-drawing result stay unchanged. `sketchStrokes.test.ts` covers prior-result parity, later edits, nonfinite coordinates, source preservation and long drawings with bounded coordinate reads. [Evidence](../notes/performance-agent-kernel.md#freehand-attachment-bounds-scan-strokes-directly).
 
 Measurements and limits: [Agent and CAD kernel performance evidence](../notes/performance-agent-kernel.md).

@@ -58,7 +58,10 @@ function surfaceSamples(solid: ShapeSolid): Float32Array {
     let u = random();
     let v = random();
 
-    if (u + v > 1) [u, v] = [1 - u, 1 - v];
+    if (u + v > 1) {
+      u = 1 - u;
+      v = 1 - v;
+    }
 
     for (let k = 0; k < 3; k++) {
       const o = p[t * 9 + k];

@@ -343,3 +343,9 @@ For those fixtures, the previous code explicitly constructed 1,200 and 2,400 ray
 The initial test run found a new test's analytic zero expectation differed from Three.js by 2.22e-14. The assertion now compares exact output with the previous ray calculation, matching the parity contract used by the larger fixtures. Production arithmetic did not change.
 
 [Print a robot's parts](../../site/content/help/print-a-robots-parts.md) still correctly describes dragging, selecting faces and refused obstacle drops. [Printability estimates](../../site/content/help/printability-estimates.md) still describes the same face override. No action, label, layout or depicted state changes, so the articles and captures remain current. No browser test, screenshot or changelog is added for this internal workspace change. Existing `e2e/printPlacement.e2e.test.ts` retains real Print-mode drag and placement coverage in CI.
+
+## Seeded triangle samples keep scalar coordinates
+
+Whole-app search found temporary barycentric pairs in printed-label fitting, visible-share analysis and kernel surface sampling. All three now keep those coordinates as scalars. Wall-thickness sampling already does this. With seed 7, each 40-point label face previously created 40 initialization pairs and 20 reflection pairs. Both counts are now zero. Returned point tuples remain. These are source-level array counts, without heap measurements or a timing claim.
+
+Existing `labelSamples.test.ts` compares all seeded coordinates across generated faces, reversed winding, degenerate and nonfinite inputs, typed-array views and later edits. User actions and visible states stay unchanged, so help articles and screenshots remain accurate.

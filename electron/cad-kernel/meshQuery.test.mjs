@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { describe, expect, it, vi } from 'vitest';
-import { MeshQuery } from './meshQuery.mjs';
+import { MeshQuery, sampleSurface, seeded, triangleData } from './meshQuery.mjs';
 
 const directions = [
   [0.5773, 0.5774, 0.5772],
@@ -60,5 +60,40 @@ describe('kernel containment votes', () => {
 
       query.bvh.geometry.dispose();
     }
+  });
+});
+
+describe('kernel surface sampling', () => {
+  it.each([300, 600])('preserves seeded coordinates, face indices and normals for %i points', (count) => {
+    const query = boxQuery(true);
+    const mesh = query.mesh;
+    const saved = structuredClone(mesh);
+    const triangles = triangleData(mesh);
+
+    for (const seed of [1, 7, 31]) {
+      const random = seeded(seed);
+      const samples = sampleSurface(mesh, triangles, count, seed);
+
+      for (const sample of samples) {
+        const target = random() * triangles.total;
+        let sum = 0;
+        const tri = triangles.areas.findIndex((area) => (sum += area) >= target);
+        const u0 = random();
+        const v0 = random();
+        const [u, v] = u0 + v0 > 1 ? [1 - u0, 1 - v0] : [u0, v0];
+        const corner = (k) => new THREE.Vector3().fromArray(mesh.positions, mesh.indices[tri * 3 + k] * 3);
+        const a = corner(0);
+        const point = a.clone().addScaledVector(corner(1).sub(a), u).addScaledVector(corner(2).sub(a), v);
+
+        expect(sample.tri).toBe(tri);
+        expect(sample.point).toEqual(point);
+        expect(sample.normal.toArray()).toEqual(Array.from(triangles.normals.slice(tri * 3, tri * 3 + 3)));
+      }
+    }
+
+    expect(sampleSurface(mesh, triangles, 0)).toEqual([]);
+    expect(sampleSurface(mesh, { areas: [0], normals: [0, 0, 0] }, count)).toEqual([]);
+    expect(mesh).toEqual(saved);
+    query.bvh.geometry.dispose();
   });
 });

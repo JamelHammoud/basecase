@@ -52,55 +52,68 @@ export function weldAndNormalizeGeometry(rawGeo: THREE.BufferGeometry): SculptMe
   return { positions, indices };
 }
 
-export function tessellateGeometryForSculpting(geo: THREE.BufferGeometry, passes = 2): THREE.BufferGeometry {
-  let current = geo.index ? geo.toNonIndexed() : geo.clone();
+function subdivideTriangles(geometry: THREE.BufferGeometry): THREE.BufferGeometry {
+  const pos = geometry.getAttribute('position') as THREE.BufferAttribute;
+  const index = geometry.getIndex();
+  const vertexIndex = index ? (i: number) => index.array[i] : (i: number) => i;
+  const triCount = (index?.count ?? pos.count) / 3;
 
-  for (let p = 0; p < passes; p++) {
-    const pos = current.getAttribute('position') as THREE.BufferAttribute;
-    const triCount = pos.count / 3;
+  const newPositions = new THREE.BufferAttribute(new Float32Array(Math.ceil(triCount) * 36), 3);
+  const vA = new THREE.Vector3();
+  const vB = new THREE.Vector3();
+  const vC = new THREE.Vector3();
+  const mAB = new THREE.Vector3();
+  const mBC = new THREE.Vector3();
+  const mCA = new THREE.Vector3();
 
-    if (triCount > 8000) break;
+  for (let t = 0; t < triCount; t++) {
+    const i0 = t * 3;
 
-    const newPositions = new THREE.BufferAttribute(new Float32Array(Math.ceil(triCount) * 36), 3);
-    const vA = new THREE.Vector3();
-    const vB = new THREE.Vector3();
-    const vC = new THREE.Vector3();
-    const mAB = new THREE.Vector3();
-    const mBC = new THREE.Vector3();
-    const mCA = new THREE.Vector3();
+    vA.fromBufferAttribute(pos, vertexIndex(i0));
+    vB.fromBufferAttribute(pos, vertexIndex(i0 + 1));
+    vC.fromBufferAttribute(pos, vertexIndex(i0 + 2));
 
-    for (let t = 0; t < triCount; t++) {
-      const i0 = t * 3;
+    mAB.addVectors(vA, vB).multiplyScalar(0.5);
+    mBC.addVectors(vB, vC).multiplyScalar(0.5);
+    mCA.addVectors(vC, vA).multiplyScalar(0.5);
 
-      vA.fromBufferAttribute(pos, i0);
-      vB.fromBufferAttribute(pos, i0 + 1);
-      vC.fromBufferAttribute(pos, i0 + 2);
-
-      mAB.addVectors(vA, vB).multiplyScalar(0.5);
-      mBC.addVectors(vB, vC).multiplyScalar(0.5);
-      mCA.addVectors(vC, vA).multiplyScalar(0.5);
-
-      newPositions.setXYZ(t * 12 + 0, vA.x, vA.y, vA.z);
-      newPositions.setXYZ(t * 12 + 1, mAB.x, mAB.y, mAB.z);
-      newPositions.setXYZ(t * 12 + 2, mCA.x, mCA.y, mCA.z);
-      newPositions.setXYZ(t * 12 + 3, mAB.x, mAB.y, mAB.z);
-      newPositions.setXYZ(t * 12 + 4, vB.x, vB.y, vB.z);
-      newPositions.setXYZ(t * 12 + 5, mBC.x, mBC.y, mBC.z);
-      newPositions.setXYZ(t * 12 + 6, mCA.x, mCA.y, mCA.z);
-      newPositions.setXYZ(t * 12 + 7, mBC.x, mBC.y, mBC.z);
-      newPositions.setXYZ(t * 12 + 8, vC.x, vC.y, vC.z);
-      newPositions.setXYZ(t * 12 + 9, mAB.x, mAB.y, mAB.z);
-      newPositions.setXYZ(t * 12 + 10, mBC.x, mBC.y, mBC.z);
-      newPositions.setXYZ(t * 12 + 11, mCA.x, mCA.y, mCA.z);
-    }
-
-    const nextGeo = new THREE.BufferGeometry();
-
-    nextGeo.setAttribute('position', newPositions);
-    current = nextGeo;
+    newPositions.setXYZ(t * 12 + 0, vA.x, vA.y, vA.z);
+    newPositions.setXYZ(t * 12 + 1, mAB.x, mAB.y, mAB.z);
+    newPositions.setXYZ(t * 12 + 2, mCA.x, mCA.y, mCA.z);
+    newPositions.setXYZ(t * 12 + 3, mAB.x, mAB.y, mAB.z);
+    newPositions.setXYZ(t * 12 + 4, vB.x, vB.y, vB.z);
+    newPositions.setXYZ(t * 12 + 5, mBC.x, mBC.y, mBC.z);
+    newPositions.setXYZ(t * 12 + 6, mCA.x, mCA.y, mCA.z);
+    newPositions.setXYZ(t * 12 + 7, mBC.x, mBC.y, mBC.z);
+    newPositions.setXYZ(t * 12 + 8, vC.x, vC.y, vC.z);
+    newPositions.setXYZ(t * 12 + 9, mAB.x, mAB.y, mAB.z);
+    newPositions.setXYZ(t * 12 + 10, mBC.x, mBC.y, mBC.z);
+    newPositions.setXYZ(t * 12 + 11, mCA.x, mCA.y, mCA.z);
   }
 
-  return current;
+  const nextGeo = new THREE.BufferGeometry();
+
+  nextGeo.setAttribute('position', newPositions);
+
+  return nextGeo;
+}
+
+export function tessellateGeometryForSculpting(geo: THREE.BufferGeometry, passes = 2): THREE.BufferGeometry {
+  const source = geo.getAttribute('position')?.array;
+  const direct = source instanceof Float32Array || source instanceof Float64Array;
+  let current = geo.index && !direct ? geo.toNonIndexed() : geo;
+
+  for (let p = 0; p < passes; p++) {
+    const count = current.index?.count ?? current.getAttribute('position').count;
+
+    if (count / 3 > 8000) break;
+
+    current = subdivideTriangles(current);
+  }
+
+  if (current !== geo) return current;
+
+  return geo.index ? geo.toNonIndexed() : geo.clone();
 }
 
 export function createSculptClayPreset(

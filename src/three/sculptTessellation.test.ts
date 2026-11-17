@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { tessellateGeometryForSculpting } from './sculptEngine';
 
 function bufferedTessellation(geometry: THREE.BufferGeometry, passes: number) {
@@ -105,6 +105,45 @@ describe('Sculpt tessellation', () => {
 
     geometry.setAttribute('position', new THREE.InterleavedBufferAttribute(buffer, 3, 1));
     expectParity(geometry, 2);
+    geometry.setIndex([3, 2, 1, 0, 5, 4]);
+    expectParity(geometry, 2);
+  });
+
+  it('subdivides directly without copying source geometry or unrelated attributes', () => {
+    for (const count of [300, 600]) {
+      for (const indexed of [false, true]) {
+        const geometry = triangleSoup(count);
+
+        if (indexed) geometry.setIndex(Array.from({ length: count * 3 }, (_, i) => count * 3 - i - 1));
+
+        const clone = vi.spyOn(geometry, 'clone');
+        const expand = vi.spyOn(geometry, 'toNonIndexed');
+        const actual = tessellateGeometryForSculpting(geometry, 2);
+
+        expect(clone).not.toHaveBeenCalled();
+        expect(expand).not.toHaveBeenCalled();
+        expectCoordinates(
+          actual.getAttribute('position').array,
+          bufferedTessellation(geometry, 2).getAttribute('position').array,
+        );
+      }
+    }
+  });
+
+  it('preserves packed, normalized and incomplete indexed source conversion', () => {
+    const attributes = [
+      new THREE.Float16BufferAttribute([1, 2, 3, 4, 5, 6, 7, 8, 9], 3),
+      new THREE.Int16BufferAttribute([1, 2, 3, 4, 5, 6, 7, 8, 9], 3, true),
+      new THREE.BufferAttribute(new Float64Array([1, 2, 3, 4, 5, 6, 7, 8, 9]), 3),
+    ];
+
+    for (const position of attributes) {
+      const geometry = new THREE.BufferGeometry().setAttribute('position', position);
+
+      geometry.setIndex([2, 0, 1, 7]);
+
+      for (const passes of [0, 1, 2]) expectParity(geometry, passes);
+    }
   });
 
   it('retains the inclusive 8000-triangle pass limit', () => {

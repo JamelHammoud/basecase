@@ -35,10 +35,13 @@ function partnerIndices(solids: Boxed[], options: PairOptions) {
   return { kinds, partners };
 }
 
-export function collisionPairs<T extends Boxed>(solids: T[], options: PairOptions, skip?: SkipPair): Array<[T, T]> {
+export function* collisionPairs<T extends Boxed>(
+  solids: T[],
+  options: PairOptions,
+  skip?: SkipPair,
+): Generator<[T, T]> {
   const { kinds, partners } = partnerIndices(solids, options);
   const cursors = [0, 0, 0, 0];
-  const pairs: Array<[T, T]> = [];
   const grown = new Box3();
 
   for (let i = 0; i < solids.length; i++) {
@@ -56,9 +59,7 @@ export function collisionPairs<T extends Boxed>(solids: T[], options: PairOption
     for (let at = cursors[kind]; at < indices.length; at++) {
       const b = solids[indices[at]];
 
-      if (!skip?.(a.id, b.id) && grown.intersectsBox(b.box)) pairs.push([a, b]);
+      if (!skip?.(a.id, b.id) && grown.intersectsBox(b.box)) yield [a, b];
     }
   }
-
-  return pairs;
 }

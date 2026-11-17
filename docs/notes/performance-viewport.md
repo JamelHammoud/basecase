@@ -2,6 +2,16 @@
 
 Implementation: [Viewport rendering](../guide/canvas.md#performance-viewport-rendering). Shared requirements: [Performance](../guide/performance.md).
 
+## Capture preset directions normalize once
+
+Whole-app searches for `viewDirection`, `VIEW_DIRECTIONS` and clone-then-normalize calls found one fixed capture direction table in `three/viewport/captures.ts`. Build-guide framing accepts arbitrary direction tuples and normalizes them at that boundary. Other clone-then-normalize sites use variable geometry or axes. Every named-view capture uses the capture helper, including ordinary, silhouette, grid and labeled requests. Silhouette fitting supplies custom angles and keeps its existing trigonometry.
+
+The five preset vectors now normalize at module load, replacing normalization on every preset request. Each request still returns a fresh vector, so caller mutation cannot change later captures. Unknown view names retain the isometric fallback.
+
+`captures.test.ts` makes 600 requests across all five presets and the unknown-name fallback. It compares exact coordinates with the former calculation and mutates every result before the next request. A restored spy asserts zero request-time normalizations, down from 600. Five module-load normalizations replace that repeated work. These are operation counts, without wall-clock or heap measurements or a claim about complete capture latency.
+
+Five custom-angle cases cover signed azimuths, fractional angles and both elevation clamps. Existing tests cover frame copying, worker encoding, helper restoration and part isolation. GPU rendering and image output are outside this CPU coverage. No label, user action or visible state changes, so help instructions and screenshots remain accurate. No timeout, retry or quarantine changes apply.
+
 ## Camera zoom uses scalar offsets
 
 A whole-app search found one perspective orbit zoom helper, `zoomCamera` in `three/viewport/wheel.ts`. Modifier-wheel pinch, Zoom Scroll and the viewport's programmatic `zoomBy` call it. Part previews install the same wheel listener. Sketch's pointer-centered 2D zoom has separate coordinates and does not use this calculation.

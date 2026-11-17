@@ -14,7 +14,7 @@ interface BrushStep {
   w: number;
   amp: number;
   avgPos: THREE.Vector3;
-  strength: number;
+  blend: number;
 }
 
 export interface SculptStrokeInput {
@@ -39,25 +39,38 @@ const BRUSHES: Record<SculptBrushKind, (step: BrushStep) => void> = {
 
     v.addScaledVector(carveDir, -amp * w);
   },
-  flatten: ({ v, n, stroke, w, strength }) => {
+  flatten: ({ v, n, stroke, w, blend }) => {
     const toVert = n.copy(v).sub(stroke.center);
     const signedDist = toVert.dot(stroke.normal);
 
-    v.addScaledVector(stroke.normal, -signedDist * w * Math.min(1, strength * 0.65));
+    v.addScaledVector(stroke.normal, -signedDist * w * blend);
   },
-  smooth: ({ v, avgPos, w, strength }) => {
-    v.lerp(avgPos, w * Math.min(0.75, strength * 0.45));
+  smooth: ({ v, avgPos, w, blend }) => {
+    v.lerp(avgPos, w * blend);
   },
-  pinch: ({ v, n, stroke, amp, w, strength }) => {
+  pinch: ({ v, n, stroke, amp, w, blend }) => {
     const toCenter = n.copy(stroke.center).sub(v);
 
-    v.addScaledVector(toCenter, w * Math.min(0.5, strength * 0.3));
+    v.addScaledVector(toCenter, w * blend);
     v.addScaledVector(stroke.normal, amp * 0.25 * w);
   },
-  grab: ({ v, stroke, w, strength }) => {
-    v.addScaledVector(stroke.delta, w * Math.min(1, strength * 1.1));
+  grab: ({ v, stroke, w, blend }) => {
+    v.addScaledVector(stroke.delta, w * blend);
   },
 };
+
+const BLEND_LIMITS: Partial<Record<SculptBrushKind, [number, number]>> = {
+  flatten: [1, 0.65],
+  smooth: [0.75, 0.45],
+  pinch: [0.5, 0.3],
+  grab: [1, 1.1],
+};
+
+function strengthBlend(kind: SculptBrushKind, strength: number): number {
+  const limits = BLEND_LIMITS[kind];
+
+  return limits ? Math.min(limits[0], strength * limits[1]) : 0;
+}
 
 const flipX = (v: THREE.Vector3) => new THREE.Vector3(-v.x, v.y, v.z);
 const flipZ = (v: THREE.Vector3) => new THREE.Vector3(v.x, v.y, -v.z);
@@ -124,7 +137,15 @@ function applyStroke(
   const v = new THREE.Vector3();
   const n = new THREE.Vector3();
   const avgPos = new THREE.Vector3();
-  const step: BrushStep = { v, n, stroke, w: 0, amp: strength * radius * 0.14, avgPos, strength };
+  const step: BrushStep = {
+    v,
+    n,
+    stroke,
+    w: 0,
+    amp: strength * radius * 0.14,
+    avgPos,
+    blend: strengthBlend(brush.kind, strength),
+  };
 
   if (brush.kind !== 'smooth') {
     applyDirectStroke(geo, step, brush);

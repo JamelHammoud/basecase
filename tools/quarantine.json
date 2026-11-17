@@ -1,5 +1,44 @@
 [
   {
+    "file": "src/study/visibilityMatrix.test.ts",
+    "test": "",
+    "issue": 1616,
+    "until": "2026-11-28",
+    "reason": "Run 44034821423 exhausted the unchanged 15000 ms beforeAll hook at line 14 on Linux and Windows before rendering assertions. Commit c377889f2 introduced the matrix after full green run 43948835889. Local feature checks do not establish hosted setup reliability. Asset read, bundling, server listen, Chrome launch and worker readiness are not distinguished. Issue #1616 owns both platform stage traces, cancellation and cleanup and equal-load baseline and candidate measurements. Whole-file filtering is required because setup precedes individual-test filtering."
+  },
+  {
+    "file": "e2e/board.e2e.test.ts",
+    "test": "reports an outline shrink as a mechanical board blocker",
+    "issue": 1614,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44034821423 exhausted the Board fit fail-status poll at line 110 on both Windows attempts, taking 133980 ms together. Linux passed in 19250 ms at the same revision. Commit bda7dbaa3 introduced the walkthrough after the last full green run. The width edit, viewport synchronization, inspection and readiness publication stages are not distinguished. Issue #1614 owns tracing and equal-load baseline and candidate measurements. Fast board geometry, constraints, history and package tests remain active."
+  },
+  {
+    "file": "e2e/reusableFixtures.e2e.test.ts",
+    "test": "captures an assembly from selection, reuses it in New Case and reopens its recorded chest chore",
+    "issue": 1364,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44034821423 retained zero tries at line 90 after Try Reference on both Windows attempts. Linux passed at the same revision in 31415 ms. Commit 14ef50083 introduced this walkthrough after the last full green run. Each attempt owns a fresh app. Startup, recording, automatic finish, scoring and persistence are not distinguished. Existing passive-fixture recording owner #1364 owns tracing this chest path separately and equal-load baseline and candidate measurements before restoration."
+  },
+  {
+    "file": "e2e/schematic.e2e.test.ts",
+    "test": "exports the current connector references and fingerprint through Build on desktop and updates electrical findings after a supply edit",
+    "issue": 1615,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44034821423 exhausted the initial Electrical connections fail-status poll on Windows desktop and never added the declared supply voltage differs finding after editing Supply voltage on web. Linux passed desktop in 13086 ms and web in 17960 ms at the same revision. Commit c1a5905c3 introduced these walkthroughs after the last full green run. The project edit, worker inspection and newest readiness publication stages are not distinguished. Issue #1615 owns separate traces for both symptoms and equal-load baseline and candidate measurements. Fast electrical projection, readiness, exports and native acceptance remain active."
+  },
+  {
+    "file": "e2e/schematic.e2e.test.ts",
+    "test": "exports the current connector references and fingerprint through Build on web and updates electrical findings after a supply edit",
+    "issue": 1615,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44034821423 exhausted the initial Electrical connections fail-status poll on Windows desktop and never added the declared supply voltage differs finding after editing Supply voltage on web. Linux passed desktop in 13086 ms and web in 17960 ms at the same revision. Commit c1a5905c3 introduced these walkthroughs after the last full green run. The project edit, worker inspection and newest readiness publication stages are not distinguished. Issue #1615 owns separate traces for both symptoms and equal-load baseline and candidate measurements. Fast electrical projection, readiness, exports and native acceptance remain active."
+  },
+  {
     "file": "e2e/scanMap.e2e.test.ts",
     "test": "rebuilds the displayed map when Scan Matching is turned off in Layers",
     "issue": 995,
@@ -84,8 +123,7 @@
     "test": "",
     "issue": 1400,
     "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Run 43851640785 exhausted the unchanged 15000 ms beforeAll budget before decoded-pixel assertions. The preceding Windows run 43847119378 passed in 8504 ms with unchanged video test, fixture, helper, extraction, dependencies and config. Linux passed at the failing revision in 9218 ms. The responsible bundle, browser or worker startup stage is unknown. Issue #1400 owns Windows tracing, cancellation and cleanup, and equal-load baseline and candidate measurements before restoration. Whole-file filtering is required because setup precedes individual-test filtering."
+    "reason": "Run 44034821423 also exhausted the unchanged 15000 ms beforeAll hook on Linux before decoded-pixel assertions. Full green run 43948835889 passed Linux in 9088 ms with unchanged test, acceptance fixture and offscreen helper. Windows setup was already quarantined after run 43851640785. The bundle, server, browser or worker readiness stage responsible is unestablished. Issue #1400 owns both platforms, cancellation and cleanup tracing and equal-load baseline and candidate measurements. Whole-file filtering is required because setup precedes individual-test filtering."
   },
   {
     "file": "tools/fleet/registry.test.mjs",
@@ -145,11 +183,10 @@
   },
   {
     "file": "e2e/caseCodeAgent.e2e.test.ts",
-    "test": "edits and undoes live panels, then sends the running Case context through ⌘I",
+    "test": "edits and undoes live panels, then sends the running Case context through \u2318I",
     "issue": 1377,
     "until": "2026-11-28",
-    "platform": "linux",
-    "reason": "Run 43831610288 returned It didn’t answer. instead of the syntax error at source line 3 at line 113 on both Linux attempts. The first panel write loaded. Windows passed at the same commit in 13.406 s. Linux passed in run 43824172798 in 12.140 s with unchanged frame code, browser test, dependencies and harness. Each attempt owns a fresh app. Frame startup, error delivery and watchdog timing are not distinguished by the log. Issue #1377 owns tracing and equal-load measurements before restoration."
+    "reason": "Run 44034821423 left sentPrompt() undefined at line 126 after composer fill and Enter on both Windows attempts. Full green run 43948835889 passed Windows in 15816 ms with unchanged walkthrough and composer. Linux was already quarantined for missing syntax-error delivery in run 43831610288. These symptoms have no established shared cause. Issue #1377 owns both platform traces, exact error-line, Undo and outgoing Case context assertions and equal-load baseline and candidate measurements."
   },
   {
     "file": "e2e/passiveFixtures.e2e.test.ts",
@@ -193,7 +230,7 @@
   },
   {
     "file": "e2e/gallery.e2e.test.ts",
-    "test": "keeps a shared code panel away from the page’s IndexedDB, its cookies and the Hub",
+    "test": "keeps a shared code panel away from the page\u2019s IndexedDB, its cookies and the Hub",
     "issue": 1139,
     "until": "2026-11-28",
     "platform": "win32",
@@ -201,7 +238,7 @@
   },
   {
     "file": "e2e/firstLaunch.e2e.test.ts",
-    "test": "says why Try on Real Robot didn’t start, and keeps saying it under the button",
+    "test": "says why Try on Real Robot didn\u2019t start, and keeps saying it under the button",
     "issue": 1127,
     "until": "2026-11-28",
     "platform": "win32",
@@ -241,7 +278,7 @@
   },
   {
     "file": "e2e/inputs.e2e.test.ts",
-    "test": "hears a recorded “sit” in a Case whose logic listens for it",
+    "test": "hears a recorded \u201csit\u201d in a Case whose logic listens for it",
     "issue": 995,
     "until": "2026-11-28",
     "platform": "win32",

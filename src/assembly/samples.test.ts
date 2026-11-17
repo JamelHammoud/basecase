@@ -105,23 +105,28 @@ describe('assembly grid samples', () => {
     const maps = vi.spyOn(Array.prototype, 'map');
     const reduces = vi.spyOn(Array.prototype, 'reduce');
     const components = vi.spyOn(THREE.Vector3.prototype, 'getComponent');
+    const roots = vi.spyOn(Math, 'sqrt');
     let mapCalls: number;
     let reduceCalls: number;
     let componentCalls: number;
+    let rootCalls: number;
 
     try {
       gridSamples(solid, 9);
       mapCalls = maps.mock.calls.length;
       reduceCalls = reduces.mock.calls.length;
       componentCalls = components.mock.calls.length;
+      rootCalls = roots.mock.calls.length;
     } finally {
       maps.mockRestore();
       reduces.mockRestore();
       components.mockRestore();
+      roots.mockRestore();
     }
 
     expect(mapCalls).toBe(0);
     expect(reduceCalls).toBe(0);
     expect(componentCalls).toBe(0);
+    expect(rootCalls).toBe(count);
   });
 });

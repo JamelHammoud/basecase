@@ -10,7 +10,15 @@ function updatedPart(part: ScenePart, patch: ScenePart | undefined): ScenePart {
   const issue = patch.sketch?.support?.issue;
 
   if (!issue) {
-    const updated = { ...part, ...patch };
+    const updated = {
+      ...part,
+      position: patch.position,
+      rotation: patch.rotation,
+      dimensions: patch.dimensions,
+      role: patch.role,
+      customNodes: patch.customNodes,
+      sketch: patch.sketch,
+    };
 
     rememberSupport(updated.sketch);
 

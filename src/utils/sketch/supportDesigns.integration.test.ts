@@ -20,6 +20,7 @@ import { copyToClipboard, takePaste } from '../../workspace/partsClipboard';
 import { SUPPORT_DESIGNS, generatedCad, mountingFeature, supportDesign } from './fixtures/supportDesigns';
 import { partPlane } from './placement';
 import { toPartLocal } from './face';
+import { mirrorPart } from '../../mirror/mirrorPart';
 
 function measure(part: ScenePart) {
   const group = buildPartGroup(part, false);
@@ -211,6 +212,17 @@ describe('generated Design to Engineer Sketch handoff', () => {
 
     expect(pasted[1].sketch!.support!.partId).toBe(pasted[0].id);
     expect(pasted[0].id).not.toBe(source.id);
+  });
+
+  it('keeps a mirrored feature independent instead of regenerating it onto the original support', () => {
+    const { source, feature } = supportDesign(5);
+    const mirrored = { ...mirrorPart(feature, { axis: 0, offset: 60 }), id: 'mirrored-feature' };
+    const after = settled([{ ...source, position: [20, 30, 40] }, feature, mirrored]);
+
+    expect(mirrored.sketch!.support).toBeUndefined();
+    expect(after[2]).toBe(mirrored);
+    expect(after[2].position).toEqual([120 - feature.position[0], feature.position[1], feature.position[2]]);
+    expect(after[2].customNodes).toBe(mirrored.customNodes);
   });
 });
 

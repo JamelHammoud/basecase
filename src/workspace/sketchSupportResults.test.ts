@@ -10,6 +10,7 @@ import { placedPlane } from '../utils/sketch/face';
 import { partFromSolid, sketchSolid } from '../utils/sketch/placement';
 import { captureSupport } from '../utils/sketch/support';
 import { supportWork } from '../utils/sketch/supportState';
+import { prepareSupportJob } from '../utils/sketch/supportJob';
 import { readinessFingerprint, readinessOf } from '../readiness/readiness';
 import { docFromParts, pushHistory, stepHistory, trackedOf } from './docHistory';
 import { applySketchSupportResults } from './sketchSupportResults';
@@ -59,6 +60,21 @@ function moved(source: ScenePart): ScenePart {
 }
 
 describe('Sketch document regeneration', () => {
+  it('applies the worker payload geometry without replacing document metadata or layer state', () => {
+    const { source, mount } = fixture();
+    const feature = { ...mount, note: 'Keep service access', visible: false, locked: true };
+    const input = [moved(source), feature];
+    const job = prepareSupportJob(input)!;
+    const result = regenerateSketchParts(structuredClone(job.parts), job.force);
+    const current = applySketchSupportResults(docFromParts(input), input, result.updated).parts[1];
+
+    expect(result.failures).toEqual([]);
+    expect(current.position).toEqual([10, 32.5, 30]);
+    expect(current).toMatchObject({ note: 'Keep service access', visible: false, locked: true });
+    expect(current.mechanicalTag).toBe(feature.mechanicalTag);
+    expect(current.massG).toBe(feature.massG);
+  });
+
   it('uses real geometry preparation and produces the expected solid volume with its mounting hole', () => {
     const { source, mount } = fixture();
     const changed = moved(source);

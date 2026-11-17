@@ -37,7 +37,6 @@ export function BoardKeepoutFields({
           icon={<DeleteIcon />}
           variant="danger"
           title="Delete"
-          variant="danger"
           onClick={() => confirmAction({ title: 'Delete keepout?', onConfirm: onDelete })}
         />
       </div>

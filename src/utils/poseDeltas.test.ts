@@ -72,7 +72,7 @@ describe('pose delta transform classification', () => {
       const saved = structuredClone(pose);
       const actual = poseDeltas(rig, pose, requested);
 
-      expect(actual).toEqual(previousDeltas(rig, pose, requested));
+      expect([...actual]).toEqual([...previousDeltas(rig, pose, requested)]);
       expect(pose).toEqual(saved);
 
       if (actual.has(children[0])) expect(actual.get(children[0])).toBe(actual.get(children[1]));
@@ -88,7 +88,7 @@ describe('pose delta transform classification', () => {
       const pose = { values: {}, roots: { hinge: { position: [offset, 0, 0] as [number, number, number] } } };
       const actual = poseDeltas(rig, pose, ids);
 
-      expect(actual).toEqual(previousDeltas(rig, pose, ids));
+      expect([...actual]).toEqual([...previousDeltas(rig, pose, ids)]);
       expect(actual.has(bases[0])).toBe(Math.abs(offset) >= 1e-9);
     }
 

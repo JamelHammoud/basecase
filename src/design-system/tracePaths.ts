@@ -70,13 +70,23 @@ type AppendPoint = (index: number, value: number) => void;
 function appendBucket(values: ArrayLike<number>, from: number, to: number, append: AppendPoint) {
   let low = -1;
   let high = -1;
+  let lowValue = Number.NaN;
+  let highValue = Number.NaN;
 
   for (let i = from; i < to; i++) {
-    if (!Number.isFinite(values[i])) continue;
+    const value = values[i];
 
-    if (low < 0 || values[i] < values[low]) low = i;
+    if (!Number.isFinite(value)) continue;
 
-    if (high < 0 || values[i] > values[high]) high = i;
+    if (low < 0 || value < lowValue) {
+      low = i;
+      lowValue = value;
+    }
+
+    if (high < 0 || value > highValue) {
+      high = i;
+      highValue = value;
+    }
   }
 
   if (low < 0) {
@@ -85,12 +95,11 @@ function appendBucket(values: ArrayLike<number>, from: number, to: number, appen
     return;
   }
 
-  const first = Math.min(low, high);
-  const last = Math.max(low, high);
+  const lowFirst = low <= high;
 
-  append(first, values[first]);
+  append(lowFirst ? low : high, lowFirst ? lowValue : highValue);
 
-  if (last !== first) append(last, values[last]);
+  if (low !== high) append(lowFirst ? high : low, lowFirst ? highValue : lowValue);
 }
 
 function appendSamples(values: ArrayLike<number>, columns: number, append: AppendPoint) {

@@ -107,3 +107,15 @@ For 600 updates in each of two viewports, the source-derived temporary vector co
 The motion test compares exact camera and orbit-target coordinates with the previous calculation across 600 updates. It includes a translated, rotated and scaled parent, settling, replacing an object under the same id, disabling following, a missing object and restarting following. Source object positions remain unchanged. The lighting follower in `renderLoop.ts` moves lights relative to the camera rather than tracking a robot. Operator hand and pose followers produce robot targets rather than camera movement.
 
 No visible state or workflow changes, so help instructions and screenshots stay applicable. Browser navigation and render scheduling remain outside this focused coverage. No quarantine applies.
+
+## Camera-follow lighting omits temporary vectors
+
+Whole-app search found one camera-relative studio lighting update in `three/viewport/renderLoop.ts`. Robot camera following tracks objects separately. Thumbnail and plate lights use their own fixed arrangements. All studio redraws share the changed lighting update.
+
+Previously each redraw cloned the key light position for change detection and the camera up vector for the fill offset. Scalar coordinate snapshots and `addScaledVector` remove both clones without adding retained storage. Arithmetic order and exact equality checks remain unchanged.
+
+`renderLoop.lighting.test.ts` drives two independent viewports through 300 and 600 camera positions, rendering each position twice. These fixtures render 1,200 and 2,400 frames and assert zero vector clones, down from 2,400 and 4,800 clones in the previous path. They compare exact fill and key positions, preserve source up vectors and orbit targets, and check that unchanged frames do not dirty shadows. Separate coverage checks interaction-held lights, robot following during interaction, settling, changed shadow spans and explicit invalidation.
+
+These are deterministic clone counts and source-derived previous counts, without timings, heap measurements or a complete frame latency claim. The tests use real Three.js cameras and lights with renderer, orbit integration and grid boundaries stubbed. GPU rendering and browser navigation are outside this coverage. No timeout, retry or quarantine changes apply. No user action, label or visible state changes, so help instructions and screenshots remain accurate.
+
+Local `check:changed` validation on November 17, 2026 passed formatting, lint, documentation, site copy, TypeScript and all 12 related tests across six files. Copy diff reports zero added, changed or removed user-facing strings.

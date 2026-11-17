@@ -161,6 +161,8 @@ Measurements and limits: [Mirror performance evidence](../notes/performance-mirr
 
 Measurements and limits: [Sketch performance evidence](../notes/performance-sketch.md).
 
+- **SVG extraction appends accepted contours directly.** `utils/svgTo3DParser.ts` samples holes and fallback subpaths into their final lists, without mapped, flattened or filtered staging lists. Import SVG previews, extrusion and Edit in Sketch share this parser. Sampling counts, path order, short-contour rejection and color selection stay unchanged. `svgTo3DParser.test.ts` covers filled holes, fallback subpath ordering, rejected outlines, sizing, overrides and empty input. [Evidence](../notes/performance-sketch.md#svg-extraction-appends-accepted-contours-directly).
+
 - **SVG bounds scan contours directly.** `utils/svgTo3DParser.ts` visits each shape's outer points without flattening them into a temporary list. Import SVG previews, extrusion and Edit in Sketch share this parser. Point order, extrema arithmetic, hole exclusion and normalized contours stay unchanged. `svgTo3DParser.test.ts` covers filled paths with holes, outline sizing, overrides and empty input. [Evidence](../notes/performance-sketch.md#svg-bounds-scan-contours-directly).
 
 - **Sketch constraint eligibility checks selection size first.** `utils/sketch/edit.ts` rejects empty selections and selections larger than two before looking up geometry. The overlay toolbar and constraint commands share this path. Single-item and pair rules stay unchanged. `constraintEligibility.test.ts` covers lines, circles, arcs, points, missing and repeated ids, both pair orders and geometry-read bounds. [Evidence](../notes/performance-sketch.md#constraint-eligibility-rejects-unsupported-selection-sizes-first).

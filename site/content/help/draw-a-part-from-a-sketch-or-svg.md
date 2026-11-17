@@ -103,7 +103,7 @@ You can hold two lines parallel, perpendicular or equal. Click the active tool t
 
 Or drag the SVG onto **Choose or drop an SVG**, which turns blue while the file is over it.
 
-The part starts 64 mm wide and 10 mm thick. You can set the width from 5 to 500 mm and the thickness from 1 to 250 mm. **Bevel** softens the edges and is on by default.
+The outline's longer side starts at 64 mm, and the part starts 10 mm thick. You can set the width from 5 to 500 mm and the thickness from 1 to 250 mm. **Bevel** softens the edges and is on by default.
 
 Click **Paste Code** to paste SVG code from a design app such as Figma or Illustrator. **Edit in Sketch**, beside the preview, opens the outline in Sketch so you can change it before you add it.
 

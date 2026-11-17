@@ -37,9 +37,9 @@ const hole: Loop = [
   [40, 10],
 ];
 
-describe('parseSvgTo3DNodes', () => {
-  afterEach(() => vi.restoreAllMocks());
+afterEach(() => vi.restoreAllMocks());
 
+describe('parseSvgTo3DNodes', () => {
   it('turns a filled path with a hole into a normalized contour extrusion', () => {
     parsed([
       shapePath('#ff0000', 0xff0000, plate, hole),
@@ -100,4 +100,26 @@ describe('parseSvgTo3DNodes', () => {
 
     expect(() => parseSvgTo3DNodes('<svg/>')).toThrow('Use an SVG with closed shapes, or try a sample.');
   });
+});
+
+it('retains fallback subpath order across paths while excluding short outlines', () => {
+  const paths = [shapePath('none', 0x111111, plate, hole), shapePath('none', 0x222222, [...plate].reverse())];
+  const short = [new THREE.Vector2(999, 999), new THREE.Vector2(1000, 1000)];
+
+  parsed(paths);
+  vi.spyOn(SVGLoader, 'createShapes').mockReturnValue([]);
+  vi.spyOn(paths[0].subPaths[1], 'getSpacedPoints').mockReturnValue(short);
+
+  const result = parseSvgTo3DNodes('<svg/>', { fileName: 'Outlines.svg', overrideColor: '#abcdef' });
+
+  expect(result).toMatchObject({ shapeCount: 2, holeCount: 0, aspectRatio: 2.5 });
+  expect(result.nodes.map((node) => node.name)).toEqual(['Outlines Path 1', 'Outlines Path 2']);
+  expect(result.nodes.map((node) => node.color)).toEqual(['#abcdef', '#abcdef']);
+  expect(result.nodes.map((node) => node.contour!.outerLoop[0])).toEqual([
+    [-0.5, 0.5],
+    [-0.5, -0.5],
+  ]);
+  expect(result.nodes[0].contour!.outerLoop).toHaveLength(49);
+  expect(paths.map((path) => path.subPaths.length)).toEqual([2, 1]);
+  expect(short).toEqual([new THREE.Vector2(999, 999), new THREE.Vector2(1000, 1000)]);
 });

@@ -88,14 +88,19 @@ describe('coplanar contact normals', () => {
     });
   });
 
-  it.each([300, 600])('uses one triangle and three corner vectors for %i nearby samples', (count) => {
+  it.each([300, 600])('refreshes the retained normal only when %i nearby samples change target faces', (count) => {
     const source = solid(new THREE.PlaneGeometry(10, 10));
     const target = solid(new THREE.PlaneGeometry(50, 50));
     const centers = new Float32Array(count * 3);
     const normals = new Float32Array(count * 3);
     const areas = new Float32Array(count).fill(1);
 
-    for (let i = 0; i < count; i++) normals[i * 3 + 2] = 1;
+    for (let i = 0; i < count; i++) {
+      normals[i * 3 + 2] = 1;
+      centers[i * 3] = Math.floor((i * 3) / count) === 1 ? 10 : -10;
+    }
+
+    const originalCenters = centers.slice();
 
     const faces = vi.spyOn(source, 'faces', 'get').mockReturnValue({ centers, normals, areas });
 
@@ -108,7 +113,7 @@ describe('coplanar contact normals', () => {
     const b = place('b', target, new THREE.Matrix4());
 
     expect(collide([a, b], OPTIONS).coplanar).toEqual([{ a: 'a', b: 'b', areaMm2: count }]);
-    expect(normal).toHaveBeenCalledTimes(count);
+    expect(normal).toHaveBeenCalledTimes(3);
 
     const triangles = new Set(normal.mock.contexts);
     const previous = normal.mock.contexts[0] as THREE.Triangle;
@@ -118,9 +123,9 @@ describe('coplanar contact normals', () => {
     normal.mockClear();
     normals.fill(0);
     expect(collide([a, b], OPTIONS).coplanar).toEqual([]);
-    expect(normal).toHaveBeenCalledTimes(count);
+    expect(normal).toHaveBeenCalledTimes(3);
     expect(normal.mock.contexts[0]).not.toBe(previous);
-    expect(centers).toEqual(new Float32Array(count * 3));
+    expect(centers).toEqual(originalCenters);
     expect(areas).toEqual(new Float32Array(count).fill(1));
     normal.mockRestore();
     faces.mockRestore();

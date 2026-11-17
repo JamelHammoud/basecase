@@ -61,3 +61,14 @@ The attachment workflow, visible crop and controls do not change. [Attach photos
 Kernel surface sampling previously constructed one input pair and one reflected or unchanged pair per point. Passing two scalars and reflecting them directly removes 600 and 1,200 temporary arrays for 300 and 600 samples. Points, normals and result records remain independently owned. These are source-level array counts, without heap measurements or a timing claim.
 
 `meshQuery.test.mjs` compares every point, triangle index and normal for both sizes across three seeds. An independent linear area scan selects triangles, and the historical tuple interpolation supplies expected points. Empty counts, zero-area surfaces and source preservation are checked too. Printed-label and visible-share samplers complete the same refinement. The kernel sandbox, permissions and message boundaries stay unchanged. No user workflow changes require help or screenshot updates.
+
+
+## Evidence selection stops at the upload cap
+
+A whole-app search for `uploadEvidenceFolder`, `evidenceKind`, `MAX_FOLDER_FILES` and capped filter results found one evidence-upload selector. Picked folders and loose-file overflow both use it through `components/agent/useAttachments.ts`. Other capped lists select different data and do not classify evidence files.
+
+`evidenceFiles.test.ts` drives the uploader with 0, 7, 800 and 10,000 files, alternating unsupported binary files with supported text files. It checks complete saved paths and text, selection order, progress, totals and file-name reads. Existing coverage retains four concurrent saves and failed-file accounting. No quarantine applies.
+
+For the 10,000-file fixture, selection reads 800 names instead of 10,000. Upload classification still reads the 400 selected names, so total name reads fall from 10,400 to 1,200. The previous selector retained 5,000 supported references before slicing to 400. The new selector retains only the final 400 references. These are deterministic operation and storage counts, not timings or a claim about complete attachment latency. Folder traversal, file reading and upload costs remain.
+
+[Attach photos, files and sketches](../../site/content/help/attach-photos-files-and-sketches.md) was checked against the final uploader. Its 400-file cap, skipped-file counts and attachment actions stay accurate. No action, label or visible state changes, so the article and screenshots stay unchanged.

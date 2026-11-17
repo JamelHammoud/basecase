@@ -2,6 +2,14 @@
 
 Implementation: [Image comparison](../guide/agent.md#performance-image-comparison). Shared requirements: [Performance](../guide/performance.md).
 
+## Target outline gaps accumulate directly
+
+Repository searches found two symmetric outline-gap accumulators, in `targetFit.ts` and `viewFit.ts`. Camera-fit details already accumulate scalar distances directly. Target fitting now does the same, removing its temporary two-distance array and iteration for each scanned grid cell. Both edge predicates and distance transforms remain unchanged. The target contribution still precedes the model contribution, retaining exact summation order, sample counts and maxima.
+
+For a W × H target-fit grid, this removes W(H − 2) temporary pairs. A 256 × 256 grid removes 65,024 arrays and 130,048 pair-entry visits. These are operation counts derived from the loop, without timing measurements or a claim about complete comparison latency. The distance buffers and grid traversal remain necessary.
+
+Existing `targetDistance.test.ts` compares exact mean and maximum target gaps with the previous calculation on 20 generated target/model comparisons. It also checks camera contour gaps. Existing target-fit tests cover matching and different rounded outlines at true and inferred scales. No action, label or visible state changes. The help articles describing design-agent comparisons remain accurate and need no replacement screenshots.
+
 ## Photo mask area rejections skip border contact
 
 Whole-app search found one mask acceptance validator, `utils/photoMask.ts`'s `checkMask`. Both photo reference masks in `silhouette.ts` and sketch-target requests in `workspace/agentTargetRequest.ts` use it. Border measurement now follows the occupied-area refusals. Masks below 1% or above 60% occupancy never need border measurements. Exactly 1% and 60% still proceed to border checks. Refusal priority, messages, cut-edge flags and accepted outputs stay unchanged.

@@ -48,6 +48,8 @@ Named buttons show only their key caps in tooltips. Measure and Annotate keep Es
 
 ## Testing coverage
 
+Measure figures retain a single prepared geometry directly instead of merging it into a copy. Multiple pieces still merge before smoothing and floor placement. `three/mergeGeometryParts.test.ts` compares Human and Dog attributes with the former path for one and three meshes and checks empty-model refusal. [Shared preparation contract](canvas.md#performance-mesh-preparation).
+
 `three/viewport/markLayer.test.ts` also checks saved strokes, live previews and selection halos at 300 and 600 points. It verifies solid materials, exact Float32 segment endpoints, absent dash buffers, movement and cleanup. [Preparation evidence](../notes/performance-viewport.md#solid-marks-omit-dash-preparation).
 
 - **Printer settings copy.** Test Connection names its own row. Empty network discovery keeps No printers found beside the existing Add Printer action, without a second instruction to add by address. Connection results, busy labels, field names, units and sending requirements remain visible. `e2e/print.e2e.test.ts` retains the Add Printer entry from Print, manual printer configuration and network discovery followed by adding both found printers. These walkthroughs do not cover empty discovery or connection-test busy, successful and failed replies. [Copy evidence and coverage limits](../notes/testing-toolbar-and-settings.md#printer-settings-copy).

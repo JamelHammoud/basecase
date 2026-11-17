@@ -2,6 +2,12 @@
 
 Implementation: [Mesh preparation](../guide/canvas.md#performance-mesh-preparation). Shared requirements: [Performance](../guide/performance.md).
 
+## Analysis worker retention walks caches directly
+
+The worker's `retain` handler previously copied every shape and geometry key, then filtered both lists before deletion. Direct map iteration removes all four temporary lists. Searches across `src/` found these two cleanup loops in the analysis worker. The pool's retention payload still needs owned arrays for its worker message and is unchanged.
+
+`analysisRetention.test.ts` drives the actual handlers with 0, 300 and 600 shapes sharing three geometries. It keeps every third shape, checks exact cache counts and disposal counts, repeats retention, queries retained solids without rebuilding, refuses discarded data and reloads it. At 300 and 600 shapes, cleanup removes lists holding 505 and 1,005 key references respectively, with one retained geometry. These are structural storage counts, without heap or latency measurements. No visible output or workflow changes.
+
 ## Hexagonal outlines prepare fixed directions once
 
 `utils/partEdges.ts` shares `hexOutline` between hexagonal edge limits and beveled mesh construction. A source search for six-corner angle construction found this shared helper as the only application implementation. Plain hexagonal meshes retain Three.js cylinder construction, which also prepares caps, normals and UVs.

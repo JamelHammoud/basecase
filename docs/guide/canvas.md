@@ -170,6 +170,8 @@ Analysis snapshots (`three/analysis/sceneShapes.ts`) resolve each distinct geome
 
 ## Performance: sensor layers and mapping
 
+Scan-matching normal estimation passes Jacobi row indices as scalars in `dataLayers/mapMath.ts`, without temporary pair arrays per sweep. Cylinder fitting uses the same scalar calling pattern in its own eigensolver. Rotation order, convergence cutoffs, sweep caps and owned outputs stay unchanged. Existing `mapMatch.test.ts`, `joints/cylinderFit.test.ts`, `joints/axisFinder.test.ts` and `joints/jointCandidates.test.ts` cover both pipelines. [Parity and allocation evidence](../notes/performance-mapping.md#jacobi-rotations-use-scalar-row-indices).
+
 Measurements and limits: [Sensor layers and mapping performance evidence](../notes/performance-mapping.md).
 
 - **Sibling frame anchors use one selection scan.** `three/viewport/dataFrames.ts` walks each anchored candidate's parent chain once to check its root and depth, retaining the shallowest matching link without candidate arrays or sorting. Equal depths retain tree insertion order. Bounded cycle traversal, root fallback and fresh anchor reads stay unchanged. All sensor drawing and mapping callers share this resolver. `dataFrames.selection.test.ts` checks depth priority, ties, disconnected cycles, anchor edits, source preservation and edge-read counts. [Evidence](../notes/performance-mapping.md#sibling-frame-anchors-use-one-selection-scan).

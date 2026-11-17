@@ -15,7 +15,7 @@ const FIT_ROUNDS = 3;
 
 const residualLimit = (radius: number) => Math.max(0.05, radius * 0.02);
 
-function jacobiRotate(m: number[][], v: number[][], [p, q]: [number, number]) {
+function jacobiRotate(m: number[][], v: number[][], p: number, q: number) {
   const theta = (m[q][q] - m[p][p]) / (2 * m[p][q]);
   const t = Math.sign(theta || 1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
   const c = 1 / Math.sqrt(t * t + 1);
@@ -53,18 +53,17 @@ export function symmetricEigen(input: number[][]): Array<{ value: number; vector
     [0, 1, 0],
     [0, 0, 1],
   ];
-  const pairs: Array<[number, number]> = [
-    [0, 1],
-    [0, 2],
-    [1, 2],
-  ];
 
   for (let sweep = 0; sweep < 50; sweep++) {
     const off = Math.abs(m[0][1]) + Math.abs(m[0][2]) + Math.abs(m[1][2]);
 
     if (off < 1e-14) break;
 
-    for (const pair of pairs) if (Math.abs(m[pair[0]][pair[1]]) > 1e-18) jacobiRotate(m, v, pair);
+    if (Math.abs(m[0][1]) > 1e-18) jacobiRotate(m, v, 0, 1);
+
+    if (Math.abs(m[0][2]) > 1e-18) jacobiRotate(m, v, 0, 2);
+
+    if (Math.abs(m[1][2]) > 1e-18) jacobiRotate(m, v, 1, 2);
   }
 
   return [0, 1, 2]

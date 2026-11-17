@@ -73,10 +73,14 @@ export function segmentationSequence(input: Float32Array, plane = 4096) {
   return result;
 }
 
-export function segmentationPointers(initial: SegmentationMemory, recent: SegmentationMemory[]) {
-  const values = [initial, ...recent.slice(-15).reverse()];
+function segmentationPointer(initial: SegmentationMemory, recent: SegmentationMemory[], index: number) {
+  const count = Math.min(15, recent.length);
 
-  return Array.from({ length: 16 }, (_, index) => values[Math.min(index, values.length - 1)]);
+  return index === 0 || count === 0 ? initial : recent[recent.length - Math.min(index, count)];
+}
+
+export function segmentationPointers(initial: SegmentationMemory, recent: SegmentationMemory[]) {
+  return Array.from({ length: 16 }, (_, index) => segmentationPointer(initial, recent, index));
 }
 
 interface BankInput {
@@ -89,27 +93,29 @@ interface BankInput {
 
 export function segmentationBank(input: BankInput) {
   const { initial, recent, frame, temporal, pointerPosition } = input;
-  const spatial = recent.slice(-6);
-  const latest = spatial.at(-1) ?? initial;
-  const entries = [initial, ...Array.from({ length: 6 }, (_, index) => spatial[index] ?? latest)];
+  const start = Math.max(0, recent.length - 6);
+  const latest = recent.at(-1) ?? initial;
   const memory = new Float32Array(28736 * 64);
   const position = new Float32Array(memory.length);
 
-  entries.forEach((entry, index) => {
+  for (let index = 0; index < 7; index++) {
+    const entry = index === 0 ? initial : (recent[start + index - 1] ?? latest);
     const row = index === 0 ? 6 : Math.min(5, frame - entry.index - 1);
     const offset = index * 4096 * 64;
 
     memory.set(entry.tokens, offset);
 
     for (let i = 0; i < entry.position.length; i++) position[offset + i] = entry.position[i] + temporal[row][i % 64];
-  });
-  segmentationPointers(initial, recent).forEach((entry, index) => {
+  }
+
+  for (let index = 0; index < 16; index++) {
+    const entry = segmentationPointer(initial, recent, index);
     const offset = 7 * 4096 * 64 + index * 256;
 
     memory.set(entry.pointer, offset);
 
     for (let i = 0; i < 256; i++) position[offset + i] = pointerPosition[index * 64 + (i % 64)];
-  });
+  }
 
   return { memory, position };
 }

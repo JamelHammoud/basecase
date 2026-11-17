@@ -140,8 +140,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     showToast,
   });
 
-  const { restorePose } = posing;
-  const undo = () => docs.travel({ direction: 'undo', codeOnly: caseRun.open }, restorePose);
+  const undo = () => docs.travel({ direction: 'undo', codeOnly: caseRun.open }, posing.restorePose);
   const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo, guide });
@@ -162,6 +161,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   });
 
   return {
+    active,
     workspaceId,
     vision: useVisionScope(),
     studio,
@@ -201,7 +201,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     buildAlong,
     repair,
     undo,
-    redo: () => docs.travel({ direction: 'redo', codeOnly: caseRun.open }, restorePose),
+    redo: () => docs.travel({ direction: 'redo', codeOnly: caseRun.open }, posing.restorePose),
     loadSeed: resetStudyBeforeLoad(study, loadSeed),
   };
 }

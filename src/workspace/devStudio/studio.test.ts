@@ -83,6 +83,7 @@ const EXPECTED_NAMES = [
   'poseTool',
   'posedPort',
   'posing',
+  'prepareVisionInspection',
   'printPlates',
   'printState',
   'project',

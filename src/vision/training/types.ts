@@ -1,6 +1,7 @@
 import type { FrozenImageSample } from '../../datasets/snapshotImages';
 import type { FrameSet, ImageClass } from '../frameSet';
 import type { VisionResult } from '../types';
+import type { PredictionEvidence } from './evidenceTypes';
 
 export type TrainingKind = 'detect' | 'segment' | 'keypoints' | 'classify';
 export type TrainingMetric = 'box-map' | 'mask-map' | 'keypoint-pck' | 'accuracy';
@@ -56,6 +57,7 @@ export interface TrainingEvaluation {
   snapshot: FrozenImageSample[];
   realTest: FrozenImageSample[];
   testHash: string;
+  evidence?: PredictionEvidence;
   metrics: {
     primary: number | null;
     perClass: ClassEvaluation[];

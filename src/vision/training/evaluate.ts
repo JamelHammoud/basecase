@@ -1,3 +1,4 @@
+import { checkEvidenceFrameCount } from './evidence';
 import { createVisionRuntime } from '../runtime';
 import type { VisionManifest } from '../manifest';
 import type { PreparedVisionTraining } from './prepare';
@@ -16,6 +17,9 @@ export async function evaluateVisionModel(
   const test = prepared.samples.filter(
     (sample) => sample.split === 'test' && prepared.realSourceIds.includes(sample.source),
   );
+
+  checkEvidenceFrameCount(test.length);
+
   const predictions: TrainingPrediction[] = [];
   const runtime = createVisionRuntime();
   const stop = () => runtime.close();

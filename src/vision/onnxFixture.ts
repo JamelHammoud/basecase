@@ -58,7 +58,7 @@ const constant = (output: string, values: number[]) => {
   return message(1, join(string(2, output), string(4, 'Constant'), message(5, attribute)));
 };
 
-export function inputSensitiveDetectionOnnx() {
+export function inputSensitiveDetectionOnnx(base = [0.1, 0.2, 0.3, 0.4, 0.2, 0], scale = [0, 0, 0, 0, 0.8, 0]) {
   const keepdims = join(string(1, 'keepdims'), number(3, 0), number(20, 2));
   const mean = message(
     1,
@@ -67,14 +67,36 @@ export function inputSensitiveDetectionOnnx() {
   const multiply = message(1, join(string(1, 'brightness'), string(1, 'scale'), string(2, 'delta'), string(4, 'Mul')));
   const add = message(1, join(string(1, 'base'), string(1, 'delta'), string(2, 'detections'), string(4, 'Add')));
   const graph = join(
-    constant('base', [0.1, 0.2, 0.3, 0.4, 0.2, 0]),
-    constant('scale', [0, 0, 0, 0, 0.8, 0]),
+    constant('base', base),
+    constant('scale', scale),
     mean,
     multiply,
     add,
     string(2, 'image-dependent-detection'),
     message(11, valueInfo('images', [1, 3, 2, 2])),
     message(12, valueInfo('detections', [1, 1, 6])),
+  );
+
+  return join(number(1, 8), message(7, graph), message(8, number(2, 13)));
+}
+
+export function constantVisionOnnx(outputs: Record<string, { dims: number[]; values: number[] }>) {
+  const nodes = Object.entries(outputs).map(([name, output]) => {
+    const data = new Float32Array(output.values);
+    const tensor = join(
+      ...output.dims.map((dim) => number(1, dim)),
+      number(2, 1),
+      message(9, new Uint8Array(data.buffer)),
+    );
+    const attribute = join(string(1, 'value'), message(5, tensor), number(20, 4));
+
+    return message(1, join(string(2, name), string(4, 'Constant'), message(5, attribute)));
+  });
+  const graph = join(
+    ...nodes,
+    string(2, 'frozen-evaluation-fixture'),
+    message(11, valueInfo('images', [1, 3, 2, 2])),
+    ...Object.entries(outputs).map(([name, output]) => message(12, valueInfo(name, output.dims))),
   );
 
   return join(number(1, 8), message(7, graph), message(8, number(2, 13)));

@@ -99,6 +99,8 @@ export const DatasetPane: React.FC<DatasetPaneProps> = ({ dataset, members, acti
     )}
     {actions.vision && (
       <VisionTrainingResults
+        key={`${dataset.id}:${actions.vision.inspectionContext}`}
+        context={actions.vision.inspectionContext}
         attempts={actions.vision.attempts}
         targets={actions.vision.targets}
         onApply={actions.vision.apply}

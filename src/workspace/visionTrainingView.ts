@@ -3,6 +3,7 @@ import { cameraViews, stripParts } from '../cameras/views';
 import { retainedVisionTargets } from '../vision/training/models';
 import type { TrainingRun } from '../vision/training/serviceTypes';
 import type { TrainingMetric, TrainingRetentionReason } from '../vision/training/types';
+import { visionInspectionNavigation } from './visionInspectionNavigation';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 const METRIC_LABELS: Record<TrainingMetric, string> = {
@@ -29,6 +30,10 @@ export function visionAttemptView(run: TrainingRun): VisionAttemptView {
   return {
     id: run.id,
     at: run.at,
+    inspection:
+      run.report.evidence && run.incumbentReport.evidence
+        ? { candidate: run.report, incumbent: run.incumbentReport }
+        : undefined,
     retained: run.status === 'retained',
     reason: REASONS[comparison.reason],
     metrics: [
@@ -58,8 +63,10 @@ export function datasetVisionView(core: WorkspaceCore): VisionTrainingView {
 
   return {
     ...training,
+    inspectionContext: `${core.workspaceId}:${core.scene.sceneId}:${core.active}`,
     attempts: training.runs.map((run) => ({
       ...visionAttemptView(run),
+      navigation: visionInspectionNavigation(core, run),
       active: run.id === retained?.id,
       targets: retainedVisionTargets(core.scene.sceneId, choices, { kind: run.kind, classes: run.manifest.classes }),
     })),

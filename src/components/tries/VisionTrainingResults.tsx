@@ -1,3 +1,7 @@
+import { useEffect, useState } from 'react';
+import { VISION_INSPECTION_EVENT, type VisionInspectionRequest } from './visionInspectionCommand';
+import { VisionInspection } from './VisionInspection';
+import { Button } from '../../design-system';
 import { fileSize } from '../../../electron/fileSize.mjs';
 import { plural } from '../../../electron/plural.mjs';
 import { MetaLine } from '../../design-system';
@@ -6,11 +10,28 @@ import { VisionTrainingApply } from './VisionTrainingApply';
 
 interface VisionTrainingResultsProps {
   attempts: VisionAttemptView[];
+  context?: string;
   targets: VisionTrainingView['targets'];
   onApply: VisionTrainingView['apply'];
 }
 
-export function VisionTrainingResults({ attempts, targets, onApply }: VisionTrainingResultsProps) {
+export function VisionTrainingResults({ attempts, targets, onApply, context }: VisionTrainingResultsProps) {
+  const [inspecting, setInspecting] = useState<string | null>(null);
+  const attempt = attempts.find((entry) => entry.id === inspecting);
+  const reports = attempt?.inspection;
+
+  useEffect(() => {
+    const requested = (event: Event) => {
+      const request = (event as CustomEvent<VisionInspectionRequest>).detail;
+
+      if (request.context === context) setInspecting(request.id);
+    };
+
+    window.addEventListener(VISION_INSPECTION_EVENT, requested);
+
+    return () => window.removeEventListener(VISION_INSPECTION_EVENT, requested);
+  }, [context]);
+
   if (!attempts.length) return null;
 
   return (
@@ -56,11 +77,20 @@ export function VisionTrainingResults({ attempts, targets, onApply }: VisionTrai
             />
           ))}
           <p className="text-[12px] text-white/60">{attempt.reason}</p>
+          {attempt.inspection && <Button onClick={() => setInspecting(attempt.id)}>Inspect Images</Button>}
           {attempt.retained && (
             <VisionTrainingApply runId={attempt.id} targets={attempt.targets ?? targets} onApply={onApply} />
           )}
         </div>
       ))}
+      {reports && (
+        <VisionInspection
+          key={inspecting}
+          reports={reports}
+          navigation={attempt?.navigation}
+          onClose={() => setInspecting(null)}
+        />
+      )}
     </section>
   );
 }

@@ -4,6 +4,7 @@ import type { ClassEvaluation, TrainingTask } from './types';
 import { annotationOverlap } from './metricsGeometry';
 import { classFailureRate } from './metricsFailures';
 import { averagePrecision } from './metricsPrecision';
+import type { ImageDiagnostics } from './evidenceTypes';
 
 export interface EvaluatedFrame {
   frame: TrainingFrame;
@@ -115,7 +116,64 @@ function classKeypoints(
   );
 }
 
-export function objectMetrics(rows: EvaluatedFrame[], task: TrainingTask): ClassEvaluation[] {
+function recordDiagnostics(
+  context: {
+    rows: EvaluatedFrame[];
+    scorer: ReturnType<typeof keypointScorer> | null;
+    matches: MatchedDetection[];
+    classId: number;
+  },
+  diagnostics: ImageDiagnostics[][] | undefined,
+) {
+  if (!diagnostics) return;
+
+  const { rows, scorer, matches, classId } = context;
+  const byRow = new Map<number, MatchedDetection[]>();
+
+  for (const match of matches) {
+    const entries = byRow.get(match.row) ?? [];
+
+    entries.push(match);
+    byRow.set(match.row, entries);
+  }
+
+  rows.forEach((row, index) => {
+    const local = (byRow.get(index) ?? []).map((match) => ({ ...match, row: 0 }));
+    const support = row.frame.annotations.filter((annotation) => annotation.classId === classId).length;
+    const truePositive = local.filter((match) => match.match >= 0).length;
+
+    diagnostics[index].push({
+      classId,
+      support,
+      truePositive,
+      falseNegative: support - truePositive,
+      falsePositive: local.length - truePositive,
+      ...(scorer
+        ? { keypoints: classKeypoints([row], local, scorer, classId) }
+        : { overlapMatches: thresholds.map(() => 0) }),
+    });
+  });
+}
+
+function recordOverlapMatches(
+  matches: MatchedDetection[],
+  diagnostics: ImageDiagnostics[][] | undefined,
+  index: number,
+) {
+  if (!diagnostics) return;
+
+  for (const match of matches) {
+    const row = diagnostics[match.row].at(-1);
+
+    if (match.match >= 0 && row?.overlapMatches) row.overlapMatches[index]++;
+  }
+}
+
+export function objectMetrics(
+  rows: EvaluatedFrame[],
+  task: TrainingTask,
+  diagnostics?: ImageDiagnostics[][],
+): ClassEvaluation[] {
   const scoreKeypoints = task.kind === 'keypoints' ? keypointScorer(task) : null;
 
   return task.classes.map((category) => {
@@ -125,6 +183,9 @@ export function objectMetrics(rows: EvaluatedFrame[], task: TrainingTask): Class
     );
     const ranked = rankedDetections(rows, task, category.name);
     const matches = matchDetections(ranked, rows, category.id, 0.5);
+
+    recordDiagnostics({ rows, scorer: scoreKeypoints, matches, classId: category.id }, diagnostics);
+
     const truePositive = matches.filter((item) => item.match >= 0).length;
     const falsePositive = ranked.length - truePositive;
     const falseNegative = support - truePositive;
@@ -135,9 +196,13 @@ export function objectMetrics(rows: EvaluatedFrame[], task: TrainingTask): Class
     );
     const score = support
       ? mean(
-          thresholds.map((threshold) =>
-            averagePrecision(matchDetections(ranked, rows, category.id, threshold), support),
-          ),
+          thresholds.map((threshold, index) => {
+            const atThreshold = threshold === 0.5 ? matches : matchDetections(ranked, rows, category.id, threshold);
+
+            recordOverlapMatches(atThreshold, diagnostics, index);
+
+            return averagePrecision(atThreshold, support);
+          }),
         )
       : null;
 

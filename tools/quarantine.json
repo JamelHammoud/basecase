@@ -476,7 +476,7 @@
     "issue": 1390,
     "until": "2026-11-28",
     "platform": "win32",
-    "reason": "Run 44175369818 exceeded the unchanged 5000 ms deadline for the resisted lid. Previous Check 44170110654 passed resisted in 4372 ms and reversed in 2100 ms with unchanged parity, capture and native replay sources. The responsible capture, uv provisioning, native startup, replay or scoring stage remains unknown. Shared native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. Other platforms, rotated lid and all eight drawer comparisons remain active."
+    "reason": "Run 44175369818 exceeded the unchanged 5000 ms deadline for the resisted lid. Previous Check 44170110654 passed resisted in 4372 ms and reversed in 2100 ms with unchanged parity, capture and native replay sources. The responsible capture, uv provisioning, native startup, replay or scoring stage remains unknown. Shared native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. All comparisons on other platforms and all eight drawer comparisons on Windows remain active."
   },
   {
     "file": "src/sim/fixtures/passiveParity.test.ts",
@@ -484,7 +484,7 @@
     "issue": 1390,
     "until": "2026-11-28",
     "platform": "win32",
-    "reason": "Run 44175369818 exceeded the unchanged 5000 ms deadline for the reversed lid. Previous Check 44170110654 passed resisted in 4372 ms and reversed in 2100 ms with unchanged parity, capture and native replay sources. The responsible capture, uv provisioning, native startup, replay or scoring stage remains unknown. Shared native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. Other platforms, rotated lid and all eight drawer comparisons remain active."
+    "reason": "Run 44175369818 exceeded the unchanged 5000 ms deadline for the reversed lid. Previous Check 44170110654 passed resisted in 4372 ms and reversed in 2100 ms with unchanged parity, capture and native replay sources. The responsible capture, uv provisioning, native startup, replay or scoring stage remains unknown. Shared native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. All comparisons on other platforms and all eight drawer comparisons on Windows remain active."
   },
   {
     "file": "src/sim/fixtures/closedParity.test.ts",
@@ -549,5 +549,13 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Run 44175369818 exhausted the unchanged 30000 ms download wait for the edited carrier. Both variants failed while the ordinary Kit walkthroughs passed. Electrical preparation, drawing and guide producers, worker replies, source guards and delivery are not distinguished. Existing manufacturing export owner #1611 tracks these additional real Kit paths, production-path tracing, cleanup and equal-load baseline and candidate measurements. Linux retains both walkthroughs. Fast ten-design electrical Kit, hash, source freshness, fabrication refusal and export cancellation coverage stays active on Windows."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for rotated",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44200197616 exceeded the unchanged 5000 ms deadline at 5005 ms on Windows. Focused Windows diagnostic 44201244228 passed the exact test at the failing revision in 4192.2372 ms with one worker and zero retries, establishing intermittency. Full green Check 43948835889 passed rotated lid in 1731 ms. The parity test, capture helper, variants and native replay helper are unchanged between those revisions. Capture, uv provisioning, native startup, replay and scoring are not distinguished by the log. Existing native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. All eight drawer comparisons remain active on Windows and every comparison remains active on other platforms."
   }
 ]

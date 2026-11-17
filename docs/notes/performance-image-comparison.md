@@ -2,6 +2,18 @@
 
 Implementation: [Image comparison](../guide/agent.md#performance-image-comparison). Shared requirements: [Performance](../guide/performance.md).
 
+## Overlap alignment stops at a perfect match
+
+Repository searches found two intersection-over-union alignment searches, camera rotation/scale in `viewFit.ts` and target translation in `targetFit.ts`. Both now stop at the first score of one. Intersection cannot exceed union, and ties keep the earlier candidate. Searches without a perfect match retain all candidates, including empty masks whose score stays zero.
+
+`viewFitAlignment.test.ts` compares complete alignment records with an independent exhaustive search across generated masks, rotations, dimensions, empty inputs and source edits. New perfect-match cases count photo pixel reads. A 3 × 3 mask stops after its first scale candidate, and a 64 × 48 mask stops after its second. With ten requested rotations, these replace 30 candidate evaluations. The larger case reads 15,360 photo pixels instead of 187,392, including the unchanged moments scan.
+
+`targetAlignment.test.ts` retains exhaustive-grid comparisons, centered and boundary-offset matches and first-offset ties. A scratch comparison of the previous and current target implementations matched all returned fields across 40 generated requests, comprising 20 identical masks and 20 edited models. Each identical pair evaluated 41 translation candidates instead of 81. Instrumented source copies and the comparison are in `scratch/perfectFit.test.ts` during implementation, with results in `scratch/perfect-fit-evidence.log`.
+
+These are operation counts, not timings or a claim about complete camera-fit latency. No action, label, visible state or help instruction changes. The existing design-agent help article remains accurate and needs no screenshot update.
+
+Scoped code validation passed formatting, lint, site copy, types and all 202 related tests across 33 files. Documentation validation is recorded in the session handoff.
+
 ## Target outline gaps accumulate directly
 
 Repository searches found two symmetric outline-gap accumulators, in `targetFit.ts` and `viewFit.ts`. Camera-fit details already accumulate scalar distances directly. Target fitting now does the same, removing its temporary two-distance array and iteration for each scanned grid cell. Both edge predicates and distance transforms remain unchanged. The target contribution still precedes the model contribution, retaining exact summation order, sample counts and maxima.

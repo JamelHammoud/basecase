@@ -94,8 +94,8 @@ function bestShift(grid: { width: number; height: number; cellMm: number }, targ
   const { occupied, score } = shiftScorer(source, model);
   let best = { iou: -1, offset: 0 };
 
-  for (let dy = -SHIFT; dy <= SHIFT; dy++)
-    for (let dx = -SHIFT; dx <= SHIFT; dx++) {
+  for (let dy = -SHIFT; dy <= SHIFT && best.iou < 1; dy++)
+    for (let dx = -SHIFT; dx <= SHIFT && best.iou < 1; dx++) {
       const offset = dy * grid.width + dx;
       const iou = score(offset);
 

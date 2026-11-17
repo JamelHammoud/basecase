@@ -145,7 +145,8 @@ export function crossingsOf(A: Placed, B: Placed, keep: number): Crossing[] {
 
   const stride = Math.max(1, Math.floor(found.length / keep));
   const available = Math.ceil(found.length / stride);
-  const count = keep < 0 ? Math.max(0, available + Math.ceil(keep)) : Math.min(available, Math.floor(keep));
+  const end = Math.trunc(keep);
+  const count = end < 0 ? Math.max(0, available + end) : Math.min(available, end);
   const selected: Crossing[] = [];
 
   for (let i = 0; i < count; i++) {

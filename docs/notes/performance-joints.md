@@ -2,6 +2,28 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## Pose deltas classify each shared transform once
+
+The app-wide search found one tolerant identity classifier used by `poseDeltas`, in `utils/kinematicsMotion.ts`. Pose editing, agent posing, robot ghosts, silhouette preparation and recorded-scene floor extraction call this shared helper. Each part attached to a joint reads the same joint matrix, and base parts share their robot's root matrix.
+
+Each call now retains moving and stationary verdicts by matrix identity. Only requested transforms enter the map, and no verdict survives the call. A module-local coefficient array replaces the sixteen-entry identity array previously allocated for every classified part. The original element order, strict 1e-9 comparison, early exit, requested-part order and returned matrix references remain intact. Forward kinematics still builds the same matrices. The map adds one entry per distinct requested matrix.
+
+On November 16, 2026, a scratch comparison bundled the previous and current helper with Rolldown on Node 26.13.0, macOS arm64. Fixtures have independent hinges at an offset pivot. Half the requested parts use the robot root and half use joint transforms, distributed across the hinges. Alternating hinges move by 37 degrees or stay at rest. Complete ordered outputs matched before timing. Each implementation had three warmup batches and eleven alternating measured batches of 1,000 complete calls.
+
+| Requested parts | Hinges | Absolute-value calls before | After | Median ms before | After |
+| --- | --- | --- | --- | --- | --- |
+| 300 | 12 | 3,677 | 120 | 0.205 | 0.079 |
+| 600 | 12 | 7,352 | 120 | 0.413 | 0.166 |
+| 300 | 300 | 3,677 | 1,293 | 0.315 | 0.282 |
+
+Absolute-value counts include the unchanged rest-pose check. The 300-hinge case requests only 150 joint transforms, and all fixtures retain root sharing. These measurements do not establish a speedup when every requested part has a distinct matrix. Timings cover complete pose-delta calls on a shared host with related tests running, without rendering, a CI timing assertion or a claim about complete interaction latency. Source and output remain in `scratch/pose-deltas-bench.mjs` and `scratch/pose-deltas-bench.json` for this session.
+
+`src/utils/poseDeltas.test.ts` compares complete ordered maps with the previous calculation across two robots, missing and duplicate part requests, rest and moving poses, rotated and translated roots, infinite inputs and later edits. It checks the strict identity threshold on both sides of zero and independently owned results across calls. Its 300- and 600-part fixtures require the same classification work as requesting one part per shared matrix. Existing kinematics, hand-declared joint and robot-twin tests cover consuming paths. No timeout, retry or quarantine changes apply.
+
+The dependency-selected check reached 644 files. Its first run passed 4,453 tests and hit two 5-second classroom grading timeouts plus one 15-second rendered visibility timeout. A second run without the concurrent benchmark passed 4,455 tests, including visibility, but timed out on classroom grading's failing Push a block submission for seeds 11 through 15. The grading failure remains unresolved, and no baseline comparison establishes its cause. The logs remain in `scratch/pose-deltas-check.log` and `scratch/pose-deltas-check-serial.log`. Neither run failed a pose-delta assertion. Formatting, lint, types, documentation and site-copy checks passed.
+
+[Pose a robot](../../site/content/help/pose-a-robot.md) and [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) still describe the same actions, labels and results. The concept article's coverage metadata now names `kinematicsMotion.ts` directly. This changes no visible state or workflow, so their prose and screenshots remain accurate without edits.
+
 ## Cylinder bounds accumulate with vertex residuals
 
 The whole-app search found one axial projection list reduced separately to minimum and maximum in `joints/cylinderFit.ts`. Both clicked-face fitting and automatic shaft-and-bore discovery call it through `axisFinder.ts`. Other projection calculations serve different geometry and do not build this cylinder summary.

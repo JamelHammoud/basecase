@@ -28,6 +28,7 @@ covers:
   - src/joints/axisFinder.ts
   - src/joints/cylinderFit.ts
   - src/utils/kinematics.ts
+  - src/utils/kinematicsMotion.ts
   - src/utils/kinematicsIk.ts
   - src/utils/kinematicsRig.ts
   - src/utils/jointNames.ts

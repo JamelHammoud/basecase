@@ -139,7 +139,13 @@ export function choosePose(shape: PrintShape, bed: Bed, print?: PartPrint): Prin
 const MAPPING = new THREE.Matrix4().set(1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1);
 
 export function bedMatrixOf(plates: Plate[], id: string): number[] {
-  return plates.flatMap((p) => p.items).find((it) => it.id === id)?.matrix ?? [...MAPPING.elements];
+  for (const plate of plates) {
+    const item = plate.items.find((it) => it.id === id);
+
+    if (item) return item.matrix ?? [...MAPPING.elements];
+  }
+
+  return [...MAPPING.elements];
 }
 
 export function itemMatrix(

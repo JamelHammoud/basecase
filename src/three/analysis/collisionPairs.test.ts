@@ -42,7 +42,7 @@ const box = (id: string, min: number[], max: number[]): Boxed => ({
   box: new Box3(new Vector3().fromArray(min), new Vector3().fromArray(max)),
 });
 
-const idsOf = (pairs: Array<[Boxed, Boxed]>) => pairs.map(([a, b]) => [a.id, b.id]);
+const idsOf = (pairs: Iterable<[Boxed, Boxed]>) => Array.from(pairs, ([a, b]) => [a.id, b.id]);
 
 function subsets(ids: string[]): string[][] {
   return Array.from({ length: 1 << ids.length }, (_, mask) => ids.filter((_, i) => mask & (1 << i)));
@@ -107,7 +107,7 @@ describe('collision pair planning', () => {
         return Reflect.get(target, key, receiver);
       },
     });
-    const pairs = collisionPairs(scene, { focus: ['0'], straddle: ['0'] });
+    const pairs = [...collisionPairs(scene, { focus: ['0'], straddle: ['0'] })];
 
     expect(reads).toBe(count);
     expect(sceneReads).toBeLessThanOrEqual(count * 4);
@@ -146,5 +146,28 @@ it('keeps padded bounds independent across nested queries and later geometry edi
 
   expect(idsOf(collisionPairs(solids, {}, skip))).toEqual([['a', 'b']]);
   solids[1].box.translate(new Vector3(1, 0, 0));
-  expect(collisionPairs(solids, {}, skip)).toEqual([]);
+  expect([...collisionPairs(solids, {}, skip)]).toEqual([]);
+});
+
+it.each([300, 600])('streams dense %i-part pairs without preparing the unconsumed suffix', (count) => {
+  const solids = Array.from({ length: count }, (_, i) => box(String(i), [0, 0, 0], [1, 1, 1]));
+  let visited = 0;
+  const pairs = collisionPairs(solids, {}, () => {
+    visited++;
+
+    return false;
+  });
+
+  expect(visited).toBe(0);
+  expect(pairs.next().value).toEqual([solids[0], solids[1]]);
+  expect(visited).toBe(1);
+  expect(pairs.next().value).toEqual([solids[0], solids[2]]);
+  expect(visited).toBe(2);
+
+  let consumed = 2;
+
+  while (!pairs.next().done) consumed++;
+
+  expect(consumed).toBe((count * (count - 1)) / 2);
+  expect(visited).toBe(consumed);
 });

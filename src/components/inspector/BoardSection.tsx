@@ -1,3 +1,5 @@
+import { BoardRoutingFields } from './BoardRoutingFields';
+import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 import { BoardFabricationFields } from './BoardFabricationFields';
 import { Button, NumberInput, Section, Select } from '../../design-system';
 import type { ElectronicsBoard } from '../../wiring/boardTypes';
@@ -11,12 +13,14 @@ export function BoardSection({
   onChange,
   onArrange,
   onImport,
+  onRoute,
   partId,
 }: {
   board?: ElectronicsBoard;
   onChange?: (value: ElectronicsBoard) => void;
   onArrange?: () => void;
   onImport?: () => void;
+  onRoute?: () => void;
   partId: string;
 }) {
   if (!board || !onChange || board.partId !== partId) return null;
@@ -24,6 +28,11 @@ export function BoardSection({
   return (
     <>
       <Section title="Board">
+        {onRoute && !IS_WEB_DEMO && (
+          <Button variant="secondary" onClick={onRoute}>
+            Route Board
+          </Button>
+        )}
         {onImport && (
           <Button variant="secondary" onClick={onImport}>
             Import Board
@@ -60,6 +69,7 @@ export function BoardSection({
         />
       </Section>
       <BoardFabricationFields board={board} onChange={onChange} />
+      <BoardRoutingFields board={board} onChange={onChange} />
       <Section title="Mounting holes" collapsible defaultOpen={false}>
         {board.holes.map((hole, index) => (
           <BoardHoleFields

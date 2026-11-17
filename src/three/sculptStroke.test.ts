@@ -35,6 +35,41 @@ function input(brush: SculptBrushKind, triangles = 1): SculptStrokeInput {
 
 afterEach(() => vi.restoreAllMocks());
 
+describe('sculpt strokes without source normals', () => {
+  it.each(BRUSHES)('prepares only needed %s normals and preserves the complete output', (brush) => {
+    for (const indexed of [false, true]) {
+      for (const invertBrush of [false, true]) {
+        const stroke = input(brush);
+        const sphere = new THREE.SphereGeometry(10, 16, 12);
+
+        stroke.geo.dispose();
+        stroke.geo = indexed ? sphere : sphere.toNonIndexed();
+        stroke.geo.deleteAttribute('normal');
+        stroke.localHitPoint.set(8, 3, 6);
+        stroke.localHitNormal.set(8, 3, 6).normalize();
+        stroke.settings.symmetryX = true;
+        stroke.settings.symmetryZ = true;
+
+        const expected = stroke.geo.clone();
+
+        expected.computeVertexNormals();
+        sculptStroke({ ...stroke, geo: expected, invertBrush });
+
+        const compute = vi.spyOn(stroke.geo, 'computeVertexNormals');
+
+        sculptStroke({ ...stroke, invertBrush });
+        expect(compute).toHaveBeenCalledTimes(brush === 'inflate' || brush === 'carve' ? 2 : 1);
+        expect(stroke.geo.getAttribute('position').array).toEqual(expected.getAttribute('position').array);
+        expect(stroke.geo.getAttribute('normal').array).toEqual(expected.getAttribute('normal').array);
+        expect(stroke.geo.index?.array).toEqual(expected.index?.array);
+        expected.dispose();
+        stroke.geo.dispose();
+        sphere.dispose();
+      }
+    }
+  });
+});
+
 describe('sculpt brush workspace', () => {
   it.each(BRUSHES)('keeps %s displacements, falloff and untouched vertices', (brush) => {
     const stroke = input(brush);

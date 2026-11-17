@@ -4,4 +4,5 @@ export function boardProcess(options: {
   args: string[];
   cwd: string;
   signal?: AbortSignal;
+  observe?: (pid: number, stop: (reason?: Error) => void) => () => Promise<void>;
 }): Promise<string>;

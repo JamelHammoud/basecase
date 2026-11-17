@@ -1,3 +1,4 @@
+import { validCopperExclusions } from '../../src/wiring/boardCopperExclusions.mjs';
 import { assertFootprintSubset, assertBoardCoordinates } from '../../src/wiring/boardFootprintSubset.mjs';
 import { readKiCadDocument, kiCadChild, kiCadChildren } from '../../src/wiring/boardKiCad.mjs';
 import { reconcileRoutedBoard } from '../../src/wiring/boardReconcile.mjs';
@@ -11,7 +12,7 @@ export function boundedBoardRequest(value) {
 
   boundedFootprints(value.footprints);
 
-  if (value.key !== undefined && !hash(value.key)) throw new Error('board-format');
+  boundedRequestMetadata(value);
 
   const keys = [
     'id',
@@ -25,6 +26,7 @@ export function boundedBoardRequest(value) {
     'geometryFingerprint',
     'rules',
     'mechanicalIssues',
+    'copperExclusions',
   ];
 
   if (Object.keys(value).some((key) => !keys.includes(key))) throw new Error('board-format');
@@ -148,3 +150,10 @@ export async function checkedBoardRequest(value) {
 }
 
 export { boardProject as nativeProject } from '../../src/wiring/boardNativeContract.mjs';
+
+function boundedRequestMetadata(value) {
+  if (value.key !== undefined && !hash(value.key)) throw new Error('board-format');
+
+  if (value.copperExclusions !== undefined && !validCopperExclusions(value.copperExclusions))
+    throw new Error('board-format');
+}

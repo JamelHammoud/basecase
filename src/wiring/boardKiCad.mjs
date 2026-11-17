@@ -65,7 +65,9 @@ function closeNode(state) {
 
   const child = state.stack.pop();
 
-  if (typeof child[0] !== 'string' || forbidden.has(child[0].toLowerCase())) fail();
+  const footprintImage = state.rootName === 'pcb' && child[0] === 'image';
+
+  if (typeof child[0] !== 'string' || (forbidden.has(child[0].toLowerCase()) && !footprintImage)) fail();
 
   if (String(child[0]).toLowerCase() === 'embedded_fonts' && (child.length !== 2 || child[1] !== 'no')) fail();
 
@@ -118,7 +120,7 @@ export function readKiCadDocument(text, rootName = 'kicad_pcb') {
     fail();
 
   const root = [];
-  const state = { stack: [root], position: 0, nodes: 0, atoms: 0 };
+  const state = { stack: [root], position: 0, nodes: 0, atoms: 0, rootName };
 
   while (state.position < text.length) scan(text, state);
 

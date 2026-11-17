@@ -23,7 +23,7 @@ hub_checks_and_blockers: |
 
 Download fabrication layers and drills with source identities, hashes and current KiCad validation reports in the desktop app.
 
-Install KiCad 9.0.6 on the computer running Basecase. Before you export, [import a routed board](/help/import-a-routed-board) with an explicit stackup. In the stackup, declare copper thicknesses and a dielectric's material, permittivity and loss tangent.
+Install KiCad 9.0.6 on the computer running Basecase. Before you export, [route a carrier board](/help/route-a-carrier-board) or [import a routed board](/help/import-a-routed-board) with an explicit stackup. In the stackup, declare copper thicknesses and a dielectric's material, permittivity and loss tangent.
 
 1. In [[⌘K]], choose **Edit Board**.
 2. In the Inspector, open **Fabrication**.

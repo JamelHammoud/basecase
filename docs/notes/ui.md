@@ -2,6 +2,44 @@
 
 Knowledge preserved from code comments before they were removed. AGENTS.md covers the rest.
 
+## Repeated control copy audit
+
+The studio audit for #1660 traced Button, IconButton, Tooltip, NumberInput, SegmentedControl, ChoiceGrid, StripButton, LinkButton and menu composition before removing copy. Shared primitives need no change. The ordinary copy report counts two removed strings and no additions. The Board title references a local variable, which the existing extractor does not count. Counting rules are unchanged.
+
+| Removed occurrence | Enclosing control | Simultaneously visible replacement |
+| --- | --- | --- |
+| `title={label}` in `components/build/BoardBuildAction.tsx`, no board | Build's Define Board button | Define Board remains the button's child and accessible name. Its handler and availability are unchanged. |
+| `title={label}` in `components/build/BoardBuildAction.tsx`, saved board | Build's Edit Board button | Edit Board remains the button's child and accessible name. Its handler and availability are unchanged. |
+| No printers in `components/settings/PrintersPane.tsx` | Saved printers card's action row when the list is empty | The Printers pane title, empty list, Find on Network and Add Printer remain visible. The row already has no label when printers exist. |
+| No printers found in `components/settings/PrintersPane.tsx` | Completed network discovery's empty result row | On this network appears only after discovery produces a result. Its empty list carries the complete result. Find on Network and Add Printer remain in the preceding card. |
+
+Retained occurrences and conditional checks:
+
+- `parts/pages.tsx` and `PartDetails.tsx` pass LinkButton's `label` as an accessible name, not visible text. Those Amazon, datasheet and product links render only an icon, so their tooltips stay.
+- `simulate/TryTimeline.tsx` shows a speed value. Its Speed tooltip names the value and retains the existing shortcut. `operate/RobotLadder.tsx` names each rung visibly but its hints explain distinct emulated-motor behavior. Current and unavailable rungs remain disabled with their hints intact.
+- `agent/ModelMenu.tsx` identifies the selected model by name and its tooltip identifies the setting. Subtract identifies the retained base part. Quarter turns explain the axis action. Alignment icons, abbreviated dimensions, currency, time budget, hardware length and color swatches retain their names, units and explanations.
+- Truncated Study names and comparison refusals retain their full-text tooltips. Board routing, vision and dataset presentation, Study family generation, mechanism creation and paired-phone presentation are unchanged.
+- Error messages, search NoMatches, SVG recovery, printer connection replies, slicing warnings, stale-guide state, estimates, provenance and safety boundaries retain information absent from the controls. Library's No models has no Models header. Play's No robot describes a different object from its Cases icon. Neither is a repeated section caption.
+- Printer discovery keeps `null` before the first search and an empty array after an empty or failed discovery. The On this network heading therefore still distinguishes an untouched pane from a completed empty result. Searching… and its disabled button remain unchanged. No discovery error detail was removed. Loading, populated results, connection-test success and failure and slicer recovery are unchanged.
+- `Button` still names icon-only uses from `title`, wraps shortcut-only uses without a label, and exposes disabled-control tooltips through its wrapper. `IconButton` retains its required title. MenuItem names, details, shortcuts and disabled states are unchanged. Popover tooltips remain suppressed while expanded.
+- The web Settings pane list excludes Printers. The Board action and ordinary scene import are available in both studio variants. No platform condition, Mac key glyph or Windows key-cap conversion changes.
+
+Browser coverage remains in the existing declarations. `boardFixture.ts` imports the ordinary scene file, opens Build and clicks Define Board by its exact accessible name. The shorter outline-shrink declaration in `e2e/board.e2e.test.ts` now returns to Build, finds the visibly named Edit Board button, clicks it and verifies the existing width-edit-to-Board-fit-blocker result. The longer placement, lock, undo, export and reopen walkthrough stays intact. Both declarations have existing Windows-only quarantines, documented in the Build guide. This change does not lift them or change deadlines.
+
+`e2e/measure.e2e.test.ts` retains the Done accessible-name and shortcut-only Esc tooltip assertions. `e2e/scenesMenu.e2e.test.ts` retains menu actions and confirmation behavior. `e2e/print.e2e.test.ts` retains manual printer configuration and populated discovery actions. Empty discovery and connection-test replies have no browser assertions. Source tracing establishes their unchanged conditions, not an observed browser pass. Linux and Windows browser execution belongs to CI.
+
+No help steps or entry points change. Preflight's unchanged-help reminders were checked against the current source and existing images:
+
+| Article | Accuracy check | Disposition |
+| --- | --- | --- |
+| [Add a printer](../../site/content/help/add-a-printer.md) | Add Printer still opens Name, Model and connection fields. Find on Network still lists results with Add. No step names either removed caption. The article has no images. | Leave unchanged. |
+| [Fit an electronics board](../../site/content/help/fit-an-electronics-board.md) | Define Board and Edit Board retain their visible names and handlers. The placement, fit and outline images show the Inspector or Build with no repeated tooltip. Neither the steps nor the images depend on that tooltip. | Leave unchanged. |
+| [Plates won't slice or send](../../site/content/help/troubleshoot-build-slicing-fails.md) | Slicers, Slice Plates, Add Printer and the Print controls retain their names and conditions. Slicer recovery and connection explanations remain intact. The article names neither removed printer caption and has no images. | Leave unchanged. |
+
+The reminder explicitly allows an accurate article to stay unchanged. No article edits, new screenshots or announcement are needed for these removals.
+
+Local verification: the seven-file changed check passed formatting, lint, documentation links, all 323 site copy pages, TypeScript and 13 related tests across seven files. Browser tests were not run locally. Existing Windows Board quarantines and the empty-discovery browser coverage gap remain unchanged.
+
 ## App (tab host)
 
 - `MAX_TABS = 8`: every open scene stays mounted with its own WebGL canvas and agent session, and browsers cap WebGL contexts near 16, so tabs stop well short.

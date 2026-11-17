@@ -1,3 +1,4 @@
+import { boardRouteFindings } from './boardRouteFindings';
 import { boardImportMessage } from './boardRoutingFindings';
 import type { ElectricalInput, ElectricalProjection } from './electricalTypes';
 import type { BoardPlacement, BoardProjection, BoardTerminal } from './boardTypes';
@@ -149,6 +150,7 @@ export function projectBoard(input: ElectricalInput): BoardProjection {
   }
 
   result.requirements.push(
+    ...boardRouteFindings(board),
     ...boardConstraints(board, part),
     ...boardHoleFindings(board, part),
     ...boardMountingFindings(input.parts, board),

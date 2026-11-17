@@ -25,6 +25,7 @@ function session() {
   );
   const commitBoard = vi.fn();
   const core = {
+    scene: { sceneId: 'board-test' },
     parts,
     project: { ...scene.project, electronicsBoard: board },
     docs: {
@@ -74,4 +75,20 @@ it('continues to mount modules and hardware when the board placement changes', (
   expect(updated).not.toBe(parts);
   expect(boardMountingFindings(updated, next)).toEqual([]);
   expect(parts.find((part) => part.id === 'buck')!.position).toEqual([100, 100, 100]);
+});
+
+it('keeps scene parts unchanged when pre-route requirements change', () => {
+  const { board, parts, actions, commitBoard } = session();
+
+  delete board.routed;
+
+  const next = {
+    ...board,
+    fabrication: { source: 'https://example.com/process', clearanceMm: 0.2, trackWidthMm: 0.25, drillMm: 0.3 },
+  };
+
+  actions.update(next);
+  expect(commitBoard.mock.calls[0][0]).toBe(parts);
+  expect(commitBoard.mock.calls[0][1]).toBe(next);
+  expect(boardMountingFindings(parts, next).some((finding) => finding.code === 'board-stale-placement')).toBe(true);
 });

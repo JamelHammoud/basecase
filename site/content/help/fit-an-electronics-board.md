@@ -45,7 +45,7 @@ Place supported connectors and regulators inside your robot, then export their e
 
 ![The rover’s Board fit check passes while electrical requirements remain unresolved](/help/fit-an-electronics-board/fit.png)
 
-[Export a robot schematic](/help/export-a-robot-schematic) explains how to download and open the KiCad project. With a board definition, the package includes the PCB, schematic, local libraries, exact product references and placement requirements. The initial export stays unrouted. [Import a routed board](/help/import-a-routed-board) brings copper back after routing in KiCad. Placement alone doesn’t establish fabrication readiness or physical assembly fit.
+[Export a robot schematic](/help/export-a-robot-schematic) explains how to download and open the KiCad project. With a board definition, the package includes the PCB, schematic, local libraries, exact product references and placement requirements. [Route a carrier board](/help/route-a-carrier-board) connects supported pads locally. You can also [import a routed board](/help/import-a-routed-board) after routing in KiCad. Placement alone doesn’t establish fabrication readiness or physical assembly fit.
 
 You can start with JST B3B-EH-A headers for ROBOTIS XL330-M288 interfaces and Pololu D36V50F5, D36V50F6 and D36V50F12 regulators. These are the initial supported products. Other interfaces remain unresolved. Servos stay off the PCB.
 

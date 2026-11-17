@@ -36,6 +36,14 @@ At the drawing limit of 400 points, this removes the 400-element projected list 
 
 `markMath.test.ts` checks one projection per point and exactly two reused output tuples at both sizes. It also covers repeated endpoints, empty or single-point input and subsequent point edits. `markLayer.test.ts` checks selection and eraser output, first-hit ties, the inclusive 10 px boundary, current camera and viewport reads, and dragged positions. A spy on the stroke's `map` method confirms both selection and eraser queries avoid the previous mapped projection. Label rendering and GPU frame time are outside this check's scope.
 
+## Mark hit tests reject distant segments before measuring length
+
+Whole-app search found one projected mark-to-segment distance loop, in `three/viewport/markMath.ts`. Selection, hovering, drag start and erasing reach it through `MarkLayer.distances`. Segment projection and clamping stay unchanged. Squared coordinate offsets bound the squared Euclidean distance from below. A bound above the best squared distance plus an eight-epsilon margin skips the sum. Remaining candidates compare squared distances and retain the nearest offsets for one final `Math.hypot`. Near ties and squared overflow or underflow use the original exact comparison. [Combined normalization evidence](performance-annotations.md#mark-picking-normalizes-only-the-nearest-distance) records the numerical guards and storage.
+
+`markMath.test.ts` compares exact outputs with the previous loop across 400-point curved strokes in both orders, repeated points, empty and single-point strokes, extreme finite scales and nonfinite projections. On horizontal strokes of 400 and 800 points with the pointer ten pixels above the first endpoint, `Math.hypot` calls fall from 399 and 799 to one each. The test asserts those counts through a restored spy. These are operation counts, not timings or a claim about complete pointer latency. Reversing both horizontal fixtures makes successive segments improve the nearest distance and still requires only one normalization. Near ties and extreme scales can require additional exact comparisons.
+
+Existing `markLayer.test.ts` covers selection and eraser output, first-hit ties, the inclusive 10 px boundary, dragged positions and current camera and viewport reads. GPU rendering is outside these checks. No action, label or visible state changes, so the existing mark help instructions and screenshots remain applicable. No browser walkthrough, timeout, retry or quarantine changes apply.
+
 ## Captured-world camera rendering stays in workers
 
 On demand, `node tools/perf/worldVideosBench.mjs` measures rendering and encoding a 10 s, 30 fps, two-camera kitchen episode against Open Floor, including stage creation. It prints both times and fails above a 3× ratio. Timing never runs in Check.
@@ -141,3 +149,13 @@ For 300 and 600 events in each of two viewports, this removes 2,400 and 4,800 te
 `src/three/viewport/wheel.test.ts` compares exact camera and target coordinates with the previous vector calculation after every event. It varies rotation, scale, distance and positive, negative and zero deltas across independent viewports, including zero scales that exercise the singular-matrix fallback. It covers Pan Scroll and Shift-scroll, unchanged camera matrices, one orbit update per event, default prevention and listener removal. A spy verifies that panning no longer calls `extractBasis`. Browser event delivery, orbit integration and GPU rendering remain outside this focused test. No retry, timeout or quarantine changes apply.
 
 No user action, label or visible state changes, so existing navigation help and screenshots remain accurate.
+
+## Sculpt prepares source normals only when needed
+
+Whole-app search found one shared stroke engine in `three/sculptStroke.ts`. Both stroke start and drag call it from `viewport/sculptInput.ts`. Inflate and Carve need source vertex normals. Flatten, Smooth, Pinch and Grab already skipped reading them, but still generated them when missing. They now skip that preparation as well. Every brush still recomputes final normals after all mirrored strokes.
+
+On November 17, 2026, `sculptStroke.test.ts` compares complete position, normal and index buffers with explicitly prepared source normals. Its six brush cases each cover indexed and unindexed 16 by 12 spheres, inversion on and off, and both mirrored regions. A restored spy checks that missing-normal Flatten, Smooth, Pinch and Grab call `computeVertexNormals` once instead of twice. Inflate and Carve retain both calls. This removes one complete face accumulation and vertex normalization pass for the four brushes when source normals are absent.
+
+These are asserted operation counts, not timings or a claim about ordinary pointer latency. Existing sculpt-data reconstruction already supplies normals, so that path saves no pass. Existing fixtures retain displacement, falloff, untouched vertices, input preservation and attribute-read coverage. No labels, actions or visible output change. [Sculpt a part](../../site/content/help/sculpt-a-part.md) remains accurate, so no help edit, screenshot or browser-test change applies. No timeout, retry or quarantine changes apply.
+
+Scoped `check:changed` validation passed formatting, lint, docs, site copy for 323 pages and types. Its related selection passed 248 files and 1,743 tests, with one file and test skipped by existing configuration, in 81.28 seconds. The log is `scratch/check-sculpt-normals.log`. Copy diff net is zero.

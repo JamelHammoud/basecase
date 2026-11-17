@@ -10,6 +10,9 @@ import { docFromParts, pushHistory, trackedOf, travelProject } from '../workspac
 it('retains exact routed copper and manufacturing inputs through ordinary scene persistence and history', async () => {
   const { scene } = electricalScenes().find((entry) => entry.name === 'dual-bus-arm')!;
   const { board, part } = defineBoard(scene, 'board');
+
+  board.fabrication = { source: 'https://example.com/original', clearanceMm: 0.1, trackWidthMm: 0.2, drillMm: 0.2 };
+
   const input = { parts: [...scene.parts, part], project: { ...scene.project, electronicsBoard: board } };
   const base = await electricalPackage(input);
   const pcb = base.files['robot.kicad_pcb'].replace(
@@ -36,6 +39,9 @@ it('retains exact routed copper and manufacturing inputs through ordinary scene 
   expect(redo.project.electronicsBoard?.routed).toEqual(routed.routed);
   expect((await electricalPackage(changed)).files['robot.kicad_pcb']).toBe(pcb);
   expect((await electricalPackage(changed)).bytes).toEqual((await electricalPackage(changed)).bytes);
+  expect((await importRoutedSource({ input: changed, bytes: new TextEncoder().encode(pcb) })).routed?.rules).toEqual(
+    routed.routed!.rules,
+  );
 });
 
 it('refuses broken UTF-8 without replacing bytes', async () => {

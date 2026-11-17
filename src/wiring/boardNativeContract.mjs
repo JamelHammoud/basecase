@@ -22,6 +22,7 @@ export const boardEvidenceKey = (request) =>
       request.rules?.trackWidthMm ?? null,
       request.rules?.drillMm ?? null,
       request.mechanicalIssues,
+      request.copperExclusions ?? [],
       request.schematic,
       request.expected,
       Object.entries(request.footprints ?? {}).sort(([a], [b]) => a.localeCompare(b)),

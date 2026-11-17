@@ -66,9 +66,17 @@ function planeOffset(ports: Port[], j: MirrorAxis): number {
 
   if (!ports.length) return 0;
 
-  const values = ports.map((p) => p.position[j]);
+  let min = Infinity;
+  let max = -Infinity;
 
-  return (Math.min(...values) + Math.max(...values)) / 2;
+  for (const port of ports) {
+    const value = port.position[j];
+
+    min = Math.min(min, value);
+    max = Math.max(max, value);
+  }
+
+  return (min + max) / 2;
 }
 
 function symmetryScore(groups: PortGroup[], j: MirrorAxis, c: number): number {

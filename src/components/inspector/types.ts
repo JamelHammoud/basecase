@@ -22,6 +22,7 @@ export interface InspectorProps {
   onUpdateBoard?: (board: import('../../wiring/boardTypes').ElectronicsBoard) => void;
   onArrangeBoard?: () => void;
   onImportBoard?: () => void;
+  onRouteBoard?: () => void;
   part: ScenePart | null;
   parts: ScenePart[];
   globalGoal: string;

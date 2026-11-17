@@ -15,8 +15,12 @@ export async function command(page: Awaited<ReturnType<typeof openApp>>['page'],
   await page.locator('button[data-idx]').filter({ hasText: label }).first().click();
 }
 
-export async function openRover(page: Awaited<ReturnType<typeof openApp>>['page']) {
-  await openKitScene(page, { name: 'Blank', parts: [], project: DEFAULT_PROJECT }, inject('webUrl'));
+export async function openRover(page: Awaited<ReturnType<typeof openApp>>['page'], desktop = false) {
+  await openKitScene(
+    page,
+    { name: 'Blank', parts: [], project: DEFAULT_PROJECT },
+    desktop ? undefined : inject('webUrl'),
+  );
 
   const scene = electricalScenes().find((entry) => entry.name === 'battery-rover')!.scene;
   const pan = {

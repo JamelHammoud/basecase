@@ -1,4 +1,6 @@
-import { importRoutedSource } from './boardRoutedSource';
+import { acceptBoardRoute } from './boardRouteAcceptance';
+import { prepareBoardRoute } from './boardRoutePreparation';
+import { importRoutedSource, importRoutedText } from './boardRoutedSource';
 import { prepareBoardExport, finishBoardExport } from './boardExportPreparation';
 import { reply, serve } from '../utils/workerRpc';
 import { inspectElectricalInput } from './electricalInspection';
@@ -9,6 +11,9 @@ import { electricalPackage } from './electricalPackage';
 import type { ElectricalInput } from './electricalTypes';
 
 serve({
+  acceptRoute: async (input: Parameters<typeof acceptBoardRoute>[0]) => reply(await acceptBoardRoute(input)),
+  importText: async (input: Parameters<typeof importRoutedText>[0]) => reply(await importRoutedText(input)),
+  prepareRoute: async (input: ElectricalInput) => reply(await prepareBoardRoute(input)),
   importBoard: async (input: Parameters<typeof importRoutedSource>[0]) => reply(await importRoutedSource(input)),
   prepareExport: async (input: ElectricalInput) => reply(await prepareBoardExport(input)),
   finishExport: async (input: Parameters<typeof finishBoardExport>[0]) => {

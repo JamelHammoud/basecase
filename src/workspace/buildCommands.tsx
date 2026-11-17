@@ -1,3 +1,4 @@
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { ReactNode } from 'react';
 import { bomCart } from '../components/build/cart';
 import { knownPurchases } from '../components/build/usePurchases';
@@ -95,6 +96,18 @@ export const buildCommands = (inputs: CommandInputs): Command[] => [
           keywords: 'electronics pcb kicad outline placement',
           run: () => void inputs.actions.board.define(),
         },
+        ...(!IS_WEB_DEMO
+          ? [
+              {
+                id: 'route-board',
+                group: 'Scene' as const,
+                label: 'Route Board',
+                icon: <PackageIcon />,
+                keywords: 'electronics pcb kicad local copper',
+                run: () => void inputs.actions.board.route(),
+              },
+            ]
+          : []),
         {
           id: 'import-board',
           group: 'Scene',

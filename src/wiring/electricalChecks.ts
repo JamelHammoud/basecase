@@ -1,3 +1,7 @@
+import { channelCall } from '../utils/platform/channelCall';
+import { electron } from '../utils/platform/transport';
+import { boardImportMessage } from './boardRoutingFindings';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CheckRow } from '../utils/engineeringTypes';
 import { electricalClient, type ElectricalInspection } from './electricalClient';
 import { electricalSnapshot, electricalWalk } from './electricalSnapshot';
@@ -67,8 +71,31 @@ export async function inspectElectrical(input: ElectricalInput) {
       meshFiles: snapshot.project.electronicsBoard ? await sourcedMeshFiles(snapshot.parts) : undefined,
     });
 
-    return { rows: electricalRows(inspection), findings: electricalFindings(inspection) };
+    const current = await withRoutingTools(inspection, snapshot.project.electronicsBoard);
+
+    return { rows: electricalRows(current), findings: electricalFindings(current) };
   } finally {
     client.dispose();
   }
+}
+
+async function withRoutingTools(
+  inspection: ElectricalInspection,
+  board: import('./boardTypes').ElectronicsBoard | undefined,
+) {
+  if (!board?.routing || board.routed) return inspection;
+
+  const status = IS_WEB_DEMO
+    ? null
+    : await channelCall<{ issues: string[] }>(electron()?.electricalCall, 'electrical:tools').catch(() => null);
+
+  if (!status || !status.issues.includes('board-router')) return inspection;
+
+  return {
+    ...inspection,
+    requirements: [
+      ...inspection.requirements,
+      { code: 'board-router', detail: boardImportMessage('board-router'), partIds: [board.partId], references: [] },
+    ],
+  };
 }

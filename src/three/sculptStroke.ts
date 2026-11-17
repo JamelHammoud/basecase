@@ -189,12 +189,12 @@ function applyStroke(
 export function sculptStroke(input: SculptStrokeInput): void {
   const { geo, settings, invertBrush = false } = input;
   const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
+  const kind = invertBrush ? (INVERTED_BRUSH[settings.brush] ?? settings.brush) : settings.brush;
 
-  if (!geo.getAttribute('normal')) {
+  if ((kind === 'inflate' || kind === 'carve') && !geo.getAttribute('normal')) {
     geo.computeVertexNormals();
   }
 
-  const kind = invertBrush ? (INVERTED_BRUSH[settings.brush] ?? settings.brush) : settings.brush;
   const brush = { kind, radius: Math.max(2, settings.radiusMm), strength: settings.strength };
 
   for (const stroke of strokesFor(input)) applyStroke(geo, stroke, brush);

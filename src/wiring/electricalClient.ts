@@ -1,3 +1,4 @@
+import type { ElectronicsBoard } from './boardTypes';
 import { workerClient } from '../utils/workerRpc';
 import type { ElectricalInput, ElectricalProjection } from './electricalTypes';
 
@@ -11,6 +12,16 @@ export interface SchematicResult {
 }
 
 type Handlers = {
+  acceptRoute: (
+    input: Parameters<typeof import('./boardRouteAcceptance').acceptBoardRoute>[0],
+  ) => Promise<{ result: ElectronicsBoard }>;
+  importText: (
+    input: Parameters<typeof import('./boardRoutedSource').importRoutedText>[0],
+  ) => Promise<{ result: ElectronicsBoard }>;
+
+  prepareRoute: (
+    input: ElectricalInput,
+  ) => Promise<{ result: Awaited<ReturnType<typeof import('./boardRoutePreparation').prepareBoardRoute>> }>;
   importBoard: (
     input: Parameters<typeof import('./boardRoutedSource').importRoutedSource>[0],
   ) => Promise<{ result: Awaited<ReturnType<typeof import('./boardRoutedSource').importRoutedSource>> }>;
@@ -34,7 +45,9 @@ type Handlers = {
 async function localHandlers(): Promise<Handlers> {
   if (typeof document !== 'undefined') throw new Error('Schematic export needs a worker.');
 
-  const { importRoutedSource } = await import('./boardRoutedSource');
+  const { acceptBoardRoute } = await import('./boardRouteAcceptance');
+  const { importRoutedSource, importRoutedText } = await import('./boardRoutedSource');
+  const { prepareBoardRoute } = await import('./boardRoutePreparation');
   const { prepareBoardExport, finishBoardExport } = await import('./boardExportPreparation');
   const { inspectElectricalInput } = await import('./electricalInspection');
   const { timedBoardPlacement } = await import('./boardPlacement');
@@ -43,6 +56,9 @@ async function localHandlers(): Promise<Handlers> {
   const { electricalPackage } = await import('./electricalPackage');
 
   return {
+    acceptRoute: async (input) => ({ result: await acceptBoardRoute(input) }),
+    importText: async (input) => ({ result: await importRoutedText(input) }),
+    prepareRoute: async (input) => ({ result: await prepareBoardRoute(input) }),
     importBoard: async (input) => ({ result: await importRoutedSource(input) }),
     prepareExport: async (input) => ({ result: await prepareBoardExport(input) }),
     finishExport: async (input) => ({ result: await finishBoardExport(input) }),

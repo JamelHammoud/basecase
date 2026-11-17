@@ -37,6 +37,8 @@ export interface BoardKeepout {
 
 export interface ElectronicsBoard {
   schema: 1;
+  fabrication?: import('./boardRoutingTypes').BoardFabricationRules;
+  routing?: import('./boardRouteContract.mjs').BoardRoutePlan;
   routed?: import('./boardRoutingTypes').BoardRoutedSource;
   partId: string;
   outline: 'rectangle';

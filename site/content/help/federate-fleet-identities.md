@@ -5,6 +5,7 @@ collection: operate
 type: task
 covers:
   - src/fleet/browser/FleetAccess.tsx
+  - src/fleet/browser/FleetProviders.tsx
   - src/fleet/browser/FleetConnection.tsx
   - src/fleet/browser/FleetMappings.tsx
   - src/fleet/browser/FleetSso.tsx
@@ -14,7 +15,7 @@ covers:
 
 You can connect subsidiaries and partners to one self-hosted organization and keep their identities and site grants separate.
 
-You must have organization-wide identity administration access. Configure the service and roles using [Host Basecase Fleet](/help/host-basecase-fleet).
+You must have organization-wide identity administration access. Configure the service using [Host Basecase Fleet](/help/host-basecase-fleet) and roles using [Manage Fleet access](/help/manage-fleet-access).
 
 1. In Fleet, click **Access**.
 2. In **Provider name**, enter the subsidiary or partner name.
@@ -40,7 +41,7 @@ To connect another subsidiary, click **Add Provider** and repeat these steps. Yo
 4. In **Fleet role**, choose the existing role to grant.
 5. Click **Save Provider**.
 
-The role list loads 100 definitions. Existing mapped roles outside that page appear by UUID.
+The role list loads 100 definitions per page and shows UUIDs beside names. Use **Next Page** to select another page and **First Page** to return. Existing mapped roles outside that page appear by UUID.
 
 To delete a mapping:
 

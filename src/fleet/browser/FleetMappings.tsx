@@ -26,7 +26,7 @@ export function FleetMappings({
   );
   const options = [
     { value: '', label: 'Choose Role' },
-    ...roles.map((role) => ({ value: role.id, label: role.name })),
+    ...roles.map((role) => ({ value: role.id, label: `${role.name} (${role.id})` })),
     ...unlistedRoles.map((role) => ({ value: role, label: role })),
   ];
 

@@ -47,7 +47,7 @@ You can drive your robot through an open Case while Basecase records the try. Wh
 
 ![Results with the latest run and one try](/help/try-a-case/results.png)
 
-To run and record the supplied reference, click **Try Reference** in **Try**. Lids and drawers use it as described in [Open lids and pull drawers](/help/open-lids-and-pull-drawers).
+To run and record the supplied reference, click **Try Reference** in **Try**. Household tasks use it as described in [Reuse an assembly in Cases](/help/reuse-an-assembly-in-cases).
 
 You can also start a try by pressing [[⌘K]] and choosing **Try ⟨Case⟩**.
 

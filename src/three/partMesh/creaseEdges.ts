@@ -71,7 +71,7 @@ export function creaseEdgesOnly(edges: number[], positions: number[], indices: n
     const list = normals.get(keys[i / 6]);
     const smooth = list?.length === 2 && list[0].dot(list[1]) > cosLimit;
 
-    if (!smooth) out.push(...edges.slice(i, i + 6));
+    if (!smooth) out.push(edges[i], edges[i + 1], edges[i + 2], edges[i + 3], edges[i + 4], edges[i + 5]);
   }
 
   return out;

@@ -16,7 +16,10 @@ export type ParamKey =
   | 'fixtureTravel'
   | 'fixtureMassG'
   | 'fixtureFriction'
-  | 'fixtureDamping';
+  | 'fixtureDamping'
+  | 'fixtureLowerStop'
+  | 'fixtureStiffness'
+  | 'fixtureSpringref';
 
 export type GoalValues = Record<ParamKey, number>;
 

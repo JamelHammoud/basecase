@@ -27,14 +27,14 @@ export interface WorldEmit {
   bodies: SimBody[];
 }
 
-function geomAttrs(item: WorldItem): string {
+function geomAttrs(item: WorldItem, share = 1): string {
   const contact = CONTACT[item.behavior];
   const friction =
     item.physics?.friction !== undefined ? ` priority="1" friction="${f(item.physics.friction)} 0.02 0.002"` : '';
 
   if (item.behavior !== 'dynamic') return `${contact}${friction}`;
 
-  return `${contact} mass="${f(Math.max(item.massG ?? DEFAULT_DYNAMIC_GRAMS, 0.1) / 1000)}"${friction}`;
+  return `${contact} mass="${(Math.max(item.massG ?? DEFAULT_DYNAMIC_GRAMS, 0.1) * share) / 1000}"${friction}`;
 }
 
 const boxSize = ({ dimensions: d }: WorldItem) => vec([d.width / 2000, d.depth / 2000, d.height / 2000]);
@@ -84,6 +84,16 @@ function hullShape(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffse
 
 function worldGeom(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffset: number): string {
   const name = `wg_${safeId(item.id)}`;
+
+  if (item.collisionHulls)
+    return item.collisionHulls
+      .map((vertices, i) => {
+        const shape = hullShape({ ...item, convexVertices: vertices }, input, out, assetOffset);
+
+        return `<geom name="${esc(name)}_${i}" ${shape} ${geomAttrs(item, 1 / item.collisionHulls!.length)}/>`;
+      })
+      .join('\n');
+
   const hull = primitiveShape(item) ? null : hullShape(item, input, out, assetOffset);
 
   if (hull) return `<geom name="${esc(name)}" ${hull} ${geomAttrs(item)}/>`;
@@ -103,8 +113,12 @@ function jointXml(item: WorldItem): string | null {
   const offset = joint.origin.map((n, i) => n - item.position[i]) as [number, number, number];
   const axis = [joint.axis[0], -joint.axis[2], joint.axis[1]];
   const range = joint.range.map((n) => n * unit);
+  const spring =
+    joint.stiffness === undefined && joint.springref === undefined
+      ? ''
+      : ` stiffness="${joint.stiffness ?? 0}" springref="${(joint.springref ?? 0) * unit}"`;
 
-  return `<joint name="wj_${safeId(item.id)}" type="${joint.type === 'revolute' ? 'hinge' : 'slide'}" pos="${vec(toMj(offset))}" axis="${vec(axis)}" limited="true" solreflimit="0.004 1" range="${range.join(' ')}" damping="${f(joint.damping)}" frictionloss="${f(joint.frictionloss)}"/>`;
+  return `<joint name="wj_${safeId(item.id)}" type="${joint.type === 'revolute' ? 'hinge' : 'slide'}" pos="${vec(toMj(offset))}" axis="${vec(axis)}" limited="true" solreflimit="0.004 1" solreffriction="0.004 1" solimpfriction="0.99 0.999 0.0001" range="${range.join(' ')}" damping="${f(joint.damping)}" frictionloss="${f(joint.frictionloss)}"${spring}/>`;
 }
 
 export function emitWorld(input: MjcfInput, assetOffset: number): WorldEmit {

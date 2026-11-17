@@ -65,6 +65,11 @@ Every goal and world the Case builder offers, the numbers each goal takes, and e
 | **Hand Off to a Spot** | Two arms with grippers | **Distance**, **Height**, **Radius**, **Time** | The donor grips the raised block alone for 0.2 s, both grip it for 0.2 s, then the recipient grips alone for 0.2 s. The block ends placed and released within **Radius** for the final 0.3 s |
 | **Open a Lid** | An arm with a gripper | **Distance**, **Height**, **Width**, **Depth**, **Travel**, **Weight**, **Joint friction**, **Damping**, **Time** | Signed hinge travel exceeds 80% of **Travel** while the arm touches the handle for 0.2 s |
 | **Pull a Drawer** | An arm with a gripper | The same fixture fields, with **Travel** in millimeters | Signed slide travel exceeds 80% of **Travel** while the arm touches the handle for 0.2 s |
+| **Open a Cupboard**, **Push a Door**, **Operate a Lever**, **Turn a Knob**, **Tip a Hinged Bin** | An arm with a gripper | The same fixture fields, with **Travel** in degrees | Signed hinge travel exceeds 80% of **Travel** during 0.2 s of handle contact |
+| **Press a Spring Button**, **Move a Sliding Gate** | An arm with a gripper | The same fixture fields, with **Travel** in millimeters | Signed slide travel exceeds 80% of **Travel** during 0.2 s of handle contact |
+| **Put Away a Block** | An arm with a gripper | The same fixture fields | Open beyond 80% of **Travel**, lift while gripped, place inside while gripped, then finish released inside with lid travel below 5 degrees |
+
+Fixture fields also include **Lower stop**, **Return spring** and **Rest position**. A saved assembly can replace the default fixture. [Reuse an assembly in Cases](/help/reuse-an-assembly-in-cases) covers capture and the chest task.
 
 On a robot with legs, these goals also fail when the robot falls: its base drops below half its starting height.
 

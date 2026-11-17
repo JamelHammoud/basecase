@@ -57,6 +57,9 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
             ...o.joint,
             origin: place(o.joint.origin),
             range: o.joint.range.map((n) => n * (o.joint!.type === 'prismatic' ? s : 1)) as [number, number],
+            ...(o.joint.springref === undefined
+              ? {}
+              : { springref: o.joint.springref * (o.joint.type === 'prismatic' ? s : 1) }),
           },
         }
       : {}),

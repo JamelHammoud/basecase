@@ -37,6 +37,8 @@ You can save a part or a group of parts to the Library, then add it to any scene
 
 When you save one part, the model gets that part's name and its **Notes**. When you save several parts, the model gets the scene's name. To save every visible part in the scene instead, choose **Save Whole Scene**.
 
+Saving a complete passive assembly also keeps its joints, limits and springs for reuse as a Case fixture. See [Reuse an assembly in Cases](/help/reuse-an-assembly-in-cases).
+
 Saving several parts also keeps an image of the view when you save. You can keep working while Basecase prepares that image.
 
 You can also choose **Save to Library** from a part's right-click menu, or from [[⌘K]].

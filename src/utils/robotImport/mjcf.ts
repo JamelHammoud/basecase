@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { readJointSprings, readJointResistance } from './jointSprings';
 import {
   childrenOf,
   mjAngles,
@@ -116,8 +117,8 @@ function mjJoint(ctx: MjContext, j: Element, link: BodyLink, after: ModelJoint |
   return {
     effort: frc > 0 ? frc : undefined,
     actuation: 'passive',
-    damping: Number(a('damping') ?? 0),
-    frictionloss: Number(a('frictionloss') ?? 0),
+    ...readJointResistance(a),
+    ...readJointSprings(a, type === 'slide' ? (value) => value : ctx.toRad),
     name: j.getAttribute('name') ?? `${link.name}_joint`,
     type: type === 'slide' ? 'prismatic' : 'revolute',
     parent: link.parent,

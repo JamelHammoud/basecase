@@ -1,4 +1,5 @@
-import { CustomModelDefinition, ScenePart } from '../types/robotics';
+import type { CustomModelDefinition, RobotJoint, ScenePart } from '../types/robotics';
+import { placedJoints } from './libraryJoints';
 
 const APP_WRITTEN =
   /^(Saved from (scene \([\w-]+\)|\d+ parts?)|3D model generated via ACP from reference image \(.*\))\.?$/;
@@ -14,10 +15,11 @@ export function modelToParts(
   model: CustomModelDefinition,
   base: [number, number, number],
   makeId: (prefix?: string) => string,
-): { parts: ScenePart[]; missingShapes: number } {
+): { parts: ScenePart[]; joints: RobotJoint[]; missingShapes: number } {
   if (!isSceneModel(model)) {
     return {
       missingShapes: 0,
+      joints: [],
       parts: [
         {
           id: makeId(),
@@ -43,21 +45,34 @@ export function modelToParts(
 
   const group = model.nodes.length > 1 ? { group: { id: makeId('group'), name: model.name } } : {};
   let missingShapes = 0;
+  const ids = new Map<string, string>();
   const parts = model.nodes.map((n): ScenePart => {
+    const id = makeId();
+
+    ids.set(n.id, id);
+
     const position: [number, number, number] = [
-      Math.round((base[0] + n.position[0]) * 10) / 10,
-      Math.round((base[1] + n.position[1]) * 10) / 10,
-      Math.round((base[2] + n.position[2]) * 10) / 10,
+      base[0] + n.position[0],
+      base[1] + n.position[1],
+      base[2] + n.position[2],
     ];
 
-    if (n.part) return { ...n.part, id: makeId(), position, ...group };
+    if (n.part)
+      return {
+        ...structuredClone(n.part),
+        id,
+        position,
+        rotation: [...n.rotation],
+        dimensions: { ...n.dimensions },
+        ...group,
+      };
 
     const kind = n.primitiveKind && n.primitiveKind !== 'cad_part' ? n.primitiveKind : 'box';
 
     if (n.primitiveKind === 'cad_part') missingShapes++;
 
     return {
-      id: makeId(),
+      id,
       name: n.name,
       kind,
       category: 'primitives',
@@ -75,5 +90,5 @@ export function modelToParts(
     };
   });
 
-  return { parts, missingShapes };
+  return { parts, joints: placedJoints(model.joints ?? [], ids, base, makeId), missingShapes };
 }

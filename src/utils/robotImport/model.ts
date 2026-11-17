@@ -28,6 +28,8 @@ export interface ModelJoint {
   actuation?: 'powered' | 'passive';
   damping?: number;
   frictionloss?: number;
+  stiffness?: number;
+  springref?: number;
   effort?: number;
   velocity?: number;
   after?: ModelJoint;

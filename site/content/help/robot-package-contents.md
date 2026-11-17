@@ -44,6 +44,8 @@ The zip unpacks to one folder named `<scene>-robot`. Lengths are in meters and a
 | `launch/display.launch.py` | Starts `robot_state_publisher`, the Joint State Publisher window and RViz on the installed URDF. |
 | `rviz/display.rviz` | The RViz layout the launch file opens: a grid and the robot model. |
 
+The `basecase` joint child keeps passive intent and spring values for Basecase reimport. Other URDF readers may ignore this extension.
+
 ## joint_map.json
 
 | Key | Meaning |

@@ -23,7 +23,7 @@ Let gravity, contact or another link move a robot joint without a motor holding 
 ![The Actuation menu with Powered and Passive choices](/help/make-a-joint-passive/actuation.png)
 
 Choosing **Passive** removes the joint's motor assignments. The joint keeps its motion axis, limits and declared physical resistance.
-The motor parts stay in the scene.
+The motor parts stay in the scene. Declared springs stay passive too.
 
 Simulation records the joint's motion. You can’t command it through live drive or training.
 You can pose it with its slider before starting simulation.

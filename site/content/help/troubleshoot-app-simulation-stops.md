@@ -49,6 +49,12 @@ Other red text under **Simulate** explains why the model can't run. Stop the sim
 
 For a four-bar with a missing crank servo variant, ask the agent to replace that servo with the exact catalog variant you use. For inconsistent or singular joints, repair the joints. In either case, you can also insert the Sketch Path again. See [Simulate a four-bar](/help/simulate-a-four-bar).
 
+## A saved fixture can’t load
+
+Repair the source assembly’s geometry and joints. In the selection’s menu, choose **Save to Library**. Make a new Case with that saved **Fixture**. Existing Cases keep their own fixture copy.
+
+Steps are in [Reuse an assembly in Cases](/help/reuse-an-assembly-in-cases).
+
 ## “This policy was trained on joints this robot no longer has. Train it again.”
 
 You changed the robot's joints after you trained this policy. A policy drives only the joints it learned on, so train it again on the robot as it is now.

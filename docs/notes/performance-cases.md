@@ -2,6 +2,14 @@
 
 Implementation: [Case facts and world geometry](../guide/cases.md#performance-case-facts-and-world-geometry). Shared requirements: [Performance](../guide/performance.md).
 
+## Reusable fixture preparation
+
+Selection capture sends geometry validation, copying and Library assembly serialization to `fixtureCapture.worker.ts`. New Case uses the same worker for fixture previews and commits the prepared result. Metadata controls read dimensions, frames and declared physical values without walking source triangle arrays. Stale worker replies are ignored after a fixture, robot or value change. Repeated unchanged number commits keep the current draft. Nonprimitive collision preparation uses the existing geometry worker and returns bounded hull buffers with transfer ownership.
+
+The generated chore runs for 27 simulated seconds. The successful local browser capture retained 1,368 frames at 50 Hz, totaling 27.36 seconds, using the existing simulation speed setter at four times speed. Source physics and the Case's 20 ms command boundary remain unchanged. The capture also included dev startup and teardown and is not a production interaction benchmark. Large-assembly main-thread serialization and production-frame timings remain unmeasured. No speedup or memory reduction is claimed.
+
+The local changed-file check selected 550 related files. Default concurrency took 184.67 seconds and reported six deadline failures. A four-worker CLI cap took 153.35 seconds and passed 3,710 assertions with one existing skip. These observations concern this shared local host and its Check invocation. Repository and CI configuration, assertions and deadlines were unchanged.
+
 ## Arm discovery retains candidate chains
 
 `robotFit.test.ts` checks inherited and leaf arm tags, first-match ties, untagged fallback, edits and source preservation, alongside shoulder reach and guest binding coverage. A scratch comparison matched complete robot facts against the previous implementation on six fixtures with 10 or 20 four-joint branches, tagging no branch, the first branch or the last branch. For 20 eligible leaves, chain construction falls from 41 to 20 without an early tagged match, or to one when the first leaf is tagged. Measured parent-map reads for the complete fact calculation fall from 9,304 to 9,220 or 9,144 respectively. Gripper discovery and morphology retain their existing work. These are operation counts, without timing assertions or a claim about complete Case startup time.

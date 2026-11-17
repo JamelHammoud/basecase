@@ -45,6 +45,8 @@ Turn the scene into a MuJoCo model and run it on the canvas.
 - **Export ▸ Robot Package** (done, with T4): the MJCF the sim runs, a URDF with its STL meshes, the joint map and the scene's policies in one zip, laid out as a ROS 2 description package that builds with colcon and opens in RViz ([Simulate](guide/simulate.md) §8d).
 - **Done when:** every `ROBOT_PRESET` and the `build-humanoid` bench scene load with no errors, and the model's total mass matches the Weight check.
 
+Reusable household fixtures use the existing Library and New Case workflow. Selected passive assemblies retain geometry, mounted frames, supplied mass and stops. The household matrix includes a composed chest task requiring lid opening, block placement and lid closure. Springs stay passive, and unsupported accelerated models use the existing C MuJoCo fallback. [Cases](guide/cases.md#passive-lid-and-drawer-fixtures) records implementation and current execution evidence. These simulations do not measure physical fit or force.
+
 ### S2. Live sim on the canvas
 - `@mujoco/mujoco` (DeepMind's official WebAssembly bindings, single-threaded build, so no special headers) runs in a Web Worker.
 - The worker streams body poses into `Viewport3D.setPose`, the path animation playback already uses. The sim never edits parts.

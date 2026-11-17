@@ -2,6 +2,14 @@
 
 Current coverage: [owning guide](../guide/simulate.md#testing-coverage). Shared policy and harness contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
 
+## Reusable fixture physics
+
+`src/cases/fixtureSprings.test.ts` checks exact passive restoring force and return to rest in WASM MuJoCo for hinges and slides. `src/cases/fixtureLive.test.ts` uses the same model, real live drive, recorder and contract scorer at several rendering batch sizes. `stepScriptedCase` preserves command delivery at the 20 ms Case boundary instead of the render-loop boundary. These assertions passed locally on 16 November 2026. They do not replace native parity.
+
+`src/cases/fixtureCollision.test.ts` requires worker-prepared rotated imported geometry to emit a mesh. It leaves source arrays unchanged. The existing convex decomposition caps remain 64 hulls per source mesh and 96 vertices per hull. Its collision representation stays transient and uses the same source ScenePart stored in the Case.
+
+`forge/crates/forge-train/tests/closed_linkages.rs` also declares passive fixture spring return on native C MuJoCo and requires SIMD, Metal and WGSL selections to use the existing spring refusal and native fallback. It adds no new workflow job. The existing packaged-app native test target runs it on macOS and Windows after building Forge. This session did not run that native target. The fast WASM suite and existing Forge spring refusal remain separate evidence. There is no accelerated spring support or physical force measurement claim.
+
 ## Simulation palette commands
 
 The separate browser test was removed under [#1144](https://github.com/JamelHammoud/basecase/issues/1144) after taking 41.374 s on Windows and 4.452 s on Linux in run 43739315274. That log does not establish which browser or startup stage caused the delay.

@@ -38,6 +38,8 @@ MuJoCo is the physics engine that robotics labs use to test robots before they b
 
 You can also compare shared robots in [Leagues](/help/replay-a-league). Each League runs fixed robot revisions on one pinned Case. Frozen standings come from CI, and browser replays let you inspect a measured seed without changing the standings.
 
+You can also [reuse an assembly in Cases](/help/reuse-an-assembly-in-cases) to test a robot opening a chest, placing a block and closing the lid.
+
 ## How the stages loop
 
 If something fails in Engineer, Simulate or Train, you go back to Design. For example, if a knee servo has to hold more than 60% of its stall torque while the robot stands on one leg, the **Servo torque** check fails in the **Build** tab. To fix it, go back to Design and choose a stronger servo.

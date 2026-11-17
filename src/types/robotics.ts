@@ -122,6 +122,8 @@ export interface CustomModelDefinition {
   defaultColor: string;
   mechanicalTag: string;
   nodes: CustomModelSubNode[];
+  joints?: RobotJoint[];
+  caseFixture?: true;
 }
 
 export interface ScenePart extends PartRelations, BooleanFields, SheetFields {

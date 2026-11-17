@@ -149,3 +149,13 @@ For 300 and 600 events in each of two viewports, this removes 2,400 and 4,800 te
 `src/three/viewport/wheel.test.ts` compares exact camera and target coordinates with the previous vector calculation after every event. It varies rotation, scale, distance and positive, negative and zero deltas across independent viewports, including zero scales that exercise the singular-matrix fallback. It covers Pan Scroll and Shift-scroll, unchanged camera matrices, one orbit update per event, default prevention and listener removal. A spy verifies that panning no longer calls `extractBasis`. Browser event delivery, orbit integration and GPU rendering remain outside this focused test. No retry, timeout or quarantine changes apply.
 
 No user action, label or visible state changes, so existing navigation help and screenshots remain accurate.
+
+## Sculpt prepares source normals only when needed
+
+Whole-app search found one shared stroke engine in `three/sculptStroke.ts`. Both stroke start and drag call it from `viewport/sculptInput.ts`. Inflate and Carve need source vertex normals. Flatten, Smooth, Pinch and Grab already skipped reading them, but still generated them when missing. They now skip that preparation as well. Every brush still recomputes final normals after all mirrored strokes.
+
+On November 17, 2026, `sculptStroke.test.ts` compares complete position, normal and index buffers with explicitly prepared source normals. Its six brush cases each cover indexed and unindexed 16 by 12 spheres, inversion on and off, and both mirrored regions. A restored spy checks that missing-normal Flatten, Smooth, Pinch and Grab call `computeVertexNormals` once instead of twice. Inflate and Carve retain both calls. This removes one complete face accumulation and vertex normalization pass for the four brushes when source normals are absent.
+
+These are asserted operation counts, not timings or a claim about ordinary pointer latency. Existing sculpt-data reconstruction already supplies normals, so that path saves no pass. Existing fixtures retain displacement, falloff, untouched vertices, input preservation and attribute-read coverage. No labels, actions or visible output change. [Sculpt a part](../../site/content/help/sculpt-a-part.md) remains accurate, so no help edit, screenshot or browser-test change applies. No timeout, retry or quarantine changes apply.
+
+Scoped `check:changed` validation passed formatting, lint, docs, site copy for 323 pages and types. Its related selection passed 248 files and 1,743 tests, with one file and test skipped by existing configuration, in 81.28 seconds. The log is `scratch/check-sculpt-normals.log`. Copy diff net is zero.

@@ -229,17 +229,24 @@ export function resolveSupport(value: unknown, part: ScenePart, soup: ArrayLike<
   };
 }
 
+const projectOffset = (x: number, y: number, z: number, axis: Vec3) => x * axis[0] + y * axis[1] + z * axis[2];
+
 function pointWithinFace(face: Face, point: Vec3) {
-  const local = new THREE.Vector3(...point).sub(new THREE.Vector3(...face.plane.origin));
-  const projected: Vec2 = [
-    local.dot(new THREE.Vector3(...face.plane.u)),
-    local.dot(new THREE.Vector3(...face.plane.v)),
-  ];
-  const [min, max] = [face.edges[0][0], face.edges[2][0]];
+  const { origin, u, v, n } = face.plane;
+  const x = point[0] - origin[0];
+  const y = point[1] - origin[1];
+  const z = point[2] - origin[2];
+  const projectedU = projectOffset(x, y, z, u);
+  const projectedV = projectOffset(x, y, z, v);
+  const min = face.edges[0][0];
+  const max = face.edges[2][0];
 
   return (
-    Math.abs(local.dot(new THREE.Vector3(...face.plane.n))) <= EPS &&
-    projected.every((v, i) => v >= min[i] - EPS && v <= max[i] + EPS)
+    Math.abs(projectOffset(x, y, z, n)) <= EPS &&
+    projectedU >= min[0] - EPS &&
+    projectedU <= max[0] + EPS &&
+    projectedV >= min[1] - EPS &&
+    projectedV <= max[1] + EPS
   );
 }
 

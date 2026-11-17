@@ -38,7 +38,7 @@ covers:
   - electron/library/datasetStore.mjs
 hub_open_a_try_from_any_scene_order: 30
 hub_open_a_try_from_any_scene: |
-  In a dataset, saved versions show their frozen samples. If a saved version is selected, choose **Working Dataset** in **Dataset version** before opening or editing a try. Saved versions don't open the try timeline or its right-click menu.
+  In a dataset, saved versions show their frozen samples. If a saved version is selected, choose **Working Dataset** in **Dataset version** before opening or editing a try from its tile. Saved try tiles don't open the timeline or their right-click menu.
 ---
 
 You can gather tries from any scene into a named dataset, then export it, publish it or train a policy on it.
@@ -73,7 +73,7 @@ To gather only selected tries, hold [[⌘]] or [[⇧]] as you select them. Right
 
 Above its tries, the dataset shows their total running time. After saving a version, use **Dataset version** to choose **Working Dataset** or a saved version. If it also holds images, it shows their image and class counts and an **Images** section. Datasets saved before class counts were added show only the image count.
 
-In **Working Dataset**, click **Label Objects** under an image to edit its object labels. See [Label objects in camera frames](/help/label-objects-in-camera-frames). Saved versions keep their image labels and don't open the label editor.
+In **Working Dataset**, click **Label Objects** under an image to edit its object labels. See [Label objects in camera frames](/help/label-objects-in-camera-frames). Saved image tiles keep their frozen labels read-only. A [vision model comparison](/help/inspect-vision-comparisons) can open the matching current image for editing while keeping its historical labels unchanged.
 
 ![Touch a Point open as a dataset, with its total time, Export Dataset, Publish to Hugging Face and Train from Tries](/help/make-a-dataset-from-tries/dataset.png)
 

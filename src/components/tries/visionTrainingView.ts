@@ -1,3 +1,5 @@
+import type { InspectionNavigation } from '../../workspace/visionInspectionNavigation';
+import type { VisionInspectionReports } from './useVisionInspection';
 import type { VisionKind } from '../../vision/manifest';
 
 export type TrainingTask = Exclude<VisionKind, 'depth'>;
@@ -13,6 +15,8 @@ export interface VisionAttemptView {
   id: string;
   at: string;
   retained: boolean;
+  inspection?: VisionInspectionReports;
+  navigation?: InspectionNavigation;
   active?: boolean;
   targets?: { id: string; name: string }[];
   reason: string;
@@ -23,6 +27,7 @@ export interface VisionAttemptView {
 }
 
 export interface VisionTrainingView {
+  inspectionContext?: string;
   task: TrainingTask;
   setTask: (task: TrainingTask) => void;
   attempts: VisionAttemptView[];

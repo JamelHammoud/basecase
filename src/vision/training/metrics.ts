@@ -1,30 +1,17 @@
+import { canonicalTest, sampleKey } from './evaluationIdentity';
 import { sha256 } from '../../cases/tries';
 import { frameHash, type FrameSet, type TrainingFrame } from '../frameSet';
 import type { FrozenImageSample } from '../../datasets/snapshotImages';
 import type { TrainingEvaluation, TrainingEvaluationInput, TrainingKind } from './types';
 import { classificationMetrics } from './metricsClassification';
+import { buildEvidence, checkEvidenceFrameCount } from './evidence';
+import type { ImageDiagnostics } from './evidenceTypes';
 import { objectMetrics, objectPrimary, type EvaluatedFrame } from './metricsObjects';
 import { trainingMetrics, validateEvaluationInput, validatePrediction } from './metricsValidation';
 
 export const defaultTrainingMetric = (kind: TrainingKind) => trainingMetrics[kind];
 
-const sampleKey = (sample: { frameSetId: string; frameId: string }) => `${sample.frameSetId}:${sample.frameId}`;
-
-export function canonicalTest(samples: FrozenImageSample[]): string {
-  return JSON.stringify(
-    [...samples]
-      .sort((a, b) => (sampleKey(a) < sampleKey(b) ? -1 : Number(sampleKey(a) > sampleKey(b))))
-      .map((sample) => ({
-        frameSetId: sample.frameSetId,
-        frameId: sample.frameId,
-        source: sample.source,
-        hash: sample.hash,
-        content: sample.content,
-        split: sample.split,
-        explicit: sample.explicit,
-      })),
-  );
-}
+export { canonicalTest } from './evaluationIdentity';
 
 function testSamples(input: TrainingEvaluationInput): FrozenImageSample[] {
   const realSources = new Set(input.realSourceIds);
@@ -103,12 +90,20 @@ export async function evaluateTraining(input: TrainingEvaluationInput): Promise<
   validateEvaluationInput(input);
 
   const realTest = testSamples(input);
+
+  checkEvidenceFrameCount(realTest.length);
+
   const rows = await evaluatedRows(input, realTest);
+  const diagnostics: ImageDiagnostics[][] = rows.map(() => []);
   const perClass =
-    input.task.kind === 'classify' ? classificationMetrics(rows, input.task) : objectMetrics(rows, input.task);
+    input.task.kind === 'classify'
+      ? classificationMetrics(rows, input.task, diagnostics)
+      : objectMetrics(rows, input.task, diagnostics);
   const correct = perClass.reduce((sum, category) => sum + category.truePositive, 0);
   const score =
     input.task.kind === 'classify' ? correct / Math.max(1, rows.length) : objectPrimary(perClass, input.task);
+
+  const testHash = await sha256(canonicalTest(realTest));
 
   return {
     version: 1,
@@ -117,7 +112,8 @@ export async function evaluateTraining(input: TrainingEvaluationInput): Promise<
     modelHash: input.modelHash,
     snapshot: structuredClone(input.snapshot),
     realTest,
-    testHash: await sha256(canonicalTest(realTest)),
+    testHash,
+    evidence: await buildEvidence({ input, realTest, testHash, diagnostics }),
     metrics: { primary: rows.length ? score : null, perClass, inference: inferenceCost(input) },
   };
 }

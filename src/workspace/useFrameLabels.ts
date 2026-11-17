@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { StoredTry } from '../cases/tryFile';
+import { readFrameLabelSet, type OriginalImageExpectation } from './visionInspectionOriginal';
 import { loadFrameSet } from '../vision/frameSetStore';
 import type { FrameSet } from '../vision/frameSet';
 import { extractTryFrames } from '../vision/tryFramesClient';
@@ -120,19 +121,23 @@ export function useFrameLabels({ sceneFor, showDataset, showToast }: FrameLabels
       requests.current.invalidate();
       setEditing(null);
     },
-    open: (id: string, frameId?: string) => {
+    open: (id: string, frameId?: string, expected?: OriginalImageExpectation) => {
       requests.current.invalidate();
 
-      void requests.current
-        .read(queue.current, () => loadFrameSet(id))
+      return requests.current
+        .read(queue.current, () => readFrameLabelSet({ id, frameId, expected }))
         .then((set) => {
-          if (set === undefined) return;
+          if (set === undefined || (expected && !expected.current())) return;
 
           if (!set) throw new Error('The saved frames could not be opened.');
 
           setEditing({ set, frameId });
         })
-        .catch(failed);
+        .catch((error: unknown) => {
+          if (expected) throw error;
+
+          failed(error);
+        });
     },
     change: (set: FrameSet, previous: FrameSet) => {
       requests.current.invalidate();

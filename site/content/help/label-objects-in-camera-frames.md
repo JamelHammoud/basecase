@@ -70,4 +70,6 @@ Select a label and choose **Track Forward** to carry it into the next 30 frames 
 
 **See Objects** fills the set with detector suggestions while keeping manual and accepted labels. To accept the current frame’s suggestions together, choose **Select label**, click empty space in the image and click **Accept Labels**. The agent’s labels also stay unreviewed.
 
-Open the saved dataset in **Library** and click **Label Objects** under an image to edit it again. If a saved version is selected, choose **Working Dataset** in **Dataset version** first. [Export Dataset](/help/export-a-lerobot-dataset) includes the image labels as COCO and YOLO packages.
+Open the saved dataset in **Library** and click **Label Objects** under an image to edit it again. To use **Label Objects** from a saved version, choose **Working Dataset** in **Dataset version** first. [Export Dataset](/help/export-a-lerobot-dataset) includes the image labels as COCO and YOLO packages.
+
+From a [vision model comparison](/help/inspect-vision-comparisons), click **Open Original Image** to edit the matching current image. Changed or missing originals stay unavailable. Edits leave the comparison's frozen labels unchanged.

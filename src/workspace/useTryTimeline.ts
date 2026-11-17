@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { timelineLanes } from '../cases/timelineLanes';
 import type { TryRecord } from '../cases/tries';
-import { loadManifests, loadRecording } from '../cases/tryStore';
+import { timelineSourceCurrent, readTimelineSource, type TimelineSource } from './tryTimelineSource';
 import type { SeedReplay } from '../cases/seedReplay';
 import { useVisionScope } from '../cameras/visionScope';
 import type { Simulation } from '../sim/useSimulation';
@@ -67,14 +67,12 @@ export function useTryTimeline(options: TimelineOptions) {
 
   useEffect(() => () => closeRecordedCameras(), [closeRecordedCameras]);
 
-  const show = async (record: TryRecord, at?: number, seeded?: SeedReplay, current = () => true) => {
+  const show = async (record: TryRecord, at?: number, seeded?: SeedReplay, source: TimelineSource = () => true) => {
+    const current = timelineSourceCurrent(source);
     const previous = pending.current?.current() ? pending.current.origin : opened;
     const ticket = ++opening.current;
     const valid = () => ticket === opening.current && current();
-    const [recording, manifests] = await Promise.all([
-      seeded?.recording ?? loadRecording(record.id),
-      loadManifests([record.id]),
-    ]);
+    const [recording, manifests] = await readTimelineSource(record.id, seeded, source);
 
     if (!recording || !valid()) return false;
 

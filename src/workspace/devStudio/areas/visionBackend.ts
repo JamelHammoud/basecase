@@ -1,3 +1,7 @@
+import { seedDatasetTry } from '../datasetFixture';
+import { updateManifests } from '../../../cases/tryStore';
+import { loadFrameSet } from '../../../vision/frameSetStore';
+import { saveLabelFrames } from '../../frameLabelStorage';
 import { newDataset } from '../../../datasets/datasetFile';
 import { loadDatasets, saveDataset } from '../../../datasets/datasetStore';
 import { saveDatasetContent } from '../../../datasets/datasetStore/content';
@@ -7,6 +11,7 @@ import type { VisionManifest } from '../../../vision/manifest';
 import { retainedVisionBindings } from '../../../vision/training/modelBindings';
 import {
   loadVisionRuns,
+  trainVisionDataset,
   setVisionTrainingBackendTestPort,
   setVisionTrainingTestPort,
 } from '../../../vision/training/service';
@@ -24,7 +29,7 @@ const manifest = (model: VisionManifest['model'], classes: string[]): VisionMani
 });
 
 export default function visionBackendStudio(studio: Studio) {
-  return {
+  const controls = {
     configureVisionBackend: async (input: { baseline: number[]; candidate: number[] }) => {
       const baseline = new Uint8Array(input.baseline);
       const candidate = new Uint8Array(input.candidate);
@@ -74,6 +79,43 @@ export default function visionBackendStudio(studio: Studio) {
 
       return dataset;
     },
+    prepareVisionInspection: async (count = 1) => {
+      const dataset = await controls.seedVisionBackendDataset();
+      const { core } = studio();
+      const stored = await seedDatasetTry(
+        await core.simTraining.sim.buildModel(),
+        core.scene.sceneId,
+        'vision-source-test',
+      );
+
+      await updateManifests([{ ...stored, source: 'operate', split: 'test' }]);
+
+      const set = (await loadFrameSet('vision-real-frames'))!;
+      const frame = set.frames.find((entry) => entry.id === 'source-test')!;
+
+      frame.origin = { tryId: stored.id, frame: 6, seconds: 0.12 };
+      set.frames.push(
+        ...Array.from({ length: count - 1 }, (_, index) => ({
+          ...structuredClone(frame),
+          id: `source-test-${index + 1}`,
+        })),
+      );
+      await saveLabelFrames(set);
+
+      const latest = (await loadDatasets()).find((entry) => entry.id === dataset.id)!;
+
+      latest.imageMembers = latest.imageMembers?.map((member) => ({
+        ...member,
+        frameIds: set.frames.map((entry) => entry.id),
+      }));
+      await saveDataset(latest);
+
+      const run = await trainVisionDataset(latest, 'detect', { limits: { maxInferenceMs: 60000 } });
+
+      studio().core.triesView.close();
+
+      return run;
+    },
     visionBackendState: async () => {
       const { core } = studio();
       const datasetId = core.triesView.dataset?.id ?? '';
@@ -86,4 +128,6 @@ export default function visionBackendStudio(studio: Studio) {
       };
     },
   };
+
+  return controls;
 }

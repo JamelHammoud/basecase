@@ -156,6 +156,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const { caseCompare, study } = useWorkspaceStudies({ ...documentContext, ...studyOptions });
 
   return {
+    active,
     versions,
     workspaceId,
     vision: useVisionScope(),

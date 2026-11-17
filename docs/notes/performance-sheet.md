@@ -2,6 +2,16 @@
 
 Implementation: [Sheet manufacturing](../guide/build.md#performance-sheet-manufacturing). Shared requirements: [Performance](../guide/performance.md).
 
+## Imported sheet triangles write directly into their buffer
+
+The whole-app search found one indexed sheet-profile expansion using a temporary three-coordinate array for every corner, in `three/geometryOps.ts`. It now writes those coordinates directly into the final Float32 triangle buffer. Object triangle extraction already writes scalar coordinates and needs no change. CAD coordinate conversion, centering, rounding, index order and buffer ownership remain unchanged.
+
+A local source replay compared the previous and current worker handler bodies with the real CAD converter and sheet detector. Complete triangle buffers and profiles matched for 12 plates varying holes, tilt and 1, 300 or 600 wall subdivisions. Four additional cases covered empty inputs, repeated and out-of-range indices, incomplete triangles, signed zero and nonfinite coordinates. Source positions and indices stayed unchanged for every plate. The hole-free 300- and 600-subdivision fixtures contain 2,404 and 4,804 triangles. Source-derived temporary triple counts fall from 7,212 and 14,412 to zero. The final buffer and CAD conversion arrays remain. These are allocation counts, without measured heap usage, timings or complete detection latency claims.
+
+Replay source, results and logs are `scratch/sheet-expansion.test.ts`, `scratch/sheet-expansion-results.json` and `scratch/sheet-expansion.log`. Existing `detectSheet.test.ts` and `sheetProjection.test.ts` retain permanent coverage of holes, concavity, tilted and rounded geometry, ordering, edits and refusal cases. No permanent test is added for the direct-copy substitution. No timeout, retry or quarantine changes apply. Actions, labels and visible states stay unchanged, so the sheet help article and screenshots remain accurate.
+
+Changed-file validation passed formatting, lint, documentation, site copy for 314 pages and types. Related tests passed 1,494 tests across 218 files, with one skipped file. Three parameterized tests in unchanged `study/visibilityMatrix.test.ts:33` reached their existing 15,000 ms timeout: pan tilt, finger occlusion and inspection arm. The run reported 148.34 seconds. The log is `scratch/check-sheet-expansion.log`. Their cause remains unresolved, and this is not a clean related-test result. No budgets, retries or quarantines changed. Copy accounting is net zero and preflight reports no findings.
+
 ## Sheet closure streams triangle keys
 
 The shared detector's closed-solid check previously made a coordinate array and mapped rounding array for each triangle corner, plus a mapped key list per face. It also copied all edge counts before checking them. The check now formats rounded scalar coordinates directly, counts three edge keys per face and scans the map's values directly. This removes seven temporary arrays per retained triangle and one final count array. The edge map and key strings remain. Rounding, signed-zero string conversion, undirected edge keys and exactly-two incidence validation stay unchanged.

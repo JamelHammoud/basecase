@@ -200,7 +200,9 @@ export const geometryHandlers = {
     for (let i = 0; i < indices.length; i++) {
       const source = indices[i] * 3;
 
-      triangles.set([mesh.positions[source], mesh.positions[source + 1], mesh.positions[source + 2]], i * 3);
+      triangles[i * 3] = mesh.positions[source];
+      triangles[i * 3 + 1] = mesh.positions[source + 1];
+      triangles[i * 3 + 2] = mesh.positions[source + 2];
     }
 
     return reply(detectSheet(triangles));

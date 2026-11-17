@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { mergeGeometries, toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { mergeGeometryParts } from '../mergeGeometryParts';
 import type { FigureKind } from './types';
 
 const SMOOTH_ANGLE = THREE.MathUtils.degToRad(60);
@@ -49,9 +50,11 @@ export function standFigure(geometry: THREE.BufferGeometry, kind: FigureKind): T
 export async function parseFigure(data: ArrayBuffer, kind: FigureKind): Promise<THREE.BufferGeometry> {
   const gltf = await new GLTFLoader().parseAsync(data, '');
   const pieces = meshGeometries(gltf.scene);
-  const merged = mergeGeometries(pieces);
+  const merged = mergeGeometryParts(pieces);
 
-  pieces.forEach((piece) => piece.dispose());
+  for (const piece of pieces) {
+    if (piece !== merged) piece.dispose();
+  }
 
   if (!merged) throw new Error(`The ${kind} figure has no meshes.`);
 

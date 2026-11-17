@@ -18,14 +18,18 @@ export interface MaskBox {
   y1: number;
 }
 
-export function maskBounds({ data, width: w, height: h }: Mask): MaskBox {
+export function maskBounds({ data, width: w, height: h }: Mask, region?: MaskBox): MaskBox {
+  const left = Math.max(0, region?.x0 ?? 0);
+  const right = Math.min(w - 1, region?.x1 ?? w - 1);
+  const top = Math.max(0, region?.y0 ?? 0);
+  const bottom = Math.min(h - 1, region?.y1 ?? h - 1);
   let x0 = w,
     x1 = -1,
     y0 = h,
     y1 = -1;
 
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
+  for (let y = top; y <= bottom; y++)
+    for (let x = left; x <= right; x++) {
       if (!data[y * w + x]) continue;
 
       x0 = Math.min(x0, x);

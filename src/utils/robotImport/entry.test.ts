@@ -133,6 +133,41 @@ describe('chooseEntry', () => {
     expect(await chooseEntry(['arm/urdf/arm.xacro'], kinds({}, { 'arm/urdf/arm.xacro': '<launch/>' }))).toBeNull();
   });
 
+  it('ranks xacro roots before depth and keeps lexical ties after edits', async () => {
+    const texts: Record<string, string> = {
+      'plain.xacro': xacro('other'),
+      'named.xacro': xacro('named'),
+      'urdf/unnamed.xacro': xacro('other'),
+      'pkg/urdf/beta.xacro': xacro('beta'),
+      'pkg/urdf/alpha.xacro': xacro('alpha', ['included.xacro']),
+      'pkg/urdf/included.xacro': xacro('included'),
+      'pkg/deeper/urdf/deep.xacro': xacro('deep'),
+      'urdf/launch.xacro': '<launch/>',
+      'urdf/unreadable.xacro': '',
+    };
+    const paths = Object.keys(texts).reverse();
+    const peek = async (path: string) => texts[path];
+
+    expect(await chooseEntry(paths, peek)).toEqual({ choices: ['pkg/urdf/alpha.xacro', 'pkg/urdf/beta.xacro'] });
+
+    texts['pkg/urdf/beta.xacro'] = xacro('other');
+
+    expect(await chooseEntry(paths, peek)).toEqual({ entry: 'pkg/urdf/alpha.xacro' });
+
+    texts['pkg/urdf/alpha.xacro'] = xacro('other', ['included.xacro', 'deep.xacro']);
+
+    expect(await chooseEntry(paths, peek)).toEqual({ entry: 'urdf/unnamed.xacro' });
+
+    const ordinary = paths.filter((path) => !path.includes('/'));
+
+    expect(await chooseEntry(ordinary, peek)).toEqual({ entry: 'named.xacro' });
+
+    texts['named.xacro'] = xacro('other');
+
+    expect(await chooseEntry(ordinary, peek)).toEqual({ choices: ['named.xacro', 'plain.xacro'] });
+    expect(paths).toEqual(Object.keys(texts).reverse());
+  });
+
   it('finds nothing in a folder without a description', async () => {
     expect(await chooseEntry(['notes/readme.md', 'pkg/package.xml'], mjcfIn([]))).toBeNull();
   });

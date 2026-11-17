@@ -139,11 +139,10 @@ export function isRestPose(pose: RobotPoseState | null | undefined): boolean {
   return Object.values(pose.values).every((v) => Math.abs(v) < 1e-6);
 }
 
-function isIdentity(m: THREE.Matrix4) {
-  const e = m.elements;
-  const id = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
-  return e.every((v, i) => Math.abs(v - id[i]) < 1e-9);
+function isIdentity(m: THREE.Matrix4) {
+  return m.elements.every((v, i) => Math.abs(v - IDENTITY[i]) < 1e-9);
 }
 
 export function poseDeltas(
@@ -156,11 +155,21 @@ export function poseDeltas(
   if (!pose || (isRestPose(pose) && !rig.joints.length)) return out;
 
   const posed = forwardKinematics(rig, pose);
+  const moving = new Map<THREE.Matrix4, boolean>();
 
   for (const id of partIds) {
     const m = partMotion(rig, posed, id);
 
-    if (m && !isIdentity(m)) out.set(id, m);
+    if (!m) continue;
+
+    let changed = moving.get(m);
+
+    if (changed === undefined) {
+      changed = !isIdentity(m);
+      moving.set(m, changed);
+    }
+
+    if (changed) out.set(id, m);
   }
 
   return out;

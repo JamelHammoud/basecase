@@ -65,7 +65,7 @@ On macOS arm64 with Node 26.13.0, the existing 48-ray, seed-3 outline fixture at
 
 ## Photo regions copy contiguous rows
 
-`cropMask.test.ts` compares the previous pixel loop across 90 regions on five mask shapes, including fractional bounds, clipped and reversed regions, nonfinite bounds, zero dimensions, nonbinary pixels and offset buffer views. It also checks incomplete buffers, unchanged sources, edits and independent outputs. Existing `outlineTrace.test.ts` and `photoScale.test.ts` exercise tracing and known-part scaling through the shared cropper.
+`cropMask.test.ts` compares the previous pixel loop across 90 regions on five mask shapes, including fractional bounds, clipped and reversed regions, nonfinite bounds, zero dimensions, nonbinary pixels and offset buffer views. It also checks incomplete buffers, unchanged sources, edits and independent outputs. Existing `outlineTrace.test.ts` exercises tracing through the cropper. Photo scaling now measures its region directly, as recorded below.
 
 On macOS arm64 with Node 26.13.0, a scratch comparison cropped the middle 80% of each axis of deterministic nonbinary masks. Each implementation had three warmup batches and eleven alternating measured batches of twenty crops. Complete results matched before timing. Median milliseconds per crop were:
 
@@ -93,3 +93,19 @@ On macOS arm64, Apple M5 Pro and Node 26.13.0, a cross-shaped mask used a seven-
 | 256 × 256 | 62,001 | 0 | 2.92770 | 2.02576 |
 
 Four warmup batches preceded fifteen alternating measured batches of thirty calls per implementation. Allocation counting ran separately from timing. The scalar stack and visited set remain allocated per corner. These shared-host timings measure corner-radius estimation alone, without a CI timing assertion or a claim about complete comparison time. The temporary comparison and output live in `scratch/cornerBench.test.ts` and `scratch/cornerBench.json` during implementation and are not committed.
+
+
+## Photo scaling measures regional bounds directly
+
+Repository searches found one `maskBounds(cropMask(...))` path, in `photoScale.ts`. The shared bounds helper now accepts inclusive pixel limits. Photo scaling rounds its normalized region as the cropper does, then measures foreground directly in the source. It removes one full-size Uint8 buffer and replaces the cropped full-image bounds scan with a regional scan. Outline tracing still needs cropped pixels and retains its cropper.
+
+`maskBounds.test.ts` compares 130 regional measurements against cropped masks across four shapes and an incomplete buffer. Cases include empty and nonbinary masks, clipping, reversed and nonfinite regions, offset views and source edits. Direct assertions cover inclusive single-column limits, full-mask bounds and the empty-region sentinel. `photoScale.test.ts` covers both axes, empty subjects and whole-robot dimensions from a known servo width.
+
+On macOS arm64, Apple M5 Pro and Node 26.13.0, a central rectangular subject occupied half of each image axis. The selection covered the middle 20% of each axis. Complete scale results matched the previous crop-based implementation. Four warmup batches preceded fifteen alternating measured batches of twenty complete scale calls per implementation.
+
+| Image | Removed buffer bytes per call | Regional pixels | Median ms before | After |
+| --- | --- | --- | --- | --- |
+| 300 × 400 | 120,000 | 4,800 | 0.25526 | 0.17837 |
+| 1568 × 1568 | 2,458,624 | 98,596 | 4.83568 | 3.52247 |
+
+Both versions retain the whole-subject scan. The baseline uses the previous scale implementation and cropper with the current full-mask bounds helper. These shared-host measurements cover scale calculation alone, without CI timing assertions or a claim about complete photo-tool latency. The temporary comparison and results live in `scratch/photoScaleBench.mjs` and `scratch/photoScaleBench.json` during implementation.

@@ -49,3 +49,7 @@ Component and variant `supplierIdentity` records are optional and separate from 
 `add_sourced_item` accepts the optional supplier record. Sourced persistence bounds its text, permits only HTTPS provenance and keeps a positive finite conversion or leaves it unknown. Replacing the product URL without supplying a new identity drops the old supplier record. The BOM reads the original sourced record, preserving provenance without reconstructing it from the runtime display spec. Purchase corrections override the whole identity in the existing price sheet. Older catalog, sourced and purchase records remain readable without new fields.
 
 `utils/purchaseIdentity.test.ts` checks exact variants, descriptive family suppression, sourced packaging and provenance and purchase overrides. Backend sourced and purchase tests check persisted identities. The complete spreadsheet purchasing matrix is documented in [Build](build.md#supplier-spreadsheet-handoff), with [evidence](../notes/testing-build.md#supplier-spreadsheet-handoff).
+
+## Component geometry preparation
+
+Catalog component edge preparation retains a single edge geometry directly, avoiding a redundant merge copy. Multiple edge geometries still merge in source order. `three/mergeGeometryParts.test.ts` compares positions, normals, materials, edges and sizes with the former pipeline for one and three meshes and empty inputs. [Shared preparation contract](canvas.md#performance-mesh-preparation).

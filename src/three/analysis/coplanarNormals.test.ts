@@ -102,7 +102,7 @@ describe('coplanar contact normals', () => {
 
     const originalCenters = centers.slice();
 
-    const faces = vi.spyOn(source, 'faces', 'get').mockReturnValue({ centers, normals, areas });
+    const faces = vi.spyOn(source, 'faces', 'get').mockReturnValue({ centers, normals, areas, surfaceArea: count });
 
     expect(source.bvh).toBeDefined();
     expect(target.bvh).toBeDefined();

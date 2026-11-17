@@ -91,6 +91,7 @@ describe('CAD crease edges', () => {
 
     expect(creaseEdgesOnly([...edge, ...reverse], positions, faces)).toEqual([...edge, ...reverse]);
     expect(normals).toHaveBeenCalledTimes(2);
+    expect(new Set(normals.mock.calls.map(([target]) => target)).size).toBe(1);
   });
 
   it('does no mesh work without a complete requested segment', () => {
@@ -172,4 +173,17 @@ describe('CAD crease edges', () => {
     expect(normals).toHaveBeenCalledTimes(2);
     expect(positions).toEqual(counted);
   });
+});
+
+it.each([300, 600])('retains a non-manifold edge shared by %s faces without retaining face normals', (count) => {
+  const positions = folded(0);
+  const faces: number[] = [];
+
+  for (let i = 0; i < count; i++) faces.push(...indices.slice((i % 2) * 3, (i % 2) * 3 + 3));
+
+  const normals = vi.spyOn(THREE.Triangle.prototype, 'getNormal');
+
+  expect(creaseEdgesOnly([...edge, ...reverse, ...edge], positions, faces)).toEqual([...edge, ...reverse, ...edge]);
+  expect(normals).toHaveBeenCalledTimes(count);
+  expect(new Set(normals.mock.calls.map(([target]) => target)).size).toBe(1);
 });

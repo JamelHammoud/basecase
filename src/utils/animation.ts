@@ -19,13 +19,15 @@ const lerp = (a: number, b: number, u: number) => a + (b - a) * u;
 
 type Blend = (p0: number, p1: number, p2: number, p3: number) => number;
 
-const blendAt =
-  (u: number, smooth: boolean): Blend =>
-  (p0, p1, p2, p3) =>
-    smooth
-      ? 0.5 *
-        (2 * p1 + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u)
-      : lerp(p1, p2, u);
+function blendAt(u: number, smooth: boolean): Blend {
+  if (!smooth) return (_p0, p1, p2) => lerp(p1, p2, u);
+
+  const u2 = u * u;
+  const u3 = u2 * u;
+
+  return (p0, p1, p2, p3) =>
+    0.5 * (2 * p1 + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u2 + (-p0 + 3 * p1 - 3 * p2 + p3) * u3);
+}
 
 const D2R = Math.PI / 180;
 const quatOf = (r?: V3) =>

@@ -591,6 +591,15 @@ On November 16, 2026, `scratch/linkage-parity.test.ts` captured complete builds 
 
 The actions and visible states in the linkage help articles remain unchanged. No help or screenshot update is needed for this internal allocation reduction.
 
+## Smooth animation shares span time powers
+
+A whole-app search for four-point interpolation and cubic time expressions found one Catmull–Rom animation sampler, in `utils/animation.ts`. Pose playback, simulation controllers, motion references and agent pose checks share it. Each smooth sample now calculates squared and cubed normalized span time once. Joint channels and the three root-position axes reuse those two scalars. The linear blend takes an early return without either calculation.
+
+For C interpolated scalar channels, the quadratic and cubic terms previously used 5C multiplications by time. They now use 2C + 2, removing 3C - 2 multiplications. A 64-joint clip with a translated root has 67 scalar channels, reducing these multiplications from 335 to 136 per sample. These are source-level operation counts, not timings or a claim about complete playback latency. Reassociation can change floating-point rounding, while support frames, sparse defaults, clamping, loops and quaternion root rotation remain unchanged.
+
+`animationInterpolation.test.ts` compares 64 nonlinear joint channels and three root axes against the preceding polynomial at seven span times, before and after an endpoint edit, within nine decimal places. It checks source preservation too. Existing animation and time-sampling tests retain sparse-channel, loop-seam, clamping and root-rotation coverage. No browser flow, timeout, retry or quarantine changes apply.
+
+Final changed-file validation passed formatting, lint, documentation, site copy for 314 pages, types and 259 related test files with 1,991 passing tests and one existing skip. The related-test run took 101.49 seconds. `node tools/copy-diff.mjs` reported net zero strings. Preflight flagged the unchanged Animate a robot and Joints and kinematics help articles for inspection. Their steps, labels and screenshots still hold because only scalar interpolation arithmetic changed.
 
 ## Xacro entry selection scores each root once
 

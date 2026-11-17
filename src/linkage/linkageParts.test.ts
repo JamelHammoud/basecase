@@ -66,4 +66,18 @@ describe.each([
     expect(bars.map((p) => p.name)).toEqual(['Ground', 'Crank', 'Coupler', 'Rocker']);
     expect(bars.every((p) => p.cad!.pending && p.cad!.code.includes('four_bar(40, 20, 50, 50, theta = 40'))).toBe(true);
   });
+
+  it('keeps bar rotations independent across bars and later insertions', () => {
+    const first = linkageParts(SOLUTION, plane, 'first');
+    const bars = first.parts.filter((p) => p.cad);
+    const rotation = [...bars[0].rotation];
+
+    expect(bars.map((p) => p.rotation)).toEqual(bars.map(() => rotation));
+    expect(new Set(bars.map((p) => p.rotation)).size).toBe(4);
+
+    bars[0].rotation[0] += 10;
+
+    expect(bars.slice(1).map((p) => p.rotation)).toEqual(bars.slice(1).map(() => rotation));
+    expect(linkageParts(SOLUTION, plane, 'later').parts[0].rotation).toEqual(rotation);
+  });
 });

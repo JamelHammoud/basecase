@@ -33,6 +33,14 @@ The remaining analysis calls belong to outline simplification. The remaining sil
 
 On macOS arm64, Apple M5 Pro and Node 26.13.0, a filled 40 × 600 mask sampled at 24 points took median times of 0.03058 ms before and 0.02618 ms after. Five warmup batches preceded 21 alternating measured batches of 1,000 traces. The temporary arrays held 3,000 entries per call before the change. These shared-host measurements cover tracing alone, without a CI timing assertion or a claim about complete photo-tool time. The throwaway comparison is `scratch/outlineComparison.test.ts` during implementation and isn't committed.
 
+## Outline resampling emits rounded points directly
+
+`outlineTrace.ts` now rounds each interpolated coordinate when it emits the sampled point. It removes the temporary unrounded point list and the final mapping pass. For N samples, this removes one outer array and N coordinate-pair arrays, plus N callback invocations. At the tool's 12 to 32 samples, that removes 13 to 33 arrays per trace. The contour ring and cumulative segment lengths remain operation-local allocations. These are allocation counts derived from the code, without timing measurements or a claim about complete tracing latency.
+
+Repository searches covered resampling in outline tracing, Sketch linkage strokes, recorded joints, Case base traces and try-search signatures. Photo-outline tracing is the only path that rounds resampled millimeter coordinate pairs. Other resamplers produce unrounded coordinates or scalar signatures with distinct precision requirements.
+
+The existing `outlineTrace.test.ts` checks exact single-row points, winding, caps, scale, offset, sparse-row bands and source preservation. A scratch comparison matched 3,600 complete results against the previous implementation across 120 generated masks. It used offset buffer views, nonbinary pixels, empty masks, six sample counts from zero to 32, five scales including zero and negative values, and positive and negative offsets. Source storage stayed unchanged. The throwaway comparison is `scratch/outline-rounding.test.ts` during implementation. No interaction or visible output changes, so no help article or browser walkthrough changes.
+
 ## Outline distances propagate one minimum per cell
 
 `targetDistance.test.ts` compares every binary pattern on nine grids through twelve cells, 160 generated masks and later edits, long diagonals, source views, independent outputs and both comparison paths. On empty 300 × 10 and 600 × 10 masks, distance-buffer reads fall from 38,144 and 76,544 to 23,840 and 47,840, with no writes added. These are operation counts without timing assertions or a claim about complete comparison time.

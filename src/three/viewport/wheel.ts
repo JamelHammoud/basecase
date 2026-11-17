@@ -34,15 +34,15 @@ export function zoomCamera(stage: CameraRig, factor: number, limits = VIEWPORT_L
 function pan(stage: CameraRig, e: WheelEvent): void {
   const { camera, orbit } = stage;
   const scale = camera.position.distanceTo(orbit.target) * 0.0016;
-  const right = new THREE.Vector3();
-  const up = new THREE.Vector3();
+  const horizontal = e.deltaX * scale;
+  const vertical = -e.deltaY * scale;
+  const basis = camera.matrix.elements;
+  const x = basis[0] * horizontal + basis[4] * vertical;
+  const y = basis[1] * horizontal + basis[5] * vertical;
+  const z = basis[2] * horizontal + basis[6] * vertical;
 
-  camera.matrix.extractBasis(right, up, new THREE.Vector3());
-
-  const offset = new THREE.Vector3().addScaledVector(right, e.deltaX * scale).addScaledVector(up, -e.deltaY * scale);
-
-  camera.position.add(offset);
-  orbit.target.add(offset);
+  camera.position.set(camera.position.x + x, camera.position.y + y, camera.position.z + z);
+  orbit.target.set(orbit.target.x + x, orbit.target.y + y, orbit.target.z + z);
   orbit.update();
 }
 

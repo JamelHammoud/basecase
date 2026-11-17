@@ -119,3 +119,13 @@ Previously each redraw cloned the key light position for change detection and th
 These are deterministic clone counts and source-derived previous counts, without timings, heap measurements or a complete frame latency claim. The tests use real Three.js cameras and lights with renderer, orbit integration and grid boundaries stubbed. GPU rendering and browser navigation are outside this coverage. No timeout, retry or quarantine changes apply. No user action, label or visible state changes, so help instructions and screenshots remain accurate.
 
 Local `check:changed` validation on November 17, 2026 passed formatting, lint, documentation, site copy, TypeScript and all 12 related tests across six files. Copy diff reports zero added, changed or removed user-facing strings.
+
+## Wheel panning reads camera basis coordinates directly
+
+Whole-app search found one wheel-pan implementation in `three/viewport/wheel.ts`. Pan Scroll and Shift-scroll share it through `listenToWheel`, including studio viewports and part previews. The pan calculation now reads the first two camera-matrix columns directly and adds the scalar offset to the camera and orbit target. It no longer constructs right, up, unused forward and offset vectors. Zoom and orbit paths keep their existing calculations.
+
+For 300 and 600 events in each of two viewports, this removes 2,400 and 4,800 temporary vector constructions. These are source-derived allocation counts, without timing or heap measurements and without a claim about complete interaction latency. No retained workspace is added.
+
+`src/three/viewport/wheel.test.ts` compares exact camera and target coordinates with the previous vector calculation after every event. It varies rotation, scale, distance and positive, negative and zero deltas across independent viewports. It covers Pan Scroll and Shift-scroll, unchanged camera matrices, one orbit update per event, default prevention and listener removal. A spy verifies that panning no longer calls `extractBasis`. Browser event delivery, orbit integration and GPU rendering remain outside this focused test. No retry, timeout or quarantine changes apply.
+
+No user action, label or visible state changes, so existing navigation help and screenshots remain accurate.

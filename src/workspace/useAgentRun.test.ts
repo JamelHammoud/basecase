@@ -67,7 +67,7 @@ it('leaves a failed reply with Retry when durable baseline storage refuses the p
   expect(lanesRef.current[0].messages.at(-1)?.failed).toBe('Disk full');
   expect(flags.busy).toBe(false);
   expect(showToast).toHaveBeenCalledWith('Disk full', { tone: 'error' });
-  expect(finish).toHaveBeenCalledWith('workspace', []);
+  expect(finish).toHaveBeenCalledWith('workspace', [], {});
   expect(endLane).toHaveBeenCalledWith('main');
   expect(clearLane).toHaveBeenCalledWith('main');
 });

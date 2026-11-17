@@ -16,7 +16,7 @@ import { newId } from './helpers';
 import { readinessGate } from './readinessGate';
 import { STOPPED_REASONS } from './liveRuns';
 import type { AgentCursors } from './useAgentCursors';
-import type { AgentLane, QueuedPrompt } from './agentLanes';
+import type { QueuedPrompt } from './agentLanes';
 import type { AgentLanes } from './useAgentLanes';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -58,8 +58,12 @@ async function resumeAgentSession(options: {
   if (resumed?.sessionId) options.setSession(options.id, resumed.sessionId);
 }
 
-function editedParts(lanes: AgentLane[], id: string) {
-  return Object.keys(lanes.find((lane) => lane.id === id)?.edits ?? {});
+async function finishRunVersions(core: WorkspaceCore, lanes: AgentLanes, id: string) {
+  const originals = lanes.lanesRef.current.find((lane) => lane.id === id)?.edits ?? {};
+
+  await core.versions
+    .finish(lanes.keyOf(id), Object.keys(originals), originals)
+    .catch((error: unknown) => core.showToast(errorMessage(error), { tone: 'error' }));
 }
 
 function setLaneBusy(lanes: AgentLanes, id: string, busy: boolean) {
@@ -165,9 +169,7 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
       setMessages(id, markLastAgentFailed(failureReason(error)));
       showToast(errorMessage(error), { tone: 'error' });
     } finally {
-      await core.versions
-        .finish(keyOf(id), editedParts(lanes.lanesRef.current, id))
-        .catch((error: unknown) => showToast(errorMessage(error), { tone: 'error' }));
+      await finishRunVersions(core, lanes, id);
       setBusy(id, false);
       void platformBridge.forgetAcpRun(keyOf(id));
       actors.endLane(id);

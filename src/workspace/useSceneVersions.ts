@@ -1,5 +1,6 @@
 import { restoreWorldAssets } from '../cases/worldAssets';
-import { useRef, useState } from 'react';
+import { useRef, useState, type RefObject } from 'react';
+import { flushSync } from 'react-dom';
 import { openVersionBranch } from '../app/sceneBranches';
 import { useVersionRunActions } from './useVersionRunActions';
 import { useVersionActivity } from './useVersionActivity';
@@ -23,20 +24,36 @@ export interface VersionOptions {
   studio: StudioShared;
 }
 
+function sessionGuard(latest: RefObject<VersionOptions>, generation: RefObject<number>) {
+  const sceneId = latest.current.scene.sceneId;
+  const started = generation.current;
+
+  return () => {
+    if (latest.current.scene.sceneId !== sceneId || generation.current !== started)
+      throw new Error('Open the original scene to change its history.');
+  };
+}
+
 async function persistVersion(
   next: VersionView,
-  design: VersionScene,
+  snapshot: () => VersionScene,
   metadata: { sceneId: string; sceneName: string; chatId?: string },
+  assertCurrent: () => void,
 ) {
   await queueSceneWrite(metadata.sceneId, async () => {
+    assertCurrent();
+
     const json = await sceneJson({
-      ...design,
+      ...snapshot(),
       id: metadata.sceneId,
       name: metadata.sceneName,
       chatId: metadata.chatId,
       history: next.history,
       autosave: true,
     });
+
+    assertCurrent();
+
     const saved = await platformBridge.saveSceneJson(json);
 
     if (!saved) throw new Error('Open the original scene to change its history.');
@@ -81,16 +98,16 @@ export function useSceneVersions(options: VersionOptions) {
     setView(next);
   };
 
-  const persist = (next: VersionView, design: VersionScene) =>
-    persistVersion(next, design, { ...latest.current.scene, chatId: chatIdRef.current });
+  const persist = (next: VersionView) =>
+    persistVersion(
+      next,
+      snapshot,
+      { ...latest.current.scene, chatId: chatIdRef.current },
+      sessionGuard(latest, generation),
+    );
 
   const request = (details: Omit<VersionRequest, 'history' | 'scene'>) => {
-    const sceneId = latest.current.scene.sceneId;
-    const started = generation.current;
-    const assertCurrent = () => {
-      if (latest.current.scene.sceneId !== sceneId || generation.current !== started)
-        throw new Error('Open the original scene to change its history.');
-    };
+    const assertCurrent = sessionGuard(latest, generation);
     const run = async () => {
       assertCurrent();
 
@@ -100,11 +117,11 @@ export function useSceneVersions(options: VersionOptions) {
       assertCurrent();
       rememberHistory(next.history, next.quoted);
 
-      if (details.action !== 'view') await persist(next, next.scene ?? design);
+      if (next.scene) await apply(next.scene, design);
+
+      if (details.action !== 'view') await persist(next);
 
       assertCurrent();
-
-      if (next.scene) await apply(next.scene, design);
 
       publish(next);
 
@@ -125,12 +142,14 @@ export function useSceneVersions(options: VersionOptions) {
     if (scene.sceneId !== sceneId || generation.current !== started || !snapshotMatches(snapshot(), expected))
       throw new Error('The design changed. Compare again.');
 
-    docs.commitVersion(design.parts, design.project, {
-      globalGoal: scene.globalGoal,
-      annotations: annotations.annotations,
+    flushSync(() => {
+      docs.commitVersion(design.parts, design.project, {
+        globalGoal: scene.globalGoal,
+        annotations: annotations.annotations,
+      });
+      scene.setGlobalGoal(design.globalGoal);
+      annotations.reset(design.annotations);
     });
-    scene.setGlobalGoal(design.globalGoal);
-    annotations.reset(design.annotations);
   };
 
   const restore = async (id: string) => {

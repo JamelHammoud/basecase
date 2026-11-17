@@ -1,5 +1,6 @@
 import type { RefObject } from 'react';
 import type { VersionRequest, VersionView } from './versionOperations';
+import type { VersionPartOriginals } from './sceneVersions';
 
 interface RunActions {
   historyRef: RefObject<string | undefined>;
@@ -19,14 +20,15 @@ export function useVersionRunActions({ historyRef, chatIdRef, request }: RunActi
 
       return request({ action: 'begin', run, chatId: chatIdRef.current });
     },
-    finish: (run: string, selected?: string[]) => request({ action: 'finish', run, selected }),
-    finishAll: async (live: string[] = [], owned: Record<string, string[]> = {}) => {
+    finish: (run: string, selected?: string[], originals?: VersionPartOriginals) =>
+      request({ action: 'finish', run, selected, originals }),
+    finishAll: async (live: string[] = [], owned: Record<string, VersionPartOriginals> = {}) => {
       if (!historyRef.current) return;
 
       const current = await request({ action: 'view' });
 
       for (const run of Object.keys(current.activeRuns).filter((key) => !live.includes(key)))
-        await request({ action: 'finish', run, selected: owned[run] });
+        await request({ action: 'finish', run, selected: Object.keys(owned[run] ?? {}), originals: owned[run] });
     },
   };
 }

@@ -85,3 +85,72 @@ it('refuses a restore or merge queued behind a newly started agent baseline', as
   ).rejects.toThrow('Stop the agent');
   expect(readVersionGraph(begun.history).activeRuns).toEqual({ workspace: begun.head });
 });
+
+it('restores the state before a lane first touched each part, preserving edits made after its run baseline', async () => {
+  const initial = versionScene([versionPart('arm', 0), versionPart('replaced', 0)]);
+  const begun = await versionOperation({
+    action: 'begin',
+    scene: JSON.stringify(initial),
+    run: 'workspace',
+    chatId: 'chat-a',
+  });
+  const originals = {
+    arm: versionPart('arm', 20),
+    replaced: null,
+    camera: versionPart('camera', 30),
+  };
+  const edited = versionScene([versionPart('arm', 40), versionPart('replaced', 50), versionPart('body', 60)]);
+  const finished = await versionOperation({
+    action: 'finish',
+    scene: JSON.stringify(edited),
+    history: begun.history,
+    run: 'workspace',
+    selected: Object.keys(originals),
+    originals,
+  });
+  const reopened = await versionOperation({ action: 'view', history: finished.history });
+  const owned = completedEdits(reopened.completedRuns, 'new-workspace', 'chat-a')!;
+  const reverted = await versionOperation({
+    action: 'revert',
+    scene: JSON.stringify(edited),
+    history: reopened.history,
+    run: owned.key,
+    selected: owned.parts,
+  });
+
+  expect(reverted.scene?.parts).toEqual(
+    expect.arrayContaining([versionPart('arm', 20), versionPart('camera', 30), versionPart('body', 60)]),
+  );
+  expect(reverted.scene?.parts).toHaveLength(3);
+  expect(restoreVersion(readVersionGraph(reopened.history), begun.head!)).toEqual(initial);
+
+  const damaged = readVersionGraph(reopened.history);
+
+  damaged.completedRuns![owned.key].originals!.arm = '0'.repeat(64);
+
+  await expect(versionOperation({ action: 'view', history: JSON.stringify(damaged) })).rejects.toThrow('damaged');
+});
+
+it('retains owned changes even when they return the design to its run baseline', async () => {
+  const begun = await versionOperation({ action: 'begin', scene: scene(0), run: 'workspace', chatId: 'chat-a' });
+  const finished = await versionOperation({
+    action: 'finish',
+    scene: scene(0),
+    history: begun.history,
+    run: 'workspace',
+    selected: ['arm'],
+    originals: { arm: versionPart('arm', 20) },
+  });
+  const owned = completedEdits(finished.completedRuns, 'workspace', 'chat-a')!;
+  const reverted = await versionOperation({
+    action: 'revert',
+    scene: scene(0),
+    history: finished.history,
+    run: owned.key,
+    selected: owned.parts,
+  });
+
+  expect(owned.parts).toEqual(['arm']);
+  expect(finished.head).not.toBe(begun.head);
+  expect(reverted.scene?.parts[0].position[0]).toBe(20);
+});

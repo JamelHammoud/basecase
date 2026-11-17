@@ -78,6 +78,8 @@ it('saves and restores a named version through Scene History and retains it afte
     await page.getByRole('button', { name: 'Before camera edit', exact: true }).click();
     await page.getByRole('button', { name: 'Restore', exact: true }).click();
     await expect.poll(() => partCount(page)).toBe(2);
+    await expect.poll(() => page.getByRole('button', { name: 'Restore', exact: true }).isEnabled()).toBe(true);
+    expect(await page.getByRole('dialog', { name: 'Scene history', exact: true }).getByRole('alert').count()).toBe(0);
     await page.reload();
     await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio));
     await expect.poll(() => partCount(page)).toBe(2);

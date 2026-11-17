@@ -152,7 +152,7 @@ export function useVersionComparison(core: WorkspaceCore) {
         throw new Error('The design changed. Compare again.');
 
       await core.versions.apply(result.view.scene, compared.snapshots[0]);
-      await core.versions.persist(result.view, result.view.scene);
+      await core.versions.persist(result.view);
       core.versions.publish(result.view);
       setCompared(null);
     });

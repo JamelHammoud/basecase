@@ -23,7 +23,10 @@ export interface CompletedVersionRun {
   parts?: string[];
   chatId?: string;
   run?: string;
+  originals?: Record<string, string | null>;
 }
+
+export type VersionPartOriginals = Record<string, ScenePart | null>;
 
 export interface VersionGraph {
   format: 1;
@@ -173,6 +176,39 @@ function parseContent(graph: VersionGraph, hash: string): unknown {
   return JSON.parse(json);
 }
 
+export function recordRunOriginals(graph: VersionGraph, originals?: VersionPartOriginals) {
+  const content = { ...graph.content };
+  const recorded = Object.fromEntries(
+    Object.entries(originals ?? {}).map(([id, part]) => {
+      if (part === null) return [id, null];
+
+      if (!validPart(part) || part.id !== id) throw badGraph();
+
+      const block = contentOf(part);
+
+      content[block.hash] = block.json;
+
+      return [id, block.hash];
+    }),
+  );
+
+  return { content, originals: originals === undefined ? undefined : recorded };
+}
+
+export function restoreRunOriginals(graph: VersionGraph, run: CompletedVersionRun): VersionPartOriginals {
+  return Object.fromEntries(
+    Object.entries(run.originals ?? {}).map(([id, hash]) => {
+      if (hash === null) return [id, null];
+
+      const part = parseContent(graph, hash);
+
+      if (!validPart(part) || part.id !== id) throw badGraph();
+
+      return [id, part];
+    }),
+  );
+}
+
 function versionRecord(graph: VersionGraph, hash: string): VersionRecord {
   const raw = parseContent(graph, hash);
 
@@ -311,7 +347,17 @@ function checkedCompletedRuns(graph: VersionGraph) {
     checkedRunParts(run.parts);
     checkedRun(run.chatId);
     checkedRun(run.run);
+    checkedRunOriginals(graph, run);
   }
+}
+
+function checkedRunOriginals(graph: VersionGraph, run: Record<string, unknown>) {
+  if (run.originals === undefined) return;
+
+  if (!recordValue(run.originals)) throw badGraph();
+
+  checkedRunParts(Object.keys(run.originals));
+  restoreRunOriginals(graph, run as unknown as CompletedVersionRun);
 }
 
 function checkedRunParts(value: unknown) {

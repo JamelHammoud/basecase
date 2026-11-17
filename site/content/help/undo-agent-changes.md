@@ -34,7 +34,7 @@ While a Case is running, [[⌘Z]] only steps back through code panel changes, an
 
 1. Under the agent's last reply, click **Revert Changes**.
 
-The parts the run changed go back with their required design dependencies. A conflicting later edit blocks the revert, so it stays untouched.
+Each part returns to its state before the run first changed it. Required design dependencies go back with it. A conflicting later edit blocks the revert, so it stays untouched.
 
 A toast appears that says “Reverted agent changes.” If you change your mind, click **Undo** in the toast.
 

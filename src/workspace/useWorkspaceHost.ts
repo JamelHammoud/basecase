@@ -72,9 +72,7 @@ function useRegisterHandle({ core, agent, autosave }: HandleOptions) {
       agent.controls.stopAll();
       stopped.current = core.versions.finishAll(
         [],
-        Object.fromEntries(
-          agent.lanes.lanesRef.current.map((lane) => [agent.lanes.keyOf(lane.id), Object.keys(lane.edits)]),
-        ),
+        Object.fromEntries(agent.lanes.lanesRef.current.map((lane) => [agent.lanes.keyOf(lane.id), lane.edits])),
       );
     },
     toast: showToast,

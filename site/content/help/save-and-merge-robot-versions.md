@@ -37,7 +37,7 @@ You keep your saved history if you close the tab or restart. During agent runs, 
 
 ## Branch and merge
 
-1. In **Scene History**, select a version.
+1. In **Scene history**, select a version.
 2. Choose **Branch**.
 3. On the new scene tab, edit the robot.
 4. On the original scene tab, right-click and choose **Scene History**.

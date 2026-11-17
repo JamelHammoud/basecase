@@ -2,6 +2,8 @@ import { checkedSceneHistory } from '../../electron/library/sceneHistory.mjs';
 import { compareDesigns, mergeDesigns, unitsOf, type MergeChoice } from './versionMerge';
 import { decodeSceneFile } from '../utils/sceneFile';
 import { reply } from '../utils/workerRpc';
+import { revertEdits } from './runEdits';
+import { canonicalJson } from '../skills/hash';
 import {
   captureVersion,
   emptyVersionGraph,
@@ -12,8 +14,11 @@ import {
   recordFingerprint,
   assertVersionScene,
   assertVersionGraph,
+  recordRunOriginals,
+  restoreRunOriginals,
   type VersionGraph,
   type VersionScene,
+  type VersionPartOriginals,
 } from './sceneVersions';
 
 export interface VersionRequest {
@@ -26,6 +31,7 @@ export interface VersionRequest {
   chatId?: string;
   selected?: string[];
   sceneId?: string;
+  originals?: VersionPartOriginals;
 }
 
 export interface VersionView {
@@ -100,11 +106,13 @@ function readScene(json: string): VersionScene {
   return scene;
 }
 
-function capture(graph: VersionGraph, request: VersionRequest): VersionGraph {
+function sceneFor(request: VersionRequest) {
   if (!request.scene) throw new Error('Save the scene before making a version.');
 
-  const scene = readScene(request.scene);
+  return readScene(request.scene);
+}
 
+function capture(graph: VersionGraph, request: VersionRequest, scene = sceneFor(request)): VersionGraph {
   return captureVersion(graph, scene, {
     label: request.label || 'Version',
     at: new Date().toISOString(),
@@ -113,14 +121,24 @@ function capture(graph: VersionGraph, request: VersionRequest): VersionGraph {
   });
 }
 
+function changedOriginals(scene: VersionScene, originals: VersionRequest['originals']) {
+  const parts = new Map(scene.parts.map((part) => [part.id, part]));
+
+  return Object.entries(originals ?? {}).some(([id, before]) => canonicalJson(before) !== canonicalJson(parts.get(id)));
+}
+
 function finishRun(graph: VersionGraph, request: VersionRequest): VersionGraph {
   const run = request.run!;
   const baseline = graph.activeRuns?.[run];
 
   if (!baseline) return graph;
 
-  const captured = capture(graph, { ...request, label: 'Agent changes' });
-  const changed = captured.versions[captured.head!].record !== graph.versions[baseline].record;
+  const scene = sceneFor(request);
+  const captured = capture(graph, { ...request, label: 'Agent changes' }, scene);
+  const changed =
+    captured.versions[captured.head!].record !== graph.versions[baseline].record ||
+    changedOriginals(scene, request.originals);
+  const originals = recordRunOriginals(captured, request.originals);
   const activeRuns = { ...graph.activeRuns };
 
   delete activeRuns[run];
@@ -133,10 +151,11 @@ function finishRun(graph: VersionGraph, request: VersionRequest): VersionGraph {
       parts: changed ? (request.selected ?? []) : [],
       chatId: graph.versions[baseline].chatId,
       run,
+      originals: originals.originals,
     },
   };
 
-  return { ...(changed ? captured : graph), activeRuns, completedRuns };
+  return { ...(changed ? captured : graph), content: originals.content, activeRuns, completedRuns };
 }
 
 function assertIdle(graph: VersionGraph) {
@@ -191,7 +210,8 @@ async function revertRun(graph: VersionGraph, request: VersionRequest): Promise<
   if (!run || !request.scene) throw new Error('Open Scene History to restore an earlier design.');
 
   const base = restoreVersion(graph, run.after);
-  const theirs = restoreVersion(graph, run.before);
+  const baseline = restoreVersion(graph, run.before);
+  const theirs = { ...baseline, parts: revertEdits(baseline.parts, restoreRunOriginals(graph, run)) };
   const ours = readScene(request.scene);
   const merge = mergeDesigns({ base, ours, theirs, selected: (request.selected ?? []).map((id) => `part:${id}`) });
 

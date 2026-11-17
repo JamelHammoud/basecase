@@ -111,6 +111,9 @@ it('labels the first interior point, preserves duplicate labels and reads later 
 
   expect(routeTopology(points, [box, duplicate])).toEqual(['a:0|z:0']);
   expect(routeTopology(points, [duplicate, box])).toEqual(['a:0|z:0']);
+  expect(
+    routeTopology([...points.slice(0, 3), [50, 50, 50], points[2], ...points.slice(3)], [box, duplicate, box]),
+  ).toEqual(['a:0|z:0|z:0', 'a:0|z:0|z:0']);
   expect(routeTopology(points, [])).toEqual([]);
   expect(routeTopology(points.slice(0, 4), [box])).toEqual([]);
 

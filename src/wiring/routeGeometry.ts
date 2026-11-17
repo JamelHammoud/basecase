@@ -238,9 +238,18 @@ export function routeTopology(points: PortVec[], obstacles: RouteObstacle[]): st
     corners(expanded(box)).map((position, bits) => ({ position, label: `${box.id}:${bits}` })),
   );
 
-  return points.slice(2, -2).flatMap((point) => {
-    const labels = vertices.filter((vertex) => sameCorner(point, vertex.position)).map((vertex) => vertex.label);
+  const topology: string[] = [];
+  const labels: string[] = [];
 
-    return labels.length ? [labels.sort().join('|')] : [];
-  });
+  for (let index = 2; index < points.length - 2; index++) {
+    labels.length = 0;
+
+    for (const vertex of vertices) {
+      if (sameCorner(points[index], vertex.position)) labels.push(vertex.label);
+    }
+
+    if (labels.length) topology.push(labels.sort().join('|'));
+  }
+
+  return topology;
 }

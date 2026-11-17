@@ -2,6 +2,16 @@
 
 Implementation: [Cable routing](../guide/build.md#performance-cable-routing). Shared requirements: [Performance](../guide/performance.md).
 
+## Detour labels share one match buffer
+
+The whole-app search found one `routeTopology` implementation and one production caller in `routeAnalysis.ts`. Both bus and power routes use it for every sampled pose. The matcher now visits interior points directly and retains one label buffer per query. Sorting, duplicate labels, matching tolerance, point order and corner preparation remain unchanged.
+
+For N interior points, the preceding implementation created one point slice, N filtered corner lists, N mapped label lists and N flat-map result lists. The replacement uses one reusable label list and the final output list. For 300 and 600 interior points, that removes 900 and 1,800 temporary arrays, respectively. These are code-derived allocation counts, not timings or a claim about complete wiring-analysis latency. Corner records and sorting work remain.
+
+`routeTopology.test.ts` compares complete output against the preceding implementation across 768 interior points, ordinary and rotated obstacles, axis and diagonal tolerance boundaries, NaN and infinity. Its repeated-corner case places an unmatched point between matches and preserves duplicate labels. Existing tests cover direct-route laziness, later obstacle edits and source preservation.
+
+No action, label or visible state changes. The cable-routing help steps and screenshot remain accurate.
+
 ## Joint sampling gaps accumulate directly
 
 The whole-app search for `routeMotion`, `halves` and adjacent sample-gap calculations found one routing half-gap constructor. Every bus and power route uses its per-joint values through `relativeMotionBound`. Other sample-gap lists, such as bench-log timestamps, serve different calculations.

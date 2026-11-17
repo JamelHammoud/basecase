@@ -20,14 +20,16 @@ const VIEWPORT_LIMITS = { minDistance: MIN_DIST, maxDistance: MAX_DIST };
 
 export function zoomCamera(stage: CameraRig, factor: number, limits = VIEWPORT_LIMITS): void {
   const { camera, orbit } = stage;
-  const offset = camera.position.clone().sub(orbit.target).multiplyScalar(factor);
-  const distance = offset.length();
+  const x = (camera.position.x - orbit.target.x) * factor;
+  const y = (camera.position.y - orbit.target.y) * factor;
+  const z = (camera.position.z - orbit.target.z) * factor;
+  const distance = Math.sqrt(x * x + y * y + z * z);
 
   if (distance < limits.minDistance || distance > limits.maxDistance) {
     return;
   }
 
-  camera.position.copy(orbit.target).add(offset);
+  camera.position.set(orbit.target.x + x, orbit.target.y + y, orbit.target.z + z);
   orbit.update();
 }
 

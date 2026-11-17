@@ -109,7 +109,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON(github.event_name != 'pull_request' && '["ubuntu-latest","windows-latest"]' || '["ubuntu-latest"]') }}
+        include: ${{ fromJSON(github.event_name != 'pull_request' && '[{"os":"ubuntu-latest","shard":"1/1"},{"os":"windows-latest","shard":"1/2"},{"os":"windows-latest","shard":"2/2"}]' || '[{"os":"ubuntu-latest","shard":"1/1"}]') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     defaults:
@@ -142,8 +142,9 @@ jobs:
           fi
       - name: Check types and unit tests
         if: ${{ github.event_name != 'pull_request' }}
-        run: npm run typecheck && npm test
+        run: npm run typecheck && npm test -- --shard ${{ matrix.shard }}
       - name: Compare passive joint physics with native MuJoCo
+        if: ${{ matrix.shard == '1/1' || matrix.shard == '1/2' }}
         run: |
           if [ "${{ github.event_name }}" != 'pull_request' ]; then
             node tools/sim/contactParity.mjs

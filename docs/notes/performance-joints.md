@@ -2,6 +2,18 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## Robot imports collect unique mesh filenames directly
+
+The app-wide search found one mesh-request collector in `utils/robotImport/importRobot.ts`. URDF, MJCF, expanded xacro and converted model imports all reach it through `readModel`. Onshape exports and SimReady visual loading have separate request contracts and do not collect filenames from this model structure.
+
+Previously the collector copied the link list, mapped every link's visuals to geometry arrays, flattened them, filtered mesh geometry, mapped filenames and deduplicated them. It now inserts mesh filenames into a set directly, then builds the existing bounded-concurrency queue. First-occurrence order, exact filename identity, six-task concurrency, parsing, progress messages and failure notes stay unchanged. The set belongs to one import.
+
+For 300 links with five visuals each, four of them meshes sharing two filenames, source-derived array constructions fall from 305 to one. The removed arrays retain 5,700 intermediate references in total: 300 links, 1,500 mapped geometries, 1,500 flattened geometries, 1,200 filtered meshes and 1,200 filenames. Both versions retain the set and two-entry queue. These are allocation counts from the code, not heap measurements or timings. Parsing and geometry preparation costs remain outside this comparison.
+
+`importMeshes.test.ts` runs real URDF folder imports with one and eight links. Each link has two references to one readable STL with different transforms, one box and two references to one missing STL. It checks one STL read, all 36 triangles per link, all imported parts, no movable joints, two progress updates and one missing-file note. Existing archive, GitHub, Hugging Face, xacro and spring round-trip tests cover downstream imports. No user action or visible state changes, so the existing import and troubleshooting help articles remain accurate without replacement screenshots.
+
+The three covered articles were checked against the final collector diff. [Import a robot](../../site/content/help/import-a-robot.md) retains its source-selection steps, menu labels, shelf actions and four screenshots because no entry point or import result changes. [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) retains its joint fields, import guarantees, hierarchy and posing explanations because mesh request collection changes no joint or part ownership. [A robot won't import from a link or folder](../../site/content/help/troubleshoot-app-robot-import-fails.md) retains its refusal messages, missing-file explanation and recovery steps because deduplication, failure notes and partial import behavior are preserved. The latter two articles contain no screenshots. Preflight mechanically flags these unchanged articles, but its instruction expressly allows retaining accurate content. None needs a prose or image edit for this change.
+
 ## MJCF frame traversal appends directly to its output
 
 The whole-app search found one MJCF frame-child traversal in `utils/robotImport/mjcfFrames.ts`. All three importer call sites share it: geometry inside bodies, child bodies and world-root bodies. `skeletonTree.ts` has an unrelated hierarchy method with the same name. No other MJCF frame-child collector needs this change.

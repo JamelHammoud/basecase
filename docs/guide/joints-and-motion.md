@@ -12,6 +12,8 @@ URDF link traversal (`utils/robotImport/urdf.ts`) groups joints by parent once p
 
 Robot mesh loading and Onshape part exports use the shared `electron/eachLimited.mjs` cursor without copying or shifting pending queues. Mesh loading keeps six active tasks at most, and Onshape keeps four. Onshape filenames retain each part’s original index when exports complete out of order. Robot mesh failures remain notes, while an Onshape export failure rejects the import.
 
+Robot imports collect mesh filenames directly into a call-local set while visiting links and visuals in source order. Only unique filenames enter the loading queue, without intermediate link, geometry or filename lists. URDF, MJCF, expanded xacro and converted descriptions share this preparation. `utils/robotImport/importMeshes.test.ts` exercises real folder import with repeated successful and missing references, primitive visuals and per-instance mesh transforms. It checks one mesh read, complete triangle counts, progress totals and one missing-file note. [Collection evidence](../notes/performance-joints.md#robot-imports-collect-unique-mesh-filenames-directly).
+
 A robot is posable once its degrees of freedom are declared. Posing never edits parts: the modeled pose is the design, and a pose only changes what the canvas shows.
 
 - **Data** (`types/robotics.ts`, saved with the scene in `ProjectSettings`): `joints` (`RobotJoint`: revolute in degrees or prismatic in mm, parent and child parts, `parentJoint` when links between joints have no geometry, origin and axis, range, limb), `pose` (the pose on the canvas: values by joint id plus an optional whole-body `root` offset), `poses` (saved) and `animations` (`RobotAnimation`: keyframes with every animated joint, smooth or linear, loop).

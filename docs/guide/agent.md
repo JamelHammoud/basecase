@@ -251,6 +251,8 @@ Measurements and limits: [Image comparison performance evidence](../notes/perfor
 
 ## Performance: agent and cad kernel
 
+- **Freehand attachment bounds scan strokes directly.** `components/agent/sketch/sketchStrokes.ts` measures the drawing without flattening strokes or constructing coordinate lists. Attach Sketch uses this frame for PNG export. The 16px margin, 96px minimum frame, centering and empty-drawing result stay unchanged. `sketchStrokes.test.ts` covers prior-result parity, later edits, nonfinite coordinates, source preservation and long drawings with bounded coordinate reads. [Evidence](../notes/performance-agent-kernel.md#freehand-attachment-bounds-scan-strokes-directly).
+
 Measurements and limits: [Agent and CAD kernel performance evidence](../notes/performance-agent-kernel.md).
 
 - **CAD coordinates write directly into output arrays.** `agent/cadMesh.ts` writes CAD coordinates directly into the mesh and edge output arrays using the scene frame `(x, z, −y)`. It allocates no coordinate tuples per vertex or edge endpoint. Agent part creation and updates, recompilation, linkage placement and sheet detection share this converter. Bounds, centering, rounding and index order stay unchanged. `cadMesh.test.ts` compares complete results against the prior conversion across varied meshes, later edits, empty and malformed coordinates, signed zero and nonfinite values. [Evidence](../notes/performance-agent-kernel.md#cad-coordinate-conversion-writes-output-directly).

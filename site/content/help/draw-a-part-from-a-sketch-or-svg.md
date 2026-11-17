@@ -58,7 +58,7 @@ Draw an outline with typed lengths, or load an SVG file, and turn it into a soli
 
 ## Sketch an outline
 
-1. To sketch on a part, click its face, such as the top of a box. To sketch on the ground, skip this step.
+1. To sketch on a part, click a supported rectangular face, such as the top of a box. To sketch on the ground, skip this step.
 2. Click **Shapes** in the bottom toolbar, then choose **Sketch**. If you clicked a face, the sketch opens with the face's edges dashed.
 
 ![Sketch open on the top face of a box, the face's outline dashed](/help/draw-a-part-from-a-sketch-or-svg/face.png)

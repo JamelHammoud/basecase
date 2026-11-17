@@ -33,7 +33,7 @@ function trianglesOf(soup: ArrayLike<number>): Tri[] {
     b.fromArray(soup, i + 3);
     c.fromArray(soup, i + 6);
 
-    const cross = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a));
+    const cross = new THREE.Vector3().subVectors(b, a).cross(c.sub(a));
     const area = cross.length() / 2;
 
     if (area < 1e-9) continue;

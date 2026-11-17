@@ -162,6 +162,7 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
         payload = queued && startQueued(id, queued);
       }
     } catch (error) {
+      setMessages(id, markLastAgentFailed(failureReason(error)));
       showToast(errorMessage(error), { tone: 'error' });
     } finally {
       await core.versions

@@ -27,7 +27,7 @@ export function completedEdits(runs: Record<string, CompletedVersionRun>, laneKe
 
   const match = Object.entries(runs)
     .reverse()
-    .find(([, run]) => chatId && run.chatId === chatId);
+    .find(([, run]) => (chatId ? run.chatId === chatId : run.run === laneKey));
 
   return match ? { key: match[0], parts: match[1].parts ?? [] } : null;
 }

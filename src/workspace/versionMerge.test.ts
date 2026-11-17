@@ -129,6 +129,20 @@ it('includes the joints of newly required assembly members without importing edi
   expect(merged.scene?.parts).toHaveLength(4);
 });
 
+it('includes a mirrored part’s source without relying on a joint to discover it', () => {
+  const base = scene([part('body')]);
+  const mirrored = { ...part('right-arm'), mirrorOf: { id: 'left-arm', axis: 'x' as const } };
+  const theirs = scene([...base.parts, part('left-arm'), mirrored]);
+  const merged = mergeDesigns({ base, ours: base, theirs, selected: ['part:right-arm'] });
+
+  expect(merged.conflicts).toEqual([]);
+  expect(merged.dangling).toEqual([]);
+  expect(merged.required).toContain('part:left-arm');
+  expect(merged.scene?.parts).toEqual(expect.arrayContaining(theirs.parts));
+  expect(merged.scene?.parts).toHaveLength(3);
+  expect(base.parts).toHaveLength(1);
+});
+
 it('requires an explicit incoming choice before restoring a required part deleted in the target', () => {
   const body = portPart('body', 'top');
   const base = scene([body]);

@@ -106,3 +106,18 @@ The named recovery declaration passed in 33,359 ms in the earlier CI observation
 The next changed-browser CI run passed named-version close and reopen in 18,411 ms, restore and reload in 9,413 ms, and branch-menu creation in 11,334 ms. The selected-merge declaration reached its one-part target and retained the bracket at x = 20. It then failed at line 58 because the unscoped Close locator matched both a workspace panel and the Scene history dialog. Its 15,249 ms report includes one configured retry. The aggregate Check failed because this browser job failed, with all three required jobs and copy successful.
 
 The dismissal now resolves Close inside the named Scene history dialog. The source-retention assertions and all merge assertions remain intact. This is a deterministic locator correction, with no timeout, retry, quarantine or assertion change. Browser execution remains with CI.
+
+
+### Review recovery and dependency corrections
+
+A closed tab previously retained its history before the asynchronous completion checkpoint published. Reopening that snapshot could republish the older graph and lose the completed run. Closed records now retain their flush promise, and Undo Close, Reopen Closed Scene and saved-scene opening await it. The closing tab still disappears immediately. `app/tabRetirement.test.ts` uses the real version codec to check the final edited design, retained baseline, completed ownership and failed-flush recovery.
+
+Completed ownership now uses each run's baseline version as its key instead of replacing the lane's previous record. `versionRunRecovery.test.ts` checks two chats sharing one lane, a no-op follow-up and consuming the latest revert while older ownership remains in history. Empty latest records prevent older changes from being offered under the current reply. The worker also rejects restore and merge during an active baseline, covering the interval before controls receive their updated disabled state.
+
+`versionMerge.test.ts` selects a mirrored part without a connecting joint and checks that dependency closure includes its source. Existing guide statements that Revert Changes disappears on reload and relies only on transient lane edits now describe durable ownership. These corrections add no command or walkthrough step. The existing help steps and screenshots remain accurate. No browser runtime, production profile or timing improvement is claimed.
+
+`useAgentRun.test.ts` refuses baseline storage and checks that no prompt is sent, the reply carries the failure for Retry, and lane cleanup still completes. The existing error and Retry copy are reused.
+
+Duplicating a closed scene marks the source checkpoint as an autosave and requires a saved result before creating its branch. `app/sceneBranches.test.ts` rejects a deleted-source write and checks that no branch is published. This prevents a delayed Duplicate from recreating a scene the user deleted.
+
+The review’s changed-file checks cover its 18 files. The workspace selection passed 345 tests across 44 related files, and the branch selection passed 12 tests across five related files. These selections overlap and are not additive. Formatting, ESLint, docs, TypeScript and all 310 site pages passed. Logs are `scratch/review-check-final.log` and `scratch/review-branch-check.log`. Browser execution remains with CI.

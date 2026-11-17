@@ -1,9 +1,10 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { openVersionBranch } from './sceneBranches';
+import { branchScene, openVersionBranch } from './sceneBranches';
 import { captureVersion, emptyVersionGraph, readVersionGraph, restoreVersion } from '../workspace/sceneVersions';
 import { versionPart, versionScene } from '../workspace/sceneVersions.fixtures';
 import { sceneStore } from '../utils/sceneStore';
 import { platformBridge } from '../utils/platformBridge';
+import type { SavedSceneSummary } from '../types/robotics';
 
 vi.mock('../utils/platformBridge', () => ({ platformBridge: { saveSceneJson: vi.fn() } }));
 
@@ -37,4 +38,20 @@ it('reserves distinct names for simultaneous branches and preserves their linked
   }
 
   expect(readVersionGraph(history)).toEqual(graph);
+});
+
+it('does not resurrect a source deleted while Duplicate prepares its linked history', async () => {
+  const design = versionScene([versionPart('chassis')]);
+
+  vi.mocked(platformBridge.saveSceneJson).mockResolvedValueOnce(null as unknown as SavedSceneSummary);
+
+  await expect(branchScene({ ...design, sceneId: 'source', sceneName: 'Chassis' }, [])).rejects.toThrow(
+    'Open the original scene',
+  );
+  expect(platformBridge.saveSceneJson).toHaveBeenCalledOnce();
+  expect(JSON.parse(vi.mocked(platformBridge.saveSceneJson).mock.calls[0][0])).toMatchObject({
+    id: 'source',
+    autosave: true,
+  });
+  expect(sceneStore.get()).toEqual([]);
 });

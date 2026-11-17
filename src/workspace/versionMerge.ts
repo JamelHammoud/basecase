@@ -128,6 +128,9 @@ function dependencies(units: Units): Map<string, Set<string>> {
   return new Map(
     [...units].map(([key, value]) => {
       const references = referencedIds(value, ids);
+      const mirrored = key.startsWith('part:') ? (value as ScenePart | undefined)?.mirrorOf?.id : undefined;
+
+      if (mirrored) references.add(mirrored);
 
       return [key, new Set(entities.filter((entity) => references.has(entity.slice(entity.indexOf(':') + 1))))];
     }),

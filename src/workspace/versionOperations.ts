@@ -125,19 +125,22 @@ function finishRun(graph: VersionGraph, request: VersionRequest): VersionGraph {
 
   delete activeRuns[run];
 
-  const completedRuns = changed
-    ? {
-        ...graph.completedRuns,
-        [run]: {
-          before: baseline,
-          after: captured.head!,
-          parts: request.selected ?? [],
-          chatId: graph.versions[baseline].chatId,
-        },
-      }
-    : graph.completedRuns;
+  const completedRuns = {
+    ...graph.completedRuns,
+    [baseline]: {
+      before: baseline,
+      after: changed ? captured.head! : baseline,
+      parts: changed ? (request.selected ?? []) : [],
+      chatId: graph.versions[baseline].chatId,
+      run,
+    },
+  };
 
   return { ...(changed ? captured : graph), activeRuns, completedRuns };
+}
+
+function assertIdle(graph: VersionGraph) {
+  if (Object.keys(graph.activeRuns ?? {}).length) throw new Error('Stop the agent before restoring or merging.');
 }
 
 export async function versionOperation(request: VersionRequest): Promise<VersionView> {
@@ -156,6 +159,8 @@ export async function versionOperation(request: VersionRequest): Promise<Version
   if (request.action === 'capture') return viewOf(capture(graph, request));
 
   if (request.action === 'revert') return revertRun(graph, request);
+
+  if (request.action === 'restore') assertIdle(graph);
 
   const scene = await checkedScene(restoreVersion(graph, request.id));
 
@@ -196,9 +201,7 @@ async function revertRun(graph: VersionGraph, request: VersionRequest): Promise<
   const saved = capture(graph, { ...request, label: 'Before revert' });
   const reverted = captureVersion(saved, scene, { label: 'Reverted agent changes', at: new Date().toISOString() });
 
-  const completedRuns = { ...reverted.completedRuns };
-
-  delete completedRuns[request.run!];
+  const completedRuns = { ...reverted.completedRuns, [request.run!]: { ...run, parts: [] } };
 
   return viewOf({ ...reverted, completedRuns }, scene);
 }
@@ -249,6 +252,9 @@ export async function compareVersions(request: VersionComparisonRequest) {
   const ours = readScene(request.ours);
   const theirs = readScene(request.theirs);
   const graph = joinVersionGraphs(graphOf(request.history), graphOf(request.otherHistory));
+
+  if (request.apply) assertIdle(graph);
+
   const otherHead = graphOf(request.otherHistory).head;
   const baseId = graph.head && otherHead ? commonVersion(graph, graph.head, otherHead) : null;
   const comparison = compareDesigns(ours, theirs);

@@ -18,6 +18,7 @@ export interface TabEntry {
 export interface ClosedTab {
   seed: WorkspaceSeed;
   index: number;
+  ready?: Promise<WorkspaceSeed>;
 }
 
 export interface TabListItem {

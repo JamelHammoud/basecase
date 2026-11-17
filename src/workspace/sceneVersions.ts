@@ -22,6 +22,7 @@ export interface CompletedVersionRun {
   after: string;
   parts?: string[];
   chatId?: string;
+  run?: string;
 }
 
 export interface VersionGraph {
@@ -309,6 +310,7 @@ function checkedCompletedRuns(graph: VersionGraph) {
 
     checkedRunParts(run.parts);
     checkedRun(run.chatId);
+    checkedRun(run.run);
   }
 }
 

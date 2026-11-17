@@ -23,19 +23,23 @@ export async function branchScene(seed: WorkspaceSeed, names: string[]): Promise
   });
 
   rememberHistory(captured.history, captured.quoted);
-  sceneStore.upsert(
-    await queueSceneWrite(seed.sceneId, async () =>
-      platformBridge.saveSceneJson(
-        await sceneJson({
-          ...design,
-          id: seed.sceneId,
-          name: seed.sceneName,
-          chatId: seed.chat?.chatId,
-          history: captured.history,
-        }),
-      ),
+
+  const saved = await queueSceneWrite(seed.sceneId, async () =>
+    platformBridge.saveSceneJson(
+      await sceneJson({
+        ...design,
+        id: seed.sceneId,
+        name: seed.sceneName,
+        chatId: seed.chat?.chatId,
+        history: captured.history,
+        autosave: true,
+      }),
     ),
   );
+
+  if (!saved) throw new Error('Open the original scene to change its history.');
+
+  sceneStore.upsert(saved);
 
   return openVersionBranch({
     history: captured.history,

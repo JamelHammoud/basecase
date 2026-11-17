@@ -48,8 +48,9 @@ describe('durable exploration lifecycle', () => {
     const reopened = readVersionGraph(interrupted.history);
 
     expect(Object.keys(reopened.activeRuns!)).toEqual([]);
-    expect(Object.keys(reopened.completedRuns!)).toEqual(['lane-a', 'lane-b']);
-    expect(restoreVersion(reopened, reopened.completedRuns!['lane-a'].before)).toEqual(base);
+    expect(Object.keys(reopened.completedRuns!)).toEqual([a.head, b.head]);
+    expect(Object.values(reopened.completedRuns!).map((run) => run.run)).toEqual(['lane-a', 'lane-b']);
+    expect(restoreVersion(reopened, reopened.completedRuns![a.head!].before)).toEqual(base);
     expect(restoreVersion(reopened).parts).toHaveLength(2);
   });
 
@@ -287,7 +288,8 @@ it('reopens completed ownership by chat and reverts only that lane after another
   });
 
   expect(owned.parts).toEqual(['arm']);
-  expect(reverted.completedRuns).not.toHaveProperty(owned.key);
+  expect(reverted.completedRuns[owned.key].parts).toEqual([]);
+  expect(completedEdits(reverted.completedRuns, 'new-workspace_lane-a', 'chat-a')?.parts).toEqual([]);
   expect(completedEdits(reopened.completedRuns, 'new-workspace_lane-a', 'chat-b')).toBeNull();
   expect(reverted.scene?.parts.find((p) => p.id === 'arm')?.position[0]).toBe(0);
   expect(reverted.scene?.parts.find((p) => p.id === 'camera')?.position[0]).toBe(40);
@@ -323,13 +325,14 @@ it('refuses an agent revert that would overwrite a later edit and preserves its 
     selected: ['arm'],
   });
   const later = scene([part('arm', 40)]);
+  const owned = completedEdits(completed.completedRuns, 'lane-a', null)!;
 
   await expect(
     versionOperation({
       action: 'revert',
       history: completed.history,
       scene: JSON.stringify(later),
-      run: 'lane-a',
+      run: owned.key,
       selected: ['arm'],
     }),
   ).rejects.toThrow('Open Scene History');

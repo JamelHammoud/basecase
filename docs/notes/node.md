@@ -446,6 +446,12 @@ Current main's shared dependency repair supplies the pinned picomatch fork, now 
 
 Revision validation in `scratch/validate-revision.mjs` executes the workflow shell in temporary Git repositories. It checks a real depth-2 merge checkout, preserves filenames with spaces, stops on a missing parent and propagates changed-check failures. An empty comparison exits successfully without invoking the changed checker. Workflow syntax is checked with `actionlint -shellcheck=`. These probes do not claim a passing hosted Check or a native Windows run.
 
+### Hosted runner acquisition failure
+
+[Pull request Check 44149279187](https://github.com/JamelHammoud/basecase/actions/runs/44149279187) passed every selected job except iOS and the aggregate. The [iOS job](https://github.com/JamelHammoud/basecase/actions/runs/44149279187/job/134276923732) ended cancelled after 16 minutes 45 seconds, with no steps, runner ID 0 and an empty runner name. Its failure annotation says “The job was not acquired by Runner of type hosted even after multiple attempts”. Three notices cite macOS arm64 capacity constraints. No simulator build or XCTest ran, and no test assertion failed. The aggregate correctly rejected the required iOS result, reported there as `abandoned`.
+
+This is hosted runner acquisition failure, separate from the Windows unit capacity repair. The workflow retains the required iOS job, its runner selection and its twenty-minute deadline. No retry, assertion change or aggregate exception is added. Job metadata and check annotations were read through the GitHub API and saved in `scratch/ios-job.json` and `scratch/ios-check.json`. The job log endpoint returned `BlobNotFound`, so there is no execution log to diagnose. Hosted iOS and native Windows validation remain CI responsibilities.
+
 ## Nightly Linux static and unit budget
 
 [Check 43911770581](https://github.com/JamelHammoud/basecase/actions/runs/43911770581) at `3e3441b8fb12428118532c93141b8241a60bb573` cancelled the Linux unit job at 17:05:12 UTC while tests were still completing. There was no failed assertion or named stalled test. The job began setup at 16:50:00, began `npm run check` at 16:51:02 and began Vitest at 16:55:22. Static checks took about 216.7 seconds before TypeScript's 42.7 seconds, leaving only 590 seconds for Vitest. The log contains 1,135 completed test files before cancellation. The same revision passed the Windows unit job with 1,427 passing files, four skipped files and 388.92 seconds in Vitest.

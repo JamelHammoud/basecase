@@ -166,7 +166,7 @@ export const PrintersPane: React.FC<{ state: PrintersState }> = ({ state }) => {
             )}
           </React.Fragment>
         ))}
-        <Row label={list.length ? null : 'No printers'}>
+        <Row label={null}>
           <div className="flex gap-[8px]">
             <Button
               size="sm"
@@ -191,7 +191,6 @@ export const PrintersPane: React.FC<{ state: PrintersState }> = ({ state }) => {
           {discovery.found.map((f) => (
             <FoundRow key={`${f.kind}:${f.host}`} found={f} onAdd={() => add(fromDiscovered(f))} />
           ))}
-          {discovery.found.length === 0 && <Row label="No printers found" />}
         </Group>
       )}
       <SlicersGroup state={state} />

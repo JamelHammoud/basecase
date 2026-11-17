@@ -26,7 +26,7 @@ describe('collision containment samples', () => {
       const before = positions.slice();
       const solid = new ShapeSolid(positions);
 
-      for (const budget of [1, 2, 3, 3.5, 24, 299, 300, 301, 400, 600, 1200]) {
+      for (const budget of [0, -1, NaN, Infinity, 0.5, 1, 2, 3, 3.5, 24, 299, 300, 301, 400, 600, 1200]) {
         const samples = samplesOf(solid, budget);
 
         expect(samples).toEqual(bufferedSamples(positions, budget));

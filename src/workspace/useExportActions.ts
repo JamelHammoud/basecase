@@ -17,6 +17,7 @@ import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
 import { useCutFileExport } from './useCutFileExport';
 import { isSheetSolid } from './cutFileExport';
+import { useSchematicExport } from './useSchematicExport';
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
@@ -26,7 +27,6 @@ export function useExportActions(core: WorkspaceCore) {
   const { parts, scene, annotations, showToast, toasts, viewportRef, project, printer, posing, printing } = core;
   const sharingRef = useRef(false);
   const exportStep = useStepExport({ parts, scene, showToast, toasts });
-  const exportRobotPackage = useRobotPackageExport(core);
   const exportCutFiles = useCutFileExport(core);
   const exportKit = useKitExport(core);
 
@@ -167,8 +167,9 @@ export function useExportActions(core: WorkspaceCore) {
     exportScene,
     airDrop,
     copyBrief,
-    exportRobotPackage,
+    exportRobotPackage: useRobotPackageExport(core),
     exportKit,
+    exportSchematic: useSchematicExport(core),
     exportCutFiles,
     canExportParts: parts.length > 0,
     canExportStep: parts.some(isStepBody),

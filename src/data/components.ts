@@ -1,3 +1,4 @@
+import type { SupplierIdentity } from '../types/purchasing';
 import MESHES from './component-meshes.json';
 import { BAM_STS3215_7V4, BAM_XL330, type ServoFit } from './servoFits';
 
@@ -25,6 +26,7 @@ export type SpecValue = string | string[];
 export const specLines = (value: SpecValue): string[] => (typeof value === 'string' ? [value] : value);
 
 export interface ComponentInfo {
+  supplierIdentity?: SupplierIdentity;
   id: string;
   name: string;
   manufacturer: string;
@@ -116,6 +118,7 @@ export interface LinearActuatorSpec {
 }
 
 export interface ComponentVariant {
+  supplierIdentity?: SupplierIdentity;
   id: string;
   label: string;
   mpn: string;

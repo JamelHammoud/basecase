@@ -52,7 +52,7 @@ Basecase leaves any parts you [already own](/help/count-the-parts-you-already-ow
 
 Other stores don't take a shared cart, so you open their listings one at a time. To buy a line with no store link, hover over it and click the link at its right end to search Amazon.
 
-Exports save to your downloads as `<scene>-bom.csv` or `<scene>-bom.md`. You can order from either file in any store.
+Exports save to your downloads as `<scene>-bom.csv` or `<scene>-bom.md`. For exact supplier numbers, remaining quantities and DigiKey column mapping, see [Export remaining purchases](/help/export-remaining-purchases).
 
 Some lines are added for you. If your design has a battery, you get a switch, fuse, wire and charger. Filament is counted in grams from the printed parts, so it isn't in the **+** menu. If you choose **Made by a Service**, **Printed parts** takes its place, and Basecase doesn't order them.
 

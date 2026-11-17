@@ -51,7 +51,11 @@ Clear every problem the Build tab finds before you print the parts, buy them, an
 10. If the scene has Cases, click a Case's row in **Checks** to open it in Simulate with its 20 paths on the canvas.
 11. Wait for the header to read **Ready to build**. Basecase runs the checks again after every change.
 
-![The Build tab with every check passed and a $150 budget beside the total](/help/get-a-robot-ready-to-build/build-tab.png)
+If **Electrical connections** is red, open it to read the missing pin maps, source requirements or conflicting supply settings. Changing declared volts and amps doesn't change a selected product's ratings.
+
+![Electrical connections reports a supply setting that disagrees with the selected module](/help/export-a-robot-schematic/supply.png)
+
+To continue the documented connections and unresolved requirements in KiCad, [export a robot schematic](/help/export-a-robot-schematic).
 
 ![An SO-101 arm inside a cloud of dots, with Payload open in Checks reading 1.26 kg at full reach, 1.88 kg close in](/help/get-a-robot-ready-to-build/payload.png)
 

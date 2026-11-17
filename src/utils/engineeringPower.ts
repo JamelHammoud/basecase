@@ -30,6 +30,8 @@ const actuatorFor = (p: ScenePart) => actuatorOf(p.componentId!, p.componentVari
 
 type PowerScene = Pick<CheckContext, 'parts' | 'project' | 'servos'>;
 
+type PowerDemandContext = Pick<CheckContext, 'parts' | 'project' | 'servos' | 'joints' | 'input'>;
+
 const actuatorsIn = (ctx: PowerScene) => [...new Set(ctx.servos.map(actuatorFor).filter(Boolean) as ActuatorSpec[])];
 
 const isOver = (b: BatterySpec, a: ActuatorSpec) => b.fullV > a.volts[1] + 1e-6;
@@ -192,7 +194,7 @@ interface ServoDraw {
   hungriest?: { joint: RobotJoint; avgA: number; peakA: number };
 }
 
-function servoCurrent(ctx: CheckContext): ServoDraw {
+function servoCurrent(ctx: PowerDemandContext): ServoDraw {
   const legIds = new Set(ctx.joints.filter(isLegJoint).flatMap((j) => j.actuators ?? []));
   let peak = 0,
     avg = 0;
@@ -210,7 +212,7 @@ function servoCurrent(ctx: CheckContext): ServoDraw {
   return { peak, avg };
 }
 
-function walkedCurrent(ctx: CheckContext): ServoDraw | undefined {
+function walkedCurrent(ctx: PowerDemandContext): ServoDraw | undefined {
   const walk = ctx.input.walk;
 
   if (typeof walk !== 'object' || walk.fellAt !== null || !walk.power) return undefined;
@@ -248,7 +250,7 @@ function walkedCurrent(ctx: CheckContext): ServoDraw | undefined {
   };
 }
 
-function currentDraw(ctx: CheckContext, source: PowerSource) {
+export function currentDraw(ctx: PowerDemandContext, source: PowerSource) {
   const b = source.battery;
   const servo = walkedCurrent(ctx) ?? servoCurrent(ctx);
   const rail = railOf(ctx, source);

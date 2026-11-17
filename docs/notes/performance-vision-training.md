@@ -43,6 +43,14 @@ On 300- and 600-frame fixtures, assignment reads fall from 900 and 1,800 to 300 
 
 `sourceClasses.test.ts` compares 80 mixed-label sequences against ordered scans and checks duplicate matches, edits, independent imports, malformed labels and the class cap. `classResolution.test.ts` checks sparse ids, named keypoints, VOC image order and Parquet rows and shards. A scratch comparison matched 120 complete imported frame sets against the previous readers. On 300- and 600-class fixtures with 3,000 lookups each by id, name and inferred id, source-property reads fell from 1,354,500 and 2,704,500 to 600 and 1,200. These are operation counts and complete-output comparisons, without timing assertions or a claim about complete import time.
 
+## Image imports append retained keypoints directly
+
+Both keypoint readers previously created a coordinate slice, a visibility list and an empty or singleton result array for each point. The shared COCO and image Parquet reader used `flatMap`. YOLO also retained an `Array.from` staging list before flattening. Both now append retained point objects directly into their output lists. Numeric input validation still runs before point decoding, including on discarded points.
+
+For the four-point fixture, the source code removes twelve temporary per-point arrays from each reader and one additional staging list from YOLO. These are structural allocation counts, not heap measurements or import timings. Numeric parsing, mask rasterization and final point objects still allocate as before. No end-to-end speed claim follows from these counts.
+
+`keypointReaders.test.ts` checks complete ordered point results for all 81 four-point visibility combinations through the YOLO reader and the shared COCO and Parquet point reader. It also checks two-coordinate YOLO points, independent imports, source preservation, missing labels, malformed lengths, nonfinite and unsupported visibility, and the different coordinate rules for absent points. Existing `readImageSource.test.ts` and `classResolution.test.ts` retain full source-reader and package round-trip coverage. This changes no user action, screen, copy, timeout or quarantine.
+
 ## Frozen prediction evidence bounds
 
 Evidence is prepared in the existing evaluation worker from predictions already produced by the inference passes. Per-image object diagnostics reuse aggregate match arrays at each recorded threshold. Classification diagnostics use the existing top-one pass. Predicted masks use RLE, with a preflight scan refusing more than 131,072 runs before constructing the encoding. JPEGs, depth and ground-truth masks remain in frozen content storage.

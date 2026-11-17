@@ -41,3 +41,7 @@ For V vertices and E edge endpoints, this removes 2 × (V + E) temporary three-n
 `cadMesh.test.ts` compares every returned field with the previous conversion for 100 deterministic meshes containing 3 through 300 vertices, then repeats after source edits. It checks source preservation, independent position outputs and unchanged index ownership. Another 42 combinations cover empty, signed-zero, nonfinite and incomplete vertices and edges. No quarantine applies. No user action, label or screenshot state changes.
 
 Preflight's coverage reminder for [The design agent](../../site/content/help/the-design-agent.md) was checked against the final code. The converter preserves every returned field, so the article's modeling, Checks, undo and steering claims remain accurate. It describes no coordinate conversion steps or screenshot states to revise. The article stays unchanged.
+
+## Scene version capture
+
+Agent prompts await a durable per-lane baseline before sending work. Completion, Stop, adopted-run completion and tab closure use the same serialized workspace capture queue. Canonical serialization and hashing run in a worker, while ordinary scene serialization retains its immutable-part cache. Normal autosave and previews omit history and preserve its stored reference. Shared content and local fixture measurements are owned by [Scene storage and startup](performance-workspace.md#scene-version-codec-and-atomic-replacement).

@@ -28,6 +28,7 @@ import type {
 export type { Vec3 } from '../three/viewport/types';
 
 export interface WorkspaceSeed {
+  history?: string;
   sceneId: string;
   sceneName: string;
   globalGoal: string;
@@ -41,6 +42,7 @@ export interface WorkspaceSeed {
 }
 
 export interface WorkspaceMeta {
+  fingerprint?: string;
   sceneId: string;
   name: string;
   partCount: number;
@@ -56,6 +58,10 @@ export type ToastOptions = Omit<ToastData, 'id' | 'message'>;
 export type ShowToast = (message: string, opts?: ToastOptions) => void;
 
 export interface WorkspaceHandle {
+  branch?: () => Promise<WorkspaceSeed>;
+  showHistory?: () => void;
+  saveVersion?: (label: string) => Promise<{ history: string; scene: import('./sceneVersions').VersionScene }>;
+  checks?: () => Promise<import('../readiness/types').Readiness | null>;
   onEvent: (event: Record<string, unknown>) => void;
   snapshot: () => WorkspaceSeed;
   thumbnail: () => Promise<string>;
@@ -121,7 +127,7 @@ export interface StudioShared {
   settingsOpen: boolean;
   openSettings: (pane?: SettingsPane, field?: SettingsField) => void;
   printers: PrintersState;
-  tabs: Array<{ id: string; name: string; sceneId: string }>;
+  tabs: Array<{ id: string; name: string; sceneId: string; fingerprint?: string }>;
   robotsBeside: (except: string) => SceneRobot[];
   handleOf: (id: string) => WorkspaceHandle | null;
   canReopenTab: boolean;
@@ -168,6 +174,8 @@ export interface Snapshot {
   tether?: Tether;
   consoles?: Record<string, CaseConsole | undefined>;
   routines?: Routine[];
+  project?: ProjectSettings;
+  scene?: { globalGoal: string; annotations: SceneAnnotation[] };
 }
 
 export interface DocState {

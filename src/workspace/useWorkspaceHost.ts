@@ -36,9 +36,11 @@ function openCaseIn(core: WorkspaceCore, kase: Case) {
 function useRegisterHandle({ core, agent, autosave }: HandleOptions) {
   const { workspaceId, studio, scene, docs, annotations, viewportRef, showToast, loadSeed } = core;
   const { setSceneName } = scene;
+  const stopped = useRef<Promise<unknown>>(Promise.resolve());
   const hostRef = useLatestRef({
     event: agent.onEvent,
     snapshot: (): WorkspaceSeed => ({
+      history: core.versions.historyRef.current,
       sceneId: scene.sceneId,
       sceneName: scene.sceneName,
       globalGoal: scene.globalGoal,
@@ -52,18 +54,47 @@ function useRegisterHandle({ core, agent, autosave }: HandleOptions) {
       agent.chat.restore(next.chat);
     },
     persist: agent.chat.persistAll,
-    flush: autosave.flush,
+    branch: () => core.versions.branch(),
+    showHistory: core.versions.show,
+    checks: core.readiness.checkNow,
+    saveVersion: async (label: string) => {
+      const saved = await core.versions.capture(label);
+
+      return { history: saved.history, scene: saved.captured };
+    },
+    flush: async () => {
+      await stopped.current;
+      await core.versions.flush();
+      await autosave.flush();
+    },
     discard: autosave.discard,
-    stop: agent.controls.stopAll,
+    stop: () => {
+      agent.controls.stopAll();
+      stopped.current = core.versions.finishAll(
+        [],
+        Object.fromEntries(agent.lanes.lanesRef.current.map((lane) => [agent.lanes.keyOf(lane.id), lane.edits])),
+      );
+    },
     toast: showToast,
     fingerprint: core.readiness.fingerprint,
-    caseRobot: () => sceneCaseRobot({ workspaceId, sceneName: scene.sceneName, docs, viewportRef }),
+    caseRobot: () =>
+      sceneCaseRobot({
+        workspaceId,
+        sceneName: scene.sceneName,
+        docs,
+        viewportRef,
+        fingerprint: () => core.readiness.fingerprint,
+      }),
     openCase: (kase: Case) => openCaseIn(core, kase),
   });
   const register = useEffectEvent((id: string, handle: WorkspaceHandle | null) => studio.register(id, handle));
 
   useEffect(() => {
     const handle: WorkspaceHandle = {
+      branch: () => hostRef.current.branch(),
+      showHistory: () => hostRef.current.showHistory(),
+      checks: () => hostRef.current.checks(),
+      saveVersion: (label) => hostRef.current.saveVersion(label),
       onEvent: (e) => hostRef.current.event(e),
       snapshot: () => hostRef.current.snapshot(),
       thumbnail: async () => viewportRef.current?.captureScreenshot(THUMBNAIL_SIDE) ?? '',
@@ -95,7 +126,8 @@ function isPristine({ seed, core, agent }: Pick<HostOptions, 'seed' | 'core' | '
     core.parts.length === 0 &&
     core.annotations.annotations.length === 0 &&
     agent.lanes.lanes.every((l) => l.messages.length === 0) &&
-    !globalGoal
+    !globalGoal &&
+    !core.versions.history
   );
 }
 
@@ -106,13 +138,24 @@ function useReportMeta({ core, agent, pristine }: Pick<HostOptions, 'core' | 'ag
   const chatKey = agent.chat.chatIds.join(' ');
   const { busy, activity } = agent;
   const partCount = parts.length;
+  const fingerprint = core.readiness.fingerprint;
   const report = useEffectEvent((id: string, meta: WorkspaceMeta) => studio.reportMeta(id, meta));
 
   useEffect(() => {
     const chatIds = chatKey ? chatKey.split(' ') : [];
 
-    report(workspaceId, { sceneId, name: sceneName, partCount, busy, activity, chatId, chatIds, pristine });
-  }, [workspaceId, sceneId, sceneName, partCount, busy, activity, chatId, chatKey, pristine]);
+    report(workspaceId, {
+      sceneId,
+      name: sceneName,
+      partCount,
+      busy,
+      activity,
+      chatId,
+      chatIds,
+      pristine,
+      fingerprint,
+    });
+  }, [workspaceId, sceneId, sceneName, partCount, busy, activity, chatId, chatKey, pristine, fingerprint]);
 }
 
 function useRightIslandWidth(active: boolean, core: WorkspaceCore) {
@@ -140,9 +183,16 @@ function useRightIslandWidth(active: boolean, core: WorkspaceCore) {
 }
 
 export function useWorkspaceHost({ active, seed, core, agent }: HostOptions) {
+  const updateChat = useEffectEvent((id: string | null) => core.versions.setChat(id));
+
+  const chatId = agent.current.chatId;
+
+  useEffect(() => updateChat(chatId), [chatId]);
+
   const pristine = isPristine({ seed, core, agent });
   const { sceneId, sceneName, globalGoal } = core.scene;
   const draft: SceneDraft = {
+    history: core.versions.history,
     sceneId,
     sceneName,
     globalGoal,

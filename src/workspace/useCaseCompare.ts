@@ -12,6 +12,7 @@ import type { ShowToast, StudioShared } from './types';
 import type { SceneDocument } from './useSceneDocument';
 
 export interface SceneCaseSource {
+  fingerprint?: () => string;
   sceneId?: string;
   workspaceId: string;
   sceneName: string;
@@ -24,6 +25,7 @@ export async function sceneCaseRobot({
   sceneName,
   docs,
   viewportRef,
+  fingerprint,
 }: SceneCaseSource): Promise<CompareRobot | null> {
   const viewport = viewportRef.current;
 
@@ -36,7 +38,15 @@ export async function sceneCaseRobot({
 
   const measures = await viewport.measureParts();
 
-  return { tabId: workspaceId, name: sceneName, parts, project, measures, partTriangles: viewport.partTriangles };
+  return {
+    tabId: workspaceId,
+    name: sceneName,
+    parts,
+    project,
+    measures,
+    partTriangles: viewport.partTriangles,
+    fingerprint: fingerprint?.(),
+  };
 }
 
 export interface CompareChoice {
@@ -68,7 +78,7 @@ export function useCaseCompare({ inFront, kase, fingerprint, studio, source, sho
   const [inFlight] = useState(() => new Map<string, Promise<Comparison>>());
   const [view, setView] = useState(newest.view);
   const caseKey = kase ? jsonHash(kase) : '';
-  const tabsKey = studio.tabs.map((t) => `${t.id}:${t.name}`).join('|');
+  const tabsKey = studio.tabs.map((t) => `${t.id}:${t.name}:${t.fingerprint ?? ''}`).join('|');
   const current = pickedTab(against, kase, studio.tabs);
 
   const keyOf = (target: Case, tabId: string) =>
@@ -142,7 +152,12 @@ export function useCaseCompare({ inFront, kase, fingerprint, studio, source, sho
   }, [current, inFront, caseKey, fingerprint, tabsKey]);
 
   const { result } = view;
-  const shown = current && result?.tabId === current && result.comparison.caseId === kase?.id ? result : null;
+  const otherFingerprint = studio.tabs.find((tab) => tab.id === current)?.fingerprint ?? '';
+  const expectedKey = `${caseKey}|${fingerprint}|${current}:${otherFingerprint}`;
+  const shown =
+    current && result?.tabId === current && result.key === expectedKey && result.comparison.caseId === kase?.id
+      ? result
+      : null;
 
   return {
     choices,

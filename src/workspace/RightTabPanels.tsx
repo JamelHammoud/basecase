@@ -4,6 +4,7 @@ import { DesktopDownload } from '../components/agent/DesktopDownload';
 import { ErrorBoundary } from '../design-system';
 import { DesignersProvider } from '../components/agent/DesignersContext';
 import { PartLinksProvider } from '../components/agent/PartLinksProvider';
+import { completedEdits } from './runEdits';
 import { canRevertLane } from './agentLanes';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { BuildPanel } from '../components/BuildPanel';
@@ -135,6 +136,7 @@ function AgentConversationTab({ core, agent }: Omit<RightTabPanelsProps, 'action
   const { studio, tool, parts, setSelectedIds } = core;
   const { chat, controls, current } = agent;
   const openGuide = useOpenGuide(core);
+  const owned = completedEdits(core.versions.view?.completedRuns ?? {}, agent.lanes.keyOf(current.id), current.chatId);
 
   return (
     <PartLinksProvider
@@ -155,7 +157,7 @@ function AgentConversationTab({ core, agent }: Omit<RightTabPanelsProps, 'action
           isBusy={current.busy}
           status={current.status}
           context={current.context}
-          canRevert={canRevertLane(current)}
+          canRevert={canRevertLane(current, owned?.parts ?? [])}
           attachRequest={tool.attachRequest}
           sketchRequest={tool.sketchRequest}
           quote={{ request: tool.quoteRequest, onRequest: tool.requestQuote, onDone: tool.clearQuote }}

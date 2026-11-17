@@ -1,6 +1,7 @@
 import type { ProjectSettings, SceneAnnotation, ScenePart } from '../types/robotics';
 
 export interface SceneDraft {
+  history?: string;
   sceneId: string;
   sceneName: string;
   globalGoal: string;
@@ -16,7 +17,7 @@ const sameText = (a: SceneDraft, b: SceneDraft) =>
   a.sceneName === b.sceneName && a.globalGoal === b.globalGoal && a.chatId === b.chatId;
 
 export function draftChanged(saved: SceneDraft, next: SceneDraft): boolean {
-  if (!sameText(saved, next)) return true;
+  if (!sameText(saved, next) || saved.history !== next.history) return true;
 
   if (!sameItems(saved.parts, next.parts) || !sameItems(saved.annotations, next.annotations)) return true;
 
@@ -42,4 +43,5 @@ export const draftPayload = (draft: SceneDraft) => ({
   project: draft.project,
   chatId: draft.chatId,
   autosave: true,
+  history: draft.history,
 });

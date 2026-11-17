@@ -6,6 +6,7 @@ export interface TabMenuActions {
   activeId: string;
   canReopen: boolean;
   onRename: (id: string) => void;
+  onHistory?: (id: string) => void;
   onDuplicate: (id: string) => void;
   onNew: () => void;
   onReopen: () => void;
@@ -20,6 +21,7 @@ export function tabMenuItems(id: string, a: TabMenuActions): ContextMenuEntry[] 
   return [
     renameEntry(() => a.onRename(id)),
     duplicateEntry(() => a.onDuplicate(id)),
+    { label: 'Scene History', icon: <HistoryIcon />, onSelect: () => a.onHistory?.(id) },
     { divider: true },
     { label: 'New Scene', shortcut: keyFor('new-scene'), icon: <PlusIcon />, onSelect: a.onNew },
     {

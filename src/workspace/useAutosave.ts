@@ -3,6 +3,7 @@ import { scenePreview } from '../three/scenePreview';
 import { buildAIHandoffPayload } from '../utils/aiHandoff';
 import { platformBridge } from '../utils/platformBridge';
 import { sceneJson } from '../utils/sceneJson';
+import { queueSceneWrite } from '../utils/sceneWrites';
 import { sceneStore } from '../utils/sceneStore';
 import { useLatestRef } from '../utils/useLatestRef';
 import { draftChanged, draftPayload, type SceneDraft } from './sceneDraft';
@@ -89,7 +90,11 @@ export function useAutosave({ draft, active, pristine, unsaved }: AutosaveOption
       ? buildAIHandoffPayload(next.sceneName, next.globalGoal, next.parts, next.annotations)
       : {};
 
-    sceneStore.upsert(await platformBridge.saveSceneJson(await sceneJson({ ...draftPayload(next), ...handoff })));
+    await queueSceneWrite(next.sceneId, async () => {
+      const payload = { ...draftPayload(next), ...handoff, history: undefined };
+
+      sceneStore.upsert(await platformBridge.saveSceneJson(await sceneJson(payload)));
+    });
     previews.schedule();
   };
 

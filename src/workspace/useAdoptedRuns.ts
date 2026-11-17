@@ -8,6 +8,7 @@ import type { StudioShared } from './types';
 import { saveChat } from './useAgentChat';
 import type { AgentCursors } from './useAgentCursors';
 import type { AgentLanes } from './useAgentLanes';
+import type { SceneVersions } from './useSceneVersions';
 
 interface AdoptedRunsOptions {
   workspaceId: string;
@@ -16,9 +17,18 @@ interface AdoptedRunsOptions {
   cursors: AgentCursors;
   setChatList: StudioShared['setChatList'];
   drain: (id: string) => Promise<void>;
+  versions: Pick<SceneVersions, 'finish' | 'finishAll' | 'perform'>;
 }
 
-export function useAdoptedRuns({ workspaceId, lanes, actors, cursors, setChatList, drain }: AdoptedRunsOptions) {
+export function useAdoptedRuns({
+  workspaceId,
+  lanes,
+  actors,
+  cursors,
+  setChatList,
+  drain,
+  versions,
+}: AdoptedRunsOptions) {
   const startedRef = useRef(false);
   const { flagsOf } = lanes;
 
@@ -26,7 +36,10 @@ export function useAdoptedRuns({ workspaceId, lanes, actors, cursors, setChatLis
     flagsOf(laneId).adopted = null;
     actors.endLane(laneId);
     cursors.clearLane(laneId);
-    void platformBridge.forgetAcpRun(key);
+    void versions.perform(async () => {
+      await versions.finish(key);
+      await platformBridge.forgetAcpRun(key);
+    });
   };
 
   const adoptRun = async (run: LiveRun) => {
@@ -62,6 +75,7 @@ export function useAdoptedRuns({ workspaceId, lanes, actors, cursors, setChatLis
     const runs = await platformBridge.liveAcpRuns(workspaceId);
 
     await Promise.all(runs.map(adoptRun));
+    await versions.perform(() => versions.finishAll(runs.filter((run) => run.busy).map((run) => run.key)));
   });
 
   useEffect(() => {

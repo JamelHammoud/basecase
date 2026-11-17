@@ -34,10 +34,10 @@ While a Case is running, [[⌘Z]] only steps back through code panel changes, an
 
 1. Under the agent's last reply, click **Revert Changes**.
 
-Only the parts that the run changed go back. Your own edits stay, and so do any code panels the agent wrote, so undo those step by step.
+Each part returns to its state before the run first changed it. Required design dependencies go back with it. A conflicting later edit blocks the revert, so it stays untouched.
 
 A toast appears that says “Reverted agent changes.” If you change your mind, click **Undo** in the toast.
 
-**Note:** **Revert Changes** only appears under the last reply, and it's gone after you reload. You can still undo earlier runs step by step.
+**Revert Changes** remains available after reopening a completed chat when its touched-part list was saved. Interrupted runs without that list remain recoverable through [Scene History](/help/save-and-merge-robot-versions).
 
 To stop the agent before it makes more changes, see [Steer or queue messages while the agent works](/help/steer-or-queue-messages).

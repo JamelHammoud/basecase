@@ -36,6 +36,7 @@ export interface TitleBarTabActions {
   newScene: () => void;
   closeTab: (id: string) => void;
   closeTabs: (ids: string[]) => void;
+  showHistory?: (id: string) => void;
   duplicateTab: (id: string) => void;
   renameTab: (id: string, name: string) => void;
   renamingTab: string | null;
@@ -128,6 +129,7 @@ export function TitleBarTabs({
           onClose={actions.closeTab}
           onCloseOthers={(id) => actions.closeTabs(idsExcept(tabs, id))}
           onCloseRight={(id) => actions.closeTabs(idsAfter(tabs, id))}
+          onHistory={actions.showHistory}
           onDuplicate={actions.duplicateTab}
           onRename={actions.renameTab}
           renaming={actions.renamingTab}

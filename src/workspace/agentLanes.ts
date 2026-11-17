@@ -85,6 +85,6 @@ export function runningChats(lanes: AgentLane[], now: Date): AgentConversationSu
     }));
 }
 
-export function canRevertLane(lane: AgentLane) {
-  return !lane.busy && Object.keys(lane.edits).length > 0 && lane.messages.at(-1)?.role === 'agent';
+export function canRevertLane(lane: AgentLane, owned = Object.keys(lane.edits)) {
+  return !lane.busy && owned.length > 0 && lane.messages.at(-1)?.role === 'agent';
 }

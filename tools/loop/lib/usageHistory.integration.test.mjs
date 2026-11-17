@@ -112,13 +112,22 @@ beforeAll(() => {
 
 it('uses the selected CLI end date for its default start and rejects reversed date windows', () => {
   const until = at - 2 * 86_400_000;
-  const historical = report(['--until', new Date(until).toISOString()]);
+  const sessions = [
+    invocation('date-window-end', { startedAt: until }),
+    invocation('date-window-after', { startedAt: at }),
+  ];
 
-  expect(historical.completionWindow).toMatchObject({ since: until - 86_400_000, until });
-  expect(historical.sessions).toBe(0);
-  expect(() => report(['--since', new Date(at + 86_400_000).toISOString()])).toThrow(
-    'Use ISO dates with --since before --until',
-  );
+  try {
+    const historical = report(['--until', new Date(until).toISOString()]);
+
+    expect(historical.completionWindow).toMatchObject({ since: until - 86_400_000, until });
+    expect(historical.sessions).toBe(0);
+    expect(() => report(['--since', new Date(at + 86_400_000).toISOString()])).toThrow(
+      'Use ISO dates with --since before --until',
+    );
+  } finally {
+    for (const id of sessions) fs.rmSync(path.join(root, 'state', 'sessions', `${id}.json`));
+  }
 });
 
 afterAll(() => {

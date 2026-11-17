@@ -296,6 +296,8 @@ Measurements and limits: [Engineering calculations performance evidence](../note
 
 ## Performance: assembly and repair planning
 
+- **Enclosure split probes reuse vector storage.** `assembly/splitTest.ts` resets the ray’s owned origin and direction for each candidate and reuses one containment point per half-plane. Straight-move probes already reuse their origins. Split-plane sample partitioning, offsets, broad-phase rejection, containment and blocker order stay unchanged. `splitTest.test.ts` compares complete results against the allocating calculation through placement edits, containment, misses and duplicate identities, and bounds sampled-point clones at two candidate counts. [Evidence](../notes/performance-assembly.md#enclosure-split-probes-reuse-vector-storage).
+
 Measurements and limits: [Assembly and repair planning performance evidence](../notes/performance-assembly.md).
 
 - **Screw-head contact thresholds stop at three.** `assembly/fastenerChain.ts` shares `probe.ts`'s `hasThreeContacts` for seated and sunk-head checks. Each query stops at its third matching ring point without collecting a filtered contact array. Washer-first seating, solid order, ring order, tolerances and the first sunk host stay unchanged. Sleeve-host ranking still counts every contact because it selects the strongest host. `ringContacts.test.ts` covers all 256 eight-point contact patterns, query counts, input preservation and later edits. Existing fastener and seeded-fault tests retain complete trace and report coverage. [Evidence](../notes/performance-assembly.md#screw-head-contact-thresholds-stop-at-three).

@@ -37,6 +37,15 @@ const quatOf = (r?: V3) =>
 
 const rootAxis = (keyframe: AnimationKeyframe, axis: number) => keyframe.root?.position?.[axis] ?? 0;
 
+function blendRotation(a: V3 | undefined, b: V3 | undefined, u: number): V3 {
+  if (!a && !b) return [-0, 0, -0];
+
+  const q = quatOf(a).slerp(quatOf(b), u);
+  const e = new THREE.Euler().setFromQuaternion(q, 'XYZ');
+
+  return [e.x / D2R, e.y / D2R, e.z / D2R];
+}
+
 function blendRoot(ks: AnimationKeyframe[], blend: Blend, u: number, smooth: boolean): RootOffset | undefined {
   if (ks.every((k) => !k.root)) return undefined;
 
@@ -45,10 +54,8 @@ function blendRoot(ks: AnimationKeyframe[], blend: Blend, u: number, smooth: boo
       ? blend(rootAxis(ks[0], i), rootAxis(ks[1], i), rootAxis(ks[2], i), rootAxis(ks[3], i))
       : lerp(rootAxis(ks[1], i), rootAxis(ks[2], i), u),
   ) as V3;
-  const q = quatOf(ks[1].root?.rotation).slerp(quatOf(ks[2].root?.rotation), u);
-  const e = new THREE.Euler().setFromQuaternion(q, 'XYZ');
 
-  return { position, rotation: [e.x / D2R, e.y / D2R, e.z / D2R] };
+  return { position, rotation: blendRotation(ks[1].root?.rotation, ks[2].root?.rotation, u) };
 }
 
 interface Span {

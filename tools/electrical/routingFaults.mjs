@@ -7,12 +7,11 @@ import { routingExecute, nativeElectricalCli } from './routingExecute.mjs';
 const wholeBoard = { min: [-100, -100], max: [100, 100] };
 const copper = /\t?\((?:segment|via)\s[\s\S]*?\n\t\)/gu;
 
-export async function routingFaults({ request, input }) {
-  const original = structuredClone(request);
-  const cases = [
+export function routingFaultCases(request) {
+  return [
     { name: 'unconnected', pcb: request.pcb.replace(copper, ''), issue: 'board-unrouted' },
-    { name: 'short', pcb: addTrack(request.pcb, -27.5), issue: 'board-drc', type: 'shorting_items' },
-    { name: 'clearance', pcb: addTrack(request.pcb, -28.6), issue: 'board-drc', type: 'clearance' },
+    { name: 'short', pcb: resizePad(request.pcb, 3.5), issue: 'board-drc', type: 'shorting_items' },
+    { name: 'clearance', pcb: resizePad(request.pcb, 3.1), issue: 'board-drc', type: 'clearance' },
     {
       name: 'track-width',
       pcb: request.pcb.replace(/\(width 0\.25\)/gu, '(width 0.01)'),
@@ -21,9 +20,13 @@ export async function routingFaults({ request, input }) {
     },
     { name: 'forbidden-copper', pcb: request.pcb, issue: 'board-copper-exclusion', copperExclusions: [wholeBoard] },
   ];
+}
+
+export async function routingFaults({ request, input }) {
+  const original = structuredClone(request);
   const results = [];
 
-  for (const fault of cases) {
+  for (const fault of routingFaultCases(request)) {
     const candidate = {
       ...request,
       pcb: fault.pcb,
@@ -48,10 +51,12 @@ export async function routingFaults({ request, input }) {
   return results;
 }
 
-function addTrack(pcb, end) {
-  const segment = `(segment (start -30 -30) (end ${end} -30) (width 0.25) (layer "F.Cu") (net 1))`;
+function resizePad(pcb, diameter) {
+  const padSize = /\(size\s+1\.7\s+1\.7\)/u;
 
-  return pcb.replace(/\)\s*$/u, `${segment})`);
+  assert.match(pcb, padSize, 'Routing fault controls require the JST header pad geometry.');
+
+  return pcb.replace(padSize, `(size ${diameter} ${diameter})`);
 }
 
 async function impossibleRoute(input) {

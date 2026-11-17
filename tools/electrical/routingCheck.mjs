@@ -120,7 +120,8 @@ for (const fixture of fixtures) {
       vias: kiCadChildren(parsed, 'via').length,
     });
   } catch (error) {
-    assert.equal(fixture.expectedOutcome, 'refused', `${fixture.name}: ${error.stack}`);
+    if (fixture.expectedOutcome !== 'refused') throw new Error(`${fixture.name}: ${error.message}`, { cause: error });
+
     assert.equal(error.message, 'board-route-layout');
     results.push({ name: fixture.name, status: 'refused', reason: error.message });
   }

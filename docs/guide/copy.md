@@ -260,6 +260,8 @@ The samples are the voice. To change how something sounds, change its samples, n
 
 Help-label suggestions and CAD part suggestions share `electron/editDistance.mjs`. It compares UTF-16 code units with one reusable row sized to the shorter string. Label ranking keeps shared-word priority, stable distance ties and glossary preference. The shared helper's tests compare complete suggestions with full-matrix distances.
 
+`tools/check-site.test.mjs` covers negative contractions in prose and titles, with code spans and front-matter keywords excluded. The real site scan checks published changelog wording too. [Site contraction repair evidence](../notes/node.md#site-contraction-regression) records the November 17 failure and its correction.
+
 **Before → after** (`2026-11-12-calibrate-servos.md`):
 
 | Before | After |

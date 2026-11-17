@@ -132,6 +132,8 @@ Measurements and limits: [Robot shells performance evidence](../notes/performanc
 
 ## Performance: joints and kinematics
 
+- **Leader sizing stops at its minimum reach.** `leader/leaderFrames.ts` returns 56 mm links directly when their combined minimum meets or exceeds half the follower's reach. Larger target reaches retain the forty-round scale search and half-millimeter rounding. Make a Leader and the agent tool share this function. `makeLeader.test.ts` covers coincident joints, targets below, at and above the minimum, unequal spans and scalable arms alongside complete leader construction. [Evidence](../notes/performance-joints.md#leader-sizing-stops-at-its-minimum-reach).
+
 Four-bar seed generation in `utils/linkage.ts` draws ground, coupler and rocker lengths directly, without temporary index or length arrays. Sketch Path and agent synthesis share this generator. Random draw order, rejection arithmetic and accepted shapes stay unchanged. Existing `linkage.test.ts` covers deterministic synthesis, path recovery, ranking and unreachable paths. [Seed parity and allocation evidence](../notes/performance-joints.md#four-bar-seeds-draw-link-lengths-directly).
 
 Four-bar seed alignment uses scalar coordinate offsets and a shared single-pass centroid helper in `utils/linkage.ts`. Path framing and each seed’s two centroids use that helper. Sketch Path and agent synthesis share the alignment. Summation order, similarity products and returned transforms stay unchanged. Existing `linkage.test.ts` covers complete synthesis, deterministic results and unreachable paths. [Alignment parity and allocation evidence](../notes/performance-joints.md#four-bar-seed-alignment-uses-scalar-offsets).

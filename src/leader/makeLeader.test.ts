@@ -188,6 +188,23 @@ function maxDiff(a: THREE.Matrix4, b: THREE.Matrix4) {
 }
 
 describe('reach', () => {
+  it.each([
+    { distances: [0, 0], lengths: [56, 56] },
+    { distances: [20, 40], lengths: [56, 56] },
+    { distances: [112, 112], lengths: [56, 56] },
+    { distances: [1, 223], lengths: [56, 56] },
+    { distances: [112, 113], lengths: [56, 56.5] },
+    { distances: [100, 400], lengths: [56, 194] },
+  ])('sizes minimum and scalable links for $distances', ({ distances, lengths }) => {
+    const robot = serialArm('reach-boundary', [
+      { id: 'base', axis: Y, origin: [0, 0, 0] },
+      { id: 'middle', axis: X, origin: [0, distances[0], 0] },
+      { id: 'tip', axis: Z, origin: [0, distances[0] + distances[1], 0] },
+    ]);
+
+    expect(leaderFrames(robot.joints).links.map((link) => link.length)).toEqual(lengths);
+  });
+
   it.each([deskArm(), urArm()])('scales $id to about half its reach', (robot) => {
     const ratio = armReach(leaderOf(robot), robot);
 

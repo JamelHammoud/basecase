@@ -95,6 +95,9 @@ function linkDirections(axes: THREE.Vector3[], offsets: THREE.Vector3[]): THREE.
 
 function linkLengths(follower: number[]): number[] {
   const target = REACH_SCALE * follower.reduce((s, v) => s + v, 0);
+
+  if (target <= MIN_LINK_MM * follower.length) return follower.map(() => MIN_LINK_MM);
+
   const total = (s: number) => follower.reduce((sum, v) => sum + Math.max(MIN_LINK_MM, s * v), 0);
   let lo = 0;
   let hi = REACH_SCALE;

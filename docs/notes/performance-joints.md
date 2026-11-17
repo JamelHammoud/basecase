@@ -2,6 +2,22 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## Leader sizing stops at its minimum reach
+
+The whole-app search found one leader link scale search, `linkLengths` in `src/leader/leaderFrames.ts`. Make a Leader from the command palette, the context menu and the agent's `make_leader` all use it through `makeLeader`. Four-bar sizing has a separate dimensional contract.
+
+When half the follower's reach is at or below 56 mm times its link count, the minimum-sized links already consume that target. The function now returns those lengths directly. The existing search and half-millimeter rounding remain for larger targets. There is no cache or changed ownership.
+
+For N links in this branch, source-derived accounting removes forty reductions over N distances and their forty N multiplications and maximum calculations. The final result map also avoids scaling and rounding. A two-link leader removes eighty search visits, and a five-link leader removes two hundred. Target summation and result allocation remain. These are operation counts, without timing or a claim about complete leader creation latency.
+
+`src/leader/makeLeader.test.ts` checks two-link follower distances of [0, 0], [20, 40], [112, 112], [1, 223], [112, 113] and [100, 400]. These cover coincident origins, undersized reach, equal and unequal spans at the boundary, the first half-millimeter above it and a scaled arm with one clamped link. Existing tests retain joint preservation, orientation, servo counts, mapping, cradle alignment and complete leader construction. No timeout, retry or quarantine changes apply.
+
+Rechecked [Make a leader arm](../../site/content/help/make-a-leader-arm.md). The command, scene tab, brackets, Build workflow, half-reach rule and 56 mm minimum remain accurate. No user action or visible state changes, so the article and its screenshots need no edit.
+
+Rechecked [Joints and kinematics](../../site/content/help/joints-and-kinematics.md), which covers the owning guide. Its joint fields, hierarchy, posing and inverse kinematics remain accurate and it has no screenshots. No article edit is needed.
+
+Scoped validation passed formatting, ESLint, documentation, site copy for 330 pages, types and all 42 related tests across five files. The session log is `scratch/check-leader-minimum.log`. Copy accounting reports zero added and zero removed strings.
+
 ## Robot imports collect unique mesh filenames directly
 
 The app-wide search found one mesh-request collector in `utils/robotImport/importRobot.ts`. URDF, MJCF, expanded xacro and converted model imports all reach it through `readModel`. Onshape exports and SimReady visual loading have separate request contracts and do not collect filenames from this model structure.

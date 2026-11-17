@@ -38,6 +38,7 @@ export function boardModuleId(parts: ScenePart[], placement: BoardPlacement) {
     part?.kind !== 'component' ||
     part.componentId !== product?.componentId ||
     part.componentVariant ||
+    placement.bindings.some((binding) => binding.partId !== part.id) ||
     !catalogGeometry(part)
   )
     return undefined;
@@ -65,12 +66,14 @@ export function mountedBoardParts(parts: ScenePart[], board: ElectronicsBoard | 
   if (!host || !board) return parts;
 
   const updates = new Map<string, { position: ScenePart['position']; rotation: ScenePart['rotation'] }>();
+  const owners = board.placements.map((placement) => boardModuleId(parts, placement));
+  const uniqueOwners = new Set(owners.filter((id) => id && owners.indexOf(id) === owners.lastIndexOf(id)));
 
   for (const placement of board.placements) {
     const product = boardProduct(placement.productId);
     const id = product?.componentId && boardModuleId(parts, placement);
 
-    if (!id) continue;
+    if (!id || !uniqueOwners.has(id)) continue;
 
     const side = board.side === 'top' ? 1 : -1;
     const matrix = partMatrix(host)

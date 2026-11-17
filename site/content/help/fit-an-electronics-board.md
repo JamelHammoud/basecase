@@ -45,12 +45,7 @@ Place supported connectors and regulators inside your robot, then export their e
 
 ![The rover’s Board fit check passes while electrical requirements remain unresolved](/help/fit-an-electronics-board/fit.png)
 
-10. In the title bar, click **Export**.
-11. In the export menu, choose **Schematic**.
-12. From Downloads, extract the ZIP.
-13. In KiCad, open `robot/robot.kicad_pro` from the extracted folder.
-
-The package includes the PCB, schematic, local libraries, exact product references and placement requirements. Copper stays unrouted. This export doesn’t establish fabrication readiness or physical assembly fit.
+[Export a robot schematic](/help/export-a-robot-schematic) explains how to download and open the KiCad project. With a board definition, the package includes the PCB, schematic, local libraries, exact product references and placement requirements. Copper stays unrouted. This export doesn’t establish fabrication readiness or physical assembly fit.
 
 You can start with JST B3B-EH-A headers for ROBOTIS XL330-M288 interfaces and Pololu D36V50F5, D36V50F6 and D36V50F12 regulators. These are the initial supported products. Other interfaces remain unresolved. Servos stay off the PCB.
 

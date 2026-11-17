@@ -220,7 +220,7 @@ export class ViewportEngine {
 
     if (props.sceneKey !== previous.sceneKey) frameScene(this.ctx.stage, props.parts);
 
-    if (props.pose !== previous.pose && !props.buildStep) this.ctx.layer.pose = props.pose ?? new Map();
+    this.ctx.layer.syncPose(previous, props);
 
     if (props.buildStep !== previous.buildStep) this.buildStep.show(props.buildStep ?? null);
 
@@ -229,7 +229,7 @@ export class ViewportEngine {
     if (meshChanged || previous.worldParts !== props.worldParts) this.syncWorld();
 
     if (meshChanged || changed(previous, props, ['parts', 'selectedPartIds'])) this.syncScene();
-    else if (props.pose !== previous.pose) this.applyPose();
+    else if (props.pose !== previous.pose || props.poseOwners !== previous.poseOwners) this.applyPose();
 
     if (changed(previous, props, GIZMO_KEYS) || Boolean(previous.onGrab) !== Boolean(props.onGrab))
       this.gizmo.refresh();

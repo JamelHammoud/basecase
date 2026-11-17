@@ -6,11 +6,11 @@ image: /changelog/fit-an-electronics-board/cover.png
 
 You can fit supported connectors and regulators onto a board inside your robot, then export the placement for editing in KiCad. You still need to route the copper.
 
-In Build, use Define Board to add a 100 × 80 × 1.6 mm carrier with four mounting holes and catalog mounting hardware. Use the Inspector to edit its dimensions, position, clearances and individual placements.
-
 Your rover’s regulator can fit on its chassis while its plug still hits the battery. With board fit, you check scene geometry and declared plug access as separate checks from electrical readiness. You need the missing geometry before you can complete the fit.
 
-With automatic placement, you keep locked components in place and try up to 50,000 candidate positions. If a fit proves infeasible, you keep every component and the original outline. Connector purchases join the existing BOM without duplicating modules.
+The board starts as a 100 × 80 × 1.6 mm carrier with four mounting holes and catalog mounting hardware. Its dimensions, position, clearances and individual placements are editable in the Inspector.
+
+Automatic placement keeps locked components in place and tries up to 50,000 candidate positions. If the search finds no fit, you keep every component and the original outline. Connector purchases join the existing BOM without duplicating modules.
 
 You can start with JST B3B-EH-A headers for ROBOTIS XL330-M288 interfaces and Pololu D36V50F5, D36V50F6 and D36V50F12 regulators. For other interfaces, you retain the unresolved requirements.
 

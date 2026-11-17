@@ -38,6 +38,18 @@ describe('physical module placement', () => {
     );
   });
 
+  it('preserves module poses when saved bindings name different source parts', () => {
+    const input = fixture();
+    const board = input.project.electronicsBoard;
+    const module = input.parts.find((part) => part.id === 'buck')!;
+
+    board.placements[0].bindings[1].partId = 'base';
+    board.placements[0].position = [20, 20];
+
+    expect(projectBoard(input).requirements.some((item) => item.code === 'board-mapping')).toBe(true);
+    expect(mountedBoardParts(input.parts, board).find((part) => part.id === module.id)).toBe(module);
+  });
+
   it.each(['top', 'bottom'] as const)('follows the board frame on the %s side', (side) => {
     const input = fixture();
     const board = input.project.electronicsBoard;
@@ -70,6 +82,7 @@ describe('physical module placement', () => {
   it('rejects a second placement of the same purchased module', () => {
     const input = fixture();
     const placements = input.project.electronicsBoard.placements;
+    const module = input.parts.find((part) => part.id === 'buck')!;
 
     placements.push({ ...structuredClone(placements[0]), id: 'duplicate', position: [20, 20] });
 
@@ -77,5 +90,8 @@ describe('physical module placement', () => {
 
     expect(projected.requirements.some((item) => item.code === 'board-mapping')).toBe(true);
     expect(projected.terminals).toHaveLength(8);
+    expect(mountedBoardParts(input.parts, input.project.electronicsBoard).find((part) => part.id === module.id)).toBe(
+      module,
+    );
   });
 });

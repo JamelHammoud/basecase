@@ -4,7 +4,7 @@ import { applyPartTransform, buildPartGroup, releasePartGroup } from '../buildPa
 import { getComponentMesh } from '../componentMeshes';
 import { preparePart } from '../partMesh/prepare';
 import type { PartBatches } from './partBatches';
-import type { Vec3 } from './types';
+import type { Vec3, ViewportProps } from './types';
 
 interface Entry {
   part: ScenePart;
@@ -14,6 +14,8 @@ interface Entry {
 }
 
 const TRANSFORM_KEYS = new Set(['position', 'rotation']);
+
+type PoseProps = Pick<ViewportProps, 'pose' | 'poseOwners' | 'buildStep'>;
 
 export function onlyTransformChanged(a: ScenePart, b: ScenePart): boolean {
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]) as Set<keyof ScenePart>;
@@ -44,6 +46,7 @@ const rememberRest = (group: THREE.Group) => {
 
 export class PartLayer {
   pose = new Map<string, THREE.Matrix4>();
+  poseOwners: ReadonlyMap<string, string> = new Map();
 
   private readonly entries = new Map<string, Entry>();
 
@@ -154,6 +157,12 @@ export class PartLayer {
     }
   }
 
+  syncPose(previous: PoseProps, props: PoseProps): void {
+    this.poseOwners = props.poseOwners ?? new Map();
+
+    if (props.pose !== previous.pose && !props.buildStep) this.pose = props.pose ?? new Map();
+  }
+
   applyPoseTo(ids: Iterable<string>): void {
     for (const id of ids) {
       const group = this.entries.get(id)?.group;
@@ -163,7 +172,7 @@ export class PartLayer {
   }
 
   toRest(id: string, position: THREE.Vector3, quaternion: THREE.Quaternion) {
-    const delta = this.pose.get(id);
+    const delta = this.poseFor(id);
 
     if (!delta) {
       return { position: position.clone(), quaternion: quaternion.clone() };
@@ -181,7 +190,7 @@ export class PartLayer {
   }
 
   pointAtRest(id: string, point: Vec3): Vec3 {
-    const delta = this.pose.get(id);
+    const delta = this.poseFor(id);
 
     return delta ? (new THREE.Vector3(...point).applyMatrix4(delta.clone().invert()).toArray() as Vec3) : point;
   }
@@ -231,7 +240,7 @@ export class PartLayer {
 
     if (!rest) return;
 
-    const delta = this.pose.get(id);
+    const delta = this.poseFor(id);
 
     if (delta) {
       POSED.compose(rest.position, rest.quaternion, UNIT).premultiply(delta);
@@ -249,6 +258,10 @@ export class PartLayer {
     const quaternion = group.userData.restQuaternion as THREE.Quaternion | undefined;
 
     return position && quaternion ? { position, quaternion } : null;
+  }
+
+  private poseFor(id: string) {
+    return this.pose.get(this.poseOwners.get(id) ?? id);
   }
 
   private upsert(next: PendingBuild): boolean {

@@ -60,3 +60,9 @@ export function boardComponents(host: ScenePart, board: ElectronicsBoard): Scene
 export function boardSelection(id: string | null, board: ElectronicsBoard | undefined) {
   return board?.placements.some((placement) => id === componentId(board, placement)) ? board.partId : id;
 }
+
+export function boardPoseOwners(board: ElectronicsBoard | undefined) {
+  if (!board) return new Map<string, string>();
+
+  return new Map(board.placements.map((placement) => [componentId(board, placement), board.partId]));
+}

@@ -111,6 +111,7 @@ export interface ViewportProps {
   sceneKey?: string;
   parts: ScenePart[];
   sourceParts?: ScenePart[];
+  poseOwners?: ReadonlyMap<string, string>;
   selectedPartIds: string[];
   transformMode: TransformMode;
   sculptSettings: SculptSettings;

@@ -1,4 +1,5 @@
-import { validRoutedRecord } from './boardRoutingRecord';
+import { validRoutePlan } from './boardRouteContract.mjs';
+import { validFabricationRules, validRoutedRecord } from './boardRoutingRecord';
 import type { ElectronicsBoard } from './boardTypes';
 import type { ScenePart } from '../types/robotics';
 
@@ -78,7 +79,7 @@ export function validBoardDefinition(value: unknown): value is ElectronicsBoard 
     entries(value.holes, hole, 128) &&
     entries(value.keepouts, keepout, 128) &&
     entries(value.placements, placement, 256) &&
-    (value.routed === undefined || validRoutedRecord(value.routed))
+    validBoardElectricalRecords(value)
   );
 }
 
@@ -92,5 +93,13 @@ export function validBoardPart(part: ScenePart) {
     vector3(part.position) &&
     vector3(part.rotation) &&
     plainBoardShape(part)
+  );
+}
+
+function validBoardElectricalRecords(value: Record<string, unknown>) {
+  return (
+    (value.fabrication === undefined || (value.fabrication !== null && validFabricationRules(value.fabrication))) &&
+    (value.routing === undefined || validRoutePlan(value.routing)) &&
+    (value.routed === undefined || validRoutedRecord(value.routed))
   );
 }

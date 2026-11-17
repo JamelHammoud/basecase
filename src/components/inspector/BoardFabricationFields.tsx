@@ -11,11 +11,13 @@ export function BoardFabricationFields({
 }) {
   const routed = board.routed;
 
-  if (!routed) return null;
+  const rules = routed?.rules ??
+    board.fabrication ?? { source: '', clearanceMm: null, trackWidthMm: null, drillMm: null };
+  const update = (patch: Partial<BoardFabricationRules>) => {
+    const next = { ...rules, ...patch };
 
-  const rules = routed.rules ?? { source: '', clearanceMm: null, trackWidthMm: null, drillMm: null };
-  const update = (patch: Partial<BoardFabricationRules>) =>
-    onChange({ ...board, routed: { ...routed, rules: { ...rules, ...patch } } });
+    onChange(routed ? { ...board, routed: { ...routed, rules: next } } : { ...board, fabrication: next });
+  };
 
   return (
     <Section title="Fabrication" collapsible defaultOpen={false}>

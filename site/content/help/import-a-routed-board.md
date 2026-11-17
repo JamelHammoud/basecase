@@ -22,6 +22,8 @@ hub_checks_and_blockers: |
 
 Import routed copper from KiCad into your robot while keeping its footprint identities and mounting geometry.
 
+For supported unrouted carriers, you can [route a carrier board locally](/help/route-a-carrier-board).
+
 You can import boards from KiCad 9.0.6 with two copper layers, straight tracks and through vias. You can't import zones, arcs or external assets. The board file limit is 8 MiB. Keep footprint placement, pads, outline, thickness and mounting holes unchanged.
 
 1. In **Export**, choose **Schematic**.

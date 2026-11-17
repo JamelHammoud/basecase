@@ -27,14 +27,28 @@ export function validRoutedRecord(value: unknown): value is BoardRoutedSource {
   if (!object(value)) return false;
 
   return (
-    onlyKeys(value, ['schema', 'hash', 'pcb', 'sourceFingerprint', 'rules', 'evidence']) &&
+    onlyKeys(value, ['schema', 'hash', 'pcb', 'sourceFingerprint', 'rules', 'evidence', 'provenance']) &&
     value.schema === 1 &&
     hash(value.hash) &&
     hash(value.sourceFingerprint) &&
     typeof value.pcb === 'string' &&
     value.pcb.length <= 8 * 1024 * 1024 &&
     validFabricationRules(value.rules) &&
+    (value.provenance === undefined || validProvenance(value.provenance)) &&
     (value.evidence === undefined || validEvidence(value.evidence))
+  );
+}
+
+function validProvenance(value: unknown) {
+  return (
+    object(value) &&
+    onlyKeys(value, ['engine', 'version', 'artifactHash', 'runtime', 'dsnHash', 'sesHash']) &&
+    value.engine === 'freerouting' &&
+    value.version === '2.1.0' &&
+    value.runtime === '21.0.13' &&
+    hash(value.artifactHash) &&
+    hash(value.dsnHash) &&
+    hash(value.sesHash)
   );
 }
 

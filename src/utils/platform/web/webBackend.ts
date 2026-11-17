@@ -1,3 +1,4 @@
+import { boardImportMessage } from '../../../wiring/boardRoutingFindings';
 import type { AcpStatusInfo, CustomModelDefinition, Purchases, StoredPurchase } from '../../../types/robotics';
 import { checkedPrice, isOnHandCount } from '../../onHand';
 import type { TrainerStatus } from '../types';
@@ -82,6 +83,9 @@ const uploadedImage = (body: Body) => ({
 });
 
 const ROUTES: Record<string, Route> = {
+  'electrical-route': () => {
+    throw new Error(boardImportMessage('board-router'));
+  },
   'datasets-content-save': (body) => webDatasets.saveContent(datasetContentFromBase64(body.arg)),
   'datasets-content-load': async (body) => {
     const bytes = await webDatasets.content(body.arg as string);

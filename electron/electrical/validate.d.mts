@@ -6,5 +6,6 @@ export function runNativeBoard(
     cli?: (args: string[], cwd: string, signal?: AbortSignal) => Promise<string>;
     signal?: AbortSignal;
     temporaryRoot?: string;
+    exportFabrication?: boolean;
   },
 ): Promise<BoardNativeResult>;

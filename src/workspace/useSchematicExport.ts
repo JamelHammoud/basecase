@@ -37,10 +37,14 @@ export function useSchematicExport(core: WorkspaceCore) {
       if ('validation' in result && result.validation && board?.routed) {
         const { key, version, issues, report, metrics } = result.validation;
 
-        core.docs.commitBoard(core.parts, {
+        const refreshed = {
           ...board,
           routed: { ...board.routed, evidence: { key, version, issues, report, metrics } },
-        });
+        };
+
+        core.docs.updateProjectNow((project) =>
+          project.electronicsBoard === board ? { ...project, electronicsBoard: refreshed } : project,
+        );
       }
 
       core.showToast(`Exported ${core.scene.sceneName}`);

@@ -50,7 +50,7 @@ Some features work only in the desktop app. In the web studio, you see this inst
 | Training vision models | Train in the desktop app from an image dataset |
 | Training on another computer | Configure SSH and seed attempts in the desktop app |
 | **Play** ▸ **Operate** | Not shown |
-| Board fabrication files | Editable board import and export only. Native KiCad validation needs the desktop app |
+| Board routing and fabrication files | Editable board import and export only. Local routing and native KiCad validation need the desktop app |
 | STEP and IGES import | Meshes only: STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE |
 | Publishing a dataset to Hugging Face | Export only |
 | Roboflow imports | Download the dataset and import its folder or zip |

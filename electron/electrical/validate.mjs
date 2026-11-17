@@ -1,3 +1,4 @@
+import { copperViolatesExclusions } from '../../src/wiring/boardCopperExclusions.mjs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -76,7 +77,7 @@ export async function runNativeBoard(request, options = {}) {
 
     result.issues = reportIssues(checked, request);
 
-    if (result.issues.length) return result;
+    if (result.issues.length || options.exportFabrication === false) return result;
 
     await fs.mkdir(path.join(directory, 'fabrication'));
     await invoke([
@@ -146,6 +147,8 @@ function reportIssues(checked, request) {
 
   if (!completeBoardRules(request.rules) || !explicitBoardStackup(request.pcb))
     result.issues.push('board-manufacturing');
+
+  if (copperViolatesExclusions(request.pcb, request.copperExclusions)) result.issues.push('board-copper-exclusion');
 
   result.issues.push(...request.mechanicalIssues);
   result.issues = [...new Set(result.issues)].slice(0, 64);

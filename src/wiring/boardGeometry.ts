@@ -22,7 +22,11 @@ export interface BoardGeometry {
 }
 
 export function boardGeometryKey(input: ElectricalInput) {
-  return hashText(electricalSourceJson({ board: routingInput(input).project.electronicsBoard, parts: input.parts }));
+  const board = routingInput(input).project.electronicsBoard;
+
+  return hashText(
+    electricalSourceJson({ board: { ...board, fabrication: undefined, routing: undefined }, parts: input.parts }),
+  );
 }
 
 export function boardSolid(part: ScenePart, board: ElectronicsBoard) {

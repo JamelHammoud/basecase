@@ -1,3 +1,4 @@
+import { useBoardRouting } from './useBoardRouting';
 import { useRoutedBoard } from './useRoutedBoard';
 import { useRef } from 'react';
 import { electricalClient } from '../wiring/electricalClient';
@@ -15,6 +16,7 @@ export function useBoard(core: WorkspaceCore) {
 
   const busy = useRef(false);
   const importBoard = useRoutedBoard(core);
+  const route = useBoardRouting(core);
   const select = (id: string) => {
     core.setSelectedIds([id]);
     core.tool.openRightTab('inspector');
@@ -67,7 +69,7 @@ export function useBoard(core: WorkspaceCore) {
     const before = project.electronicsBoard;
 
     if (
-      electricalSourceJson({ ...before, routed: undefined }) === electricalSourceJson({ ...board, routed: undefined })
+      electricalSourceJson(boardPlacementDefinition(before)) === electricalSourceJson(boardPlacementDefinition(board))
     ) {
       core.docs.commitBoard(currentParts, board);
 
@@ -83,5 +85,9 @@ export function useBoard(core: WorkspaceCore) {
     core.docs.commitBoard(mountedBoardParts(parts, board), board);
   };
 
-  return { define, select, update, importBoard, arrange: () => prepare('place') };
+  return { define, select, update, importBoard, route, arrange: () => prepare('place') };
+}
+
+function boardPlacementDefinition(board: ElectronicsBoard | undefined) {
+  return { ...board, routed: undefined, routing: undefined, fabrication: undefined };
 }

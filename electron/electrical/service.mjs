@@ -2,14 +2,32 @@ import { Worker } from 'node:worker_threads';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { boundedRouteRequest } from './route.mjs';
 import { boundedBoardRequest } from './inputs.mjs';
 
 export class ElectricalBoards {
   jobs = new Map();
   cancelled = new Set();
 
+  async tools() {
+    return this.run({ id: crypto.randomUUID() }, 'tools');
+  }
+
   async validate(request) {
     boundedBoardRequest(request);
+
+    return this.run(request, 'validate');
+  }
+
+  async route(input) {
+    boundedRouteRequest(input);
+    boundedBoardRequest(input.request);
+
+    return this.run(input, 'route');
+  }
+
+  async run(input, mode) {
+    const request = mode === 'route' ? input.request : input;
 
     if (this.cancelled.delete(request.id)) throw new Error('board-validation');
 
@@ -23,7 +41,7 @@ export class ElectricalBoards {
     try {
       directory = await fs.mkdtemp(path.join(os.tmpdir(), 'basecase-pcb-job-'));
       job.worker = new Worker(new URL('./worker.mjs', import.meta.url), {
-        workerData: { request, directory },
+        workerData: { request: input, mode, directory },
         resourceLimits: { maxOldGenerationSizeMb: 192 },
       });
 

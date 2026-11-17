@@ -1,6 +1,8 @@
 import { postRoutesOf, registerCalls } from '../callRoutes.mjs';
 
 export const ELECTRICAL_CALLS = {
+  'electrical:tools': (store) => store.tools(),
+  'electrical:route': (store, value) => store.route(value),
   'electrical:validate': (store, value) => store.validate(value),
   'electrical:cancel': (store, value) => store.cancel(value),
 };

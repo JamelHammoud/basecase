@@ -158,3 +158,16 @@ For unit spacing and a 1.5 mm density radius, candidate tuples fall from 125 to 
 A scratch replay compares complete density-filter buffers in 36 cases and complete mass-search grids in 18 cases. Fixtures vary anisotropic spacing, sparse occupancy, radius and wall thickness, and check source preservation. Existing `lightenNeighborhoods.test.ts` retains independent all-pairs filter comparisons, radius cases, changed inputs, source preservation, mass-search behavior and bounded distance counts. No new permanent test is needed for this direct-emission substitution. Replay source and results remain local in `scratch/lighten-offset-parity.test.ts` and `scratch/lighten-offset-parity.log`. User actions, labels and visible states stay unchanged, so existing Lighten help and screenshots remain accurate.
 
 The targeted check passed ESLint, documentation, TypeScript and all 343 related tests across 55 files. Its site-copy stage failed on unchanged `site/content/changelog/2026-11-17-export-electronics-with-a-robot-kit.md:15`, whose “does not” contraction is already owned by open repair #1694. The complete command cannot be reported as passing. No timeout, retry or quarantine changed. Final validation remains local in `scratch/check-lighten-offsets-final.log`.
+
+
+## Cell centers use scalar grid coordinates
+
+A whole-app search found mapped grid-center calculations in `strength/mesh.ts` and `three/viewport/stressOverlay.ts`. The first serves frozen-region queries in Lighten grid preparation, load-path preparation and optimization. The second places every displayed stress cell. Both now calculate the three coordinates directly. Other voxel coordinates in mesh construction already use scalars.
+
+A scratch replay checked 18,212 cell centers across singleton, 3 × 5 × 7 and 10 × 9 × 100 grids, with unit and anisotropic spacing and a translated origin. Every returned center matched the previous mapped calculation exactly. Complete Float32 instance matrices and color buffers also matched, retaining source cell order. The replay used the real stress-field store and overlay sync and disposed each overlay afterward.
+
+The overlay removes three coordinate arrays and one mapping callback per cell. Lighten center queries remove two arrays and one mapping callback per query, retaining the returned center tuple. Across the replay this removes 54,636 overlay arrays and 36,424 center-helper arrays. These are source-derived construction counts, without heap profiling, timings or a claim about complete solve latency. No user action, label or visible state changes, so existing help and screenshots remain accurate.
+
+Existing Lighten frozen-region and optimization tests retain pipeline coverage. The direct coordinate substitution uses a scratch replay instead of a new permanent test that repeats the calculation. Replay source and output remain local in `scratch/stress-centers.test.ts` and `scratch/stress-centers.log`.
+
+The targeted check passed formatting, ESLint, documentation, site copy for 330 pages, TypeScript and 525 related tests across 70 files. Copy diff reported no added, changed or removed strings. Preflight flagged the unchanged Strength help article. Reading its steps, thresholds, labels and screenshot descriptions against this substitution confirmed they remain accurate, so the article stays unchanged.

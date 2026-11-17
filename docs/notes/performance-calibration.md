@@ -25,3 +25,15 @@ The calibration test checks complete bounded steps, unchanged inputs and repeat 
 ## Live angle history reuses circular storage
 
 `robot/robotGap.test.ts` compares 24 generated streams with copied histories and checks inclusive time boundaries, duplicate timestamps, returned angle identities, changing frame rates, long gaps, wrapped growth and resets. Over 3,000 frames at 20 ms intervals and 6,000 at 10 ms, retained-array slice calls fall from 5,498 and 10,998 to zero. Those slices previously copied 1,379,998 and 5,509,998 entries. Every measured-robot gap comparison shares `AngleTrace`. Capacity growth still copies retained entries and keeps its peak capacity until reset. Expiry releases angle references immediately. These are operation counts without timing assertions or a claim about complete simulation time.
+
+## Population distances accumulate during the solve
+
+An app-wide search found one Mahalanobis implementation, in `utils/gaussian.ts`, consumed by `reality/population.ts` through `bandDistance` and `inBand`. Forward substitution now accumulates squared components in row order. The solved vector remains necessary for later rows. The separate reduction and its callback are removed. For the seven servo parameters, this removes seven solved-vector reads per query. These are source-derived operation counts, not latency measurements.
+
+`utils/mahalanobis.test.ts` compares exact results with the previous two-pass equations for 160 generated matrices of zero through fifteen dimensions, then repeats after offset and diagonal edits. Frozen inputs check source preservation. A further 56 cases cover singular diagonals, signed zero, overflow, infinities and NaN. Existing population tests retain held-out membership coverage. No timeout, retry or quarantine changes apply.
+
+The app still supplies no real measured servo populations. This refinement changes no action, label or visible state, so help articles and screenshots remain accurate without edits.
+
+Validation passed implementation formatting and lint, docs, site copy for 314 pages and types. The related run selected 367 files: 364 passed, two failed and one was skipped, with 2,329 passing tests and five failures. Three classroom cup-grading seed batches exceeded 5,000 ms, followed by an incomplete count of 15 rather than 20 runs. The rover-obstacle rendered visibility test exceeded 15,000 ms. Their cause was not established. No deadlines or quarantine entries changed, and the broad selection was not repeated. The log is `scratch/check-distance.log`.
+
+The initial run also found a formatting warning in the new parity test. After formatting it, the focused check on that test and the documentation passed all checks and both tests in 112 ms of Vitest time. That log is `scratch/check-distance-final.log`. Copy accounting is net zero, and preflight has no findings.

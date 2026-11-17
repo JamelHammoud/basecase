@@ -1,7 +1,7 @@
 import { Euler, Matrix4, MathUtils, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import type { RootOffset } from '../types/robotics';
-import { rootMatrix } from './kinematicsMotion';
+import { isRestPose, isZeroRoot, rootMatrix } from './kinematicsMotion';
 import type { V3 } from './kinematicsRig';
 
 function composedRoot(pivot: V3, root?: RootOffset): Matrix4 {
@@ -25,6 +25,36 @@ function composedRoot(pivot: V3, root?: RootOffset): Matrix4 {
 }
 
 describe('robot root transforms', () => {
+  it('preserves rest classification for partial offsets, tolerance boundaries and nonfinite coordinates', () => {
+    const values = [-Infinity, -1, -1e-6, -0.999e-6, -0, 0, 0.999e-6, 1e-6, 1, Infinity, NaN];
+    const roots: Array<RootOffset | undefined> = [undefined, {}];
+
+    for (const value of values) {
+      for (let axis = 0; axis < 3; axis++) {
+        const coordinates: V3 = [0, -0, 0];
+
+        coordinates[axis] = value;
+        roots.push(
+          { position: coordinates },
+          { rotation: coordinates },
+          { position: coordinates, rotation: coordinates },
+        );
+      }
+    }
+
+    const before = structuredClone(roots);
+
+    for (const root of roots) {
+      const expected = !root || [...(root.position ?? []), ...(root.rotation ?? [])].every((v) => Math.abs(v) < 1e-6);
+
+      expect(isZeroRoot(root)).toBe(expected);
+      expect(isRestPose({ values: {}, root })).toBe(expected);
+      expect(isRestPose({ values: {}, roots: root ? { robot: root } : {} })).toBe(expected);
+    }
+
+    expect(roots).toEqual(before);
+  });
+
   it('matches composed transforms for partial roots, signed angles and offset pivots', () => {
     for (let i = 0; i < 120; i++) {
       const pivot: V3 = [i * 7 - 400, Math.sin(i) * 900, i * -13];

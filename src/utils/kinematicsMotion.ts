@@ -19,8 +19,19 @@ export function clampJoint(j: Pick<RobotJoint, 'range'>, v: number): number {
   return Math.min(Math.max(v, Math.min(j.range[0], j.range[1])), Math.max(j.range[0], j.range[1]));
 }
 
-export const isZeroRoot = (r?: RootOffset) =>
-  !r || [...(r.position ?? []), ...(r.rotation ?? [])].every((v) => Math.abs(v) < 1e-6);
+function isZeroOffset(values?: V3): boolean {
+  if (!values) return true;
+
+  for (const value of values) {
+    const withinTolerance = Math.abs(value) < 1e-6;
+
+    if (!withinTolerance) return false;
+  }
+
+  return true;
+}
+
+export const isZeroRoot = (r?: RootOffset) => !r || (isZeroOffset(r.position) && isZeroOffset(r.rotation));
 
 export const robotRootOffset = (rig: Rig, pose: RobotPoseState | null | undefined, key: string) =>
   pose?.roots?.[key] ?? (rig.robots.length === 1 ? pose?.root : undefined);

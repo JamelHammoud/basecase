@@ -13,3 +13,11 @@ Whole-app search found one world-point stroke attachment loop, `three/viewport/m
 For 48 stroke points, direction vectors and result lists fall from 48 each to one each. For 600 points, the existing stride of 13 visits 47 points, reducing both counts from 47 to one. Three.js still allocates intersection records and performs the same geometry queries. These are structural allocation counts, not timings or an end-to-end latency claim.
 
 `three/viewport/markParts.test.ts` uses overlapping and separate real box meshes to check nearest-hit selection, deduplication, first-seen order, misses after hits, empty input, later placement changes and unchanged stroke points and camera position. Fixtures of 48, 49, 96, 97 and 600 points assert the unchanged sampling count and one direction and intersection buffer per call. No UI state, action, copy, screenshot, browser walkthrough, timeout or quarantine changes.
+
+## Mark picking normalizes only the nearest distance
+
+Whole-app search found one annotation polyline distance helper, `three/viewport/markMath.ts`. `MarkLayer.distances` uses it for `hitTest` and `hits`, covering click selection, drag targeting, hover and erasing. Stroke length, closure and eraser spacing require their individual segment lengths and keep their existing calculations.
+
+For a 400-point mark, distance normalization falls from 399 `Math.hypot` calls to one final `Math.sqrt`. For 800 points, it falls from 799 calls to one. Segment projection and comparison remain linear, every point is still projected once, and the two endpoint buffers remain shared. These are source-derived operation counts, not timings or a measured interaction latency improvement. Squared calculations operate on projected pixel coordinates.
+
+`markMath.test.ts` checks diagonal projections, vertical segments, both endpoint clamps, reversed traversal and exact hits against analytic distances. Existing cases cover loops, empty and single-point inputs, repeated endpoints, edits and 400- and 800-point projection counts. Related `markLayer.test.ts` covers actual projected selection and erasure hit thresholds and label picking. No controls, copy, workflow, screenshots, browser walkthroughs or quarantine conditions change.

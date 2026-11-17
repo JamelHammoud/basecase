@@ -122,13 +122,17 @@ function effortFlags(recording: Recording): QualityFlag[] {
 
 function bodyStill(poses: ArrayLike<number>, a: number, b: number) {
   const moved = Math.hypot(poses[b] - poses[a], poses[b + 1] - poses[a + 1], poses[b + 2] - poses[a + 2]);
+  const withinPositionLimit = moved * 1000 <= FLAG_RULES.stillMm;
+
+  if (!withinPositionLimit) return false;
+
   let dot = 0;
 
   for (let k = 3; k < POSE; k++) dot += poses[a + k] * poses[b + k];
 
   const turned = 2 * Math.acos(Math.min(1, Math.abs(dot)));
 
-  return moved * 1000 <= FLAG_RULES.stillMm && turned <= FLAG_RULES.stillDeg * D2R;
+  return turned <= FLAG_RULES.stillDeg * D2R;
 }
 
 function stillSince(recording: Recording, anchor: number, frame: number) {

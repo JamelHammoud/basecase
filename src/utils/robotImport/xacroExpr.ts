@@ -47,6 +47,18 @@ const num = (v: XacroValue) => {
 
 const unary = (f: (x: number) => number) => (args: XacroValue[]) => f(num(args[0]));
 
+const extremum = (maximum: boolean) => (args: XacroValue[]) => {
+  let value = maximum ? -Infinity : Infinity;
+
+  for (const arg of args) {
+    const number = num(arg);
+
+    value = maximum ? Math.max(value, number) : Math.min(value, number);
+  }
+
+  return value;
+};
+
 const FUNCTIONS = new Map<string, (args: XacroValue[]) => XacroValue>([
   ['radians', unary((x) => x * deg)],
   ['degrees', unary((x) => x / deg)],
@@ -66,8 +78,8 @@ const FUNCTIONS = new Map<string, (args: XacroValue[]) => XacroValue>([
   ['round', unary(Math.round)],
   ['atan2', (args) => Math.atan2(num(args[0]), num(args[1]))],
   ['pow', (args) => num(args[0]) ** num(args[1])],
-  ['min', (args) => Math.min(...args.map(num))],
-  ['max', (args) => Math.max(...args.map(num))],
+  ['min', extremum(false)],
+  ['max', extremum(true)],
   ['str', (args) => formatValue(args[0])],
   ['bool', (args) => truthy(args[0])],
 ]);

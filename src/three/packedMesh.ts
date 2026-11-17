@@ -1,8 +1,8 @@
 import type { ScenePart } from '../types/robotics';
 
 interface MeshArrays {
-  positions: number[];
-  indices: number[];
+  positions: number[] | Float32Array;
+  indices: number[] | Uint32Array;
 }
 
 interface Packed {
@@ -17,7 +17,10 @@ export function packedMesh(src: MeshArrays): Packed {
 
   if (cached) return cached;
 
-  const made = { positions: Float32Array.from(src.positions), indices: Uint32Array.from(src.indices) };
+  const made = {
+    positions: src.positions instanceof Float32Array ? src.positions : Float32Array.from(src.positions),
+    indices: src.indices instanceof Uint32Array ? src.indices : Uint32Array.from(src.indices),
+  };
 
   packed.set(src, made);
 

@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { deepStrictEqual, notDeepStrictEqual, notStrictEqual } from 'node:assert';
+import { describe, it } from 'vitest';
 import { binaryStl, StlWriter } from './stlBytes';
 
 const HEADER = 80;
@@ -71,10 +72,10 @@ describe('binary STL encoding', () => {
         const source = Object.freeze([...values, ...tail]);
         const float32 = new Float32Array(source);
 
-        expect(binaryStl(source)).toEqual(previousStl(source));
-        expect(binaryStl(new Float64Array(source))).toEqual(previousStl(source));
-        expect(binaryStl(float32)).toEqual(previousStl(float32));
-        expect(streamedStl(source)).toEqual(previousStl(float32));
+        deepStrictEqual(binaryStl(source), previousStl(source));
+        deepStrictEqual(binaryStl(new Float64Array(source)), previousStl(source));
+        deepStrictEqual(binaryStl(float32), previousStl(float32));
+        deepStrictEqual(streamedStl(source), previousStl(float32));
       }
     }
   });
@@ -88,9 +89,9 @@ describe('binary STL encoding', () => {
 
     const edited = binaryStl(source);
 
-    expect(edited).toEqual(previousStl(source));
-    expect(edited).not.toEqual(first);
-    expect(first).toEqual(saved);
-    expect(binaryStl(source).buffer).not.toBe(edited.buffer);
+    deepStrictEqual(edited, previousStl(source));
+    notDeepStrictEqual(edited, first);
+    deepStrictEqual(first, saved);
+    notStrictEqual(binaryStl(source).buffer, edited.buffer);
   });
 });

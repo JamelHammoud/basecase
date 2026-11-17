@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { SketchPen, sketchFrame, traceSegment, traceStroke } from './sketchStrokes';
+import { SketchPen, SketchStroke, sketchFrame, traceSegment, traceStroke } from './sketchStrokes';
+
+function bufferedFrame(strokes: SketchStroke[]) {
+  const points = strokes.flat();
+
+  if (!points.length) return null;
+
+  const minX = Math.min(...points.map((p) => p.x));
+  const maxX = Math.max(...points.map((p) => p.x));
+  const minY = Math.min(...points.map((p) => p.y));
+  const maxY = Math.max(...points.map((p) => p.y));
+  const width = Math.max(maxX - minX + 32, 96);
+  const height = Math.max(maxY - minY + 32, 96);
+
+  return { x: (minX + maxX - width) / 2, y: (minY + maxY - height) / 2, width, height };
+}
 
 function recordingPen() {
   const calls: string[] = [];
@@ -79,5 +94,43 @@ describe('sketchFrame', () => {
 
   it('keeps a small drawing centred in a frame big enough to read', () => {
     expect(sketchFrame([[{ x: 40, y: 60 }]])).toEqual({ x: -8, y: 12, width: 96, height: 96 });
+  });
+
+  it('matches buffered bounds across multiple strokes, edits and unusual coordinates', () => {
+    const values = [-Infinity, -100, -0, 0, 0.125, 64, Infinity, NaN];
+
+    for (let seed = 0; seed < 80; seed++) {
+      const strokes = Array.from({ length: seed % 7 }, (_, line) =>
+        Array.from({ length: (seed + line) % 19 }, (_, i) => ({
+          x: Math.sin(seed + i) * 300,
+          y: Math.cos(line - i) * 200,
+        })),
+      );
+      const before = structuredClone(strokes);
+
+      expect(sketchFrame(strokes)).toEqual(bufferedFrame(strokes));
+      expect(strokes).toEqual(before);
+      strokes.push([{ x: values[seed % values.length], y: values[(seed * 3) % values.length] }]);
+      expect(sketchFrame(strokes)).toEqual(bufferedFrame(strokes));
+    }
+  });
+
+  it('frames long drawings with one read per coordinate and no argument spreading', () => {
+    let reads = 0;
+    const points = Array.from({ length: 200_000 }, (_, i) => ({
+      get x() {
+        reads++;
+
+        return i;
+      },
+      get y() {
+        reads++;
+
+        return -i;
+      },
+    }));
+
+    expect(sketchFrame([[], points, []])).toEqual({ x: -16, y: -200_015, width: 200_031, height: 200_031 });
+    expect(reads).toBe(400_000);
   });
 });

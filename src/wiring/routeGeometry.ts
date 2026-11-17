@@ -220,6 +220,17 @@ export function routePolyline(input: RouteInput): PortVec[] | null {
   return routePath(input)?.map((point) => [...point.position]) ?? null;
 }
 
+function sameCorner(point: PortVec, corner: PortVec): boolean {
+  if (
+    Math.abs(point[0] - corner[0]) >= EPSILON ||
+    Math.abs(point[1] - corner[1]) >= EPSILON ||
+    Math.abs(point[2] - corner[2]) >= EPSILON
+  )
+    return false;
+
+  return distance(point, corner) < EPSILON;
+}
+
 export function routeTopology(points: PortVec[], obstacles: RouteObstacle[]): string[] {
   if (points.length <= 4) return [];
 
@@ -228,9 +239,7 @@ export function routeTopology(points: PortVec[], obstacles: RouteObstacle[]): st
   );
 
   return points.slice(2, -2).flatMap((point) => {
-    const labels = vertices
-      .filter((vertex) => distance(point, vertex.position) < EPSILON)
-      .map((vertex) => vertex.label);
+    const labels = vertices.filter((vertex) => sameCorner(point, vertex.position)).map((vertex) => vertex.label);
 
     return labels.length ? [labels.sort().join('|')] : [];
   });

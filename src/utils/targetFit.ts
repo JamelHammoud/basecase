@@ -162,12 +162,16 @@ function edgeGap(grid: Grid): { mean: number; max: number } {
     const fromTarget = isEdge(grid.target, grid.width, i) ? toModel[i] : -1;
     const fromModel = isEdge(grid.model, grid.width, i) ? toTarget[i] : -1;
 
-    for (const v of [fromTarget, fromModel]) {
-      if (v < 0) continue;
-
-      sum += v;
+    if (fromTarget >= 0) {
+      sum += fromTarget;
       n++;
-      max = Math.max(max, v);
+      max = Math.max(max, fromTarget);
+    }
+
+    if (fromModel >= 0) {
+      sum += fromModel;
+      n++;
+      max = Math.max(max, fromModel);
     }
   }
 

@@ -99,12 +99,13 @@ export async function usdzOf({ geometries, meshes }: UsdzJob): Promise<Uint8Arra
   const byId = new Map(geometries.map((g) => [g.id, g]));
   const materialOf = materialCache();
   const scene = new THREE.Scene();
+  const world = new THREE.Matrix4();
   const built = meshes.flatMap(({ geometry, matrix, material }) => {
     const source = byId.get(geometry);
 
     if (!source) return [];
 
-    const world = MM_TO_M.clone().multiply(new THREE.Matrix4().fromArray(matrix));
+    world.fromArray(matrix).premultiply(MM_TO_M);
 
     return [new THREE.Mesh(bakedGeometry(source, world), materialOf(material))];
   });

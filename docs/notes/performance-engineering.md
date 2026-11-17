@@ -345,7 +345,6 @@ A separate real electrical worker-service probe completed routing and validation
 
 The review found that the viewport preview key still serialized routing and fabrication declarations, although geometry analysis already excluded them. The preview, geometry analysis and mounting-edit comparison now share the placement-only definition. Declaration edits no longer invalidate that preview key. The scene persistence test checks metadata exclusion and continued invalidation for an edge-clearance edit. This is a key-invalidation regression check, not a new timing measurement. The native measurements above were not rerun during review.
 
-
 ## Common electrical rails join pins directly
 
 A whole-app search found one common-rail constructor in `wiring/electricalGraph.ts`, called by `electrical.ts` for each mapped part. Schematic exports, board inputs and electrical Checks share that projection. Cable connections retain their existing explicit joins.
@@ -353,3 +352,15 @@ A whole-app search found one common-rail constructor in `wiring/electricalGraph.
 For each common function across E endpoints, the previous constructor allocated E filtered pin lists, E mapped node lists, one flattened matching list and one suffix copy. Direct joining removes all 2E+2 lists while preserving matching-node objects, pin scans and union operations. Three common functions over 48 endpoints therefore avoid 294 temporary lists per call. These are code-derived allocation counts, without timing measurements or a claim about total export latency.
 
 `electricalGraph.test.ts` compares complete net records with the previous constructor at zero, one, two, three, four, twelve and 48 endpoints. Batches include missing maps, singleton functions, reversed endpoint order, repeated common functions, overlapping calls and a preexisting cable connection. It checks unchanged inputs and independent graph instances. Existing electrical projection tests retain source propagation, domain and export coverage. No action, label or visible state changes, so existing help steps and captures remain accurate.
+
+## Payload hand centers accumulate during selection
+
+Whole-app search found one Payload hand-point estimator in `utils/engineeringPayload.ts`. Build and agent engineering reports share it. It formerly filtered nearby corners, then traversed that list separately for X, Y and Z averages. The proximity scan now accumulates all three sums and the count directly. The far-corner selection and original corner list remain unchanged. The selected far corner's half-reach radius is calculated once before the proximity scan.
+
+On November 17, 2026, `scratch/payload-center-parity.cjs` transpiled the preceding and changed helper bodies using the installed TypeScript compiler. Exact comparisons passed 1,024 cases with zero to sixteen downstream entries, missing measurements, reversed source order, degenerate boxes, negative coordinates, signed zero, NaN and infinity. The comparison preserves NaN results when no corner qualifies. The ordinary eight-corner forearm fixture retained the hand point `[400, 80, 0]`. Instrumented length calls fell from 30 to 23 because the radius no longer repeats for every corner. For C corners with K accepted corners, the final stage removes one K-entry temporary list and 3K reduction visits. These are operation counts, not timings or a complete Checks latency claim.
+
+Existing `payload.test.ts` covers complete Payload rows, stronger actuators, injected arm models and non-arm exclusion. This internal accumulation change adds no control, text, visible state or user action. Help instructions and screenshots remain current. No test timeout, retry or quarantine changes apply.
+
+Preflight identified [Get a robot ready to build](../../site/content/help/get-a-robot-ready-to-build.md) through its `covers` entry. Its Payload step, full-reach and close-in readings, dot-cloud state and screenshots remain accurate because the selected hand point is unchanged. The article is intentionally unchanged.
+
+Changed-file validation passed formatting, lint, documentation, site copy for 329 pages and TypeScript. Related selection passed 294 files and 1,971 tests, with one existing file and test skipped, in 119.97 seconds. The follow-up documentation-only check passed after recording the help-article finding. Complete output remains in `scratch/payload-center-check.log`. Copy accounting is net zero.

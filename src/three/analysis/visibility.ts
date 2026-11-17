@@ -77,21 +77,23 @@ function worldSamples(parts: VisibilityInput[]) {
   const points = new Float32Array(samples.reduce((n, local) => n + local.length, 0));
   const owner = new Int32Array(points.length / 3);
   const v = new THREE.Vector3();
+  const box = new THREE.Box3();
   let offset = 0;
 
   samples.forEach((local, partIndex) => {
     const matrix = parts[partIndex].matrix;
 
-    for (let i = 0; i < local.length; i += 3)
-      v.fromArray(local, i)
-        .applyMatrix4(matrix)
-        .toArray(points, offset + i);
+    for (let i = 0; i < local.length; i += 3) {
+      v.fromArray(local, i).applyMatrix4(matrix);
+      v.set(Math.fround(v.x), Math.fround(v.y), Math.fround(v.z)).toArray(points, offset + i);
+      box.expandByPoint(v);
+    }
 
     owner.fill(partIndex, offset / 3, (offset + local.length) / 3);
     offset += local.length;
   });
 
-  return { points, owner };
+  return { points, owner, box };
 }
 
 interface SplatWorkspace {
@@ -131,12 +133,12 @@ function splat(workspace: SplatWorkspace, [axis, sign]: [number, number], counts
 export function visibleShares(parts: VisibilityInput[]): Record<string, number> {
   if (!parts.length) return {};
 
-  const { points, owner } = worldSamples(parts);
+  const { points, owner, box } = worldSamples(parts);
   const counts = new Float64Array(parts.length);
   const workspace: SplatWorkspace = {
     points,
     owner,
-    box: new THREE.Box3().setFromArray(points),
+    box,
     depth: new Float64Array(GRID * GRID),
     winner: new Int32Array(GRID * GRID),
   };

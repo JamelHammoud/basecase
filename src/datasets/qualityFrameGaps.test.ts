@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Recording } from '../sim/recorder';
 import { qualityFlags } from './qualityFlags';
 
@@ -29,6 +29,61 @@ function stationary(frames = 401): Recording {
 const flagsOf = (recording: Recording) => qualityFlags({ recording, model: null, modelMatches: null });
 
 describe('quality frame gaps and idle stretches', () => {
+  it.each([
+    { offset: [0.002, 0, 0], degrees: 0, split: true },
+    { offset: [0, -0.002, 0], degrees: 0, split: true },
+    { offset: [0, 0, 0.002], degrees: 0, split: true },
+    { offset: [0.0008, 0.0008, 0], degrees: 0, split: true },
+    { offset: [0.0005, 0.0005, 0.0005], degrees: 0.4, split: false },
+    { offset: [0.0005, 0, 0], degrees: 0.6, split: true },
+    { offset: [0, 0, 0], degrees: 0, split: false },
+  ])('checks every body against both stillness limits: $offset, $degrees degrees', ({ offset, degrees, split }) => {
+    const recording = stationary();
+    const half = (degrees * Math.PI) / 360;
+
+    for (let f = 125; f < recording.frames; f++) {
+      const at = f * recording.nbody * 7 + 7;
+      const sign = f % 2 ? -1 : 1;
+
+      recording.poses.set(offset, at);
+      recording.poses[at + 3] = sign * Math.cos(half);
+      recording.poses[at + 4] = sign * Math.sin(half);
+    }
+
+    expect(flagsOf(recording)).toEqual(
+      split
+        ? [
+            { kind: 'idle', at: 0 },
+            { kind: 'idle', at: 2.5 },
+          ]
+        : [{ kind: 'idle', at: 0 }],
+    );
+  });
+
+  it('does no rotation comparisons for bodies already moving beyond the translation limit', () => {
+    const recording = stationary();
+
+    for (let f = 0; f < recording.frames; f++) recording.poses[f * recording.nbody * 7] = f * 0.002;
+
+    const acos = vi.spyOn(Math, 'acos');
+
+    try {
+      expect(flagsOf(recording)).toEqual([]);
+      expect(acos).not.toHaveBeenCalled();
+      recording.poses.fill(0);
+
+      for (let f = 0; f < recording.frames; f++) {
+        recording.poses[f * recording.nbody * 7 + 3] = 1;
+        recording.poses[f * recording.nbody * 7 + 10] = 1;
+      }
+
+      expect(flagsOf(recording)).toEqual([{ kind: 'idle', at: 0 }]);
+      expect(acos).toHaveBeenCalledTimes((recording.frames - 1) * recording.nbody);
+    } finally {
+      acos.mockRestore();
+    }
+  });
+
   it.each(['t', 'qpos', 'poses'] as const)(
     'splits idle stretches at NaNs in %s and rereads edited recordings',
     (key) => {

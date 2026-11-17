@@ -1,5 +1,15 @@
 # Engineering calculations performance
 
+## Whole-price formatters are prepared on first use
+
+The app-wide search found `createMoney` in the currency store and the Settings currency-option builder. Settings builds labels for all 30 supported currencies using only the symbol and name. Previously those labels constructed 60 `Intl.NumberFormat` objects, including 30 discarded whole-price formatters. They now construct 30 exact formatters. Each money object prepares at most one additional formatter if a whole-price consumer uses it. There is no shared cache or change to rate ownership.
+
+`src/utils/currency.test.ts` instruments the native formatter constructor. It checks 30 constructions after creating all currency labels and using exact, raw and plain formatting. Repeated whole-price calls across every currency raise the total to 60, without further constructions. Output matches native whole-price formatting for zero, negative, fractional, large, NaN and infinite values, including entered prices. Existing tests cover converted prices, rate refreshes and BOM CSV, Markdown and agent text.
+
+These are deterministic construction counts, not latency or heap measurements. The change does not remove the exact formatters needed for currency symbols. There is no screen or workflow change.
+
+Local verification on November 17 passed the isolated currency file's five tests, formatting, lint, TypeScript, site copy and documentation checks. The source-related selection ran 470 files, with 463 passing, one skipped and six failing. It passed 3,198 tests and failed 15. Fourteen failures hit the existing five-second timeout in `cases/slots.test.ts`, `cases/terrain.test.ts`, `cases/handoffGoal.test.ts`, `skills/kitTransitions.test.ts`, `sim/fixtures/passiveParity.test.ts` and `classroom/grading.test.ts`. The remaining classroom assertion received 15 completed runs instead of 20 after the seed-batch timeouts. Other work was running on the host. These observations do not establish a baseline cause. No timeout, retry or quarantine changed.
+
 ## Board placement preparation
 
 A production-bundle probe used Chrome 157.0.8103.79 on arm64 macOS, with two and 32 repeated XL330 modules and a 100 × 80 × 1.6 mm carrier. Each module had an explicit three-pad JST placement. The probe called the shipped electrical worker through its normal request/reply protocol, using the catalog servo and header GLBs. Each row is one observation with a fresh worker. They are samples, not latency or memory bounds. Other work was running on the host.

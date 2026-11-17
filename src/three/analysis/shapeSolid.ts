@@ -48,24 +48,36 @@ const MIN_FACE_AREA = 0.5;
 const FACE_PIECE_MM2 = 25;
 const MAX_FACE_SPLITS = 12;
 
-function pieceCenters({ a, b, c }: THREE.Triangle, n: number, out: number[], center: THREE.Vector3): void {
-  const at = (u: number, v: number, w: number) => {
-    center
-      .set(0, 0, 0)
-      .addScaledVector(a, u / n)
-      .addScaledVector(b, v / n)
-      .addScaledVector(c, w / n);
-    out.push(center.x, center.y, center.z);
-  };
+function pieceWeights(n: number, cache: Map<number, number[]>): number[] {
+  const cached = cache.get(n);
+
+  if (cached) return cached;
+
+  const weights: number[] = [];
 
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < n - i; j++) {
       const k = n - 1 - i - j;
 
-      at(i + 1 / 3, j + 1 / 3, k + 1 / 3);
+      weights.push((i + 1 / 3) / n, (j + 1 / 3) / n, (k + 1 / 3) / n);
 
-      if (k > 0) at(i + 2 / 3, j + 2 / 3, k - 1 / 3);
+      if (k > 0) weights.push((i + 2 / 3) / n, (j + 2 / 3) / n, (k - 1 / 3) / n);
     }
+  }
+
+  cache.set(n, weights);
+
+  return weights;
+}
+
+function pieceCenters({ a, b, c }: THREE.Triangle, weights: number[], out: number[], center: THREE.Vector3): void {
+  for (let i = 0; i < weights.length; i += 3) {
+    center
+      .set(0, 0, 0)
+      .addScaledVector(a, weights[i])
+      .addScaledVector(b, weights[i + 1])
+      .addScaledVector(c, weights[i + 2]);
+    out.push(center.x, center.y, center.z);
   }
 }
 
@@ -75,6 +87,7 @@ function faceData(positions: Float32Array): Faces {
   const centers: number[] = [];
   const normals: number[] = [];
   const areas: number[] = [];
+  const weights = new Map<number, number[]>();
   let surfaceArea = 0;
   const a = new THREE.Vector3(),
     b = new THREE.Vector3(),
@@ -104,7 +117,7 @@ function faceData(positions: Float32Array): Faces {
     const start = centers.length;
     const weight = Math.fround((area * step) / (splits * splits));
 
-    pieceCenters(tri, splits, centers, center);
+    pieceCenters(tri, pieceWeights(splits, weights), centers, center);
 
     for (let i = start; i < centers.length; i += 3) {
       normals.push(n.x, n.y, n.z);

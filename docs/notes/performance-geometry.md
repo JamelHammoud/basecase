@@ -313,6 +313,14 @@ On November 17, 2026, `scratch/stl-coordinate-reads.mjs` transpiled the precedin
 
 Scoped changed-file validation passed formatting, lint, documentation, site copy for 321 pages, TypeScript and all 423 related tests across 63 files. The related run reported 11.95 seconds. Complete output is in `scratch/check-stl-corners.log`. Copy accounting is net zero and preflight reports no findings.
 
+### STL byte-comparison timeout repair
+
+The full-suite run [44126366964](https://github.com/JamelHammoud/basecase/actions/runs/44126366964) at `64df273282d6266ba438c5b4cb14a4afcf049e20` reported one failed Linux unit test, `binary STL encoding > preserves complete file bytes across ordinary, degenerate and nonfinite facets`. It exceeded the unchanged 5,000 ms test budget. Classification is flaky under load, with excessive byte-comparison work in the test. Commit `6cc836b214d4edd416cccb63440749aa3f88d5b4` introduced this fixture matrix after the last green full-suite revision, `348373decd8013d264fc3e2e9fe1f8b298051b34`. The unmodified test passed locally. No platform branch, timer, I/O or random fixture is involved.
+
+Vitest 5.0.5 generic equality traverses each Uint8Array through its iterable matcher. The parity matrix performs 96 complete-file comparisons, totaling 551,664 compared bytes. Node 26.13.0 strict equality compares Uint8Array byte lengths and contents through its native byte comparator. The repair uses that strict assertion for byte equality and inequality, retaining every fixture, independent reference encoding, whole-file comparison and output-ownership assertion. Production STL encoding stays unchanged.
+
+On the local macOS arm64 host with Node 26.13.0, one unmodified changed-file check passed both tests and reported 629 ms for its Vitest run. One initial native-assertion check passed both tests and reported 112 ms. These are single scoped observations on a shared host, including Vitest overhead. They establish reduced comparison work without measuring a flake rate or claiming Linux CI timing. No fixture, assertion, timeout, retry or quarantine is removed or relaxed. Existing scene and posed-STL tests continue to cover transforms and placement.
+
 ## Build-guide contact solids extract only positions
 
 Repository search found `guide/render/guideMeasure.ts` as the only caller of `worldGeometry`. Its BVH and contact probes need positions alone. This completes use of the existing direct triangle extractor at the remaining legacy geometry-conversion wrapper. Other object measurements already use `worldTriangles` or `localTriangles`.
@@ -340,3 +348,24 @@ For 300 and 600 vertices inside the base band, source coordinate reads fall from
 `shapeReports.test.ts` compares exact bounds, centroids and base hulls with the preceding calculation across identity, translation, rotation, reflection, nonuniform and zero scales, empty meshes, incomplete coordinates, degenerate points and the base-band boundary. It reuses solids across placement edits and checks source and matrix preservation. Getter instrumentation counts coordinate reads after local preparation has been cached. No workflow, label or visible state changes, so help articles and screenshots remain accurate. No browser test, timeout, retry or quarantine changes apply.
 
 Changed-file validation passed formatting, ESLint, documentation, site copy for 323 pages, TypeScript and all 461 related tests across 61 files. The related run reported 47.30 seconds. Complete output is in `scratch/check-world-measure-final.log`. The initial run caught test formatting and an unbound typed-array method in the counting proxy. Both were corrected. Copy accounting is net zero, and preflight reports no findings.
+
+## Screw recess outlines write directly into paths
+
+Repository search found `three/hardwareRecess.ts` as the single recess outline builder for Torx, Phillips, Pozidriv and slot drives. All recessed hardware uses its shared cutter. Hex drives already write directly through `polygonShape` and need no change.
+
+The previous builders retained a complete coordinate list and then traversed it to build a Three.js shape. Direct path emission removes 73 coordinate tuples per Torx outline, twelve per Phillips outline, 24 per Pozidriv outline and four per slot outline. Each also loses its outer outline array and second traversal. Cross drives still allocate their three-point or six-point quarter profile. Three.js path and extrusion allocations remain. These are source-derived allocation counts, without wall-clock or complete mesh-build speedup claims.
+
+`src/three/hardwareRecess.test.ts` compares complete cutter position, normal and UV buffers, indices and groups against the previous outline construction. It covers every catalog Torx and cross size, unknown-size fallbacks, four slot widths and three head diameters with nonzero vertical placement and depth. Existing `hardwareRecessGeometry.test.ts` covers complete recessed hardware CSG pieces and material groups. No labels, controls, workflow or visible output change, so help instructions and screenshots stay accurate. No browser test, timeout, retry or quarantine changes apply.
+
+Changed-file validation passed formatting for all four files, production-code lint, docs, site copy for 323 pages and TypeScript. The initial test file had one statement-spacing error, which was corrected. A focused changed-file rerun passed lint, types and the new 117-case cutter comparison in 200 ms.
+
+The broad related selection passed 243 files and 1,698 tests, skipped one file and test, and failed six tests in four files over 102.74 seconds. Five failures exceeded their existing 5,000 ms limit: the hexapod block path in `cases/caseBuilder.test.ts:239`, the two-arm handoff in `cases/slots.test.ts:117`, two seed batches in `classroom/grading.test.ts:50`, and complete recessed CSG construction in `three/hardwareRecessGeometry.test.ts:97`. Classroom grading then reported fifteen completed runs where twenty were expected at line 78. These failures were not compared against an unchanged baseline and remain unresolved. The direct cutter comparison passed in both selections. No timeout, retry or quarantine setting changed. Complete logs are `scratch/check-recess.log` and `scratch/check-recess-correction.log`.
+
+
+## Mesh packing retains already packed buffers
+
+Whole-app search found one shared packer, `three/packedMesh.ts`. Scene delivery for cameras, thumbnails, datasets, build guides, Routine rendering and Study uses `packParts`. Geometry preparation and boolean operands also call `packedMesh`. Delivered scenes already contain typed mesh arrays, but packing them again previously copied both buffers. The helper now retains each correctly typed buffer independently. Ordinary arrays retain their Float32 and Uint32 conversion and identity cache. No caller, message format or worker scheduling changes.
+
+On November 17, 2026, the permanent `packedMesh.test.ts` fixture passed a subdivided 13 × 17 × 23 mm box through packing, structured cloning, repacking and real creased geometry preparation. It compares complete position and normal output and unchanged delivered buffers. The fixture has 162 position values and 144 indices. Repacking removes two typed-array allocations and 1,224 copied bytes per fresh delivered source. These are buffer sizes and source-derived copy counts, without timing, heap-peak or complete interaction latency claims. Structured cloning across worker boundaries still copies the payload.
+
+Coverage also checks nonfinite values, signed zero, unsigned conversion, cache identity, mixed ordinary and packed inputs, empty arrays and subarray identity. Buffers remain immutable shared inputs within their receiving context. No action, label or visible state changes, so help articles and screenshots remain accurate. No timeout, retry or quarantine changes apply.

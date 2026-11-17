@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { analyzePixels } from './imagePixelAnalysis';
 import { floodMaskOf } from './silhouette';
 
@@ -15,6 +15,66 @@ function image(width: number, height: number, subject: (x: number, y: number) =>
 
   return { data, width, height, colorSpace: 'srgb' };
 }
+
+describe('image hole bounds', () => {
+  it.each(['empty', 'point', 'row', 'column', 'two rows', 'two columns'])(
+    'skips background traversal for %s foreground without an interior',
+    (shape) => {
+      const subjects: Record<string, (x: number, y: number) => boolean> = {
+        empty: () => false,
+        point: (x, y) => x === 20 && y === 20,
+        row: (x, y) => x >= 5 && x <= 34 && y === 20,
+        column: (x, y) => y >= 5 && y <= 34 && x === 20,
+        'two rows': (x, y) => x >= 5 && x <= 34 && (y === 20 || y === 21),
+        'two columns': (x, y) => y >= 5 && y <= 34 && (x === 20 || x === 21),
+      };
+      const photo = image(40, 40, subjects[shape]);
+      const before = photo.data.slice();
+      const pop = vi.spyOn(Array.prototype, 'pop');
+      let pops: number;
+      let result;
+
+      try {
+        result = analyzePixels({
+          data: photo.data,
+          gridSize: 40,
+          imageWidth: 400,
+          imageHeight: 400,
+          targetSpanMm: 70,
+          extrudeHeightMm: 10,
+        });
+        pops = pop.mock.calls.length;
+      } finally {
+        pop.mockRestore();
+      }
+
+      expect(result.detectedHoleCenters).toEqual([]);
+      expect(result.contour.holes).toEqual([]);
+      expect(photo.data).toEqual(before);
+      expect(pops).toBe(0);
+    },
+  );
+
+  it('keeps the smallest accepted enclosed hole', () => {
+    const photo = image(
+      12,
+      12,
+      (x, y) => x >= 4 && x <= 7 && y >= 4 && y <= 7 && (x === 4 || x === 7 || y === 4 || y === 7),
+    );
+    const result = analyzePixels({
+      data: photo.data,
+      gridSize: 12,
+      imageWidth: 120,
+      imageHeight: 120,
+      targetSpanMm: 70,
+      extrudeHeightMm: 10,
+    });
+
+    expect(result.detectedHoleCenters).toHaveLength(1);
+    expect(result.detectedHoleCenters[0].radiusNorm).toBeCloseTo(0.094, 10);
+    expect(result.contour.holes).toHaveLength(1);
+  });
+});
 
 describe('image flood analysis', () => {
   it.each([

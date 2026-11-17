@@ -217,6 +217,8 @@ Camera shots from `simulate` and `operate` receive the active Case's captured-wo
 
 ## Performance: image comparison
 
+- **Image hole detection skips foreground without an interior.** `utils/imagePixelAnalysis.ts` returns no holes before allocating visited pixels or flooding the background when either foreground bounding-box span is below two pixels. Empty masks and one- or two-pixel-wide subjects cannot supply a candidate inside both bounds. Foreground color, dimensions and outline preparation remain unchanged. `imagePixelAnalysis.test.ts` checks empty, point, row, column and two-pixel bands, source preservation, zero flood removals and the smallest accepted enclosed hole. [Evidence](../notes/performance-image-comparison.md#thin-image-subjects-skip-hole-floods).
+
 Measurements and limits: [Image comparison performance evidence](../notes/performance-image-comparison.md).
 
 - **Photo masks check subject size before border contact.** `utils/photoMask.ts` skips edge measurements when occupied area already refuses the mask. Photo reference masks and sketch-target requests share this validator. The inclusive 1% and 60% area limits, rejection priority and accepted-mask edge checks stay unchanged. `photoMask.test.ts` covers both area boundaries, rejection priority, source preservation and border-read counts. [Evidence](../notes/performance-image-comparison.md#photo-mask-area-rejections-skip-border-contact).

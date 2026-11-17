@@ -36,6 +36,12 @@ const vertexCount = (candidate: unknown): number => {
 };
 
 function retain(key: string, entry: Entry): void {
+  if (entry.weight > RETAINED_VERTICES) {
+    entry.dispose();
+
+    return;
+  }
+
   retained.set(key, entry);
   retainedWeight += entry.weight;
 

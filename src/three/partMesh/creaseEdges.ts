@@ -2,11 +2,36 @@ import * as THREE from 'three';
 import { pairKey } from '../../../electron/cad-kernel/pairKey.mjs';
 
 const CREASE_DEG = 20;
+const COS_LIMIT = Math.cos(THREE.MathUtils.degToRad(CREASE_DEG));
+
+interface EdgeFaces {
+  count: number;
+  x: number;
+  y: number;
+  z: number;
+  smooth: boolean;
+}
+
+function appendNormal(edge: EdgeFaces | undefined, normal: THREE.Vector3) {
+  if (!edge) return;
+
+  edge.count++;
+
+  if (edge.count === 1) {
+    edge.x = normal.x;
+    edge.y = normal.y;
+    edge.z = normal.z;
+
+    return;
+  }
+
+  if (edge.count === 2) edge.smooth = edge.x * normal.x + edge.y * normal.y + edge.z * normal.z > COS_LIMIT;
+}
 
 const pointKey = (x: number, y: number, z: number) =>
   `${Math.round(x * 100)},${Math.round(y * 100)},${Math.round(z * 100)}`;
 
-function gatherFaceNormals(positions: number[], indices: number[], normals: Map<string, THREE.Vector3[]>) {
+function classifyFaceEdges(positions: number[], indices: number[], facesByEdge: Map<string, EdgeFaces>) {
   const vertexKeys = new Map<number, string>();
   const vertexKey = (i: number) => {
     const hit = vertexKeys.get(i);
@@ -23,6 +48,7 @@ function gatherFaceNormals(positions: number[], indices: number[], normals: Map<
   const b = new THREE.Vector3();
   const c = new THREE.Vector3();
   const triangle = new THREE.Triangle(a, b, c);
+  const normal = new THREE.Vector3();
 
   for (let t = 0; t + 2 < indices.length; t += 3) {
     const ia = indices[t];
@@ -31,9 +57,9 @@ function gatherFaceNormals(positions: number[], indices: number[], normals: Map<
     const ka = vertexKey(ia);
     const kb = vertexKey(ib);
     const kc = vertexKey(ic);
-    const ab = normals.get(pairKey(ka, kb));
-    const bc = normals.get(pairKey(kb, kc));
-    const ca = normals.get(pairKey(kc, ka));
+    const ab = facesByEdge.get(pairKey(ka, kb));
+    const bc = facesByEdge.get(pairKey(kb, kc));
+    const ca = facesByEdge.get(pairKey(kc, ka));
 
     if (!ab && !bc && !ca) continue;
 
@@ -41,11 +67,11 @@ function gatherFaceNormals(positions: number[], indices: number[], normals: Map<
     b.fromArray(positions, ib * 3);
     c.fromArray(positions, ic * 3);
 
-    const normal = triangle.getNormal(new THREE.Vector3());
+    triangle.getNormal(normal);
 
-    ab?.push(normal);
-    bc?.push(normal);
-    ca?.push(normal);
+    appendNormal(ab, normal);
+    appendNormal(bc, normal);
+    appendNormal(ca, normal);
   }
 }
 
@@ -60,16 +86,17 @@ export function creaseEdgesOnly(edges: number[], positions: number[], indices: n
 
   if (!keys.length) return [];
 
-  const normals = new Map<string, THREE.Vector3[]>(keys.map((key) => [key, []]));
+  const facesByEdge = new Map<string, EdgeFaces>(
+    keys.map((key) => [key, { count: 0, x: 0, y: 0, z: 0, smooth: false }]),
+  );
 
-  gatherFaceNormals(positions, indices, normals);
+  classifyFaceEdges(positions, indices, facesByEdge);
 
-  const cosLimit = Math.cos(THREE.MathUtils.degToRad(CREASE_DEG));
   const out: number[] = [];
 
   for (let i = 0; i + 5 < edges.length; i += 6) {
-    const list = normals.get(keys[i / 6]);
-    const smooth = list?.length === 2 && list[0].dot(list[1]) > cosLimit;
+    const faces = facesByEdge.get(keys[i / 6])!;
+    const smooth = faces.count === 2 && faces.smooth;
 
     if (!smooth) out.push(edges[i], edges[i + 1], edges[i + 2], edges[i + 3], edges[i + 4], edges[i + 5]);
   }

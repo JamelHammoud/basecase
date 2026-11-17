@@ -251,6 +251,8 @@ Measurements and limits: [Image comparison performance evidence](../notes/perfor
 
 - **Photo border medians use fixed histograms.** `utils/silhouette.ts` counts RGB border samples into three 256-bin arrays instead of copying and sorting three channel arrays. It keeps the upper median, doubled corner samples, spread threshold and color-distance threshold. [Evidence](../notes/performance-image-comparison.md#photo-border-medians-use-fixed-histograms).
 
+- **Busy photo borders stop at the decisive sample.** `utils/silhouette.ts` stops accumulating nonnegative color distances once their partial sum already exceeds the full border’s spread allowance. The median still uses every border sample. The rejection keeps the original division and strict cutoff of 14, including corner weighting and acceptance at the boundary. `silhouette.test.ts` compares complete-scan decisions across narrow images and threshold-adjacent colors and counts distance calls for busy and plain borders. [Evidence](../notes/performance-image-comparison.md#busy-photo-borders-stop-at-the-decisive-sample).
+
 ## Performance: agent and cad kernel
 
 - **Freehand attachment bounds scan strokes directly.** `components/agent/sketch/sketchStrokes.ts` measures the drawing without flattening strokes or constructing coordinate lists. Attach Sketch uses this frame for PNG export. The 16px margin, 96px minimum frame, centering and empty-drawing result stay unchanged. `sketchStrokes.test.ts` covers prior-result parity, later edits, nonfinite coordinates, source preservation and long drawings with bounded coordinate reads. [Evidence](../notes/performance-agent-kernel.md#freehand-attachment-bounds-scan-strokes-directly).

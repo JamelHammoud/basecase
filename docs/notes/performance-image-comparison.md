@@ -157,3 +157,14 @@ That run failed three unchanged tests. `deleteTone.test.ts` reports missing dang
 Review reproduced two decimal-region regressions against the independent full scan. With width 6, horizontal start 0.4, vertical start 0.1 and foreground pixels at indices 1 and 2, reverse subtraction missed the second pixel and returned x1 = 0.4 instead of 1.4. At width 4 with both starts at 0.2, it returned 1.2000000000000002 instead of 1.2. The two regression cases in `maskEdges.test.ts` now exercise the retained forward sampling for fractional horizontal starts. Integer masks keep the endpoint read counts above. The failing reproduction is recorded in `scratch/mask-fractional-regression.log` during review.
 
 Review validation in `scratch/mask-review-check.log` passed formatting, lint, docs, site copy and types. Related tests passed 732 cases across 120 files, including both decimal regressions, and reproduced the same three unchanged failures described above. No test deadline, assertion or quarantine was relaxed.
+
+
+## Busy photo borders stop at the decisive sample
+
+Repository searches found one border-spread rejection, in `silhouette.ts`, shared by photo reference masks and profiles. The median still reads every sample. Spread accumulation stops when a partial sum alone would fail the original full-border average. Distances are nonnegative. The early comparison checks both the total allowance and the original division, preserving floating-point rounding at the strict cutoff. Accepted borders retain their original accumulation order and complete scan.
+
+`silhouette.test.ts` compares decisions with an independent complete scan for 60 images across widths 1, 2, 7 and 32, heights 1, 2 and 9, and red-channel variations 0, 12, 28, 29 and 255. Existing tests cover exact spread 14, corner weighting, channel medians, subject masks and unchanged source bytes.
+
+On a 100 × 100 image split horizontally between red-channel values 0 and 255, distance calls fall from 400 to 43. A plain image keeps all 400 distance calls. These are operation counts, not timings or a claim about complete photo-tool latency. Border construction, median preparation and flood traversal are unchanged. There is no new interaction or visible state, so help screenshots and browser walkthroughs are unchanged.
+
+Scoped validation passed formatting, lint, documentation, types and all 51 related tests across seven files. The command failed only the site copy check on the unchanged `2026-11-17-export-electronics-with-a-robot-kit.md` article’s “does not” at line 15. The same text is present in the starting revision. No unrelated article was edited. The check log is `scratch/refine-check.log`. Copy diff reports zero additions, changes and removals.

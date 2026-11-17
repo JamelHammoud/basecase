@@ -73,13 +73,24 @@ function borderMedian(data: Uint8ClampedArray, border: number[]): number[] {
   });
 }
 
+function busyBorder(data: Uint8ClampedArray, border: number[], median: number[]): boolean {
+  const limit = 14 * border.length;
+  let total = 0;
+
+  for (const i of border) {
+    total += Math.hypot(data[i * 4] - median[0], data[i * 4 + 1] - median[1], data[i * 4 + 2] - median[2]);
+
+    if (total > limit && total / border.length > 14) return true;
+  }
+
+  return false;
+}
+
 export function floodMaskOf({ data, width: w, height: h }: ImageData): { mask?: Mask; reason?: string } {
   const border = borderPixels(w, h);
   const med = borderMedian(data, border);
-  const dist = (i: number) => Math.hypot(data[i * 4] - med[0], data[i * 4 + 1] - med[1], data[i * 4 + 2] - med[2]);
-  const spread = border.reduce((s, i) => s + dist(i), 0) / border.length;
 
-  if (spread > 14) return { reason: 'the background isn’t plain (busy scene or gradient)' };
+  if (busyBorder(data, border, med)) return { reason: 'the background isn’t plain (busy scene or gradient)' };
 
   const mask = floodBackground(border, w, h, (i) => pixelColorDistanceSquared(data, i * 4, med) > 12 * 12);
 

@@ -20,6 +20,18 @@ interface ExtractedShape {
 
 export const DEFAULT_COLOR = '#e4e4e7';
 
+function sampledLoops(paths: THREE.Path[], divisions: number): THREE.Vector2[][] {
+  const loops: THREE.Vector2[][] = [];
+
+  for (const path of paths) {
+    const points = path.getSpacedPoints(divisions);
+
+    if (points.length >= 3) loops.push(points);
+  }
+
+  return loops;
+}
+
 function filledShapes(svgData: SVGResult, overrideColor?: string): ExtractedShape[] {
   const out: ExtractedShape[] = [];
 
@@ -36,7 +48,7 @@ function filledShapes(svgData: SVGResult, overrideColor?: string): ExtractedShap
 
       if (outerPts.length < 3) continue;
 
-      const holesPts = (shape.holes || []).map((hole) => hole.getSpacedPoints(28)).filter((h) => h.length >= 3);
+      const holesPts = sampledLoops(shape.holes || [], 28);
 
       out.push({ outerPts, holesPts, color: hexColor });
     }
@@ -46,10 +58,19 @@ function filledShapes(svgData: SVGResult, overrideColor?: string): ExtractedShap
 }
 
 function outlineShapes(svgData: SVGResult, overrideColor?: string): ExtractedShape[] {
-  return svgData.paths
-    .flatMap((path) => path.subPaths.map((subPath) => subPath.getSpacedPoints(48)))
-    .filter((pts) => pts.length >= 3)
-    .map((pts) => ({ outerPts: pts, holesPts: [], color: overrideColor || DEFAULT_COLOR }));
+  const out: ExtractedShape[] = [];
+
+  for (const path of svgData.paths) {
+    for (const subPath of path.subPaths) {
+      const outerPts = subPath.getSpacedPoints(48);
+
+      if (outerPts.length < 3) continue;
+
+      out.push({ outerPts, holesPts: [], color: overrideColor || DEFAULT_COLOR });
+    }
+  }
+
+  return out;
 }
 
 function shapeBounds(shapes: ExtractedShape[]) {

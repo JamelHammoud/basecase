@@ -1,5 +1,6 @@
 import type { ImageAnnotation, ImageKeypoint, ImageMask } from './frameSet';
 import { traceMaskPolygons } from './maskPolygons';
+import { maskBounds } from '../utils/silhouetteProfile';
 
 function checkDimensions(pixels: ArrayLike<number>, width: number, height: number): void {
   if (
@@ -83,19 +84,7 @@ export function decodeMask(mask: ImageMask): Uint8Array {
 export function maskBox(pixels: Uint8Array, width: number, height: number): ImageAnnotation['box'] | null {
   checkDimensions(pixels, width, height);
 
-  let left = width;
-  let top = height;
-  let right = -1;
-  let bottom = -1;
-
-  pixels.forEach((v, i) => {
-    if (!v) return;
-
-    left = Math.min(left, i % width);
-    right = Math.max(right, i % width);
-    top = Math.min(top, Math.floor(i / width));
-    bottom = Math.max(bottom, Math.floor(i / width));
-  });
+  const { x0: left, y0: top, x1: right, y1: bottom } = maskBounds({ data: pixels, width, height });
 
   return right < 0 ? null : [left, top, right - left + 1, bottom - top + 1];
 }

@@ -143,6 +143,14 @@ On November 16, 2026, `scratch/face-projection.test.ts` compared complete ordere
 
 The face-selection steps and screenshot in [Draw a part from a sketch or SVG](../../site/content/help/draw-a-part-from-a-sketch-or-svg.md) remain accurate. No control, output or visible state changes, so no article edit or screenshot is needed.
 
+## SVG extraction appends accepted contours directly
+
+Whole-app search found sampling and short-contour filtering together only in `utils/svgTo3DParser.ts`. Its consumers are the Import SVG panel and studio draft restoration. Previews, extrusion and Edit in Sketch receive the same parsed contours. Filled holes formerly used a mapped list followed by a filtered result. Fallback outlines used a mapped list per source path, a flattened list, a filtered list and the final shape list. Accepted points now append directly to the retained lists. Sampled point arrays and final contour records still allocate.
+
+For P fallback paths containing S subpaths, the change removes P + 2 staging arrays and two full traversals of subpath references. For 300 and 600 paths, that is 302 and 602 arrays. Each filled shape with holes also loses one mapped staging array. These are source-derived allocation counts, not measured heap usage or timings. Sampling and normalization costs remain unchanged.
+
+`svgTo3DParser.test.ts` covers real filled contours with holes, sizing, overrides and empty input. The fallback case forces the loader's empty-shape branch and checks order across multiple paths, exclusion of a short contour from bounds, sampled point count and source preservation. Actions, output geometry and visible states stay unchanged. Rechecking the [Sketch and SVG help article](../../site/content/help/draw-a-part-from-a-sketch-or-svg.md) found that its initial 64 mm size applies to the longer outline side, rather than always its width. The article corrects that sentence. Its steps, labels and screenshots still apply, so no new capture is needed. No timeout, retry or quarantine changes.
+
 ## Sketch support preparation
 
 Measured on macOS with headless Chrome and the existing software GL harness on 16 November 2026. The documentation capture served the current source through Vite's development server and called the production geometry worker and document-result implementation. These are warm function measurements, not cold app startup or a production-bundle viewport benchmark. One warm-up preceded twelve recorded requests for one feature and an eight-feature chain. Every recorded request completed with no support finding.

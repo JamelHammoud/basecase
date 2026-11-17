@@ -51,13 +51,13 @@ export function circleShape(r: number): THREE.Shape {
   return s;
 }
 
-export function holePath(r: number, sides = 32, angle0 = 0): THREE.Path {
+export function holePath(r: number, sides = 32, angle0 = 0, center?: [number, number]): THREE.Path {
   const p = new THREE.Path();
 
   for (let i = 0; i <= sides; i++) {
     const a = angle0 - (i / sides) * Math.PI * 2;
-    const x = Math.cos(a) * r;
-    const y = Math.sin(a) * r;
+    const x = center ? Math.cos(a) * r + center[0] : Math.cos(a) * r;
+    const y = center ? Math.sin(a) * r + center[1] : Math.sin(a) * r;
 
     if (i === 0) p.moveTo(x, y);
     else p.lineTo(x, y);

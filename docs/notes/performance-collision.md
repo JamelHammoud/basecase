@@ -175,3 +175,11 @@ For the existing 300- and 600-crossing fixtures, selection visits 24 indices ins
 `crossing.test.ts` compares complete selected results against the former filter-and-slice calculation. Budgets cover exact and oversized counts, zero, positive and negative fractions, negative counts, NaN and both infinities. Existing tests cover empty gathers, traversal order, gathering limits, transformed geometry and independent output vectors. No user action or visible state changes, so help instructions and screenshots remain accurate. No timeout, retry or quarantine changes apply.
 
 Review found that testing the untruncated budget for negativity returned all 300 or 600 crossings for budgets between -1 and 0. The former slice returns none because these endpoints truncate to negative zero. Selection now truncates the endpoint before testing its sign. The existing parity cases additionally cover negative zero, the smallest negative subnormal, -0.5 and -0.999.
+
+## Tiny collision faces stop before length calculation
+
+On November 17, 2026, the shared `shapeSolid.ts` face preparation moved its 0.5 mm² rejection ahead of the square root. The equivalent squared cross-product threshold is 1. Accepted faces retain the previous length, area and subdivision arithmetic. The normal fallback for nonfinite inputs stays unchanged.
+
+The `facePieces.test.ts` fixtures contain 300 and 600 triangles, repeating heights 0, the Float32 value immediately below 1, 1 and the Float32 value immediately above 1. Each triangle has a unit base. Half pass the inclusive area cutoff. Previously preparation needed 450 and 900 square roots, one per triangle plus one subdivision root per accepted triangle. It now needs 300 and 600, removing all 150 and 300 rejected-face roots. Counts are source-derived and asserted locally, not elapsed-time measurements or claims about whole-scene latency.
+
+The test compares complete centers, normals, weights and totals against independently prepared accepted geometry. It checks unchanged source coordinates and replacement shapes. Existing tests cover winding, varied orientations, stride, the subdivision cap and cached output. There is no change to user actions or visible states, so help instructions and screenshots remain accurate. No timeout, retry or quarantine changes apply.

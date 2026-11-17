@@ -118,7 +118,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          fetch-depth: ${{ github.event_name == 'pull_request' && 0 || 1 }}
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 1 }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
@@ -130,8 +130,9 @@ jobs:
         run: |
           npm run check:tracked
           npm run check:quarantine
-          mapfile -t files < <(git diff --name-only --diff-filter=ACMR HEAD^1 HEAD)
-          if [ "${#files[@]}" -eq 0 ]; then echo "Nothing changed to check."; exit 0; fi
+          changed=$(git diff --name-only --diff-filter=ACMR HEAD^1 HEAD)
+          if [ -z "$changed" ]; then echo "Nothing changed to check."; exit 0; fi
+          mapfile -t files <<< "$changed"
           node tools/check-changed.mjs "${files[@]}"
       - name: Test robot daemon arguments when its Rust code changed
         if: ${{ github.event_name == 'pull_request' }}

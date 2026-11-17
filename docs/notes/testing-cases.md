@@ -34,6 +34,18 @@ The first consolidated changed-file check selected 548 related files. It passed 
 
 The slider spring force fixture uses 0.2 N s/m damping. Its earlier 0.02 N s/m fixture was still oscillating at 5.08997 mm after four simulated seconds around a 5 mm rest coordinate. Initial force matched the spring, so the fixture damping was corrected without changing force or position assertions or the test deadline.
 
+### Review corrections for reusable fixtures
+
+A probe resizing a saved drawer from 80 mm to 160 mm deep retained its original -10 to 50 mm stops and 5 mm spring rest coordinate. The placement path had scaled these values, but the builder replaced them with unscaled source defaults. Defaults now follow the dimension scale along the resolved slide axis before explicit physics edits apply. `fixtureReuse.test.ts` covers X, Z and diagonal axes, explicit overrides, unchanged stiffness and source isolation.
+
+A separate probe split a 0.1 g body into 64 collision hulls. Six-decimal kilogram rounding emitted 0.000002 kg per hull, totaling 0.128 g. Mass shares now retain full numeric precision. `fixtureCollision.test.ts` compiles the 64-hull body in WASM MuJoCo and checks the resulting body mass.
+
+The review changed-file check on 16 November selected 273 related files. It passed 1,932 assertions with one existing skip and reported six deadline failures in classroom cup grading, the hexapod Case builder, rover visibility and a Motor Kit transition. The new fixture assertions passed. The run took 126.52 seconds. No baseline cause was established. The same check with Vitest’s supported `VITEST_MAX_WORKERS=4` environment setting passed 272 files and 1,938 assertions, with one existing skip, in 111.04 seconds. No declaration, assertion, deadline or repository configuration changed.
+
+A multi-joint probe selected a drawer’s hinged lid before its tray. New Case used slider defaults but made the lid’s hinge primary, overwriting the wrong joint’s physics. Reversing declarations could also offer the assembly for hinge goals. Matching and placement now choose the same primary joint as the rig and source defaults. `fixtureReuse.test.ts` checks both declaration orders with child geometry first, parent-slider edits, retained child hinge physics and mismatched-goal refusal.
+
+After the primary-joint correction, the four-worker related run passed 274 files and 2,133 assertions, with one existing skip, in 120.21 seconds. Its type phase caught a missing group field on the new test part. The corrected fixture then passed its own changed-file check, including global types and all ten reuse assertions. No browser or native Forge run was added locally.
+
 ## Default console coverage
 
 The overlapping default-layout walkthrough and its Windows quarantine were removed under [#1151](https://github.com/JamelHammoud/basecase/issues/1151). In run 43739315274 it took 40.949 s on Linux, including 23.279 s until studio readiness. The remaining custom-console walkthrough took 12.071 s and retains Run Case through ⌘K, live recording, timer and score updates, Reset and Esc. The log does not identify which startup stage caused the delay.

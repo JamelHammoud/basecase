@@ -1,5 +1,6 @@
 import type { CustomModelDefinition } from '../types/robotics';
 import type { V3 } from '../utils/kinematics';
+import { fixtureSource } from './fixtureAssembly';
 
 export const HOUSEHOLD_FIXTURES = {
   cupboard: { object: 'Cupboard', name: 'Open a Cupboard', hinge: true, turn: [0, 0, -90] },
@@ -22,7 +23,9 @@ export const isFixtureGoal = (kind: string) =>
   kind === 'lid' || kind === 'drawer' || kind === 'chest' || isHouseholdKind(kind);
 
 export function fixtureFitsGoal(model: CustomModelDefinition, kind: string): boolean {
-  const type = model.joints?.find((joint) => joint.type !== 'fixed')?.type;
+  if (!isFixtureGoal(kind)) return false;
 
-  return isFixtureGoal(kind) && type === (fixtureHinge(kind) ? 'revolute' : 'prismatic');
+  const type = fixtureSource(model).joint?.type;
+
+  return type === (fixtureHinge(kind) ? 'revolute' : 'prismatic');
 }

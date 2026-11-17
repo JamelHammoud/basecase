@@ -1,11 +1,12 @@
 import loadMujoco from '@mujoco/mujoco';
 import { expect, it } from 'vitest';
 import { fixtureRobots } from '../sim/fixtures/robots';
-import { buildRig } from '../utils/kinematics';
+import { buildRig, type V3 } from '../utils/kinematics';
 import { buildCase, builderRobot, type CaseSpec } from './caseBuilder';
 import { captureCaseFixture } from './fixtureAssembly';
 import { fixtureScene } from './fixtureScenes.fixtures';
 import { runCase } from './testing';
+import { box } from '../sim/fixtures/parts';
 
 const arm = fixtureRobots().find((robot) => robot.id === 'arm-6dof')!;
 const robot = builderRobot(buildRig(arm.joints, arm.parts), arm.parts);
@@ -105,3 +106,79 @@ it('preserves moving-body dimensions and mass when selection order differs from 
   expect(lid.size).toEqual([90, 6, 140]);
   expect(lid.massG).toBe(5);
 });
+
+it.each([{ axis: [1, 0, 0] as V3 }, { axis: [0, 0, -1] as V3 }, { axis: [Math.SQRT1_2, 0, -Math.SQRT1_2] as V3 }])(
+  'scales saved slider stops and rest coordinates along the axis $axis',
+  async ({ axis }) => {
+    const assembly = fixtureScene(made({ goal: 'drawer', world: 'floor' }), 'Drawer');
+
+    assembly.joints[0] = { ...assembly.joints[0], axis, range: [-10, 50], stiffness: 2, springref: 5 };
+
+    const fixture = await captureCaseFixture(assembly);
+    const values = { fixtureWidthMm: 105, fixtureDepthMm: 160 };
+    const scaled = made({ goal: 'drawer', world: 'floor', fixture, values });
+    const joint = scaled.world.objects.find((object) => object.joint)!.joint!;
+    const factor = Math.hypot(axis[0] * 1.5, axis[1], axis[2] * 2);
+
+    expect(joint.range[0]).toBeCloseTo(-10 * factor, 12);
+    expect(joint.range[1]).toBeCloseTo(50 * factor, 12);
+    expect(joint.springref).toBeCloseTo(5 * factor, 12);
+    expect(joint.stiffness).toBe(2);
+
+    const edited = made({
+      goal: 'drawer',
+      world: 'floor',
+      fixture,
+      values: { ...values, fixtureLowerStop: -4, fixtureTravel: 30, fixtureSpringref: 3 },
+    });
+
+    expect(edited.world.objects.find((object) => object.joint)!.joint).toMatchObject({
+      range: [-4, 30],
+      springref: 3,
+    });
+    expect(fixture.joints![0]).toMatchObject({ range: [-10, 50], springref: 5 });
+  },
+);
+
+it.each([false, true])(
+  'keeps the parent slider primary when child parts come first and joint order is reversed: %s',
+  async (reverse) => {
+    const assembly = fixtureScene(made({ goal: 'drawer', world: 'floor' }), 'Drawer with a lid');
+
+    assembly.parts.push({ ...box('extra-lid', [0, 150, 300], [70, 6, 80], 5), group: assembly.parts[0].group });
+    assembly.joints.push({
+      id: 'extra-hinge',
+      name: 'Extra hinge',
+      type: 'revolute',
+      parent: ['fixture'],
+      child: ['extra-lid'],
+      origin: [0, 150, 340],
+      axis: [1, 0, 0],
+      range: [0, 80],
+      actuation: 'passive',
+      damping: 0.01,
+      stiffness: 0.2,
+      springref: 10,
+    });
+    assembly.parts.reverse();
+
+    if (reverse) assembly.joints.reverse();
+
+    const fixture = await captureCaseFixture(assembly);
+    const kase = made({ goal: 'drawer', world: 'floor', fixture, values: { fixtureTravel: 35 } });
+    const primary = kase.world.objects.find((object) => object.id === 'fixture')!;
+    const child = kase.world.objects.find((object) => object.name === 'extra-lid')!;
+
+    expect(primary.joint).toMatchObject({ type: 'prismatic', range: [0, 35] });
+    expect(child.parent).toBe('fixture');
+    expect(child.joint).toMatchObject({
+      type: 'revolute',
+      range: [0, 80],
+      damping: 0.01,
+      stiffness: 0.2,
+      springref: 10,
+    });
+    expect(buildCase({ goal: 'lid', world: 'floor', fixture }, robot).ok).toBe(false);
+    expect(fixture.joints!.find((joint) => joint.id === 'extra-hinge')!.range).toEqual([0, 80]);
+  },
+);

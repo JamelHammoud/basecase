@@ -108,7 +108,7 @@ export function goalDefaults(
     handoff: handoffDefaults(robot),
   };
 
-  const supplied = robot.fixture ? fixtureModelValues(robot.fixture) : {};
+  const supplied = robot.fixture ? fixtureModelValues(robot.fixture, chosen) : {};
   const values = {
     ...base,
     ...byKind[kind],

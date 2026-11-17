@@ -34,7 +34,7 @@ function geomAttrs(item: WorldItem, share = 1): string {
 
   if (item.behavior !== 'dynamic') return `${contact}${friction}`;
 
-  return `${contact} mass="${f((Math.max(item.massG ?? DEFAULT_DYNAMIC_GRAMS, 0.1) * share) / 1000)}"${friction}`;
+  return `${contact} mass="${(Math.max(item.massG ?? DEFAULT_DYNAMIC_GRAMS, 0.1) * share) / 1000}"${friction}`;
 }
 
 const boxSize = ({ dimensions: d }: WorldItem) => vec([d.width / 2000, d.depth / 2000, d.height / 2000]);

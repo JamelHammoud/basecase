@@ -8,21 +8,27 @@ import { halfExtents } from '../utils/selection';
 export const fixtureHandle = (objects: WorldObject[]): WorldObject =>
   objects.find((object) => object.id === 'handle') ?? objects.find((object) => object.joint)!;
 
-export function fixtureModelValues(model: CustomModelDefinition): Partial<GoalValues> {
+export function fixtureModelValues(model: CustomModelDefinition, edits: Partial<GoalValues> = {}): Partial<GoalValues> {
   const { parts, joint, part } = fixtureSource(model);
 
   if (!joint || !part) return {};
 
   const extent = halfExtents(part);
   const floor = Math.min(...parts.map((item) => item.position[1] - halfExtents(item)[1]));
+  const scale = [
+    (edits.fixtureWidthMm ?? extent[0] * 2) / (extent[0] * 2),
+    1,
+    (edits.fixtureDepthMm ?? extent[2] * 2) / (extent[2] * 2),
+  ];
+  const travelScale = joint.type === 'prismatic' ? Math.hypot(...joint.axis.map((value, i) => value * scale[i])) : 1;
 
   return {
     fixtureWidthMm: extent[0] * 2,
     fixtureDepthMm: extent[2] * 2,
-    fixtureTravel: joint.range?.[1],
-    fixtureLowerStop: joint.range?.[0],
+    fixtureTravel: joint.range === undefined ? undefined : joint.range[1] * travelScale,
+    fixtureLowerStop: joint.range === undefined ? undefined : joint.range[0] * travelScale,
     fixtureStiffness: joint.stiffness === undefined ? undefined : joint.stiffness * 1000,
-    fixtureSpringref: joint.springref,
+    fixtureSpringref: joint.springref === undefined ? undefined : joint.springref * travelScale,
     fixtureMassG: fixtureMass(part),
     fixtureFriction: (joint.frictionloss ?? 0) * 1000,
     fixtureDamping: (joint.damping ?? 0) * 1000,
@@ -39,7 +45,8 @@ export function reusedFixture(model: CustomModelDefinition, robot: BuilderRobot,
     position: [0, 0, 0],
     size: [dimensions.width * scaleX, dimensions.height, dimensions.depth * scaleZ],
   });
-  const jointed = source.find((object) => object.joint)!;
+  const { parts, part } = fixtureSource(model);
+  const jointed = source[parts.findIndex((item) => item === part)];
   const handle = source.find((object) => object.parent === jointed.id && /handle|grip/i.test(object.name)) ?? jointed;
   const front = jointed.position[2] - halfExtents(worldItem(jointed))[2];
   const rename = new Map<string, string>([[jointed.id, 'fixture']]);

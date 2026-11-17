@@ -34,17 +34,16 @@ Use an assembly with passive hinges or sliders with limits, and select every con
    ![The Toy chest assembly selected in Layers with Save to Library in its menu](/help/reuse-an-assembly-in-cases/selection.png)
 
 3. Open the scene with your robot arm and gripper.
-4. In **Play**, choose **Cases**.
-5. Click **New Case**.
-6. Under **Goal**, choose **Put Away a Block**.
-7. Under **Fixture**, choose the saved chest.
-8. Set **Width** to 100 mm.
+4. In **Play** ▸ **Cases**, click **New Case**.
+5. Under **Goal**, choose **Put Away a Block**.
+6. Under **Fixture**, choose the saved chest.
+7. Set **Width** to 100 mm.
 
    ![New Case with Toy chest selected as the fixture and Width set to 100 mm](/help/reuse-an-assembly-in-cases/builder.png)
 
-9. Click **Make Case**.
-10. In **Try**, click **Try Reference**.
-11. Under **Results**, open the saved try.
+8. Click **Make Case**.
+9. In **Try**, click **Try Reference**.
+10. Under **Results**, open the saved try.
 
    ![The saved chest chore open on its recorded timeline](/help/reuse-an-assembly-in-cases/recorded-try.png)
 

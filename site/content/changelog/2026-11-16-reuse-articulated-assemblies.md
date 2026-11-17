@@ -6,7 +6,7 @@ image: /changelog/reuse-articulated-assemblies/cover.png
 
 You can save a passive assembly and reuse it as a fixture in Cases. In the complete chest task, the robot opens the lid, places a block inside and closes the lid.
 
-Select the assembly and choose **Save to Library**. In **New Case**, choose the saved **Fixture** alongside the task.
+Assemblies saved through **Save to Library** appear under **Fixture** in **New Case**.
 
 Opening the lid doesn't prove a robot can fill and close the chest. The composed task checks the whole sequence, including a lifted grasp and released placement. The robot fails if it doesn't open the lid far enough, drops the block or leaves the lid open.
 

@@ -129,24 +129,41 @@ function mateJoint(b, mate, parentGroup) {
   };
 }
 
+function matesByGroup(b) {
+  const byGroup = new Map();
+
+  for (const mate of b.mates) {
+    if (!mate.ends.every((e) => b.parts.has(e.path))) continue;
+
+    const [first, second] = mate.ends.map((e) => b.groupOf(e.path));
+
+    if (first === second) continue;
+
+    for (const [group, other] of [
+      [first, second],
+      [second, first],
+    ]) {
+      const entries = byGroup.get(group) ?? [];
+
+      entries.push({ mate, other });
+      byGroup.set(group, entries);
+    }
+  }
+
+  return byGroup;
+}
+
 function treeJoints(b, root) {
   const joints = [];
   const seen = new Set([root]);
   const queue = [root];
-  const open = b.mates.filter((m) => m.ends.every((e) => b.parts.has(e.path)));
-  const used = new Set();
+  const byGroup = matesByGroup(b);
 
-  for (let group = queue.shift(); group !== undefined; group = queue.shift()) {
-    for (const mate of open) {
-      const groups = mate.ends.map((e) => b.groupOf(e.path));
+  for (let at = 0; at < queue.length; at++) {
+    const group = queue[at];
 
-      if (used.has(mate) || !groups.includes(group)) continue;
-
-      used.add(mate);
-
-      const other = groups[0] === group ? groups[1] : groups[0];
-
-      if (other === group || seen.has(other)) continue;
+    for (const { mate, other } of byGroup.get(group) ?? []) {
+      if (seen.has(other)) continue;
 
       seen.add(other);
       queue.push(other);

@@ -600,3 +600,23 @@ For C interpolated scalar channels, the quadratic and cubic terms previously use
 `animationInterpolation.test.ts` compares 64 nonlinear joint channels and three root axes against the preceding polynomial at seven span times, before and after an endpoint edit, within nine decimal places. It checks source preservation too. Existing animation and time-sampling tests retain sparse-channel, loop-seam, clamping and root-rotation coverage. No browser flow, timeout, retry or quarantine changes apply.
 
 Final changed-file validation passed formatting, lint, documentation, site copy for 314 pages, types and 259 related test files with 1,991 passing tests and one existing skip. The related-test run took 101.49 seconds. `node tools/copy-diff.mjs` reported net zero strings. Preflight flagged the unchanged Animate a robot and Joints and kinematics help articles for inspection. Their steps, labels and screenshots still hold because only scalar interpolation arithmetic changed.
+
+## Xacro entry selection scores each root once
+
+The app-wide search found one xacro entry scorer in `src/utils/robotImport/entry.ts`. `readModel.ts` uses it for local folders, archives and linked repositories. Other description priorities and path-depth sorting remain separate.
+
+The previous selector built a record for each peeked xacro, retained eligible records, scored every eligible root to find the maximum, then scored them all again to retain ties. The selector now visits the peeked files once, excludes included and nonrobot documents, and scores each eligible root once. A better score clears the owned winner list. Ties append paths in the original order before the unchanged depth selector.
+
+Source-derived counts for 24 and 48 eligible roots reduce score evaluations from 48 and 96 to 24 and 48. The per-peek path/text records, retained-record list, score list and filtered winner-record list are removed. The winner-path array remains. File reads, include discovery, document classification and final depth sorting still run. These are operation and allocation counts, without latency measurements or a claim about complete import speed.
+
+`robotImport/entry.test.ts` checks score priority over depth, later higher-scoring roots, lexical and depth ties, included high-scoring files, nonrobot and empty documents, source preservation and edits between calls. Existing cases cover XML and xacro peek limits, description priority, scope and empty results. No timeout, retry or quarantine changes apply.
+
+The three covered help articles were reread against the final selector, its diff and `readModel.ts`:
+
+- [Import a robot](../../site/content/help/import-a-robot.md): `chooseEntry` retains description priority, include exclusions, scoring criteria and final depth ordering. `treeEntry` still opens the same robot choice list for tied entries. Explicit file choices, xacro expansion, import controls and shelf operations are untouched. Its four screenshots show unchanged states.
+- [Joints and kinematics](../../site/content/help/joints-and-kinematics.md): the selector still supplies the same entry to `readModel`, which expands xacro before the unchanged URDF parser. Joint fields, passive springs, hierarchy, posing, IK and per-robot selection are untouched. The article has no screenshots.
+- [A robot won't import from a link or folder](../../site/content/help/troubleshoot-app-robot-import-fails.md): link validation, missing-description errors, mesh loading, XML errors and passive-joint handling are untouched. Empty candidate sets still return null, and `treeEntry` still maps that to the same local or linked-source error. Recovery steps and quoted messages remain accurate. The article has no screenshots.
+
+No article step, label or screenshot becomes inaccurate in this refinement. The articles remain unchanged under preflight's explicit allowance for accurate covered articles. The three automated reminders remain present because preflight detects file coverage, not whether prose became untrue.
+
+Focused validation passed formatting, ESLint, documentation, site copy for 314 pages, types and all 307 related tests across 41 files. Copy accounting reports zero added, changed and removed strings. The check log is `scratch/check-xacro-final.log`.

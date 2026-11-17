@@ -73,17 +73,36 @@ const isXacro = (path: string) => /\.xacro$/i.test(path);
 const fileName = (path: string) => path.split('/').pop()!.toLowerCase();
 const stemOf = (path: string) => fileName(path).replace(/(\.urdf)?\.xacro$/, '');
 
-interface XacroFile {
-  path: string;
-  text: string;
-}
-
-function xacroScore({ path, text }: XacroFile): number {
+function xacroScore(path: string, text: string): number {
   const stem = stemOf(path);
   const named =
     stem === ROBOT_NAME.exec(text)?.[1].toLowerCase() || path.toLowerCase().includes(`${stem}_description/`);
 
   return (DESCRIPTION_DIR.test(path) ? 2 : 0) + (named ? 1 : 0);
+}
+
+function rankedXacro(files: string[], texts: string[], included: Set<string>): string[] {
+  const winners: string[] = [];
+  let best = -Infinity;
+
+  for (let i = 0; i < files.length; i++) {
+    const path = files[i];
+
+    if (descriptionKind(texts[i]) !== 'urdf' || included.has(fileName(path))) continue;
+
+    const score = xacroScore(path, texts[i]);
+
+    if (score < best) continue;
+
+    if (score > best) {
+      winners.length = 0;
+      best = score;
+    }
+
+    winners.push(path);
+  }
+
+  return winners;
 }
 
 async function topXacro(paths: string[], peek: Peek): Promise<EntryChoice | null> {
@@ -92,12 +111,8 @@ async function topXacro(paths: string[], peek: Peek): Promise<EntryChoice | null
     .map((p) => p.path);
   const texts = await Promise.all(files.map((p) => peek(p).catch(() => '')));
   const included = new Set(texts.flatMap((t) => [...t.matchAll(XACRO_INCLUDE)].map((m) => fileName(m[1]))));
-  const top = files
-    .map((path, i) => ({ path, text: texts[i] }))
-    .filter((f) => descriptionKind(f.text) === 'urdf' && !included.has(fileName(f.path)));
-  const best = Math.max(...top.map(xacroScore));
 
-  return decide(top.filter((f) => xacroScore(f) === best).map((f) => f.path));
+  return decide(rankedXacro(files, texts, included));
 }
 
 export async function chooseEntry(paths: string[], peek: Peek): Promise<EntryChoice | null> {

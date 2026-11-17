@@ -17,18 +17,20 @@ const ray = new THREE.Ray();
 
 function halfBlockers(points: THREE.Vector3[], dir: THREE.Vector3, others: Placed[]): string[] {
   const blocked = new Set<string>();
+  const probe = new THREE.Vector3();
 
   for (const o of points) {
     for (const q of others) {
       if (blocked.has(q.id)) continue;
 
-      ray.set(o.clone().addScaledVector(dir, 0.15), dir);
+      ray.origin.copy(o).addScaledVector(dir, 0.15);
+      ray.direction.copy(dir);
 
       if (!ray.intersectsBox(q.box)) continue;
 
       ray.applyMatrix4(q.inverse);
 
-      if (q.solid.bvh.raycastFirst(ray, THREE.DoubleSide) && !insideSolid(q, o.clone().addScaledVector(dir, 0.3)))
+      if (q.solid.bvh.raycastFirst(ray, THREE.DoubleSide) && !insideSolid(q, probe.copy(o).addScaledVector(dir, 0.3)))
         blocked.add(q.id);
     }
   }

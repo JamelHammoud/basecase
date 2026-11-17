@@ -53,7 +53,7 @@ it('recovers the existing Fleet through the local command and signs in after res
     expect(JSON.parse(audit.stdout).items.some((item: { action: string }) => item.action === 'recovery.use')).toBe(
       true,
     );
-    expect(await page.pageErrors()).toEqual([]);
+    expect(await page.pageErrors({ filter: 'all' })).toEqual([]);
   } finally {
     await browser.close();
   }

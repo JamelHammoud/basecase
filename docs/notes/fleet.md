@@ -275,3 +275,5 @@ The final review changed-file check passed all 65 related tests across 16 files 
 ### Repair verification
 
 The final eight-file `check:changed` passed formatting, lint, docs, quarantine validation, TypeScript and all 115 related tests across 13 files. Its related-test phase took 13.75 seconds on Node v26.13.0. `scratch/repair-final-check.log` retains the output. This fast run validates the changed test code and quarantine tooling, not browser execution of the unpublished Fleet correction. The separate browser declarations remain CI-owned.
+
+Review found that the installed Playwright implementation defaults `pageErrors()` to errors since the latest navigation. Federation reloads its configuration page and navigates through SSO, so a final default call can omit earlier uncaught errors. Both Fleet declarations explicitly request `filter: 'all'` to preserve those errors across navigations. The source evidence is `node_modules/playwright-core/lib/coreBundle.js`, in the server-side `pageErrors` method. Browser execution remains with CI.

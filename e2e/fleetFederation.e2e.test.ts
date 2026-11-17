@@ -119,7 +119,7 @@ it('configures two Fleet providers, signs in with distinct site scopes and remov
     expect(user.status).toBe(201);
     await expect.poll(() => page.getByText(entries[1].robot.name, { exact: true }).count()).toBe(0);
     expect(await page.evaluate(async () => (await fetch('/v1/me')).status)).toBe(401);
-    expect(await page.pageErrors()).toEqual([]);
+    expect(await page.pageErrors({ filter: 'all' })).toEqual([]);
   } finally {
     await browser.close();
   }

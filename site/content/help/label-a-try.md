@@ -20,6 +20,7 @@ covers:
   - src/components/simulate/FlagMark.tsx
   - src/components/simulate/useSegmentUndo.ts
   - src/components/tries/TriesMode.tsx
+  - src/components/tries/TagTriesField.tsx
   - src/components/tries/useTagTries.ts
   - src/workspace/useTryLabels.ts
   - src/workspace/tagTries.ts

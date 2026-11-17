@@ -17,3 +17,7 @@ Basecase ships for macOS and Windows 11 (x64). Plan, status and the QA list: [do
 - **Line endings:** `.gitattributes` keeps every text file LF, so Prettier passes on Windows checkouts.
 - **The CAD kernel** runs in the same Chromium sandbox on Windows and macOS (§0h); nothing depends on the Node version. So does the CAD file converter. The packaged Windows app runs its kernel self-test in CI (`BASECASE_KERNEL_SELFTEST`, §0e), since Playwright can't drive it there, and the converter's sandbox test (`cadImportSandbox.app.test.ts`), which starts the app itself without Playwright.
 - Nightly Check runs types, every active unit test, native passive-joint parity and browser tests on `windows-latest`. Shared static checks run on Linux. The app is packaged for Windows without driving it (§0e). A change that only works on one OS fails CI.
+
+## Routed board validation
+
+The electrical service locates `kicad-cli.exe` with `findOnPath`, the standard KiCad 9.0 installation or a host-owned executable setting. It passes argument arrays without a shell. Cancellation uses `kill()` for this disposable native process and waits for its close before deleting temporary files. It never asks KiCad to save after cancellation. Native input and output paths are built with `path.join`. The existing electrical CI job installs the SHA-256-pinned 9.0.6 executable for routed DRC and fabrication checks. Only the browser shard containing the routed-board walkthrough installs it for that walkthrough.

@@ -1,3 +1,4 @@
+import { useRoutedBoard } from './useRoutedBoard';
 import { useRef } from 'react';
 import { electricalClient } from '../wiring/electricalClient';
 import { electricalSnapshot } from '../wiring/electricalSnapshot';
@@ -13,6 +14,7 @@ export function useBoard(core: WorkspaceCore) {
   'use memo';
 
   const busy = useRef(false);
+  const importBoard = useRoutedBoard(core);
   const select = (id: string) => {
     core.setSelectedIds([id]);
     core.tool.openRightTab('inspector');
@@ -69,5 +71,5 @@ export function useBoard(core: WorkspaceCore) {
     core.docs.commitBoard(mountedBoardParts(parts, board), board);
   };
 
-  return { define, select, update, arrange: () => prepare('place') };
+  return { define, select, update, importBoard, arrange: () => prepare('place') };
 }

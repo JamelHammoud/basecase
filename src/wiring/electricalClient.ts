@@ -11,6 +11,13 @@ export interface SchematicResult {
 }
 
 type Handlers = {
+  importBoard: (
+    input: Parameters<typeof import('./boardRoutedSource').importRoutedSource>[0],
+  ) => Promise<{ result: Awaited<ReturnType<typeof import('./boardRoutedSource').importRoutedSource>> }>;
+  prepareExport: (input: ElectricalInput) => Promise<{ result: import('./boardRoutingPackage').PreparedBoardExport }>;
+  finishExport: (
+    input: Parameters<typeof import('./boardExportPreparation').finishBoardExport>[0],
+  ) => Promise<{ result: SchematicResult }>;
   preview: (
     input: Parameters<typeof import('./boardPreview').boardPreview>[0],
   ) => Promise<{ result: ReturnType<typeof import('./boardPreview').boardPreview> }>;
@@ -27,6 +34,8 @@ type Handlers = {
 async function localHandlers(): Promise<Handlers> {
   if (typeof document !== 'undefined') throw new Error('Schematic export needs a worker.');
 
+  const { importRoutedSource } = await import('./boardRoutedSource');
+  const { prepareBoardExport, finishBoardExport } = await import('./boardExportPreparation');
   const { inspectElectricalInput } = await import('./electricalInspection');
   const { timedBoardPlacement } = await import('./boardPlacement');
   const { defineBoard } = await import('./boardDefinition');
@@ -34,6 +43,9 @@ async function localHandlers(): Promise<Handlers> {
   const { electricalPackage } = await import('./electricalPackage');
 
   return {
+    importBoard: async (input) => ({ result: await importRoutedSource(input) }),
+    prepareExport: async (input) => ({ result: await prepareBoardExport(input) }),
+    finishExport: async (input) => ({ result: await finishBoardExport(input) }),
     preview: async (input) => ({ result: boardPreview(input) }),
     define: async (input) => ({ result: defineBoard(input, input.boardId) }),
     inspect: async (input) => ({ result: await inspectElectricalInput(input) }),

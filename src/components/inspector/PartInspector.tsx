@@ -76,6 +76,7 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
         board={props.board}
         onChange={props.onUpdateBoard}
         onArrange={props.onArrangeBoard}
+        onImport={props.onImportBoard}
         partId={part.id}
       />
 

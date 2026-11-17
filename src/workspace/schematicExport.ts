@@ -1,3 +1,4 @@
+import { validateNativeBoard } from '../wiring/boardNativeClient';
 import { electricalClient } from '../wiring/electricalClient';
 import { electricalSnapshot, electricalWalk } from '../wiring/electricalSnapshot';
 import { freshWalk } from './storedWalk';
@@ -45,16 +46,27 @@ export async function schematicExport(core: WorkspaceCore, run: SchematicRun) {
     guard();
 
     const dispatchStart = performance.now();
-    const pending = client.call('build', { ...input, meshFiles });
+    const pending = input.project.electronicsBoard?.routed
+      ? client.call('prepareExport', { ...input, meshFiles })
+      : client.call('build', { ...input, meshFiles });
 
     performance.measure('schematic:dispatch', { start: dispatchStart });
 
-    const result = await pending;
+    const prepared = await pending;
+
+    guard();
+
+    const native =
+      'request' in prepared && prepared.request ? await validateNativeBoard(prepared.request, run.signal) : null;
+
+    guard();
+
+    const result = 'request' in prepared ? await client.call('finishExport', { prepared, result: native }) : prepared;
 
     guard();
     performance.measure('schematic:prepare', { start });
 
-    return result;
+    return native ? { ...result, validation: native } : result;
   } finally {
     run.signal.removeEventListener('abort', stop);
     client.dispose();

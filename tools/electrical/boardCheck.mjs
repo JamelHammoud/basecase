@@ -85,7 +85,16 @@ export async function checkBoard({ fixture, dir, cli, exportOnly, root }) {
 
   await fs.copyFile(path.join(root, 'tools/electrical/pcb.py'), path.join(boardDir, 'pcb.py'));
 
-  const facts = JSON.parse(cli(['pcb.py', 'robot.kicad_pcb'], boardDir, 'python3'));
+  const facts = JSON.parse(cli(['pcb.py', 'robot.kicad_pcb', 'resave'], boardDir, 'python3'));
+  const resaved = await fs.readFile(path.join(boardDir, 'robot.kicad_pcb'), 'utf8');
+
+  assert.deepEqual(fixture.board.reconcile(resaved), {
+    accepted: true,
+    translationMm: [0, 0],
+    segments: 0,
+    vias: 0,
+  });
+
   const actual = facts.pads.sort((a, b) => a.reference.localeCompare(b.reference) || a.pad.localeCompare(b.pad));
 
   assert.deepEqual(actual, expected);

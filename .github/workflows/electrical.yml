@@ -23,9 +23,12 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Install pinned KiCad CLI for native Windows fabrication checks
+        if: runner.os == 'Windows'
+        run: node tools/electrical/installCli.mjs
       - name: Validate KiCad 9.0.6 ERC, PCB pads and DRC fault controls
         if: runner.os == 'Linux'
         run: node tools/electrical/check.mjs --docker
       - name: Validate portable exports and save/reopen determinism
         if: runner.os == 'Windows'
-        run: node tools/electrical/check.mjs --export-only
+        run: node tools/electrical/check.mjs --export-only --routed-native

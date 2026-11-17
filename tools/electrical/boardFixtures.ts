@@ -7,9 +7,17 @@ import { projectBoard } from '../../src/wiring/boardProjection';
 import { boardPcb } from '../../src/wiring/boardPcb';
 import { mountedBoardParts } from '../../src/wiring/boardMounts';
 import { boardComponents } from '../../src/wiring/boardComponents';
+import { reconcileRoutedBoard } from '../../src/wiring/boardReconcile.mjs';
 
-export async function boardFixture(scene: WiringFixture) {
-  const { part, board, hardwareParts } = defineBoard(scene, 'board');
+export async function boardFixture(
+  scene: WiringFixture,
+  configure?: (definition: ReturnType<typeof defineBoard>) => void,
+) {
+  const definition = defineBoard(scene, 'board');
+
+  configure?.(definition);
+
+  const { part, board, hardwareParts } = definition;
   const ids = [
     ...new Set(
       [...scene.parts, ...boardComponents(part, board)].flatMap((item) => (item.componentId ? [item.componentId] : [])),
@@ -46,5 +54,17 @@ export async function boardFixture(scene: WiringFixture) {
     }),
   );
 
-  return { ...made, definition: board, snapshot: input, reopened: reopened.bytes, transforms };
+  return {
+    ...made,
+    definition: board,
+    snapshot: input,
+    reopened: reopened.bytes,
+    transforms,
+    reconcile: (imported: string) =>
+      reconcileRoutedBoard({
+        expected: made.files['robot.kicad_pcb'],
+        imported,
+        sourceFingerprint: made.sourceFingerprint,
+      }),
+  };
 }

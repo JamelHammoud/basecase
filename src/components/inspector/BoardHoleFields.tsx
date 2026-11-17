@@ -48,6 +48,7 @@ export function BoardHoleFields({
       <div className="flex justify-end">
         <IconButton
           icon={<DeleteIcon />}
+          variant="danger"
           title="Delete"
           onClick={() => confirmAction({ title: 'Delete mounting hole and hardware?', onConfirm: onDelete })}
         />

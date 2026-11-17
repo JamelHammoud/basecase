@@ -52,7 +52,7 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Real parts | Where every part comes from | Placeholders, parts with nothing saying where to get them, and parts whose link and numbers aren't checked |
 | Repairs | How much comes apart to replace a part | “Replacing these means taking a lot apart.” as a note |
 
-[Fit an electronics board](/help/fit-an-electronics-board) covers board placement. Electrical requirements and unrouted copper remain separate blockers.
+[Fit an electronics board](/help/fit-an-electronics-board) covers board placement. Electrical requirements and missing or stale routed-copper evidence remain separate blockers. [Import a routed board](/help/import-a-routed-board) covers the KiCad handoff.
 
 For an Onshape robot, **Assembly** also lists **Fixed Mates** as notes. A cylindrical mate keeps its hinge, and the note names only its held slide, such as “Axle slide imports as fixed.” Other unsupported mates stay fixed. These notes don't block Ready to build.
 

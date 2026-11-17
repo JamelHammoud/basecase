@@ -49,7 +49,7 @@ jobs:
           if grep -qE "$vision" <<< "$files"; then echo "vision=true"; else echo "vision=false"; fi >> "$GITHUB_OUTPUT"
           daemon='^(hw/|verify/hw/|\.github/workflows/(check|release)\.yml$)'
           if grep -qE "$daemon" <<< "$files"; then echo "daemon=true"; else echo "daemon=false"; fi >> "$GITHUB_OUTPUT"
-          electrical='^(src/wiring/|src/workspace/([^/]*Schematic|schematic)[^/]*|src/utils/(engineeringPower|powerSources|servoAmps)\.ts$|src/data/(components|connectorPorts|componentPorts|supplies|sourcedItems)\.ts$|tools/electrical/|e2e/schematic\.e2e\.test\.ts$|\.github/workflows/(electrical|check)\.yml$|package(-lock)?\.json$)'
+          electrical='^(src/wiring/|src/workspace/([^/]*Schematic|schematic)[^/]*|src/utils/(engineeringPower|powerSources|servoAmps)\.ts$|src/data/(components|connectorPorts|componentPorts|supplies|sourcedItems)\.ts$|tools/electrical/|e2e/(schematic|board|boardRouted)\.e2e\.test\.ts$|electron/electrical/|src/workspace/(useRoutedBoard|useBoard|useBoardPreview)\.ts$|\.github/workflows/(electrical|check)\.yml$|package(-lock)?\.json$)'
           if grep -qE "$electrical" <<< "$files"; then echo "electrical=true"; else echo "electrical=false"; fi >> "$GITHUB_OUTPUT"
 
   electrical:
@@ -180,6 +180,8 @@ jobs:
         run: npm run build:daemon
       - run: npx vite build
       - run: npx vite build --mode web --outDir dist-web
+      - name: Prepare KiCad for the shard with the routed board walkthrough
+        run: node tools/electrical/installCli.mjs --browser-shard ${{ matrix.shard }}/${{ strategy.job-total }}
       - run: npx vitest run --config vitest.e2e.config.ts --shard ${{ matrix.shard }}/${{ strategy.job-total }}
 
       - name: Run quarantined tests
@@ -218,6 +220,9 @@ jobs:
           echo "list=$(jq -r '.files | join(" ")' <<< "$found")" >> "$GITHUB_OUTPUT"
           echo "fallback=$(jq -r '.fallbackFiles | join(" ")' <<< "$found")" >> "$GITHUB_OUTPUT"
           echo "pattern=$(jq -r '.pattern' <<< "$found")" >> "$GITHUB_OUTPUT"
+      - name: Prepare KiCad for the routed board walkthrough
+        if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/boardRouted.e2e.test.ts') }}
+        run: node tools/electrical/installCli.mjs
       - name: Install uv for local USD facility conversion
         if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/fleetSites.e2e.test.ts') }}
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2
@@ -277,6 +282,8 @@ jobs:
         run: npm run build:daemon
       - run: npx vite build
       - run: npx vite build --mode web --outDir dist-web
+      - name: Prepare KiCad for the shard with the routed board walkthrough
+        run: node tools/electrical/installCli.mjs --browser-shard ${{ matrix.shard }}/${{ strategy.job-total }}
       - run: npx vitest run --config vitest.e2e.config.ts --shard ${{ matrix.shard }}/${{ strategy.job-total }}
 
       - name: Run quarantined tests

@@ -1,25 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import type { ScenePart } from '../types/robotics';
 import type { ElectronicsBoard } from '../wiring/boardTypes';
 import { electricalClient } from '../wiring/electricalClient';
+import { electricalSourceJson } from '../wiring/electricalSource';
 
 export function useBoardPreview(parts: ScenePart[], board: ElectronicsBoard | undefined) {
   const host = parts.find((part) => part.id === board?.partId);
+  const definition = board ? { ...board, routed: undefined } : undefined;
+  const key = electricalSourceJson(definition);
+  const latestDefinition = useEffectEvent(() => definition);
   const [preview, setPreview] = useState<{
     host: ScenePart;
-    board: ElectronicsBoard;
+    key: string;
     mesh: ScenePart['mesh'];
     components: ScenePart[];
   } | null>(null);
 
   useEffect(() => {
-    if (!host || !board) return;
+    const currentBoard = latestDefinition();
+
+    if (!host || !currentBoard) return;
 
     const client = electricalClient();
     let current = true;
 
     void client
-      .call('preview', { part: host, board })
+      .call('preview', { part: host, board: currentBoard })
       .then((result) => {
         if (!current) return;
 
@@ -29,7 +35,7 @@ export function useBoardPreview(parts: ScenePart[], board: ElectronicsBoard | un
           baseSize: result.baseSize,
         };
 
-        setPreview({ host, board, mesh, components: result.components });
+        setPreview({ host, key, mesh, components: result.components });
       })
       .catch(() => {
         if (current) setPreview(null);
@@ -40,9 +46,9 @@ export function useBoardPreview(parts: ScenePart[], board: ElectronicsBoard | un
       current = false;
       client.dispose();
     };
-  }, [host, board]);
+  }, [host, key]);
 
-  const current = preview && host && preview.host === host && preview.board === board;
+  const current = preview && host && preview.host === host && preview.key === key;
   const rendered = current ? { ...host, kind: 'mesh' as const, mesh: preview.mesh } : host;
 
   return [

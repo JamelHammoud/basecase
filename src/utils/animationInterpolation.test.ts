@@ -65,3 +65,62 @@ describe('linear animation support', () => {
     expect(sampleAnimation(animation, 1.25).values.joint0).toBe(-11.25);
   });
 });
+
+function previousSmooth(points: number[], u: number): number {
+  const [p0, p1, p2, p3] = points;
+
+  return (
+    0.5 * (2 * p1 + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u)
+  );
+}
+
+describe('smooth animation support', () => {
+  it('shares time powers across nonlinear joint and root channels after edits', () => {
+    const animation = animationOf(64);
+
+    animation.interpolation = 'smooth';
+
+    for (const [k, frame] of animation.keyframes.entries()) {
+      for (const id of Object.keys(frame.values)) {
+        const j = Number(id.slice(5));
+
+        frame.values[id] = Math.sin(k * 7 + j) * (j + 1) * 100;
+      }
+
+      frame.root!.position = [Math.sin(k) * 300, k * k * -31, k ** 3 * 47];
+    }
+
+    for (const edited of [false, true]) {
+      if (edited) animation.keyframes[2].values.joint0 = -1234;
+
+      const before = structuredClone(animation);
+
+      for (const time of [1, 1.001, 1.13, 1.25, 1.49, 1.75, 1.999]) {
+        const pose = sampleAnimation(animation, time);
+        const u = time - 1;
+
+        for (const [id, value] of Object.entries(pose.values)) {
+          expect(value).toBeCloseTo(
+            previousSmooth(
+              animation.keyframes.map((frame) => frame.values[id]),
+              u,
+            ),
+            9,
+          );
+        }
+
+        for (const [axis, value] of pose.root!.position!.entries()) {
+          expect(value).toBeCloseTo(
+            previousSmooth(
+              animation.keyframes.map((frame) => frame.root!.position![axis]),
+              u,
+            ),
+            9,
+          );
+        }
+      }
+
+      expect(animation).toEqual(before);
+    }
+  });
+});

@@ -42,6 +42,8 @@ Several scenes stay open at once, each with its own parts, undo history, selecti
 
 Measurements and limits: [Scene storage and startup performance evidence](../notes/performance-workspace.md).
 
+- **Closing selects a surviving tab directly.** `app/tabModel.ts` searches right from the closed active tab, then left only when no right tab survives. It returns at the first survivor without copying or reversing tab ranges. Every scene-close command shares this helper through `useTabActions`. `tabModel.test.ts` checks all 256 closing subsets and all eight active positions at the tab limit, including keeping an active survivor and selecting the replacement blank tab. [Evidence](../notes/performance-workspace.md#close-selection-without-copied-tab-ranges).
+
 - **Dated lists prepare timestamps once.** `utils/dateGroups.ts` parses each item's update time once for sorting and labeling in both Scenes and Chat History. It prepares the local midnight and year once per grouping call. Equal timestamps retain source order, input arrays stay unchanged, and later calls read timestamp edits and calendar changes afresh. [Evidence](../notes/performance-workspace.md#dated-lists-prepare-timestamps-once).
 
   Older entries reuse one formatted label per local calendar month and year within the call. Recent-day cutoffs still run before month lookup. `dateGroups.test.ts` covers distinct years, unchanged labels and formatting counts at 300 and 600 entries alongside the existing boundary and ownership checks.

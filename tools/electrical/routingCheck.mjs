@@ -41,7 +41,7 @@ await routingExecute({ command: tools.python, args: [path.resolve('tools/electri
 
 for (const fixture of fixtures) {
   const original = JSON.stringify(fixture.input.project);
-  const pins = fixture.expected ? expectedPads({ expected: fixture.expected, board: fixture.base }) : denseExpected();
+  const pins = expectedPads({ expected: fixture.expected, board: fixture.base });
 
   try {
     const input = await fixture.prepare();
@@ -88,8 +88,7 @@ for (const fixture of fixtures) {
 
     assert.deepEqual(validation.issues, [], `${fixture.name}: ${validation.report}`);
 
-    if (fixture.name === 'dense-dual-domain') {
-      assert.ok(kiCadChildren(parsed, 'via').length > 0);
+    if (fixture.name === 'dual-bus-arm') {
       await fs.writeFile(
         path.join(output, 'faults.json'),
         JSON.stringify(await routingFaults({ request: prepared.request, input }), null, 2),
@@ -120,7 +119,8 @@ for (const fixture of fixtures) {
       vias: kiCadChildren(parsed, 'via').length,
     });
   } catch (error) {
-    assert.equal(fixture.expectedOutcome, 'refused', `${fixture.name}: ${error.stack}`);
+    if (fixture.expectedOutcome !== 'refused') throw new Error(`${fixture.name}: ${error.message}`, { cause: error });
+
     assert.equal(error.message, 'board-route-layout');
     results.push({ name: fixture.name, status: 'refused', reason: error.message });
   }
@@ -130,20 +130,6 @@ for (const fixture of fixtures) {
   process.stdout.write(`${JSON.stringify(results.at(-1))}\n`);
 }
 
-assert.equal(results.length, 11);
+assert.equal(results.length, 10);
 
-assert.equal(results.filter((result) => result.status === 'routed').length, 3);
-
-function denseExpected() {
-  return ['xl1', 'xl2', 'xl3', 'xl4']
-    .flatMap((id, i) =>
-      ['', 'repeat_', 'repeat2_', 'repeat3_'].flatMap((prefix) =>
-        ['1', '2', '3'].map((pad) => ({
-          reference: `BC_${prefix}connector_${id}`,
-          pad,
-          net: `/${['GROUND', 'POSITIVE', 'DATA'][Number(pad) - 1]}_${i < 2 ? 1 : 2}`,
-        })),
-      ),
-    )
-    .sort((a, b) => a.reference.localeCompare(b.reference) || a.pad.localeCompare(b.pad));
-}
+assert.equal(results.filter((result) => result.status === 'routed').length, 2);

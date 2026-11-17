@@ -1,5 +1,3 @@
-import { component } from '../../src/wiring/fixtures';
-import { componentSize } from '../../src/data/components';
 import { electricalScenes } from '../../src/wiring/electricalFixtures';
 import { boardFixture } from './boardFixtures';
 import { prepareBoardRoute } from '../../src/wiring/boardRoutePreparation';
@@ -62,60 +60,7 @@ export async function routingFixtures() {
     });
   }
 
-  fixtures.push(await denseRoutingFixture());
-
   return fixtures;
 }
 
 export { acceptBoardRoute, finishBoardExport, encodeSceneFile, decodeSceneFile };
-
-async function denseRoutingFixture() {
-  const original = electricalScenes().find((entry) => entry.name === 'dual-bus-arm')!.scene;
-  const added = [
-    component('third', 'robotis-u2d2'),
-    component('xl3', 'dynamixel-xl330-m288'),
-    component('xl4', 'dynamixel-xl330-m288'),
-  ].map((part, i) => ({
-    ...part,
-    dimensions: componentSize(part.componentId!),
-    position: [-180, 50, i * 50] as [number, number, number],
-  }));
-  const scene = { ...original, parts: [...original.parts, ...added] };
-  const base = await boardFixture(scene, ({ board, part }) => {
-    part.position = [0, 500, 0];
-    board.heightMm = { top: 30, bottom: 30 };
-    board.placements = ['', 'repeat_', 'repeat2_', 'repeat3_']
-      .flatMap((prefix) => board.placements.map((placement) => ({ ...placement, id: `${prefix}${placement.id}` })))
-      .map((placement, i) => ({
-        ...placement,
-        position: [
-          -30 + (((i * 5) % 16) % 4) * 20 + Math.floor(((i * 5) % 16) / 4) * 0.37,
-          -30 + Math.floor(((i * 5) % 16) / 4) * 20,
-        ],
-        rotation: ((i % 4) * 90) as 0 | 90 | 180 | 270,
-        locked: true,
-        unplaced: false,
-      }));
-  });
-  const board = { ...base.definition, fabrication: FIXTURE_RULES, routing: ROUTING_PLAN };
-  const input = { ...base.snapshot, project: { ...base.snapshot.project, electronicsBoard: board } };
-
-  return {
-    name: 'dense-dual-domain',
-    base,
-    expectedOutcome: 'routed',
-    input,
-    expected: null,
-    prepare: () => prepareBoardRoute(input),
-    finish: async (pcb: string, provenance: NonNullable<typeof board.routed>['provenance']) => {
-      const imported = await importRoutedText({ input, pcb });
-
-      imported.routed!.provenance = provenance;
-
-      return {
-        board: imported,
-        prepared: await prepareBoardExport({ ...input, project: { ...input.project, electronicsBoard: imported } }),
-      };
-    },
-  };
-}

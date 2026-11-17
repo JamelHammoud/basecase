@@ -37,9 +37,10 @@ function pan(stage: CameraRig, e: WheelEvent): void {
   const horizontal = e.deltaX * scale;
   const vertical = -e.deltaY * scale;
   const basis = camera.matrix.elements;
-  const x = basis[0] * horizontal + basis[4] * vertical;
-  const y = basis[1] * horizontal + basis[5] * vertical;
-  const z = basis[2] * horizontal + basis[6] * vertical;
+  const singular = camera.matrix.determinantAffine() === 0;
+  const x = singular ? horizontal : basis[0] * horizontal + basis[4] * vertical;
+  const y = singular ? vertical : basis[1] * horizontal + basis[5] * vertical;
+  const z = singular ? 0 : basis[2] * horizontal + basis[6] * vertical;
 
   camera.position.set(camera.position.x + x, camera.position.y + y, camera.position.z + z);
   orbit.target.set(orbit.target.x + x, orbit.target.y + y, orbit.target.z + z);

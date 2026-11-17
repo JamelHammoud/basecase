@@ -40,7 +40,7 @@ it.each([300, 600])('preserves exact pan motion across %i events in independent 
       }) as WheelEvent;
 
       camera.rotation.set(frame / 19, -frame / 23, index + frame / 31);
-      camera.scale.set(1 + index, 0.5 + (frame % 3), 2);
+      camera.scale.set(1 + index, 0.5 + (frame % 3), frame % 13 === 0 ? 0 : 2);
       camera.updateMatrix();
 
       const matrix = camera.matrix.elements.slice();

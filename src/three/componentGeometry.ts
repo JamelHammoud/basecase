@@ -1,7 +1,8 @@
 import { MeshoptDecoder } from 'meshoptimizer';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { mergeGeometries, toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { mergeGeometryParts } from './mergeGeometryParts';
 
 type Vec3 = [number, number, number];
 
@@ -59,7 +60,7 @@ function creasedPieces(scene: THREE.Object3D) {
 
 function mergedEdges(geometries: THREE.BufferGeometry[]): Float32Array {
   const parts = geometries.map((g) => new THREE.EdgesGeometry(g, 35));
-  const merged = parts.length ? mergeGeometries(parts, false) : null;
+  const merged = mergeGeometryParts(parts);
 
   return merged ? (merged.getAttribute('position').array as Float32Array) : new Float32Array();
 }

@@ -35,6 +35,7 @@ export function BoardKeepoutFields({
       <div className="flex justify-end">
         <IconButton
           icon={<DeleteIcon />}
+          variant="danger"
           title="Delete"
           onClick={() => confirmAction({ title: 'Delete keepout?', onConfirm: onDelete })}
         />

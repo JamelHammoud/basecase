@@ -35,6 +35,17 @@ describe('untrusted board records', () => {
     null,
     {},
     { ...definition, schema: 2 },
+    {
+      ...definition,
+      routed: {
+        schema: 1,
+        hash: 'a'.repeat(64),
+        pcb: '(kicad_pcb)',
+        sourceFingerprint: 'b'.repeat(64),
+        rules: null,
+        external: '../../secret',
+      },
+    },
     { ...definition, partId: '../board' },
     { ...definition, heightMm: { top: NaN, bottom: 5 } },
     { ...definition, heightMm: { top: Infinity, bottom: 5 } },

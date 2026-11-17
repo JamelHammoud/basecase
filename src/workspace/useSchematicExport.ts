@@ -26,11 +26,23 @@ export function useSchematicExport(core: WorkspaceCore) {
     });
 
     try {
-      const { bytes } = await schematicExport(core, { signal: abort.signal, current: () => latest.current });
+      const result = await schematicExport(core, { signal: abort.signal, current: () => latest.current });
       const deliveryStart = performance.now();
 
-      downloadBytes(bytes, `${fileSafe(core.scene.sceneName)}-schematic.zip`, 'application/zip');
+      downloadBytes(result.bytes, `${fileSafe(core.scene.sceneName)}-schematic.zip`, 'application/zip');
       performance.measure('schematic:delivery', { start: deliveryStart });
+
+      const board = core.project.electronicsBoard;
+
+      if ('validation' in result && result.validation && board?.routed) {
+        const { key, version, issues, report, metrics } = result.validation;
+
+        core.docs.commitBoard(core.parts, {
+          ...board,
+          routed: { ...board.routed, evidence: { key, version, issues, report, metrics } },
+        });
+      }
+
       core.showToast(`Exported ${core.scene.sceneName}`);
     } catch (error) {
       if (abort.signal.aborted) core.toasts.dismissToast();

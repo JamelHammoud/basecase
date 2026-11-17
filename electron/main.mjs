@@ -1,3 +1,4 @@
+import { registerElectricalHandlers } from './electrical/routes.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -259,6 +260,7 @@ registerHubHandlers(ipcMain, backend.hub);
 registerTryHandlers(ipcMain, backend.tries);
 registerDatasetHandlers(ipcMain, backend.datasets);
 registerVisionTrainingHandlers(ipcMain, backend.visionTraining);
+registerElectricalHandlers(ipcMain, backend.electrical);
 registerOnshapeHandlers(ipcMain, backend.onshape);
 registerEarthHandlers(ipcMain, backend.earth);
 registerRoboflowHandlers(ipcMain, backend.roboflow);

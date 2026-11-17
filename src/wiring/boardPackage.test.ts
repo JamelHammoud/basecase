@@ -1,5 +1,8 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+import { finishBoardFiles, type PreparedBoardExport } from './boardRoutingPackage';
+import { importRoutedSource } from './boardRoutedSource';
+import { prepareBoardExport } from './boardExportPreparation';
 import { electricalPackage } from './electricalPackage';
 import { electricalScenes } from './electricalFixtures';
 import type { ElectronicsBoard } from './boardTypes';
@@ -62,6 +65,7 @@ describe('editable board package', () => {
     expect(pcb).toContain('(drill 3.2)');
     expect(pcb).toContain('BC_xl1');
     expect(pcb).toContain('BC_xl2');
+    expect(pcb).toContain(`(property "BasecaseSource" "${result.sourceFingerprint}")`);
     expect(pcb).not.toMatch(/\(segment|\(zone|\(via/);
     expect(result.files['fp-lib-table']).toContain('${KIPRJMOD}/Robot.pretty');
     expect(result.files['Robot.pretty/JST_B3B_EH_A_TypeA.kicad_mod']).toContain('(pad "3"');
@@ -97,4 +101,28 @@ describe('editable board package', () => {
     expect(result.files['robot.kicad_pcb']).not.toContain('BC_xl1');
     expect(result.files['robot.kicad_pcb']).toContain('BC_xl2');
   });
+});
+
+it.each([
+  { version: null, issues: ['board-validator'], report: null },
+  { version: '9.0.6', issues: ['board-validation'], report: '{}' },
+  { version: '9.0.7', issues: ['board-validator'], report: null },
+])('retains incomplete copper when native validation cannot prove connections: $version', async (native) => {
+  const input = fixture();
+  const base = await electricalPackage(input);
+  const board = await importRoutedSource({ input, bytes: new TextEncoder().encode(base.files['robot.kicad_pcb']) });
+  const prepared: PreparedBoardExport = await prepareBoardExport({
+    ...input,
+    project: { ...input.project, electronicsBoard: board },
+  });
+  const files = await finishBoardFiles(prepared, {
+    ...native,
+    key: prepared.request!.key!,
+    files: {},
+    metrics: { cliMs: 0, outputBytes: 0 },
+  });
+  const report = JSON.parse(files['requirements.json']);
+
+  expect(report.board.requirements.some((item: { code: string }) => item.code === 'board-unrouted')).toBe(true);
+  expect(Object.keys(files).some((name) => name.startsWith('fabrication/'))).toBe(false);
 });

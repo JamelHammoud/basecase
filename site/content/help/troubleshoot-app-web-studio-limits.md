@@ -68,3 +68,5 @@ Designing, Checks, the bill of materials and prices, Print mode's plate layout a
 Motor Kit training and public skill installation work in browsers that support GPU training. See [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
 
 Camera detection also runs in your browser. Its first use downloads the model and saves a checked copy in browser storage. Clearing site data removes that copy too. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
+
+Routed boards keep their copper in the web studio. KiCad validation and fabrication export need the desktop app with KiCad 9.0.6. See [Export board fabrication files](/help/export-board-fabrication-files).

@@ -1,8 +1,11 @@
+import { inspectRoutedBoard } from './boardRoutingInspection';
 import { electricalProjection } from './electrical';
 import type { ElectricalInput } from './electricalTypes';
 import { mergeElectricalRequirements } from './electricalRequirements';
 
 export async function inspectElectricalInput(input: ElectricalInput) {
+  if (input.project.electronicsBoard?.routed) return inspectRoutedBoard(input);
+
   if (!input.project.electronicsBoard) {
     const { requirements, powerBudget } = electricalProjection(input);
 

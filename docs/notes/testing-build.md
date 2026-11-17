@@ -224,6 +224,12 @@ The review's named nine-file changed check passed formatting, lint, documentatio
 
 ## Sketch support regeneration
 
+### Portable reopen fixture repair
+
+PR #1610's Linux changed-browser job reached the scene-file reopen assertion after source edits and undo/redo passed. Both attempts observed one tab instead of two. The shared harness returns `{}` for unconfigured scene saves and reads. Open Scene File decodes the bytes, saves the imported record, then opens it by reading that record from storage. The empty replies could not supply the imported scene identity or parts. The aggregate Check failed because this browser job failed, with its other required jobs successful.
+
+The support walkthrough now installs a local in-memory save/read fixture before editing. Saves retain the posted record and return its id, timestamp and part count. Reads retrieve that same record by id. Existing new-tab, support-id, geometry-span, authored-point and empty-error assertions remain intact. No test, retry, assertion or deadline was removed or relaxed. Local verification uses the changed-file check. Linux and Windows browser execution remains in CI.
+
 The initial resolver tests cover unique axis-aligned rectangular support faces. Ten named fixtures reuse one box generator. They test pose and dimension changes, authored coordinates and preservation of the part id and mechanical tag. They do not establish the issue's ten complete generated-design acceptance cases, independent surface and hole-location verification, or BOM preservation across those designs.
 
 `supportIntent.test.ts` exercises a 10 mm dimensioned construction line tied to a changing reference corner, conflicting dimensions and a graph with 129 bound sketches. The initial four-file changed check passed six related files and 35 tests. Its related-test phase took 742 ms. This preceded document and worker integration.
@@ -267,4 +273,20 @@ Preflight also prompted review of the existing boolean tasks, grouping, keyboard
 
 ### Follow-up help coverage
 
-The preflight follow-up extends Edit a cut with supported-cutout behavior, Group parts with copied-support identities, Keyboard shortcuts with face-selection cancellation, Run a command with Select Face availability, and mounting-hole snapping with resized-target following. Existing steps and captures still describe the same controls and states. The other thirteen flagged articles retain accurate instructions. The Checks hub receives its Sketch summary from the feature article, while boolean commands, Path mode, export, posing, board fitting, sourcing and printability retain their existing contracts.
+The preflight follow-up extends Edit a cut with supported-cutout behavior, Group parts with copied-support identities, Keyboard shortcuts with face-selection cancellation, Run a command with Select Face availability, and mounting-hole snapping with resized-target following. Existing steps and captures still describe the same controls and states. The thirteen remaining coverage prompts were checked individually against the current source diff. Their steps, labels and captured states remain accurate for these reasons. No article or screenshot replacement is needed.
+
+| Article | Source comparison and retained instructions |
+| --- | --- |
+| [Checks and blockers](../../site/content/help/checks-and-blockers.md) | Readiness adds Sketch support findings and their freshness evidence. Existing blocker, note, Ignore, dispute and unfinished-check behavior remains. The feature article supplies the Sketch summary through the hub. |
+| [Cut, join and intersect parts](../../site/content/help/cut-join-and-intersect-parts.md) | The selection-operations change remaps support references during duplication. Union, Intersect, Subtract, first-selected operands and Cutout commands are unchanged. |
+| [Design a linkage from a path](../../site/content/help/design-a-linkage-from-a-path.md) | SketchPanel adds Select Face only for a bound supported solid Sketch. Path eligibility, point editing, linkage choices and the three captured Path states are unchanged. |
+| [Export plates as 3MF](../../site/content/help/export-plates-as-3mf.md) | Scene commands add the conditional Select Face command. Export, 3MF Plates, file grouping, plate preparation and the export-menu capture are unchanged. |
+| [Fit an electronics board](../../site/content/help/fit-an-electronics-board.md) | The three Board controls gain the existing danger variant on Delete. Labels, confirmation, placement fields, locking, arrangement, hardware ownership and the documented board states remain unchanged. |
+| [Get a robot ready to build](../../site/content/help/get-a-robot-ready-to-build.md) | Adding Select Face to the command list leaves Show Build and Run Checks available. Case evaluation, verdict separation and the captured Case states are unchanged. |
+| [Pose a robot](../../site/content/help/pose-a-robot.md) | The command list adds Select Face without changing pose commands. Joint controls, saved poses, rest pose, undo grouping and shortcuts retain their existing behavior. |
+| [Printability estimates](../../site/content/help/printability-estimates.md) | The wording diff adds only Sketch Supports. Print orientation, support thresholds, thin-wall limits, time estimates and material handling are unchanged. |
+| [The design agent](../../site/content/help/the-design-agent.md) | The agent guide documents dependent Sketch regeneration within the existing source edit. The article's one-step undo claim, edit priority, Checks, account setup and capability overview remain accurate. |
+| [Union, Subtract or Intersect shows an error](../../site/content/help/troubleshoot-booleans.md) | Duplication reference remapping does not alter boolean eligibility, overlap tests, errors or operand order. Each recovery step remains valid. |
+| [A check blocks Ready to build](../../site/content/help/troubleshoot-build-check-blocks-ready-to-build.md) | Sketch findings use ordinary blocker handling. Finding selection, Fix, Run Checks, Ignore, Restore and automatic follow-up controls are unchanged. The hub receives the feature-specific recovery link. |
+| [A part is too big to print or has thin walls](../../site/content/help/troubleshoot-build-part-wont-print.md) | Adding Sketch Supports leaves all quoted Printing findings, dimensions, thresholds, plate controls and suggested fixes unchanged. |
+| [Real parts check lists placeholders or unchecked parts](../../site/content/help/troubleshoot-build-real-parts-check.md) | Adding Sketch Supports leaves sourcing findings, BOM replacement, Add Price and material choices unchanged. No sourcing control or captured state changes. |

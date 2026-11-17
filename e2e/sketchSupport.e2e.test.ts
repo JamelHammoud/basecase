@@ -12,6 +12,7 @@ import {
   supportField,
   supportParts,
   supportPlane,
+  supportSceneStorage,
   supportTriangles,
 } from './sketchSupport.helpers';
 
@@ -19,6 +20,7 @@ let app: App;
 
 beforeAll(async () => {
   app = await openApp();
+  await supportSceneStorage(app.page);
 });
 afterAll(async () => {
   await app?.close();

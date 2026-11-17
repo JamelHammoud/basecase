@@ -211,6 +211,8 @@ Measurements and limits: [Selection performance evidence](../notes/performance-s
 
 ### Sketch support references
 
+The Sketch support browser walkthrough uses a local scene save/read fixture, so Open Scene File can retrieve its imported record through ordinary scene loading. It retains the new-tab, saved-reference, mesh-span and authored-point assertions.
+
 A sketch made on a unique, axis-aligned rectangular face stores an optional versioned support reference in `PartSketch.support`. It records the supporting part id, local normal and face frame, canonical corner ids and a geometry fingerprint. Canonical corners keep reference-point identities independent of triangle order. Existing sketches without a support reference keep their previous placement and editing behavior.
 
 The supported face has four straight boundary edges and one plane for its signed local normal. Rigid translation and rotation, thickness changes and rectangular outline resizing can resolve that face again. Split boundaries, holes in the supporting face, competing parallel surfaces, booleans as supports, sculpted sources, deformers and affine sheet transforms are outside this subset. Boolean operands retain their own source identities, so a cutout can refer to the original operand without referring to the enclosing Subtract result.

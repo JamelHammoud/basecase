@@ -1,5 +1,5 @@
 import type { Page } from 'playwright-core';
-import type { ScenePart } from '../src/types/robotics';
+import type { SavedSceneRecord, ScenePart } from '../src/types/robotics';
 import { shown } from './harness';
 
 interface SketchStudio {
@@ -13,6 +13,26 @@ interface SketchStudio {
 }
 
 type StudioWindow = { __studio: SketchStudio };
+
+export async function supportSceneStorage(page: Page) {
+  const saved = new Map<string, SavedSceneRecord>();
+
+  await page.route(/\/api\/bridge\/(scene|save-scene)(\?|$)/, async (route) => {
+    const url = new URL(route.request().url());
+
+    if (url.pathname.endsWith('/save-scene')) {
+      const record = route.request().postDataJSON() as SavedSceneRecord;
+      const stored = { ...record, updatedAt: new Date().toISOString(), partCount: record.parts.length };
+
+      saved.set(record.id, stored);
+      await route.fulfill({ json: stored });
+
+      return;
+    }
+
+    await route.fulfill({ json: saved.get(url.searchParams.get('id') ?? '') ?? null });
+  });
+}
 
 export const supportParts = (page: Page) =>
   page.evaluate(() => (window as unknown as StudioWindow).__studio.sceneRecord().parts);

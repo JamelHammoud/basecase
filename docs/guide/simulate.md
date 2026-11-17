@@ -130,6 +130,14 @@ Case world bodies can form passive hinge and slide trees. `mjcfWorld.ts` emits e
 
 The Recorder already stores the complete qpos, qvel and body poses, so fixture motion needs no new recording format. Robot actuator counts and robot recording address lists stay unchanged. Cases expose signed fixture travel from relative body poses through their existing facts, contracts and console probes. See [Cases](cases.md#passive-lid-and-drawer-fixtures) for bounds and units.
 
+Optional fixture `stiffness` passes through in SI units. `springref` converts from degrees to radians for hinges and millimeters to meters for sliders. Spring values retain full numeric precision in the emitted XML. Locked joints remain welded even when they declare a spring. `src/cases/fixtureSprings.test.ts` compiles both joint types with zero gravity, checks their passive restoring forces without actuators and steps them to their rest coordinates. It also checks portable retention, reach scaling and validation. These are WASM MuJoCo assertions. They do not establish accelerated spring support or physical fit and force measurements.
+
+World joint friction uses `solreffriction="0.004 1"` and `solimpfriction="0.99 0.999 0.0001"`. Default soft friction allowed a released lid to creep closed under gravity despite its declared resistance. The tighter constraints reduce that creep while retaining finite joint friction and ordinary contact-driven actuation. The household reference matrix and the original passive-fixture tests exercise this emission. No holding actuator is added.
+
+Captured fixture geometry uses the existing geometry worker and world decomposition before live or headless MJCF compilation. Each convex piece emits on the original body with a share of its declared mass. Source CAD, mesh and affine data remain in the Case for rendering and portable files. `fixtureCollision.test.ts` checks rotated imported geometry without a bounding-box collision fallback. Fixture seeded resistance is applied to native model arrays during the existing Case startup, leaving nominal XML unchanged. [Fixture coverage](cases.md#passive-lid-and-drawer-fixtures) and [simulation evidence](../notes/testing-simulate.md#reusable-fixture-physics).
+
+Live Case reference scripts apply commands at each existing 20 ms Case step through `stepScriptedCase`, independent of render-loop batching and simulation speed. Other live inputs and ordinary non-Case script scheduling keep their existing timing. `fixtureLive.test.ts` requires a passing recorded chest chore at 20, 80 and 300 ms rendering batches.
+
 ## Testing coverage
 
 - **LiDAR specifications.** `src/sim/lidarSpec.test.ts` checks unit rejection, comma and decimal values, range separators, rate bounds, sample precedence, field-of-view precedence, defaults and ray limits through alternating repeated reads. It also checks unchanged inputs, fresh reads after edits and independent results.

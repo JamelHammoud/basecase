@@ -10,6 +10,8 @@ Screw recess construction shares `three/hardwareRecessGeometry.ts` across socket
 
 Imported mesh files and robot-link visuals share `linkSoup` in `three/geometryOps.ts`. The geometry worker transforms each source vertex directly into the combined triangle buffer and accumulates bounds in the same pass. Bounds use float32-rounded coordinates, matching the stored triangles. Source arrays stay unchanged, and each call owns its output and transform workspace.
 
+Captured Case fixtures reuse the geometry worker to build source shapes and decompose their collision surfaces. Local hull vertices receive the source rotation before returning as transferable buffers. Source CAD, mesh and affine data remain unchanged. The geometry client loads its local fallback handlers dynamically, keeping their geometry and decomposition imports inside the worker during browser use. [Fixture geometry coverage](cases.md#passive-lid-and-drawer-fixtures) and [preparation observations](../notes/performance-cases.md#reusable-fixture-preparation).
+
 Recorded map fusion and world reconstruction share chronological sensor ordering in `dataLayers/mapFeed.ts`. Each call indexes sensor ranks once for timestamp ties, preserving scan, cloud and depth order, then message order within each sensor. No rank index survives the call.
 
 Recorded world reconstruction shares `dataLayers/mapWorldBoxes.ts` across planar walls, inferred floors and measured 3D surfaces. Box growth checks each adjacent face directly and stops at its first missing cell, without copied face bounds or cell lists. Consumed cells use scalar coordinate keys. Axis order, cell order, exact occupied coverage and piece-budget refusals stay unchanged.

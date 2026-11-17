@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { readJointSprings, readJointResistance } from './jointSprings';
 import {
   displayRgb,
   elem,
@@ -128,10 +129,15 @@ function urdfJoint(j: Element): UrdfJoint | null {
     ...(elem(j, 'basecase')?.getAttribute('actuation') === 'passive'
       ? {
           actuation: 'passive' as const,
-          damping: Number(elem(j, 'dynamics')?.getAttribute('damping') ?? 0),
-          frictionloss: Number(elem(j, 'dynamics')?.getAttribute('friction') ?? 0),
+          ...readJointResistance(
+            (key) => elem(j, 'dynamics')?.getAttribute(key === 'frictionloss' ? 'friction' : key) ?? undefined,
+          ),
         }
       : {}),
+    ...readJointSprings(
+      (name) => elem(j, 'basecase')?.getAttribute(name) ?? undefined,
+      (value) => value,
+    ),
     velocity: positiveAttr(lim, 'velocity'),
   };
 }
@@ -189,7 +195,17 @@ function linkTree(links: Map<string, ModelLink>, raw: UrdfJoint[], root: string)
         axis: j.axis,
         limit: j.limit,
         effort: j.effort,
-        ...(j.actuation ? { actuation: j.actuation, damping: j.damping, frictionloss: j.frictionloss } : {}),
+        ...(j.actuation
+          ? {
+              actuation: j.actuation,
+              damping: j.damping,
+              frictionloss: j.frictionloss,
+              stiffness: j.stiffness,
+              springref: j.springref,
+            }
+          : {}),
+        ...(j.stiffness === undefined ? {} : { stiffness: j.stiffness }),
+        ...(j.springref === undefined ? {} : { springref: j.springref }),
         velocity: j.velocity,
       });
       walk(j.child, jw, depth + 1);

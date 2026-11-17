@@ -15,6 +15,8 @@ export interface RobotJoint {
   actuation?: 'powered' | 'passive';
   damping?: number;
   frictionloss?: number;
+  stiffness?: number;
+  springref?: number;
   actuators?: string[];
   effortNm?: number;
   velocity?: number;

@@ -12,6 +12,8 @@ import { detectSheet } from '../sheet/detectSheet';
 import { cadMeshToScene } from '../agent/cadMesh';
 import { buildPartGroup, releasePartGroup } from './buildPartMesh';
 import { localTriangles } from './meshMeasure';
+import { worldCollision } from './worldCollision';
+import type { WorldItem } from '../sim/mjcfTypes';
 import type { ScenePart } from '../types/robotics';
 
 type Vec3 = [number, number, number];
@@ -169,6 +171,14 @@ async function parseMesh({ data, path }: ParseMeshJob): Promise<Float32Array | n
 const transferLines = (lines: Float32Array) => reply(lines, [lines.buffer]);
 
 export const geometryHandlers = {
+  worldCollision: async (part: WorldItem) => {
+    const hulls = await worldCollision(part);
+
+    return reply(
+      hulls,
+      hulls.map((hull) => hull.buffer),
+    );
+  },
   partSheetProfile: (part: ScenePart) => {
     const group = buildPartGroup(part, false);
 

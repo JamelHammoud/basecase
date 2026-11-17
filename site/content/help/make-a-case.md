@@ -37,7 +37,7 @@ Before you start, make sure the scene has a robot with joints. To learn what a C
 
 For Hand Off to a Spot, both arms must have grippers and be open in separate scene tabs. Basecase refuses combinations that can’t grasp the same block or reach the transfer. See [Put two robots in one Case](/help/put-two-robots-in-one-case).
 
-For **Open a Lid** or **Pull a Drawer**, the arm must have a gripper. Steps are in [Open lids and pull drawers](/help/open-lids-and-pull-drawers).
+For household interactions, the arm must have a gripper. Saved passive assemblies appear under **Fixture**. For the composed chest chore, see [Reuse an assembly in Cases](/help/reuse-an-assembly-in-cases). Steps are in [Open lids and pull drawers](/help/open-lids-and-pull-drawers).
 
 1. Click **Play** in the view rail on the left.
 2. Click **Cases** at the top of the panel.

@@ -38,7 +38,7 @@ Watching a robot stand in the simulation won't tell you whether it can reach a s
 - **Slots.** The kinds of robots the Case needs: an arm, wheels or legs. Arm control and driven-wheel matching use powered joints. Hand Off to a Spot needs two arms with grippers, opened in separate scene tabs.
 - **A world.** The objects around the robot. Objects can be solid or pushable, and markers show a spot without getting in the robot's way. During a run, the Case's code can move, light or hide any object tagged movable.
   The world can include the ground. As you make the Case, you can add [rough ground, a step or a slope](/help/test-a-robot-on-rough-ground-steps-or-a-slope), sized to the robot's legs or wheels.
-  You can [open lids and pull drawers](/help/open-lids-and-pull-drawers) through physical contact, with editable travel, weight and resistance.
+  You can [reuse articulated assemblies](/help/reuse-an-assembly-in-cases) through physical contact, with editable travel, weight, resistance and springs. A composed chest task requires opening, placing a block and closing.
   You can also [import a captured world](/help/import-a-world) from a collider mesh, with an optional splat for its appearance.
 - **Controls.** The commands you steer with during a try, such as Move and Turn, or Move and Raise and Lower for an arm.
 - **A contract.** The rules for a try: what it takes to pass, and what fails it, such as a fall.

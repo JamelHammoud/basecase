@@ -17,6 +17,7 @@ import type { Scan } from './scanner';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
 import type { WorldChange } from '../cases/worldSet';
+import { preparedWorldItems } from '../cases/fixtureCollision';
 import { withLooks } from './worldLooks';
 import type { LiveCaseInput } from '../cases/liveCase';
 import type { WatchPlan } from '../skills/liveWatch';
@@ -230,7 +231,7 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
           measures,
           partTriangles: vp.partTriangles,
           posedFloor,
-          world: options?.alone ? [] : worldRef.current,
+          world: options?.alone ? [] : await preparedWorldItems(worldRef.current),
           ...(options?.pin ? { fixedBase: { [options.pin]: true } } : {}),
         },
         options?.alone ? NO_GUESTS : guestsRef.current,

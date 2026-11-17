@@ -24,6 +24,7 @@ const EXPECTED_NAMES = [
   'capture',
   'caseConsole',
   'caseMat',
+  'caseRunSpeed',
   'caseRunState',
   'caseTrails',
   'checkDots',

@@ -2,6 +2,12 @@
 
 Current coverage: [owning guide](../guide/joints-and-motion.md#testing-coverage). Shared policy and harness contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
 
+## Assembly springs
+
+`src/utils/robotImport/springs.test.ts` checks MJCF hinge angle conversion, slider SI rest coordinates, passive emission without actuators and URDF extensions. Its complete round trip writes URDF with actual part masses and STL meshes, imports the assembly, saves it through Library and places it as a Case fixture. Zero-gravity spring trajectories match to four decimal places in radians over 1,000 two-millisecond steps. Missing resistance remains absent for provenance instead of being marked as a supplied zero.
+
+The initial export fixture omitted its mass inputs and therefore exported the writer's minimum link mass. Supplying the existing published mass records corrected that fixture. A second comparison was disturbed by an initially overlapping base and missing radian compiler declaration in the test's standalone XML. The final setup clears the base and declares radians. Trajectory assertions were retained. The four declarations passed locally in 1.40 seconds on 16 November 2026. No imported physical force or fit accuracy follows from this round trip.
+
 ## Windows linkage history
 
 `e2e/linkage.e2e.test.ts` is quarantined only on Windows through 28 November 2026 under [#1128](https://github.com/JamelHammoud/basecase/issues/1128). Run 43728033376 inserted and undid the five-part linkage, then failed to restore it after redo. Its retry could not find the solution button because the first attempt had closed Sketch. Windows passed the unchanged insertion test in run 43721538732 in 1.384 s, and Linux passed at the failing commit in 1.213 s. The cause is not established. The entire file is listed so quarantine observations retain those prerequisites. Restoring Windows coverage requires isolated attempts, history and key-dispatch traces and at least ten runs before and after at equal load.

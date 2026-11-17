@@ -45,6 +45,7 @@ export class ShapeSolid {
 
 const FACE_TARGET = 1500;
 const MIN_FACE_AREA = 0.5;
+const MIN_FACE_LENGTH_SQ = (MIN_FACE_AREA * 2) ** 2;
 const FACE_PIECE_MM2 = 25;
 const MAX_FACE_SPLITS = 12;
 
@@ -105,10 +106,11 @@ function faceData(positions: Float32Array): Faces {
     n.subVectors(c, b).cross(edge.subVectors(a, b));
 
     const lengthSq = n.lengthSq();
+
+    if (lengthSq < MIN_FACE_LENGTH_SQ) continue;
+
     const length = Math.sqrt(lengthSq);
     const area = length * 0.5;
-
-    if (area < MIN_FACE_AREA) continue;
 
     if (lengthSq > 0) n.multiplyScalar(1 / length);
     else n.set(0, 0, 0);

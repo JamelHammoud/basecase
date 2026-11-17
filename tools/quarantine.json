@@ -1,5 +1,13 @@
 [
   {
+    "file": "e2e/kit.e2e.test.ts",
+    "test": "downloads a reconciled kit through Export on web with matching packing, guide, servo map and 3MF mesh",
+    "issue": 1611,
+    "until": "2026-11-30",
+    "platform": "win32",
+    "reason": "Run 44034821423 missed the unchanged 10000 ms download wait on both Windows web attempts, with Exporting kit still visible and completed preparation ending at Checking the build order. The Windows desktop case passed in 13476 ms and Linux web passed at the same revision in 9322 ms. Full green run 43948835889 passed Windows web in 12449 ms without retries, with unchanged kit tests, guide-worker fixture, kit producers, guide generation and worker RPC sources. Focused Windows diagnostic 44036302249 passed the exact web case at the failing revision in 23690 ms with one worker and retries disabled, confirming intermittent behavior. The pending guide input, worker startup, fixture route or reply boundary is not established. Issue #1611 owns tracing from boot through preparation and delivery, plus equal-load baseline and candidate measurements before restoration. Desktop Windows, other platforms and all fast kit producer and guide coverage remain active."
+  },
+  {
     "file": "src/study/visibilityMatrix.test.ts",
     "test": "",
     "issue": 1616,

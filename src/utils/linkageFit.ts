@@ -181,14 +181,13 @@ export function levenbergMarquardt(
 ): { x: Float64Array; cost: number } {
   const first = residuals(start, problem);
   let state: Trial = { x: Float64Array.from(start), r: first, cost: sumSquares(first) };
-  let columns = jacobian(state.x, state.r, problem);
   let normal: ReturnType<typeof prepareNormalStep> | null = null;
   let lambda = 1e-3;
 
   for (let iteration = 0; iteration < MAX_ITERATIONS && state.cost > TOLERANCE && lambda < 1e10; iteration++) {
     if (budget && iteration === budget.checkAt && state.cost > budget.worstCost) break;
 
-    normal ??= prepareNormalStep(columns, state.r);
+    normal ??= prepareNormalStep(jacobian(state.x, state.r, problem), state.r);
 
     const trial = trialStep(state, lambda, problem, normal);
 
@@ -201,7 +200,6 @@ export function levenbergMarquardt(
     const gain = (state.cost - trial.cost) / state.cost;
 
     state = trial;
-    columns = jacobian(state.x, state.r, problem);
     normal = null;
     lambda = Math.max(lambda / 3, 1e-9);
 

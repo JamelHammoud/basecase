@@ -215,6 +215,14 @@ The first related check exposed an incorrect edit in `authenticate` while moving
 
 Documentation captures use the existing browser harness. An initial scratch capture accidentally used Vitest's unit default of five seconds and expired before Fleet navigation. An attempted merge with the browser config also concatenated its test includes, so that run was stopped and the capture-only include was assigned explicitly. The next openApp capture hit its existing 30-second studio navigation deadline before reaching Fleet. A standalone Fleet capture then used the same Chrome launcher and real service directly, avoiding unrelated studio boot. It captured the existing sign-in state without a password and the recovered original inventory in 9.42 seconds. Vite reported delayed shutdown afterward. These are documentation captures, not CI browser acceptance results. No timeout or retry was raised and no visual judgment is claimed.
 
+### Recovery browser assertion scope
+
+[Check 44042519036](https://github.com/JamelHammoud/basecase/actions/runs/44042519036) checked `08e3b77a675920319ca62a66a4a0eee017bfbd80`. Both Linux attempts completed the local recovery, old-token refusal, service restart, sign-in, original organization and robot reads, and durable audit assertion. The final assertion at line 67 failed on 111 `ERR_NETWORK_CHANGED` asset errors from the separate desktop studio origin. Windows passed the same declaration in 20,348 ms. Recovery commit `47fd104c8` introduced this browser setup after the last full green run, [43948835889](https://github.com/JamelHammoud/basecase/actions/runs/43948835889) at `348373decd8013d264fc3e2e9fe1f8b298051b34`.
+
+This is a harness assertion-scope defect exposed by a Linux network interruption. `openApp()` launched and observed a studio page, while the test performed every Fleet operation in another context without observing its errors. The interrupted asset requests belonged to the unused page. The network event's external trigger is not established, and this repair makes no claim to fix Chromium networking. Recovery now uses the existing Chrome launcher directly, opens only its Fleet page, checks that page's uncaught errors and closes the browser in `finally`. Federation used the identical unused-page pattern and receives the same correction. Existing HTTP, identity, inventory, audit, provider-scope and revocation assertions remain intact. Expected HTTP authorization refusals remain explicit status assertions.
+
+The repair runs only the named-file fast check locally. Changed-e2e CI owns the two browser declarations. There is no quarantine, added wait, timeout change, retry or local flake-rate measurement for Fleet. Removing the unused studio removes its startup and background work without deferring any product work. No numerical latency improvement is claimed.
+
 ## Federation and provisioning
 
 Issue #1341 adds adapters to the existing identity evaluator, browser shell and audited local recovery. The acceptance matrix uses real PostgreSQL and HTTP endpoints and locally generated RSA keys. The first backend changed-file run passed 73 related tests across 13 files in 12.82 seconds. It also reported three lint errors, corrected in subsequent edits. This earlier pass predates the final recovery and provisioning tests and is not final-input evidence.
@@ -263,3 +271,7 @@ The first local check could not load dependencies. This worktree initially share
 
 
 The final review changed-file check passed all 65 related tests across 16 files in 13.59 seconds, including the original recovery command test with its unchanged five-second limit. Formatting, lint, documentation, all 302 site pages and types passed. The exact code-input log is `scratch/review-final-check-3.log`. The later evidence-only edit has a separate Markdown check in `scratch/review-evidence-check.log`. Browser execution remains with Linux and Windows CI. No browser walkthrough or visual judgment ran in this review.
+
+### Repair verification
+
+The final eight-file `check:changed` passed formatting, lint, docs, quarantine validation, TypeScript and all 115 related tests across 13 files. Its related-test phase took 13.75 seconds on Node v26.13.0. `scratch/repair-final-check.log` retains the output. This fast run validates the changed test code and quarantine tooling, not browser execution of the unpublished Fleet correction. The separate browser declarations remain CI-owned.

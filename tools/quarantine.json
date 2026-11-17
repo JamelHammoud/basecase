@@ -1,5 +1,29 @@
 [
   {
+    "file": "e2e/board.e2e.test.ts",
+    "test": "defines, edits and locks the generated rover board, exports its PCB and reopens the same placement",
+    "issue": 1620,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44042519036 exhausted the unchanged 30000 ms Schematic download wait on both Windows attempts. Linux passed in 24770 ms. The previous Windows run 44038644745 passed with unchanged board test, export, download and electrical worker sources, while run 44034821423 passed only on retry. Export guards, mesh loading, worker replies, error toasts and browser delivery are not distinguished. Issue #1620 owns this declaration and the separate routed-board import/export stages, production-path traces and equal-load baseline and candidate measurements before restoration. Other platforms and fast placement, geometry, history and package tests stay active."
+  },
+  {
+    "file": "e2e/boardRouted.e2e.test.ts",
+    "test": "imports a routed KiCad derivative through the Inspector and downloads checked fabrication files",
+    "issue": 1620,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44042519036 stalled during the visible and enabled Schematic menu-item click before the first archive, and its download promise also rejected. Linux passed in 24364 ms. The preceding Windows run 44038644745 exported the first archive and reached native validation but never committed routed.pcb. Commit bc96fdbbe introduced the walkthrough after full green run 43948835889. Neither stage has an established cause. Focused Windows diagnostic 44111179140 passed the initial export and import at the same revision, then failed the Gerber file-function assertion at line 104. The artifact lacks archive bytes to distinguish content from reader behavior. Issue #1620 owns separate export, native-result and source-guard traces, download promise cleanup and equal-load baseline and candidate measurements. Other platforms and fast routed-source, package, native validation and fabrication coverage stay active."
+  },
+  {
+    "file": "e2e/sketchSupport.e2e.test.ts",
+    "test": "creates on a canvas-picked generated deck, follows Inspector edits, undoes, redoes and reopens the actual file",
+    "issue": 1621,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44042519036 missed the unchanged 10000 ms download poll on the first Windows attempt. The retry reused the beforeAll app, exported and reopened the file with the support id retained, then missed the mesh-triangle poll with zero triangles. Linux passed in 14818 ms at the same revision, and the explicit replacement case passed Windows in 6828 ms. Commit 08e3b77a6 introduced the walkthrough after the last green. Thumbnail preparation, file delivery, support validation, active viewport and retained retry state are not distinguished. Issue #1621 owns production-path tracing and equal-load baseline and candidate measurements. Other platforms, the replacement browser case and fast support integration, serialization, history and failure coverage remain active. Focused Windows diagnostic 44111175052 passed the exact test at the same revision in 15982 ms with one worker and retries disabled, confirming intermittent behavior without establishing its cause."
+  },
+  {
     "file": "e2e/kit.e2e.test.ts",
     "test": "downloads a reconciled kit through Export on web with matching packing, guide, servo map and 3MF mesh",
     "issue": 1611,

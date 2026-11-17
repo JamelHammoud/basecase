@@ -1,3 +1,6 @@
+import { BOARD_CLI_VERSION } from './boardNativeContract.mjs';
+import { routingInput } from './boardRoutingRecord';
+import { retainBoardSource } from './boardRoutingPackage';
 import { zipSync, type Zippable } from 'three/examples/jsm/libs/fflate.module.js';
 import { electricalProjection } from './electrical';
 import { ELECTRICAL_PIN_MAPS } from './electricalPinMaps';
@@ -8,7 +11,7 @@ import { electricalFacts } from './electricalFacts';
 import { POWER_MODULES } from './electricalModules';
 import { boardPackage } from './boardPackage';
 
-export const KICAD_VALIDATOR_VERSION = '9.0.6';
+export const KICAD_VALIDATOR_VERSION = BOARD_CLI_VERSION;
 
 async function fingerprint(text: string) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -17,6 +20,10 @@ async function fingerprint(text: string) {
 }
 
 export async function electricalPackage(input: ElectricalInput) {
+  const routed = input.project.electronicsBoard?.routed;
+
+  input = routingInput(input);
+
   const board = await boardPackage(input);
   const projection = board?.electrical ?? electricalProjection(input);
   const source = electricalSourceJson({
@@ -55,6 +62,18 @@ export async function electricalPackage(input: ElectricalInput) {
     ...board?.files,
   };
 
+  if (files['robot.kicad_pcb'])
+    files['robot.kicad_pcb'] = files['robot.kicad_pcb'].replace(
+      /\)\s*$/u,
+      `(property "BasecaseSource" "${sourceFingerprint}"))\n`,
+    );
+
+  await retainBoardSource({ routed, files, sourceFingerprint });
+
+  return electricalArchive(files, sourceFingerprint);
+}
+
+export function electricalArchive(files: Record<string, string>, sourceFingerprint: string) {
   const archive: Zippable = {};
 
   for (const [path, text] of Object.entries(files))

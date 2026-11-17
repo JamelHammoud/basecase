@@ -42,7 +42,9 @@ Treat each package as a draft. Cable lengths and quantities stay in Build. Resol
 
 Read `robot/requirements.json` alongside the schematic. You’ll find unresolved interfaces, source-backed terminal references, supply requirements, and unknown loads. In `robot/source.json`, you can review the electrical inputs used for the fingerprint.
 
-If the scene contains a board definition, the ZIP also includes `robot.kicad_pcb`, local footprints and `placement.json`. Read the placement requirements alongside the PCB. Copper remains unrouted. The export doesn’t establish assembly fit or electrical performance. [Fit an electronics board](/help/fit-an-electronics-board) describes placement and mechanical checks.
+If the scene contains a board definition, the ZIP also includes `robot.kicad_pcb`, local footprints and `placement.json`. Its `BasecaseSource` property matches the source fingerprint in `requirements.json`. Read the placement requirements alongside the PCB.
+
+A new placement remains unrouted. An imported routed source stays intact. [Export board fabrication files](/help/export-board-fabrication-files) explains when Gerbers and drills join the package. The export doesn’t establish assembly fit or electrical performance. [Fit an electronics board](/help/fit-an-electronics-board) describes placement and mechanical checks.
 
 For a tethered robot, use **Servo voltage** and **Supply current** in **Checks** to change the declared volts and amps. Those controls don’t change a selected product’s ratings.
 

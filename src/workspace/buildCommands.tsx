@@ -96,6 +96,14 @@ export const buildCommands = (inputs: CommandInputs): Command[] => [
           run: () => void inputs.actions.board.define(),
         },
         {
+          id: 'import-board',
+          group: 'Scene',
+          label: 'Import Board',
+          icon: <PackageIcon />,
+          keywords: 'electronics pcb kicad routed copper',
+          run: () => void inputs.actions.board.importBoard(),
+        },
+        {
           id: 'arrange-board',
           group: 'Scene',
           label: 'Arrange Board',

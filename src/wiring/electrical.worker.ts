@@ -1,3 +1,5 @@
+import { importRoutedSource } from './boardRoutedSource';
+import { prepareBoardExport, finishBoardExport } from './boardExportPreparation';
 import { reply, serve } from '../utils/workerRpc';
 import { inspectElectricalInput } from './electricalInspection';
 import { timedBoardPlacement } from './boardPlacement';
@@ -7,6 +9,13 @@ import { electricalPackage } from './electricalPackage';
 import type { ElectricalInput } from './electricalTypes';
 
 serve({
+  importBoard: async (input: Parameters<typeof importRoutedSource>[0]) => reply(await importRoutedSource(input)),
+  prepareExport: async (input: ElectricalInput) => reply(await prepareBoardExport(input)),
+  finishExport: async (input: Parameters<typeof finishBoardExport>[0]) => {
+    const { bytes, sourceFingerprint } = await finishBoardExport(input);
+
+    return reply({ bytes, sourceFingerprint }, [bytes.buffer]);
+  },
   preview: (input: Parameters<typeof boardPreview>[0]) => {
     const result = boardPreview(input);
 

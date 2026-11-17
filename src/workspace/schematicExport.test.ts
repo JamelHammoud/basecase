@@ -4,6 +4,10 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 import { schematicExport } from './schematicExport';
 import { defineBoard } from '../wiring/boardDefinition';
 
+const native = vi.hoisted(() => ({ run: vi.fn() }));
+
+vi.mock('../wiring/boardNativeClient', () => ({ validateNativeBoard: native.run }));
+
 const work = vi.hoisted(() => ({ build: vi.fn(), dispose: vi.fn() }));
 
 vi.mock('../wiring/electricalClient', () => ({
@@ -80,4 +84,37 @@ describe('schematic preparation', () => {
       expect(core.project.electronicsBoard).toEqual(board);
     },
   );
+});
+
+it.each(['supply', 'parts', 'cancel'])('refuses %s changes during native board validation', async (fault) => {
+  const { core, run, controller } = context();
+  const { board, part } = defineBoard(core, 'board');
+
+  board.routed = {
+    schema: 1,
+    hash: 'a'.repeat(64),
+    pcb: '(kicad_pcb)',
+    sourceFingerprint: 'b'.repeat(64),
+    rules: null,
+  };
+  core.parts = [...core.parts, part];
+  core.project = { ...core.project, electronicsBoard: board };
+  core.docs.partsRef.current = core.parts;
+  core.docs.projectRef.current = core.project;
+  work.build.mockImplementationOnce(async () => ({
+    files: {},
+    sourceFingerprint: 'source',
+    request: { id: 'validation' },
+  }));
+  native.run.mockImplementationOnce(async () => {
+    if (fault === 'supply') core.docs.projectRef.current = { ...core.project, tether: { volts: 12, amps: 1 } };
+
+    if (fault === 'parts') core.docs.partsRef.current = core.parts.slice();
+
+    if (fault === 'cancel') controller.abort();
+
+    return { key: 'evidence', issues: [], files: {} };
+  });
+  await expect(schematicExport(core, run)).rejects.toThrow();
+  expect(work.dispose).toHaveBeenCalled();
 });

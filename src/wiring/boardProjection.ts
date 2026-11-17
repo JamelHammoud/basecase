@@ -1,3 +1,4 @@
+import { boardImportMessage } from './boardRoutingFindings';
 import type { ElectricalInput, ElectricalProjection } from './electricalTypes';
 import type { BoardPlacement, BoardProjection, BoardTerminal } from './boardTypes';
 import { electricalProjection } from './electrical';
@@ -156,7 +157,7 @@ export function projectBoard(input: ElectricalInput): BoardProjection {
   );
 
   if (result.terminals.length)
-    result.requirements.push(boardRequirement(board, 'unrouted', 'Route the board’s copper connections in KiCad.'));
+    result.requirements.push(boardRequirement(board, 'unrouted', boardImportMessage('board-unrouted')));
 
   return result;
 }

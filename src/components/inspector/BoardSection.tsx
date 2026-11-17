@@ -1,3 +1,4 @@
+import { BoardFabricationFields } from './BoardFabricationFields';
 import { Button, NumberInput, Section, Select } from '../../design-system';
 import type { ElectronicsBoard } from '../../wiring/boardTypes';
 import { BoardPlacementFields } from './BoardPlacementFields';
@@ -9,11 +10,13 @@ export function BoardSection({
   board,
   onChange,
   onArrange,
+  onImport,
   partId,
 }: {
   board?: ElectronicsBoard;
   onChange?: (value: ElectronicsBoard) => void;
   onArrange?: () => void;
+  onImport?: () => void;
   partId: string;
 }) {
   if (!board || !onChange || board.partId !== partId) return null;
@@ -21,6 +24,11 @@ export function BoardSection({
   return (
     <>
       <Section title="Board">
+        {onImport && (
+          <Button variant="secondary" onClick={onImport}>
+            Import Board
+          </Button>
+        )}
         {onArrange && (
           <Button variant="secondary" onClick={onArrange}>
             Auto Arrange
@@ -51,6 +59,7 @@ export function BoardSection({
           onChange={(value, live) => !live && onChange({ ...board, edgeClearanceMm: value })}
         />
       </Section>
+      <BoardFabricationFields board={board} onChange={onChange} />
       <Section title="Mounting holes" collapsible defaultOpen={false}>
         {board.holes.map((hole, index) => (
           <BoardHoleFields

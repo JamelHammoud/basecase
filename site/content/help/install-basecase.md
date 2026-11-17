@@ -43,6 +43,8 @@ The desktop app runs the agent, slicing and printing, and starts local or remote
 
 You don't need administrator rights to run the installer. It installs Basecase for your Windows account and adds a Basecase shortcut.
 
+To validate routed boards and export fabrication files, install KiCad 9.0.6 separately. See [Export board fabrication files](/help/export-board-fabrication-files).
+
 ## The first launch
 
 Basecase opens with a two-wheel rover in the simulator (see [Drive your first robot](/help/drive-your-first-robot)). The agent connects while the app starts.

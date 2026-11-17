@@ -78,6 +78,7 @@
       "vendor/**",
       "electron/**",
       "src/hub/*.mjs",
+      "src/wiring/*.mjs",
       "!electron/**/*.test.mjs",
       "!electron/**/.venv/**",
       "!electron/**/__pycache__/**",

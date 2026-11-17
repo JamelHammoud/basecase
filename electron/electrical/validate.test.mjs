@@ -12,6 +12,7 @@ import { checkedBoardRequest } from './inputs.mjs';
 import { checkedOutput } from './outputs.mjs';
 import { boardProcess } from './process.mjs';
 import { boardDigest } from '../../src/wiring/boardNativeContract.mjs';
+import { routeStackup } from '../../src/wiring/boardRouteContract.mjs';
 
 let request;
 let temporaryRoot;
@@ -143,6 +144,34 @@ it('bounds native stdout without accepting an incomplete process result', async 
 
 it('requires a coherent footprint library and a source-bound schematic', async () => {
   await expect(checkedBoardRequest({ ...request, footprints: null })).rejects.toThrow('board-format');
+});
+
+it('inspects clean routing candidates without generating fabrication outputs', async () => {
+  const stackup = routeStackup({ copperMm: 0.035, dielectricMaterial: 'FR4', epsilonR: 4.5, lossTangent: 0.02 }, 1.6);
+  const pcb = request.pcb.replace('(setup', `(setup ${stackup}`);
+  const candidate = {
+    ...request,
+    pcb,
+    boardHash: await boardDigest(pcb),
+    mechanicalIssues: [],
+    rules: { source: 'https://example.com/process', clearanceMm: 0.2, trackWidthMm: 0.25, drillMm: 0.3 },
+  };
+  const cli = vi.fn(async (args, cwd) => {
+    if (args[0] === 'version') return '9.0.6';
+
+    await fs.writeFile(
+      path.join(cwd, 'drc.json'),
+      JSON.stringify({ kicad_version: '9.0.6', violations: [], unconnected_items: [], schematic_parity: [] }),
+    );
+
+    return '';
+  });
+  const result = await runNativeBoard(candidate, { temporaryRoot, cli, exportFabrication: false });
+
+  expect(result.issues).toEqual([]);
+  expect(result.files).toEqual({});
+  expect(cli.mock.calls.map(([args]) => args[1]).filter(Boolean)).toEqual(['drc']);
+  expect(await fs.readdir(temporaryRoot)).toEqual([]);
 });
 
 it('releases native worker jobs on missing executables and cancellation', async () => {

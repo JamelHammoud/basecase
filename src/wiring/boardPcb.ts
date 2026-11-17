@@ -9,10 +9,10 @@ const layerFor = (side: 'top' | 'bottom', type: string) => q(`${side === 'top' ?
 const pcbNet = (name: string) => (name.startsWith('unconnected-(') ? name : `/${name}`);
 const unusedNet = (reference: string, pad: string) => `unconnected-(${reference}-Pad${pad})`;
 
-function holePad(hole: BoardHole, bottom = false) {
+function holePad(hole: BoardHole, bottom = false, angle = 0) {
   const position = [hole.position[0], (bottom ? -1 : 1) * hole.position[1]];
 
-  return `(pad "" np_thru_hole circle (at ${position.join(' ')}) (size ${hole.diameterMm} ${hole.diameterMm}) (drill ${hole.diameterMm}) (layers "*.Cu" "*.Mask"))`;
+  return `(pad "" np_thru_hole circle (at ${position.join(' ')} ${angle}) (size ${hole.diameterMm} ${hole.diameterMm}) (drill ${hole.diameterMm}) (layers "*.Cu" "*.Mask"))`;
 }
 
 function courtyard(product: BoardProduct, layer: string, bottom = false) {
@@ -35,6 +35,7 @@ function footprint(
   const side = result.board.side;
   const layer = layerFor(side, 'Cu');
   const angle = -placement.rotation;
+  const mirror = side === 'bottom' ? '(justify mirror)' : '';
   const pads = product.pads.map((pad) => {
     const terminal = result.terminals.find(
       (candidate) => candidate.placementId === placement.id && candidate.pad === pad.number,
@@ -49,12 +50,12 @@ function footprint(
   return `(footprint ${q(`Robot:${product.footprint}`)} (layer ${layer})
     (uuid ${electricalUuid(`board:${placement.id}`)})
     (at ${placement.position.join(' ')} ${angle}) ${placement.locked ? '(locked yes)' : ''}
-    (property "Reference" ${q(reference)} (at 0 -4 ${angle}) (layer ${layerFor(side, 'Fab')}) (effects (font (size 1 1) (thickness 0.15))))
-    (property "Value" ${q(product.mpn)} (at 0 4 ${angle}) (layer ${layerFor(side, 'Fab')}) (effects (font (size 1 1) (thickness 0.15))))
+    (property "Reference" ${q(reference)} (at 0 -4 ${angle}) (layer ${layerFor(side, 'Fab')}) (effects (font (size 1 1) (thickness 0.15)) ${mirror}))
+    (property "Value" ${q(product.mpn)} (at 0 4 ${angle}) (layer ${layerFor(side, 'Fab')}) (effects (font (size 1 1) (thickness 0.15)) ${mirror}))
     (property "Datasheet" ${q(product.source)} (at 0 0 0) (layer ${layerFor(side, 'Fab')}) (hide yes) (effects (font (size 1 1) (thickness 0.15))))
     (path ${q(`/${electricalUuid('robot')}/${electricalUuid(reference)}`)})
     (attr through_hole exclude_from_bom) ${courtyard(product, layerFor(side, 'CrtYd'), side === 'bottom')} ${pads.join('\n')}
-    ${(product.mounting ?? []).map((hole) => holePad(hole, side === 'bottom')).join('\n')})`;
+    ${(product.mounting ?? []).map((hole) => holePad(hole, side === 'bottom', angle)).join('\n')})`;
 }
 
 function mountingHoles(result: BoardProjection) {

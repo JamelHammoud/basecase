@@ -85,3 +85,13 @@ it('refuses to publish an installation with a different CLI version', async () =
   await expect(import('./installCli.mjs')).rejects.toThrow('KiCad version differs.');
   expect(native.append).not.toHaveBeenCalled();
 });
+
+it('selects the installed local KiCad container for Linux conversion and browser routing', async () => {
+  Object.defineProperty(process, 'platform', { value: 'linux' });
+
+  await import('./installCli.mjs');
+  expect(native.spawn.mock.calls.map(([command, args]) => [command, args])).toEqual([
+    ['docker', ['pull', 'kicad/kicad:9.0.6']],
+  ]);
+  expect(native.append).toHaveBeenCalledWith('github-env', 'BASECASE_KICAD_DOCKER=1\n');
+});

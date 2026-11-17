@@ -20,7 +20,12 @@ export async function boardPackage(input: ElectricalInput) {
   return {
     electrical: board.electrical,
     schematic: boardSchematic(board),
-    source: { boardProducts: BOARD_PRODUCTS, boardGeometry: geometry.evidence },
+    source: {
+      boardProducts: BOARD_PRODUCTS,
+      boardGeometry: geometry.evidence,
+      ...(board.board.fabrication ? { fabrication: board.board.fabrication } : {}),
+      ...(board.board.routing ? { routing: board.board.routing } : {}),
+    },
     report,
     files: {
       ...boardPcb(board),

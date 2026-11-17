@@ -17,6 +17,7 @@ export interface BoardNativeRequest {
   geometryFingerprint: string;
   rules: BoardFabricationRules | null;
   mechanicalIssues: string[];
+  copperExclusions?: import('./boardCopperExclusions.mjs').CopperExclusion[];
 }
 
 export interface BoardNativeResult {
@@ -30,9 +31,23 @@ export interface BoardNativeResult {
 
 export interface BoardRoutedSource {
   schema: 1;
+  provenance?: BoardRouteResult['provenance'];
   hash: string;
   pcb: string;
   sourceFingerprint: string;
   rules: BoardFabricationRules | null;
   evidence?: Omit<BoardNativeResult, 'files'>;
+}
+
+export interface BoardRouteResult {
+  pcb: string;
+  metrics: { routeMs: number; outputBytes: number; peakRssBytes: number };
+  provenance: {
+    engine: string;
+    version: string;
+    artifactHash: string;
+    runtime: string;
+    dsnHash: string;
+    sesHash: string;
+  };
 }

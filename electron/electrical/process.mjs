@@ -38,7 +38,7 @@ export async function boardExecutable() {
   throw new Error('board-validator');
 }
 
-export function boardProcess({ command, args, cwd, signal }) {
+export function boardProcess({ command, args, cwd, signal, observe }) {
   signal?.throwIfAborted();
 
   return new Promise((resolve, reject) => {
@@ -65,10 +65,11 @@ export function boardProcess({ command, args, cwd, signal }) {
     const chunks = [];
     let bytes = 0;
     let error = null;
-    const stop = () => {
-      error ??= new Error('board-validation');
+    const stop = (reason) => {
+      error ??= routeFailure(signal?.reason) ?? routeFailure(reason) ?? new Error('board-validation');
       child.kill();
     };
+    const finishObservation = child.pid && observe ? observe(child.pid, stop) : async () => undefined;
     const timer = setTimeout(stop, 30_000);
     const append = (chunk) => {
       bytes += chunk.length;
@@ -84,8 +85,11 @@ export function boardProcess({ command, args, cwd, signal }) {
     child.on('error', (cause) => {
       error = cause;
     });
-    child.on('close', (code) => {
+    child.on('close', async (code) => {
       clearTimeout(timer);
+      await finishObservation().catch((cause) => {
+        error ??= cause;
+      });
       signal?.removeEventListener('abort', stop);
 
       if (error || code !== 0)
@@ -96,4 +100,8 @@ export function boardProcess({ command, args, cwd, signal }) {
       resolve(Buffer.concat(chunks).toString('utf8').trim());
     });
   });
+}
+
+function routeFailure(reason) {
+  return reason instanceof Error && reason.message.startsWith('board-route-') ? reason : null;
 }

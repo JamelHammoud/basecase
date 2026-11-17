@@ -1,3 +1,4 @@
+import { boardHoles } from './boardHoles';
 import {
   boardDigest,
   boardEvidenceKey,
@@ -34,7 +35,12 @@ export async function retainBoardSource(options: {
   files[`source/${routed.hash}.kicad_pcb`] = routed.pcb;
   files['README.txt'] =
     'Editable routed board. Read requirements.json and placement.json before connecting hardware.\nFabrication files require current KiCad 9.0.6 validation and explicit manufacturing inputs.\nDRC doesn’t establish current capacity, thermal performance or measured electrical behavior. Checks in Basecase remains the build verdict.\n';
-  report.board.routed = { hash: routed.hash, sourceFingerprint: routed.sourceFingerprint, rules: routed.rules };
+  report.board.routed = {
+    hash: routed.hash,
+    sourceFingerprint: routed.sourceFingerprint,
+    rules: routed.rules,
+    provenance: routed.provenance,
+  };
 
   if (issue)
     report.board.requirements.push({
@@ -89,6 +95,7 @@ export async function nativeBoardRequest(
     geometryFingerprint: await boardDigest(electricalSourceJson(source.boardGeometry)),
     rules: routed.rules,
     mechanicalIssues,
+    copperExclusions: boardExclusions(report.board.board),
   };
 
   request.key = await boardEvidenceKey(request);
@@ -149,4 +156,18 @@ export async function finishBoardFiles(prepared: PreparedBoardExport, result: Bo
   );
 
   return files;
+}
+
+function boardExclusions(board: import('./boardTypes').ElectronicsBoard) {
+  return [
+    ...board.keepouts.map(({ min, max }) => ({ min, max })),
+    ...boardHoles(board).map((hole) => {
+      const radius = hole.diameterMm / 2 + hole.keepoutMm;
+
+      return {
+        min: [hole.position[0] - radius, hole.position[1] - radius] as [number, number],
+        max: [hole.position[0] + radius, hole.position[1] + radius] as [number, number],
+      };
+    }),
+  ];
 }

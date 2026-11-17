@@ -99,6 +99,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
       onUpdateBoard={actions.board.update}
       onArrangeBoard={() => void actions.board.arrange()}
       onImportBoard={() => void actions.board.importBoard()}
+      onRouteBoard={() => void actions.board.route()}
       key={scene.sceneId}
       part={selection.selectedPart}
       parts={parts}

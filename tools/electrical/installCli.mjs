@@ -64,16 +64,31 @@ function selectedBrowserShard(shard) {
     shard,
   ]);
 
-  return files.includes('boardRouted.e2e.test.ts');
+  return {
+    native: files.includes('boardRouted.e2e.test.ts') || files.includes('boardRouting.e2e.test.ts'),
+    routing: files.includes('boardRouting.e2e.test.ts'),
+  };
 }
 
 async function main() {
   const shard = process.argv[process.argv.indexOf('--browser-shard') + 1];
 
-  if (process.argv.includes('--browser-shard') && !selectedBrowserShard(shard)) return;
+  const selected = process.argv.includes('--browser-shard')
+    ? selectedBrowserShard(shard)
+    : { native: true, routing: false };
+
+  if (!selected.native) return;
+
+  if (selected.routing) {
+    const { installBoardRouter } = await import('./installRouter.mjs');
+    const directory = await installBoardRouter(path.resolve('scratch/routing-tools'));
+
+    await fsp.appendFile(process.env.GITHUB_ENV, `BASECASE_ROUTING_TOOLS=${directory}\n`);
+  }
 
   if (process.platform === 'linux') {
     run('docker', ['pull', 'kicad/kicad:9.0.6']);
+    await fsp.appendFile(process.env.GITHUB_ENV, 'BASECASE_KICAD_DOCKER=1\n');
 
     return;
   }

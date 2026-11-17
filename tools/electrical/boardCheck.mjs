@@ -8,7 +8,7 @@ const powerPads = ['VOUT_1', 'VOUT_2', 'GND1_1', 'GND1_2', 'GND2_1', 'GND2_2', '
 const unusedPads = ['VRP_1', 'VRP_2', 'CONTROL_1', 'CONTROL_2'];
 const sourceNode = (part, port, pin) => JSON.stringify([part, port, pin]);
 
-function expectedPads(fixture) {
+export function expectedPads(fixture) {
   const report = JSON.parse(fixture.board.files['requirements.json']);
   const endpoints = new Map(report.projection.endpoints.map((end) => [end.reference, end]));
   const nets = new Map();

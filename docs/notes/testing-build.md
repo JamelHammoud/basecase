@@ -446,3 +446,66 @@ The existing export help was checked against `ExportMenu.tsx`, `exchangeCommands
 | [Open a shared scene](../../site/content/help/open-a-shared-scene.md) | Retained unchanged. Open Scene File still calls `core.studio.openSceneFile()`. Removing its local alias changes no behavior. Scene decoding, blank-tab reuse, library saving and drop entry are unchanged. The article has no screenshot to replace. |
 
 No existing instruction was rewritten solely to clear a coverage prompt. The refreshed menu captures show the added Drawings entry while retaining each documented export action.
+
+## Local board routing
+
+Issue #1613 extends the existing generated board, routed-source parser and native fabrication checks. `tools/electrical/routingCheck.mjs` executes the pinned router and KiCad 9.0.6 conversions, compares pad nets with independently declared circuit groups, reconciles source identities and geometry, runs native DRC and schematic parity, exports the existing ten fabrication files and encodes and reopens the scene. Each input project must remain unchanged. The final local matrix passed all eleven declared outcomes.
+
+| Original design | Observed outcome |
+| --- | --- |
+| Tethered SO-101 | Refused unsupported carrier connectivity |
+| Battery rover | Routed and exported, bottom side, 90-degree placement |
+| Quadruped | Refused unsupported carrier connectivity |
+| Hexapod | Refused unsupported carrier connectivity and missing prepared geometry |
+| Pan-tilt camera | Refused unsupported carrier connectivity |
+| Gripper | Refused unsupported carrier connectivity |
+| Mixed-voltage robot | Refused unsupported carrier connectivity |
+| Dual-bus arm | Routed and exported, bottom side, 270-degree placement |
+| Sensor-rich inspection robot | Refused unsupported carrier connectivity |
+| Fixed appliance | Refused unsupported carrier connectivity |
+
+The eight refusals retain their complete original circuits. Their current carrier projection has mounting holes without a supported connected carrier circuit. The matrix does not add replacement interfaces or reinterpret unsupported wiring as empty success. Its extra dense fixture retains the dual-bus scene, adds a third adapter and two catalog servos, and repeats all four supported headers four times. It declares six shared nets across two separate domains, 48 numbered pads, quarter-turn placements and the top component side. The declared vias use a 0.8002 mm outside diameter and 0.4001 mm drill, exercising fractional-micrometer session names. The final native route contained 121 straight tracks and 16 through vias. All footprint, pad, hole, outline, side and source checks passed. Copper bytes need not repeat between runs.
+
+Six real native controls cover unconnected pads, a short, insufficient copper clearance, an undersized track, forbidden copper and impossible routing. Shorts and clearance faults assert KiCad's specific violation types, rather than accepting an unrelated DRC failure. Each control produces no fabrication outputs. The independent copper-exclusion check includes complete track width and via diameter. The impossible case covers the entire board with a copper exclusion and remains unresolved.
+
+Compatibility probes established executable `ExportSpecctraDSN(board, filename)` and `ImportSpecctraSES(board, filename)` APIs in KiCad 9.0.6. Documented GUI operations were not treated as CLI subcommands. Freerouting's macOS native CLI 2.5.0 failed serialization, and 1.9.0 failed headless initialization. The pinned JVM distribution 2.1.0 routed real copper. Its documented maximum-pass argument alone left the legacy loop running to pass 999. Setting the effective stop field now limits the observed native loop to eight passes. Native acceptance asserts those actual pass numbers.
+
+The matrix exposed two generated-footprint defects. Bottom-side reference and value text needed mirroring. Rotated module mounting pads needed the same local angle as the library geometry. Those producer corrections pass existing identity reconciliation and strict native DRC. Early geometric cleanup was rejected after it disconnected a native-connected candidate. A retained engine session also contained a one-point wire. KiCad 9.0.6 ignores that wire, so the bounded SES reader accepts it without treating it as a connection. The raw candidate had zero unconnected pads and one native dangling-track warning. Removing only that UUID exposed its reversed duplicate as the next warning. The final normalization removes the native-identified track and exact same-net, same-layer, same-width, same-endpoint copies. The retained counterexample then passed native DRC with no missing connections. Evidence is `scratch/routing/unclean-validation.json`, `identified-cleanup-after.log` and `identified-cleanup/validation.json`.
+
+Routing now uses the existing validator in inspection-only mode before one bounded normalization stage. It does not produce fabrication outputs. Only warning-level dangling tracks on an otherwise connected report are eligible, with at most 4,096 canonical UUIDs. Shorts, clearances, missing connections, parity mismatches, unknown identities, via identities and other findings refuse normalization. The ordinary parser and final native validation still run before the commit. The router runs once. There is no routing retry or additional readiness verdict. The native fixture retains connected copper and vias while removing selected spur copies, including reversed copies. It imports an executable SES fixture with a connected straight track and a one-point wire, verifying that only the straight track becomes copper. It also verifies refusal without partial removal for unknown and via identities.
+
+Fast contract and boundary tests cover missing declarations, special electrical requirements, existing copper, hostile DSN and SES, incompatible identity output, malformed output, file and directory bounds, the operation deadline, native process failure, sampled RSS refusal and active child cancellation with cleanup. Transaction tests cover electrical and mechanical edits, scene changes, cancellation, late native validation, failed acceptance and exactly one successful commit. Schema tests retain declarations, editable copper and provenance through ordinary scene encoding. Export evidence refresh adds no history entry and does not replace a newer board.
+
+The focused browser walkthrough opens a generated rover through the ordinary file picker, defines its board, enters declarations through the Inspector, routes it and parses the actual downloaded Schematic ZIP. It asserts connected copper, native findings, fabrication files, source reconciliation and complete undo/redo. Help captures use the same walkthrough through `openApp`. The browser case has retries disabled and keeps the existing deadlines. Routing and native fault matrices stay outside browser tests. Local measurement captures and logs remain under `scratch/routing/`. Native results, DSN, SES and ZIPs remain under `scratch/electrical/routing/`.
+
+The existing Electrical CI job installs the pinned Java runtime and router only for selected routing inputs, then executes conversion, routing, validation and fabrication on Linux and Windows. Browser shards install the same tools only when they include the routing walkthrough. Linux conversion uses the pinned local KiCad container, selected explicitly by the CI installer. This local session observed macOS native execution. It did not execute the new Linux or Windows jobs. No interactive Windows host or physical electrical validation is claimed.
+
+An earlier four-worker changed-file selection passed 3,621 related tests across 546 files, with one pre-existing skip. A later default-concurrency selection passed its static checks and 3,059 tests but timed out in six unchanged Bambu project, classroom, Case and passive-fixture tests. Their 5,000 ms deadlines remain unchanged. The final check uses four local workers, as the earlier passing selection did. The detailed logs remain in `scratch/routing/release-code-check.log` and `compatibility-final-check.log`. No timeout, retry, skip or native DRC assertion was weakened.
+
+### Help coverage rechecked without edits
+
+| Article | Why the existing steps and captures remain accurate |
+| --- | --- |
+| [Buy the parts for a robot](../../site/content/help/buy-the-parts-for-a-robot.md) | Route Board adds a command without changing Buy All, quantities, listings, BOM downloads or the carrier's purchased components. |
+| [Make a build guide](../../site/content/help/make-a-build-guide.md) | Routing adds no soldering or assembly steps. Build guide generation, update controls, PDFs and captures keep their existing behavior. |
+| [A part is too big to print or has thin walls](../../site/content/help/troubleshoot-build-part-wont-print.md) | Adding the Inspector's routing callback changes no printability threshold, label, slicer control or captured printing state. |
+
+### Final checks and retained limits
+
+The final 89-file code selection passed formatting, lint, Ruff, types, site copy and all 3,634 related tests across 547 files. One existing test remained skipped. Local concurrency was four workers, with no repository or CI concurrency change. The run took 113.63 seconds. The native candidate and inspection-only export tests also passed their focused 55-test selection. The added executable SES fixture confirms that KiCad 9.0.6 imports a connected straight track while ignoring a one-point wire. Its source checks and direct native execution passed. Logs are `scratch/routing/frozen-code-check.log`, `final-native-candidate-check.log`, `point-session-check.log` and `point-session-fixture.log`.
+
+The current production capture passed both the ordinary rover walkthrough and the dense route. The loaded dense profiling case passed separately after capturing a rendered frame. Both retain no app errors. CPU profiles distinguish cold shader and MJCF startup from loaded routing work in [the performance evidence](performance-engineering.md#local-board-routing). The local mixed bundle and development servers reported a teardown exit warning after the functional assertions passed. Capture logs are `scratch/routing/current-production-capture.log` and `dense-loaded-capture.log`.
+
+The real `ElectricalBoards` service routed and validated the dual-bus carrier and returned to zero active jobs. A cancellation scheduled after 300 ms refused in 305.45 ms total, also leaving zero active jobs and an unchanged request. This includes the native inspection and normalization pipeline. `scratch/routing/current-service-probe.log` and `service-result.json` retain the observation. Native routing, six refusal controls, all identities, source persistence and ten-file fabrication outputs passed in `scratch/routing/native-normalized-matrix.log`, with complete results beneath `scratch/electrical/routing/`.
+
+The final control-test refinement waits for the resource watcher’s abort event rather than a fixed sleep. Its two-file check passed 19 tests in 344 ms. The native SES compatibility fixture and its source check also passed after being added to the existing native matrix setup. Logs are `scratch/routing/final-control-check.log`, `point-session-fixture.log` and `point-session-check.log`. That control-test refinement changed no product code.
+
+### Review corrections
+
+The routing fields previously displayed undeclared numeric values as zero. The shared number input ignored committing an unchanged zero, so entering zero for loss tangent left its saved declaration null. Nullable number inputs now display a blank and commit a typed zero. The existing routing walkthrough checks that transition and checks that both dimensionless dielectric fields have no millimeter suffix. Its native routing, download and undo/redo assertions remain intact. These new browser assertions are left to CI and were not executed during review.
+
+Fabrication and routing names now sit above their numeric fields instead of occupying the number input’s 28px scrub-label slot. The saved labels and entry steps are unchanged. The routing help article still names the same fields and controls, and its captures still show those declaration and routed states. No new product strings were added. The changelog now explicitly places copper editing in KiCad.
+
+Preview invalidation now uses the same placement-only definition as board geometry analysis and mounting edits. The scene persistence test checks that declarations survive reopening while the placement key remains unchanged, and that a placement constraint edit still changes that key. The security guide now includes the existing tool-status call in its electrical allowlist.
+
+The review’s final 17-file changed selection passed formatting, lint, docs, site copy, types and 3,167 related tests, with one existing skip. Its related-test phase took 119.97 seconds with four local workers. The initial default-worker run passed 3,166 tests but exceeded the unchanged five-second deadline in the classroom failing block-push seed batch. That test passed in the four-worker selection. No timeout, retry, assertion or CI setting changed. Logs are `scratch/review-check.log`, `review-check-four-workers.log` and `review-docs-check.log`.

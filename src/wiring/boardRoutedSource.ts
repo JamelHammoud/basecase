@@ -41,7 +41,7 @@ export async function importRoutedSource({
       pcb,
       hash: await boardDigest(bytes),
       sourceFingerprint: base.sourceFingerprint,
-      rules: board.routed?.rules ?? null,
+      rules: board.routed?.rules ?? board.fabrication ?? null,
     },
   };
 }
@@ -52,4 +52,8 @@ function routedText(bytes: Uint8Array<ArrayBuffer>) {
   } catch {
     throw new Error(boardImportMessage('board-format'));
   }
+}
+
+export function importRoutedText(input: { input: ElectricalInput; pcb: string }) {
+  return importRoutedSource({ input: input.input, bytes: new TextEncoder().encode(input.pcb) });
 }

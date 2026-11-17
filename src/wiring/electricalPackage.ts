@@ -6,6 +6,7 @@ import { electricalSourceJson } from './electricalSource';
 import type { ElectricalInput } from './electricalTypes';
 import { electricalFacts } from './electricalFacts';
 import { POWER_MODULES } from './electricalModules';
+import { boardPackage } from './boardPackage';
 
 export const KICAD_VALIDATOR_VERSION = '9.0.6';
 
@@ -16,7 +17,8 @@ async function fingerprint(text: string) {
 }
 
 export async function electricalPackage(input: ElectricalInput) {
-  const projection = electricalProjection(input);
+  const board = await boardPackage(input);
+  const projection = board?.electrical ?? electricalProjection(input);
   const source = electricalSourceJson({
     schema: 1,
     scene: projection.inputs,
@@ -26,10 +28,12 @@ export async function electricalPackage(input: ElectricalInput) {
     calculationInputs: electricalFacts(input),
     powerBudget: projection.powerBudget,
     moduleMaps: POWER_MODULES,
+    ...board?.source,
   });
   const sourceFingerprint = await fingerprint(source);
-  const { schematic, library } = electricalSchematic(projection);
+  const { schematic, library } = electricalSchematic(board?.schematic ?? projection);
   const report = {
+    ...(board ? { board: board.report } : {}),
     sourceFingerprint,
     validator: { name: 'kicad-cli', version: KICAD_VALIDATOR_VERSION, status: 'not-run' },
     projection,
@@ -39,6 +43,7 @@ export async function electricalPackage(input: ElectricalInput) {
   };
   const files: Record<string, string> = {
     'README.txt':
+      board?.readme ??
       'Incomplete editable schematic draft. Read requirements.json before connecting hardware.\nKiCad ERC has not run on this export. Checks in Basecase remains the build verdict.\nConnector symbols reference existing modules and do not describe their internal circuitry.\nNo PCB, routing, power-integrity analysis or measured electrical performance is included.\nUse KiCad 9.0.6: kicad-cli sch erc robot.kicad_sch --format json --output erc.json\nExport connections: kicad-cli sch export netlist robot.kicad_sch --output robot.net\n',
     'requirements.json': electricalSourceJson(report, 2),
     'source.json': source,
@@ -47,7 +52,9 @@ export async function electricalPackage(input: ElectricalInput) {
     'robot.kicad_pro': JSON.stringify({ meta: { filename: 'robot.kicad_pro', version: 1 } }),
     'sym-lib-table':
       '(sym_lib_table (version 7) (lib (name "Robot") (type "KiCad") (uri "${KIPRJMOD}/robot.kicad_sym") (options "") (descr "Robot module interfaces")))\n',
+    ...board?.files,
   };
+
   const archive: Zippable = {};
 
   for (const [path, text] of Object.entries(files))

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { bomCart } from '../components/build/cart';
 import { knownPurchases } from '../components/build/usePurchases';
 import type { Command } from '../components/CommandPalette';
-import { ExternalLinkIcon, PackageIcon, RefreshIcon } from '../design-system';
+import { ExternalLinkIcon, PackageIcon, RefreshIcon, PlusIcon } from '../design-system';
 import { isBuilt } from '../guide/guidePlan';
 import { buildBom } from '../utils/bom';
 import { openLink } from '../utils/openLink';
@@ -85,6 +85,38 @@ function guideCommands({ core }: CommandInputs): Command[] {
 }
 
 export const buildCommands = (inputs: CommandInputs): Command[] => [
+  ...(inputs.core.project.electronicsBoard
+    ? [
+        {
+          id: 'edit-board',
+          group: 'Scene',
+          label: 'Edit Board',
+          icon: <PackageIcon />,
+          keywords: 'electronics pcb kicad outline placement',
+          run: () => void inputs.actions.board.define(),
+        },
+        {
+          id: 'arrange-board',
+          group: 'Scene',
+          label: 'Arrange Board',
+          icon: <RefreshIcon />,
+          keywords: 'electronics pcb kicad placement',
+          run: () => void inputs.actions.board.arrange(),
+        },
+      ]
+    : []),
+  ...(!inputs.core.project.electronicsBoard && inputs.core.parts.length
+    ? [
+        {
+          id: 'define-board',
+          group: 'Scene',
+          label: 'Define Board',
+          icon: <PlusIcon />,
+          keywords: 'electronics pcb kicad outline placement',
+          run: () => void inputs.actions.board.define(),
+        },
+      ]
+    : []),
   ...guideCommands(inputs),
   ...buildAlongCommand(inputs),
   ...buyAllCommand(inputs),

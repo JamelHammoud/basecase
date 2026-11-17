@@ -18,6 +18,9 @@ export const materialTag = (part: ScenePart): string =>
   MATERIALS.find((m) => m.value === part.mechanicalTag)?.value ?? PRINTED_TAG;
 
 export interface InspectorProps {
+  board?: import('../../wiring/boardTypes').ElectronicsBoard;
+  onUpdateBoard?: (board: import('../../wiring/boardTypes').ElectronicsBoard) => void;
+  onArrangeBoard?: () => void;
   part: ScenePart | null;
   parts: ScenePart[];
   globalGoal: string;

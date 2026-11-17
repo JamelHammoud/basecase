@@ -166,6 +166,7 @@ export interface TextFile {
 }
 
 export interface Snapshot {
+  electronicsBoard?: ProjectSettings['electronicsBoard'];
   parts: ScenePart[];
   pose: RobotPoseState | undefined;
   joints: RobotJoint[] | undefined;

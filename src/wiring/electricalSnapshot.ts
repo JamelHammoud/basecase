@@ -22,7 +22,7 @@ export function isElectricalPart(part: ScenePart) {
 }
 
 export function electricalSnapshot(scene: WiringScene): WiringScene {
-  const parts = scene.parts.filter(isElectricalPart).map((part) => ({
+  const electricalParts = scene.parts.filter(isElectricalPart).map((part) => ({
     ...part,
     cad: undefined,
     mesh: undefined,
@@ -31,7 +31,8 @@ export function electricalSnapshot(scene: WiringScene): WiringScene {
     deformers: undefined,
     edges: undefined,
   }));
-  const { joints, tether, extras, sourced, wiring } = scene.project;
+  const { joints, tether, extras, sourced, wiring, electronicsBoard } = scene.project;
+  const parts = electronicsBoard ? scene.parts : electricalParts;
 
-  return { parts, project: { ...DEFAULT_PROJECT, joints, tether, extras, sourced, wiring } };
+  return { parts, project: { ...DEFAULT_PROJECT, joints, tether, extras, sourced, wiring, electronicsBoard } };
 }

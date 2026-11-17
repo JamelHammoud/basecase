@@ -32,6 +32,8 @@ Basecase saves each scene as you work. To share a scene, send it as a single .ba
 
 A scene is one design. It holds your parts, joints, poses, comments and goal, plus its Cases, Routines and [Study](/help/study-design-options) settings and results.
 
+A scene also keeps its [electronics board](/help/fit-an-electronics-board), including mounting constraints, placement identities and locks. Those settings travel in its `.basecase` file.
+
 Each imported world is stored once per scene, including its mesh, colliders, textures and optional splat. Cases in that scene share the same world data.
 
 Basecase saves your scene 1.2 seconds after your last change, and again when you switch tabs, close a scene or quit. If you open a blank scene and close it without making a change, Basecase discards it.

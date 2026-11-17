@@ -45,6 +45,8 @@ Compare printing, assembly, and servo setup with the hours you have for your rob
 
 For what the estimate includes and leaves out, see [Printability estimates](/help/printability-estimates).
 
+Time doesn’t estimate PCB routing or soldering for an [electronics board](/help/fit-an-electronics-board).
+
 Changes to printer obstacle settings or supplied brim clearance refresh the checks and invalidate affected plate timings. Those plates use estimates until sliced again.
 
 ![The Time check failing with a one-hour budget on Weekend rover](/help/set-a-time-budget/over-budget.png)

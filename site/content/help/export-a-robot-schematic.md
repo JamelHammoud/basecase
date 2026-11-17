@@ -22,6 +22,8 @@ covers:
   - src/wiring/electricalPackage.ts
   - src/wiring/electricalChecks.ts
   - src/wiring/electricalModules.ts
+  - src/wiring/boardPackage.ts
+  - src/wiring/boardPcb.ts
 ---
 
 Export the robot’s documented connections and unresolved electrical requirements to KiCad.
@@ -40,10 +42,12 @@ Treat each package as a draft. Cable lengths and quantities stay in Build. Resol
 
 Read `robot/requirements.json` alongside the schematic. You’ll find unresolved interfaces, source-backed terminal references, supply requirements, and unknown loads. In `robot/source.json`, you can review the electrical inputs used for the fingerprint.
 
+If the scene contains a board definition, the ZIP also includes `robot.kicad_pcb`, local footprints and `placement.json`. Read the placement requirements alongside the PCB. Copper remains unrouted. The export doesn’t establish assembly fit or electrical performance. [Fit an electronics board](/help/fit-an-electronics-board) describes placement and mechanical checks.
+
 For a tethered robot, use **Servo voltage** and **Supply current** in **Checks** to change the declared volts and amps. Those controls don’t change a selected product’s ratings.
 
 ![Electrical connections reports a supply setting that disagrees with the selected module](/help/export-a-robot-schematic/supply.png)
 
 You can choose **Schematic** in [[⌘K]].
 
-The project targets KiCad 9.0.6. Read the bundled README for the commands for ERC and netlist export. You can find documentation for these commands in the [KiCad CLI manual](https://docs.kicad.org/9.0/en/cli/cli.html).
+The project targets KiCad 9.0.6. The bundled README lists validation commands for the exported draft. You can find documentation for these commands in the [KiCad CLI manual](https://docs.kicad.org/9.0/en/cli/cli.html).

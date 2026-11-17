@@ -34,6 +34,8 @@ export interface ElectricalPartMap {
 }
 
 export interface ElectricalEndpoint {
+  offBoard?: boolean;
+  footprint?: string;
   reference: string;
   partId: string | null;
   componentId: string | null;
@@ -105,6 +107,7 @@ export interface ElectricalProjection {
 }
 
 export interface ElectricalInput extends WiringScene {
+  meshFiles?: import('../three/componentMeshes').MeshFiles;
   wiring?: Netlist;
   pinMaps?: readonly ElectricalPartMap[];
   walk?: import('../utils/engineeringTypes').WalkSim;

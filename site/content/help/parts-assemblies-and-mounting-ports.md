@@ -74,7 +74,7 @@ For a list of every check, see [Build tab checks](/help/build-checks).
 
 ## Mounting ports
 
-Every component has mounting ports: named holes, bores, bosses, faces and outputs, each with a position and a direction. Each port's position and direction come from the maker's mesh, and tests check them against it.
+Components with documented mechanical attachment points have mounting ports: named holes, bores, bosses, faces and outputs, each with a position and a direction. Each port's position and direction come from the maker's mesh, and tests check them against it. A PCB header’s solder pins use footprint pad geometry instead of screw-hole ports.
 
 For example, the Feetech STS3215 servo has:
 

@@ -13,6 +13,8 @@ import { MarkLabelField } from './MarkLabelField';
 import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { useBoardPreview } from './useBoardPreview';
+import { boardSelectionProps } from './boardSelection';
 
 interface SceneViewportProps {
   active: boolean;
@@ -71,7 +73,6 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
     parts,
     project,
     selectedIds,
-    selection,
     tool,
     annotations,
     marks,
@@ -81,13 +82,16 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
   } = core;
   const { edits } = actions;
   const { cursors, lanes } = agent;
+  const shownParts = shownPartsFor(core);
+  const boardParts = useBoardPreview(shownParts, project.electronicsBoard);
 
   return (
     <>
       <Viewport3D
         ref={viewportRef}
         sceneKey={core.scene.sceneId}
-        parts={shownPartsFor(core)}
+        parts={boardParts}
+        sourceParts={shownParts}
         selectedPartIds={canvasSelection(core.caseRun, selectedIds)}
         transformMode={tool.transformMode}
         sculptSettings={tool.sculptSettings}
@@ -95,13 +99,12 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         snapAngleDeg={studio.snapAngleDeg}
         trackpadMode={studio.trackpadMode}
         showGrid={studio.showGrid}
-        onSelectPart={selection.select}
+        {...boardSelectionProps(core)}
         onPickPoint={core.sketching.notePick}
         onOpenPart={core.sketching.edit}
         onUpdatePartTransform={edits.updatePartTransform}
         onUpdatePartsTransform={edits.updatePartsTransform}
         onPlacePart={edits.placePart}
-        onMarqueeSelect={selection.marqueeSelect}
         onCommitSculptMesh={edits.commitSculptMesh}
         annotateMode={annotations.commentMode}
         measureMode={tool.measuring}

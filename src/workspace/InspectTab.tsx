@@ -87,6 +87,9 @@ function SceneInspector({ core, actions }: InspectTabProps) {
 
   return (
     <Inspector
+      board={core.project.electronicsBoard}
+      onUpdateBoard={actions.board.update}
+      onArrangeBoard={() => void actions.board.arrange()}
       key={scene.sceneId}
       part={selection.selectedPart}
       parts={parts}

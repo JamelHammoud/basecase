@@ -56,6 +56,8 @@ Exports save to your downloads as `<scene>-bom.csv` or `<scene>-bom.md`. For exa
 
 Some lines are added for you. If your design has a battery, you get a switch, fuse, wire and charger. Filament is counted in grams from the printed parts, so it isn't in the **+** menu. If you choose **Made by a Service**, **Printed parts** takes its place, and Basecase doesn't order them.
 
+A [board placement](/help/fit-an-electronics-board) adds its required connectors to the list. Existing regulators and their included headers are counted once.
+
 Cables come from the wiring, one for each hop of each servo bus, starting at the adapter. Once routes are measured, Basecase chooses the shortest compatible stock cable that covers the route through joint motion, including slack. Waveshare 5264 cables come in 300 mm and 900 mm lengths. DYNAMIXEL X servos use the 180 mm **ROBOTIS Robot Cable-X3P**.
 
 Each product and length has its own line, price and on-hand count. Extra cables you add count toward the required quantity only on the same product's line. The remaining pieces round up to whole packs. A route without a suitable known length stays blocked in **Cable reach**, even if a cable appears in the list. [Servo bus or Cable reach is red](/help/troubleshoot-servo-bus) explains unresolved routes.

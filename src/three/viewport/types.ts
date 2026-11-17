@@ -110,6 +110,7 @@ export interface BuildStepView {
 export interface ViewportProps {
   sceneKey?: string;
   parts: ScenePart[];
+  sourceParts?: ScenePart[];
   selectedPartIds: string[];
   transformMode: TransformMode;
   sculptSettings: SculptSettings;

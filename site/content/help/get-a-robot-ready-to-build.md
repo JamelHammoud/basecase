@@ -55,6 +55,8 @@ If **Electrical connections** is red, open it to read the missing pin maps, sour
 
 ![Electrical connections reports a supply setting that disagrees with the selected module](/help/export-a-robot-schematic/supply.png)
 
+If **Board fit** is red, open it to find the affected placement, mounting hole or missing geometry. Use **Edit Board** to change its constraints, as described in [Fit an electronics board](/help/fit-an-electronics-board).
+
 To continue the documented connections and unresolved requirements in KiCad, [export a robot schematic](/help/export-a-robot-schematic).
 
 ![An SO-101 arm inside a cloud of dots, with Payload open in Checks reading 1.26 kg at full reach, 1.88 kg close in](/help/get-a-robot-ready-to-build/payload.png)

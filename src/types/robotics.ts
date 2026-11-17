@@ -201,6 +201,7 @@ export type { RobotJoint } from './joint';
 export type { BuildGuideRecord, ProjectRecords } from './projectRecords';
 
 export interface ProjectSettings extends ProjectRecords, PrintService, ProjectBudgets {
+  electronicsBoard?: import('../wiring/boardTypes').ElectronicsBoard;
   printer: string;
   material: PrintMaterial;
   infillPct: number;

@@ -2,6 +2,16 @@
 
 Knowledge preserved from code comments. Complements AGENTS.md; nothing here repeats it.
 
+## iOS runner capacity
+
+Class: environment. In [Check 44148543842](https://github.com/JamelHammoud/basecase/actions/runs/44148543842), revision `8216505a9c447e4d74b8ecd1865a4f8eda8bc238`, the [iOS job](https://github.com/JamelHammoud/basecase/actions/runs/44148543842/job/134270417181) never acquired a runner. Its job metadata has runner id zero, an empty runner name and no steps. GitHub recorded it from 18:30:36 to 18:52:19 UTC on November 17, 2026, a 21-minute 43-second interval. The failure annotation says the hosted runner did not acquire the job after multiple attempts. Three notices identify capacity constraints for macOS arm64 runners. There is no job log to inspect. The aggregate reported `IOS: abandoned`, while the API records `cancelled`. The other 27 executed jobs succeeded, and two jobs were correctly skipped. The aggregate was the only job with a failure conclusion.
+
+The last green full run, [43948835889](https://github.com/JamelHammoud/basecase/actions/runs/43948835889), ran iOS on `macos-26-arm64` image `20261112.0504.1`, with Xcode 26.6. Its iOS job completed in 3 minutes 8 seconds after a 2-minute 16-second queue interval. No `ios/` code changed between that revision and the failed run. The failure happened before checkout or compilation, so it does not identify a source regression or a flaky XCTest.
+
+The repair pins only the iOS job to `macos-26-intel`. GitHub's [hosted runner specifications](https://docs.github.com/en/actions/reference/runners/github-hosted-runners) list that label as Intel, while `macos-latest` and `macos-26` target arm64. The [macOS 26 Intel inventory](https://github.com/actions/runner-images/blob/main/images/macos/macos-26-Readme.md) lists Xcode 26.6 as default and installed iPhone simulators. This preserves the OS and default Xcode versions used by the green run while selecting a different capacity pool. The job's selection, required success result, simulator command, XCTest assertions and twenty-minute timeout remain intact. No retries, waits or quarantine are added.
+
+Current coverage is in [Scan app](../guide/scan-app.md#tests). Local validation checks formatting and documentation. Native Intel simulator execution and queue time remain unmeasured until the ordinary pull request Check runs the candidate. Hosted capacity is variable, so this pin does not establish an availability guarantee or a measured speedup. The source metadata, annotations, prior green log and runner inventories are retained locally under `scratch/` in the repair worktree.
+
 ## Frames and units
 - Agent/bench frame: Z up, mm, front faces -Y, left is +X. Studio (viewport/GLB) frame is Y up.
 - Studio to bench frame is `(x, -z, y)` (`bench/glb.mjs`); CAD to studio is `(x, z, -y)`.

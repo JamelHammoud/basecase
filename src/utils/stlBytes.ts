@@ -1,13 +1,22 @@
 const HEADER = 80;
 const FACET = 50;
 
-function writeNormal(view: DataView, at: number, t: ArrayLike<number>, i: number) {
-  const ux = t[i + 3] - t[i],
-    uy = t[i + 4] - t[i + 1],
-    uz = t[i + 5] - t[i + 2];
-  const vx = t[i + 6] - t[i],
-    vy = t[i + 7] - t[i + 1],
-    vz = t[i + 8] - t[i + 2];
+function writeFacet(view: DataView, at: number, triangles: ArrayLike<number>, i: number) {
+  const ax = triangles[i];
+  const ay = triangles[i + 1];
+  const az = triangles[i + 2];
+  const bx = triangles[i + 3];
+  const by = triangles[i + 4];
+  const bz = triangles[i + 5];
+  const cx = triangles[i + 6];
+  const cy = triangles[i + 7];
+  const cz = triangles[i + 8];
+  const ux = bx - ax,
+    uy = by - ay,
+    uz = bz - az;
+  const vx = cx - ax,
+    vy = cy - ay,
+    vz = cz - az;
   const nx = uy * vz - uz * vy,
     ny = uz * vx - ux * vz,
     nz = ux * vy - uy * vx;
@@ -16,12 +25,15 @@ function writeNormal(view: DataView, at: number, t: ArrayLike<number>, i: number
   view.setFloat32(at, nx / len, true);
   view.setFloat32(at + 4, ny / len, true);
   view.setFloat32(at + 8, nz / len, true);
-}
-
-function writeFacet(view: DataView, at: number, triangles: ArrayLike<number>, i: number) {
-  writeNormal(view, at, triangles, i);
-
-  for (let k = 0; k < 9; k++) view.setFloat32(at + 12 + k * 4, triangles[i + k], true);
+  view.setFloat32(at + 12, ax, true);
+  view.setFloat32(at + 16, ay, true);
+  view.setFloat32(at + 20, az, true);
+  view.setFloat32(at + 24, bx, true);
+  view.setFloat32(at + 28, by, true);
+  view.setFloat32(at + 32, bz, true);
+  view.setFloat32(at + 36, cx, true);
+  view.setFloat32(at + 40, cy, true);
+  view.setFloat32(at + 44, cz, true);
 }
 
 export class StlWriter {

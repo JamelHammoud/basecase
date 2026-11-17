@@ -176,3 +176,47 @@ describe('battery lead clearance', () => {
     ]);
   });
 });
+
+function insertShell(outer: [number, number, number], inner: [number, number, number], matrix: THREE.Matrix4) {
+  const outside = box('outside', outer).solid.positions;
+  const inside = box('inside', inner).solid.positions;
+  const positions = new Float32Array(outside.length + inside.length);
+
+  positions.set(outside);
+  positions.set(inside, outside.length);
+
+  return place('host', new ShapeSolid(positions), matrix);
+}
+
+const insertChains: ChainResult = {
+  screws: [],
+  sleeves: [{ id: 'insert', kind: 'insert', host: 'host', screw: null }],
+};
+
+describe('insert wall minima', () => {
+  it.each([0, 0.3, Math.PI / 2])('measures the thinnest radial wall after rotation %j', (angle) => {
+    const matrix = new THREE.Matrix4().makeRotationZ(angle).setPosition(7, -4, 11);
+    const insert = box('insert', [2, 8, 2], matrix);
+    const host = insertShell([12, 12, 14], [10, 10, 10], matrix);
+    const before = host.solid.positions.slice();
+
+    expect(fitProbes([insert, host], insertChains, []).insertWalls).toEqual({
+      insert: { host: 'host', minMm: expect.closeTo(1, 10) },
+    });
+    expect(host.solid.positions).toEqual(before);
+  });
+
+  it('keeps valid measurements among missing levels and rereads changed hosts', () => {
+    const matrix = new THREE.Matrix4();
+    const insert = box('insert', [2, 8, 2]);
+    const host = insertShell([12, 4, 14], [10, 2, 10], matrix);
+    const thinner = insertShell([11, 4, 14], [10, 2, 10], matrix);
+    const measure = (target: Placed) => fitProbes([insert, target], insertChains, []).insertWalls;
+
+    expect(measure(host)).toEqual({ insert: { host: 'host', minMm: 1 } });
+    expect(measure(thinner)).toEqual({ insert: { host: 'host', minMm: 0.5 } });
+    expect(measure(host)).toEqual({ insert: { host: 'host', minMm: 1 } });
+    expect(measure(box('host', [10, 10, 10]))).toEqual({});
+    expect(fitProbes([insert], insertChains, []).insertWalls).toEqual({});
+  });
+});

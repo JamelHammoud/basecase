@@ -23,12 +23,6 @@ export function rectShape(x0: number, y0: number, x1: number, y1: number): THREE
   return s;
 }
 
-const circlePathAt = (x: number, y: number, r: number) => {
-  const p = holePath(r, 24);
-
-  return new THREE.Path(p.getPoints().map((v) => new THREE.Vector2(v.x + x, v.y + y)));
-};
-
 export function holeRun(length: number, first: number, pitch: number, keep: number): number[] {
   const out: number[] = [];
 
@@ -44,7 +38,7 @@ function linearRail({ spec, add }: BuildContext) {
   const layer = (radius: number) => {
     const s = rectShape(-r.widthWR / 2, -L / 2, r.widthWR / 2, L / 2);
 
-    for (const z of holes) s.holes.push(circlePathAt(0, -z, radius));
+    for (const z of holes) s.holes.push(holePath(radius, 24, 0, [0, -z]));
 
     return s;
   };

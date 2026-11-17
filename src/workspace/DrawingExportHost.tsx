@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '../design-system';
 import { DrawingExportSheet } from './DrawingExportSheet';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { ExportActions } from './useExportActions';
@@ -16,12 +17,14 @@ export function DrawingExportHost({
   if (!active || !drawings.isOpen) return null;
 
   return (
-    <DrawingExportSheet
-      mode={drawings.mode}
-      parts={core.parts}
-      selectedIds={core.selectedIds}
-      onClose={drawings.close}
-      onExport={(selection) => void drawings.run(selection)}
-    />
+    <ErrorBoundary region={drawings.mode === 'kit' ? 'Kit' : 'Drawings'} onClose={drawings.close}>
+      <DrawingExportSheet
+        mode={drawings.mode}
+        parts={core.parts}
+        selectedIds={core.selectedIds}
+        onClose={drawings.close}
+        onExport={(selection) => void drawings.run(selection)}
+      />
+    </ErrorBoundary>
   );
 }

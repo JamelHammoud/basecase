@@ -41,7 +41,7 @@ You can edit the SVG files as vectors. On each sheet, you can find the name of i
 
 The part keeps its supplied material and declared print material. If the part has no material, Basecase leaves it unspecified.
 
-Basecase measures hole centers from the declared datum and marks an approximate circle fit with a `~` before its diameter. You can find the numerical allowances on the drawing. Basecase omits unsupported hole dimensions. These allowances describe measurement and do not specify a machining tolerance.
+Basecase measures hole centers from the declared datum and marks an approximate circle fit with a `~` before its diameter. You can find the numerical allowances on the drawing. Basecase omits unsupported hole dimensions. These allowances describe measurement and don't specify a machining tolerance.
 
 Print the PDF at actual size to preserve its declared scale. If the chosen scale can’t fit A4, choose a smaller scale and export again.
 

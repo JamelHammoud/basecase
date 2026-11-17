@@ -18,10 +18,11 @@ export default function delivery({ log }) {
     try {
       const url = deliver(entry);
 
+      close(entry);
+
       if (!url) continue;
 
       log(`delivered ${url} from existing verified work`);
-      close(entry);
     } catch (error) {
       log(`${entry.branch}: delivery failed: ${error.message}`);
     } finally {

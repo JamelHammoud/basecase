@@ -10,8 +10,8 @@ const copper = /\t?\((?:segment|via)\s[\s\S]*?\n\t\)/gu;
 export function routingFaultCases(request) {
   return [
     { name: 'unconnected', pcb: request.pcb.replace(copper, ''), issue: 'board-unrouted' },
-    { name: 'short', pcb: resizePad(request.pcb, 3.5), issue: 'board-drc', type: 'shorting_items' },
-    { name: 'clearance', pcb: resizePad(request.pcb, 3.1), issue: 'board-drc', type: 'clearance' },
+    padFault(request, 'short', 3.5, 'shorting_items'),
+    padFault(request, 'clearance', 3.1, 'clearance'),
     {
       name: 'track-width',
       pcb: request.pcb.replace(/\(width 0\.25\)/gu, '(width 0.01)'),
@@ -30,6 +30,7 @@ export async function routingFaults({ request, input }) {
     const candidate = {
       ...request,
       pcb: fault.pcb,
+      expected: fault.expected ?? request.expected,
       boardHash: await boardDigest(fault.pcb),
       copperExclusions: fault.copperExclusions ?? request.copperExclusions,
     };
@@ -49,6 +50,18 @@ export async function routingFaults({ request, input }) {
   assert.deepEqual(request, original);
 
   return results;
+}
+
+function padFault(request, name, diameter, type) {
+  const pcb = resizePad(request.pcb, diameter);
+
+  return {
+    name,
+    pcb,
+    expected: pcb,
+    issue: 'board-drc',
+    type,
+  };
 }
 
 function resizePad(pcb, diameter) {

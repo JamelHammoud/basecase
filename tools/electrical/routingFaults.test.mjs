@@ -4,8 +4,10 @@ import { projectBoard } from '../../src/wiring/boardProjection';
 import { boardPcb } from '../../src/wiring/boardPcb';
 import { electricalScenes } from '../../src/wiring/electricalFixtures';
 import { kiCadChild, kiCadChildren, kiCadNumber, readKiCadBoard } from '../../src/wiring/boardKiCad.mjs';
+import { reconcileRoutedBoard } from '../../src/wiring/boardReconcile.mjs';
 import { routingFaultCases } from './routingFaults.mjs';
 
+const sourceFingerprint = 'a'.repeat(64);
 const variants = ['top', 'bottom'].flatMap((side) => [0, 90, 180, 270].map((rotation) => ({ side, rotation })));
 
 function generatedBoard({ side, rotation }) {
@@ -26,7 +28,10 @@ function generatedBoard({ side, rotation }) {
     project: { ...scene.project, electronicsBoard: board },
   });
 
-  return boardPcb(projection)['robot.kicad_pcb'];
+  return boardPcb(projection)['robot.kicad_pcb'].replace(
+    /\)\s*$/u,
+    `(property "BasecaseSource" "${sourceFingerprint}"))`,
+  );
 }
 
 function padGap(pcb) {
@@ -50,7 +55,7 @@ it.each(variants)(
     const crossing = '(segment (start -30 -30) (end -27.5 -30) (width 0.25) (layer "F.Cu") (net 1))';
     const pcb = generated.replace(/\)\s*$/u, `${crossing})`);
     const original = readKiCadBoard(pcb);
-    const request = { pcb };
+    const request = { pcb, expected: generated };
     const faults = routingFaultCases(request);
     const short = faults.find((fault) => fault.name === 'short');
     const clearance = faults.find((fault) => fault.name === 'clearance');
@@ -64,17 +69,28 @@ it.each(variants)(
     for (const fault of [short, clearance]) {
       const candidate = readKiCadBoard(fault.pcb);
 
+      expect(reconcileRoutedBoard({ expected: generated, imported: fault.pcb, sourceFingerprint }).accepted).toBe(
+        false,
+      );
+      expect(reconcileRoutedBoard({ expected: fault.expected, imported: fault.pcb, sourceFingerprint })).toMatchObject({
+        accepted: true,
+        segments: 1,
+      });
+      expect(fault.expected).toBe(fault.pcb);
+
       expect(kiCadChildren(candidate, 'segment')).toEqual(kiCadChildren(original, 'segment'));
       expect(kiCadChildren(candidate, 'footprint')).toHaveLength(kiCadChildren(original, 'footprint').length);
       expect(fault.pcb.replace(/\(size 3\.[15] 3\.[15]\)/u, '(size 1.7 1.7)')).toBe(pcb);
     }
 
-    expect(request).toEqual({ pcb });
+    expect(request).toEqual({ pcb, expected: generated });
   },
 );
 
 it('refuses to silently omit a fault when the expected header geometry changes', () => {
   const pcb = generatedBoard(variants[0]).replace(/\(size 1\.7 1\.7\)/gu, '(size 1.8 1.8)');
 
-  expect(() => routingFaultCases({ pcb })).toThrow('Routing fault controls require the JST header pad geometry.');
+  expect(() => routingFaultCases({ pcb, expected: pcb })).toThrow(
+    'Routing fault controls require the JST header pad geometry.',
+  );
 });

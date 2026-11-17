@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { PartEdges } from '../../types/robotics';
 import type { Outline } from '../../utils/partEdges';
-import { contourAt, cornerDirs, edgeLayers, insetCorner, outlineCorners, type Vec2 } from './edgedProfile';
+import { cornerDirs, edgeLayers, insetCorner, outlineCorners, type Corner, type Vec2 } from './edgedProfile';
 
 type V3 = [number, number, number];
 
@@ -40,21 +40,42 @@ class Triangles {
   }
 }
 
-function prismTriangles(outline: Outline, height: number, edges: PartEdges, middle: number): number[] {
-  const corners = outlineCorners(outline, edges);
-  const rings = edgeLayers(height, edges, middle).map(([y, reach]) =>
-    contourAt(corners, reach).map(([x, z]): V3 => [x, y, z]),
-  );
-  const out = new Triangles();
+function placePrismRing(ring: V3[], corners: Corner[], [y, reach]: Vec2) {
+  let i = 0;
 
-  for (let k = 0; k + 1 < rings.length; k++) {
-    const [low, high] = [rings[k], rings[k + 1]];
+  for (const { center, dirs } of corners) {
+    for (const dir of dirs) {
+      const vertex = ring[i++];
+
+      vertex[0] = center[0] + dir[0] * reach;
+      vertex[1] = y;
+      vertex[2] = center[1] + dir[1] * reach;
+    }
+  }
+}
+
+export function prismTriangles(outline: Outline, height: number, edges: PartEdges, middle: number): number[] {
+  const corners = outlineCorners(outline, edges);
+  const layers = edgeLayers(height, edges, middle);
+  const out = new Triangles();
+  let low = corners.flatMap(({ dirs }) => dirs.map((): V3 => [0, 0, 0]));
+  let high = low.map((): V3 => [0, 0, 0]);
+
+  placePrismRing(low, corners, layers[0]);
+
+  for (let k = 1; k < layers.length; k++) {
+    placePrismRing(high, corners, layers[k]);
 
     low.forEach((a, j) => {
       const next = (j + 1) % low.length;
 
       out.quad(a, low[next], high[next], high[j]);
     });
+
+    const previous = low;
+
+    low = high;
+    high = previous;
   }
 
   const cap = corners.map(({ center }) => center);

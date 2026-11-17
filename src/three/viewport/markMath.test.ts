@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   distanceToPolyline,
   encloses,
@@ -20,6 +20,23 @@ const copyPoint = (point: Point2, out: Point2): void => {
   out[0] = point[0];
   out[1] = point[1];
 };
+
+function previousDistance([px, py]: Point2, points: Point2[]): number {
+  let best = Infinity;
+
+  for (let i = 1; i < points.length; i++) {
+    const [ax, ay] = points[i - 1];
+    const [bx, by] = points[i];
+    const dx = bx - ax;
+    const dy = by - ay;
+    const lengthSq = dx * dx + dy * dy;
+    const t = lengthSq ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lengthSq)) : 0;
+
+    best = Math.min(best, Math.hypot(px - (ax + t * dx), py - (ay + t * dy)));
+  }
+
+  return best;
+}
 
 describe('mark strokes', () => {
   it('tells a loop that circles something from a line', () => {
@@ -98,5 +115,66 @@ describe('mark strokes', () => {
     expect(viewAngles([0, 0, 1])).toBe('az:0,el:0');
     expect(viewAngles([1, 0, 0])).toBe('az:90,el:0');
     expect(viewAngles([0, 1, 1])).toBe('az:0,el:45');
+  });
+});
+
+describe('mark segment distance bounds', () => {
+  it('preserves exact distances across segment directions, scales and nonfinite projections', () => {
+    const points: Point2[] = Array.from({ length: 400 }, (_, i) => [
+      Math.sin(i * 7.3) * 2000,
+      Math.cos(i * 3.1) * 1000,
+    ]);
+    const strokes: Point2[][] = [
+      points,
+      [...points].reverse(),
+      [[0, 0]],
+      [],
+      [
+        [0, 0],
+        [0, 0],
+        [10, 0],
+        [10, 10],
+      ],
+      [
+        [1e-200, 0],
+        [1e-200, 0],
+      ],
+      [
+        [1e200, 0],
+        [1e200, 0],
+      ],
+      [
+        [0, 0],
+        [Infinity, NaN],
+        [0, 0],
+      ],
+    ];
+
+    for (const stroke of strokes) {
+      for (const point of [
+        [0, 0],
+        [0, 10],
+        [6, 8],
+        [2000, -1000],
+      ] satisfies Point2[]) {
+        expect(distanceToPolyline(point, stroke, copyPoint)).toBe(previousDistance(point, stroke));
+      }
+    }
+  });
+
+  it('rejects segments outside the nearest distance before calculating their lengths', () => {
+    const hypot = vi.spyOn(Math, 'hypot');
+
+    try {
+      for (const count of [400, 800]) {
+        const points: Point2[] = Array.from({ length: count }, (_, i) => [i, 0]);
+
+        hypot.mockClear();
+        expect(distanceToPolyline([0, 10], points, copyPoint)).toBe(10);
+        expect(hypot).toHaveBeenCalledTimes(1);
+      }
+    } finally {
+      hypot.mockRestore();
+    }
   });
 });

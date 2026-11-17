@@ -21,7 +21,7 @@ hub_checks_and_blockers: |
   **Schematic** can include Gerbers, separate plated and non-plated drills, the routed source and validation hashes. [Export board fabrication files](/help/export-board-fabrication-files) covers the required process inputs.
 ---
 
-Download fabrication layers and drills with source identities, hashes and current KiCad validation reports.
+Download fabrication layers and drills with source identities, hashes and current KiCad validation reports in the desktop app.
 
 Install KiCad 9.0.6 on the computer running Basecase. Before you export, [import a routed board](/help/import-a-routed-board) with an explicit stackup. In the stackup, declare copper thicknesses and a dielectric's material, permittivity and loss tangent.
 

@@ -263,3 +263,10 @@ Pull request #1609's Windows electrical job failed on 17 November 2026 at 06:43:
 KiCad's [multi-user installer source](https://gitlab.com/kicad/packaging/kicad-win-builder/-/blob/master/nsis/includes/NsisMultiUser.nsh) explicitly exits with `MULTIUSER_ERROR_INVALID_PARAMETERS` when silent mode has neither `/allusers` nor `/currentuser`. The command supplied only `/S` and `/D`. It now supplies `/currentuser` before the final destination argument. Native command failures include the exit status and signal, or preserve the launch error and cause. No wait, retry or timeout was added.
 
 `tools/electrical/installCli.test.mjs` exercises the installer entry point with controlled network, checksum, filesystem and native-process boundaries. It covers successful scope selection and environment publication, checksum refusal before execution, silent exit diagnostics, launch errors and version refusal before publication. These checks establish orchestration, not an actual Windows installation. The Windows electrical CI job remains the native installation and routed fabrication acceptance check. No interactive Windows host was available in this revision.
+
+
+### Fabrication edits preserve scene placement
+
+Review of #1609 found that Fabrication field edits went through the same hardware reconciliation and module mounting as placement edits. Entering a manufacturing URL or minimum could therefore move a detached regulator back to its saved pose and replace otherwise unchanged part records. `useBoard.update` now commits only the board record when its definition excluding routed metadata is unchanged. Definition edits keep the existing mounting path. `workspace/useBoard.test.ts` exercises both paths with a detached regulator and generated mounting hardware, checking reference preservation, retained placement findings and ordinary remounting.
+
+The review also made the desktop requirement explicit in the routed-board changelog opening and fabrication task summary. Web import and editable export remain available. Native validation and fabrication output require the desktop app with KiCad 9.0.6.

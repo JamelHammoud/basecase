@@ -4,7 +4,7 @@ date: 2026-11-16
 image: /changelog/routed-board-fabrication/cover.png
 ---
 
-You can import a routed KiCad board and export fabrication files tied to the current robot. You'll need KiCad 9.0.6 for native validation and fabrication output.
+You can import a routed KiCad board and export fabrication files tied to the current robot. Native validation and fabrication export require the desktop app with KiCad 9.0.6.
 
 Use **Import Board** in the board Inspector, then **Schematic** in **Export** to get the checked package. For a dual-bus arm, you can keep both connector footprints and route their copper connections in KiCad.
 

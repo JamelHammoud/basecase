@@ -62,9 +62,21 @@ export function useBoard(core: WorkspaceCore) {
     await prepare('define');
   };
   const update = (board: ElectronicsBoard) => {
+    const project = core.docs.projectRef.current;
+    const currentParts = core.docs.partsRef.current;
+    const before = project.electronicsBoard;
+
+    if (
+      electricalSourceJson({ ...before, routed: undefined }) === electricalSourceJson({ ...board, routed: undefined })
+    ) {
+      core.docs.commitBoard(currentParts, board);
+
+      return;
+    }
+
     const parts = reconcileBoardHardware({
-      parts: core.docs.partsRef.current,
-      before: core.docs.projectRef.current.electronicsBoard,
+      parts: currentParts,
+      before,
       after: board,
     });
 

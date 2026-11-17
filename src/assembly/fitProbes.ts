@@ -57,13 +57,20 @@ function insertWall(insert: Placed, host: Placed): number | null {
   const axis = new THREE.Vector3().setFromMatrixColumn(insert.matrix, 1).normalize();
   const half = Math.abs(insert.box.getSize(new THREE.Vector3()).dot(axis)) / 2;
   const spokes = spokesAround(axis);
-  const walls = LEVELS.flatMap((level) => {
-    const from = centre.clone().addScaledVector(axis, level * half * 2);
+  const from = new THREE.Vector3();
+  let minMm: number | null = null;
 
-    return spokes.map((d) => wallAlong(host, from, d)).filter((w): w is number => w !== null);
-  });
+  for (const level of LEVELS) {
+    from.copy(centre).addScaledVector(axis, level * half * 2);
 
-  return walls.length ? Math.min(...walls) : null;
+    for (const direction of spokes) {
+      const wall = wallAlong(host, from, direction);
+
+      if (wall !== null) minMm = minMm === null ? wall : Math.min(minMm, wall);
+    }
+  }
+
+  return minMm;
 }
 
 function insertWalls(placed: Map<string, Placed>, chains: ChainResult): Record<string, InsertWall> {

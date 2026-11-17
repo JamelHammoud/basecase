@@ -126,10 +126,17 @@ export function supportMargin(sole: V3[], com: V3): number {
 
   const hull = convexHull(sole.map((p) => [p[0], p[1]]));
   const p: [number, number] = [com[0], com[1]];
-  const edges = hull.map((a, i) => [a, hull[(i + 1) % hull.length]] as const);
-  const distance = Math.min(...edges.map(([a, b]) => segmentDistance(p, a, b)));
-  const inside =
-    hull.length >= 3 && edges.every(([a, b]) => (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]) > 0);
+  let distance = Infinity;
+  let inside = hull.length >= 3;
+
+  for (let i = 0; i < hull.length; i++) {
+    const a = hull[i];
+    const b = hull[(i + 1) % hull.length];
+
+    distance = Math.min(distance, segmentDistance(p, a, b));
+
+    inside = inside && (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]) > 0;
+  }
 
   return inside ? distance : -distance;
 }

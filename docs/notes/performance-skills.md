@@ -39,3 +39,11 @@ Each target limb previously allocated a filtered source-limb list. With C compat
 The instrumented fixture in `robotSchema.test.ts` has four source limbs of lengths 2, 1, 2 and 3, and three target limbs of length 2. It records six `Math.hypot` calls, equal to the old six calls, while removing three candidate arrays. For twelve compatible source limbs and six targets, the formulas give 132 previous calls and 72 current calls, with six candidate arrays removed. These are operation counts, not timings or a claim about complete installation speed.
 
 Tests check complete joint maps, source-order ties, reusable source limbs, incompatible lengths, edited inputs, target joint order and nonfinite distances. No workflow, UI or artifact format changes, so help steps and screenshots remain current.
+
+## Support margins scan hull edges directly
+
+A whole-app search found one skill support-margin implementation in `skills/feasibilityStance.ts`, called by `feasibilityChecks.ts`. Ordinary feasibility and relaxation attempts share it. Build uses a separate margin calculation with different boundary and degenerate-polygon rules, so it retains that policy.
+
+For H hull vertices, the previous skill calculation allocated H edge tuples, one edge list and one distance list. Direct traversal removes all H+2 arrays and the separate containment traversal. A four-vertex hull avoids six arrays, and a twelve-vertex hull avoids fourteen. The existing projected sole list, hull, center tuple and segment-distance arithmetic remain unchanged. Containment still stops evaluating sides after its first rejection. These are code-derived allocation counts, not timings or a claim about complete training latency.
+
+`supportMargin.test.ts` compares exact results with the preceding calculation for contact counts zero through 64, five center queries and both source orders. Queries include signed zero, NaN and infinity. Existing cases cover strict boundary negative zero, repeated contacts, collinear contacts and source preservation. No action, label or screen state changes, so help steps and screenshots remain accurate. No quarantine, timeout or retry changes apply.

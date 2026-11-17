@@ -747,3 +747,21 @@ For five- and twelve-point paths, an unused Jacobian previously evaluated fourte
 A scratch comparison ran the previous and changed solvers over sixty seeded (`52da7c0252da7c0252da7c0252da7c02`) five- to twelve-point trials, alternating sweep directions and including budget exits. All returned parameter arrays and costs matched exactly. Thirty-eight trials removed derivative work. Instrumented exponential calls fell from 511,521 to 504,082 across the sample. The remaining trials stopped after a rejected step and had no unused accepted-state Jacobian to remove. These are operation counts, not timings or a claim about complete synthesis latency.
 
 `linkageFit.test.ts` checks zero derivative probes for already fitted paths in both directions and immediate budget exits, convergence after one accepted step, initial-state preservation and independent returned storage. Existing `linkage.test.ts` covers complete synthesis, deterministic results and rejected paths. Scratch sources and counts stay in `scratch/linkageFitParity.test.ts` and `scratch/linkage-fit-counts.json` during implementation and are not required by committed tests.
+
+
+## Four-bar seed alignment uses scalar offsets
+
+The whole-app search found one point-set similarity fit for randomized four-bar seeds, `similarity` in `utils/linkage.ts`. Sketch Path and agent synthesis call it through the same fitter. Camera mat homographies solve a separate projective fit with scalar coordinates already, and skill similarity ranks schemas rather than aligning coordinates.
+
+Path framing and both seed centroids now share one scalar accumulator. Each coordinate sum retains source order and divides only after summation. Alignment computes its four centered coordinates and scaled sine and cosine directly into scalars. The returned centroids, origin and fit records remain owned by each call. No cache survives a call, so later point edits read current coordinates.
+
+For N path points and 72 seeds, source-derived accounting removes `72 × (2N + 4) + 1` temporary arrays per synthesis. Five-point and twelve-point paths remove 1,009 and 2,017 arrays respectively. Each centroid visits its point list once instead of twice, with the same coordinate reads and additions. These are source counts, without measured heap usage, timing assertions or a claim about complete synthesis latency.
+
+On November 17, 2026, `scratch/linkage-alignment.test.ts` compared complete similarity transforms with the preceding implementation for 10,000 seeded pairs. Fixtures cover five through twelve points, thirteen coordinate scales, rotations and translations, plus coincident, signed-zero and nonfinite coordinates. Complete ordered synthesis results also matched for a five-point straight path, a ten-point Chebyshev lambda curve, an unreachable path and a translated twelve-point curve. Both scratch tests passed. The session log is `scratch/linkage-alignment.log`. Existing `linkage.test.ts` retains production pipeline coverage without a new narrow test or a timing threshold.
+
+Rechecked [Design a linkage from a path](../../site/content/help/design-a-linkage-from-a-path.md). Point limits, worker scheduling, seed order, ranking, error labels, insertion, undo and agent behavior stay unchanged. Its steps and three captured states remain accurate, so the article and screenshots remain unchanged.
+
+
+[Joints and kinematics](../../site/content/help/joints-and-kinematics.md) also covers the owning guide. Its joint fields, source list, closed-loop behavior, posing and IK describe unchanged downstream behavior. It has no screenshots. Preflight reports both unchanged articles as reminders, and their current content remains accurate under its stated allowance.
+
+Focused validation passed formatting, ESLint, documentation, site copy for 330 pages, types and 106 related tests across 16 files. Related tests took 1.66 seconds. The session log is `scratch/check-alignment.log`. Copy accounting reports zero added, changed or removed strings. No timeout, retry or quarantine changes apply.

@@ -4,7 +4,7 @@ import type { KitJob } from './types';
 
 serve({
   build: async (job: KitJob) => {
-    const bytes = buildKit(job);
+    const bytes = await buildKit(job);
 
     return reply(bytes, [bytes.buffer]);
   },

@@ -29,7 +29,7 @@ You can save your whole scene as a single STL mesh, in millimeters, and open it 
 1. Click **Export** at the top right of the window.
 2. Choose **STL**.
 
-![The Export menu with STL](/help/export-a-robot-package/menu.png)
+![STL in the rover's Export menu](/help/export-a-robot-package/menu.png)
 
 Basecase saves a binary STL file named after the scene. The file includes every visible solid part, rotated so that Z points up, the way slicers expect. Hidden parts are left out.
 

@@ -8,7 +8,7 @@ const localHandlers = async (): Promise<KitHandlers> => {
 
   const { buildKit } = await import('./buildKit');
 
-  return { build: async (job) => ({ result: buildKit(job) }) };
+  return { build: async (job) => ({ result: await buildKit(job) }) };
 };
 
 export function kitClient() {

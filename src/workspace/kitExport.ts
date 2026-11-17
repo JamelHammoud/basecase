@@ -1,3 +1,5 @@
+import { drawingsClient } from '../sheet/drawingsClient';
+import type { DrawingOptions } from '../sheet/drawingTypes';
 import { provenOrderOf } from '../assembly/provenOrder';
 import { knownPurchases } from '../components/build/usePurchases';
 import { generateGuide } from '../guide/generateGuide';
@@ -16,9 +18,11 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 export interface KitRun {
   signal: AbortSignal;
   current: () => WorkspaceCore;
+  drawingOptions?: DrawingOptions;
 }
 
 export function kitGuard(core: WorkspaceCore, run: KitRun) {
+  const active = core.active;
   const name = core.scene.sceneName;
   const id = core.scene.sceneId;
   const printer = JSON.stringify(core.printer);
@@ -29,6 +33,7 @@ export function kitGuard(core: WorkspaceCore, run: KitRun) {
     const current = run.current();
 
     if (
+      current.active !== active ||
       current.docs.partsRef.current !== core.parts ||
       current.docs.projectRef.current !== core.project ||
       current.scene.sceneId !== id ||
@@ -69,6 +74,28 @@ export async function prepareKit(core: WorkspaceCore, run: KitRun) {
   guard();
 
   const measures = await stage('Measuring parts', () => viewport.measureParts());
+
+  guard();
+
+  const drawingClient = drawingsClient();
+  const stopDrawings = () => drawingClient.dispose();
+
+  run.signal.addEventListener('abort', stopDrawings, { once: true });
+
+  const drawings = await stage('Drawings', async () => {
+    try {
+      return await drawingClient.call('files', {
+        source: { id: core.scene.sceneId, name, fingerprint: '' },
+        sourceSnapshot: { parts, project },
+        purchases,
+        parts,
+        options: run.drawingOptions ?? { frame: 'part', plane: 'xy', scale: 0.2 },
+      });
+    } finally {
+      run.signal.removeEventListener('abort', stopDrawings);
+      drawingClient.dispose();
+    }
+  });
 
   guard();
 
@@ -127,6 +154,8 @@ export async function prepareKit(core: WorkspaceCore, run: KitRun) {
 
   return {
     name,
+    drawings,
+    designFingerprint: drawings.manifest.source.fingerprint,
     parts,
     project,
     purchases,
@@ -164,7 +193,7 @@ export async function exportKit(core: WorkspaceCore, run: KitRun): Promise<Uint8
       client.call(
         'build',
         job,
-        Object.values(job.files).map((file) => file.buffer as ArrayBuffer),
+        [...Object.values(job.files), ...Object.values(job.drawings.files)].map((file) => file.buffer as ArrayBuffer),
       ),
     );
 

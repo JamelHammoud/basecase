@@ -9,7 +9,8 @@ import { buildGuidePlan } from '../guide/guidePlan';
 import { approximateScene } from '../guide/guideScene';
 import { guideFingerprint } from '../guide/guideFingerprint';
 import { buildKit, kitManifest } from './buildKit';
-import { kitFixture, kitFixtureNames } from './kit.fixtures';
+import { drawnKitFixture, withCurrentDrawings } from './drawings.fixtures';
+import { kitFixtureNames } from './kit.fixtures';
 import type { KitJob, KitManifest } from './types';
 
 const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
@@ -48,15 +49,15 @@ function expectWorkflow(job: KitJob, manifest: KitManifest) {
 }
 
 describe('manufacturing kit reconciliation', () => {
-  it.each(kitFixtureNames)('reconciles %s through the real producers', (name) => {
-    const job = kitFixture(name);
+  it.each(kitFixtureNames)('reconciles %s through the real producers', async (name) => {
+    const job = await drawnKitFixture(name);
     const screw = job.parts.find((p) => p.hardware)!;
 
     job.purchases = { [hardwareKey(screw.hardware!)]: { onHand: 1 } };
 
     const bom = buildBom(job);
     const manifest = kitManifest(job);
-    const files = unzipSync(buildKit(job));
+    const files = unzipSync(await buildKit(job));
 
     expect(manifest.purchases).toEqual(bom.lines);
     expect(manifest.purchases.find((line) => line.key === hardwareKey(screw.hardware!))).toMatchObject({
@@ -114,8 +115,8 @@ describe('manufacturing kit reconciliation', () => {
     expect(files['servos.csv']).toBeDefined();
   });
 
-  it('records Checks freshness and retains the measured verdict', () => {
-    const job = kitFixture();
+  it('records Checks freshness and retains the measured verdict', async () => {
+    const job = await drawnKitFixture();
 
     job.checks = readinessOf([], { parts: job.parts, fingerprint: 'previous', rows: [] });
     job.checksFingerprint = 'current';
@@ -124,8 +125,8 @@ describe('manufacturing kit reconciliation', () => {
     expect(kitManifest(job).checks.freshness).toBe('current');
   });
 
-  it('keeps owned hardware in its assembly bag', () => {
-    const job = kitFixture();
+  it('keeps owned hardware in its assembly bag', async () => {
+    const job = await drawnKitFixture();
     const key = hardwareKey(job.parts.find((p) => p.hardware)!.hardware!);
 
     job.purchases = { [key]: { onHand: 10 } };
@@ -136,20 +137,20 @@ describe('manufacturing kit reconciliation', () => {
     expect(sum(manifest.packing.filter((line) => line.key === key).map((line) => line.qty))).toBe(2);
   });
 
-  it('packs an exact extra catalog version as unassigned demand', () => {
-    const job = kitFixture();
+  it('packs an exact extra catalog version as unassigned demand', async () => {
+    const job = await drawnKitFixture();
     const key = 'component:feetech-sts3215|c018';
 
     job.project.extras = [{ key, qty: 2 }];
 
-    const manifest = kitManifest(job);
+    const manifest = kitManifest(await withCurrentDrawings(job));
 
     expect(manifest.packing.find((row) => row.key === key)).toMatchObject({ qty: 2, partIds: [], step: null });
     expect(manifest.purchases.find((row) => row.key === key)?.qty).toBe(2);
   });
 
-  it('refuses a driven actuator absent from physical assembly demand', () => {
-    const job = kitFixture();
+  it('refuses a driven actuator absent from physical assembly demand', async () => {
+    const job = await drawnKitFixture();
     const part = job.parts.find((part) => part.id === job.project.joints?.[0].actuators?.[0])!;
 
     part.role = 'cutout';
@@ -159,7 +160,7 @@ describe('manufacturing kit reconciliation', () => {
     );
     job.guide.fingerprint = guideFingerprint(job.name, job.parts, job.project);
 
-    expect(() => buildKit(job)).toThrow('one exact actuator identity');
+    await expect(buildKit(job)).rejects.toThrow('one exact actuator identity');
   });
 
   it.each([
@@ -172,8 +173,8 @@ describe('manufacturing kit reconciliation', () => {
     'extra identity',
     'extra version',
     'step coverage',
-  ] as const)('refuses missing or unsupported %s', (fault) => {
-    const job = kitFixture();
+  ] as const)('refuses missing or unsupported %s', async (fault) => {
+    const job = await drawnKitFixture();
 
     if (fault === 'guide') job.guide.fingerprint = 'stale';
 
@@ -193,11 +194,11 @@ describe('manufacturing kit reconciliation', () => {
 
     if (fault === 'step coverage') job.guide.plan.steps = [];
 
-    expect(() => buildKit(job)).toThrow();
+    await expect(buildKit(job)).rejects.toThrow();
   });
 
-  it('preserves unproven steps without conferring readiness', () => {
-    const job = kitFixture();
+  it('preserves unproven steps without conferring readiness', async () => {
+    const job = await drawnKitFixture();
 
     job.guide.plan.steps[0].unproven = true;
 

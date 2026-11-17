@@ -61,3 +61,7 @@ Measure figures retain a single prepared geometry directly instead of merging it
 - **Training settings.** `src/remoteTraining/bridge.test.ts` checks public-status filtering, configure and deselect calls, and accessible password and text fields. `electron/remoteTraining/routes.test.mjs` checks that trusted IPC and guarded HTTP share one configuration boundary. `e2e/remoteTraining.e2e.test.ts` configures a fixture computer through the pane before using Train and recovering its result after a reload. [Evidence and scope](../notes/testing-toolbar-and-settings.md#training-computer-settings).
 
   The grouped walkthrough chooses two attempts and two concurrent trainers before Connect, starts Stand, reloads and receives a controlled local verdict under the same workflow identity. `remoteTraining/group.test.mjs` checks the actual native child identities and frozen settings. Its browser boundary remains controlled. [Grouped settings evidence](../notes/testing-toolbar-and-settings.md#grouped-training-settings).
+
+### Exported dimensions
+
+Measure remains a temporary viewport overlay. Export ▸ Drawings exports snapshot geometry as PDF and editable SVG sheets, with its own frame and scale controls. Kit uses the same drawing preparation and controls. Drawing dimensions and their numerical allowances are documented in [Build](build.md#mechanical-drawing-export).

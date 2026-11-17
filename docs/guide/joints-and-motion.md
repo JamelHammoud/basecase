@@ -264,6 +264,8 @@ Measurements and limits: [Motion fitting and retargeting performance evidence](.
 
 - **Motion fitting summarizes channels without temporary arrays.** `utils/motionSkeletonStats.ts` scans fitted values for ranges and reads the final trajectory directly for peak speed and acceleration. File import and the agent share these summaries through `motionSkeleton.ts`. Each summary reads a joint angle once per frame and retains only scalar bounds or the preceding angle and speed. No channel array, copied finite-difference window or per-joint trajectory array is built, and extrema avoid argument spreads. [Evidence](../notes/performance-motion.md#motion-fitting-summarizes-channels-without-temporary-arrays).
 
+- **Motion limb requests normalize once per selection.** `utils/motionSkeletonSource.ts` compacts requested limb names before scanning endpoints. Validation and chain generation share `motionLeaves`. Exact names, punctuation and case handling, limb aliases, endpoint-owner names and source order stay unchanged. Each call reads edited requests afresh. `motionSkeletonSource.test.ts` compares complete selected chains and bounds request reads independently of endpoint count. [Evidence](../notes/performance-motion.md#motion-limb-requests-normalize-once-per-selection).
+
 ## Testing coverage
 
 - **Leader arms.** `e2e/leader.e2e.test.ts` creates a leader through ⌘K and checks its new scene tab, follower joint mapping and printing plates. `src/leader/makeLeader.test.ts` checks fixed-base eligibility, joint preservation, forward-kinematics orientation, servo counts, follower mapping and gripper handling. The browser suite does not separately check context-menu visibility. [Removal evidence](../notes/testing-joints-and-motion.md#leader-context-menu).

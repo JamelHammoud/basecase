@@ -160,15 +160,23 @@ export function sourcePoints(value: unknown, names: string[], dimensions: [numbe
 
   if (values.length !== names.length * 3) refuseImage();
 
-  return names.flatMap((name, i) => {
-    const [x, y, visibility] = values.slice(i * 3, i * 3 + 3);
+  const points: ImageKeypoint[] = [];
+
+  for (let i = 0; i < names.length; i++) {
+    const x = values[i * 3];
+    const y = values[i * 3 + 1];
+    const visibility = values[i * 3 + 2];
 
     if (
-      ![0, 1, 2].includes(visibility) ||
+      (visibility !== 0 && visibility !== 1 && visibility !== 2) ||
       (visibility > 0 && (x < 0 || y < 0 || x >= dimensions[0] || y >= dimensions[1]))
     )
       refuseImage();
 
-    return visibility === 0 ? [] : [{ name, x, y, visible: visibility === 2 }];
-  });
+    if (visibility === 0) continue;
+
+    points.push({ name: names[i], x, y, visible: visibility === 2 });
+  }
+
+  return points;
 }

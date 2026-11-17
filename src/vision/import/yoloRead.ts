@@ -1,4 +1,4 @@
-import type { FrameSet, ImageClass, TrainingFrame } from '../frameSet';
+import type { FrameSet, ImageClass, ImageKeypoint, TrainingFrame } from '../frameSet';
 import { decodeSourceImage } from './imageDecode';
 import { annotationPixels, boxPixels, polygonPixels } from './sourceGeometry';
 import { IMAGE_LIMITS, number, refuseImage, sourceBytes, sourceText, type ImageSourceFiles } from './sourceFiles';
@@ -39,17 +39,22 @@ function yoloPoints(cells: number[], context: YoloContext, category: ImageClass)
 
   if (!shape) return [];
 
-  return Array.from({ length: shape[0] }, (_, i) => {
+  const points: ImageKeypoint[] = [];
+
+  for (let i = 0; i < shape[0]; i++) {
     const at = 4 + i * shape[1];
-    const [x, y] = cells.slice(at, at + 2);
+    const x = cells[at];
+    const y = cells[at + 1];
     const visibility = shape[1] === 3 ? cells[at + 2] : 2;
 
-    if (x >= 1 || y >= 1 || ![0, 1, 2].includes(visibility)) refuseImage();
+    if (x >= 1 || y >= 1 || (visibility !== 0 && visibility !== 1 && visibility !== 2)) refuseImage();
 
-    return visibility === 0
-      ? []
-      : [{ name: category.keypoints![i], x: x * width, y: y * height, visible: visibility === 2 }];
-  }).flat();
+    if (visibility === 0) continue;
+
+    points.push({ name: category.keypoints![i], x: x * width, y: y * height, visible: visibility === 2 });
+  }
+
+  return points;
 }
 
 function yoloAnnotation(line: string, context: YoloContext, index: number) {

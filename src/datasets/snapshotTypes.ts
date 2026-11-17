@@ -2,6 +2,7 @@ import { readStoredTry, type StoredTry, type TrySplit } from '../cases/tryFile';
 import type { FrozenImageSample } from './snapshotImages';
 import { isHash } from '../skills/hash';
 import type { Dataset } from './datasetFile';
+import { validImageGroups } from '../vision/conditions';
 
 export type SnapshotDataset = Pick<Dataset, 'id' | 'name' | 'createdAt' | 'caseId' | 'sceneId' | 'seed'>;
 
@@ -68,7 +69,7 @@ function frozenSample(v: unknown): v is FrozenTrySample {
   );
 }
 
-const frozenImage = (v: unknown): v is FrozenImageSample =>
+export const isFrozenImageSample = (v: unknown): v is FrozenImageSample =>
   object(v) &&
   id(v.frameSetId) &&
   id(v.frameId) &&
@@ -76,7 +77,8 @@ const frozenImage = (v: unknown): v is FrozenImageSample =>
   isHash(v.hash) &&
   isHash(v.content) &&
   split(v.split) &&
-  (v.explicit === undefined || split(v.explicit));
+  (v.explicit === undefined || split(v.explicit)) &&
+  (v.groups === undefined || validImageGroups(v.groups));
 
 const frozenDataset = (v: unknown): v is SnapshotDataset =>
   object(v) &&
@@ -101,7 +103,7 @@ export function readSnapshot(v: unknown): DatasetSnapshot | null {
     v.samples.every(frozenSample) &&
     Array.isArray(v.images) &&
     v.images.length <= 100_000 &&
-    v.images.every(frozenImage) &&
+    v.images.every(isFrozenImageSample) &&
     modelHashFits(v.modelHash, v.samples);
 
   return valid ? structuredClone(v as unknown as DatasetSnapshot) : null;

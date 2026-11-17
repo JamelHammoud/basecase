@@ -2,7 +2,14 @@ import { loadDatasets, saveDataset } from '../datasets/datasetStore';
 import { newDataset } from '../datasets/datasetFile';
 import { datasetWrites } from '../datasets/datasetStore/datasetWrites';
 import type { FrameSet } from '../vision/frameSet';
-import { hashFrameSet, loadFrameSet, loadFrameSetManifest, saveFrameSet } from '../vision/frameSetStore';
+import type { FrameSetManifest } from '../vision/frameSetStoreTypes';
+import {
+  hashFrameSet,
+  loadFrameSet,
+  loadFrameSetManifest,
+  saveFrameSet,
+  saveFrameSetMetadata,
+} from '../vision/frameSetStore';
 import { mergeFrameLabels } from '../vision/labelEditsClient';
 
 const write = datasetWrites();
@@ -12,6 +19,9 @@ const labelState = (set: FrameSet) => ({
 });
 
 export const saveLabelFrames = (set: FrameSet) => write('frame-labels', () => persistLabels(set));
+
+export const editLabelMetadataBatch = <T>(edit: (save: typeof persistMetadata) => Promise<T>): Promise<T> =>
+  write('frame-labels', () => edit(persistMetadata));
 
 export const saveLabelEdits = (previous: FrameSet, next: FrameSet) =>
   editLabelFrames(
@@ -74,6 +84,15 @@ async function persistLabels(set: FrameSet) {
   await saveFrameSet(set);
 
   const hash = await hashFrameSet(set);
+
+  return persistDatasetMembers(set, hash);
+}
+
+async function persistMetadata(set: FrameSetManifest, expected: FrameSetManifest) {
+  return persistDatasetMembers(set, await saveFrameSetMetadata(set, expected));
+}
+
+async function persistDatasetMembers(set: FrameSetManifest, hash: string) {
   const datasets = await loadDatasets();
   const classes = set.classes.map((category) => category.name);
   const members = { frameSetId: set.id, frameIds: set.frames.map((frame) => frame.id), hash, classes };

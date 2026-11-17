@@ -9,6 +9,11 @@ import type { TrainingEvaluation, TrainingEvaluationInput } from './types';
 import { comparisonImages } from './inspection';
 import { verifyEvidence } from './evidence';
 import { inspectionImage, type InspectionImageInput } from './inspectionImage';
+import { frozenImageGroups, type ImageGroup } from './conditionEvaluation';
+import { conditionGroupJob } from './conditionGroupJob';
+import { inspectionContext } from './inspectionContext';
+
+const inspection = inspectionContext();
 
 export const evaluationJobs = {
   sourceIdentity: async ({ bytes, stored }: { bytes: Uint8Array; stored: StoredTry }) =>
@@ -20,6 +25,8 @@ export const evaluationJobs = {
   },
   frameHash: async (frame: TrainingFrame) => reply(await frameHash(frame)),
   inspectionIndex: async (input: { candidate: TrainingEvaluation; incumbent: TrainingEvaluation }) => {
+    const token = inspection.begin(input);
+
     await verifyEvidence(input.candidate);
     await verifyEvidence(input.incumbent);
 
@@ -29,7 +36,29 @@ export const evaluationJobs = {
       (image) => [candidate.get(image.candidate)!, incumbent.get(image.incumbent)!] as const,
     );
 
-    return reply(indices);
+    const groups = frozenImageGroups(input.candidate);
+
+    inspection.remember(token, input);
+
+    return reply({
+      indices,
+      groups,
+      unlabeled: input.candidate.snapshot.filter((sample) => !sample.groups?.labels.length).length,
+    });
+  },
+  inspectionGroup: async (input: { context: string; group: ImageGroup; port: MessagePort }) => {
+    try {
+      return reply(
+        await conditionGroupJob({ ...inspection.read(input.context), group: input.group, port: input.port }),
+      );
+    } finally {
+      input.port.close();
+    }
+  },
+  releaseInspection: (context: string) => {
+    inspection.release(context);
+
+    return reply(true);
   },
   inspectionImage: async (input: InspectionImageInput) => {
     const result = await inspectionImage(input);

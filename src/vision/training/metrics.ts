@@ -2,12 +2,13 @@ import { canonicalTest, sampleKey } from './evaluationIdentity';
 import { sha256 } from '../../cases/tries';
 import { frameHash, type FrameSet, type TrainingFrame } from '../frameSet';
 import type { FrozenImageSample } from '../../datasets/snapshotImages';
-import type { TrainingEvaluation, TrainingEvaluationInput, TrainingKind } from './types';
+import type { TrainingEvaluation, TrainingEvaluationInput, TrainingKind, TrainingTask } from './types';
 import { classificationMetrics } from './metricsClassification';
 import { buildEvidence, checkEvidenceFrameCount } from './evidence';
 import type { ImageDiagnostics } from './evidenceTypes';
 import { objectMetrics, objectPrimary, type EvaluatedFrame } from './metricsObjects';
 import { trainingMetrics, validateEvaluationInput, validatePrediction } from './metricsValidation';
+import { evaluationImageGroups } from '../conditions';
 
 export const defaultTrainingMetric = (kind: TrainingKind) => trainingMetrics[kind];
 
@@ -52,7 +53,10 @@ function remapFrame(frame: TrainingFrame, set: FrameSet, input: TrainingEvaluati
   return { ...frame, annotations };
 }
 
-async function evaluatedRows(input: TrainingEvaluationInput, test: FrozenImageSample[]): Promise<EvaluatedFrame[]> {
+export async function evaluatedRows(
+  input: TrainingEvaluationInput,
+  test: FrozenImageSample[],
+): Promise<EvaluatedFrame[]> {
   const predictions = new Map(input.predictions.map((prediction) => [sampleKey(prediction), prediction]));
 
   const rows = await Promise.all(
@@ -86,6 +90,15 @@ function inferenceCost(input: TrainingEvaluationInput) {
   };
 }
 
+export function scoreTrainingRows(rows: EvaluatedFrame[], task: TrainingTask, diagnostics?: ImageDiagnostics[][]) {
+  const perClass =
+    task.kind === 'classify' ? classificationMetrics(rows, task, diagnostics) : objectMetrics(rows, task, diagnostics);
+  const correct = perClass.reduce((sum, category) => sum + category.truePositive, 0);
+  const score = task.kind === 'classify' ? correct / Math.max(1, rows.length) : objectPrimary(perClass, task);
+
+  return { primary: rows.length ? score : null, perClass };
+}
+
 export async function evaluateTraining(input: TrainingEvaluationInput): Promise<TrainingEvaluation> {
   validateEvaluationInput(input);
 
@@ -95,13 +108,8 @@ export async function evaluateTraining(input: TrainingEvaluationInput): Promise<
 
   const rows = await evaluatedRows(input, realTest);
   const diagnostics: ImageDiagnostics[][] = rows.map(() => []);
-  const perClass =
-    input.task.kind === 'classify'
-      ? classificationMetrics(rows, input.task, diagnostics)
-      : objectMetrics(rows, input.task, diagnostics);
-  const correct = perClass.reduce((sum, category) => sum + category.truePositive, 0);
-  const score =
-    input.task.kind === 'classify' ? correct / Math.max(1, rows.length) : objectPrimary(perClass, input.task);
+  const scores = scoreTrainingRows(rows, input.task, diagnostics);
+  const snapshot = evaluationImageGroups(input.snapshot, input.sets);
 
   const testHash = await sha256(canonicalTest(realTest));
 
@@ -110,10 +118,10 @@ export async function evaluateTraining(input: TrainingEvaluationInput): Promise<
     protocol: 'vision-eval-v1',
     task: structuredClone(input.task),
     modelHash: input.modelHash,
-    snapshot: structuredClone(input.snapshot),
+    snapshot: structuredClone(snapshot),
     realTest,
     testHash,
-    evidence: await buildEvidence({ input, realTest, testHash, diagnostics }),
-    metrics: { primary: rows.length ? score : null, perClass, inference: inferenceCost(input) },
+    evidence: await buildEvidence({ input: { ...input, snapshot }, realTest, testHash, diagnostics }),
+    metrics: { ...scores, inference: inferenceCost(input) },
   };
 }

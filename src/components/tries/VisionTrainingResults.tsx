@@ -78,6 +78,9 @@ export function VisionTrainingResults({ attempts, targets, onApply, context }: V
           ))}
           <p className="text-[12px] text-white/60">{attempt.reason}</p>
           {attempt.inspection && <Button onClick={() => setInspecting(attempt.id)}>Inspect Images</Button>}
+          {!attempt.inspection && (
+            <p className="text-[12px] text-white/60">Condition comparison is unavailable for this saved evidence.</p>
+          )}
           {attempt.retained && (
             <VisionTrainingApply runId={attempt.id} targets={attempt.targets ?? targets} onApply={onApply} />
           )}

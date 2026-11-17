@@ -4,6 +4,7 @@ import type { FrameSet } from '../vision/frameSet';
 import { loadFrameSet } from '../vision/frameSetStore';
 import { imageDatasetWorker } from '../vision/imageDatasetWorker';
 import type { ImageSplit } from '../vision/imageSplit';
+import type { ImageGroupMembership } from '../vision/conditions';
 
 export interface FrozenImageSample {
   frameSetId: string;
@@ -13,6 +14,7 @@ export interface FrozenImageSample {
   content: string;
   split: ImageSplit;
   explicit?: ImageSplit;
+  groups?: ImageGroupMembership;
 }
 
 export async function freezeImages(
@@ -39,15 +41,15 @@ export async function restoreImages(
   samples: FrozenImageSample[],
   load: (hash: string) => Promise<Uint8Array | null> = loadDatasetContent,
 ): Promise<FrameSet[]> {
-  const sets = new Map<string, { set: FrameSet; classes: string }>();
+  const sets = new Map<string, { set: FrameSet; metadata: string }>();
 
   for (const sample of samples) {
     const bytes = await frozenContent(sample, load);
     const set = await imageDatasetWorker.call('unpackSnapshot', { sample, bytes });
     const previous = sets.get(set.id);
-    const classes = JSON.stringify(set.classes);
+    const metadata = JSON.stringify({ classes: set.classes, conditions: set.conditions });
 
-    if (previous && previous.classes !== classes) throw new Error('The frozen image classes changed.');
+    if (previous && previous.metadata !== metadata) throw new Error('The frozen image metadata changed.');
 
     if (previous) {
       previous.set.frames.push(...set.frames);
@@ -56,7 +58,7 @@ export async function restoreImages(
       continue;
     }
 
-    sets.set(set.id, { set, classes });
+    sets.set(set.id, { set, metadata });
   }
 
   return [...sets.values()].map(({ set }) => set);

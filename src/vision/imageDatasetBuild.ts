@@ -4,6 +4,7 @@ import { frameHash, frameSetHash, type FrameSet, type ImageClass, type TrainingF
 import { exportYolo } from './yoloExport';
 import type { FrozenImageSample } from '../datasets/snapshotImages';
 import type { ImageSplit } from './imageSplit';
+import { MAX_CONDITIONS } from './conditions';
 
 const imageDatasetCard = new TextEncoder().encode(
   [
@@ -23,6 +24,20 @@ const imageDatasetCard = new TextEncoder().encode(
     '',
   ].join('\n'),
 );
+
+function mergedConditions(sets: FrameSet[]): string[] {
+  const conditions = new Set<string>();
+
+  for (const set of sets) {
+    for (const name of set.conditions ?? []) {
+      conditions.add(name);
+
+      if (conditions.size > MAX_CONDITIONS) throw new Error('Use at most 32 image conditions.');
+    }
+  }
+
+  return [...conditions];
+}
 
 function mergedClasses(sets: FrameSet[]): ImageClass[] {
   const categories = new Map<string, ImageClass>();
@@ -133,7 +148,9 @@ export async function buildImageDataset(
   samples?: FrozenImageSample[],
 ): Promise<Record<string, Uint8Array>> {
   const classes = mergedClasses(sets);
+  const conditions = mergedConditions(sets);
   const selected = samples ? await frozenFrames(samples, sets, classes) : await memberFrames(dataset, sets, classes);
+
   const set: FrameSet = {
     version: 1,
     id: dataset.id,
@@ -143,6 +160,7 @@ export async function buildImageDataset(
     seed: dataset.seed,
     classes,
     ...selected,
+    ...(sets.some((set) => set.conditions !== undefined) ? { conditions } : {}),
     createdAt: dataset.createdAt,
   };
   const prefix = (folder: string, files: Record<string, Uint8Array>) =>

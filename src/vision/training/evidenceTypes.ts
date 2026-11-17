@@ -20,6 +20,7 @@ export interface PredictionEvidence {
   hash: string;
   modelHash: string;
   testHash: string;
+  groupsHash?: string;
   frames: {
     sample: FrozenImageSample;
     prediction: EvidencePrediction;

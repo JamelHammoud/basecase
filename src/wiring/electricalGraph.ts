@@ -1,7 +1,32 @@
-import type { ElectricalEndpoint, ElectricalNet, ElectricalNode, ElectricalPartMap } from './electricalTypes';
+import type {
+  ElectricalEndpoint,
+  ElectricalFunction,
+  ElectricalNet,
+  ElectricalNode,
+  ElectricalPartMap,
+} from './electricalTypes';
 import { compareElectricalIds } from './electricalSource';
 
 export const nodeKey = (node: ElectricalNode) => JSON.stringify([node.reference, node.pin]);
+
+function joinCommon(
+  ends: ElectricalEndpoint[],
+  kind: ElectricalFunction,
+  join: (a: ElectricalNode, b: ElectricalNode) => void,
+) {
+  let first: ElectricalNode | undefined;
+
+  for (const end of ends) {
+    for (const pin of end.map?.pins ?? []) {
+      if (pin.function !== kind) continue;
+
+      const node = { reference: end.reference, pin: pin.number };
+
+      if (first) join(first, node);
+      else first = node;
+    }
+  }
+}
 
 export function electricalGraph(endpoints: ElectricalEndpoint[]) {
   const parents = new Map<string, string>();
@@ -31,15 +56,7 @@ export function electricalGraph(endpoints: ElectricalEndpoint[]) {
     parents.set(root(bk), root(ak));
   };
   const common = (map: ElectricalPartMap, ends: ElectricalEndpoint[]) => {
-    for (const kind of map.common) {
-      const matching = ends.flatMap((end) =>
-        (end.map?.pins ?? [])
-          .filter((pin) => pin.function === kind)
-          .map((pin) => ({ reference: end.reference, pin: pin.number })),
-      );
-
-      matching.slice(1).forEach((node) => join(matching[0], node));
-    }
+    for (const kind of map.common) joinCommon(ends, kind, join);
   };
   const nets = (): ElectricalNet[] => {
     const groups = new Map<string, ElectricalNode[]>();

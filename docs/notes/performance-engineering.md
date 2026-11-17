@@ -345,6 +345,14 @@ A separate real electrical worker-service probe completed routing and validation
 
 The review found that the viewport preview key still serialized routing and fabrication declarations, although geometry analysis already excluded them. The preview, geometry analysis and mounting-edit comparison now share the placement-only definition. Declaration edits no longer invalidate that preview key. The scene persistence test checks metadata exclusion and continued invalidation for an edge-clearance edit. This is a key-invalidation regression check, not a new timing measurement. The native measurements above were not rerun during review.
 
+## Common electrical rails join pins directly
+
+A whole-app search found one common-rail constructor in `wiring/electricalGraph.ts`, called by `electrical.ts` for each mapped part. Schematic exports, board inputs and electrical Checks share that projection. Cable connections retain their existing explicit joins.
+
+For each common function across E endpoints, the previous constructor allocated E filtered pin lists, E mapped node lists, one flattened matching list and one suffix copy. Direct joining removes all 2E+2 lists while preserving matching-node objects, pin scans and union operations. Three common functions over 48 endpoints therefore avoid 294 temporary lists per call. These are code-derived allocation counts, without timing measurements or a claim about total export latency.
+
+`electricalGraph.test.ts` compares complete net records with the previous constructor at zero, one, two, three, four, twelve and 48 endpoints. Batches include missing maps, singleton functions, reversed endpoint order, repeated common functions, overlapping calls and a preexisting cable connection. It checks unchanged inputs and independent graph instances. Existing electrical projection tests retain source propagation, domain and export coverage. No action, label or visible state changes, so existing help steps and captures remain accurate.
+
 ## Payload hand centers accumulate during selection
 
 Whole-app search found one Payload hand-point estimator in `utils/engineeringPayload.ts`. Build and agent engineering reports share it. It formerly filtered nearby corners, then traversed that list separately for X, Y and Z averages. The proximity scan now accumulates all three sums and the count directly. The far-corner selection and original corner list remain unchanged. The selected far corner's half-reach radius is calculated once before the proximity scan.

@@ -1,4 +1,5 @@
 import { maskRows, rowBandWidths } from './maskRows';
+import { maskRowLeft, maskRowRight } from './maskRowEdges';
 
 export interface Profile {
   bands: number[];
@@ -28,15 +29,21 @@ export function maskBounds({ data, width: w, height: h }: Mask, region?: MaskBox
     y0 = h,
     y1 = -1;
 
-  for (let y = top; y <= bottom; y++)
-    for (let x = left; x <= right; x++) {
-      if (!data[y * w + x]) continue;
+  if (left > right || Number.isNaN(left) || Number.isNaN(right)) return { x0, x1, y0, y1 };
 
-      x0 = Math.min(x0, x);
-      x1 = Math.max(x1, x);
-      y0 = Math.min(y0, y);
-      y1 = Math.max(y1, y);
-    }
+  const last = Number.isInteger(left) ? Math.floor(right) : right;
+
+  for (let y = top; y <= bottom; y++) {
+    const offset = y * w;
+    const first = maskRowLeft(data, offset, left, last);
+
+    if (first < 0) continue;
+
+    x0 = Math.min(x0, first);
+    x1 = Math.max(x1, maskRowRight(data, offset, last, first));
+    y0 = Math.min(y0, y);
+    y1 = y;
+  }
 
   return { x0, x1, y0, y1 };
 }

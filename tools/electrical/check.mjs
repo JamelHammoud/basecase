@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { build } from 'rolldown';
 import { unzipSync, strFromU8 } from 'three/examples/jsm/libs/fflate.module.js';
 import { xmlConnections } from './netlist.mjs';
+import { checkBoard } from './boardCheck.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const output = path.join(root, 'scratch', 'electrical', 'acceptance');
@@ -15,8 +16,8 @@ const image = 'kicad/kicad:9.0.6';
 const docker = process.argv.includes('--docker');
 const exportOnly = process.argv.includes('--export-only');
 
-function cli(args, dir) {
-  const command = docker ? 'docker' : 'kicad-cli';
+function cli(args, dir, tool = 'kicad-cli') {
+  const command = docker ? 'docker' : tool;
   const inputs = docker
     ? [
         'run',
@@ -30,7 +31,7 @@ function cli(args, dir) {
         '--workdir',
         '/work',
         '--entrypoint',
-        'kicad-cli',
+        tool,
         image,
         ...args,
       ]
@@ -83,6 +84,7 @@ async function negativeControls(dir, fixture) {
 
 async function checkFixture(fixture) {
   const dir = path.join(output, fixture.name);
+  const board = await checkBoard({ fixture, dir, cli, exportOnly, root });
 
   await fs.mkdir(dir, { recursive: true });
 
@@ -111,13 +113,14 @@ async function checkFixture(fixture) {
 
   assert.equal(busRail.nominalV, fixture.expected.expectedServoVolts);
 
-  if (exportOnly) return { name: fixture.name, bytes: fixture.bytes.length, validation: 'export-only' };
+  if (exportOnly) return { name: fixture.name, bytes: fixture.bytes.length, board, validation: 'export-only' };
 
   await validate(dir, fixture.expected.groups);
 
   if (fixture.name === 'tethered-so101') await negativeControls(dir, fixture);
 
   return {
+    board,
     name: fixture.name,
     bytes: fixture.bytes.length,
     validation: 'KiCad 9.0.6 ERC and independent netlist',
@@ -136,13 +139,24 @@ async function main() {
     await build({
       input: path.join(root, 'tools/electrical/fixtures.ts'),
       platform: 'node',
-      output: { file: bundle, format: 'esm' },
+      transform: { define: { 'import.meta.env.MODE': '"production"', 'import.meta.env.BASE_URL': '"/"' } },
+      plugins: [
+        {
+          name: 'electrical-node-asset',
+          resolveId: (id) =>
+            id === 'manifold-3d/manifold.wasm?url' ? path.join(root, 'tools/cli/assetUrl.mjs') : null,
+        },
+      ],
+      output: { file: bundle, format: 'esm', codeSplitting: false },
     });
 
     const { acceptanceFixtures } = await import(pathToFileURL(bundle).href);
-    const fixtures = await acceptanceFixtures();
+    const selectedName = process.argv.includes('--fixture')
+      ? process.argv[process.argv.indexOf('--fixture') + 1]
+      : undefined;
+    const fixtures = await acceptanceFixtures(selectedName);
 
-    assert.equal(fixtures.length, 10);
+    assert.equal(fixtures.length, selectedName ? 1 : 10);
 
     if (!exportOnly) assert.equal(cli(['version'], output), '9.0.6');
 

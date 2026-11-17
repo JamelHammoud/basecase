@@ -52,6 +52,10 @@ Ask the sender to reopen the original scene and export it again with **Export** 
 
 A Case's hinge or slide has a damaged reference, axis, limit or physics value. Basecase refuses that fixture when opening the scene. Ask the sender to reopen the original scene and export it again with **Export** ▸ **Scene**.
 
+## The message names a board definition
+
+The scene’s board has damaged identities, dimensions, mounting constraints or placement records. Ask the sender to reopen the original scene and export it again with **Export** ▸ **Scene**.
+
 ## Double-clicking the file does nothing
 
 Basecase doesn't open `.basecase` files from Finder or File Explorer. To open one, drop the file on the canvas, or use **Open Scene File** in [[⌘K]].

@@ -46,10 +46,13 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Parts attached | Whether each part is held by something | “These parts aren’t attached to anything, so they’d fall loose.” |
 | Screws | Every screw, insert and the hole it goes into | Screws ending in air, with no hole, too long, too short, off their holes or too deep. Empty inserts. Holes too small for an insert. Thin walls around an insert |
 | Assembly | Whether a build order exists | “A screwdriver can’t reach these screws, in any build order.” and “These parts can’t be put in place, in any build order.” |
+| Board fit | A defined board’s outline, mounting hardware, footprints and plug access | Components or holes outside the outline, collisions, inaccessible plugs and unresolved geometry |
 | Fit | Parts that overlap, and room for battery leads | “These parts overlap by … mm.” and “There isn’t enough room for the battery’s wires and connector.” |
 | Printing | Each printed part against your printer | Parts too big for the plate, walls too thin to print, and parts meant to be clear |
 | Real parts | Where every part comes from | Placeholders, parts with nothing saying where to get them, and parts whose link and numbers aren't checked |
 | Repairs | How much comes apart to replace a part | “Replacing these means taking a lot apart.” as a note |
+
+[Fit an electronics board](/help/fit-an-electronics-board) covers board placement. Electrical requirements and unrouted copper remain separate blockers.
 
 For an Onshape robot, **Assembly** also lists **Fixed Mates** as notes. A cylindrical mate keeps its hinge, and the note names only its held slide, such as “Axle slide imports as fixed.” Other unsupported mates stay fixed. These notes don't block Ready to build.
 

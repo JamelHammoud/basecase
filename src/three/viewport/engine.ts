@@ -220,7 +220,7 @@ export class ViewportEngine {
 
     if (props.sceneKey !== previous.sceneKey) frameScene(this.ctx.stage, props.parts);
 
-    if (props.pose !== previous.pose && !props.buildStep) this.ctx.layer.pose = props.pose ?? new Map();
+    this.ctx.layer.syncPose(previous, props);
 
     if (props.buildStep !== previous.buildStep) this.buildStep.show(props.buildStep ?? null);
 
@@ -229,7 +229,7 @@ export class ViewportEngine {
     if (meshChanged || previous.worldParts !== props.worldParts) this.syncWorld();
 
     if (meshChanged || changed(previous, props, ['parts', 'selectedPartIds'])) this.syncScene();
-    else if (props.pose !== previous.pose) this.applyPose();
+    else if (props.pose !== previous.pose || props.poseOwners !== previous.poseOwners) this.applyPose();
 
     if (changed(previous, props, GIZMO_KEYS) || Boolean(previous.onGrab) !== Boolean(props.onGrab))
       this.gizmo.refresh();
@@ -282,8 +282,10 @@ export class ViewportEngine {
     const { ctx } = this;
     const withRest = <T>(run: () => T) => ctx.layer.withRest(run, () => this.applyPose());
     const unbatched = <T>(run: () => T) => ctx.batches.unbatched(run);
-    const solidShapes = (visibleOnly: boolean) => snapshotShapes(measure.solidObjects(ctx, { visibleOnly }));
-    const restSolids = (visibleOnly: boolean) => withRest(() => solidShapes(visibleOnly));
+    const solidShapes = (visibleOnly: boolean, includeDerived = false) =>
+      snapshotShapes(measure.solidObjects(ctx, { visibleOnly, includeDerived }));
+    const restSolids = (visibleOnly: boolean, includeDerived = false) =>
+      withRest(() => solidShapes(visibleOnly, includeDerived));
     const restSolidsWith = (ids: string[]) => withRest(() => snapshotSolidsWith(ctx, ids));
     const restShapes = (ids?: string[]) => withRest(() => snapshotShapes(measure.partObjects(ctx, ids)));
     const camera = <T>(run: () => T) => {
@@ -362,8 +364,8 @@ export class ViewportEngine {
           withRest(() => snapshotShapes(measure.partObjects(ctx, [...task.hosts, ...task.fits.map((f) => f.id)]))),
           task,
         ),
-      exportStl: () => stlIn(restSolids(true)),
-      exportUsdz: () => exportUsdz(measure.solidObjects(ctx, { visibleOnly: true })),
+      exportStl: () => stlIn(restSolids(true, true)),
+      exportUsdz: () => exportUsdz(measure.solidObjects(ctx, { visibleOnly: true, includeDerived: true })),
       partTriangles: (id) => measure.partTriangles(ctx, id),
       servoOutput: (id) => withRest(() => measure.servoOutput(ctx, id)),
       jointAxis: (query) =>

@@ -2,6 +2,7 @@ import { electricalClient } from '../wiring/electricalClient';
 import { electricalSnapshot, electricalWalk } from '../wiring/electricalSnapshot';
 import { freshWalk } from './storedWalk';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { sourcedMeshFiles } from '../three/componentMeshes';
 
 export interface SchematicRun {
   signal: AbortSignal;
@@ -39,8 +40,12 @@ export async function schematicExport(core: WorkspaceCore, run: SchematicRun) {
   run.signal.addEventListener('abort', stop, { once: true });
 
   try {
+    const meshFiles = core.project.electronicsBoard ? await sourcedMeshFiles(core.parts) : undefined;
+
+    guard();
+
     const dispatchStart = performance.now();
-    const pending = client.call('build', input);
+    const pending = client.call('build', { ...input, meshFiles });
 
     performance.measure('schematic:dispatch', { start: dispatchStart });
 

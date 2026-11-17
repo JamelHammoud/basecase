@@ -31,4 +31,6 @@ You can send a whole design to someone as a single .basecase file. They can open
 
 The file includes the parts, joints, poses, comments, Cases, Routines, [Study](/help/study-design-options) settings and results, and the scene's goal. Imported worlds come with their collider meshes, textures and optional splats, so the recipient doesn't need the original capture files. Print history, the print service and its quotes, trained policies, Case tries, taught skills, the build guide and your chat with the agent stay on your computer and aren't in the file. To learn why, see [Scenes, files and the Library](/help/scenes-files-and-the-library).
 
+An [electronics board](/help/fit-an-electronics-board) travels with the scene, including its mounting constraints, placement identities and locks. The recipient can edit those placements.
+
 To export from the menu instead, choose **File** ▸ **Export Scene**. Or choose **Export Scene** in [[⌘K]]. The person you send the file to can open it by following [Open a shared scene](/help/open-a-shared-scene).

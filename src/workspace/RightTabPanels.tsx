@@ -66,12 +66,13 @@ function useVisitedTabs(tab: RightTab) {
   return visited;
 }
 
-function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) {
+function BuildTab({ core, agent, actions }: RightTabPanelsProps) {
   const { docs, parts, project, scene, setSelectedIds, showToast, guide, printing, studio, tool, simTraining } = core;
   const { setProject } = docs;
 
   return (
     <BuildPanel
+      onDefineBoard={() => void actions.board.define()}
       parts={parts}
       sceneName={scene.sceneName}
       project={project}
@@ -261,7 +262,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
         <InspectTab core={core} actions={actions} />
       </TabActivity>
       <TabActivity tab="build" current={current} visited={visited}>
-        <BuildTab core={core} agent={agent} />
+        <BuildTab core={core} agent={agent} actions={actions} />
       </TabActivity>
       <TabActivity tab="acp" current={current} visited={visited}>
         <AgentTab core={core} agent={agent} />

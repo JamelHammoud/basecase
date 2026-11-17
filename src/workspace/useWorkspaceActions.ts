@@ -17,6 +17,7 @@ import { useRobotInsert } from './useRobotInsert';
 import { useSelectionOps } from './useSelectionOps';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { useWrapRobot } from './useWrapRobot';
+import { useBoard } from './useBoard';
 
 export function useWorkspaceActions(core: WorkspaceCore) {
   const pose = usePoseActions(core);
@@ -49,6 +50,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
   });
 
   return {
+    board: useBoard(core),
     pose,
     robots,
     creation,

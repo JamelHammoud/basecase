@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useScrollFade } from '../design-system';
+import { BoardBuildAction } from './build/BoardBuildAction';
 import type { PrintMaterial, ProjectSettings, PurchaseRecord, ScenePart } from '../types/robotics';
-import { onHandOf, withOnHand, withPrice } from '../utils/onHand';
+import { onHandOf, withPrice } from '../utils/onHand';
 import type { ShowToast } from '../workspace/types';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import { useMoney } from '../utils/useMoney';
@@ -10,7 +11,7 @@ import type { Printing } from '../workspace/usePrinting';
 import { isBuilt } from '../guide/guidePlan';
 import type { BuildGuide } from '../workspace/useBuildGuide';
 import { BuyList } from './build/BuyList';
-import { onHandAmount } from './build/buyLine';
+import { saveLineOnHand } from './build/saveLineOnHand';
 import { CheckSheet } from './build/CheckSheet';
 import { ChecksSection } from './build/ChecksSection';
 import { GuideSection } from './build/GuideSection';
@@ -27,6 +28,7 @@ import type { Viewport3DHandle } from './Viewport3D';
 import { useBomWiring } from './build/useBomWiring';
 
 interface BuildPanelProps {
+  onDefineBoard: () => void;
   parts: ScenePart[];
   sceneName: string;
   project: ProjectSettings;
@@ -57,6 +59,7 @@ function supportByMaterial(print: PrintReport | null) {
 const fileStem = (sceneName: string) => sceneName.replace(/[^\w-]+/g, '-').replace(/^-|-$/g, '') || 'robot';
 
 export const BuildPanel: React.FC<BuildPanelProps> = ({
+  onDefineBoard,
   parts,
   sceneName,
   project,
@@ -100,18 +103,13 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
     await savePurchase(line.key, withPrice(purchases[line.key], record));
     setChecking(null);
   };
-  const saveOnHand = async (line: BomLine, count: number) => {
-    const before = purchases[line.key];
-
-    await savePurchase(line.key, withOnHand(before, count));
-    onToast(`Saved ${onHandAmount(count, line.unit)} for ${line.name}`, {
-      action: { label: 'Undo', onClick: () => void savePurchase(line.key, before ?? null) },
-    });
-  };
+  const saveOnHand = (line: BomLine, count: number) =>
+    saveLineOnHand({ line, count, purchases, savePurchase, onToast });
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       <div ref={setScroller} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        <BoardBuildAction exists={!!project.electronicsBoard} onClick={onDefineBoard} />
         <ChecksSection
           readiness={readiness.current}
           checking={readiness.checking}

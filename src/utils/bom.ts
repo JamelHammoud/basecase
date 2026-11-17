@@ -29,6 +29,7 @@ import { wiringSupplies } from '../wiring/wiringSupplies';
 import { sceneTether } from './powerSources';
 import { sheetOf } from '../sheet/materials';
 import { describeSheet, sheetKey } from './bomSheet';
+import { boardPurchases } from '../wiring/boardPurchases';
 
 export { FILAMENT_MARGIN, STALE_DAYS, localDate } from './bomTypes';
 export type { Bom, BomCategory, BomLine, PriceStatus, PrintedPart } from './bomTypes';
@@ -210,6 +211,10 @@ function addCount(counts: Counts, key: string, qty: number, partIds: string[] = 
   e.qty += qty;
   e.partIds.push(...partIds);
   counts.set(key, e);
+}
+
+function addBoardPurchases(counts: Counts, board: ProjectSettings['electronicsBoard']) {
+  for (const item of boardPurchases(board)) addCount(counts, item.key, item.qty, item.partIds);
 }
 
 export function boughtKey(p: ScenePart): string | null {
@@ -416,6 +421,8 @@ export function buildBom({
 }: BomInput): Bom {
   const tally = tallyParts(parts, project, measures);
   const byService = project.madeBy === 'service';
+
+  addBoardPurchases(tally.counts, project.electronicsBoard);
 
   if (!byService) addFilament(tally, supportG);
 

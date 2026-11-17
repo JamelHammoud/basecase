@@ -5055,6 +5055,43 @@ export const COMPONENTS: ComponentInfo[] = [
     keywords: 'robotis, openrb, openrb-150, dynamixel controller, samd21, arduino mkr',
   },
   {
+    id: 'jst-b3b-eh-a',
+    name: 'JST B3B-EH-A',
+    manufacturer: 'JST',
+    mpn: 'B3B-EH-A',
+    group: 'Power',
+    description: 'Three-circuit top-entry EH header for a 2.5 mm wire-to-board connection.',
+    specs: [
+      ['Pitch', '2.5 mm'],
+      ['Circuits', '3'],
+      ['Current', '3 A with AWG 22 wire'],
+      ['Mating housing', 'JST EHR-3'],
+    ],
+    mounting:
+      'Type A body 10 × 3.8 mm, 6 mm above the PCB. Three 0.64 mm square posts on a 2.5 mm pitch, 3.2 mm tails and 0.95 mm recommended PCB bores. The pin row is 1.6 mm from one body face. No screw holes. Mated height is 8.1 mm.',
+    links: {
+      amazon: { url: 'https://www.amazon.com/s?k=JST+B3B-EH-A', kind: 'search' },
+      product: 'https://www.jst-mfg.com/product/index.php?lang=2&series=58',
+      datasheet: 'https://www.jst.com/wp-content/uploads/2025/06/eEH.pdf',
+    },
+    supplierIdentity: {
+      supplier: 'DigiKey',
+      supplierPartNumber: '455-B3B-EH-A-ND',
+      sourceUrl: 'https://www.digikey.com/en/products/detail/jst-sales-america-inc/B3B-EH-A/926521',
+      orderingUnit: 'piece',
+      unitsPerOrder: 1,
+    },
+    model: {
+      source: 'checked',
+      by: 'Rene Poeschl',
+      checkedAgainst: 'JST',
+      url: 'https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/master/Connector_JST.3dshapes/JST_EH_B3B-EH-A_1x03_P2.50mm_Vertical.step',
+      license: 'CC-BY-SA-4.0 with KiCad library exception',
+    },
+    color: '#d7d4b8',
+    keywords: 'jst, eh, b3b-eh-a, ehr-3, connector, header, pcb, 2.5mm',
+  },
+  {
     id: 'pololu-d36v50f5',
     name: 'Pololu D36V50F5 5 V 5.5 A Regulator',
     manufacturer: 'Pololu',

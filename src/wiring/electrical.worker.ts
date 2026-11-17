@@ -1,14 +1,20 @@
 import { reply, serve } from '../utils/workerRpc';
-import { electricalProjection } from './electrical';
+import { inspectElectricalInput } from './electricalInspection';
+import { timedBoardPlacement } from './boardPlacement';
+import { defineBoard } from './boardDefinition';
+import { boardPreview } from './boardPreview';
 import { electricalPackage } from './electricalPackage';
 import type { ElectricalInput } from './electricalTypes';
 
 serve({
-  inspect: (input: ElectricalInput) => {
-    const { requirements, powerBudget } = electricalProjection(input);
+  preview: (input: Parameters<typeof boardPreview>[0]) => {
+    const result = boardPreview(input);
 
-    return reply({ requirements, powerBudget });
+    return reply(result, [result.positions.buffer, result.indices.buffer]);
   },
+  define: (input: ElectricalInput & { boardId: string }) => reply(defineBoard(input, input.boardId)),
+  inspect: async (input: ElectricalInput) => reply(await inspectElectricalInput(input)),
+  place: (input: ElectricalInput) => reply(timedBoardPlacement(input)),
   build: async (input: ElectricalInput) => {
     const { bytes, sourceFingerprint } = await electricalPackage(input);
 

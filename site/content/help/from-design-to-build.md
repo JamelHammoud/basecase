@@ -64,6 +64,8 @@ Prices you check in a store are exact. The others are list prices, and Basecase 
 
 **Electrical connections** checks documented pins and declared supplies. Missing pin maps, unknown loads and unresolved power interfaces remain blockers. To continue the documented connections in KiCad, [export a robot schematic](/help/export-a-robot-schematic).
 
+**Board fit** checks a defined board’s outline, mounting hardware and connector clearance against scene geometry. Passing it doesn’t clear electrical blockers or route copper. See [Fit an electronics board](/help/fit-an-electronics-board).
+
 **Cable reach** checks these same connections through joint motion. A blocked route, missing port geometry or insufficient cable length stops Ready to build. [Servo bus or Cable reach is red](/help/troubleshoot-servo-bus) explains the findings. [Build Along](/help/build-along) shows each connection when both endpoints are installed.
 
 ## How it gets made

@@ -9,6 +9,8 @@ const effects = '(effects (font (size 1.27 1.27)))';
 const hidden = '(effects (font (size 1.27 1.27)) (hide yes))';
 
 function valueOf(end: ElectricalEndpoint) {
+  if (end.footprint) return end.name;
+
   const module = POWER_MODULES.find((candidate) => candidate.id === end.moduleId);
   const component = COMPONENT_BY_ID[end.componentId ?? ''];
   const variant = component?.variants?.find((candidate) => candidate.id === end.variant);
@@ -16,7 +18,7 @@ function valueOf(end: ElectricalEndpoint) {
   return `${module?.mpn ?? variant?.mpn ?? component?.mpn ?? end.name} / ${end.port}`;
 }
 
-function uuid(value: string) {
+export function electricalUuid(value: string) {
   const blocks = [0, 1, 2, 3]
     .map((index) =>
       Number.parseInt(hashText(`${index}:${value}`), 36)
@@ -41,6 +43,7 @@ function properties(end: ElectricalEndpoint, x: number, y: number) {
       Port: end.port,
       Datasheet: end.map?.source ?? '',
       Basis: end.map?.basis ?? 'manufacturer interface',
+      ...(end.footprint ? { Footprint: `Robot:${end.footprint}` } : {}),
     }).map(([key, value]) => `(property ${quoted(key)} ${quoted(value)} (at ${x} ${y} 0) ${hidden})`),
   ].join('\n');
 }
@@ -55,7 +58,7 @@ function librarySymbol(end: ElectricalEndpoint, embedded: boolean) {
     )
     .join('\n');
 
-  return `(symbol ${quoted(id)} (pin_names (offset 1.016)) (in_bom no) (on_board yes)
+  return `(symbol ${quoted(id)} (pin_names (offset 1.016)) (in_bom no) (on_board ${end.offBoard ? 'no' : 'yes'})
     ${properties(end, 0, 0)}
     (symbol ${quoted(`${name}_0_1`)} (rectangle (start -5.08 2.54) (end 15.24 -10.16) (stroke (width 0) (type default)) (fill (type background))))
     (symbol ${quoted(`${name}_1_1`)} ${pins}))`;
@@ -65,20 +68,20 @@ function instance(end: ElectricalEndpoint, index: number, root: string) {
   const x = 30.48 + (index % 3) * 93.98;
   const y = 30.48 + Math.floor(index / 3) * 35.56;
   const pins = (end.map?.pins ?? [])
-    .map((pin) => `(pin ${quoted(pin.number)} (uuid ${uuid(`${end.reference}:pin:${pin.number}`)}))`)
+    .map((pin) => `(pin ${quoted(pin.number)} (uuid ${electricalUuid(`${end.reference}:pin:${pin.number}`)}))`)
     .join('\n');
 
   return {
     x,
     y,
-    sexpr: `(symbol (lib_id ${quoted(`Robot:Interface_${end.reference}`)}) (at ${x} ${y} 0) (unit 1) (in_bom no) (on_board yes) (dnp no)
-      (uuid ${uuid(end.reference)}) ${properties(end, x, y)} ${pins}
+    sexpr: `(symbol (lib_id ${quoted(`Robot:Interface_${end.reference}`)}) (at ${x} ${y} 0) (unit 1) (in_bom no) (on_board ${end.offBoard ? 'no' : 'yes'}) (dnp no)
+      (uuid ${electricalUuid(end.reference)}) ${properties(end, x, y)} ${pins}
       (instances (project "robot" (path ${quoted(`/${root}`)} (reference ${quoted(end.reference)}) (unit 1)))))`,
   };
 }
 
 export function electricalSchematic(projection: ElectricalProjection) {
-  const root = uuid('robot');
+  const root = electricalUuid('robot');
   const netByPin = new Map(projection.nets.flatMap((net) => net.nodes.map((node) => [nodeKey(node), net.name])));
   const symbols = projection.endpoints.map((end, index) => {
     const item = instance(end, index, root);
@@ -87,14 +90,14 @@ export function electricalSchematic(projection: ElectricalProjection) {
       const y = Number((item.y + pinIndex * 2.54).toFixed(4));
 
       if (end.map?.unused?.[pin.number])
-        return [`(no_connect (at ${x} ${y}) (uuid ${uuid(`${end.reference}:${pin.number}:unused`)}))`];
+        return [`(no_connect (at ${x} ${y}) (uuid ${electricalUuid(`${end.reference}:${pin.number}:unused`)}))`];
 
       const net = netByPin.get(nodeKey({ reference: end.reference, pin: pin.number }));
 
       if (!net) return [];
 
       return [
-        `(label ${quoted(net)} (at ${x} ${y} 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid ${uuid(`${end.reference}:${pin.number}:label`)}))`,
+        `(label ${quoted(net)} (at ${x} ${y} 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid ${electricalUuid(`${end.reference}:${pin.number}:label`)}))`,
       ];
     });
 
@@ -105,7 +108,7 @@ export function electricalSchematic(projection: ElectricalProjection) {
   return {
     schematic: `(kicad_sch (version 20250114) (generator "basecase") (uuid ${root}) (paper "User" 350 ${height})
       (lib_symbols ${projection.endpoints.map((end) => librarySymbol(end, true)).join('\n')})
-      (text "INCOMPLETE DRAFT - read requirements.json" (at 20.32 10.16 0) ${effects} (uuid ${uuid('draft')}))
+      (text "INCOMPLETE DRAFT - read requirements.json" (at 20.32 10.16 0) ${effects} (uuid ${electricalUuid('draft')}))
       ${symbols.join('\n')} (sheet_instances (path "/" (page "1"))))\n`,
     library: `(kicad_symbol_lib (version 20241209) (generator "basecase") ${projection.endpoints.map((end) => librarySymbol(end, false)).join('\n')})\n`,
   };

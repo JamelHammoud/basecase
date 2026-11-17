@@ -28,6 +28,8 @@ You can take back one step of the agent's work, or everything it changed in its 
 
 Each change the agent makes, such as adding parts, reshaping a part or writing a Case's code panel, is one undo step. To go further back, press [[⌘Z]] again, up to 50 steps.
 
+Board edits also undo saved placements and mounting-hardware references alongside the scene parts. See [Fit an electronics board](/help/fit-an-electronics-board).
+
 While a Case is running, [[⌘Z]] only steps back through code panel changes, and it stops when it reaches any other kind of change.
 
 ## Revert a whole run

@@ -1,5 +1,22 @@
 # Engineering calculations performance
 
+## Board placement preparation
+
+A production-bundle probe used Chrome 157.0.8103.79 on arm64 macOS, with two and 32 repeated XL330 modules and a 100 × 80 × 1.6 mm carrier. Each module had an explicit three-pad JST placement. The probe called the shipped electrical worker through its normal request/reply protocol, using the catalog servo and header GLBs. Each row is one observation with a fresh worker. They are samples, not latency or memory bounds. Other work was running on the host.
+
+| Modules | Placement | Candidates | Geometry preparation | Prepared triangle bytes | Preview preparation | Preview transfer bytes |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2 | 13.4 ms | 829 | 128.5 ms | 1,830,240 | 3.1 ms | 38,592 |
+| 32 | 127.6 ms | 38,560 | 316.5 ms | 29,283,840 | 24.0 ms | 608,832 |
+
+Both searches placed every connector without a clearance or preparation blocker. Prepared triangle buffers stayed inside the worker. Scene JSON was 1,616 and 18,490 UTF-8 bytes. The shared input GLBs totaled 130,396 bytes. These describe cloned input contents, not the browser's internal wire encoding. Preview position and index buffer sizes are actual transferred byte lengths. Placement replies retain ordinary projection data, while inspection returns findings and scalar metrics.
+
+Measured synchronous `postMessage` dispatch was 0 to 0.4 ms. Placement round trips, including worker startup and imports, were 239.2 and 310.3 ms. Inspection round trips were 142.3 and 366.3 ms. Preview round trips were 4.8 and 25.7 ms. The interaction-thread conversion into the existing renderer's number-array mesh contract took 0.3 and 7.1 ms. Heavy bores, placement and clearance work remained in the worker.
+
+Chrome's `Runtime.getHeapUsage` was sampled after explicit collection before work, while holding the converted preview and after releasing it. Active-preview heap deltas were 193,796 and 1,265,964 bytes. After release, deltas were 115,004 and 2,360 bytes. Backing-storage deltas after release were 9 and 0 bytes. No workers remained after either job. These renderer samples include initialization and instrumentation costs. They exclude full-app rendering, GPU memory and whole-process RSS. They do not establish a leak bound across repeated edits. The currently displayed mesh intentionally remains live until replaced.
+
+An earlier Node-only probe measured 4.72/74.74 ms placement and 78.51/209.42 ms preparation before derived header meshes and final assembly evidence were included. It did not measure browser dispatch or transferable previews, so it is not the current feature baseline. Raw browser observations and the throwaway probe are retained in the task handoff. There is no earlier shipped board-placement baseline.
+
 Implementation: [Engineering calculations](../guide/build.md#performance-engineering-calculations). Shared requirements: [Performance](../guide/performance.md).
 
 ## Axis rotations allocate only their result

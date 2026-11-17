@@ -7,6 +7,13 @@ export interface ListPrice {
 }
 
 export const LIST_PRICES: Record<string, ListPrice> = {
+  'component:jst-b3b-eh-a': {
+    usd: 0.13,
+    per: 1,
+    store: 'DigiKey',
+    url: 'https://www.digikey.com/en/products/detail/jst-sales-america-inc/B3B-EH-A/926521',
+    seen: '2026-11-16',
+  },
   'component:feetech-sts3215|c018': {
     usd: 27.99,
     per: 1,

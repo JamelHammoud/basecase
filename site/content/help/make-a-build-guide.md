@@ -57,4 +57,6 @@ Basecase checks that the steps work in the order shown. Parts the planner couldn
 
 Basecase spends up to 20 seconds checking the order. If it stops early, the card reads **Out of date**. Click **Update** to check the order again.
 
+A [board placement](/help/fit-an-electronics-board) doesn’t add PCB soldering steps to the guide.
+
 To print the parts the guide uses, see [Print a robot's parts](/help/print-a-robots-parts).

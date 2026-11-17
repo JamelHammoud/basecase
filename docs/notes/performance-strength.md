@@ -2,6 +2,16 @@
 
 Implementation: [Strength and Lighten](../guide/build.md#performance-strength-and-lighten). Shared requirements: [Performance](../guide/performance.md).
 
+## Elastic block lookups search sorted rows
+
+A whole-app search found one sparse elastic block lookup, in `strength/elasticPattern.ts`. It serves all 64 destination queries per hexahedral element and diagonal lookup during block-Jacobi setup. Strength and Lighten share both consumers. Each row already has sorted unique columns, with at most 27 neighbors, so binary search replaces the repeated scan without new storage or retained state.
+
+A scratch comparison matched complete row starts, columns and destination tables exactly on six dense and perforated grids. Dense grids contained 300, 600 and 10,000 cells. Perforated grids removed every fifth cell and contained 240, 480 and 8,000 cells. On shared macOS arm64 hardware with Node 26.13.0, median dense connectivity preparation times fell from 0.448 ms to 0.397 ms for 600 cells and from 7.854 ms to 6.966 ms for 10,000 cells. Each result used five warmup batches and 21 alternating measured batches of ten calls per implementation. These measure connectivity preparation alone, without CI timing assertions or a claim about complete Strength or Lighten latency. Scratch source, baseline and results remain local in `scratch/elastic-lookup.mjs`, `scratch/elasticPattern-before.ts` and `scratch/elastic-lookup-results.json`.
+
+`elasticNeighbours.test.ts` checks exact lookup and rejection across row lengths zero through 27, missing columns before, between and after entries, nonzero-offset typed-array views, unchanged sources and subsequent edits. Its existing independent set-based reference covers 120 dense, sparse, disconnected and singleton-axis fixtures, repeated elements and corner identities. `elasticPattern.test.ts` retains independent dense assembly and changed-support displacement comparisons. `cg.test.ts` covers all four materials, partial supports and stopping behavior.
+
+The scoped `check:changed` passed formatting, ESLint, documentation, all 323 site pages and TypeScript. Related selection passed 467 tests across 64 files in 50.97 seconds. No timeout, retry or quarantine changed.
+
 ## Elastic solves stop before preparing unused directions
 
 A whole-app search found one block-Jacobi conjugate-gradient implementation in `strength/cg.ts`, called by Strength displacement solving and every Lighten optimization load case. The final completed iteration now checks its residual and iteration limit before preconditioning the residual or constructing the next direction. It removes one preconditioner pass and one direction-update pass from every solve that performs at least one iteration. Initial setup remains unchanged, including solves that perform no iterations.

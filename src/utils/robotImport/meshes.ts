@@ -24,7 +24,7 @@ function collect(root: THREE.Object3D): THREE.BufferGeometry | null {
 
     g.setAttribute('position', m.geometry.getAttribute('position').clone());
 
-    if (m.geometry.index) g.setIndex(m.geometry.index.clone());
+    g.setIndex(m.geometry.index);
 
     g.applyMatrix4(m.matrixWorld);
     geos.push(g.index ? g.toNonIndexed() : g);

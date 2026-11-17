@@ -46,7 +46,7 @@ function creasedPieces(scene: THREE.Object3D) {
 
     plain.setAttribute('position', mesh.geometry.getAttribute('position').clone());
 
-    if (mesh.geometry.index) plain.setIndex(mesh.geometry.index.clone());
+    plain.setIndex(mesh.geometry.index);
 
     plain.applyMatrix4(mesh.matrixWorld);
     pieces.push({

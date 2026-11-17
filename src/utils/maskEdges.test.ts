@@ -47,6 +47,18 @@ describe('mask edge scans', () => {
     }
   });
 
+  it.each([
+    { width: 6, x0: 0.4, y0: 0.1 },
+    { width: 4, x0: 0.2, y0: 0.2 },
+  ])('retains forward decimal sampling at $width pixels', ({ width, x0, y0 }) => {
+    const mask = { width, height: 2, data: new Uint8Array(width * 2) };
+    const region = { x0, x1: width - 1, y0, y1: y0 };
+
+    mask.data[1] = 127;
+    mask.data[2] = 255;
+    expect(maskBounds(mask, region)).toEqual(reference(mask, region).box);
+  });
+
   it('keeps regional limits, fractional sampling, incomplete views and edited sources', () => {
     const storage = new Uint8Array(90).fill(127);
     const mask = { width: 13, height: 7, data: storage.subarray(3, 78) };

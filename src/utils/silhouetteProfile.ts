@@ -31,7 +31,7 @@ export function maskBounds({ data, width: w, height: h }: Mask, region?: MaskBox
 
   if (left > right || Number.isNaN(left) || Number.isNaN(right)) return { x0, x1, y0, y1 };
 
-  const last = left + Math.floor(right - left);
+  const last = Number.isInteger(left) ? Math.floor(right) : right;
 
   for (let y = top; y <= bottom; y++) {
     const offset = y * w;

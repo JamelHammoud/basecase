@@ -73,6 +73,10 @@ describe('edged lathe ring reuse', () => {
       profiles.push(
         Array.from({ length: 3 + (seed % 12) }, (_, i): Vec2 => [5 + 3 * Math.sin(seed * 13 + i), i * (seed / 7)]),
       );
+      profiles.push([
+        [1, 0],
+        [1, (seed / 20) * 1e-8],
+      ]);
     }
 
     for (const profile of profiles) {
@@ -102,14 +106,17 @@ describe('edged lathe ring reuse', () => {
     const profile = Array.from({ length: spans + 1 }, (_, i): Vec2 => [5 + i / 10, i]);
     const sin = vi.spyOn(Math, 'sin');
     const cos = vi.spyOn(Math, 'cos');
+    const hypot = vi.spyOn(Math, 'hypot');
 
     try {
       expect(latheTriangles(profile, false)).toHaveLength(spans * 48 * 18);
       expect(sin).not.toHaveBeenCalled();
       expect(cos).not.toHaveBeenCalled();
+      expect(hypot).not.toHaveBeenCalled();
     } finally {
       sin.mockRestore();
       cos.mockRestore();
+      hypot.mockRestore();
     }
   });
 });

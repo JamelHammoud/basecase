@@ -25,7 +25,7 @@ function sortedHits(target: Placed, origin: THREE.Vector3, dir: THREE.Vector3): 
   ray.direction.copy(dir).transformDirection(target.inverse);
 
   return target.solid.bvh
-    .raycast(ray, THREE.DoubleSide)
+    .raycast(ray, THREE.DoubleSide, 0, REACH_MM)
     .map((h) => h.distance)
     .sort((a, b) => a - b)
     .filter((d, i, all) => i === 0 || d - all[i - 1] > SAME_HIT_MM);
@@ -45,7 +45,7 @@ function spokesAround(axis: THREE.Vector3): THREE.Vector3[] {
 }
 
 function wallAlong(host: Placed, from: THREE.Vector3, dir: THREE.Vector3): number | null {
-  const hits = sortedHits(host, from, dir).filter((d) => d <= REACH_MM);
+  const hits = sortedHits(host, from, dir);
 
   if (hits.length < 2 || hits[0] > NO_WALL_GAP_MM + REACH_MM / 4) return null;
 

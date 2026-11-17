@@ -2,6 +2,26 @@
 
 Implementation: [Joints and kinematics](../guide/joints-and-motion.md#performance-joints-and-kinematics). Shared requirements: [Performance](../guide/performance.md).
 
+## MJCF frame traversal appends directly to its output
+
+The whole-app search found one MJCF frame-child traversal in `utils/robotImport/mjcfFrames.ts`. All three importer call sites share it: geometry inside bodies, child bodies and world-root bodies. `skeletonTree.ts` has an unrelated hierarchy method with the same name. No other MJCF frame-child collector needs this change.
+
+Previously every visited container copied its children and used `flatMap` to collect results. Each matching child created a singleton list, and every unrelated child created an empty list. Nested results were copied into each ancestor's result array. The traversal now iterates children directly and appends records into one output. It retains frame matrices, matching records and recursive visits. A query-local visitor closure replaces the per-container callback closures. Transform multiplication order and shared matrix references within a frame stay unchanged.
+
+For a chain of 32 frames ending in 300 matching children with no unrelated children, source-derived array constructions fall from 366 to one. That includes 33 child snapshots, 33 result arrays and 300 singleton arrays before the change. Appended result references fall from 9,900 to 300. Frame placement and the 300 result records still allocate. These are allocation and traversal counts, without timing measurements or a claim about complete import latency. Traversal remains recursive.
+
+`mjcfFrames.test.ts` compares the preceding traversal at depths zero, one, eight and 32 for geometry, body, frame and absent tags. It checks exact matrices, element identity, source transform preservation, independent result arrays and fresh placement after attribute and angle edits. Its parser integration checks nested world and body frames, visual-local placements, joint-world placements, sibling order and excluded containers. Existing robot import and actuator tests cover downstream conversion. No timeout, retry or quarantine changes apply.
+
+The three covered help articles were reread against the final traversal diff and its importer call sites:
+
+- [Import a robot](../../site/content/help/import-a-robot.md): source selection, Import Robot, Choose Folder, canvas drops and shelf controls are untouched. Matching children keep their order and transforms, so imported parts and joint placement retain the documented behavior. Its four screenshots show unchanged controls and states.
+- [Joints and kinematics](../../site/content/help/joints-and-kinematics.md): joint fields, passive springs, ownership, hierarchy, posing, IK and selected-robot behavior remain unchanged. The guide addition describes collection storage only. The article has no screenshots.
+- [A robot won't import from a link or folder](../../site/content/help/troubleshoot-app-robot-import-fails.md): link validation, description selection, mesh errors and passive actuation handling remain untouched. The traversal preserves the same matching and excluded elements, so it introduces no new failure or recovery action. The article has no screenshots.
+
+No step, label or screenshot becomes inaccurate in this refinement. All three articles remain unchanged under preflight's explicit allowance for accurate covered articles. Its reminders remain mechanically present because coverage detection does not inspect whether prose became untrue.
+
+Changed-file validation passed formatting, ESLint, documentation links, site copy for 323 pages, types and all 332 tests across 46 related files. The related-test run took 2.39 seconds. The log is `scratch/check-mjcf-frames.log`. Copy accounting reports net zero. Preflight reports the three unchanged covered articles above, whose accurate text is intentionally retained under its stated allowance.
+
 ## Pose deltas classify each shared transform once
 
 The app-wide search found one tolerant identity classifier used by `poseDeltas`, in `utils/kinematicsMotion.ts`. Pose editing, agent posing, robot ghosts, silhouette preparation and recorded-scene floor extraction call this shared helper. Each part attached to a joint reads the same joint matrix, and base parts share their robot's root matrix.

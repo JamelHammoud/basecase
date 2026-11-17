@@ -47,10 +47,17 @@ function pan(stage: CameraRig, e: WheelEvent): void {
   orbit.update();
 }
 
-function orbitBy(stage: CameraRig, e: WheelEvent): void {
+interface OrbitWorkspace {
+  offset: THREE.Vector3;
+  spherical: THREE.Spherical;
+}
+
+function orbitBy(stage: CameraRig, e: WheelEvent, workspace: OrbitWorkspace): void {
   const { camera, orbit } = stage;
-  const offset = camera.position.clone().sub(orbit.target);
-  const spherical = new THREE.Spherical().setFromVector3(offset);
+  const { offset, spherical } = workspace;
+
+  offset.copy(camera.position).sub(orbit.target);
+  spherical.setFromVector3(offset);
 
   spherical.theta -= e.deltaX * ROTATE_SPEED;
   spherical.phi = Math.max(MIN_POLAR, Math.min(MAX_POLAR, spherical.phi - e.deltaY * ROTATE_SPEED));
@@ -61,6 +68,7 @@ function orbitBy(stage: CameraRig, e: WheelEvent): void {
 }
 
 export function listenToWheel(rig: CameraRig, canvas: HTMLElement, options: () => WheelOptions): () => void {
+  const orbitWorkspace = { offset: new THREE.Vector3(), spherical: new THREE.Spherical() };
   const onWheel = (e: WheelEvent) => {
     e.preventDefault();
 
@@ -81,7 +89,7 @@ export function listenToWheel(rig: CameraRig, canvas: HTMLElement, options: () =
     }
 
     if (e.shiftKey || scroll.panScroll) pan(rig, e);
-    else orbitBy(rig, e);
+    else orbitBy(rig, e, orbitWorkspace);
   };
 
   canvas.addEventListener('wheel', onWheel, { passive: false });

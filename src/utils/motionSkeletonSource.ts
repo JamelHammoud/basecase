@@ -57,24 +57,23 @@ function ancestors(motion: Mocap, leaf: string): string[] {
   return chain.reverse();
 }
 
+const compactLimb = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
 function includeLimb(name: string, limbs?: string[]): boolean {
   if (!limbs?.length) return true;
 
-  const compact = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const value = compact(name);
+  const value = compactLimb(name);
   const limb = limbOf(name);
 
-  return limbs.some(
-    (item) =>
-      value === compact(item) || (compact(item).includes(limb) && value.includes(compact(item).replace(limb, ''))),
-  );
+  return limbs.some((item) => value === item || (item.includes(limb) && value.includes(item.replace(limb, ''))));
 }
 
 export function motionLeaves(motion: Mocap, limbs?: string[]): string[] {
   const parents = new Set(motion.parentOf.values());
+  const selected = limbs?.map(compactLimb);
 
   return motion.bones.filter(
-    (bone) => !parents.has(bone) && includeLimb(motion.endSites?.parentOf.get(bone) ?? bone, limbs),
+    (bone) => !parents.has(bone) && includeLimb(motion.endSites?.parentOf.get(bone) ?? bone, selected),
   );
 }
 

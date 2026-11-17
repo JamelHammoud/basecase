@@ -205,12 +205,16 @@ function faceBuckets(tris: Float32Array) {
     total += area2 / 2;
 
     const key = `${Math.round(n.x * 40)},${Math.round(n.y * 40)},${Math.round(n.z * 40)}`;
-    const bucket = buckets.get(key) ?? { normal: new THREE.Vector3(), area: 0, offset: 0 };
+    let bucket = buckets.get(key);
+
+    if (!bucket) {
+      bucket = { normal: new THREE.Vector3(), area: 0, offset: 0 };
+      buckets.set(key, bucket);
+    }
 
     bucket.normal.addScaledVector(n, area2 / 2);
     bucket.offset += a.dot(n) * (area2 / 2);
     bucket.area += area2 / 2;
-    buckets.set(key, bucket);
   }
 
   return { buckets: [...buckets.values()], total, walls: { areas, total: wallTotal } };

@@ -301,6 +301,14 @@ On November 17, 2026, `scratch/stl-coordinate-reads.mjs` transpiled the precedin
 
 Scoped changed-file validation passed formatting, lint, documentation, site copy for 321 pages, TypeScript and all 423 related tests across 63 files. The related run reported 11.95 seconds. Complete output is in `scratch/check-stl-corners.log`. Copy accounting is net zero and preflight reports no findings.
 
+## Build-guide contact solids extract only positions
+
+Repository search found `guide/render/guideMeasure.ts` as the only caller of `worldGeometry`. Its BVH and contact probes need positions alone. This completes use of the existing direct triangle extractor at the remaining legacy geometry-conversion wrapper. Other object measurements already use `worldTriangles` or `localTriangles`.
+
+`interference.test.ts` compares exact Float32 output with the former full-geometry calculation across 24 nested scenes. Each contains indexed, expanded and hidden boxes, with rotations, translation, nonuniform scale, reflections and zero scale. It checks source preservation, later placement edits, independent results and empty input. Existing `meshTriangles.test.ts` covers interleaved attributes and incomplete triangles in the shared extractor. Incomplete inputs now follow that extractor's complete-triangle policy instead of entering the contact BVH with trailing corners.
+
+On the two visible meshes in the operation-count fixture, geometry expansion falls from one call to zero, geometry cloning from one call to zero, and full-geometry transforms from two calls to zero. Position transforms remain necessary. Per-mesh transformed position buffers and unrelated cloned attributes are no longer retained before combination. These are operation counts and structural allocation observations, without timing assertions or a claim about complete guide latency. No user action, label or visible state changes, so help instructions and screenshots remain accurate.
+
 ## SimReady visuals append to one body list
 
 Whole-app search found one textured-piece grouping site in `three/simreadyVisuals.ts`, shared by all SimReady objects and robots. It previously replaced the body array on every mesh with a spread of the preceding pieces. It now creates the list on the first mesh and appends subsequent pieces. The map is private until parsing finishes, so no published cache array changes during construction. Mesh transforms, geometry clones, materials and traversal order stay unchanged.

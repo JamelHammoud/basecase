@@ -2,6 +2,7 @@ import type { PartKind, ScenePart } from '../types/robotics';
 import type { PassiveJoint } from '../sim/passiveJoint';
 import { fixtureSignals } from './fixtureTravel';
 import { readPassiveJoint, validateFixtures } from './fixtureValidation';
+import { readFixtureGeometry } from './fixtureGeometry';
 import type { WorldBehavior, WorldItem } from '../sim/mjcfTypes';
 import type { V3 } from '../utils/kinematics';
 import { consoleReader, type CaseConsole } from './console/format';
@@ -73,6 +74,8 @@ export interface RobotSlot {
 }
 
 export interface WorldObject {
+  geometry?: ScenePart;
+  massSource?: 'supplied' | 'estimated';
   parent?: string;
   joint?: PassiveJoint;
   id: string;
@@ -224,6 +227,10 @@ const readObject: Reader<WorldObject> = (value, where) => {
   const v = asRecord(value, where);
 
   return {
+    ...(v.geometry === undefined ? {} : { geometry: readFixtureGeometry(v.geometry, `${where}.geometry`) }),
+    ...(v.massSource === undefined
+      ? {}
+      : { massSource: oneOf(['supplied', 'estimated'] as const)(v.massSource, `${where}.massSource`) }),
     ...(v.parent === undefined ? {} : { parent: asId(v.parent, `${where}.parent`) }),
     ...(v.joint === undefined ? {} : { joint: readPassiveJoint(v.joint, `${where}.joint`) }),
     id: asId(v.id, `${where}.id`),
@@ -436,14 +443,15 @@ export function readCases(raw: unknown[] | undefined): Case[] {
 
 export function worldItem(o: WorldObject): WorldItem {
   const part: ScenePart = {
+    ...o.geometry,
     id: o.id,
     name: o.name,
-    kind: o.kind as PartKind,
+    kind: o.geometry?.kind ?? (o.kind as PartKind),
     category: 'structure',
     role: 'solid',
     position: o.position,
     rotation: o.rotation,
-    dimensions: { width: o.size[0], height: o.size[1], depth: o.size[2] },
+    dimensions: { ...o.geometry?.dimensions, width: o.size[0], height: o.size[1], depth: o.size[2] },
     color: o.color,
     note: '',
     visible: true,

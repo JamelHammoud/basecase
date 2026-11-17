@@ -26,7 +26,7 @@ interface SimTrainingOptions {
   posing: Posing;
   viewportRef: RefObject<Viewport3DHandle | null>;
   showToast: ShowToast;
-  studio: Pick<StudioShared, 'openSettings' | 'robotsBeside'>;
+  studio: Pick<StudioShared, 'openSettings' | 'robotsBeside' | 'customModels'>;
 }
 
 function withPolicy(policies: PolicyRecord[], record: PolicyRecord, replaces: string | null): PolicyRecord[] {
@@ -87,6 +87,7 @@ export function useSimTraining(options: SimTrainingOptions) {
   };
 
   const cases = useCases({
+    fixtures: studio.customModels,
     parts,
     project,
     setProject,

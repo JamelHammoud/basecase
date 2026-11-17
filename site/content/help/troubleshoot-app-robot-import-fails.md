@@ -72,6 +72,7 @@ If the joint should have motor control:
 | “Choose a URDF or MJCF file. That one isn’t valid XML.” | The file is damaged. Download it again. |
 | “Choose a URDF or MJCF file.” | The file is XML, but it has no robot description in it. |
 | “Nothing to show: the description has no meshes or shapes.” | The description has joints, but no geometry to draw. |
+| “Use finite spring values and nonnegative stiffness.” | Set `stiffness` from 0 to 1,000,000 and use a finite `springref`. Import the corrected file. |
 
 Basecase imports a Hugging Face LeRobot dataset link as tries, and does the same with a folder or zip that holds a LeRobot dataset or a ROS 2 recording. If one of those fails, the message names the dataset's file and what's wrong with it. See [Import robot data as tries](/help/import-robot-data-as-tries).
 

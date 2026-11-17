@@ -2,7 +2,7 @@ import { catalogNote } from '../data/catalog';
 import { hardwareName, hardwareNote } from '../data/hardware';
 import type { CatalogItem, CustomModelSubNode, ScenePart, SculptMeshData } from '../types/robotics';
 import type { SketchSolid } from '../utils/sketch/placement';
-import type { Vec3 } from './types';
+import type { V3 as Vec3 } from '../utils/kinematics';
 
 export type ClayPreset = 'clay_sphere' | 'clay_box' | 'clay_cylinder' | 'clay_capsule';
 

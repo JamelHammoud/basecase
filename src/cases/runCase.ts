@@ -34,6 +34,8 @@ import {
   type Signals,
 } from './runCaseLogic';
 import { scaledToReach } from './scale';
+import { varyFixtureResistance } from './fixtureRandom';
+import { preparedWorldItems } from './fixtureCollision';
 import { reseededGround } from './terrain';
 import { caseSlots, type Case, type ReferenceCommand } from './schema';
 import { caseWorldItems } from './importedWorldItems';
@@ -248,6 +250,7 @@ export function startEngine(mj: MainModule, model: SimModel, options: EngineStar
   });
 
   arena.prepare({ instance, controller: { kind: 'hold' }, start: model.initial, robot: model.robots[0]?.key ?? '' });
+  varyFixtureResistance(mj, arena.engine, options.seed!);
   arena.engine.setController(controller);
 
   return { engine: arena.engine, dispose: () => arena.dispose() };
@@ -333,7 +336,7 @@ function fitted(authored: Case, robot: CaseRobot, options: RunOptions): Fitted |
 async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Promise<CaseResult> {
   const jitter = options.seed === undefined ? null : worldRandom(options.seed);
   const kase = jitter ? reseededGround(jitteredWorld(fit.scaled, jitter), jitter) : fit.scaled;
-  const world = caseWorldItems(kase, options.worldColliders);
+  const world = await preparedWorldItems(caseWorldItems(kase, options.worldColliders));
   const model = buildMjcf({ ...fit.input, world, fixedBase: fixedBaseFor(fit.cast) });
   const { plan, refusal: logicRefusal } = logicPlan(kase, options);
 

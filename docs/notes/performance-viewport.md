@@ -2,6 +2,16 @@
 
 Implementation: [Viewport rendering](../guide/canvas.md#performance-viewport-rendering). Shared requirements: [Performance](../guide/performance.md).
 
+## Camera zoom uses scalar offsets
+
+A whole-app search found one perspective orbit zoom helper, `zoomCamera` in `three/viewport/wheel.ts`. Modifier-wheel pinch, Zoom Scroll and the viewport's programmatic `zoomBy` call it. Part previews install the same wheel listener. Sketch's pointer-centered 2D zoom has separate coordinates and does not use this calculation.
+
+Previously each call cloned the camera position before scaling its offset from the orbit target, including calls rejected by distance limits. Scalar offsets remove that vector while retaining subtraction, multiplication, squared length, square root and target addition in the same order. No workspace or cache is added.
+
+`wheelZoom.test.ts` compares 600 calls across two independent rigs against the previous vector calculation and asserts zero vector clones during the new calls, down from 600. This is an allocation count, not a timing or complete interaction latency measurement. Cases include moving targets, zero offsets, negative factors, underflow, overflow, infinity and NaN. Additional cases cover inclusive limits, Ctrl and Meta pinch, capped Zoom Scroll, event prevention and listener removal. Existing `wheel.test.ts` covers pan and orbit paths.
+
+GPU rendering and physical trackpad delivery are outside these CPU tests. No workflow, label or visible state changes, so existing navigation help and screenshots remain applicable. No timeout, retry or quarantine changes apply.
+
 ## Solid marks omit dash preparation
 
 A whole-app search found one `computeLineDistances` call, in `three/viewport/markLayer.ts`. Its shared builder creates saved annotation strokes, live drawing previews and selection halos. None enables dashed materials. The installed Three.js `LineMaterial` reads distance attributes only under `USE_DASH`. Removing the call therefore removes unused preparation across every caller without changing line geometry or rendering inputs used by solid lines.

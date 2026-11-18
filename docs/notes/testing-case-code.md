@@ -16,7 +16,9 @@ The spinning-panel test in `e2e/caseCode.e2e.test.ts` was quarantined only on Wi
 
 The walkthrough, its frame-count helper, spinning fixture and Windows quarantine entry are removed. `src/cases/console/codeBridge.test.ts` already checks missed heartbeats, the ten-second hello deadline, page-stall recovery, failure reporting and drive release with a controlled clock. No product code, deadline or retry changes. This removes the reported 33-second declaration rather than claiming a measured shard speedup.
 
-The retained unit tests do not establish browser frame progress during an infinite loop, actual iframe disposal or renderer-process shutdown. Those browser-specific checks are now absent on every platform. The Windows incident above remains historical evidence, rather than a pending quarantine restoration condition for a deleted declaration. Browser execution is left to CI, with only fast focused checks run locally.
+`e2e/codeFrame.e2e.test.ts` replaces the removed walkthrough with a focused browser declaration on every platform. Vite bundles the production `CodeFrame`, its hook, bridge and client with production React into memory. A routed blank page mounts that component with an isolated signal bus and an infinite-loop source. It asserts animation progress on the parent page while the frame hangs, the exact failure message, `about:blank` navigation and iframe removal. Page and browser closure remain real. The fixture supplies no studio, rover or simulator. The production hello and frame-ending deadlines stay unchanged.
+
+The Windows incident above remains historical evidence. The new declaration has no quarantine or retry changes. Browser execution and platform shutdown observations are left to CI, with only fast focused checks run locally. No replacement duration or shard speedup has been measured, and browser closure is not an operating-system process census.
 
 ## Code joystick
 

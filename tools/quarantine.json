@@ -720,7 +720,7 @@
   },
   {
     "file": "e2e/buildCheck.e2e.test.ts",
-    "test": "puts /pass and the open Case in the composer from ⌘K when its row fails",
+    "test": "puts /pass and the open Case in the composer from \u2318K when its row fails",
     "issue": 988,
     "until": "2026-11-28",
     "platform": "win32",
@@ -733,5 +733,29 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44364437393 exhausted the unchanged 5000 ms deadline at 5007 ms. Same-revision Windows diagnostic 44366221140 reproduced the timeout in 5004.9236 ms with one worker, zero retries and quarantine off on the same runner image. Previous Windows Check 44353177242 passed short drawer in 2204 ms with unchanged parity, capture, variants, native replay, Case builder and runner, dependency lock and unit configuration on the same runner image. WASM capture, uv provisioning, native startup, replay, scoring and cleanup are not distinguished. Existing priority native replay owner #1390 owns stage tracing, an established fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Windows retains resisted, reversed and rotated drawers, WASM fixture physics and persistence. Linux retains short drawer and all comparisons except its existing nominal-lid quarantine. macOS retains all sixteen. Preserve state and margin drift below 1e-6, exact contacts, verdict agreement, stop bounds and failure without contacts. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "tools/fleet/facilities.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44364437393 exhausted the unchanged 10000 ms beforeAll hook before any of six facility assertions ran. Same-revision Linux diagnostic 44369576621 passed setup and the source-hash/restart assertion in a 9504 ms process with one worker, zero retries and quarantine off on the same Ubuntu image. DXF preparation, Docker readiness, migrations, HTTP startup and identity enrollment are not distinguished. Existing priority shared fixture owner #1401 owns stage and cleanup tracing, an established fix and ten baseline and ten candidate Linux observations at equal load before restoration. Whole-file filtering is required because setup precedes per-test filtering. macOS retains all six cases. Linux retains pure import, registration, robot-position and browser checks, which do not replace the full HTTP matrix. The existing Windows entry remains separate. No deadline or assertion changes."
+  },
+  {
+    "file": "tools/fleet/scale.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44364437393 exhausted the unchanged 10000 ms beforeAll hook before the eleven scale assertions ran. Same-revision Windows diagnostic 44369584582 passed setup and enumeration in an 8893 ms process with one worker, zero retries and quarantine off on an older Windows image. Native PostgreSQL startup, migrations, identity setup, seeding 10000 robots and subscription startup are unresolved, including image contribution. Existing priority shared fixture owner #1401 owns stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load before restoration. Whole-file filtering is required because setup precedes per-test filtering. Linux and macOS retain the complete scale matrix. Windows retains authorization, adapter and browser coverage, which do not replace 10000-robot ingestion and enumeration. No deadline or assertion changes."
+  },
+  {
+    "file": "tools/testing/vitestCache.test.mjs",
+    "test": "linked-worktree invalidation > runs concurrent cold starts against distinct source and reuses warm transforms",
+    "issue": 1808,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44364437393 passed both cold and warm child runs, then failed the unchanged requirement that both warm outputs contain [read]. Same-revision Windows diagnostic 44369593658 passed in 1404.5088 ms with one worker, zero retries and quarantine off on the same runner image, establishing intermittency. Child outputs, cache slots, metadata invalidation and debug delivery remain unresolved under priority owner #1808. Restore after tracing these stages, fixing the demonstrated cause and ten baseline and ten candidate Windows observations at equal load with retries disabled. Only this declaration is quarantined. The dependency-invalidation sibling primes its own cache precondition. Windows retains all other cache lifecycle and configuration checks. Linux and macOS retain concurrent cold/warm reuse. No assertion or deadline changes."
   }
 ]

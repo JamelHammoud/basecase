@@ -33,11 +33,11 @@
   },
   {
     "file": "e2e/boardRouted.e2e.test.ts",
-    "test": "imports a routed KiCad derivative through the Inspector and downloads checked fabrication files",
+    "test": "imports a routed KiCad derivative through the Inspector with undo and redo",
     "issue": 1620,
     "until": "2026-11-28",
     "platform": "win32",
-    "reason": "Run 44042519036 stalled during the visible and enabled Schematic menu-item click before the first archive, and its download promise also rejected. Linux passed in 24364 ms. The preceding Windows run 44038644745 exported the first archive and reached native validation but never committed routed.pcb. Commit bc96fdbbe introduced the walkthrough after full green run 43948835889. Neither stage has an established cause. Focused Windows diagnostic 44111179140 passed the initial export and import at the same revision, then failed the Gerber file-function assertion at line 104. The artifact lacks archive bytes to distinguish content from reader behavior. Issue #1620 owns separate export, native-result and source-guard traces, download promise cleanup and equal-load baseline and candidate measurements. Other platforms and fast routed-source, package, native validation and fabrication coverage stay active."
+    "reason": "The focused Inspector import retains the native validation and source commit path from the combined walkthrough. Run 44038644745 reached native validation but never committed routed.pcb. Removing scene opening and both exports does not establish the cause of that retained-stage failure. The former export and Gerber failures are outside this focused declaration. Issue #1620 retains ownership of native-result and source-guard traces, plus at least ten baseline and ten candidate observations at equal load on Windows with retries disabled and unchanged assertions and deadlines before restoration. Linux and macOS remain active, alongside fast routed-source and native fabrication coverage."
   },
   {
     "file": "e2e/sketchSupport.e2e.test.ts",

@@ -260,6 +260,18 @@ Review found that removing a saved Study’s visibility request left its measure
 
 The review’s changed-file check passed formatting, ESLint, documentation, TypeScript, all 297 site pages and 283 related tests across 52 files. The log is `scratch/review-check.log`. Browser tests were not run locally.
 
+### Configuration-only browser fixture
+
+Issue [#1776](https://github.com/JamelHammoud/basecase/issues/1776) targets `configures a saved camera try in Study and returns to ordinary Study`. [Run 44245137178](https://github.com/JamelHammoud/basecase/actions/runs/44245137178) passed the declaration in 45,448 ms on Windows shard 3 and 11,027 ms on Linux shard 3. These are hosted test durations. The logs do not isolate the slow stage.
+
+Review identified unique browser coverage in the deleted declaration. The browser assertions are restored unchanged. The title names the lightweight fixture so changed-browser selection runs this declaration in CI. It selects a saved simulated try, edits samples and pose, removes and restores camera and target selections to check Run Study eligibility, then clears the Try selection. It never executes Study.
+
+`keepStudyTry` now saves two prescribed static body poses through the real try store. It no longer loads catalog meshes, starts scene preparation or builds a simulation model. The manifest uses a configuration-only model hash. This fixture checks selection and configuration wiring and cannot supply a valid visibility execution source. The existing studio inventory retains the hook. No timeout, retry, quarantine or assertion changes accompany this revision.
+
+`studyCameraRun.test.ts` retains immutable source reuse, cancellation and invalid-source tests. `cameraPersistence.test.ts` covers portable records and source identity. `studyTrainingImages.test.ts` checks applied optical fields through history and training-image generation. `e2e/study.e2e.test.ts` retains ordinary command entry, execution, preview, Apply and Undo. The production-worker rendering matrix remains under its existing quarantine, as documented in the [camera guide](../guide/cameras.md#study-camera-visibility).
+
+Local verification uses the named changed-file check. Browser execution and comparative hosted timings remain with CI, so no measured runtime reduction or flake rate is claimed.
+
 ## Linked design comparison
 
 Scene History calls the existing shared Case comparison after both open robots are measured. The current Case and both scene fingerprints bind the result. A fingerprint change during measurement or before merge refuses the operation. `caseCompare.test.ts` retains its physical shared-Case and BOM/Weight checks and adds fingerprint coverage. The graph and selective-merge matrix lives in `workspace/versionOperations.test.ts` and `workspace/versionMerge.test.ts`. Browser entry-point declarations are in `e2e/sceneVersions.e2e.test.ts`. No incoming local try, policy, skill or handoff evidence is copied by a geometry merge.

@@ -69,7 +69,11 @@ describe('linked-worktree invalidation', () => {
   it('preserves installed-dependency invalidation and recovers after failure', async () => {
     await fixture(left, 'recovered');
     write(left, 'vitest.config.ts', config);
-    fs.unlinkSync(path.join(left, 'tools/areas/two.ts'));
+    fs.rmSync(path.join(left, 'tools/areas/two.ts'), { force: true });
+
+    const primed = await Promise.all(pair.dirs.map((dir) => pair.start(dir, args).done));
+
+    primed.forEach(passed);
     write(left, 'node_modules/.package-lock.json', '{"lockfileVersion":3,"name":"changed"}');
 
     const results = await Promise.all(pair.dirs.map((dir) => pair.start(dir, args).done));

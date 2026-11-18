@@ -4,7 +4,7 @@ date: 2026-11-18
 image: /changelog/compare-fit-clearances/cover.png
 ---
 
-You can print several dimension values on one comparison plate, then apply your choice to the editable design. Open Print Fit Test and choose an authored binding under Variants.
+You can print several dimension values on a comparison plate in Print Fit Test, then apply your choice to the editable design.
 
 For a 608 bearing seat, you can compare bore diameters of 21.9, 22 and 22.1 mm before you print the whole housing. Each coupon comes from regenerated host geometry and keeps its print orientation and material.
 

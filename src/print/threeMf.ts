@@ -96,10 +96,19 @@ export function plateOrigin(plateIndex: number, plateCount: number, [w, d]: [num
   return [col * w * (1 + PLATE_GAP), -row * d * (1 + PLATE_GAP)];
 }
 
-function transformText(m: number[], offset: [number, number]): string {
-  return [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10], m[12] + offset[0], m[13] + offset[1], m[14]]
-    .map(num)
-    .join(' ');
+export function threeMfBuildMatrix(matrix: number[], offset: [number, number]): number[] {
+  const translated = matrix.slice();
+
+  translated[12] += offset[0];
+  translated[13] += offset[1];
+
+  return translated.map((value) => Number(num(value)));
+}
+
+function transformText(matrix: number[], offset: [number, number]): string {
+  const m = threeMfBuildMatrix(matrix, offset);
+
+  return [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10], m[12], m[13], m[14]].join(' ');
 }
 
 function modelXml(input: ThreeMfInput): string {

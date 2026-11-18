@@ -55,7 +55,9 @@ it('delivers one deterministic comparison 3MF with exact identities, transforms,
   expect(map.interface).toEqual(design.parts[1]);
   expect(map.binding).toEqual(comparison.request.binding);
   expect(map.candidates.map((c) => c.objects)).toEqual([
-    ...plates.files[0].items.map((item, i) => [{ id: i + 1, plate: item.plate, matrix: item.matrix }]),
+    ...plates.files[0].items.map((item, i) => [
+      { id: i + 1, plate: item.plate, matrix: item.matrix.map((value) => Math.round(value * 1e5) / 1e5) },
+    ]),
     [],
   ]);
   expect(map.candidates.map((c) => c.value)).toEqual([21.9, 22, 22.1, 1000]);
@@ -64,6 +66,26 @@ it('delivers one deterministic comparison 3MF with exact identities, transforms,
   expect([...xml.matchAll(/<object id=/g)]).toHaveLength(3);
   expect([...xml.matchAll(/<triangle /g)]).toHaveLength(coupons.reduce((n, c) => n + c.positions.length / 9, 0));
   expect((await writeFitPlate({ coupons, parts, plates, comparison })).files.PETG).toEqual(bytes);
+
+  const splitParts = parts.map((part, index) => ({ ...part, print: { ...part.print, plate: index === 2 ? 2 : 1 } }));
+  const splitReport = fitTestReport(coupons, splitParts, { printer, project: DEFAULT_PROJECT });
+  const splitPlates = jobSpec(splitReport.plan, printer, DEFAULT_PROJECT);
+  const split = await writeFitPlate({ coupons, parts: splitParts, plates: splitPlates, comparison });
+  const splitEntries = unzipSync(split.files.PETG);
+  const splitMap: FitPlateIdentity = JSON.parse(strFromU8(splitEntries['Metadata/basecase-fit-test.json']));
+  const builds = new Map(
+    [...strFromU8(splitEntries['3D/3dmodel.model']).matchAll(/<item objectid="(\d+)" transform="([^"]+)"/g)].map(
+      (match) => [Number(match[1]), match[2].split(' ').map(Number)],
+    ),
+  );
+
+  expect(splitReport.plan.plates).toHaveLength(2);
+
+  for (const object of splitMap.candidates.flatMap((candidate) => candidate.objects)) {
+    const transform = [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14].map((index) => object.matrix[index]);
+
+    expect(transform).toEqual(builds.get(object.id));
+  }
 });
 
 it('applies the choice through the ordinary document transaction, invalidates checks and plates, and retains undo, redo and reopen', async () => {

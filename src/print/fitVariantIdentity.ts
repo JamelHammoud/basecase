@@ -2,6 +2,7 @@ import type { FitComparison } from './fitVariants';
 import type { ThreeMfFileSpec } from '../three/analysis/plateFiles';
 import type { ParameterDesign } from '../utils/designParameters/mutations';
 import type { ScenePart } from '../types/robotics';
+import { plateOrigin, threeMfBuildMatrix } from './threeMf';
 
 export interface FitPlateIdentity {
   version: 1;
@@ -33,8 +34,13 @@ export async function fitSourceHash(design: ParameterDesign): Promise<string> {
   return Array.from(new Uint8Array(digest), (n) => n.toString(16).padStart(2, '0')).join('');
 }
 
-export function fitPlateIdentity(comparison: FitComparison, file: ThreeMfFileSpec): FitPlateIdentity {
+export function fitPlateIdentity(
+  comparison: FitComparison,
+  file: ThreeMfFileSpec,
+  plateSize: [number, number],
+): FitPlateIdentity {
   const fit = comparison.source.parts.find((p) => p.id === comparison.request.fit)!;
+  const plateIndex = new Map(file.plates.map((plate, index) => [plate.number, index]));
 
   return {
     version: 1,
@@ -56,7 +62,18 @@ export function fitPlateIdentity(comparison: FitComparison, file: ThreeMfFileSpe
       down: candidate.coupon?.pose.down,
       material: comparison.request.material,
       objects: file.items.flatMap((item, i) =>
-        item.id === candidate.id ? [{ id: i + 1, plate: item.plate, matrix: item.matrix }] : [],
+        item.id === candidate.id
+          ? [
+              {
+                id: i + 1,
+                plate: item.plate,
+                matrix: threeMfBuildMatrix(
+                  item.matrix,
+                  plateOrigin(plateIndex.get(item.plate) ?? 0, file.plates.length, plateSize),
+                ),
+              },
+            ]
+          : [],
       ),
     })),
   };

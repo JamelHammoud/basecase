@@ -35,7 +35,7 @@ export async function writeFitPlate(input: FitPlateWrite) {
   try {
     const files = plates.files.map((file) => ({
       ...file,
-      fitTest: comparison ? fitPlateIdentity(comparison, file) : undefined,
+      fitTest: comparison ? fitPlateIdentity(comparison, file, plates.plateSize) : undefined,
     }));
 
     return await plateFiles(

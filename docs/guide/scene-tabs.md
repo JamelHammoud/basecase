@@ -65,7 +65,7 @@ Measurements and limits: [Scene storage and startup performance evidence](../not
 
 ### First-launch relaunch
 
-`app/firstLaunch.test.ts` retains saved-tab restoration and fresh-profile behavior, and `workspace/sceneDraft.test.ts` retains edit detection. The rover startup and keyboard driving tests remain active on every platform, and camera refusal runs on Linux and macOS.
+`app/firstLaunch.test.ts` retains saved-tab restoration and fresh-profile behavior, and `workspace/sceneDraft.test.ts` retains edit detection. The rover startup test remains active on every platform. First-launch keyboard takeover runs on Linux and macOS and is quarantined only on Windows through 28 November 2026 under [#1799](https://github.com/JamelHammoud/basecase/issues/1799). Windows retains the ordinary rover W and Escape walkthrough in `e2e/drive.e2e.test.ts`, rover command physics in `sim/drive.test.ts` and the reference trajectory in `app/firstRobotSim.test.ts`. These do not establish first-launch reference-to-keyboard takeover on Windows. Camera refusal runs on Linux and macOS.
 
 [Incident evidence and limits](../notes/testing-first-launch.md).
 

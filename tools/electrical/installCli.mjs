@@ -62,7 +62,10 @@ function selectedBrowserShard(shard) {
     .map((file) => path.basename(file));
 
   return {
-    native: selected.includes('boardRouting.e2e.test.ts') || selected.includes('kitElectrical.e2e.test.ts'),
+    native:
+      selected.includes('boardRouted.e2e.test.ts') ||
+      selected.includes('boardRouting.e2e.test.ts') ||
+      selected.includes('kitElectrical.e2e.test.ts'),
     routing: selected.includes('boardRouting.e2e.test.ts'),
   };
 }

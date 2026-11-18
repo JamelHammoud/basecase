@@ -22,7 +22,7 @@ export async function boardRoutingWalkthrough() {
       unplaced: false,
     }));
     board.fabrication = FIXTURE_RULES;
-    board.routing = ROUTING_PLAN;
+    board.routing = { ...ROUTING_PLAN, lossTangent: null };
   });
   const app = await openApp();
   const { page } = app;
@@ -31,6 +31,23 @@ export async function boardRoutingWalkthrough() {
   try {
     await openKitScene(page, { ...input, name: 'Board rover' });
     await command(page, 'Edit Board');
+    await page.getByRole('button', { name: 'Routing', exact: true }).click();
+
+    const loss = page.getByRole('textbox', { name: 'Dielectric loss tangent', exact: true });
+
+    expect(await loss.inputValue()).toBe('');
+    expect(await loss.locator('..').innerText()).toBe('');
+    expect(
+      await page.getByRole('textbox', { name: 'Dielectric permittivity', exact: true }).locator('..').innerText(),
+    ).toBe('');
+    await loss.fill('0');
+    await loss.press('Enter');
+    expect(
+      (await page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord())).project.electronicsBoard
+        ?.routing?.lossTangent,
+    ).toBe(0);
+    await loss.fill(String(ROUTING_PLAN.lossTangent));
+    await loss.press('Enter');
 
     const original = await page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord());
     const completion = page.waitForResponse((response) => response.url().endsWith('/electrical-validate'));

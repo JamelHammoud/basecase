@@ -1,5 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import '../src/index.css';
+import { CodeCockpitFixture } from './codeCockpitFixture';
 import { createSignalBus } from '../src/cases/console/signalBus';
 import { CodeFrame } from '../src/components/caseRun/code/CodeFrame';
 
@@ -11,10 +13,14 @@ const ctx = {
 };
 
 createRoot(document.getElementById('root')).render(
-  <CodeFrame
-    panel={{ id: 'spin', kind: 'code', title: 'Spin', source: '<script>while (true) {}</script>' }}
-    ctx={ctx}
-    pointer
-    className=""
-  />,
+  location.search === '?cockpit' ? (
+    <CodeCockpitFixture />
+  ) : (
+    <CodeFrame
+      panel={{ id: 'spin', kind: 'code', title: 'Spin', source: '<script>while (true) {}</script>' }}
+      ctx={ctx}
+      pointer
+      className=""
+    />
+  ),
 );

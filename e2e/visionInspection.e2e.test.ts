@@ -51,6 +51,8 @@ it(
     await page.keyboard.press('Enter');
     await dialog.getByRole('button', { name: 'source-test', exact: true }).click();
     await dialog.getByRole('img', { name: 'Frozen comparison image', exact: true }).waitFor();
+    await dialog.getByRole('button', { name: 'Open Original Image', exact: true }).click();
+    await expect.poll(() => dialog.getByRole('status').textContent()).toBe('Original image is unavailable');
 
     const tab = await page.evaluate(() => (window as unknown as { __studioTabs: Tabs }).__studioTabs.list().activeId);
 
@@ -58,6 +60,11 @@ it(
     await expect.poll(() => dialog.count()).toBe(0);
     await page.evaluate((id) => (window as unknown as { __studioTabs: Tabs }).__studioTabs.select(id), tab);
     await expect.poll(() => dialog.count()).toBe(0);
+
+    const after = await saved();
+
+    expect(after.runs[0]).toEqual(before.runs[0]);
+    expect(after.dataset.versions).toEqual(before.dataset.versions);
     expect(app.errors).toEqual([]);
   },
 );

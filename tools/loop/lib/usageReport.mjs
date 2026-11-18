@@ -1,6 +1,4 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { LOOP_DIR } from './paths.mjs';
+import { sessionRecords } from './sessionJournal.mjs';
 import { quotaState } from './quota.mjs';
 import { accountBurn } from './accountBurn.mjs';
 import { weeklyForecast } from './agentPolicy.mjs';
@@ -11,25 +9,7 @@ import { taskUsage } from './usageTasks.mjs';
 import { sessionTotals } from './usageTotals.mjs';
 
 export { cachedInputTokens, tokenCount } from './usageTotals.mjs';
-
-export function sessionRecords({ since = Date.now() - 24 * 60 * 60_000 } = {}) {
-  const dir = path.join(LOOP_DIR, 'state', 'sessions');
-
-  if (!fs.existsSync(dir)) return [];
-
-  return fs
-    .readdirSync(dir)
-    .filter((file) => file.endsWith('.json'))
-    .flatMap((file) => {
-      try {
-        const entry = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
-
-        return entry.startedAt >= since ? [entry] : [];
-      } catch {
-        return [];
-      }
-    });
-}
+export { sessionRecords } from './sessionJournal.mjs';
 
 export function usageReport({ now = Date.now(), since = now - 86_400_000 } = {}) {
   const retained = sessionRecords({ since: 0 });

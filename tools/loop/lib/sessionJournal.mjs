@@ -18,6 +18,25 @@ export const jsonLines = (text) =>
       }
     });
 
+export function sessionRecords({ since = Date.now() - 24 * 60 * 60_000 } = {}) {
+  const dir = path.join(LOOP_DIR, 'state', 'sessions');
+
+  if (!fs.existsSync(dir)) return [];
+
+  return fs
+    .readdirSync(dir)
+    .filter((file) => file.endsWith('.json'))
+    .flatMap((file) => {
+      try {
+        const entry = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+
+        return entry.startedAt >= since ? [entry] : [];
+      } catch {
+        return [];
+      }
+    });
+}
+
 export function recordSession(entry) {
   const dir = path.join(LOOP_DIR, 'state', 'sessions');
   const id = entry.id ?? `${Date.now()}-${process.pid}-${crypto.randomUUID()}`;

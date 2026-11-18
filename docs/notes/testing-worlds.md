@@ -20,6 +20,17 @@ One focused Windows observation at the failed revision passed the exact Scan Mat
 
 The Windows corridor-world walkthrough is quarantined through 28 November 2026 under [#995](https://github.com/JamelHammoud/basecase/issues/995). Run 43693830979 failed both attempts at different import or playback stages. Its failing worker stage is not established. Restoring it requires Windows traces and at least ten runs before and after at the same load. The kitchen import setup in `e2e/worldImport.e2e.test.ts` was simplified under [#1142](https://github.com/JamelHammoud/basecase/issues/1142) after taking 37 s in run 43739315274. The duplicate kitchen recording and export test was removed under [#1145](https://github.com/JamelHammoud/basecase/issues/1145) after passing in 75.124 s in run 43739315274. Its Windows quarantine was removed with it. `datasets/worldRender.test.ts` remains quarantined on all platforms through 28 November 2026 under [#985](https://github.com/JamelHammoud/basecase/issues/985) after render-worker setup timed out.
 
+
+### Focused kitchen import walkthrough
+
+[#1781](https://github.com/JamelHammoud/basecase/issues/1781) reported the kitchen import walkthrough above 30 seconds. [Check 44245137178](https://github.com/JamelHammoud/basecase/actions/runs/44245137178) recorded 31,377 ms on Windows and 25,871 ms on Linux for `opens New Case with its splat and separate colliders without adding scene parts`. The complete three-test file took 50,335 ms and 36,922 ms respectively. The retrieved log is retained locally in `scratch/issue-1781-ci.log`.
+
+The test combined world import with a second Run Case camera workflow. The repair removes that second workflow, including camera startup, two worker captures, PNG decoding and pixel-difference polling. The remaining walkthrough keeps the real drop, selected Kitchen and Reach a Spot choices, Make Case, active Case, loaded world, registered hash, rendered splats, bounded colliders, unchanged scene part count and empty app errors. Mesh fallback and splat-only refusal remain separate browser tests. No timeout, retry or quarantine changes are made.
+
+`three/viewport/importedWorld.test.ts` covers Spark setup, collider transforms and cleanup. `datasets/worldRender.test.ts` contains the captured-pixel and floor-baseline assertions through the real worker pipeline, but remains quarantined under #985. Its restoration conditions are unchanged. Removing the live Scene-tile comparison leaves that combined captured-world camera path without an active browser assertion. This is a deliberate scope reduction for the slow import walkthrough, not evidence that the quarantined renderer checks are passing.
+
+No candidate browser timing was measured locally because this lane runs only changed-file checks. The CI values above measure the original whole test, not the removed camera phase. Candidate timing and cross-platform browser results remain for pull request CI.
+
 ## Topic-only import map regression
 
 [Check 44227652023](https://github.com/JamelHammoud/basecase/actions/runs/44227652023) at `8416f27ec38e9271d3cb3cf10b28848cf4a81e4d` failed both Linux corridor walkthroughs before either Layers action. Import completed and the saved try opened, but map points stayed zero. Commit `3ad17140d` (#1766) changed every source without joint columns into a model-free saved source, even when a robot was already in the scene. Its independent timeline exposes no recording to `useMapLayer` or `useMapWorld`, bypassing the existing reconstruction pipeline.

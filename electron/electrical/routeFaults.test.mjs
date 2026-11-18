@@ -127,7 +127,15 @@ it.each([
     'process-failure': 'board-route-failed',
   }[mode];
 
-  await expect(routeNativeBoard(input, { temporaryRoot, tools, execute })).rejects.toThrow(reason);
+  const routing = routeNativeBoard(input, { temporaryRoot, tools, execute });
+
+  await expect(routing).rejects.toThrow(reason);
+
+  if (mode === 'directory-limit')
+    await expect(routing).rejects.toMatchObject({
+      cause: { message: 'board-route-limit', cause: { resource: 'entries' } },
+    });
+
   expect(input).toEqual(original);
   expect(await fs.readdir(temporaryRoot)).toEqual([]);
 

@@ -1,3 +1,5 @@
+import { defaultTrainingMetric } from './metrics';
+import type { TrainingRequirement } from './requirementTypes';
 import { useEffect, useRef, useState } from 'react';
 import type { Dataset } from '../../datasets/datasetFile';
 import { errorMessage } from '../../utils/errorMessage';
@@ -13,6 +15,11 @@ interface VisionTrainingOptions {
 }
 
 export function useVisionTraining({ datasetId, showToast }: VisionTrainingOptions) {
+  const [declared, setDeclared] = useState<{ datasetId: string | null; values: TrainingRequirement[] }>({
+    datasetId,
+    values: [],
+  });
+  const requirements = declared.datasetId === datasetId ? declared.values : [];
   const [task, setTask] = useState<TrainingKind>('detect');
   const [maxInferenceMs, setMaxInferenceMs] = useState(100);
   const [maxModelBytes, setMaxModelBytes] = useState(256 * 1024 * 1024);
@@ -54,6 +61,7 @@ export function useVisionTraining({ datasetId, showToast }: VisionTrainingOption
     trainVisionDataset(dataset, task, {
       signal: controller.signal,
       limits: { maxInferenceMs, maxModelBytes },
+      requirements,
       onProgress: setProgress,
     })
       .then(
@@ -78,7 +86,15 @@ export function useVisionTraining({ datasetId, showToast }: VisionTrainingOption
   return {
     canTrain: !IS_WEB_DEMO,
     task,
-    setTask,
+    setTask: (kind: TrainingKind) => {
+      setTask(kind);
+      setDeclared({
+        datasetId,
+        values: requirements.map((value) => ({ ...value, metric: defaultTrainingMetric(kind) })),
+      });
+    },
+    requirements,
+    setRequirements: (values: TrainingRequirement[]) => setDeclared({ datasetId, values }),
     maxInferenceMs,
     setMaxInferenceMs,
     maxModelBytes,

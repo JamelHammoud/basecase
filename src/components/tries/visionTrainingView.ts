@@ -1,3 +1,4 @@
+import type { TrainingRequirement, RequirementOutcome } from '../../vision/training/requirementTypes';
 import type { InspectionNavigation } from '../../workspace/visionInspectionNavigation';
 import type { VisionInspectionReports } from './useVisionInspection';
 import type { VisionKind } from '../../vision/manifest';
@@ -20,6 +21,7 @@ export interface VisionAttemptView {
   active?: boolean;
   targets?: { id: string; name: string }[];
   reason: string;
+  requirements?: RequirementOutcome[];
   metrics: { name: string; value: string }[];
   failures: { className: string; missed: number; falsePositives: number }[];
   inferenceMs: number | null;
@@ -28,6 +30,8 @@ export interface VisionAttemptView {
 
 export interface VisionTrainingView {
   inspectionContext?: string;
+  requirements?: TrainingRequirement[];
+  setRequirements?: (values: TrainingRequirement[]) => void;
   task: TrainingTask;
   setTask: (task: TrainingTask) => void;
   attempts: VisionAttemptView[];

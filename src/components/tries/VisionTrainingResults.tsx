@@ -1,3 +1,4 @@
+import { VisionRequirementResults } from './VisionRequirementResults';
 import { useEffect, useState } from 'react';
 import { VISION_INSPECTION_EVENT, type VisionInspectionRequest } from './visionInspectionCommand';
 import { VisionInspection } from './VisionInspection';
@@ -77,6 +78,7 @@ export function VisionTrainingResults({ attempts, targets, onApply, context }: V
             />
           ))}
           <p className="text-[12px] text-white/60">{attempt.reason}</p>
+          <VisionRequirementResults outcomes={attempt.requirements} />
           {attempt.inspection && <Button onClick={() => setInspecting(attempt.id)}>Inspect Images</Button>}
           {attempt.retained && (
             <VisionTrainingApply runId={attempt.id} targets={attempt.targets ?? targets} onApply={onApply} />

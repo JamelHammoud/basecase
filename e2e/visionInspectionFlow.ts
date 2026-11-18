@@ -8,14 +8,11 @@ import type { Dataset } from '../src/datasets/datasetFile';
 export interface InspectionStudio {
   configureVisionBackend: (input: { baseline: number[]; candidate: number[] }) => Promise<void>;
   prepareVisionInspection: (count?: number) => Promise<TrainingRun>;
-  simState: () => { timeline: { frame: number; open: boolean } };
   visionBackendState: () => Promise<{ runs: TrainingRun[]; dataset: Dataset }>;
+  simState: () => { timeline: { frame: number } | null };
 }
 
-export async function openVisionInspection(
-  app: App,
-  options: { count?: number; beforeInspect?: () => Promise<void> } = {},
-) {
+export async function openVisionInspection(app: App) {
   const { page } = app;
 
   await loadFixtureRobot(page, 'arm-3dof');
@@ -24,10 +21,9 @@ export async function openVisionInspection(
       const studio = (window as unknown as { __studio: InspectionStudio }).__studio;
 
       await studio.configureVisionBackend(input);
-      await studio.prepareVisionInspection(input.count);
+      await studio.prepareVisionInspection();
     },
     {
-      count: options.count ?? 1,
       baseline: [...tinyDetectionOnnx([0, 0, 1, 1, 0.01, 0])],
       candidate: [...tinyDetectionOnnx([0, 0, 1, 1, 0.9, 0])],
     },
@@ -36,11 +32,11 @@ export async function openVisionInspection(
   await page.locator(shown('[data-testid="library-datasets"]')).getByText('Real cups', { exact: true }).click();
 
   const pane = page.locator(shown('[data-testid="dataset-pane"]'));
+
   const saved = () =>
     page.evaluate(() => (window as unknown as { __studio: InspectionStudio }).__studio.visionBackendState());
   const before = await saved();
 
-  await options.beforeInspect?.();
   await pane.getByRole('button', { name: 'Inspect Images', exact: true }).click();
 
   const dialog = page.getByRole('dialog', { name: 'Comparison images', exact: true });
@@ -57,9 +53,12 @@ export async function followVisionSource(app: App) {
   const dialog = app.page.getByRole('dialog', { name: 'Comparison images', exact: true });
 
   await dialog.getByRole('button', { name: 'Open Source Try', exact: true }).click();
+  await app.page.locator(shown('[data-testid="try-timeline"]')).waitFor();
   await expect
     .poll(() =>
-      app.page.evaluate(() => (window as unknown as { __studio: InspectionStudio }).__studio.simState().timeline.frame),
+      app.page.evaluate(
+        () => (window as unknown as { __studio: InspectionStudio }).__studio.simState().timeline?.frame,
+      ),
     )
     .toBe(6);
 }

@@ -17,11 +17,9 @@ export async function openPurchasingRobot(page: Page) {
   scene.project = { ...scene.project, ...{ extras: [{ key: picoKey, qty: 3 }] } };
   await page.evaluate((record) => (window as unknown as { __studio: StudioHook }).__studio.load(record), scene);
   await openPurchasingBuild(page);
-
-  return scene;
 }
 
-export async function openPurchasingBuild(page: Page) {
+async function openPurchasingBuild(page: Page) {
   await page.getByRole('tab', { name: 'Build', exact: true }).filter({ visible: true }).click();
 
   const components = page
@@ -32,7 +30,7 @@ export async function openPurchasingBuild(page: Page) {
   if ((await components.getAttribute('aria-expanded')) === 'false') await components.click();
 }
 
-export async function editPicoIdentity(page: Page, supplierPartNumber = '2648-SC1631CT-ND') {
+export async function editPicoIdentity(page: Page) {
   await picoRow(page).getByRole('button').last().click();
 
   const dialog = page.getByRole('dialog', { name: 'Raspberry Pi Pico 2', exact: true });
@@ -46,7 +44,7 @@ export async function editPicoIdentity(page: Page, supplierPartNumber = '2648-SC
   await dialog.getByRole('textbox', { name: 'Manufacturer', exact: true }).fill('Raspberry Pi');
   await dialog.getByRole('textbox', { name: 'Manufacturer part number', exact: true }).fill('SC1631');
   await dialog.getByRole('textbox', { name: 'Supplier', exact: true }).fill('DigiKey');
-  await dialog.getByRole('textbox', { name: 'Supplier part number', exact: true }).fill(supplierPartNumber);
+  await dialog.getByRole('textbox', { name: 'Supplier part number', exact: true }).fill('2648-SC1631CT-ND');
   await dialog.getByRole('textbox', { name: 'Ordering unit', exact: true }).fill('piece');
 
   const units = dialog.getByRole('textbox', { name: 'Units per order', exact: true });

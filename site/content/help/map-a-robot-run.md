@@ -47,7 +47,7 @@ Start with an [imported ROS recording](/help/play-a-ros-recordings-topics-in-the
 ![The Map row’s menu with Scan Matching checked](/help/map-a-robot-run/scan-matching.png)
 
 6. Choose **Scan Matching** to compare placement with matching off. The check mark means matching is on.
-7. Drag on the timeline to inspect the robot at different times. The map keeps the whole run in view while each sensor's scan follows the playhead.
+7. Drag on the timeline to inspect different times. The map keeps the whole run in view.
 
 Scan matching starts on for imported readings. It uses overlapping surfaces to adjust their placement from the recorded poses. Poor starting poses, moving objects or repeated surfaces can still leave drift. Simulated LiDAR hits use their recorded world positions and bypass matching.
 

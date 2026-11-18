@@ -26,7 +26,10 @@ afterAll(async () => {
 });
 
 async function selectPart(name: string) {
-  await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Layers"]')).click();
+  const layers = app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Layers"]'));
+
+  if ((await layers.getAttribute('aria-pressed')) !== 'true') await layers.click();
+
   await app.page.locator(shown('[data-layer-row]')).filter({ hasText: name }).click();
 }
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Section } from '../../design-system';
 import { ownedBy } from '../../readiness/readiness';
 import type { CheckStatus, CheckSummary, Readiness } from '../../readiness/types';
@@ -43,10 +43,18 @@ const Checking: React.FC<{ name: string }> = ({ name }) => (
 
 const entryKey = (check: CheckSummary) => (check.caseId ? `case:${check.caseId}` : check.name);
 
-const Entry: React.FC<{ check: CheckSummary; readiness: Readiness; context: FindingContext }> = ({
+const Entry: React.FC<{
+  check: CheckSummary;
+  readiness: Readiness;
+  context: FindingContext;
+  open: boolean;
+  onToggle: () => void;
+}> = ({
   check,
   readiness,
   context,
+  open,
+  onToggle,
 }) => {
   const notes = readiness.notes.filter(ownedBy(check));
 
@@ -55,10 +63,12 @@ const Entry: React.FC<{ check: CheckSummary; readiness: Readiness; context: Find
   const blockers = readiness.blockers.filter(ownedBy(check));
   const stressIds = stressIdsOf(readiness, check.name);
 
-  return <CheckItem check={check} blockers={blockers} notes={notes} context={context} stressIds={stressIds} />;
+  return <CheckItem check={check} blockers={blockers} notes={notes} context={context} stressIds={stressIds} open={open} onToggle={onToggle} />;
 };
 
 export const ChecksSection: React.FC<ChecksSectionProps> = ({ readiness, checking, context, restore }) => {
+  const [expanded, setExpanded] = useState<string[]>(() => context.focusedCheck ? [context.focusedCheck] : []);
+
   if (!context.parts.length || readiness?.status === 'empty') return null;
 
   const { text, tone } = verdict(readiness, checking);
@@ -69,7 +79,14 @@ export const ChecksSection: React.FC<ChecksSectionProps> = ({ readiness, checkin
         {!readiness && FIRST_RUN.map((name) => <Checking key={name} name={name} />)}
         {readiness &&
           bySeverity(readiness.checks).map((check) => (
-            <Entry key={entryKey(check)} check={check} readiness={readiness} context={context} />
+            <Entry
+              key={entryKey(check)}
+              check={check}
+              readiness={readiness}
+              context={context}
+              open={expanded.includes(entryKey(check))}
+              onToggle={() => setExpanded((names) => names.includes(entryKey(check)) ? names.filter((name) => name !== entryKey(check)) : [...names, entryKey(check)])}
+            />
           ))}
       </ul>
       {readiness && <IgnoredChecks readiness={readiness} context={context} restore={restore} />}

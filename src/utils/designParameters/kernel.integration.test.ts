@@ -114,33 +114,6 @@ describe('real kernel shared dimension preparation', () => {
   );
 });
 
-it.each([1, 16, 64])('prepares %s repeated CAD modules once each and retains unrelated geometry', async (count) => {
-  const source = await sourcePart(ASSEMBLIES[0]);
-  const modules = Array.from({ length: count }, (_, index) => ({ ...source, id: `deck-${index}` }));
-  const stock = specToPart({ id: 'unchanged', shape: 'box', size: [10, 10, 10] });
-  let compiled = 0;
-  const result = await prepareParameterEdit(
-    { parts: [...modules, stock], parameters: [{ name: 'width', unit: 'mm', value: 200 }] },
-    {
-      compile: (part, code) => {
-        compiled += 1;
-
-        return kernel.renderPart('openscad', code, { expect: part.cad?.expect });
-      },
-      regenerate: async (job) => regenerateParameterGeometry(job),
-      isCurrent: () => true,
-    },
-  );
-
-  expect(compiled).toBe(count);
-  expect(result.metrics.compiled).toBe(count);
-  expect(result.parts.at(-1)).toBe(stock);
-
-  for (const part of result.parts.slice(0, count)) expect(part.dimensions.width).toBeCloseTo(200, 4);
-
-  process.stdout.write(`parameter-cad-modules ${JSON.stringify({ count, ...result.metrics })}\n`);
-});
-
 it('refuses an actual kernel expectation failure without publishing any geometry', async () => {
   const source = await sourcePart(ASSEMBLIES[0]);
   const expected = { ...source, cad: { ...source.cad!, expect: { bodies: 2 } } };

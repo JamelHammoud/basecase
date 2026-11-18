@@ -42,13 +42,6 @@ async function startDriving(id: string) {
   await expect.poll(() => button('Stop Driving').count()).toBeGreaterThan(0);
 }
 
-async function holdKey(key: string, ms: number) {
-  await app.page.mouse.click(720, 450);
-  await app.page.keyboard.down(key);
-  await app.page.waitForTimeout(ms);
-  await app.page.keyboard.up(key);
-}
-
 async function stopDriving() {
   await app.page.keyboard.press('Escape');
   await expect.poll(async () => (await simState()).drive).toBe('off');
@@ -65,15 +58,21 @@ afterAll(async () => {
 const itUnlessWindows = it.skipIf(process.platform === 'win32');
 
 describe('live drive', () => {
-  it('drives a rover forward with W, and S, F and Backspace never edit parts', async () => {
+  it('drives a rover forward with W while edit shortcuts leave the part count unchanged', async () => {
     await startDriving('rover-diff');
 
     const before = await partCount(app.page);
 
-    await holdKey('w', 2500);
-    await expect.poll(async () => (await simState()).stats?.robots[0].forward ?? 0).toBeGreaterThan(0.1);
+    await app.page.mouse.click(720, 450);
+    await app.page.keyboard.down('w');
 
-    for (const key of ['s', 'f', 'Backspace', 'Meta+z']) await app.page.keyboard.press(key);
+    try {
+      await expect.poll(async () => (await simState()).stats?.robots[0].forward ?? 0).toBeGreaterThan(0.1);
+    } finally {
+      await app.page.keyboard.up('w');
+    }
+
+    for (const key of ['s', 'f', 'Backspace', 'ControlOrMeta+z']) await app.page.keyboard.press(key);
 
     const after = await simState();
 

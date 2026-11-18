@@ -230,14 +230,6 @@
     "reason": "Run 43856125616 failed the unchanged mean main-thread handoff budget at line 374 on both Windows attempts, measuring 2.403 and 2.182 ms against less than 2 ms. The preceding Windows run 43851640785 passed in 12.043 s with unchanged test body, camera pipeline, code bridge, harness, dependency lock and e2e configuration. A single zero-retry Windows diagnostic at the exact failing commit passed in run 43858111193, confirming intermittency. Dimensions and rate checks passed before the failure. Scheduling and actual callback work are not distinguished. Issue #1410 owns Windows tracing and equal-load before-and-after measurements. Linux and macOS retain the walkthrough, while cameraStream, streamPace, feedWorker and codeWorld tests retain routing, pacing, ownership and teardown coverage."
   },
   {
-    "file": "e2e/caseCode.e2e.test.ts",
-    "test": "passes pointer input through the HUD and stops driving before closing Run Case on Escape inside a code frame",
-    "issue": 1377,
-    "until": "2026-11-28",
-    "platform": "linux",
-    "reason": "Run 43831610288 kept Drive off for the unchanged 60000 ms poll at line 223 after the joystick click on both Linux attempts. Windows passed at the same commit. Linux passed in run 43824172798 with unchanged Case code, browser test, dependencies and harness. Each attempt owns a fresh app. Frame handshake, click delivery and simulation startup are not distinguished by the log. Issue #1377 owns tracing and equal-load measurements before restoration."
-  },
-  {
     "file": "e2e/caseCodeAgent.e2e.test.ts",
     "test": "edits and undoes live panels, then sends the running Case context through \u2318I",
     "issue": 1377,

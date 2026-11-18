@@ -44,8 +44,6 @@ it(
     await expect
       .poll(async () => (await saved()).dataset.imageMembers?.[0].hash)
       .not.toBe(before.dataset.imageMembers?.[0].hash);
-    await page.keyboard.press('Escape');
-    await page.getByText('Real cups', { exact: true }).click();
     await page.keyboard.press('ControlOrMeta+k');
     await page.getByLabel('Search commands').fill('Inspect Images');
     await page.keyboard.press('Enter');

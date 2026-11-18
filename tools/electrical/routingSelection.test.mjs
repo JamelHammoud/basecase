@@ -7,6 +7,7 @@ it('selects routing and fabrication inputs while leaving unrelated wiring and pr
     'electron/electrical/validate.mjs',
     'tools/electrical/routeFixtures.ts',
     'src/workspace/useBoardRouting.ts',
+    'e2e/boardRouting.e2e.test.ts',
     '.github/workflows/electrical.yml',
     'package-lock.json',
   ])

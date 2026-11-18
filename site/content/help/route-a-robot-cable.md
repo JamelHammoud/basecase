@@ -1,7 +1,7 @@
 ---
 title: Route a robot cable
 date: 2026-11-18
-collection: build
+collection: build-and-print
 type: task
 covers:
   - src/components/build/CableRoutesSection.tsx

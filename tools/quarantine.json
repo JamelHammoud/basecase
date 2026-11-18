@@ -717,5 +717,13 @@
     "until": "2026-11-28",
     "platform": "linux",
     "reason": "Check 44358913096 exhausted the unchanged 10000 ms beforeAll budget awaiting fleetFixture before any of nine recovery assertions ran. Previous Linux Check 44353177242 passed the complete file in 13451 ms including assertions with unchanged recovery, PostgreSQL, fixture and service sources. Same-revision Linux diagnostic 44360510021 passed setup and the selected recovery assertion in a 7956 ms process on the same runner image with one worker, zero retries and quarantine off. Docker startup, readiness, migrations and HTTP startup are not distinguished. Existing priority shared fixture owner #1401 owns stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Linux observations at equal load without retries before restoration. Whole-file filtering is required because setup precedes individual-test filtering. macOS retains the full matrix. Linux retains recovery migration and browser recovery checks, which do not replace the full recovery matrix. Existing Windows quarantine remains separate."
+  },
+  {
+    "file": "e2e/buildCheck.e2e.test.ts",
+    "test": "puts /pass and the open Case in the composer from ⌘K when its row fails",
+    "issue": 988,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44358913096 completed scene loading and selected Build, then found zero Reach a Spot rows through the unchanged 90000 ms poll on both Windows attempts. The following fit-refusal declaration loaded the same robot and Case and passed in 1475 ms. Previous Windows Check 44353177242 passed this declaration in 23912 ms, and Linux at the failing revision passed in 3266 ms. Same-revision Windows diagnostic 44362858893 passed in 4648.0942 ms with one worker, zero retries and quarantine off on the same runner image, confirming intermittency. The log does not distinguish mesh readiness, model preparation, worker inspection, readiness invalidation or publication. Existing priority Check-row owner #988 owns this separate refusal-row path, stage tracing and ten baseline and ten candidate Windows observations at equal load with retries disabled before restoration. Other platforms retain Make It Pass composer coverage. Windows retains the fit-refusal row, Case header and New Case sibling, plus fast row ownership and real worker-session coverage. No assertion, deadline or retry changes."
   }
 ]

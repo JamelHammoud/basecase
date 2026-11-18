@@ -910,9 +910,9 @@ The map, world import and dataset pipeline tests retain their existing platform 
 
 ### Cases in Checks
 
-`src/readiness/caseChecks.test.ts` checks verdict thresholds, row names and counts, and ownership when Cases share names. `src/workspace/caseChecks.test.ts` checks merging 20 outcomes into a row and handling failed or replaced runs. `src/cases/caseCheckJob.test.ts` runs seeded batches through the real worker session. The remaining Cases in Checks tests in `e2e/buildCheck.e2e.test.ts` open a Case from its row, use Make It Pass and follow a fit refusal to New Case.
+`src/readiness/caseChecks.test.ts` checks verdict thresholds, row names and counts, and ownership when Cases share names. `src/workspace/caseChecks.test.ts` checks merging 20 outcomes into a row and handling failed or replaced runs. `src/cases/caseCheckJob.test.ts` runs seeded batches through the real worker session. The Cases in Checks tests in `e2e/buildCheck.e2e.test.ts` open a Case from its row, use Make It Pass and follow a fit refusal to New Case. The Make It Pass declaration is quarantined only on Windows through 28 November 2026 under existing Check-row owner [#988](https://github.com/JamelHammoud/basecase/issues/988). Windows retains the fit-refusal row, Case header and New Case walkthrough. Linux and macOS retain both declarations. The fast checks do not replace Windows command-palette delivery into the composer.
 
-[Incident evidence and limits](../notes/testing-cases.md).
+[Incident evidence and restoration conditions](../notes/testing-cases.md#windows-make-it-pass-check-row).
 
 ### Case comparison
 

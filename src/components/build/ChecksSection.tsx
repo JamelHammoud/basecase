@@ -49,13 +49,7 @@ const Entry: React.FC<{
   context: FindingContext;
   open: boolean;
   onToggle: () => void;
-}> = ({
-  check,
-  readiness,
-  context,
-  open,
-  onToggle,
-}) => {
+}> = ({ check, readiness, context, open, onToggle }) => {
   const notes = readiness.notes.filter(ownedBy(check));
 
   if (check.caseId) return <CaseCheckItem check={{ ...check, caseId: check.caseId }} notes={notes} context={context} />;
@@ -63,11 +57,21 @@ const Entry: React.FC<{
   const blockers = readiness.blockers.filter(ownedBy(check));
   const stressIds = stressIdsOf(readiness, check.name);
 
-  return <CheckItem check={check} blockers={blockers} notes={notes} context={context} stressIds={stressIds} open={open} onToggle={onToggle} />;
+  return (
+    <CheckItem
+      check={check}
+      blockers={blockers}
+      notes={notes}
+      context={context}
+      stressIds={stressIds}
+      open={open}
+      onToggle={onToggle}
+    />
+  );
 };
 
 export const ChecksSection: React.FC<ChecksSectionProps> = ({ readiness, checking, context, restore }) => {
-  const [expanded, setExpanded] = useState<string[]>(() => context.focusedCheck ? [context.focusedCheck] : []);
+  const [expanded, setExpanded] = useState<string[]>(() => (context.focusedCheck ? [context.focusedCheck] : []));
 
   if (!context.parts.length || readiness?.status === 'empty') return null;
 
@@ -85,7 +89,13 @@ export const ChecksSection: React.FC<ChecksSectionProps> = ({ readiness, checkin
               readiness={readiness}
               context={context}
               open={expanded.includes(entryKey(check))}
-              onToggle={() => setExpanded((names) => names.includes(entryKey(check)) ? names.filter((name) => name !== entryKey(check)) : [...names, entryKey(check)])}
+              onToggle={() =>
+                setExpanded((names) =>
+                  names.includes(entryKey(check))
+                    ? names.filter((name) => name !== entryKey(check))
+                    : [...names, entryKey(check)],
+                )
+              }
             />
           ))}
       </ul>

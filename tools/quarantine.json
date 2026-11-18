@@ -597,5 +597,13 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44206588211 failed both Windows attempts. The first reached Open Try after restoring and acknowledging the incident but found no timeline at line 102. The retry stalled in the part-count callback after loading the arm into the second tab at line 79. Same-revision Windows diagnostic 44208960108 passed the complete exact test with one worker, zero retries and quarantine off in a 38591 ms process. Previous Check 44200197616 passed in 16742 ms with unchanged test, fixture, harness, incident, replay and timeline sources. The responsible scene-load and playback stages are unresolved. Issue #1749 owns per-path tracing, cleanup and equal-load baseline and candidate measurements before restoration. Other platforms retain the walkthrough. Fast collector, storage and recorder integration coverage remains active on Windows."
+  },
+  {
+    "file": "e2e/classroom.e2e.test.ts",
+    "test": "grades two revisions and opens the failing Check without losing the grid",
+    "issue": 1754,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44210703841 completed grading, independent failing-Check inspection and the original two-tile grid, then found zero submission tiles after teacher reload at line 159 on both Windows attempts. Same-revision Windows diagnostic 44212666461 passed the exact test in 11640.8835 ms with one worker, zero retries and quarantine off, confirming intermittency. Previous Windows Check 44206588211 passed in 15132 ms with no intervening application, e2e, dependency-lock, Vite or browser configuration changes. Linux passed at the failing revision in 7157 ms. Missing records, queued persistence, load errors and reload rendering are not distinguished. Issue #1754 owns teacher-path tracing and equal-load baseline and candidate Windows measurements before restoration, coordinating shared helpers with student download owner #1508. Other platforms retain this walkthrough. Windows retains assignment export, edited-attempt reload and Submit, real file validation and native-worker grading. No assertion or deadline changes."
   }
 ]

@@ -567,6 +567,14 @@
     "reason": "Check 44206588211 timed out at 5025 ms against the unchanged 5000 ms deadline. Focused Windows diagnostic 44207822586 passed the exact test at the failing revision in 3481.1829 ms with one worker, zero retries and quarantine off, establishing intermittency. Previous Check 44200197616 passed nominal drawer in 1736 ms with unchanged parity, capture, variant, Case builder and native replay sources. Capture, uv provisioning, native startup, replay and scoring are not distinguished by the log. Existing native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. The other seven drawers remain active on Windows and every comparison remains active on other platforms."
   },
   {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for limp",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44214681066 timed out at 5004 ms against the unchanged 5000 ms deadline. Same-revision Windows diagnostic 44215996839 passed the exact test in 3840.8756 ms with one worker, zero retries and quarantine off, establishing intermittency. Previous Windows Check 44210703841 passed limp drawer in 4493 ms with unchanged parity, capture, variant, Case builder, native replay, dependency-lock and Vitest configuration sources. Capture, uv provisioning, native startup, replay, scoring and cleanup are not distinguished by the log. Existing open priority native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. The other six drawers remain active on Windows and every comparison remains active on other platforms."
+  },
+  {
     "file": "tools/fleet/recovery.test.mjs",
     "test": "",
     "issue": 1401,

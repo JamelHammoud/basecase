@@ -20,12 +20,14 @@ it('imports a routed KiCad derivative through the Inspector with undo and redo',
 
     const original = await currentBoard();
     const chooser = page.waitForEvent('filechooser');
+    const validated = page.waitForResponse((response) => response.url().endsWith('/electrical-validate'));
 
     expect(original?.routed).toBeUndefined();
     await page.getByRole('button', { name: 'Import Board', exact: true }).click();
     await (
       await chooser
     ).setFiles({ name: 'robot.kicad_pcb', mimeType: 'application/octet-stream', buffer: Buffer.from(fixture.pcb) });
+    await validated;
     await expect.poll(async () => (await currentBoard())?.routed?.pcb).toBe(fixture.pcb);
 
     const imported = await currentBoard();

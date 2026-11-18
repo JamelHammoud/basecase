@@ -1,4 +1,4 @@
-import loadMujoco from '@mujoco/mujoco';
+import { loadMujoco } from './loadMujoco';
 import { decomposeWorld } from '../cases/worldDecomposition';
 import type { ScenePart } from '../types/robotics';
 import { SimEngine } from './engine';
@@ -108,7 +108,8 @@ export async function prepareContactJob(job: ContactPreparationJob): Promise<Con
 
   assertCollisionPieces(input, robotHulls);
 
-  const model = buildMjcf({ ...input, robotHulls, partTriangles: (id) => job.triangles[id] ?? null });
+  const triangles = (id: string) => job.triangles[id] ?? null;
+  const model = buildMjcf({ ...input, robotHulls, partTriangles: triangles, worldTriangles: triangles });
 
   await assertContactStart(
     model,

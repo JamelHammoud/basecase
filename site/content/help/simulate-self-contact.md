@@ -11,7 +11,7 @@ covers:
   - src/sim/useSceneModel.ts
 ---
 
-Use self-contact to prevent links from passing through one another during simulation. You can keep the same contact model when you train or export the robot.
+Test collisions between your robot’s links in simulation and keep the contact model when you train or export it.
 
 1. Download the [Folding arm scene](/help/simulate-self-contact/folding-arm.basecase).
 2. In [[⌘K]], choose **Open Scene File**.

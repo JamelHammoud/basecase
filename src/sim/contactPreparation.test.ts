@@ -5,6 +5,66 @@ import { prepareContactJob } from './contactPreparation';
 import { contactJob, prepareContactModel } from './contactPreparationClient';
 import loadMujoco from '@mujoco/mujoco';
 import { SimEngine } from './engine';
+import { headlessParts } from '../three/headlessParts';
+import { componentMeshesReady, forgetComponentMesh } from '../three/componentMeshes';
+import { buildMjcf } from './mjcf';
+import type { WorldItem } from './mjcfTypes';
+
+it('retains supplied world collision triangles through contact preparation', async () => {
+  const input = selfContactArmInput(true);
+  const obstacle: WorldItem = {
+    ...input.parts[0],
+    id: 'obstacle',
+    kind: 'mesh',
+    position: [500, 100, 0],
+    behavior: 'static',
+  };
+  const geometry = new BoxGeometry(20, 30, 40).toNonIndexed();
+  const triangles = new Float32Array(geometry.attributes.position.array);
+  const scene = {
+    ...input,
+    world: [obstacle],
+    worldTriangles: (id: string) => (id === obstacle.id ? triangles : null),
+  };
+
+  try {
+    const model = await prepareContactModel(scene);
+    const disabled = buildMjcf({ ...scene, project: { ...input.project, selfContact: {} } });
+    const worldGeom = (xml: string) => xml.match(/<geom name="wg_obstacle"[^>]*>/)?.[0];
+
+    expect(worldGeom(model.xml)).toContain('type="mesh"');
+    expect(worldGeom(model.xml)).toBe(worldGeom(disabled.xml));
+  } finally {
+    geometry.dispose();
+  }
+});
+
+it('rejects failed component display placeholders in headless contact preparation while retaining the disabled fallback', async () => {
+  const input = selfContactArmInput(true);
+  const componentId = 'self-contact-missing-component';
+  const parts = input.parts.map((part) =>
+    part.id === 'tip' ? { ...part, kind: 'component' as const, componentId } : part,
+  );
+
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response(null, { status: 404 })),
+  );
+
+  try {
+    expect(await componentMeshesReady([componentId])).toEqual([componentId]);
+
+    const loaded = await headlessParts(parts, input.rig.joints, {});
+    const scene = { ...input, parts, measures: loaded.measures, partTriangles: loaded.partTriangles };
+
+    expect(loaded.partTriangles('tip')).toBeNull();
+    await expect(prepareContactModel(scene)).rejects.toThrow('Repair collision geometry for');
+    expect(buildMjcf({ ...scene, project: { ...input.project, selfContact: {} } }).xml).toContain('g_tip');
+  } finally {
+    forgetComponentMesh(componentId);
+    vi.unstubAllGlobals();
+  }
+});
 
 it('reuses collision geometry by content while rebuilding placement and rejects starting penetration', async () => {
   const input = selfContactArmInput(true);

@@ -1,9 +1,22 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { boundsOf, solidObjects } from './measurements';
+import { boundsOf, partTriangles, solidObjects } from './measurements';
 import type { ViewportContext } from './viewportContext';
 
 const RADIUS = 50;
+
+it('returns collision triangles only after a component placeholder has been replaced', () => {
+  const object = new THREE.Group();
+
+  object.add(new THREE.Mesh(new THREE.BoxGeometry(20, 20, 20)));
+  object.userData.placeholder = true;
+
+  const ctx = { layer: { get: () => object } } as unknown as ViewportContext;
+
+  expect(partTriangles(ctx, 'component')).toBeNull();
+  object.userData.placeholder = false;
+  expect(partTriangles(ctx, 'component')?.length).toBeGreaterThan(0);
+});
 
 it('keeps derived board components out of generic assembly while allowing explicit route obstacles', () => {
   const source = { id: 'board', role: 'solid', kind: 'box', visible: true };

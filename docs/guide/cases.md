@@ -964,7 +964,7 @@ The operator-camera browser check runs on Linux and macOS. Its Windows live-read
 
 ### Hung code panel shutdown
 
-`cases/console/codeBridge.test.ts` retains heartbeat, hello deadline, page-stall recovery and drive-release coverage on every platform. The slow studio spinning-panel walkthrough and its Windows quarantine entry have been removed. `e2e/codeFrame.e2e.test.ts` instead bundles and mounts the production `CodeFrame` alone, with a real infinite-loop panel and the unchanged hello deadline. It asserts parent-page animation progress, the failure message, navigation to `about:blank`, iframe removal and browser cleanup without rover or simulation startup. This focused declaration runs on every platform.
+`cases/console/codeBridge.test.ts` retains heartbeat, hello deadline, page-stall recovery and drive-release coverage on every platform. The slow studio spinning-panel walkthrough and its Windows quarantine entry have been removed. `e2e/codeFrame.e2e.test.ts` instead bundles and mounts the production `CodeFrame` alone, with a real infinite-loop panel and the unchanged hello deadline. Its inline Vite build explicitly uses production JSX as well as production React, since Vitest's test environment otherwise selects development JSX calls. It asserts parent-page animation progress, the failure message, navigation to `about:blank`, iframe removal and browser cleanup without rover or simulation startup. This focused declaration runs on every platform.
 
 [Incident evidence and limits](../notes/testing-case-code.md).
 

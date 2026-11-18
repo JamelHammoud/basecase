@@ -20,6 +20,12 @@ The walkthrough, its frame-count helper, spinning fixture and Windows quarantine
 
 The Windows incident above remains historical evidence. The new declaration has no quarantine or retry changes. Browser execution and platform shutdown observations are left to CI, with only fast focused checks run locally. No replacement duration or shard speedup has been measured, and browser closure is not an operating-system process census.
 
+### Focused fixture mount failure
+
+The pull request's changed-browser Check on 18 November 2026 timed out waiting for `[data-testid="code-frame"]` at line 55 on both attempts. The declaration took 60.432 seconds including its existing retry. It never reached the animation or disposal assertions. The aggregate `check` job failed because `E2E_CHANGED` was `failure`, with its three required jobs successful. The log also reported Vite server shutdown warnings, without establishing their cause.
+
+A browser-free bundle reproduction with `NODE_ENV=test` emits `jsxDEV` calls while the explicit `process.env.NODE_ENV` replacement selects production React. Production `react/jsx-dev-runtime` supplies no `jsxDEV`, so the fixture cannot render. Setting Vite's `oxc.jsx.development` to `false` aligns the JSX transform with the existing production React selection. A second bundle under the same test environment contains `CodeFrame` and no `jsxDEV` calls. The browser assertions, timeouts, retries and product code stay unchanged. CI must still establish browser lifecycle and platform cleanup behavior for the corrected bundle.
+
 ## Code joystick
 
 The studio joystick walkthrough was narrowed and its Windows quarantine ([#842](https://github.com/JamelHammoud/basecase/issues/842)) was removed under [#1143](https://github.com/JamelHammoud/basecase/issues/1143). The original sequence took 66.708 s on Windows in run 43739315274. The retained shared-Case joystick and HUD test in `e2e/gallery.e2e.test.ts` passed in 6.127 s on Linux and 7.819 s on Windows in that run.

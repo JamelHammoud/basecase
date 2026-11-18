@@ -13,6 +13,7 @@ beforeAll(async () => {
     configFile: false,
     logLevel: 'silent',
     define: { 'process.env.NODE_ENV': '"production"' },
+    oxc: { jsx: { development: false } },
     build: {
       write: false,
       lib: {

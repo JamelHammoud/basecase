@@ -53,4 +53,4 @@ The agent reads the color of each mark and the parts it circles. Marks aren't pa
 1. Right-click a message in the chat.
 2. Choose **Quote Message**, then type your reply.
 
-In the **Build** tab, each Check has a **Fix** button that asks the agent to fix that problem. To ask the agent about the problem before it fixes anything, right-click the problem's row and choose **Quote**.
+In the **Build** tab, **Fix** asks the agent to fix a problem. Some findings offer direct actions, such as **Edit Route** for [a cable connection](/help/route-a-robot-cable). To ask the agent about the problem before it fixes anything, right-click the problem's row and choose **Quote**.

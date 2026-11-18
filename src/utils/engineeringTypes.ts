@@ -1,3 +1,4 @@
+import type { RouteIdentity } from '../wiring/routeEditing';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, Purchases, RobotJoint, ScenePart } from '../types/robotics';
 import type { BomInput } from './bom';
@@ -31,6 +32,7 @@ export interface CheckDot {
 }
 
 export type FindingFix =
+  | { kind: 'cable-route'; route: RouteIdentity }
   | { kind: 'print-face'; part: string; down: V3 }
   | { kind: 'calibrate'; joints: string[] }
   | { kind: 'new-case' }

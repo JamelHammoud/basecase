@@ -98,7 +98,7 @@ To enter hours and read the breakdown, [Set a time budget](/help/set-a-time-budg
 
 Virtual fuse, switch and supply connections have no physical placement and are excluded from **Cable reach**. They remain on the wiring list.
 
-Open **Cable reach** to read each failing connection's endpoints, required length and available cable length. A limiting joint position appears beside the connection. Click the finding's part names to select its endpoints. [Servo bus or Cable reach is red](/help/troubleshoot-servo-bus) explains the routing limits.
+Open **Cable reach** to read each failing connection's endpoints, required length and available cable length. A limiting joint position appears beside the connection. Click the finding's part names to select its endpoints. [Route a robot cable](/help/route-a-robot-cable) covers **Edit Route**, stock and routing points. [Servo bus or Cable reach is red](/help/troubleshoot-servo-bus) explains the routing limits.
 
 Open **Peak torque** to plot each joint's walk against its servo's torque–speed line. A joint with a warning shows its plot under the warning. Click any other joint to open its plot.
 

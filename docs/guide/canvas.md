@@ -271,3 +271,7 @@ Fleet's browser map uses the same `WGS84_ELLIPSOID` ECEF and ENU contracts as th
 ### Source-local recording geometry
 
 Data-layer shapes share `dataLayers/shapeGeometry.ts` between viewport meshes and recording comparison worker previews. The factories preserve the existing arrow, box, sphere and cylinder geometry. Comparison reuses topic tracks and draw primitives within separate local XY frames, without writing scene layers or matching robot frames. Its bounded snapshots and source-isolation tests are documented in [Cases](cases.md#comparison-preparation-coverage).
+
+## Cable route editing overlay
+
+`viewport/cableRouteLayer.ts` draws the current cable path, authored points and named connector endpoints while the Build route editor is open. It owns a line, a point buffer and DOM endpoint labels. Pointer movement projects onto a camera-facing plane and calls the editor's preview callback. Pointer release calls the commit callback once. Scene, geometry, wiring or pose replacement cancels a pending drag. Picking uses container coordinates, including an oversized canvas. The layer releases geometry, materials, labels and pointer listeners on disposal. Rendering remains on demand. [Build](build.md#editable-cable-routes) owns analysis and acceptance coverage.

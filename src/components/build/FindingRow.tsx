@@ -24,7 +24,11 @@ export interface FindingContext {
   showDots?: (check: string | null) => void;
 }
 
-const FIX_LABELS: Record<string, string> = { 'new-case': 'New Case', 'replay-fall': 'Replay in Sim' };
+const FIX_LABELS: Record<string, string> = {
+  'new-case': 'New Case',
+  'replay-fall': 'Replay in Sim',
+  'cable-route': 'Edit Route',
+};
 
 function useFindingMenu(finding: ReadinessFinding, actions: FindingActions) {
   const [at, setAt] = useState<{ x: number; y: number } | null>(null);

@@ -426,3 +426,35 @@ The seven help articles covering this file remain unchanged after checking their
 | [Real parts check lists placeholders or unchecked parts](../../site/content/help/troubleshoot-build-real-parts-check.md) | Sourcing findings, stand-in handling and saved-price confirmation are unchanged. Fix, Add Price and Save retain their labels and actions. |
 
 No illustrated state changes, so the existing screenshots remain current. The preflight coverage notices are resolved by these article checks rather than unrelated edits to published instructions.
+
+## Cable editor interaction work
+
+Measured on November 18 on macOS arm64, Apple M5 Pro, Node 26.13.0 and Chrome 157.0.8103.79. These are local observations on a shared host, not CI timing thresholds or worst-case limits.
+
+### Pointer requests and renderer retention
+
+The documentation capture used the ordinary Cable reach finding, a generated two-servo arm, selected 900 mm stock and an adapter-owned point. A temporary probe wrapped native Worker postMessage, message and terminate boundaries. A canvas drag generated 100 pointer movements. The saved wiring stayed unchanged during movement, and the probe observed **zero routing requests during the drag and one after release**. The release request transferred **zero geometry bytes**, reusing the worker's immutable geometry cache. No readiness worker request was added after that result entered the existing shared cache.
+
+After the measured drag, the capture performed 20 more canvas drags. Of 25 wiring requests over initial editing and those drags, 24 completed and one was terminated when a newer edit replaced it. No browser errors were captured. Native cancellation latency was measured separately below. Both app bundles were absent, so this interaction capture used the development server. Its operation counts establish request behavior, not production frame latency.
+
+Chrome Runtime.getHeapUsage was sampled after explicit garbage collection before the first drag and after the 21 committed drags. Renderer used heap rose from **76,644,976 to 84,124,012 bytes**, a **7,479,036-byte** delta. Embedder heap rose by 627,992 bytes and backing storage by 533,527 bytes. The scene deliberately retained those edits on its ordinary undo timeline. These renderer values include development and initialization costs, exclude worker and GPU memory, and do not establish a leak bound. Raw observations are retained in `scratch/cable-interaction-measurements.json`.
+
+### Compiled production worker
+
+A separate probe bundled the unchanged production analysis worker, cableAnalysisClient and geometry preparation with Rolldown. A small Node worker_threads adapter supplied the same request/reply transport and browser-style Worker callbacks. The adapter did not replace routing, geometry caches or cancellation. Warm request preparation includes the actual rest-shape snapshot, geometry-key lookup and payload preparation before postMessage. It excludes component-file loading. The manifold asset URL import was resolved as an asset URL during bundling, and its unrelated boolean path was not invoked.
+
+The fixture had **six parts, four joints, 32 static obstacle meshes and one shared subdivided box geometry**. Each edit changed the authored point by one millimeter. The worker ran the existing full-motion routing path. One warmup was followed by 100 completed edits, then five cancellation observations with a warmed replacement worker between them.
+
+| Measurement | Median | 95th percentile | Range |
+| --- | --- | --- | --- |
+| Rest-shape snapshot | 0.024 ms | 0.131 ms | 0.018–0.199 ms |
+| Warm request preparation before postMessage, including snapshot | 0.034 ms | 0.162 ms | 0.024–0.218 ms |
+| Warm routing round trip | 14.98 ms | 17.33 ms | 14.63–34.84 ms |
+| Abort to caller rejection, five observations | 0.056 ms | Not measured | 0.048–0.193 ms |
+| Abort to native worker exit, five observations | 1.96 ms | Not measured | 0.99–2.00 ms |
+
+Cold preparation took 1.086 ms, and the cold routing round trip including worker startup took 79.60 ms. The first request transferred 15,048 geometry bytes. The next 100 requests transferred none. Cancellation terminated the native worker, and each replacement received that geometry again. Cancellation was triggered immediately after dispatch, so these samples cover a superseded queued or running request, not an upper bound on every workload. The final ordinary disposal is excluded from the five cancellation samples.
+
+Explicit worker garbage collection before and after the 100 edits measured heap use of **12,775,712 and 13,352,000 bytes**, a **576,288-byte** delta. Worker array buffers stayed at **381,131 bytes** and external memory changed by 40 bytes. These values include worker initialization and JIT retention. They are not whole-process RSS measurements or proof of leak freedom. Raw timings and memory snapshots are retained in `scratch/cable-worker-measurements.json`, with the transport and bundling probe under `scratch/cableBench*`.
+
+The editor keeps pointer previews outside the saved project, and ordinary BOM/readiness effects only see committed edits. Completed cancellable results prime the existing shared result cache. Superseded requests terminate their worker and reject stale publication. No throttle, delayed analysis queue, retry or new timing gate was added.

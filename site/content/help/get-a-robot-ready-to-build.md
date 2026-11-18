@@ -44,6 +44,7 @@ Clear every problem the Build tab finds before you print the parts, buy them, an
 5. Click **Fix** to hand the problem to the agent, or change the part yourself. Some checks work differently:
    - On **Strength**, **Fix** prints the part on its strongest face instead.
    - On **Falls**, **Replay in Sim** plays that joint's worst fall in the simulation.
+   - On **Cable reach**, **Edit Route** opens the [cable stock and routing points](/help/route-a-robot-cable).
 6. If the robot runs on a power supply instead of a battery, open **Servo voltage** and type the supply's volts in **V**.
 7. Open **Supply current** and type the power supply's amps in **A**.
 8. Open **Current and runtime** to see how long the battery lasts, such as **about 2 h 08 min**. After the agent runs the trained walk policy in the simulator, the section shows the average and peak amps from that walk, and the joint that draws the most. Until then, and after you change the design, the runtime shows **(estimate)**.

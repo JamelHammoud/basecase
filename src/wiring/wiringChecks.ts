@@ -1,3 +1,4 @@
+import { routeIdentity } from './routeEditing';
 import type { CheckRow } from '../utils/engineeringTypes';
 import { plural } from '../../electron/plural.mjs';
 import { CONNECTOR_NAMES } from './connectors';
@@ -62,6 +63,7 @@ function reachRows(netlist: Netlist, joints: RobotJoint[]): CheckRow[] {
     text: routeDetail(net, joints),
     ids: [net.from.id, net.to.id].filter((id): id is string => !!id),
     status: 'fail' as const,
+    ...(routeIdentity(net) ? { fix: { kind: 'cable-route' as const, route: routeIdentity(net)! } } : {}),
     joint: Object.keys(net.route!.limitingPose)[0],
   }));
 

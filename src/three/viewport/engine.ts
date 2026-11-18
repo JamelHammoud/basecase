@@ -1,3 +1,4 @@
+import { wiringReader } from './wiringReader';
 import type * as THREE from 'three';
 import { fastenerInput } from '../../assembly/fastenerSpec';
 import {
@@ -25,8 +26,8 @@ import { exportUsdz } from '../usdz/usdzExport';
 import { SkeletonOverlay } from './skeletonOverlay';
 import { BlueprintUnderlay } from './blueprint';
 import { BuildStepLayer } from './buildStep';
-import { currentView, focusOn, frameObjects, frameScene, lookThrough, setCameraPreset } from './cameraOps';
-import { snapshotSolidsWith, wiringSnapshot } from './analysisSnapshots';
+import { currentView, focusOn, frameLayer, frameScene, lookThrough, setCameraPreset } from './cameraOps';
+import { snapshotSolidsWith } from './analysisSnapshots';
 import { CanvasSizer } from './canvasSizer';
 import { captureScreenshot, captureViews } from './captures';
 import { silhouetteShots } from './fitCapture';
@@ -147,6 +148,7 @@ export class ViewportEngine {
     this.skeleton.sync(options.props.skeleton);
     this.overlays = new StageOverlays(this.ctx, options.props, {
       ghost: options.ghostLabel,
+      cable: options.buildLabels,
       frame: options.frameLabel,
       attribution: options.attribution,
     });
@@ -187,7 +189,7 @@ export class ViewportEngine {
       }),
       () => outline.dispose(),
     ];
-    this.cleanups.push(this.skeleton.install());
+    this.cleanups.push(this.skeleton.install(), this.overlays.cableRoute.install());
     this.api = completing(this.handle(), () => this.complete());
     this.syncWorld();
     this.syncScene();
@@ -298,6 +300,10 @@ export class ViewportEngine {
       return result;
     };
 
+    const wiring = wiringReader(ctx, () => this.complete());
+
+    this.cleanups.push(wiring.dispose);
+
     return {
       captureScreenshot: (maxSide) => captureScreenshot(ctx, this.gizmo.controls.getHelper(), maxSide),
       captureViews: (views, onlyIds, opts) => {
@@ -330,7 +336,7 @@ export class ViewportEngine {
       },
       interference: (onlyIds) => interferenceIn(restSolids(true), interferenceOptions(onlyIds)),
       fastenerChains: () => fastenersIn(restSolids(false), fastenerInput(this.props.parts)),
-      wiring: (scene) => wiringSnapshot(scene, ctx, () => this.complete()),
+      wiring: wiring.query,
       assembly: (options) => assemblyIn(restSolids(false), { ...fastenerInput(this.props.parts), ...options }),
       posedInterference: (onlyIds, riders) =>
         interferenceIn(solidShapes(true), { ...interferenceOptions(onlyIds), riders }).then((r) => r.interferences),
@@ -470,15 +476,10 @@ export class ViewportEngine {
   }
 
   private frameAll(): void {
-    const { layer, stage, loop } = this.ctx;
-
-    this.frameWhenBuilt = layer.hasPending;
+    this.frameWhenBuilt = this.ctx.layer.hasPending;
 
     if (this.frameWhenBuilt) return;
 
-    const objects = layer.objects().flatMap(([id, object]) => (layer.part(id)?.kind === 'image_plane' ? [] : [object]));
-    const animation = frameObjects(stage, objects);
-
-    if (animation) loop.frameAnimation = animation;
+    frameLayer(this.ctx);
   }
 }

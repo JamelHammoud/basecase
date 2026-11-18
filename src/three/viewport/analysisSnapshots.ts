@@ -21,7 +21,12 @@ function sameSceneParts(before: ScenePart[], after: ScenePart[]): boolean {
   return solids(before).length === solids(after).length && expected.every((part) => byId.get(part.id) === part);
 }
 
-export async function wiringSnapshot(scene: WiringScene, ctx: ViewportContext, complete: () => void) {
+export async function wiringSnapshot(
+  scene: WiringScene,
+  ctx: ViewportContext,
+  complete: () => void,
+  analyze = wiringIn,
+) {
   const failed = await componentMeshesReady(scene.parts.flatMap((part) => part.componentId ?? []));
 
   if (failed.length) throw new Error(failed.map((id) => componentMeshError(id) ?? id).join('\n'));
@@ -38,5 +43,5 @@ export async function wiringSnapshot(scene: WiringScene, ctx: ViewportContext, c
     ctx.applyPose,
   );
 
-  return wiringIn(snapshot, scene);
+  return analyze(snapshot, scene);
 }

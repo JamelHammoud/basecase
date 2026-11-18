@@ -47,7 +47,7 @@ You're done when **Servo bus** no longer appears in the list.
 1. In **Build**, open **Cable reach** under **Checks**.
 2. Read the affected cable's endpoints, required length and available cable length. When a joint position limits the route, its angle or travel is listed too.
 3. Click a part name in the finding to select that endpoint in the scene.
-4. Move the parts to shorten the route or clear the connector's exit, then check **Cable reach** again.
+4. Click **Edit Route** to choose stock and attach routing points to existing links. [Route a robot cable](/help/route-a-robot-cable) has the steps.
 
 ![Cable reach expanded with a route needing more than the available 180 mm cable](/help/troubleshoot-servo-bus/cable-reach.png)
 

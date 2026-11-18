@@ -130,3 +130,30 @@ describe('Build panel cable measurements', () => {
     expect(publish).toHaveBeenCalledOnce();
   });
 });
+
+it('shares an in-flight route across unrelated edits and aborts replaced scenes and disposal', async () => {
+  const scene = so101();
+  const source = bomWiring();
+  const signals: AbortSignal[] = [];
+  const pending = pendingWiring();
+  const query = vi.fn((_scene, signal: AbortSignal) => {
+    signals.push(signal);
+
+    return pending.promise;
+  });
+  const cleanup = source.load(scene, query);
+
+  cleanup();
+  source.load({ ...scene, project: { ...scene.project, budgetUsd: 40 } }, query);
+  expect(query).toHaveBeenCalledOnce();
+  expect(signals[0].aborted).toBe(false);
+  source.load({ ...scene, parts: [...scene.parts] }, query);
+  expect(query).toHaveBeenCalledTimes(2);
+  expect(signals[0].aborted).toBe(true);
+  expect(signals[1].aborted).toBe(false);
+  source.dispose();
+  expect(signals[1].aborted).toBe(true);
+  pending.resolve(analyzeWiring(scene, []));
+  await pending.promise;
+  expect(source.snapshot()).toBeNull();
+});

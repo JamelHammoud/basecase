@@ -1,3 +1,4 @@
+import { cableCommands } from './cableCommands';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { ReactNode } from 'react';
 import { bomCart } from '../components/build/cart';
@@ -138,6 +139,7 @@ export const buildCommands = (inputs: CommandInputs): Command[] => [
         },
       ]
     : []),
+  ...cableCommands(inputs),
   ...guideCommands(inputs),
   ...buildAlongCommand(inputs),
   ...buyAllCommand(inputs),

@@ -97,8 +97,8 @@ export class Marquee {
   }
 
   private onDown(e: PointerEvent): void {
-    const { annotateMode, measureMode, markMode, transformMode, buildStep } = this.ctx.props();
-    const otherTool = annotateMode || measureMode || markMode || transformMode === 'sculpt' || buildStep;
+    const { annotateMode, measureMode, markMode, transformMode, buildStep, cableRoute } = this.ctx.props();
+    const otherTool = annotateMode || measureMode || markMode || transformMode === 'sculpt' || buildStep || cableRoute;
 
     if (!e.shiftKey || e.button !== 0 || otherTool || this.hoveringAxis()) {
       return;

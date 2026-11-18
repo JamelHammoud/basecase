@@ -1,3 +1,4 @@
+import { useCableRoutes } from './useCableRoutes';
 import { useWorkspaceVersioning } from './useWorkspaceVersioning';
 import { useVisionScope } from '../cameras/visionScope';
 import { useScenePrinting } from './usePrinting';
@@ -156,6 +157,9 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const studyOptions = { active, workspaceId, viewportRef, readiness, simTraining, tool, showToast };
   const { caseCompare, study } = useWorkspaceStudies({ ...documentContext, ...studyOptions });
 
+  const cableRouteOptions = { docs, sceneId: scene.sceneId, posing, showToast };
+  const cableRouteUi = { tool, select: setSelectedIds };
+
   return {
     active,
     parameters,
@@ -165,6 +169,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     studio,
     printer,
     readiness,
+    cableRoutes: useCableRoutes({ ...cableRouteOptions, ui: cableRouteUi }),
     caseCompare,
     study,
     printing,

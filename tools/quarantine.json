@@ -581,5 +581,21 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44200197616 left operatorCamera().live false at the unchanged readiness poll on both Windows attempts, before the inference and overlay assertions. Same-revision Windows diagnostic 44203112400 passed with one worker, zero retries and quarantine off in a 24344 ms process. Previous Check 44195663922 passed in 20393 ms with unchanged camera, fixture, harness, dependencies and test configuration. Linux passed at the failing revision in 14353 ms. Existing owner #1366 tracks command, capture, worker readiness and cleanup tracing and equal-load baseline and candidate measurements. Linux and macOS retain the full real-pixel walkthrough. Windows retains estimator-frame transfer, pixel-sensitive WASM inference, signals and overlay predicate coverage."
+  },
+  {
+    "file": "src/guide/render/guideStage.test.ts",
+    "test": "",
+    "issue": 1400,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44206588211 exhausted the unchanged 15000 ms beforeAll budget before any of three guide pixel and draw-call cases ran. Same-revision Linux diagnostic 44208943189 passed view 0 with one worker, zero retries and quarantine off in a 14623 ms process. Previous Check 44200197616 passed the file in 14580 ms with unchanged guide renderer, fixture, test and offscreen helper. Bundling, HTTP startup, Chrome launch and module-worker readiness remain indistinguishable. Existing shared setup owner #1400 owns stage tracing, cancellation, cleanup and equal-load baseline and candidate measurements before restoration. macOS retains the full matrix. Guide planning, generation and worker-ownership tests remain active on Linux. Whole-file filtering is required because setup precedes individual-test filtering."
+  },
+  {
+    "file": "e2e/fleetIncidents.e2e.test.ts",
+    "test": "restores a fleet problem, acknowledges it and opens its exact kept try",
+    "issue": 1749,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44206588211 failed both Windows attempts. The first reached Open Try after restoring and acknowledging the incident but found no timeline at line 102. The retry stalled in the part-count callback after loading the arm into the second tab at line 79. Same-revision Windows diagnostic 44208960108 passed the complete exact test with one worker, zero retries and quarantine off in a 38591 ms process. Previous Check 44200197616 passed in 16742 ms with unchanged test, fixture, harness, incident, replay and timeline sources. The responsible scene-load and playback stages are unresolved. Issue #1749 owns per-path tracing, cleanup and equal-load baseline and candidate measurements before restoration. Other platforms retain the walkthrough. Fast collector, storage and recorder integration coverage remains active on Windows."
   }
 ]

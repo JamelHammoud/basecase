@@ -44,7 +44,7 @@ The fast collector matrix covers arm stalls, quadruped disconnects, independent 
 
 The focused browser walkthrough restores a retained incident, acknowledges it while it remains active, and opens its exact kept try. A two-frame recording is seeded through the real temporary TryStore. The existing fleet walkthrough retains stall isolation and rollout coverage. Lifecycle and predicate matrices stay in fast tests. Local validation uses only `check:changed`. CI owns the browser walkthrough and platform observations. Help captures use the same emulated recorder through `recordedLink` without judging their appearance.
 
-History is collected while the studio is running. The local storage test simulates a renderer restart, not a physical host failure. Missing or malformed storage restores an empty history, and a storage write failure leaves the in-memory incidents available. Real motors and external sensor drivers are outside these tests. There is no new quarantine or retry.
+History is collected while the studio is running. The local storage test simulates a renderer restart, not a physical host failure. Missing or malformed storage restores an empty history, and a storage write failure leaves the in-memory incidents available. Real motors and external sensor drivers are outside these tests. The initial implementation added no quarantine or retry. The later Windows containment is recorded below.
 
 ### Pull request #1354 browser failure
 
@@ -64,6 +64,19 @@ The browser walkthrough opens Operate in two scene tabs before inspecting. It re
 The review validation passed `check:changed` for the code and test changes, including 47 related test files and 222 tests, types, lint, docs and site copy.
 
 The native fleet integration asserts that the arm fault precedes its recorded event, preserving the existing renderer replay binding while checking the incident against that same saved session. The disconnected incident browser fixture also asserts that its retained row has no Look rung. These assertions add no recording wait or retry.
+
+
+### Windows retained-incident playback on 18 November
+
+[Check 44206588211](https://github.com/JamelHammoud/basecase/actions/runs/44206588211) at `eb8bc0b3f508ebb67ed07f9ec4b09f2ad23a640b` failed the retained-incident walkthrough on both Windows attempts, taking 78,922 ms together. The first attempt restored storage, loaded both arm scenes, acknowledged the active incident, closed and reopened its dialog and clicked Open Try. The timeline remained absent at line 102. The retry failed earlier at line 79, where the part-count polling callback did not resolve after loading the arm into the second tab. Neither failure identifies its responsible asynchronous stage. No shared cause between those paths is established.
+
+The preceding [Check 44200197616](https://github.com/JamelHammoud/basecase/actions/runs/44200197616) passed Windows in 16,742 ms and Linux in 9,999 ms. The test, arm fixture, harness, active studio hook, incident component and store, replay opener, timeline source, opening and playback code, test configuration and Check workflow are unchanged between those revisions. Vite, Vitest, Playwright, Rolldown, Three and React versions are unchanged. Last full green [43948835889](https://github.com/JamelHammoud/basecase/actions/runs/43948835889) passed Windows in 15,986 ms. No causative merge or environment change is established.
+
+Classification: intermittent Windows scene-loading and retained-try playback with unresolved stages. Same-revision [Windows diagnostic 44208960108](https://github.com/JamelHammoud/basecase/actions/runs/44208960108), durable ticket `44668e9f-6205-4046-86e9-8e0393e029fb`, passed the complete exact test with one worker, zero retries and quarantine off. The process took 38,591 ms and the assertion 26,493.3504 ms on image `20261103.298.1`, Node 26.13.0 and four CPUs. Its manifest and report are retained in `scratch/diagnostics/44668e9f-6205-4046-86e9-8e0393e029fb/`. This establishes intermittency, not a flake rate or candidate fix.
+
+Only the exact Windows declaration is quarantined through 28 November 2026 under [#1749](https://github.com/JamelHammoud/basecase/issues/1749), labelled `loop:fix`, `loop:next` and `loop:priority`. Linux and macOS retain it. Windows keeps fast collector, storage and native recorder integration tests, but temporarily lacks the combined ordinary dialog-to-timeline observation across two scene tabs. The existing fleet walkthrough still covers independent operation and rollout.
+
+The owner traces page boot and reload, active workspace changes, load dispatch and committed part state, TryStore save and reads, manifest and recording retrieval, simulation startup, scrub compatibility, timeline ownership, app errors and cleanup. Restoration requires a demonstrated cause and at least ten baseline and ten candidate observations at equal Windows load with retries disabled for each affected path. Preserve exact recording identity, the active latch after acknowledgment, no daemon commands, one dialog across two tabs, Escape from the action button, timeline opening and closing and empty renderer errors. Keep the real temporary TryStore, arm-derived recording dimensions, current deadlines and assertions. A faster replacement must preserve the same contract.
 
 ## Emulated G1
 

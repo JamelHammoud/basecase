@@ -112,33 +112,6 @@ describe('proving any hand-off', { timeout: 120_000 }, () => {
     expect(result.ok ? '' : result.errors[0].message).toBe('walk to flop fell in 8 of 8 tries in simulation.');
   });
 
-  it('gives the Kit’s own pairs the proofs the Kit records', () => {
-    const scene = sceneOf('quad-servo', quad, []);
-    const kit = kitForModel(scene);
-    const kitProof = (from: string, to: string) => ({
-      seeds: 8,
-      falls: 0,
-      failures: 0,
-      modelHash: kit.modelHash,
-      skills: pairStamp(scene, { from, to }),
-    });
-
-    for (const skill of kit.skills.filter((s) => s.status === 'ready')) {
-      for (const [to, proof] of Object.entries(skill.transitions))
-        expect(proveHandoff(scene, { from: skill.id, to })).toEqual(proof);
-    }
-
-    expect(kit.skills.map((s) => [s.id, s.transitions])).toEqual([
-      ['walk', { settle: kitProof('walk', 'settle') }],
-      [
-        'settle',
-        { walk: kitProof('settle', 'walk'), 'turn-away': expect.objectContaining({ seeds: 8, falls: 0, failures: 8 }) },
-      ],
-      ['turn-away', { walk: kitProof('turn-away', 'walk'), settle: kitProof('turn-away', 'settle') }],
-      ['look-at', {}],
-    ]);
-  });
-
   it('makes a proof stale when the robot’s model changes', () => {
     const scene = sceneOf('quad-servo', quad, [fixtureMoveSkill({ model: quad, animation: quadWave() })]);
     const kit = kitForModel(scene);

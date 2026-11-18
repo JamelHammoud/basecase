@@ -23,24 +23,21 @@ export async function stubBracketStrength(page: Page) {
         }
 
         if (!listening.has(this)) {
+          const onmessage = this.onmessage;
+
           listening.add(this);
           pending.set(this, new Map());
-          this.addEventListener(
-            'message',
-            (event: MessageEvent<{ id: number }>) => {
-              const result = pending.get(this)?.get(event.data.id);
+          this.onmessage = (event: MessageEvent<{ id: number }>) => {
+            const result = pending.get(this)?.get(event.data.id);
 
-              if (!result) return;
+            if (!result) return onmessage?.call(this, event);
 
-              pending.get(this)!.delete(event.data.id);
-              event.stopImmediatePropagation();
+            pending.get(this)!.delete(event.data.id);
 
-              const data = 'error' in event.data ? event.data : { id: event.data.id, result };
+            const data = 'error' in event.data ? event.data : { id: event.data.id, result };
 
-              this.dispatchEvent(new MessageEvent('message', { data }));
-            },
-            true,
-          );
+            onmessage?.call(this, new MessageEvent('message', { data }));
+          };
         }
 
         const readings = task.jobs.map((job): StrengthReading => ({

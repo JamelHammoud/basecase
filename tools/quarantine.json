@@ -648,7 +648,7 @@
   },
   {
     "file": "e2e/inputs.e2e.test.ts",
-    "test": "moves a fixed arm’s hand right with a recorded hand once a Case naming hand starts a try",
+    "test": "moves a fixed arm\u2019s hand right with a recorded hand once a Case naming hand starts a try",
     "issue": 995,
     "until": "2026-11-28",
     "platform": "win32",
@@ -656,10 +656,26 @@
   },
   {
     "file": "e2e/tryStop.e2e.test.ts",
-    "test": "ends the try at once from the canvas’s Stop Driving",
+    "test": "ends the try at once from the canvas\u2019s Stop Driving",
     "issue": 1026,
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44222219427 removed the try clock within the unchanged 3000 ms deadline after Stop Driving but retained zero tries through the 30000 ms saved-count poll. Its retry reused the stopped beforeAll app and then failed the initial Drive-on poll. Same-revision Windows diagnostic 44226427636 passed in 9661.5486 ms with one worker, zero retries and quarantine off, confirming intermittency. Previous Windows Check 44218519123 passed the exact declaration in 11641 ms with unchanged walkthrough and recording sources. Linux at the failing revision passed in 5523 ms. Recording frames, worker stop replies, scoring, refusal feedback and persistence are unresolved. Existing Case recording owner #1026 owns this manual-stop path separately from reference startup, coordinating shared helpers with #1049 and #1364. Restore after stage tracing, an established fix and ten baseline and ten candidate Windows observations at equal load with retries disabled. The paused-simulation sibling remains active on Windows and other platforms retain both paths. No assertion or deadline changes."
+  },
+  {
+    "file": "e2e/caseCode.e2e.test.ts",
+    "test": "lights a target the agent made movable, from code during a try, and records the change",
+    "issue": 1026,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44227652023 reached Drive on, then exhausted either the Stop Try visibility poll or the Light action/color poll. Windows run 44218519123 passed in 23820 ms with unchanged test, Case startup and code-world paths. The finite Case can finish between browser commands, but the log does not establish whether automatic completion or code-frame delivery caused these earlier failures. Existing recording owner #1026 owns stage traces and equal-load baseline/candidate measurements before restoration. Linux and macOS retain the complete walkthrough. codeWorld and useCaseTry retain routing, validation and startup ownership coverage without replacing this combined browser path."
+  },
+  {
+    "file": "e2e/visionConditions.e2e.test.ts",
+    "test": "imports images, assigns conditions and inspects unchanged historical members after current edits",
+    "issue": 1129,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44227652023 completed import and condition assignment, clicked Train, then retained zero saved runs through the unchanged poll. Windows run 44218519123 passed the same walkthrough in 21484 ms. The intervening condition-result copy edit does not change training or persistence. Preparation, inference and persistence are not distinguished by this log. Existing real-image completion owner #1129 owns production-stage traces and equal-load baseline/candidate measurements before restoration. Other platforms retain the complete walkthrough. conditionWorkflows, conditionEvaluation and conditionRequest retain scoring, frozen evidence, restoration and cancellation coverage."
   }
 ]

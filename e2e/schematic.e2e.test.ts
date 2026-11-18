@@ -31,6 +31,9 @@ it.each(['desktop', 'web'])(
       await voltage.getByRole('textbox', { name: 'Supply voltage' }).fill('12');
       await voltage.getByRole('textbox', { name: 'Supply voltage' }).press('Enter');
       await expect.poll(() => electrical.innerText()).toContain('declared supply voltage differs');
+      expect(
+        await electrical.getByRole('button', { name: /^Electrical connections/ }).getAttribute('aria-expanded'),
+      ).toBe('true');
       await app.page.getByRole('button', { name: 'Export', exact: true }).click();
 
       const delivery = app.page.waitForEvent('download');

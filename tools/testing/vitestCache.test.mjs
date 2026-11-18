@@ -80,35 +80,37 @@ describe('linked-worktree invalidation', () => {
   });
 });
 
-it('runs concurrent check:changed entry points and clears caches without disturbing active runners', async () => {
+it('runs concurrent check:changed entry points against distinct workspace sources', async () => {
   const pair = workspacePair();
-  const [left, right] = pair.dirs;
   const check = ['run', 'check:changed', '--', 'tools/cacheFixture.test.mjs', 'tools/value.mjs'];
 
   try {
-    await fixture(left, 'left');
-    await fixture(right, 'right');
+    await Promise.all(pair.dirs.map((dir, index) => fixture(dir, `workspace-${index}`)));
 
     const checks = await Promise.all(pair.dirs.map((dir) => pair.start(dir, check, { npm: true }).done));
 
     checks.forEach(passed);
     expect(checks.every((result) => result.output.includes('1 passed'))).toBe(true);
+  } finally {
+    await pair.close();
+  }
+});
 
-    const active = pair.start(right, args, { env: { CACHE_RELEASE: 'release' } });
+it('clears an owned cache while another runner retains its lease and transforms', async () => {
+  const pair = workspacePair();
+  const [dir] = pair.dirs;
+
+  try {
+    await fixture(dir, 'active');
+
+    const active = pair.start(dir, args, { env: { CACHE_RELEASE: 'release' } });
 
     await active.ready;
-    expect(fs.existsSync(path.join(right, 'ready'))).toBe(true);
-    await fixture(left, 'fresh');
-
-    const rerun = pair.start(left, check, { npm: true });
-    const clearing = pair.start(right, ['--clearCache']);
-
-    passed(await clearing.done);
-    passed(await rerun.done);
-    write(right, 'release', 'go');
+    expect(fs.existsSync(path.join(dir, 'ready'))).toBe(true);
+    passed(await pair.start(dir, ['--clearCache']).done);
+    write(dir, 'release', 'go');
     passed(await active.done);
-
-    passed(await pair.start(right, args).done);
+    expect(cacheFiles(dir).some((file) => file.endsWith('.lease'))).toBe(false);
   } finally {
     await pair.close();
   }

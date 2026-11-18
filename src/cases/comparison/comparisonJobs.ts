@@ -93,6 +93,24 @@ export function comparisonJobs() {
 
       return reply(result, result.bitmap ? [result.bitmap] : []);
     },
+    async map({ matching }: { matching: boolean }) {
+      const current = opened();
+      const { topicMap } = await import('../../dataLayers/mapFeed');
+      const cloud = topicMap(current.index, { match: matching })?.cloud ?? null;
+
+      return reply(cloud, cloud ? [cloud.points.buffer] : []);
+    },
+    async mapWorld({ name, matching }: { name: string; matching: boolean }) {
+      const current = opened();
+      const { mapJobs } = await import('../../dataLayers/mapJobs');
+
+      return mapJobs().makeWorld({
+        topics: current.recording.topics ?? new Uint8Array(),
+        sourceTry: current.stored.id,
+        name,
+        matching,
+      });
+    },
     plot({ id, rule }: { id: string; rule: SamplingRule }) {
       const channel = opened().channels.find((candidate) => candidate.id === id);
 

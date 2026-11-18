@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { showStress } from '../../strength/fields';
 import { DisclosureRow } from '../../design-system';
 import { shownDetail } from '../../readiness/shownDetail';
@@ -15,9 +15,9 @@ export const CheckItem: React.FC<{
   notes: ReadinessFinding[];
   context: FindingContext;
   stressIds?: string[];
-}> = ({ check, blockers, notes, context, stressIds }) => {
-  const [open, setOpen] = useState(check.name === context.focusedCheck);
-
+  open: boolean;
+  onToggle: () => void;
+}> = ({ check, blockers, notes, context, stressIds, open, onToggle }) => {
   useEffect(() => (open && stressIds?.length ? showStress(stressIds) : undefined), [open, stressIds]);
 
   const count = blockers.length + notes.length;
@@ -36,7 +36,7 @@ export const CheckItem: React.FC<{
 
   return (
     <li data-check={check.name} data-status={check.status}>
-      <DisclosureRow open={open} onToggle={() => setOpen((v) => !v)} disabled={!hasBody}>
+      <DisclosureRow open={open} onToggle={onToggle} disabled={!hasBody}>
         <CheckIcon status={check.status} />
         <span
           className={`min-w-0 flex-1 text-[13px] leading-[18px] ${check.status === 'not run' ? 'text-white/50' : 'text-white/90'}`}

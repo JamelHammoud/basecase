@@ -51,8 +51,14 @@ async function importCorridor() {
   await expect.poll(() => app.page.getByText('Imported 1 try', { exact: true }).count()).toBeGreaterThan(0);
   await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
   await app.page.locator(shown('[data-testid="library-tries"] button')).first().click();
-  await app.page.locator(shown('[data-testid="try-tile"]')).filter({ hasText: 'corridor.mcap' }).click();
+
+  const tile = app.page.locator(shown('[data-testid="try-tile"]')).filter({ hasText: 'corridor.mcap' });
+  const id = await tile.getAttribute('data-try');
+
+  await tile.click();
   await expect.poll(async () => (await mapLayer())?.points ?? 0).toBeGreaterThan(360);
+
+  return id;
 }
 
 beforeEach(async () => {
@@ -81,7 +87,9 @@ describe('A robot run’s map', () => {
 
   it('makes a saved corridor world through Layers and New Case and passes a seeded reference try', async () => {
     await loadFixtureRobot(app.page, 'rover-diff');
-    await importCorridor();
+
+    const sourceTry = await importCorridor();
+
     await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Layers"]')).click();
     await mapRow().click({ button: 'right' });
     await app.page.getByRole('menuitem', { name: 'Make World', exact: true }).click();
@@ -114,7 +122,7 @@ describe('A robot run’s map', () => {
     expect(made.imported?.hash).toMatch(/^[a-f0-9]{64}$/);
     expect(made.pieces).toBeGreaterThan(1);
     expect(made.pieces).toBeLessThanOrEqual(64);
-    expect(made.reconstruction?.sourceTry).toBeTruthy();
+    expect(made.reconstruction?.sourceTry).toBe(sourceTry);
     expect(made.reconstruction?.estimates.floor).toBe(true);
     await app.page.keyboard.press('Escape');
     await expect.poll(async () => (await state()).timeline).toBeNull();

@@ -3,10 +3,12 @@ import { loadFixtureRobot } from './driveChecks';
 import { shown, type App } from './harness';
 import { tinyDetectionOnnx } from '../src/vision/onnxFixture';
 import type { TrainingRun } from '../src/vision/training/serviceTypes';
+import type { Dataset } from '../src/datasets/datasetFile';
 
 export interface InspectionStudio {
   configureVisionBackend: (input: { baseline: number[]; candidate: number[] }) => Promise<void>;
   prepareVisionInspection: (count?: number) => Promise<TrainingRun>;
+  visionBackendState: () => Promise<{ runs: TrainingRun[]; dataset: Dataset }>;
   simState: () => { timeline: { frame: number } | null };
 }
 
@@ -31,12 +33,20 @@ export async function openVisionInspection(app: App) {
 
   const pane = page.locator(shown('[data-testid="dataset-pane"]'));
 
+  const saved = () =>
+    page.evaluate(() => (window as unknown as { __studio: InspectionStudio }).__studio.visionBackendState());
+  const before = await saved();
+
   await pane.getByRole('button', { name: 'Inspect Images', exact: true }).click();
 
   const dialog = page.getByRole('dialog', { name: 'Comparison images', exact: true });
 
+  await dialog.getByRole('combobox', { name: 'Class', exact: true }).selectOption('0');
+  await dialog.getByRole('combobox', { name: 'Finding', exact: true }).selectOption('misses');
   await dialog.getByRole('button', { name: 'source-test', exact: true }).click();
   await dialog.getByRole('img', { name: 'Frozen comparison image', exact: true }).waitFor();
+
+  return { pane, dialog, before, saved };
 }
 
 export async function followVisionSource(app: App) {

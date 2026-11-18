@@ -158,15 +158,15 @@ The original-image unit test checks changed-content refusal, while source naviga
 The initial deletion's changed-file check passed formatting, lint, documentation, site copy and types, plus 12 retained unit and integration tests in 463 ms. That result did not establish replacement coverage for the removed controls. The revision restores those browser interactions without running them locally.
 
 
-### Follow-up reduction to source playback
+### Follow-up inspection navigation refinement
 
-Issue [#1825](https://github.com/JamelHammoud/basecase/issues/1825) follows the three-opening trim. [Check 44391437908](https://github.com/JamelHammoud/basecase/actions/runs/44391437908) still took 37,612 ms on Windows shard 6 and 20,470 ms on Linux shard 6 for the combined declaration. Both passed. The complete downloaded log is retained in the task worktree at `scratch/run-44391437908.log`. These are shared-workload observations, not isolated timings.
+Issue [#1825](https://github.com/JamelHammoud/basecase/issues/1825) follows the three-opening trim. [Check 44391437908](https://github.com/JamelHammoud/basecase/actions/runs/44391437908) still took 37,612 ms on Windows shard 6 and 20,470 ms on Linux shard 6 for the combined declaration. Both passed. These are shared-workload observations, not isolated timings.
 
-The browser test now proves one journey: Library to a frozen comparison image to **Open Source Try**, ending with the playback timeline open at saved frame 6. It opens the comparison once. The helper no longer selects Class or Finding, reads saved-run snapshots or exposes unused before-inspection and image-count options. Fixture preparation still uses the existing real training and source recording path.
+Review of #1834 rejected reducing the test to source playback because unit tests do not cover the removed UI wiring. The revision retains all browser assertions from the three-opening walkthrough, including Class and Finding selection, both displayed model hashes, overlay counts, original-image editing and persisted hash change, changed-original refusal feedback, scoped command entry, scene-switch dismissal and saved-evidence preservation.
 
-The unit and integration coverage listed above retains historical evidence, original-content refusal and exact-frame source validation. The requirements browser walkthrough retains frozen-image reopening and saved-run/version preservation. Overlay switching, displayed model hashes, original-image editor wiring and refusal status, the scoped command and scene-switch dismissal lose their direct browser assertions. These UI checks are deliberately cut from the combined story, rather than claimed as equivalent unit coverage. Production behavior, deadlines, retries and quarantine are unchanged.
+After the label editor closes, the dataset remains selected. The walkthrough now opens the scoped command directly, removing an Escape and dataset-row click that dismissed and reopened the same dataset. Fixture setup remains shared in one app. Unused image-count and before-inspection options are removed. Source playback waits for the visible timeline and verifies saved frame 6 with a nullable timeline read. No timeout, retry or quarantine changes. No runtime reduction is claimed before CI executes this revision on Linux and Windows.
 
-Candidate browser execution and timing remain with CI. No local browser duration or shard speedup is claimed.
+Scoped revision validation is recorded in `scratch/revise-1834-check.log`. Browser execution and timing remain with CI.
 
 
 ## Windows live operator readiness recurrence

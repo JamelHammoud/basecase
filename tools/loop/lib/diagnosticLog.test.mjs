@@ -24,7 +24,7 @@ it('streams a job log beyond the buffer limit and retains its final cleanup byte
   const chunks = [Buffer.alloc(FILE_LIMIT, 65), Buffer.alloc(FILE_LIMIT, 66), ending];
   const log = await diagnosticJobLog({ repository: 'o/r', id: 42 }, () => processLog(chunks));
 
-  expect(log).toEqual(Buffer.concat(chunks).subarray(-FILE_LIMIT));
+  expect(log.equals(Buffer.concat(chunks).subarray(-FILE_LIMIT))).toBe(true);
   expect(log.subarray(-ending.length)).toEqual(ending);
 });
 

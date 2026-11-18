@@ -2,6 +2,20 @@
 
 Knowledge preserved from code comments. Complements AGENTS.md; nothing here repeats it.
 
+## Windows diagnostic log assertion cost
+
+[Check 44218519123](https://github.com/JamelHammoud/basecase/actions/runs/44218519123) exhausted the unchanged 5,000 ms deadline in `diagnosticLog.test.mjs`, reporting 8,710 ms for its streamed-tail case. Previous Windows Check 44214681066 passed the unchanged case in 4,531 ms. The fixture emits more than 2 MiB and compares its final 1 MiB with generic deep equality. This is a load-sensitive assertion workload with an identified avoidable cost, not evidence of a failed download or changed streaming implementation.
+
+The full-tail assertion now uses `Buffer.equals`, preserving exact length and every byte. The final cleanup-byte assertion and unsuccessful-download refusal remain unchanged. One local changed-file baseline took 790 ms overall, with 99% in tests. The same changed-file command after the edit took 60 ms overall, with 26% in tests. These are individual macOS observations from this session, not Windows candidate results or flake-rate measurements. Logs are `scratch/check-log-baseline.log` and `scratch/check-log-candidate.log`. No deadline, retry, quarantine or production downloader behavior changes.
+
+## Windows shallow help history deadline
+
+[Check 44218519123](https://github.com/JamelHammoud/basecase/actions/runs/44218519123), workload `88795454ecb795f17e855d5ca2b50a3f95b1be14`, exhausted the unchanged 5,000 ms callback deadline in `tools/site/gitDates.test.mjs` while completing a shallow checkout. Previous Windows Check 44214681066 at `505f2d5b599f005dfaf201ce6dbe863f762916d4` passed that case in 1,451 ms. The test, history reader, dependency lock and test configuration are unchanged between those revisions. No causative merge or changed environment is established.
+
+[Diagnostic 44220730841](https://github.com/JamelHammoud/basecase/actions/runs/44220730841), ticket `7bfaa385-e162-4515-8f79-e618ec7885d1`, passed the exact test at the failed revision in 511.6697 ms. Its process took 1,553 ms. The collected artifact verifies Windows x64, Node v26.13.0, image `20261103.298.1`, four CPUs, one worker, quarantine off and zero retries. This confirms intermittency. The timeout does not distinguish the local clone, date reads, history fetch, shallow-state query, fallback checks or cleanup. Source-history preparation occurs before the callback.
+
+Only this exact declaration is quarantined on Windows through 28 November 2026 under [#1763](https://github.com/JamelHammoud/basecase/issues/1763), opened with fix, next and priority labels. Windows retains tracked and untracked date reads and missing-directory coverage. Other platforms retain real history completion. Restoration requires stage and cleanup tracing, an established fix and at least ten baseline and ten candidate observations at equal load with retries disabled. Preserve the real shallow clone, exact before and after dates, complete-history check and repeated completion behavior. No local browser run or repeated rate measurement was performed. Durable evidence is in `scratch/diagnostics/7bfaa385-e162-4515-8f79-e618ec7885d1/`.
+
 ## Repair evidence by platform and path
 
 Three direction comments on November 17 distinguish failures that share an owner or helper without an established shared cause:

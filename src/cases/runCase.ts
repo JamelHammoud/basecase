@@ -4,6 +4,7 @@ import { policyCommand, type VelocityDrive } from '../sim/driveAccess';
 import { roverForward } from '../sim/driveSetup';
 import { SimEngine, type Controller } from '../sim/engine';
 import { buildMjcf } from '../sim/mjcf';
+import { preparedCalibratedModel } from '../sim/calibratedModel';
 import type { MjcfInput, SimModel, WorldItem } from '../sim/mjcfTypes';
 import type { PolicySpec } from '../sim/policy';
 import { Recorder, type Recording } from '../sim/recorder';
@@ -292,7 +293,7 @@ function ownInput(robot: CaseRobot): MjcfInput {
   return {
     parts: robot.parts,
     rig,
-    project: DEFAULT_PROJECT,
+    project: { ...DEFAULT_PROJECT, selfContact: robot.selfContact },
     measures: robot.measures,
     partTriangles: robot.partTriangles,
     servoVolts: robot.servoVolts,
@@ -337,7 +338,7 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
   const jitter = options.seed === undefined ? null : worldRandom(options.seed);
   const kase = jitter ? reseededGround(jitteredWorld(fit.scaled, jitter), jitter) : fit.scaled;
   const world = await preparedWorldItems(caseWorldItems(kase, options.worldColliders));
-  const model = buildMjcf({ ...fit.input, world, fixedBase: fixedBaseFor(fit.cast) });
+  const model = await preparedCalibratedModel({ ...fit.input, world, fixedBase: fixedBaseFor(fit.cast) }, undefined);
   const { plan, refusal: logicRefusal } = logicPlan(kase, options);
 
   if (logicRefusal) return refused(fit.scaled, logicRefusal, model);

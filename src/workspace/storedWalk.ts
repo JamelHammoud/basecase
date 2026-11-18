@@ -4,6 +4,7 @@ import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { FallSim, StoredFalls, StoredWalk, WalkSim } from '../utils/engineeringTypes';
 import { jsonHash } from '../utils/geometryHash';
 import { activeBodyCalibration } from '../reality/history';
+import { activeContactSettings } from '../sim/selfContact';
 
 export const bodyPhysicsKey = (project: ProjectSettings) =>
   Object.entries(project.bodyCalibrations ?? {}).flatMap(([robot, history]) => {
@@ -15,6 +16,7 @@ export const bodyPhysicsKey = (project: ProjectSettings) =>
 export const walkKey = (parts: ScenePart[], project: ProjectSettings) =>
   readinessFingerprint(parts, {
     joints: project.joints ?? [],
+    selfContact: activeContactSettings(project.selfContact),
     policy: walkPolicy(project.policies ?? [])?.id ?? null,
     body: bodyPhysicsKey(project),
   });
@@ -30,6 +32,7 @@ export const freshWalk = (parts: ScenePart[], project: ProjectSettings): StoredW
 export const fallsKey = (parts: ScenePart[], project: ProjectSettings) =>
   readinessFingerprint(parts, {
     joints: project.joints ?? [],
+    selfContact: activeContactSettings(project.selfContact),
     pose: jsonHash(project.pose ?? null),
     body: bodyPhysicsKey(project),
   });

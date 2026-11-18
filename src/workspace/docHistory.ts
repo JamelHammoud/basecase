@@ -37,9 +37,11 @@ export const trackedOf = ({
   skeleton,
   electronicsBoard,
   designParameters,
+  selfContact,
 }: ProjectSettings): Omit<Snapshot, 'parts'> => ({
   electronicsBoard,
   designParameters,
+  selfContact,
   pose,
   joints,
   marks,
@@ -59,6 +61,7 @@ function supplyFor(next: Snapshot | undefined, project: ProjectSettings): Partia
 
 function restoredProject(to: Snapshot, here: Snapshot, cases: Case[] | undefined): Partial<ProjectSettings> {
   return {
+    ...('selfContact' in to ? { selfContact: to.selfContact } : {}),
     ...('designParameters' in to ? { designParameters: to.designParameters } : {}),
     ...(to.electronicsBoard === here.electronicsBoard ? {} : { electronicsBoard: to.electronicsBoard }),
     ...(to.joints === here.joints ? {} : { joints: to.joints }),

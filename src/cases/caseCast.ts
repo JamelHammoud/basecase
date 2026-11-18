@@ -48,8 +48,10 @@ export function guestsOf(slots: NamedSlot[], partners: Array<SlotRobot | undefin
 
 export function castJoined(lead: SlotRobot, guests: Guest[]): SlotRobot {
   const placed = guests.map((g) => placedRobot(g.robot, g.place));
+  const selfContact = Object.assign({}, lead.selfContact, ...placed.map((robot) => robot.selfContact));
 
   return {
+    ...(Object.keys(selfContact).length ? { selfContact } : {}),
     parts: [...lead.parts, ...placed.flatMap((r) => r.parts)],
     joints: [...lead.joints, ...placed.flatMap((r) => r.joints)],
   };

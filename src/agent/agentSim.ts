@@ -22,6 +22,7 @@ import { plural } from '../../electron/plural.mjs';
 import { percent } from '../../electron/percent.mjs';
 
 export interface SimulatePayload {
+  self_contact?: { robot: string; enabled: boolean; exclusions?: [string, string][] };
   seconds?: number;
   controller?: string;
   pushes?: Array<{ at: number; direction: 'forward' | 'backward' | 'left' | 'right'; strength?: number }>;

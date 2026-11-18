@@ -30,6 +30,8 @@ import { passiveJointXml } from './mjcfPassive';
 import { jointSpringAttrs } from './passiveJoint';
 import { loopEquality, loopHinge, physicalLoops } from './mjcfLoops';
 import { activeBodyCalibration } from '../reality/history';
+import { contactFingerprint, contactTopology } from './mjcfContactTopology';
+import { contactGeometry } from './mjcfContactGeometry';
 
 export { fromMj, quatFromMj, quatToMj, simDelta, simDeltas, toMj, worldDelta, worldDeltas } from './mjcfFrames';
 export { SIM_MODEL_VERSION } from './mjcfTypes';
@@ -117,6 +119,9 @@ function geomFor(st: BuildState, p: ScenePart, origin: V3, role: GeomRole): stri
   const verts = tris && tris.length >= 9 ? cachedHull(p, tris, origin) : null;
   const attrs = geomAttrs(st, p, role);
   const name = `g_${p.id.replace(/[^\w-]/g, '_')}`;
+  const hulls = st.input.robotHulls?.[p.id];
+
+  if (hulls?.length && role === 'robot') return contactGeometry({ part: p, origin, hulls, attrs, assets: st.assets });
 
   if (verts) {
     const mesh = `m${st.assets.length}_${safeId(p.id)}`;
@@ -340,6 +345,7 @@ function emitRobot(st: BuildState, robot: Rig['robots'][number]) {
       assets: st.assets.slice(assetsFrom),
       body: [...rootLines, ...equality],
       actuators: st.actuatorXml.slice(actuatorsFrom),
+      contacts: contactFingerprint(robot, st),
     }),
   });
   st.massKg[robot.key] = rb.grams / 1000;
@@ -392,7 +398,7 @@ ${st.assets.join('\n')}
 ${worldFloor(st.input)}
 ${st.worldXml.join('\n')}
   </worldbody>
-${st.equalityXml.length ? `  <equality>\n${st.equalityXml.join('\n')}\n  </equality>\n` : ''}${robotContactExclusions(st.input.rig.robots, st.bodies)}  <actuator>
+${st.equalityXml.length ? `  <equality>\n${st.equalityXml.join('\n')}\n  </equality>\n` : ''}${robotContactExclusions(st.input.rig.robots, st.bodies, contactTopology(st))}  <actuator>
 ${st.actuatorXml.join('\n')}
   </actuator>
 </mujoco>
@@ -411,7 +417,7 @@ export function buildMjcf(given: MjcfInput): SimModel {
     byId: new Map(parts.map((p) => [p.id, p])),
     masses: new Map(partMasses(parts, project, input.measures).map((m) => [m.id, m])),
     assets: [],
-    contactMasks: robotContactMasks(rig.robots),
+    contactMasks: robotContactMasks(rig.robots, project.selfContact),
     partsByJoint: ownedPartsByJoint(rig.ownerOf),
     bodies: [],
     simJoints: [],

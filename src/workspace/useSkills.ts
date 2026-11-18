@@ -110,7 +110,7 @@ function useRuntime({ workspaceId, setProject, project, parts }: SkillsInput) {
 
   useLayoutEffect(() => {
     runtime.invalidateRecovery();
-  }, [runtime, parts, project.joints, project.servoCalibrations, project.bodyCalibrations]);
+  }, [runtime, parts, project.joints, project.servoCalibrations, project.bodyCalibrations, project.selfContact]);
 
   useEffect(() => () => runtime.dispose(), [runtime]);
 
@@ -194,6 +194,7 @@ function useSceneModel(input: SkillsInput, { runtime, platform, watch }: ModelWa
     project.joints,
     project.servoCalibrations,
     project.bodyCalibrations,
+    project.selfContact,
     project.animations,
     buildModel,
     runtime,

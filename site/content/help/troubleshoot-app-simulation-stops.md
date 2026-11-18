@@ -73,3 +73,7 @@ In the **Build** tab, Checks warns when a powered joint has no servo or publishe
 For an intentionally unpowered joint, [make it passive](/help/make-a-joint-passive) instead. Passive joints need no estimated motor torque.
 
 If Checks says “These servos aren’t calibrated on this robot.”, those servos have no measured model. You can measure any Feetech or Dynamixel servo with [Calibrate an emulated robot](/help/calibrate-an-emulated-robot). Other servos keep their estimate.
+
+## Links overlap at the start
+
+Move or repose the named links, then start simulation again. Self-contact refuses overlap deeper than 0.5 mm. Missing collision geometry also stops preparation. The limits and an example are in [Simulate self-contact](/help/simulate-self-contact).

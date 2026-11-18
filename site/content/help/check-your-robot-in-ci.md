@@ -51,4 +51,6 @@ The command exits 0 when every Case passes, 1 when any misses, and 2 when it can
 
 In a clone of Basecase, `npx basecase check robot.basecase` runs the same command.
 
-Catalog parts and parts the agent modeled use their real meshes. A part the agent sourced that isn't in the catalog yet runs as its box, because its mesh stays on the computer that sourced it.
+Catalog parts and parts the agent modeled use their real meshes. With self-contact off, a sourced part whose mesh is missing runs as its box.
+
+With [self-contact enabled](/help/simulate-self-contact), missing collision geometry stops preparation. Export the scene with its meshes before checking it on another computer.

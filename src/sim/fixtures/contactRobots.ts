@@ -27,17 +27,21 @@ function robot(index: number) {
   return { parts, joints };
 }
 
-export function contactScene(count: number): SimModel {
+export function contactScene(count: number, selfContact: number[] = [], reverse = false): SimModel {
   const robots = Array.from({ length: count }, (_, i) => robot(i));
   const scenery = box('scenery', [15, 15, 30], [40, 40, 40], 100);
   const object: ScenePart = { ...box('object', [15, 15, -30], [40, 40, 40], 100), physics: { dynamic: true } };
   const parts = [...robots.flatMap((r) => r.parts), scenery, object];
   const joints = robots.flatMap((r) => r.joints);
+  const rig = buildRig(joints, parts);
+  const config = Object.fromEntries(selfContact.map((index) => [rig.robots[index].key, { enabled: true }]));
+
+  if (reverse) rig.robots.reverse();
 
   return buildMjcf({
     parts,
-    rig: buildRig(joints, parts),
-    project: DEFAULT_PROJECT,
+    rig,
+    project: { ...DEFAULT_PROJECT, selfContact: config },
     measures: {},
     partTriangles: () => null,
     world: [

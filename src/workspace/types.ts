@@ -166,6 +166,7 @@ export interface TextFile {
 }
 
 export interface Snapshot {
+  selfContact?: ProjectSettings['selfContact'];
   designParameters?: ProjectSettings['designParameters'];
   electronicsBoard?: ProjectSettings['electronicsBoard'];
   parts: ScenePart[];

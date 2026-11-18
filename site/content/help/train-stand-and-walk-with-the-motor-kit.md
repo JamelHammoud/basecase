@@ -95,7 +95,7 @@ In Chrome on the same Mac, Stand took about two and a quarter minutes.
 
 During local training or a single remote attempt, Walk retrains from its best result after an Arena refusal. That can take up to 30 minutes on four or six legs, and up to 45 minutes on two.
 
-On a Mac with Apple silicon, Stand and Walk train on the GPU. On Windows they train on the CPU, and the times above don't apply there.
+On a Mac with Apple silicon, Stand and Walk use the GPU when the model is supported. Self-contact models use native MuJoCo. On Windows they train on the CPU, and the times above don't apply there.
 
 ## What Walk can do
 

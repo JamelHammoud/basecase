@@ -68,6 +68,7 @@ export const projectFingerprint = (
 ) =>
   readinessFingerprint(parts, {
     joints: project.joints,
+    selfContact: project.selfContact,
     wiring: project.wiring,
     electronicsBoard: jsonHash(project.electronicsBoard),
     budget: project.budgetUsd,

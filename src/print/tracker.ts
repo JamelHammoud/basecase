@@ -72,9 +72,16 @@ export function plateStatusLookup(records: PrintRecord[] = []): PlateStatusLooku
 
 export function splitPrinted(parts: ScenePart[], records: PrintRecord[] = [], keyOf: (p: ScenePart) => string) {
   const keys = printedKeys(records);
-  const printed = parts.filter((p) => keys.get(p.id) === keyOf(p));
+  const printed: ScenePart[] = [];
+  const remaining: ScenePart[] = [];
 
-  return { printed, remaining: parts.filter((p) => keys.get(p.id) !== keyOf(p)) };
+  for (const part of parts) {
+    const target = keys.get(part.id) === keyOf(part) ? printed : remaining;
+
+    target.push(part);
+  }
+
+  return { printed, remaining };
 }
 
 interface PrintedScene {

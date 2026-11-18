@@ -349,3 +349,24 @@ The initial test run found a new test's analytic zero expectation differed from 
 Whole-app search found temporary barycentric pairs in printed-label fitting, visible-share analysis and kernel surface sampling. All three now keep those coordinates as scalars. Wall-thickness sampling already does this. With seed 7, each 40-point label face previously created 40 initialization pairs and 20 reflection pairs. Both counts are now zero. Returned point tuples remain. These are source-level array counts, without heap measurements or a timing claim.
 
 Existing `labelSamples.test.ts` compares all seeded coordinates across generated faces, reversed winding, degenerate and nonfinite inputs, typed-array views and later edits. User actions and visible states stay unchanged, so help articles and screenshots remain accurate.
+
+## Printed parts are partitioned once
+
+Whole-app search found one printed-versus-remaining partition, `splitPrinted` in `print/tracker.ts`. Its production caller is `workspace/usePrinting.ts`, which supplies both the skipped count and print scope. The helper now appends each part to one output list during a single traversal. It removes the second shape-key calculation and history lookup per part. Both lists retain scene order and original part references. History sorting and replacement semantics remain unchanged.
+
+On November 17, 2026, a scratch replay on macOS arm64 compared complete outputs with the previous two-filter implementation across 60 fixtures. Sizes were zero, one, five, 300 and 600 parts. Cases covered all six record states, stale shape keys, equal timestamps, later successful records and reversed history. Outputs matched and source parts and records stayed unchanged. Instrumented shape-key calls fell from 600 to 300 for 300 parts and from 1,200 to 600 for 600 parts. These are operation counts, not timings or heap measurements. Both output arrays and history preparation still allocate. No complete Print-mode latency improvement is claimed.
+
+Replay source, results and output remain in `scratch/print-partition.test.ts`, `scratch/print-partition-results.json` and `scratch/print-partition.log`. Existing `tracker.test.ts` covers replacement persistence and stale shapes. `project.test.ts` checks tracker filtering through actual plate export. This reversible traversal refinement adds no permanent test, browser walkthrough, timeout, retry or quarantine.
+
+[Print a robot's parts](../../site/content/help/print-a-robots-parts.md) still correctly describes the skip-printed switch, edited brackets returning to the plates and repair replacement scope. No action, label, partition result or depicted state changes, so its instructions and screenshots stay current.
+
+The preflight follow-up reread both complete covered articles against `splitPrinted` and its caller in `workspace/usePrinting.ts`. The caller still defaults to skipping printed parts and passes the unchanged remaining-part list to `printScopeParts`.
+
+- [The path from design to build](../../site/content/help/from-design-to-build.md): “How it gets made” still describes build-order plates, slicing and sending. The one-part repair plate still uses the existing repair scope. The partition does not change guide order, printed letters, readiness, kit contents or any named control. The article has no numbered steps or screenshots.
+- [Printability estimates](../../site/content/help/printability-estimates.md): “From estimate to slice” still describes material packing, build-order priority and a single replacement copy. Pose selection, support and wall thresholds, obstacle clearance, sliced-time substitution and excluded sheet parts are outside this diff. The article has no numbered steps or screenshots.
+
+Neither article has a step, label, claim or depicted state made untrue by this change, so both stay unchanged. Preflight continues to report their broad `src/print/` coverage because it detects changed paths rather than this verification.
+
+The scratch replay passed all 60 fixtures. The initial changed-file check passed formatting, lint, docs, site copy for 330 pages and TypeScript, then failed before related tests started. Vitest reported `ENOTEMPTY` while removing the shared `node_modules/.vitest-cache` directory. The replay and changed-file check had run concurrently against the same linked dependencies. The required check was started again after the replay finished, with no test timeout, retry setting or repository configuration change. Initial logs remain in `scratch/check-print-partition.log` and `scratch/print-partition.log`, with the sequential check in `scratch/check-print-partition-final.log`.
+
+The sequential changed-file check passed all static stages and 37 related tests across eight files. Vitest reported 827 ms for the test phase. Copy accounting is net zero. Preflight retains only the two unchanged-help reminders resolved above.

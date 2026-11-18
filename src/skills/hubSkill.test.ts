@@ -24,9 +24,9 @@ const asText = (files: Record<string, Uint8Array>) =>
 const published = (skill: Skill, model: SimModel) =>
   asText(publishedSkillFiles({ skill, environment: kitEnvironment(model, 'stand'), model }));
 
-async function install(files: Record<string, string>, model: SimModel, design: string, gain = 0) {
+async function install(files: Record<string, string>, model: SimModel, design: string) {
   const plan = installPlan(readPublishedSkill(files), model);
-  const { jobs, forge } = stubForge(gain);
+  const { jobs, forge } = stubForge();
   const saved: string[] = [];
   const stop = new AbortController();
   const outcome = await trainKitEntry({
@@ -259,14 +259,31 @@ describe('installing a published skill', () => {
   });
 
   it('saves nothing when Arena refuses the result, and says how many tries passed', async () => {
-    const refused = await install(published(stand, quad), hexapod, 'hexapod', 20);
+    const passed = readyStand(hexapod, 'hexapod').evidence!;
+    const evidence = {
+      ...passed,
+      passed: false,
+      lowerBound: 0.4,
+      variants: passed.variants.map((variant) =>
+        variant.variant === 'latency' ? { ...variant, passes: 20, lowerBound: 0.4 } : variant,
+      ),
+    };
+    const judge = vi.spyOn(arena, 'runArena').mockResolvedValueOnce(evidence);
 
-    expect(refused.outcome.kind).toBe('refused');
-    expect(refused.saved).toEqual([]);
+    try {
+      const refused = await install(published(stand, quad), hexapod, 'hexapod');
 
-    const evidence = refused.outcome.kind === 'refused' ? refused.outcome.evidence : null;
+      expect(refused.outcome).toMatchObject({ kind: 'refused', evidence });
+      expect(refused.saved).toEqual([]);
 
-    expect(evidence?.passed).toBe(false);
-    expect(refusedLine(evidence!)).toMatch(/^Refused in Arena: \d+ of 32 tries$/);
-  }, 120000);
+      if (refused.outcome.kind !== 'refused') throw new Error('Arena refusal was ignored.');
+
+      expect(refusedLine(refused.outcome.evidence!)).toBe('Refused in Arena: 20 of 32 tries');
+      expect(judge).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ model: hexapod, environment: kitEnvironment(hexapod, 'stand') }),
+      );
+    } finally {
+      judge.mockRestore();
+    }
+  });
 });

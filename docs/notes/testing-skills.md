@@ -2,6 +2,14 @@
 
 Current coverage: [owning guide](../guide/skills.md#testing-coverage). Shared policy and harness contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
 
+## Published skill refusal
+
+Issue #1775 reports that “saves nothing when Arena refuses the result, and says how many tries passed” took 33 seconds in [Check run 44245137178](https://github.com/JamelHammoud/basecase/actions/runs/44245137178). The installation fixture supplied a high-gain policy and ran real hexapod Arena rollouts to obtain a refusal, with a 120-second test timeout. Its assertions checked an empty save list, refusal and a count-shaped string.
+
+The regression now supplies one controlled Arena refusal, matching the neighboring successful installation test's boundary. Real publication, source-to-target mapping, MuJoCo feasibility, Motor Kit orchestration and artifact retention remain exercised. The assertion checks the exact worst count, 20 of 32 in the latency variant, and exactly one Arena call for the target hexapod. The per-test timeout is removed. This test proves refusal propagation and retention, not hexapod physics. `arena.test.ts` retains real WASM pass and failure judgments, with statistical thresholds and randomized draws covered separately. No production behavior, timeout configuration, retry or quarantine changes.
+
+On the macOS worktree, the focused changed-file check ran all 12 `hubSkill.test.ts` cases successfully in 308 ms of Vitest duration. That first check failed formatting, which was then corrected. This local file duration and the reported 33-second CI test duration come from different hosts and workloads, so they do not establish a CI speedup ratio.
+
 ## Edited robot local sources
 
 The desktop studio enables automatic local Stand reuse for floating legged models with three powered joints per leg and source-to-target leg counts 4 to 4, 6 to 6 and 6 to 5. First robots and other mappings retain the cold path. Controlled Forge and Arena results establish orchestration only. Native comparisons below qualify this limited scope, without a universal learning-speed claim.

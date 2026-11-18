@@ -8,6 +8,8 @@ const bin = (relative) => path.join(root, 'node_modules', relative);
 const SCRIPT = /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/;
 const TYPED = /\.(ts|tsx|mts|cts)$/;
 const TESTED_ROOTS = ['src/', 'electron/', 'tools/', 'bench/', 'verify/lib/'];
+const CACHE_INPUT =
+  /^(?:(?:verify\/)?vitest(?:\.(?:e2e|app|perf|scratch))?\.config\.ts|tools\/testing\/vitestCache\.mjs)$/;
 const TEST_FILE = /\.test\.(ts|tsx|mts|js|mjs)$/;
 const SITE_INPUTS = /^(?:site\/|tools\/(?:site|copy)\/|src\/.+\.tsx?$|electron\/[^/]+\.(?:mjs|json)$)/;
 
@@ -59,7 +61,8 @@ function nearestTests(file) {
 }
 
 function testedFiles(files) {
-  const underRoots = files.filter((file) => TESTED_ROOTS.some((prefix) => file.startsWith(prefix)));
+  const inputs = files.map((file) => (CACHE_INPUT.test(file) ? 'tools/testing/vitestCache.test.mjs' : file));
+  const underRoots = inputs.filter((file) => TESTED_ROOTS.some((prefix) => file.startsWith(prefix)));
   const data = underRoots.filter((file) => !SCRIPT.test(file) && !file.endsWith('.md') && !file.endsWith('.py'));
 
   return [...new Set([...underRoots.filter((file) => SCRIPT.test(file)), ...data, ...data.flatMap(nearestTests)])];

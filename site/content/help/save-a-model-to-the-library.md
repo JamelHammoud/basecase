@@ -28,6 +28,8 @@ covers:
 
 You can save a part or a group of parts to the Library, then add it to any scene later.
 
+Unbind [shared dimensions](/help/link-dimensions-with-shared-parameters) before saving. Library models can’t keep references to declarations in another scene.
+
 1. Select the parts you want to keep.
 2. Click **Library** in the view rail on the left.
 3. Click **+** at the top right of the Library.

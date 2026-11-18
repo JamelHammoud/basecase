@@ -71,7 +71,7 @@ Every export is in the **Export** menu at the top right of the window.
 | **Drawings** | `<scene>-drawings.zip` | PDF, editable SVG and a source manifest for [dimensioned drawings](/help/export-dimensioned-drawings) |
 | **STEP**, in the desktop app only | `<scene>.step` | Every visible solid part as its own body, in millimeters, Z up, as [Export a STEP file](/help/export-a-step-file) explains |
 | **Schematic** | `<scene>-schematic.zip` | An editable KiCad project with requirements and source identities. Supported routed boards can include checked [fabrication files](/help/export-board-fabrication-files) |
-| **Scene** | `<scene>.basecase` | The scene, including its imported worlds, to open in Basecase |
+| **Scene** | `<scene>.basecase` | The scene, including its imported worlds, shared parameters and dimension bindings, to open in Basecase |
 | **Kit** | `<scene>-kit.zip` | Plates, mechanical drawings, sheet DXF files, illustrated guide, packing, provenance and joint identities, listed in [Robot kit contents](/help/robot-kit-contents) |
 | **Robot Package** | `<scene>-robot.zip` | MJCF, URDF, meshes, joint map, policies and ROS 2 package files, listed in [Robot package contents](/help/robot-package-contents) |
 | **Copy as Markdown** | The clipboard | The scene as a Markdown spec: its goal and every part with its size |

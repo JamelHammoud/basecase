@@ -1,5 +1,6 @@
 import type { CustomModelDefinition, RobotJoint, ScenePart } from '../types/robotics';
 import { placedJoints } from './libraryJoints';
+import { refuseParameterModel } from './designParameters/transfers';
 
 const APP_WRITTEN =
   /^(Saved from (scene \([\w-]+\)|\d+ parts?)|3D model generated via ACP from reference image \(.*\))\.?$/;
@@ -16,6 +17,8 @@ export function modelToParts(
   base: [number, number, number],
   makeId: (prefix?: string) => string,
 ): { parts: ScenePart[]; joints: RobotJoint[]; missingShapes: number } {
+  refuseParameterModel(model);
+
   if (!isSceneModel(model)) {
     return {
       missingShapes: 0,

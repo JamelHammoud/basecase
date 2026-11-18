@@ -169,7 +169,16 @@ export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
   };
 
   const placeCustomModel = (model: CustomModelDefinition, at?: Vec3, place?: SnapPlacement) => {
-    const made = modelToParts(model, modelBase(model, at), newId);
+    let made: ReturnType<typeof modelToParts>;
+
+    try {
+      made = modelToParts(model, modelBase(model, at), newId);
+    } catch (error) {
+      showToast(errorMessage(error), { tone: 'error' });
+
+      return;
+    }
+
     const { missingShapes } = made;
     const inserted = made.parts.length === 1 ? [withPlacement(made.parts[0], place)] : made.parts;
 

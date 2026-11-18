@@ -95,6 +95,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
 
   return (
     <Inspector
+      parameters={core.parameters}
       board={core.project.electronicsBoard}
       onUpdateBoard={actions.board.update}
       onArrangeBoard={() => void actions.board.arrange()}

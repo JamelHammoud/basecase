@@ -25,6 +25,7 @@ const printing = (name: string, text: string): Rule => ({ area: 'printing', chec
 const sourcing = (name: string, text: string): Rule => ({ area: 'parts', check: REAL_PARTS, name, text });
 
 export const RULES = {
+  'design-parameters': { area: 'design', check: 'Dimensions', name: 'Dimensions', text: '' },
   'sketch-support': { area: 'design', check: 'Sketch', name: 'Sketch Supports', text: '' },
   air: screw('Screws Ending in Air', 'These screws don’t grip anything. Each needs an insert, a nut or more material.'),
   uncut: screw('Screws Without Holes', 'These screws run through solid material, so they need a hole cut for them.'),

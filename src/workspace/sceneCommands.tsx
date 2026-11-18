@@ -1,4 +1,5 @@
 import { sketchSupportCommands } from './sketchSupportCommands';
+import { parameterCommands } from './parameterCommands';
 import { classroomCommands } from './classroomCommands';
 import type { Command } from '../components/CommandPalette';
 import {
@@ -310,6 +311,7 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
 }
 
 export const sceneCommands = (inputs: CommandInputs): Command[] => [
+  ...parameterCommands(inputs.core),
   ...fileCommands(inputs),
   ...exchangeCommands(inputs),
   ...printCommands(inputs),

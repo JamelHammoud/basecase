@@ -17,6 +17,8 @@ import type { WorldItem } from '../sim/mjcfTypes';
 import type { ScenePart } from '../types/robotics';
 import { regenerateSketchParts } from './sketchSupportOps';
 import { sketchFace, type SketchFaceJob } from './sketchFaceOps';
+import { regenerateParameterGeometry } from '../utils/designParameters/geometry';
+import type { ParameterGeometryJob } from '../utils/designParameters/transaction';
 
 type Vec3 = [number, number, number];
 
@@ -173,6 +175,7 @@ async function parseMesh({ data, path }: ParseMeshJob): Promise<Float32Array | n
 const transferLines = (lines: Float32Array) => reply(lines, [lines.buffer]);
 
 export const geometryHandlers = {
+  parameterGeometry: async (job: ParameterGeometryJob) => reply(await regenerateParameterGeometry(job)),
   sketchFace: (job: SketchFaceJob) => reply(sketchFace(job)),
   sketchSupports: ({ parts, force }: { parts: ScenePart[]; force: string[] }) =>
     reply(regenerateSketchParts(parts, force)),

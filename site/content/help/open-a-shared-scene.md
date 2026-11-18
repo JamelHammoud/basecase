@@ -31,6 +31,8 @@ The scene opens in a new tab. If the front tab is a blank scene you haven't touc
 
 A saved [electronics board](/help/fit-an-electronics-board) keeps its mounting constraints, placements and locks when you open the file.
 
+[Shared parameters and dimension bindings](/help/link-dimensions-with-shared-parameters) stay editable in the opened scene. Basecase validates reopened bindings before their geometry counts as current in Checks.
+
 Imported worlds come with the scene, including their colliders, textures and optional splats. You don't need the original capture files.
 
 You can also choose **File** ▸ **Open Scene File**, or drop the file on the canvas. Double-clicking a `.basecase` file in Finder or File Explorer doesn't open it in Basecase.

@@ -166,6 +166,7 @@ export interface TextFile {
 }
 
 export interface Snapshot {
+  designParameters?: ProjectSettings['designParameters'];
   electronicsBoard?: ProjectSettings['electronicsBoard'];
   parts: ScenePart[];
   pose: RobotPoseState | undefined;

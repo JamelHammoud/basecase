@@ -6,7 +6,7 @@ import type { Printing } from './usePrinting';
 import type { SceneDocument } from './useSceneDocument';
 import type { SceneWorkspaceProps } from './types';
 import type { PrinterSetup } from '../data/printers';
-import { failedReadiness, readinessDelta, withDecisions } from '../readiness/readiness';
+import { failedReadiness, readinessDelta, withDecisions, currentReadiness } from '../readiness/readiness';
 import type { Readiness } from '../readiness/types';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { TimeInput } from '../utils/engineeringTime';
@@ -67,21 +67,28 @@ export function useReadiness({
     void loadSourced();
   }, []);
 
-  const decided = (r: Readiness) => withDecisions(r, partsRef.current, projectRef.current.readiness);
-  const latest = () => (latestRef.current ? decided(latestRef.current) : null);
-
-  const checkNow = (): Promise<Readiness | null> => {
-    const viewport = viewportRef.current;
-    const now = projectFingerprint(partsRef.current, projectRef.current, printer, {
+  const decided = (r: Readiness) =>
+    withDecisions(r, partsRef.current, projectRef.current.readiness, projectRef.current.designParameters);
+  const fingerprintNow = () =>
+    projectFingerprint(partsRef.current, projectRef.current, printer, {
       purchases: knownPurchases(),
       money: currentMoney(),
       printerCount,
       slices,
     });
+  const latest = () => {
+    const current = currentReadiness(latestRef.current, fingerprintNow());
+
+    return current ? decided(current) : null;
+  };
+
+  const checkNow = (): Promise<Readiness | null> => {
+    const viewport = viewportRef.current;
+    const now = fingerprintNow();
 
     if (!viewport) return Promise.resolve(null);
 
-    if (latestRef.current?.fingerprint === now) return Promise.resolve(latest());
+    if (latestRef.current?.fingerprint === now) return Promise.resolve(decided(latestRef.current));
 
     if (runRef.current?.fingerprint === now) return runRef.current.promise;
 
@@ -107,7 +114,13 @@ export function useReadiness({
     })
       .then(keepIfNewest)
       .catch((error: unknown) =>
-        keepIfNewest(failedReadiness(error, { parts: partsRef.current, decisions: projectRef.current.readiness })),
+        keepIfNewest(
+          failedReadiness(error, {
+            parts: partsRef.current,
+            decisions: projectRef.current.readiness,
+            designParameters: projectRef.current.designParameters,
+          }),
+        ),
       )
       .finally(() => {
         if (runRef.current?.promise === promise) {
@@ -131,8 +144,10 @@ export function useReadiness({
     return () => window.clearTimeout(timer);
   }, [fingerprint]);
 
+  const current = currentReadiness(measured, fingerprint);
+
   return {
-    current: measured && withDecisions(measured, parts, project.readiness),
+    current: current && withDecisions(current, parts, project.readiness, project.designParameters),
     fingerprint,
     checking,
     checkNow,

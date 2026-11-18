@@ -30,6 +30,8 @@ Each change the agent makes, such as adding parts, reshaping a part or writing a
 
 Board edits also undo saved placements and mounting-hardware references alongside the scene parts. See [Fit an electronics board](/help/fit-an-electronics-board).
 
+A batch of [shared parameter edits](/help/link-dimensions-with-shared-parameters) is one undo step. Undo restores its declarations, bindings and regenerated parts together.
+
 While a Case is running, [[⌘Z]] only steps back through code panel changes, and it stops when it reaches any other kind of change.
 
 ## Revert a whole run

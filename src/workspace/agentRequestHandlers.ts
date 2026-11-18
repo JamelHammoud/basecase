@@ -71,10 +71,13 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { RobotSkeleton } from '../types/skeleton';
 import { newId } from './helpers';
 import { plural } from '../../electron/plural.mjs';
+import type { ParameterEdit } from '../utils/designParameters/edits';
+import { assertAgentParameterEdits } from '../utils/designParameters/edits';
 
 type Payload = Record<string, unknown>;
 
 export interface RequestContext extends RepairContext, LightenContext {
+  editParameters?: (edits: ParameterEdit[]) => Promise<boolean | string>;
   parts: () => ScenePart[];
   project: () => ProjectSettings;
   printer: () => PrinterSetup;
@@ -285,6 +288,19 @@ async function setBuild(payload: Payload, ctx: RequestContext) {
 }
 
 async function applyWithCost(payload: Payload, ctx: RequestContext) {
+  if (payload.parameterEdits && Array.isArray(payload.ops) && payload.ops.length)
+    throw new Error('Apply parameter edits separately from other updates.');
+
+  if (payload.parameterEdits) {
+    assertAgentParameterEdits(payload.parameterEdits);
+
+    const ok = await ctx.editParameters?.(payload.parameterEdits as ParameterEdit[]);
+
+    const refused = typeof ok === 'string' ? ok : 'Shared dimensions were not changed.';
+
+    return { ok: ok === true, summary: ok === true ? 'Updated shared dimensions.' : refused };
+  }
+
   const { ops, problems } = prepareOps((payload.ops as AgentOp[]) ?? [], ctx);
   const summary = await ctx.applyOps(ops);
   const framed = problems.length ? ` Not placed: ${problems.join('; ')}.` : '';
@@ -301,6 +317,7 @@ const HANDLERS: Record<string, Handler> = {
 
     return {
       ...snapshotScene(ctx.parts(), measured),
+      ...(ctx.project().designParameters?.length ? { parameters: ctx.project().designParameters } : {}),
       ...(marks.length ? { marks } : {}),
       ...(consoles.length ? { consoles } : {}),
     };

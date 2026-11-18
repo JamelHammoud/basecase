@@ -7,6 +7,7 @@ import { sceneText } from './sceneText.mjs';
 import { settledWrites } from './pendingWrites.mjs';
 import { bridge, clashText, fail, text } from './shared.mjs';
 import { plural } from '../plural.mjs';
+import { parameterEditsSchema } from './parameterSchema.mjs';
 
 export const getScene = {
   name: 'get_scene',
@@ -113,8 +114,9 @@ export const updateParts = {
   config: {
     title: 'Move or restyle parts',
     description:
-      "Changes placement (position, rotation), color, name, group, role, material, sheet or note of existing parts by id. sheet { material: aluminum-6061, carbon-fiber or acrylic, thicknessMm } requires a flat part and changes its geometry to the nearest stocked thickness. For primitives you can also change size, and round or bevel the edges of a box, cube, cylinder, tube, hex_prism or wedge with edges { kind: fillet or chamfer, mm }. Ids may be a boolean's operands and the boolean re-cuts. For other CAD geometry changes, call model_part again.",
+      "Changes placement (position, rotation), color, name, group, role, material, sheet or note of existing parts by id. sheet { material: aluminum-6061, carbon-fiber or acrylic, thicknessMm } requires a flat part and changes its geometry to the nearest stocked thickness. For primitives you can also change size, and round or bevel the edges of a box, cube, cylinder, tube, hex_prism or wedge with edges { kind: fillet or chamfer, mm }. Ids may be a boolean's operands and the boolean re-cuts. parameterEdits declares shared dimensions with set, rename, delete, bind or unbind operations. Units are mm, deg or 1. Expressions use declared names, dimensional literals and arithmetic. Send parameterEdits separately from updates. All parameter edits regenerate together as one undo step. get_scene lists declarations and bindings. Delete an in-use parameter with resolution freeze to retain dependent dimensions. For other CAD geometry changes, call model_part again.",
     inputSchema: {
+      parameterEdits: parameterEditsSchema,
       updates: z
         .array(
           z.object({
@@ -126,11 +128,21 @@ export const updateParts = {
           }),
         )
         .min(1)
-        .max(60),
+        .max(60)
+        .optional(),
     },
   },
-  handler: async ({ updates: given }) => {
+  handler: async ({ updates: given = [], parameterEdits }) => {
     try {
+      if (parameterEdits?.length && given.length)
+        throw new Error('Apply parameter edits separately from other updates.');
+
+      if (parameterEdits?.length) {
+        const result = await bridge('apply', { parameterEdits });
+
+        return text(result.summary);
+      }
+
       const { parts: updates, notice } = clipTexts(given);
       const res = await bridge('apply', { ops: updates.map((u) => ({ op: 'update', part: u })) });
 

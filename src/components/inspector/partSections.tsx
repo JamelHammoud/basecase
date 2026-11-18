@@ -109,7 +109,11 @@ export const SizeSection: React.FC<PartSectionProps & { isImage: boolean; sheetP
   sheetProfile,
 }) => {
   const sheet = part.sheet ?? (sheetProfile && sheetOf(part, sheetProfile));
-  const disabled = (axis: number) => !!sheet && (!sheetProfile || Math.abs(sheetProfile.normal[axis]) > 0.0001);
+  const disabled = (axis: number) =>
+    (!!sheet && (!sheetProfile || Math.abs(sheetProfile.normal[axis]) > 0.0001)) ||
+    !!part.dimensionBindings?.some(
+      (binding) => binding.kind !== 'primitive' || binding.target === ['width', 'height', 'depth'][axis],
+    );
   const setDim = (key: DimensionKey, v: number, live?: Phase) =>
     onUpdate({ dimensions: resizedDimensions(part.dimensions, key, v, isImage) }, live);
 
@@ -152,6 +156,11 @@ export const SizeSection: React.FC<PartSectionProps & { isImage: boolean; sheetP
           <NumberInput
             label="T"
             aria-label="Wall thickness"
+            disabled={
+              !!part.dimensionBindings?.some(
+                (binding) => binding.kind === 'primitive' && binding.target === 'thickness',
+              )
+            }
             value={part.dimensions.thickness}
             min={1}
             max={50}

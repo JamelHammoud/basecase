@@ -365,6 +365,7 @@ function sceneLinks(p: ScenePart) {
   const ports = p.kind === 'hardware' ? '' : portSummary(portsOf(p));
 
   return {
+    ...(p.dimensionBindings?.length ? { dimensions: p.dimensionBindings } : {}),
     ...(p.mirrorOf ? { mirrorOf: p.mirrorOf.id } : {}),
     ...(p.frame ? { frame: p.frame } : {}),
     ...(ports ? { ports } : {}),

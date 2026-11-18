@@ -37,7 +37,15 @@
     "issue": 1621,
     "until": "2026-11-28",
     "platform": "win32",
-    "reason": "Run 44042519036 missed the unchanged 10000 ms download poll on the first Windows attempt. The retry reused the beforeAll app, exported and reopened the file with the support id retained, then missed the mesh-triangle poll with zero triangles. Linux passed in 14818 ms at the same revision, and the explicit replacement case passed Windows in 6828 ms. Commit 08e3b77a6 introduced the walkthrough after the last green. Thumbnail preparation, file delivery, support validation, active viewport and retained retry state are not distinguished. Issue #1621 owns production-path tracing and equal-load baseline and candidate measurements. Other platforms, the replacement browser case and fast support integration, serialization, history and failure coverage remain active. Focused Windows diagnostic 44111175052 passed the exact test at the same revision in 15982 ms with one worker and retries disabled, confirming intermittent behavior without establishing its cause."
+    "reason": "Run 44042519036 missed the unchanged 10000 ms download poll on the first Windows attempt. The retry reused the beforeAll app, exported and reopened the file with the support id retained, then missed the mesh-triangle poll with zero triangles. Linux passed in 14818 ms at the same revision, and the explicit replacement case passed Windows in 6828 ms. Commit 08e3b77a6 introduced the walkthrough after the last green. Thumbnail preparation, file delivery, support validation, active viewport and retained retry state are not distinguished. Issue #1621 owns production-path tracing and equal-load baseline and candidate measurements. Other platforms and fast support integration, serialization, history and failure coverage remain active. The replacement browser case is separately quarantined on Windows under the same owner. Focused Windows diagnostic 44111175052 passed the exact test at the same revision in 15982 ms with one worker and retries disabled, confirming intermittent behavior without establishing its cause."
+  },
+  {
+    "file": "e2e/sketchSupport.e2e.test.ts",
+    "test": "retains geometry after deletion and resolves only after explicit face selection",
+    "issue": 1621,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44380885141 retained geometry after source deletion and committed the replacement support id, then exhausted the unchanged poll for a cleared support issue. Its shared-app retry instead missed the supporting-part finding text. Last full green 44245137178 passed this unchanged declaration in 9549 ms. Same-revision Windows diagnostic 44383913059 passed in 12494.9466 ms with one worker, retries disabled and quarantine off, establishing intermittency without a failure rate. Replacement capture, regeneration, result application and Checks delivery remain separate untraced stages. Existing Sketch browser owner #1621 owns these Windows boundaries alongside file delivery, isolated attempts and ten baseline and ten candidate observations at equal load with retries disabled before restoration. Linux and macOS retain both declarations. Fast generated-design regeneration, face capture, missing-support, geometry, serialization, history and queue tests remain active. No assertion, timeout or retry changes."
   },
   {
     "file": "e2e/kit.e2e.test.ts",
@@ -203,7 +211,15 @@
     "issue": 1386,
     "until": "2026-11-28",
     "platform": "linux",
-    "reason": "Run 43844795005 completed the inventory walkthrough but failed its final error assertion with 78 ERR_NETWORK_CHANGED asset failures. Retry then timed out filling Organization ID after the shared browser had signed in and the viewer roles had been removed. The same Fleet test, browser, fixture, harness, lockfile and e2e configuration passed Linux run 43839831222 in 7945 ms. The initial network-change trigger is not established. Issue #1386 owns startup tracing, attempt isolation and equal-load measurements before restoration. Enrollment and non-Linux coverage remain active."
+    "reason": "Run 43844795005 completed the inventory walkthrough but failed its final error assertion with 78 ERR_NETWORK_CHANGED asset failures. Retry then timed out filling Organization ID after the shared browser had signed in and the viewer roles had been removed. The same Fleet test, browser, fixture, harness, lockfile and e2e configuration passed Linux run 43839831222 in 7945 ms. The initial network-change trigger is not established. Issue #1386 owns startup tracing, attempt isolation and equal-load measurements before restoration. Enrollment and macOS coverage remain active."
+  },
+  {
+    "file": "e2e/fleet.e2e.test.ts",
+    "test": "opens Fleet from Operate, restricts a site viewer and reopens persistent inventory",
+    "issue": 1386,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44380885141 completed inventory, cross-site denial, scrolling, service restart and role removal, then could not locate Reload Fleet after rows cleared. The retry reused the signed-in beforeAll browser and revoked viewer, then could not locate Organization ID. Last full green 44245137178 passed the unchanged declaration in 6693 ms. Same-revision Windows diagnostic 44383903662 passed the complete declaration in 10606.9314 ms with one worker, retries disabled and quarantine off, establishing intermittency without a failure rate. No responsible stage or common cause with the Linux network-change failure is established. Existing walkthrough owner #1386 owns Windows reset delivery, session and attempt-isolation traces and ten baseline and ten candidate Windows observations at equal load with retries disabled before restoration. Enrollment, browser access administration, fast subscription guards and macOS inventory coverage remain active. Preserve assertions and deadlines."
   },
   {
     "file": "e2e/caseCode.e2e.test.ts",

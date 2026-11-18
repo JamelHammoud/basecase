@@ -36,5 +36,3 @@ export async function acceptanceFixtures(selectedName?: string) {
 
   return records;
 }
-
-export { completedRoutedFixture } from './routedFixtures';

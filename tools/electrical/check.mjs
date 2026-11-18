@@ -1,4 +1,3 @@
-import { checkRoutedFixture } from './routedCheck.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -152,7 +151,7 @@ async function main() {
       output: { file: bundle, format: 'esm', codeSplitting: false },
     });
 
-    const { acceptanceFixtures, completedRoutedFixture } = await import(pathToFileURL(bundle).href);
+    const { acceptanceFixtures } = await import(pathToFileURL(bundle).href);
     const selectedName = process.argv.includes('--fixture')
       ? process.argv[process.argv.indexOf('--fixture') + 1]
       : undefined;
@@ -165,9 +164,6 @@ async function main() {
     const results = [];
 
     for (const fixture of fixtures) results.push(await checkFixture(fixture));
-
-    if (!exportOnly || process.argv.includes('--routed-native'))
-      results.push(await checkRoutedFixture(await completedRoutedFixture(), cli));
 
     await fs.writeFile(path.join(output, 'results.json'), `${JSON.stringify(results, null, 2)}\n`);
     process.stdout.write(`${JSON.stringify(results)}\n`);

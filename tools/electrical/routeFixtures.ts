@@ -64,3 +64,5 @@ export async function routingFixtures() {
 }
 
 export { acceptBoardRoute, finishBoardExport, encodeSceneFile, decodeSceneFile };
+
+export { nativeKitFixture } from '../../src/kit/nativeKit.fixtures';

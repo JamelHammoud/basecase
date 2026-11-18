@@ -17,13 +17,19 @@ import { indexRouteSpecs } from '../wiring/routeSpecs';
 import type { SceneDocument } from './useSceneDocument';
 import type { ShowToast } from './types';
 import type { TransformMode } from '../types/robotics';
+import type { RightTab } from './types';
 
 interface Options {
   docs: SceneDocument;
   sceneId: string;
   posing: Posing;
   showToast: ShowToast;
-  ui: { tool: { setMode: (mode: TransformMode) => void }; select: (ids: string[]) => void };
+  ui: {
+    tool: { setMode: (mode: TransformMode) => void; openRightTab: (tab: RightTab) => void };
+    select: (ids: string[]) => void;
+    buildAlong: { close: () => void };
+    sketching: { cancelSupport: () => void };
+  };
 }
 
 export function useCableRoutes({ docs, sceneId, posing, showToast, ui }: Options) {
@@ -79,7 +85,10 @@ export function useCableRoutes({ docs, sceneId, posing, showToast, ui }: Options
   const open = (route: RouteIdentity) => {
     if (!findEditableNet({ parts: docs.partsRef.current, project: docs.projectRef.current }, route)) return;
 
+    ui.buildAlong.close();
+    ui.sketching.cancelSupport();
     ui.tool.setMode('translate');
+    ui.tool.openRightTab('build');
     ui.select([route.from.partId, route.to.partId]);
     setSelection({ sceneId, identity: route });
     setPreview(null);
@@ -94,7 +103,7 @@ export function useCableRoutes({ docs, sceneId, posing, showToast, ui }: Options
     net: net || null,
     spec,
     anchors,
-    placing,
+    placing: net ? placing : null,
     previewing: preview?.base === docs.project,
     nets: editableNets(scene),
     open,
@@ -123,7 +132,10 @@ export function useCableRoutes({ docs, sceneId, posing, showToast, ui }: Options
       setPlacing(null);
     },
     showPose: (values: Record<string, number>) => {
+      if (!net) return;
+
       close();
+      ui.select([net.from.id!, net.to.id!]);
       posing.setPose({ ...posing.pose, values });
       ui.tool.setMode('pose');
     },

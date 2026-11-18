@@ -68,7 +68,7 @@ function cameraStripFor(core: WorkspaceCore, actions: WorkspaceActions) {
 }
 
 function pickPointFor(core: WorkspaceCore) {
-  return core.cableRoutes.placing !== null ? core.cableRoutes.pick : core.sketching.notePick;
+  return core.cableRoutes.net ? core.cableRoutes.pick : core.sketching.notePick;
 }
 
 export function SceneViewport({ active, core, actions, agent }: SceneViewportProps) {
@@ -106,7 +106,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         showGrid={studio.showGrid}
         {...boardSelectionProps(core)}
         onPickPoint={pickPointFor(core)}
-        onOpenPart={core.sketching.edit}
+        onOpenPart={core.cableRoutes.net ? undefined : core.sketching.edit}
         onUpdatePartTransform={edits.updatePartTransform}
         onUpdatePartsTransform={edits.updatePartsTransform}
         onPlacePart={edits.placePart}

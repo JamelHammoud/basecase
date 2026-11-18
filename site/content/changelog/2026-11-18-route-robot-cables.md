@@ -10,6 +10,6 @@ You may need more cable as an arm's wrist extends. Choose the stock you plan to 
 
 You'll see the chosen stock in the bill of materials. In Build Along, you keep the modeled rest route and cable identity. Click **Show Pose** to open the measured limiting joint position in **Pose**.
 
-You still get the existing check's conservative clearances and motion limits. You cannot use it to certify physical bend radius or whole-robot readiness.
+You still get the existing check's conservative clearances and motion limits. You can’t use it to certify physical bend radius or whole-robot readiness.
 
 Steps are in [Route a robot cable](/help/route-a-robot-cable).

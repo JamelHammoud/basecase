@@ -12,10 +12,7 @@ export function cableCommands({ core }: CommandInputs) {
       label: `Edit Route: ${net.from.name}: ${net.from.port!.name} to ${net.to.name}: ${net.to.port!.name}`,
       icon: <PackageIcon />,
       keywords: 'cable reach wire stock anchor point',
-      run: () => {
-        core.tool.openRightTab('build');
-        core.cableRoutes.open(identity);
-      },
+      run: () => core.cableRoutes.open(identity),
     };
   });
 }

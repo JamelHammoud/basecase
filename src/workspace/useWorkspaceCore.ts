@@ -157,8 +157,9 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const studyOptions = { active, workspaceId, viewportRef, readiness, simTraining, tool, showToast };
   const { caseCompare, study } = useWorkspaceStudies({ ...documentContext, ...studyOptions });
 
+  const sketching = useSketchSession({ docs, viewportRef, selectedIds, setSelectedIds, tool, showToast });
   const cableRouteOptions = { docs, sceneId: scene.sceneId, posing, showToast };
-  const cableRouteUi = { tool, select: setSelectedIds };
+  const cableRouteUi = { tool, select: setSelectedIds, buildAlong, sketching };
 
   return {
     active,
@@ -186,7 +187,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     selectedIds,
     setSelectedIds,
     selection,
-    sketching: useSketchSession({ docs, viewportRef, selectedIds, setSelectedIds, tool, showToast }),
+    sketching,
     annotations,
     marks,
     measure,

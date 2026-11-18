@@ -459,6 +459,8 @@ The ten watcher cases cover vanished files, vanished nested directories, the inc
 
 The final changed-file check passed formatting, ESLint, documentation validation and all 64 related tests across six files. The existing native fault boundary also asserts that an entry-limit cause survives the routing abort. Scratch evidence is retained in `scratch/routing-watch/before.log` and `scratch/routing-watch/final.log`.
 
+Review found that the initial repair still refused missing files. Asynchronous `fs.lstat` rejects with `ENOENT` even when passed `throwIfNoEntry: false`, while the original mock invented a successful undefined result for that option. A real-filesystem regression reproduced the refusal on Node 26.13.0. The watcher now catches `ENOENT` explicitly, and the mock rejects missing paths like the real API. Other inspection errors remain fatal. Review logs are retained in `scratch/routing-watch-review/before.log` and `scratch/routing-watch-review/final.log`. Native Windows execution remains unobserved locally.
+
 [Route a carrier board](../../site/content/help/route-a-carrier-board.md) was rechecked against this repair. Its installation instructions, declarations, Route Board and Schematic actions, cancellation, undo/redo, failure behavior and screenshots remain accurate. File monitoring changes no documented step or label, so the article remains unchanged.
 
 ## Local board routing

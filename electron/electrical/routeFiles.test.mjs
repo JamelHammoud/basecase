@@ -1,4 +1,5 @@
 import path from 'node:path';
+import os from 'node:os';
 import { afterEach, expect, it, vi } from 'vitest';
 import { watchRouteFiles } from './routeFiles.mjs';
 
@@ -21,11 +22,11 @@ const stat = (kind, size = 0) => ({
   isSymbolicLink: () => kind === 'symlink',
 });
 
-async function sample() {
+async function sample(directory = root) {
   vi.useFakeTimers();
 
   const stop = vi.fn();
-  const close = watchRouteFiles(root, stop);
+  const close = watchRouteFiles(directory, stop);
 
   await vi.advanceTimersByTimeAsync(100);
   await close();
@@ -42,10 +43,8 @@ it.each([0, 24 * 1024 * 1024, 24 * 1024 * 1024 + 1])(
   'continues bounding live files when a listed temporary file disappears with %s bytes remaining',
   async (size) => {
     native.readdir.mockResolvedValue(['temporary', 'candidate.kicad_pcb']);
-    native.lstat.mockImplementation(async (file, options) => {
+    native.lstat.mockImplementation(async (file) => {
       if (file.endsWith('candidate.kicad_pcb')) return stat('file', size);
-
-      if (options?.throwIfNoEntry === false) return undefined;
 
       throw missing;
     });
@@ -58,6 +57,22 @@ it.each([0, 24 * 1024 * 1024, 24 * 1024 * 1024 + 1])(
   },
 );
 
+it('tolerates a missing entry using the real asynchronous filesystem API', async () => {
+  const { default: fs } = await vi.importActual('node:fs/promises');
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'routing-watch-'));
+
+  native.readdir.mockResolvedValue(['temporary']);
+  native.lstat.mockImplementation(fs.lstat);
+
+  try {
+    const stop = await sample(directory);
+
+    expect(stop).not.toHaveBeenCalled();
+  } finally {
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
 it('tolerates a nested directory disappearing before enumeration and still inspects its siblings', async () => {
   native.readdir.mockImplementation(async (directory) => {
     if (directory === root) return ['settings', 'candidate.kicad_pcb'];
@@ -69,7 +84,7 @@ it('tolerates a nested directory disappearing before enumeration and still inspe
   const stop = await sample();
 
   expect(stop).not.toHaveBeenCalled();
-  expect(native.lstat).toHaveBeenCalledWith(path.join(root, 'candidate.kicad_pcb'), { throwIfNoEntry: false });
+  expect(native.lstat).toHaveBeenCalledWith(path.join(root, 'candidate.kicad_pcb'));
   expect(native.readdir).toHaveBeenCalledWith(path.join(root, 'settings'));
 });
 

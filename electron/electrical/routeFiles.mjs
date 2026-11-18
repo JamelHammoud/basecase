@@ -29,7 +29,7 @@ async function inspectRouteFiles(directory) {
 }
 
 async function inspectRouteEntry(file, state) {
-  const stat = await fs.lstat(file, { throwIfNoEntry: false });
+  const stat = await routeFileStat(file);
 
   if (!stat) return;
 
@@ -40,6 +40,16 @@ async function inspectRouteEntry(file, state) {
   if (state.bytes > 24 * 1024 * 1024) throw routeFileLimit('bytes', state.bytes);
 
   if (stat.isDirectory()) state.directories.push(file);
+}
+
+async function routeFileStat(file) {
+  try {
+    return await fs.lstat(file);
+  } catch (error) {
+    if (error.code === 'ENOENT') return undefined;
+
+    throw error;
+  }
 }
 
 async function routeDirectory(current, root) {

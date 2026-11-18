@@ -240,6 +240,16 @@ The original independent Electrical export workflow was absent from the aggregat
 
 The review's named nine-file changed check passed formatting, lint, documentation, types, site copy for 306 pages and 45 related tests across seven files. The test run reported 889 ms. `scratch/review-1564/check.log` retains the local evidence. No browser, KiCad, Windows or GitHub workflow execution was performed during review. Product copy is unchanged.
 
+## Routed-board walkthrough removal
+
+Issue [#1777](https://github.com/JamelHammoud/basecase/issues/1777) reports 54 seconds for `imports a routed KiCad derivative through the Inspector and downloads checked fabrication files` in [Check 44245137178](https://github.com/JamelHammoud/basecase/actions/runs/44245137178). That is the reported CI duration, not a new local measurement. The walkthrough combined ordinary scene opening, an initial Schematic download, Inspector import, native validation, fabrication-field edits, another native export and a stale-supply check.
+
+The declaration and its unreferenced walkthrough helper are deleted. Its Windows quarantine entry and native-shard references are removed too. No replacement browser test, retry or deadline is added. Removing the declaration eliminates that workload rather than establishing a faster implementation or a measured shard reduction.
+
+`boardRoutedSource.test.ts` retains the ten-design import and persistence matrix, exact bytes, history and stale-supply refusal. `boardRouted.test.ts` retains identity reconciliation and hostile-source controls. `tools/electrical/routedCheck.mjs` retains real KiCad DRC and parity, independent Gerber and drill inspection, deterministic export, manifest hashes and manufacturing-limit refusal. The local-routing browser walkthrough still downloads Schematic fabrication files, and the electrical Kit browser cases inspect routed and edited carrier downloads. These retain separate export entry points, not the deleted manual-import UI sequence.
+
+Ordinary Inspector import and manual fabrication-field entry now lack the combined browser observation on every platform. This explicitly replaces the deleted declaration's Windows-only quarantine and restoration requirement under #1620. Existing incident observations below remain historical evidence. Product behavior, native acceptance and fast tests are unchanged. Local verification uses the named changed-file check, while native and remaining browser execution stay in CI.
+
 ## Routed-board reconciliation
 
 Issue #1597 extends the existing electrical projection and package. All ten designs retain exact supported footprint, terminal, net and mounting identities, unresolved electrical requirements and source bytes through import and ordinary scene encoding. Unsupported interfaces remain findings rather than invented footprints. `boardRoutedSource.test.ts` covers save/reopen, undo/redo, malformed UTF-8, a retained byte-order mark and stale supply inputs. `schematicExport.test.ts` covers cancellation and edits to parts, supplies and scene identity during native validation. No cached report authorizes fabrication exports. They rerun the native validator.

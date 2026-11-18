@@ -15,7 +15,7 @@ it('assigns every browser file and each native dependency to exactly one of the 
     Math.max(...shards.map((files) => files.length)) - Math.min(...shards.map((files) => files.length)),
   ).toBeLessThanOrEqual(1);
 
-  for (const file of ['boardRouted.e2e.test.ts', 'boardRouting.e2e.test.ts', 'kitElectrical.e2e.test.ts']) {
+  for (const file of ['boardRouting.e2e.test.ts', 'kitElectrical.e2e.test.ts']) {
     expect(shards.filter((files) => files.some((assigned) => path.basename(assigned) === file))).toHaveLength(1);
   }
 });

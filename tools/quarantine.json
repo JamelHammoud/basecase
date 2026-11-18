@@ -757,5 +757,21 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44364437393 passed both cold and warm child runs, then failed the unchanged requirement that both warm outputs contain [read]. Same-revision Windows diagnostic 44369593658 passed in 1404.5088 ms with one worker, zero retries and quarantine off on the same runner image, establishing intermittency. Child outputs, cache slots, metadata invalidation and debug delivery remain unresolved under priority owner #1808. Restore after tracing these stages, fixing the demonstrated cause and ten baseline and ten candidate Windows observations at equal load with retries disabled. Only this declaration is quarantined. The dependency-invalidation sibling primes its own cache precondition. Windows retains all other cache lifecycle and configuration checks. Linux and macOS retain concurrent cold/warm reuse. No assertion or deadline changes."
+  },
+  {
+    "file": "e2e/site.e2e.test.ts",
+    "test": "goes from the landing to the changelog",
+    "issue": 1811,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44370011621 completed landing navigation and resolved the Changelog anchor, then exhausted the unchanged 30000 ms click actionability deadline on both Windows attempts before reaching the destination URL. Same-revision Windows diagnostic 44374070244 passed the exact declaration in 2501.6471 ms with one worker, zero retries and quarantine off, confirming intermittency. Previous Windows Check 44364437393 passed in 5883 ms with unchanged site, browser harness, dependency lock and configuration. Linux at the failed revision passed in 2714 ms. Layout stability, renderer scheduling, pointer delivery and page ownership remain unresolved under priority owner #1811. Restore after stage and cleanup tracing, an established fix and ten baseline and ten candidate Windows observations at equal load with retries disabled. Coordinate shared browser lifecycle changes with #1139. Other platforms retain the complete story. Windows retains all three help stories and static route, feed, image-reference and conditional navigation coverage, which do not replace real changelog navigation and image loading. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/site.e2e.test.ts",
+    "test": "goes from the changelog to a blog post and back",
+    "issue": 1811,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44370011621 completed changelog navigation, then exhausted the unchanged 30000 ms Blog click deadline on both Windows attempts before reaching the blog URL. One attempt only logged selector waiting and the other resolved the Blog anchor before waiting for visible, enabled and stable. Same-revision Windows diagnostic 44374113214 passed the exact declaration in 2640.6814 ms with one worker, zero retries and quarantine off, confirming intermittency. Previous Windows Check 44364437393 passed in 521 ms with unchanged site, browser harness, dependency lock and configuration. Linux at the failed revision passed in 584 ms. Layout stability, renderer scheduling, pointer delivery and page ownership remain unresolved under priority owner #1811, separately from the landing path until a shared cause is established. Restore after stage and cleanup tracing, an established fix and ten baseline and ten candidate Windows observations at equal load with retries disabled. Other platforms retain the complete story. Windows retains all three help stories and static page and blog-link coverage, which do not replace real blog navigation. No assertion, deadline or retry changes."
   }
 ]

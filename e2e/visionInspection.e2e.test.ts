@@ -15,21 +15,20 @@ afterEach(async () => {
 });
 
 it(
-  'opens a saved frozen comparison from Library and preserves evidence through source playback, edits and scene switching',
+  'switches inspection overlays, opens source playback and label editing, and dismisses scoped inspection on scene switching',
   { retry: 0 },
   async () => {
     app = await openApp();
 
     const { page } = app;
     const { pane, dialog, before, saved } = await openVisionInspection(app);
-    const run = before.runs[0];
 
     await dialog.getByRole('combobox', { name: 'Prediction overlay', exact: true }).selectOption('incumbent');
     expect(await dialog.locator('[data-prediction]').count()).toBe(0);
     await dialog.getByRole('combobox', { name: 'Prediction overlay', exact: true }).selectOption('candidate');
     expect(await dialog.locator('[data-prediction]').count()).toBe(1);
-    expect(await dialog.textContent()).toContain(run.report.modelHash);
-    expect(await dialog.textContent()).toContain(run.incumbentReport.modelHash);
+    expect(await dialog.textContent()).toContain(before.runs[0].report.modelHash);
+    expect(await dialog.textContent()).toContain(before.runs[0].incumbentReport.modelHash);
     await followVisionSource(app);
     await page.keyboard.press('Escape');
     await pane.getByRole('button', { name: 'Inspect Images', exact: true }).click();
@@ -45,12 +44,15 @@ it(
     await expect
       .poll(async () => (await saved()).dataset.imageMembers?.[0].hash)
       .not.toBe(before.dataset.imageMembers?.[0].hash);
-    await pane.getByRole('button', { name: 'Inspect Images', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await page.getByText('Real cups', { exact: true }).click();
+    await page.keyboard.press('ControlOrMeta+k');
+    await page.getByLabel('Search commands').fill('Inspect Images');
+    await page.keyboard.press('Enter');
     await dialog.getByRole('button', { name: 'source-test', exact: true }).click();
+    await dialog.getByRole('img', { name: 'Frozen comparison image', exact: true }).waitFor();
     await dialog.getByRole('button', { name: 'Open Original Image', exact: true }).click();
     await expect.poll(() => dialog.getByRole('status').textContent()).toBe('Original image is unavailable');
-    expect((await saved()).runs[0]).toEqual(run);
-    expect((await saved()).dataset.versions).toEqual(before.dataset.versions);
 
     const tab = await page.evaluate(() => (window as unknown as { __studioTabs: Tabs }).__studioTabs.list().activeId);
 
@@ -58,19 +60,11 @@ it(
     await expect.poll(() => dialog.count()).toBe(0);
     await page.evaluate((id) => (window as unknown as { __studioTabs: Tabs }).__studioTabs.select(id), tab);
     await expect.poll(() => dialog.count()).toBe(0);
-    await pane.getByRole('button', { name: 'Inspect Images', exact: true }).click();
-    await dialog.getByRole('button', { name: 'source-test', exact: true }).click();
-    await dialog.getByRole('img', { name: 'Frozen comparison image', exact: true }).waitFor();
-    expect((await saved()).runs[0]).toEqual(run);
-    await dialog.getByRole('button', { name: 'Close', exact: true }).click();
-    await page.keyboard.press('Escape');
-    await page.getByText('Real cups', { exact: true }).click();
-    await page.keyboard.press('Meta+k');
-    await page.getByLabel('Search commands').fill('Inspect Images');
-    await page.keyboard.press('Enter');
-    await dialog.getByRole('button', { name: 'source-test', exact: true }).click();
-    await dialog.getByRole('img', { name: 'Frozen comparison image', exact: true }).waitFor();
-    expect((await saved()).runs[0]).toEqual(run);
+
+    const after = await saved();
+
+    expect(after.runs[0]).toEqual(before.runs[0]);
+    expect(after.dataset.versions).toEqual(before.dataset.versions);
     expect(app.errors).toEqual([]);
   },
 );

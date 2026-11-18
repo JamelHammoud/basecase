@@ -19,10 +19,10 @@ beforeAll(async () => {
     oxc: { jsx: { development: false } },
     build: {
       write: false,
+      rolldownOptions: { output: { codeSplitting: false } },
       lib: {
         entry: fileURLToPath(new URL('./codeFrameFixture.jsx', import.meta.url)),
-        formats: ['iife'],
-        name: 'FrameTest',
+        formats: ['es'],
       },
     },
   });
@@ -59,7 +59,7 @@ it('keeps the page drawing and disposes an infinitely looping production CodeFra
 
   try {
     await page.goto('http://code-frame.test/');
-    await page.addScriptTag({ content: script });
+    await page.addScriptTag({ type: 'module', content: script });
     await page.locator('[data-testid="code-frame"]').waitFor({ state: 'attached' });
 
     const frames = page.evaluate(
@@ -102,7 +102,7 @@ it('passes HUD clicks to the canvas and handles two iframe Escape presses withou
   try {
     await page.goto('http://code-frame.test/?cockpit');
     await page.addStyleTag({ content: styles });
-    await page.addScriptTag({ content: script });
+    await page.addScriptTag({ type: 'module', content: script });
 
     const hud = page.locator('[data-testid="case-run-overlay"][data-panel="hud"]');
 

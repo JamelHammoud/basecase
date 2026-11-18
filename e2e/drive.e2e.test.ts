@@ -58,12 +58,19 @@ afterAll(async () => {
 const itUnlessWindows = it.skipIf(process.platform === 'win32');
 
 describe('live drive', () => {
-  it('starts and stops rover Drive while edit shortcuts leave the part count unchanged', async () => {
+  it('drives a rover forward with W while edit shortcuts leave the part count unchanged', async () => {
     await startDriving('rover-diff');
 
     const before = await partCount(app.page);
 
     await app.page.mouse.click(720, 450);
+    await app.page.keyboard.down('w');
+
+    try {
+      await expect.poll(async () => (await simState()).stats?.robots[0].forward ?? 0).toBeGreaterThan(0.1);
+    } finally {
+      await app.page.keyboard.up('w');
+    }
 
     for (const key of ['s', 'f', 'Backspace', 'ControlOrMeta+z']) await app.page.keyboard.press(key);
 

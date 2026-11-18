@@ -40,6 +40,8 @@ Guide visibility probes retain a separate small ID render target. They no longer
 
 ## Performance: print planning and labels
 
+`print/tracker.ts` partitions printed and remaining scene parts in one pass, computing each part's shape key once. Both lists retain scene order and part identity. Existing `tracker.test.ts` covers changed shapes and replacement history, and `project.test.ts` checks that tracker-skipped parts stay out of exported plates. [Partition evidence](../notes/performance-printing.md#printed-parts-are-partitioned-once).
+
 Seeded printed-label sampling keeps barycentric coordinates in scalars, including triangle reflection. It creates only the returned point tuples. `labelSamples.test.ts` compares every coordinate with the historical sampler across generated, degenerate, nonfinite and edited faces. [Sampling evidence](../notes/performance-printing.md#seeded-triangle-samples-keep-scalar-coordinates).
 
 

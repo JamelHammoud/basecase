@@ -693,5 +693,13 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44353177242 exhausted the unchanged 10000 ms beforeAll budget before any of six facility cases ran. Same-revision Windows diagnostic 44354762014 reproduced the setup timeout with one worker, zero retries and quarantine off. Previous Windows Check 44344443437 passed all six in 9099 ms with unchanged Fleet sources and configuration, but used an older runner image. DXF preparation, native cluster initialization, migrations, HTTP startup, identity preparation and the image contribution remain unresolved under existing priority shared fixture owner #1401. Whole-file filtering is required because setup precedes individual test filtering. Restore after stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load. Linux and macOS retain the complete matrix. Windows retains pure import, registration, position and browser coverage, but lacks this complete HTTP matrix."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for weak",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44353177242 exhausted the unchanged 5000 ms deadline at 5018 ms. Same-revision Windows diagnostic 44357103546 reproduced it at 5005.1493 ms with one worker, zero retries and quarantine off. Full green Check 44245137178 passed in 4524 ms with unchanged parity, capture, variants, native replay, Case runner, dependencies and unit configuration. WASM capture, uv provisioning, native startup, replay, scoring and cleanup remain unresolved under existing priority owner #1390. Windows retains short, resisted, reversed and rotated drawers, WASM fixture physics and persistence. Other platforms retain weak drawer parity. Restore after stage and cleanup tracing, an established fix and ten baseline and ten candidate Windows observations at equal load without retries. Preserve 1e-6 state and margin limits, exact contacts, native verdict agreement, stop bounds and failure without contacts."
   }
 ]

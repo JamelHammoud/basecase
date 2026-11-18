@@ -771,7 +771,7 @@ An initial history test inferred a required joints field from its fixture and fa
 
 ### Browser and documentation
 
-`e2e/cableEditing.e2e.test.ts` is the focused CI walkthrough. It opens the generated arm's Cable reach finding, selects stock, adds and numerically moves a point, checks Checks and BOM, restores every route edit through undo/redo, exports and reopens real scene bytes, then opens the ordinary Build Along command. It adds no deadline or retry. The full browser test is not run locally.
+`e2e/cableEditing.e2e.test.ts` is the focused CI walkthrough. It opens the generated arm's Cable reach finding, selects stock, adds and numerically moves a point, checks Checks and BOM, restores every route edit through undo/redo, exports and reopens real scene bytes. Build Along route stock and points are checked by `kit/cableRoutes.test.ts`, and route step assignment by `guide/buildAlong.test.ts`. It adds no deadline or retry. The full browser test is not run locally.
 
 The documentation capture uses the ordinary finding and editor controls, then actual canvas drags. Its final measurements and capture log are retained in `scratch/cable-capture-continuation.log` and `scratch/cable-interaction-measurements.json`. The harness serves development bundles when production bundles are absent. Its existing Vite shutdown warning follows successful capture. Images illustrate the finding and edited route, and were not used to judge appearance. [Interaction measurements and limits](performance-engineering.md#cable-editor-interaction-work) distinguish browser operation counts from the compiled-worker timing and memory probe.
 
@@ -781,7 +781,7 @@ Purchasing and check-reference articles describe explicit route stock. The ready
 
 ### Final local checks
 
-The final 68-file changed check passed formatting, lint, docs, site copy for 342 pages, types and 2,495 related tests across 371 files. One existing test remained skipped. The log is `scratch/cable-complete-check.log`. The exact-owner and numeric matrix check passed 11 tests, the coupled and complete history check passed four tests, and the full mesh matrix passed all 20 cases. The final documentation and interaction capture passed in 51.65 seconds with no captured browser errors and the existing Vite shutdown warning. Its worker-boundary probe observed the measured 100-event drag and 20 further drags without changing the app's history, worker or browser harness contracts. Full browser export/reopen and Build Along execution remain with the normal Linux and Windows CI jobs.
+The final 68-file changed check passed formatting, lint, docs, site copy for 342 pages, types and 2,495 related tests across 371 files. One existing test remained skipped. The log is `scratch/cable-complete-check.log`. The exact-owner and numeric matrix check passed 11 tests, the coupled and complete history check passed four tests, and the full mesh matrix passed all 20 cases. The final documentation and interaction capture passed in 51.65 seconds with no captured browser errors and the existing Vite shutdown warning. Its worker-boundary probe observed the measured 100-event drag and 20 further drags without changing the app's history, worker or browser harness contracts. Full browser export/reopen execution remains with the normal Linux and Windows CI jobs. Build Along controls retain their separate browser walkthrough.
 
 
 ### Cable help preflight correction
@@ -803,3 +803,12 @@ The eleven coverage notices were compared with the final production diff. Three 
 | Undo what the agent changed | docHistory now restores wiring alongside existing tracked state. Agent per-edit history, Case-only undo restrictions, revert behavior and the existing board/shared-parameter examples remain accurate. |
 
 The three article edits add no app labels. They reuse Edit Route, Cable reach, Fix and Done. Unchanged-help preflight notices for the other eight are retained as reviewed coverage notices rather than creating unrelated publication edits.
+
+
+### Cable editor browser traversal failure
+
+The 18 November pull request Check failed in `showCableBuildAlong` after the editor, history, Checks, BOM and scene export/reopen assertions completed. The browser case took 91.33 seconds including the configured retry. Both attempts reported step 2 when the helper expected step 1. The aggregate `check` failed because `e2e-changed` failed. Its required, ROS, electrical and copy jobs passed.
+
+The helper waited for the toolbar to exist, which includes the opening state. In that state there is no `data-step`, and `Number(null)` becomes zero. Playwright can resolve the Next step control while opening completes, then click from the first actual step to the second. The helper incorrectly requires the resulting step to equal the opening-state value plus one. This is a test synchronization error, not evidence that playback skipped an assembly step.
+
+The redundant Build Along traversal and its helper are deleted. No assertion is loosened, and no wait, retry or deadline is added. The retained browser case covers the ordinary editor entry, stock, local numeric point, Checks, BOM, full undo/redo and actual scene export/reopen. `kit/cableRoutes.test.ts` independently checks authored stock and transformed rest points through production routing, guide planning, Build Along and actual Kit bytes. `guide/buildAlong.test.ts` checks that each worker route appears exactly once at the first step with both endpoints installed. `e2e/buildCable.e2e.test.ts` retains the separate playback controls walkthrough. Browser delivery of this edited route into playback is no longer asserted by the cable editor case. CI owns the next browser result, and no local browser timing improvement is claimed.

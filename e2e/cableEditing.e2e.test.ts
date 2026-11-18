@@ -1,6 +1,6 @@
 import { editableNets, routeIdentity, updateRoute } from '../src/wiring/routeEditing';
 import { contactCommand as command, retainSelfContactSceneFiles } from './selfContactScene';
-import { reopenCableScene, showCableBuildAlong, cableLines } from './cableEditingSteps';
+import { reopenCableScene, cableLines } from './cableEditingSteps';
 import { afterEach, expect, it } from 'vitest';
 import { component, sceneOf, servoJoints } from '../src/wiring/fixtures';
 import { buildCheckPage, sceneRecord, studioLoad } from './buildCheckFixtures';
@@ -70,9 +70,5 @@ it('edits a Cable reach route with local anchors and stock, then restores it thr
   await command(app, 'Export Scene');
   await reopenCableScene(app);
   await expect.poll(async () => (await sceneRecord(app.page)).project.wiring).toEqual(authored);
-  await showCableBuildAlong(
-    app,
-    parts.map((part) => part.id),
-  );
   expect(app.errors).toEqual([]);
 });

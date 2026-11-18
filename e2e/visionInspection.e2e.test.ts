@@ -27,6 +27,8 @@ it(
     expect(await dialog.locator('[data-prediction]').count()).toBe(0);
     await dialog.getByRole('combobox', { name: 'Prediction overlay', exact: true }).selectOption('candidate');
     expect(await dialog.locator('[data-prediction]').count()).toBe(1);
+    expect(await dialog.textContent()).toContain(before.runs[0].report.modelHash);
+    expect(await dialog.textContent()).toContain(before.runs[0].incumbentReport.modelHash);
     await followVisionSource(app);
     await page.keyboard.press('Escape');
     await pane.getByRole('button', { name: 'Inspect Images', exact: true }).click();

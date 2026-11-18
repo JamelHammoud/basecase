@@ -1,8 +1,6 @@
 import { it } from 'vitest';
 import { boardRoutingWalkthrough } from './boardRoutingWalkthrough';
 
-it(
-  'routes the imported rover from Board and downloads source-bound fabrication before undoing the route',
-  { retry: 0 },
-  () => boardRoutingWalkthrough(),
+it('routes a declared rover board through the Inspector and restores the route with undo and redo', { retry: 0 }, () =>
+  boardRoutingWalkthrough(),
 );

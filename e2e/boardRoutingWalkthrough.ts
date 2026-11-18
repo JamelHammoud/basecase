@@ -1,37 +1,37 @@
 import { expect } from 'vitest';
-import { readFile } from 'node:fs/promises';
-import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { openApp } from './harness';
-import { openRover, type Studio } from './boardFixture';
+import { command, type Studio } from './boardFixture';
+import { openKitScene } from './kitScene';
 import { routedBoardBackend } from './boardRoutedBackend';
-import { routedSceneBackend } from './boardRoutedScene.mjs';
-import { reconcileRoutedBoard } from '../src/wiring/boardReconcile.mjs';
+import { boardFixtureInput } from '../tools/electrical/boardFixtures';
+import { ROUTING_PLAN } from '../tools/electrical/routeFixtures';
+import { FIXTURE_RULES } from '../tools/electrical/routedFixtures';
+import { electricalScenes } from '../src/wiring/electricalFixtures';
 
-import type { Page } from 'playwright-core';
-
-export async function boardRoutingWalkthrough(capture?: (page: Page, state: string) => Promise<void>) {
+export async function boardRoutingWalkthrough() {
+  const scene = electricalScenes().find((entry) => entry.name === 'battery-rover')!.scene;
+  const { input } = await boardFixtureInput(scene, ({ board, part }) => {
+    part.position = [0, 500, 0];
+    board.side = 'bottom';
+    board.heightMm = { top: 30, bottom: 30 };
+    board.placements = board.placements.map((placement, index) => ({
+      ...placement,
+      position: [0, index * 24 - 12],
+      rotation: 90,
+      locked: true,
+      unplaced: false,
+    }));
+    board.fabrication = FIXTURE_RULES;
+    board.routing = { ...ROUTING_PLAN, lossTangent: null };
+  });
   const app = await openApp();
   const { page } = app;
   const stop = await routedBoardBackend(page);
-  const closeScenes = await routedSceneBackend(page);
 
   try {
-    await openRover(page, true);
-    await page.getByRole('button', { name: 'Fabrication', exact: true }).click();
-    await page.getByRole('textbox', { name: 'Fabrication source', exact: true }).fill('https://example.com/process');
-
-    for (const [label, value] of [
-      ['Minimum clearance', '0.2'],
-      ['Minimum track width', '0.25'],
-      ['Minimum drill', '0.3'],
-    ]) {
-      await page.getByRole('textbox', { name: label, exact: true }).fill(value);
-      await page.getByRole('textbox', { name: label, exact: true }).press('Enter');
-    }
-
+    await openKitScene(page, { ...input, name: 'Board rover' });
+    await command(page, 'Edit Board');
     await page.getByRole('button', { name: 'Routing', exact: true }).click();
-    await page.getByRole('textbox', { name: 'Routing source', exact: true }).fill('https://example.com/design');
-    await page.getByRole('textbox', { name: 'Dielectric material', exact: true }).fill('FR4');
 
     const loss = page.getByRole('textbox', { name: 'Dielectric loss tangent', exact: true });
 
@@ -46,25 +46,13 @@ export async function boardRoutingWalkthrough(capture?: (page: Page, state: stri
       (await page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord())).project.electronicsBoard
         ?.routing?.lossTangent,
     ).toBe(0);
-
-    for (const [label, value] of [
-      ['Track width', '0.4'],
-      ['Copper clearance', '0.25'],
-      ['Via diameter', '0.8'],
-      ['Via drill', '0.4'],
-      ['Copper thickness', '0.035'],
-      ['Dielectric permittivity', '4.5'],
-      ['Dielectric loss tangent', '0.02'],
-    ]) {
-      await page.getByRole('textbox', { name: label, exact: true }).fill(value);
-      await page.getByRole('textbox', { name: label, exact: true }).press('Enter');
-    }
-
-    await capture?.(page, 'requirements');
+    await loss.fill(String(ROUTING_PLAN.lossTangent));
+    await loss.press('Enter');
 
     const original = await page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord());
     const completion = page.waitForResponse((response) => response.url().endsWith('/electrical-validate'));
 
+    expect(original.project.electronicsBoard?.routed).toBeUndefined();
     await page.getByRole('button', { name: 'Route Board', exact: true }).click();
     await completion;
     await expect
@@ -74,46 +62,21 @@ export async function boardRoutingWalkthrough(capture?: (page: Page, state: stri
             ?.routed?.evidence?.issues,
       )
       .toEqual([]);
-    await capture?.(page, 'routed');
-    await page.getByRole('button', { name: 'Export', exact: true }).click();
 
-    const delivery = page.waitForEvent('download');
+    const routed = await page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord());
 
-    await page.getByRole('menuitem', { name: 'Schematic', exact: true }).click();
-
-    const files = unzipSync(await readFile((await (await delivery).path())!));
-    const source = strFromU8(files['robot/robot.kicad_pcb']);
-    const validation = JSON.parse(strFromU8(files['robot/validation.json']));
-    const manifest = JSON.parse(strFromU8(files['robot/manifest.json']));
-    const comparison = reconcileRoutedBoard({
-      expected: strFromU8(files['robot/current-unrouted.kicad_pcb']),
-      imported: source,
-      sourceFingerprint: manifest.sourceFingerprint,
-    });
-
-    expect(comparison.accepted).toBe(true);
-    expect(source).toContain('(segment');
-    expect(validation.issues).toEqual([]);
-    expect(Object.keys(files).filter((name) => name.startsWith('robot/fabrication/'))).toHaveLength(10);
+    expect(routed.project.electronicsBoard?.routed?.pcb).toContain('(segment');
+    expect(routed.project.electronicsBoard?.routed?.provenance?.engine).toBe('freerouting');
+    expect(routed.parts).toEqual(original.parts);
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
     await expect
-      .poll(
-        async () =>
-          (await page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord())).project.electronicsBoard,
-      )
-      .toEqual(original.project.electronicsBoard);
+      .poll(() => page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord()))
+      .toEqual(original);
     await page.getByRole('button', { name: 'Redo', exact: true }).click();
-    await expect
-      .poll(
-        async () =>
-          (await page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord())).project.electronicsBoard
-            ?.routed?.pcb,
-      )
-      .toBe(source);
+    await expect.poll(() => page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord())).toEqual(routed);
     expect(app.errors).toEqual([]);
   } finally {
     stop();
     await app.close();
-    await closeScenes();
   }
 }

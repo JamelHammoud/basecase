@@ -504,7 +504,7 @@
   },
   {
     "file": "e2e/boardRouting.e2e.test.ts",
-    "test": "routes the imported rover from Board and downloads source-bound fabrication before undoing the route",
+    "test": "routes a declared rover board through the Inspector and restores the route with undo and redo",
     "issue": 1620,
     "until": "2026-11-28",
     "platform": "win32",

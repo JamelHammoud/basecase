@@ -1,7 +1,48 @@
 import { expect, it } from 'vitest';
 import { openApp, shown } from './harness';
 import { buildCheckPage } from './buildCheckFixtures';
-import { openRover } from './boardFixture';
+import { openRover, type Studio } from './boardFixture';
+
+it('locks a generated board placement with keyboard undo and redo', async () => {
+  const app = await openApp();
+
+  try {
+    const { page } = app;
+
+    await openRover(page);
+    await page
+      .locator('section')
+      .filter({ has: page.getByRole('button', { name: 'B3B-EH-A', exact: true }) })
+      .getByRole('switch', { name: 'Locked', exact: true })
+      .click();
+
+    const original = await page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord());
+
+    expect(original.project.electronicsBoard?.placements.find((item) => item.id === 'connector_pan')?.locked).toBe(
+      true,
+    );
+
+    await page.keyboard.press('ControlOrMeta+z');
+    await expect
+      .poll(
+        async () =>
+          (
+            await page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord())
+          ).project.electronicsBoard?.placements.find((item) => item.id === 'connector_pan')?.locked,
+      )
+      .toBe(false);
+    await page.keyboard.press('ControlOrMeta+Shift+z');
+    await expect
+      .poll(
+        async () =>
+          (await page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord())).project.electronicsBoard,
+      )
+      .toEqual(original.project.electronicsBoard);
+    expect(app.errors).toEqual([]);
+  } finally {
+    await app.close();
+  }
+});
 
 it('reports an outline shrink as a mechanical board blocker', async () => {
   const app = await openApp();

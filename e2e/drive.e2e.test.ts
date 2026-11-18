@@ -58,6 +58,23 @@ afterAll(async () => {
 const itUnlessWindows = it.skipIf(process.platform === 'win32');
 
 describe('live drive', () => {
+  it('starts and stops rover Drive while edit shortcuts leave the part count unchanged', async () => {
+    await startDriving('rover-diff');
+
+    const before = await partCount(app.page);
+
+    await app.page.mouse.click(720, 450);
+
+    for (const key of ['s', 'f', 'Backspace', 'ControlOrMeta+z']) await app.page.keyboard.press(key);
+
+    const after = await simState();
+
+    expect(await partCount(app.page)).toBe(before);
+    expect(after.status).toBe('ready');
+    expect(after.drive).toBe('on');
+    await stopDriving();
+  });
+
   it('offers to teach a biped to walk instead of Drive', async () => {
     await loadFixture('biped-servo');
     await clickTab('Simulate');

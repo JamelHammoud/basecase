@@ -829,5 +829,13 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44375421899 first missed the unchanged post-redo Cable reach pass poll after authored wiring was restored. Its retry passed readiness and BOM, then missed the scene-download poll. Same-revision Windows diagnostic 44380049632 reproduced missing download registration after completing editor, history, Checks and BOM assertions with one worker, retries disabled and quarantine off. It does not establish a complete Windows pass or a shared cause with the readiness stall. Linux passed this complete declaration at the same revision, proving Linux intermittency only. Priority owner #1815 owns separate readiness and export stage traces and ten baseline and ten candidate observations at equal load on each platform before restoration. Preserve assertions and deadlines. Fast cable matrices, worker analysis, BOM, history and real scene-file byte tests remain active but do not replace Windows browser editor and persistence coverage."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for rotated",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44380885141 exhausted the unchanged 5000 ms callback deadline at 5008 ms without a numerical, contact or verdict assertion failure. Full green Check 44245137178 passed rotated drawer in 1140 ms on the same Windows image with unchanged parity, capture, variants and native replay sources. Linux passed at the failed revision in 827 ms. Same-revision Windows diagnostic 44382490339 passed in 4077.557 ms on the same image with one worker, zero retries and quarantine off, establishing intermittency. WASM capture, uv provisioning, native startup, replay, scoring and cleanup are not distinguished. Existing open priority replay owner #1390 owns stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. This completes the Windows quarantine of all sixteen passive fixture native comparisons. Windows retains WASM fixture physics and persistence, which do not replace native state, contact and verdict parity. Linux retains fifteen comparisons outside its existing nominal-lid quarantine, and macOS retains all sixteen. Preserve drift below 1e-6, exact contacts, verdict and margin agreement, stop bounds and failure without contacts. No assertion, deadline or retry changes."
   }
 ]

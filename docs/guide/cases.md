@@ -836,11 +836,13 @@ Linux and macOS retain the complete extraction, draw and undo walkthrough in `e2
 
 [Incident evidence and limits](../notes/testing-cases.md).
 
-### Live arm drive coverage
+### Live drive coverage
 
-`src/sim/driveClasses.test.ts` checks arm drive classification, end-effector movement under forward velocity, idle holding and release position in real MuJoCo. Its key tests cover per-class mappings. `src/sim/driveGrip.test.ts` checks gripper keys and holding joints after release. `e2e/drive.e2e.test.ts` retains the rover W walkthrough through Drive and Escape, plus the arm's Pick Up a Block walkthrough through New Case, Try It, Space and a passed recorded try. The separate arm W smoke test is removed because it asserted elapsed time rather than arm movement.
+`src/sim/driveClasses.test.ts` checks arm drive classification, end-effector movement under forward velocity, idle holding and release position in real MuJoCo. Its key tests cover per-class mappings. `src/sim/driveGrip.test.ts` checks gripper keys and holding joints after release. `src/sim/drive.test.ts` checks forward movement, stopping and turning for differential and four-wheel rovers in real MuJoCo. `e2e/drive.e2e.test.ts` retains the arm's Pick Up a Block walkthrough through New Case, Try It, Space and a passed recorded try. The separate arm W smoke test is removed because it asserted elapsed time rather than arm movement.
 
-[Incident evidence and limits](../notes/testing-cases.md#live-arm-drive-smoke-test).
+The separate rover W browser test is removed. Its part-count checks did not verify part properties, selection or history. Direct rover W browser coverage and the combined S, F, Backspace and undo suppression assertion are no longer present. Drive entry with a focused text field and Escape remains covered on Linux and macOS.
+
+[Arm evidence](../notes/testing-cases.md#live-arm-drive-smoke-test) and [rover evidence and limits](../notes/testing-cases.md#live-rover-drive-smoke-test).
 
 ### Reference-startup coverage
 

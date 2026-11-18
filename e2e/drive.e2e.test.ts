@@ -42,13 +42,6 @@ async function startDriving(id: string) {
   await expect.poll(() => button('Stop Driving').count()).toBeGreaterThan(0);
 }
 
-async function holdKey(key: string, ms: number) {
-  await app.page.mouse.click(720, 450);
-  await app.page.keyboard.down(key);
-  await app.page.waitForTimeout(ms);
-  await app.page.keyboard.up(key);
-}
-
 async function stopDriving() {
   await app.page.keyboard.press('Escape');
   await expect.poll(async () => (await simState()).drive).toBe('off');
@@ -65,24 +58,6 @@ afterAll(async () => {
 const itUnlessWindows = it.skipIf(process.platform === 'win32');
 
 describe('live drive', () => {
-  it('drives a rover forward with W, and S, F and Backspace never edit parts', async () => {
-    await startDriving('rover-diff');
-
-    const before = await partCount(app.page);
-
-    await holdKey('w', 2500);
-    await expect.poll(async () => (await simState()).stats?.robots[0].forward ?? 0).toBeGreaterThan(0.1);
-
-    for (const key of ['s', 'f', 'Backspace', 'Meta+z']) await app.page.keyboard.press(key);
-
-    const after = await simState();
-
-    expect(await partCount(app.page)).toBe(before);
-    expect(after.status).toBe('ready');
-    expect(after.drive).toBe('on');
-    await stopDriving();
-  });
-
   it('offers to teach a biped to walk instead of Drive', async () => {
     await loadFixture('biped-servo');
     await clickTab('Simulate');

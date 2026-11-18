@@ -3,7 +3,7 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { presetCase } from '../src/cases/caseBuilder';
 import { robotFacts, slotRefusal } from '../src/cases/robotFit';
 import { caseSlots } from '../src/cases/schema';
-import { L_BRACKET_NAME, lBracketScene } from '../src/strength/fixtures/lBracket';
+import { L_BRACKET, L_BRACKET_NAME, lBracketScene, ON_ITS_SIDE } from '../src/strength/fixtures/lBracket';
 import type { WalkSim } from '../src/utils/engineeringTypes';
 import { buildRig } from '../src/utils/kinematics';
 import {
@@ -17,6 +17,7 @@ import {
   type StudioHook,
 } from './buildCheckFixtures';
 import { openApp, partCount, type App } from './harness';
+import { stubBracketStrength } from './strengthWorker';
 
 let app: App;
 
@@ -372,27 +373,32 @@ describe('Cases in Checks', () => {
 });
 
 describe('Strength', () => {
-  it('fails an L-bracket printed with its layers across the bend, and Fix turns it on its side', async () => {
-    const scene = lBracketScene();
-
+  it('applies the direct print-face Fix and refreshes the verdict', async () => {
+    await stubBracketStrength(app.page);
     await app.page.evaluate((record) => {
-      const studio = (window as unknown as { __studio: StudioHook }).__studio;
-
-      studio.load({ parts: record.parts, project: { ...(studio.sceneRecord().project as object), ...record.project } });
-    }, scene);
+      (window as unknown as { __studio: StudioHook }).__studio.load(record);
+    }, lBracketScene());
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
 
-    const row = checks()
-      .locator('li')
-      .filter({ has: app.page.getByRole('button', { name: /^Strength/ }) })
-      .first();
+    const row = checkRow('Strength');
+    const verdict = row.getByRole('button', { name: /^Strength/ });
 
-    await expect.poll(() => row.locator('svg.text-red-400').count(), { timeout: 90000 }).toBeGreaterThan(0);
-    await row.getByRole('button', { name: /^Strength/ }).click();
+    await expect.poll(() => row.getAttribute('data-status')).toBe('fail');
+    await verdict.click();
     expect(await row.textContent()).toContain(L_BRACKET_NAME);
-
-    await row.getByRole('button', { name: 'Fix' }).first().click();
-    await expect.poll(() => row.locator('svg.text-emerald-400').count(), { timeout: 90000 }).toBeGreaterThan(0);
-    expect(await row.locator('svg.text-red-400').count()).toBe(0);
-  }, 200000);
+    await row.getByRole('button', { name: 'Fix', exact: true }).click();
+    await expect
+      .poll(() =>
+        app.page.evaluate(
+          (id) =>
+            (window as unknown as { __studio: StudioHook }).__studio.sceneRecord().parts.find((part) => part.id === id)
+              ?.print?.down,
+          L_BRACKET,
+        ),
+      )
+      .toEqual(ON_ITS_SIDE);
+    await expect.poll(() => row.getAttribute('data-status')).toBe('pass');
+    expect(await row.getByRole('button', { name: 'Fix', exact: true }).count()).toBe(0);
+    expect(app.errors).toEqual([]);
+  });
 });

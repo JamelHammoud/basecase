@@ -4,6 +4,7 @@ import { partMatrix } from '../utils/kinematics';
 import { partEdges } from '../utils/partEdges';
 import { quatToMj, toMj } from './mjcfFrames';
 import { cachedHull } from './mjcfHull';
+import { authoredPrimitive } from './mjcfContactGeometry';
 import { esc, f, safeId, vec } from './mjcfText';
 import type { MjcfInput, SimBody, WorldBehavior, WorldItem } from './mjcfTypes';
 
@@ -101,9 +102,7 @@ function worldGeom(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffse
 
   const primitive = primitiveShape(item);
 
-  const modified = item.deformers || item.sculptMesh || item.boolean || item.csg || item.mesh || item.cad;
-
-  if ((!primitive || modified) && item.behavior !== 'marker') out.fallbackParts.push(item.id);
+  if ((!primitive || !authoredPrimitive(item)) && item.behavior !== 'marker') out.fallbackParts.push(item.id);
 
   const shape = primitive ?? `type="box" size="${boxSize(item)}"`;
   const turn = quatToMj(new THREE.Quaternion().setFromRotationMatrix(partMatrix(item)));

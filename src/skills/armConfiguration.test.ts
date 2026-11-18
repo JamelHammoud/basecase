@@ -4,6 +4,7 @@ import { selfContactArm, selfContactArmInput } from '../sim/fixtures/selfContact
 import { buildMjcf } from '../sim/mjcf';
 import { ArmConfiguration } from './armConfiguration';
 import { fixtureModel } from './fixtureModels';
+import { box } from '../sim/fixtures/parts';
 
 let mj: MainModule;
 
@@ -22,6 +23,21 @@ it('refuses missing source colliders and legacy models without provenance', () =
   expect(() => new ArmConfiguration(mj, ambiguous, ['tip'])).toThrow(/collision geometry/);
   expect(() => new ArmConfiguration(mj, legacy, ['tip'])).toThrow(/collision geometry/);
 });
+
+it.each(['componentId', 'customModelId'] as const)(
+  'refuses a Case primitive standing in for missing %s geometry',
+  (source) => {
+    const input = selfContactArmInput(false);
+    const obstacle = { ...box('obstacle', [300, 100, 0], [40, 40, 40], 1000), behavior: 'static' as const };
+    const plain = buildMjcf({ ...input, world: [obstacle] });
+    const missing = buildMjcf({ ...input, world: [{ ...obstacle, [source]: 'missing-source' }] });
+
+    expect(plain.collisionGeometry?.fallbackParts).toEqual([]);
+    expect(missing.xml).toBe(plain.xml);
+    expect(missing.collisionGeometry?.fallbackParts).toEqual(['obstacle']);
+    expect(() => new ArmConfiguration(mj, missing, ['tip'])).toThrow(/collision geometry/);
+  },
+);
 
 it('selects only target ancestors and starts from the authored nonzero configuration', () => {
   const model = fixtureModel('arm-6dof');

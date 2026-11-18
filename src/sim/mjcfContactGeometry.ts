@@ -5,9 +5,9 @@ import { toMj, quatToMj } from './mjcfFrames';
 import { esc, safeId, vec } from './mjcfText';
 import { partEdges } from '../utils/partEdges';
 
-export function authoredBox(part: ScenePart): boolean {
+export function authoredPrimitive(part: ScenePart): boolean {
   return (
-    (part.kind === 'box' || part.kind === 'cube') &&
+    ['box', 'cube', 'sphere', 'cylinder'].includes(part.kind) &&
     !partEdges(part) &&
     !part.sheetTransform &&
     !part.deformers &&
@@ -21,6 +21,10 @@ export function authoredBox(part: ScenePart): boolean {
     !part.sketch &&
     !part.hardware
   );
+}
+
+export function authoredBox(part: ScenePart): boolean {
+  return (part.kind === 'box' || part.kind === 'cube') && authoredPrimitive(part);
 }
 
 export function fallbackCollider(p: ScenePart, origin: V3, attrs: string): string {

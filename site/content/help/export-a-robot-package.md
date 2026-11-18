@@ -63,4 +63,6 @@ The package isn't a LeRobot dataset, and the policies are in Basecase's own JSON
 Passive joints remain in the physical model. Declared springs stay in MJCF and use a Basecase extension in URDF. They have no servo ID or ROS command interface.
 Policies that command a now-passive joint stay out of the package.
 
+Temporary [fit-test variants](/help/compare-fit-clearances) stay out of the robot package. Apply your chosen dimension before exporting to include it in the robot.
+
 Every file in the zip is listed in [Robot package contents](/help/robot-package-contents).

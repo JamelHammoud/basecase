@@ -5,7 +5,18 @@ export interface Quantity {
   unit: ParameterUnit;
 }
 
-export type DesignParameter = { name: string; unit: ParameterUnit } & (
+export interface FitDimensionChoice {
+  kind: 'design-choice';
+  value: number;
+  sourceSha256: string;
+  sourcePart: string;
+  binding: DimensionBinding;
+  interface: { id: string; key: string };
+  down: [number, number, number];
+  material: string;
+}
+
+export type DesignParameter = { name: string; unit: ParameterUnit; fitChoice?: FitDimensionChoice } & (
   { value: number; expression?: never } | { expression: string; value?: never }
 );
 

@@ -35,4 +35,4 @@ Basecase saves a binary STL file named after the scene. The file includes every 
 
 **STL** is available once the scene has a part. You can also choose **File** ▸ **Export STL**, or use **Export STL** in [[⌘K]].
 
-If you're exporting to print, use **3MF Plates** in the same menu instead. It lays parts out on plates for your printer. For every format Basecase writes, see [Import and export formats](/help/import-and-export-formats).
+If you're exporting to print, use **3MF Plates** in the same menu instead. It saves the open [fit test's coupons](/help/compare-fit-clearances), or your design's plates otherwise. For every format Basecase writes, see [Import and export formats](/help/import-and-export-formats).

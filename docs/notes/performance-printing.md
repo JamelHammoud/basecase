@@ -370,3 +370,26 @@ Neither article has a step, label, claim or depicted state made untrue by this c
 The scratch replay passed all 60 fixtures. The initial changed-file check passed formatting, lint, docs, site copy for 330 pages and TypeScript, then failed before related tests started. Vitest reported `ENOTEMPTY` while removing the shared `node_modules/.vitest-cache` directory. The replay and changed-file check had run concurrently against the same linked dependencies. The required check was started again after the replay finished, with no test timeout, retry setting or repository configuration change. Initial logs remain in `scratch/check-print-partition.log` and `scratch/print-partition.log`, with the sequential check in `scratch/check-print-partition-final.log`.
 
 The sequential changed-file check passed all static stages and 37 related tests across eight files. Vitest reported 827 ms for the test phase. Copy accounting is net zero. Preflight retains only the two unchanged-help reminders resolved above.
+
+## Comparison fit plates
+
+The November 18 local capture used the generated 608 bearing seat in `print/fitVariants.fixtures.ts`, a PETG host and three bore values: 21.9, 22 and 22.1 mm. Hardware was an Apple M5 Pro with 24 GiB RAM, macOS arm64, Node 26.13.0 and Chrome 157.0.8103.79. The ordinary single-value fit and the comparison used the same coupon cutter, printer and plate writer. The baseline was opened once to warm the existing analysis caches, then reopened for the measured preparation. The comparison always started a fresh operation worker.
+
+These are single local development-server observations gathered while capturing help states. They are not production-build timings, CI timings, a throughput rate or evidence that comparisons are faster.
+
+| Observation | Single value | Three values |
+| --- | ---: | ---: |
+| Preparation from the ordinary UI action to the plate or candidate controls | 297.55 ms warm | 345.76 ms |
+| Delivered 3MF bytes | 2,979 | 5,813 |
+| Retained dedicated preparation workers after completion | 0 | 0 |
+| Shared geometry-worker used heap after explicit GC | 15,753,116 bytes | 15,815,504 bytes |
+| Shared geometry-worker backing storage after explicit GC | 15,963,823 bytes | 15,963,854 bytes |
+| Analysis-worker used heap after explicit GC, all four | 48,409,636 bytes | 48,409,636 bytes |
+
+The first baseline action, including initial Print setup and restored-geometry readiness, took 1,865.24 ms. It is not comparable with the warmed baseline. Preparation timings include UI delivery. Byte counts come from the actual ordinary plate writer's binary output, including the comparison identity map.
+
+Worker memory was sampled through Chrome's Target and Runtime domains. Each worker received `HeapProfiler.collectGarbage`, then `Runtime.getHeapUsage`. Both completed states retained six workers in this session. The operation worker was absent after completion and after cancellation. Across all workers, used heap changed from 78,557,592 to 80,455,660 bytes, then 78,898,388 after cancellation. Backing storage changed from 76,583,060 to 151,805,556 bytes. The changing remainder belongs to the thumbnail worker during these captures, so total-worker deltas cannot be attributed to comparison preparation. The geometry-worker increase was 62,388 heap bytes and 31 backing-storage bytes, while analysis-worker measurements were unchanged. No operating-system RSS or peak operation-worker heap was measured.
+
+Cancelling an eight-value preparation took 7.14 ms from dispatching the Cancel click to clearing its busy state. A subsequent worker snapshot retained no operation worker and the same six shared workers. The original single-value entry has no Cancel control, so it has no corresponding latency measurement. Cancellation was measured on actual worker startup and source hashing. Native CAD cancellation still relies on the existing transaction guard and bounded kernel pool, rather than terminating unrelated kernel jobs.
+
+`fitVariantJob.test.ts` exercises operation-worker disposal after successful preparation and a nonresponding request. It asserts that cancellation never invokes interaction-thread geometry as a fallback. Production geometry tests retain source arrays, independently measure resulting holes, inspect package identities and check deterministic bytes. [Failure observations and coverage](testing-build.md#comparison-fit-plates) record which paths were observed locally and which remain assigned to CI.

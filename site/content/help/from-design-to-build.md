@@ -52,6 +52,8 @@ A sketch with an unresolved supporting face stays blocked even while its previou
 
 Shared dimensions must match their parameters and pass regeneration validation before their geometry counts as current. See [Link dimensions with shared parameters](/help/link-dimensions-with-shared-parameters).
 
+You can [compare clearances on a fit test plate](/help/compare-fit-clearances) before changing an authored dimension. Applying a value records a design choice and reruns Checks. It doesn't establish a physical fit.
+
 ## What you buy
 
 Basecase builds the **Bill of materials** from the scene. It counts components by part, and screws and nuts by their exact size. Printed parts become grams of filament for each material, and Basecase rounds filament up to whole spools with 15% to spare. If you don't have a printer, Slant 3D can quote each printed part instead.

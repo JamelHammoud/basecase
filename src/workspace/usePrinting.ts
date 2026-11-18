@@ -25,11 +25,16 @@ import { usePrintFleet } from './usePrintFleet';
 import { usePrintJob } from './usePrintJob';
 import { usePlateWriter } from './usePlateWriter';
 import type { GuidePlan } from '../guide/guideTypes';
+import { useDesignParameters, type DesignParameters } from './useDesignParameters';
+import type { SceneDocument } from './useSceneDocument';
 import { usePrintMode } from './usePrintMode';
 
 export type { PrintMode } from './usePrintMode';
 
 interface PrintingOptions {
+  active: boolean;
+  projectRef: RefObject<ProjectSettings>;
+  parameters: DesignParameters;
   jobId: string;
   sceneName: string;
   parts: ScenePart[];
@@ -75,7 +80,7 @@ const plateMarker =
 
 export function usePrinting(options: PrintingOptions) {
   const { parts, printer, project, setProject, commitParts, showToast, viewport } = options;
-  const fit = useFitTest({ parts, project, printer, viewport });
+  const fit = useFitTest({ ...options, parts, project, printer, viewport });
   const printingMode = usePrintMode({ jobId: options.jobId, parts, fit });
   const { mode, repairId } = printingMode;
   const [skipPrinted, setSkipPrinted] = useState(true);
@@ -116,11 +121,12 @@ export function usePrinting(options: PrintingOptions) {
   const plates = usePlateWriter(
     repairId ? { ...options, parts: printParts, partsRef: { current: printParts } } : options,
   );
+  const write = fit.active ? fit.threeMf : plates.write;
   const job = usePrintJob({
     ...options,
     report: shown,
     jobId: fit.active ? `${options.jobId}-fit-test` : options.jobId,
-    write: fit.active ? fit.threeMf : plates.write,
+    write,
     labels: fit.active ? '' : plates.key,
   });
   const records = project.prints ?? [];
@@ -175,12 +181,12 @@ export function usePrinting(options: PrintingOptions) {
     records,
     plateStatus,
     markForReprint: (id: string) => setRecords((prev) => markForReprint(prev, id)),
-    fitTest: fit.parts && { parts: fit.parts },
+    fitTest: fit.parts && { parts: fit.parts, variants: fit.variants, downs: fit.downs },
     canFitTest: fit.available,
     fitCutting: fit.cutting,
     merges,
     service,
-    plates,
+    plates: { ...plates, write },
     sending: fleet.sending,
     sendPlate: fleet.sendPlate,
     markPlate,
@@ -194,14 +200,9 @@ export function usePrinting(options: PrintingOptions) {
 export type Printing = ReturnType<typeof usePrinting>;
 
 interface ScenePrintingOptions {
+  active: boolean;
   scene: { sceneId: string; sceneName: string };
-  docs: {
-    parts: ScenePart[];
-    partsRef: RefObject<ScenePart[]>;
-    project: ProjectSettings;
-    setProject: Setter<ProjectSettings>;
-    commitParts: CommitParts;
-  };
+  docs: SceneDocument;
   studio: { printers: { printers: MyPrinter[] }; isRightOpen: boolean; openSettings: (pane: SettingsPane) => void };
   tool: { rightTab: string };
   viewportRef: { current: Viewport3DHandle | null };
@@ -213,7 +214,11 @@ interface ScenePrintingOptions {
 export function useScenePrinting(options: ScenePrintingOptions) {
   const { scene, docs, studio, tool, viewportRef, showToast, undo, guide } = options;
   const printer = resolvePrinter(docs.project.printer, studio.printers.printers);
+  const parameters = useDesignParameters({ docs, sceneId: scene.sceneId, showToast });
   const printing = usePrinting({
+    active: options.active,
+    parameters,
+    projectRef: docs.projectRef,
     jobId: scene.sceneId,
     sceneName: scene.sceneName,
     parts: docs.parts,
@@ -232,5 +237,5 @@ export function useScenePrinting(options: ScenePrintingOptions) {
     guideFingerprint: guide.fingerprint,
   });
 
-  return { printer, printing };
+  return { printer, printing, parameters };
 }

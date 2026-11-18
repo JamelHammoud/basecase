@@ -36,4 +36,6 @@ Each part gets the same letter that the build guide and Build Along use for it. 
 
 A face gets a letter only if it doesn't touch any other part and isn't the face the part prints on. If a part has no face like that, it prints without its letter, and its row in **Parts** tells you so. For example: “Letter C left off: no flat face is hidden, free and big enough”.
 
+[Comparison fit-test coupons](/help/compare-fit-clearances) have dimension values in their 3MF object names, with no guide letters cut into them.
+
 The letters change only the plate files. The part in your scene stays the same, and a plate you've already printed still counts as printed. If you [make a build guide](/help/make-a-build-guide) after the plates are sliced, the letters still match it, because Basecase slices the plates again whenever the letters could have changed.

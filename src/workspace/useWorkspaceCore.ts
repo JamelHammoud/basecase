@@ -28,7 +28,6 @@ import { useRepair } from './useRepair';
 import { useLatestRef } from '../utils/useLatestRef';
 import { useWorkspaceTools } from './useWorkspaceTools';
 import { useWorkspaceFrameLabels } from './useWorkspaceFrameLabels';
-import { useDesignParameters } from './useDesignParameters';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -149,7 +148,8 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const { versions, undo, redo } = useWorkspaceVersioning({ ...documentContext, ...historyOptions });
   const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
-  const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo, guide });
+  const printContext = { ...documentContext, tool, viewportRef, showToast, undo, guide, active };
+  const { printer, printing, parameters } = useScenePrinting(printContext);
   const repair = useRepair({ ...docs, viewportRef, guide, buildAlong, printing });
 
   const readiness = useSceneReadiness(docs, printing, studio, viewportRef);
@@ -158,7 +158,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   return {
     active,
-    parameters: useDesignParameters({ docs, sceneId: scene.sceneId, showToast }),
+    parameters,
     versions,
     workspaceId,
     vision: useVisionScope(),

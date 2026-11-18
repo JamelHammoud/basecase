@@ -18,6 +18,11 @@ import type { ScenePart } from '../types/robotics';
 import { regenerateSketchParts } from './sketchSupportOps';
 import { sketchFace, type SketchFaceJob } from './sketchFaceOps';
 import { regenerateParameterGeometry } from '../utils/designParameters/geometry';
+import { fitSourceHash } from '../print/fitVariantIdentity';
+import type { FitComparison } from '../print/fitVariants';
+import type { ParameterDesign } from '../utils/designParameters/mutations';
+import { fitComparisonParts, writeFitPlate, type FitPlateWrite } from '../print/fitPlateWriter';
+import { fitVariantCoupons, type FitVariantCut } from '../print/fitVariantGeometry';
 import type { ParameterGeometryJob } from '../utils/designParameters/transaction';
 
 type Vec3 = [number, number, number];
@@ -175,6 +180,24 @@ async function parseMesh({ data, path }: ParseMeshJob): Promise<Float32Array | n
 const transferLines = (lines: Float32Array) => reply(lines, [lines.buffer]);
 
 export const geometryHandlers = {
+  fitComparisonParts: (comparison: FitComparison) => reply(fitComparisonParts(comparison)),
+  fitSourceHash: async (design: ParameterDesign) => reply(await fitSourceHash(design)),
+  fitPlateWrite: async (job: FitPlateWrite) => {
+    const result = await writeFitPlate(job);
+
+    return reply(
+      result,
+      Object.values(result.files).map((file) => file.buffer),
+    );
+  },
+  fitVariantCoupons: async (job: FitVariantCut) => {
+    const coupons = await fitVariantCoupons(job);
+
+    return reply(
+      coupons,
+      coupons.map((coupon) => coupon.positions.buffer),
+    );
+  },
   parameterGeometry: async (job: ParameterGeometryJob) => reply(await regenerateParameterGeometry(job)),
   sketchFace: (job: SketchFaceJob) => reply(sketchFace(job)),
   sketchSupports: ({ parts, force }: { parts: ScenePart[]; force: string[] }) =>

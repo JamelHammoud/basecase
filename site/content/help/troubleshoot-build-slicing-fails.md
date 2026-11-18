@@ -103,3 +103,7 @@ The tool that cuts each part's build guide letter didn't load, so Basecase didn'
 3. Slice again with **Slice Plates** in [[⌘K]].
 
 Your parts then print without letters. To learn more about guide letters, see [Label printed parts with their guide letters](/help/label-printed-parts).
+
+## “Fit preparation reached 30 seconds. Prepare fewer values.”
+
+The comparison fit test reached its preparation limit before slicing. The source design stays unchanged. In **Values (mm)**, enter fewer values, then click **Prepare Variants**. [Compare clearances on a fit test plate](/help/compare-fit-clearances) covers the preparation steps.

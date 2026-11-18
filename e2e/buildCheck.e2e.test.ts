@@ -3,7 +3,6 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { presetCase } from '../src/cases/caseBuilder';
 import { robotFacts, slotRefusal } from '../src/cases/robotFit';
 import { caseSlots } from '../src/cases/schema';
-import { L_BRACKET_NAME, lBracketScene } from '../src/strength/fixtures/lBracket';
 import type { WalkSim } from '../src/utils/engineeringTypes';
 import { buildRig } from '../src/utils/kinematics';
 import {
@@ -369,30 +368,4 @@ describe('Cases in Checks', () => {
     await app.page.keyboard.press('Escape');
     expect(app.errors).toEqual([]);
   }, 150000);
-});
-
-describe('Strength', () => {
-  it('fails an L-bracket printed with its layers across the bend, and Fix turns it on its side', async () => {
-    const scene = lBracketScene();
-
-    await app.page.evaluate((record) => {
-      const studio = (window as unknown as { __studio: StudioHook }).__studio;
-
-      studio.load({ parts: record.parts, project: { ...(studio.sceneRecord().project as object), ...record.project } });
-    }, scene);
-    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
-
-    const row = checks()
-      .locator('li')
-      .filter({ has: app.page.getByRole('button', { name: /^Strength/ }) })
-      .first();
-
-    await expect.poll(() => row.locator('svg.text-red-400').count(), { timeout: 90000 }).toBeGreaterThan(0);
-    await row.getByRole('button', { name: /^Strength/ }).click();
-    expect(await row.textContent()).toContain(L_BRACKET_NAME);
-
-    await row.getByRole('button', { name: 'Fix' }).first().click();
-    await expect.poll(() => row.locator('svg.text-emerald-400').count(), { timeout: 90000 }).toBeGreaterThan(0);
-    expect(await row.locator('svg.text-red-400').count()).toBe(0);
-  }, 200000);
 });

@@ -1,3 +1,4 @@
+import { cableRouteView } from './cableRouteView';
 import { drilledOperands } from '../booleans/picking';
 import { importedPlacement } from '../cases/importedWorld';
 import { caseWorldView } from '../cases/worldView';
@@ -66,6 +67,10 @@ function cameraStripFor(core: WorkspaceCore, actions: WorkspaceActions) {
   );
 }
 
+function pickPointFor(core: WorkspaceCore) {
+  return core.cableRoutes.net ? core.cableRoutes.pick : core.sketching.notePick;
+}
+
 export function SceneViewport({ active, core, actions, agent }: SceneViewportProps) {
   const {
     viewportRef,
@@ -100,8 +105,8 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         trackpadMode={studio.trackpadMode}
         showGrid={studio.showGrid}
         {...boardSelectionProps(core)}
-        onPickPoint={core.sketching.notePick}
-        onOpenPart={core.sketching.edit}
+        onPickPoint={pickPointFor(core)}
+        onOpenPart={core.cableRoutes.net ? undefined : core.sketching.edit}
         onUpdatePartTransform={edits.updatePartTransform}
         onUpdatePartsTransform={edits.updatePartsTransform}
         onPlacePart={edits.placePart}
@@ -144,6 +149,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         }
         onAxisPick={actions.joints.onAxisPick}
         buildStep={core.buildAlong.view}
+        cableRoute={cableRouteView(core)}
         skeleton={core.skeleton.view}
         onSkeletonDrag={core.skeleton.onViewportDrag}
         onSkeletonPick={core.skeleton.openMenu}

@@ -1,12 +1,14 @@
+import { supportByMaterial } from './build/supportByMaterial';
+import { CableRoutesSection } from './build/CableRoutesSection';
+import type { CableRoutes } from '../workspace/useCableRoutes';
 import React, { useState } from 'react';
 import { useScrollFade } from '../design-system';
 import { BoardBuildAction } from './build/BoardBuildAction';
-import type { PrintMaterial, ProjectSettings, PurchaseRecord, ScenePart } from '../types/robotics';
+import type { ProjectSettings, PurchaseRecord, ScenePart } from '../types/robotics';
 import { onHandOf, withPrice } from '../utils/onHand';
 import type { ShowToast } from '../workspace/types';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import { useMoney } from '../utils/useMoney';
-import type { PrintReport } from '../utils/printReport';
 import type { Printing } from '../workspace/usePrinting';
 import { isBuilt } from '../guide/guidePlan';
 import type { BuildGuide } from '../workspace/useBuildGuide';
@@ -28,6 +30,7 @@ import type { Viewport3DHandle } from './Viewport3D';
 import { useBomWiring } from './build/useBomWiring';
 
 interface BuildPanelProps {
+  cableRoutes: CableRoutes;
   onDefineBoard: () => void;
   parts: ScenePart[];
   sceneName: string;
@@ -48,18 +51,11 @@ interface BuildPanelProps {
   viewportRef: RefObject<Viewport3DHandle | null>;
 }
 
-function supportByMaterial(print: PrintReport | null) {
-  const out: Partial<Record<PrintMaterial, number>> = {};
-
-  for (const r of print?.parts ?? []) out[r.material] = (out[r.material] ?? 0) + r.supportG;
-
-  return out;
-}
-
 const fileStem = (sceneName: string) => sceneName.replace(/[^\w-]+/g, '-').replace(/^-|-$/g, '') || 'robot';
 
 export const BuildPanel: React.FC<BuildPanelProps> = ({
   onDefineBoard,
+  cableRoutes,
   parts,
   sceneName,
   project,
@@ -120,6 +116,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
             actions: {
               onFix: onFixFinding,
               onApplyFix: {
+                'cable-route': cableRoutes.openFinding,
                 'print-face': ({ fix }) =>
                   fix?.kind === 'print-face' &&
                   printing.setPartPrint([fix.part], { down: fix.down, at: undefined, turned: undefined }),
@@ -153,6 +150,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
             onRestoreRule: (rule) => onChangeProject({ readiness: restoreRule(project.readiness, rule) }),
           }}
         />
+        <CableRoutesSection routes={cableRoutes} parts={parts} wiring={wiring} onShowPose={cableRoutes.showPose} />
         <BuyList
           bom={bom}
           measuring={!wiring}

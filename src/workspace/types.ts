@@ -166,6 +166,7 @@ export interface TextFile {
 }
 
 export interface Snapshot {
+  wiring?: ProjectSettings['wiring'];
   selfContact?: ProjectSettings['selfContact'];
   designParameters?: ProjectSettings['designParameters'];
   electronicsBoard?: ProjectSettings['electronicsBoard'];

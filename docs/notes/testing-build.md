@@ -723,3 +723,101 @@ Classification is an external environment dependency in browser setup. `currency
 `exposeTestHooks` now installs an exact-URL route on the browser context before app initialization. It serves the bundled date and USD conversion table using the provider's `date` and `rates` schema and explicitly permits cross-origin access. Desktop, web and additional pages in the context inherit the same fixture. This pins the external input without suppressing browser errors or changing product fetching. Unknown URLs and query variants remain live. The mark assertions, deadlines and retries are unchanged.
 
 `tools/testing/browserRates.test.mjs` checks pre-initialization registration, context ownership, exact URL selection, unrelated requests and response format without launching a browser. Existing `src/utils/currency.test.ts` covers currency formatting, conversion and picking up newer rates. The changed-file check passed formatting, lint, docs, types, quarantine validation and 117 assertions across 14 files. Its log is `scratch/repair-check.log`. Browser execution remains with CI. This repair does not establish recovery of the public provider or measure a flake rate.
+
+## Editable cable route work
+
+The editor changes the existing project.wiring records. Acceptance uses production netlist, analysis, BOM, scene-file, history, version-reference and manufacturing archive paths. No routing bound, timeout, retry or quarantine is changed.
+
+### Generated designs and numerical contracts
+
+`wiring/cableEditingMatrix.test.ts` covers ten generated designs with explicit stock, exact required lengths, full limiting-pose values, unchanged connector identities and quantities. One pass isolates stock and declared-motion propagation without obstacle inputs. A second pass sends every design through the analysis worker with transformed, nonuniformly scaled generated solid meshes and compares the full result against explicit world bounds. Separate ring and owner-mesh tests below cover the critical clearance cases. These checks do not establish whole-robot readiness.
+
+| Design | Required length | Limiting joint values |
+| --- | --- | --- |
+| Two-servo arm | 243 mm | Shoulder 0°, wrist 15° |
+| Wrist-camera arm | 243 mm | Shoulder 0°, wrist 15° |
+| Differential rover | 229 mm | Left -15°, right 15° |
+| Quadruped | Unresolved | All zero, retained coverage-limit refusal |
+| Hexapod | Unresolved | All zero, retained coverage-limit refusal |
+| Pan-tilt camera | 243 mm | Pan 0°, tilt 15° |
+| Sliding mechanism | 249 mm | -20 mm |
+| Two-adapter servo chain | 243 mm | 0°, 15°, 15°, 15° |
+| Mixed servo buses | 243 mm | Serial joints 0° and 15°, second bus 15° |
+| Enclosure with lid-mounted servo | 295 mm | Lid 90° |
+
+Each resolved edited route selects one 900 mm cable and contributes one piece and one purchase pack. Other route stocks are pinned independently, so automatic choices cannot obscure the expected selected-stock quantity. The quadruped and hexapod retain Range coverage exceeds routing limit rather than reducing their motion samples.
+
+`wiring/cableCoupledEditing.test.ts` moves an anchor on the downstream wrist link while both joints move. Its retained requirement is 417 mm at shoulder -15° and wrist -15°. Independent planar trigonometry evaluates 961 simultaneous poses at one-degree intervals and checks the conservative requirement covers their complete polyline lengths, bend allowances and slack. A selected 300 mm cable fails. Modeled rest points remain unchanged.
+
+### Geometry and refusal cases
+
+`wiring/routeEditingAcceptance.test.ts` repairs a changing detour topology with one adapter-owned point at [30, 40, 160] mm. The requirement is 486 mm at elbow -90°. Selecting 300 mm stock retains that requirement and pose while failing. The same suite keeps blocked exits, missing anchor owners and unsupported loop closures unresolved. `routeEditing.test.ts` refuses incompatible stock, virtual endpoints, stale net identities and nonfinite points. It also checks repeated-part isolation and imported endpoint property order.
+
+`three/analysis/cableOpening.test.ts` passes a real four-bar ring mesh through the existing worker pipeline. A ray passes through its opening while whole-solid conservative bounds still refuse the connector exit.
+
+`three/analysis/cableOwnerGeometry.test.ts` uses a real box mesh with nonuniform scale and a 90° owner rotation. It inverts a separately posed surface pick to exact local millimeters. The surface point is refused by the existing clearance envelope. Moving it outward repairs the route. Resizing the mesh preserves the saved coordinates and can invalidate clearance, and a further explicit move repairs it again. The editor does not silently offset surface picks or normalize coordinates by dimensions.
+
+### History, stale work and consumers
+
+`workspace/cableHistory.test.ts` restores stock and ordered anchors through real scene-file compression and ordinary undo/redo. A complete six-operation sequence covers stock, adding, moving, adding another point, reordering and deletion, then undoes and redoes every state. Version merging carries the required anchor owner and detects a missing owner.
+
+`kit/cableRoutes.test.ts` reconciles selected stock and rest points through actual Kit ZIP bytes, current fabrication drawings, packing quantities and Build Along. Its fixture joints are fixed at rest to isolate manufacturing reconciliation. The motion matrix and coupled tests retain full declared movement separately.
+
+`three/viewport/cableRouteLayer.test.ts` covers 100 preview callbacks and one release, oversized-canvas coordinates, scene replacement, geometry changes, undo and pointer cancellation. `cableAnalysisClient.test.ts` drives the real production analysis handler through a controlled worker boundary for geometry reuse, cancellation and late responses. BOM reader tests retain in-flight work across unrelated edits, cancel replaced scenes and suppress stale publication. Completed cancellable results are shared with engineering and Build Along through the existing cache.
+
+`workspace/cableRouteMode.test.ts` verifies leaving drawing tools, selecting endpoint parts and entering ordinary Pose controls. Identical Link or stock choices retain the project identity, so a no-op cannot add an unexpected undo step. A structural patch cannot replace the fixed endpoint fields. `components/build/CableRouteEditor.test.ts` checks Automatic remains the displayed authored policy even when it resolves to a known measured cable.
+
+An initial history test inferred a required joints field from its fixture and failed type checking when ordinary history returned ProjectSettings. Its state variable now has that production type. An initial SSR assertion matched an exact option opening tag and failed on its existing class attribute. The corrected assertion reads the selected option's text and retains both automatic and explicit policy assertions.
+
+### Browser and documentation
+
+`e2e/cableEditing.e2e.test.ts` is the focused CI walkthrough. It opens the generated arm's Cable reach finding, selects stock, adds and numerically moves a point, checks Checks and BOM, restores every route edit through undo/redo, exports and reopens real scene bytes. Build Along route stock and points are checked by `kit/cableRoutes.test.ts`, and route step assignment by `guide/buildAlong.test.ts`. It adds no deadline or retry. The full browser test is not run locally.
+
+The documentation capture uses the ordinary finding and editor controls, then actual canvas drags. Its final measurements and capture log are retained in `scratch/cable-capture-continuation.log` and `scratch/cable-interaction-measurements.json`. The harness serves development bundles when production bundles are absent. Its existing Vite shutdown warning follows successful capture. Images illustrate the finding and edited route, and were not used to judge appearance. [Interaction measurements and limits](performance-engineering.md#cable-editor-interaction-work) distinguish browser operation counts from the compiled-worker timing and memory probe.
+
+### Help coverage
+
+Purchasing and check-reference articles describe explicit route stock. The ready-to-build task includes Edit Route among direct actions, and the part-quote task distinguishes direct actions from agent Fix. Unchanged articles retain their instructions for Strength fixes, on-hand quantities, blocker classification, Pose concepts, keyboard mode exit, guide generation, snapping outside route editing, teaching, the agent hub and ordinary agent undo. Their illustrated states remain applicable. The feature-owned cable article documents the new controls and surface-clearance behavior.
+
+### Final local checks
+
+The final 68-file changed check passed formatting, lint, docs, site copy for 342 pages, types and 2,495 related tests across 371 files. One existing test remained skipped. The log is `scratch/cable-complete-check.log`. The exact-owner and numeric matrix check passed 11 tests, the coupled and complete history check passed four tests, and the full mesh matrix passed all 20 cases. The final documentation and interaction capture passed in 51.65 seconds with no captured browser errors and the existing Vite shutdown warning. Its worker-boundary probe observed the measured 100-event drag and 20 further drags without changing the app's history, worker or browser harness contracts. Full browser export/reopen execution remains with the normal Linux and Windows CI jobs. Build Along controls retain their separate browser walkthrough.
+
+
+### Cable help preflight correction
+
+The eleven coverage notices were compared with the final production diff. Three articles needed corrections. The remaining eight keep their current instructions and screenshots. No capture state in those eight changes.
+
+| Article | Comparison and result |
+| --- | --- |
+| Check printed parts are strong enough | FindingRow adds the cable-route label only. Strength still uses Fix for the print-face action or agent fallback. Its failed and passing stress screenshots remain accurate. |
+| Count the parts you already own | BuildPanel inserts Wiring before the unchanged purchasing sections. Quantity editing, on-hand arithmetic, toast Undo and cable-product inventory identity remain unchanged. Both inventory screenshots still show those states. |
+| The path from design to build | The verdict, BOM and guide behavior described remain true. It already describes measured cable hops and selected lengths. Cable editing does not change its existing readiness claims. |
+| Joints and kinematics | Show Pose uses ordinary pose values without changing joint declarations or the modeled rest frame. The tree, loop, rest-pose and inverse-kinematics descriptions remain true. |
+| Keyboard shortcuts | Added the concrete Escape behavior for an open cable editor and retention of committed edits. Existing key bindings remain unchanged. |
+| Make a build guide | buildCommands adds cable commands alongside unchanged guide commands. Make, Open, Update, PDF controls and the two guide-card screenshots remain accurate. |
+| Snap parts together by their mounting holes | Gizmo detaches while cable editing is open. Added the required Done action before moving parts. Port snapping and all three illustrated snapping states remain unchanged after closing the editor. |
+| Teach a robot a skill | RightTabPanels only passes cableRoutes to BuildPanel. Simulate, Train, Teach and skill controls are unchanged. |
+| The design agent | The contributor guide adds route-consumer facts without changing the article's agent workflow, priority order, follow-ups or undo claims. The hub retains feature-owned contributions. |
+| A check blocks Ready to build | Replaced the assumption that every problem offers agent Fix. The instructions now name Edit Route for supported Cable reach findings and retain Fix for agent fallback. Ignore, Restore and Run Checks remain unchanged. |
+| Undo what the agent changed | docHistory now restores wiring alongside existing tracked state. Agent per-edit history, Case-only undo restrictions, revert behavior and the existing board/shared-parameter examples remain accurate. |
+
+The three article edits add no app labels. They reuse Edit Route, Cable reach, Fix and Done. Unchanged-help preflight notices for the other eight are retained as reviewed coverage notices rather than creating unrelated publication edits.
+
+
+### Cable editor browser traversal failure
+
+The 18 November pull request Check failed in `showCableBuildAlong` after the editor, history, Checks, BOM and scene export/reopen assertions completed. The browser case took 91.33 seconds including the configured retry. Both attempts reported step 2 when the helper expected step 1. The aggregate `check` failed because `e2e-changed` failed. Its required, ROS, electrical and copy jobs passed.
+
+The helper waited for the toolbar to exist, which includes the opening state. In that state there is no `data-step`, and `Number(null)` becomes zero. Playwright can resolve the Next step control while opening completes, then click from the first actual step to the second. The helper incorrectly requires the resulting step to equal the opening-state value plus one. This is a test synchronization error, not evidence that playback skipped an assembly step.
+
+The redundant Build Along traversal and its helper are deleted. No assertion is loosened, and no wait, retry or deadline is added. The retained browser case covers the ordinary editor entry, stock, local numeric point, Checks, BOM, full undo/redo and actual scene export/reopen. `kit/cableRoutes.test.ts` independently checks authored stock and transformed rest points through production routing, guide planning, Build Along and actual Kit bytes. `guide/buildAlong.test.ts` checks that each worker route appears exactly once at the first step with both endpoints installed. `e2e/buildCable.e2e.test.ts` retains the separate playback controls walkthrough. Browser delivery of this edited route into playback is no longer asserted by the cable editor case. CI owns the next browser result, and no local browser timing improvement is claimed.
+
+
+### Cable editor mode review
+
+Opening a route previously left an active Build Along session in place. That session hid the cable overlay and continued to own Escape and history shortcuts. Route opening now closes that session and opens Build through the same action from findings, Wiring and the palette. Show Pose also reselects the endpoint parts, since choosing an unrelated anchor owner can otherwise remove the robot's Pose tab. `workspace/cableRouteMode.test.ts` covers both transitions without a browser or added waits.
+
+Opening a route cancels pending Sketch face replacement, so Escape belongs to route editing immediately. Cable editing owns canvas point callbacks even between placements and suppresses Sketch double-click editing. This prevents a pending Sketch face replacement from consuming a cable-editor click while retaining hidden drawing drafts. A route that disappears after scene replacement exposes no active point placement. No app strings or illustrated control states change.
+
+The review changed-file check passed formatting, lint, docs, site copy for 342 pages, types and 22 related tests across ten files. Its log is `scratch/review-1807-check.log`. The changelog's “cannot” was contracted to satisfy the current copy check. Browser execution remains with CI.

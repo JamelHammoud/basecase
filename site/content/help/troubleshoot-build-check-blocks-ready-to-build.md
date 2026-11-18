@@ -40,8 +40,10 @@ At least one check still holds a blocker, often one you haven't opened.
 1. Click **Build** at the top of the right panel.
 2. In **Checks**, open the first check with a blocker if it’s closed. Basecase lists the worst ones first.
 3. To select a part, click its name under a problem.
-4. Change the part, or click **Fix** to hand the problem to the agent.
+4. Use the action beside the problem, or change the part yourself.
 5. Wait a moment after your last edit. The header reads **Checking…**, then shows the new verdict.
+
+**Edit Route** opens the cable editor for a supported **Cable reach** finding. [Route a robot cable](/help/route-a-robot-cable) covers its controls. **Fix** sends the problem to the agent when no direct fix applies.
 
 You're done when the header reads **Ready to build** and the red dot on the **Build** tab is gone.
 

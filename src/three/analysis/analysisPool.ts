@@ -147,6 +147,10 @@ export function wiringIn(shapes: SceneShapes, scene: WiringScene): Promise<Netli
   );
 }
 
+export function rememberWiring(shapes: SceneShapes, scene: WiringScene, result: Netlist): void {
+  void cachedWiring(shapes.instances, scene, () => Promise.resolve(result)).catch(() => {});
+}
+
 export function printReportsIn(
   scene: SceneShapes,
   faces?: Record<string, Array<[number, number, number]>>,

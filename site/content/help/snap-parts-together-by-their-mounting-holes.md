@@ -15,6 +15,8 @@ covers:
 
 You can put a servo on a bracket, a board on a plate or a camera on its mount by their real holes, without lining parts up by eye or typing in positions.
 
+If a cable route is open, click **Done** before moving parts.
+
 1. Select the part and press [[V]] for Move. Or start dragging a part from Parts or the Library onto the canvas.
 2. Drag it toward the part it mounts on. White dots appear on the holes, horns, bores and faces that fit each other. For example, the servo's horn fits a hole circle of the same size and thread, its output shaft fits a matching bore, and M2 holes fit M2 holes.
 3. Bring a dot within about 8 mm of its partner. The pair turns blue and the part jumps into place, turned so the two line up.

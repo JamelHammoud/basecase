@@ -1,8 +1,9 @@
+import { analyzeWiring } from '../../wiring/routeAnalysis';
 import * as THREE from 'three';
 import { expect, it } from 'vitest';
 import type { PortVec } from '../../types/ports';
 import { component, sceneOf } from '../../wiring/fixtures';
-import { fastenersIn, wiringIn } from './analysisPool';
+import { fastenersIn, rememberWiring, wiringIn } from './analysisPool';
 import { snapshotShapes } from './sceneShapes';
 import { bracket, objectsOf } from '../../assembly/assembly.fixtures';
 import { fastenerInput } from '../../assembly/fastenerSpec';
@@ -116,4 +117,16 @@ it('loads and refreshes scene-carried connector geometry in the analysis worker'
 
   expect(refreshed.buses[0].nets[0].from.port?.position).toEqual([0, 0, 0]);
   expect(refreshed.buses[0].nets[0].route?.requiredMm).toBeGreaterThan(netlist.buses[0].nets[0].route!.requiredMm!);
+});
+
+it('shares a completed cancellable reader result with engineering and Build Along', async () => {
+  const scene = sceneOf(
+    [component('adapter', 'robotis-u2d2'), { ...component('servo', 'dynamixel-xl330-m288'), position: [70, 0, 0] }],
+    [],
+  );
+  const shapes = snapshotShapes([]);
+  const measured = analyzeWiring(scene, []);
+
+  rememberWiring(shapes, scene, measured);
+  expect(await wiringIn(shapes, scene)).toBe(measured);
 });

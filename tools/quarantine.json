@@ -653,5 +653,13 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44218519123 reached Drive on and the operator panel, then measured zero hand movement through the unchanged 30000 ms poll. Its retry reached cleanup and failed on one unclosed VideoFrame warning. Same-revision diagnostic 44220733847 passed the exact test in 33488.9382 ms with one worker, zero retries and quarantine off. Previous Check 44214681066 passed in 13994 ms with unchanged input, camera, fixture, harness, dependencies and browser configuration. Feed delivery, follower output, simulation stepping and frame ownership remain unresolved under existing owner #995. The shared error array retained this one warning through otherwise successful pan and MIDI assertions. Only the hand declaration is quarantined. Pan, MIDI and all non-Windows hand coverage remain active, alongside fast hand-following, frame-ownership and shutdown tests. Restore after tracing those stages and equal-load baseline and candidate Windows observations without changing deadlines or assertions."
+  },
+  {
+    "file": "e2e/tryStop.e2e.test.ts",
+    "test": "ends the try at once from the canvas’s Stop Driving",
+    "issue": 1026,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44222219427 removed the try clock within the unchanged 3000 ms deadline after Stop Driving but retained zero tries through the 30000 ms saved-count poll. Its retry reused the stopped beforeAll app and then failed the initial Drive-on poll. Same-revision Windows diagnostic 44226427636 passed in 9661.5486 ms with one worker, zero retries and quarantine off, confirming intermittency. Previous Windows Check 44218519123 passed the exact declaration in 11641 ms with unchanged walkthrough and recording sources. Linux at the failing revision passed in 5523 ms. Recording frames, worker stop replies, scoring, refusal feedback and persistence are unresolved. Existing Case recording owner #1026 owns this manual-stop path separately from reference startup, coordinating shared helpers with #1049 and #1364. Restore after stage tracing, an established fix and ten baseline and ten candidate Windows observations at equal load with retries disabled. The paused-simulation sibling remains active on Windows and other platforms retain both paths. No assertion or deadline changes."
   }
 ]

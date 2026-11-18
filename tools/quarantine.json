@@ -71,14 +71,6 @@
     "reason": "Run 44034821423 exhausted the Board fit fail-status poll at line 110 on both Windows attempts, taking 133980 ms together. Linux passed in 19250 ms at the same revision. Commit bda7dbaa3 introduced the walkthrough after the last full green run. The width edit, viewport synchronization, inspection and readiness publication stages are not distinguished. Issue #1614 owns tracing and equal-load baseline and candidate measurements. Fast board geometry, constraints, history and package tests remain active."
   },
   {
-    "file": "e2e/reusableFixtures.e2e.test.ts",
-    "test": "captures an assembly from selection, reuses it in New Case and reopens its recorded chest chore",
-    "issue": 1364,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Run 44034821423 retained zero tries at line 90 after Try Reference on both Windows attempts. Linux passed at the same revision in 31415 ms. Commit 14ef50083 introduced this walkthrough after the last full green run. Each attempt owns a fresh app. Startup, recording, automatic finish, scoring and persistence are not distinguished. Existing passive-fixture recording owner #1364 owns tracing this chest path separately and equal-load baseline and candidate measurements before restoration."
-  },
-  {
     "file": "e2e/schematic.e2e.test.ts",
     "test": "exports the current connector references and fingerprint through Build on desktop and updates electrical findings after a supply edit",
     "issue": 1615,

@@ -673,6 +673,18 @@ The doctor requested one operational rerun of the failed jobs with `gh run rerun
 
 Local `check:changed` passed for all six changed files, including formatting, ESLint, documentation and seven tests across the planner and lane fixtures. Vitest reported 69 ms total. `git diff --check` passed. The operational rerun was still in progress when these results were recorded. No candidate hosted dispatch result or full-suite recovery is claimed.
 
+## Repair startup held the only slot
+
+On 18 November 2026, Check [44227652023](https://github.com/JamelHammoud/basecase/actions/runs/44227652023) failed six test jobs on `8416f27`. Repair started at 03:11:22 UTC. At 04:49 UTC, its runner and Codex child were still alive after 98 minutes. Its worktree was clean, no scratch directory or handoff existed, and the journal still said `running`. No rollout was created for this invocation, and no child tool process existed. The earlier `every failed job in the last Check has had a repair` messages ended at 03:10:11 and concerned earlier runs. No handled-job record existed for this Check.
+
+The observed failure is provider startup holding the single repair slot before a session started. The precise internal startup fault remains unestablished. The agent API defaulted to six hours, while the repair brief only asked for completion within thirty minutes. No execution deadline enforced that instruction. The doctor terminated only the stalled Codex child after checking the clean worktree. Its parent recorded `repair session failed:` at 04:50:01 and `took 99 min`, completed the journal with `ok: false`, a null session and 5,917,886 ms duration, then released the slot through its ordinary cleanup. The saved evidence is `scratch/doctor/stalled-session.json` and the failed Check log is `scratch/doctor/main-failed.log`.
+
+The lane now passes one thirty-minute absolute deadline to the existing agent execution path. Startup, execution, provider fallback and answer formatting share that budget. No new timer loop, polling lane, retry or check is introduced. The dispatch regression checks the deadline, failed-session cleanup, unchanged handled state and eligibility on the next ordinary visit. Existing agent execution coverage checks deadline propagation, and Codex execution coverage checks expiry before launch and during formatting. These tests control execution boundaries and do not reproduce the provider's internal startup failure.
+
+This repair restores dispatch and bounds future slot occupation. It does not claim that the six failed jobs pass. Their retained log includes schematic findings assertions, two unit-test deadlines, Case recording, scan-map behavior and Windows design-parameter and vision-condition walkthroughs. The regular repair lane remains responsible for those failures. No assertion, test timeout, retry or quarantine changes here.
+
+Validation passed `npm run check:changed` for the five changed files, including formatting, lint, documentation checks and all four repair-dispatch tests. The focused test run took 70 ms. Hosted startup and the failed product tests were not rerun locally.
+
 ## Cache lifecycle nightly deadline
 
 [Check 44227652023](https://github.com/JamelHammoud/basecase/actions/runs/44227652023) failed the compound `vitestCache.test.mjs` declaration at its five-second deadline on both Windows and Linux. It was introduced by `772559997` (#1761), after the last full green [43948835889](https://github.com/JamelHammoud/basecase/actions/runs/43948835889) at `348373decd8013d264fc3e2e9fe1f8b298051b34`. This is a newly introduced slow test with a code-established workload cause, not evidence of a cache-ownership defect or changed environment.

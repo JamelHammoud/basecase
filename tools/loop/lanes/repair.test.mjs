@@ -62,6 +62,23 @@ describe('repair dispatch', () => {
     expect(runAgent).not.toHaveBeenCalled();
   });
 
+  it('bounds startup and execution and leaves failures eligible for the next ordinary visit', () => {
+    const started = Date.now();
+
+    runAgent.mockReturnValueOnce({ ok: false, error: 'Task execution deadline exhausted' });
+    repair({ log: vi.fn() });
+
+    const { deadlineAt } = runAgent.mock.calls[0][0];
+
+    expect(deadlineAt).toBeGreaterThanOrEqual(started + 30 * 60_000);
+    expect(deadlineAt).toBeLessThanOrEqual(Date.now() + 30 * 60_000);
+    expect(state.save).not.toHaveBeenCalled();
+    expect(close).toHaveBeenCalledWith({ dir: 'scratch/repair-fixture' });
+    repair({ log: vi.fn() });
+    expect(runAgent).toHaveBeenCalledTimes(2);
+    expect(state.save).toHaveBeenCalledWith(failedRun.databaseId, { jobs });
+  });
+
   it('leaves an earlier open repair to finish before inspecting another run', () => {
     openPulls.mockReturnValue([{ headRefName: 'loop/repair/older-run', createdAt: new Date().toISOString() }]);
     repair({ log: vi.fn() });

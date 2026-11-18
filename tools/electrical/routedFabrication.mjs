@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { kiCadChild, kiCadChildren, kiCadNumber, readKiCadBoard } from '../../src/wiring/boardKiCad.mjs';
 import { drillFacts, gerberFacts } from './fabricationFacts.mjs';
 
-const rounded = (value) => Math.round(value * 1_000_000) / 1_000_000 || 0;
+const rounded = (value) => Number(value.toFixed(3)) || 0;
 const sortedHoles = (holes) => holes.sort((a, b) => a.diameter - b.diameter || a.x - b.x || a.y - b.y);
 
 function padHole(footprint, pad) {
@@ -13,9 +13,9 @@ function padHole(footprint, pad) {
   const y = kiCadNumber(local[2]);
 
   return {
-    diameter: kiCadNumber(kiCadChild(pad, 'drill')[1]),
+    diameter: rounded(kiCadNumber(kiCadChild(pad, 'drill')[1])),
     x: rounded(kiCadNumber(origin[1]) + x * Math.cos(angle) - y * Math.sin(angle)),
-    y: rounded(kiCadNumber(origin[2]) + x * Math.sin(angle) + y * Math.cos(angle)),
+    y: rounded(-(kiCadNumber(origin[2]) + x * Math.sin(angle) + y * Math.cos(angle))),
   };
 }
 
@@ -28,9 +28,9 @@ export function boardDrills(pcb) {
     const at = kiCadChild(via, 'at');
 
     return {
-      diameter: kiCadNumber(kiCadChild(via, 'drill')[1]),
-      x: kiCadNumber(at[1]),
-      y: kiCadNumber(at[2]),
+      diameter: rounded(kiCadNumber(kiCadChild(via, 'drill')[1])),
+      x: rounded(kiCadNumber(at[1])),
+      y: rounded(-kiCadNumber(at[2])),
     };
   });
   const ofType = (type) => pads.filter((pad) => pad.type === type).map(({ diameter, x, y }) => ({ diameter, x, y }));
@@ -40,6 +40,11 @@ export function boardDrills(pcb) {
 
 export function inspectFabrication(files, pcb) {
   const board = readKiCadBoard(pcb);
+  const trackLayers = kiCadChildren(board, 'segment').map((segment) => kiCadChild(segment, 'layer')[1]);
+
+  assert.ok(kiCadChildren(board, 'via').length > 0, 'Fabrication acceptance requires through vias.');
+  assert.deepEqual([...new Set(trackLayers)].sort(), ['B.Cu', 'F.Cu']);
+
   const nets = kiCadChildren(board, 'net')
     .map((net) => net[2])
     .filter(Boolean)

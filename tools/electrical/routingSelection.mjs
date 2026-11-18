@@ -5,7 +5,7 @@ export function needsRouting(files, event) {
   if (event !== 'pull_request') return true;
 
   const affected =
-    /^(src\/wiring\/(board|electrical(Package|Fixtures|Source|Robots))|electron\/electrical\/|tools\/electrical\/(route|routing|installRouter|boardFixtures|expected|copperCheck)|src\/workspace\/useBoardRouting|e2e\/boardRouting|\.github\/workflows\/(electrical|check)\.yml$|package(-lock)?\.json$)/u;
+    /^(src\/wiring\/(board|electrical)|src\/data\/(components|connectorPorts|componentPorts|supplies|sourcedItems)\.ts$|src\/utils\/(engineeringPower|powerSources|servoAmps)\.ts$|electron\/electrical\/|tools\/electrical\/|src\/workspace\/(useRoutedBoard|useBoard|useBoardPreview|useBoardRouting)\.ts$|e2e\/boardRouting|\.github\/workflows\/(electrical|check)\.yml$|package(-lock)?\.json$)/u;
 
   return files.some((file) => affected.test(file));
 }

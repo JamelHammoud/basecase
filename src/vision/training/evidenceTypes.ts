@@ -1,3 +1,4 @@
+import type { RequirementMeasurement } from './requirementTypes';
 import type { FrozenImageSample } from '../../datasets/snapshotImages';
 import type { ImageMask } from '../frameSet';
 import type { VisionDetection, VisionResult } from '../types';
@@ -21,6 +22,7 @@ export interface PredictionEvidence {
   modelHash: string;
   testHash: string;
   groupsHash?: string;
+  requirements?: RequirementMeasurement[];
   frames: {
     sample: FrozenImageSample;
     prediction: EvidencePrediction;

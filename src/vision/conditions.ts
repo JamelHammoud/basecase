@@ -4,6 +4,19 @@ import type { FrozenImageSample } from '../datasets/snapshotImages';
 export const MAX_CONDITIONS = 32;
 export const MAX_FRAME_CONDITIONS = 8;
 
+export interface ImageGroup {
+  kind: 'condition' | 'camera' | 'source';
+  name: string;
+}
+
+export function matchesImageGroup(sample: FrozenImageSample, group: ImageGroup): boolean {
+  if (group.kind === 'source') return sample.source === group.name;
+
+  if (group.kind === 'camera') return sample.groups?.camera === group.name;
+
+  return sample.groups?.labels.includes(group.name) ?? false;
+}
+
 export interface ImageGroupMembership {
   camera: string;
   declared: string[];

@@ -103,3 +103,5 @@ Measurements and limits: [Panels and Layers performance evidence](../notes/perfo
 ### Classroom workspace
 
 The browser's Classroom command opens `/classroom` in another tab. It uses one tile per submitted revision, with its display name, fingerprint prefix, status, estimated cost, weight, Case pass count and existing Check labels. Weight uses the shared formatter, with its unit supplying the label. A selected replay uses the existing gallery rendering path. Opening a robot creates an independent studio scene and preserves the grid. The assignment and submission file inputs use the shared 32px TextInput primitive with native browser selection. See [Cases](cases.md#classroom-assignments).
+
+Dataset training controls and results occupy at most half the Tries view and scroll independently. Image selection and condition editing remain reachable as requirement lists and training history grow.

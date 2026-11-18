@@ -1,10 +1,11 @@
+import { requirementMeasurements } from './requirementEvaluation';
 import { canonicalTest, sampleKey } from './evaluationIdentity';
 import { sha256 } from '../../cases/tries';
 import { frameHash, type FrameSet, type TrainingFrame } from '../frameSet';
 import type { FrozenImageSample } from '../../datasets/snapshotImages';
 import type { TrainingEvaluation, TrainingEvaluationInput, TrainingKind, TrainingTask } from './types';
 import { classificationMetrics } from './metricsClassification';
-import { buildEvidence, checkEvidenceFrameCount } from './evidence';
+import { trainingEvidence, checkEvidenceFrameCount } from './evidence';
 import type { ImageDiagnostics } from './evidenceTypes';
 import { objectMetrics, objectPrimary, type EvaluatedFrame } from './metricsObjects';
 import { trainingMetrics, validateEvaluationInput, validatePrediction } from './metricsValidation';
@@ -121,7 +122,15 @@ export async function evaluateTraining(input: TrainingEvaluationInput): Promise<
     snapshot: structuredClone(snapshot),
     realTest,
     testHash,
-    evidence: await buildEvidence({ input: { ...input, snapshot }, realTest, testHash, diagnostics }),
+    ...(await trainingEvidence({
+      input: { ...input, snapshot },
+      realTest,
+      testHash,
+      diagnostics,
+      ...(input.task.requirements?.length
+        ? { requirements: requirementMeasurements({ task: input.task, snapshot, realTest, rows }) }
+        : {}),
+    })),
     metrics: { ...scores, inference: inferenceCost(input) },
   };
 }

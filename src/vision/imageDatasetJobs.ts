@@ -6,6 +6,7 @@ import { buildImageDataset } from './imageDatasetBuild';
 import type { FrozenImageSample } from '../datasets/snapshotImages';
 import { packImageSnapshots, unpackImageSnapshot } from './imageSnapshot';
 import type { ImageMembers } from '../datasets/datasetFile';
+import { imageGroups } from './conditions';
 
 interface Job {
   dataset: Dataset;
@@ -15,6 +16,11 @@ interface Job {
 }
 
 export const imageDatasetJobs = {
+  snapshotChoices: async ({ sample, bytes }: { sample: FrozenImageSample; bytes: Uint8Array }) => {
+    const set = await unpackImageSnapshot(sample, bytes);
+
+    return reply({ groups: imageGroups(set, set.frames[0]), classes: set.classes.map((category) => category.name) });
+  },
   packSnapshots: async ({ set, member }: { set: FrameSet; member: ImageMembers }) => {
     const packed = await packImageSnapshots(set, member);
     const transfer = packed.map(({ bytes }) => bytes.buffer).filter((buffer) => buffer instanceof ArrayBuffer);

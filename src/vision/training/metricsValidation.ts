@@ -1,3 +1,4 @@
+import { canonicalRequirements } from './requirements';
 import type { TrainingTask, TrainingEvaluationInput } from './types';
 import type { VisionDetection, VisionResult } from '../types';
 import { isFrozenImageSample } from '../../datasets/snapshotTypes';
@@ -49,6 +50,8 @@ export function validateTrainingTask(task: TrainingTask): void {
     throw new Error('Choose a keypoint tolerance above zero and at most one.');
 
   validateLimits(task);
+
+  canonicalRequirements(task.requirements, task);
 }
 
 function validateLimits(task: TrainingTask) {

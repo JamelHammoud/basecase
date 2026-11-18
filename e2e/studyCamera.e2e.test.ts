@@ -14,7 +14,7 @@ let app: App | undefined;
 
 afterEach(async () => app?.close());
 
-it('configures a saved camera try in Study and returns to ordinary Study', { retry: 0 }, async () => {
+it('configures a lightweight saved camera try in Study and returns to ordinary Study', { retry: 0 }, async () => {
   app = await openApp();
 
   const { page } = app;

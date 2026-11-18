@@ -8,7 +8,7 @@ The nightly full suite failed on `main`. Merges keep landing, but no release goe
 4. **Flaky:** fix it here only when the log and the code show the cause. Otherwise add it to `tools/quarantine.json` (`file`, `test`, `issue`, `until` within two weeks, `reason`) and open the issue it names with the labels `loop:fix`, `loop:next` and `loop:priority`, so a builder makes it deterministic and measures the rate before and after. Never measure flake rates in this session.
 5. **Environment:** pin the thing that changed. Never edit tests for it.
 
-The lane has one slot, so every failure that lands while you work waits for you. Aim to open your pull request within 30 minutes.
+The lane has one slot, so every failure that lands while you work waits for you. The runner enforces a 30-minute total session deadline, including startup and answer formatting. Finish within that budget.
 
 For a focused Windows or Linux observation, use the runner command in the Loop guide's **Targeted CI diagnostics** section. Submit a published workload revision and exact full test name, then collect its durable ticket in this same repair context. The command owns dispatch and evidence retrieval, never publication. No local edits enter CI until the existing runner publishes them. Repeated before-and-after measurements still belong to the existing flake owner.
 

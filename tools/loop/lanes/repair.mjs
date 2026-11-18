@@ -14,6 +14,7 @@ export const schedule = {
 
 const MAX_LOG = 80_000;
 const HANDLED_FOR_MS = 6 * 60 * 60 * 1000;
+const SESSION_MS = 30 * 60 * 1000;
 const repaired = store('repair', { jobs: [] });
 
 const beingRepaired = () =>
@@ -64,7 +65,13 @@ export default function repair({ log }) {
     ]
       .filter(Boolean)
       .join('\n\n');
-    const result = runAgent({ cwd: worktree.dir, name: 'repair', prompt, schema: CHANGE_SCHEMA });
+    const result = runAgent({
+      cwd: worktree.dir,
+      name: 'repair',
+      prompt,
+      schema: CHANGE_SCHEMA,
+      deadlineAt: Date.now() + SESSION_MS,
+    });
 
     if (!result.ok) {
       log(`repair session failed: ${String(result.error).slice(0, 500)}`);

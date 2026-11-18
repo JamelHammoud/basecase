@@ -14,7 +14,7 @@ const REASONS: Record<TrainingRetentionReason, string> = {
   'different-test': 'The models used different held-out images',
   'different-task': 'The models used different tasks',
   limits: 'The model exceeded the task limits',
-  requirements: 'The model did not meet the declared requirements',
+  requirements: '',
   'no-improvement': 'The incumbent scored higher or tied',
 };
 

@@ -77,7 +77,7 @@ export function VisionTrainingResults({ attempts, targets, onApply, context }: V
               ]}
             />
           ))}
-          <p className="text-[12px] text-white/60">{attempt.reason}</p>
+          {attempt.reason && <p className="text-[12px] text-white/60">{attempt.reason}</p>}
           <VisionRequirementResults outcomes={attempt.requirements} />
           {attempt.inspection && <Button onClick={() => setInspecting(attempt.id)}>Inspect Images</Button>}
           {attempt.retained && (

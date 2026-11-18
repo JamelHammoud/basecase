@@ -153,6 +153,10 @@ Restoration requires tracing startup through command dispatch, capture, session 
 
 ## Declared operating requirements
 
+Review coverage in `requirementChoices.test.ts` restores two cameras and legacy class choices from real snapshot archives without condition metadata. It edits current camera and class metadata, checks saved choices remain frozen, and verifies complete frozen summaries need no content reads. The earlier condition-rescoring performance table retains its original measurements, separate from the requirement observations below.
+
+The review's changed-file check passed formatting, lint, documentation, site copy for 332 pages, types and 183 related tests across 40 files. The log is `scratch/review-1752-check.log`. Its first run caught a new fixture editing the original image array instead of the cloned saved snapshot. The corrected fixture changes the saved snapshot when exercising summary-only reads. No browser tests ran locally during review.
+
 Issue #1745 extends the existing evaluator and comparison. Requirements remain optional and freeze before backend dispatch. The candidate and incumbent use the same prepared snapshot and declarations. Tests preserve group membership, source ancestry, exact model hashes and dataset identity through JSON save/reopen. Exploratory group selection does not change a saved retention decision.
 
 The generated ONNX matrix declares expected aggregate and subgroup results separately. Every listed subgroup scores 0 for the candidate and 1 for the incumbent. Floors are zero, support minima are one and permitted regression is zero, so each comparison records a regression checkpoint. Cases without aggregate improvement also remain checkpoints. Class names distinguish people, parts, pallets, mugs, bins, handles, landmarks, appliance states and inspection defects.

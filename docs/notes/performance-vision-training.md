@@ -10,8 +10,8 @@ The following observations were recorded on 17 November 2026 with Node 26.13.0, 
 
 | Real test images | Rescore both reports | Evidence bytes per model | Returned result bytes | Heap-used difference |
 | --- | --- | --- | --- | --- |
-| 4 | 1.723 ms | 2.526 ms | 0.216 ms | 638 | 1,665 |
-| 1,000 | 85.948 ms | 122.683 ms | 2.670 ms | 8,420 | 17,241 |
+| 4 | 2.364 ms | 2,743 | 769 | 177,464 bytes |
+| 1,000 | 106.845 ms | 604,225 | 19,609 | -1,721,224 bytes |
 
 Heap-used difference is the V8 heap-used difference after collection, with source content and reports already retained. It includes the returned result and runtime caches. The negative 1,000-image difference reflects other reclaimed heap, so retained allocation at that size is inconclusive. These differences are not peak memory. They exclude image buffers, workers, WASM, GPU allocations and other processes. One observation per size does not establish throughput or a scaling ratio. Host contention and collection make timings and heap differences variable. The fixture asserts complete support, both scores and a 64 KiB returned-output ceiling for its two-class data, without asserting time or heap use.
 

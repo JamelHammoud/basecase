@@ -12,6 +12,7 @@ covers:
   - src/components/tries/VisionRequirementFields.tsx
   - src/components/tries/VisionRequirementResults.tsx
   - src/components/tries/useRequirementChoices.ts
+  - src/vision/training/requirementChoices.ts
   - src/vision/training/requirements.ts
   - src/vision/training/requirementEvaluation.ts
   - src/vision/training/requirementRetention.ts
@@ -27,7 +28,7 @@ You train models on desktop. For measured support, you need held-out real images
 4. In **Group**, choose an existing condition or camera.
 5. In **Class**, choose a required class or **All Classes**.
 6. In **Score floor**, set the minimum score as a percentage.
-7. In **Minimum real test**, set the minimum number of measured images.
+7. In **Real test**, set the minimum number of measured images.
 8. In **Permitted regression**, set the allowed score drop in percentage points.
 
 ![A night requirement with a score floor, minimum real test support and permitted regression](/help/require-vision-conditions/requirements.png)

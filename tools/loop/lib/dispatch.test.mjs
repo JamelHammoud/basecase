@@ -18,7 +18,6 @@ vi.mock('./agent.mjs', () => ({ CHANGE_SCHEMA: {} }));
 vi.mock('./github.mjs', () => ({
   issues: (label) => calls.steps.filter((step) => step.labels.some((entry) => entry.name === label)),
   hasLabel: (step, label) => step.labels.some((entry) => entry.name === label),
-  openPulls: () => [],
   closeIssue: vi.fn(),
   commentOnIssue: vi.fn(),
   editIssueLabels: (number, { add = [], remove = [] }) => {
@@ -28,6 +27,8 @@ vi.mock('./github.mjs', () => ({
   },
 }));
 vi.mock('./stepPulls.mjs', () => ({
+  pullHistory: () => [],
+  indexByStep: () => calls.statuses,
   stepPullIndex: (options) => (options?.fresh && !calls.historyAvailable ? null : calls.statuses),
   stepStatus: (index, n) => index.get(n) ?? 'none',
 }));
@@ -40,7 +41,7 @@ vi.mock('./worktree.mjs', () => ({
 }));
 
 const { dispatch } = await import('./dispatch.mjs');
-const { selectWork } = await import('../lanes/refine.mjs');
+const { default: refine, selectWork } = await import('../lanes/refine.mjs');
 const { claim } = await import('./claim.mjs');
 const step = (number, extra = {}) => ({
   number,
@@ -130,6 +131,23 @@ it('uses a useful refinement when no eligible product remains', async () => {
   await run();
   expect(calls.fallback).toHaveBeenCalledOnce();
   expect(calls.execute).not.toHaveBeenCalled();
+});
+
+it('runs an eligible product from the refinement worker when the standalone work budget is empty', async () => {
+  const options = {
+    lane: 'refine',
+    module: { default: refine, schedule: { agent: true }, selectWork },
+    context,
+    capacity: () => ({ sessions: 0, loadPerCore: 0 }),
+    counts: () => ({ openWaiting: 0, queuedRuns: 0 }),
+  };
+
+  await dispatch(options);
+  expect(calls.execute.mock.calls[0][0]).toMatchObject({ name: 'build', worker: 'refine-1' });
+  calls.steps = [];
+  await dispatch(options);
+  expect(calls.execute).toHaveBeenCalledOnce();
+  expect(context.log).toHaveBeenCalledWith('waiting: standalone refinement reached its 24-hour work budget');
 });
 
 it('applies product backpressure and frees the claim without inventing a refinement', async () => {

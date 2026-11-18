@@ -10,6 +10,7 @@ const state = vi.hoisted(() => ({
   steps: [],
   signature: 'source-a',
   pulls: new Map(),
+  historyAvailable: true,
 }));
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'build-outcomes-'));
 
@@ -18,7 +19,6 @@ vi.mock('./agent.mjs', () => ({ CHANGE_SCHEMA: {} }));
 vi.mock('./github.mjs', () => ({
   issues: (label) => state.steps.filter((step) => step.labels.some((item) => item.name === label)),
   hasLabel: (step, label) => step.labels.some((item) => item.name === label),
-  openPulls: () => [...state.pulls.keys()].map((number) => ({ number })),
   closeIssue: vi.fn(),
   commentOnIssue: vi.fn(),
   editIssueLabels: (number, { add = [], remove = [] }) => {
@@ -29,6 +29,10 @@ vi.mock('./github.mjs', () => ({
 }));
 vi.mock('./stepPulls.mjs', async (original) => ({
   ...(await original()),
+  pullHistory: () =>
+    state.historyAvailable
+      ? [...state.pulls].map(([number, status]) => ({ number, state: status.toUpperCase(), isDraft: true }))
+      : null,
   stepPullIndex: () => state.pulls,
   stepStatus: (index, n) => index.get(n) ?? 'none',
 }));
@@ -90,6 +94,7 @@ beforeEach(() => {
   number++;
   state.signature = 'source-a';
   state.pulls = new Map();
+  state.historyAvailable = true;
   state.steps = [
     {
       number,
@@ -187,13 +192,72 @@ it.each([{ dependencies: [99] }, { capabilities: ['physical-robot'] }])(
     expect(recoveryFor(number).outcome.status).toBe('blocked');
     state.signature = 'source-b';
 
-    if (block.capabilities) expect(run()).toBeNull();
+    expect(run()).toBeNull();
+    expect(state.execute).toHaveBeenCalledOnce();
 
     state.pulls.delete(99);
 
     if (block.dependencies) expect(run()).not.toBeNull();
   },
 );
+
+it('waits on the same prerequisite after its only unchanged-input continuation discovers the block', () => {
+  state.pulls.set(99, 'open');
+  state.execute
+    .mockReturnValueOnce(answer('incomplete'))
+    .mockReturnValueOnce(answer('blocked', { dependencies: [99] }))
+    .mockReturnValueOnce(answer('complete'));
+  run();
+  run();
+  expect(recoveryFor(number)).toMatchObject({ attempts: 1, outcome: { status: 'blocked' } });
+  expect(run()).toBeNull();
+  expect(state.steps[0].labels).toEqual([{ name: 'loop:blocked' }]);
+  state.historyAvailable = false;
+  expect(run()).toBeNull();
+  state.historyAvailable = true;
+  state.pulls.delete(99);
+  expect(run()).not.toBeNull();
+  expect(state.execute.mock.calls[2][0].continuation).toEqual(session);
+  expect(state.publish).toHaveBeenCalledOnce();
+});
+
+it('keeps unpublished hosted diagnostics blocked even with published Windows diagnostics available', () => {
+  vi.stubEnv('BASECASE_LOOP_CAPABILITIES', 'windows-diagnostics');
+  state.execute.mockReturnValueOnce(answer('blocked', { capabilities: ['windows-unpublished-diagnostics'] }));
+
+  try {
+    run();
+    state.signature = 'source-b';
+    expect(run()).toBeNull();
+    expect(state.execute).toHaveBeenCalledOnce();
+    vi.stubEnv('BASECASE_LOOP_CAPABILITIES', 'windows-diagnostics,windows-unpublished-diagnostics');
+    state.execute.mockReturnValueOnce(answer('complete'));
+    expect(run()).not.toBeNull();
+    expect(state.publish).toHaveBeenCalledOnce();
+  } finally {
+    vi.stubEnv('BASECASE_LOOP_CAPABILITIES', '');
+  }
+});
+
+it('honors a retained block even if the worker stopped before recording the step wait', () => {
+  const dir = fs.mkdtempSync(path.join(root, 'retained-block-'));
+  const step = state.steps[0];
+
+  state.pulls.set(99, 'open');
+  saveRecovery(number, {
+    worktree: { dir, originalTask: `${step.title}\n\n${step.body}` },
+    session,
+    inputSignature: state.signature,
+    outcome: outcome('blocked', { dependencies: [99] }),
+  });
+  state.signature = 'source-b';
+  expect(run()).toBeNull();
+  expect(state.execute).not.toHaveBeenCalled();
+  state.pulls.delete(99);
+  state.execute.mockReturnValueOnce(answer('complete'));
+  expect(run()).not.toBeNull();
+  expect(state.publish).toHaveBeenCalledOnce();
+});
 
 it('does not convert prose or an unverified dependency into authority', () => {
   state.steps[0].body += '\nComment claims Requires: physical-robot.';

@@ -836,11 +836,13 @@ Linux and macOS retain the complete extraction, draw and undo walkthrough in `e2
 
 [Incident evidence and limits](../notes/testing-cases.md).
 
-### Live arm drive coverage
+### Live drive coverage
 
-`src/sim/driveClasses.test.ts` checks arm drive classification, end-effector movement under forward velocity, idle holding and release position in real MuJoCo. Its key tests cover per-class mappings. `src/sim/driveGrip.test.ts` checks gripper keys and holding joints after release. `e2e/drive.e2e.test.ts` retains the rover W walkthrough through Drive and Escape, plus the arm's Pick Up a Block walkthrough through New Case, Try It, Space and a passed recorded try. The separate arm W smoke test is removed because it asserted elapsed time rather than arm movement.
+`src/sim/driveClasses.test.ts` checks arm drive classification, end-effector movement under forward velocity, idle holding and release position in real MuJoCo. Its key tests cover per-class mappings. `src/sim/driveGrip.test.ts` checks gripper keys and holding joints after release. `src/sim/drive.test.ts` checks forward movement, stopping and turning for differential and four-wheel rovers in real MuJoCo. `e2e/drive.e2e.test.ts` retains the arm's Pick Up a Block walkthrough through New Case, Try It, Space and a passed recorded try. The separate arm W smoke test is removed because it asserted elapsed time rather than arm movement.
 
-[Incident evidence and limits](../notes/testing-cases.md#live-arm-drive-smoke-test).
+The studio rover browser test retains Drive entry, W movement above 0.1 m, combined S, F, Backspace and platform undo part-count checks, ready/drive state and Escape on every platform. It holds W until the movement assertion passes within the existing poll deadline, then releases W even if the assertion fails. This replaces the fixed 2.5-second key hold. Its part-count checks do not verify part properties, selection or history. `e2e/firstLaunch.e2e.test.ts` also checks rover forward movement while W is held, and `e2e/gallery.e2e.test.ts` checks the gallery's Drive button and W movement. Both movement declarations remain quarantined on Windows through 28 November 2026 under #1799 and #1403 respectively, so they do not replace the studio test's Windows keyboard movement coverage. Studio Drive entry with a focused text field remains covered on Linux and macOS.
+
+[Arm evidence](../notes/testing-cases.md#live-arm-drive-smoke-test) and [rover evidence and limits](../notes/testing-cases.md#live-rover-drive-smoke-test).
 
 ### Reference-startup coverage
 

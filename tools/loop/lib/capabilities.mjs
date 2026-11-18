@@ -7,6 +7,7 @@ export const REQUIREMENTS = [
   ...AVAILABLE,
   'windows-host',
   'windows-diagnostics',
+  'windows-unpublished-diagnostics',
   'physical-robot',
   'physical-printer',
   'ios-device',

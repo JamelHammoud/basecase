@@ -2,6 +2,16 @@
 
 Implementation: [Cable routing](../guide/build.md#performance-cable-routing). Shared requirements: [Performance](../guide/performance.md).
 
+## Connector exits accumulate the nearest housing boundary
+
+The whole-app search for `ownerExitDistance` and local boundary distances found one housing-exit implementation. Both bus and power routes reach it through `routePath`. It retains the nearest boundary in axis order instead of building a flattened distance list from three axis-result lists. The outside-housing fast path still returns before this scan.
+
+Each endpoint that reaches the boundary scan previously constructed four temporary arrays. The replacement constructs none for this scan, removing eight arrays when both endpoints need it. Local-coordinate transforms and endpoint coordinate arrays remain. These are source-derived allocation counts, not timings or a claim about complete routing latency.
+
+A local scratch comparison matched complete polylines and refusals against the preceding implementation for 240 routes. It varied five housing sizes, eight axis directions including near-parallel components, three local rotations and a neighbouring blocker. Every input stayed unchanged. Existing `routeGeometry.test.ts` retains extended and rotated housing exits, mandatory-exit obstructions, anchors and deterministic detours. No new test, timeout, retry or quarantine was needed.
+
+This changes no action, label or visible state. The cable-routing help steps and screenshots remain accurate.
+
 ## Detour labels share one match buffer
 
 The whole-app search found one `routeTopology` implementation and one production caller in `routeAnalysis.ts`. Both bus and power routes use it for every sampled pose. The matcher now visits interior points directly and retains one label buffer per query. Sorting, duplicate labels, matching tolerance, point order and corner preparation remain unchanged.

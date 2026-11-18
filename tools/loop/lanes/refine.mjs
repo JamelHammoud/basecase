@@ -9,6 +9,7 @@ import { ideaOf, mergedRefines, pullNumberOf, recentRefinesText, refineIdeas } f
 import { run } from '../lib/sh.mjs';
 import { heldBy, stepAreas, stepAreasText } from '../lib/stepAreas.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
+import { runWithinRefinementBudget } from '../lib/refinementBudget.mjs';
 
 export const schedule = {
   agent: true,
@@ -87,7 +88,7 @@ function publishUnlessHeld(output, { worktree, log, deps }) {
   return url;
 }
 
-export default function refine({ log }, deps = LIVE) {
+function runRefinement({ log }, deps) {
   const worktree = deps.openBranch('refine', 'fit');
 
   try {
@@ -117,6 +118,10 @@ export default function refine({ log }, deps = LIVE) {
   } finally {
     deps.close(worktree);
   }
+}
+
+export default function refine(context, deps = LIVE) {
+  return runWithinRefinementBudget(() => runRefinement(context, deps), context.log);
 }
 
 export function selectWork({ slot }) {

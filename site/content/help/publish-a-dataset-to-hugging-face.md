@@ -38,8 +38,10 @@ Publish recorded tries or labeled images to a Hugging Face dataset repo, with Le
 ![The Accounts pane with a token saved](/help/publish-a-dataset-to-hugging-face/accounts.png)
 
 4. In **Library** ▸ **Datasets**, click the dataset to publish.
-5. Click **Publish to Hugging Face**.
+5. In the dataset’s upper pane, click **Publish to Hugging Face**.
 6. When the toast says "Published to" followed by the dataset's name, click **Open** to see the dataset on the Hub.
+
+In an image dataset, scroll within the upper pane if training controls or results put the publishing button out of view.
 
 To make a dataset first, follow [Make a dataset from tries](/help/make-a-dataset-from-tries) or [Import an image dataset](/help/import-an-image-dataset).
 

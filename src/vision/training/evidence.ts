@@ -1,3 +1,5 @@
+import { validateRequirementEvidence } from './requirementRetention';
+import type { RequirementMeasurement } from './requirementTypes';
 import { decodeMask, encodeMask } from '../imageMasks';
 import { canonicalTest } from './evaluationIdentity';
 import { sha256 } from '../../cases/tries';
@@ -7,6 +9,8 @@ import type { TrainingEvaluation, TrainingEvaluationInput } from './types';
 import type { EvidencePrediction, ImageDiagnostics, PredictionEvidence } from './evidenceTypes';
 import type { FrozenImageSample } from '../../datasets/snapshotImages';
 import { isFrozenImageSample } from '../../datasets/snapshotTypes';
+
+class EvidenceLimitError extends Error {}
 
 export const EVIDENCE_MAX_FRAMES = 1000;
 export const EVIDENCE_MAX_BYTES = 3 * 1024 * 1024;
@@ -37,7 +41,7 @@ function checkedMask(mask: NonNullable<VisionDetection['mask']>) {
       runs += Number(value !== previous);
       previous = value;
 
-      if (runs > 131072) throw new Error('Compare masks with at most 131,072 runs.');
+      if (runs > 131072) throw new EvidenceLimitError('Compare masks with at most 131,072 runs.');
     }
   }
 
@@ -55,7 +59,7 @@ function encodeResult(result: VisionResult, remaining: number): EvidencePredicti
 
       bytes += new TextEncoder().encode(JSON.stringify(encoded)).byteLength;
 
-      if (bytes > remaining) throw new Error('Prediction evidence exceeds 3 MiB per model.');
+      if (bytes > remaining) throw new EvidenceLimitError('Prediction evidence exceeds 3 MiB per model.');
 
       return encoded;
     }),
@@ -82,11 +86,13 @@ export async function buildEvidence({
   realTest,
   testHash,
   diagnostics,
+  requirements,
 }: {
   input: TrainingEvaluationInput;
   realTest: FrozenImageSample[];
   testHash: string;
   diagnostics: ImageDiagnostics[][];
+  requirements?: RequirementMeasurement[];
 }): Promise<PredictionEvidence> {
   const predictions = new Map(input.predictions.map((entry) => [`${entry.frameSetId}:${entry.frameId}`, entry.result]));
   const evidence: PredictionEvidence = {
@@ -96,6 +102,7 @@ export async function buildEvidence({
     testHash,
     groupsHash: await imageGroupsHash(input.snapshot),
     frames: [],
+    ...(requirements ? { requirements } : {}),
   };
   let bytes = evidenceSize(evidence) + 64;
 
@@ -108,7 +115,7 @@ export async function buildEvidence({
 
     bytes += new TextEncoder().encode(JSON.stringify(frame)).byteLength + 1;
 
-    if (bytes > EVIDENCE_MAX_BYTES) throw new Error('Prediction evidence exceeds 3 MiB per model.');
+    if (bytes > EVIDENCE_MAX_BYTES) throw new EvidenceLimitError('Prediction evidence exceeds 3 MiB per model.');
 
     evidence.frames.push(frame);
   });
@@ -118,8 +125,21 @@ export async function buildEvidence({
   return evidence;
 }
 
+export async function trainingEvidence(
+  input: Parameters<typeof buildEvidence>[0],
+): Promise<Pick<TrainingEvaluation, 'evidence' | 'requirementEvidenceFailure'>> {
+  try {
+    return { evidence: await buildEvidence(input) };
+  } catch (error) {
+    if (!(error instanceof EvidenceLimitError) || !input.input.task.requirements?.length) throw error;
+
+    return { requirementEvidenceFailure: 'resources' };
+  }
+}
+
 export async function verifyEvidence(report: TrainingEvaluation) {
   validateEvidence(report);
+  validateRequirementEvidence(report);
 
   const evidence = report.evidence;
 

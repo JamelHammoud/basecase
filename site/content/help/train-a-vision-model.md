@@ -26,7 +26,7 @@ Fit a model to your labeled images in the desktop app and compare it with the cu
 
 Your images must have separate training and validation groups. Basecase reserves an eligible real recording group for testing before freezing the working dataset.
 
-To find failures within declared conditions, cameras or sources, follow [Compare vision models by condition](/help/compare-vision-conditions).
+To find failures within declared conditions, cameras or sources, follow [Compare vision models by condition](/help/compare-vision-conditions). To make a group part of retention, [set requirements for vision model retention](/help/require-vision-conditions) before training.
 
 1. In **Library**, open an image dataset under **Datasets**. To bring in labeled images, follow [Import an image dataset](/help/import-an-image-dataset).
 2. In **Vision task**, choose **Detect Objects**, **Segment Objects**, **Find Keypoints** or **Classify Images**.
@@ -49,7 +49,7 @@ To stop a run, click **Stop Training**. You can also choose **Train** or **Stop 
 
 Training freezes the working dataset's images, labels and split assignments as a version. To train from a saved version, choose it in **Dataset version** before clicking **Train**. Accept suggested labels before training. Classification needs at least two classes and exactly one annotation per image, and keypoint training needs named landmarks.
 
-Basecase keeps a candidate only when it beats the incumbent on the same held-out real test images and meets your recorded limits. The first run compares with the initial model before training. A tie, a limit failure or a run without eligible real test images saves a checkpoint. Generated Case images and frames extracted from simulated tries don't count as real test evidence.
+Basecase keeps a candidate only when it beats the incumbent on the same held-out real test images and meets your recorded limits and declared requirements. The first run compares with the initial model before training. A tie, a limit failure or a run without eligible real test images saves a checkpoint. Generated Case images and frames extracted from simulated tries don't count as real test evidence.
 
 ![A checkpoint after a candidate scored below its incumbent, beside the previously retained model](/help/train-a-vision-model/checkpoint.png)
 

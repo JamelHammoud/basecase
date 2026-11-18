@@ -39,12 +39,14 @@ The dataset must contain tries without images. A dataset with images offers **Tr
 
 1. Open a Case and drive it with **Try It** until at least five tries pass. For steps, see [Try a Case](/help/try-a-case).
 2. Under **Results**, click **Make Dataset**. The dataset opens over the canvas. To gather tries from a Library search instead, see [Make a dataset from tries](/help/make-a-dataset-from-tries).
-3. Click **Train from Tries**.
+3. In the dataset’s upper pane, click **Train from Tries**.
 
 ![Touch a Point open as a dataset, with its total time, Export Dataset, Publish to Hugging Face and Train from Tries](/help/make-a-dataset-from-tries/dataset.png)
 
 4. When a count appears under the buttons, click **Done**.
 5. Under **Train**, click **Try** on the Case's row.
+
+Scroll within the dataset’s upper pane if the count or failure results extend beyond it.
 
 While it trains, the Case's row under **Train** shows the progress. On the arm-3dof test robot, ten 4-second tries trained in under 3 seconds, and the 32 runs that judge the policy took about 6 seconds more.
 

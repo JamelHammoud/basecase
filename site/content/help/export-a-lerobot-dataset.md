@@ -32,9 +32,11 @@ LeRobot is Hugging Face's open library for robot learning, and GR00T is NVIDIA's
 
 1. Open a Case and record tries with **Try It** until at least one passes. To learn how, see [Try a Case](/help/try-a-case).
 2. Under **Results**, click **Make Dataset**. The dataset opens over the canvas. To gather tries from other scenes or Cases, see [Make a dataset from tries](/help/make-a-dataset-from-tries).
-3. Click **Export Dataset**.
+3. In the dataset’s upper pane, click **Export Dataset**.
 
 ![Touch a Point open as a dataset, with its total time, Export Dataset, Publish to Hugging Face and Train from Tries](/help/make-a-dataset-from-tries/dataset.png)
+
+In an image dataset, scroll within the upper pane if training controls or results put the export button out of view.
 
 A toast shows "Exporting dataset…" and then tells you how many tries went in. The zip saves to your downloads, named after the dataset. For example, Touch the Dots exports as `touch-the-dots-dataset.zip`.
 

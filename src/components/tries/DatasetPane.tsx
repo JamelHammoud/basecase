@@ -46,7 +46,7 @@ interface DatasetPaneProps {
 }
 
 export const DatasetPane: React.FC<DatasetPaneProps> = ({ dataset, members, actions }) => (
-  <div className="px-[12px] pb-3 flex flex-col gap-2.5" data-testid="dataset-pane">
+  <div className="px-[12px] pb-3 flex flex-col gap-2.5 shrink-0 max-h-[50%] overflow-y-auto" data-testid="dataset-pane">
     <MetaLine className="flex-wrap text-[12.5px] text-white/60 tabular" items={statItems(dataset, members)} />
     {dataset.versions.length > 0 && (
       <Select
@@ -63,7 +63,7 @@ export const DatasetPane: React.FC<DatasetPaneProps> = ({ dataset, members, acti
         }
       />
     )}
-    {actions.vision && <DatasetVisionFields vision={actions.vision} />}
+    {actions.vision && <DatasetVisionFields dataset={dataset} vision={actions.vision} />}
     <div className="flex flex-wrap gap-1.5">
       {dataset.query && !dataset.selectedVersion && (
         <Button size="sm" icon={<RefreshIcon className="w-4 h-4" />} onClick={actions.update}>

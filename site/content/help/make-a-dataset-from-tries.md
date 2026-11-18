@@ -71,11 +71,11 @@ To gather only selected tries, hold [[⌘]] or [[⇧]] as you select them. Selec
 
 ## The dataset
 
-Above its tries, the dataset shows their total running time. After saving a version, use **Dataset version** to choose **Working Dataset** or a saved version. If it also holds images, it shows their image and class counts and an **Images** section. Datasets saved before class counts were added show only the image count.
+Above its tries, the dataset shows their total running time. The controls and training results occupy a separate scrolling pane above the image and try lists. After saving a version, use **Dataset version** to choose **Working Dataset** or a saved version. If it also holds images, it shows their image and class counts and an **Images** section. Datasets saved before class counts were added show only the image count.
 
 In **Working Dataset**, click **Label Objects** under an image to edit its object labels. See [Label objects in camera frames](/help/label-objects-in-camera-frames). Saved image tiles keep their frozen labels read-only. A [vision model comparison](/help/inspect-vision-comparisons) can open the matching current image for editing while keeping its historical labels unchanged.
 
-To group selected images by supplied operating conditions, follow [Compare vision models by condition](/help/compare-vision-conditions).
+To group selected images by supplied operating conditions, follow [Compare vision models by condition](/help/compare-vision-conditions). To make a condition, camera or class part of retention, [set requirements for vision model retention](/help/require-vision-conditions) before training.
 
 ![Touch a Point open as a dataset, with its total time, Export Dataset, Publish to Hugging Face and Train from Tries](/help/make-a-dataset-from-tries/dataset.png)
 

@@ -17,6 +17,12 @@ import { errorMessage } from '../../utils/errorMessage';
 const inspection = inspectionContext();
 
 export const evaluationJobs = {
+  verifyRequirements: async (input: { candidate: TrainingEvaluation; incumbent: TrainingEvaluation }) => {
+    await verifyEvidence(input.candidate);
+    await verifyEvidence(input.incumbent);
+
+    return reply(true);
+  },
   sourceIdentity: async ({ bytes, stored }: { bytes: Uint8Array; stored: StoredTry }) =>
     reply(await inspectionSourceIdentity(bytes, stored)),
   sourceRecording: async (input: Parameters<typeof restoreInspectionSource>[0]) => {

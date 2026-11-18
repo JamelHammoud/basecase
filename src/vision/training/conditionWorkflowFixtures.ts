@@ -12,6 +12,9 @@ import type { TrySplit } from '../../cases/tryFile';
 
 interface Workflow {
   name: string;
+  classNames?: [string, string];
+  landmarks?: [string, string];
+  conditionAlias?: { from: string; to: string };
   kind: TrainingKind;
   mode: 'brightness' | 'small' | 'occluded' | 'class-error' | 'mask' | 'points' | 'classification' | 'import';
   group: ImageGroup;
@@ -151,7 +154,7 @@ function target(test: Workflow, index: number) {
     keypoints: [
       { name: 'center', x: 4, y: 4, visible: true },
       { name: 'hidden', x: -1, y: -1, visible: false },
-    ],
+    ].map((point, index) => ({ ...point, name: test.landmarks?.[index] ?? point.name })),
   });
 }
 
@@ -169,8 +172,13 @@ export async function conditionWorkflowFixture(test: Workflow) {
       { id: 2, name: 'Refrigerator' },
     ];
 
+  if (test.classNames)
+    set.classes.forEach((category, index) => {
+      category.name = test.classNames![index];
+    });
+
   set.classes.forEach((category) => {
-    category.keypoints = ['center', 'hidden'];
+    category.keypoints = test.landmarks ?? ['center', 'hidden'];
   });
   set.frames = await Promise.all(
     splits.map(async (split, index) => ({
@@ -206,6 +214,15 @@ export async function conditionWorkflowFixture(test: Workflow) {
           }),
     })),
   );
+
+  if (test.conditionAlias) {
+    const rename = (name: string) => (name === test.conditionAlias!.from ? test.conditionAlias!.to : name);
+
+    set.conditions = [...new Set(set.conditions.map(rename))];
+    set.frames.forEach((frame) => {
+      frame.conditions = frame.conditions?.map(rename);
+    });
+  }
 
   const sets = [set];
 
@@ -272,7 +289,7 @@ export async function conditionModel(test: Workflow, candidate: boolean) {
     id: `condition-${hash.slice(0, 24)}`,
     kind: test.kind,
     adapter: 'generic',
-    classes: test.kind === 'classify' ? ['Microwave', 'Refrigerator'] : ['Cup', 'Plate'],
+    classes: test.classNames ?? (test.kind === 'classify' ? ['Microwave', 'Refrigerator'] : ['Cup', 'Plate']),
     input: { width: 2, height: 2, layout: 'nchw', mean: [0, 0, 0], std: [1, 1, 1], scale: 1 / 255 },
     model: { source: 'local', sha256: hash, bytes: bytes.length },
   };

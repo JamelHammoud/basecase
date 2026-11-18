@@ -964,7 +964,7 @@ The operator-camera browser check runs on Linux and macOS. Its Windows live-read
 
 ### Hung code panel shutdown
 
-`cases/console/codeBridge.test.ts` retains heartbeat, hello deadline, page-stall recovery and drive-release coverage on every platform. The spinning-panel browser test in `e2e/caseCode.e2e.test.ts` remains active on Linux and macOS.
+`cases/console/codeBridge.test.ts` retains heartbeat, hello deadline, page-stall recovery and drive-release coverage on every platform. The slow spinning-panel browser test and its Windows quarantine entry have been removed. Browser frame progress, infinite-loop iframe disposal and renderer shutdown are no longer asserted by that walkthrough.
 
 [Incident evidence and limits](../notes/testing-case-code.md).
 

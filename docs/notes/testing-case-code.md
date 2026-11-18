@@ -8,7 +8,15 @@ The separate shortcut-and-message test in `e2e/caseCodeAgent.e2e.test.ts` took 4
 
 ## Hung code panel shutdown
 
-The spinning-panel test in `e2e/caseCode.e2e.test.ts` is quarantined only on Windows through 28 November 2026 under [#1137](https://github.com/JamelHammoud/basecase/issues/1137). Run 43736502131 showed the error and removed the iframe but recorded no `about:blank` navigation on either attempt, followed by both 120 s `browser.close()` hook timeouts. The preceding Windows run 43735086890 passed in 17.065 s with unchanged test, frame, bridge, harness, dependencies and e2e configuration. Linux passed at the failing commit in 15.116 s. The navigation or renderer shutdown cause is not established. Restoring it requires Windows frame-lifecycle and renderer-process traces and at least ten runs before and after at equal load.
+The spinning-panel test in `e2e/caseCode.e2e.test.ts` was quarantined only on Windows through 28 November 2026 under [#1137](https://github.com/JamelHammoud/basecase/issues/1137). Run 43736502131 showed the error and removed the iframe but recorded no `about:blank` navigation on either attempt, followed by both 120 s `browser.close()` hook timeouts. The preceding Windows run 43735086890 passed in 17.065 s with unchanged test, frame, bridge, harness, dependencies and e2e configuration. Linux passed at the failing commit in 15.116 s. The navigation or renderer shutdown cause is not established. Before removal, restoration required Windows frame-lifecycle and renderer-process traces and at least ten runs before and after at equal load.
+
+### Slow spinning-panel test removal
+
+[#1780](https://github.com/JamelHammoud/basecase/issues/1780) reports 33 seconds for the spinning-panel walkthrough in [run 44245137178](https://github.com/JamelHammoud/basecase/actions/runs/44245137178). The report does not isolate startup, the watchdog wait or cleanup. The test opened the studio, loaded a rover, entered Run Case and ran an infinite-loop script before checking the error, iframe removal, `about:blank` navigation and Escape.
+
+The walkthrough, its frame-count helper, spinning fixture and Windows quarantine entry are removed. `src/cases/console/codeBridge.test.ts` already checks missed heartbeats, the ten-second hello deadline, page-stall recovery, failure reporting and drive release with a controlled clock. No product code, deadline or retry changes. This removes the reported 33-second declaration rather than claiming a measured shard speedup.
+
+The retained unit tests do not establish browser frame progress during an infinite loop, actual iframe disposal or renderer-process shutdown. Those browser-specific checks are now absent on every platform. The Windows incident above remains historical evidence, rather than a pending quarantine restoration condition for a deleted declaration. Browser execution is left to CI, with only fast focused checks run locally.
 
 ## Code joystick
 

@@ -2,6 +2,16 @@
 
 Knowledge preserved from code comments. Complements AGENTS.md; nothing here repeats it.
 
+## Repair evidence by platform and path
+
+Three direction comments on November 17 distinguish failures that share an owner or helper without an established shared cause:
+
+- [#1400](https://github.com/JamelHammoud/basecase/issues/1400#issuecomment-6941557492) adds a Linux setup timeout to the recorded-video worker's Windows investigation. The unchanged test passed Linux in 9,088 ms in the preceding full green run, then exhausted its 15,000 ms setup hook. The log cannot distinguish bundling, server startup, Chrome launch or worker readiness. Earlier Linux helper measurements do not explain either recurrence. [Recorded-video setup](recorded-video-worker-setup.md) retains the measurements and restoration conditions.
+- [#1377](https://github.com/JamelHammoud/basecase/issues/1377#issuecomment-6941557824) adds a Windows prompt-delivery failure to the existing Linux syntax-error investigation. Both Windows attempts reached the filled composer but observed no sent prompt. The preceding Windows run passed in 15,816 ms with the walkthrough and composer unchanged. Draft, focus, shortcut dispatch, connection, preparation and delivery remain distinct candidate stages. [Case code testing](testing-case-code.md) owns the evidence.
+- [#1364](https://github.com/JamelHammoud/basecase/issues/1364#issuecomment-6941558194) adds the reusable chest's Windows recording failure to the lid and drawer owner. Each attempt used a fresh app and retained zero tries after Try Reference. Linux passed the same revision in 31,415 ms. Startup, recording, automatic finish, scoring and persistence are not distinguished by that log. [Case testing](testing-cases.md) owns that path's evidence.
+
+Each comment requires separate traces and ten baseline and ten candidate observations at equal load on the affected platform before restoration. This lesson strengthens the existing CI repair rule without adding a runner check, wait or measurement to the repair session. Causal attribution and whether a trace proves a user path require evidence review, so a static lint cannot enforce them. The subsystem notes retain their current quarantine and acceptance conditions. This documentation change measures no failure rate and restores no test.
+
 ## Pull request metadata repair
 
 Repair [#1713](https://github.com/JamelHammoud/basecase/pull/1713) opened at 21:36:41 UTC on November 17, 2026. Its 21:39:01 review reported one blocker: the body omitted a Why section explaining `.github/workflows/check.yml`. The repair template rendered failure, cause, summary and checks, but discarded the supplied `why` field. The fix template had the same omission. Other templates already placed the field under their own headings.

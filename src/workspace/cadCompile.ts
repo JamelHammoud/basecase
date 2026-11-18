@@ -4,23 +4,17 @@ import type { ScenePart } from '../types/robotics';
 import type { CadLanguage, RenderedCad } from '../utils/platform/types';
 import { patchEveryState } from './docHistory';
 import type { DocState } from './types';
+import { isCompiled, type CompiledCad } from '../utils/platform/cadResult';
+
+export { isCompiled, type CompiledCad } from '../utils/platform/cadResult';
 
 type PartCad = NonNullable<ScenePart['cad']>;
-
-export interface CompiledCad extends RenderedCad {
-  ok: true;
-  positions: number[];
-  indices: number[];
-}
 
 export interface CadCompileJob {
   key: string;
   language: CadLanguage;
   code: string;
 }
-
-export const isCompiled = (rendered: RenderedCad): rendered is CompiledCad =>
-  rendered.ok === true && !!rendered.positions?.length && !!rendered.indices?.length;
 
 export const cadKey = (cad: Pick<PartCad, 'language' | 'code'>) => `${cad.language}\n${cad.code}`;
 

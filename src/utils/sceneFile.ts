@@ -5,6 +5,7 @@ import { readSkillBundle } from '../skills/bundle';
 import type { ProjectSettings, SavedSceneRecord, SceneAnnotation, ScenePart } from '../types/robotics';
 import { validSheetFields } from '../sheet/validation';
 import { validBoardDefinition } from '../wiring/boardValidation';
+import { validateParameterScene } from './designParameters/verification';
 import {
   restoreWorldAssets,
   sceneWorldAssets,
@@ -155,6 +156,7 @@ export async function decodeSceneFile(bytes: Uint8Array): Promise<SharedScene> {
     throw new Error('Repair the board definition before placement.');
 
   validateFixtureImports(project?.cases);
+  validateParameterScene({ parts: scene.parts, project });
   sceneWorldAssets(project, assets);
 
   return {

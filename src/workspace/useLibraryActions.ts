@@ -8,6 +8,7 @@ import { sceneModel } from './libraryModels';
 import { canCaptureCaseFixture } from '../cases/fixtureAssembly';
 import { captureFixtureInWorker } from '../cases/fixtureCaptureClient';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { refuseParameterTransfer } from '../utils/designParameters/transfers';
 
 function useLibraryModels({ studio, showToast }: WorkspaceCore) {
   'use memo';
@@ -71,6 +72,8 @@ export function useLibraryActions(core: WorkspaceCore) {
     const single = mode === 'selected' && selectedParts.length === 1 ? selectedPart : null;
 
     try {
+      refuseParameterTransfer(sourceParts);
+
       const joints = core.project.joints ?? [];
       const screenshot = () => viewportRef.current?.captureScreenshot();
       const model = canCaptureCaseFixture(sourceParts, joints)

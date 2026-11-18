@@ -183,6 +183,7 @@ export async function runReadiness({
     {
       parts,
       decisions: project.readiness,
+      designParameters: project.designParameters,
       fingerprint: geometry.timedOut ? UNSETTLED_FINGERPRINT : fingerprint,
       rows: [...engineering.rows, ...electrical.rows, ...cases],
       wiring: engineering.wiring,

@@ -30,6 +30,7 @@ import { useSketchSupportResults } from './useSketchSupportResults';
 import { projectFromSeed } from './helpers';
 import type { CommitParts, DocState, Snapshot, WorkspaceSeed } from './types';
 import { mountedBoardParts } from '../wiring/boardMounts';
+import { permittedParameterEdit } from './parameterEditGuard';
 
 const POSE_FOLD_MS = 700;
 
@@ -59,6 +60,8 @@ function useProjectCommits(commitProject: CommitProject, projectRef: RefObject<P
   'use memo';
 
   return {
+    commitParameters: (parts: ScenePart[], designParameters: ProjectSettings['designParameters']) =>
+      commitProject({}, (p) => ({ ...p, designParameters }), parts),
     commitVersion: (parts: ScenePart[], project: ProjectSettings, scene: Snapshot['scene']) =>
       commitProject({ project: projectRef.current, scene }, () => project, parts),
     commitBoard: (parts: ScenePart[], electronicsBoard: ProjectSettings['electronicsBoard']) =>
@@ -83,7 +86,7 @@ function useProjectCommits(commitProject: CommitProject, projectRef: RefObject<P
   };
 }
 
-export function useSceneDocument(seed?: WorkspaceSeed) {
+export function useSceneDocument(seed?: WorkspaceSeed, refused?: (reason: string) => void) {
   const projectState = useProjectState(seed);
   const { projectRef, updateProjectNow, setProjectNow } = projectState;
   const [doc, setDoc] = useState<DocState>(() => (seed ? { ...EMPTY_DOC, parts: seed.parts } : EMPTY_DOC));
@@ -125,14 +128,16 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     const now = tracked();
     const { joints } = now;
     const d = docRef.current;
+    const edited = editWithOperands(d.parts, updater);
+
+    if (!permittedParameterEdit(edited, projectRef.current, refused)) return;
 
     if (live) {
-      writeDoc(liveEdit(d, editWithOperands(d.parts, updater)));
+      writeDoc(liveEdit(d, edited));
 
       return;
     }
 
-    const edited = editWithOperands(d.parts, updater);
     const board = projectRef.current.electronicsBoard;
     const hostChanged =
       board && edited.find((part) => part.id === board.partId) !== d.parts.find((part) => part.id === board.partId);

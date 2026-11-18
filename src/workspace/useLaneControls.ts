@@ -68,6 +68,7 @@ export function useLaneControls(options: LaneControlOptions) {
   useRunFinished(options);
 
   const stop = (id = lanes.currentId) => {
+    core.parameters.cancel();
     flagsOf(id).stopped = true;
     platformBridge.cancelAcp(keyOf(id)).catch(() => {});
   };

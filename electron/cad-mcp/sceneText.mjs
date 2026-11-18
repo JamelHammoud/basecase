@@ -9,6 +9,7 @@ const vec = (a, digits = 2) => `[${a.map((v) => num(v, digits)).join(',')}]`;
 const isZero = (a) => !a || a.every((v) => v === 0);
 
 const links = (p) => [
+  p.dimensions && `dimensions=${JSON.stringify(p.dimensions)}`,
   p.operandOf && `operand-of=${p.operandOf}`,
   p.operands && `operands=[${p.operands.map((o) => o.id).join(',')}]`,
   p.mirrorOf && `mirror-of=${p.mirrorOf}`,
@@ -112,10 +113,20 @@ const consoleLines = (consoles) =>
     ? ['Case consoles, as they stand with the person’s own changes:', ...consoles.map((c) => JSON.stringify(c))]
     : [];
 
+const boundParts = (part) => [
+  ...(part.dimensions?.length ? [`${part.id}:${part.dimensions.length}`] : []),
+  ...(part.operands ?? []).flatMap(boundParts),
+];
+
 export function sceneText(snap, filter = {}) {
   const filtered = !!(filter.ids?.length || filter.group);
   const picked = pickParts(snap.parts, filter);
+  const bound = picked.flatMap(boundParts);
   const marks = [
+    ...(bound.length
+      ? [`Bound dimensions: ${bound.slice(0, IDS_PER_GROUP).join(' ')}${bound.length > IDS_PER_GROUP ? ' ...' : ''}`]
+      : []),
+    ...(snap.parameters?.length ? [`Parameters: ${JSON.stringify(snap.parameters)}`] : []),
     ...(snap.marks?.length ? ['Marks:', ...snap.marks.map((m) => JSON.stringify(m))] : []),
     ...consoleLines(snap.consoles),
   ];

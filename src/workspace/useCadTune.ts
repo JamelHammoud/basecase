@@ -9,9 +9,16 @@ export function useCadTune({ docs, showToast, workspaceId }: WorkspaceCore) {
   const queues = useRef(new Map<string, Promise<void>>());
 
   const run = async (id: string, values: Record<string, number>) => {
-    const source = partsRef.current.find((p) => p.id === id)?.cad;
+    const part = partsRef.current.find((p) => p.id === id);
+    const source = part?.cad;
 
     if (!source) return;
+
+    if (part?.dimensionBindings?.some((binding) => binding.kind === 'cad' && Object.hasOwn(values, binding.target))) {
+      showToast('Edit the shared parameter or unbind this dimension.', { tone: 'error' });
+
+      return;
+    }
 
     try {
       const tuned = tunedCad(await platformBridge.tuneCadPart({ workspaceId, id, values }), source.expect);

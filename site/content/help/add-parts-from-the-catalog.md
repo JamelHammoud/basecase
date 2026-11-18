@@ -82,6 +82,8 @@ You can choose any length from the shortest stock length up to 300 mm, in 0.5 mm
 
 Width and height can be up to 2000 mm, and depth up to 600 mm.
 
+A dimension bound to a shared parameter can't be typed under **Size**. Edit its parameter or unbind it, as described in [Link dimensions with shared parameters](/help/link-dimensions-with-shared-parameters).
+
 You can also press [[A]] to open Shapes, and drag a shape onto the canvas instead of clicking it.
 
 **Hole**, **Slot** and **Pivot Axis** are in [[⌘K]]. A Hole or Slot is a Cutout: overlap it with a part, then subtract it. To learn how, see [Cut, join and intersect parts](/help/cut-join-and-intersect-parts).

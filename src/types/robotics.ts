@@ -181,6 +181,7 @@ export interface ScenePart extends PartRelations, BooleanFields, SheetFields {
   jointId?: string;
   cameraLens?: Lens;
   sketch?: PartSketch;
+  dimensionBindings?: import('../utils/designParameters/types').DimensionBinding[];
 }
 
 export type { PartPrint, PrintQuote, PrintRecord } from './print';
@@ -201,6 +202,7 @@ export type { RobotJoint } from './joint';
 export type { BuildGuideRecord, ProjectRecords } from './projectRecords';
 
 export interface ProjectSettings extends ProjectRecords, PrintService, ProjectBudgets {
+  designParameters?: import('../utils/designParameters/types').DesignParameter[];
   electronicsBoard?: import('../wiring/boardTypes').ElectronicsBoard;
   printer: string;
   material: PrintMaterial;

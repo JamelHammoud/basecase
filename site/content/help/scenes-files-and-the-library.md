@@ -34,6 +34,8 @@ A scene is one design. It holds your parts, joints, poses, comments and goal, pl
 
 A scene also keeps its [electronics board](/help/fit-an-electronics-board), including mounting constraints, placement identities and locks. Those settings travel in its `.basecase` file.
 
+[Shared parameters and dimension bindings](/help/link-dimensions-with-shared-parameters) also save with the scene and travel in its `.basecase` file. A parameter edit and its regenerated geometry undo together.
+
 Each imported world is stored once per scene, including its mesh, colliders, textures and optional splat. Cases in that scene share the same world data.
 
 Basecase saves your scene 1.2 seconds after your last change, and again when you switch tabs, close a scene or quit. If you open a blank scene and close it without making a change, Basecase discards it.

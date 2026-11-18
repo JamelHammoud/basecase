@@ -28,6 +28,7 @@ import { useRepair } from './useRepair';
 import { useLatestRef } from '../utils/useLatestRef';
 import { useWorkspaceTools } from './useWorkspaceTools';
 import { useWorkspaceFrameLabels } from './useWorkspaceFrameLabels';
+import { useDesignParameters } from './useDesignParameters';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -80,11 +81,11 @@ const versionSeedLoader =
 export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWorkspaceProps) {
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const scene = useSceneMeta(seed);
-  const docs = useSceneDocument(seed);
-  const documentContext = { scene, docs, studio };
-  const { parts, project, projectRef } = docs;
   const toasts = useToast(studio.openSettings);
   const { showToast } = toasts;
+  const docs = useSceneDocument(seed, (reason) => showToast(reason, { tone: 'error' }));
+  const documentContext = { scene, docs, studio };
+  const { parts, project, projectRef } = docs;
 
   useRobotUpgrade(docs, showToast);
   useCadCompile(docs);
@@ -157,6 +158,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   return {
     active,
+    parameters: useDesignParameters({ docs, sceneId: scene.sceneId, showToast }),
     versions,
     workspaceId,
     vision: useVisionScope(),

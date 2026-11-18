@@ -2,6 +2,46 @@
 
 Knowledge preserved from code comments. Complements AGENTS.md; nothing here repeats it.
 
+## Vitest cache ownership
+
+Step #1759 follows the individual `ENOTEMPTY` observation recorded under the earlier unit-shard repair. That named check stopped before tests while clearing a cache reached through linked `node_modules`. A scratch preload assigning `fsModuleCachePath` per workspace let the same named check pass. Those observations do not establish an abort rate or explain product startup failures.
+
+Installed Vitest 5.0.5 defaults its persistent module cache to `node_modules/.vitest-cache`. Its integrity check reads installation metadata, including `node_modules/.package-lock.json`, and recursively deletes the cache when that hash changes. It also hashes source contents and configuration dependencies. The literal `import.meta.glob(` bailout remains essential for discovery additions and removals. A root `package-lock.json` edit alone is not the installed-dependency invalidation exercised here.
+
+The shared configuration helper assigns worktree-local module and Vite caches to reusable, exclusively claimed slots. This also isolates results and optimizer output. Slot leases sit outside the directories Vitest clears. No process waits for an occupied slot. Normal exit releases its lease, including after an assertion or configuration failure. A forced termination may reserve a slot until the idle workspace cache is removed. We deliberately avoid reclaiming a lease by PID or age, which could take ownership from a live invocation. Old tool generations also remain local until cache or worktree cleanup.
+
+### Bounded macOS observation
+
+The retained comparison ran on the task's macOS arm64 host with Node v26.13.0, Vite 8.3.5 and Vitest 5.0.5. Each arm creates two temporary linked Git worktrees with one real shared dependency directory. Package directory links resolve to the installed packages. Installation metadata and caches belong to that disposable directory, so the experiment never clears the loop's live dependency cache.
+
+Baseline uses the original unit configuration without cache overrides. Candidate uses the shared helper. Both arms execute the same tiny assertions against distinct values at the same relative source path. Four concurrent rounds cover cold, warm, changed installation metadata and warm after invalidation. One runner then pauses at a file handshake while the other clears its cache. After release it dynamically imports another module. A final concurrent rerun checks retained reuse. There are eleven test executions and one clear command per arm. Preparation is elapsed child launch time through the first `RUN` banner, not test duration. The clear command has no such banner.
+
+Each table cell lists the left and right observations in milliseconds, without averaging:
+
+| Phase | Baseline preparation | Candidate preparation | Baseline total | Candidate total |
+| --- | --- | --- | --- | --- |
+| Cold | 112.59, 111.48 | 112.46, 112.06 | 244.98, 243.96 | 246.68, 246.29 |
+| Warm | 112.16, 111.68 | 114.02, 113.56 | 232.84, 232.39 | 234.57, 234.57 |
+| Installation metadata changed | 110.55, 110.02 | 112.26, 111.83 | 240.84, 240.33 | 247.67, 247.26 |
+| Warm after invalidation | 110.09, 108.83 | 111.25, 110.80 | 231.36, 230.86 | 231.64, 231.18 |
+| Rerun after clearing | 110.64, 110.11 | 112.34, 111.53 | 241.73, 241.28 | 241.07, 230.69 |
+
+Every command returned zero in both arms. Concurrent invalidation did not reproduce `ENOTEMPTY`, so the abort reproduction is inconclusive. During clearing, baseline's active runner logged one `ENOENT` cache-write failure and served the late module inline. Candidate logged no cache filesystem exception. The baseline clear command took 106.42 ms and its active runner took 339.33 ms, including the handshake. Candidate took 113.37 ms and 315.92 ms respectively. These are single observations, not speed or reliability estimates.
+
+Warm runs read six persistent modules per workspace in both arms. Both retransform the glob discovery module on each process start. Changed installation metadata gives zero persistent reads in both workspaces. After clearing, baseline's untouched workspace has zero warm reads. Candidate's untouched workspace retains six. This demonstrates cache ownership and retained reuse without claiming fewer measured aborted sessions.
+
+Retained module and Vite cache file bytes before clearing were 76,197 for baseline and 76,727 for candidate, across both workspaces. After clearing they were 312 and 38,537 respectively. After the final rerun they were 76,197 and 76,726. Counts exclude temporary per-process module output and linked dependency package bytes. Candidate's retained bytes reflect that clearing one workspace preserves the other workspace's cache.
+
+The measurement script is retained at `scratch/measure-vitest-cache.mjs`, with structured observations in `scratch/cache-measurements.json` and individual `scratch/cache-<arm>-<phase>-<workspace>.log` files. These session files are intentionally untracked. No valid week-over-week worst-lane baseline was supplied. The change claims no reversal of that measure, no product startup repair and no quarantine restoration.
+
+### Regression coverage and limits
+
+`tools/testing/vitestCache.test.mjs` exercises real installed Vitest child processes and concurrent `npm run check:changed` entry points. Assertions cover workspace source identity, fresh edits, glob additions and removals, configuration transforms, an intentionally failing stale-value assertion, recovery, installation metadata invalidation and warm module reads. It also covers cold same-worktree overlap, clearing beside an active runner with a late import, disposing another workspace during execution and all seven existing configurations. The two verification configurations inherit one cache family. Their gate thresholds and assertions are unchanged, and the verification manifest updates only the base configuration's hash.
+
+The first local named check exposed Vitest's configuration-dependency selection behavior, which expands `related` to the whole suite. That run was stopped. Changed-file selection now maps cache configuration inputs to the focused regression instead of triggering that expansion. Test preparation uses disposable package links and small fixtures. Cleanup terminates owned process trees and waits for their close before deleting worktrees. No app server, browser suite, launcher, serialization, retry or test timeout increase is added.
+
+Linux and Windows execution remains for the existing CI unit jobs. macOS observations establish neither hosted-platform performance nor a failure rate. Forced termination can retain a lease, and old tool generations consume local cache space until idle cleanup. Neither condition permits another runner to delete an active cache.
+
 ## Windows diagnostic log assertion cost
 
 [Check 44218519123](https://github.com/JamelHammoud/basecase/actions/runs/44218519123) exhausted the unchanged 5,000 ms deadline in `diagnosticLog.test.mjs`, reporting 8,710 ms for its streamed-tail case. Previous Windows Check 44214681066 passed the unchanged case in 4,531 ms. The fixture emits more than 2 MiB and compares its final 1 MiB with generic deep equality. This is a load-sensitive assertion workload with an identified avoidable cost, not evidence of a failed download or changed streaming implementation.

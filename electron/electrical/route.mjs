@@ -7,6 +7,7 @@ import { checkedBoardRequest } from './inputs.mjs';
 import { boardProcess, boardExecutable } from './process.mjs';
 import { nativeRouteCandidate } from './routeCandidate.mjs';
 import { routeMemory } from './routeMemory.mjs';
+import { watchRouteFiles } from './routeFiles.mjs';
 import { routeTools, verifyRoutingRuntime, ROUTER_HASH, ROUTER_VERSION, ROUTER_JAVA_VERSION } from './routeTools.mjs';
 import { checkedRoutePlan, routeStackup, checkedSession } from '../../src/wiring/boardRouteContract.mjs';
 import { readKiCadBoard, kiCadChild, kiCadChildren, kiCadNumber } from '../../src/wiring/boardKiCad.mjs';
@@ -53,7 +54,7 @@ export async function routeNativeBoard(input, options = {}) {
   const metrics = { routeMs: 0, outputBytes: 0, peakRssBytes: 0 };
   const abort = new AbortController();
   const cancel = () => abort.abort();
-  const limit = () => abort.abort(new Error('board-route-limit'));
+  const limit = (cause) => abort.abort(new Error('board-route-limit', { cause }));
   const timer = setTimeout(limit, 40_000);
   const start = performance.now();
   const stopWatching = watchRouteFiles(directory, limit);
@@ -191,28 +192,6 @@ async function routeOutput(directory, name) {
   if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 8 * 1024 * 1024) throw new Error('board-route-limit');
 
   return new TextDecoder('utf-8', { fatal: true }).decode(await fs.readFile(file));
-}
-
-function watchRouteFiles(directory, stop) {
-  let pending = Promise.resolve();
-  const inspect = async () => {
-    const names = await fs.readdir(directory, { recursive: true });
-
-    if (names.length > 64) throw new Error('board-route-limit');
-
-    const stats = await Promise.all(names.map((name) => fs.lstat(path.join(directory, name))));
-    const bytes = stats.reduce((sum, stat) => sum + (stat.isFile() ? stat.size : 0), 0);
-
-    if (bytes > 24 * 1024 * 1024 || stats.some((stat) => stat.isSymbolicLink())) throw new Error('board-route-limit');
-  };
-  const timer = setInterval(() => {
-    pending = pending.then(inspect).catch(stop);
-  }, 100);
-
-  return async () => {
-    clearInterval(timer);
-    await pending;
-  };
 }
 
 function checkRoutedDimensions(candidate, plan) {

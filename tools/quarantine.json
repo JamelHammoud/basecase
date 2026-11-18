@@ -621,5 +621,37 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44214681066 passed ROS 2 connection, Test and posed-shoulder following, then exhausted the unchanged 30000 ms tab-click deadline returning to Operate at line 103. The tab was visible, enabled, stable and selected, and scrolling completed, but click delivery did not complete. The retry reused the connected beforeAll fixture and waited for the absent Feetech picker at line 62. Previous Windows Check 44210703841 passed in 9750 ms with unchanged test, harness, fixtures, robot, simulation, connection-control, dependency-lock and browser-configuration sources. Linux passed at the failing revision in 5540 ms. Same-revision Windows diagnostic 44217093535 passed the exact test in 8132.8451 ms with one worker, zero retries and quarantine off, establishing intermittency. Input delivery, renderer responsiveness and cleanup are unresolved. Issue #1757 owns per-stage tracing, isolated attempt state and equal-load baseline and candidate Windows measurements before restoration. Other platforms retain the walkthrough. Fast ROS 2 mapping, ladder, intent ordering and native intent-following coverage remains active. No assertion or deadline changes."
+  },
+  {
+    "file": "tools/leagues/prepare.test.mjs",
+    "test": "prepares a new League with its creation commit and hands that immutable checkout to replay",
+    "issue": 1762,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44218519123 exhausted the unchanged 5000 ms callback deadline on Windows. Same-revision diagnostic 44220727583 passed the exact test in 1242.1862 ms with one worker, zero retries and quarantine off. Previous Check 44214681066 passed in 2327 ms with unchanged creation, CLI, fixture, dependency lock and unit configuration. Temporary setup, Node child, jiti import, MuJoCo startup, output writes and cleanup are not distinguished. Issue #1762 owns stage tracing and equal-load baseline and candidate Windows observations before restoration. Other platforms retain the real CLI path. Fast creation and League validation tests remain active on Windows."
+  },
+  {
+    "file": "tools/site/gitDates.test.mjs",
+    "test": "completes a shallow build checkout before reading dates of unchanged articles",
+    "issue": 1763,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44218519123 exhausted the unchanged 5000 ms callback deadline on Windows. Same-revision diagnostic 44220730841 passed the exact test in 511.6697 ms with one worker, zero retries and quarantine off. Previous Check 44214681066 passed in 1451 ms with unchanged source, fixture, dependency lock and unit configuration. Local clone, date reads, history fetch, shallow-state query, fallback checks and cleanup are not distinguished. Issue #1763 owns stage tracing and equal-load baseline and candidate Windows observations before restoration. Other platforms retain the real shallow-history path. Windows retains tracked and untracked article-date and missing-directory coverage."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for locked",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44218519123 exhausted the unchanged 5000 ms deadline for locked drawer native parity on Windows. Same-revision diagnostic 44220731180 passed in 4724.5451 ms with one worker, zero retries and quarantine off. Previous Check 44214681066 passed in 2336 ms with unchanged parity, capture, variants, native replay, dependencies and unit configuration. WASM capture, uv provisioning, native replay, scoring and cleanup are unresolved stages under existing owner #1390. Restore only after stage tracing, an established fix and equal-load baseline and candidate Windows observations. Windows retains five other drawers, WASM physics and persistence. Other platforms retain every native comparison. Keep state and margin drift below 1e-6, exact contacts, verdict agreement and failure without contacts."
+  },
+  {
+    "file": "e2e/inputs.e2e.test.ts",
+    "test": "moves a fixed arm’s hand right with a recorded hand once a Case naming hand starts a try",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44218519123 reached Drive on and the operator panel, then measured zero hand movement through the unchanged 30000 ms poll. Its retry reached cleanup and failed on one unclosed VideoFrame warning. Same-revision diagnostic 44220733847 passed the exact test in 33488.9382 ms with one worker, zero retries and quarantine off. Previous Check 44214681066 passed in 13994 ms with unchanged input, camera, fixture, harness, dependencies and browser configuration. Feed delivery, follower output, simulation stepping and frame ownership remain unresolved under existing owner #995. The shared error array retained this one warning through otherwise successful pan and MIDI assertions. Only the hand declaration is quarantined. Pan, MIDI and all non-Windows hand coverage remain active, alongside fast hand-following, frame-ownership and shutdown tests. Restore after tracing those stages and equal-load baseline and candidate Windows observations without changing deadlines or assertions."
   }
 ]

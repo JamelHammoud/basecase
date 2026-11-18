@@ -175,7 +175,7 @@ async function parseMesh({ data, path }: ParseMeshJob): Promise<Float32Array | n
 const transferLines = (lines: Float32Array) => reply(lines, [lines.buffer]);
 
 export const geometryHandlers = {
-  parameterGeometry: (job: ParameterGeometryJob) => reply(regenerateParameterGeometry(job)),
+  parameterGeometry: async (job: ParameterGeometryJob) => reply(await regenerateParameterGeometry(job)),
   sketchFace: (job: SketchFaceJob) => reply(sketchFace(job)),
   sketchSupports: ({ parts, force }: { parts: ScenePart[]; force: string[] }) =>
     reply(regenerateSketchParts(parts, force)),

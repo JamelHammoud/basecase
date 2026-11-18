@@ -8,6 +8,8 @@ import { solveSketch } from '../sketch/solver';
 import { PARAMETER_LIMITS } from './types';
 import type { ParameterGeometryJob } from './transaction';
 import { changedParameterPlan } from './scope';
+import { regenerateParameterBooleans } from './booleanGeometry';
+import { provideMeshFiles } from '../../three/componentMeshes';
 
 function sketchPart(part: ScenePart, values: Record<string, number>): ScenePart {
   const record = part.sketch!;
@@ -60,7 +62,9 @@ function supported(parts: ScenePart[], force: string[]) {
   return { parts: parts.map((part) => updated.get(part.id) ?? part), count: updated.size };
 }
 
-export function regenerateParameterGeometry(job: ParameterGeometryJob): ScenePart[] {
+export async function regenerateParameterGeometry(job: ParameterGeometryJob): Promise<ScenePart[]> {
+  provideMeshFiles(job.meshFiles);
+
   const byId = new Map(job.cad.map(({ id, payload }) => [id, payload]));
   const edits = new Map(
     job.plans
@@ -88,7 +92,8 @@ export function regenerateParameterGeometry(job: ParameterGeometryJob): ScenePar
 
   for (let pass = 0; pass <= PARAMETER_LIMITS.depth; pass++) {
     const regenerated = supported(parts, pass === 0 ? force : []);
-    const next = followed(parts, regenerated.parts);
+    const booleans = surfaceOperands(await regenerateParameterBooleans(job.parts, regenerated.parts));
+    const next = followed(parts, booleans);
     const settled = next.every((part, index) => part === parts[index]);
 
     parts = next;

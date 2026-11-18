@@ -546,7 +546,7 @@ Export stays synchronous after the existing current-wiring guard enables the spr
 
 ### Shared dimension Checks and coverage
 
-Shared parameter edits publish geometry and declarations together only after required regeneration succeeds. They retain catalog identities, BOM quantities and ordinary scene history. The edit never writes readiness decisions or new simulation evidence. Geometry and parameter verification enter the existing readiness fingerprint. Walk, falls and trained-policy fingerprints become stale through their ordinary geometry inputs.
+Shared parameter edits publish geometry and declarations together only after required regeneration succeeds, including recutting affected boolean assemblies. Empty or failed cuts preserve the previous design. They retain catalog identities, BOM quantities and ordinary scene history. The edit never writes readiness decisions or new simulation evidence. Geometry and parameter verification enter the existing readiness fingerprint. Walk, falls and trained-policy fingerprints become stale through their ordinary geometry inputs.
 
 Checks adds a Dimensions blocker for malformed, mismatched or unverified bindings. Native file loading and saved scene loading validate declarations before their geometry is considered current. Saved bound parts regenerate through the existing kernel and geometry worker. A failed target preserves retained geometry and remains blocked. Unrelated findings stay in the Build verdict.
 

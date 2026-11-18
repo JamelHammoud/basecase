@@ -130,7 +130,7 @@ export function useSceneDocument(seed?: WorkspaceSeed, refused?: (reason: string
     const d = docRef.current;
     const edited = editWithOperands(d.parts, updater);
 
-    if (!permittedParameterEdit(edited, projectRef.current, refused)) return;
+    if (!permittedParameterEdit(edited, projectRef.current, refused, d.parts)) return;
 
     if (live) {
       writeDoc(liveEdit(d, edited));

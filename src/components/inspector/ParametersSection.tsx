@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, FieldRow, Section, Select, TextInput } from '../../design-system';
+import { Button, FieldRow, Section, Select, TextInput, useScrollFade } from '../../design-system';
 import { enteredParameter } from '../../utils/designParameters/targets';
 import type { ParameterUnit } from '../../utils/designParameters/types';
 import type { ScenePart } from '../../types/robotics';
@@ -8,6 +8,7 @@ import { ParameterRow, PARAMETER_UNITS } from './ParameterRow';
 import { ParameterBindings } from './ParameterBindings';
 
 export function ParametersSection({ controls, part }: { controls: DesignParameters; part: ScenePart | null }) {
+  const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const [name, setName] = useState('');
   const [value, setValue] = useState('');
   const [unit, setUnit] = useState<ParameterUnit>('mm');
@@ -19,7 +20,7 @@ export function ParametersSection({ controls, part }: { controls: DesignParamete
   };
 
   return (
-    <div data-parameters className="max-h-[50%] shrink-0 overflow-y-auto">
+    <div ref={setFadeEl} style={fadeStyle} data-parameters className="max-h-[50%] shrink-0 overflow-y-auto">
       <Section title="Parameters" collapsible open={controls.expanded} onOpenChange={controls.setExpanded}>
         {controls.parameters.map((parameter) => (
           <ParameterRow

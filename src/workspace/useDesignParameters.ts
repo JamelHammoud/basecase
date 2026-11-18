@@ -15,6 +15,8 @@ import { errorMessage } from '../utils/errorMessage';
 import type { SceneDocument } from './useSceneDocument';
 import type { ShowToast } from './types';
 import { measureParameterWork } from '../utils/designParameters/measurements';
+import { sourcedMeshFiles } from '../three/componentMeshes';
+import { isBooleanPart } from '../booleans/parts';
 
 interface Options {
   docs: SceneDocument;
@@ -48,9 +50,11 @@ export function useDesignParameters({ docs, sceneId, showToast }: Options) {
       const result = await prepareParameterEdit(design, {
         force: parameterVerificationTargets(baseline, design, edits),
         compile: (part, code) => platformBridge.renderCad('openscad', code, part.cad?.expect),
-        regenerate: (input) => {
+        regenerate: async (input) => {
+          const components = surfaceOperands(input.parts.filter(isBooleanPart)).filter((part) => part.componentId);
+          const meshFiles = components.length ? await sourcedMeshFiles(components) : undefined;
           const started = performance.now();
-          const pending = geometryWorker.call('parameterGeometry', input);
+          const pending = geometryWorker.call('parameterGeometry', { ...input, meshFiles });
 
           measureParameterWork('dispatch', started);
 

@@ -27,7 +27,11 @@ function connections(parts: ScenePart[]) {
   };
 
   for (const part of parts) {
-    const targets = [part.sketch?.support?.partId, ...(part.mates ?? []).map((mate) => mate.target)];
+    const targets = [
+      part.sketch?.support?.partId,
+      ...(part.mates ?? []).map((mate) => mate.target),
+      ...(part.boolean?.operands ?? []).map((operand) => operand.id),
+    ];
 
     for (const target of targets.filter((id) => id !== undefined)) {
       connect(part.id, target);
@@ -38,13 +42,10 @@ function connections(parts: ScenePart[]) {
   return linked;
 }
 
-export function parameterGeometryScope(job: ParameterGeometryJob): ParameterGeometryJob {
-  const changed = job.plans.filter(
-    (plan) => changedParameterPlan(plan) || job.verify || job.force?.includes(plan.part.id),
-  );
-  const wanted = new Set([...changed.map((plan) => plan.part.id), ...job.cad.map((cad) => cad.id)]);
+export function connectedParameterIds(parts: ScenePart[], targets: Iterable<string>) {
+  const wanted = new Set(targets);
   const pending = [...wanted];
-  const graph = connections(surfaceOperands(job.parts));
+  const graph = connections(surfaceOperands(parts));
 
   for (let i = 0; i < pending.length; i++) {
     for (const id of graph.get(pending[i]) ?? []) {
@@ -55,6 +56,17 @@ export function parameterGeometryScope(job: ParameterGeometryJob): ParameterGeom
     }
   }
 
+  return wanted;
+}
+
+export function parameterGeometryScope(job: ParameterGeometryJob): ParameterGeometryJob {
+  const changed = job.plans.filter(
+    (plan) => changedParameterPlan(plan) || job.verify || job.force?.includes(plan.part.id),
+  );
+  const wanted = connectedParameterIds(job.parts, [
+    ...changed.map((plan) => plan.part.id),
+    ...job.cad.map((cad) => cad.id),
+  ]);
   const parts = job.parts.filter((part) => surfaceOperands([part]).some((item) => wanted.has(item.id)));
 
   return { parts, plans: changed, cad: job.cad, verify: job.verify, force: job.force };

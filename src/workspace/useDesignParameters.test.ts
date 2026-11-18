@@ -182,6 +182,18 @@ it('keeps renamed and frozen dimensions verified across undo without rebuilding 
   expect(compile).not.toHaveBeenCalled();
 });
 
+it('refuses ordinary scaling of bound CAD geometry without a history entry and still permits placement', () => {
+  const { docs, part, toast } = setup();
+
+  docs.commitParts((parts) => parts.map((item) => ({ ...item, dimensions: { ...item.dimensions, width: 120 } })));
+  expect(docs.docRef.current.parts[0]).toBe(part);
+  expect(docs.docRef.current.past).toHaveLength(0);
+  expect(toast).toHaveBeenCalledWith('Edit the shared parameter or unbind this dimension.');
+  docs.commitParts((parts) => parts.map((item) => ({ ...item, position: [10, 20, 30] })));
+  expect(docs.docRef.current.parts[0].position).toEqual([10, 20, 30]);
+  expect(docs.docRef.current.past).toHaveLength(1);
+});
+
 it('lets the latest concurrent edit publish while discarding an earlier successful compile', async () => {
   const { docs, controls, compile } = setup();
   let finish!: (result: { ok: true; positions: number[]; indices: number[] }) => void;

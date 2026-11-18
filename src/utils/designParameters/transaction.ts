@@ -10,8 +10,10 @@ import { editWithOperands } from '../../booleans/operands';
 import type { ParameterDesign } from './mutations';
 import { planParameterEdit, type ParameterPartPlan } from './plan';
 import { parameterGeometryScope } from './scope';
+import type { MeshFiles } from '../../three/componentMeshes';
 
 export interface ParameterGeometryJob {
+  meshFiles?: MeshFiles;
   force?: string[];
   verify?: boolean;
   parts: ScenePart[];

@@ -18,7 +18,7 @@ const deck = () => ({
 });
 const compile = vi.fn(async () => ({ ok: false, error: 'Unexpected compilation' }));
 const regenerate = async (job: ParameterGeometryJob) =>
-  structuredClone(regenerateParameterGeometry(structuredClone(job)));
+  structuredClone(await regenerateParameterGeometry(structuredClone(job)));
 
 describe('parameter transaction isolation', () => {
   it('sends only connected parts for geometry work and preserves unrelated identities across a real clone boundary', async () => {
@@ -85,12 +85,14 @@ describe('parameter transaction isolation', () => {
       { parts: doc.parts, parameters },
       {
         compile,
-        regenerate: async (job) =>
-          new Promise<ScenePart[]>((resolve) => {
+        regenerate: async (job) => {
+          resolveGeometry = await regenerateParameterGeometry(job);
+
+          return new Promise<ScenePart[]>((resolve) => {
             finish = resolve;
-            resolveGeometry = regenerateParameterGeometry(job);
             entered();
-          }),
+          });
+        },
         isCurrent: () => doc === captured,
       },
     );

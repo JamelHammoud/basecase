@@ -4,9 +4,9 @@ date: 2026-11-17
 image: /changelog/drive-shared-dimensions/cover.png
 ---
 
-You can connect several editable robot dimensions to one named value. Change a chassis width in the desktop app and regenerate its related plates and mounting patterns together.
+You can connect several editable robot dimensions to one named value and regenerate related plates and mounting patterns together. This works in the desktop app.
 
-Open **Edit Parameters** in the command palette, then declare a value and bind dimensions through the Inspector. You can bind editable primitives, numeric OpenSCAD assignments and dimensional Sketch constraints. You can’t bind catalog product dimensions.
+The Inspector holds shared parameters for editable primitives, numeric OpenSCAD assignments and dimensional Sketch constraints. You can’t bind catalog product dimensions.
 
 Changing a rover's chassis width used to leave its mounting plate and hole pattern behind. Bind the deck to `width` and its mounting spacing to `width - 40 mm` to keep them connected.
 

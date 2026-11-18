@@ -16,6 +16,8 @@ The final development-server documentation capture measured the rover edit's syn
 
 Current correctness coverage and corrected failures are recorded in [Build test evidence](testing-build.md#shared-dimension-preparation). No shared performance policy, timeout, retry or quarantine changed.
 
+The review correction adds boolean parent edges to the existing connected scope and runs required recuts in the same geometry worker. Binding metadata no longer invalidates a boolean geometry hash. The samples above did not include boolean assemblies and do not measure recut latency. The nested-boolean regression measures mesh volume and verifies settled hashes without a timing assertion. [Review coverage](testing-build.md#shared-dimension-preparation) records its failure boundaries.
+
 ## SVG bounds scan contours directly
 
 The bounds search found one remaining flattened point list in the SVG-to-solid parser, `utils/svgTo3DParser.ts`. Sketch framing and profile output already accumulate bounds directly. The parser now scans each outer contour in source order without collecting its references in another array. Holes remain excluded from bounds. Filled shapes and the outline fallback share the same scan, which supplies preview dimensions, extrusion contours and the Edit in Sketch handoff.

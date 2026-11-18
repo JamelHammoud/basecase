@@ -39,7 +39,7 @@ const { createNodeKernel } = await load(
 const kernel: Kernel = createNodeKernel();
 const compile = (part: ScenePart, code: string) => kernel.renderPart('openscad', code, { expect: part.cad?.expect });
 const regenerate = async (job: Parameters<typeof regenerateParameterGeometry>[0]) =>
-  structuredClone(regenerateParameterGeometry(structuredClone(job)));
+  structuredClone(await regenerateParameterGeometry(structuredClone(job)));
 
 afterAll(() => kernel.stopKernels());
 

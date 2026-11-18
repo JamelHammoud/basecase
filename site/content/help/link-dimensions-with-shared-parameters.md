@@ -40,8 +40,8 @@ Open the command palette with [[⌘K]]. Use millimeters for primitive dimensions
 
 Edit a parameter’s name to rename its references in the same edit. To delete a parameter that’s in use, choose **Freeze and Delete**. This keeps dependent dimensions at their current values.
 
-Choose **Unbind** to edit a dimension on its own. Unbind dimensions before saving the parts to Library or pasting them into another scene. If you change declarations before pasting, copy the parts again.
+Choose **Unbind** to edit a dimension on its own. Unbind also releases a CAD or Sketch part for scaling. Unbind dimensions before saving the parts to Library or pasting them into another scene. If you change declarations before pasting, copy the parts again.
 
-If regeneration fails, you keep the previous complete design. Use Undo and Redo to restore the declarations and geometry together. After reopening bindings, you must validate their geometry before it counts as current in Checks.
+If regeneration fails, you keep the previous complete design. Use Undo and Redo to restore the declarations and geometry together. Basecase automatically validates reopened bindings before their geometry counts as current in Checks.
 
 See [Checks and blockers](/help/checks-and-blockers) before building the changed design.

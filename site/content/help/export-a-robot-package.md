@@ -64,3 +64,5 @@ Passive joints remain in the physical model. Declared springs stay in MJCF and u
 Policies that command a now-passive joint stay out of the package.
 
 Every file in the zip is listed in [Robot package contents](/help/robot-package-contents).
+
+The [self-contact setting](/help/simulate-self-contact) is included in `robot.xml`. URDF keeps link geometry and joints, so use MJCF for the same self-contact physics.

@@ -60,6 +60,8 @@ function useProjectCommits(commitProject: CommitProject, projectRef: RefObject<P
   'use memo';
 
   return {
+    commitSelfContact: (selfContact: ProjectSettings['selfContact']) =>
+      commitProject({}, (p) => ({ ...p, selfContact })),
     commitParameters: (parts: ScenePart[], designParameters: ProjectSettings['designParameters']) =>
       commitProject({}, (p) => ({ ...p, designParameters }), parts),
     commitVersion: (parts: ScenePart[], project: ProjectSettings, scene: Snapshot['scene']) =>

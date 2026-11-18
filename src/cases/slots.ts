@@ -7,6 +7,7 @@ import type { RobotSlot } from './schema';
 import { plural } from '../../electron/plural.mjs';
 
 export interface SlotRobot {
+  selfContact?: import('../sim/selfContact').SelfContactSettings;
   parts: ScenePart[];
   joints: RobotJoint[];
 }
@@ -78,6 +79,16 @@ function placedJoint(j: RobotJoint, place: Placement): RobotJoint {
 
 export function placedRobot(robot: SlotRobot, place: Placement): SlotRobot {
   return {
+    ...(robot.selfContact
+      ? {
+          selfContact: Object.fromEntries(
+            Object.entries(robot.selfContact).map(([key, setting]) => [
+              place.id(key),
+              { ...setting, exclusions: setting.exclusions?.map(([a, b]) => [place.id(a), place.id(b)]) },
+            ]),
+          ),
+        }
+      : {}),
     parts: robot.parts.map((p) => placedPart(p, place)),
     joints: robot.joints.map((j) => placedJoint(j, place)),
   };

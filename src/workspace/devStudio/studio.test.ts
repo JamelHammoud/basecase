@@ -118,6 +118,7 @@ const EXPECTED_NAMES = [
   'selectFace',
   'selectUnit',
   'selection',
+  'selfContactPairs',
   'setBodyRun',
   'setPose',
   'sharedLink',

@@ -85,6 +85,7 @@ function wireRobot(input: CaseRobotInput): WireRobot {
 
   return {
     id: 'scene',
+    selfContact: input.project.selfContact,
     parts: input.parts,
     joints: input.project.joints ?? [],
     measures: input.measures,
@@ -106,7 +107,10 @@ function keepModel(key: string, reading: ModelReading) {
 
 async function readModel(input: CaseRobotInput, robot: () => WireRobot, turn: number | null): Promise<ModelReading> {
   const records = walkRecords(input.project);
-  const geometry = readinessFingerprint(input.parts, { joints: input.project.joints });
+  const geometry = readinessFingerprint(input.parts, {
+    joints: input.project.joints,
+    selfContact: input.project.selfContact,
+  });
   const walks = hashOf(records);
   const key = `${geometry}|${walks}`;
   const known = models.get(key);

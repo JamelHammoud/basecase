@@ -34,6 +34,8 @@ If you change the robot a policy learned on, train the policy again so it runs o
 
 Until Basecase saves the new policy in its place, the old one stays and keeps running. If you stop training, you get back the controller you had before.
 
+Enabling self-contact or changing an excluded link pair makes that robot’s policies out of date. Steps are in [Simulate self-contact](/help/simulate-self-contact).
+
 Adding the first Sketch four-bar to a scene, or removing its last one, changes the physics solver settings and makes the scene's policies out of date.
 
 Moving the robot across the floor, posing it, or adding scenery doesn't make a policy out of date. If you roll a calibration back in Operate to the one a policy trained on, that policy is current again.

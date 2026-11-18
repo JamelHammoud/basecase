@@ -24,14 +24,6 @@
     "reason": "Run 44164732083 exhausted the unchanged 15000 ms beforeAll budget, skipping all three guide pixel and draw-call cases. Last full green 43948835889 passed this file in 9642 ms. Same-revision Windows diagnostic 44167880896 passed view 0 with one worker and retries disabled in a 10786 ms process. Bundle, server, Chrome launch and worker readiness stages are not distinguished. Existing shared OffscreenCanvas setup owner #1400 owns stage tracing, cancellation, cleanup and equal-load baseline and candidate measurements. Other platforms and fast guide planning, generation and worker-ownership coverage remain active. Whole-file filtering is required because setup precedes individual-test filtering."
   },
   {
-    "file": "e2e/board.e2e.test.ts",
-    "test": "defines, edits and locks the generated rover board, exports its PCB and reopens the same placement",
-    "issue": 1620,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Run 44042519036 exhausted the unchanged 30000 ms Schematic download wait on both Windows attempts. Linux passed in 24770 ms. The previous Windows run 44038644745 passed with unchanged board test, export, download and electrical worker sources, while run 44034821423 passed only on retry. Export guards, mesh loading, worker replies, error toasts and browser delivery are not distinguished. Issue #1620 owns this declaration and the separate routed-board import/export stages, production-path traces and equal-load baseline and candidate measurements before restoration. Other platforms and fast placement, geometry, history and package tests stay active."
-  },
-  {
     "file": "e2e/boardRouted.e2e.test.ts",
     "test": "imports a routed KiCad derivative through the Inspector and downloads checked fabrication files",
     "issue": 1620,

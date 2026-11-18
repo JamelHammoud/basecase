@@ -613,5 +613,13 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44210703841 completed grading, independent failing-Check inspection and the original two-tile grid, then found zero submission tiles after teacher reload at line 159 on both Windows attempts. Same-revision Windows diagnostic 44212666461 passed the exact test in 11640.8835 ms with one worker, zero retries and quarantine off, confirming intermittency. Previous Windows Check 44206588211 passed in 15132 ms with no intervening application, e2e, dependency-lock, Vite or browser configuration changes. Linux passed at the failing revision in 7157 ms. Missing records, queued persistence, load errors and reload rendering are not distinguished. Issue #1754 owns teacher-path tracing and equal-load baseline and candidate Windows measurements before restoration, coordinating shared helpers with student download owner #1508. Other platforms retain this walkthrough. Windows retains assignment export, edited-attempt reload and Submit, real file validation and native-worker grading. No assertion or deadline changes."
+  },
+  {
+    "file": "e2e/operateRos2.e2e.test.ts",
+    "test": "connects the arm as an emulated ROS 2 robot, climbs to Test and follows a posed shoulder",
+    "issue": 1757,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44214681066 passed ROS 2 connection, Test and posed-shoulder following, then exhausted the unchanged 30000 ms tab-click deadline returning to Operate at line 103. The tab was visible, enabled, stable and selected, and scrolling completed, but click delivery did not complete. The retry reused the connected beforeAll fixture and waited for the absent Feetech picker at line 62. Previous Windows Check 44210703841 passed in 9750 ms with unchanged test, harness, fixtures, robot, simulation, connection-control, dependency-lock and browser-configuration sources. Linux passed at the failing revision in 5540 ms. Same-revision Windows diagnostic 44217093535 passed the exact test in 8132.8451 ms with one worker, zero retries and quarantine off, establishing intermittency. Input delivery, renderer responsiveness and cleanup are unresolved. Issue #1757 owns per-stage tracing, isolated attempt state and equal-load baseline and candidate Windows measurements before restoration. Other platforms retain the walkthrough. Fast ROS 2 mapping, ladder, intent ordering and native intent-following coverage remains active. No assertion or deadline changes."
   }
 ]

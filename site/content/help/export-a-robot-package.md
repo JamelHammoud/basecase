@@ -66,3 +66,5 @@ Policies that command a now-passive joint stay out of the package.
 Temporary [fit-test variants](/help/compare-fit-clearances) stay out of the robot package. Apply your chosen dimension before exporting to include it in the robot.
 
 Every file in the zip is listed in [Robot package contents](/help/robot-package-contents).
+
+The [self-contact setting](/help/simulate-self-contact) is included in `robot.xml`. URDF keeps link geometry and joints, so use MJCF for the same self-contact physics.

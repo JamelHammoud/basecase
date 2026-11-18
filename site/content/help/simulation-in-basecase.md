@@ -91,4 +91,6 @@ Cases and Routines can react to detections from this scene's simulated or live c
 
 ## Limits
 
-Parts of the same robot don't collide with each other in the simulation, so one leg can pass through another. The model also leaves out the STS3215's speed limit, current limits, supply sag and backlash.
+By default, parts of the same robot don't collide, so one leg can pass through another. In **Simulate**, enable **Self-contact** to let non-adjacent links collide. These contacts use convex hulls and don’t establish physical fit.
+
+The model also leaves out the STS3215's speed limit, current limits, supply sag and backlash.

@@ -112,7 +112,7 @@ For `add_sourced_item`, `supplierIdentity` keeps the supplier name, exact suppli
 
 | Tool | What it does |
 |---|---|
-| `simulate` | Runs the scene in MuJoCo |
+| `simulate` | Runs the scene in MuJoCo and can save per-robot self-contact settings |
 | `fit_body` | Fits link masses, terminal payloads and floor friction from the latest Operate run, using the active servo fits. Keeps a body version only when held-out error falls by at least 25%, otherwise reports Can’t tell |
 | `set_world` | Places objects that exist only in the simulation |
 | `start_drive` | Drives the robot in the simulation |

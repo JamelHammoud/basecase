@@ -131,3 +131,28 @@ A local scratch replay compared complete results against the previous source for
 The replay source and reports are session artifacts in `scratch/lidar-patterns.test.ts`, `scratch/lidar-before.ts` and `scratch/lidar-pattern-counts.json`. The covered help article, [Simulate a LiDAR](../../site/content/help/simulate-a-lidar.md), remains accurate because no controls, values, states or user actions change. No article edit or screenshot is needed.
 
 Changed-file validation passed formatting, lint, docs, site copy for 295 pages and types. The related run passed 240 files and 1,541 tests, including the new parser tests, with one existing skipped file and test. One test failed at its existing 5,000 ms timeout: the hexapod Rough Ground walk in `src/cases/terrain.test.ts:165`. The run reported 103.95 seconds. This does not establish that test's baseline status, and the related check is not fully passing. No test was retried, weakened or quarantined. The complete log is `scratch/check-lidar-patterns.log`.
+
+## Self-contact
+
+Measured on 17 November 2026 on Apple M5 Pro, macOS arm64, Node 26.13.0 and pinned MuJoCo 4.0.0. `selfContactMeasurements.test.ts` reuses the ten generated mechanisms and the production replay workload. Preparation takes the median of three runs, with content reuse after the first enabled preparation. Stepping takes the median of three 1,000-substep runs, each covering two simulated seconds at 0.002 s. The same reference targets run with self-contact disabled and enabled. No timing threshold, timeout or retry was added.
+
+Numbers come from Vitest’s isolated Node worker. They measure the preparation computation and real WASM stepping, without browser worker launch or UI frame timing. RSS is sampled after the runs, and includes Node, MuJoCo and the preparation runtime. It is not a peak or a per-model allocation. Disabled runs precede enabled runs in the same worker, so memory samples retain earlier allocations. JIT warmup and garbage collection prevent a speedup claim from these observations.
+
+Preparation, stepping and memory columns are disabled / enabled. The pair column lists eligible enabled body / geom pairs before spatial broad-phase rejection. Geom counts use the compiled masks and emitted exclusions, so the payload arm and compound Sketch model expose more geom pairs than body pairs. Disabled models have zero eligible self-contact pairs.
+
+| Mechanism | Preparation ms | Eligible body / geom pairs | Steps/s | Worker RSS MiB | Worker JS heap MiB | Retained hull bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| folding arm | 0.15 / 1.54 | 1 / 1 | 171,519 / 279,968 | 208.7 / 234.7 | 43.0 / 53.8 | 0 |
+| crossed humanoid arms | 0.08 / 0.96 | 1 / 1 | 415,239 / 325,976 | 251.4 / 277.6 | 57.7 / 59.8 | 0 |
+| quadruped leg and torso | 0.09 / 1.18 | 10 / 10 | 270,130 / 198,911 | 294.7 / 312.7 | 77.5 / 68.1 | 0 |
+| neighboring hexapod legs | 0.15 / 1.04 | 15 / 15 | 252,818 / 202,127 | 324.0 / 326.0 | 77.0 / 94.5 | 0 |
+| opposed gripper fingers | 0.05 / 0.79 | 1 / 1 | 425,298 / 303,536 | 331.5 / 331.4 | 83.0 / 77.4 | 0 |
+| pan-tilt camera and mount | 0.04 / 0.68 | 1 / 1 | 482,762 / 314,700 | 332.5 / 336.2 | 92.5 / 85.2 | 0 |
+| folded snake | 0.12 / 0.87 | 6 / 6 | 322,715 / 241,726 | 340.5 / 342.3 | 86.5 / 102.6 | 0 |
+| desk-lamp linkage | 0.07 / 0.82 | 3 / 3 | 370,645 / 312,061 | 349.2 / 354.2 | 93.7 / 95.8 | 0 |
+| asymmetric payload arm | 0.05 / 0.69 | 1 / 2 | 431,523 / 260,250 | 357.5 / 365.7 | 111.2 / 103.4 | 0 |
+| closed Sketch mechanism | 0.29 / 2.01 | 2 / 4 | 339,256 / 208,243 | 358.7 / 371.1 | 70.1 / 88.6 | 480 |
+
+The closed Sketch fixture retained 480 hull bytes from 2160 complex-source bytes. The other fixtures use convex primitives and retain no decomposed hulls. These fixture bytes do not include the decomposition runtime’s internal memory. The ordinary browser workflow was separately captured with actual worker preparation, enabled contact, a disabled passing control and exported scene-file reopen.
+
+The browser cache retains at most 16 MiB of completed hulls. Exact local triangle bytes and a preparation revision form its SHA-256 key. Placement is recomputed after a cache hit. Cancellation terminates browser preparation, while stale replies cannot update its cache or publish a model. The existing captured-world decomposition supplies the 64-piece, 96-vertex and 1 mm minimum-thickness approximation. [Implementation and coverage](../guide/simulate.md#self-contact).

@@ -28,6 +28,17 @@ export default function simStudio(studio: Studio) {
   const sim = () => studio().core.simTraining.sim;
 
   return {
+    selfContactPairs: () => {
+      const model = sim().modelNow();
+      const contacts = sim().latestContacts() ?? [];
+      const pairs: string[][] = [];
+
+      for (let i = 0; model && i + 1 < contacts.length; i += 2) {
+        pairs.push([model.bodies[contacts[i]].parts[0], model.bodies[contacts[i + 1]].parts[0]].sort());
+      }
+
+      return pairs;
+    },
     simRecordingFrame: () => sim().sought()?.frame,
     simPins: () => {
       const { core, posesRef } = studio();

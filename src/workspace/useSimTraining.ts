@@ -50,6 +50,11 @@ export function useSimTraining(options: SimTrainingOptions) {
     viewportRef,
     restDeltas: posing.deltas,
     velocity,
+    onSelfContact: (settings) => {
+      docs.commitSelfContact(settings);
+
+      return docs.projectRef.current;
+    },
   });
   const skills = useSkills({ workspaceId, sim, project, setProject, rig: posing.rig, parts });
 

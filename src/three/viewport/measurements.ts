@@ -59,7 +59,7 @@ export function boundsOf(ctx: ViewportContext, ids: string[]): { min: Vec3; max:
 export function partTriangles(ctx: ViewportContext, id: string): Float32Array | null {
   const object = ctx.layer.get(id) ?? ctx.world.get(id);
 
-  return object ? localTriangles(object) : null;
+  return object && !object.userData.placeholder ? localTriangles(object) : null;
 }
 
 export function servoOutput(ctx: ViewportContext, id: string): { point: Vec3; axis: Vec3 } | null {

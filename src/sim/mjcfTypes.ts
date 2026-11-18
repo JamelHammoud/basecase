@@ -78,6 +78,7 @@ export interface ServoSpread {
 }
 
 export interface MjcfInput {
+  robotHulls?: Record<string, Float32Array[]>;
   parts: ScenePart[];
   rig: Rig;
   project: ProjectSettings;

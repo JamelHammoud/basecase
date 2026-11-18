@@ -1,11 +1,9 @@
-import { simCalibrations } from '../../reality/history';
-import { calibratedInput } from '../../reality/calibratedInput';
 import type { MeshFiles } from '../../three/componentMeshes';
 import { headlessParts } from '../../three/headlessParts';
 import { DEFAULT_PROJECT } from '../../types/robotics';
 import { buildRig } from '../../utils/kinematics';
 import type { SharedScene } from '../../utils/sceneFile';
-import { buildMjcf } from '../mjcf';
+import { preparedCalibratedModel } from '../calibratedModel';
 import { robotPackageFiles, robotPartIds } from './buildRobotPackage';
 
 export async function scenePackageFiles(scene: SharedScene, meshes: MeshFiles): Promise<Record<string, Uint8Array>> {
@@ -13,7 +11,7 @@ export async function scenePackageFiles(scene: SharedScene, meshes: MeshFiles): 
   const { joints, measures, partTriangles } = await headlessParts(scene.parts, project.joints ?? [], meshes);
   const rig = buildRig(joints, scene.parts);
   const input = { parts: scene.parts, rig, project, measures, partTriangles };
-  const model = buildMjcf(calibratedInput(input, simCalibrations(project.servoCalibrations)));
+  const model = await preparedCalibratedModel(input, project.servoCalibrations);
   const ids = robotPartIds(model);
   const triangles: Record<string, Float32Array> = {};
 

@@ -1,6 +1,6 @@
 import type { VersionedSceneRecord } from '../types/sceneHistory';
 import type { WorkspaceMeta, WorkspaceSeed } from '../SceneWorkspace';
-import type { RobotJoint, ScenePart } from '../types/robotics';
+import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { newSceneId } from '../utils/sceneIds';
 import { moveItem } from '../utils/moveItem';
 import { copyName } from '../workspace/helpers';
@@ -31,6 +31,7 @@ export interface TabListItem {
 export type Metas = Record<string, WorkspaceMeta>;
 
 export interface SceneRobot {
+  selfContact?: ProjectSettings['selfContact'];
   tabId: string;
   name: string;
   parts: ScenePart[];
@@ -175,6 +176,8 @@ export function sceneRobots(
     const seed = tab.id === except ? undefined : snapshotOf(tab);
     const joints = seed?.project?.joints ?? [];
 
-    return seed && joints.length ? [{ tabId: tab.id, name: seed.sceneName, parts: seed.parts, joints }] : [];
+    return seed && joints.length
+      ? [{ tabId: tab.id, name: seed.sceneName, parts: seed.parts, joints, selfContact: seed.project?.selfContact }]
+      : [];
   });
 }

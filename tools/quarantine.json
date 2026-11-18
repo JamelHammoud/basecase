@@ -797,5 +797,21 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44375421899 exhausted the unchanged 5000 ms deadline at 5006 ms. Last full green Check 44245137178 passed in 1099 ms on the same Windows image with unchanged parity, capture and native replay sources. Linux passed at the failing revision in 772 ms. Same-revision Windows diagnostic 44377675097 passed in 3257.4653 ms on the same image with one worker, zero retries and quarantine off, establishing intermittency. WASM capture, uv provisioning, native startup, replay, scoring and cleanup are not distinguished. Existing priority replay owner #1390 owns stage tracing, an established fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Windows retains rotated drawer parity, WASM fixture physics and persistence. Linux retains fifteen native fixture comparisons outside its existing nominal-lid quarantine, and macOS retains all sixteen. Preserve state and margin drift below 1e-6, exact contacts, verdict agreement, stop bounds and failure without contacts. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/cableEditing.e2e.test.ts",
+    "test": "edits a Cable reach route with local anchors and stock, then restores it through undo and redo",
+    "issue": 1815,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44375421899 passed editor changes, undo/redo, Cable reach and BOM, then missed the unchanged scene-download poll on both Linux attempts. Same-revision diagnostic 44379268899 passed the complete declaration in 27627.621812 ms with one worker, retries disabled and quarantine off. Export command delivery, thumbnail preparation, encoding, download and reopening remain distinct untraced stages. Priority owner #1815 owns tracing and ten baseline and ten candidate observations at equal load with retries disabled and the original assertions and deadlines before restoration. Fast cable matrices, worker routing, BOM, history and actual scene-file byte tests remain active. They do not replace this browser editor and persistence path. Windows has a separate readiness-after-redo observation and is assessed independently."
+  },
+  {
+    "file": "e2e/cableEditing.e2e.test.ts",
+    "test": "edits a Cable reach route with local anchors and stock, then restores it through undo and redo",
+    "issue": 1815,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44375421899 first missed the unchanged post-redo Cable reach pass poll after authored wiring was restored. Its retry passed readiness and BOM, then missed the scene-download poll. Same-revision Windows diagnostic 44380049632 reproduced missing download registration after completing editor, history, Checks and BOM assertions with one worker, retries disabled and quarantine off. It does not establish a complete Windows pass or a shared cause with the readiness stall. Linux passed this complete declaration at the same revision, proving Linux intermittency only. Priority owner #1815 owns separate readiness and export stage traces and ten baseline and ten candidate observations at equal load on each platform before restoration. Preserve assertions and deadlines. Fast cable matrices, worker analysis, BOM, history and real scene-file byte tests remain active but do not replace Windows browser editor and persistence coverage."
   }
 ]

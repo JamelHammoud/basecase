@@ -158,6 +158,17 @@ The original-image unit test checks changed-content refusal, while source naviga
 The initial deletion's changed-file check passed formatting, lint, documentation, site copy and types, plus 12 retained unit and integration tests in 463 ms. That result did not establish replacement coverage for the removed controls. The revision restores those browser interactions without running them locally.
 
 
+### Follow-up reduction to source playback
+
+Issue [#1825](https://github.com/JamelHammoud/basecase/issues/1825) follows the three-opening trim. [Check 44391437908](https://github.com/JamelHammoud/basecase/actions/runs/44391437908) still took 37,612 ms on Windows shard 6 and 20,470 ms on Linux shard 6 for the combined declaration. Both passed. The complete downloaded log is retained in the task worktree at `scratch/run-44391437908.log`. These are shared-workload observations, not isolated timings.
+
+The browser test now proves one journey: Library to a frozen comparison image to **Open Source Try**, ending with the playback timeline open at saved frame 6. It opens the comparison once. The helper no longer selects Class or Finding, reads saved-run snapshots or exposes unused before-inspection and image-count options. Fixture preparation still uses the existing real training and source recording path.
+
+The unit and integration coverage listed above retains historical evidence, original-content refusal and exact-frame source validation. The requirements browser walkthrough retains frozen-image reopening and saved-run/version preservation. Overlay switching, displayed model hashes, original-image editor wiring and refusal status, the scoped command and scene-switch dismissal lose their direct browser assertions. These UI checks are deliberately cut from the combined story, rather than claimed as equivalent unit coverage. Production behavior, deadlines, retries and quarantine are unchanged.
+
+Candidate browser execution and timing remain with CI. No local browser duration or shard speedup is claimed.
+
+
 ## Windows live operator readiness recurrence
 
 [Check 44200197616](https://github.com/JamelHammoud/basecase/actions/runs/44200197616) at `81dc0446019e1ccc14f100286bd99fb61610587c` failed the Find Faces declaration at `vision.e2e.test.ts:59` on both Windows attempts. The unchanged live-readiness poll received false before the inference and overlay assertions. The declaration took 75,609 ms across both attempts. This differs from the Linux overlay observation deadline fixed above. The log does not identify whether the command, camera request, session lifetime or worker startup prevented readiness.

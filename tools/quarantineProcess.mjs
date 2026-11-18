@@ -45,7 +45,17 @@ function stop(child) {
     return;
   }
 
-  for (const pid of [...descendants(child.pid), -child.pid]) kill(pid);
+  try {
+    for (const pid of descendants(child.pid)) {
+      try {
+        kill(pid);
+      } catch (error) {
+        console.error(`Quarantine descendant cleanup: ${error.message}`);
+      }
+    }
+  } finally {
+    kill(-child.pid);
+  }
 }
 
 export function runQuarantineProcess(args, { cwd, timeoutMs }) {
@@ -68,7 +78,9 @@ export function runQuarantineProcess(args, { cwd, timeoutMs }) {
             stop(child);
           } catch (error) {
             console.error(`Quarantine process cleanup: ${error.message}`);
-            child.kill();
+
+            if (IS_WINDOWS) child.kill();
+            else child.kill('SIGKILL');
           }
         }, timeoutMs)
       : undefined;

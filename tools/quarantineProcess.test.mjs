@@ -91,6 +91,46 @@ describe('quarantine observation ownership', () => {
     expect(mocks.spawn).not.toHaveBeenCalled();
   });
 
+  it.each(['snapshot', 'descendant', 'group', 'taskkill'])(
+    'continues forceful cleanup after a %s failure',
+    async (failure) => {
+      vi.useFakeTimers();
+      mocks.windows = failure === 'taskkill';
+
+      const child = childProcess();
+      const kill = vi.spyOn(process, 'kill').mockImplementation((pid) => {
+        if ((failure === 'descendant' && pid === 125) || failure === 'group') {
+          throw Object.assign(new Error('Permission denied'), { code: 'EPERM' });
+        }
+
+        return true;
+      });
+
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      if (failure === 'snapshot' || failure === 'taskkill') {
+        mocks.execFileSync.mockImplementationOnce(() => {
+          throw new Error('Command timed out');
+        });
+      }
+
+      const result = runQuarantineProcess(['fixture.mjs'], { cwd: '.', timeoutMs: 45000 });
+
+      await vi.advanceTimersByTimeAsync(45000);
+
+      if (!mocks.windows) expect(kill).toHaveBeenCalledWith(-123, 'SIGKILL');
+
+      if (failure === 'descendant') expect(kill).toHaveBeenCalledWith(124, 'SIGKILL');
+
+      if (failure === 'group') expect(child.kill).toHaveBeenCalledWith('SIGKILL');
+
+      if (failure === 'taskkill') expect(child.kill).toHaveBeenCalledWith();
+
+      child.emit('close', null);
+      await expect(result).resolves.toEqual({ timedOut: true, code: null });
+    },
+  );
+
   it('reports a failed launch and removes its deadline', async () => {
     vi.useFakeTimers();
 

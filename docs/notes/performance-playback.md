@@ -41,3 +41,32 @@ The only production consumer of `midiPlayer` is `midiSource`, which previously s
 `src/midi/midiPlayer.test.ts` compares complete per-frame outputs with the former sliced calculation over 300 and 600 clock reads. Each fixture has 100 alternating note and control events, groups of three equal-time events, forward jumps and backward restarts. The former calculation creates 300 and 600 batch arrays respectively, including empty batches. The new delivery path creates zero batch arrays. These are source-derived allocation counts, not timings or a claim about complete simulation latency. Event objects and named input events retain their existing ownership and allocation.
 
 Boundary coverage includes repeated timestamps, the 1 ns due tolerance, simultaneous event order, original event identity, empty songs, completion and restart. The source integration test retains real input-bus delivery and null drive output. No browser flow or screen changes. No tests are quarantined by this refinement.
+
+## Saved-source comparison preparation
+
+The design reference is [Foxglove comparison mode](https://docs.foxglove.dev/docs/visualization/comparison-mode): distinct sources share elapsed playback and adjustable offsets. This grounds the interaction model, without a superiority claim. Clock synchronization and coordinate registration require independent evidence.
+
+Measured on 17 November 2026, macOS arm64, Apple M5 Pro, Node 26.13.0. A scratch Vite SSR bundle ran production `prepareSource`, `sampleChannel`, `preparePlot` and raw camera preparation in two concurrent native workers. Small inputs had three frames and two topic channels. Capped inputs held 20,121 frames over 600 seconds, 96 position/velocity/control coordinates, 64 body poses and six selected joint channels. Each was 67,043,432 encoded bytes, below the 64 MiB cap. Arrays were generated directly rather than rerunning physics. A separate raw camera input exercised image reduction in each worker.
+
+| Per-source observation | Small pair, worker range | Capped pair, worker range |
+| --- | --- | --- |
+| Decode and hash preparation | 2.82–2.94 ms | 33.92–34.12 ms |
+| 1,000 forward/backward cursor reads, every channel | 1.27–1.58 ms | 10.55–10.68 ms |
+| Timestamp property reads per cursor | 17 | 128.382 |
+| Distinct decoded typed buffers | 268 bytes | 67,043,196 bytes |
+| Prepared plot samples | 5 | 820 |
+| One plot preparation | 0.038–0.044 ms | 5.75–5.93 ms |
+| Sampled worker heap plus external memory | 7,717,468–7,975,340 bytes | 222,723,724–223,093,268 bytes |
+| Raw camera input bytes | 12 | 12,582,912 |
+| Raw camera preparation | 0.054–0.057 ms | 2.36–2.95 ms |
+| Prepared camera RGBA bytes | 16 | 1,048,576 |
+
+Worker memory includes fixture construction, encoded and decoded arrays, camera inputs and temporary allocations before garbage collection. It is sampled after open and plot/image preparation, not a continuous peak or a GPU measurement. Distinct typed buffers exclude strings and object overhead. Both workers terminate after each pair. The raw camera allocation above is an actual retained typed buffer. The separate camera fixture avoids attributing its input bytes to BCTR decode.
+
+A macOS documentation capture used `openApp` and ordinary Import for `before.mcap` and `after.mcap`. It selected the Library tiles, opened Compare Tries through the palette, inspected independent red/green pixels and numeric/state values, aligned planted events, sought backward, closed comparison and reopened the original identity and file hash. The capture finished in 19.00 seconds. Its images are under `site/public/help/compare-saved-tries/` and `site/public/changelog/compare-two-tries/`. Vite reported a teardown timeout after the test passed because its two servers retained a process handle. No test deadline, retry or skip was changed.
+
+Each source owns at most one retained camera bitmap and one spatial bitmap in its worker, plus their transferred renderer canvases. At maximum dimensions those four surfaces account for 3,145,728 RGBA bytes per source, excluding decoder workspaces and transient replies. For the captured 2 × 1 camera and 512 × 256 spatial panel, renderer counters measured 8 and 524,288 retained RGBA bytes per source. Including the matching worker surfaces gives 1,048,592 bytes per source. These are dimension-based surface accounting, not measured GPU residency. Video uses the existing indexed decoder rather than decoding the complete clip at each seek. Native worker numbers exclude HTTP, IPC and renderer paint cost.
+
+The ten-case native matrix now includes physical rover, calibrated servo arm, quadruped, payload gripper and appliance models, emulated Operate decoding, real MCAP decoding, raw cameras, unequal-rate ROS columns, gaps and duplicate discrete states. Signal and media tests verify isolation, exact hashes, clipping, missing channels and unsupported frames. Worker/session tests cover replacement, deletion, late results and repeated disposal. The focused browser test is active with retry zero for Linux and Windows CI. Those CI results have not been observed locally.
+
+Plots prepare only when signal selection or sampling age changes. Cursor movement uses indexed timestamp lookup and bounded snapshots. Spatial rasterization reuses two indexed geometry results, with one retained raster per source. No scene rebuild or physical frame registration occurs. Current limits are documented in [Cases](../guide/cases.md#comparison-preparation-coverage).

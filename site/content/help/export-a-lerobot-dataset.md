@@ -44,7 +44,7 @@ You can also find **Export Dataset** in [[⌘K]] while a dataset is open. Export
 
 The working dataset exports passed and unjudged tries that fit the current robot model. Missed tries and tries with any quality flag stay in the dataset but out of the export. Tries from another robot model stay out too. The toast reports the number left out. A saved version exports against its saved robot and scene.
 
-Tries made by [Multiply](/help/multiply-a-try-into-demonstrations) go in too, one episode each. Tries from your real robot don't go in, because they only record where the robot's base went. [Imported tries](/help/import-robot-data-as-tries) on the same robot go in as demonstrations, unless a Case judged them failed or you marked them failed.
+Tries made by [Multiply](/help/multiply-a-try-into-demonstrations) go in too, one episode each. Tries from your real robot don't go in, because they only record where the robot's base went. [Imported tries](/help/import-robot-data-as-tries) with joint recordings on the same robot go in as demonstrations, unless a Case judged them failed or you marked them failed. Topic-only recordings stay available for playback and comparison, but aren't robot demonstrations.
 
 If none of the tries fit, the toast says "Export and training take only passed tries of this Case as it is now. Try It to record more."
 

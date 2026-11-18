@@ -67,7 +67,7 @@ The dataset keeps your search and its matching samples. A segment match includes
 
 If the scene has the Case those tries came from, the dataset takes that Case's name. Otherwise, it takes the name of your search.
 
-To gather only selected tries, hold [[⌘]] or [[⇧]] as you select them. Right-click one and choose **Make Dataset**. Within a search, those tries contribute only their matching frame ranges.
+To gather only selected tries, hold [[⌘]] or [[⇧]] as you select them. Selection keeps Tries open. Right-click one and choose **Make Dataset**. Within a search, those tries contribute only their matching frame ranges.
 
 ## The dataset
 
@@ -86,7 +86,7 @@ To group selected images by supplied operating conditions, follow [Compare visio
 
 **Note:** Publishing and both kinds of training are available in the desktop app.
 
-Failed tries stay in the dataset, while export, publishing and training leave them out. A try without a verdict, such as an [imported try](/help/import-robot-data-as-tries), counts as a demonstration. To exclude one, mark it failed in [Label a try](/help/label-a-try).
+Failed tries stay in the dataset, while export, publishing and training leave them out. A try without a verdict, such as an [imported joint recording](/help/import-robot-data-as-tries), counts as a demonstration when it fits the robot model. Topic-only recordings remain available to [compare saved tries](/help/compare-saved-tries), but export and policy training leave them out. To exclude one, mark it failed in [Label a try](/help/label-a-try).
 
 Any quality flag excludes its selected samples from export, publishing and training. The same actions leave out the tries listed under [Tries that export leaves out](#tries-that-export-leaves-out).
 

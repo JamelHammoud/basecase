@@ -111,6 +111,14 @@ const datasetGroups = (dataset: Dataset, all: TrySummary[]) => tryGroups(dataset
 
 const groupOrder = (groups: TryGroup[]) => groups.flatMap((g) => g.tries.map((t) => t.id));
 
+function comparableTries(all: TrySummary[], selected: string[], timelineOpen: boolean) {
+  return (
+    !timelineOpen &&
+    selected.length === 2 &&
+    selected.every((id) => all.some((summary) => summary.id === id && summary.recording))
+  );
+}
+
 export function useTriesView({ places, timeline, showToast }: TriesViewOptions) {
   const all = useTries() ?? [];
   const datasets = useDatasets() ?? [];
@@ -175,6 +183,9 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
     query,
     hits,
     selected,
+    canCompare: comparableTries(all, selected, timeline.open || !timeline.canCompare),
+    compare: () =>
+      void timeline.compare(selected).catch((error: unknown) => showToast(errorMessage(error), { tone: 'error' })),
     order,
     all,
     searching,
@@ -210,7 +221,7 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
 
       setPick(next);
 
-      if (next.selected.includes(id)) show(id);
+      if (!keys.shift && !keys.toggle && next.selected.includes(id)) show(id);
     },
     like: (tryId: string) => setQuery(likeQuery(tryId)),
     remove: (id?: string) => remove(id && !selected.includes(id) ? [id] : selected),

@@ -40,7 +40,7 @@ You can open any try you've recorded from any scene, then step through it on the
 
 ![Tries over the canvas with a try from each of two scenes](/help/open-a-try-from-any-scene/tries.png)
 
-4. The try plays through its Case's console, and the try timeline appears under the canvas. Tries stays hidden until you close the try. To step through the try, follow the steps in [Play a try through its console](/help/play-a-try-through-its-console).
+4. The try opens on the timeline, with its Case's console or source panels for a topic-only recording. Tries stays hidden until you close the try. To step through the try, follow the steps in [Play a try through its console](/help/play-a-try-through-its-console).
 
 ![A try from Tries playing through the Touch the Dots console, with its timeline under the canvas](/help/open-a-try-from-any-scene/timeline.png)
 
@@ -53,7 +53,7 @@ Saved camera videos play at the timeline's playhead. Detection runs on those fra
 
 To delete tries, select them, press [[⌫]], then click **Delete**. Hold [[⌘]] or [[⇧]] while you click to select more than one try. Deleting a try also deletes any Variations that came from it.
 
-**Note:** A try opens on the timeline only if it fits the robot in the open scene. If a try's Case isn't in the open scene, or it's an imported try with no Case, the try plays through the default cards, titled with the robot's name. A try imported from a ROS recording adds a column of cards for its topics. See [Play a ROS recording's topics in the console](/help/play-a-ros-recordings-topics-in-the-console). Clicking a real try selects it but doesn't open the timeline.
+**Note:** Ordinary joint playback requires a compatible scene robot. Topic-only imports and comparison read saved evidence without that match. If a try's Case isn't in the open scene, or it's an imported try with no Case, the try plays through the default cards, titled with the robot's name. A try imported from a ROS recording adds a column of cards for its topics. See [Play a ROS recording's topics in the console](/help/play-a-ros-recordings-topics-in-the-console). Clicking a real try selects it but doesn't open the timeline.
 
 If you recorded tries before the Library held them, Basecase moves them into the Library the first time you open their scene. On a Mac, Basecase stores tries in `library/tries` inside `~/Library/Application Support/Basecase`, with one folder per try.
 

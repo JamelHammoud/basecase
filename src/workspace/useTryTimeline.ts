@@ -7,6 +7,8 @@ import { useVisionScope } from '../cameras/visionScope';
 import type { Simulation } from '../sim/useSimulation';
 import { useTimelinePlayback } from './useTimelinePlayback';
 import { useTryLabels } from './useTryLabels';
+import { useSavedTimeline } from './useSavedTimeline';
+import { loadManifests } from '../cases/tryStore';
 import {
   prepareOpening,
   restoreSeedWorld,
@@ -40,10 +42,23 @@ const openedView = (opened: Opened | null) => ({
   trips: opened?.trips ?? [],
 });
 
+async function isTopicTry(record: TryRecord) {
+  if (record.manifest.modelHash) return false;
+
+  const stored = (await loadManifests([record.id]))[0];
+
+  return stored?.source === 'import' && stored.robot.joints.length === 0;
+}
+
+function comparisonAllowed(opened: Opened | null, sim: Simulation) {
+  return !opened && !sim.drive.active;
+}
+
 export function useTryTimeline(options: TimelineOptions) {
   const { closeRecordedCameras, openRecordedCameras, seekRecordedCameras } = useVisionScope().playback;
   const { sim } = options;
   const [opened, setOpened] = useState<Opened | null>(null);
+  const saved = useSavedTimeline();
   const opening = useRef(0);
   const pending = useRef<{ origin: TimelineOrigin; current: () => boolean } | null>(null);
   const frames = opened?.recording.frames ?? 0;
@@ -72,6 +87,15 @@ export function useTryTimeline(options: TimelineOptions) {
     const previous = pending.current?.current() ? pending.current.origin : opened;
     const ticket = ++opening.current;
     const valid = () => ticket === opening.current && current();
+
+    saved.close();
+
+    const topicOnly = await isTopicTry(record);
+
+    if (!valid()) return false;
+
+    if (topicOnly) return saved.show([record.id], at);
+
     const [recording, manifests] = await readTimelineSource(record.id, seeded, source);
 
     if (!recording || !valid()) return false;
@@ -118,23 +142,36 @@ export function useTryTimeline(options: TimelineOptions) {
     setOpened(null);
   });
 
+  const controls = saved.active ? saved : { ...playback, frames, dt: opened?.recording.dt ?? 0, origin: 0, close };
+
   return {
     ...openedView(opened),
-    frames,
-    dt: opened?.recording.dt ?? 0,
+    open: !!opened || saved.active,
+    comparison: saved,
+    canCompare: comparisonAllowed(opened, sim),
+    compare: (ids: readonly string[]) => {
+      if (!comparisonAllowed(opened, sim)) return Promise.resolve(false);
+
+      opening.current++;
+
+      return saved.show(ids);
+    },
+    frames: controls.frames,
+    origin: controls.origin,
+    dt: controls.dt,
     lanes,
     labels,
-    frame: playback.frame,
-    playing: playback.playing,
-    speed: playback.speed,
-    loop: playback.loop,
+    frame: controls.frame,
+    playing: controls.playing,
+    speed: controls.speed,
+    loop: controls.loop,
     show,
-    close,
-    seek: (frame: number) => playback.jump(frame),
-    step: playback.step,
-    toggle: playback.toggle,
-    faster: playback.faster,
-    setLoop: playback.setLoop,
+    close: controls.close,
+    seek: controls.jump,
+    step: controls.step,
+    toggle: controls.toggle,
+    faster: controls.faster,
+    setLoop: controls.setLoop,
   };
 }
 

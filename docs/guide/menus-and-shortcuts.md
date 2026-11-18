@@ -67,3 +67,7 @@ In the browser studio, Classroom opens the local file workspace in another tab. 
 ## Routed boards
 
 Route Board appears in the desktop command palette and selected carrier Inspector, using the existing native electrical job service. Import Board appears in the command palette when the scene has a board definition, and in that board’s Inspector. It uses the ordinary file picker and preserves unsupported-edit refusals. Schematic remains the export command for both incomplete editable electronics and checked board fabrication files. No keyboard shortcut is added. [Build](build.md#testing-coverage) describes native validation and unresolved requirements.
+
+### Saved-run comparison
+
+Compare Tries appears in the View command group when exactly two recorded Library tries are selected and ordinary playback or live driving is closed. It opens the shared recording timeline without running a Case. Existing timeline keyboard controls apply to its shared cursor. [Behavior and coverage](cases.md#comparison-preparation-coverage).

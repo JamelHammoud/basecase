@@ -783,6 +783,22 @@
     "reason": "Check 44370011621 completed changelog navigation, then exhausted the unchanged 30000 ms Blog click deadline on both Windows attempts before reaching the blog URL. One attempt only logged selector waiting and the other resolved the Blog anchor before waiting for visible, enabled and stable. Same-revision Windows diagnostic 44374113214 passed the exact declaration in 2640.6814 ms with one worker, zero retries and quarantine off, confirming intermittency. Previous Windows Check 44364437393 passed in 521 ms with unchanged site, browser harness, dependency lock and configuration. Linux at the failed revision passed in 584 ms. Layout stability, renderer scheduling, pointer delivery and page ownership remain unresolved under priority owner #1811, separately from the landing path until a shared cause is established. Restore after stage and cleanup tracing, an established fix and ten baseline and ten candidate Windows observations at equal load with retries disabled. Other platforms retain the complete story. Windows retains all three help stories and static page and blog-link coverage, which do not replace real blog navigation. No assertion, deadline or retry changes."
   },
   {
+    "file": "tools/fleet/scale.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44375421899 exhausted the unchanged 10000 ms beforeAll deadline before all eleven scale assertions. Cleanup queried the initialized database, but memoryBefore was absent and ingestion and snapshots stayed at zero. Bootstrap, registry seeding, service credentials and subscription readiness are not distinguished. Fleet scale, fixture and PostgreSQL sources are unchanged since full green Check 44245137178, which passed all eleven cases in 11164 ms including bodies. Same-revision Linux diagnostic 44377678789 reproduced the setup-hook timeout in a 10649 ms process on another image with one worker, zero retries and quarantine off. No selected assertion ran, so the retained artifact is setup evidence and is not verified as selected-test execution. The Linux runner images differ, without an established environment cause to pin. Shared priority fixture owner #1401 owns stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Linux observations at equal load without retries before restoration. Whole-file containment is necessary because shared setup precedes test selection. macOS retains the full 10000-robot matrix. Linux retains authorization, adapter, registry and browser checks, which do not replace scale ingestion, enumeration or subscriptions. No deadline or assertion changes."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for reversed",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44375421899 exhausted the unchanged 5000 ms deadline at 5006 ms. Last full green Check 44245137178 passed in 1099 ms on the same Windows image with unchanged parity, capture and native replay sources. Linux passed at the failing revision in 772 ms. Same-revision Windows diagnostic 44377675097 passed in 3257.4653 ms on the same image with one worker, zero retries and quarantine off, establishing intermittency. WASM capture, uv provisioning, native startup, replay, scoring and cleanup are not distinguished. Existing priority replay owner #1390 owns stage tracing, an established fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Windows retains rotated drawer parity, WASM fixture physics and persistence. Linux retains fifteen native fixture comparisons outside its existing nominal-lid quarantine, and macOS retains all sixteen. Preserve state and margin drift below 1e-6, exact contacts, verdict agreement, stop bounds and failure without contacts. No assertion, deadline or retry changes."
+  },
+  {
     "file": "e2e/cableEditing.e2e.test.ts",
     "test": "edits a Cable reach route with local anchors and stock, then restores it through undo and redo",
     "issue": 1815,

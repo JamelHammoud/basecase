@@ -7,6 +7,7 @@ import { build } from 'rolldown';
 import { routeNativeBoard } from '../../electron/electrical/route.mjs';
 import { runNativeBoard } from '../../electron/electrical/validate.mjs';
 import { routingFaults } from './routingFaults.mjs';
+import { checkRoutedArtifacts } from './routedCheck.mjs';
 import { expectedPads } from './boardCheck.mjs';
 import { readKiCadBoard, kiCadChildren, kiCadChild } from '../../src/wiring/boardKiCad.mjs';
 import { routingExecute, nativeElectricalCli } from './routingExecute.mjs';
@@ -29,9 +30,8 @@ await build({
   output: { file: path.join(output, 'fixtures.mjs'), format: 'esm', codeSplitting: false },
 });
 
-const { routingFixtures, acceptBoardRoute, finishBoardExport, encodeSceneFile, decodeSceneFile } = await import(
-  pathToFileURL(path.join(output, 'fixtures.mjs')).href
-);
+const { routingFixtures, acceptBoardRoute, finishBoardExport, encodeSceneFile, decodeSceneFile, nativeKitFixture } =
+  await import(pathToFileURL(path.join(output, 'fixtures.mjs')).href);
 const results = [];
 const tools = await routeTools();
 
@@ -97,6 +97,27 @@ for (const fixture of fixtures) {
 
     const accepted = await acceptBoardRoute({ board, request: prepared.request, result: validation });
     const archive = await finishBoardExport({ prepared, result: validation });
+
+    if (fixture.name === 'dual-bus-arm') {
+      const repeated = await runNativeBoard(prepared.request, { cli: nativeElectricalCli });
+
+      assert.deepEqual(repeated.files, validation.files);
+      assert.equal(repeated.report, validation.report);
+      await checkRoutedArtifacts(
+        {
+          prepared,
+          finish: (result) => finishBoardExport({ prepared, result }),
+          kit: (result) =>
+            nativeKitFixture(
+              { ...fixture.input, project: { ...fixture.input.project, electronicsBoard: accepted } },
+              prepared,
+              result,
+            ),
+        },
+        validation,
+      );
+    }
+
     const saved = await encodeSceneFile({
       parts: fixture.input.parts,
       project: { ...fixture.input.project, electronicsBoard: accepted },

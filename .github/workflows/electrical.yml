@@ -38,7 +38,7 @@ jobs:
         run: node tools/electrical/check.mjs --docker
       - name: Validate portable exports and save/reopen determinism
         if: runner.os == 'Windows'
-        run: node tools/electrical/check.mjs --export-only --routed-native
+        run: node tools/electrical/check.mjs --export-only
 
       - name: Route supported carrier matrix with KiCad DRC and existing fabrication exports
         if: steps.routing.outputs.needed == 'true'

@@ -94,3 +94,22 @@ it('refuses to silently omit a fault when the expected header geometry changes',
     'Routing fault controls require the JST header pad geometry.',
   );
 });
+
+it('retains missing and independently tightened native manufacturing rules without editing copper', () => {
+  const pcb = generatedBoard(variants[0]);
+  const rules = { source: 'https://example.com/process', clearanceMm: 0.2, trackWidthMm: 0.25, drillMm: 0.3 };
+  const faults = routingFaultCases({ pcb, rules });
+
+  expect(faults.find((fault) => fault.name === 'missing-rules')).toMatchObject({
+    pcb,
+    rules: null,
+    issue: 'board-manufacturing',
+  });
+
+  for (const field of ['clearanceMm', 'trackWidthMm', 'drillMm'])
+    expect(faults.find((fault) => fault.name === field)).toMatchObject({
+      pcb,
+      rules: { ...rules, [field]: 1.1 },
+      issue: 'board-drc',
+    });
+});

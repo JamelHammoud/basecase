@@ -19,6 +19,13 @@ export function routingFaultCases(request) {
       type: 'track_width',
     },
     { name: 'forbidden-copper', pcb: request.pcb, issue: 'board-copper-exclusion', copperExclusions: [wholeBoard] },
+    { name: 'missing-rules', pcb: request.pcb, rules: null, issue: 'board-manufacturing' },
+    ...['clearanceMm', 'trackWidthMm', 'drillMm'].map((field) => ({
+      name: field,
+      pcb: request.pcb,
+      rules: { ...request.rules, [field]: 1.1 },
+      issue: 'board-drc',
+    })),
   ];
 }
 
@@ -30,6 +37,7 @@ export async function routingFaults({ request, input }) {
     const candidate = {
       ...request,
       pcb: fault.pcb,
+      rules: Object.hasOwn(fault, 'rules') ? fault.rules : request.rules,
       expected: fault.expected ?? request.expected,
       boardHash: await boardDigest(fault.pcb),
       copperExclusions: fault.copperExclusions ?? request.copperExclusions,

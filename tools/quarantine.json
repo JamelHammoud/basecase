@@ -664,10 +664,18 @@
   },
   {
     "file": "e2e/caseRun.e2e.test.ts",
-    "test": "opens a Case’s own console: its areas, a live timer and score, Try It and Reset as buttons",
+    "test": "opens a Case\u2019s own console: its areas, a live timer and score, Try It and Reset as buttons",
     "issue": 1026,
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44241579596 reached the live timer, score and disabled Reset assertions on both Windows attempts. The first Stop Try click found html intercepting pointer events before the button detached. The second saved 6.04 seconds against the unchanged early-stop bound of 5 seconds. Same-revision Windows diagnostic 44243772337 passed in 15345.7226 ms with one worker, zero retries and quarantine off, confirming intermittency. Full green Windows Check 43948835889 passed in 13283 ms with unchanged walkthrough, recording hook and console sources. Linux passed at the failing revision in 13420 ms. Input delivery, renderer scheduling and automatic completion are not distinguished. Existing recording owner #1026 owns this separate custom-console path, stage tracing and ten baseline and ten candidate Windows observations at equal load with retries disabled before restoration. Other platforms retain the complete walkthrough. Fast console rendering, signal bus, recording/scoring and startup-ownership tests remain active without replacing real pointer delivery and early stopping. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for nominal",
+    "platform": "linux",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "reason": "Check 44344443437 exhausted the unchanged 5000 ms deadline at 5023 ms. Same-revision Linux diagnostic 44346927799 passed in 2395.687391 ms with one worker, zero retries and quarantine off. Last green Check 44245137178 passed in 3428 ms with unchanged parity, capture and native replay sources. WASM capture, uv provisioning, native replay, scoring and cleanup remain unresolved under existing shared replay owner #1390. Restore only after tracing those stages, fixing the demonstrated cause and ten baseline and ten candidate Linux observations at equal load. Linux retains the other fifteen native fixture comparisons, WASM physics and persistence. Existing Windows quarantines remain separate and macOS retains the complete matrix. Preserve 1e-6 state and margin limits, exact active contacts, verdict agreement and failure without contacts."
   }
 ]

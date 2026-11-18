@@ -129,6 +129,8 @@ const EXPECTED_NAMES = [
   'simTool',
   'sketchPath',
   'sketchSupportMeasurements',
+  'skillBodyPosition',
+  'stageSkillCase',
   'stlBase64',
   'storedTry',
   'stressBudget',

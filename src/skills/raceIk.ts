@@ -2,9 +2,14 @@ import { solve3 } from '../utils/solve3';
 import type { MainModule } from '@mujoco/mujoco';
 import { SimEngine } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
-import type { JointValues, RobotAnimation } from '../types/robotics';
+import type { JointValues, RobotPoseState } from '../types/robotics';
 import type { SkillController } from './artifacts';
 import type { V3 } from './kitModel';
+import { ArmConfiguration } from './armConfiguration';
+import { planArmMotion } from './armMotion';
+import { errorMessage } from '../utils/errorMessage';
+import { modelHashes } from './artifacts';
+import { hashOf } from './hash';
 
 const R2D = 180 / Math.PI;
 const SETTLE_S = 2;
@@ -14,7 +19,6 @@ const ITERATIONS = 200;
 const RESTARTS = 12;
 const FIT_M = 5e-4;
 const SAG_ROUNDS = 6;
-const MOVE_S = 0.4;
 
 interface ArmJoint {
   id: string;
@@ -24,6 +28,7 @@ interface ArmJoint {
 
 interface Arm {
   engine: SimEngine;
+  space: ArmConfiguration;
   joints: ArmJoint[];
   body: number;
 }
@@ -34,31 +39,12 @@ export interface Waypoint {
 }
 
 function openArm(mj: MainModule, model: SimModel, part: string): Arm {
-  const engine = new SimEngine(mj, model);
-  const robot = model.robots[0].key;
-  const owner = model.bodies.find((b) => b.parts.includes(part));
-  const body = owner ? mj.mj_name2id(engine.model, mj.mjtObj.mjOBJ_BODY.value, owner.name) : -1;
+  const space = new ArmConfiguration(mj, model, [part]);
+  const engine = space.engine;
+  const owner = model.bodies.find((b) => b.parts.includes(part))!;
+  const body = mj.mj_name2id(engine.model, mj.mjtObj.mjOBJ_BODY.value, owner.name);
 
-  if (body < 0) {
-    engine.dispose();
-
-    throw new Error(`The model has no part ${part}.`);
-  }
-
-  const joints = model.joints
-    .filter((j) => j.robot === robot && j.actuator >= 0 && j.drive === 'position' && j.type === 'revolute')
-    .map((j) => {
-      const id = mj.mj_name2id(engine.model, mj.mjtObj.mjOBJ_JOINT.value, j.name);
-      const range = j.range ?? [-180, 180];
-
-      return {
-        id: j.id,
-        qpos: engine.model.jnt_qposadr[id],
-        range: [range[0] / R2D, range[1] / R2D] as [number, number],
-      };
-    });
-
-  return { engine, joints, body };
+  return { engine, space, joints: space.joints, body };
 }
 
 function pointAt(mj: MainModule, arm: Arm, q: number[]): V3 {
@@ -113,14 +99,20 @@ function descend(mj: MainModule, arm: Arm, options: { target: V3; start: number[
 
 function solvePoint(mj: MainModule, arm: Arm, options: { target: V3; start: number[] }) {
   let best = descend(mj, arm, options);
+  let clear = arm.space.clear(best.q);
 
-  for (let r = 0; r < RESTARTS && best.miss > FIT_M; r++) {
+  for (let r = 0; r < RESTARTS && (best.miss > FIT_M || !clear); r++) {
     const start = arm.joints.map((j, i) =>
       r === 0 ? 0 : j.range[0] + ((j.range[1] - j.range[0]) * ((i * 7 + r * 3) % 11)) / 10,
     );
     const tried = descend(mj, arm, { ...options, start });
 
-    if (tried.miss < best.miss) best = tried;
+    const separated = arm.space.clear(tried.q);
+
+    if (separated && (!clear || tried.miss < best.miss)) {
+      best = tried;
+      clear = true;
+    }
   }
 
   return best;
@@ -134,7 +126,10 @@ function settledPoint(mj: MainModule, model: SimModel, options: { arm: Arm; valu
   const engine = new SimEngine(mj, model);
 
   try {
-    engine.setController({ kind: 'hold', values: { ...model.initial.values, ...options.values } });
+    const values = { ...model.initial.values, ...options.values };
+
+    engine.setController({ kind: 'hold', values });
+    engine.reset({ ...model.initial, values });
     engine.step(SETTLE_S);
 
     const p = engine.data.xpos;
@@ -169,23 +164,70 @@ function planPoint(mj: MainModule, model: SimModel, options: { arm: Arm; target:
 }
 
 export interface IkPlan {
-  controller: SkillController;
+  controller: SkillController | null;
+  reason: string;
   missM: number;
+  search?: { checks: number; nodes: number };
 }
 
-export function planReach(
+export interface ReachCandidate extends IkPlan {
+  key: string;
+  seed: number;
+}
+
+interface ReachContext {
+  part: string;
+  waypoints: Waypoint[];
+  horizonS: number;
+  start?: RobotPoseState;
+  seed?: number;
+}
+
+export function reachPlanKey(model: SimModel, context: ReachContext): string {
+  const { part, waypoints, horizonS, start } = context;
+
+  return hashOf({ model: modelHashes(model), collision: model.collisionGeometry, part, waypoints, horizonS, start });
+}
+
+export function reachCandidate(model: SimModel, context: ReachContext, plan: IkPlan): ReachCandidate | undefined {
+  if (new TextEncoder().encode(JSON.stringify(plan.controller)).byteLength > 64 * 1024) return undefined;
+
+  return {
+    ...plan,
+    missM: Number.isFinite(plan.missM) ? plan.missM : 0,
+    key: reachPlanKey(model, context),
+    seed: context.seed ?? 1812,
+  };
+}
+
+export async function planReach(
   mj: MainModule,
   model: SimModel,
-  options: { part: string; waypoints: Waypoint[]; horizonS: number },
-): IkPlan {
-  const arm = openArm(mj, model, options.part);
+  options: {
+    part: string;
+    waypoints: Waypoint[];
+    horizonS: number;
+    start?: RobotPoseState;
+    seed?: number;
+    stop?: () => boolean;
+  },
+): Promise<IkPlan> {
+  model = { ...model, initial: options.start ?? model.initial };
+
+  let opened: Arm | null = null;
 
   try {
+    const arm = openArm(mj, model, options.part);
+
+    opened = arm;
+
     const poses: number[][] = [];
-    let start = arm.joints.map(() => 0);
+    let start = arm.joints.map((j) => arm.engine.data.qpos[j.qpos] as number);
     let missM = 0;
 
     for (const w of options.waypoints) {
+      if (options.stop?.()) return { controller: null, reason: 'Stopped.', missM };
+
       const fit = planPoint(mj, model, { arm, target: w.point, start });
 
       poses.push(fit.q);
@@ -193,35 +235,28 @@ export function planReach(
       start = fit.q;
     }
 
-    return { controller: controllerFor(model, { arm, poses, horizonS: options.horizonS }), missM };
+    const span = options.horizonS / poses.length;
+    const keys = poses.flatMap((q, i) => [
+      { t: (i + 1) * span - options.waypoints[i].holdS, values: toValues(arm, q) },
+      { t: (i + 1) * span, values: toValues(arm, q) },
+    ]);
+    const plan = await planArmMotion(mj, model, {
+      parts: [options.part],
+      keys,
+      horizonS: options.horizonS,
+      seed: options.seed,
+      stop: options.stop ?? (() => false),
+    });
+
+    return {
+      controller: plan.controller,
+      reason: plan.reason,
+      missM,
+      search: { checks: plan.checks, nodes: plan.nodes },
+    };
+  } catch (error) {
+    return { controller: null, reason: errorMessage(error), missM: Infinity };
   } finally {
-    arm.engine.dispose();
+    opened?.space.dispose();
   }
-}
-
-function controllerFor(model: SimModel, options: { arm: Arm; poses: number[][]; horizonS: number }): SkillController {
-  const { arm, poses, horizonS } = options;
-  const values = poses.map((q) => ({ ...model.initial.values, ...toValues(arm, q) }));
-
-  if (values.length === 1) return { kind: 'hold', values: values[0] };
-
-  const span = horizonS / values.length;
-  const keyframes = values.flatMap((v, k) =>
-    k === 0
-      ? [{ t: 0, values: v }]
-      : [
-          { t: k * span - MOVE_S, values: values[k - 1] },
-          { t: k * span, values: v },
-        ],
-  );
-  const animation: RobotAnimation = {
-    id: 'reach-plan',
-    name: 'Reach plan',
-    duration: horizonS,
-    loop: false,
-    keyframes,
-    interpolation: 'linear',
-  };
-
-  return { kind: 'animation', animation };
 }

@@ -1,5 +1,6 @@
 import type { MainModule } from '@mujoco/mujoco';
 import type { Controller } from '../sim/engine';
+import type { SimEngine } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
 import { ARENA } from './arena';
 import { signalReaders, type SignalReader } from './arenaSignals';
@@ -46,12 +47,19 @@ export class Trials {
   private readonly model: SimModel;
   private readonly full: Bench;
   private readonly half: Bench;
+  private readonly guard?: (engine: SimEngine) => boolean;
 
-  constructor(options: { mj: MainModule; model: SimModel; environment: Environment }) {
+  constructor(options: {
+    mj: MainModule;
+    model: SimModel;
+    environment: Environment;
+    guard?: (engine: SimEngine) => boolean;
+  }) {
     const { mj, model, environment } = options;
 
     this.env = environment;
     this.model = model;
+    this.guard = options.guard;
     this.full = new Bench(mj, model, environment);
     this.half = new Bench(mj, withTimestep(model, 0.5), environment);
   }
@@ -96,8 +104,13 @@ export class Trials {
       robot: this.env.robot,
     });
 
+    let unsafe = this.guard ? !this.guard(world.engine) : false;
+    const inspect = () => {
+      unsafe ||= this.guard ? !this.guard(world.engine) : false;
+    };
+
     for (let tick = 0; tick < ticks; tick++) {
-      if (tick > 0) world.engine.step(traceDt);
+      if (tick > 0) world.engine.step(traceDt, this.guard ? inspect : undefined);
 
       for (const name of names) signals[name].push(readers[name]());
     }
@@ -105,7 +118,7 @@ export class Trials {
     const trace = { dt: traceDt, signals };
     const result = await evaluateContract(contract, trace).catch(() => null);
 
-    return { result, trace, diverged: world.diverged() };
+    return { result, trace, diverged: world.diverged() || unsafe };
   }
 
   dispose() {

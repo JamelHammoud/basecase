@@ -278,6 +278,14 @@
   },
   {
     "file": "e2e/firstLaunch.e2e.test.ts",
+    "test": "moves the base forward while W is held",
+    "issue": 1799,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Windows run 44344443437 passed first-launch reference motion and an advancing clock, then both W attempts observed exactly zero forward delta during the unchanged 3000 ms poll for movement greater than 0.2. Linux passed at the same commit in 866 ms. Windows passed in 1745 ms in the last green run 44245137178. The test shares its app with startup and leaves W held after assertion failure, so the retry is not independent. Input delivery, simulation playing state and worker progress during the failed action were not captured. The stalled stage and responsible commit are not established."
+  },
+  {
+    "file": "e2e/firstLaunch.e2e.test.ts",
     "test": "says why Try on Real Robot didn\u2019t start, and keeps saying it under the button",
     "issue": 1127,
     "until": "2026-11-28",

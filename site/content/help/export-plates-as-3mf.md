@@ -31,9 +31,11 @@ You can save the laid-out plates as 3MF files and slice them in any slicer. Base
 
 ![3MF Plates in the rover's Export menu](/help/export-a-robot-package/menu.png)
 
-Basecase saves the files to your downloads. If the scene uses one material, the file is named `<scene>.3mf`. If it uses several, each material gets its own file, such as `robot-arm-PLA.3mf` and `robot-arm-PETG.3mf`.
+Basecase saves the files to your downloads. If the exported plates use one material, the file is named `<scene>.3mf`. If they use several, each material gets its own file, such as `robot-arm-PLA.3mf` and `robot-arm-PETG.3mf`.
 
 Inside each file, the plates are named Plate 1, Plate 2, and so on, and they're laid out the way Bambu Studio lays out plates. Parts keep their names and the orientation you chose in Print mode.
+
+While **Print Fit Test** is open, this exports its coupons instead of the design's full plates. A comparison includes its dimension values and source identities, as [Compare clearances on a fit test plate](/help/compare-fit-clearances) explains.
 
 Sheet parts aren't on the plates. To export their outlines and holes for cutting, see [Cut parts from sheet](/help/cut-parts-from-sheet).
 

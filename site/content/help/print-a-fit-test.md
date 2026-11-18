@@ -23,6 +23,8 @@ A fit test prints small pieces of your design around each servo pocket, insert h
 
 **Note:** The fit test pieces have no guide letters, so **Label parts** is hidden while the fit test plate is open.
 
+To compare authored dimension values and apply a choice, follow [Compare clearances on a fit test plate](/help/compare-fit-clearances).
+
 Fit test pieces use the same printer obstacle and brim clearance checks as the design's plates. A piece that fails fit stays off the plate, including when the printer's obstacle geometry isn't supported.
 
 ![Print mode with Print Fit Test beside Done](/help/print-a-fit-test/print-mode.png)

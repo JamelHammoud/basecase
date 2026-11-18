@@ -53,6 +53,8 @@ Assembly allows one minute per guide step, half a minute per fastener, one and a
 
 To compare that total with the hours available, [Set a time budget](/help/set-a-time-budget).
 
+[Comparison fit-test coupons](/help/compare-fit-clearances) keep the host's print orientation and material. Choosing a dimension doesn't record a physical fit measurement or calibrate these estimates. Applying it reruns the design's ordinary Checks.
+
 ## What Basecase won't print
 
 A printed part meant to be clear, such as one named “Front Glass”, blocks the build. A printer can't make clear parts. A part bigger than the plate blocks it too. **Parts** in Print mode says how many pieces to split it into.

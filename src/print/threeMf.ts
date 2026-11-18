@@ -1,3 +1,4 @@
+import type { FitPlateIdentity } from './fitVariantIdentity';
 import { strToU8, zipSync } from 'three/examples/jsm/libs/fflate.module.js';
 
 export interface MeshData {
@@ -19,6 +20,7 @@ export interface ThreeMfItem {
 }
 
 export interface ThreeMfInput {
+  fitTest?: FitPlateIdentity;
   objects: ThreeMfObject[];
   items: ThreeMfItem[];
   plates: Array<{ number: number; name: string }>;
@@ -94,10 +96,19 @@ export function plateOrigin(plateIndex: number, plateCount: number, [w, d]: [num
   return [col * w * (1 + PLATE_GAP), -row * d * (1 + PLATE_GAP)];
 }
 
-function transformText(m: number[], offset: [number, number]): string {
-  return [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10], m[12] + offset[0], m[13] + offset[1], m[14]]
-    .map(num)
-    .join(' ');
+export function threeMfBuildMatrix(matrix: number[], offset: [number, number]): number[] {
+  const translated = matrix.slice();
+
+  translated[12] += offset[0];
+  translated[13] += offset[1];
+
+  return translated.map((value) => Number(num(value)));
+}
+
+function transformText(matrix: number[], offset: [number, number]): string {
+  const m = threeMfBuildMatrix(matrix, offset);
+
+  return [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10], m[12], m[13], m[14]].join(' ');
 }
 
 function modelXml(input: ThreeMfInput): string {
@@ -143,7 +154,11 @@ const RELS = `<?xml version="1.0" encoding="UTF-8"?>
 
 export function writeThreeMf(input: ThreeMfInput): Uint8Array {
   const files: Record<string, Uint8Array> = {
-    '[Content_Types].xml': strToU8(CONTENT_TYPES),
+    '[Content_Types].xml': strToU8(
+      input.fitTest
+        ? CONTENT_TYPES.replace('</Types>', '<Default Extension="json" ContentType="application/json"/>\n</Types>')
+        : CONTENT_TYPES,
+    ),
     '_rels/.rels': strToU8(RELS),
     '3D/3dmodel.model': strToU8(modelXml(input)),
   };
@@ -153,7 +168,9 @@ export function writeThreeMf(input: ThreeMfInput): Uint8Array {
     files['Metadata/project_settings.config'] = strToU8(projectSettings(input.project));
   }
 
-  return zipSync(files, { level: 6, ...(input.project ? { mtime: new Date(1980, 0, 1) } : {}) });
+  if (input.fitTest) files['Metadata/basecase-fit-test.json'] = strToU8(JSON.stringify(input.fitTest));
+
+  return zipSync(files, { level: 6, ...(input.project || input.fitTest ? { mtime: new Date(1980, 0, 1) } : {}) });
 }
 
 export interface ThreeMfProject {

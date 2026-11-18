@@ -12,6 +12,7 @@ import { plural } from '../../../electron/plural.mjs';
 import { duration } from '../../utils/duration';
 import { weight } from '../../utils/weight';
 import { plateNumbers, plateStateText } from './plateFacts';
+import { FitVariants } from './FitVariants';
 import { MergeSection } from './MergeSection';
 import { PrintedSection } from './PrintedSection';
 import { PrinterFleet, type PlateSend } from './PrinterFleet';
@@ -305,12 +306,16 @@ const PrintHeader: React.FC<{ printing: Printing; onDone: () => void }> = ({ pri
   />
 );
 
+function selectedPrintPart(printing: Printing, parts: ScenePart[]) {
+  return printing.fitTest ? undefined : (printing.repairPart ?? parts.find((p) => p.id === printing.mode?.selected));
+}
+
 export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
   const { printing, parts, onDone } = props;
   const { ref, style } = useScrollFade();
   const plates = printing.report?.plan.plates ?? [];
   const plate = plates.find((p) => p.number === printing.mode?.plate) ?? plates[0];
-  const selected = printing.repairPart ?? parts.find((p) => p.id === printing.mode?.selected);
+  const selected = selectedPrintPart(printing, parts);
   const sending = usePlateSend(printing);
 
   return (
@@ -343,6 +348,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
           <PrinterLive printing={printing} />
           <PrinterFleet printing={printing} onStartNext={sending.setConfirming} />
         </Section>
+        {printing.fitTest && <FitVariants printing={printing} parts={parts} project={props.project} />}
         {selected && (
           <PartControls
             printing={printing}

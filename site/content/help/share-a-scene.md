@@ -33,6 +33,6 @@ The file includes the parts, joints, poses, comments, Cases, Routines, [Study](/
 
 An [electronics board](/help/fit-an-electronics-board) travels with the scene, including its mounting constraints, placement identities and locks. The recipient can edit those placements.
 
-[Shared parameters and dimension bindings](/help/link-dimensions-with-shared-parameters) travel with the scene too. The recipient can edit the parameters to regenerate related parts together.
+[Shared parameters and dimension bindings](/help/link-dimensions-with-shared-parameters) travel with the scene too. The recipient can edit the parameters to regenerate related parts together. An applied [fit-test choice](/help/compare-fit-clearances) keeps its selected value, source hash and material with its parameter. Temporary comparison coupons stay out of the scene file.
 
 To export from the menu instead, choose **File** ▸ **Export Scene**. Or choose **Export Scene** in [[⌘K]]. The person you send the file to can open it by following [Open a shared scene](/help/open-a-shared-scene).

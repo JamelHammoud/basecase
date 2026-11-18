@@ -66,7 +66,7 @@ Every export is in the **Export** menu at the top right of the window.
 |---|---|---|
 | **Image** | `<scene>.png` | The canvas as you see it, without the grid, gizmos and other helpers |
 | **STL** | `<scene>.stl` | Every visible solid part as one binary mesh, in millimeters, Z up |
-| **3MF Plates** | `<scene>.3mf`, or one file per material | The printed parts laid out on plates, each with its [guide letter](/help/label-printed-parts) while **Label parts** is on |
+| **3MF Plates** | `<scene>.3mf`, or one file per material | The printed parts laid out on plates, with [guide letters](/help/label-printed-parts) while **Label parts** is on. An open [fit test](/help/compare-fit-clearances) exports its coupons, with comparison identities when variants are prepared |
 | **Cut Files** | `<scene>-cut-files.zip` | One DXF per [sheet part](/help/cut-parts-from-sheet), with its outline and holes in millimeters |
 | **Drawings** | `<scene>-drawings.zip` | PDF, editable SVG and a source manifest for [dimensioned drawings](/help/export-dimensioned-drawings) |
 | **STEP**, in the desktop app only | `<scene>.step` | Every visible solid part as its own body, in millimeters, Z up, as [Export a STEP file](/help/export-a-step-file) explains |

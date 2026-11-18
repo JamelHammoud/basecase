@@ -44,4 +44,6 @@ Choose **Unbind** to edit a dimension on its own. Unbind also releases a CAD or 
 
 If regeneration fails, you keep the previous complete design. Use Undo and Redo to restore the declarations and geometry together. Basecase automatically validates reopened bindings before their geometry counts as current in Checks.
 
+To print several values before choosing one, [compare clearances on a fit test plate](/help/compare-fit-clearances). Applying a coupon value keeps its source and material with the parameter as a design choice.
+
 See [Checks and blockers](/help/checks-and-blockers) before building the changed design.

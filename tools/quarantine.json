@@ -519,14 +519,6 @@
     "reason": "Run 44175369818 exhausted the unchanged 10000 ms beforeAll deadline before any of eleven HTTP service cases ran. Previous Check 44170110654 passed this file in 6293 ms with unchanged fixtures and service sources. Native cluster startup, migrations, HTTP startup and identity preparation are not distinguished. Existing shared fixture owner #1401 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. macOS retains the complete service matrix. Authorization, recovery, facilities, adapters, scale and browser checks remain active on Windows."
   },
   {
-    "file": "e2e/boardRouting.e2e.test.ts",
-    "test": "routes the imported rover from Board and downloads source-bound fabrication before undoing the route",
-    "issue": 1620,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Run 44175369818 exhausted the unchanged 30000 ms electrical-validate response wait in boardRoutingWalkthrough.ts:66 after Route Board. The log does not distinguish router provisioning, export preparation, routing, validation or stale-source refusal. Shared board delivery and native validation owner #1620 tracks production-path tracing, cancellation, cleanup and equal-load baseline and candidate measurements. Linux retains the walkthrough and fast routing, reconciliation, fabrication and source-guard tests stay active. No timeout or assertion changes."
-  },
-  {
     "file": "e2e/drawings.e2e.test.ts",
     "test": "imports a rover, exports its plate through Drawings, edits it in the Inspector and reconciles Kit drawing identities",
     "issue": 1611,

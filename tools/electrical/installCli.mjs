@@ -61,30 +61,14 @@ function selectedBrowserShard(shard) {
     .filter(Boolean)
     .map((file) => path.basename(file));
 
-  return {
-    native:
-      selected.includes('boardRouted.e2e.test.ts') ||
-      selected.includes('boardRouting.e2e.test.ts') ||
-      selected.includes('kitElectrical.e2e.test.ts'),
-    routing: selected.includes('boardRouting.e2e.test.ts'),
-  };
+  return selected.includes('boardRouted.e2e.test.ts') || selected.includes('kitElectrical.e2e.test.ts');
 }
 
 async function main() {
   const shard = process.argv[process.argv.indexOf('--browser-shard') + 1];
+  const selected = process.argv.includes('--browser-shard') ? selectedBrowserShard(shard) : true;
 
-  const selected = process.argv.includes('--browser-shard')
-    ? selectedBrowserShard(shard)
-    : { native: true, routing: false };
-
-  if (!selected.native) return;
-
-  if (selected.routing) {
-    const { installBoardRouter } = await import('./installRouter.mjs');
-    const directory = await installBoardRouter(path.resolve('scratch/routing-tools'));
-
-    await fsp.appendFile(process.env.GITHUB_ENV, `BASECASE_ROUTING_TOOLS=${directory}\n`);
-  }
+  if (!selected) return;
 
   if (process.platform === 'linux') {
     run('docker', ['pull', 'kicad/kicad:9.0.6']);

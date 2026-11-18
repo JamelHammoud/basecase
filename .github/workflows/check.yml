@@ -49,7 +49,7 @@ jobs:
           if grep -qE "$vision" <<< "$files"; then echo "vision=true"; else echo "vision=false"; fi >> "$GITHUB_OUTPUT"
           daemon='^(hw/|verify/hw/|\.github/workflows/(check|release)\.yml$)'
           if grep -qE "$daemon" <<< "$files"; then echo "daemon=true"; else echo "daemon=false"; fi >> "$GITHUB_OUTPUT"
-          electrical='^(src/wiring/|src/workspace/([^/]*Schematic|schematic)[^/]*|src/utils/(engineeringPower|powerSources|servoAmps)\.ts$|src/data/(components|connectorPorts|componentPorts|supplies|sourcedItems)\.ts$|tools/electrical/|e2e/(schematic|board|boardRouted|boardRouting)\.e2e\.test\.ts$|electron/electrical/|src/workspace/(useRoutedBoard|useBoard|useBoardPreview|useBoardRouting)\.ts$|\.github/workflows/(electrical|check)\.yml$|package(-lock)?\.json$)'
+          electrical='^(src/wiring/|src/workspace/([^/]*Schematic|schematic)[^/]*|src/utils/(engineeringPower|powerSources|servoAmps)\.ts$|src/data/(components|connectorPorts|componentPorts|supplies|sourcedItems)\.ts$|tools/electrical/|e2e/(schematic|board|boardRouted)\.e2e\.test\.ts$|electron/electrical/|src/workspace/(useRoutedBoard|useBoard|useBoardPreview|useBoardRouting)\.ts$|\.github/workflows/(electrical|check)\.yml$|package(-lock)?\.json$)'
           if grep -qE "$electrical" <<< "$files"; then echo "electrical=true"; else echo "electrical=false"; fi >> "$GITHUB_OUTPUT"
 
   electrical:
@@ -222,11 +222,8 @@ jobs:
           echo "fallback=$(jq -r '.fallbackFiles | join(" ")' <<< "$found")" >> "$GITHUB_OUTPUT"
           echo "pattern=$(jq -r '.pattern' <<< "$found")" >> "$GITHUB_OUTPUT"
       - name: Prepare KiCad for the routed board walkthrough
-        if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/boardRouted.e2e.test.ts') || contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/boardRouting.e2e.test.ts') || contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/kitElectrical.e2e.test.ts') }}
+        if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/boardRouted.e2e.test.ts') || contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/kitElectrical.e2e.test.ts') }}
         run: node tools/electrical/installCli.mjs
-      - name: Install native board routing tools for selected walkthrough
-        if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/boardRouting.e2e.test.ts') }}
-        run: node tools/electrical/installRouter.mjs --directory scratch/routing-tools
       - name: Install uv for local USD facility conversion
         if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/fleetSites.e2e.test.ts') }}
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2

@@ -1,12 +1,12 @@
 import { buildOutcome, buildSchema } from '../lib/buildOutcome.mjs';
 import { CHANGE_SCHEMA } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
-import { closeIssue, commentOnIssue, editIssueLabels, hasLabel, issues, openPulls } from '../lib/github.mjs';
+import { closeIssue, commentOnIssue, editIssueLabels, hasLabel, issues } from '../lib/github.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { buildOrder } from '../lib/dependsOn.mjs';
 import { checkedRun } from '../lib/preflight.mjs';
 import { publish } from '../lib/pull.mjs';
-import { stepPullIndex, stepStatus } from '../lib/stepPulls.mjs';
+import { indexByStep, pullHistory, stepPullIndex, stepStatus } from '../lib/stepPulls.mjs';
 import { recordDecline } from '../lib/stepState.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 import { eligibleTask, taskKey, unavailableCapabilities } from '../lib/capabilities.mjs';
@@ -32,7 +32,7 @@ const byPriorityThenAge = (a, b) =>
     Number(hasLabel(a, 'loop:feature') || hasLabel(a, 'loop:integration')) ||
   a.createdAt.localeCompare(b.createdAt);
 
-const openPullNumbers = () => new Set(openPulls().map((pull) => pull.number));
+const openPullNumbers = (pulls) => new Set(pulls.filter((pull) => pull.state === 'OPEN').map((pull) => pull.number));
 
 const ORPHAN_AFTER_MS = 30 * 60 * 1000;
 
@@ -48,12 +48,13 @@ const unbuilt = (steps, index) =>
   steps.filter((step) => !closeIfMerged(step, index) && stepStatus(index, step.number) === 'none');
 
 export const waitingSteps = () => {
-  const index = stepPullIndex();
+  const pulls = pullHistory();
 
-  if (!index) return [];
+  if (!pulls) return [];
 
+  const index = indexByStep(pulls);
   const now = Date.now();
-  const openNumbers = openPullNumbers();
+  const openNumbers = openPullNumbers(pulls);
   const queued = issues(NEXT).filter((issue) => !hasLabel(issue, BUILDING));
   const stale = issues(BUILDING).filter((issue) => now - Date.parse(issue.updatedAt) > ORPHAN_AFTER_MS);
   const blocked = issues('loop:blocked');
@@ -71,15 +72,17 @@ export const waitingSteps = () => {
 
 function reconsideration({ missing, inputSignature, waitFor, until }) {
   if (missing.length > 0)
-    return `Waiting for ${missing.join(', ')}. A builder reconsiders when those capabilities become available or the task definition changes.`;
+    return `Waiting for ${missing.join(', ')}. A builder reconsiders when those capabilities become available and blocking pull requests close, or the task definition changes.`;
+
+  if (waitFor.length > 0)
+    return `Waiting for ${waitFor.map((number) => `#${number}`).join(', ')} to close or the task definition to change.`;
 
   if (inputSignature)
-    return 'A builder reconsiders when its declared source inputs, task definition or available capabilities change, or its named dependencies close.';
+    return 'A builder reconsiders when its declared source inputs, task definition or available capabilities change.';
 
-  const dependency = waitFor.length > 0 ? `until ${waitFor.map((number) => `#${number}`).join(', ')} close, and ` : '';
   const retry = new Date(until).toISOString().slice(0, 16).replace('T', ' ');
 
-  return `A builder picks it up again ${dependency}after ${retry} UTC at the earliest.`;
+  return `A builder picks it up again after ${retry} UTC at the earliest.`;
 }
 
 function decline(step, outcome, inputSignature) {
@@ -92,7 +95,7 @@ function decline(step, outcome, inputSignature) {
     missing,
   });
 
-  if (missing.length > 0 || (inputSignature && waitFor.length === 0))
+  if (missing.length > 0 || waitFor.length > 0 || inputSignature)
     editIssueLabels(step.number, { add: ['loop:blocked'], remove: [NEXT, BUILDING] });
 
   commentOnIssue(
@@ -140,6 +143,7 @@ function retainFailedSession(step, inputSignature, worktree, { session, reason, 
   saveRecovery(step.number, {
     worktree,
     inputSignature: recoverySignature(step, inputSignature),
+    taskHead: taskKey(step),
     session,
     reason: String(reason ?? '').slice(-6000),
     outcome,
@@ -171,7 +175,7 @@ const retainedWorktree = (step, slot, recovery) => ({
 
 const executionOutcome = (result) =>
   result.ok
-    ? buildOutcome(result.output, openPullNumbers())
+    ? buildOutcome(result.output, openPullNumbers(pullHistory() ?? []))
     : {
         status: 'incomplete',
         reason: String(result.error ?? 'Agent execution interrupted'),

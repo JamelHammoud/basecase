@@ -51,6 +51,8 @@ In the comparison, click **Open Original Image** to open the matching current im
 
 You can also press [[⌘K]] and choose **Inspect Images** while the dataset is open.
 
+Declared requirements show their saved scores, support and outcomes in the comparison. Current threshold or membership edits leave those results unchanged.
+
 To inspect frozen groups by declared condition, camera or source, follow [Compare vision models by condition](/help/compare-vision-conditions).
 
 To prepare another comparison, follow [Train a vision model](/help/train-a-vision-model).

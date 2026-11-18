@@ -44,8 +44,8 @@ export function VisionConditionResults({
         <dd>{score(result.incumbent)}</dd>
       </dl>
       <p className="text-white/60">
-        Conditions are supplied labels. Exploratory comparison. Retention uses the full real test. Group scores can’t
-        establish statistical significance or a deployment guarantee.
+        Conditions are supplied labels. Only requirements declared before training affect retention. Group scores can’t
+        establish statistical significance, physical safety or a deployment guarantee.
       </p>
     </div>
   );

@@ -41,17 +41,19 @@ function ownerExitDistance(endpoint: RouteEndpoint, start: PortVec, owner: Route
 
   if (AXES.some((axis) => localStart[axis] < owner.min[axis] || localStart[axis] > owner.max[axis])) return EXIT_MM;
 
-  const distances = AXES.flatMap((axis) => {
+  let nearest = Infinity;
+
+  for (const axis of AXES) {
     const direction = (localStart[axis] - origin[axis]) / EXIT_MM;
 
-    if (Math.abs(direction) < EPSILON) return [];
+    if (Math.abs(direction) < EPSILON) continue;
 
     const edge = direction > 0 ? owner.max[axis] : owner.min[axis];
 
-    return [(edge - origin[axis]) / direction];
-  });
+    nearest = Math.min(nearest, (edge - origin[axis]) / direction);
+  }
 
-  return Math.max(EXIT_MM, Math.min(...distances));
+  return Math.max(EXIT_MM, nearest);
 }
 
 function exit(endpoint: RouteEndpoint, boxes: RouteObstacle[]): PortVec | null {

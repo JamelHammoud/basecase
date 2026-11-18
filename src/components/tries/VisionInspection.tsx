@@ -1,3 +1,5 @@
+import { VisionRequirementResults } from './VisionRequirementResults';
+import { requirementOutcomes } from '../../vision/training/requirementRetention';
 import type { InspectionNavigation } from '../../workspace/visionInspectionNavigation';
 import { useInspectionNavigation } from './useInspectionNavigation';
 import { useState } from 'react';
@@ -55,6 +57,9 @@ export function VisionInspection({ reports, onClose, navigation }: Props) {
           <dt>Test</dt>
           <dd>{reports.candidate.testHash}</dd>
         </dl>
+        {index && !index.problem && (
+          <VisionRequirementResults outcomes={requirementOutcomes(reports.candidate, reports.incumbent)} />
+        )}
         <details className="text-white/60">
           <summary>Matching rules</summary>
           <p>{rules[task.kind]}</p>

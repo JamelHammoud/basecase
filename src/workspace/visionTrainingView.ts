@@ -14,6 +14,7 @@ const REASONS: Record<TrainingRetentionReason, string> = {
   'different-test': 'The models used different held-out images',
   'different-task': 'The models used different tasks',
   limits: 'The model exceeded the task limits',
+  requirements: '',
   'no-improvement': 'The incumbent scored higher or tied',
 };
 
@@ -22,6 +23,7 @@ export function visionAttemptView(run: TrainingRun): VisionAttemptView {
 
   return {
     id: run.id,
+    requirements: comparison.requirements,
     at: run.at,
     inspection:
       run.report.evidence && run.incumbentReport.evidence

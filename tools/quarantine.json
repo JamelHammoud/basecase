@@ -567,6 +567,14 @@
     "reason": "Check 44206588211 timed out at 5025 ms against the unchanged 5000 ms deadline. Focused Windows diagnostic 44207822586 passed the exact test at the failing revision in 3481.1829 ms with one worker, zero retries and quarantine off, establishing intermittency. Previous Check 44200197616 passed nominal drawer in 1736 ms with unchanged parity, capture, variant, Case builder and native replay sources. Capture, uv provisioning, native startup, replay and scoring are not distinguished by the log. Existing native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. The other seven drawers remain active on Windows and every comparison remains active on other platforms."
   },
   {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for limp",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44214681066 timed out at 5004 ms against the unchanged 5000 ms deadline. Same-revision Windows diagnostic 44215996839 passed the exact test in 3840.8756 ms with one worker, zero retries and quarantine off, establishing intermittency. Previous Windows Check 44210703841 passed limp drawer in 4493 ms with unchanged parity, capture, variant, Case builder, native replay, dependency-lock and Vitest configuration sources. Capture, uv provisioning, native startup, replay, scoring and cleanup are not distinguished by the log. Existing open priority native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. The other six drawers remain active on Windows and every comparison remains active on other platforms."
+  },
+  {
     "file": "tools/fleet/recovery.test.mjs",
     "test": "",
     "issue": 1401,
@@ -597,5 +605,21 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44206588211 failed both Windows attempts. The first reached Open Try after restoring and acknowledging the incident but found no timeline at line 102. The retry stalled in the part-count callback after loading the arm into the second tab at line 79. Same-revision Windows diagnostic 44208960108 passed the complete exact test with one worker, zero retries and quarantine off in a 38591 ms process. Previous Check 44200197616 passed in 16742 ms with unchanged test, fixture, harness, incident, replay and timeline sources. The responsible scene-load and playback stages are unresolved. Issue #1749 owns per-path tracing, cleanup and equal-load baseline and candidate measurements before restoration. Other platforms retain the walkthrough. Fast collector, storage and recorder integration coverage remains active on Windows."
+  },
+  {
+    "file": "e2e/classroom.e2e.test.ts",
+    "test": "grades two revisions and opens the failing Check without losing the grid",
+    "issue": 1754,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44210703841 completed grading, independent failing-Check inspection and the original two-tile grid, then found zero submission tiles after teacher reload at line 159 on both Windows attempts. Same-revision Windows diagnostic 44212666461 passed the exact test in 11640.8835 ms with one worker, zero retries and quarantine off, confirming intermittency. Previous Windows Check 44206588211 passed in 15132 ms with no intervening application, e2e, dependency-lock, Vite or browser configuration changes. Linux passed at the failing revision in 7157 ms. Missing records, queued persistence, load errors and reload rendering are not distinguished. Issue #1754 owns teacher-path tracing and equal-load baseline and candidate Windows measurements before restoration, coordinating shared helpers with student download owner #1508. Other platforms retain this walkthrough. Windows retains assignment export, edited-attempt reload and Submit, real file validation and native-worker grading. No assertion or deadline changes."
+  },
+  {
+    "file": "e2e/operateRos2.e2e.test.ts",
+    "test": "connects the arm as an emulated ROS 2 robot, climbs to Test and follows a posed shoulder",
+    "issue": 1757,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44214681066 passed ROS 2 connection, Test and posed-shoulder following, then exhausted the unchanged 30000 ms tab-click deadline returning to Operate at line 103. The tab was visible, enabled, stable and selected, and scrolling completed, but click delivery did not complete. The retry reused the connected beforeAll fixture and waited for the absent Feetech picker at line 62. Previous Windows Check 44210703841 passed in 9750 ms with unchanged test, harness, fixtures, robot, simulation, connection-control, dependency-lock and browser-configuration sources. Linux passed at the failing revision in 5540 ms. Same-revision Windows diagnostic 44217093535 passed the exact test in 8132.8451 ms with one worker, zero retries and quarantine off, establishing intermittency. Input delivery, renderer responsiveness and cleanup are unresolved. Issue #1757 owns per-stage tracing, isolated attempt state and equal-load baseline and candidate Windows measurements before restoration. Other platforms retain the walkthrough. Fast ROS 2 mapping, ladder, intent ordering and native intent-following coverage remains active. No assertion or deadline changes."
   }
 ]

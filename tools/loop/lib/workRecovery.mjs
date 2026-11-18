@@ -12,13 +12,15 @@ export const recoveryFor = (number) => {
   return entry.dir && fs.existsSync(entry.dir) ? entry : null;
 };
 
-export function saveRecovery(number, { worktree, inputSignature, session, reason, outcome, execution }) {
+export function saveRecovery(number, { worktree, inputSignature, taskHead, session, reason, outcome, execution }) {
   const previous = recoveryFor(number);
-  const attempts = previous?.inputSignature === inputSignature ? (previous.attempts ?? 0) + 1 : 0;
+  const sameInputs = previous && previous.inputSignature === inputSignature && previous.outcome?.status !== 'blocked';
+  const attempts = sameInputs ? (previous.attempts ?? 0) + 1 : 0;
 
   return recoveries.save(number, {
     ...worktree,
     inputSignature,
+    taskHead,
     session,
     reason,
     outcome,
@@ -34,7 +36,7 @@ export const hasRecovery = (dir) => activeRecoveries().some((entry) => entry.dir
 export const recoveryReady = (entry, inputSignature) =>
   !entry ||
   ((!entry.deadlineAt || entry.deadlineAt > Date.now()) &&
-    (entry.attempts < 1 || entry.inputSignature !== inputSignature));
+    (entry.outcome?.status === 'blocked' || entry.attempts < 1 || entry.inputSignature !== inputSignature));
 
 export function refreshRecovery({ dir }, execute = run) {
   fetchGit(['-q', 'origin', 'main'], { cwd: dir }, execute);

@@ -28,11 +28,15 @@ vi.mock('../lib/github.mjs', () => ({
   },
   hasLabel: (issue, name) => issue.labels.some((label) => label.name === name),
   issues: (name) => calls.steps.filter((issue) => issue.labels.some((label) => label.name === name)),
-  openPulls: () => [],
 }));
 vi.mock('../lib/preflight.mjs', () => ({ checkedRun: calls.checkedRun }));
 vi.mock('../lib/pull.mjs', () => ({ publish: calls.publish }));
-vi.mock('../lib/stepPulls.mjs', () => ({ stepPullIndex: () => new Map(), stepStatus: () => 'none' }));
+vi.mock('../lib/stepPulls.mjs', () => ({
+  pullHistory: () => [],
+  indexByStep: () => new Map(),
+  stepPullIndex: () => new Map(),
+  stepStatus: () => 'none',
+}));
 vi.mock('../lib/taskInputs.mjs', () => ({ taskInputSignature: () => calls.signature }));
 vi.mock('../lib/worktree.mjs', () => ({ openBranch: calls.openBranch, close: calls.close }));
 vi.mock('../lib/workRecovery.mjs', async (importOriginal) => ({

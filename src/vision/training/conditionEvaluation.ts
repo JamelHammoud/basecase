@@ -1,7 +1,6 @@
 import { conditionImages } from './conditionImages';
 import { loadDatasetContent } from '../../datasets/datasetStore/content';
-import type { FrozenImageSample } from '../../datasets/snapshotImages';
-import { MAX_CONDITIONS } from '../conditions';
+import { matchesImageGroup, type ImageGroup, MAX_CONDITIONS } from '../conditions';
 import { decodeEvidenceResult, verifyEvidence } from './evidence';
 import { canonicalTest, sampleKey } from './evaluationIdentity';
 import { evaluatedRows, scoreTrainingRows } from './metrics';
@@ -9,10 +8,7 @@ import { validateEvaluationInput } from './metricsValidation';
 import { validateTrainingEvaluation } from './retentionValidation';
 import type { TrainingEvaluation, TrainingPrediction } from './types';
 
-export interface ImageGroup {
-  kind: 'condition' | 'camera' | 'source';
-  name: string;
-}
+export type { ImageGroup } from '../conditions';
 
 export interface ImageGroupSupport extends ImageGroup {
   members: number;
@@ -24,13 +20,7 @@ export interface ImageGroupSupport extends ImageGroup {
   keys: string[];
 }
 
-export function matchesImageGroup(sample: FrozenImageSample, group: ImageGroup): boolean {
-  if (group.kind === 'source') return sample.source === group.name;
-
-  if (group.kind === 'camera') return sample.groups?.camera === group.name;
-
-  return sample.groups?.labels.includes(group.name) ?? false;
-}
+export { matchesImageGroup } from '../conditions';
 
 function groupDefinitions(report: TrainingEvaluation): ImageGroup[] {
   const conditions = new Set<string>();

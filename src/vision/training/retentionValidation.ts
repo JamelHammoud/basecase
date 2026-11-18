@@ -1,3 +1,4 @@
+import { validateRequirementEvidence } from './requirementRetention';
 import type { FrozenImageSample } from '../../datasets/snapshotImages';
 import { canonicalTest } from './metrics';
 import { validateTrainingTask } from './metricsValidation';
@@ -115,6 +116,7 @@ function matchingPrimary(report: TrainingEvaluation): boolean {
 
 export function validateTrainingEvaluation(report: TrainingEvaluation): void {
   validateTrainingTask(report.task);
+  validateRequirementEvidence(report);
 
   const { primary, perClass } = report.metrics;
 

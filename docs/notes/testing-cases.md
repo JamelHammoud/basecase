@@ -260,15 +260,17 @@ Review found that removing a saved Study’s visibility request left its measure
 
 The review’s changed-file check passed formatting, ESLint, documentation, TypeScript, all 297 site pages and 283 related tests across 52 files. The log is `scratch/review-check.log`. Browser tests were not run locally.
 
-### Configuration-only browser removal
+### Configuration-only browser fixture
 
-Issue [#1776](https://github.com/JamelHammoud/basecase/issues/1776) removes `configures a saved camera try in Study and returns to ordinary Study`. [Run 44245137178](https://github.com/JamelHammoud/basecase/actions/runs/44245137178) passed the declaration in 45,448 ms on Windows shard 3 and 11,027 ms on Linux shard 3. These are hosted test durations. The logs do not isolate the slow stage, and no engine speedup is claimed.
+Issue [#1776](https://github.com/JamelHammoud/basecase/issues/1776) targets `configures a saved camera try in Study and returns to ordinary Study`. [Run 44245137178](https://github.com/JamelHammoud/basecase/actions/runs/44245137178) passed the declaration in 45,448 ms on Windows shard 3 and 11,027 ms on Linux shard 3. These are hosted test durations. The logs do not isolate the slow stage.
 
-The declaration built and saved a simulated try through `keepStudyTry`, opened Study, edited configuration controls and toggled Run Study eligibility. It never ran Study or asserted visibility results. Its exclusive hook and model-building fixture are removed with it. The studio hook inventory test retains coverage of the remaining area hooks.
+Review identified unique browser coverage in the deleted declaration. The browser assertions are restored unchanged. The title names the lightweight fixture so changed-browser selection runs this declaration in CI. It selects a saved simulated try, edits samples and pose, removes and restores camera and target selections to check Run Study eligibility, then clears the Try selection. It never executes Study.
 
-Existing `visibility.test.ts` checks request limits, empty targets and sampling. `cameraChoices.test.ts` covers immutable pose and lens edits, optical validation and rigid mounts. `studyCameraRun.test.ts` covers immutable source reuse, cancellation and invalid source selections. `cameraPersistence.test.ts` covers portable records and source identity. `studyTrainingImages.test.ts` checks applied optical fields through history and training-image generation. `e2e/study.e2e.test.ts` retains ordinary command entry, execution, preview, Apply and Undo.
+`keepStudyTry` now saves two prescribed static body poses through the real try store. It no longer loads catalog meshes, starts scene preparation or builds a simulation model. The manifest uses a configuration-only model hash. This fixture checks selection and configuration wiring and cannot supply a valid visibility execution source. The existing studio inventory retains the hook. No timeout, retry, quarantine or assertion changes accompany this revision.
 
-No active browser test now checks saved-try selection, sample and pose field editing, camera and target switches or clearing the Try selection. These narrow configuration assertions are deliberately removed rather than replaced by another saved-model browser setup. No quarantine, timeout increase or retry is added. Browser execution remains with CI.
+`studyCameraRun.test.ts` retains immutable source reuse, cancellation and invalid-source tests. `cameraPersistence.test.ts` covers portable records and source identity. `studyTrainingImages.test.ts` checks applied optical fields through history and training-image generation. `e2e/study.e2e.test.ts` retains ordinary command entry, execution, preview, Apply and Undo. The production-worker rendering matrix remains under its existing quarantine, as documented in the [camera guide](../guide/cameras.md#study-camera-visibility).
+
+Local verification uses the named changed-file check. Browser execution and comparative hosted timings remain with CI, so no measured runtime reduction or flake rate is claimed.
 
 ## Linked design comparison
 

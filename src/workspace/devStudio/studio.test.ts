@@ -59,6 +59,7 @@ const EXPECTED_NAMES = [
   'inputEvents',
   'interference',
   'keepStoredTries',
+  'keepStudyTry',
   'labelNotes',
   'lastDownload',
   'load',

@@ -348,6 +348,8 @@ Removal clearance checks stop at the first live blocker. `assembly/removalOrder.
 
 ## Performance: cable routing
 
+- **Connector exits accumulate the nearest housing boundary.** `wiring/routeGeometry.ts` keeps one minimum while scanning the three local axes, without temporary distance lists. Bus and power routes share this owner-exit calculation. Axis order, the parallel threshold, rotated local frames, the 8 mm minimum and neighbouring-solid checks stay unchanged. Existing `routeGeometry.test.ts` covers extended exits, rotated owners and blocked exits. [Evidence](../notes/performance-wiring.md#connector-exits-accumulate-the-nearest-housing-boundary).
+
 Measurements and limits: [Cable routing performance evidence](../notes/performance-wiring.md).
 
 - **Detour labels share one match buffer.** `wiring/routeGeometry.ts` visits interior path points by index and appends matching corner labels into one reusable list. It emits each sorted label string directly into the topology result. Bus and power routes share this implementation. `routeTopology.test.ts` compares full results across tolerance boundaries, transformed obstacles and nonfinite points, including unmatched points between repeated corners and duplicate labels. [Evidence](../notes/performance-wiring.md#detour-labels-share-one-match-buffer).

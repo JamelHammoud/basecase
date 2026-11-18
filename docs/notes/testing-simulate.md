@@ -267,3 +267,22 @@ Focused [Windows diagnostic 44382490339](https://github.com/JamelHammoud/basecas
 Only rotated drawer joins the Windows quarantine through 28 November 2026 under existing open priority replay owner [#1390](https://github.com/JamelHammoud/basecase/issues/1390), which retains `loop:fix`, `loop:next` and `loop:priority`. All sixteen passive-fixture native comparisons are now absent from regular Windows checks. Windows retains WASM fixture physics and persistence, but these do not replace native state, contact and verdict parity. Linux retains fifteen comparisons outside its existing nominal-lid quarantine, and macOS retains all sixteen. Other native replay suites retain their separate platform coverage.
 
 Restoration requires stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load with retries disabled. Preserve state and margin drift below 1e-6, exact contact identities, native verdict agreement, stop bounds and failure without contacts. No assertion, timeout, retry or product physics behavior changes. Source logs remain in the repair handoff under `scratch/failed-windows-unit-2.log`, `scratch/failed-linux-unit-2.log` and `scratch/green-windows-unit-2.log`.
+
+## Windows self-contact native replay deadlines
+
+[Check 44386066760](https://github.com/JamelHammoud/basecase/actions/runs/44386066760) at `8211a6295c8509a8e3ab4d78f64bba8265b1d9a9` exhausted the unchanged 5,000 ms callback deadlines for folding arm at 5,015 ms and crossed humanoid arms at 5,084 ms in `src/sim/selfContactDesigns.test.ts`. All ten WASM contact and independent negative-control cases passed. The other eight native comparisons passed in 480 to 859 ms. No drift or contact assertion failure was reported.
+
+The self-contact matrix arrived in `1db05e0f3` after last full green [Check 44245137178](https://github.com/JamelHammoud/basecase/actions/runs/44245137178). Its addition alone does not establish a deterministic regression. At the failed revision, Linux passed crossed humanoid arms in 3,077 ms and retained its existing folding-arm quarantine. The Windows failure used image `20261103.298.1`.
+
+Two exact-revision Windows diagnostics passed separately on that same image with Node v26.13.0, four CPUs, one worker, zero retries and quarantine off:
+
+| Declaration | Diagnostic | Durable ticket | Assertion | Process |
+| --- | --- | --- | --- | --- |
+| Folding arm | [44387905638](https://github.com/JamelHammoud/basecase/actions/runs/44387905638) | `1e7a1b06-eb7b-4e51-84a5-35ecb76117af` | 4,023.5489 ms | 6,308 ms |
+| Crossed humanoid arms | [44387914542](https://github.com/JamelHammoud/basecase/actions/runs/44387914542) | `ef05aac3-d4a3-4dc5-b39e-16db5ea59974` | 3,463.2089 ms | 5,555 ms |
+
+Classification is intermittent Windows native replay execution, established independently for each declaration at the same revision and image. Only callback entry and deadline expiry are established in the failed shard. Model preparation, WASM capture, uv provisioning, native startup, replay, comparison and cleanup share the budget without stage markers. No responsible stage, environment component to pin or causative merge is established. No revert or product physics change is justified by this evidence.
+
+Only those two declarations join the Windows quarantine through 28 November 2026 under existing open priority replay owner [#1390](https://github.com/JamelHammoud/basecase/issues/1390). Windows retains eight native self-contact comparisons, Linux retains nine and macOS retains ten. All ten WASM contact and negative-control cases, package XML and recording/contact byte tests remain active on every platform. These checks do not replace the two missing Windows native comparisons.
+
+Restoration requires separate stage and cleanup traces, an established fix and ten baseline and ten candidate Windows observations at equal load with retries disabled. Preserve each three-second trajectory, drift below 1e-6 and exact contact identities. This repair makes one observation per declaration, not a flake-rate measurement. Source logs and the collected manifests, reports and cleanup logs are referenced in `scratch/task-handoff.json`.

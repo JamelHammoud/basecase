@@ -10,6 +10,6 @@ Editing a rover's controller can change when it starts turning. Align the record
 
 You keep each source's signals, states, messages, cameras and original identity. Both sources start at elapsed time zero, and you can align them using separate offsets and recorded events. You can plot compatible numeric channels together and show their difference, using the previous sample within your chosen maximum age.
 
-You compare saved evidence without driving a robot or changing either try. Each recording must be under 64 MB. You view spatial previews in their own local frames, so matching topic names do not imply physical registration. You won't see zero in place of a missing or stale sample.
+You compare saved evidence without driving a robot or changing either try. Each recording must be under 64 MB. You view spatial previews in their own local frames, so matching topic names don't imply physical registration. You won't see zero in place of a missing or stale sample.
 
 Steps are in [Compare saved tries](/help/compare-saved-tries).

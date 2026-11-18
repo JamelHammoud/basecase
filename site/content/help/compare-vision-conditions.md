@@ -50,7 +50,7 @@ To remove a condition from selected images, click **Remove Condition** to open a
 
 Use **Class** to select a class's score and images. Use **Finding** to filter the image list for matching errors and changes.
 
-Group scores remain exploratory unless you [set requirements for vision model retention](/help/require-vision-conditions) before training. They don't establish statistical significance or guarantee deployment performance. Retention still requires improvement on the complete real test.
+Group scores remain exploratory unless you [set requirements for vision model retention](/help/require-vision-conditions) before training. Retention still requires improvement on the complete real test.
 
 You can see separate support counts for synthetic and unverified test images. You won't see measured scores for these images, empty groups or groups without real test members.
 

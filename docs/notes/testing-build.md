@@ -714,6 +714,16 @@ Review found that the first drill checker compared PCB Y directly and retained s
 
 The accepted board must contain through vias and tracks on both copper layers, so source-driven expectations cannot silently remove the earlier native topology coverage. Check 44338216185 retained three dual-bus vias on Windows and five on Linux. Neither observation fixes the router’s via count. The native routing selector now includes the electrical maps, catalog inputs, power calculations and acceptance parsers that previously selected the standalone fabrication check. Its focused test retains cable-routing-only exclusions. No native invocation is added to the consolidated matrix, and its timeouts and retry settings are unchanged.
 
+## Browser exchange-rate isolation
+
+[Check 44353177242](https://github.com/JamelHammoud/basecase/actions/runs/44353177242) at `7c85804665c8043a38be403970fc24a636f422f2` failed the Windows mark-drag and delete-all walkthroughs only at their final empty-console assertions. Dragging retained the label and moved the stroke. Delete-all completed confirmation, cancellation, deletion and Undo. Both failures contained the same two browser messages for `https://api.frankfurter.dev/v1/latest?base=USD`: a missing cross-origin response header and the resulting failed fetch. The shared app retained those messages through both declarations and their existing retries. No annotation behavior failure is established.
+
+Classification is an external environment dependency in browser setup. `currencyStore.refreshRates` catches fetch rejection and retains bundled rates, but the browser still logs the rejected cross-origin request. The shared browser harness stubbed bridge routes and model downloads while leaving this startup request live. Relevant currency data, refresh code and harness sources are unchanged from full green Check 44245137178. No causative merge is established.
+
+`exposeTestHooks` now installs an exact-URL route on the browser context before app initialization. It serves the bundled date and USD conversion table using the provider's `date` and `rates` schema and explicitly permits cross-origin access. Desktop, web and additional pages in the context inherit the same fixture. This pins the external input without suppressing browser errors or changing product fetching. Unknown URLs and query variants remain live. The mark assertions, deadlines and retries are unchanged.
+
+`tools/testing/browserRates.test.mjs` checks pre-initialization registration, context ownership, exact URL selection, unrelated requests and response format without launching a browser. Existing `src/utils/currency.test.ts` covers currency formatting, conversion and picking up newer rates. The changed-file check passed formatting, lint, docs, types, quarantine validation and 117 assertions across 14 files. Its log is `scratch/repair-check.log`. Browser execution remains with CI. This repair does not establish recovery of the public provider or measure a flake rate.
+
 ## Editable cable route work
 
 The editor changes the existing project.wiring records. Acceptance uses production netlist, analysis, BOM, scene-file, history, version-reference and manufacturing archive paths. No routing bound, timeout, retry or quarantine is changed.

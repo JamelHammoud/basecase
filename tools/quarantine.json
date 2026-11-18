@@ -685,5 +685,45 @@
     "issue": 1390,
     "until": "2026-11-28",
     "reason": "Check 44344443437 exhausted the unchanged 5000 ms deadline at 5023 ms. Same-revision Linux diagnostic 44346927799 passed in 2395.687391 ms with one worker, zero retries and quarantine off. Last green Check 44245137178 passed in 3428 ms with unchanged parity, capture and native replay sources. WASM capture, uv provisioning, native replay, scoring and cleanup remain unresolved under existing shared replay owner #1390. Restore only after tracing those stages, fixing the demonstrated cause and ten baseline and ten candidate Linux observations at equal load. Linux retains the other fifteen native fixture comparisons, WASM physics and persistence. Existing Windows quarantines remain separate and macOS retains the complete matrix. Preserve 1e-6 state and margin limits, exact active contacts, verdict agreement and failure without contacts."
+  },
+  {
+    "file": "tools/fleet/facilities.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44353177242 exhausted the unchanged 10000 ms beforeAll budget before any of six facility cases ran. Same-revision Windows diagnostic 44354762014 reproduced the setup timeout with one worker, zero retries and quarantine off. Previous Windows Check 44344443437 passed all six in 9099 ms with unchanged Fleet sources and configuration, but used an older runner image. DXF preparation, native cluster initialization, migrations, HTTP startup, identity preparation and the image contribution remain unresolved under existing priority shared fixture owner #1401. Whole-file filtering is required because setup precedes individual test filtering. Restore after stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load. Linux and macOS retain the complete matrix. Windows retains pure import, registration, position and browser coverage, but lacks this complete HTTP matrix."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for weak",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44353177242 exhausted the unchanged 5000 ms deadline at 5018 ms. Same-revision Windows diagnostic 44357103546 reproduced it at 5005.1493 ms with one worker, zero retries and quarantine off. Full green Check 44245137178 passed in 4524 ms with unchanged parity, capture, variants, native replay, Case runner, dependencies and unit configuration. WASM capture, uv provisioning, native startup, replay, scoring and cleanup remain unresolved under existing priority owner #1390. Windows retains short, resisted, reversed and rotated drawers, WASM fixture physics and persistence. Other platforms retain weak drawer parity. Restore after stage and cleanup tracing, an established fix and ten baseline and ten candidate Windows observations at equal load without retries. Preserve 1e-6 state and margin limits, exact contacts, native verdict agreement, stop bounds and failure without contacts."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "folding arm replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44358913096 exhausted the unchanged 5000 ms deadline at 5005 ms. Previous Linux Check 44353177242 passed in 3173 ms with unchanged test, preparation, capture and native replay sources. Same-revision Linux diagnostic 44360482589 passed in 2342.79267 ms with one worker, zero retries and quarantine off on a different runner image. WASM capture, uv provisioning, native startup, replay, comparison and cleanup are not distinguished. Existing priority shared replay owner #1390 owns stage tracing, a demonstrated fix and ten baseline and ten candidate Linux observations at equal load without retries before restoration. Linux retains the other nine native self-contact comparisons, all ten WASM contact and negative-control cases, package and recording coverage. Other platforms retain folding-arm parity. Preserve drift below 1e-6 and exact contact identities."
+  },
+  {
+    "file": "tools/fleet/recovery.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44358913096 exhausted the unchanged 10000 ms beforeAll budget awaiting fleetFixture before any of nine recovery assertions ran. Previous Linux Check 44353177242 passed the complete file in 13451 ms including assertions with unchanged recovery, PostgreSQL, fixture and service sources. Same-revision Linux diagnostic 44360510021 passed setup and the selected recovery assertion in a 7956 ms process on the same runner image with one worker, zero retries and quarantine off. Docker startup, readiness, migrations and HTTP startup are not distinguished. Existing priority shared fixture owner #1401 owns stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Linux observations at equal load without retries before restoration. Whole-file filtering is required because setup precedes individual-test filtering. macOS retains the full matrix. Linux retains recovery migration and browser recovery checks, which do not replace the full recovery matrix. Existing Windows quarantine remains separate."
+  },
+  {
+    "file": "e2e/buildCheck.e2e.test.ts",
+    "test": "puts /pass and the open Case in the composer from ⌘K when its row fails",
+    "issue": 988,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44358913096 completed scene loading and selected Build, then found zero Reach a Spot rows through the unchanged 90000 ms poll on both Windows attempts. The following fit-refusal declaration loaded the same robot and Case and passed in 1475 ms. Previous Windows Check 44353177242 passed this declaration in 23912 ms, and Linux at the failing revision passed in 3266 ms. Same-revision Windows diagnostic 44362858893 passed in 4648.0942 ms with one worker, zero retries and quarantine off on the same runner image, confirming intermittency. The log does not distinguish mesh readiness, model preparation, worker inspection, readiness invalidation or publication. Existing priority Check-row owner #988 owns this separate refusal-row path, stage tracing and ten baseline and ten candidate Windows observations at equal load with retries disabled before restoration. Other platforms retain Make It Pass composer coverage. Windows retains the fit-refusal row, Case header and New Case sibling, plus fast row ownership and real worker-session coverage. No assertion, deadline or retry changes."
   }
 ]

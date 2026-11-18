@@ -685,5 +685,13 @@
     "issue": 1390,
     "until": "2026-11-28",
     "reason": "Check 44344443437 exhausted the unchanged 5000 ms deadline at 5023 ms. Same-revision Linux diagnostic 44346927799 passed in 2395.687391 ms with one worker, zero retries and quarantine off. Last green Check 44245137178 passed in 3428 ms with unchanged parity, capture and native replay sources. WASM capture, uv provisioning, native replay, scoring and cleanup remain unresolved under existing shared replay owner #1390. Restore only after tracing those stages, fixing the demonstrated cause and ten baseline and ten candidate Linux observations at equal load. Linux retains the other fifteen native fixture comparisons, WASM physics and persistence. Existing Windows quarantines remain separate and macOS retains the complete matrix. Preserve 1e-6 state and margin limits, exact active contacts, verdict agreement and failure without contacts."
+  },
+  {
+    "file": "tools/fleet/facilities.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44353177242 exhausted the unchanged 10000 ms beforeAll budget before any of six facility cases ran. Same-revision Windows diagnostic 44354762014 reproduced the setup timeout with one worker, zero retries and quarantine off. Previous Windows Check 44344443437 passed all six in 9099 ms with unchanged Fleet sources and configuration, but used an older runner image. DXF preparation, native cluster initialization, migrations, HTTP startup, identity preparation and the image contribution remain unresolved under existing priority shared fixture owner #1401. Whole-file filtering is required because setup precedes individual test filtering. Restore after stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load. Linux and macOS retain the complete matrix. Windows retains pure import, registration, position and browser coverage, but lacks this complete HTTP matrix."
   }
 ]

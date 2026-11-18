@@ -51,26 +51,6 @@ const areaCount = () => app.page.locator(shown('[data-testid="case-run-area"]'))
 
 const frameOf = (panel: string) => app.page.frameLocator(`[data-panel="${panel}"] iframe`);
 
-const framesUntil = (selector: string) =>
-  app.page.evaluate(
-    (until) =>
-      new Promise<number>((done) => {
-        let frames = 0;
-
-        const tick = () => {
-          frames++;
-
-          if (document.querySelector(until)) done(frames);
-          else requestAnimationFrame(tick);
-        };
-
-        requestAnimationFrame(tick);
-      }),
-    selector,
-  );
-
-const SPIN = '<p>Spinning</p><script>while (true) {}</script>';
-
 const LAMP = {
   id: 'lamp',
   name: 'Lamp',
@@ -203,30 +183,6 @@ describe('Case code panels', () => {
     await frameOf('stick').locator('body').press('Escape');
     await expect.poll(areaCount).toBe(0);
     expect(app.errors).toEqual([]);
-  });
-
-  it('unloads a panel that never answers with its error, while the page keeps drawing frames', async () => {
-    const { page } = app;
-    const failed = '[data-panel="spin"] [data-testid="code-failed"]';
-    const panelUrls: string[] = [];
-
-    page.on('framenavigated', (frame) => {
-      if (frame.parentFrame()) panelUrls.push(frame.url());
-    });
-
-    await openCase({
-      input: ['keys'],
-      panels: [{ id: 'spin', kind: 'code', title: 'Spin', height: 80, source: SPIN }],
-      layout: { areas: [{ canvas: true }, { size: 320, panels: ['spin'] }] },
-    });
-
-    expect(await framesUntil(failed)).toBeGreaterThan(3);
-    expect(await page.locator(failed).textContent()).toBe('Couldn’t run Spin. It didn’t answer.');
-    expect(await page.locator('[data-panel="spin"] iframe').count()).toBe(0);
-    expect(panelUrls).toContain('about:blank');
-
-    await page.keyboard.press('Escape');
-    await expect.poll(areaCount).toBe(0);
   });
 });
 

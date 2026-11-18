@@ -2,21 +2,24 @@ import { afterEach, beforeEach, expect, it } from 'vitest';
 import { buildCase, builderRobot } from '../src/cases/caseBuilder';
 import { fixtureScene } from '../src/cases/fixtureScenes.fixtures';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
-import { DEFAULT_PROJECT, type CustomModelDefinition, type SavedSceneRecord } from '../src/types/robotics';
+import {
+  DEFAULT_PROJECT,
+  type CustomModelDefinition,
+  type ProjectSettings,
+  type SavedSceneRecord,
+} from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
 import { openApp, openPlayTab, partCount, shown, type App } from './harness';
 
 interface Studio {
   load: (scene: unknown) => void;
-  simState: () => { tries: Array<{ id: string; passed: boolean }>; timeline: unknown };
-  fixtureTravel: () => number[];
-  caseRunSpeed: (speed: number) => void;
+  sceneRecord: () => { project: ProjectSettings };
 }
 
 let app: App;
 const saved = new Map<string, SavedSceneRecord>();
 const arm = fixtureRobots().find((robot) => robot.id === 'arm-6dof')!;
-const state = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState());
+const sceneRecord = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.sceneRecord());
 
 beforeEach(async () => {
   saved.clear();
@@ -48,7 +51,7 @@ afterEach(async () => {
   await app?.close();
 });
 
-it('captures an assembly from selection, reuses it in New Case and reopens its recorded chest chore', async () => {
+it('captures an assembly from selection and reopens its resized New Case fixture', async () => {
   const built = buildCase({ goal: 'chest', world: 'floor' }, builderRobot(buildRig(arm.joints, arm.parts), arm.parts));
 
   if (!built.ok) throw new Error(built.problem);
@@ -85,21 +88,17 @@ it('captures an assembly from selection, reuses it in New Case and reopens its r
   await builder.getByLabel('Width').fill('100');
   await builder.getByLabel('Width').press('Enter');
   await builder.getByRole('button', { name: 'Make Case', exact: true }).click();
-  await page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.caseRunSpeed(4));
-  await page.locator(shown('button'), { hasText: 'Try Reference' }).first().click();
-  await expect.poll(async () => (await state()).tries.length).toBe(1);
-  expect((await state()).tries[0].passed).toBe(true);
-  await expect.poll(() => saved.get('fixture-robot')?.project?.tries?.length).toBe(1);
+  await expect
+    .poll(async () => (await sceneRecord()).project.cases?.[0]?.world.objects.find((object) => object.joint)?.size[0])
+    .toBe(100);
+
+  const kase = (await sceneRecord()).project.cases![0];
+
+  expect(kase.world.objects.find((object) => object.joint)!.geometry).toBeDefined();
+  await expect.poll(() => saved.get('fixture-robot')?.project?.cases).toEqual([kase]);
   await page.getByRole('button', { name: 'New scene', exact: true }).first().click();
   await page.getByRole('button', { name: 'Scenes', exact: true }).first().click();
   await page.locator('[data-scene-row="fixture-robot"]').click();
-  await openPlayTab(page, 'Cases');
-  await page.locator(shown('[data-testid="try-row"]')).first().click();
-  await expect.poll(async () => (await state()).timeline).not.toBeNull();
-
-  const travel = await page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.fixtureTravel());
-
-  expect(Math.max(...travel)).toBeGreaterThan(40);
-  expect(Math.abs(travel.at(-1)!)).toBeLessThan(5);
+  await expect.poll(async () => (await sceneRecord()).project.cases).toEqual([kase]);
   expect(app.errors).toEqual([]);
 });

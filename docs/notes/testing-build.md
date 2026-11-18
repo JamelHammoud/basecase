@@ -146,6 +146,16 @@ The first broad changed-file check selected 639 files. It reported 629 passed, n
 
 A focused changed-file run of the purchasing tests reported four files and 34 tests passed in 769 ms. That was an intermediate source snapshot, before the final normalization assertions. The browser walkthrough is declared in `e2e/bomPurchasing.e2e.test.ts` for the existing Linux and Windows CI harness. It opens a generated arm with three Pico 2 boards in the BOM, edits the listing and owned stock through existing controls, parses the real CSV download, reloads the saved scene and repeats, then corrects the packaging-specific supplier number. No supplier website is automated. Supplier matching, external upload acceptance and manufactured electrical performance remain unmeasured.
 
+### Slow purchasing walkthrough reduction
+
+Issue [#1822](https://github.com/JamelHammoud/basecase/issues/1822) reports the purchasing browser declaration taking 31 seconds in [Check 44391437908](https://github.com/JamelHammoud/basecase/actions/runs/44391437908). That declaration combined an initial listing and stock edit with a page reload, a second CSV comparison, a packaging correction and a third download.
+
+The browser case now proves one control-to-file path: edit a Pico 2 listing, type `1.0` sequentially, own one of three boards and inspect the actual CSV download for two remaining pieces and exact supplier identity. The exact filename, download failure and application-error assertions remain. It performs one download instead of three and no page reload. No deadline, retry or quarantine changes.
+
+`utils/bomPurchasing.test.ts` already parses production CSV for corrected identities after JSON reload and separate reel, multipack and owned-stock quantities. `electron/backend/purchases.test.mjs` saves, reloads, corrects and reloads supplier identity and stock on disk. `components/build/purchaseForm.test.ts` covers conversion drafts and identity edits. These existing fast tests retain the removed details. Browser purchase-store hydration after a page reload is no longer asserted by this case. No supplier upload or matching behavior is tested. CI owns the shortened browser case's timing, so no measured duration improvement is claimed locally.
+
+The scoped changed-file check passed formatting, lint, docs and types. A separate focused check of the three existing coverage files passed all 33 tests in 203 ms of Vitest time, plus formatting, lint, types and the 342-page site copy check. Logs are retained in `scratch/check-changed.log` and `scratch/coverage-check.log`. No local browser run or duration comparison was performed.
+
 ### Final implementation validation
 
 On 16 November 2026, the final named-file `check:changed` run selected 644 test files. It passed 643 files and 4,460 tests, with one existing skipped file and test, in 115.78 seconds. Formatting, ESLint, TypeScript, documentation and the 301-page site check passed. A follow-up check for the browser helper, reload comparison and help wording passed its eight related purchase-form tests. The browser walkthrough itself remains for Linux and Windows CI, as required by this task's local-check policy.

@@ -759,6 +759,14 @@
     "reason": "Check 44364437393 passed both cold and warm child runs, then failed the unchanged requirement that both warm outputs contain [read]. Same-revision Windows diagnostic 44369593658 passed in 1404.5088 ms with one worker, zero retries and quarantine off on the same runner image, establishing intermittency. Child outputs, cache slots, metadata invalidation and debug delivery remain unresolved under priority owner #1808. Restore after tracing these stages, fixing the demonstrated cause and ten baseline and ten candidate Windows observations at equal load with retries disabled. Only this declaration is quarantined. The dependency-invalidation sibling primes its own cache precondition. Windows retains all other cache lifecycle and configuration checks. Linux and macOS retain concurrent cold/warm reuse. No assertion or deadline changes."
   },
   {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for resisted",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44370011621 exhausted the unchanged 5000 ms deadline at 5039 ms. Same-revision Windows diagnostic 44372994329 reproduced the timeout at 5019.5244 ms with one worker, zero retries and quarantine off on the same image. Last full green Check 44245137178 passed in 1162 ms with unchanged parity, capture, variants, native replay, Case builder and scoring, dependency lock and unit configuration on the same Windows image. WASM capture, uv provisioning, native startup, replay, scoring and cleanup are not distinguished. Existing priority replay owner #1390 owns stage tracing, an established fix and ten baseline and ten candidate Windows observations at equal load with retries disabled before restoration. Windows retains reversed and rotated drawer parity, WASM fixture physics and persistence. Linux retains fifteen native fixture comparisons outside its existing nominal-lid quarantine, and macOS retains all sixteen. Preserve state and margin drift below 1e-6, exact contacts, verdict agreement, stop bounds and failure without contacts. No assertion, deadline or retry changes."
+  },
+  {
     "file": "e2e/site.e2e.test.ts",
     "test": "goes from the landing to the changelog",
     "issue": 1811,

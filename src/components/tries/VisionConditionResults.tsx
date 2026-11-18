@@ -43,10 +43,6 @@ export function VisionConditionResults({
         <dt>Incumbent</dt>
         <dd>{score(result.incumbent)}</dd>
       </dl>
-      <p className="text-white/60">
-        Conditions are supplied labels. Only requirements declared before training affect retention. Group scores can’t
-        establish statistical significance, physical safety or a deployment guarantee.
-      </p>
     </div>
   );
 }

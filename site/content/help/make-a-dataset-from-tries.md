@@ -75,7 +75,7 @@ Above its tries, the dataset shows their total running time. The controls and tr
 
 In **Working Dataset**, click **Label Objects** under an image to edit its object labels. See [Label objects in camera frames](/help/label-objects-in-camera-frames). Saved image tiles keep their frozen labels read-only. A [vision model comparison](/help/inspect-vision-comparisons) can open the matching current image for editing while keeping its historical labels unchanged.
 
-To group selected images by supplied operating conditions, follow [Compare vision models by condition](/help/compare-vision-conditions). To make a condition, camera or class part of retention, [set requirements for vision model retention](/help/require-vision-conditions) before training.
+To assign conditions and inspect their support and model scores, follow [Compare vision models by condition](/help/compare-vision-conditions). To make a condition, camera or class part of retention, [set requirements for vision model retention](/help/require-vision-conditions) before training.
 
 ![Touch a Point open as a dataset, with its total time, Export Dataset, Publish to Hugging Face and Train from Tries](/help/make-a-dataset-from-tries/dataset.png)
 

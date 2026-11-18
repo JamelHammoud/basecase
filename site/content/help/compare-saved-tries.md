@@ -46,10 +46,10 @@ You start with both recordings aligned by elapsed time. Use **Offset** to shift 
 
 You can see the source time below each identity. Expand the source heading to inspect its robot, model, policy and original hashes.
 
-To compare differences, select channels with compatible known units. Use **Previous sample** to set the maximum sample age in seconds. Basecase does not use numerical interpolation for states or events.
+To compare differences, select channels with compatible known units. Use **Previous sample** to set the maximum sample age in seconds. Basecase doesn't use numerical interpolation for states or events.
 
 You can see distinct statuses for missing, stale, clipped and outside-range samples. Each recording must be under 64 MB.
 
-You can view cameras and spatial layers in separate source panels. In spatial previews, you see each frame's local XY plane. Basecase does not register coordinates between robots.
+You can view cameras and spatial layers in separate source panels. In spatial previews, you see each frame's local XY plane. Basecase doesn't register coordinates between robots.
 
 For imported recordings without joints, you don't need a scene robot. See [Import robot data as tries](/help/import-robot-data-as-tries).

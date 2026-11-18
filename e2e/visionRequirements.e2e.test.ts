@@ -92,6 +92,22 @@ it('keeps an aggregate winner as a checkpoint and reopens its frozen operating r
 
     await dialog.getByRole('combobox', { name: 'Group', exact: true }).selectOption(group);
     await expect.poll(() => dialog.getByTestId('condition-results').textContent()).toContain('0.0%');
+
+    const scores = dialog.getByTestId('condition-results');
+
+    expect(await scores.locator('dt').allTextContents()).toEqual([
+      'Members',
+      'Real test',
+      'Synthetic or unverified test',
+      'Other splits',
+      'Overlapping conditions',
+      'Box mAP',
+      'Incumbent',
+    ]);
+    expect(await scores.locator('dd').allTextContents()).toEqual(['1', '1', '0', '0', '0', '0.0%', '100.0%']);
+    expect(await scores.locator('p').count()).toBe(0);
+    expect(await dialog.getByTestId('requirement-results').textContent()).toContain('Below score floor');
+    expect(await pane.locator('[data-retained="false"]').count()).toBe(1);
     await dialog.getByRole('button', { name: frameId, exact: true }).click();
     await dialog.getByRole('img', { name: 'Frozen comparison image', exact: true }).waitFor();
     await dialog.getByRole('button', { name: 'Close', exact: true }).click();

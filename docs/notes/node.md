@@ -275,6 +275,37 @@ The single test created a Git repository, scanned the same source range six time
 
 The fixture now performs four Git scans and two Node command launches instead of six and three. At this fixture's three files and two existing source sides, the subprocess count falls from 51 to 36, including setup. These are source-derived counts, not a flake-rate measurement. The 5,000 ms deadline remains unchanged. No retry, skip, quarantine or production behavior changes. A single local baseline check passed. The repaired fixture's focused check passes all three tests, formatting, lint, documentation validation and site copy checks across 295 pages. Windows validation of the repair belongs to the pull request's Check, and the full nightly verdict remains independent.
 
+### Vision condition copy removal
+
+Issue #1767 applies the existing copy rule to production presentation without changing accounting or verdicts. The inventory inspected extracted production UI sentences, standing paragraphs, hints, subtitles and warning language across `src/` and native Electron surfaces. It followed composition in `src/components`, `src/fleet/browser`, `src/vision/training` and `src/design-system`, including the Library dataset, Inspect Images dialog, frozen requirement results and Apply Model control. Local source inventories are `scratch/long-ui-copy.txt`, `scratch/scoped-copy.txt` and `scratch/production-copy-candidates.txt`. These are inspection artifacts, not a new scanner or check.
+
+One matching standing paragraph remains removable. Its three sentences occupy one counted JSX string in `VisionConditionResults.tsx`. No deletion quota applies.
+
+| Sentence removed | Surrounding state and evidence |
+| --- | --- |
+| Conditions are supplied labels. | Library's Condition field and Assign Condition action create the labels. The inspection Group selector names Condition, Camera or Source explicitly. Frozen model and test hashes remain visible above it. |
+| Only requirements declared before training affect retention. | Add Requirement configures thresholds before Train. Completed results and Inspect Images separately show frozen requirement scores, support, thresholds and the specific outcome. Changing working requirements never rewrites these results. The existing condition and requirement help articles explain this timing once in their task context. |
+| Group scores can’t establish statistical significance, physical safety or a deployment guarantee. | The selected group already shows Members, Real test, Synthetic or unverified test, Other splits, Overlapping conditions and both measured scores. This sentence supplies no measured bound or recovery action. No replacement badge or warning is added. |
+
+The remaining matching surfaces retain information the surrounding controls or evidence do not supply:
+
+| Production surface | Retained exception and reason |
+| --- | --- |
+| `VisionGroupFilter`, `VisionConditionResults`, `VisionRequirementResults` | Unlabelled-image coverage, unavailable historical groups, worker problems, unmeasured scores, group support and each frozen requirement refusal remain. These distinguish missing evidence from measured zero and determine why retention failed. |
+| `VisionInspection`, `VisionInspectionDetail`, `VisionInspectionLinks` | Matching rules disclose IoU thresholds, keypoint tolerance and classification selection. Model and test hashes identify sources. Image-load and original-source failures explain unavailable navigation. |
+| `VisionTrainingResults`, `VisionTrainingApply`, training presentation | Checkpoint or Retained, comparison reasons, inference cost, model size, per-class errors and compatible destinations remain. Apply Model still appears only for retained runs. |
+| `StudyVisibilityDetails`, `NewCaseCard`, Build findings | Geometric visibility differs from detector accuracy. Sampling intervals estimate time between observations. Resolution, maximum sample gap, pixel bounds, estimated floor and obstacle height, engineering unknowns and actionable blockers remain. The values alone do not explain these limitations. |
+| Fleet `RegistrationForm`, `FleetSite` | WGS84, facility meters and the altitude frame distinguish coordinate systems. Unit scale, up axis, source filenames and hashes identify the imported facility. The unregistered-state instruction explains missing globe placement. |
+| Fleet Access, invitations, credentials, providers and connection forms | Selected scopes, grants, identity and expiry fields remain. Credential failures and local recovery before required SSO are actionable refusals. No standing disclaimer remains to remove. |
+| Operate ladder, calibration, incidents and rollout | Emulated hardware identity, measured calibration evidence, held-state reasons, unavailable tries and canary selection explain the actual operation. No authorization or recovery condition changes. |
+| Print confirmation, live print and printer settings | Loaded material, slot, busy printer, clear-bed instruction, nonresumable stopped print and connection requirements remain operational instructions. |
+| Training settings, hardware sizing, SVG import and Drive | SSH identity path, host-key comparison, seed-budget sharing, stock-length limits, file selection and keyboard/gamepad or canvas-focus instructions add information their control labels omit. |
+| Shared design-system primitives | Empty-state descriptions, modal subtitles, errors and tooltips are supplied by callers. No blanket disclaimer is built into the primitives. Accessibility names and shortcut tooltips remain intact. |
+
+The existing `e2e/visionRequirements.e2e.test.ts` walkthrough now asserts all seven support/score rows for night, no paragraph under those rows, the adjacent Below score floor reason and a nonretained attempt. Its existing assertions retain the aggregate winner as a checkpoint, omit Apply Model, and preserve the entire saved run and version after current condition and score-floor edits. It adds no training run, retry or deadline. Existing condition, inspection, requirement, retention and model-binding tests remain unchanged. Browser execution belongs to ordinary CI. The condition help article drops the matching blanket sentence and retains its retention explanation. No task steps change and no screenshots or announcement are added.
+
+The copy report records 0 added, 0 changed and 1 removed production string, net −1. Initial validation found three existing contraction violations at base revision `3ad17140dd802fc73097ddb46ff8384e953a4522`: `site/content/changelog/2026-11-17-compare-two-tries.md:13` and `site/content/help/compare-saved-tries.md:49,53`. Those three phrases now use contractions without changing their coordinate, interpolation or missing-sample limitations. The final changed-file check passes formatting, lint, documentation, site copy across 336 pages, types and all 17 related tests across eight files. Evidence is `scratch/check-changed-resumed.log`. Browser checks have not run locally, as required by the loop lane.
+
 ## Copy source context
 
 Issue #1414 refines the report for arc #224 after the recorded net increase of 128 strings across 193 merges. It changes no app strings. Occurrence extraction, normalization, move cancellation and justification policy remain the accounting contract above. Context is a lazy source walk over the already captured after-source, not a second string scanner. Counting, the budget job and preflight never evaluate it. The report is captured before review merges the head onto current main.

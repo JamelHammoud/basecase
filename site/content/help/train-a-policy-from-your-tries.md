@@ -70,7 +70,9 @@ If fewer than 29 runs pass, Basecase saves nothing. The count turns red, and the
 
 ## Which tries it learns from
 
-Train from Tries uses the dataset's passed and unjudged tries that fit the current robot model. These are the same samples that [Export a LeRobot dataset](/help/export-a-lerobot-dataset) uses. Failed tries, real-robot tries and any try with a quality flag are left out. A segment selection contributes only its selected frames. If fewer than five samples count, a toast says "Export and training take only passed tries of this Case as it is now. Try It to record more."
+Train from Tries uses the dataset's passed and unjudged tries that fit the current robot model. These are the same samples that [Export a LeRobot dataset](/help/export-a-lerobot-dataset) uses. Failed tries, real-robot tries and any try with a quality flag are left out.
+
+Topic-only recordings are left out because they contain no robot joint positions or targets. A segment selection contributes only its selected frames. If fewer than five samples count, a toast says "Export and training take only passed tries of this Case as it is now. Try It to record more."
 
 Training freezes the working dataset's samples, labels, exclusions and split assignments as a version. Forge uses that version's training and validation groups, with the same assignments as export. Test samples stay out of fitting and validation. Segments, variations and identical recording content stay with their source. Imported split assignments remain explicit, and conflicting assignments stop the job with an error.
 
@@ -80,7 +82,7 @@ Each selected range needs at least two frames after sampling at 25 frames per se
 
 To train an earlier saved version, choose it in **Dataset version**, then click **Train from Tries**. Its saved robot model must match the current robot. Missing recordings stop training with an error. Versions without saved samples can't restore historical labels, so choose **Working Dataset** to freeze the current samples instead.
 
-Some tries hold joint positions but no speeds. Imported tries are like this, and so are tries recorded before Train from Tries arrived. On a robot with a fixed base, Basecase works out each joint's speed from how far it moved since the previous frame, 25 times a second. A robot whose base moves, like a rover or a walker, needs tries that include speeds.
+Some tries hold joint positions but no speeds. Imported joint recordings are like this, and so are tries recorded before Train from Tries arrived. On a robot with a fixed base, Basecase works out each joint's speed from how far it moved since the previous frame, 25 times a second. A robot whose base moves, like a rover or a walker, needs tries that include speeds.
 
 Tries that **Multiply** made from a passed try count too, within their source's split. For more, see [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
 

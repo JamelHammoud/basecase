@@ -1,7 +1,7 @@
 import type { VisionTrainingView } from '../components/tries/visionTrainingView';
 import { requestVisionInspection } from '../components/tries/visionInspectionCommand';
 import type { Command } from '../components/CommandPalette';
-import { DownloadIcon, ShareIcon, SpreadsheetIcon, StopIcon, TrainIcon } from '../design-system';
+import { CompareIcon, DownloadIcon, ShareIcon, SpreadsheetIcon, StopIcon, TrainIcon } from '../design-system';
 import { TRIES_TO_TRAIN } from '../skills/triesTraining';
 import { imageCount } from '../datasets/datasetView';
 import { showNewCase } from './caseCommands';
@@ -124,6 +124,18 @@ function openDatasetCommands(core: WorkspaceCore): Command[] {
 }
 
 export const datasetCommands = (core: WorkspaceCore): Command[] => [
+  ...(core.triesView.canCompare
+    ? [
+        {
+          id: 'compare-tries',
+          group: 'View',
+          label: 'Compare Tries',
+          icon: <CompareIcon />,
+          keywords: 'recordings saved runs timeline offsets alignment',
+          run: core.triesView.compare,
+        },
+      ]
+    : []),
   ...makeCommands(core),
   ...openDatasetCommands(core),
 ];

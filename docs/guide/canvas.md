@@ -266,3 +266,7 @@ Measurements and limits: [Viewport rendering performance evidence](../notes/perf
 ### Fleet globe and facility views
 
 Fleet's browser map uses the same `WGS84_ELLIPSOID` ECEF and ENU contracts as the studio Earth layer. `fleet/browser/mapStage.ts` draws a local graticule and registered facility geometry, without using the desktop Google tile bridge. Its coordinates remain meters with Z up. The studio Earth layer still maps ENU into scene millimeters with Y up. [Fleet](fleet.md#explicit-registration-and-positions) owns registration, pose freshness, altitude, current-page bounds and browser coverage. Its geometry buffers are prepared in workers and its map renders only on changes.
+
+### Source-local recording geometry
+
+Data-layer shapes share `dataLayers/shapeGeometry.ts` between viewport meshes and recording comparison worker previews. The factories preserve the existing arrow, box, sphere and cylinder geometry. Comparison reuses topic tracks and draw primitives within separate local XY frames, without writing scene layers or matching robot frames. Its bounded snapshots and source-isolation tests are documented in [Cases](cases.md#comparison-preparation-coverage).

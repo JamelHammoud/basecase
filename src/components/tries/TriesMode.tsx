@@ -1,13 +1,6 @@
+import { TriesHeader } from './TriesHeader';
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  ContextMenu,
-  ModeHeader,
-  SearchField,
-  SectionHeader,
-  tagEntry,
-  useScrollFade,
-  type ContextMenuEntry,
-} from '../../design-system';
+import { ContextMenu, SectionHeader, tagEntry, useScrollFade, type ContextMenuEntry } from '../../design-system';
 import type { TrySummary } from '../../cases/tryFile';
 import type { DatasetMode } from '../../workspace/useDatasetMode';
 import { EARLIER_TRIES, OTHER_TRIES } from '../../workspace/useDatasetExport';
@@ -117,19 +110,6 @@ export const TriesMode: React.FC<TriesModeProps> = ({
     });
   };
 
-  const onSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== 'Escape') return;
-
-    if (view.query) {
-      view.setQuery('');
-
-      return;
-    }
-
-    e.stopPropagation();
-    e.currentTarget.blur();
-  };
-
   const grid = { view, order, sceneId, scene, showMenu };
 
   return (
@@ -142,22 +122,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({
         e.stopPropagation();
       }}
     >
-      <ModeHeader
-        title={mode.dataset?.name ?? 'Tries'}
-        onDone={view.close}
-        actions={
-          !mode.dataset && (
-            <SearchField
-              value={view.query}
-              onChange={view.setQuery}
-              onKeyDown={onSearchKey}
-              placeholder="e.g. failed grasp red block last week"
-              aria-label="Search tries"
-              className="w-[300px]"
-            />
-          )
-        }
-      />
+      <TriesHeader view={view} dataset={mode.dataset} />
       {mode.dataset && mode.actions && (
         <DatasetPane dataset={mode.dataset} members={mode.members} actions={mode.actions} />
       )}

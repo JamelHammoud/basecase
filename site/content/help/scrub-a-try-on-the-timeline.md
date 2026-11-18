@@ -60,4 +60,4 @@ To split, merge, rename or tag segments, see [Label a try](/help/label-a-try).
 
 For more on the cards around the canvas, see [Play a try through its console](/help/play-a-try-through-its-console).
 
-You can't open a try that you recorded before you added or removed a joint. To open a try from another scene, use the Library. See [Open a try from any scene](/help/open-a-try-from-any-scene).
+Joint playback can't open a try recorded before you added or removed a joint. You can [Compare saved tries](/help/compare-saved-tries) without that match. To open a try from another scene, use the Library. See [Open a try from any scene](/help/open-a-try-from-any-scene).

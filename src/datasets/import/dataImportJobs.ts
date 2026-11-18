@@ -7,6 +7,7 @@ import { ImageImportSession, type ImageImportContext, type ImageImportSummary } 
 import { importVideoBytes } from './importVideoBytes';
 import { DataImportError, type SourceData, type SourceFormat } from './types';
 import { columnSpans, mergedSpans, type ColumnSpan } from './units';
+import { topicOnlyTries } from './topicOnlyTries';
 
 export interface SourceSummary {
   format: SourceFormat | 'images';
@@ -19,7 +20,7 @@ export interface SourceSummary {
 }
 
 export interface BuildJob {
-  model: SimModel;
+  model: SimModel | null;
   plan: ReplayPlan;
   target: ImportTarget;
 }
@@ -75,6 +76,10 @@ export function importHandlers() {
       const { data, files } = read;
 
       read = null;
+
+      if (data.names.length === 0) return topicOnlyTries(data, job.target);
+
+      if (!job.model) throw new DataImportError('Import the files again.');
 
       const built = await importedTries(await loadMujoco(), {
         model: job.model,

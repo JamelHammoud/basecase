@@ -63,7 +63,7 @@ Canonical image packages preserve supplied condition definitions and membership.
 
 If you publish the same dataset again, Basecase updates the folders included in the export. Tries rewrite `data/`, `videos/` and `meta/`, while images rewrite `coco/` and `yolo/` and the image dataset's `README.md` card. Folders outside that export stay as they are.
 
-The working dataset leaves out real-robot tries, failed tries, tries with quality flags and tries on another robot model. The toast shows how many samples were left out. A saved version uses its original samples, robot and scene.
+The working dataset leaves out real-robot tries, failed tries, tries with quality flags and tries on another robot model. Topic-only recordings are also left out because they have no robot joint recording. The toast shows how many samples were left out. A saved version uses its original samples, robot and scene.
 
 Each publish tags its commit with the dataset's version, such as `dataset-v2`. Publishing freezes the selected frames, labels, recording and image content, exclusions and split assignments. Editing an instruction or segment boundary creates a new version on the next publish. Publishing unchanged samples keeps the same version.
 

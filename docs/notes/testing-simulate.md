@@ -2,6 +2,34 @@
 
 Current coverage: [owning guide](../guide/simulate.md#testing-coverage). Shared policy and harness contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
 
+## Windows gripper, camera and payload replay deadlines
+
+[Check 44532657394](https://github.com/JamelHammoud/basecase/actions/runs/44532657394), workload `a7426f512bb936297657647e212196d45e80b449`, failed Windows unit shard 1/2 on three exact native C/WASM replay declarations in `src/sim/selfContactDesigns.test.ts`. Each exhausted the unchanged 5,000 ms callback deadline. No contact-identity or state-drift assertion failure was reported. All ten WASM contact and independent negative-control cases passed.
+
+| Mechanism | Failed Windows callback | Previous Windows pass | Same-revision Linux pass | Last full green Windows pass |
+| --- | --- | --- | --- | --- |
+| Opposed gripper fingers | 5,005 ms | 2,758 ms | 300 ms | 602 ms |
+| Pan-tilt camera and mount | 5,025 ms | 603 ms | 454 ms | 585 ms |
+| Asymmetric payload arm | 5,015 ms | 510 ms | 443 ms | 578 ms |
+
+Previous [Check 44527768820](https://github.com/JamelHammoud/basecase/actions/runs/44527768820), workload `efc4e399f2bbd68a59fe873507142759ed824ee4`, passed all three Windows declarations. The only intervening merge adds the separate enabled/disabled folding-arm quarantines and documentation. Simulation, fixture, preparation, capture, native helper, lockfile and unit configuration sources are unchanged. The same simulation and native helper sources also match last full green [Check 44391437908](https://github.com/JamelHammoud/basecase/actions/runs/44391437908), workload `d3ee63311358cc0494517acd42328e0bc22e06c8`. The lockfile changes since that green run only update the unrelated agent ACP dependency. There is no identified causative merge to revert. The failed Windows image `20261103.298.1` matches that full green run. The preceding run used `20261116.315.1`. These observations do not identify an environment component to pin.
+
+Classification is intermittent Windows native replay execution with an unresolved stage. The failed log establishes callback entry and deadline expiry, without a last completed internal stage. Preparation, WASM capture, uv dependency provisioning, native Python startup, replay, comparison and cleanup share the callback budget without stage markers. All three paths have separate failures. Their shared helper does not establish one root cause.
+
+Exact-revision Windows diagnostics passed each declaration independently with one worker, zero retries and quarantine off. The runner collected and verified all three durable artifacts in this repair context.
+
+| Mechanism | Diagnostic | Test duration | Process duration | Windows image | Durable ticket |
+| --- | --- | --- | --- | --- | --- |
+| Opposed gripper fingers | [Run 44534108387](https://github.com/JamelHammoud/basecase/actions/runs/44534108387) | 3,593.8117 ms | 5,672 ms | `20261116.315.1` | `231a7b95-69fb-4b02-b22e-63e0773e4ece` |
+| Pan-tilt camera and mount | [Run 44534117234](https://github.com/JamelHammoud/basecase/actions/runs/44534117234) | 3,554.2339 ms | 5,766 ms | `20261116.315.1` | `2994aee6-bb02-4ed8-9f18-e37208e0fd42` |
+| Asymmetric payload arm | [Run 44534123671](https://github.com/JamelHammoud/basecase/actions/runs/44534123671) | 4,018.3154 ms | 6,091 ms | `20261103.298.1` | `3c3c4ed1-41c0-41f2-87a7-c68c0d1bce1f` |
+
+The verified manifests record Windows x64, Node v26.13.0 and four CPUs, with empty cleanup-message lists. Payload used the same image as the failed shard. Gripper and camera used the other observed image. These single observations establish intermittency for each path at the failed revision, without an equal-load comparison, a flake-rate estimate or an identified slow stage. Image differences do not identify an environment cause. Evidence remains under each ticket’s scratch directory.
+
+Only these three exact declarations join the Windows quarantine through 28 November 2026 under existing open priority replay owner [#1390](https://github.com/JamelHammoud/basecase/issues/1390), which already carries `loop:fix`, `loop:next` and `loop:priority`. Windows retains native parity for folded snake, desk-lamp linkage and closed Sketch mechanism. Linux retains nine native matrix comparisons outside its existing folding-arm quarantine, and macOS retains all ten. Every platform retains all ten WASM contact and independent negative-control cases, package XML and recording/contact byte coverage. These checks do not replace the three missing Windows native comparisons.
+
+Restoration requires stage tracing through cleanup, an established fix and at least ten baseline and ten candidate observations for each affected Windows path at equal load with retries disabled. Preserve each three-second trajectory, drift below 1e-6 and exact contact identities. Repair measures no repeated flake rate and changes no assertion, deadline or retry. Raw logs and diagnostic selections are referenced by the task handoff.
+
 ## Windows folding-arm enabled and disabled replay deadlines
 
 [Check 44527768820](https://github.com/JamelHammoud/basecase/actions/runs/44527768820), workload `efc4e399f2bbd68a59fe873507142759ed824ee4`, failed only Windows unit shard 2/2 in the supplied failure log. Both declarations in `src/sim/fixtures/selfContactParity.test.ts` exhausted their unchanged 5,000 ms callback deadline. Enabled contact took 5,009 ms and disabled contact took 5,004 ms. No state-drift, native-version or contact assertion failure was reported. Linux passed the same comparisons at that revision in 618 and 422 ms.

@@ -28,7 +28,7 @@ export interface MoveOutcome {
 export async function trainMove(input: MoveInput): Promise<MoveOutcome> {
   const { model, animation } = input;
   const environment = moveEnvironment(model, animation);
-  const analysis = moveAnalysis(model);
+  const analysis = moveAnalysis(model, animation.robot);
   const task = { id: animation.name, design: input.design, model, environment, analysis };
   const outcome = await solveWith({
     ...input,

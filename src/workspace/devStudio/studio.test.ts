@@ -150,6 +150,7 @@ const EXPECTED_NAMES = [
   'visionBackendState',
   'visionConditionImport',
   'visionTraining',
+  'workspaceInspection',
   'worldAt',
   'worldState',
 ];

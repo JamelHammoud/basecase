@@ -125,7 +125,7 @@ export const closeKin = (kin: Kin) => {
 
 export const refresh = (kin: Kin) => kin.mj.mj_kinematics(kin.model, kin.data);
 
-export function bodyPoint(kin: Kin, body: number, local: V3): V3 {
+export function bodyPoint(kin: Pick<Kin, 'data'>, body: number, local: V3): V3 {
   const { xpos, xmat } = kin.data;
   const m = (r: number, c: number) => xmat[body * 9 + r * 3 + c];
   const rotated: V3 = [0, 1, 2].map((r) => m(r, 0) * local[0] + m(r, 1) * local[1] + m(r, 2) * local[2]) as V3;

@@ -8,6 +8,8 @@ import { JointRangeFields } from './pose/JointRangeFields';
 import { JointRow } from './pose/JointRow';
 import { PosesSection } from './pose/PosesSection';
 import { SkeletonSection } from './pose/SkeletonSection';
+import { WorkspaceSection } from './pose/WorkspaceSection';
+import type { ArmWorkspace } from '../workspace/useArmWorkspace';
 import type { SkeletonEdit } from '../workspace/useSkeletonEdit';
 
 export interface JointEdits {
@@ -25,6 +27,7 @@ interface PosePanelProps {
   onWalkCycle: () => void;
   canWalk: boolean;
   measured: ReadonlySet<string>;
+  workspace: ArmWorkspace;
 }
 
 const jointMenu = (j: RobotJoint, edits: JointEdits): ContextMenuEntry[] => [
@@ -62,10 +65,12 @@ export const PosePanel: React.FC<PosePanelProps> = ({
   onWalkCycle,
   canWalk,
   measured,
+  workspace,
 }) => {
   const { activeJointId } = posing;
   const rig = posing.robot?.rig ?? null;
-  const pose = posing.robot?.pose;
+  const pose =
+    workspace.view && workspace.preview ? { ...posing.robot?.pose, values: workspace.preview } : posing.robot?.pose;
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const groups = useMemo(
     () => (rig ? jointGroups(rig) : []).map((g) => ({ ...g, rowLabels: jointRowLabels(g.joints, g.label) })),
@@ -125,6 +130,7 @@ export const PosePanel: React.FC<PosePanelProps> = ({
         className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
       >
         <SkeletonSection skeleton={skeleton} />
+        <WorkspaceSection workspace={workspace} />
 
         {posing.robot && (
           <>

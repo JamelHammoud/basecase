@@ -69,7 +69,11 @@ ctx.onmessage = async (ev: MessageEvent<SkillsRequest>) => {
 
     const { localSalt, ...job } = msg;
 
-    ctx.postMessage(await runSkillsJob(job, { mj, forge, save, progress, localSalt }));
+    const reply = await runSkillsJob(job, { mj, forge, save, progress, localSalt });
+    const transfer =
+      reply.type === 'workspace' ? [reply.samples.positions.buffer, reply.samples.configurations.buffer] : [];
+
+    ctx.postMessage(reply, transfer);
   } catch (e) {
     ctx.postMessage({ type: 'error', message: errorMessage(e) } satisfies SkillsMessage);
   }

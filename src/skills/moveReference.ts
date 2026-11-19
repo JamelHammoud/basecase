@@ -29,9 +29,9 @@ export const frameCount = (animation: RobotAnimation, controlDt = MOVE_CONTROL_D
 };
 
 export function moveReference(model: SimModel, animation: RobotAnimation): MoveReference {
-  const robot = kitRobot(model);
+  const robot = kitRobot(model, animation.robot);
   const byId = new Map(model.joints.map((j) => [j.id, j]));
-  const height = rootHeight(model);
+  const height = rootHeight(model, animation.robot);
   const n = Math.min(frameCount(animation), MAX_REFERENCE_FRAMES);
   const frames = Array.from({ length: n }, (_, k) => {
     const pose = sampleAnimation(animation, k * MOVE_CONTROL_DT);

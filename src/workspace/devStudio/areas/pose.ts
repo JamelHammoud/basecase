@@ -2,11 +2,13 @@ import type { RobotPoseState } from '../../../types/robotics';
 import { posedPort } from '../../../utils/posedPort';
 import type { JointDragStep } from '../../useSkeletonEdit';
 import type { Studio } from '../types';
+import { inspectWorkspace } from '../workspaceInspection';
 
 type Payload = Record<string, unknown>;
 
 export default function poseStudio(studio: Studio) {
   return {
+    workspaceInspection: () => inspectWorkspace(studio),
     posing: () => studio().core.posing,
     setPose: (values: Record<string, number>, root?: RobotPoseState['root']) =>
       studio().core.posing.setPose({ values, root }),

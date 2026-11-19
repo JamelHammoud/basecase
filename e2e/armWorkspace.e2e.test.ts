@@ -46,6 +46,13 @@ it(
       },
     );
 
+    await expect
+      .poll(() => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.sceneRecord()))
+      .toMatchObject({
+        parts: fixture.input.parts,
+        project: { ...fixture.input.project, pose: fixture.input.pose },
+      });
+
     const before = await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.sceneRecord());
 
     await contactCommand(app, 'Inspect Workspace');

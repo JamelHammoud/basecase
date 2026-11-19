@@ -1,13 +1,9 @@
-import { afterEach, beforeEach, expect, it } from 'vitest';
-import { buildCase, builderRobot } from '../src/cases/caseBuilder';
+import { afterEach, expect, it } from 'vitest';
+import { buildCase, builderRobot, type CaseSpec } from '../src/cases/caseBuilder';
+import { captureCaseFixture } from '../src/cases/fixtureAssembly';
 import { fixtureScene } from '../src/cases/fixtureScenes.fixtures';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
-import {
-  DEFAULT_PROJECT,
-  type CustomModelDefinition,
-  type ProjectSettings,
-  type SavedSceneRecord,
-} from '../src/types/robotics';
+import { DEFAULT_PROJECT, type CustomModelDefinition, type ProjectSettings } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
 import { openApp, openPlayTab, partCount, shown, type App } from './harness';
 
@@ -17,67 +13,62 @@ interface Studio {
 }
 
 let app: App;
-const saved = new Map<string, SavedSceneRecord>();
 const arm = fixtureRobots().find((robot) => robot.id === 'arm-6dof')!;
+const robot = builderRobot(buildRig(arm.joints, arm.parts), arm.parts);
 const sceneRecord = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.sceneRecord());
 
-beforeEach(async () => {
-  saved.clear();
-  app = await openApp({ scenes: [] });
-  await app.page.route(/\/api\/bridge\/(scene|scenes|save-scene)(\?|$)/, async (route) => {
-    const url = new URL(route.request().url());
-    const name = url.pathname.split('/').at(-1);
+function made(spec: CaseSpec) {
+  const result = buildCase(spec, robot);
 
-    if (name === 'save-scene') {
-      const payload = route.request().postDataJSON() as SavedSceneRecord;
+  if (!result.ok) throw new Error(result.problem);
 
-      saved.set(payload.id, { ...payload, updatedAt: new Date().toISOString(), partCount: payload.parts.length });
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(saved.get(payload.id)),
-      });
+  return result.kase;
+}
 
-      return;
-    }
+const source = fixtureScene(made({ goal: 'chest', world: 'floor' }), 'Toy chest');
 
-    const result = name === 'scene' ? saved.get(url.searchParams.get('id') ?? '') : [...saved.values()];
-
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(result ?? null) });
-  });
-});
+async function load(scene: unknown, count: number) {
+  await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), scene);
+  await expect.poll(() => partCount(app.page)).toBe(count);
+}
 
 afterEach(async () => {
   await app?.close();
 });
 
-it('captures an assembly from selection and reopens its resized New Case fixture', async () => {
-  const built = buildCase({ goal: 'chest', world: 'floor' }, builderRobot(buildRig(arm.joints, arm.parts), arm.parts));
+it('saves a selected passive assembly through the selection menu', async () => {
+  app = await openApp({ scenes: [] });
+  await load(
+    {
+      id: 'fixture-source',
+      name: source.name,
+      parts: source.parts,
+      project: { ...DEFAULT_PROJECT, joints: source.joints },
+    },
+    source.parts.length,
+  );
 
-  if (!built.ok) throw new Error(built.problem);
-
-  const source = fixtureScene(built.kase, 'Toy chest');
   const { page } = app;
 
-  await page.evaluate((scene) => (window as unknown as { __studio: Studio }).__studio.load(scene), {
-    id: 'fixture-source',
-    name: source.name,
-    parts: source.parts,
-    project: { ...DEFAULT_PROJECT, joints: source.joints },
-  });
-  await expect.poll(() => partCount(page)).toBe(source.parts.length);
   await page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Layers"]')).click();
   await page.locator(shown('[data-layer-row="group:fixture-assembly"]')).click({ button: 'right' });
   await page.getByRole('menuitem', { name: 'Save to Library', exact: true }).click();
   await expect.poll(() => app.posts.filter((post) => post.route === 'save-model').length).toBe(1);
   expect((app.posts.find((post) => post.route === 'save-model')!.body as CustomModelDefinition).caseFixture).toBe(true);
-  await page.evaluate((scene) => (window as unknown as { __studio: Studio }).__studio.load(scene), {
-    id: 'fixture-robot',
-    name: 'Chest robot',
-    parts: arm.parts,
-    project: { ...DEFAULT_PROJECT, joints: arm.joints },
-  });
-  await expect.poll(() => partCount(page)).toBe(arm.parts.length);
+  expect(app.errors).toEqual([]);
+});
+
+it('selects a saved fixture and applies its edited width through New Case', async () => {
+  const fixture = await captureCaseFixture(source);
+
+  app = await openApp({ scenes: [], models: [fixture] });
+  await load(
+    { id: 'fixture-robot', name: 'Chest robot', parts: arm.parts, project: { ...DEFAULT_PROJECT, joints: arm.joints } },
+    arm.parts.length,
+  );
+
+  const { page } = app;
+
   await openPlayTab(page, 'Cases');
   await page.locator(shown('button'), { hasText: 'New Case' }).first().click();
 
@@ -91,12 +82,29 @@ it('captures an assembly from selection and reopens its resized New Case fixture
   await expect
     .poll(async () => (await sceneRecord()).project.cases?.[0]?.world.objects.find((object) => object.joint)?.size[0])
     .toBe(100);
+  expect((await sceneRecord()).project.cases![0].world.objects.find((object) => object.joint)!.geometry).toBeDefined();
+  expect(app.errors).toEqual([]);
+});
 
-  const kase = (await sceneRecord()).project.cases![0];
+it('opens a saved scene containing a resized fixture through Scenes', async () => {
+  const fixture = await captureCaseFixture(source);
+  const kase = made({ goal: 'chest', world: 'floor', fixture, values: { fixtureWidthMm: 100 } });
+  const scene = {
+    id: 'fixture-robot',
+    name: 'Chest robot',
+    globalGoal: '',
+    updatedAt: '2026-11-19T00:00:00.000Z',
+    partCount: arm.parts.length,
+    parts: arm.parts,
+    project: { ...DEFAULT_PROJECT, joints: arm.joints, cases: [kase] },
+  };
 
-  expect(kase.world.objects.find((object) => object.joint)!.geometry).toBeDefined();
-  await expect.poll(() => saved.get('fixture-robot')?.project?.cases).toEqual([kase]);
+  app = await openApp({ scenes: [scene], scene });
+
+  const { page } = app;
+
   await page.getByRole('button', { name: 'New scene', exact: true }).first().click();
+  await expect.poll(async () => (await sceneRecord()).project.cases ?? []).toEqual([]);
   await page.getByRole('button', { name: 'Scenes', exact: true }).first().click();
   await page.locator('[data-scene-row="fixture-robot"]').click();
   await expect.poll(async () => (await sceneRecord()).project.cases).toEqual([kase]);

@@ -347,6 +347,8 @@ Measurements and limits: [Calibration and body properties performance evidence](
 
 - **Windows network pairing.** The native network coverage above retains the same 150000 µs stop bound, sealed stop and reconnect. `session.rs` checks heartbeat and intent watchdogs. [Incident evidence](../notes/testing-robot-runtime.md#windows-network-pairing).
 
+- **Network fixture teardown.** `e2e/operateNetwork.e2e.test.ts` stops forwarding telemetry and awaits all active renderer deliveries before disposing its fleet, daemon and browser. Delivery failures are collected immediately and fail teardown after the active calls settle. Cleanup still runs when delivery fails. `tools/testing/networkRobotEvents.test.mjs` checks concurrent deliveries, out-of-order completion, blocked late events and failures before and during teardown without starting a browser or daemon. Pairing, the watchdog bound, sealed stop, reconnect and installation assertions remain in the browser file. [Failure evidence and limits](../notes/testing-robot-runtime.md#network-fixture-teardown).
+
 ## Passive joint mappings
 
 `servoLayout` assigns consecutive IDs only to powered movable declarations. Passive joints consume no emulated servo, ROS command joint or robot-package servo ID. Physical simulation readouts and recordings still include them. Changing actuation preserves powered-joint source order and invalidates existing model-bound evidence.

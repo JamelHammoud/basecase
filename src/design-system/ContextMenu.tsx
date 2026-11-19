@@ -60,11 +60,11 @@ const Submenu: React.FC<{ left: boolean; width: number; children: React.ReactNod
   );
 };
 
-const SubmenuTrigger: React.FC<{ label: string; icon?: React.ReactNode; open: boolean; onToggle: () => void }> = ({
+const SubmenuTrigger: React.FC<{ label: string; icon?: React.ReactNode; open: boolean; onOpen: () => void }> = ({
   label,
   icon,
   open,
-  onToggle,
+  onOpen,
 }) => {
   const padded = useMenuGutter(!!icon);
 
@@ -74,7 +74,7 @@ const SubmenuTrigger: React.FC<{ label: string; icon?: React.ReactNode; open: bo
       role="menuitem"
       aria-haspopup="menu"
       aria-expanded={open}
-      onClick={onToggle}
+      onClick={onOpen}
       className={`w-full h-[32px] px-2.5 rounded-lg flex items-center gap-2 text-[13.5px] text-left cursor-default transition-colors ${
         open ? 'bg-white/[0.09] text-white' : 'text-white/90 hover:bg-white/[0.09]'
       }`}
@@ -177,12 +177,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, minWidth 
 
             return (
               <div key={i} className="relative" onPointerEnter={() => setOpenSub(i)}>
-                <SubmenuTrigger
-                  label={item.label}
-                  icon={item.icon}
-                  open={open}
-                  onToggle={() => setOpenSub(open ? null : i)}
-                />
+                <SubmenuTrigger label={item.label} icon={item.icon} open={open} onOpen={() => setOpenSub(i)} />
                 {open && (
                   <Submenu left={!!pos?.subLeft} width={item.submenuWidth ?? 260}>
                     {item.submenu(onClose)}

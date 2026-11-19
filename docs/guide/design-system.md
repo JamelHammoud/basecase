@@ -49,6 +49,12 @@ Use these primitives. Never hand-roll a styled `<button>` or input when one fits
 - `ImageViewer`: full-window image viewer. Pinch or ⌘-scroll zooms at the pointer, two-finger scroll and drag pan, double-click toggles fit / 100%+, − + 0 keys, ← → and a filmstrip for several images, Esc or a backdrop click closes. Controls float in glass islands: Zoom out, the zoom readout, which zooms to fit (0), Zoom in and Close. A control never sits beside another that does its job, so there's no separate fit button.
 - Tokens in `theme.ts` (`THEME_COLORS`, `LAYOUT`, `DRAG_REGION`, `NO_DRAG_REGION`) mirror the `@theme` block in `index.css`.
 
+## Context submenu activation
+
+`ContextMenu` submenu triggers open their submenu on hover, click or ordinary button keyboard activation. Activating an open trigger keeps it open, so a pointer entering just before a click cannot close the submenu it opened. Other-entry hover, action selection, Esc and outside dismissal retain their existing behavior.
+
+`e2e/servoFaults.e2e.test.ts` explicitly hovers Fault, clicks it and presses Enter while checking `aria-expanded` after each action, then chooses Limp and checks live state, the joint badge and recorded fault identity and time. This browser declaration remains active on Linux and macOS with its existing Windows exclusion. Browser execution belongs to CI. [Failure evidence and limits](../notes/ui.md#context-submenu-hover-and-click-ordering).
+
 ## Performance: trace plots
 
 Measurements and limits: [Trace plots performance evidence](../notes/performance-plots.md).

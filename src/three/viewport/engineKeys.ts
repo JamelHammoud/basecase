@@ -13,6 +13,7 @@ export const GIZMO_KEYS: Array<keyof ViewportProps> = [
   'axisPick',
   'buildStep',
   'cableRoute',
+  'workspace',
 ];
 
 export const FIGURE_KEYS: Array<keyof ViewportProps> = ['figures', 'humanHeightMm', 'measureKind', 'measureMode'];

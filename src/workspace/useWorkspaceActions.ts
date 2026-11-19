@@ -1,4 +1,5 @@
 import { useArmSizing } from './useArmSizing';
+import { useArmWorkspace } from './useArmWorkspace';
 import { useCadTune } from './useCadTune';
 import { useDataImport } from './useDataImport';
 import { useEarthPlace } from './useEarthPlace';
@@ -50,6 +51,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
   });
 
   return {
+    workspace: useArmWorkspace(core),
     board: useBoard(core),
     pose,
     robots,

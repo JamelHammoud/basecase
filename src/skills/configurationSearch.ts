@@ -1,4 +1,5 @@
 import { seeded } from '../utils/seeded';
+import { ConfigurationYield } from './configurationYield';
 
 export interface ConfigurationJoint {
   range: [number, number];
@@ -51,12 +52,10 @@ class Checker {
   checks = 0;
   stopped: 'budget' | 'cancelled' | null = null;
   readonly input: ConfigurationProblem;
-  private readonly channel = new MessageChannel();
-  private resume: (() => void) | null = null;
+  private readonly yielding = new ConfigurationYield();
 
   constructor(input: ConfigurationProblem) {
     this.input = input;
-    this.channel.port1.onmessage = () => this.resume?.();
   }
 
   clear(q: number[]): boolean | Promise<boolean> {
@@ -64,25 +63,13 @@ class Checker {
   }
 
   private async afterYield(q: number[]): Promise<boolean> {
-    await new Promise<void>((resolve) => {
-      const immediate = (globalThis as { setImmediate?: (callback: () => void) => unknown }).setImmediate;
-
-      if (immediate) {
-        immediate(resolve);
-
-        return;
-      }
-
-      this.resume = resolve;
-      this.channel.port2.postMessage(null);
-    });
+    await this.yielding.wait();
 
     return this.checked(q);
   }
 
   dispose() {
-    this.channel.port1.close();
-    this.channel.port2.close();
+    this.yielding.dispose();
   }
 
   private checked(q: number[]): boolean {

@@ -1,4 +1,5 @@
 import { CableRouteLayer } from './cableRouteLayer';
+import { WorkspaceLayer } from './workspaceLayer';
 import * as THREE from 'three';
 import { errorMessage } from '../../utils/errorMessage';
 import { AgentFrames } from './agentFrames';
@@ -45,6 +46,7 @@ function showAttribution(label: HTMLElement | null, text: string): void {
 
 export class StageOverlays {
   readonly cableRoute: CableRouteLayer;
+  readonly workspace: WorkspaceLayer;
 
   readonly ghost: GhostLayer;
 
@@ -70,6 +72,8 @@ export class StageOverlays {
     const size = new THREE.Vector2();
 
     this.cableRoute = new CableRouteLayer(ctx, labels.cable ?? (() => null));
+    this.workspace = new WorkspaceLayer(ctx);
+    this.workspace.sync(props.workspace ?? null);
     this.cameraGlyphs = new CameraGlyphs(overlays);
     this.cameraGlyphs.sync(props.fixedCameras);
     this.dataLayers = new DataLayers(overlays);
@@ -95,6 +99,8 @@ export class StageOverlays {
   }
 
   sync(previous: ViewportProps, props: ViewportProps): void {
+    if (previous.workspace !== props.workspace) this.workspace.sync(props.workspace ?? null);
+
     if (previous.cableRoute !== props.cableRoute) this.cableRoute.sync(props.cableRoute ?? null);
 
     if (previous.agentFrames !== props.agentFrames) this.agentFrames.sync(props.agentFrames ?? []);
@@ -135,6 +141,7 @@ export class StageOverlays {
   }
 
   dispose(): void {
+    this.workspace.dispose();
     this.cableRoute.dispose();
     this.cameraGlyphs.dispose();
     this.dataLayers.dispose();

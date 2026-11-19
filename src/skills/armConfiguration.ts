@@ -151,6 +151,8 @@ export class ArmConfiguration {
     const joints = sim.joints.flatMap((j) => {
       const id = this.mj.mj_name2id(model, this.mj.mjtObj.mjOBJ_JOINT.value, j.name);
 
+      if (id < 0) throw new Error('Reconnect the target joints before planning motion.');
+
       if (!ancestors.has(model.jnt_bodyid[id])) return [];
 
       if (j.type !== 'revolute') throw new Error('Motion planning needs revolute target chains.');

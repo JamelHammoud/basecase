@@ -75,14 +75,15 @@ export function moveProblems(model: SimModel, reference: MoveReference): string[
   return [`It stays within ${angleFromRadians(MOVE_BARS.canaryShare * MOVE_BARS.toleranceRad)} of the rest pose.`];
 }
 
-function rootPart(model: SimModel): string | null {
-  const { root } = kitRobot(model);
+function rootPart(model: SimModel, reference: MoveReference): string | null {
+  const key = model.joints.find((j) => reference.joints.includes(j.id))?.robot;
+  const { root } = kitRobot(model, key);
 
   return model.bodies.find((b) => b.name === root)?.parts[0] ?? null;
 }
 
 function moveSignals(model: SimModel, reference: MoveReference): Record<string, SignalSource> {
-  const part = rootPart(model);
+  const part = rootPart(model, reference);
   const joints = reference.joints.map((joint) => [jointSignal(joint), { kind: 'joint-position', joint }]);
   const place: Record<string, SignalSource> = part
     ? { x: { kind: 'part-position', part, axis: 'x' }, y: { kind: 'part-position', part, axis: 'y' } }
@@ -149,7 +150,7 @@ export function startPose(model: SimModel, reference: MoveReference): RobotPoseS
 export const moveRewardHash = (reference: MoveReference) => sha256Hex(moveReward(reference));
 
 export function moveEnvironment(model: SimModel, animation: RobotAnimation): Environment {
-  const robot = kitRobot(model);
+  const robot = kitRobot(model, animation.robot);
   const reference = moveReference(model, animation);
 
   return withServoSpreads(model, {
@@ -173,8 +174,8 @@ export function moveEnvironment(model: SimModel, animation: RobotAnimation): Env
   });
 }
 
-export function moveAnalysis(model: SimModel): TaskAnalysis {
-  const robot = model.robots[0];
+export function moveAnalysis(model: SimModel, key?: string): TaskAnalysis {
+  const robot = key ? model.robots.find((r) => r.key === key) : model.robots[0];
   const floating = !!robot?.floating;
 
   return {
@@ -191,13 +192,15 @@ export function moveAnalysis(model: SimModel): TaskAnalysis {
 }
 
 export function moveAnimations(model: SimModel, animations: readonly RobotAnimation[]): RobotAnimation[] {
-  const robot = model.robots[0];
+  return animations.filter((animation) => {
+    const robot = animation.robot ? model.robots.find((r) => r.key === animation.robot) : model.robots[0];
 
-  if (!robot?.floating || robot.morphology !== 'legged') return [];
+    if (!robot || (robot.floating && (robot !== model.robots[0] || robot.morphology !== 'legged'))) return false;
 
-  const mine = (a: RobotAnimation) =>
-    a.robot === robot.key ||
-    (!a.robot && Object.keys(a.keyframes[0]?.values ?? {}).some((id) => robot.joints.includes(id)));
+    const mine =
+      animation.robot === robot.key ||
+      Object.keys(animation.keyframes[0]?.values ?? {}).some((id) => robot.joints.includes(id));
 
-  return animations.filter((a) => a.keyframes.length > 1 && mine(a));
+    return animation.keyframes.length > 1 && mine;
+  });
 }

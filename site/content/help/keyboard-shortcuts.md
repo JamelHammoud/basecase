@@ -89,6 +89,8 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 
 While [editing a cable route](/help/route-a-robot-cable), [[Esc]] closes the editor. Committed route edits stay in the scene.
 
+While [inspecting an arm workspace](/help/inspect-an-arm-workspace), [[Esc]] closes inspection and restores the current pose.
+
 In [Tries](/help/open-a-try-from-any-scene), [[⌫]] deletes the selected tries once you confirm. Keys without [[⌘]] leave the scene alone there.
 
 ## Scenes

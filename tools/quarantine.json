@@ -957,5 +957,13 @@
     "until": "2026-11-28",
     "platform": "linux",
     "reason": "Check 44504735978 exhausted the unchanged 10000 ms beforeAll deadline awaiting fleetFixture before the registry assertion ran. Previous Linux Check 44500060639 passed the file in 8345 ms on the same Ubuntu image 20261111.196.1 with unchanged Fleet, fixture, PostgreSQL and unit configuration sources. Same-revision Linux diagnostic 44505926442 passed in a 9411 ms process with a 449.24056 ms assertion on the same image, one worker, zero retries and quarantine off. Docker launch, database readiness, connection, migrations, HTTP startup and cleanup are not distinguished. Existing open priority shared fixture owner #1401 owns tracing, a demonstrated fix and ten baseline and ten candidate equal-load Linux observations with retries disabled before restoration. Whole-file filtering is required because setup precedes individual test filtering. macOS retains the complete ten-class inventory, duplicate vendor identities, two vendors at one site, stale state and robot.control acceptance. Linux retains authorization, adapter and legacy migration checks, which do not replace this combined registry assertion. Windows retains its separate existing quarantine. No deadline, retry or assertion changes."
+  },
+  {
+    "file": "e2e/buildCheck.e2e.test.ts",
+    "test": "",
+    "issue": 1860,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44509387028 exhausted the unchanged 120000 ms beforeAll deadline awaiting openApp before any of the twelve declarations ran, with no studio-ready message. Previous Windows Check 44504735978 started the same unchanged setup in 7879 ms and passed ten active declarations in 55560 ms. The only intervening merge added a Linux Fleet quarantine. Exact-revision Windows diagnostic 44511835373 passed startup in 8723 ms and the selected Checks assertion in 3909.0344 ms with one worker, zero retries and quarantine off on the older image 20261103.298.1. Runner images differed, without an identified component to pin. Chrome launch, page creation, fixture routing, navigation, studio readiness and late cleanup remain unresolved. Priority setup owner #1860 owns stage tracing, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled before restoration. Whole-file filtering is required because setup precedes declaration filtering. Keep the independent #988 Case-row and #1855 Strength verdict quarantines when restoring setup. Linux and macOS retain the file. Windows retains fast readiness, engineering, Case worker-session and BOM pipelines, which do not replace these combined browser interactions. No assertion, deadline or retry changes."
   }
 ]

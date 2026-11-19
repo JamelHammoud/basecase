@@ -6,6 +6,16 @@ Current coverage: [owning guide](../guide/robot-runtime.md#testing-coverage). Sh
 
 `e2e/operateCalibration.e2e.test.ts` leaves fitting and replay accuracy to the pipeline tests in the guide, avoiding the 86 s live calibration story from run 43642970706 (#855).
 
+### Windows calibration setup on 19 November
+
+[Check 44495446798](https://github.com/JamelHammoud/basecase/actions/runs/44495446798) at `aa8a3040a82b8bd1853561dbd2c12ffce9df38f6` failed `e2e/operateCalibration.e2e.test.ts` in shared setup at line 92. It connected the emulator, reached Set Up and clicked Test, then exhausted the existing `vi.waitFor` deadline while observing `data-mode="test"`. The already quarantined test body never ran. Intent delivery, daemon transition, incoming status and UI observation are not distinguished. This is a setup failure separate from the earlier replay and rollback callback deadline owned by [#987](https://github.com/JamelHammoud/basecase/issues/987).
+
+The runtime, fixture and browser sources are unchanged since [last full green 44391437908](https://github.com/JamelHammoud/basecase/actions/runs/44391437908). Its Windows setup completed while the body remained quarantined. No changed environment component has been identified to pin. The existing Windows entry now covers the whole file through its unchanged 28 November expiry, so setup is filtered before Vitest enters it. Linux and macOS retain the full story. Fast calibration, replay, history, measured-joint, engineering-model and originating-unit action tests remain active on Windows. They do not establish browser setup, replay, confirmation or direct Fix delivery.
+
+Focused Windows diagnostic [44498289199](https://github.com/JamelHammoud/basecase/actions/runs/44498289199) selects the exact full declaration at the failed revision with one worker, zero retries and quarantine off. Durable ticket: `94a2af4a-9807-4c05-9196-cbac0adef68f`. Restoration stays with #987 and requires a demonstrated cause and fix plus at least ten baseline and ten candidate observations at equal Windows load, with current assertions and deadlines intact. The repair session does not measure a flake rate.
+
+The diagnostic manifest was collected and verified in the repair session. On Windows image `20261103.298.1`, setup reached the body, which then exhausted its already quarantined 15-second deadline at 15,119.6201 ms. The whole process took 37,476 ms. The result establishes that setup can complete at the failed revision and preserves the older body failure as a separate path. The failed calibration shard used the same image. This establishes intermittent setup at the same revision and image without demonstrating a setup fix.
+
 ## Mixed-servo calibration
 
 The mixed-arm browser test was replaced after taking 49 s in run 43642970706 (#856).

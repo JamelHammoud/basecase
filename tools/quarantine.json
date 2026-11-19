@@ -933,5 +933,21 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44495446798 saved the expected print.down but timed out awaiting a passing Strength row, then failed at the initial failing-row poll on retry. Attempts totaled 37138 ms and share browser and worker prototype state. The fixture introduced in 9ba78ef88 is newer than full green 44391437908, whose former real-solve walkthrough passed in 31529 ms, but the log does not establish a fixture, RPC or readiness cause. Reverting would restore longer polls and a 200-second declaration. Same-revision diagnostic 44498287095 also saved the face and timed out awaiting the passing row in 25339.5288 ms on Windows image 20261103.298.1, with one worker, zero retries and quarantine off. This reproduces verdict delivery failure without identifying its cause. Priority owner #1855 owns stage tracing, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations before restoration. Linux and macOS retain direct Fix and verdict coverage. Windows retains real engineeringStrength failure, blocker, suggested-face, passing-face and thicker-control solves plus the worker-fixture protocol test. These do not replace direct browser Fix delivery. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "neighboring hexapod legs replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44500060639 exhausted the unchanged 5000 ms callback deadline at 5006 ms. Previous Windows Check 44495446798 passed in 3037 ms on the same image 20261116.315.1 with unchanged simulation, fixture, preparation, capture and native helper sources. No drift or contact assertion failed. Exact-revision Windows diagnostic 44503195355 passed in 3508.7074 ms with one worker, zero retries and quarantine off on image 20261103.298.1. This single observation does not isolate an image component or failing stage. Preparation, WASM capture, uv provisioning, native startup, replay, comparison and cleanup remain unresolved under existing priority replay owner #1390. Restore after stage tracing, an established fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. Six other Windows native self-contact comparisons and all ten WASM contact and negative-control cases, package and recording coverage remain active. Linux and macOS retain this comparison. Preserve the three-second trajectory, drift below 1e-6 and exact contact identities."
+  },
+  {
+    "file": "e2e/inputs.e2e.test.ts",
+    "test": "pairs a phone from ⌘K and drives a rover by its tilt, and refuses the phone after Unpair Phone",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44500060639 connected the phone and reached Drive on, then measured 0.0473696773983312 m through the unchanged 30000 ms greater-than-0.1 m motion poll. Its shared-app retry never displayed the pairing QR. Previous Windows Check 44495446798 passed in 12804 ms with unchanged input, phone, simulation and harness sources on image 20261103.298.1 rather than the failing image 20261116.315.1. Exact-revision Windows diagnostic 44503214963 passed in 10963.187 ms with one worker, zero retries and quarantine off on image 20261103.298.1, while retaining the preview-server close timeout. This single observation does not establish an image cause or repair. Input delivery, simulation progress, pairing state, retained socket ownership and cleanup remain separate unresolved stages under existing input-path owner #995. Restore only after tracing each stage, establishing a fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. Preserve QR, connection, motion, Unpair Phone, revoked connection refusal and empty app errors with existing deadlines. Linux and macOS retain the walkthrough. Fast TLS protocol, event-stream, store, tilt mapping and real MuJoCo movement checks remain active but do not replace the combined browser path."
   }
 ]

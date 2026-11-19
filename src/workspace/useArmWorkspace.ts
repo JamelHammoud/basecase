@@ -7,14 +7,7 @@ import { errorMessage } from '../utils/errorMessage';
 import { useLatestRef } from '../utils/useLatestRef';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { ScenePart } from '../types/robotics';
-import type { RobotAnimation } from '../types/robotics';
-
-const targetAnimation = (animation: RobotAnimation, robot?: string): RobotAnimation => ({
-  ...animation,
-  id: crypto.randomUUID(),
-  name: 'Workspace target',
-  robot,
-});
+import { workspaceTarget } from './armWorkspaceTarget';
 
 interface Inspection {
   source: ReturnType<typeof workspaceSource>;
@@ -79,7 +72,7 @@ function useInspectionLifecycle(core: WorkspaceCore, source: Inspection['source'
     if (!previewedRef.current) return;
 
     previewedRef.current = false;
-    latestRef.current.posing.previewPose(latestRef.current.posing.pose ?? { values: {} });
+    core.posing.previewPose(core.posing.pose ?? { values: {} });
   });
 
   useLayoutEffect(
@@ -104,13 +97,13 @@ function useInspectionLifecycle(core: WorkspaceCore, source: Inspection['source'
   );
 
   useLayoutEffect(() => {
-    if (core.tool.transformMode === 'pose') return;
+    if (core.tool.transformMode === 'pose' && core.tool.rightTab === 'pose') return;
 
     generationRef.current++;
     session.cancel();
     preparationRef.current?.abort();
     restore();
-  }, [core.tool.transformMode, session]);
+  }, [core.tool.transformMode, core.tool.rightTab, session]);
 
   return { generationRef, preparationRef, previewedRef, latestRef };
 }
@@ -121,7 +114,7 @@ export function useArmWorkspace(core: WorkspaceCore) {
   const [preview, setPreview] = useState<Record<string, number> | null>(null);
   const source = workspaceSource(core);
   const { generationRef, preparationRef, previewedRef, latestRef } = useInspectionLifecycle(core, source, session);
-  const inPose = core.tool.transformMode === 'pose';
+  const inPose = core.tool.transformMode === 'pose' && core.tool.rightTab === 'pose';
   const view = inspection && inPose && sameSource(inspection.source, source) ? inspection : null;
 
   if (inspection && (!inPose || !sameSource(inspection.source, source))) {
@@ -185,7 +178,7 @@ export function useArmWorkspace(core: WorkspaceCore) {
     void sample(initialInspection(core, selectedPart));
   };
   const select = (index: number) => {
-    if (!view?.samples) return;
+    if (!view?.samples || view.busy) return;
 
     const values = workspaceValues(view.samples, index);
 
@@ -195,7 +188,7 @@ export function useArmWorkspace(core: WorkspaceCore) {
     setInspection({ ...view, selected: index });
   };
   const plan = async () => {
-    if (!view?.samples || !view.model || view.selected === null) return;
+    if (!view?.samples || !view.model || view.selected === null || view.busy) return;
 
     const token = ++generationRef.current;
     const values = workspaceValues(view.samples, view.selected);
@@ -214,7 +207,9 @@ export function useArmWorkspace(core: WorkspaceCore) {
       }
 
       close();
-      core.posing.addAnimation(targetAnimation(result.controller.animation, core.posing.robot?.group.key));
+      core.posing.addAnimation(
+        workspaceTarget(result.controller.animation, core.posing.animations, core.posing.robot?.group.key),
+      );
       core.tool.openRightTab('sim');
     } catch (error) {
       if (current(view, token)) setInspection({ ...view, busy: false, problem: errorMessage(error) });

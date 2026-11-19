@@ -69,6 +69,17 @@ it(
     expect(await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.sceneRecord())).toEqual(
       before,
     );
+    await contactCommand(app, 'Show Simulate');
+    expect(
+      await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.workspaceInspection()),
+    ).toEqual({ count: 0, selected: null, point: null, screen: null, previewPoint: null });
+    expect(await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.sceneRecord())).toEqual(
+      before,
+    );
+    await contactCommand(app, 'Inspect Workspace');
+    await expect.poll(() => app.page.locator(shown('[data-testid="workspace-samples"]')).isVisible()).toBe(true);
+    await app.page.getByLabel('Sample', { exact: true }).fill('1');
+    await app.page.getByLabel('Sample', { exact: true }).press('Enter');
     await app.page.getByRole('button', { name: 'Plan Motion', exact: true }).click();
     await expect
       .poll(() =>

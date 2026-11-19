@@ -53,6 +53,7 @@ export function WorkspaceSection({ workspace }: { workspace: ArmWorkspace }) {
               min={1}
               max={count}
               precision={0}
+              disabled={view.busy}
               onChange={(index) => workspace.select(index - 1)}
             />
           </FieldRow>
@@ -67,7 +68,7 @@ export function WorkspaceSection({ workspace }: { workspace: ArmWorkspace }) {
           <Button size="sm" disabled={view.busy || view.selected === null} onClick={workspace.plan}>
             Plan Motion
           </Button>
-          <Button size="sm" variant="ghost" onClick={workspace.close}>
+          <Button size="sm" variant="ghost" shortcut="Esc" onClick={workspace.close}>
             Close Workspace
           </Button>
         </div>

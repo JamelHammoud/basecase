@@ -23,11 +23,11 @@ The arm must have a fixed base and powered revolute joints. You can't inspect an
 
 ![Sampled positions surround the selected arm, with the configuration budget in Pose](/help/inspect-an-arm-workspace/samples.png)
 
-4. In **Workspace**, click a dot on the canvas.
+4. On the canvas, click a sampled dot.
 
 ![A selected dot previews the joint configuration that placed the tool point there](/help/inspect-an-arm-workspace/preview.png)
 
-5. Click **Plan Motion**.
+5. In **Workspace**, click **Plan Motion**.
 6. In **Simulate**, under **Train**, click **Train** beside **Workspace target**.
 
 ![The planned motion appears as Workspace target in the existing Skills list](/help/inspect-an-arm-workspace/skills.png)
@@ -38,6 +38,8 @@ The tool point starts at the selected part's center. In Pose, edit its **X**, **
 
 Each dot marks an endpoint that passed collision checks against the compiled geometry. You can't determine whether the space between dots is clear, even if the sample is empty. A dot doesn't confirm that you can reach it from the current pose. The planner may fail to find a path within its budget, and Arena may reject a planned motion.
 
-You can inspect the workspace and select dots without changing the design. The planner must find a path before it adds an animation. Changes to geometry, joints, tool selection, parked poses or the world clear the inspection. Click **Close Workspace** or press [[Esc]] to restore the current pose.
+You can inspect the workspace and select dots without changing the design. The planner must find a path before it adds an animation. Later plans get numbered names to keep earlier animations.
+
+Changes to geometry, joints, tool selection, parked poses or the world clear the inspection. Leaving **Pose** also closes inspection and restores the current pose. Click **Close Workspace** or press [[Esc]] to close it from **Pose**.
 
 You can't establish payload capacity, orientation reachability or physical accuracy from position samples. See [Plan an arm reach](/help/plan-an-arm-reach) for the existing planner's limits.

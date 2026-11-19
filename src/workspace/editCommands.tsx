@@ -64,7 +64,7 @@ function armCommands(inputs: CommandInputs): Command[] {
     ...(workspace.view
       ? [{ id: 'close-workspace', label: 'Close Workspace', group: 'Pose', run: workspace.close }]
       : []),
-    ...(workspace.view?.selected !== null && workspace.view?.samples
+    ...(workspace.view?.selected !== null && workspace.view?.samples && !workspace.view.busy
       ? [{ id: 'workspace-motion', label: 'Plan Motion', group: 'Pose', run: workspace.plan }]
       : []),
   ];

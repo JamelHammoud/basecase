@@ -1,17 +1,29 @@
+import { expect } from 'vitest';
 import { loadFixtureRobot } from './driveChecks';
+import { box, joint } from '../src/sim/fixtures/parts';
 import { shown, type App } from './harness';
 import { tinyDetectionOnnx } from '../src/vision/onnxFixture';
 import type { TrainingRun } from '../src/vision/training/serviceTypes';
+import type { Dataset } from '../src/datasets/datasetFile';
 
 export interface InspectionStudio {
   configureVisionBackend: (input: { baseline: number[]; candidate: number[] }) => Promise<void>;
   prepareVisionInspection: (count?: number) => Promise<TrainingRun>;
+  visionBackendState: () => Promise<{ runs: TrainingRun[]; dataset: Dataset }>;
+  simState: () => { timeline: { frame: number } | null };
 }
 
 export async function openVisionInspection(app: App) {
   const { page } = app;
 
-  await loadFixtureRobot(page, 'arm-3dof');
+  await loadFixtureRobot(page, {
+    id: 'inspection-arm',
+    parts: [box('base', [0, 10, 0], [40, 20, 40], 100), box('link', [0, 50, 0], [10, 60, 10], 20)],
+    joints: [
+      joint({ id: 'hinge', link: ['base', 'link'], origin: [0, 20, 0], axis: [1, 0, 0], effortNm: 1, limb: 'arm' }),
+    ],
+    expect: { morphology: 'fixed', stand: 'n/a', walk: 'n/a' },
+  });
   await page.evaluate(
     async (input) => {
       const studio = (window as unknown as { __studio: InspectionStudio }).__studio;
@@ -29,6 +41,10 @@ export async function openVisionInspection(app: App) {
 
   const pane = page.locator(shown('[data-testid="dataset-pane"]'));
 
+  const saved = () =>
+    page.evaluate(() => (window as unknown as { __studio: InspectionStudio }).__studio.visionBackendState());
+  const before = await saved();
+
   await pane.getByRole('button', { name: 'Inspect Images', exact: true }).click();
 
   const dialog = page.getByRole('dialog', { name: 'Comparison images', exact: true });
@@ -38,5 +54,19 @@ export async function openVisionInspection(app: App) {
   await dialog.getByRole('button', { name: 'source-test', exact: true }).click();
   await dialog.getByRole('img', { name: 'Frozen comparison image', exact: true }).waitFor();
 
-  return dialog;
+  return { pane, dialog, before, saved };
+}
+
+export async function followVisionSource(app: App) {
+  const dialog = app.page.getByRole('dialog', { name: 'Comparison images', exact: true });
+
+  await dialog.getByRole('button', { name: 'Open Source Try', exact: true }).click();
+  await app.page.locator(shown('[data-testid="try-timeline"]')).waitFor();
+  await expect
+    .poll(() =>
+      app.page.evaluate(
+        () => (window as unknown as { __studio: InspectionStudio }).__studio.simState().timeline?.frame,
+      ),
+    )
+    .toBe(6);
 }

@@ -274,3 +274,33 @@ The workspace acceptance matrix uses real WASM MuJoCo and ordinary forward kinem
 `armWorkspaceTarget.test.ts` exercises the production Skills job dispatcher, a found motion and the existing bounded timing refusal. It also prepares a move environment for the second arm without reordering the model or changing parked values, and refuses missing geometry provenance before move judging or retention. Fixed-arm move playback uses the existing collision-aware development trials before the unchanged Arena. The selected sample supplies a supporting configuration, not a reachability or retained-skill verdict.
 
 The final local named-file check passed 684 tests across 115 selected files, including the original arm-planning, feasibility and native replay suites. Formatting, lint, types, documentation and all 348 site pages passed in that same check. No full suite or regular e2e command ran locally. Linux and Windows browser and portable checks remain CI work, rather than local measurements.
+
+## Hosted arm-planning callback deadlines
+
+[Check 44474977845](https://github.com/JamelHammoud/basecase/actions/runs/44474977845) at `1e4b6bf9963a72b2c2f1625465453f1c4659cac9` reported the prompt solver callback in `armPlanningMatrix.test.ts` at 8,695 ms against its unchanged 5,000 ms deadline on Linux. The ten generated reaches, both rotations and six independent negative controls passed there. Exact-revision [Linux diagnostic 44476094277](https://github.com/JamelHammoud/basecase/actions/runs/44476094277) reproduced the prompt timeout at 7,760.851263 ms with one worker, zero retries and quarantine off. Both used image `20261111.196.1`. Ticket `d2081561-690a-47f2-8c37-b9acf53758ac` retains the verified manifest, test output and cleanup evidence. The diagnostic process took 9,531 ms and its job took about 1.067 elapsed minutes including preparation. This is one reproduction, not a flake-rate measurement.
+
+The Windows second unit shard completed after the initial failure brief and added thirteen callback deadline failures in that file on image `20261103.298.1`:
+
+| Declaration | Reported duration, ms |
+| --- | ---: |
+| divider | 7,665 |
+| column | 6,825 |
+| shelf | 7,278 |
+| cabinet | 7,979 |
+| bins | 6,991 |
+| parked-arm | 9,159 |
+| base-fold | 7,746 |
+| long-tool | 7,714 |
+| asymmetric | 7,167 |
+| narrow-passage | 8,633 |
+| rotated 37 degrees | 9,818 |
+| rotated -71 degrees | 9,575 |
+| prompt solver | 17,674 |
+
+The generated callbacks reached their post-validation measurement output and completed the geometry, saved-bundle and retention assertions without a reported assertion failure. Their `raceDraft` validation alone took 6,230.7241 to 8,852.8971 ms, beyond the callback budget. Drafting took 188.9609 to 976.6946 ms and independent inspection took 14.1206 to 46.0329 ms. The stage between draft and inspection is established as expensive, but the existing markers do not separate physical development trials from Arena. Prompt and rotated cases lack internal markers. Their callbacks establish entry and deadline expiry, not a stalled internal stage.
+
+Classification is a hosted deadline regression introduced by `5184bd019`, which added these declarations after last full green [Check 44391437908](https://github.com/JamelHammoud/basecase/actions/runs/44391437908) at `d3ee63311358cc0494517acd42328e0bc22e06c8`. The Linux prompt reproduced with one worker, so intermittency is not established. No environment change is established to pin. A reverse-application check of the introducing merge fails in `configurationSearch.ts`, `armConfiguration.ts`, the Skills guide and its testing and performance notes after the workspace feature's edits. A clean revert is unavailable. Product planner, physics and acceptance changes are not justified by a callback timeout alone.
+
+Priority repair [#1848](https://github.com/JamelHammoud/basecase/issues/1848) owns the ten generated reaches, both rotations and prompt solver on Windows, and only the prompt solver on Linux, quarantined through 28 November 2026. Windows retains all six independent negative controls. Linux retains eighteen of nineteen declarations. macOS retains all nineteen. Existing configuration search, collision ancestry, cancellation, native arm replay, runtime retention and browser tests remain active on their existing platforms. These checks do not replace the missing integrated positive observations.
+
+The owner must distinguish endpoint compensation, bounded search, eight guarded physical trials, Arena, prompt confidence evaluation, persistence and cleanup. Restoration requires a demonstrated fix and at least ten baseline and ten candidate observations at equal load on each affected platform and path, with retries disabled. Preserve all ten layouts, both rotations, prompt dispatch, seven-second generated and ten-second prompt/rotated trajectories, eight physical draws, all 96 Arena tries, 5 mm tolerance, dwell, bundle assertions and collision inspections. This repair changes no assertion, deadline, retry, worker policy or product solver. Full job logs, the failed reverse-application check and diagnostic evidence references are retained in the task handoff.

@@ -861,5 +861,133 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44386066760 exhausted the unchanged 10000 ms beforeAll deadline before its sole legacy migration assertion ran. Full green Check 44245137178 passed the file in 5218 ms including a 611 ms body with unchanged relevant Fleet, fixture, PostgreSQL, lockfile and unit configuration sources. Exact-revision Windows diagnostic 44387921285 passed the body in 343.6958 ms in an 8660 ms process on the same image with one worker, zero retries and quarantine off, establishing intermittent setup. PostgreSQL startup, connection, legacy schema preparation, identity and inventory seeding are not distinguished. Existing open priority fixture owner #1401 owns tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Whole-file filtering is required because shared setup precedes test filtering. Linux and macOS retain migration acceptance. Windows retains authorization, adapter and browser recovery, which do not replace legacy migration and audit coverage. Preserve real PostgreSQL, local command, inventory and audit assertions and deadlines."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "quadruped leg and torso replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 exhausted the unchanged 5000 ms callback deadline at 5004 ms. Last full green 44391437908 passed in 2865 ms with unchanged replay, fixture and native helper sources. Exact-revision diagnostic 44476051750 passed in 3531.5076 ms on the same Windows image 20261103.298.1 with one worker, zero retries and quarantine off. Preparation, WASM capture, uv provisioning, native startup, replay, comparison and cleanup remain unresolved. Existing priority owner #1390 covers stage tracing and equal-load baseline and candidate measurements. Seven other Windows native self-contact comparisons and all ten WASM contact and negative-control cases remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "divider reaches through the production draft, search, physical trials and Arena",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 reported this integrated arm-planning callback at 7665 ms against its unchanged 5000 ms deadline on Windows image 20261103.298.1. Commit 5184bd019 introduced the declarations after last full green 44391437908. A clean reverse application conflicts with the subsequent workspace feature. All ten generated cases reached their measurement output, with validation alone taking 6230.7241 to 8852.8971 ms. Prompt and rotated cases lack internal stage markers. Priority owner #1848 covers stage tracing and equal-load platform measurements before restoration. The six independent negative controls and other arm search, lifecycle, native replay and retention coverage remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "column reaches through the production draft, search, physical trials and Arena",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 reported this integrated arm-planning callback at 6825 ms against its unchanged 5000 ms deadline on Windows image 20261103.298.1. Commit 5184bd019 introduced the declarations after last full green 44391437908. A clean reverse application conflicts with the subsequent workspace feature. All ten generated cases reached their measurement output, with validation alone taking 6230.7241 to 8852.8971 ms. Prompt and rotated cases lack internal stage markers. Priority owner #1848 covers stage tracing and equal-load platform measurements before restoration. The six independent negative controls and other arm search, lifecycle, native replay and retention coverage remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "shelf reaches through the production draft, search, physical trials and Arena",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 reported this integrated arm-planning callback at 7278 ms against its unchanged 5000 ms deadline on Windows image 20261103.298.1. Commit 5184bd019 introduced the declarations after last full green 44391437908. A clean reverse application conflicts with the subsequent workspace feature. All ten generated cases reached their measurement output, with validation alone taking 6230.7241 to 8852.8971 ms. Prompt and rotated cases lack internal stage markers. Priority owner #1848 covers stage tracing and equal-load platform measurements before restoration. The six independent negative controls and other arm search, lifecycle, native replay and retention coverage remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "cabinet reaches through the production draft, search, physical trials and Arena",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 reported this integrated arm-planning callback at 7979 ms against its unchanged 5000 ms deadline on Windows image 20261103.298.1. Commit 5184bd019 introduced the declarations after last full green 44391437908. A clean reverse application conflicts with the subsequent workspace feature. All ten generated cases reached their measurement output, with validation alone taking 6230.7241 to 8852.8971 ms. Prompt and rotated cases lack internal stage markers. Priority owner #1848 covers stage tracing and equal-load platform measurements before restoration. The six independent negative controls and other arm search, lifecycle, native replay and retention coverage remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "bins reaches through the production draft, search, physical trials and Arena",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 reported this integrated arm-planning callback at 6991 ms against its unchanged 5000 ms deadline on Windows image 20261103.298.1. Commit 5184bd019 introduced the declarations after last full green 44391437908. A clean reverse application conflicts with the subsequent workspace feature. All ten generated cases reached their measurement output, with validation alone taking 6230.7241 to 8852.8971 ms. Prompt and rotated cases lack internal stage markers. Priority owner #1848 covers stage tracing and equal-load platform measurements before restoration. The six independent negative controls and other arm search, lifecycle, native replay and retention coverage remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "parked-arm reaches through the production draft, search, physical trials and Arena",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 reported this integrated arm-planning callback at 9159 ms against its unchanged 5000 ms deadline on Windows image 20261103.298.1. Commit 5184bd019 introduced the declarations after last full green 44391437908. A clean reverse application conflicts with the subsequent workspace feature. All ten generated cases reached their measurement output, with validation alone taking 6230.7241 to 8852.8971 ms. Prompt and rotated cases lack internal stage markers. Priority owner #1848 covers stage tracing and equal-load platform measurements before restoration. The six independent negative controls and other arm search, lifecycle, native replay and retention coverage remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "base-fold reaches through the production draft, search, physical trials and Arena",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 reported this integrated arm-planning callback at 7746 ms against its unchanged 5000 ms deadline on Windows image 20261103.298.1. Commit 5184bd019 introduced the declarations after last full green 44391437908. A clean reverse application conflicts with the subsequent workspace feature. All ten generated cases reached their measurement output, with validation alone taking 6230.7241 to 8852.8971 ms. Prompt and rotated cases lack internal stage markers. Priority owner #1848 covers stage tracing and equal-load platform measurements before restoration. The six independent negative controls and other arm search, lifecycle, native replay and retention coverage remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "long-tool reaches through the production draft, search, physical trials and Arena",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 reported this integrated arm-planning callback at 7714 ms against its unchanged 5000 ms deadline on Windows image 20261103.298.1. Commit 5184bd019 introduced the declarations after last full green 44391437908. A clean reverse application conflicts with the subsequent workspace feature. All ten generated cases reached their measurement output, with validation alone taking 6230.7241 to 8852.8971 ms. Prompt and rotated cases lack internal stage markers. Priority owner #1848 covers stage tracing and equal-load platform measurements before restoration. The six independent negative controls and other arm search, lifecycle, native replay and retention coverage remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "asymmetric reaches through the production draft, search, physical trials and Arena",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 reported this integrated arm-planning callback at 7167 ms against its unchanged 5000 ms deadline on Windows image 20261103.298.1. Commit 5184bd019 introduced the declarations after last full green 44391437908. A clean reverse application conflicts with the subsequent workspace feature. All ten generated cases reached their measurement output, with validation alone taking 6230.7241 to 8852.8971 ms. Prompt and rotated cases lack internal stage markers. Priority owner #1848 covers stage tracing and equal-load platform measurements before restoration. The six independent negative controls and other arm search, lifecycle, native replay and retention coverage remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "narrow-passage reaches through the production draft, search, physical trials and Arena",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 reported this integrated arm-planning callback at 8633 ms against its unchanged 5000 ms deadline on Windows image 20261103.298.1. Commit 5184bd019 introduced the declarations after last full green 44391437908. A clean reverse application conflicts with the subsequent workspace feature. All ten generated cases reached their measurement output, with validation alone taking 6230.7241 to 8852.8971 ms. Prompt and rotated cases lack internal stage markers. Priority owner #1848 covers stage tracing and equal-load platform measurements before restoration. The six independent negative controls and other arm search, lifecycle, native replay and retention coverage remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "retains a reach with the entire fixture rotated 37 degrees",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 reported this integrated arm-planning callback at 9818 ms against its unchanged 5000 ms deadline on Windows image 20261103.298.1. Commit 5184bd019 introduced the declarations after last full green 44391437908. A clean reverse application conflicts with the subsequent workspace feature. All ten generated cases reached their measurement output, with validation alone taking 6230.7241 to 8852.8971 ms. Prompt and rotated cases lack internal stage markers. Priority owner #1848 covers stage tracing and equal-load platform measurements before restoration. The six independent negative controls and other arm search, lifecycle, native replay and retention coverage remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "retains a reach with the entire fixture rotated -71 degrees",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 reported this integrated arm-planning callback at 9575 ms against its unchanged 5000 ms deadline on Windows image 20261103.298.1. Commit 5184bd019 introduced the declarations after last full green 44391437908. A clean reverse application conflicts with the subsequent workspace feature. All ten generated cases reached their measurement output, with validation alone taking 6230.7241 to 8852.8971 ms. Prompt and rotated cases lack internal stage markers. Priority owner #1848 covers stage tracing and equal-load platform measurements before restoration. The six independent negative controls and other arm search, lifecycle, native replay and retention coverage remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "plans an obstructed part goal through the existing prompt motion solver and Arena",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 reported this integrated arm-planning callback at 17674 ms against its unchanged 5000 ms deadline on Windows image 20261103.298.1. Commit 5184bd019 introduced the declarations after last full green 44391437908. A clean reverse application conflicts with the subsequent workspace feature. All ten generated cases reached their measurement output, with validation alone taking 6230.7241 to 8852.8971 ms. Prompt and rotated cases lack internal stage markers. Priority owner #1848 covers stage tracing and equal-load platform measurements before restoration. The six independent negative controls and other arm search, lifecycle, native replay and retention coverage remain active."
+  },
+  {
+    "file": "src/skills/armPlanningMatrix.test.ts",
+    "test": "plans an obstructed part goal through the existing prompt motion solver and Arena",
+    "issue": 1848,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44474977845 reported the prompt solver at 8695 ms against its unchanged 5000 ms deadline. Exact-revision diagnostic 44476094277 reproduced it at 7760.851263 ms on the same Linux image 20261111.196.1 with one worker, zero retries and quarantine off. Commit 5184bd019 introduced this declaration after last full green 44391437908. The integrated search, physical trials, Arena, confidence evaluation and save stages are not distinguished. A clean reverse application conflicts with the subsequent workspace feature. Priority owner #1848 owns stage tracing and equal-load measurements before restoration. Linux retains the other eighteen declarations and all unrelated arm coverage."
+  },
+  {
+    "file": "e2e/operate.e2e.test.ts",
+    "test": "starts camera calibration from the command palette",
+    "issue": 987,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 exhausted the unchanged 15000 ms callback deadline on both Windows attempts, totaling 30681 ms, without identifying the failing operation. Exact-revision diagnostic 44477091304 passed in 7006.3338 ms on the same Windows image 20261116.315.1 with one worker, zero retries and quarantine off. Linux passed the failing revision in 1382 ms. Existing priority calibration owner #987 covers this command path separately from replay, rollback and Fix, including scene load, connection, ladder, palette delivery, capture state, disconnect and cleanup tracing and equal-load measurements before restoration. Other platforms and fast calibration pipelines remain active."
   }
 ]

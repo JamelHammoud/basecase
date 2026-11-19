@@ -8,6 +8,7 @@ import type { SignalSource } from './environment';
 import type { BodyFacts } from './anythingBody';
 import { restFeet, footTargets, type Foot } from './anythingFeet';
 import { Ik, targetValue, type IkJoint, type IkTarget } from './anythingIk';
+import { bodyAncestors } from './armConfiguration';
 import type { IntentKey, IntentPose, PartGoal } from './anythingTypes';
 
 const D2R = Math.PI / 180;
@@ -76,9 +77,16 @@ export class Poser {
     return id;
   }
 
-  ikJoints(exclude: string[] = []): IkJoint[] {
+  ikJoints(exclude: string[] = [], targets: IkTarget[] = []): IkJoint[] {
+    const ancestors = new Set(targets.flatMap((t) => [...bodyAncestors(this.engine.model, t.body)]));
+    const inChain = (name: string) => {
+      const id = this.mj.mj_name2id(this.engine.model, this.mj.mjtObj.mjOBJ_JOINT.value, name);
+
+      return this.facts.floating || !targets.length || ancestors.has(this.engine.model.jnt_bodyid[id]);
+    };
+
     return this.facts.joints
-      .filter((j) => j.actuated && j.drive === 'position' && !exclude.includes(j.id))
+      .filter((j) => j.actuated && j.drive === 'position' && !exclude.includes(j.id) && inChain(j.name))
       .map((j) => ({
         qpos: this.jointAdr[j.id],
         range: [(j.range?.[0] ?? -180) * D2R, (j.range?.[1] ?? 180) * D2R] as [number, number],
@@ -150,7 +158,7 @@ export class Poser {
 
     if (!targets.length) return { q, miss: 0 };
 
-    const joints = this.ikJoints(Object.keys(pose.joints ?? {}));
+    const joints = this.ikJoints(Object.keys(pose.joints ?? {}), targets);
     const seed = [...q];
 
     for (const j of joints) seed[j.qpos] = start[j.qpos];

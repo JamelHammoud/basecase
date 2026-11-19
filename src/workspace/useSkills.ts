@@ -56,7 +56,7 @@ interface SkillsInput {
   parts: ScenePart[];
 }
 
-function useRuntime({ workspaceId, setProject, project, parts }: SkillsInput) {
+function useRuntime({ workspaceId, setProject, project, parts, sim }: SkillsInput) {
   const [jobs, setJobs] = useState<SkillJob[]>([]);
   const [refusals, setRefusals] = useState<SkillRefusals>({});
   const [stress, setStress] = useState<StressReports>({});
@@ -110,7 +110,18 @@ function useRuntime({ workspaceId, setProject, project, parts }: SkillsInput) {
 
   useLayoutEffect(() => {
     runtime.invalidateRecovery();
-  }, [runtime, parts, project.joints, project.servoCalibrations, project.bodyCalibrations, project.selfContact]);
+  }, [
+    runtime,
+    parts,
+    project.joints,
+    project.servoCalibrations,
+    project.bodyCalibrations,
+    project.selfContact,
+    project.cases,
+    project.pose,
+    sim.worldParts,
+    sim.guestParts,
+  ]);
 
   useEffect(() => () => runtime.dispose(), [runtime]);
 
@@ -196,6 +207,10 @@ function useSceneModel(input: SkillsInput, { runtime, platform, watch }: ModelWa
     project.bodyCalibrations,
     project.selfContact,
     project.animations,
+    project.cases,
+    project.pose,
+    input.sim.worldParts,
+    input.sim.guestParts,
     buildModel,
     runtime,
     platform,

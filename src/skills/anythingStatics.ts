@@ -44,12 +44,17 @@ export class Statics {
     this.mj = options.mj;
     this.poser = options.poser;
     this.engine = new SimEngine(options.mj, options.model);
-    this.restValues = Object.fromEntries(options.poser.facts.joints.map((j) => [j.id, j.restDeg]));
+    this.restValues = this.valuesOf(options.poser.facts.rest);
   }
 
   valuesOf(q: number[]): JointValues {
     return Object.fromEntries(
-      this.poser.facts.joints.map((j) => [j.id, Math.round(q[this.poser.jointAdr[j.id]] * R2D * 1000) / 1000]),
+      this.poser.facts.joints.map((j) => {
+        const type = this.engine.sim.joints.find((joint) => joint.id === j.id)!.type;
+        const value = q[this.poser.jointAdr[j.id]] * (type === 'revolute' ? R2D : 1000);
+
+        return [j.id, this.poser.facts.floating ? Math.round(value * 1000) / 1000 : value];
+      }),
     );
   }
 
@@ -60,6 +65,12 @@ export class Statics {
     engine.setController({ kind: 'animation', animation: rampAnimation(this.restValues, values) });
     engine.reset();
     engine.setState(facts.rest);
+
+    if (!facts.floating) {
+      engine.setController({ kind: 'hold', values });
+      engine.reset({ ...engine.sim.initial, values });
+    }
+
     engine.step(SETTLE_S);
 
     const root = this.mj.mj_name2id(engine.model, this.mj.mjtObj.mjOBJ_BODY.value, facts.root);

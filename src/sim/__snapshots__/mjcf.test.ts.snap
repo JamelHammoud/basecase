@@ -86,6 +86,9 @@ exports[`buildMjcf > turns a two-joint legged robot and a loose part into MJCF 2
       -0.027,
     ],
   },
+  "collisionGeometry": {
+    "fallbackParts": [],
+  },
   "initial": {
     "roots": {
       "hip": {

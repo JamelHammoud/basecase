@@ -64,7 +64,7 @@ it('authors spacer deviations and a failing stack, edits a dimension and undoes 
   await inner.press('Enter');
   await supportCommand(app.page, 'Show Build');
   await expect.poll(() => check.getAttribute('data-status')).toBe('pass');
-  await supportCommand(app.page, 'Undo');
+  await app.page.getByRole('button', { name: 'Undo', exact: true }).click();
   await expect.poll(() => check.getAttribute('data-status')).toBe('fail');
   expect(app.errors).toEqual([]);
 });

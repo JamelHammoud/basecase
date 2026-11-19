@@ -3,8 +3,17 @@ set -eo pipefail
 trap 'chown -R "${HOST_UID:-0}:${HOST_GID:-0}" /ws' EXIT
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq
-apt-get install -y -qq --no-install-recommends liburdfdom-tools libxml2-utils curl >/dev/null
+mkdir -p /tmp/ros-apt
+cat >/tmp/ros-apt/ubuntu.sources <<'EOF'
+Types: deb
+URIs: https://snapshot.ubuntu.com/ubuntu/20261118T000000Z/
+Suites: noble noble-updates noble-security
+Components: main universe
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+EOF
+apt_options=(-o Dir::Etc::sourcelist=/dev/null -o Dir::Etc::sourceparts=/tmp/ros-apt)
+apt-get "${apt_options[@]}" update -qq --error-on=any
+apt-get "${apt_options[@]}" install -y -qq --no-install-recommends liburdfdom-tools libxml2-utils curl >/dev/null
 rep=https://raw.githubusercontent.com/ros-infrastructure/rep/11ca24a41f31480dfb9562ba99f2a5b93d3ebda5/xsd
 mkdir -p /tmp/xsd
 for xsd in package_format3.xsd package_common.xsd; do curl -fsSL -o "/tmp/xsd/$xsd" "$rep/$xsd"; done

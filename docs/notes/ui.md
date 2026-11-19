@@ -292,3 +292,11 @@ The Routine-specific declaration remains active on every platform. It checks the
 `errorBoundary.e2e.test.ts` retains Parts and Canvas region isolation and recovery. Those shared tests do not replace the Routine-specific identity and persistent-failure assertions. Both shared declarations passed on Windows at the failing revision in 9,558 ms for the complete file.
 
 Only named-file checks run locally. CI owns browser execution. Complete failure and previous-green logs are retained in `scratch/failed-windows-e2e-1.log` and `scratch/green-run.log` for the task handoff.
+
+## Routine recovery selection dependency
+
+The pull request Check selected only `reloads the Routines tab back to its Routine once the failure is gone`. Both attempts failed at the fallback count before Reload, with zero visible Routines fallbacks. The test process took 33.18 seconds and then reported the existing ten-second server shutdown warning. The aggregate check failed solely because `e2e-changed` failed. Its other required jobs succeeded or were correctly skipped.
+
+The recovery declaration relied on the preceding declaration to open Play's Routines tab and create a Routine. Exact-name selection skipped that setup, leaving the tab closed when the crash was injected. This is a deterministic selection dependency, separate from the earlier Windows pointer actionability evidence.
+
+Creation and recovery now form one independently selectable declaration in `e2e/firstRoutine.e2e.test.ts`. It retains every assertion from both declarations and the ordinary Enter activation for both Reload actions. The same app and rover startup serve the complete lifecycle, with no extra launch, wait, retry, quarantine or deadline change. Routine identity is checked only after a non-null Routine and mounted flow have been established. Shared region isolation and recovery remain covered by `e2e/errorBoundary.e2e.test.ts`. Browser execution remains for CI, so no passing browser duration or failure rate is claimed locally.

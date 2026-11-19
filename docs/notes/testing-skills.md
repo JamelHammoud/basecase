@@ -241,3 +241,31 @@ The restored Routine recovery test retains its persistent-failure and identity a
 The final rollback selection passed formatting, lint, documentation, 344 site pages, quarantine validation and TypeScript. Its related-test run passed 2,181 tests, with one existing skip and one audit failure. The browser declaration audit read a deleted file still present in the unstaged Git index. Staging the two deleted browser declarations made its focused named-file check pass its one test without changing the audit. Together the checks passed all 2,182 active selected tests. Logs are retained at `scratch/revision-check.log`, `scratch/audit-check.log` and `scratch/help-check.log`. No local browser suite or full-suite command ran. These local results do not establish Windows execution results.
 
 Preflight requested review of eighteen unchanged help articles because their `covers` lists include shared menus, Pose, the gizmo, runtime or engine files touched by the rollback. Each article still matches the retained paths. All eighteen articles and all `src/` files match the pre-feature revision. The menu changes remove only workspace commands, the Pose and gizmo changes remove only inspection state, and the runtime changes restore earlier teaching and execution paths. No unrelated article edit is needed. The machine notices remain in `scratch/preflight.json` as a record of that review, not as unaddressed content defects.
+
+
+### Unchanged help verification for the rollback
+
+The follow-up preflight repeated the same eighteen `covers` reminders. Each article was read against the current rollback diff. None names Inspect Workspace, Close Workspace or Plan Motion. The following retained paths justify leaving their steps, labels and screenshots unchanged.
+
+| Article | Retained path checked against the rollback | Referenced images |
+| --- | --- | --- |
+| [Add a camera view](../../site/content/help/add-a-camera-view.md) | The empty-canvas Add Camera View entry still calls `actions.cameras.add`. The rollback changes only selected-arm entries. | 0 |
+| [Align and spread parts](../../site/content/help/align-and-spread-parts.md) | The shared Align strip, arrangement commands and Center on Origin remain. | 2 |
+| [Cut, join and intersect parts](../../site/content/help/cut-join-and-intersect-parts.md) | Union, Subtract, Intersect, role choices and Subtract Overlapping Cutouts retain their handlers. | 0 |
+| [Fail a servo mid-run](../../site/content/help/fail-a-servo-mid-run.md) | `faultItems` still exposes the fault submenu for a driven joint during simulation. Fault choices and Results are unchanged. | 3 |
+| [Group parts](../../site/content/help/group-parts.md) | Group, Ungroup, Duplicate and Rename keep their handlers and shortcuts. Only the independent inspection action is removed. | 0 |
+| [Import a file](../../site/content/help/import-a-file.md) | The empty-canvas Import entry still calls `pickImports` at the menu point. File routing and the SVG panel are unchanged. | 2 |
+| [Join two parts with a hinge or slider](../../site/content/help/join-two-parts-with-a-hinge.md) | Hand-joint menu entries remain. Pose still renders joint rows, Range and Delete from the document pose. | 3 |
+| [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) | The guide removes workspace sampling details only. Joint fields, trees, rest-pose behavior and ordinary IK remain. | 0 |
+| [Make a joint passive](../../site/content/help/make-a-joint-passive.md) | Pose retains Actuation with Powered and Passive choices, `setActuation` and the starting-position slider. | 1 |
+| [Move and rotate parts](../../site/content/help/move-and-rotate-parts.md) | Floor, stack, center and reset-rotation actions remain. No ordinary transform path is removed. | 0 |
+| [Find, hide and lock parts in Layers](../../site/content/help/organize-parts-in-layers.md) | Rename, Hide, Show, Lock and Unlock retain their handlers. Layers and map actions are unchanged. | 2 |
+| [Point the agent at a part](../../site/content/help/point-the-agent-at-a-part.md) | Quote Part still submits `partQuote(part)`. Annotation and message quoting are unchanged. | 0 |
+| [Pose and simulate your first robot](../../site/content/help/pose-and-simulate-your-first-robot.md) | Pose reads the document pose directly. Hold still reads the controller values and Limp leaves no commanded position values. | 0 |
+| [Retrain an edited robot](../../site/content/help/retrain-an-edited-robot.md) | The runtime diff changes taught races and inspection-related invalidation. Local Stand source selection, Motor Kit training and Arena retention remain. | 4 |
+| [Run any command from the keyboard](../../site/content/help/run-a-command.md) | Clipboard, grouping, boolean and arrangement commands remain. The article names none of the withdrawn workspace commands. | 0 |
+| [Snap parts together by their mounting holes](../../site/content/help/snap-parts-together-by-their-mounting-holes.md) | The gizmo loses only its workspace-inspection suppression condition. Port snapping, cable-route suppression and modifier behavior are unchanged. | 3 |
+| [Train Stand and Walk with the Motor Kit](../../site/content/help/train-stand-and-walk-with-the-motor-kit.md) | `useSkills` restores earlier invalidation inputs. Motor Kit rows, dispatch, local source reuse and training evidence paths remain. | 4 |
+| [Simulate tab is missing or the simulation stops](../../site/content/help/troubleshoot-app-simulation-stops.md) | Engine control sampling and force recording return to their earlier implementation. Tab admission, stop controls, failure messages and preparation refusals are unchanged. | 0 |
+
+A byte comparison against `5184bd019^` confirmed that all eighteen article files and their twenty-four referenced images are identical to that revision. The audit inventory is in `scratch/help-rollback-audit.json`. This establishes retained content and asset identity alongside the source-path check. It does not claim a new browser execution or a visual judgment. No article edit or replacement capture is needed.

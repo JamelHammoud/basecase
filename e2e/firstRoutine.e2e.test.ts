@@ -34,7 +34,7 @@ afterAll(async () => {
 });
 
 describe('Routines on the first-launch rover', () => {
-  it('opens a new Routine from the empty state', async () => {
+  it('creates a Routine and reloads it after a tab failure', async () => {
     const { page } = app;
 
     await expect.poll(() => partCount(page), { timeout: 30000 }).toBe(rover.robot.parts.length);
@@ -45,9 +45,7 @@ describe('Routines on the first-launch rover', () => {
     await expect.poll(routineId).not.toBeNull();
     expect(await fallback().count()).toBe(0);
     expect(app.errors).toEqual([]);
-  });
 
-  it('reloads the Routines tab back to its Routine once the failure is gone', async () => {
     const id = await routineId();
 
     await crash('Routines');

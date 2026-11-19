@@ -59,9 +59,9 @@ function sheetViews(doc: DrawingDocument, sheet: DrawingSheet, top: number) {
 
   const bottom = occupiedHeight + 12;
 
-  dimension(doc, [22, bottom], [22 + width, bottom], drawingNumber(sheet.extents[0]));
-  dimension(doc, [12, occupiedHeight], [12, occupiedHeight - height], drawingNumber(sheet.extents[1]));
-  dimension(doc, [22 + width + 22, bottom], [22 + width + 22 + depth, bottom], drawingNumber(sheet.extents[2]));
+  dimension(doc, [22, bottom], [22 + width, bottom], `~${drawingNumber(sheet.extents[0])}`);
+  dimension(doc, [12, occupiedHeight], [12, occupiedHeight - height], `~${drawingNumber(sheet.extents[1])}`);
+  dimension(doc, [22 + width + 22, bottom], [22 + width + 22 + depth, bottom], `~${drawingNumber(sheet.extents[2])}`);
 }
 
 export function drawingDocument(sheet: DrawingSheet, manifest: DrawingManifest): DrawingDocument {
@@ -86,7 +86,9 @@ export function drawingDocument(sheet: DrawingSheet, manifest: DrawingManifest):
     sheet.mode === 'profile' ? 'Measured profile' : 'Outline only: feature dimensions omitted',
     sheet.material ? `Material: ${sheet.material}` : 'Material: unspecified',
     `Numerical tolerance ${manifest.numericalToleranceMm} mm. Circle chord allowance ${manifest.circleChordToleranceMm} mm.`,
-    'Measured mesh geometry. Approximate circle fits use ~. No fits, process tolerances or finish specified.',
+    manifest.tolerances
+      ? 'Measured mesh dimensions use ~. Authored manufacturing declarations are in drawings.json.'
+      : 'Measured mesh dimensions use ~. No fits, process tolerances or finish specified.',
     'Print at actual size. Checks supplies the Ready to build verdict.',
   ];
 
@@ -105,7 +107,7 @@ export function holeDocuments(sheet: DrawingSheet, manifest: DrawingManifest): D
   rows.push(
     ...(sheet.edges ?? []).map(
       (edge, index) =>
-        `E${index + 1}    ${drawingNumber(edge.lengthMm)}    (${edge.a.map(drawingNumber).join(', ')}) to (${edge.b.map(drawingNumber).join(', ')})`,
+        `E${index + 1}    ~${drawingNumber(edge.lengthMm)}    (${edge.a.map(drawingNumber).join(', ')}) to (${edge.b.map(drawingNumber).join(', ')})`,
     ),
   );
 

@@ -1,3 +1,5 @@
+import { tolerancesIn } from '../three/analysis/analysisPool';
+import { toleranceRows } from '../readiness/tolerances';
 import { bedOf } from '../print/bed';
 import { assemblyReport, serviceableIds } from '../assembly/assemblyReport';
 import { rememberClamps } from '../assembly/clampCache';
@@ -67,6 +69,8 @@ export const projectFingerprint = (
   world: ReadinessWorld,
 ) =>
   readinessFingerprint(parts, {
+    designParameters: project.designParameters,
+    dimensionalRequirements: project.dimensionalRequirements,
     joints: project.joints,
     selfContact: project.selfContact,
     wiring: project.wiring,
@@ -149,7 +153,7 @@ export async function runReadiness({
       walk: typeof walk === 'object' ? walk : undefined,
     }),
   );
-  const [engineering, geometry, print, purchases, measures, cases, electrical] = await Promise.all([
+  const [engineering, geometry, print, purchases, measures, cases, electrical, tolerances] = await Promise.all([
     engineeringRun,
     viewport.assembly({ serviceable: serviceableIds(parts), budgetMs: BUDGET_MS, batteries: batteriesIn(parts) }),
     printing,
@@ -157,6 +161,7 @@ export async function runReadiness({
     measuring,
     casesRun,
     electricalRun,
+    tolerancesIn({ parts, parameters: project.designParameters ?? [], requirements: project.dimensionalRequirements }),
   ]);
 
   rememberClamps(parts, clampsOf(geometry.chains));
@@ -168,6 +173,7 @@ export async function runReadiness({
     [
       ...assemblyFindings(assemblyReport(parts, geometry)),
       ...engineeringFindings(engineering),
+      ...engineeringFindings({ ...engineering, rows: toleranceRows(tolerances) }),
       ...electrical.findings,
       ...fitFindings(fits.items),
       ...printFindings(print),
@@ -186,7 +192,7 @@ export async function runReadiness({
       decisions: project.readiness,
       designParameters: project.designParameters,
       fingerprint: geometry.timedOut ? UNSETTLED_FINGERPRINT : fingerprint,
-      rows: [...engineering.rows, ...electrical.rows, ...cases],
+      rows: [...engineering.rows, ...electrical.rows, ...cases, ...toleranceRows(tolerances)],
       wiring: engineering.wiring,
     },
   );

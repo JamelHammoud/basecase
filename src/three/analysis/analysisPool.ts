@@ -1,3 +1,4 @@
+import { tolerancePayload } from '../../utils/designParameters/tolerancePayload';
 import { workerClient, type WorkerClient } from '../../utils/workerRpc';
 import type { Coplanar, Interference } from '../interference';
 import type { MeshMeasure } from '../meshMeasure';
@@ -272,4 +273,18 @@ export function fitCouponsIn(scene: SceneShapes, task: FitCouponTask): Promise<F
   if (!task.fits.length || !task.hosts.length) return Promise.resolve([]);
 
   return analyze(leastBusy(), scene, { kind: 'fitCoupons', instances: scene.instances, ...task });
+}
+
+export async function tolerancesIn(design: import('../../utils/designParameters/mutations').ParameterDesign) {
+  if (!design.requirements?.length) return [];
+
+  const client = leastBusy();
+
+  client.busy++;
+
+  try {
+    return await client.rpc.call('tolerances', tolerancePayload(design));
+  } finally {
+    client.busy--;
+  }
 }

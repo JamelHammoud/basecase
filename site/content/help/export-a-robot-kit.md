@@ -57,7 +57,9 @@ A generated carrier adds an `electrical` folder. Read `electrical/requirements.j
 
 ![The exported Kit confirmation reporting missing PCB fabrication](/help/export-a-robot-kit/electrical-diagnostic.png)
 
-The drawings folder includes PDF, editable SVG, matching source STL files and source identities. Print plates can also include guide-letter cuts. Drawing preparation supports up to 256 scene parts and 64 MB of drawing output. You can export up to 256 MB before compression. If you edit the scene during preparation, Basecase discards the export. You won’t change readiness or program servos by exporting a kit.
+The drawings folder includes PDF, editable SVG, matching source STL files, source identities and authored tolerance evidence. Its declarations and stack results match standalone Drawings from the same frozen design.
+
+Print plates can also include guide-letter cuts. Drawing preparation supports up to 256 scene parts and 64 MB of drawing output. You can export up to 256 MB before compression. If you edit the scene during preparation, Basecase discards the export. You won’t change readiness or program servos by exporting a kit.
 
 Electrical and mechanical files share the kit’s design fingerprint. PCB fabrication files require current native KiCad validation. That validation establishes neither electrical performance nor assembly fit. Checks remains the build-readiness verdict.
 

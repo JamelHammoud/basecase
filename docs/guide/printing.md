@@ -135,3 +135,7 @@ Printer settings leave Test Connection as the row's action name and show connect
 ### Carrier boards in Kit
 
 A generated carrier belongs to PCB fabrication. Kit excludes its scene box from print plates, sheet cut files and mechanical drawing preparation. Its editable manufacturing sources and accepted fabrication output live in `electrical/`, bound to the same design as the plates. Other manufactured parts continue through the existing drawing and plate producers. Designs without a carrier retain the mechanical-only archive. Total connector and mounting demand remains in packing even when purchases are covered by stock. [Kit contents](../../site/content/help/robot-kit-contents.md) describes the archive and its diagnostic limits. [Build](build.md#electronics-in-manufacturing-kits) owns electrical preparation and coverage. Electrical size contributes to the existing 256 MB expanded archive limit before composition or compression.
+
+### Manufacturing deviations and comparison choices
+
+Applying a Print Fit Test value preserves any explicitly authored manufacturing deviations on that parameter. A coupon choice never creates or estimates deviations. Declare them in Edit Parameters and author a dimensional requirement before treating a worst-case stack as checked. Nominal geometry and print comparison coupons keep their existing roles. Drawings and Kit carry the same frozen declarations and dimensional results, with their separate mesh approximation limits. [Build](build.md#authored-dimensional-tolerances) records the evidence and annotation limits.

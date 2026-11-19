@@ -160,3 +160,13 @@ export function planParameterEdit(parts: ScenePart[], parameters: unknown): Para
 
   return plans;
 }
+
+export function currentParameterValue(plan: ParameterPartPlan, target: string) {
+  if (plan.kind === 'primitive') return plan.part.dimensions[target as keyof ScenePart['dimensions']];
+
+  if (plan.kind === 'cad') return parameterCadDimensions(plan.part.cad!).find((row) => row.name === target)?.value;
+
+  const constraint = plan.part.sketch!.sketch.constraints.find((item) => item.id === target);
+
+  return constraint && 'value' in constraint ? constraint.value : undefined;
+}

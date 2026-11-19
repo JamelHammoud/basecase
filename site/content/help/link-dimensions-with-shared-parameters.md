@@ -38,7 +38,7 @@ Repeat steps 6 through 9 for related dimensions. For mounting spacing, you can u
 
 Open the command palette with [[⌘K]]. Use millimeters for primitive dimensions and degrees for sketch angles. For an OpenSCAD dimension, include its declared unit in the binding.
 
-Edit a parameter’s name to rename its references in the same edit. To delete a parameter that’s in use, choose **Freeze and Delete**. This keeps dependent dimensions at their current values.
+Edit a parameter’s name to rename its references in the same edit. To delete a parameter that’s in use, choose **Freeze and Delete**. This keeps dependent dimensions at their current values. Remove dimensional tolerance requirements before freezing or deleting a parameter.
 
 Choose **Unbind** to edit a dimension on its own. Unbind also releases a CAD or Sketch part for scaling. Unbind dimensions before saving the parts to Library or pasting them into another scene. If you change declarations before pasting, copy the parts again.
 

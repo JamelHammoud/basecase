@@ -204,6 +204,7 @@ export type { BuildGuideRecord, ProjectRecords } from './projectRecords';
 export interface ProjectSettings extends ProjectRecords, PrintService, ProjectBudgets {
   selfContact?: import('../sim/selfContact').SelfContactSettings;
   designParameters?: import('../utils/designParameters/types').DesignParameter[];
+  dimensionalRequirements?: import('../utils/designParameters/types').DimensionalRequirement[];
   electronicsBoard?: import('../wiring/boardTypes').ElectronicsBoard;
   printer: string;
   material: PrintMaterial;

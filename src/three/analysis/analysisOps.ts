@@ -1,3 +1,5 @@
+import { analyzeTolerances } from '../../utils/designParameters/tolerances';
+import type { ParameterDesign } from '../../utils/designParameters/mutations';
 import * as THREE from 'three';
 import { weld } from '../../print/threeMf';
 import { posedStl } from '../../print/posedStl';
@@ -245,6 +247,7 @@ const meshBuffers = (result: unknown) =>
   ]);
 
 export const analysisHandlers = {
+  tolerances: (design: ParameterDesign) => reply(analyzeTolerances(design)),
   analyze: async ({ geometries: newGeometries, shapes, task }: AnalyzePayload) => {
     newGeometries.forEach((g) => geometries.set(g.id, g));
     shapes.forEach((s) => specs.set(s.key, s));

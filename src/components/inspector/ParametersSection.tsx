@@ -1,3 +1,4 @@
+import { DimensionalRequirements } from './DimensionalRequirements';
 import { useState } from 'react';
 import { Button, FieldRow, Section, Select, TextInput, useScrollFade } from '../../design-system';
 import { enteredParameter } from '../../utils/designParameters/targets';
@@ -24,7 +25,7 @@ export function ParametersSection({ controls, part }: { controls: DesignParamete
       <Section title="Parameters" collapsible open={controls.expanded} onOpenChange={controls.setExpanded}>
         {controls.parameters.map((parameter) => (
           <ParameterRow
-            key={`${parameter.name}:${parameter.expression ?? parameter.value}:${parameter.unit}`}
+            key={`${parameter.name}:${parameter.expression ?? parameter.value}:${parameter.unit}:${JSON.stringify(parameter.tolerance)}`}
             parameter={parameter}
             controls={controls}
           />
@@ -46,6 +47,7 @@ export function ParametersSection({ controls, part }: { controls: DesignParamete
         <Button size="sm" disabled={controls.busy || !name.trim() || !value.trim()} onClick={() => void add()}>
           Add
         </Button>
+        <DimensionalRequirements controls={controls} />
         {part && (
           <ParameterBindings
             key={`${part.id}:${JSON.stringify(part.dimensionBindings)}`}

@@ -36,4 +36,4 @@ See [Link dimensions with shared parameters](/help/link-dimensions-with-shared-p
 
 You can enter 2 to 8 distinct values greater than zero and up to 1000 mm. You can review the saved reasons for failed candidates. If you change the source, prepare a new set of variants before applying one.
 
-Applying a value records a design choice. This choice isn't a physical measurement, material compensation or calibration result. Press [[⌘Z]] to undo the dimension change.
+Applying a value records a design choice and preserves any manufacturing deviations you declared. It doesn’t derive deviations from the coupon. This choice isn't a physical measurement, material compensation or calibration result. Press [[⌘Z]] to undo the dimension change.

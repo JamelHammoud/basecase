@@ -83,6 +83,14 @@ function BuildTab({ core, agent, actions }: RightTabPanelsProps) {
         IS_WEB_DEMO
           ? undefined
           : (finding) => {
+              if (finding.fix?.kind === 'parameters') {
+                setSelectedIds(finding.ids);
+                tool.openRightTab('inspector');
+                core.parameters.setExpanded(true);
+
+                return;
+              }
+
               tool.openRightTab('acp');
               void agent.send({ ...fixRequest(finding, parts), ...studio.agentChoice }, 'queue');
             }

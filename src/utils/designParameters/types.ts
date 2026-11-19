@@ -16,9 +16,25 @@ export interface FitDimensionChoice {
   material: string;
 }
 
-export type DesignParameter = { name: string; unit: ParameterUnit; fitChoice?: FitDimensionChoice } & (
-  { value: number; expression?: never } | { expression: string; value?: never }
-);
+export interface ManufacturingDeviation {
+  lower: number;
+  upper: number;
+}
+
+export interface DimensionalRequirement {
+  name: string;
+  expression: string;
+  minimum: number;
+  maximum: number;
+  dimensions: Array<{ parameter: string; part: string; kind: DimensionBinding['kind']; target: string }>;
+}
+
+export type DesignParameter = {
+  name: string;
+  unit: ParameterUnit;
+  fitChoice?: FitDimensionChoice;
+  tolerance?: ManufacturingDeviation;
+} & ({ value: number; expression?: never } | { expression: string; value?: never });
 
 export interface DimensionBinding {
   kind: 'primitive' | 'cad' | 'sketch';

@@ -1,3 +1,4 @@
+import { ParameterTolerance } from './ParameterTolerance';
 import { TextInput, Select, IconButton, DeleteIcon } from '../../design-system';
 import { enteredParameter } from '../../utils/designParameters/targets';
 import type { DesignParameter, ParameterUnit } from '../../utils/designParameters/types';
@@ -43,7 +44,10 @@ export function ParameterRow({ parameter, controls }: { parameter: DesignParamet
 
           const ok = await controls.apply({
             op: 'set',
-            parameter: enteredParameter(parameter.name, parameter.unit, input.value),
+            parameter: {
+              ...enteredParameter(parameter.name, parameter.unit, input.value),
+              tolerance: parameter.tolerance,
+            },
           });
 
           if (!ok) input.value = text;
@@ -60,7 +64,10 @@ export function ParameterRow({ parameter, controls }: { parameter: DesignParamet
         onChange={(event) =>
           void controls.apply({
             op: 'set',
-            parameter: enteredParameter(parameter.name, event.target.value as ParameterUnit, text),
+            parameter: {
+              ...enteredParameter(parameter.name, event.target.value as ParameterUnit, text),
+              tolerance: parameter.tolerance,
+            },
           })
         }
       />
@@ -72,6 +79,9 @@ export function ParameterRow({ parameter, controls }: { parameter: DesignParamet
         disabled={controls.busy}
         onClick={() => controls.remove(parameter.name)}
       />
+      {parameter.unit === 'mm' && parameter.expression === undefined && (
+        <ParameterTolerance parameter={parameter} controls={controls} />
+      )}
     </div>
   );
 }

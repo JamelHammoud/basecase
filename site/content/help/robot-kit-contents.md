@@ -25,7 +25,7 @@ The files in a manufacturing kit archive connect assembly demand, remaining purc
 | `drawings/drawings.pdf` | Dimensioned orthographic views with declared units and scale |
 | `drawings/*.svg` | Editable vector sheets from the same drawing preparation |
 | `drawings/*.stl` | Matching source geometry in millimeters, Z up, before guide-letter cuts on print plates |
-| `drawings/drawings.json` | Source identity, geometry and file hashes, projection matrices, quantities, datums and numerical allowances |
+| `drawings/drawings.json` | Source identity, geometry and file hashes, projection matrices, quantities, datums, numerical allowances, authored tolerances and stack results |
 | `electrical/robot.kicad_sch` | Current editable schematic for a generated carrier |
 | `electrical/robot.kicad_pcb` | Editable board source, including diagnostic routed sources when rejected |
 | `electrical/placement.json` | Placement identities, terminals, physical geometry evidence and unresolved requirements |

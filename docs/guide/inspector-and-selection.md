@@ -270,3 +270,11 @@ Inspector edits to link geometry, position or joints stop simulation and cancel 
 ## Cable point selection
 
 Cable routes are edited in Build's Wiring section or from a Cable reach finding. Editing keeps connector endpoint identities fixed. Authored points have an existing solid owner and local millimeter X/Y/Z coordinates. Move Point picks an owner on the canvas and keeps the clicked surface position. Conservative cable clearance can require a subsequent outward move. Point coordinates stay in millimeters when the owner is resized. Dragging an authored point preserves its owner and previews its new position until release. Part transform gizmos and marquee selection stay off while the cable editor is open. Escape closes the editor. Point deletion asks for confirmation and ordinary scene undo restores it. [Build](build.md#editable-cable-routes) owns the routing contract and test coverage.
+
+### Manufacturing declarations in Parameters
+
+Numeric mm rows expose Lower deviation and Upper deviation. Both fields must be supplied to save a declaration. Clearing both removes it. These are signed manufacturing deviations from the nominal value, not new geometry dimensions. Existing deviations survive ordinary nominal edits and selected Fit Test values.
+
+The collapsed Dimensional tolerances section edits requirement names, expressions, acceptable Minimum and Maximum values in mm and explicit dimension-reference switches. The switches list existing mm bindings that directly name a declared parameter. Add creates a requirement and selecting its name edits it with Save. Delete uses the ordinary confirmation. Requirements and deviations use the same atomic history as parameters and persist in native and saved scene records.
+
+Renaming rewrites requirement expressions and dimension references together. Remove requirements before deleting or freezing a declaration. Unbinding or deleting a referenced part is refused until its requirement is removed. Duplication preserves shared bindings, while existing requirements keep their explicitly referenced source parts. Independent manufactured copies need separate declared dimensions. Bound parts retain the existing refusal for Library and cross-scene transfer. [Build](build.md#authored-dimensional-tolerances) owns evaluation, export evidence and current coverage.

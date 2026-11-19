@@ -39,9 +39,9 @@ function assertPdfProjection(pdf: string, sheet: DrawingSheet) {
   const dimensionTexts = [...pdf.matchAll(/\(([^()]*)\) Tj/g)].map((text) => text[1]);
 
   expect(pdf).toContain('/MediaBox [0 0 841.8898 595.2756]');
-  expect(dimensionTexts).toContain(String(Number(width.toFixed(4))));
-  expect(dimensionTexts).toContain(String(Number(height.toFixed(4))));
-  expect(dimensionTexts).toContain(String(Number(depth.toFixed(4))));
+  expect(dimensionTexts).toContain(`~${Number(width.toFixed(4))}`);
+  expect(dimensionTexts).toContain(`~${Number(height.toFixed(4))}`);
+  expect(dimensionTexts).toContain(`~${Number(depth.toFixed(4))}`);
 
   for (const line of sheet.views[0].lines) {
     const expected = [

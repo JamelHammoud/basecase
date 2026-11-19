@@ -244,3 +244,36 @@ it('exposes the same atomic edit and compact declarations through the existing a
     requestHandler('apply')!({ parameterEdits: [{ op: 'insert', parts: [] }] }, context, 'apply'),
   ).rejects.toThrow(/supported parameter edits/);
 });
+
+it('rejects a late native reply after dimensional requirements change without replacing geometry', async () => {
+  const { docs, controls, compile, part } = setup();
+  const requirement = {
+    name: 'width_limit',
+    expression: 'width',
+    minimum: 0,
+    maximum: 120,
+    dimensions: [{ parameter: 'width', part: 'deck', kind: 'cad' as const, target: 'width' }],
+  };
+
+  docs.updateProjectNow((project) => ({ ...project, dimensionalRequirements: [requirement] }));
+
+  let finish!: (result: { ok: true; positions: number[]; indices: number[] }) => void;
+
+  compile.mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+
+  const pending = controls.apply({
+    op: 'set',
+    parameter: { name: 'width', unit: 'mm', value: 100, tolerance: { lower: -0.1, upper: 0.2 } },
+  });
+
+  docs.updateProjectNow((project) => ({ ...project, dimensionalRequirements: [{ ...requirement, maximum: 90 }] }));
+  finish({ ok: true, ...generatedCad([100, 6, 40]) });
+  expect(await pending).toBe(false);
+  expect(docs.docRef.current.parts[0]).toBe(part);
+  expect(docs.docRef.current.past).toHaveLength(0);
+  expect(docs.projectRef.current.dimensionalRequirements![0].maximum).toBe(90);
+});

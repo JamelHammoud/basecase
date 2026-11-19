@@ -1,3 +1,4 @@
+import { drawingToleranceEvidence, authoredDrawingDimensions } from '../sheet/drawingTolerances';
 import { jsonHash } from '../utils/geometryHash';
 import { bytesFingerprint } from '../sheet/drawingStl';
 import { drawingQuantity } from '../sheet/drawingQuantity';
@@ -8,6 +9,8 @@ import { boughtKey } from '../utils/bom';
 export function kitDrawings(job: KitJob, prepared: PreparedDrawings) {
   const { manifest, files } = prepared;
   const bound = new Set<string>();
+
+  checkToleranceEvidence(job, prepared);
 
   if (
     manifest.source.name !== job.name ||
@@ -23,6 +26,7 @@ export function kitDrawings(job: KitJob, prepared: PreparedDrawings) {
     if (
       !sources.length ||
       sources.some((part) => !part || part.role !== 'solid' || boughtKey(part) || bound.has(part.id)) ||
+      !matchingDimensionAnnotations(sources, sheet.authoredDimensions, job) ||
       sheet.quantity !== quantity ||
       !files[sheet.svg] ||
       !files[sheet.geometryFile] ||
@@ -68,4 +72,28 @@ export async function checkedKitDrawings(job: KitJob) {
   }
 
   return result;
+}
+
+function checkToleranceEvidence(job: KitJob, { manifest, files }: PreparedDrawings) {
+  const evidence = drawingToleranceEvidence({ parts: job.parts, project: job.project });
+
+  if (JSON.stringify(manifest.tolerances) !== JSON.stringify(evidence))
+    throw new Error('Reconcile drawing tolerances with the frozen kit source.');
+
+  if (
+    evidence &&
+    JSON.stringify(JSON.parse(new TextDecoder().decode(files['drawings.json'])).tolerances) !== JSON.stringify(evidence)
+  )
+    throw new Error('Reconcile drawing tolerances with the frozen kit source.');
+}
+
+function matchingDimensionAnnotations(
+  sources: Array<KitJob['parts'][number] | undefined>,
+  annotations: import('../sheet/drawingTypes').DrawingSheet['authoredDimensions'],
+  job: KitJob,
+) {
+  return sources.every(
+    (part) =>
+      !part || JSON.stringify(authoredDrawingDimensions(part, job.project)) === JSON.stringify(annotations ?? []),
+  );
 }

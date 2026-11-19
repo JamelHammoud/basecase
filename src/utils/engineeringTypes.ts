@@ -32,6 +32,7 @@ export interface CheckDot {
 }
 
 export type FindingFix =
+  | { kind: 'parameters' }
   | { kind: 'cable-route'; route: RouteIdentity }
   | { kind: 'print-face'; part: string; down: V3 }
   | { kind: 'calibrate'; joints: string[] }

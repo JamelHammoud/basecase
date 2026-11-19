@@ -150,7 +150,7 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
 export function engineeringFinding(
   check: string,
   level: FindingLevel,
-  f: { detail: string; ids?: string[]; fix?: FindingFix; joint?: string; agentText?: string },
+  f: { detail: string; ids?: string[]; subject?: string; fix?: FindingFix; joint?: string; agentText?: string },
 ): Finding {
   const code = slug(check);
   const plain = PLAIN_ENGINEERING[check]?.[level];
@@ -158,7 +158,7 @@ export function engineeringFinding(
   const ids = f.ids ?? [];
 
   return {
-    key: keyOf(`design:${code}`, ids, agentText),
+    key: f.subject ? `design:${code}:${f.subject}` : keyOf(`design:${code}`, ids, agentText),
     level,
     area: 'design',
     check,

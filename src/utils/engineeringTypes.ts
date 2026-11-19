@@ -46,7 +46,14 @@ export interface CheckRow {
   status: 'pass' | 'warn' | 'fail' | 'not run';
   detail: string;
   ids?: string[];
-  items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail'; fix?: FindingFix; joint?: string }>;
+  items?: Array<{
+    text: string;
+    ids?: string[];
+    subject?: string;
+    status?: 'warn' | 'fail';
+    fix?: FindingFix;
+    joint?: string;
+  }>;
   itemsAreContext?: boolean;
   detailInItems?: boolean;
   caseId?: string;

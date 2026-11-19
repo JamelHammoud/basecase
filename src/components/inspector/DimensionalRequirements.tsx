@@ -5,10 +5,18 @@ import { surfaceOperands } from '../../booleans/operands';
 import type { DesignParameters } from '../../workspace/useDesignParameters';
 import type { DimensionalRequirement } from '../../utils/designParameters/types';
 
-const EMPTY = { name: '', expression: '', minimum: 0, maximum: 1, dimensions: [] } satisfies DimensionalRequirement;
+const EMPTY = {
+  name: '',
+  expression: '',
+  minimum: '0',
+  maximum: '1',
+  dimensions: [] as DimensionalRequirement['dimensions'],
+};
+const incomplete = (draft: typeof EMPTY) =>
+  !draft.name || !draft.expression || !draft.dimensions.length || !draft.minimum.trim() || !draft.maximum.trim();
 
 export function DimensionalRequirements({ controls }: { controls: DesignParameters }) {
-  const [draft, setDraft] = useState<DimensionalRequirement>(EMPTY);
+  const [draft, setDraft] = useState(EMPTY);
   const [editing, setEditing] = useState<string | null>(null);
   const choices = surfaceOperands(controls.parts).flatMap((part) =>
     (part.dimensionBindings ?? []).flatMap((binding) => {
@@ -23,35 +31,34 @@ export function DimensionalRequirements({ controls }: { controls: DesignParamete
       ];
     }),
   );
+  const reset = () => {
+    setDraft(EMPTY);
+    setEditing(null);
+  };
   const save = async () => {
-    const requirements = [...controls.requirements.filter((item) => item.name !== editing), draft];
+    const requirement = { ...draft, minimum: Number(draft.minimum), maximum: Number(draft.maximum) };
+    const requirements = [...controls.requirements.filter((item) => item.name !== editing), requirement];
 
-    if (await controls.apply({ op: 'requirements', requirements })) {
-      setDraft(EMPTY);
-      setEditing(null);
-    }
+    if (await controls.apply({ op: 'requirements', requirements })) reset();
   };
   const remove = (name: string) =>
     confirmAction({
       title: `Delete ${name}?`,
       confirmLabel: 'Delete',
-      onConfirm: () => {
-        void controls.apply({
-          op: 'remove-requirement',
-          name,
-        });
+      onConfirm: async () => {
+        if ((await controls.apply({ op: 'remove-requirement', name })) && editing === name) reset();
       },
     });
 
   return (
-    <Section title="Dimensional tolerances" collapsible defaultOpen={false}>
+    <Section title="Dimensional tolerances" collapsible defaultOpen={false} className="!px-0 !py-0 !border-b-0">
       <div data-dimensional-requirement className="space-y-2">
         {controls.requirements.map((item) => (
           <div key={item.name} className="flex items-center gap-2">
             <Button
               size="sm"
               onClick={() => {
-                setDraft(item);
+                setDraft({ ...item, minimum: String(item.minimum), maximum: String(item.maximum) });
                 setEditing(item.name);
               }}
             >
@@ -84,15 +91,15 @@ export function DimensionalRequirements({ controls }: { controls: DesignParamete
         <FieldRow label="Minimum">
           <TextInput
             aria-label="Minimum"
-            value={String(draft.minimum)}
-            onChange={(event) => setDraft({ ...draft, minimum: Number(event.target.value) })}
+            value={draft.minimum}
+            onChange={(event) => setDraft({ ...draft, minimum: event.target.value })}
           />
         </FieldRow>
         <FieldRow label="Maximum">
           <TextInput
             aria-label="Maximum"
-            value={String(draft.maximum)}
-            onChange={(event) => setDraft({ ...draft, maximum: Number(event.target.value) })}
+            value={draft.maximum}
+            onChange={(event) => setDraft({ ...draft, maximum: event.target.value })}
           />
         </FieldRow>
         {choices.map(({ dimension, label }) => {
@@ -116,11 +123,7 @@ export function DimensionalRequirements({ controls }: { controls: DesignParamete
             />
           );
         })}
-        <Button
-          size="sm"
-          disabled={controls.busy || !draft.name || !draft.expression || !draft.dimensions.length}
-          onClick={() => void save()}
-        >
+        <Button size="sm" disabled={controls.busy || incomplete(draft)} onClick={() => void save()}>
           {editing ? 'Save' : 'Add'}
         </Button>
       </div>

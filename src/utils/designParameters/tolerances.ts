@@ -1,4 +1,5 @@
 import { currentParameterValue } from './plan';
+import { formatDimension } from '../../../electron/cad-kernel/dimensions.mjs';
 import { resolveParameters } from './resolve';
 import { surfaceOperands } from '../../booleans/operands';
 import { errorMessage } from '../errorMessage';
@@ -79,7 +80,8 @@ function checkedStack(context: StackContext, requirement: DimensionalRequirement
       );
 
     const actual = currentParameterValue({ part: part!, kind: binding.kind, values: {} }, binding.target);
-    const expected = nominalValues.get(dimension.parameter)?.value;
+    const nominal = nominalValues.get(dimension.parameter)!.value;
+    const expected = binding.kind === 'cad' ? Number(formatDimension(nominal)) : nominal;
 
     if (verifyGeometry && actual !== expected)
       throw new Error(`Regenerate ${dimension.part}:${dimension.target} before checking its tolerance.`);

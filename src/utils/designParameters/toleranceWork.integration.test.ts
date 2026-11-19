@@ -8,7 +8,7 @@ import { analyzeTolerances } from './tolerances';
 import { tolerancePayload } from './tolerancePayload';
 import { analysisHandlers } from '../../three/analysis/analysisOps';
 import { toleranceRows } from '../../readiness/tolerances';
-import { currentReadiness, readinessOf } from '../../readiness/readiness';
+import { currentReadiness, ignoreFinding, readinessOf } from '../../readiness/readiness';
 import { engineeringFindings } from '../../readiness/findings';
 import { runEngineering } from '../engineering';
 import { projectFingerprint } from '../../workspace/runReadiness';
@@ -84,6 +84,20 @@ it('keeps Checks authoritative and invalidates old results on tolerance and requ
 
   expect(readiness.blockers.some((finding) => finding.fix?.kind === 'parameters')).toBe(true);
   expect(toleranceRows([])).toEqual([]);
+
+  const requirements = [...design.requirements, { ...design.requirements[0], name: 'second_clearance' }];
+  const sharedRows = toleranceRows(analyzeTolerances({ ...design, requirements }));
+  const sharedFindings = engineeringFindings({ ...engineering, rows: sharedRows });
+  const ignored = readinessOf(sharedFindings, {
+    parts: design.parts,
+    fingerprint,
+    rows: sharedRows,
+    decisions: ignoreFinding(undefined, sharedFindings[0]),
+  });
+
+  expect(new Set(sharedFindings.map((finding) => finding.key)).size).toBe(2);
+  expect(ignored.ignored).toHaveLength(1);
+  expect(ignored.blockers.filter((finding) => finding.fix?.kind === 'parameters')).toHaveLength(1);
 
   const changed = {
     ...project,

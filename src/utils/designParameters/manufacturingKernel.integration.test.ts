@@ -94,3 +94,46 @@ it.each(TOLERANCE_MECHANISMS.map(([name], index) => ({ name, index })))(
     expect(analyzeTolerances(prepared)[0].minimum).toBeCloseTo(a - 0.001 - (b + upperB), 10);
   },
 );
+
+it('matches a derived nominal dimension at the precision used by native CAD regeneration', async () => {
+  const code = 'feature = 0.3; cylinder(d=feature,h=8,$fn=24);';
+  const rendered = await kernel.renderPart('openscad', code);
+
+  expect(rendered.ok, rendered.error).toBe(true);
+
+  const part = {
+    ...specToPart({
+      id: 'pin',
+      name: 'Pin',
+      shape: 'cad_part',
+      cad: { language: 'openscad', code, positions: rendered.positions!, indices: rendered.indices! },
+    }),
+    dimensionBindings: [{ kind: 'cad' as const, target: 'feature', unit: 'mm' as const, expression: 'diameter' }],
+  };
+  const payload = tolerancePayload({
+    parts: [part],
+    parameters: [
+      { name: 'base', unit: 'mm', value: 0.2, tolerance: { lower: -0.01, upper: 0.01 } },
+      { name: 'diameter', unit: 'mm', expression: 'base + 0.1 mm' },
+    ],
+    requirements: [
+      {
+        name: 'diameter_range',
+        expression: 'diameter',
+        minimum: 0.2,
+        maximum: 0.4,
+        dimensions: [{ parameter: 'diameter', part: 'pin', kind: 'cad', target: 'feature' }],
+      },
+    ],
+  });
+  const result = analysisHandlers.tolerances(payload).result[0];
+
+  expect(result.status).toBe('pass');
+  expect(result.minimum).toBeCloseTo(0.29, 10);
+  expect(result.maximum).toBeCloseTo(0.31, 10);
+  payload.parts[0].cad!.code = code.replace('0.3', '0.31');
+  expect(analysisHandlers.tolerances(payload).result[0]).toMatchObject({
+    status: 'unresolved',
+    reason: 'Regenerate pin:feature before checking its tolerance.',
+  });
+});

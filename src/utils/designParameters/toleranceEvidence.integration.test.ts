@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
+import { strFromU8, strToU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { toleranceFixture } from './tolerances.fixtures';
 import { decodeSceneFile, encodeSceneFile } from '../sceneFile';
 import { DEFAULT_PROJECT } from '../../types/robotics';
@@ -135,6 +135,15 @@ it('reconciles real standalone Drawings and Kit evidence against the frozen sour
       .authoredDimensions,
   ).toHaveLength(1);
   expect(standaloneManifest.numericalToleranceMm).toBeCloseTo(0.002, 8);
+
+  const originalJson = job.drawings.files['drawings.json'];
+
+  standaloneManifest.sheets.find(
+    (sheet: { authoredDimensions?: unknown[] }) => sheet.authoredDimensions,
+  ).authoredDimensions[0].tolerance.upper = 99;
+  job.drawings.files['drawings.json'] = strToU8(JSON.stringify(standaloneManifest));
+  await expect(buildKit(job)).rejects.toThrow(/tolerances/);
+  job.drawings.files['drawings.json'] = originalJson;
   job.drawings.manifest.tolerances!.results[0].nominal = 999;
   await expect(buildKit(job)).rejects.toThrow(/tolerances/);
 });

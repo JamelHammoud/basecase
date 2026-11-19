@@ -18,6 +18,7 @@ export function toleranceRows(results: StackResult[]): CheckRow[] {
         .filter((result) => result.status !== 'pass')
         .map((result) => ({
           text: stackText(result),
+          subject: result.name,
           ids: [...new Set(result.dimensions.map((dimension) => dimension.part))],
           status: 'fail' as const,
           fix: { kind: 'parameters' as const },

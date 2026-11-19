@@ -45,8 +45,10 @@ it('authors spacer deviations and a failing stack, edits a dimension and undoes 
 
   await requirement.getByRole('textbox', { name: 'Name', exact: true }).fill('clearance');
   await requirement.getByRole('textbox', { name: 'Expression', exact: true }).fill('outer - inner');
-  await requirement.getByRole('textbox', { name: 'Minimum', exact: true }).fill('0');
-  await requirement.getByRole('textbox', { name: 'Maximum', exact: true }).fill('1');
+  await requirement.getByRole('textbox', { name: 'Minimum', exact: true }).fill('');
+  await requirement.getByRole('textbox', { name: 'Minimum', exact: true }).pressSequentially('-0.01');
+  await requirement.getByRole('textbox', { name: 'Maximum', exact: true }).fill('');
+  await requirement.getByRole('textbox', { name: 'Maximum', exact: true }).pressSequentially('1.25');
   await requirement.getByRole('switch').nth(0).click();
   await requirement.getByRole('switch').nth(1).click();
   await requirement.getByRole('button', { name: 'Add', exact: true }).click();

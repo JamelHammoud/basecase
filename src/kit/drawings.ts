@@ -4,6 +4,7 @@ import { bytesFingerprint } from '../sheet/drawingStl';
 import { drawingQuantity } from '../sheet/drawingQuantity';
 import type { PreparedDrawings } from '../sheet/drawingsClient';
 import type { KitJob } from './types';
+import type { DrawingManifest } from '../sheet/drawingTypes';
 import { boughtKey } from '../utils/bom';
 
 export function kitDrawings(job: KitJob, prepared: PreparedDrawings) {
@@ -76,13 +77,15 @@ export async function checkedKitDrawings(job: KitJob) {
 
 function checkToleranceEvidence(job: KitJob, { manifest, files }: PreparedDrawings) {
   const evidence = drawingToleranceEvidence({ parts: job.parts, project: job.project });
+  const saved: DrawingManifest = JSON.parse(new TextDecoder().decode(files['drawings.json']));
 
   if (JSON.stringify(manifest.tolerances) !== JSON.stringify(evidence))
     throw new Error('Reconcile drawing tolerances with the frozen kit source.');
 
   if (
-    evidence &&
-    JSON.stringify(JSON.parse(new TextDecoder().decode(files['drawings.json'])).tolerances) !== JSON.stringify(evidence)
+    JSON.stringify(saved.tolerances) !== JSON.stringify(evidence) ||
+    JSON.stringify(saved.sheets.map((sheet) => sheet.authoredDimensions)) !==
+      JSON.stringify(manifest.sheets.map((sheet) => sheet.authoredDimensions))
   )
     throw new Error('Reconcile drawing tolerances with the frozen kit source.');
 }

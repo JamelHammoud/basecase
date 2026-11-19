@@ -277,4 +277,6 @@ Numeric mm rows expose Lower deviation and Upper deviation. Both fields must be 
 
 The collapsed Dimensional tolerances section edits requirement names, expressions, acceptable Minimum and Maximum values in mm and explicit dimension-reference switches. The switches list existing mm bindings that directly name a declared parameter. Add creates a requirement and selecting its name edits it with Save. Delete uses the ordinary confirmation. Requirements and deviations use the same atomic history as parameters and persist in native and saved scene records.
 
+Requirement bounds retain typed text until Add or Save, allowing signed and fractional intervals without converting partial input. Empty bounds disable saving. Deleting the requirement being edited resets its draft to Add.
+
 Renaming rewrites requirement expressions and dimension references together. Remove requirements before deleting or freezing a declaration. Unbinding or deleting a referenced part is refused until its requirement is removed. Duplication preserves shared bindings, while existing requirements keep their explicitly referenced source parts. Independent manufactured copies need separate declared dimensions. Bound parts retain the existing refusal for Library and cross-scene transfer. [Build](build.md#authored-dimensional-tolerances) owns evaluation, export evidence and current coverage.

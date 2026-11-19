@@ -31,17 +31,15 @@ Check whether linked dimensions can exceed a declared clearance interval as manu
 Start with editable dimensions [linked to shared parameters](/help/link-dimensions-with-shared-parameters) in the desktop app. Enter explicit manufacturing deviations for each contributor. Passing a requirement doesn’t establish physical fit or build readiness.
 
 1. In the command palette, choose **Edit Parameters**.
-2. Under **Parameters**, enter the signed **Lower deviation** for a numeric mm parameter.
-3. In **Upper deviation**, enter its upper deviation and press [[↩]].
-4. Repeat for each contributing numeric dimension.
-5. Under **Parameters**, open **Dimensional tolerances**.
-6. In **Name**, enter a requirement name such as `clearance`.
-7. In **Expression**, enter the stack, such as `outer - inner`.
-8. In **Minimum**, enter the lowest acceptable value in mm.
-9. In **Maximum**, enter the highest acceptable value in mm.
-10. Turn on the contributing part dimensions.
-11. Click **Add**.
-12. In **Build**, open **Dimensional tolerances**.
+2. Under **Parameters**, enter the signed **Lower deviation** and **Upper deviation** for each contributing numeric mm parameter.
+3. Under **Parameters**, open **Dimensional tolerances**.
+4. In **Name**, enter a requirement name such as `clearance`.
+5. In **Expression**, enter the stack, such as `outer - inner`.
+6. In **Minimum**, enter the lowest acceptable value in mm.
+7. In **Maximum**, enter the highest acceptable value in mm.
+8. Under **Dimensional tolerances**, turn on the contributing part dimensions.
+9. Under **Dimensional tolerances**, click **Add**.
+10. In **Build**, open **Dimensional tolerances**.
 
 ![Spacer dimensions with explicit deviations and the authored clearance requirement](/help/check-dimensional-tolerances/parameters.png)
 

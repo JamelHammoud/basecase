@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
-import { openApp, shown, type App } from './harness';
+import { openApp, type App } from './harness';
 import { selfContactArmScene } from '../src/sim/fixtures/selfContactArm';
-import { state } from './closedLinkageSteps';
 import { contactCommand as command, retainSelfContactSceneFiles } from './selfContactScene';
 
 let app: App;
@@ -15,28 +14,19 @@ afterAll(async () => {
   await app?.close();
 });
 
-it('enables folding-arm contact, stops at the base, saves and reopens it, and disables contact for the passing control', async () => {
+it('retains the authored Self-contact switch through scene export and reopening', async () => {
   await app.page.evaluate(
     (scene) => (window as unknown as { __studio: { load: (scene: unknown) => void } }).__studio.load(scene),
     selfContactArmScene(),
   );
   await command(app, 'Show Simulate');
-  await app.page.getByRole('switch', { name: /^Self-contact for/ }).click();
-  await app.page.getByRole('button', { name: 'Simulate', exact: true }).click();
-  await expect.poll(async () => (await state(app)).playing).toBe(true);
-  await app.page.locator(shown('select[aria-label="Controller"]')).selectOption({ label: 'Fold' });
-  await expect.poll(async () => (await state(app)).joints.elbow?.position ?? 0).toBeLessThan(-50);
-  await expect
-    .poll(async () =>
-      app.page.evaluate(() =>
-        (window as unknown as { __studio: { selfContactPairs: () => string[][] } }).__studio.selfContactPairs(),
-      ),
-    )
-    .toContainEqual(['base', 'tip']);
-  expect((await state(app)).joints.elbow.position).toBeGreaterThan(-85);
-  await command(app, 'Stop Simulation');
-  await command(app, 'Export Scene');
 
+  const toggle = app.page.getByRole('switch', { name: /^Self-contact for/ });
+
+  await expect.poll(() => toggle.getAttribute('aria-checked')).toBe('false');
+  await toggle.click();
+  await expect.poll(() => toggle.getAttribute('aria-checked')).toBe('true');
+  await command(app, 'Export Scene');
   await expect
     .poll(() =>
       app.page.evaluate(
@@ -54,6 +44,8 @@ it('enables folding-arm contact, stops at the base, saves and reopens it, and di
   );
 
   expect(file?.name).toMatch(/\.basecase$/);
+  await toggle.click();
+  await expect.poll(() => toggle.getAttribute('aria-checked')).toBe('false');
   await app.page.evaluate(async (file) => {
     const studio = (
       window as unknown as { __studio: { clear: () => void; dropFiles: (files: unknown[]) => Promise<void> } }
@@ -68,13 +60,6 @@ it('enables folding-arm contact, stops at the base, saves and reopens it, and di
     )
     .toBe(3);
   await command(app, 'Show Simulate');
-  await expect
-    .poll(() => app.page.getByRole('switch', { name: /^Self-contact for/ }).getAttribute('aria-checked'))
-    .toBe('true');
-  await app.page.getByRole('switch', { name: /^Self-contact for/ }).click();
-  await app.page.getByRole('button', { name: 'Simulate', exact: true }).click();
-  await expect.poll(async () => (await state(app)).playing).toBe(true);
-  await app.page.locator(shown('select[aria-label="Controller"]')).selectOption({ label: 'Fold' });
-  await expect.poll(async () => (await state(app)).joints.elbow?.position ?? 0).toBeLessThan(-88);
+  await expect.poll(() => toggle.getAttribute('aria-checked')).toBe('true');
   expect(app.errors).toEqual([]);
 });

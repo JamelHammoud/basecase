@@ -27,6 +27,7 @@ export interface FindingContext {
 const FIX_LABELS: Record<string, string> = {
   'new-case': 'New Case',
   'replay-fall': 'Replay in Sim',
+  parameters: 'Edit Parameters',
   'cable-route': 'Edit Route',
 };
 
@@ -48,7 +49,7 @@ function useFindingMenu(finding: ReadinessFinding, actions: FindingActions) {
 }
 
 const fixOf = (finding: ReadinessFinding, actions: FindingActions) =>
-  finding.fix ? actions.onApplyFix?.[finding.fix.kind] : actions.onFix;
+  finding.fix && finding.fix.kind !== 'parameters' ? actions.onApplyFix?.[finding.fix.kind] : actions.onFix;
 
 const FixButton: React.FC<{ finding: ReadinessFinding; fix: (finding: ReadinessFinding) => void }> = ({
   finding,

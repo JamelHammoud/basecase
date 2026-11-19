@@ -14,7 +14,7 @@ related:
 
 Export a fabricated part's measured geometry as PDF and editable vector sheets to send to a workshop.
 
-You can include feature dimensions for flat profiles that face the chosen front plane. For other solids, you get views with outlines alone. Use Latin characters in PDF names.
+You can include feature dimensions for flat profiles that face the chosen front plane. Other solids keep their outline views. Directly bound box and cube dimensions can display authored tolerance tables. Use Latin characters in PDF names.
 
 1. In **Layers**, select the fabricated part.
 ![The rover deck selected in Layers](/help/export-dimensioned-drawings/selection.png)
@@ -37,11 +37,11 @@ You can include feature dimensions for flat profiles that face the chosen front 
 
 ![The exported rover deck drawing with orthographic views and measured features](/help/export-dimensioned-drawings/drawing.png)
 
-You can edit the SVG files as vectors. On each sheet, you can find the name of its matching source STL in millimeters, with Z up. In the JSON file, you can find source identity, geometry hashes and quantities. Parts with identical geometry and material share a sheet.
+You can edit the SVG files as vectors. On each sheet, you can find the name of its matching source STL in millimeters, with Z up. In the JSON file, you can find source identity, geometry hashes and quantities. Parts with identical geometry, material and authored dimension declarations share a sheet.
 
 The part keeps its supplied material and declared print material. If the part has no material, Basecase leaves it unspecified.
 
-Basecase measures hole centers from the declared datum and marks an approximate circle fit with a `~` before its diameter. You can find the numerical allowances on the drawing. Basecase omits unsupported hole dimensions. These allowances describe measurement and don't specify a machining tolerance.
+Basecase measures hole centers from the declared datum. Measured extents, edges and approximate circle diameters carry `~`. You can find the numerical allowances on the drawing. Basecase omits unsupported hole dimensions. These numerical allowances describe measurement and don't specify a machining tolerance. Authored deviations and stack results stay in `drawings.json`, bound to the source fingerprint.
 
 Print the PDF at actual size to preserve its declared scale. If the chosen scale can’t fit A4, choose a smaller scale and export again.
 

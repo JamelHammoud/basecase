@@ -30,6 +30,7 @@ export function useDesignParameters({ docs, sceneId, showToast }: Options) {
   const [busy, setBusy] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const parameters = docs.project.designParameters;
+  const requirements = docs.project.dimensionalRequirements;
   const status = parameterDesignStatus(docs.parts, parameters);
   const prepare = async (edit?: ParameterEdit | ParameterEdit[], current: () => boolean = () => true) => {
     job.current?.abort();
@@ -37,14 +38,18 @@ export function useDesignParameters({ docs, sceneId, showToast }: Options) {
     const controller = new AbortController();
     const source = docs.docRef.current;
     const declarations = docs.projectRef.current.designParameters;
+    const stacks = docs.projectRef.current.dimensionalRequirements;
     const isCurrent = () =>
-      current() && docs.docRef.current === source && docs.projectRef.current.designParameters === declarations;
+      current() &&
+      docs.docRef.current === source &&
+      docs.projectRef.current.designParameters === declarations &&
+      docs.projectRef.current.dimensionalRequirements === stacks;
 
     job.current = controller;
     problem.current = null;
 
     try {
-      const baseline = { parts: source.parts, parameters: declarations ?? [] };
+      const baseline = { parts: source.parts, parameters: declarations ?? [], requirements: stacks };
       const edits = Array.isArray(edit) ? edit : [edit].filter((item) => item !== undefined);
       const design = editParameterBatch(baseline, edits);
       const result = await prepareParameterEdit(design, {
@@ -72,7 +77,7 @@ export function useDesignParameters({ docs, sceneId, showToast }: Options) {
 
       for (const part of surfaceOperands(result.parts)) rememberSupport(part.sketch);
 
-      if (edit) docs.commitParameters(result.parts, result.parameters);
+      if (edit) docs.commitParameters(result.parts, result.parameters, result.requirements);
       else docs.writeDoc({ ...source, parts: result.parts });
 
       measureParameterWork('commit', committing);
@@ -112,6 +117,8 @@ export function useDesignParameters({ docs, sceneId, showToast }: Options) {
 
   return {
     parameters: parameters ?? [],
+    requirements: requirements ?? [],
+    parts: docs.parts,
     busy,
     expanded,
     setExpanded,

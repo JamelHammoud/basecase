@@ -6,11 +6,11 @@ interface Token {
   end: number;
 }
 
-type Node =
+export type ExpressionNode =
   | { kind: 'literal'; quantity: Quantity }
   | { kind: 'name'; name: string }
-  | { kind: 'unary'; sign: number; child: Node }
-  | { kind: 'binary'; op: string; left: Node; right: Node };
+  | { kind: 'unary'; sign: number; child: ExpressionNode }
+  | { kind: 'binary'; op: string; left: ExpressionNode; right: ExpressionNode };
 
 const UNITS = new Set(['mm', 'deg']);
 const RESERVED = new Set(['mm', 'deg', 'constructor', 'prototype', '__proto__']);
@@ -65,7 +65,7 @@ class Parser {
     return this.tokens[this.index]?.text;
   }
 
-  parse(): Node {
+  parse(): ExpressionNode {
     const node = this.sum(0);
 
     if (this.index !== this.tokens.length) throw new Error(`Unexpected expression token ${this.peek()}.`);
@@ -73,7 +73,7 @@ class Parser {
     return node;
   }
 
-  private sum(depth: number): Node {
+  private sum(depth: number): ExpressionNode {
     let left = this.product(depth);
 
     while (this.peek() === '+' || this.peek() === '-') {
@@ -85,7 +85,7 @@ class Parser {
     return left;
   }
 
-  private product(depth: number): Node {
+  private product(depth: number): ExpressionNode {
     let left = this.atom(depth);
 
     while (this.peek() === '*' || this.peek() === '/') {
@@ -97,7 +97,7 @@ class Parser {
     return left;
   }
 
-  private atom(depth: number): Node {
+  private atom(depth: number): ExpressionNode {
     if (depth >= PARAMETER_LIMITS.depth) throw new Error('Expression nesting exceeds 16 levels.');
 
     const token = this.tokens[this.index++]?.text;
@@ -151,7 +151,7 @@ function namedQuantity(name: string, values: ReadonlyMap<string, Quantity>): Qua
   return finite(found);
 }
 
-function evaluate(node: Node, values: ReadonlyMap<string, Quantity>, depth: number): Quantity {
+function evaluate(node: ExpressionNode, values: ReadonlyMap<string, Quantity>, depth: number): Quantity {
   if (depth > PARAMETER_LIMITS.tokens) throw new Error('Expression exceeds its evaluation limit.');
 
   if (node.kind === 'literal') return node.quantity;
@@ -193,3 +193,5 @@ export function substituteExpression(expression: string, before: string, after: 
 
   return renamed;
 }
+
+export const parseExpression = (expression: string): ExpressionNode => new Parser(tokensOf(expression)).parse();

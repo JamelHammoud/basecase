@@ -14,7 +14,14 @@ interface Options {
 export function requestParameterDeletion(name: string, { docs, apply, showToast }: Options) {
   const source = docs.docRef.current;
   const parameters = docs.projectRef.current.designParameters;
-  const dependents = parameterDependents({ parts: source.parts, parameters: parameters ?? [] }, name);
+  const dependents = parameterDependents(
+    {
+      parts: source.parts,
+      parameters: parameters ?? [],
+      requirements: docs.projectRef.current.dimensionalRequirements,
+    },
+    name,
+  );
 
   const parts = surfaceOperands(source.parts);
   const labels = dependents.map((dependent) => {

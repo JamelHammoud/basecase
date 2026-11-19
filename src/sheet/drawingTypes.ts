@@ -63,6 +63,7 @@ export interface DrawingSheet {
   mode: 'profile' | 'outline-only';
   thicknessMm?: number;
   holes: DrawingHole[];
+  authoredDimensions?: import('./drawingTolerances').AuthoredDrawingDimension[];
   authoredSketch?: { entities: string[]; depthMm: number };
   omittedHoleDimensions?: number;
   edges?: Array<{ a: DrawingPoint; b: DrawingPoint; lengthMm: number }>;
@@ -73,6 +74,7 @@ export interface DrawingManifest {
   format: 'basecase-mechanical-drawings';
   schema: 1;
   source: DrawingSource;
+  tolerances?: ReturnType<typeof import('./drawingTolerances').drawingToleranceEvidence>;
   numericalToleranceMm: number;
   circleChordToleranceMm: number;
   sheets: DrawingSheet[];

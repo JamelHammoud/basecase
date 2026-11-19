@@ -1,3 +1,4 @@
+import { drawingToleranceEvidence, authoredDrawingDimensions, toleranceDocuments } from './drawingTolerances';
 import { strToU8, zipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { drawingStl, bytesFingerprint } from './drawingStl';
 import { drawingQuantity } from './drawingQuantity';
@@ -96,6 +97,7 @@ async function prepareDrawingGeometry(job: DrawingJob) {
     circleChordToleranceMm: DRAWING_LIMITS.chordMm,
     sheets: [],
     references: [],
+    ...(job.sourceSnapshot ? { tolerances: drawingToleranceEvidence(job.sourceSnapshot) } : {}),
   };
   const geometryFiles: Record<string, Uint8Array> = {};
   const metrics = { projectionMs: 0, prepareMs: 0, layoutMs: 0 };
@@ -131,7 +133,8 @@ async function prepareDrawingGeometry(job: DrawingJob) {
     const fingerprint = await geometryFingerprint(prepared.sourceTriangles);
     const material = materialOf(part, prepared.sourceTriangles, job);
     const projectionKey = projectionIdentity(part, job);
-    const key = `${fingerprint}|${material ?? ''}|${projectionKey}`;
+    const authoredDimensions = authoredDrawingDimensions(part, job.sourceSnapshot?.project);
+    const key = `${fingerprint}|${material ?? ''}|${projectionKey}|${JSON.stringify(authoredDimensions)}`;
     const quantity = drawingQuantity(part);
     const existing = shared.get(key);
 
@@ -170,6 +173,7 @@ async function prepareDrawingGeometry(job: DrawingJob) {
       datum: prepared.datum,
       extents: prepared.extents,
       ...drawingFeatures(prepared.triangles),
+      ...(authoredDimensions.length ? { authoredDimensions } : {}),
       authoredSketch: matchingDrawingSketch(part, prepared.sourceTriangles),
       views,
     };
@@ -194,6 +198,7 @@ export function drawingFiles(manifest: DrawingManifest, geometryFiles: Record<st
   const documents = manifest.sheets.map((sheet) => [
     drawingDocument(sheet, manifest),
     ...holeDocuments(sheet, manifest),
+    ...toleranceDocuments(sheet, manifest),
   ]);
 
   manifest.sheets.forEach((sheet, index) => {

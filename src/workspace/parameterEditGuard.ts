@@ -1,5 +1,5 @@
 import type { ScenePart, ProjectSettings } from '../types/robotics';
-import { validateParameterRecords } from '../utils/designParameters/verification';
+import { validateParameterScene } from '../utils/designParameters/verification';
 import { errorMessage } from '../utils/errorMessage';
 import { surfaceOperands } from '../booleans/operands';
 
@@ -30,7 +30,7 @@ export function permittedParameterEdit(
 ) {
   try {
     assertBoundScale(parts, before);
-    validateParameterRecords(parts, project.designParameters);
+    validateParameterScene({ parts, project });
 
     return true;
   } catch (error) {

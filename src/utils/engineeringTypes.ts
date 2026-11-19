@@ -32,6 +32,7 @@ export interface CheckDot {
 }
 
 export type FindingFix =
+  | { kind: 'parameters' }
   | { kind: 'cable-route'; route: RouteIdentity }
   | { kind: 'print-face'; part: string; down: V3 }
   | { kind: 'calibrate'; joints: string[] }
@@ -45,7 +46,14 @@ export interface CheckRow {
   status: 'pass' | 'warn' | 'fail' | 'not run';
   detail: string;
   ids?: string[];
-  items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail'; fix?: FindingFix; joint?: string }>;
+  items?: Array<{
+    text: string;
+    ids?: string[];
+    subject?: string;
+    status?: 'warn' | 'fail';
+    fix?: FindingFix;
+    joint?: string;
+  }>;
   itemsAreContext?: boolean;
   detailInItems?: boolean;
   caseId?: string;

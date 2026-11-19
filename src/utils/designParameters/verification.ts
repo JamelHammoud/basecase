@@ -1,8 +1,8 @@
-import { parameterCadDimensions } from './cadDimensions';
+import { validateRequirements } from './tolerances';
 import { surfaceOperands } from '../../booleans/operands';
 import type { ScenePart, ProjectSettings } from '../../types/robotics';
 import type { DimensionBinding } from './types';
-import { planParameterEdit, type ParameterPartPlan } from './plan';
+import { planParameterEdit, currentParameterValue, type ParameterPartPlan } from './plan';
 import { errorMessage } from '../errorMessage';
 import { hasEmbeddedParameterBindings } from './transfers';
 import type { ParameterEdit } from './edits';
@@ -25,16 +25,6 @@ export function rememberParameterDesign(parts: ScenePart[], parameters: unknown)
 
 const known = (part: ScenePart) => part.dimensionBindings && verified.get(key(part))?.get(part.dimensionBindings);
 
-function currentValue(plan: ParameterPartPlan, target: string) {
-  if (plan.kind === 'primitive') return plan.part.dimensions[target as keyof ScenePart['dimensions']];
-
-  if (plan.kind === 'cad') return parameterCadDimensions(plan.part.cad!).find((row) => row.name === target)?.value;
-
-  const constraint = plan.part.sketch!.sketch.constraints.find((item) => item.id === target);
-
-  return constraint && 'value' in constraint ? constraint.value : undefined;
-}
-
 export function parameterDesignStatus(
   parts: ScenePart[],
   parameters: unknown,
@@ -44,7 +34,9 @@ export function parameterDesignStatus(
     const pendingIds = plans.filter((plan) => known(plan.part) !== signature(plan)).map((plan) => plan.part.id);
 
     for (const plan of plans) {
-      const mismatch = Object.entries(plan.values).find(([target, value]) => currentValue(plan, target) !== value);
+      const mismatch = Object.entries(plan.values).find(
+        ([target, value]) => currentParameterValue(plan, target) !== value,
+      );
 
       if (mismatch)
         return {
@@ -83,6 +75,11 @@ export function parameterGeometryEvidence(parts: ScenePart[]) {
 
 export function validateParameterScene(scene: { parts: ScenePart[]; project?: ProjectSettings }) {
   validateParameterRecords(scene.parts, scene.project?.designParameters);
+  validateRequirements({
+    parts: scene.parts,
+    parameters: scene.project?.designParameters ?? [],
+    requirements: scene.project?.dimensionalRequirements,
+  });
 }
 
 export function parameterVerificationTargets(

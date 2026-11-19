@@ -138,6 +138,7 @@ export async function prepareParameterEdit(design: ParameterDesign, services: Pa
   return {
     parts,
     parameters: design.parameters,
+    ...(design.requirements ? { requirements: design.requirements } : {}),
     metrics: {
       elapsedMs: performance.now() - started,
       compiled: cad.length,

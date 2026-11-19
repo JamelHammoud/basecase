@@ -63,8 +63,11 @@ function useProjectCommits(commitProject: CommitProject, projectRef: RefObject<P
     commitWiring: (wiring: ProjectSettings['wiring']) => commitProject({}, (p) => ({ ...p, wiring })),
     commitSelfContact: (selfContact: ProjectSettings['selfContact']) =>
       commitProject({}, (p) => ({ ...p, selfContact })),
-    commitParameters: (parts: ScenePart[], designParameters: ProjectSettings['designParameters']) =>
-      commitProject({}, (p) => ({ ...p, designParameters }), parts),
+    commitParameters: (
+      parts: ScenePart[],
+      designParameters: ProjectSettings['designParameters'],
+      dimensionalRequirements = projectRef.current.dimensionalRequirements,
+    ) => commitProject({}, (p) => ({ ...p, designParameters, dimensionalRequirements }), parts),
     commitVersion: (parts: ScenePart[], project: ProjectSettings, scene: Snapshot['scene']) =>
       commitProject({ project: projectRef.current, scene }, () => project, parts),
     commitBoard: (parts: ScenePart[], electronicsBoard: ProjectSettings['electronicsBoard']) =>

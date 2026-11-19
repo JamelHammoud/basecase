@@ -1,4 +1,5 @@
 import { evaluateExpression, expressionNames, parameterName } from './expression';
+import { validateDeviation } from './toleranceValidation';
 import { PARAMETER_LIMITS, type DesignParameter, type ParameterUnit, type Quantity } from './types';
 
 export const parameterUnit = (unit: unknown): unit is ParameterUnit => unit === 'mm' || unit === 'deg' || unit === '1';
@@ -12,6 +13,8 @@ function checkedParameter(parameter: unknown): asserts parameter is DesignParame
 
   if (!parameterName(record.name) || !parameterUnit(record.unit) || (!literal && !expression))
     throw new Error('Declare a parameter name, unit and finite value or expression.');
+
+  validateDeviation(parameter as DesignParameter);
 }
 
 interface Resolution {

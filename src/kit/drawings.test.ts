@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
+import { strFromU8, strToU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { buildDrawings } from '../sheet/drawings';
 import { jsonHash } from '../utils/geometryHash';
 import { kitFixture } from './kit.fixtures';
@@ -30,6 +30,16 @@ describe('kit mechanical drawings', () => {
     expect(manifest.drawings).toEqual(standalone.manifest);
 
     for (const [name, bytes] of Object.entries(separate)) expect(files[`drawings/${name}`]).toEqual(bytes);
+  });
+
+  it('refuses JSON manufacturing evidence when the frozen design has no declarations', async () => {
+    const { job } = await prepared();
+    const drawing = job.drawings!;
+    const saved = JSON.parse(strFromU8(drawing.files['drawings.json']));
+
+    saved.tolerances = { parameters: [], requirements: [], results: [] };
+    drawing.files['drawings.json'] = strToU8(JSON.stringify(saved));
+    await expect(buildKit(job)).rejects.toThrow(/tolerances/);
   });
 
   it.each(['quantity', 'identity', 'coverage', 'file', 'source geometry', 'geometry fingerprint', 'geometry bytes'])(

@@ -210,12 +210,15 @@ export function fitVariantEdit(comparison: FitComparison, index: number, current
 
   if (!candidate?.coupon || candidate.reason) throw new Error('Choose a prepared coupon.');
 
+  const tolerance = current.parameters.find((parameter) => parameter.name === request.binding.parameter)?.tolerance;
+
   return {
     op: 'set',
     parameter: {
       name: request.binding.parameter,
       unit: 'mm',
       value: candidate.value,
+      ...(tolerance ? { tolerance } : {}),
       fitChoice: {
         kind: 'design-choice',
         value: candidate.value,

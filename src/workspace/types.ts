@@ -169,6 +169,7 @@ export interface Snapshot {
   wiring?: ProjectSettings['wiring'];
   selfContact?: ProjectSettings['selfContact'];
   designParameters?: ProjectSettings['designParameters'];
+  dimensionalRequirements?: ProjectSettings['dimensionalRequirements'];
   electronicsBoard?: ProjectSettings['electronicsBoard'];
   parts: ScenePart[];
   pose: RobotPoseState | undefined;

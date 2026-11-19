@@ -50,7 +50,7 @@ A classroom result doesn't grant **Ready to build**. Open the submitted robot an
 
 A sketch with an unresolved supporting face stays blocked even while its previous solid remains visible. [Keep a sketch on a face](/help/keep-a-sketch-on-a-face) covers replacing that reference.
 
-Shared dimensions must match their parameters and pass regeneration validation before their geometry counts as current. See [Link dimensions with shared parameters](/help/link-dimensions-with-shared-parameters).
+Shared dimensions must match their parameters and pass regeneration validation before their geometry counts as current. See [Link dimensions with shared parameters](/help/link-dimensions-with-shared-parameters). [Check dimensional tolerances](/help/check-dimensional-tolerances) evaluates authored clearance requirements with explicit manufacturing deviations. Missing deviations leave those requirements unresolved, and passing one doesn’t establish physical fit.
 
 You can [compare clearances on a fit test plate](/help/compare-fit-clearances) before changing an authored dimension. Applying a value records a design choice and reruns Checks. It doesn't establish a physical fit.
 

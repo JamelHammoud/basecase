@@ -3,15 +3,23 @@ import type { ScenePart } from '../../types/robotics';
 import { expressionNames, parameterName, renameExpression, substituteExpression } from './expression';
 import { planParameterEdit } from './plan';
 import { resolveParameters } from './resolve';
-import type { DesignParameter } from './types';
+import type { DesignParameter, DimensionalRequirement } from './types';
 
 export interface ParameterDesign {
   parts: ScenePart[];
   parameters: DesignParameter[];
+  requirements?: DimensionalRequirement[];
 }
 
 export function parameterDependents(design: ParameterDesign, name: string): string[] {
   return [
+    ...(design.requirements ?? [])
+      .filter(
+        (item) =>
+          expressionNames(item.expression).includes(name) ||
+          item.dimensions.some((dimension) => dimension.parameter === name),
+      )
+      .map((item) => `requirement:${item.name}`),
     ...design.parameters
       .filter((p) => p.expression && expressionNames(p.expression).includes(name))
       .map((p) => `parameter:${p.name}`),
@@ -47,7 +55,9 @@ function rewriteReferences(design: ParameterDesign, rewrite: (expression: string
     }),
   );
 
-  return { parts, parameters };
+  const requirements = design.requirements?.map((item) => ({ ...item, expression: rewrite(item.expression) }));
+
+  return { ...design, parts, parameters, ...(requirements ? { requirements } : {}) };
 }
 
 export function renameParameter(design: ParameterDesign, before: string, after: string): ParameterDesign {
@@ -62,7 +72,13 @@ export function renameParameter(design: ParameterDesign, before: string, after: 
 
   const rewritten = rewriteReferences(design, (expression) => renameExpression(expression, before, after));
   const parameters = rewritten.parameters.map((p) => (p.name === before ? { ...p, name: after } : p));
-  const result = { ...rewritten, parameters };
+  const requirements = rewritten.requirements?.map((item) => ({
+    ...item,
+    dimensions: item.dimensions.map((dimension) =>
+      dimension.parameter === before ? { ...dimension, parameter: after } : dimension,
+    ),
+  }));
+  const result = { ...rewritten, parameters, ...(requirements ? { requirements } : {}) };
 
   planParameterEdit(result.parts, result.parameters);
 
@@ -79,6 +95,9 @@ export function removeParameter(design: ParameterDesign, name: string, resolutio
   const dependents = parameterDependents(design, name);
 
   if (dependents.length && resolution !== 'freeze') throw new Error(`${name} is used by ${dependents.join(', ')}.`);
+
+  if (design.requirements?.length)
+    throw new Error('Remove dimensional requirements before freezing or deleting a parameter.');
 
   const literal = `(${quantity.value}${quantity.unit === '1' ? '' : ` ${quantity.unit}`})`;
   const rewrite = (expression: string) => substituteExpression(expression, name, literal);

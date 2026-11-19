@@ -949,5 +949,13 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44500060639 connected the phone and reached Drive on, then measured 0.0473696773983312 m through the unchanged 30000 ms greater-than-0.1 m motion poll. Its shared-app retry never displayed the pairing QR. Previous Windows Check 44495446798 passed in 12804 ms with unchanged input, phone, simulation and harness sources on image 20261103.298.1 rather than the failing image 20261116.315.1. Exact-revision Windows diagnostic 44503214963 passed in 10963.187 ms with one worker, zero retries and quarantine off on image 20261103.298.1, while retaining the preview-server close timeout. This single observation does not establish an image cause or repair. Input delivery, simulation progress, pairing state, retained socket ownership and cleanup remain separate unresolved stages under existing input-path owner #995. Restore only after tracing each stage, establishing a fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. Preserve QR, connection, motion, Unpair Phone, revoked connection refusal and empty app errors with existing deadlines. Linux and macOS retain the walkthrough. Fast TLS protocol, event-stream, store, tilt mapping and real MuJoCo movement checks remain active but do not replace the combined browser path."
+  },
+  {
+    "file": "tools/fleet/registry.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44504735978 exhausted the unchanged 10000 ms beforeAll deadline awaiting fleetFixture before the registry assertion ran. Previous Linux Check 44500060639 passed the file in 8345 ms on the same Ubuntu image 20261111.196.1 with unchanged Fleet, fixture, PostgreSQL and unit configuration sources. Same-revision Linux diagnostic 44505926442 passed in a 9411 ms process with a 449.24056 ms assertion on the same image, one worker, zero retries and quarantine off. Docker launch, database readiness, connection, migrations, HTTP startup and cleanup are not distinguished. Existing open priority shared fixture owner #1401 owns tracing, a demonstrated fix and ten baseline and ten candidate equal-load Linux observations with retries disabled before restoration. Whole-file filtering is required because setup precedes individual test filtering. macOS retains the complete ten-class inventory, duplicate vendor identities, two vendors per site, stale state and robot.control acceptance. Linux retains authorization, adapter and legacy migration checks, which do not replace this combined registry assertion. Windows retains its separate existing quarantine. No deadline, retry or assertion changes."
   }
 ]

@@ -64,6 +64,14 @@
   },
   {
     "file": "e2e/board.e2e.test.ts",
+    "test": "",
+    "issue": 1614,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44518466291 failed shared setup after Define Board when Width (X) never became visible within 30000 ms, before either test body ran. The preceding Windows run 44513988396 passed setup and placement locking with unchanged board sources, harness, dependencies and runner image. Worker completion, stale-source rejection, selection and Inspector publication are not distinguished. Issue #1614 owns this setup path and separate outline-readiness failure, stage and cleanup tracing and equal-load baseline and candidate measurements. Whole-file exclusion is required because declaration filtering runs after beforeAll. Remove this file entry only after setup is deterministic, retaining the individual outline entry until its separate restoration evidence exists. Linux and macOS retain both declarations."
+  },
+  {
+    "file": "e2e/board.e2e.test.ts",
     "test": "reports an outline shrink as a mechanical board blocker",
     "issue": 1614,
     "until": "2026-11-28",

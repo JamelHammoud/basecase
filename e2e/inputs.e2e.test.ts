@@ -279,7 +279,7 @@ describe('live inputs', () => {
     await load(panTilt());
     await app.page.evaluate(
       (samples) => (window as unknown as StudioWindow).__studio.feedFace(samples),
-      faceOffCentre(),
+      [faceOffCentre()[0]],
     );
     expect(await driveWith(['face'])).toBe(true);
     await expect

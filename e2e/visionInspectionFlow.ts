@@ -1,5 +1,6 @@
 import { expect } from 'vitest';
 import { loadFixtureRobot } from './driveChecks';
+import { box, joint } from '../src/sim/fixtures/parts';
 import { shown, type App } from './harness';
 import { tinyDetectionOnnx } from '../src/vision/onnxFixture';
 import type { TrainingRun } from '../src/vision/training/serviceTypes';
@@ -15,7 +16,14 @@ export interface InspectionStudio {
 export async function openVisionInspection(app: App) {
   const { page } = app;
 
-  await loadFixtureRobot(page, 'arm-3dof');
+  await loadFixtureRobot(page, {
+    id: 'inspection-arm',
+    parts: [box('base', [0, 10, 0], [40, 20, 40], 100), box('link', [0, 50, 0], [10, 60, 10], 20)],
+    joints: [
+      joint({ id: 'hinge', link: ['base', 'link'], origin: [0, 20, 0], axis: [1, 0, 0], effortNm: 1, limb: 'arm' }),
+    ],
+    expect: { morphology: 'fixed', stand: 'n/a', walk: 'n/a' },
+  });
   await page.evaluate(
     async (input) => {
       const studio = (window as unknown as { __studio: InspectionStudio }).__studio;

@@ -23,10 +23,13 @@ it(
     const { page } = app;
     const { pane, dialog, before, saved } = await openVisionInspection(app);
 
+    const predictions = dialog.locator('[data-prediction]');
+
+    await expect.poll(() => predictions.count()).toBe(1);
     await dialog.getByRole('combobox', { name: 'Prediction overlay', exact: true }).selectOption('incumbent');
-    expect(await dialog.locator('[data-prediction]').count()).toBe(0);
+    await expect.poll(() => predictions.count()).toBe(0);
     await dialog.getByRole('combobox', { name: 'Prediction overlay', exact: true }).selectOption('candidate');
-    expect(await dialog.locator('[data-prediction]').count()).toBe(1);
+    await expect.poll(() => predictions.count()).toBe(1);
     expect(await dialog.textContent()).toContain(before.runs[0].report.modelHash);
     expect(await dialog.textContent()).toContain(before.runs[0].incumbentReport.modelHash);
     await followVisionSource(app);

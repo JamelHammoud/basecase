@@ -8,6 +8,7 @@ import { useLatestRef } from '../utils/useLatestRef';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { ScenePart } from '../types/robotics';
 import { workspaceTarget } from './armWorkspaceTarget';
+import { assertWorkspacePose } from './armWorkspacePose';
 
 interface Inspection {
   source: ReturnType<typeof workspaceSource>;
@@ -158,6 +159,8 @@ export function useArmWorkspace(core: WorkspaceCore) {
     setPreview(null);
 
     try {
+      assertWorkspacePose(core.posing.rig, core.posing.pose);
+
       const model = request.model ?? (await core.simTraining.sim.buildModel({ signal: controller.signal }));
 
       if (!current(request, token)) return;

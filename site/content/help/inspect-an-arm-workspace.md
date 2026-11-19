@@ -17,6 +17,8 @@ Find sampled tool positions for an existing arm and test a motion to one before 
 
 The arm must have a fixed base and powered revolute joints. You can't inspect an arm with moving obstacles, closed mechanisms or missing collision geometry.
 
+Whole-body pose offsets must be cleared first. For each robot with an offset, select a part and choose **Rest Pose** in [[⌘K]]. Nonzero joint angles are supported.
+
 1. On the canvas, select the arm's tool part.
 2. Press [[⌘K]].
 3. Choose **Inspect Workspace**.

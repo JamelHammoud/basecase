@@ -41,9 +41,7 @@ export function WorkspaceSection({ workspace }: { workspace: ArmWorkspace }) {
           />
         </FieldRow>
         {view.busy && <Spinner className="w-4 h-4" />}
-        {samples && (
-          <p data-testid="workspace-samples">{`${plural(count, 'position')} from ${plural(samples.checks, 'configuration')}`}</p>
-        )}
+        {samples && <p data-testid="workspace-samples">{plural(count, 'position')}</p>}
         {samples && <p>Sampled endpoints. Other positions are unknown.</p>}
         {count > 0 && (
           <FieldRow label="Sample">

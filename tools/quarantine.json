@@ -877,5 +877,13 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44474977845 exhausted the unchanged 15000 ms callback deadline on both Windows attempts, totaling 30681 ms, without identifying the failing operation. Exact-revision diagnostic 44477091304 passed in 7006.3338 ms on the same Windows image 20261116.315.1 with one worker, zero retries and quarantine off. Linux passed the failing revision in 1382 ms. Existing priority calibration owner #987 covers this command path separately from replay, rollback and Fix, including scene load, connection, ladder, palette delivery, capture state, disconnect and cleanup tracing and equal-load measurements before restoration. Other platforms and fast calibration pipelines remain active."
+  },
+  {
+    "file": "tools/fleet/adapter.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44495446798 exhausted the unchanged 10000 ms beforeAll deadline awaiting fleetFixture before either adapter assertion ran. Previous Windows Check 44474977845 passed both cases in 6246 ms with unchanged Fleet, fixture, PostgreSQL, publisher and unit configuration sources. Exact-revision Windows diagnostic 44496846595 passed setup and the publication assertion in a 9047 ms process with one worker, zero retries and quarantine off on the older image 20261103.298.1. Native cluster initialization, migrations and HTTP startup are not distinguished, and runner image contribution remains unresolved. Existing open priority shared fixture owner #1401 owns stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Whole-file filtering is required because setup precedes individual test filtering. Linux and macOS retain the authenticated TCP loopback, scoped publication, persistent disconnect and transport-refusal matrix. Windows retains publisher, authorization and listener unit coverage, which do not replace this complete integration. No deadline, retry or assertion changes."
   }
 ]

@@ -420,11 +420,11 @@
   },
   {
     "file": "e2e/operateCalibration.e2e.test.ts",
-    "test": "replays a measured joint, confirms rollback and offers calibration from Checks",
+    "test": "",
     "issue": 987,
     "until": "2026-11-28",
     "platform": "win32",
-    "reason": "Run 43687018679 exceeded the unchanged 15 s test budget on both Windows attempts without identifying a failing step. The cause is not established."
+    "reason": "Check 44495446798 failed the shared beforeAll while awaiting Test mode at line 92, before the already quarantined declaration ran. Last full green 44391437908 completed Windows setup with unchanged runtime and fixture sources. This expands existing owner #987 to whole-file filtering so setup is excluded too, without changing the 2026-11-28 expiry. The last completed stage was clicking the Test rung after reaching Set Up. Intent delivery, daemon mode, status propagation and observation remain unresolved. Exact-revision Windows diagnostic 44498289199 completed setup, then exhausted the already quarantined body deadline at 15119.6201 ms with one worker, zero retries and quarantine off. This distinguishes intermittent setup from the existing callback failure. Linux and macOS retain replay, confirmed rollback, measured badges, Servo models and direct calibration Fix. Windows retains fast fitting, replay, history, measured-joint, engineering-model and originating-unit action coverage, which does not replace the browser story. Require stage evidence, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations before restoration. No assertion, deadline or retry changes."
   },
   {
     "file": "e2e/caseTrails.e2e.test.ts",
@@ -885,5 +885,53 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44495446798 exhausted the unchanged 10000 ms beforeAll deadline awaiting fleetFixture before either adapter assertion ran. Previous Windows Check 44474977845 passed both cases in 6246 ms with unchanged Fleet, fixture, PostgreSQL, publisher and unit configuration sources. Exact-revision Windows diagnostic 44496846595 passed setup and the publication assertion in a 9047 ms process with one worker, zero retries and quarantine off on the older image 20261103.298.1. Native cluster initialization, migrations and HTTP startup are not distinguished, and runner image contribution remains unresolved. Existing open priority shared fixture owner #1401 owns stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Whole-file filtering is required because setup precedes individual test filtering. Linux and macOS retain the authenticated TCP loopback, scoped publication, persistent disconnect and transport-refusal matrix. Windows retains publisher, authorization and listener unit coverage, which do not replace this complete integration. No deadline, retry or assertion changes."
+  },
+  {
+    "file": "e2e/print.e2e.test.ts",
+    "test": "plates one coupon per fit with Print Fit Test from \u2318K, and leaves the scene as it was",
+    "issue": 1853,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Both Windows attempts in Check 44495446798 reached the final empty-console assertion with ERR_CONNECTION_REFUSED for the STS3215 mesh on the local bundle server. Last full green 44391437908 passed in 14465 ms with unchanged print and test sources. Same-revision diagnostic 44498263448 passed this declaration in 13709.1286 ms on Windows image 20261103.298.1 with one worker, zero retries and quarantine off. This confirms intermittent delivery without establishing a server-refusal cause. The server refusal cause remains unresolved. Existing priority owner #1853 coordinates the four paths and shared app. Require a demonstrated cause and fix and ten baseline and ten candidate equal-load Windows observations for each failed path with retries disabled before restoration. Linux and macOS retain these declarations. Windows retains Print panel, shortcut and backend-call assertions, print-placement browser coverage and fast coupon, label, packing, tracker and fleet pipelines. These do not replace the quarantined complete stories. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/print.e2e.test.ts",
+    "test": "debosses the guide letter into the tray\u2019s hidden floor, and Label parts off writes plain meshes",
+    "issue": 1853,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44495446798 first returned no omitted-label notes instead of the four expected entries, then failed on a retained mesh-request console error on retry. Last full green 44391437908 passed in 6740 ms with unchanged print, guide and test sources. Exact-revision diagnostic 44499134700 passed the isolated story in 32083.0393 ms on image 20261116.315.1 with one worker, zero retries and quarantine off. It does not reproduce the preceding shared-app history. Label generation, guide readiness and shared-app error contamination must be traced separately. Existing priority owner #1853 coordinates the four paths and shared app. Require a demonstrated cause and fix and ten baseline and ten candidate equal-load Windows observations for each failed path with retries disabled before restoration. Linux and macOS retain these declarations. Windows retains Print panel, shortcut and backend-call assertions, print-placement browser coverage and fast coupon, label, packing, tracker and fleet pipelines. These do not replace the quarantined complete stories. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/print.e2e.test.ts",
+    "test": "lays out plates on the CORE One\u2019s bed once it\u2019s added in Settings \u25b8 Printers",
+    "issue": 1853,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44495446798 first failed on the earlier retained mesh-request error, then found two matching Prusa descriptions instead of one on retry. Last full green 44391437908 passed in 3193 ms with unchanged printer and browser sources. Exact-revision diagnostic 44499137907 passed the isolated story in 11603.4913 ms on the same image 20261103.298.1 with one worker, zero retries and quarantine off. Shared printer state and retry isolation remain unresolved. Existing priority owner #1853 coordinates the four paths and shared app. Require a demonstrated cause and fix and ten baseline and ten candidate equal-load Windows observations for each failed path with retries disabled before restoration. Linux and macOS retain these declarations. Windows retains Print panel, shortcut and backend-call assertions, print-placement browser coverage and fast coupon, label, packing, tracker and fleet pipelines. These do not replace the quarantined complete stories. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/print.e2e.test.ts",
+    "test": "puts the base on plate 1 and gives two idle printers different plates with Start Next",
+    "issue": 1853,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44495446798 first failed on the earlier retained mesh-request error, then omitted base from its expected three-plate layout on retry. Last full green 44391437908 passed in 5155 ms with unchanged print and browser sources. Exact-revision diagnostic 44499140745 reached the expected three plates, then failed at line 397 with zero observed sends instead of one in 23505.5384 ms on the same image 20261103.298.1, one worker, zero retries and quarantine off. Original base eligibility and this later send-delivery failure are separate unresolved paths. Existing priority owner #1853 coordinates the four paths and shared app. Require a demonstrated cause and fix and ten baseline and ten candidate equal-load Windows observations for each failed path with retries disabled before restoration. Linux and macOS retain these declarations. Windows retains Print panel, shortcut and backend-call assertions, print-placement browser coverage and fast coupon, label, packing, tracker and fleet pipelines. These do not replace the quarantined complete stories. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/fitVariants.e2e.test.ts",
+    "test": "prepares a bearing comparison through Print Fit Test, exports its real plate, applies a value and undoes it",
+    "issue": 1854,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44495446798 prepared three coupons, inspected the exported 3MF and selected 22.1 mm, then exhausted the unchanged 30000 ms click deadline because Apply stayed disabled. Stale source and busy state are not distinguished. Last full green 44391437908 passed Windows in 16913 ms with unchanged browser, guard and preparation-hook sources. Same-revision diagnostic 44498284294 passed the complete story in 10977.1068 ms on Windows image 20261103.298.1, compared with 20261116.315.1 in the failed shard, with one worker, zero retries and quarantine off. This establishes a pass at the failed revision without identifying stale or busy state or an image component to pin. Priority owner #1854 owns stage tracing, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations before restoration. Linux and macOS retain the complete walkthrough. Windows retains the ten-interface geometry matrix, source guards, worker lifecycle, 3MF identity and parameter commit/history/save integration coverage, which do not replace candidate-selection and Apply delivery. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/buildCheck.e2e.test.ts",
+    "test": "applies the direct print-face Fix and refreshes the verdict",
+    "issue": 1855,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44495446798 saved the expected print.down but timed out awaiting a passing Strength row, then failed at the initial failing-row poll on retry. Attempts totaled 37138 ms and share browser and worker prototype state. The fixture introduced in 9ba78ef88 is newer than full green 44391437908, whose former real-solve walkthrough passed in 31529 ms, but the log does not establish a fixture, RPC or readiness cause. Reverting would restore longer polls and a 200-second declaration. Same-revision diagnostic 44498287095 also saved the face and timed out awaiting the passing row in 25339.5288 ms on Windows image 20261103.298.1, with one worker, zero retries and quarantine off. This reproduces verdict delivery failure without identifying its cause. Priority owner #1855 owns stage tracing, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations before restoration. Linux and macOS retain direct Fix and verdict coverage. Windows retains real engineeringStrength failure, blocker, suggested-face, passing-face and thicker-control solves plus the worker-fixture protocol test. These do not replace direct browser Fix delivery. No assertion, deadline or retry changes."
   }
 ]

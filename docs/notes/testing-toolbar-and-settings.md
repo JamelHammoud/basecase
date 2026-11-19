@@ -21,6 +21,16 @@ Existing `e2e/print.e2e.test.ts` covers opening Settings from Add Printer in Pri
 
 The circle version took 50 s in run 43642970706 (#864).
 
+## Delete Marks Undo
+
+Class: intermittent browser timing failure observed on Windows, with a state-dependent retry failure. [Check 44532657394](https://github.com/JamelHammoud/basecase/actions/runs/44532657394) failed `annotate marks > deletes every mark after asking, with Undo` at `a7426f512bb936297657647e212196d45e80b449`. All six Windows browser shards passed in [Check 44391437908](https://github.com/JamelHammoud/basecase/actions/runs/44391437908) at `d3ee63311358cc0494517acd42328e0bc22e06c8`. The mark test, `useToast.ts`, `useMarks.ts` and `markInput.ts` have no changes between those revisions. This evidence does not identify a breaking merge to revert or establish a Windows-specific application bug.
+
+The first attempt reached zero saved marks after confirmation. Playwright found a visible, enabled, stable Undo button, then reported it detached while scrolling into view. `useToast.ts` schedules action-toast dismissal after 5,000 ms. The test polled scene state before attempting that time-limited action, leaving the click dependent on runner scheduling. The existing retry then failed earlier: the shared page retained zero marks from the completed deletion, and drawing one stroke produced one record while setup expected two. It never reached confirmation or Undo on that attempt. The job's later Vite shutdown warning follows these assertion failures and does not explain them.
+
+The repaired case installs the browser clock before reloading, then loads its own two saved mark records through `__studio.load`. It can run independently of the preceding drawing tests and resets its preconditions on every invocation. Once the confirmation is present, it pauses the browser clock before Delete, checks the empty saved scene, clicks Undo on the Deleted 2 marks toast, and compares every restored record with the fixture. The clock resumes in `finally`. Drawing, label focus, recoloring, capture, selection and dragging retain their existing browser cases. No application timer, timeout, retry, assertion deadline or quarantine changes.
+
+Local verification uses the changed-file check only. Windows execution and a post-change full-suite verdict remain unobserved in this session. No repeated flake-rate measurements were run. The repair follows the log and timer code, and does not claim a measured rate improvement or test action-toast expiry itself.
+
 ## Training computer settings
 
 The bridge test drops an identity path and extra credential fields from a malformed status reply. The route test checks configure and deselect through both transports. Static markup checks field names and the masked identity input. These tests do not establish SSH reachability, host-key verification or Forge execution. Those belong to the remote transport tests.

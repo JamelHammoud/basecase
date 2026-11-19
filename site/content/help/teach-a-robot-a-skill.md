@@ -48,7 +48,7 @@ You can also type `/train` and the goal straight into the agent's box. To stop t
 
 ## How Basecase trains it
 
-Basecase starts with the cheapest method that could work. For a fixed-base arm, it plans a path around fixed Case obstacles without training a policy. Steps and limits are in [Plan an arm reach](/help/plan-an-arm-reach). Walking somewhere trains a policy with reinforcement learning, and Basecase tries several rewards until one passes. Whatever the method, a skill only counts once it passes [Arena](/help/arena).
+Basecase starts with the cheapest method that could work. For example, Basecase plans a reach to a point with inverse kinematics, so it needs no training. Walking somewhere trains a policy with reinforcement learning, and Basecase tries several rewards until one passes. Whatever the method, a skill only counts once it passes [Arena](/help/arena).
 
 ## When nothing passes
 

@@ -129,8 +129,6 @@ const EXPECTED_NAMES = [
   'simTool',
   'sketchPath',
   'sketchSupportMeasurements',
-  'skillBodyPosition',
-  'stageSkillCase',
   'stlBase64',
   'storedTry',
   'stressBudget',
@@ -150,7 +148,6 @@ const EXPECTED_NAMES = [
   'visionBackendState',
   'visionConditionImport',
   'visionTraining',
-  'workspaceInspection',
   'worldAt',
   'worldState',
 ];

@@ -26,14 +26,6 @@ const isFormFocus = (el: Element | null) => isTextEntry(el) || el instanceof HTM
 
 const keysGoElsewhere = () => isFormFocus(document.activeElement) || isModalOpen();
 
-function closeArmWorkspace(actions: WorkspaceActions) {
-  if (!actions.workspace?.view) return false;
-
-  actions.workspace.close();
-
-  return true;
-}
-
 function editKeys({ core, actions, ui }: WorkspaceKeyDeps): ShortcutHandlers {
   const { tool, undo, redo, selection } = core;
   const { edits, ops } = actions;
@@ -122,8 +114,6 @@ function viewKeys({ core, actions, ui }: WorkspaceKeyDeps): ShortcutHandlers {
   };
 
   const deselect = () => {
-    if (closeArmWorkspace(actions)) return;
-
     if (core.sketching.cancelSupport()) return;
 
     if (core.cableRoutes?.net) {

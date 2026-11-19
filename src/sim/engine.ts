@@ -1,7 +1,7 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import type { RobotAnimation, RobotPoseState } from '../types/robotics';
 import { loopInitial } from './loopInitial';
-import { ControlTargets, jointQposOf } from './controlValues';
+import { controlValues } from './controlValues';
 import { primeCtrlHistory } from './ctrlHistory';
 import * as THREE from 'three';
 import { createDrive, type DriveCommand, type DriveHand, type DriveLoop, type DriveSetup } from './drive';
@@ -32,6 +32,8 @@ export type { JointStat, RobotStat, SimStats } from './engineStats';
 
 const D2R = Math.PI / 180;
 
+const jointQposOf = (type: 'revolute' | 'prismatic', v: number) => (type === 'revolute' ? v * D2R : v / 1000);
+
 export class SimEngine {
   readonly model: MjModel;
   readonly data: MjData;
@@ -50,7 +52,6 @@ export class SimEngine {
     startXY: [number, number];
   }>;
   private controller: Controller = { kind: 'hold' };
-  private targets: ControlTargets;
   private drive: DriveLoop | null = null;
   private arms: PoseDrive | null = null;
   private route: RouteRunner | null = null;
@@ -75,7 +76,6 @@ export class SimEngine {
     this.model = mj.MjModel.from_xml_string(sim.xml);
     this.data = new mj.MjData(this.model);
     this.dt = this.model.opt.timestep;
-    this.targets = new ControlTargets(sim, this.dt);
     this.grab = new GrabForce(this.model, this.data, this.dt);
     this.pushes = new PushForce(this.data);
     this.scanner = Scanner.create(mj, this.model, this.data, sim.scans);
@@ -197,7 +197,6 @@ export class SimEngine {
 
   setController(c: Controller) {
     this.controller = c;
-    this.targets.set(c);
     this.given.clear();
     this.policyState?.eyes?.dispose();
     this.policyState = null;
@@ -279,6 +278,14 @@ export class SimEngine {
     if (r) this.pushes.start(r.rootBody, force, { ...timing, tilt: () => this.tiltOf(r) });
   }
 
+  private targetFor(i: number, values: Record<string, number> | undefined): number {
+    const j = this.sim.joints[i];
+
+    if (j.drive === 'velocity') return 0;
+
+    return jointQposOf(j.type, values?.[j.id] ?? this.sim.initial.values[j.id] ?? 0);
+  }
+
   setFault(jointId: string, kind: FaultKind | null) {
     const i = this.sim.joints.findIndex((j) => j.id === jointId);
     const j = this.sim.joints[i];
@@ -294,7 +301,7 @@ export class SimEngine {
     return fault ? { fault } : {};
   }
 
-  private applyControl(ctrl: Float64Array) {
+  private applyControl() {
     const { data } = this;
     const c = this.controller;
 
@@ -306,7 +313,11 @@ export class SimEngine {
       return;
     }
 
-    this.targets.apply(c, data.time, ctrl);
+    const values = controlValues(c, data.time);
+
+    this.sim.joints.forEach((j, i) => {
+      if (j.actuator >= 0) data.ctrl[j.actuator] = this.targetFor(i, values);
+    });
 
     const ps = this.policyState;
     const pc = routePolicy(c);
@@ -323,7 +334,7 @@ export class SimEngine {
 
     this.sim.joints.forEach((j, i) => {
       if (j.actuator >= 0 && j.drive === 'position' && values?.[j.id] !== undefined)
-        this.data.ctrl[j.actuator] = this.targets.targetFor(i, values);
+        this.data.ctrl[j.actuator] = this.targetFor(i, values);
     });
   }
 
@@ -333,7 +344,7 @@ export class SimEngine {
     this.sim.joints.forEach((j, i) => {
       if (j.actuator < 0) return;
 
-      this.data.ctrl[j.actuator] = j.drive === 'velocity' ? (wheels?.[j.id] ?? 0) : this.targets.targetFor(i, values);
+      this.data.ctrl[j.actuator] = j.drive === 'velocity' ? (wheels?.[j.id] ?? 0) : this.targetFor(i, values);
     });
   }
 
@@ -350,18 +361,12 @@ export class SimEngine {
   step(seconds: number, afterStep?: () => void) {
     const { mj, model, data } = this;
     const steps = Math.max(1, Math.round(seconds / this.dt));
-    const n = this.sim.joints.length;
-    let ctrl = data.ctrl;
-    let force = data.actuator_force;
+    const { joints } = this.sim;
+    const n = joints.length;
 
     for (let s = 0; s < steps; s++) {
-      if (!ctrl.byteLength && n) ctrl = data.ctrl;
-
-      this.applyControl(ctrl);
-
-      if (!ctrl.byteLength && n) ctrl = data.ctrl;
-
-      this.faults.apply(ctrl);
+      this.applyControl();
+      this.faults.apply(data.ctrl);
       this.pushes.apply();
       this.grab.apply();
       mj.mj_step(model, data);
@@ -369,23 +374,18 @@ export class SimEngine {
       this.scanner?.tick();
       this.stepHook?.();
 
-      if (!force.byteLength && n) force = data.actuator_force;
+      const force = data.actuator_force;
 
-      this.recordForces(force);
+      for (let i = 0; i < n; i++) {
+        const actuator = joints[i].actuator;
+        const u = actuator >= 0 ? Math.abs(force[actuator]) / joints[i].effort : 0;
+
+        if (u > this.peaks[i]) this.peaks[i] = u;
+
+        if (u >= 0.98) this.saturated[i] += this.dt;
+      }
+
       this.checkFalls();
-    }
-  }
-
-  private recordForces(force: Float64Array) {
-    const { joints } = this.sim;
-
-    for (let i = 0; i < joints.length; i++) {
-      const actuator = joints[i].actuator;
-      const u = actuator >= 0 ? Math.abs(force[actuator]) / joints[i].effort : 0;
-
-      if (u > this.peaks[i]) this.peaks[i] = u;
-
-      if (u >= 0.98) this.saturated[i] += this.dt;
     }
   }
 

@@ -1,8 +1,6 @@
 import { proveSkill } from './prove';
 import { lengthLabel } from '../utils/size';
-import { planReach, reachPlanKey } from './raceIk';
-import { DESIGN_CHANGED } from './skillRecovery';
-import { checkArmMotion } from './armMotionTrial';
+import { planReach } from './raceIk';
 import { rewardSearch } from './raceRewardSearch';
 import { playMove, trackMotion } from './raceTracking';
 import {
@@ -33,9 +31,9 @@ const unbuilt = (method: Method, clock: RaceClock): SolveResult => ({
 
 async function ikPlan(input: RaceInput, clock: RaceClock): Promise<SolveResult> {
   const { mj, task } = input;
-  const fail = (reason: string, terminal = false): SolveResult => ({
+  const fail = (reason: string): SolveResult => ({
     skill: null,
-    attempt: { method: 'ik-or-motion-plan', passed: false, cost: elapsedOf(clock), reason, candidates: [], terminal },
+    attempt: { method: 'ik-or-motion-plan', passed: false, cost: elapsedOf(clock), reason, candidates: [] },
   });
 
   if (task.goal.kind === 'track') return playMove(input, clock);
@@ -45,30 +43,7 @@ async function ikPlan(input: RaceInput, clock: RaceClock): Promise<SolveResult> 
 
   if (task.goal.kind === 'open') return fail('IK plans poses for reach goals, and this task has no point to reach.');
 
-  const context = {
-    ...task.goal,
-    horizonS: task.environment.horizonS,
-    start: task.environment.reset.pose,
-    seed: input.seed,
-    stop: () => input.signal?.aborted ?? false,
-  };
-  const cached = task.reachPlan;
-
-  if (cached && cached.key !== reachPlanKey(task.model, context)) return fail(DESIGN_CHANGED, true);
-
-  const plan = cached?.seed === (input.seed ?? 1812) ? cached : await planReach(mj, task.model, context);
-
-  if (!plan.controller || input.signal?.aborted) return fail(plan.reason, true);
-
-  const checked = await checkArmMotion(mj, task.model, {
-    controller: plan.controller,
-    environment: task.environment,
-    parts: [task.goal.part],
-    stop: () => input.signal?.aborted ?? false,
-  });
-
-  if (!checked.controller) return fail(checked.reason, true);
-
+  const plan = planReach(mj, task.model, { ...task.goal, horizonS: task.environment.horizonS });
   const proof = await proveSkill({
     mj,
     model: task.model,

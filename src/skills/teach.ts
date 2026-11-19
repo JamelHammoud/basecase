@@ -10,7 +10,7 @@ import { hashOf } from './hash';
 import { kitRobot } from './kitModel';
 import { proveSkill } from './prove';
 import { runSolverRace, type RaceGoal, type RaceOutcome } from './race';
-import { planReach, reachCandidate, type ReachCandidate } from './raceIk';
+import { planReach } from './raceIk';
 import { judgeRollout, type Rollout } from './rollout';
 import { routeTask, type Route, type TaskAnalysis } from './router';
 import { draftAnalysis, draftEnvironment, draftGoal, draftProblems, type DraftInput } from './teachEnvironment';
@@ -19,7 +19,6 @@ import { duration } from '../utils/duration';
 export type { DraftInput } from './teachEnvironment';
 
 export interface SkillDraft {
-  reachPlan?: ReachCandidate;
   id: string;
   name: string;
   request: string;
@@ -46,25 +45,17 @@ interface Sim {
   model: SimModel;
 }
 
-async function rolloutsFor(
-  sim: Sim,
-  draft: SkillDraft,
-): Promise<{ rollouts: Rollout[]; warning: string | null; reachPlan?: ReachCandidate }> {
+async function rolloutsFor(sim: Sim, draft: SkillDraft): Promise<Rollout[]> {
   const { mj, model } = sim;
   const environment = draft.environment;
   const still = await judgeRollout({ mj, model, environment, controller: { kind: 'hold' }, label: 'Holding still' });
 
-  if (draft.goal.kind !== 'reach') return { rollouts: [still], warning: null };
+  if (draft.goal.kind !== 'reach') return [still];
 
-  const context = { ...draft.goal, horizonS: environment.horizonS, start: environment.reset.pose };
-  const plan = await planReach(mj, model, context);
-  const reachPlan = reachCandidate(model, context, plan);
-
-  if (!plan.controller) return { rollouts: [still], warning: plan.reason, reachPlan };
-
+  const plan = planReach(mj, model, { ...draft.goal, horizonS: environment.horizonS });
   const planned = await judgeRollout({ mj, model, environment, controller: plan.controller, label: 'Planned reach' });
 
-  return { rollouts: [still, planned], warning: null, reachPlan };
+  return [still, planned];
 }
 
 function standReport(sim: Sim) {
@@ -90,10 +81,9 @@ export async function draftSkill(input: Sim & { design: string; request: DraftIn
   const analysis = draftAnalysis(model, request);
   const body = { name: request.name.trim(), request: request.request, design, goal, environment, analysis };
   const draft: SkillDraft = { id: hashOf(body), ...body, rewards: request.rewards?.length ? request.rewards : null };
-  const { rollouts, warning, reachPlan } = await rolloutsFor(input, draft);
+  const rollouts = await rolloutsFor(input, draft);
   const stand = standReport(input);
   const warnings = [
-    ...(warning ? [warning] : []),
     ...(rollouts[0].passed
       ? ['Holding still already passes, so this contract can’t tell the skill from doing nothing.']
       : []),
@@ -103,7 +93,7 @@ export async function draftSkill(input: Sim & { design: string; request: DraftIn
   return {
     ok: true,
     report: {
-      draft: { ...draft, ...(reachPlan ? { reachPlan } : {}) },
+      draft,
       words: contractWords(environment.contract),
       route: routeTask(analysis),
       rollouts,
@@ -135,7 +125,6 @@ export function raceDraft(
       environment: draft.environment,
       analysis: draft.analysis,
       goal: draft.goal,
-      reachPlan: draft.reachPlan,
     },
     forge: input.forge,
     save: input.save,

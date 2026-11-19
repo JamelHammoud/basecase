@@ -226,81 +226,18 @@ Only this exact probe is quarantined on Windows through 28 November 2026 under o
 
 Restoration requires tracing lookup, native spawn, input, output and completion, fixing the established cause and ten baseline and ten candidate Windows observations at equal load with retries disabled. Preserve shell-free native executable selection and all transport boundary assertions. Do not increase deadlines, add retries or assume that a faster mock proves installed OpenSSH compatibility. This repair changes no transport code or assertion. Source logs and collected manifests, reports and cleanup logs are referenced in `scratch/task-handoff.json`.
 
+## Hosted arm-planning rollback
 
-## Obstacle-aware arm planning
+[Check 44474977845](https://github.com/JamelHammoud/basecase/actions/runs/44474977845) at `1e4b6bf99` reported a Linux prompt callback of 8,695 ms against the existing 5,000 ms deadline. Exact-revision diagnostic 44476094277 reproduced it at 7,760.85 ms with one worker and retries disabled. Windows validation alone took 6,230.72 to 8,852.90 ms across the ten generated positive cases. Both rotated fixtures and the prompt callback also exceeded their deadlines. These are reproduced regressions, not evidence for flaky-test quarantine.
 
-Implementation: [Skills](../guide/skills.md#obstacle-aware-arm-candidates). Comparative work, timing, memory and cancellation observations are in [performance evidence](performance-skills.md#obstacle-aware-arm-planning).
+The regression arrived in `5184bd019`. The following `1e4b6bf99` workspace feature reused its planner, collision provenance, physical validation and prepared controls. Reverting the planner alone would remove imports and simulation contracts needed by workspace inspection. This repair reverses both feature commits, including their UI, browser walkthroughs, help pages, announcements and screenshots. All source under `src/` matches `5184bd019^`. It removes the fourteen proposed planning quarantines rather than suppressing the regression. The two independently reproduced intermittent Windows replay and calibration cases keep their separate owners and expiries.
 
-### Production matrix and negative controls
+The original direct-IK, prompt motion, move, runtime-retention, simulation and Arena coverage remains. The removed planning and workspace acceptance declarations describe the withdrawn capabilities. This is a feature rollback, not a claim that a slower implementation was optimized or that its acceptance matrix passed on Windows.
 
-`armPlanningMatrix.test.ts` generates divider, column, shelf, cabinet, bins, parked-arm, base-fold, long-tool, asymmetric and narrow-passage requests through the production draft and solver race. Each positive case runs eight real development trials and all 96 Arena tries, saves ordinary Skill JSON and reads it through the bundle reader. All ten generated requests use seven seconds, a 5 mm contract tolerance, a 0.5-second dwell within the final two seconds and a one-second endpoint hold. The geometry, initial and target configurations, limits, physical timesteps and five-second test deadline are unchanged from the initial ten-second fixtures. The shorter requests require faster tracking. Ten-second prompt, rotated-fixture, browser and native replay cases remain.
+Before rollback, two local named-file checks passed all nineteen matrix declarations in 20.22 and 20.25 seconds of Vitest time. Those macOS observations do not contradict the hosted failures. A further named-file run sampled validation with Node's CPU profiler. Its ten-second test-process sample spent 1,107 ms directly in `mj_collision`, 432 ms in `mj_rne` and 419 ms in `mj_kinematics1`, with many other physics routines consuming the remaining samples. It did not establish a JavaScript optimization sufficient to meet the Windows deadline. Local profiling is diagnostic evidence, not a cross-platform speed or failure-rate comparison.
 
-A separate uninflated MuJoCo engine samples 501 configurations per animation segment, including endpoints. It checks finite commands, authored limits, increasing times, no penetrating contacts and unchanged parked controls. Physical development trials inspect actual coordinates after every integration step. A 1,001-state comparison checks clearance certificates against fresh collision queries, including parked descendants, forbidden contact, jumps and nonfinite input.
+The restored Routine recovery test retains its persistent-failure and identity assertions on every platform. It uses keyboard activation for Reload to avoid the automatic pointer-scroll stage shown in the Windows failure. [UI evidence](ui.md#windows-routine-reload-actionability) records that distinct repair and its unmeasured Windows limit. CI owns browser and hosted-platform execution.
 
-Independent negative controls cover enclosed targets, colliding starts, insufficient clearance, forbidden self-contact, joint-limit obstruction and inadequate actuator tracking. They assert no retained skill and no false geometric-impossibility claim. The weak-actuator control keeps a clear geometric candidate while physical validation refuses all eight draws.
+The final rollback selection passed formatting, lint, documentation, 344 site pages, quarantine validation and TypeScript. Its related-test run passed 2,181 tests, with one existing skip and one audit failure. The browser declaration audit read a deleted file still present in the unstaged Git index. Staging the two deleted browser declarations made its focused named-file check pass its one test without changing the audit. Together the checks passed all 2,182 active selected tests. Logs are retained at `scratch/revision-check.log`, `scratch/audit-check.log` and `scratch/help-check.log`. No local browser suite or full-suite command ran. These local results do not establish Windows execution results.
 
-`configurationSearch.test.ts` covers seeds, wrapping, direct paths, bounded exhaustion, cancellation and timed corner shortening. Its timing case independently checks 1,001 points per returned transition. `armConfiguration.test.ts` covers chain ancestry, parked branches, authored contact exclusions, source provenance and unsupported models. `armPlanningLifecycle.test.ts` checks deterministic endpoint-to-controller results and Stop or edits during active production search. `runtimeRace.test.ts` checks save, retention and stale-result boundaries.
-
-### Reference physics and browser entry
-
-`armMotionReplay.test.ts` replays searched divider and rotated-column controllers in C MuJoCo and WASM. Contacts must match and state drift remains below the existing 1e-6 tolerance. Both replays retain ten-second controllers.
-
-`e2e/armPlanning.e2e.test.ts` requests an obstructed reach through the existing Skills prompt, hands off through recorded agent tool calls with real planning and Arena, reads the result row and presses Try. It observes the body poses used by the renderer, checks the declared target around the divider, saves and reopens the ordinary scene and exercises a bounded refusal with empty app errors. It changes no recording paths or quarantine entries.
-
-Review found that the target wait and the 25 ms observation timer read poses independently. The wait could succeed before the timer recorded arrival, leaving the final sample outside the unchanged 5 mm assertion. The successful target callback now records that pose and clears the timer before returning. This removes that scheduling race without changing the target, tolerance, path assertions or deadline. Browser execution of this correction belongs to CI.
-
-The current-main browser capture passed in 41.38 seconds through reach, refusal and save/reopen using the harness's development-server fallback. Screenshots were saved outside the served public tree until the browser closed, preventing capture writes from triggering a development reload. Source and result are `scratch/arm-capture.test.ts` and `scratch/arm-capture-current-main.log`. Navigation observations are in `scratch/arm-capture-network.json`. The final source capture passed the same complete workflow in 41.07 seconds, recorded in `scratch/arm-capture-final-acceptance.log`. Its app error list was empty. The development harness printed a two-server teardown warning and exited with status 0, leaving no capture server running.
-
-### Normal-concurrency acceptance
-
-The first complete related selection after timed corner refinement and seven-second generated requests passed formatting, lint, docs, all 346 site pages, types and 2,045 tests. One existing file and test were skipped. The run used normal concurrency and unchanged five-second test deadlines across 314 selected files. Vitest took 43.90 seconds. Evidence is `scratch/check-empty-contacts-full.log`. The final bounded local-cost implementation then passed the same 2,045 tests at normal concurrency in 44.04 seconds, again with one existing skip. Its exact log is `scratch/check-final-acceptance.log`.
-
-The six-second probe honestly refused four requests at the existing command-speed bound. The seven-second matrix retains every geometric, tracking, dwell, trial-count and retention assertion. It does not claim a speedup for the original ten-second computational workload. No timeout, retry, worker override, quarantine or merge gate was added.
-
-### Earlier failure evidence
-
-Closed attempt #1837 passed 2,029 related tests with one local worker but still exceeded five-second shelf and cabinet deadlines under normal concurrency. That serial pass did not establish steady acceptance. Later ten-second retained-work selections also exceeded deadlines. On main at `23297fb72`, shelf took 5,253 ms, cabinet 7,062 ms and bins 5,889 ms while 2,041 other tests passed. Logs include `scratch/check-current-main.log`, `scratch/check-solver-all.log` and `scratch/check-final.log`.
-
-A general native-box emission experiment caused existing rover Push in Block and league replay failures without resolving arm deadlines. A narrower fixed-robot variant passed complete inertia-tensor and contact comparisons, but no collider change was retained. Exploratory sources are under `scratch/exact-box-prototype/`. Logs include `scratch/check-exact-box-all.log`, `scratch/check-box-geometry-final.log` and `scratch/check-fixed-box-geometry.log`.
-
-An earlier browser capture failed during initial navigation at the unchanged 30-second harness deadline and exercised no feature actions. Its log is `scratch/arm-capture-reopen.log`. The later current-main capture above completed those actions. A separate earlier broad run reported a V8 worker SIGTRAP in Routine handoff coverage. Neither observation changed deadlines or quarantine policy.
-
-## Arm workspace inspection
-
-The workspace acceptance matrix uses real WASM MuJoCo and ordinary forward kinematics on ten generated arms. Negative inputs include missing collision provenance, unresolved compiled joint identities, a disconnected target part, floating bases, moving-world metadata, forbidden self-contact, intervening geometry and exhausted budgets. `ArmConfiguration` now refuses a declared joint name absent from the compiled model instead of silently omitting that coordinate. Existing valid planner inputs keep their original eligibility and search limits.
-
-`armWorkspaceSession.test.ts` makes a worker boundary return after cancellation and replacement. It checks the abort signal and rejects both obsolete and disposed replies. The workspace hook cancels preparation and sampling on immutable source changes, compares request generations after both asynchronous stages, hides results during the render that replaces their source and restores the current pose during cleanup. Tool-point and sample-budget edits start new generations. The sampler releases its engine and message channel in `finally`, and the existing Skills client terminates the worker on completion or abort.
-
-`armWorkspaceTarget.test.ts` exercises the production Skills job dispatcher, a found motion and the existing bounded timing refusal. It also prepares a move environment for the second arm without reordering the model or changing parked values, and refuses missing geometry provenance before move judging or retention. Fixed-arm move playback uses the existing collision-aware development trials before the unchanged Arena. The selected sample supplies a supporting configuration, not a reachability or retained-skill verdict.
-
-The final local named-file check passed 684 tests across 115 selected files, including the original arm-planning, feasibility and native replay suites. Formatting, lint, types, documentation and all 348 site pages passed in that same check. No full suite or regular e2e command ran locally. Linux and Windows browser and portable checks remain CI work, rather than local measurements.
-
-## Hosted arm-planning callback deadlines
-
-[Check 44474977845](https://github.com/JamelHammoud/basecase/actions/runs/44474977845) at `1e4b6bf9963a72b2c2f1625465453f1c4659cac9` reported the prompt solver callback in `armPlanningMatrix.test.ts` at 8,695 ms against its unchanged 5,000 ms deadline on Linux. The ten generated reaches, both rotations and six independent negative controls passed there. Exact-revision [Linux diagnostic 44476094277](https://github.com/JamelHammoud/basecase/actions/runs/44476094277) reproduced the prompt timeout at 7,760.851263 ms with one worker, zero retries and quarantine off. Both used image `20261111.196.1`. Ticket `d2081561-690a-47f2-8c37-b9acf53758ac` retains the verified manifest, test output and cleanup evidence. The diagnostic process took 9,531 ms and its job took about 1.067 elapsed minutes including preparation. This is one reproduction, not a flake-rate measurement.
-
-The Windows second unit shard completed after the initial failure brief and added thirteen callback deadline failures in that file on image `20261103.298.1`:
-
-| Declaration | Reported duration, ms |
-| --- | ---: |
-| divider | 7,665 |
-| column | 6,825 |
-| shelf | 7,278 |
-| cabinet | 7,979 |
-| bins | 6,991 |
-| parked-arm | 9,159 |
-| base-fold | 7,746 |
-| long-tool | 7,714 |
-| asymmetric | 7,167 |
-| narrow-passage | 8,633 |
-| rotated 37 degrees | 9,818 |
-| rotated -71 degrees | 9,575 |
-| prompt solver | 17,674 |
-
-The generated callbacks reached their post-validation measurement output and completed the geometry, saved-bundle and retention assertions without a reported assertion failure. Their `raceDraft` validation alone took 6,230.7241 to 8,852.8971 ms, beyond the callback budget. Drafting took 188.9609 to 976.6946 ms and independent inspection took 14.1206 to 46.0329 ms. The stage between draft and inspection is established as expensive, but the existing markers do not separate physical development trials from Arena. Prompt and rotated cases lack internal markers. Their callbacks establish entry and deadline expiry, not a stalled internal stage.
-
-Classification is a hosted deadline regression introduced by `5184bd019`, which added these declarations after last full green [Check 44391437908](https://github.com/JamelHammoud/basecase/actions/runs/44391437908) at `d3ee63311358cc0494517acd42328e0bc22e06c8`. The Linux prompt reproduced with one worker, so intermittency is not established. No environment change is established to pin. A reverse-application check of the introducing merge fails in `configurationSearch.ts`, `armConfiguration.ts`, the Skills guide and its testing and performance notes after the workspace feature's edits. A clean revert is unavailable. Product planner, physics and acceptance changes are not justified by a callback timeout alone.
-
-Priority repair [#1848](https://github.com/JamelHammoud/basecase/issues/1848) owns the ten generated reaches, both rotations and prompt solver on Windows, and only the prompt solver on Linux, quarantined through 28 November 2026. Windows retains all six independent negative controls. Linux retains eighteen of nineteen declarations. macOS retains all nineteen. Existing configuration search, collision ancestry, cancellation, native arm replay, runtime retention and browser tests remain active on their existing platforms. These checks do not replace the missing integrated positive observations.
-
-The owner must distinguish endpoint compensation, bounded search, eight guarded physical trials, Arena, prompt confidence evaluation, persistence and cleanup. Restoration requires a demonstrated fix and at least ten baseline and ten candidate observations at equal load on each affected platform and path, with retries disabled. Preserve all ten layouts, both rotations, prompt dispatch, seven-second generated and ten-second prompt/rotated trajectories, eight physical draws, all 96 Arena tries, 5 mm tolerance, dwell, bundle assertions and collision inspections. This repair changes no assertion, deadline, retry, worker policy or product solver. Full job logs, the failed reverse-application check and diagnostic evidence references are retained in the task handoff.
+Preflight requested review of eighteen unchanged help articles because their `covers` lists include shared menus, Pose, the gizmo, runtime or engine files touched by the rollback. Each article still matches the retained paths. All eighteen articles and all `src/` files match the pre-feature revision. The menu changes remove only workspace commands, the Pose and gizmo changes remove only inspection state, and the runtime changes restore earlier teaching and execution paths. No unrelated article edit is needed. The machine notices remain in `scratch/preflight.json` as a record of that review, not as unaddressed content defects.

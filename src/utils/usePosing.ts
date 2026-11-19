@@ -46,7 +46,6 @@ export interface Posing {
   setJointValue: (id: string, value: number) => void;
   setPose: (next: RobotPoseState | null) => void;
   restorePose: (next: RobotPoseState | undefined) => void;
-  previewPose: (next: RobotPoseState) => void;
   onPoseJoint: (id: string, delta: number, phase: 'start' | 'move' | 'end') => void;
   savePose: (name: string) => RobotPose;
   applySavedPose: (id: string) => void;
@@ -190,7 +189,6 @@ export function usePosing({
     pause,
     scrub,
     pointOf,
-    previewPose: preview,
   };
 }
 

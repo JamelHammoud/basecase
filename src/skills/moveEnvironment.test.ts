@@ -119,7 +119,7 @@ describe('a move built from a Pose-tab animation', () => {
     expect(routeTask(moveAnalysis(fixtureModel('arm-3dof'))).method).toBe('ik-or-motion-plan');
   });
 
-  it('lists only moves that match a supported robot', () => {
+  it('lists moves only for legged robots', () => {
     expect(moveAnimations(quad, [quadSit()]).map((a) => a.name)).toEqual(['Sit']);
     expect(moveAnimations(fixtureModel('arm-3dof'), [quadSit()])).toEqual([]);
   });

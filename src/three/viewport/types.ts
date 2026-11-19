@@ -1,5 +1,4 @@
 import type { CableRouteView } from './cableRouteLayer';
-import type { WorkspaceView } from './workspaceLayer';
 import type { CaseTrails } from './caseTrails';
 import type { CameraSpec, SilhouetteShot } from './fitCapture';
 import type { ImportedWorldState, ImportedWorldView } from './importedWorld';
@@ -163,7 +162,6 @@ export interface ViewportProps {
   onAxisPick?: (hit: AxisPickHit | null, click: boolean) => void;
   buildStep?: BuildStepView | null;
   cableRoute?: CableRouteView | null;
-  workspace?: WorkspaceView | null;
   skeleton?: SkeletonView | null;
   onSkeletonDrag?: (drag: SkeletonDragEvent) => void;
   onSkeletonPick?: (id: string, at: { x: number; y: number }) => void;

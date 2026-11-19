@@ -89,12 +89,7 @@ function sharedEntries(inputs: ContextInputs) {
 }
 
 function armItems(inputs: ContextInputs): ContextMenuEntry[] {
-  const actions = selectionActions(inputs);
-
-  return [
-    ...(inputs.actions.arm.canSize ? [menuEntry(actions.sizeArm)] : []),
-    ...(inputs.actions.workspace.canInspect ? [menuEntry(actions.inspectWorkspace)] : []),
-  ];
+  return inputs.actions.arm.canSize ? [menuEntry(selectionActions(inputs).sizeArm)] : [];
 }
 
 function wrapItems(inputs: ContextInputs): ContextMenuEntry[] {

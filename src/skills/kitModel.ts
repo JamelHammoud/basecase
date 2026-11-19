@@ -19,8 +19,8 @@ const LEGGED_SPEED = 0.2;
 const TWO_LEGGED_SPEED = 0.15;
 const BACK_SHARE = 0.5;
 
-export function kitRobot(model: SimModel, key?: string): KitRobot {
-  const robot = key ? model.robots.find((r) => r.key === key) : model.robots[0];
+export function kitRobot(model: SimModel): KitRobot {
+  const robot = model.robots[0];
 
   if (!robot) throw new Error('The Motor Kit needs a robot with joints.');
 
@@ -33,8 +33,8 @@ function escaped(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function rootHeight(model: SimModel, robot?: string): number {
-  const { key, root } = kitRobot(model, robot);
+export function rootHeight(model: SimModel): number {
+  const { key, root } = kitRobot(model);
   const at = new RegExp(`<body\\b[^>]*\\bname="${escaped(root)}"[^>]*\\bpos="([^"]*)"`).exec(model.xml);
   const z = Number(at?.[1].trim().split(/\s+/)[2] ?? NaN);
 

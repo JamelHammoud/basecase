@@ -11,7 +11,6 @@ import { moveSchedule } from './moveSchedule';
 import { proveSkill } from './prove';
 import { elapsedOf, type RaceClock, type RaceInput, type SolveResult } from './raceTypes';
 import { seedDevelopment } from './seedDevelopment';
-import { fixedMoveProblem } from './moveArmValidation';
 
 const SEED_SPAN = 1_000_000;
 
@@ -25,10 +24,6 @@ export async function playMove(input: RaceInput, clock: RaceClock): Promise<Solv
   const { mj, task } = input;
 
   if (task.goal.kind !== 'track') return failed(clock, 'ik-or-motion-plan', 'This task has no animation to play.');
-
-  const problem = await fixedMoveProblem(input);
-
-  if (problem) return failed(clock, 'ik-or-motion-plan', problem);
 
   const proof = await proveSkill({
     mj,

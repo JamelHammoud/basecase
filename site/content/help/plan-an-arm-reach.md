@@ -34,10 +34,4 @@ Start with the arm and its Case open. You can’t plan a reach with moving obsta
 
 ![The arm reaches the other side of the divider in simulation](/help/plan-an-arm-reach/reached.png)
 
-A clear endpoint doesn’t prove that the arm can get there. The planner checks intermediate configurations and transitions, then tests the candidate path in physical simulation. You need Arena to retain the skill.
-
-The planner has a fixed search budget. If it reports that it found no motion within that budget, a path may exist.
-
-For an unobstructed reach, the planner keeps the direct path. You can use the same saved animation format and **Try** control for a searched path.
-
 For the contract workflow, see [Teach a robot a skill](/help/teach-a-robot-a-skill). For the evidence behind a retained result, see [Arena](/help/arena).

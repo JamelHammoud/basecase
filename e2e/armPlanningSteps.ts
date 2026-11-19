@@ -165,9 +165,20 @@ async function beginObservation(app: App) {
 async function observeReach(app: App, target: number[]) {
   await app.page
     .waitForFunction((point) => {
-      const position = (window as unknown as { __studio: Studio }).__studio.skillBodyPosition('link2');
+      const w = window as unknown as ObservedWindow;
+      const position = w.__studio.skillBodyPosition('link2');
+      const observation = w.__armObservation;
 
-      return position && Math.hypot(...position.map((v, i) => v - point[i])) < 0.005;
+      if (!position || !observation) return false;
+
+      const reached = Math.hypot(...position.map((v, i) => v - point[i])) < 0.005;
+
+      if (!reached) return false;
+
+      clearInterval(observation.timer);
+      observation.samples.push(position);
+
+      return true;
     }, target)
     .finally(() =>
       app.page.evaluate(() => {

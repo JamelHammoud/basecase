@@ -247,6 +247,8 @@ Independent negative controls cover enclosed targets, colliding starts, insuffic
 
 `e2e/armPlanning.e2e.test.ts` requests an obstructed reach through the existing Skills prompt, hands off through recorded agent tool calls with real planning and Arena, reads the result row and presses Try. It observes the body poses used by the renderer, checks the declared target around the divider, saves and reopens the ordinary scene and exercises a bounded refusal with empty app errors. It changes no recording paths or quarantine entries.
 
+Review found that the target wait and the 25 ms observation timer read poses independently. The wait could succeed before the timer recorded arrival, leaving the final sample outside the unchanged 5 mm assertion. The successful target callback now records that pose and clears the timer before returning. This removes that scheduling race without changing the target, tolerance, path assertions or deadline. Browser execution of this correction belongs to CI.
+
 The current-main browser capture passed in 41.38 seconds through reach, refusal and save/reopen using the harness's development-server fallback. Screenshots were saved outside the served public tree until the browser closed, preventing capture writes from triggering a development reload. Source and result are `scratch/arm-capture.test.ts` and `scratch/arm-capture-current-main.log`. Navigation observations are in `scratch/arm-capture-network.json`. The final source capture passed the same complete workflow in 41.07 seconds, recorded in `scratch/arm-capture-final-acceptance.log`. Its app error list was empty. The development harness printed a two-server teardown warning and exited with status 0, leaving no capture server running.
 
 ### Normal-concurrency acceptance

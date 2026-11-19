@@ -4,9 +4,9 @@ date: 2026-11-18
 image: /changelog/plan-arm-motions-around-obstacles/cover.png
 ---
 
-You can plan a reach for a fixed-base arm around fixed Case obstacles. A clear endpoint doesn't guarantee a clear motion.
+You can plan an arm reach around Case obstacles. The robot base and obstacles must be fixed.
 
-Open **Simulate**, go to **Train** and choose **Teach it to** to plan a reach. Play saved reaches through **Try**.
+Reach planning is in **Simulate** under **Train**. Saved reaches play through **Try**.
 
 An arm can reach a target beyond a shelf but hit the shelf edge during a straight motion. The planner checks the transition from the arm's starting configuration, including its other links and parked branches.
 

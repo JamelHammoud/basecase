@@ -942,9 +942,9 @@ The operator-camera browser check runs on Linux and macOS. Its Windows live-read
 
 ### Phone pairing
 
-`electron/phone/phoneBridge.test.mjs` connects a real TLS phone before opening the guarded event stream, then checks connected-state recovery, live input, stream reconnection, Unpair Phone and listener cleanup. Cross-site pairing and event subscriptions remain refused. `phonePairing.test.mjs` covers certificate-pinned connections, one-use tokens, hostile requests and frames, disconnects and expiry. `src/phone/phoneStore.test.ts` covers re-pairing and state adoption after reload. The existing phone walkthrough in `e2e/inputs.e2e.test.ts` retains pairing through ⌘K, rover movement from tilt and refusal after Unpair Phone on every platform.
+`electron/phone/phoneBridge.test.mjs` connects a real TLS phone before opening the guarded event stream, then checks connected-state recovery, live input, stream reconnection, Unpair Phone and listener cleanup. Cross-site pairing and event subscriptions remain refused. `phonePairing.test.mjs` covers certificate-pinned connections, one-use tokens, hostile requests and frames, disconnects and expiry. `src/phone/phoneStore.test.ts` covers re-pairing and state adoption after reload. `phoneDrive.test.ts` retains real MuJoCo movement from tilt and stopping from level input for rovers and quadrupeds, plus arm reach and button mapping. The existing phone walkthrough in `e2e/inputs.e2e.test.ts` retains pairing through ⌘K, rover movement from tilt and refusal after Unpair Phone on Linux and macOS. It is quarantined only on Windows through 28 November 2026 under existing input-path owner [#995](https://github.com/JamelHammoud/basecase/issues/995). Windows temporarily lacks the combined palette, TLS, live tilt, physical movement and revocation walkthrough. Fast protocol, store and physics checks do not replace it.
 
-[Incident evidence and limits](../notes/testing-inputs.md#phone-event-stream-startup).
+[Event-stream evidence](../notes/testing-inputs.md#phone-event-stream-startup) and [Windows movement and pairing evidence](../notes/testing-inputs.md#windows-phone-movement-and-repeated-pairing) record the separate failures and restoration conditions.
 
 ### Windows voice and saved-policy startup
 

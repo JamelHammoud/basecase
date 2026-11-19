@@ -269,6 +269,14 @@
     "reason": "Carries the existing spinning-panel quarantine to its focused production CodeFrame replacement. Run 43736502131 showed the panel error and removed its iframe but recorded no about:blank navigation on either Windows attempt, followed by both 120000 ms browser.close() hook timeouts. Linux passed at the same revision in 15116 ms, and the preceding Windows run 43735086890 passed in 17065 ms with unchanged test, frame, bridge, harness, dependencies and configuration. Removing studio and simulation startup does not establish a fix for infinite-loop navigation or renderer shutdown. Issue #1137 retains Windows frame-lifecycle and process tracing and at least ten baseline and ten candidate observations at equal load with retries disabled before restoration. Fast bridge watchdog tests remain active."
   },
   {
+    "file": "e2e/codeFrame.e2e.test.ts",
+    "test": "passes HUD clicks to the canvas and handles two iframe Escape presses without starting a simulator",
+    "issue": 1866,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44523077433 passed HUD hit testing and the parent canvas click, then exhausted the unchanged 30000 ms locator deadline waiting for the joystick iframe canvas on both attempts, totaling 61414 ms. Drive and Escape were never reached. Preceding Windows Check 44518466291 passed in 1106 ms with unchanged fixture, cockpit, CodeFrame, bridge, keyboard hooks, harness, dependency and e2e configuration sources. Same-revision Windows diagnostic 44525456674 passed in 2878.722 ms with one worker, zero retries and quarantine off on image 20261103.298.1 rather than the failing 20261116.315.1, retaining the preview-server shutdown warning. This single observation identifies no image component to pin or product repair. Panel navigation, parsing, handshake, watchdog failure, HUD-click rerender and cleanup remain unresolved under priority owner #1866. Restore only after tracing the failing stage, establishing a fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. Linux and macOS retain the complete declaration. Windows retains real-client bridge joystick, release, HUD and Escape tests, overlay pointer styles and separate live-drive Escape and Case exit coverage, which do not replace the combined iframe pointer and two-Escape path. Keep the separate #1137 infinite-loop quarantine. No assertion, deadline or retry changes."
+  },
+  {
     "file": "e2e/gallery.e2e.test.ts",
     "test": "keeps the landing page on phones, and says plainly when a link is wrong",
     "issue": 1139,

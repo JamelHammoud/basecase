@@ -8,12 +8,13 @@ import { RobotFleet } from '../electron/robot/robotFleet.mjs';
 import type { NetworkRobotAsk } from '../src/robot/networkTypes';
 import { ARM } from './armFixture';
 import { openApp, openPlayTab, partCount, shown, type App } from './harness';
+import { networkRobotEvents } from './networkRobotEvents';
 
 let app: App;
 let daemon: ChildProcessWithoutNullStreams;
 let fleet: RobotFleet;
 let directory: string;
-let closing = false;
+let forwarding: ReturnType<typeof networkRobotEvents>;
 const events: Array<Record<string, unknown>> = [];
 const daemonEvents: Array<Record<string, unknown>> = [];
 const endpoint = { host: '127.0.0.1', port: 0, name: 'Kitchen Arm' };
@@ -80,6 +81,9 @@ beforeAll(async () => {
     { timeout: 10000 },
   );
   app = await openApp();
+  forwarding = networkRobotEvents((event) =>
+    app.page.evaluate((next) => (window as unknown as StudioWindow).networkLink?.receive(next), event),
+  );
   fleet = new RobotFleet({
     binary,
     tmpDir: directory,
@@ -87,8 +91,7 @@ beforeAll(async () => {
     emit: (event: Record<string, unknown>) => {
       events.push(event);
 
-      if (!closing)
-        void app.page.evaluate((next) => (window as unknown as StudioWindow).networkLink?.receive(next), event);
+      forwarding.emit(event);
     },
   });
   await app.page.exposeFunction('networkCall', async (method: string, argument: unknown, unit?: string) => {
@@ -133,19 +136,22 @@ beforeAll(async () => {
 }, 120000);
 
 afterAll(async () => {
-  closing = true;
-  fleet?.dispose();
+  try {
+    await forwarding?.close();
+  } finally {
+    fleet?.dispose();
 
-  if (daemon && daemon.exitCode === null) {
-    const exited = once(daemon, 'exit');
+    if (daemon && daemon.exitCode === null) {
+      const exited = once(daemon, 'exit');
 
-    daemon.kill();
-    await exited;
+      daemon.kill();
+      await exited;
+    }
+
+    await app?.close();
+
+    if (directory) fs.rmSync(directory, { recursive: true, force: true });
   }
-
-  await app?.close();
-
-  if (directory) fs.rmSync(directory, { recursive: true, force: true });
 });
 
 describe('Operate a network robot', () => {

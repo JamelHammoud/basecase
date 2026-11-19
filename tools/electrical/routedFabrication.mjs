@@ -2,8 +2,16 @@ import assert from 'node:assert/strict';
 import { kiCadChild, kiCadChildren, kiCadNumber, readKiCadBoard } from '../../src/wiring/boardKiCad.mjs';
 import { drillFacts, gerberFacts } from './fabricationFacts.mjs';
 
-const rounded = (value) => Number(value.toFixed(3)) || 0;
 const sortedHoles = (holes) => holes.sort((a, b) => a.diameter - b.diameter || a.x - b.x || a.y - b.y);
+
+function excellonMillimeters(value) {
+  const millimeters = Math.round(value * 1_000_000) * (1 / 1_000_000);
+  const exactHalfMicrometer = Math.abs(millimeters % 0.125) === 0.0625;
+
+  if (exactHalfMicrometer) return (Math.round((millimeters * 1000) / 2) * 2) / 1000 || 0;
+
+  return Number(millimeters.toFixed(3)) || 0;
+}
 
 function padHole(footprint, pad) {
   const origin = kiCadChild(footprint, 'at');
@@ -13,9 +21,9 @@ function padHole(footprint, pad) {
   const y = kiCadNumber(local[2]);
 
   return {
-    diameter: rounded(kiCadNumber(kiCadChild(pad, 'drill')[1])),
-    x: rounded(kiCadNumber(origin[1]) + x * Math.cos(angle) - y * Math.sin(angle)),
-    y: rounded(-(kiCadNumber(origin[2]) + x * Math.sin(angle) + y * Math.cos(angle))),
+    diameter: excellonMillimeters(kiCadNumber(kiCadChild(pad, 'drill')[1])),
+    x: excellonMillimeters(kiCadNumber(origin[1]) + x * Math.cos(angle) - y * Math.sin(angle)),
+    y: excellonMillimeters(-(kiCadNumber(origin[2]) + x * Math.sin(angle) + y * Math.cos(angle))),
   };
 }
 
@@ -28,9 +36,9 @@ export function boardDrills(pcb) {
     const at = kiCadChild(via, 'at');
 
     return {
-      diameter: rounded(kiCadNumber(kiCadChild(via, 'drill')[1])),
-      x: rounded(kiCadNumber(at[1])),
-      y: rounded(-kiCadNumber(at[2])),
+      diameter: excellonMillimeters(kiCadNumber(kiCadChild(via, 'drill')[1])),
+      x: excellonMillimeters(kiCadNumber(at[1])),
+      y: excellonMillimeters(-kiCadNumber(at[2])),
     };
   });
   const ofType = (type) => pads.filter((pad) => pad.type === type).map(({ diameter, x, y }) => ({ diameter, x, y }));

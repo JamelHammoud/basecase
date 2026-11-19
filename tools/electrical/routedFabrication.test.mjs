@@ -50,6 +50,52 @@ it.each(rotations)(
 );
 
 it.each([
+  { source: -3.2145, exported: -3.214 },
+  { source: 3.2145, exported: 3.214 },
+  { source: -3.214499, exported: -3.214 },
+  { source: -3.214501, exported: -3.215 },
+  { source: 3.214499, exported: 3.214 },
+  { source: 3.214501, exported: 3.215 },
+  { source: 0.0625, exported: 0.062 },
+  { source: -0.0625, exported: -0.062 },
+  { source: 0.1875, exported: 0.188 },
+  { source: -0.1875, exported: -0.188 },
+])('matches native nanometer conversion for via coordinate $source', ({ source, exported }) => {
+  const { files, pcb } = fabrication(rotations[0]);
+  const changed = pcb.replace('(at 1.2344 2.3456)', `(at ${source} ${source})`);
+  const drillFile = 'fabrication/robot-PTH.drl';
+
+  files[drillFile] = files[drillFile].replace('X1.234Y-2.346', `X${exported}Y${-exported}`);
+
+  expect(() => inspectFabrication(files, changed)).not.toThrow();
+
+  files[drillFile] = files[drillFile].replace(`X${exported}Y`, `X${(exported + 0.001).toFixed(3)}Y`);
+
+  expect(() => inspectFabrication(files, changed)).toThrow();
+});
+
+it('converts transformed pad coordinates through native nanometers', () => {
+  const { files, pcb } = fabrication(rotations[0]);
+  const changed = pcb.replace('(at 10 20 0)', '(at -5.2145 20 0)');
+
+  files['fabrication/robot-PTH.drl'] = files['fabrication/robot-PTH.drl'].replace('X12Y-23', 'X-3.214Y-23');
+
+  expect(() => inspectFabrication(files, changed)).not.toThrow();
+});
+
+it.each([
+  { source: 0.3125, exported: '0.312' },
+  { source: 0.4375, exported: '0.438' },
+])('matches native ties-to-even tool diameter $source', ({ source, exported }) => {
+  const { files, pcb } = fabrication(rotations[0]);
+  const changed = pcb.replace('(drill 0.4001)', `(drill ${source})`);
+
+  files['fabrication/robot-PTH.drl'] = files['fabrication/robot-PTH.drl'].replace('T02C0.400', `T02C${exported}`);
+
+  expect(() => inspectFabrication(files, changed)).not.toThrow();
+});
+
+it.each([
   { file: 'robot-PTH.drl', from: 'X1.234Y-2.346', to: 'X1.234Y-2.347' },
   { file: 'robot-PTH.drl', from: 'T02C0.400', to: 'T02C0.401' },
   { file: 'robot-PTH.drl', from: 'T02\r\nX1.234Y-2.346', to: '' },

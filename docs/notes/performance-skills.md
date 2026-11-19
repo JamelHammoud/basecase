@@ -55,3 +55,46 @@ A whole-app search found one topology attribute reader in `skills/artifacts.ts`.
 For B body opening tags, F freejoint tags and J joint tags, the previous reader constructed B + F + 3J regular expressions per hash. It now constructs none during hashing and retains three module-level patterns. For 300 body tags, one freejoint and 300 joints, this removes 1,201 constructor calls per hash. These are code-derived operation counts, not timings or a claim about complete training speed. Tag-match arrays and hash serialization remain unchanged.
 
 The patterns have no global or sticky flag, so repeated reads hold no cursor state. `artifacts.test.ts` checks the expected topology digest for nested bodies, a self-closing body, reordered attributes, prefixed attribute names, missing attributes and edited names between repeated reads. Existing cases cover physics, actuator and topology changes and their skill freshness decisions. No workflow, artifact schema, hash input or screen state changes, so help steps and screenshots remain current.
+
+## Obstacle-aware arm planning
+
+Implementation and bounds: [Skills](../guide/skills.md#obstacle-aware-arm-candidates). Measurements below use an Apple M5 Pro with Node 26.13.0 on 18 November 2026. Linux and Windows run the same production-pipeline coverage in existing CI. No hosted timing or physical accuracy result is claimed here.
+
+### Current direct-path comparison
+
+The baseline uses the direct planner and engine from main at `bc4baf626`. Relevant baseline source is unchanged by the update to `23297fb72`. Each mode runs in a fresh process with the same generated three-joint divider fixture, initial shoulder −60 degrees, target +60 degrees, ten-second contract and fixed comparison salt. The clear control removes only the divider. Each process takes three clear samples, then three divider samples. The first sample includes cold setup. Values are medians, not a statistical speed claim.
+
+| Geometry and planner | Planning | Development validation | Arena | Arena result |
+| --- | --- | --- | --- | --- |
+| Clear direct baseline | 8.86 ms | none | 1,495.10 ms | passed |
+| Clear candidate | 9.68 ms | 128.91 ms | 1,335.67 ms | passed |
+| Divider direct baseline | 60.47 ms | none | 2,462.53 ms | failed |
+| Divider candidate | 23.02 ms | 138.65 ms | 1,432.24 ms | passed |
+
+Clear candidates make 52 configuration checks and create zero search nodes. Divider candidates make 2,747 checks and retain 92 nodes in every sample. The direct baseline performs no path search and has no development-validation stage. The obstructed baseline fails the task, so it is not an equivalent successful workload. Variation in host contention and controller dynamics prevents attributing the elapsed differences to one optimization.
+
+The current planner skips allocating an empty WASM contact list when MuJoCo reports zero contacts. Configuration queries and IK updates read one writable coordinate view per query. Command tables reuse exact physics-clock targets across trials, while geometric queries retain moving-geometry membership and nearest-node scans avoid temporary difference vectors. [Simulation evidence](performance-simulation.md#exact-physics-clock-command-tables) records the command-table bounds and parity checks.
+
+### Memory and cancellation
+
+Median process RSS after clear samples is 246.66 MiB for the baseline and 231.64 MiB for the candidate. After divider samples it is 248.77 and 251.73 MiB. Process high-water readings reach 249.19 and 251.89 MiB. These aggregate readings include MuJoCo, a live observer engine, test hosting, garbage collection and OS memory management. They are not per-plan allocation peaks or evidence of a memory saving.
+
+The observer reads WASM backing capacity in both modes. It stays at 48.875 MiB for the baseline and grows to 70.4375 MiB for the candidate. The candidate's additional collision and development engines increase reserved physics memory. Each prepared command table separately holds at most 2.25 MiB of numeric storage, with at most two timestep entries for a live model and animation identity.
+
+An active divider search schedules cancellation after 100 stop observations. The timer fires before a later collision batch and returns Stopped in 0.06 ms, after 258 total stop observations and 256 configuration checks. The synchronous baseline has no stop callback. This measures in-process cancellation, not browser worker termination.
+
+The probe and raw results are `scratch/arm-comparison.test.ts`, `scratch/arm-comparison-baseline.json` and `scratch/arm-comparison-candidate.json`. Logs are `scratch/arm-comparison-final-baseline.log` and `scratch/arm-comparison-final-candidate.log`. Original baseline sources are retained under `scratch/original*.ts`. These ignored files are session evidence rather than committed fixtures.
+
+### Generated request timing
+
+The ten generated matrix requests now last seven seconds. Their geometry, actual starting and target configurations, authored limits, 5 mm tolerance, 0.5-second dwell, one-second endpoint hold, eight development draws and all 96 Arena tries are unchanged. Physics remains at 2 ms and 1 ms in the half-step trials. The five-second test deadline is unchanged. The requests require reaching the same target three seconds earlier than the initial ten-second fixtures.
+
+The first six-second probe was refused by the existing speed bound for shelf, cabinet, long tool and asymmetric chains. Bounded corner relaxation reduced their measured movement and corner-hold costs to 5.76, 5.73, 5.19 and 5.05 seconds. A one-second endpoint hold remains additional. Seven seconds accommodates these bounded candidates. This observation does not establish a globally shortest path. The probe is `scratch/arm-motion-costs.test.ts`, with results in `scratch/arm-motion-costs.json`.
+
+The generated workload therefore simulates less time while requiring faster tracking. It is not a same-workload speedup measurement. Ten-second prompt, rotated-fixture, browser and native replay requests retain longer-horizon coverage. The first complete normal-concurrency selection passed 2,045 tests with one existing skip in 43.90 seconds. The log is `scratch/check-empty-contacts-full.log`. The final source check passed the same selection at normal concurrency in 44.04 seconds, with the same existing skip, recorded in `scratch/check-final-acceptance.log`.
+
+### Earlier deadline and geometry observations
+
+Closed attempt #1837 passed a serial local selection but failed shelf and cabinet under normal concurrency. Later retained ten-second checks also failed shelf, cabinet and bins. On main at `23297fb72`, those cases took 5,253, 7,062 and 5,889 ms against the unchanged five-second deadline. The log is `scratch/check-current-main.log`. The host observation in `scratch/current-host-observation.json` does not establish a cause or a missing capability.
+
+A four-sample cabinet probe alternated the default island setting with island detection disabled. All samples passed Arena, but the small timing difference did not establish a stable gain. No solver-setting change is retained. Native box emission caused existing rover regressions and did not resolve arm deadlines, so all experimental collider changes were removed. [Testing evidence](testing-skills.md#obstacle-aware-arm-planning) records those limits. Model XML, contact masks, exclusions and validation draws retain their existing definitions.

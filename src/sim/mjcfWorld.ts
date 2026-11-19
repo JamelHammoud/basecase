@@ -4,6 +4,7 @@ import { partMatrix } from '../utils/kinematics';
 import { partEdges } from '../utils/partEdges';
 import { quatToMj, toMj } from './mjcfFrames';
 import { cachedHull } from './mjcfHull';
+import { authoredPrimitive } from './mjcfContactGeometry';
 import { esc, f, safeId, vec } from './mjcfText';
 import type { MjcfInput, SimBody, WorldBehavior, WorldItem } from './mjcfTypes';
 
@@ -25,6 +26,7 @@ export interface WorldEmit {
   lines: string[];
   assets: string[];
   bodies: SimBody[];
+  fallbackParts: string[];
 }
 
 function geomAttrs(item: WorldItem, share = 1): string {
@@ -98,7 +100,11 @@ function worldGeom(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffse
 
   if (hull) return `<geom name="${esc(name)}" ${hull} ${geomAttrs(item)}/>`;
 
-  const shape = primitiveShape(item) ?? `type="box" size="${boxSize(item)}"`;
+  const primitive = primitiveShape(item);
+
+  if ((!primitive || !authoredPrimitive(item)) && item.behavior !== 'marker') out.fallbackParts.push(item.id);
+
+  const shape = primitive ?? `type="box" size="${boxSize(item)}"`;
   const turn = quatToMj(new THREE.Quaternion().setFromRotationMatrix(partMatrix(item)));
 
   return `<geom name="${esc(name)}" ${shape} quat="${vec(turn)}" ${geomAttrs(item)}/>`;
@@ -122,7 +128,7 @@ function jointXml(item: WorldItem): string | null {
 }
 
 export function emitWorld(input: MjcfInput, assetOffset: number): WorldEmit {
-  const out: WorldEmit = { lines: [], assets: [], bodies: [] };
+  const out: WorldEmit = { lines: [], assets: [], bodies: [], fallbackParts: [] };
   const items = input.world ?? [];
 
   validateWorldFixtures(items);

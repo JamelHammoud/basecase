@@ -20,5 +20,14 @@ export default function skillsStudio(studio: Studio) {
     stressBudget: (budget: number) => studio().core.simTraining.skills.stress.setBudget(budget),
     stubTabEngine,
     publishedSkills: () => studio().core.simTraining.skillHub.candidates,
+    skillBodyPosition: (part: string) => {
+      const { core, posesRef } = studio();
+      const model = core.simTraining.sim.modelNow();
+      const body = model?.bodies.findIndex((b) => b.parts.includes(part)) ?? -1;
+      const poses = posesRef.current;
+
+      return body >= 0 && poses ? Array.from(poses.subarray(body * 7, body * 7 + 3)) : null;
+    },
+    stageSkillCase: (id: string) => studio().core.simTraining.cases.open(id),
   };
 }

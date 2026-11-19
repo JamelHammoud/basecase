@@ -3,12 +3,12 @@ import { assertJointActuation } from '../joints/actuation';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { RobotJoint, RobotPoseState, ScenePart } from '../types/robotics';
 import { partMasses } from '../utils/engineering';
-import { clampJoint, isMovable, partMatrix, robotPose, type Rig, type V3 } from '../utils/kinematics';
+import { clampJoint, isMovable, robotPose, type Rig, type V3 } from '../utils/kinematics';
 import { ownedPartsByJoint } from '../utils/kinematicsMembers';
 import { effortOf } from './mjcfEffort';
 import { robotFingerprint } from './mjcfFingerprint';
 import { robotContactExclusions, robotContactMasks } from './mjcfContacts';
-import { quatToMj, toMj } from './mjcfFrames';
+import { toMj } from './mjcfFrames';
 import { cachedHull } from './mjcfHull';
 import { fittedActuatorXml, fittedJointAttrs, fittedServo } from './mjcfServo';
 import { esc, f, safeId, vec } from './mjcfText';
@@ -31,7 +31,7 @@ import { jointSpringAttrs } from './passiveJoint';
 import { loopEquality, loopHinge, physicalLoops } from './mjcfLoops';
 import { activeBodyCalibration } from '../reality/history';
 import { contactFingerprint, contactTopology } from './mjcfContactTopology';
-import { contactGeometry } from './mjcfContactGeometry';
+import { contactGeometry, authoredBox, fallbackCollider } from './mjcfContactGeometry';
 
 export { fromMj, quatFromMj, quatToMj, simDelta, simDeltas, toMj, worldDelta, worldDeltas } from './mjcfFrames';
 export { SIM_MODEL_VERSION } from './mjcfTypes';
@@ -57,6 +57,7 @@ interface BuildState {
   lift: number;
   equalityXml: string[];
   loops: ReturnType<typeof physicalLoops>;
+  fallbackParts: string[];
 }
 
 interface RobotBuild {
@@ -115,7 +116,6 @@ function geomAttrs(st: BuildState, p: ScenePart, role: GeomRole): string {
 
 function geomFor(st: BuildState, p: ScenePart, origin: V3, role: GeomRole): string | null {
   const tris = st.input.partTriangles(p.id);
-  const place = partMatrix(p);
   const verts = tris && tris.length >= 9 ? cachedHull(p, tris, origin) : null;
   const attrs = geomAttrs(st, p, role);
   const name = `g_${p.id.replace(/[^\w-]/g, '_')}`;
@@ -131,13 +131,9 @@ function geomFor(st: BuildState, p: ScenePart, origin: V3, role: GeomRole): stri
     return `<geom name="${esc(name)}" type="mesh" mesh="${mesh}" ${attrs}/>`;
   }
 
-  const d = p.dimensions;
-  const center = new THREE.Vector3().applyMatrix4(place);
-  const q = new THREE.Quaternion().setFromRotationMatrix(place);
-  const pos = toMj([center.x - origin[0], center.y - origin[1], center.z - origin[2]]);
-  const half = [Math.max(d.width, 1) / 2000, Math.max(d.depth, 1) / 2000, Math.max(d.height, 1) / 2000];
+  if (!authoredBox(p)) st.fallbackParts.push(p.id);
 
-  return `<geom name="${esc(name)}" type="box" size="${vec(half)}" pos="${vec(pos)}" quat="${vec(quatToMj(q))}" ${attrs}/>`;
+  return fallbackCollider(p, origin, attrs);
 }
 
 function solidPart(st: BuildState, id: string): boolean {
@@ -429,6 +425,7 @@ export function buildMjcf(given: MjcfInput): SimModel {
     actuatorXml: [],
     equalityXml: [],
     loops,
+    fallbackParts: [],
     lift: input.posedFloor != null ? Math.max(0, -input.posedFloor) + 2 : 0,
   };
 
@@ -469,6 +466,7 @@ export function buildMjcf(given: MjcfInput): SimModel {
     initial: { values: st.initialValues, roots: st.roots },
     massKg: st.massKg,
     bodyPayloads: bodyPayloads(st.bodies, parts),
+    collisionGeometry: { fallbackParts: [...st.fallbackParts, ...world.fallbackParts] },
     ...(scans.length ? { scans } : {}),
     ...(servoSpreads.length ? { servoSpreads } : {}),
   };

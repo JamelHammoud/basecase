@@ -9,7 +9,6 @@ import { errorMessage } from '../utils/errorMessage';
 import type { BackgroundTask } from './kitPlan';
 import type { InstallCompleted } from './installRun';
 import { runRuntimeKit } from './runtimeKit';
-import type { RaceOutcome } from './race';
 import type { ForgeFactory, JobRow, KitInstall, RaceReport, Run, RuntimeDeps } from './skillsRuntimeTypes';
 import type { SkillPorts, SkillsJob } from './skillsJob';
 import { SkillCoach } from './skillsCoach';
@@ -18,7 +17,7 @@ import { refusedLine, skillRecord, type SkillRecord } from './skillRecords';
 import { KIT_LABELS, refusalModel, type SkillTarget } from './skillRows';
 import { NO_SNAPSHOT_STORE, NO_SNAPSHOTS, trailRefs, type SnapshotRef, type Snapshots } from './snapshots';
 import type { DraftInput, DraftReport, DraftResult } from './teach';
-import { raceSummary } from './teach';
+import { runTaughtRace } from './runtimeRace';
 import type { Environment } from './environment';
 import { recoverableWorker, seededRecoveryJob, type RecoveryTriesPorts } from './recoverSkill';
 import { recoveredRun } from './recoveredRun';
@@ -40,6 +39,7 @@ const BUSY = 'Training is running. Check list_skills, or wait for it to finish.'
 export class SkillsRuntime extends SkillsRuntimeJobs {
   lastRace: RaceReport | null = null;
   private drafts = new Map<string, DraftReport>();
+  private draftRevisions = new WeakMap<DraftReport, number>();
   private recoveryTries?: RecoveryTriesPorts;
   private designRevision = 0;
 
@@ -82,6 +82,8 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
   invalidateRecovery() {
     this.designRevision += 1;
     this.deps.recovery?.invalidate();
+
+    if (this.jobs.some((job) => job.target.startsWith('goal:'))) this.user?.abort();
   }
 
   setRecoveryContext(context: string) {
@@ -148,9 +150,14 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
   }
 
   async draft(model: SimModel, request: DraftInput): Promise<DraftResult> {
+    const revision = this.designRevision;
     const reply = await this.deps.runner({ type: 'draft', model, design: designOf(model), request }, this.ports());
 
+    if (revision !== this.designRevision) return { ok: false, problems: [DESIGN_CHANGED] };
+
     if (reply.result.ok) this.drafts.set(reply.result.report.draft.id, reply.result.report);
+
+    if (reply.result.ok) this.draftRevisions.set(reply.result.report, revision);
 
     return reply.result;
   }
@@ -294,6 +301,9 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
     if (this.user) return BUSY;
 
     const { draft } = report;
+    const revision = this.designRevision;
+
+    if (this.draftRevisions.get(report) !== revision) return DESIGN_CHANGED;
 
     this.running = this.start({
       recoverable: true,
@@ -302,12 +312,18 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
       background: false,
       model,
       work: async (forge, signal) => {
-        const reply = await this.deps.runner(
-          { type: 'race', model, draft, budgetSteps },
-          { ...this.ports(), forge, signal },
-        );
-
-        await this.finishRace(report, reply.outcome);
+        await runTaughtRace({
+          model,
+          report,
+          budgetSteps,
+          runner: this.deps.runner,
+          ports: { ...this.ports(), forge, signal },
+          assertCurrent: () => this.assertDesignCurrent(revision, signal),
+          keep: (target, record, assertCurrent) => this.keep(target, record, assertCurrent),
+          onRace: (result) => {
+            this.lastRace = result;
+          },
+        });
       },
     });
 
@@ -347,23 +363,6 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
 
     assertCurrent?.();
     this.deps.onRecord(kept.length ? { ...record, snapshots: kept } : record);
-  }
-
-  private async finishRace(report: DraftReport, outcome: RaceOutcome) {
-    const { draft } = report;
-
-    if (outcome.kind === 'skill')
-      await this.keep(
-        `goal:${draft.name}`,
-        skillRecord(outcome.skill, { kit: null, goal: draft.request, environment: draft.environment }),
-      );
-
-    this.lastRace = {
-      name: draft.name,
-      found: outcome.kind === 'skill',
-      lines: raceSummary(outcome),
-      relaxation: outcome.kind === 'skill' ? null : report.relaxation,
-    };
   }
 
   private async kitWork(

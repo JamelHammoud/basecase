@@ -225,3 +225,42 @@ Exact-revision [Windows diagnostic 44387897125](https://github.com/JamelHammoud/
 Only this exact probe is quarantined on Windows through 28 November 2026 under open priority owner [#1819](https://github.com/JamelHammoud/basecase/issues/1819), labelled `loop:fix`, `loop:next` and `loop:priority`. Windows retains the other thirteen configuration checks, including host-key pinning, argument boundaries, hostile hosts and users and interrupted-upload classification, plus remote trainer, transport, bundle and selection tests. Linux and macOS retain the installed-client probe, and Linux retains real sshd transport acceptance. Those checks do not replace Windows installed-client execution. The browser recovery investigation remains separately owned by #1365.
 
 Restoration requires tracing lookup, native spawn, input, output and completion, fixing the established cause and ten baseline and ten candidate Windows observations at equal load with retries disabled. Preserve shell-free native executable selection and all transport boundary assertions. Do not increase deadlines, add retries or assume that a faster mock proves installed OpenSSH compatibility. This repair changes no transport code or assertion. Source logs and collected manifests, reports and cleanup logs are referenced in `scratch/task-handoff.json`.
+
+
+## Obstacle-aware arm planning
+
+Implementation: [Skills](../guide/skills.md#obstacle-aware-arm-candidates). Comparative work, timing, memory and cancellation observations are in [performance evidence](performance-skills.md#obstacle-aware-arm-planning).
+
+### Production matrix and negative controls
+
+`armPlanningMatrix.test.ts` generates divider, column, shelf, cabinet, bins, parked-arm, base-fold, long-tool, asymmetric and narrow-passage requests through the production draft and solver race. Each positive case runs eight real development trials and all 96 Arena tries, saves ordinary Skill JSON and reads it through the bundle reader. All ten generated requests use seven seconds, a 5 mm contract tolerance, a 0.5-second dwell within the final two seconds and a one-second endpoint hold. The geometry, initial and target configurations, limits, physical timesteps and five-second test deadline are unchanged from the initial ten-second fixtures. The shorter requests require faster tracking. Ten-second prompt, rotated-fixture, browser and native replay cases remain.
+
+A separate uninflated MuJoCo engine samples 501 configurations per animation segment, including endpoints. It checks finite commands, authored limits, increasing times, no penetrating contacts and unchanged parked controls. Physical development trials inspect actual coordinates after every integration step. A 1,001-state comparison checks clearance certificates against fresh collision queries, including parked descendants, forbidden contact, jumps and nonfinite input.
+
+Independent negative controls cover enclosed targets, colliding starts, insufficient clearance, forbidden self-contact, joint-limit obstruction and inadequate actuator tracking. They assert no retained skill and no false geometric-impossibility claim. The weak-actuator control keeps a clear geometric candidate while physical validation refuses all eight draws.
+
+`configurationSearch.test.ts` covers seeds, wrapping, direct paths, bounded exhaustion, cancellation and timed corner shortening. Its timing case independently checks 1,001 points per returned transition. `armConfiguration.test.ts` covers chain ancestry, parked branches, authored contact exclusions, source provenance and unsupported models. `armPlanningLifecycle.test.ts` checks deterministic endpoint-to-controller results and Stop or edits during active production search. `runtimeRace.test.ts` checks save, retention and stale-result boundaries.
+
+### Reference physics and browser entry
+
+`armMotionReplay.test.ts` replays searched divider and rotated-column controllers in C MuJoCo and WASM. Contacts must match and state drift remains below the existing 1e-6 tolerance. Both replays retain ten-second controllers.
+
+`e2e/armPlanning.e2e.test.ts` requests an obstructed reach through the existing Skills prompt, hands off through recorded agent tool calls with real planning and Arena, reads the result row and presses Try. It observes the body poses used by the renderer, checks the declared target around the divider, saves and reopens the ordinary scene and exercises a bounded refusal with empty app errors. It changes no recording paths or quarantine entries.
+
+Review found that the target wait and the 25 ms observation timer read poses independently. The wait could succeed before the timer recorded arrival, leaving the final sample outside the unchanged 5 mm assertion. The successful target callback now records that pose and clears the timer before returning. This removes that scheduling race without changing the target, tolerance, path assertions or deadline. Browser execution of this correction belongs to CI.
+
+The current-main browser capture passed in 41.38 seconds through reach, refusal and save/reopen using the harness's development-server fallback. Screenshots were saved outside the served public tree until the browser closed, preventing capture writes from triggering a development reload. Source and result are `scratch/arm-capture.test.ts` and `scratch/arm-capture-current-main.log`. Navigation observations are in `scratch/arm-capture-network.json`. The final source capture passed the same complete workflow in 41.07 seconds, recorded in `scratch/arm-capture-final-acceptance.log`. Its app error list was empty. The development harness printed a two-server teardown warning and exited with status 0, leaving no capture server running.
+
+### Normal-concurrency acceptance
+
+The first complete related selection after timed corner refinement and seven-second generated requests passed formatting, lint, docs, all 346 site pages, types and 2,045 tests. One existing file and test were skipped. The run used normal concurrency and unchanged five-second test deadlines across 314 selected files. Vitest took 43.90 seconds. Evidence is `scratch/check-empty-contacts-full.log`. The final bounded local-cost implementation then passed the same 2,045 tests at normal concurrency in 44.04 seconds, again with one existing skip. Its exact log is `scratch/check-final-acceptance.log`.
+
+The six-second probe honestly refused four requests at the existing command-speed bound. The seven-second matrix retains every geometric, tracking, dwell, trial-count and retention assertion. It does not claim a speedup for the original ten-second computational workload. No timeout, retry, worker override, quarantine or merge gate was added.
+
+### Earlier failure evidence
+
+Closed attempt #1837 passed 2,029 related tests with one local worker but still exceeded five-second shelf and cabinet deadlines under normal concurrency. That serial pass did not establish steady acceptance. Later ten-second retained-work selections also exceeded deadlines. On main at `23297fb72`, shelf took 5,253 ms, cabinet 7,062 ms and bins 5,889 ms while 2,041 other tests passed. Logs include `scratch/check-current-main.log`, `scratch/check-solver-all.log` and `scratch/check-final.log`.
+
+A general native-box emission experiment caused existing rover Push in Block and league replay failures without resolving arm deadlines. A narrower fixed-robot variant passed complete inertia-tensor and contact comparisons, but no collider change was retained. Exploratory sources are under `scratch/exact-box-prototype/`. Logs include `scratch/check-exact-box-all.log`, `scratch/check-box-geometry-final.log` and `scratch/check-fixed-box-geometry.log`.
+
+An earlier browser capture failed during initial navigation at the unchanged 30-second harness deadline and exercised no feature actions. Its log is `scratch/arm-capture-reopen.log`. The later current-main capture above completed those actions. A separate earlier broad run reported a V8 worker SIGTRAP in Routine handoff coverage. Neither observation changed deadlines or quarantine policy.

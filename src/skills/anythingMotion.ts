@@ -10,6 +10,7 @@ import { augmented, LEAPS, leapsIn, type Key } from './anythingAugment';
 import { Statics, type JointValues } from './anythingStatics';
 import type { TaskSpec } from './anythingTypes';
 import { plural } from '../../electron/plural.mjs';
+import { planFixedArm } from './anythingArm';
 
 const LEADS = [0.3, 0, 0.6];
 const CHECK_CASES = 8;
@@ -175,6 +176,9 @@ export async function planMotion(input: MotionInput): Promise<MotionPlan> {
 
   try {
     const solved = statics.keyValues(spec.intent).map(({ t, values }) => ({ t, values }));
+
+    if (poser.facts.cls === 'arm') return await planFixedArm(input, solved);
+
     const cases = trials.cases(CHECK_CASES - 1, `check|${spec.name}`);
     const leaps = leapsIn(spec.intent) ? LEAPS : LEAPS.slice(0, 1);
     let plan: Planned | null = null;

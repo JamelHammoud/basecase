@@ -69,6 +69,7 @@ export interface SimModel {
   scans?: Eye[];
   servoSpreads?: ServoSpread[];
   bodyPayloads?: Record<string, V3>;
+  collisionGeometry?: { fallbackParts: string[] };
 }
 
 export interface ServoSpread {

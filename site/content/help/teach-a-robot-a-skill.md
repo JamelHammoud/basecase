@@ -39,7 +39,7 @@ You can [train on another computer](/help/train-on-another-computer) over SSH an
 3. Click **Teach**. The **Agent** tab opens with `/train` and your goal.
 4. Read the contract the agent shows. It lists what passes, what fails, and a run where the robot holds still, which must fail.
 5. Reply to approve the contract, or tell the agent what to change.
-6. Watch the skill's row under **Train**, which shows the trainer's progress. The robot on the canvas runs the newest snapshot of the skill.
+6. Watch the skill's row under **Train**, which shows its progress. While a policy trains, the canvas runs its newest snapshot.
 7. When the row shows its Arena line, such as "31 of 32 tries, at least 86%", click **Try**.
 
 The skill runs in the simulation, on the canvas.
@@ -48,7 +48,7 @@ You can also type `/train` and the goal straight into the agent's box. To stop t
 
 ## How Basecase trains it
 
-Basecase starts with the cheapest method that could work. For example, Basecase plans a reach to a point with inverse kinematics, so it needs no training. Walking somewhere trains a policy with reinforcement learning, and Basecase tries several rewards until one passes. Whatever the method, a skill only counts once it passes [Arena](/help/arena).
+Basecase starts with the cheapest method that could work. For a fixed-base arm, it plans a path around fixed Case obstacles without training a policy. Steps and limits are in [Plan an arm reach](/help/plan-an-arm-reach). Walking somewhere trains a policy with reinforcement learning, and Basecase tries several rewards until one passes. Whatever the method, a skill only counts once it passes [Arena](/help/arena).
 
 ## When nothing passes
 

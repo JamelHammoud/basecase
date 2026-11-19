@@ -174,13 +174,6 @@ export function selectionActions({ core, actions, ui }: PartActionInputs) {
       keywords: 'reach payload link lengths servos manipulator design points reference',
       run: actions.arm.open,
     },
-    inspectWorkspace: {
-      id: 'inspect-workspace',
-      label: 'Inspect Workspace',
-      icon: JointsIcon,
-      keywords: 'arm reach sampled positions tool',
-      run: actions.workspace.open,
-    },
     resetView: { id: 'reset-view', label: 'Reset View', icon: RotateLeftIcon, run: ui.resetView },
   } satisfies Record<string, PartAction>;
 }

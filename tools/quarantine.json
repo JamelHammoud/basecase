@@ -861,5 +861,21 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44386066760 exhausted the unchanged 10000 ms beforeAll deadline before its sole legacy migration assertion ran. Full green Check 44245137178 passed the file in 5218 ms including a 611 ms body with unchanged relevant Fleet, fixture, PostgreSQL, lockfile and unit configuration sources. Exact-revision Windows diagnostic 44387921285 passed the body in 343.6958 ms in an 8660 ms process on the same image with one worker, zero retries and quarantine off, establishing intermittent setup. PostgreSQL startup, connection, legacy schema preparation, identity and inventory seeding are not distinguished. Existing open priority fixture owner #1401 owns tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Whole-file filtering is required because shared setup precedes test filtering. Linux and macOS retain migration acceptance. Windows retains authorization, adapter and browser recovery, which do not replace legacy migration and audit coverage. Preserve real PostgreSQL, local command, inventory and audit assertions and deadlines."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "quadruped leg and torso replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 exhausted the unchanged 5000 ms callback deadline at 5004 ms. Last full green 44391437908 passed in 2865 ms with unchanged replay, fixture and native helper sources. Exact-revision diagnostic 44476051750 passed in 3531.5076 ms on the same Windows image 20261103.298.1 with one worker, zero retries and quarantine off. Preparation, WASM capture, uv provisioning, native startup, replay, comparison and cleanup remain unresolved. Existing priority owner #1390 covers stage tracing and equal-load baseline and candidate measurements. Seven other Windows native self-contact comparisons and all ten WASM contact and negative-control cases remain active."
+  },
+  {
+    "file": "e2e/operate.e2e.test.ts",
+    "test": "starts camera calibration from the command palette",
+    "issue": 987,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 exhausted the unchanged 15000 ms callback deadline on both Windows attempts, totaling 30681 ms, without identifying the failing operation. Exact-revision diagnostic 44477091304 passed in 7006.3338 ms on the same Windows image 20261116.315.1 with one worker, zero retries and quarantine off. Linux passed the failing revision in 1382 ms. Existing priority calibration owner #987 covers this command path separately from replay, rollback and Fix, including scene load, connection, ladder, palette delivery, capture state, disconnect and cleanup tracing and equal-load measurements before restoration. Other platforms and fast calibration pipelines remain active."
   }
 ]

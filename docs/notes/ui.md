@@ -280,3 +280,23 @@ Local verification: the seven-file changed check passed formatting, lint, docume
 ## main.tsx
 
 - `html.is-electron` lets the sidebar use native window vibrancy. `html.is-fullscreen` is toggled from the `window:fullscreen` events, since full screen has no desktop behind the window and the chrome must turn solid.
+
+## Windows Routine Reload actionability
+
+[Check 44474977845](https://github.com/JamelHammoud/basecase/actions/runs/44474977845) at `1e4b6bf9963a72b2c2f1625465453f1c4659cac9` completed its Windows browser shard 1 after the repair brief. The Routine-specific recovery declaration in `e2e/firstRoutine.e2e.test.ts` failed both existing attempts at the first Reload click, line 57. Playwright found the button visible, enabled and stable, then exhausted its unchanged 30-second action budget while scrolling it into view. The click was not established as delivered. Clearing the injected crash, the second Reload and restored Routine identity were not reached. The file also reported the existing two-server shutdown warning after the test failures.
+
+Last full green [Check 44391437908](https://github.com/JamelHammoud/basecase/actions/runs/44391437908) passed the Windows recovery declaration in 927 ms and Linux in 1,571 ms. Its test source has not changed since `00ece242f`. No causative merge or changed environment component is established. Classification is a Windows browser actionability failure with an unresolved scroll or dispatch stage. The two existing attempts share one app and injected crash state, so they are not independent observations and establish no rate.
+
+The Routine-specific declaration remains active on every platform. It checks the retained Routine identity, the missing flow during a forced crash, Reload while the failure remains active and recovery after clearing the failure. Both Reload actions now use the button's ordinary Enter activation. This avoids Playwright's automatic pointer scrolling, the stage where the Windows log stopped before delivering a click. The unchanged fallback, mounted-flow, identity and unexpected-error assertions still judge the result. No force click, retry, deadline change or Windows quarantine is added. This targets the demonstrated browser actionability stage and does not establish a measured Windows failure-rate improvement. CI owns browser execution.
+
+`errorBoundary.e2e.test.ts` retains Parts and Canvas region isolation and recovery. Those shared tests do not replace the Routine-specific identity and persistent-failure assertions. Both shared declarations passed on Windows at the failing revision in 9,558 ms for the complete file.
+
+Only named-file checks run locally. CI owns browser execution. Complete failure and previous-green logs are retained in `scratch/failed-windows-e2e-1.log` and `scratch/green-run.log` for the task handoff.
+
+## Routine recovery selection dependency
+
+The pull request Check selected only `reloads the Routines tab back to its Routine once the failure is gone`. Both attempts failed at the fallback count before Reload, with zero visible Routines fallbacks. The test process took 33.18 seconds and then reported the existing ten-second server shutdown warning. The aggregate check failed solely because `e2e-changed` failed. Its other required jobs succeeded or were correctly skipped.
+
+The recovery declaration relied on the preceding declaration to open Play's Routines tab and create a Routine. Exact-name selection skipped that setup, leaving the tab closed when the crash was injected. This is a deterministic selection dependency, separate from the earlier Windows pointer actionability evidence.
+
+Creation and recovery now form one independently selectable declaration in `e2e/firstRoutine.e2e.test.ts`. It retains every assertion from both declarations and the ordinary Enter activation for both Reload actions. The same app and rover startup serve the complete lifecycle, with no extra launch, wait, retry, quarantine or deadline change. Routine identity is checked only after a non-null Routine and mounted flow have been established. Shared region isolation and recovery remain covered by `e2e/errorBoundary.e2e.test.ts`. Browser execution remains for CI, so no passing browser duration or failure rate is claimed locally.

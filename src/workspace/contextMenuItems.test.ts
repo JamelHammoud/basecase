@@ -23,7 +23,6 @@ function selectedRobot(count: number, available = true) {
       library: {},
       mirror: {},
       arm: { canSize: false },
-      workspace: { canInspect: false },
       wrap: { canWrap: () => false },
       robots: { armOfPart: () => null },
       joints: { canJoin: false },

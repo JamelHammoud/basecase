@@ -189,7 +189,7 @@ export class ViewportEngine {
       }),
       () => outline.dispose(),
     ];
-    this.cleanups.push(this.skeleton.install(), this.overlays.cableRoute.install(), this.overlays.workspace.install());
+    this.cleanups.push(this.skeleton.install(), this.overlays.cableRoute.install());
     this.api = completing(this.handle(), () => this.complete());
     this.syncWorld();
     this.syncScene();

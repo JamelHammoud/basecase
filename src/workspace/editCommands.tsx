@@ -55,19 +55,9 @@ function wrapCommands(inputs: CommandInputs): Command[] {
 }
 
 function armCommands(inputs: CommandInputs): Command[] {
-  const actions = selectionActions(inputs);
-  const workspace = inputs.actions.workspace;
+  if (!inputs.actions.arm.canSize) return [];
 
-  return [
-    ...(inputs.actions.arm.canSize ? [paletteCommand(actions.sizeArm, 'Selection')] : []),
-    ...(workspace.canInspect ? [paletteCommand(actions.inspectWorkspace, 'Pose')] : []),
-    ...(workspace.view
-      ? [{ id: 'close-workspace', label: 'Close Workspace', group: 'Pose', run: workspace.close }]
-      : []),
-    ...(workspace.view?.selected !== null && workspace.view?.samples && !workspace.view.busy
-      ? [{ id: 'workspace-motion', label: 'Plan Motion', group: 'Pose', run: workspace.plan }]
-      : []),
-  ];
+  return [paletteCommand(selectionActions(inputs).sizeArm, 'Selection')];
 }
 
 function onePartCommands(inputs: CommandInputs): Command[] {

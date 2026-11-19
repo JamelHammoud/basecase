@@ -4,8 +4,6 @@ import { bodyPoint, norm, refresh, sub, type JointInfo, type Kin, type V3 } from
 const SAMPLES = 2048;
 const REFINED = 6;
 
-export const reachSampleRandom = () => seededRandom('5eedc0de5eedc0de5eedc0de5eedc0de');
-
 interface ReachSample {
   gap: number;
   q: Float64Array;
@@ -26,7 +24,7 @@ export function bestReachSamples(
   options: { joints: JointInfo[]; tip: { body: number; local: V3 }; target: V3 },
 ) {
   const { joints, tip, target } = options;
-  const random = reachSampleRandom();
+  const random = seededRandom('5eedc0de5eedc0de5eedc0de5eedc0de');
   const samples: ReachSample[] = [];
 
   for (let i = 0; i < SAMPLES; i++) {

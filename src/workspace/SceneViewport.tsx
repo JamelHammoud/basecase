@@ -16,13 +16,6 @@ import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { useBoardPreview } from './useBoardPreview';
 import { boardSelectionProps } from './boardSelection';
-import type { ArmWorkspace } from './useArmWorkspace';
-
-function workspaceView(workspace: ArmWorkspace) {
-  if (!workspace.view?.samples) return null;
-
-  return { positions: workspace.view.samples.positions, selected: workspace.view.selected, select: workspace.select };
-}
 
 interface SceneViewportProps {
   active: boolean;
@@ -92,6 +85,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
     posing,
     simTraining: { sim },
   } = core;
+  const { edits } = actions;
   const { cursors, lanes } = agent;
   const shownParts = shownPartsFor(core);
   const boardParts = useBoardPreview(shownParts, project.electronicsBoard);
@@ -113,10 +107,10 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         {...boardSelectionProps(core)}
         onPickPoint={pickPointFor(core)}
         onOpenPart={core.cableRoutes.net ? undefined : core.sketching.edit}
-        onUpdatePartTransform={actions.edits.updatePartTransform}
-        onUpdatePartsTransform={actions.edits.updatePartsTransform}
-        onPlacePart={actions.edits.placePart}
-        onCommitSculptMesh={actions.edits.commitSculptMesh}
+        onUpdatePartTransform={edits.updatePartTransform}
+        onUpdatePartsTransform={edits.updatePartsTransform}
+        onPlacePart={edits.placePart}
+        onCommitSculptMesh={edits.commitSculptMesh}
         annotateMode={annotations.commentMode}
         measureMode={tool.measuring}
         measureUnit={studio.measureUnit}
@@ -156,7 +150,6 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         onAxisPick={actions.joints.onAxisPick}
         buildStep={core.buildAlong.view}
         cableRoute={cableRouteView(core)}
-        workspace={workspaceView(actions.workspace)}
         skeleton={core.skeleton.view}
         onSkeletonDrag={core.skeleton.onViewportDrag}
         onSkeletonPick={core.skeleton.openMenu}

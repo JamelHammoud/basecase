@@ -226,7 +226,6 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
     <div className="flex-1 min-h-0 flex flex-col">
       <TabActivity tab="pose" current={current} visited={visited} available={posable}>
         <PosePanel
-          workspace={actions.workspace}
           posing={posing}
           jointEdits={actions.joints}
           skeleton={core.skeleton}

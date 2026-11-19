@@ -210,9 +210,3 @@ The frame picker now projects each matrix origin and immediately compares its sc
 DOM event delivery, label painting and GPU rendering remain outside this unit coverage. No user action, label or visible result changes, so help instructions and screenshots remain accurate. No timeout, retry or quarantine changes apply.
 
 Local `check:changed` validation on November 17, 2026 passed formatting, lint, documentation, site copy for 330 pages, TypeScript and all nine related tests across four files. Vitest reported 372 ms for the related run. The log is `scratch/check-frame-picker.log`. Copy diff reports zero added, changed or removed user-facing strings.
-
-## Arm workspace inspection
-
-For issue #1846, the real `WorkspaceLayer` was exercised in Node 26.13.0 on macOS arm64 with a PerspectiveCamera, an EventTarget canvas and 2,048 returned points. Twenty buffer-replacement and pointer-pick iterations followed the sampler warmups. The three-link fixture's median cloud synchronization was 0.0081 ms and its median pick was 0.1730 ms. The six-link fixture's corresponding medians were 0.0047 and 0.3558 ms. These isolate the main-thread overlay implementation. They exclude browser layout, React, WebGL upload and frame rendering, so they are not end-to-end frame timings.
-
-Each cloud retains one 24,576-byte Float32 position array. Selection replaces only one three-float array, adding 12 bytes, and the cloud geometry retains identity. The layer draws discrete points, projects them only during a pick and adds no animation callback. Buffer retention, picking, clear, listener removal and material disposal are covered by `workspaceLayer.test.ts`. The robot's existing PartLayer and batches remain in place. [Worker measurements](performance-skills.md#arm-workspace-inspection) account for sample buffers and collision queries.

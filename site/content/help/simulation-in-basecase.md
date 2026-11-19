@@ -82,7 +82,7 @@ A run doesn't change your parts. The canvas shows the simulated pose until you e
 
 - **Drive** lets you steer the robot live with the keyboard, a gamepad, a phone, or your arms in front of the camera. If you drive a humanoid with the camera, Basecase holds its base in place unless the humanoid has a ready Walk skill.
 - **Cases** record tries and mark each one as a pass or a miss. A running Case's code can move, recolor or hide the Case's movable objects, and the try records each change. To see each value as it was at any moment, play back a try from the Case's cards.
-- **Training** can [plan an arm reach](/help/plan-an-arm-reach) or train a policy on Forge, Basecase's trainer built on the same MuJoCo formulation. While a policy trains, the canvas shows its newest snapshot. A skill counts only after Arena replays it on MuJoCo itself.
+- **Training** can plan a reach with inverse kinematics or train a policy on Forge, Basecase's trainer built on the same MuJoCo formulation. While a policy trains, the canvas shows its newest snapshot. A skill counts only after Arena replays it on MuJoCo itself.
 - **Routines** run step by step on the live simulation.
 - **Falls**, in the Build tab, tips a legged robot over from 12 directions to find the servos a fall would strip.
 - **The emulated robot** follows the simulation once it reaches Test.

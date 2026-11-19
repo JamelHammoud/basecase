@@ -1,6 +1,4 @@
 import { localJudgments } from './localJudgments';
-import { sampleArmWorkspace, type WorkspaceRequest, type WorkspaceSamples } from './armWorkspace';
-import { planArmMotion, type ArmMotionInput, type ArmMotionResult } from './armMotion';
 import type { MainModule } from '@mujoco/mujoco';
 import { trainHandoff, type HandoffResult, type HandoffTrainInput } from '../routines/handoffTraining';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -20,8 +18,6 @@ import { trainOnFindings, type StressTraining, type StressTrainOutcome } from '.
 import { draftSkill, raceDraft, recheckSkill, type DraftInput, type DraftResult, type SkillDraft } from './teach';
 
 export type SkillsJob =
-  | { type: 'workspace-motion'; model: SimModel; request: Omit<ArmMotionInput, 'stop'> }
-  | { type: 'workspace'; model: SimModel; request: Omit<WorkspaceRequest, 'stop'> }
   | { type: 'draft'; model: SimModel; design: string; request: DraftInput }
   | { type: 'race'; model: SimModel; draft: SkillDraft; budgetSteps?: number; seed?: number }
   | ({ type: 'kit'; model: SimModel; design: string; entry: TrainedEntry; warm?: KitWarm; seed?: number } & KitContext)
@@ -48,8 +44,6 @@ export interface CoachJob extends CoachSubjectJob {
 }
 
 export type SkillsReply =
-  | { type: 'workspace-motion'; result: ArmMotionResult }
-  | { type: 'workspace'; samples: WorkspaceSamples }
   | { type: 'draft'; result: DraftResult }
   | { type: 'race'; outcome: RaceOutcome }
   | { type: 'kit'; outcome: KitOutcome }
@@ -75,18 +69,6 @@ export interface SkillPorts {
 export async function runSkillsJob(job: SkillsJob, ports: SkillPorts & { mj: MainModule }): Promise<SkillsReply> {
   const { mj, forge, save, signal, progress } = ports;
   const judgment = localJudgments(ports.localSalt);
-
-  if (job.type === 'workspace-motion')
-    return {
-      type: 'workspace-motion',
-      result: await planArmMotion(mj, job.model, { ...job.request, stop: () => signal?.aborted ?? false }),
-    };
-
-  if (job.type === 'workspace')
-    return {
-      type: 'workspace',
-      samples: await sampleArmWorkspace(mj, job.model, { ...job.request, stop: () => signal?.aborted ?? false }),
-    };
 
   if (job.type === 'draft') return { type: 'draft', result: await draftSkill({ mj, ...job }) };
 

@@ -6,7 +6,7 @@ import type { Skill } from './artifacts';
 import type { Environment, RewardRef } from './environment';
 import type { ForgeRunner, SkillSave } from './forgeRunner';
 import type { V3 } from './kitModel';
-import type { Waypoint, ReachCandidate } from './raceIk';
+import type { Waypoint } from './raceIk';
 import type { Method, Route, TaskAnalysis } from './router';
 
 export type RaceGoal =
@@ -16,7 +16,6 @@ export type RaceGoal =
   | { kind: 'open' };
 
 export interface RaceTask {
-  reachPlan?: ReachCandidate;
   id: string;
   design: string;
   model: SimModel;

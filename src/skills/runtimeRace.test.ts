@@ -6,6 +6,9 @@ import type { SkillRunner } from './skillsClient';
 import { runTaughtRace } from './runtimeRace';
 import { routeTask, type TaskAnalysis } from './router';
 import type { DraftReport } from './teach';
+import { SkillsRuntime } from './skillsRuntime';
+import { DESIGN_CHANGED } from './skillRecovery';
+import type { SkillRecord } from './skillRecords';
 
 const model = fixtureModel('quad-servo');
 const animation = quadSit();
@@ -117,3 +120,69 @@ it.each(['before-save', 'after-save', 'during-keep', 'cancelled'])(
     expect(run.onRace).not.toHaveBeenCalled();
   },
 );
+
+function localRuntime(stage: 'draft' | 'race') {
+  const records: SkillRecord[] = [];
+  const runtime: SkillsRuntime = new SkillsRuntime({
+    runner: (async (job) => {
+      if (job.type === stage) runtime.invalidateRecovery();
+
+      if (job.type === 'draft') return { type: 'draft', result: { ok: true, report } };
+
+      return {
+        type: 'race',
+        outcome: {
+          kind: 'skill',
+          skill,
+          method: 'ik-or-motion-plan',
+          route,
+          cost: { wallS: 1, steps: 0 },
+          attempts: [],
+        },
+      };
+    }) as SkillRunner,
+    forge: () => async () => ({ ok: false, policy: null, events: [], stderr: '' }),
+    save: async () => {},
+    loadSkill: async () => null,
+    onRecord: (record) => records.push(record),
+    onChange: () => {},
+  });
+
+  return { runtime, records };
+}
+
+const request = {
+  name: report.draft.name,
+  request: report.draft.request,
+  seconds: 1,
+  goal: { kind: 'open' as const },
+  contract: report.draft.environment.contract,
+  signals: report.draft.environment.signals,
+};
+
+it('rejects a draft returned after a design edit without a remote recovery journal', async () => {
+  const { runtime } = localRuntime('draft');
+
+  expect(await runtime.draft(model, request)).toEqual({ ok: false, problems: [DESIGN_CHANGED] });
+  expect(runtime.draftOf(report.draft.id)).toBeNull();
+});
+
+it('refuses an approved draft after a design edit before the race starts', async () => {
+  const { runtime } = localRuntime('race');
+
+  expect((await runtime.draft(model, request)).ok).toBe(true);
+  runtime.invalidateRecovery();
+  expect(runtime.race(model, report.draft.id)).toBe(DESIGN_CHANGED);
+  expect(runtime.busy).toBe(false);
+});
+
+it('discards a local taught result returned after a design edit', async () => {
+  const { runtime, records } = localRuntime('race');
+
+  expect((await runtime.draft(model, request)).ok).toBe(true);
+  expect(runtime.race(model, report.draft.id)).toBeNull();
+  await runtime.settled();
+  expect(records).toEqual([]);
+  expect(runtime.lastRace).toBeNull();
+  expect(runtime.busy).toBe(false);
+});

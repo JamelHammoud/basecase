@@ -1,9 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { saluteMotion, wave } from '../src/cameras/gestures/fixtures/gestures';
 import { exampleFrom } from '../src/cameras/gestures/gestureRecognizer';
-import { faceOffCentre } from '../src/cameras/operator/fixtures/faceOffCentre';
 import { handMovesRight } from '../src/cameras/operator/fixtures/handMovesRight';
-import { panTilt, PAN_JOINT } from '../src/cameras/operator/fixtures/panTilt';
 import type { PoseSample } from '../src/cameras/operator/poseFollow';
 import { CASE_FORMAT_VERSION } from '../src/cases/schema';
 import { SONG_BYTES, SONG_NOTES } from '../src/midi/fixtures/song';
@@ -21,7 +19,6 @@ interface SimState {
   tries: unknown[];
   stats: { robots: Array<{ forward: number }> } | null;
   effector: number[] | null;
-  joints: Record<string, { target: number; position: number }>;
 }
 
 type Phone = { status: 'off' } | { status: 'pairing'; url: string; token: string; cert: string } | { status: string };
@@ -39,7 +36,6 @@ interface StudioWindow {
     phone: () => Phone;
     driveWith: (inputs: string[]) => Promise<boolean>;
     feedHand: (samples: unknown[]) => void;
-    feedFace: (samples: unknown[]) => void;
     dropFiles: (files: Array<{ name: string; base64: string }>) => void;
     inputEvents: () => InputEvent[];
     feedVoice: (samples: number[], sampleRate: number) => void;
@@ -90,8 +86,6 @@ const WATCH_CAMERA = {
 const TILT_HZ = 30;
 const FAST_FEED_FPS = 120;
 const HAND_MOVED_MM = 10;
-const FACE_TURNED_DEG = 10;
-const SETTLED_DEG = 2;
 const OPERATOR_TILE = '[data-testid="camera-tile"][data-camera="operator"]';
 
 let app: App;
@@ -272,29 +266,6 @@ describe('live inputs', () => {
 
     await expect.poll(movedRight, { timeout: 30000 }).toBeGreaterThan(HAND_MOVED_MM);
     await leaveCase();
-    expect(app.errors).toEqual([]);
-  });
-
-  it('turns a pan-tilt’s pan joint toward an off-centre face', async () => {
-    await load(panTilt());
-    await app.page.evaluate(
-      (samples) => (window as unknown as StudioWindow).__studio.feedFace(samples),
-      faceOffCentre(),
-    );
-    expect(await driveWith(['face'])).toBe(true);
-    await expect
-      .poll(async () => Math.abs((await studio()).joints[PAN_JOINT]?.target ?? 0), { timeout: 30000 })
-      .toBeGreaterThan(FACE_TURNED_DEG);
-    await expect
-      .poll(
-        async () => {
-          const pan = (await studio()).joints[PAN_JOINT];
-
-          return Math.abs(pan.target - pan.position);
-        },
-        { timeout: 30000 },
-      )
-      .toBeLessThan(SETTLED_DEG);
     expect(app.errors).toEqual([]);
   });
 

@@ -140,6 +140,8 @@ Live Case reference scripts apply commands at each existing 20 ms Case step thro
 
 ## Testing coverage
 
+- **Live servo faults.** `e2e/servoFaults.e2e.test.ts` checks Fault staying open after hover, click and Enter, then applies Limp from Peak torque during a try. It verifies the live fault, joint badge and the recorded joint, kind and simulation time. Its existing Windows exclusion remains a coverage gap. CI runs the browser declaration. [Submenu failure evidence](../notes/ui.md#context-submenu-hover-and-click-ordering).
+
 - **LiDAR specifications.** `src/sim/lidarSpec.test.ts` checks unit rejection, comma and decimal values, range separators, rate bounds, sample precedence, field-of-view precedence, defaults and ray limits through alternating repeated reads. It also checks unchanged inputs, fresh reads after edits and independent results.
 
 - **LiDAR selection.** `src/sim/lidarSelection.test.ts` checks every non-LiDAR catalog group without reading its spec rows, unrelated scenes without body membership reads, and valid sensors with duplicate owners, missing bodies, mixed parts and the scan limit. Existing `lidar.test.ts` covers catalog specifications, generated MJCF, real MuJoCo corridor scans and summary output.

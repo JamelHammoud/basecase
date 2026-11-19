@@ -65,10 +65,16 @@ describe('servo faults', () => {
 
     const row = app.page.locator(visible('[data-testid="peak-row"]')).first();
     const item = (name: string) => app.page.locator(visible('[role=menuitem]'), { hasText: new RegExp(`^${name}$`) });
+    const faultMenu = item('Fault');
 
     await expect.poll(() => row.count(), { timeout: 30000 }).toBe(1);
     await row.click({ button: 'right' });
-    await item('Fault').click();
+    await faultMenu.hover();
+    await expect.poll(() => faultMenu.getAttribute('aria-expanded')).toBe('true');
+    await faultMenu.click();
+    await expect.poll(() => faultMenu.getAttribute('aria-expanded')).toBe('true');
+    await faultMenu.press('Enter');
+    await expect.poll(() => faultMenu.getAttribute('aria-expanded')).toBe('true');
     await item('Limp').click();
     await expect.poll(async () => Object.values((await simState()).faults)).toEqual(['limp']);
     await expect.poll(() => row.innerText()).toContain('Limp');

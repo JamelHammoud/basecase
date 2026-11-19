@@ -293,6 +293,16 @@ The Routine-specific declaration remains active on every platform. It checks the
 
 Only named-file checks run locally. CI owns browser execution. Complete failure and previous-green logs are retained in `scratch/failed-windows-e2e-1.log` and `scratch/green-run.log` for the task handoff.
 
+## Context submenu hover and click ordering
+
+[Check 44513988396](https://github.com/JamelHammoud/basecase/actions/runs/44513988396), workload `86969f1d2ac7cab1c105dc809d9daa4fa679922a`, failed only the Linux servo-fault browser declaration. Both existing attempts reached a running try, the Peak torque row and Fault activation. Each then exhausted the unchanged 30-second locator deadline waiting for visible Limp. Applying the fault, recording it and asserting persisted evidence were not reached. The declaration took 67,366 ms across both attempts. The two-server shutdown warning followed the assertion failure and also appears in the preceding successful shard.
+
+The same declaration passed in 10,911 ms in the immediately preceding [Check 44509387028](https://github.com/JamelHammoud/basecase/actions/runs/44509387028), workload `340379e8155ab67a8359d542b6647452a4f82dfe`. The intervening commit changes only Build quarantine data and documentation. `ContextMenu.tsx`, `RunResult.tsx` and the browser declaration also match last full green `d3ee63311358cc0494517acd42328e0bc22e06c8`. No causative merge since green or changed environment component is established.
+
+Classification is an intermittent submenu interaction with a source-established event-order cause. The shared context menu's pointer-enter handler sets the open submenu index. Its click handler toggled that same index to null when already open. A pointer entering Fault before its click therefore opened and immediately closed the submenu, leaving Limp absent. Activation now sets the index directly, the same operation as hover. This repairs every shared context submenu without changing fault physics, recording, menu placement, deadlines or retries.
+
+The existing servo-fault declaration now establishes hover expansion before clicking, checks that clicking preserves expansion and repeats the check after ordinary Enter activation. It retains all live-state, badge, recorded identity, kind, timestamp and unexpected-error assertions. This explicit sequence would close the old submenu at the click. No additional browser launch or test declaration is added. Its existing Windows exclusion remains. Browser execution is left to CI, and no local browser reproduction, same-commit pass or failure-rate measurement is claimed. The repair uses the demonstrated handler conflict rather than quarantining the test.
+
 ## Routine recovery selection dependency
 
 The pull request Check selected only `reloads the Routines tab back to its Routine once the failure is gone`. Both attempts failed at the fallback count before Reload, with zero visible Routines fallbacks. The test process took 33.18 seconds and then reported the existing ten-second server shutdown warning. The aggregate check failed solely because `e2e-changed` failed. Its other required jobs succeeded or were correctly skipped.

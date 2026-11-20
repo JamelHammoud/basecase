@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { requireNoTendons } from '../joints/tendonAdmission';
 import type { JointValues, RobotJoint, RootOffset } from '../types/robotics';
 import { prepareIkJacobian } from './kinematicsJacobian';
 import { clampJoint, forwardKinematics, type PosedRig } from './kinematicsMotion';
@@ -191,6 +192,8 @@ function iterate(pb: IkProblem, state: IkState, tol: number): boolean {
 }
 
 export function solveIK(rig: Rig, start: JointValues, targets: IkTarget[], opts: IkOptions = {}): IkResult {
+  requireNoTendons(rig.joints);
+
   const pb = ikProblem(rig, targets, opts);
   const values: JointValues = { ...start };
   const posed = forwardKinematics(rig, { values, root: opts.root });

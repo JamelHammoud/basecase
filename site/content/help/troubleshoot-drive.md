@@ -48,7 +48,7 @@ Basecase hides **Drive** while a Case is open, because **Try It** does the drivi
 1. Click **Close Case** (×) next to the Case's name in the **Simulate** tab.
 2. Find **Drive** under **Control**.
 
-If your robot has no arm, wheels or legs, there's nothing to drive, and **Drive** doesn't show.
+If your robot has no arm, wheels, legs or ideal tendon declaration, **Drive** doesn't show.
 
 Basecase hides **Drive with Camera** while a Case is open too, but you can still find it in [[⌘K]].
 

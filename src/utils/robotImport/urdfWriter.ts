@@ -214,9 +214,18 @@ export function writeUrdf(input: UrdfInput): UrdfFiles {
     ...st.links,
     ...st.joints,
     ...(input.tail ?? []),
+    ...tendonExtension(input.joints),
     '</robot>',
     '',
   ].join('\n');
 
   return { urdf, meshes: st.meshes, root };
+}
+
+function tendonExtension(joints: RobotJoint[]): string[] {
+  const motors = joints.filter((joint) => joint.tendon).map((joint) => ({ motor: joint.id, tendon: joint.tendon }));
+
+  return motors.length
+    ? [`  <basecase unsupported="ideal-tendons" encoding="json">${esc(JSON.stringify(motors))}</basecase>`]
+    : [];
 }

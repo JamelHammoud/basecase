@@ -34,6 +34,8 @@ If Operate won't let you climb a rung, or the emulated robot stops, find the mes
 
 Operate needs a powered joint that moves. If the scene has none, Operate shows "No robot." If it has more than 32 powered moving joints, Operate shows nothing to connect.
 
+Authored ideal tendon robots run only in simulation and can’t connect to an emulator.
+
 **Note:** Operate isn't available in the browser version of Basecase.
 
 To add a robot to the scene:

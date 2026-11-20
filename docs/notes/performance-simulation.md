@@ -166,3 +166,34 @@ The integration assertions now live in `src/routines/kitHandoff.test.ts`. Kit co
 Existing `handoff.test.ts` cases retain real proof success, fall refusal, stale-model rejection, determinism and retraining. `src/skills/kitTransitions.test.ts` retains real quad and hexapod movement checks, both turn directions and an upright stationary candidate that must fail. `compileStops.test.ts` retains compiler refusals for failed movement, falls, stale physics and insufficient seeds. The reported 35 seconds is historical CI evidence, not a measured saving for a complete shard.
 
 The revised targeted check passed formatting, lint, docs, site copy and types. All nine tests across `handoff.test.ts` and `kitHandoff.test.ts` passed in 58.74 seconds on the development Mac. This combined file duration includes the existing training tests and concurrent local work, so it is not a hosted-shard speedup measurement. The source-level reduction is 64 repeated seeded rollouts. The moved integration test retains its original 120-second budget.
+
+
+## Ideal tendon transmissions
+
+Each model declaration has at most 64 motor spools and 32 passive output terms per spool. Preparation builds emitted joint-name lookups and writes a fixed tendon plus its declared equality or elastic law. Physics stepping stays inside MuJoCo. No per-tick scene traversal, new worker protocol, wait or retry is added. Legacy models emit no tendon metadata.
+
+The generated matrix measures model preparation, one second of WASM stepping, encoded recording byte size, half-second native replay and cancellation through the calibrated-model entry point. These observations include catalog motor fits and ordinary recording sampling at 50 Hz. They are shared-host observations without CI timing thresholds or a whole-app responsiveness claim. [Test evidence](testing-simulate.md#ideal-tendon-transmissions) records fixtures, numerical bounds and execution limits.
+
+
+Local Apple M5 Pro, macOS arm64 with Node 26.13.0 and MuJoCo 4.0.0, 20 November 2026: the focused matrix reported the following single observations. Preparation includes fixture creation and MJCF generation. Stepping covers one simulated second, 500 steps and ordinary recording sampling. Native replay includes Python startup and 250 physics steps. The cancellation observation combines already-aborted and stale-source refusals. These are warm-cache, shared-host observations, without a baseline comparison or platform timing guarantee.
+
+| Mechanism | Preparation ms | WASM stepping ms | Recording bytes | Native replay ms |
+| --- | ---: | ---: | ---: | ---: |
+| remote elbow | 4.993 | 16.652 | 6960 | 523.526 |
+| spring-return wrist | 0.731 | 7.165 | 6952 | 201.215 |
+| coupled finger | 0.761 | 5.923 | 9104 | 194.840 |
+| opposing-jaw gripper | 0.674 | 79.245 | 9104 | 179.281 |
+| three-joint finger | 0.833 | 4.908 | 11232 | 175.788 |
+| paired ankle joints | 0.624 | 4.448 | 9104 | 167.022 |
+| two-axis differential wrist | 0.738 | 5.046 | 11624 | 164.300 |
+| sliding carriage | 0.562 | 3.458 | 6952 | 167.232 |
+| coupled pan-tilt mechanism | 0.734 | 4.129 | 9104 | 160.190 |
+| repeated independent finger modules | 0.644 | 4.980 | 11624 | 156.623 |
+
+Cancellation and stale-source refusal together took 1.704 ms. Maximum observed native/WASM state drift across the ten mechanisms was 1.65e-13, with no contact differences. The three additional native spring-return, loaded-saturation and elastic-law comparisons stayed below 1.86e-12. The final focused selection passed 56 tests across nine files in 3.10 seconds. This measurement excludes type checking, linting, browser startup and package compilation.
+
+
+After merging main `94a1bb558107b826888e88fe710c5c84652b44bd`, the required related selection repeated the same ten-mechanism measurements on the same macOS host and toolchain. Preparation ranged from 0.552 to 69.906 ms. One simulated second with recording ranged from 3.378 to 81.466 ms. Encoded recordings ranged from 6952 to 11624 bytes. Already-aborted and stale-source refusal together took 3.482 ms. All 13 native comparisons retained maximum drift below 1.86e-12 and identical contact identities. Other lanes ran checks on the shared host during these observations. This is neither a controlled performance comparison nor a passing required check, which exhausted other test and setup deadlines. [Failure evidence](testing-simulate.md#ideal-tendon-transmissions) records those limits.
+
+
+The full related selection with four local workers repeated all ten preparation, stepping and recording measurements. Preparation ranged from 0.318 to 18.498 ms. One simulated second with recording ranged from 1.722 to 37.104 ms. Encoded recordings remained 6952 to 11624 bytes. Already-aborted and stale-source refusal together took 13.110 ms. All 13 native comparisons retained maximum drift below 1.86e-12 and identical contact identities. The complete command took 242.76 seconds, compared with 242.41 seconds for the earlier default-concurrency candidate command. Host load and caches were uncontrolled, so these totals establish no throughput improvement or regression. No persistent check or worker setting changes.

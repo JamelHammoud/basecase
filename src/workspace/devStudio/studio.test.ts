@@ -139,6 +139,7 @@ const EXPECTED_NAMES = [
   'stubTabEngine',
   'stubTrainer',
   'studyState',
+  'tendonRecording',
   'trainingImageFiles',
   'trainingImages',
   'trainingLabelBenchmark',

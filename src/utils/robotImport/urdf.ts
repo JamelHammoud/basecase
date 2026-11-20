@@ -219,6 +219,10 @@ function linkTree(links: Map<string, ModelLink>, raw: UrdfJoint[], root: string)
 
 export function parseUrdf(doc: Document): Model {
   const robot = doc.documentElement;
+
+  if (elem(robot, 'basecase')?.getAttribute('unsupported') === 'ideal-tendons')
+    throw new Error('Open the Basecase scene to retain its ideal tendon transmissions.');
+
   const colorOf = urdfMaterials(robot);
   const links = new Map<string, ModelLink>(
     elems(robot, 'link').map((l) => [l.getAttribute('name') ?? '', urdfLink(l, colorOf)]),

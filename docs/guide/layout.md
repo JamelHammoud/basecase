@@ -109,3 +109,6 @@ Dataset training controls and results occupy at most half the Tries view and scr
 ### Saved recording selection
 
 Library modifier-click and range selection keep Tries visible rather than opening playback. Two recorded tries enable Compare Tries in the header. Plain clicks retain ordinary playback. Comparison returns to the same Library selection on close. [Saved-source behavior and coverage](cases.md#comparison-preparation-coverage).
+
+
+Library capture requires the complete motor and passive-joint assembly for an authored ideal tendon. Placement remaps each output reference to the copied joint ID. Partial captures refuse rather than losing the coupling. [Joints and motion](joints-and-motion.md#ideal-fixed-tendons) owns the schema and coverage.

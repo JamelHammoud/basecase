@@ -58,6 +58,8 @@ Each joint has these fields:
 | Servo | The actuator that drives a powered joint. Checks sizes it against the load. |
 | Actuation | Powered joints have motor control. Passive joints move through gravity, contact or another link. |
 
+You can [compare supplier offers](/help/compare-supplier-offers) for a joint’s current servo. Selecting an offer keeps the servo, pivot, range and actuation unchanged.
+
 ## Where joints come from
 
 Joints come with a robot, a hand, or a design from the agent. You can also add them yourself:

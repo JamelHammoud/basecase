@@ -1,3 +1,4 @@
+import { setSupplierOffersOpen } from './offerDialog';
 import React, { useRef, useState } from 'react';
 import {
   IconButton,
@@ -91,6 +92,7 @@ const ExportBomMenu: React.FC<ExportBomMenuProps> = ({ cart, measuring, onExport
         align="end"
         className="w-64 max-h-[60vh] overflow-y-auto"
       >
+        <MenuItem label="Supplier Offers" onSelect={() => run(() => setSupplierOffersOpen(true))} />
         <MenuItem label="CSV Spreadsheet" onSelect={() => run(onExportCsv)} />
         <MenuItem label="Markdown" onSelect={() => run(onExportMarkdown)} />
         {(amazonUrl || cart.stores.length > 0) && <MenuDivider />}

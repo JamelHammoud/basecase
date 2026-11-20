@@ -53,7 +53,7 @@ In the web studio, the **Agent** tab reads “Build with the agent in the deskto
 
 ## Your scenes are gone from the web studio
 
-The web studio stores your scenes, Library models, tries, dataset versions, prices and the parts you own in your browser, not online. Clearing the site's data deletes them, including frozen dataset recordings, images and exports. They don't show up in another browser or on another computer. Scene exports keep the current design, without saved versions or branch links.
+The web studio stores your scenes, Library models, tries, dataset versions, prices, supplier quotes and the parts you own in your browser, not online. Clearing the site's data deletes them, including frozen dataset recordings, images and exports. They don't show up in another browser or on another computer. Scene exports keep the current design, without saved versions or branch links.
 
 1. Before you clear browser data, open each scene and click **Export** in the title bar.
 2. Choose **Scene** to download a `.basecase` file.
@@ -64,6 +64,8 @@ If you clear the browser's data and a scene goes with it, you can't get that sce
 ## What works without the desktop app
 
 Designing, Checks, the bill of materials and prices, Print mode's plate layout and 3MF export all run in your browser. Saving a scene to share works the same way in the web studio and the desktop app. For the steps, see [Share a scene](/help/share-a-scene).
+
+[Supplier offer comparison](/help/compare-supplier-offers) also works in your browser, without a supplier account.
 
 Motor Kit training and public skill installation work in browsers that support GPU training. See [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
 

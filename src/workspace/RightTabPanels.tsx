@@ -85,6 +85,7 @@ function BuildTab({ core, agent, actions }: RightTabPanelsProps) {
       cableRoutes={core.cableRoutes}
       parts={parts}
       sceneName={scene.sceneName}
+      sceneId={scene.sceneId}
       project={project}
       onChangeProject={(patch: Partial<ProjectSettings>) => setProject((p) => ({ ...p, ...patch }))}
       printing={printing}

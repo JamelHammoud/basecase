@@ -63,4 +63,6 @@ Classroom grading uses the full design cost, without subtracting the teacher's o
 
 You can also paste an order confirmation or a parts list into the agent's composer and ask it to record what you own. The agent saves the counts in the same place as the ones you type in **On hand**. When it picks parts, it lists the ones you own first and uses them before buying others.
 
+Saved [supplier offers](/help/compare-supplier-offers) use the same remaining quantities. Changing an on-hand count recalculates their pack counts without consuming stock.
+
 Next, [buy the parts for a robot](/help/buy-the-parts-for-a-robot).

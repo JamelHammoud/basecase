@@ -34,7 +34,7 @@ export function savePurchase(libraryDir, { key, record }) {
 
   const stored = record && storedRecord(record);
 
-  if (stored) all[key] = stored;
+  if (stored) Object.defineProperty(all, key, { value: stored, enumerable: true, writable: true, configurable: true });
   else delete all[key];
 
   const file = purchasesFile(libraryDir);

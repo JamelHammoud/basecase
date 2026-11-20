@@ -98,18 +98,26 @@ function guideCommands({ core }: CommandInputs): Command[] {
   return guide.stale ? [open, make('guide-update', 'Update Build Guide', <RefreshIcon />)] : [open];
 }
 
-export const buildCommands = (inputs: CommandInputs): Command[] => [
-  {
-    id: 'supplier-offers',
-    group: 'Scene',
-    label: 'Supplier Offers',
-    icon: <PackageIcon />,
-    keywords: 'quote import purchasing csv supplier arrival',
-    run: () => {
-      inputs.core.tool.openRightTab('build');
-      setSupplierOffersOpen(true);
+function supplierOfferCommands({ core }: CommandInputs): Command[] {
+  if (core.buildAlong?.frozen) return [];
+
+  return [
+    {
+      id: 'supplier-offers',
+      group: 'Scene',
+      label: 'Supplier Offers',
+      icon: <PackageIcon />,
+      keywords: 'quote import purchasing csv supplier arrival',
+      run: () => {
+        core.tool.openRightTab('build');
+        setSupplierOffersOpen(true);
+      },
     },
-  },
+  ];
+}
+
+export const buildCommands = (inputs: CommandInputs): Command[] => [
+  ...supplierOfferCommands(inputs),
   ...(inputs.core.project.electronicsBoard
     ? [
         {

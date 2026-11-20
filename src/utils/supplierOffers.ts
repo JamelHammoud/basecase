@@ -213,7 +213,7 @@ function identityCells(item: OfferComparison): unknown[] {
 }
 
 export const purchasingStatus = (item: OfferComparison) =>
-  item.line.toBuy === 0 ? 'Owned stock sufficient' : item.issues.join('; ') || 'Sufficient stock';
+  item.line.toBuy === 0 ? 'Owned stock sufficient' : item.issues.join(', ') || 'Sufficient stock';
 
 function exportLine(item: OfferComparison, result: PurchasingComparison): unknown[] {
   const { line, selected } = item;

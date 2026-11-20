@@ -16,7 +16,9 @@ const timestamp = (value) =>
     Number.isFinite(Date.parse(value)));
 const identityFields = ['manufacturer', 'mpn', 'supplier', 'supplierPartNumber', 'orderingUnit', 'sourceUrl'];
 const validIdentity = (identity) =>
-  identity &&
+  identity !== null &&
+  typeof identity === 'object' &&
+  !Array.isArray(identity) &&
   identityFields.every((key) => optionalText(identity[key])) &&
   (identity.unitsPerOrder === undefined || positive(identity.unitsPerOrder));
 const validBreak = (item) =>
@@ -70,7 +72,11 @@ const validBook = (book) =>
   book.offers.every(validEntry) &&
   new Set(book.offers.map((entry) => entry.offer.id)).size === book.offers.length &&
   validSelection(book);
-const validPlan = (plan) => plan && boundedText(plan.destination) && (plan.requiredBy === '' || date(plan.requiredBy));
+const validPlan = (plan) =>
+  plan &&
+  boundedText(plan.destination) &&
+  typeof plan.requiredBy === 'string' &&
+  (plan.requiredBy === '' || date(plan.requiredBy));
 
 export function checkedPurchasingEvidence(record) {
   const book = record.supplierOffers;

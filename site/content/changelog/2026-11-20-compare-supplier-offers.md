@@ -6,7 +6,7 @@ image: /changelog/compare-supplier-offers/cover.png
 
 You can import supplier quotes or enter them by hand, compare them against remaining BOM quantities and export a dated purchasing plan. You save quotes as evidence without connecting a supplier account.
 
-Open Supplier Offers from Build's spreadsheet menu. Set a destination and required arrival date, then confirm each imported offer's exact identity and packaging before selecting it.
+Supplier Offers is in Build's spreadsheet menu and the command palette.
 
 To buy three Pico 2 boards sold in packs of two, you need two packs. If you own one board, you need one pack from the same quote. Quantity breaks use those order quantities. You use the same selected offers for the comparison and exported totals.
 

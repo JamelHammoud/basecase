@@ -1,28 +1,31 @@
 import { Button } from '../../design-system';
-import type { SupplierOffers, SupplierOffer } from '../../types/purchasing';
+import type { SupplierOffers, ConfirmedOffer } from '../../types/purchasing';
 import type { BomLine } from '../../utils/bomTypes';
 import { compareOffer, purchasingStatus, type PurchasingComparison } from '../../utils/supplierOffers';
+import { dayLabel } from '../../utils/timeAgo';
 
 export function OfferComparison({
   result,
   books,
   onSelect,
   onEdit,
+  saving,
 }: {
   result: PurchasingComparison;
   books: (key: string) => SupplierOffers | undefined;
-  onEdit: (offer: SupplierOffer) => void;
+  onEdit: (offer: ConfirmedOffer, line: BomLine) => void;
   onSelect: (line: BomLine, id: string) => Promise<void>;
+  saving: boolean;
 }) {
   return (
     <div className="space-y-3">
-      {result.lines.map(({ line, issues }) => (
+      {result.lines.map(({ line, issues, selected }) => (
         <div key={line.key} className="space-y-2 py-3">
           <p className="text-[14px] text-white/90">{line.name}</p>
           <p className="text-[13px] text-white/60">
             {line.toBuy} {line.unit}
           </p>
-          {!books(line.key)?.offers.length &&
+          {!selected &&
             issues.map((issue) => (
               <p key={issue} className="text-[13px] text-white/60">
                 {issue}
@@ -37,19 +40,21 @@ export function OfferComparison({
                 <Button
                   variant={books(line.key)?.selectedId === offer.id ? 'active' : 'secondary'}
                   aria-pressed={books(line.key)?.selectedId === offer.id}
+                  disabled={saving}
                   onClick={() => void onSelect(line, offer.id)}
                 >
                   {`Select ${offer.identity.supplier} ${offer.identity.supplierPartNumber}`}
                 </Button>
-                <Button onClick={() => onEdit(offer)}>Edit Match</Button>
+                <Button onClick={() => onEdit(entry, line)}>Edit Match</Button>
                 <p className="text-[13px] text-white/60">
                   {compared.orderQty ?? '?'} {offer.identity.orderingUnit} {compared.total ?? '?'} {offer.currency}
                 </p>
                 <p className="text-[13px] text-white/60">
-                  {offer.destination} {offer.arrivalEarliest ?? '?'} / {offer.arrivalLatest ?? '?'}
+                  {offer.destination} {offer.arrivalEarliest ? dayLabel(offer.arrivalEarliest) : '?'} /{' '}
+                  {offer.arrivalLatest ? dayLabel(offer.arrivalLatest) : '?'}
                 </p>
                 <p className="text-[13px] text-white/60">
-                  {offer.observedAt ?? '?'} {offer.source}
+                  {offer.observedAt ? dayLabel(offer.observedAt) : '?'} {offer.source}
                 </p>
                 {(compared.issues.length ? compared.issues : [purchasingStatus(compared)]).map((issue) => (
                   <p key={issue} className="text-[13px] text-white/60">
@@ -68,7 +73,7 @@ export function OfferComparison({
       ))}
       {result.purchasingComplete && <p className="text-[13px] text-white/60">Purchasing evidence complete</p>}
       {result.estimatedArrival && (
-        <p className="text-[13px] text-white/60">{`Purchasing arrival estimate: ${result.estimatedArrival}`}</p>
+        <p className="text-[13px] text-white/60">{`Purchasing arrival estimate: ${dayLabel(result.estimatedArrival)}`}</p>
       )}
       {result.unresolved.map((issue) => (
         <p key={issue} className="text-[13px] text-white/60">

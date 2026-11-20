@@ -102,6 +102,8 @@ it.each([
   { ...offer, arrivalLatest: '2026-02-30' },
   { ...offer, observedAt: 'not a timestamp' },
   { ...offer, breaks: [{ minOrders: 1, price: Infinity }] },
+  { ...offer, identity: 'not an identity' },
+  { ...offer, identity: [] },
 ])('rejects malformed persisted evidence before changing purchases %j', (bad) => {
   savePurchase(dir, { key, record: initialRecord() });
 
@@ -114,6 +116,21 @@ it.each([
     }),
   ).toThrow();
   expect(fs.readFileSync(path.join(dir, 'purchases.json'), 'utf8')).toBe(before);
+});
+
+it('rejects an incomplete plan without replacing stored evidence and retains prototype-named purchase keys', () => {
+  savePurchase(dir, { key, record: initialRecord() });
+
+  const before = fs.readFileSync(path.join(dir, 'purchases.json'), 'utf8');
+
+  expect(() => savePurchase(dir, { key: 'plan', record: { purchasePlan: { destination: 'US-CA' } } })).toThrow(
+    'Check the purchasing destination and date.',
+  );
+  expect(fs.readFileSync(path.join(dir, 'purchases.json'), 'utf8')).toBe(before);
+  savePurchase(dir, { key: '__proto__', record: initialRecord() });
+  expect(Object.hasOwn(listPurchases(dir), '__proto__')).toBe(true);
+  expect(listPurchases(dir).__proto__.supplierOffers.selectedId).toBe('0001');
+  expect(listPurchases(dir)[key].onHand).toBe(1);
 });
 
 it('bounds retained Unicode evidence by encoded bytes before touching disk', () => {

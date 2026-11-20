@@ -24,7 +24,6 @@ export function SupplierOfferSheet({
   onClose: () => void;
 }) {
   const {
-    planKey,
     plan,
     setPlan,
     drafts,
@@ -32,8 +31,11 @@ export function SupplierOfferSheet({
     entering,
     setEntering,
     error,
+    saving,
+    edit,
+    select,
     result,
-    attempt,
+    savePlan,
     imported,
     confirm,
   } = useSupplierOffers({ bom, purchases, scene, save });
@@ -46,6 +48,7 @@ export function SupplierOfferSheet({
       maxWidth="max-w-[680px]"
       action={{
         label: 'Export Purchasing Plan',
+        disabled: saving,
         onClick: () =>
           download(`${scene}-purchasing-${result.generatedAt.slice(0, 10)}.csv`, purchasingCsv(result), 'text/csv'),
       }}
@@ -68,7 +71,9 @@ export function SupplierOfferSheet({
             />
           </label>
         </div>
-        <Button onClick={() => void attempt(() => save(planKey, { purchasePlan: plan }))}>Save</Button>
+        <Button disabled={saving} onClick={() => void savePlan()}>
+          Save
+        </Button>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => setEntering(!entering)} aria-expanded={entering}>
             Enter Quote
@@ -94,7 +99,7 @@ export function SupplierOfferSheet({
         {entering && (
           <OfferFields
             onAdd={(offer) => {
-              setDrafts((items) => [...items, offer]);
+              setDrafts((items) => [...items, { offer }]);
               setEntering(false);
             }}
           />
@@ -104,26 +109,23 @@ export function SupplierOfferSheet({
             {error}
           </p>
         )}
-        {drafts.map((offer) => (
+        {drafts.map(({ offer, key, unitsPerOrder }) => (
           <OfferMatch
             key={offer.id}
             offer={offer}
             lines={bom.lines}
+            initialKey={key}
+            unitsPerOrder={unitsPerOrder}
+            saving={saving}
             onConfirm={(key, per) => confirm(offer, key, per)}
           />
         ))}
         <OfferComparison
           result={result}
+          saving={saving}
           books={(key) => purchases[key]?.supplierOffers}
-          onEdit={(offer) => setDrafts((items) => [...items.filter((item) => item.id !== offer.id), offer])}
-          onSelect={(line, id) =>
-            attempt(() =>
-              save(line.key, {
-                ...purchases[line.key],
-                supplierOffers: { offers: purchases[line.key].supplierOffers!.offers, selectedId: id },
-              }),
-            )
-          }
+          onEdit={edit}
+          onSelect={select}
         />
       </div>
     </Modal>

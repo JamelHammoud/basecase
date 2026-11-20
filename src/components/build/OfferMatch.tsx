@@ -8,13 +8,19 @@ export function OfferMatch({
   offer,
   lines,
   onConfirm,
+  initialKey,
+  unitsPerOrder,
+  saving,
 }: {
   offer: SupplierOffer;
   lines: BomLine[];
   onConfirm: (key: string, per: number) => Promise<void>;
+  initialKey?: string;
+  unitsPerOrder?: number;
+  saving: boolean;
 }) {
-  const [key, setKey] = useState(() => lines.find((line) => exactOffer(offer, line))?.key ?? '');
-  const [per, setPer] = useState(String(offer.identity.unitsPerOrder ?? ''));
+  const [key, setKey] = useState(() => initialKey ?? lines.find((line) => exactOffer(offer, line))?.key ?? '');
+  const [per, setPer] = useState(String(unitsPerOrder ?? offer.identity.unitsPerOrder ?? ''));
   const line = lines.find((item) => item.key === key);
   const valid =
     line &&
@@ -23,7 +29,8 @@ export function OfferMatch({
     !!offer.identity.supplierPartNumber &&
     !!offer.identity.orderingUnit &&
     Number.isFinite(Number(per)) &&
-    Number(per) > 0;
+    Number(per) > 0 &&
+    Number(per) <= 1e12;
 
   return (
     <div className="space-y-2 py-3">
@@ -56,7 +63,7 @@ export function OfferMatch({
           Match the manufacturer and part number in the listing before confirming packaging.
         </p>
       )}
-      <Button disabled={!valid} onClick={() => void onConfirm(key, Number(per))}>
+      <Button disabled={!valid || saving} onClick={() => void onConfirm(key, Number(per))}>
         Confirm Match and Packaging
       </Button>
     </div>

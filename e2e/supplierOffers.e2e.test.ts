@@ -37,6 +37,11 @@ it('imports, confirms and retains selected supplier evidence through a real purc
     });
     await dialog.getByRole('button', { name: 'Confirm Match and Packaging', exact: true }).first().click();
     await dialog.getByRole('button', { name: 'Select Shop A 00012', exact: true }).waitFor();
+    await dialog
+      .getByRole('button', { name: 'Select Shop A 00012', exact: true })
+      .locator('../..')
+      .getByText('Select an offer', { exact: true })
+      .waitFor();
     await dialog.getByRole('button', { name: 'Confirm Match and Packaging', exact: true }).first().click();
     await dialog.getByRole('button', { name: 'Select Shop B 00013', exact: true }).click();
 
@@ -67,6 +72,13 @@ it('imports, confirms and retains selected supplier evidence through a real purc
     await expect
       .poll(() => page.getByRole('button', { name: 'Select Shop B 00013', exact: true }).getAttribute('aria-pressed'))
       .toBe('true');
+    await dialog.getByRole('button', { name: 'Edit Match', exact: true }).nth(1).click();
+    await dialog.getByRole('textbox', { name: 'Units per order', exact: true }).fill('4');
+    await dialog.getByRole('button', { name: 'Confirm Match and Packaging', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Edit Match', exact: true }).nth(1).click();
+    await expect
+      .poll(() => dialog.getByRole('textbox', { name: 'Units per order', exact: true }).inputValue())
+      .toBe('4');
     expect(app.errors).toEqual([]);
   } finally {
     await app.close();

@@ -2,6 +2,14 @@
 
 Knowledge preserved from code comments before they were removed. AGENTS.md covers the rest.
 
+## Build and composer control coverage
+
+The Build panel renders Checks before the bill of materials, guide, saved builds and printing. Board creation and editing are children of the expanded Electrical connections check and remain absent from read-only checks. The existing first-section assertion in `e2e/buildCheck.e2e.test.ts` covers Checks leading Build. The board fixture opens Electrical connections before Define Board, and the outline-shrink declaration reopens that check when needed before Edit Board. The existing Windows board setup and outline quarantines and Build startup quarantine remain in force as documented in the Build guide.
+
+`e2e/buildTime.e2e.test.ts` measures the rendered Time label text, input value and hours suffix with a four-digit budget and requires separation plus a 32px field height. `e2e/composerControls.e2e.test.ts` sends a draft through the ordinary composer while holding the prompt response, requires a centered 20px Stop SVG in the same 32px button, then clicks Stop and observes the cancel request. These assertions cover geometry and cancellation delivery, without judging appearance or exercising a live provider.
+
+Pull request #1965 reports five passing browser cases across the board, build-time and composer files on macOS using the development harness. It also reports that restoring the earlier label CSS reproduced about 1.9px of overlap. Those are author-reported observations. Review did not rerun browser tests, and production-bundle browser execution on Linux and Windows remains for CI.
+
 ## Repeated control copy audit
 
 The studio audit for #1660 traced Button, IconButton, Tooltip, NumberInput, SegmentedControl, ChoiceGrid, StripButton, LinkButton and menu composition before removing copy. Shared primitives need no change. The ordinary copy report counts two removed strings and no additions. The Board title references a local variable, which the existing extractor does not count. Counting rules are unchanged.

@@ -3,9 +3,11 @@ import { afterAll, beforeAll, expect, inject, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fleetFixture, type FleetClient } from '../tools/fleet/fixture.mjs';
 import { factoryDxf, siteControls, usdFacility } from '../src/fleet/sites/siteFixtures';
-import { openApp, type App } from './harness';
+import type { Browser, Page } from 'playwright-core';
+import { launchChrome } from './harness';
 
-let app: App;
+let browser: Browser;
+let page: Page;
 let fixture: Awaited<ReturnType<typeof fleetFixture>>;
 let admin: FleetClient;
 let site: string;
@@ -26,35 +28,39 @@ beforeAll(async () => {
   robots = await Promise.all(
     ['Rover 01', 'Rover 02'].map(async (name) => (await admin.create('robot', { name, parent: site })).id),
   );
-  app = await openApp();
-  await app.page.goto(`${fixture.origin}/fleet`);
-  await app.page.getByRole('textbox', { name: 'Organization ID' }).fill(admin.org);
-  await app.page.getByRole('textbox', { name: 'Email' }).fill(admin.email);
-  await app.page.getByLabel('Password', { exact: true }).fill('fleet-fixture-password');
-  await app.page.getByRole('button', { name: 'Sign In', exact: true }).click();
-  await app.page.getByLabel('Site', { exact: true }).selectOption(site);
+  browser = await launchChrome();
+  page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await page.goto(`${fixture.origin}/fleet`);
+  await page.getByRole('textbox', { name: 'Organization ID' }).fill(admin.org);
+  await page.getByRole('textbox', { name: 'Email' }).fill(admin.email);
+  await page.getByLabel('Password', { exact: true }).fill('fleet-fixture-password');
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+  await page.getByLabel('Site', { exact: true }).selectOption(site);
 });
 
 afterAll(async () => {
-  await app?.close();
-  await fixture?.close();
+  try {
+    await browser?.close();
+  } finally {
+    await fixture?.close();
+  }
 });
 
 it('uploads, registers and reopens a facility from a replay-fed robot on the globe', async () => {
-  await app.page.getByLabel('Source units', { exact: true }).selectOption('mm');
+  await page.getByLabel('Source units', { exact: true }).selectOption('mm');
   await uploadFacility({ name: 'factory.dxf', mimeType: 'application/dxf', buffer: Buffer.from(factoryDxf) });
-  await expect.poll(() => app.page.getByTestId('fleet-facility').count()).toBe(1);
+  await expect.poll(() => page.getByTestId('fleet-facility').count()).toBe(1);
 
   for (const [point, control] of siteControls.controls.entries()) {
     const values = [...control.local, control.latitude, control.longitude, control.altitudeM];
     const labels = ['Local east (m)', 'Local north (m)', 'Local up (m)', 'Latitude', 'Longitude', 'Altitude (m)'];
 
     for (const [index, label] of labels.entries())
-      await app.page.getByLabel(`${label} ${point + 1}`, { exact: true }).fill(String(values[index]));
+      await page.getByLabel(`${label} ${point + 1}`, { exact: true }).fill(String(values[index]));
   }
 
-  await app.page.getByLabel('Vertical frame', { exact: true }).selectOption('ellipsoid');
-  await app.page.getByRole('button', { name: 'Register Site', exact: true }).click();
+  await page.getByLabel('Vertical frame', { exact: true }).selectOption('ellipsoid');
+  await page.getByRole('button', { name: 'Register Site', exact: true }).click();
   await expect
     .poll(
       async () => (await admin.result<{ registration: unknown }>('GET', `site/${site}/facility`)).registration != null,
@@ -87,21 +93,21 @@ it('uploads, registers and reopens a facility from a replay-fed robot on the glo
     ]);
   }
 
-  await app.page.getByLabel('Site', { exact: true }).selectOption('');
+  await page.getByLabel('Site', { exact: true }).selectOption('');
   await expect
-    .poll(() => app.page.getByTestId('fleet-globe').getByRole('button', { name: 'Rover 01', exact: true }).count())
+    .poll(() => page.getByTestId('fleet-globe').getByRole('button', { name: 'Rover 01', exact: true }).count())
     .toBe(1);
-  await app.page.getByTestId('fleet-globe').getByRole('button', { name: 'Rover 01', exact: true }).click();
-  await app.page.getByRole('button', { name: 'Open Facility', exact: true }).click();
-  await expect.poll(() => app.page.getByTestId('fleet-facility').count()).toBe(1);
-  await app.page.reload();
-  await app.page.getByLabel('Site', { exact: true }).selectOption(site);
-  await expect.poll(() => app.page.getByTestId('fleet-facility').count()).toBe(1);
+  await page.getByTestId('fleet-globe').getByRole('button', { name: 'Rover 01', exact: true }).click();
+  await page.getByRole('button', { name: 'Open Facility', exact: true }).click();
+  await expect.poll(() => page.getByTestId('fleet-facility').count()).toBe(1);
+  await page.reload();
+  await page.getByLabel('Site', { exact: true }).selectOption(site);
+  await expect.poll(() => page.getByTestId('fleet-facility').count()).toBe(1);
 
   const reopened = await admin.result<{ registration: { matrix: number[] } }>('GET', `site/${site}/facility`);
 
   expect(reopened.registration.matrix).toEqual(saved.registration.matrix);
-  expect(await app.page.getByText('Register this facility to place robots on the globe').count()).toBe(0);
+  expect(await page.getByText('Register this facility to place robots on the globe').count()).toBe(0);
 });
 
 it('imports a locally uploaded USD facility through the production converter', async () => {
@@ -111,7 +117,7 @@ it('imports a locally uploaded USD facility through the production converter', a
       async () => (await admin.result<{ facility: { name: string } }>('GET', `site/${site}/facility`)).facility.name,
     )
     .toBe('facility.usda');
-  await expect.poll(() => app.page.getByTestId('fleet-facility').count()).toBe(1);
+  await expect.poll(() => page.getByTestId('fleet-facility').count()).toBe(1);
 
   const saved = await admin.result<{
     facility: { sourceFrame: { metersPerUnit: number; up: string }; sources: { name: string }[] };
@@ -122,28 +128,26 @@ it('imports a locally uploaded USD facility through the production converter', a
   expect(saved.facility.sourceFrame.up).toBe('Y');
   expect(saved.facility.sources[0].name).toBe('facility.usda');
   expect(saved.registration).toBeNull();
-  await expect.poll(() => app.page.getByLabel('Latitude 1', { exact: true }).inputValue()).toBe('');
+  await expect.poll(() => page.getByLabel('Latitude 1', { exact: true }).inputValue()).toBe('');
 });
 
 async function uploadFacility(file: { name: string; mimeType: string; buffer: Buffer }) {
-  const chooser = app.page.waitForEvent('filechooser');
+  const chooser = page.waitForEvent('filechooser');
 
-  await app.page.getByRole('button', { name: 'Upload Facility', exact: true }).click();
+  await page.getByRole('button', { name: 'Upload Facility', exact: true }).click();
   await (await chooser).setFiles(file);
 }
 
 it('clears entered controls when replacing a facility with identical source bytes', async () => {
   const source = { name: 'factory.dxf', mimeType: 'application/dxf', buffer: Buffer.from(factoryDxf) };
 
-  await app.page.getByLabel('Source units', { exact: true }).selectOption('mm');
+  await page.getByLabel('Source units', { exact: true }).selectOption('mm');
   await uploadFacility(source);
-  await expect.poll(() => app.page.getByText('factory.dxf', { exact: true }).count()).toBe(1);
-  await expect
-    .poll(() => app.page.getByRole('button', { name: 'Upload Facility', exact: true }).isEnabled())
-    .toBe(true);
-  await expect.poll(() => app.page.getByTestId('fleet-facility').count()).toBe(1);
-  await app.page.getByLabel('Latitude 1', { exact: true }).fill('42');
+  await expect.poll(() => page.getByText('factory.dxf', { exact: true }).count()).toBe(1);
+  await expect.poll(() => page.getByRole('button', { name: 'Upload Facility', exact: true }).isEnabled()).toBe(true);
+  await expect.poll(() => page.getByTestId('fleet-facility').count()).toBe(1);
+  await page.getByLabel('Latitude 1', { exact: true }).fill('42');
   await uploadFacility(source);
-  await expect.poll(() => app.page.getByLabel('Latitude 1', { exact: true }).inputValue()).toBe('');
-  expect(await app.page.getByTestId('fleet-facility').count()).toBe(1);
+  await expect.poll(() => page.getByLabel('Latitude 1', { exact: true }).inputValue()).toBe('');
+  expect(await page.getByTestId('fleet-facility').count()).toBe(1);
 });

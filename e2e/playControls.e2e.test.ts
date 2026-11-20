@@ -41,12 +41,10 @@ describe('Simulate controls while a Case drives the rover', () => {
   it('shoves the rover at least 10 cm with Push while it stands still', async () => {
     const { page } = app;
 
-    if ((await simState()).drive === 'on') {
-      await page.keyboard.press('Meta+k');
-      await page.keyboard.type('Stop Driving');
-      await page.keyboard.press('Enter');
-    }
-
+    await controller().selectOption('hold');
+    await expect.poll(async () => (await simState()).drive).toBe('off');
+    await page.getByRole('button', { name: 'Reset', exact: true }).click();
+    await expect.poll(async () => (await rover()).travelled).toBeLessThan(0.01);
     await expect.poll(async () => (await simState()).playing).toBe(true);
     await expect.poll(async () => (await rover()).speed, { timeout: 20000 }).toBeLessThan(0.01);
 

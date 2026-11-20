@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { wiringNetlist } from '../wiring/netlist';
 import { kitFixture } from '../kit/kit.fixtures';
+import { jsonHash } from '../utils/geometryHash';
 import { guideFingerprint } from '../guide/guideFingerprint';
 import { resolvePrinter } from '../data/printers';
 import { exportKit, prepareKit } from './kitExport';
@@ -14,15 +15,19 @@ const calls = vi.hoisted(() => ({
   guide: vi.fn(),
   print: vi.fn(),
   map: vi.fn(),
+  plan: vi.fn(),
+  electrical: vi.fn(),
 }));
 
 vi.mock('../components/build/usePurchases', () => ({ knownPurchases: calls.purchases }));
 vi.mock('../utils/platformBridge', () => ({ platformBridge: { listPurchases: calls.inventory } }));
 
+vi.mock('./schematicExport', () => ({ kitElectricalExport: calls.electrical }));
+
 vi.mock('../kit/kitClient', () => ({ kitClient: calls.worker }));
 
 vi.mock('../three/componentMeshes', () => ({ componentMeshesReady: calls.catalog }));
-vi.mock('../guide/generateGuide', () => ({ generateGuide: calls.guide }));
+vi.mock('../guide/generateGuide', () => ({ generateGuide: calls.guide, generateGuidePlan: calls.plan }));
 vi.mock('../utils/printReport', async (load) => ({ ...(await load<object>()), printReportOf: calls.print }));
 vi.mock('./robotPackageExport', () => ({ robotJointMapJob: calls.map }));
 
@@ -57,6 +62,7 @@ function context() {
     html: job.guide.html,
     record: { fingerprint: guideFingerprint(job.name, job.parts, job.project) },
   });
+  calls.plan.mockResolvedValue(job.guide.plan);
   calls.print.mockResolvedValue(job.print);
   calls.map.mockResolvedValue(job.mapInput);
 
@@ -215,5 +221,41 @@ describe('kit preparation snapshot', () => {
       await expect(prepareKit(core, run)).rejects.toThrow('scene changed');
       expect(calls.map).not.toHaveBeenCalled();
     },
+  );
+});
+
+it('prepares the reconciled Kit without drawing files, illustrated HTML or a PDF for an individual build', async () => {
+  const { core, run, job } = context();
+  const made = await prepareKit(core, { ...run, assemblyOnly: true });
+
+  expect(calls.guide).not.toHaveBeenCalled();
+  expect(calls.plan).toHaveBeenCalledWith(expect.objectContaining({ parts: job.parts, project: job.project }), {
+    signal: run.signal,
+  });
+  expect(made.drawings).toBeUndefined();
+  expect(made.guide.html).toBe('');
+  expect(made.guide.plan).toEqual(job.guide.plan);
+  expect(made.files).toEqual(job.files);
+});
+
+it('binds carrier build evidence to its source without preparing drawing PDFs', async () => {
+  const { core, run } = context();
+
+  core.project = {
+    ...core.project,
+    electronicsBoard: { partId: 'arm' } as NonNullable<WorkspaceCore['project']['electronicsBoard']>,
+  };
+  core.docs.projectRef.current = core.project;
+  calls.electrical.mockResolvedValue({ files: {}, manifest: {} });
+
+  const made = await prepareKit(core, { ...run, assemblyOnly: true });
+
+  expect(made.drawings).toBeUndefined();
+  expect(made.guide.html).toBe('');
+  expect(calls.guide).not.toHaveBeenCalled();
+  expect(calls.electrical).toHaveBeenCalledWith(
+    core,
+    expect.objectContaining({ assemblyOnly: true }),
+    jsonHash({ parts: core.parts, project: core.project }),
   );
 });

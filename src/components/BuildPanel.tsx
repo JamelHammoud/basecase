@@ -30,6 +30,7 @@ import type { Viewport3DHandle } from './Viewport3D';
 import { useBomWiring } from './build/useBomWiring';
 
 interface BuildPanelProps {
+  builds?: React.ReactNode;
   cableRoutes: CableRoutes;
   onDefineBoard: () => void;
   parts: ScenePart[];
@@ -73,6 +74,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   guide,
   readiness,
   viewportRef,
+  ...rest
 }) => {
   const [purchases, savePurchase] = usePurchases();
   const { measures, report: print } = printing;
@@ -81,18 +83,16 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   const measuredWiring = useBomWiring({ parts, project }, viewportRef, onToast);
   const wiring = measuredWiring ?? currentWiring(readiness);
   const bom = buildBom({ parts, project, purchases, measures, supportG: supportByMaterial(print), wiring });
-  const file = fileStem(sceneName);
   const money = useMoney();
-  const tether = sceneTether({ parts, project });
 
   const exportCsv = () => {
     const names = Object.fromEntries(parts.map((p) => [p.id, p.name]));
 
-    download(`${file}-bom.csv`, bomToCsv(bom, names, money), 'text/csv');
+    download(`${fileStem(sceneName)}-bom.csv`, bomToCsv(bom, names, money), 'text/csv');
     onToast('Exported bill of materials');
   };
   const exportMarkdown = () => {
-    download(`${file}-bom.md`, bomToMarkdown(bom, sceneName, money), 'text/markdown');
+    download(`${fileStem(sceneName)}-bom.md`, bomToMarkdown(bom, sceneName, money), 'text/markdown');
     onToast('Exported bill of materials');
   };
   const savePrice = async (line: BomLine, record: PurchaseRecord | null) => {
@@ -105,6 +105,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       <div ref={setScroller} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        {rest.builds}
         <BoardBuildAction exists={!!project.electronicsBoard} onClick={onDefineBoard} />
         <ChecksSection
           readiness={readiness.current}
@@ -141,7 +142,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
               onIgnoreRule: (finding) => onChangeProject({ readiness: ignoreRule(project.readiness, finding) }),
               onSelectParts,
             },
-            tether: tether && { tether, onChange: (next) => onChangeProject({ tether: next }) },
+            tether: tetherControl(parts, project, onChangeProject),
             onOpenCase,
             showDots: readiness.showDots,
           }}
@@ -178,3 +179,11 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
     </div>
   );
 };
+
+function tetherControl(parts: ScenePart[], project: ProjectSettings, onChange: BuildPanelProps['onChangeProject']) {
+  const tether = sceneTether({ parts, project });
+
+  return tether
+    ? { tether, onChange: (next: NonNullable<ProjectSettings['tether']>) => onChange({ tether: next }) }
+    : undefined;
+}

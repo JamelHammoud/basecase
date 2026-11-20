@@ -7,7 +7,7 @@ import { guideFingerprint } from '../guide/guideFingerprint';
 import { resolvePrinter } from '../data/printers';
 import { jobSpec } from '../print/job';
 import { weld, writeThreeMf } from '../print/threeMf';
-import { fixtureMeasures, fixtureTriangles, box } from '../sim/fixtures/parts';
+import { fixtureMeasures, fixtureTriangles, box, joint } from '../sim/fixtures/parts';
 import { fixtureRobots, withoutGripper } from '../sim/fixtures/robots';
 import { fixturePackageJob } from '../sim/fixtures/robotPackage';
 import { isPrinted } from '../utils/bom';
@@ -27,6 +27,8 @@ const CASES = [
   ['multi-material chassis', 'rover-diff'],
   ['repeated limb modules', 'hexapod'],
   ['mixed sheet-and-printed', 'arm-3dof'],
+  ['biped', 'biped-servo'],
+  ['conveyor mechanism', 'rover-diff'],
 ] as const;
 
 export const kitFixtureNames = CASES.map(([name]) => name);
@@ -45,6 +47,17 @@ function servo(id: string, mixed: boolean, variant = 'c001'): ScenePart {
 
 function sourceOf(name: string) {
   const robot = fixtureRobots().find((r) => r.id === CASES.find(([n]) => n === name)?.[1])!;
+
+  if (name === 'conveyor mechanism')
+    return {
+      ...robot,
+      parts: [
+        box('frame', [0, 15, 0], [120, 20, 60], 80),
+        box('roller', [40, 35, 0], [16, 16, 50], 20),
+        box('belt', [0, 35, 0], [80, 2, 50], 15),
+      ],
+      joints: [joint({ id: 'drive', link: ['frame', 'roller'], origin: [40, 35, 0], axis: [0, 0, 1], effortNm: 1.9 })],
+    };
 
   if (name === 'SO-101-style arm') return withoutGripper(robot);
 

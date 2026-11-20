@@ -1,0 +1,23 @@
+import type { BuildRecord } from '../kit/buildRecords';
+import type { FrozenKit } from '../kit/frozenKit';
+import type { ScenePart } from '../types/robotics';
+import type { BuildAlongStep } from '../guide/buildAlong';
+import type { BuildStepView, ViewShot } from '../three/viewport/types';
+
+export interface Session {
+  steps: BuildAlongStep[];
+  stepParts: string[][];
+  views: BuildStepView[];
+  index: number;
+  camera: ViewShot;
+  frozen?: { record: BuildRecord; kit: FrozenKit; parts: ScenePart[] };
+}
+
+export const stepView = (step: BuildAlongStep): BuildStepView => ({
+  shown: step.shown,
+  moves: step.moves,
+  arrows: step.arrows,
+  removing: step.repairPhase === 'remove',
+  labels: step.servos.map((s) => ({ partId: s.partId, text: `${s.joint}, ID ${s.id}` })),
+  routes: step.routes.flatMap((net) => (net.route?.points.length ? [{ points: net.route.points }] : [])),
+});

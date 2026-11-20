@@ -14,6 +14,8 @@ covers:
 
 Strength tells you whether each printed bracket between a servo and the next joint survives that joint's load, printed the way you'll print it.
 
+To change print faces, close any saved build with **Done** first.
+
 1. Define the robot's joints, then screw its printed parts to the servo horns. Strength only checks parts it can trace from a horn through screws.
 2. Click Build at the top of the right panel.
 3. In Checks, click Strength if it's closed. Each part shows its joint, the load on it, and how many times over it can carry that load. A part passes at 2× or more and fails under 1.3×.

@@ -37,3 +37,5 @@ A green check appears beside the step count when every printed part the step use
 ![Step 1 of 2 with a green check beside the count](/help/build-along/parts-ready.png)
 
 For a broken part, [Repair a part](/help/repair-a-part) opens a walkthrough of removal, replacement and reassembly in Build Along.
+
+To retain separate progress for physical copies of one design, [resume a robot build](/help/resume-a-robot-build).

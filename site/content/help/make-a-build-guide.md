@@ -59,4 +59,6 @@ Basecase spends up to 20 seconds checking the order. If it stops early, the card
 
 A [board placement](/help/fit-an-electronics-board) appears among fabricated boards and doesn’t add PCB soldering steps to the guide. For routed copper and drill files, see [Export board fabrication files](/help/export-board-fabrication-files).
 
+For instructions that keep their original design and saved assembly progress, [resume a robot build](/help/resume-a-robot-build).
+
 To print the parts the guide uses, see [Print a robot's parts](/help/print-a-robots-parts).

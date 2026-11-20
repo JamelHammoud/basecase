@@ -9,7 +9,7 @@ import {
   type PreparedClassroom,
   type GradingResources,
 } from './grading';
-import { seedBatches, type SeedRuns } from '../cases/caseRuns';
+import { seedsUpTo, type SeedRuns } from '../cases/caseRuns';
 import { classroomAssignments, generatedClassroom, pipelineResources } from './grading.fixtures';
 import { classroomFixture } from './fixtures';
 import { assignmentOf, classroomBytes, readAssignment, readSubmission, submissionOf } from './envelope';
@@ -47,12 +47,9 @@ describe('classroom production grading pipeline', () => {
         await settleClassroomWorkers();
         expect(workers.every((worker) => worker.terminated)).toBe(true);
       });
-      it.each(seedBatches(20, 4).map((seeds) => ({ seeds })))(
-        'evaluates prescribed seeds $seeds',
-        async ({ seeds }) => {
-          batches.push(await runClassroomSeeds(resources, prepared, seeds));
-        },
-      );
+      it.each(seedsUpTo(20))('evaluates prescribed seed %i', async (seed) => {
+        batches.push(await runClassroomSeeds(resources, prepared, [seed]));
+      });
       it('independently grades all twenty seeds and engineering Checks', async () => {
         const submission = mode === 'valid' ? input.valid : input.failing;
         const row = await finishClassroom(resources, prepared, submission, batches);
@@ -122,12 +119,9 @@ describe('classroom production grading pipeline', () => {
         await settleClassroomWorkers();
         expect(workers.every((worker) => worker.terminated)).toBe(true);
       });
-      it.each(seedBatches(20, 4).map((seeds) => ({ seeds })))(
-        'recomputes prescribed seeds $seeds without trusting submitted evidence',
-        async ({ seeds }) => {
-          batches.push(await runClassroomSeeds(resources, prepared, seeds));
-        },
-      );
+      it.each(seedsUpTo(20))('recomputes prescribed seed %i without trusting submitted evidence', async (seed) => {
+        batches.push(await runClassroomSeeds(resources, prepared, [seed]));
+      });
       it('retains independent engineering and deterministic Case results', async () => {
         const row = await finishClassroom(resources, prepared, claimed, batches);
         const jobs = workers.flatMap((worker) => worker.jobs).filter((job) => job.type === 'runs');

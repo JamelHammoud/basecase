@@ -1,10 +1,12 @@
 import type { BuildRecord } from '../kit/buildRecords';
 import type { FrozenKit } from '../kit/frozenKit';
-import type { ScenePart } from '../types/robotics';
+import type { GuidePlan } from '../guide/guideTypes';
+import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { BuildAlongStep } from '../guide/buildAlong';
 import type { BuildStepView, ViewShot } from '../three/viewport/types';
 
 export interface Session {
+  cradleSource?: { id: number; plan: GuidePlan; parts: ScenePart[]; project: ProjectSettings };
   steps: BuildAlongStep[];
   stepParts: string[][];
   views: BuildStepView[];

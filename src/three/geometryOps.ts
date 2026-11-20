@@ -24,6 +24,8 @@ import type { ParameterDesign } from '../utils/designParameters/mutations';
 import { fitComparisonParts, writeFitPlate, type FitPlateWrite } from '../print/fitPlateWriter';
 import { fitVariantCoupons, type FitVariantCut } from '../print/fitVariantGeometry';
 import type { ParameterGeometryJob } from '../utils/designParameters/transaction';
+import { prepareCradleJob, type CradleJob } from '../print/cradleJob';
+import { writeCradlePlate } from '../print/cradlePlate';
 
 type Vec3 = [number, number, number];
 
@@ -180,6 +182,19 @@ async function parseMesh({ data, path }: ParseMeshJob): Promise<Float32Array | n
 const transferLines = (lines: Float32Array) => reply(lines, [lines.buffer]);
 
 export const geometryHandlers = {
+  cradlePrepare: async (job: CradleJob) => {
+    const result = await prepareCradleJob(job);
+
+    return reply(result, [result.geometry.positions.buffer, result.geometry.normals.buffer]);
+  },
+  cradlePlate: async (job: Parameters<typeof writeCradlePlate>[0]) => {
+    const result = await writeCradlePlate(job);
+
+    return reply(
+      result,
+      Object.values(result.files).map((file) => file.buffer),
+    );
+  },
   fitComparisonParts: (comparison: FitComparison) => reply(fitComparisonParts(comparison)),
   fitSourceHash: async (design: ParameterDesign) => reply(await fitSourceHash(design)),
   fitPlateWrite: async (job: FitPlateWrite) => {

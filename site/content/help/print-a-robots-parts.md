@@ -95,4 +95,4 @@ When you [repair a part](/help/repair-a-part), it stops counting as printed even
 
 If you have two or more printers that report their state, each idle printer gets **Start Next**. See [Print plates on several printers](/help/print-plates-on-several-printers).
 
-To close Print mode, press [[Esc]] or click **Done**. A repair plate returns to the same Build Along step. From **Print Fit Test**, **Done** first returns to the design's plates. Otherwise, you return to the scene, where you can [make a build guide](/help/make-a-build-guide) for putting the parts together.
+To close Print mode, press [[Esc]] or click **Done**. A repair plate or [assembly cradle](/help/make-an-assembly-cradle) returns to the same Build Along step. From **Print Fit Test**, **Done** first returns to the design's plates. Otherwise, you return to the scene, where you can [make a build guide](/help/make-a-build-guide) for putting the parts together.

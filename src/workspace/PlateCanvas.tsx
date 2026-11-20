@@ -35,7 +35,7 @@ function useKeys(printing: Printing, plates: Plate[], active: boolean) {
       Escape: () => (mode.face ? printing.setFaceMode(false) : printing.closeMode()),
       ArrowRight: () => index < plates.length - 1 && printing.setModePlate(plates[index + 1].number),
       ArrowLeft: () => index > 0 && printing.setModePlate(plates[index - 1].number),
-      f: () => mode.selected && !printing.fitTest && printing.setFaceMode(!mode.face),
+      f: () => mode.selected && !printing.temporaryPrint && printing.setFaceMode(!mode.face),
       r: () => mode.selected && printing.turnPart(mode.selected),
     };
     const action = actions[e.key.length === 1 ? e.key.toLowerCase() : e.key];
@@ -119,7 +119,7 @@ export function PlateCanvas({ active, printing, parts }: PlateCanvasProps) {
 
     printing.selectPart(hit.id);
 
-    if (!item || !start || item.copy !== 0 || item.yaw % 90 !== 0 || printing.fitTest) return;
+    if (!item || !start || item.copy !== 0 || item.yaw % 90 !== 0 || printing.temporaryPrint) return;
 
     dragRef.current = { item, startX: start.x, startZ: start.z, dx: 0, dz: 0, moved: false };
     view.setOrbit(false);

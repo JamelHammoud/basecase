@@ -4,7 +4,7 @@ export function BoardBuildAction({ exists, onClick }: { exists: boolean; onClick
   const label = exists ? 'Edit Board' : 'Define Board';
 
   return (
-    <div className="p-[12px]">
+    <div className="pl-[31px] pr-[7px] py-1">
       <Button variant="secondary" onClick={onClick}>
         {label}
       </Button>

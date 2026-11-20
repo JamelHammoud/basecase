@@ -31,7 +31,7 @@ covers:
 Place supported connectors and regulators inside your robot, then export their editable KiCad placement.
 
 1. In the right panel, click **Build**.
-2. In **Build**, click **Define Board**.
+2. In **Build**, expand **Electrical connections** in **Checks** and click **Define Board**.
 3. In the Inspector, edit the board’s dimensions and position.
 4. In **Board**, set the component side and clearances.
 5. In **Mounting holes**, edit the holes around your mounting points.
@@ -57,7 +57,9 @@ If the outline is too small, **Board fit** reports a blocker. The app keeps the 
 
 ![Board fit reports mounting holes and components outside the shrunken outline](/help/fit-an-electronics-board/outline.png)
 
-Use **Edit Board** in Build to return to the Inspector. **Auto Arrange** places unlocked components and adds supported endpoints introduced since you defined the board. It preserves unresolved requirements.
+Expand **Electrical connections** in **Build** and click **Edit Board** to return to the Inspector. **Auto Arrange** places unlocked components and adds supported endpoints introduced since you defined the board. It preserves unresolved requirements.
+
+![Edit Board inside the expanded Electrical connections check](/help/fit-an-electronics-board/controls.png)
 
 Use **Add Hole** or **Add Keepout** for more constraints. If you delete a mounting hole, the app asks for confirmation, then removes the hole and its linked screw and standoff.
 

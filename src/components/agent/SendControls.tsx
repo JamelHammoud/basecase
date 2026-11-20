@@ -43,7 +43,7 @@ export const SendControls: React.FC<{
   if (isBusy && !hasDraft && !editing)
     return (
       <IconButton
-        icon={<StopSolidIcon className="w-3.5 h-3.5" />}
+        icon={<StopSolidIcon className="w-[20px] h-[20px]" />}
         title="Stop"
         shortcut={keyFor('stop')}
         tooltipSide="top"

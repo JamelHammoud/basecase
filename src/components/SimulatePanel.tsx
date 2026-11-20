@@ -15,6 +15,7 @@ import type { SceneSkills } from '../workspace/useSkills';
 import { useTrainingWatch } from '../workspace/useTrainingWatch';
 import { watchSubject } from '../workspace/watchSubject';
 import { CaseSection, TrySection } from './simulate/CaseSections';
+import { WorkbenchSection } from './simulate/WorkbenchSection';
 import { ControlSection, useChooseController, type WalkTeaching } from './simulate/ControlSection';
 import { ResultsSection } from './simulate/ResultsSection';
 import type { CaseCompare } from '../workspace/useCaseCompare';
@@ -153,6 +154,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
           />
         )}
         <StudySection study={props.study} />
+        <WorkbenchSection key={cases.active?.id ?? ''} workbench={cases.workbench} />
         <ControlSection {...control} choose={choose} showDrive={!kase} walk={walk} onToast={props.onToast} />
         <TrainSection
           skills={skills}

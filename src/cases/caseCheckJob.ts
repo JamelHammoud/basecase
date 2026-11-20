@@ -23,6 +23,9 @@ import { multiplyTry, type Multiplied } from './tryReplay';
 import { recordingTransfer } from '../sim/recorder';
 import { effortsTransfer } from '../sim/recordedFrames';
 import { seedReplay, type SeedReplay } from './seedReplay';
+import { rehearseWorkbench, type WorkbenchResult } from './workbench/rehearsal';
+import type { WorkbenchPose } from './workbench/placement';
+import { placementIdentity, type PlacementIdentity } from './workbench/retention';
 
 export interface WireRobot {
   selfContact?: import('../sim/selfContact').SelfContactSettings;
@@ -73,17 +76,41 @@ export interface MultiplyJob {
   seeds: number[];
 }
 
+export interface WorkbenchJob {
+  type: 'workbench';
+  unit: string;
+  kase: Case;
+  robot: WireRobot;
+  pose: WorkbenchPose;
+}
+
+export type WorkbenchIdentityJob = Omit<WorkbenchJob, 'type'> & { type: 'workbench-identity' };
+
 export type CaseCheckJob =
-  { type: 'model'; robot: WireRobot; walks: SkillRecord[] } | RunsJob | ReplayJob | RecordJob | MultiplyJob;
+  | { type: 'model'; robot: WireRobot; walks: SkillRecord[] }
+  | RunsJob
+  | ReplayJob
+  | RecordJob
+  | MultiplyJob
+  | WorkbenchJob
+  | WorkbenchIdentityJob;
 
 export type CaseCheckReply =
   | { type: 'model'; modelHash: string; walk: WalkPick | null; stop: string | null }
   | { type: 'runs'; result: SeedRuns }
   | { type: 'replay'; film: FilmShot | null }
   | { type: 'record'; replay: SeedReplay }
-  | { type: 'multiply'; result: Multiplied };
+  | { type: 'multiply'; result: Multiplied }
+  | { type: 'workbench'; result: WorkbenchResult }
+  | { type: 'workbench-identity'; identity: PlacementIdentity };
 
 export function replyTransfer(reply: CaseCheckReply): Transferable[] {
+  if (reply.type === 'workbench') {
+    const replay = reply.result.replay;
+
+    return replay ? [...recordingTransfer(replay.recording), ...effortsTransfer(replay.efforts)] : [];
+  }
+
   if (reply.type === 'multiply') return reply.result.kept.flatMap((v) => recordingTransfer(v.recording));
 
   if (reply.type === 'record')
@@ -103,6 +130,13 @@ export const caseRobotOf = (robot: WireRobot): CaseRobot => ({
   partTriangles: (id) => robot.triangles[id] ?? null,
   servoVolts: robot.servoVolts,
 });
+
+export const workbenchIdentityReply = (
+  job: CaseCheckJob,
+): Extract<CaseCheckReply, { type: 'workbench-identity' }> | null =>
+  job.type === 'workbench-identity'
+    ? { type: 'workbench-identity', identity: placementIdentity({ ...job, robot: caseRobotOf(job.robot) }) }
+    : null;
 
 function walkPick(records: SkillRecord[], model: SimModel | null): WalkPick | null {
   if (!model?.robots[0]?.floating) return null;
@@ -127,6 +161,14 @@ export class CaseCheckSession {
   private held: { hash: string; robot: WireRobot } | null = null;
 
   async run(mj: MainModule, job: CaseCheckJob): Promise<CaseCheckReply> {
+    if (job.type === 'workbench-identity') return workbenchIdentityReply(job)!;
+
+    if (job.type === 'workbench')
+      return {
+        type: 'workbench',
+        result: await rehearseWorkbench(mj, { ...job, robot: caseRobotOf(job.robot) }, false),
+      };
+
     if (job.type === 'model') return this.fit(mj, job.robot, job.walks);
 
     if (job.type === 'multiply') return { type: 'multiply', result: await multiplyTry(mj, job.source, job.seeds) };

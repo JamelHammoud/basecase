@@ -20,6 +20,7 @@ import { INPUT_COMMANDS } from './inputCommands';
 import { showLeftTab } from './showView';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { workbenchCommands } from './workbenchCommands';
 
 const showCases = (core: WorkspaceCore) => showLeftTab(core, 'cases');
 
@@ -317,6 +318,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
       run: () => showCases(core),
     },
     ...newCase,
+    ...workbenchCommands(core),
     ...images,
     drive,
     ...respawn,

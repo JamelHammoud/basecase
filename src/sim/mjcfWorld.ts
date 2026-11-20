@@ -18,7 +18,13 @@ const DEFAULT_DYNAMIC_GRAMS = 100;
 export function worldFloor(input: MjcfInput): string {
   if (input.world?.some((item) => item.behavior === 'static' && item.convexVertices)) return '';
 
-  return '    <geom name="floor" type="plane" size="0 0 0.05" contype="0" conaffinity="1"/>';
+  const height = input.worldFloorMm;
+
+  if (height !== undefined && !Number.isFinite(height)) throw new Error('Floor height must be finite.');
+
+  const at = height ? ` pos="0 0 ${f(height / 1000)}"` : '';
+
+  return `    <geom name="floor"${at} type="plane" size="0 0 0.05" contype="0" conaffinity="1"/>`;
 }
 
 export interface WorldEmit {

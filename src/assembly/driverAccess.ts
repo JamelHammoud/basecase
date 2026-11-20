@@ -22,6 +22,31 @@ const KEY_ARM_FROM_MM = 8;
 const KEY_ARM_TO_MM = 56;
 const KEY_SECTORS = 6;
 
+export interface DriverCylinder {
+  from: [number, number, number];
+  axis: [number, number, number];
+  radius: number;
+  length: number;
+}
+
+export function driverEnvelope(chain: FastenerChain, tool: 'straight' | 'L-key', radiusMm = BIT_R): DriverCylinder[] {
+  const bitRadius = Math.max(BIT_R, radiusMm);
+  const cylinder = (start: number, length: number, radius: number): DriverCylinder => ({
+    from: new THREE.Vector3(...chain.top).addScaledVector(new THREE.Vector3(...chain.axis), start).toArray(),
+    axis: chain.axis,
+    radius,
+    length,
+  });
+
+  if (tool === 'straight')
+    return [cylinder(0, BIT_MM, bitRadius), cylinder(BIT_MM, STRAIGHT_MM - BIT_MM, Math.max(HANDLE_R, bitRadius))];
+
+  return [
+    cylinder(0, KEY_SHORT_ARM_MM, bitRadius),
+    cylinder(KEY_HEIGHTS[0] - bitRadius, KEY_HEIGHTS[2] - KEY_HEIGHTS[0] + bitRadius * 2, KEY_ARM_TO_MM + bitRadius),
+  ];
+}
+
 interface Segment {
   from: THREE.Vector3;
   dir: THREE.Vector3;

@@ -44,4 +44,4 @@ The steps below run the daemon on this computer. To run it on Linux and connect 
 
 8. Click **Stop**. The robot holds the last positions it measured, and the daemon sends nothing more. If the app stops sending commands, the robot holds on its own within 100 ms.
 
-Any scene robot with up to 32 powered joints can connect this way. Servo calibration applies only to Feetech and Dynamixel servos.
+Scene robots with up to 32 powered joints can connect this way, except robots with authored ideal tendons. Servo calibration applies only to Feetech and Dynamixel servos.

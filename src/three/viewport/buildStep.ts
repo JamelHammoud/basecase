@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { projectPoints } from './measurements';
 import type { BuildStepView, Vec3 } from './types';
 import type { ViewportContext } from './viewportContext';
+import { BuildToolingLayer } from './buildTooling';
 
 const HOLD_MS = 450;
 const MOVE_MS = 900;
@@ -56,6 +57,7 @@ function labelElement(text: string): HTMLElement {
 }
 
 export class BuildStepLayer {
+  private readonly tooling: BuildToolingLayer;
   private view: BuildStepView | null = null;
 
   private shown = new Set<string>();
@@ -93,6 +95,7 @@ export class BuildStepLayer {
   private readonly labelRoot: () => HTMLElement | null;
 
   constructor(ctx: ViewportContext, labelRoot: () => HTMLElement | null) {
+    this.tooling = new BuildToolingLayer(ctx.stage.overlays);
     this.ctx = ctx;
     this.labelRoot = labelRoot;
     this.arrows.name = 'build-step-arrows';
@@ -107,6 +110,7 @@ export class BuildStepLayer {
 
     this.view = view;
     this.clearOverlay();
+    this.tooling.show(view?.tooling);
 
     if (!view) {
       this.leave();
@@ -164,6 +168,7 @@ export class BuildStepLayer {
   }
 
   dispose(): void {
+    this.tooling.dispose();
     this.clearOverlay();
     this.arrows.removeFromParent();
     this.routes.removeFromParent();

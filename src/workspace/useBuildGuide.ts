@@ -204,4 +204,4 @@ export function useBuildGuide(options: BuildGuideOptions) {
   };
 }
 
-export type BuildGuide = ReturnType<typeof useBuildGuide>;
+export type BuildGuide = ReturnType<typeof useBuildGuide> & { play?: () => void };

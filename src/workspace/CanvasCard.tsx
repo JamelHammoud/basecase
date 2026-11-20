@@ -132,7 +132,7 @@ export function CanvasCard(props: CanvasCardProps) {
       <ErrorBoundary region="Canvas" className="absolute inset-0 flex-col">
         <SceneViewport active={active} core={core} actions={actions} agent={agent} />
         {core.printing.mode && (
-          <PlateCanvas active={active} printing={core.printing} parts={core.printing.fitTest?.parts ?? core.parts} />
+          <PlateCanvas active={active} printing={core.printing} parts={core.printing.temporaryParts ?? core.parts} />
         )}
       </ErrorBoundary>
       <div className="canvas-vignette absolute inset-0 pointer-events-none" />

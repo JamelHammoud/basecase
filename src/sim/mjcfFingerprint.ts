@@ -1,4 +1,5 @@
 import { hashText } from '../utils/geometryHash';
+import type { IdealTendon } from '../types/tendon';
 
 const SCENE_INDEXED: Array<[RegExp, string]> = [
   [/(?<![A-Za-z0-9])j\d+_/g, 'j_'],
@@ -24,9 +25,18 @@ export interface RobotXml {
   body: string[];
   actuators: string[];
   contacts?: string;
+  transmissions?: Array<{ motor: string; tendon: IdealTendon }>;
 }
 
-export function robotFingerprint({ timestep, tolerance, assets, body, actuators, contacts }: RobotXml): string {
+export function robotFingerprint({
+  timestep,
+  tolerance,
+  assets,
+  body,
+  actuators,
+  contacts,
+  transmissions,
+}: RobotXml): string {
   const stableBody = body
     .slice(1)
     .map((line) => line.replace(/contype="-?\d+" conaffinity="-?\d+"/g, 'contype="1" conaffinity="0"'));
@@ -37,6 +47,7 @@ export function robotFingerprint({ timestep, tolerance, assets, body, actuators,
     ...stableBody,
     ...actuators,
     ...(contacts ? [contacts] : []),
+    ...(transmissions?.length ? [hashText(JSON.stringify(transmissions))] : []),
   ].join('\n');
 
   return hashText(SCENE_INDEXED.reduce((s, [pattern, plain]) => s.replace(pattern, plain), text));

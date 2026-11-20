@@ -191,7 +191,7 @@ const PlateDetail: React.FC<PlateHandlers & { printing: Printing; plate: Plate; 
         onSend={onSend}
         onAddPrinter={onAddPrinter}
       />
-      {!printing.fitTest && <PlateMarks printing={printing} plate={plate} />}
+      {!printing.temporaryPrint && <PlateMarks printing={printing} plate={plate} />}
     </Section>
   );
 };
@@ -291,7 +291,7 @@ const PrintHeader: React.FC<{ printing: Printing; onDone: () => void }> = ({ pri
     title={printing.fitTest ? 'Print Fit Test' : 'Print'}
     onDone={onDone}
     actions={
-      !printing.fitTest &&
+      !printing.temporaryPrint &&
       printing.canFitTest && (
         <Button
           variant="secondary"
@@ -307,7 +307,9 @@ const PrintHeader: React.FC<{ printing: Printing; onDone: () => void }> = ({ pri
 );
 
 function selectedPrintPart(printing: Printing, parts: ScenePart[]) {
-  return printing.fitTest ? undefined : (printing.repairPart ?? parts.find((p) => p.id === printing.mode?.selected));
+  return printing.temporaryPrint
+    ? undefined
+    : (printing.repairPart ?? parts.find((p) => p.id === printing.mode?.selected));
 }
 
 export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
@@ -331,14 +333,14 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
             onAddPrinter={props.onAddPrinter}
             onChooseService={() => void printing.service.choose()}
           />
-          {!printing.fitTest && (
+          {!printing.temporaryPrint && (
             <SwitchRow
               label="Label parts"
               checked={labelsOn(props.project)}
               onChange={(labelParts) => props.onChangeProject({ labelParts })}
             />
           )}
-          {printing.printedCount > 0 && !printing.fitTest && !printing.repairId && (
+          {printing.printedCount > 0 && !printing.temporaryPrint && !printing.repairId && (
             <SwitchRow
               label={`Skip ${plural(printing.printedCount, 'printed part')}`}
               checked={printing.skipPrinted}
@@ -354,7 +356,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
             printing={printing}
             part={selected}
             plates={plates}
-            labels={!printing.fitTest && labelsOn(props.project)}
+            labels={!printing.temporaryPrint && labelsOn(props.project)}
           />
         )}
         {plate && (
@@ -370,7 +372,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
         <PrintedSection
           report={printing.report}
           project={props.project}
-          notes={printing.fitTest ? {} : printing.plates.notes}
+          notes={printing.temporaryPrint ? {} : printing.plates.notes}
           onSelectParts={([id]) => id && showPart(printing, id)}
         />
       </div>

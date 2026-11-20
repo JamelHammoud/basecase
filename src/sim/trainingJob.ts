@@ -2,6 +2,7 @@ import { actuatorDefaults } from './actuatorChannels';
 import type { SimModel } from './mjcfTypes';
 import type { TrainTask } from './policy';
 import { SNAPSHOT_EVERY_S } from '../skills/snapshots';
+import { requireNoTendons } from '../joints/tendonAdmission';
 
 export interface TrainOptions {
   task: TrainTask;
@@ -16,6 +17,8 @@ export function requireActions(joints: readonly unknown[]) {
 const D2R = Math.PI / 180;
 
 export function trainingJob(model: SimModel, robotKey: string, opts: TrainOptions, name: string) {
+  requireNoTendons(model.joints.filter((j) => j.robot === robotKey));
+
   const robot = model.robots.find((r) => r.key === robotKey)!;
   const joints = model.joints.filter((j) => j.robot === robotKey && j.actuator >= 0);
 

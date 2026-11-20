@@ -17,6 +17,7 @@ import { plural } from '../../electron/plural.mjs';
 import { currentSlices, sliceLookup } from '../print/slices';
 
 interface PrintJobOptions {
+  enabled?: boolean;
   jobId: string;
   sceneName: string;
   report: PrintReport | null;
@@ -80,6 +81,8 @@ export function usePrintJob(options: PrintJobOptions) {
   const progress = useSliceProgress(jobId, slicing);
 
   useEffect(() => {
+    if (options.enabled === false) return;
+
     let live = true;
 
     printBridge
@@ -90,7 +93,7 @@ export function usePrintJob(options: PrintJobOptions) {
     return () => {
       live = false;
     };
-  }, [jobId]);
+  }, [jobId, options.enabled]);
 
   const sliceReport = async (report: PrintReport | null) => {
     setSlicing(true);

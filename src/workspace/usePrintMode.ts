@@ -9,6 +9,7 @@ export interface PrintMode {
 }
 
 interface ModeState {
+  temporary?: boolean;
   scene: string;
   mode: PrintMode | null;
   repairId: string | null;
@@ -16,6 +17,7 @@ interface ModeState {
 }
 
 interface ModeOptions {
+  temporaryAvailable?: boolean;
   jobId: string;
   parts: ScenePart[];
   fit: { active: boolean; leave: () => void; start: () => Promise<boolean> };
@@ -23,10 +25,12 @@ interface ModeOptions {
 
 const opened = (plate = 1, selected: string | null = null): PrintMode => ({ plate, selected, face: false });
 
-export function usePrintMode({ jobId, parts, fit }: ModeOptions) {
+export function usePrintMode({ jobId, parts, fit, temporaryAvailable = false }: ModeOptions) {
   const [state, setState] = useState<ModeState>({ scene: jobId, mode: null, repairId: null });
 
   if (state.scene !== jobId) setState({ scene: jobId, mode: null, repairId: null });
+
+  if (state.temporary && !temporaryAvailable) setState({ scene: jobId, mode: null, repairId: null });
 
   const openMode = (plate = 1) => {
     fit.leave();
@@ -39,7 +43,7 @@ export function usePrintMode({ jobId, parts, fit }: ModeOptions) {
     setState({ scene: jobId, mode: opened(1, id), repairId: id });
   };
   const closeMode = () => {
-    setState({ scene: jobId, mode: fit.active ? opened() : null, repairId: null });
+    setState({ scene: jobId, mode: fit.active && !state.temporary ? opened() : null, repairId: null });
     fit.leave();
   };
   const startFitTest = async () => {
@@ -59,7 +63,8 @@ export function usePrintMode({ jobId, parts, fit }: ModeOptions) {
     repairPrint: state.repairPrint,
     repairPart: state.repairId ? repairPrintParts(parts, state.repairId, state.repairPrint)[0] : undefined,
     editRepairPrint,
-    canMerge: !!state.mode && !fit.active && !state.repairId,
+    canMerge: !!state.mode && !fit.active && !state.repairId && !state.temporary,
+    openTemporary: () => setState({ scene: jobId, mode: opened(), repairId: null, temporary: true }),
     openMode,
     openRepairPlate,
     closeMode,

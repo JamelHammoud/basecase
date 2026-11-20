@@ -126,6 +126,9 @@ export function getRig(ctx: PoseContext, wanted?: string): PoseReply {
     ...robotsHeader(full, scope),
     `${scope.name}: ${plural(movable.length, 'joint')} (values from the modeled pose; agent frame, mm):`,
     ...movable.map((j) => jointLine(rig, j, names)),
+    ...rig.joints.flatMap((joint) =>
+      joint.tendon ? [`- ${joint.id}: ideal tendon ${JSON.stringify(joint.tendon)}`] : [],
+    ),
     '',
     canvasPoseLine(scope.local),
     ...libraryLines(ctx, scope),

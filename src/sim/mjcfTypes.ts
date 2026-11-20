@@ -35,6 +35,7 @@ export interface WorldItem extends ScenePart {
 }
 
 export interface SimJoint {
+  tendon?: import('../types/tendon').IdealTendon;
   loop?: LoopClosure;
   id: string;
   name: string;

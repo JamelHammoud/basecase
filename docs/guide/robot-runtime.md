@@ -379,6 +379,10 @@ Case conditions use the existing contract evaluator in a worker. [Cases](cases.m
 
 The retained-incident browser declaration is quarantined only on Windows through 28 November 2026 under [#1749](https://github.com/JamelHammoud/basecase/issues/1749). Linux and macOS retain the complete walkthrough. Windows retains the fast collector, storage and native recorder integration matrices, with a temporary gap in ordinary incident-dialog playback across two scene tabs. [Failure stages and restoration conditions](../notes/testing-robot-runtime.md#windows-retained-incident-playback-on-18-november) keep second-tab scene loading separate from timeline opening.
 
+### Ideal tendon admission
+
+`sceneRobotChoices` refuses authored tendon rigs before connecting an emulator or robot. Robot Computer joint-map export refuses the same declarations. Robot Package export instead retains simulation XML and an explicitly unsupported URDF extension, with `transmissions.json` preserving the authored motor and passive-joint references. No tendon hardware deployment or daemon transmission model is added. `sim/tendonAdmission.test.ts` checks runtime choice refusal. [Joints and motion](joints-and-motion.md#ideal-fixed-tendons) owns the declaration.
+
 ### Workbench rehearsal
 
 An arm Case's [measured workbench placement](cases.md#measured-workbench-placement) binds entered coordinates to the same lowercase unit identity used by named connections. A unit can be named while disconnected. Reading the fleet only supplies name suggestions. Choosing a placement never selects, connects or advances a daemon unit.

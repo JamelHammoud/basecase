@@ -1073,6 +1073,10 @@ Requirements are supplied operational criteria. They do not establish statistica
 
 Case slots retain each source robot’s authored self-contact setting. Placement prefixes the robot key and each excluded part id, and joining retains the resulting settings. Live models, worker model jobs and headless Case runs use the shared prepared calibrated-model path. Case cache identity includes contact configuration. Existing recording contact arrays preserve the same body pairs through file round trips. `selfContact.test.ts` covers placement and worker transport, and the ten-mechanism simulation matrix covers package and recorded contact evidence. [Self-contact coverage and limits](simulate.md#self-contact).
 
+### Ideal tendon motor channels
+
+Case slot placement remaps every tendon output joint reference together with its motor spool ID. Live and reference drives use the existing pose drive for authored tendon robots. That drive's explicit powered-joint list excludes passive outputs. A reference command therefore names motor spool coordinates, while physical observations retain every joint. Ordinary saved recordings carry the tendon declaration, control mapping, physical addresses and model fingerprints in their optional transmission metadata. The recording byte format retains this header without changing legacy recordings. Coverage and execution limits are in [simulation evidence](../notes/testing-simulate.md#ideal-tendon-transmissions).
+
 ## Measured workbench placement
 
 An open single-arm Case offers Workbench placement in Simulate and Edit Workbench Placement in the command palette. The person enters a named unit, XYZ translation in millimeters and yaw in degrees, then chooses Rehearse. Unit names use the existing runtime namespace. Choosing a name never connects or selects a daemon connection. The result is one nominal simulated reference, separate from the twenty randomized Checks runs.

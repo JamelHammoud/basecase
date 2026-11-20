@@ -1,6 +1,8 @@
 import { sampleAnimation } from '../utils/animation';
 import type { Controller } from './engine';
 
+export { assertTendonController } from './tendonController';
+
 export function controlValues(c: Controller, time: number): Record<string, number> | undefined {
   if (c.kind === 'hold') return c.values;
 

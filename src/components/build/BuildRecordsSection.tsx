@@ -28,10 +28,10 @@ export function BuildRecordsSection({ core }: { core: WorkspaceCore }) {
   const load = useEffectEvent(() => localBuilds.list().then(setRecords).catch(fail));
 
   useEffect(() => {
-    void load();
+    if (core.active) void load();
 
     return () => abort.current?.abort();
-  }, []);
+  }, [core.active]);
 
   const cancel = () => {
     abort.current?.abort();

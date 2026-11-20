@@ -74,7 +74,7 @@ export function useFrozenBuildAlong({
       if (run !== openingRef.current) return;
 
       setSession((current) =>
-        current?.frozen
+        current?.frozen?.record.id === record.id
           ? {
               ...current,
               index: record.index,

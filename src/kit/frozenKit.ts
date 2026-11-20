@@ -11,6 +11,7 @@ import { frozenKitContent, hydrateFrozenKit, type PreparedFrozenKit } from './fr
 export { frozenKitContent, type PreparedFrozenKit } from './frozenContent';
 
 import { kitManifest } from './buildKit';
+import { kitSheets } from './sheets';
 import { checkKitSource } from './limits';
 import type { KitJob, KitManifest } from './types';
 
@@ -48,6 +49,7 @@ export async function freezeBuildKit({ job, meshes = {} }: { job: KitJob; meshes
     outputs: Object.fromEntries(
       Object.entries({
         ...Object.fromEntries(Object.entries(job.files).map(([key, bytes]) => [`plates/${key}.3mf`, bytes])),
+        ...Object.fromEntries(kitSheets(job).map((sheet) => [sheet.file, new TextEncoder().encode(sheet.dxf)])),
         ...electrical,
         ...drawings,
       }).map(([key, bytes]) => [key, Array.from(bytes)]),
@@ -66,12 +68,22 @@ export function readFrozenKit(content: PreparedFrozenKit): FrozenKit {
 
   frozenViewParts(kit);
 
-  for (const part of kit.manifest.printed) {
-    if (part.outputs.some((output) => !kit.outputs?.[`plates/${output.file}`]?.length))
-      throw new Error('The build kit is damaged.');
-  }
+  checkFrozenOutputs(kit);
 
   return kit;
+}
+
+function checkFrozenOutputs(kit: FrozenKit) {
+  const files = [
+    ...kit.manifest.printed.flatMap((part) => part.outputs.map((output) => `plates/${output.file}`)),
+    ...kit.manifest.sheets.map((sheet) => sheet.file),
+    ...(kit.manifest.electrical ? [kit.manifest.electrical.manifest] : []),
+    ...(kit.manifest.drawings?.sheets.flatMap((sheet) => [`drawings/${sheet.svg}`, `drawings/${sheet.geometryFile}`]) ??
+      []),
+  ];
+
+  if (kit.manifest.printed.some((part) => !part.outputs.length) || files.some((file) => !kit.outputs[file]?.length))
+    throw new Error('The build kit is damaged.');
 }
 
 function checkFrozenEnvelope(kit: FrozenKit) {

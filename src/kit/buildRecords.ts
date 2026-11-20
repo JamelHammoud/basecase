@@ -31,7 +31,14 @@ function indexOf(value: unknown): BuildIndex {
 
   const index = value as BuildIndex;
 
-  if (!Array.isArray(index.records) || !index.assets || !index.kits) throw new Error('The build history is damaged.');
+  if (
+    !Array.isArray(index.records) ||
+    !index.records.every(validSummary) ||
+    new Set(index.records.map((record) => record.id)).size !== index.records.length ||
+    !index.assets ||
+    !index.kits
+  )
+    throw new Error('The build history is damaged.');
 
   return index;
 }
@@ -40,20 +47,46 @@ function recordOf(value: unknown): BuildRecord {
   const record = value as BuildRecord;
 
   if (
-    !record ||
-    typeof record.id !== 'string' ||
-    !isHash(record.kit) ||
+    !validSummary(record) ||
     !Number.isInteger(record.index) ||
     record.index < 0 ||
     record.index >= record.count ||
-    !record.completed ||
-    !Number.isInteger(record.count) ||
-    record.count < 1 ||
-    record.count > 10000
+    !validCompletion(record)
   )
     throw new Error('The build history is damaged.');
 
   return record;
+}
+
+function validSummary(record: BuildSummary) {
+  return (
+    !!record &&
+    typeof record.id === 'string' &&
+    !!record.id &&
+    typeof record.name === 'string' &&
+    !!record.name.trim() &&
+    isHash(record.kit) &&
+    validTimestamp(record.createdAt) &&
+    Number.isInteger(record.count) &&
+    record.count >= 1 &&
+    record.count <= 10000
+  );
+}
+
+function validTimestamp(value: unknown) {
+  return typeof value === 'string' && Number.isFinite(Date.parse(value));
+}
+
+function validCompletion(record: BuildRecord) {
+  if (!record.completed || typeof record.completed !== 'object' || Array.isArray(record.completed)) return false;
+
+  return Object.entries(record.completed).every(([key, timestamp]) => {
+    const step = Number(key);
+
+    return (
+      String(step) === key && Number.isInteger(step) && step >= 0 && step < record.count && validTimestamp(timestamp)
+    );
+  });
 }
 
 const assetKey = (hash: string) => `asset:${hash}`;

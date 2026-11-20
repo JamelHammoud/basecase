@@ -33,15 +33,6 @@ hub_sort: order
 
 The Checks header shows Ready to build only when no check holds a blocker. Until then, it shows how many problems are left to fix. If your design isn't passing, find the case below that matches what you see.
 
-## A saved build keeps showing the same findings
-
-Saved builds retain the Checks captured when they were made. Editing the design or completing steps leaves those findings unchanged.
-
-1. Click **Done** to return to the editable design.
-2. In **Checks**, inspect the current findings.
-
-[Resume a robot build](/help/resume-a-robot-build) explains the retained evidence.
-
 ## The header still shows a count after you edit
 
 At least one check still holds a blocker, often one you haven't opened.

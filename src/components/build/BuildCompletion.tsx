@@ -7,7 +7,12 @@ export function BuildCompletion({ buildAlong }: { buildAlong: BuildAlong }) {
   const completed = !!buildAlong.frozen.record.completed[String(buildAlong.index)];
 
   return (
-    <Button size="sm" variant="ghost" disabled={buildAlong.saving} onClick={() => void buildAlong.complete()}>
+    <Button
+      size="sm"
+      variant="ghost"
+      disabled={buildAlong.saving || buildAlong.opening}
+      onClick={() => void buildAlong.complete()}
+    >
       {completed ? 'Mark Incomplete' : 'Complete Step'}
     </Button>
   );

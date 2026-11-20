@@ -229,7 +229,9 @@ it('prepares the reconciled Kit without drawing files, illustrated HTML or a PDF
   const made = await prepareKit(core, { ...run, assemblyOnly: true });
 
   expect(calls.guide).not.toHaveBeenCalled();
-  expect(calls.plan).toHaveBeenCalledWith(expect.objectContaining({ parts: job.parts, project: job.project }));
+  expect(calls.plan).toHaveBeenCalledWith(expect.objectContaining({ parts: job.parts, project: job.project }), {
+    signal: run.signal,
+  });
   expect(made.drawings).toBeUndefined();
   expect(made.guide.html).toBe('');
   expect(made.guide.plan).toEqual(job.guide.plan);

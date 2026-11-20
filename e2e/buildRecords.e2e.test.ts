@@ -42,6 +42,9 @@ it('resumes two independent frozen builds through Build after reload and source 
     await app.page.getByRole('button', { name: 'Arm one', exact: true }).click();
     await app.page.getByRole('button', { name: 'Complete Step', exact: true }).click();
     await expect.poll(() => app.page.getByRole('button', { name: 'Mark Incomplete', exact: true }).count()).toBe(1);
+    expect(await app.page.locator('[data-frozen-checks]').count()).toBe(1);
+    expect(await app.page.locator('#build-guide').count()).toBe(0);
+    expect(await app.page.getByRole('button', { name: 'Define Board', exact: true }).count()).toBe(0);
 
     const original = await frozenBuild(app.page);
 

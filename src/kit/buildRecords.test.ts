@@ -165,3 +165,37 @@ it('shares geometry across different retained Checks and frees only unreferenced
   expect(storage.assetBytes()).toBe(0);
   expect(await store.list()).toEqual([]);
 });
+
+it.each([
+  { name: null },
+  { createdAt: 'broken' },
+  { completed: [] },
+  { completed: { '-1': '2026-11-20T00:00:00.000Z' } },
+  { completed: { '10000': '2026-11-20T00:00:00.000Z' } },
+  { completed: { '0': true } },
+])('rejects malformed build metadata and completion without overwriting it: %j', async (fault) => {
+  const storage = memoryBuildStorage();
+  const store = createBuildStore(storage);
+  const { kit } = await prepared();
+  const record = await store.create('Saved', kit);
+  const key = `build:${record.id}`;
+  const damaged = { ...record, ...fault };
+
+  await storage.update([key], () => ({ puts: { [key]: damaged }, result: undefined }));
+  await expect(store.open(record.id)).rejects.toThrow('history is damaged');
+  await expect(store.complete(record.id, 0, true)).rejects.toThrow('history is damaged');
+  expect(await storage.get(key)).toEqual(damaged);
+});
+
+it('refuses a damaged summary instead of rendering it as a saved build', async () => {
+  const storage = memoryBuildStorage();
+  const store = createBuildStore(storage);
+  const { kit } = await prepared();
+
+  await store.create('Saved', kit);
+  await storage.update(['index'], ([saved]) => ({
+    puts: { index: { ...(saved as object), records: [null] } },
+    result: undefined,
+  }));
+  await expect(store.list()).rejects.toThrow('history is damaged');
+});

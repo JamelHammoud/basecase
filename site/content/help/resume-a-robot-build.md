@@ -8,6 +8,15 @@ hub_checks_and_blockers: |
   ## Checks in individual builds
 
   [Individual builds](/help/resume-a-robot-build) retain their original Checks and assembly-order limitations. Completing a step leaves blockers unchanged.
+hub_troubleshoot_build_check_blocks_ready_to_build: |
+  ## A saved build keeps showing the same findings
+
+  Saved builds retain the Checks captured when they were made. Editing the design or completing steps leaves those findings unchanged.
+
+  1. In Build Along, click **Done** to return to the editable design.
+  2. In **Checks**, inspect the current findings.
+
+  [Resume a robot build](/help/resume-a-robot-build) explains the retained evidence.
 related:
   - build-along
   - build-checks
@@ -19,7 +28,7 @@ covers:
   - src/workspace/useFrozenBuildAlong.ts
 ---
 
-You can track assembly progress for several robots made from the same design. For each build, you keep the geometry and instructions you started with.
+Track assembly progress for several robots from one design, with each build keeping its original geometry and instructions.
 
 Your design must meet the same part, actuator and plate requirements as a [manufacturing kit](/help/export-a-robot-kit).
 
@@ -29,7 +38,7 @@ Your design must meet the same part, actuator and plate requirements as a [manuf
 
 ![The Make Build dialog with Arm one entered as the build name](/help/resume-a-robot-build/name.png)
 
-4. Click **Make**.
+4. In the dialog, click **Make**.
 5. Under **Builds**, click the build's name.
 6. After assembling the displayed step, click **Complete Step**.
 
@@ -42,7 +51,7 @@ Basecase saves your place as you move between steps. You keep the same completed
 ![Arm two on its second step with Complete Step available and its own saved position](/help/resume-a-robot-build/navigation.png)
 
 8. Click **Done** to return to the editable design.
-9. After restarting Basecase, under **Builds**, click the build's name to resume.
+9. After restarting Basecase, in **Build** under **Builds**, click the build's name to resume.
 
 ![Builds lists Arm one and Arm two separately](/help/resume-a-robot-build/builds.png)
 

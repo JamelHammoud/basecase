@@ -3,7 +3,8 @@ import { box } from '../sim/fixtures/parts';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { buildGuidePlan } from './guidePlan';
 import { approximateScene } from './guideScene';
-import { generateGuide } from './generateGuide';
+import { generateGuide, generateGuidePlan } from './generateGuide';
+import type { AssemblyGeometry } from '../assembly/assemblyGeometry';
 
 const calls = vi.hoisted(() => ({ render: vi.fn(), save: vi.fn() }));
 
@@ -60,4 +61,32 @@ it('terminates the export-owned guide worker when preparation is interrupted', a
   expect(stopped).toHaveBeenCalledOnce();
   expect(calls.render).not.toHaveBeenCalled();
   expect(calls.save).not.toHaveBeenCalled();
+});
+
+it('refuses frozen build planning on the interaction thread without a worker', async () => {
+  vi.stubGlobal('Worker', undefined);
+
+  await expect(
+    generateGuidePlan({ ...input, geometry: {} as AssemblyGeometry }, { signal: new AbortController().signal }),
+  ).rejects.toThrow('Kit export needs a worker.');
+});
+
+it('terminates the frozen build planning worker on cancellation', async () => {
+  const abort = new AbortController();
+  const stopped = vi.fn();
+
+  class InterruptingWorker {
+    postMessage() {
+      abort.abort();
+    }
+
+    terminate() {
+      stopped();
+    }
+  }
+
+  vi.stubGlobal('Worker', InterruptingWorker);
+
+  await expect(generateGuidePlan({ ...input, geometry: {} as AssemblyGeometry }, abort)).rejects.toThrow();
+  expect(stopped).toHaveBeenCalledOnce();
 });

@@ -6,9 +6,9 @@ image: /changelog/resume-a-robot-build/cover.png
 
 You can name individual robot builds in Build and resume their assembly progress after restarting Basecase. Each build keeps the geometry and instructions it started with.
 
-You can assemble two arms from the same design on different days. Make two builds from that design without copying its editable scene.
+You can assemble two arms from the same design on different days. The two builds share a design without needing separate editable scenes.
 
-Each build keeps its Kit, navigation position and completed steps. Use Complete Step to record assembly progress after the save commits. With Next and Previous, you move through the instructions without recording assembly.
+Each build keeps its Kit, navigation position and completed steps. **Complete Step** records assembly progress. Moving between steps keeps that progress unchanged.
 
 You can edit the design without changing either build. In each build’s retained Checks, you keep the original findings and freshness. Completing a build leaves blockers, print records, stock and movement permissions unchanged.
 

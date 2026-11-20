@@ -105,7 +105,7 @@ export async function prepareKit(core: WorkspaceCore, run: KitRun) {
   const order = { ...provenOrderOf(parts, geometry), timedOut: geometry.timedOut };
   const guide = run.assemblyOnly
     ? await stage('Build guide', async () => ({
-        plan: await generateGuidePlan({ title: name, parts, project, geometry }),
+        plan: await generateGuidePlan({ title: name, parts, project, geometry }, { signal: run.signal }),
         html: '',
         record: {
           id: '',

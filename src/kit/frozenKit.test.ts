@@ -10,6 +10,7 @@ import { wiringNetlist } from '../wiring/netlist';
 import { kitManifest } from './buildKit';
 import { freezeBuildKit, readFrozenKit, frozenViewParts, frozenKitContent } from './frozenKit';
 import { kitFixture } from './kit.fixtures';
+import { kitSheets } from './sheets';
 
 const designs = [
   'differential rover',
@@ -22,6 +23,7 @@ const designs = [
   'conveyor mechanism',
   'mixed-servo arm',
   'repeated limb modules',
+  'mixed sheet-and-printed',
 ];
 
 function jobFor(name: string) {
@@ -59,6 +61,10 @@ it.each(designs)(
     expect(JSON.stringify(frozen.manifest)).toBe(JSON.stringify(manifest));
     expect(frozen.manifest.guide.partIds.sort()).toEqual(job.parts.map((part) => part.id).sort());
     expect(frozen.parts).toEqual(job.parts);
+
+    for (const sheet of kitSheets(job)) {
+      expect(new TextDecoder().decode(Uint8Array.from(frozen.outputs[sheet.file]))).toBe(sheet.dxf);
+    }
 
     for (const part of job.parts) {
       expect(frozen.geometry[part.id].positions).toEqual(Array.from(meshes[part.id].vertices));
@@ -107,4 +113,15 @@ it('refuses absent geometry and incomplete output references even with a matchin
   };
   frozen.outputs = {};
   expect(() => readFrozenKit(frozenKitContent(frozen))).toThrow('damaged');
+});
+
+it('rejects a retained Kit whose sheet manifest references an absent manufacturing output', async () => {
+  const job = kitFixture('mixed sheet-and-printed');
+  const triangles = fixtureTriangles(job.parts);
+  const meshes = Object.fromEntries(job.parts.map((part) => [part.id, weld(triangles(part.id)!)]));
+  const kit = readFrozenKit(await freezeBuildKit({ job, meshes }));
+
+  expect(kit.manifest.sheets).toHaveLength(1);
+  delete kit.outputs[kit.manifest.sheets[0].file];
+  expect(() => readFrozenKit(frozenKitContent(kit))).toThrow('damaged');
 });

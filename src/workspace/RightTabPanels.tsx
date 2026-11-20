@@ -71,6 +71,13 @@ function BuildTab({ core, agent, actions }: RightTabPanelsProps) {
   const { docs, parts, project, scene, setSelectedIds, showToast, guide, printing, studio, tool, simTraining } = core;
   const { setProject } = docs;
 
+  if (core.buildAlong.frozen)
+    return (
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        <BuildRecordsSection core={core} />
+      </div>
+    );
+
   return (
     <BuildPanel
       builds={<BuildRecordsSection core={core} />}

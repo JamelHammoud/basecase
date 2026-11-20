@@ -310,6 +310,14 @@
   },
   {
     "file": "e2e/firstLaunch.e2e.test.ts",
+    "test": "opens on the rover, already driving to its flag, without saving it",
+    "issue": 795,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Windows run 44782838288 reached rover startup and forward motion, then saved the untouched rover with a generated buildGuide. Its retry reused the same app and failed because both simulation clock reads were 20.319999999999617. Linux passed at the same revision in 6406 ms. Windows passed in the last green run 44697629334 in 4378 ms. Startup, autosave, guide generation and this test did not change between those revisions. Automatic guide generation updates the project, but the actual draft transition and the retry clock failure were not traced. Issue #795 already owns unwanted rover saves. Trace these paths separately, isolate attempts and retain ten baseline and ten candidate observations at equal Windows load before restoring this declaration."
+  },
+  {
+    "file": "e2e/firstLaunch.e2e.test.ts",
     "test": "moves the base forward while W is held",
     "issue": 1799,
     "until": "2026-11-28",

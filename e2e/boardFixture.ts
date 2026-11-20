@@ -43,6 +43,10 @@ export async function openRover(page: Awaited<ReturnType<typeof openApp>>['page'
   ).setFiles({ name: 'board-rover.basecase', mimeType: 'application/octet-stream', buffer: Buffer.from(file) });
   await page.getByRole('tab', { name: 'Board rover', exact: true }).click();
   await page.locator(shown('[role=tab]'), { hasText: 'Build' }).first().click();
+  await page
+    .locator('[data-check="Electrical connections"]')
+    .getByRole('button', { name: /^Electrical connections/ })
+    .click();
   await page.getByRole('button', { name: 'Define Board', exact: true }).click();
   await page.getByRole('textbox', { name: 'Width (X)', exact: true }).waitFor();
 }

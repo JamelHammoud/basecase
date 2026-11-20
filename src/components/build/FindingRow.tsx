@@ -21,6 +21,7 @@ export interface FindingContext {
   panScroll: boolean;
   actions: FindingActions;
   tether?: TetherControl;
+  board?: { exists: boolean; onClick: () => void };
   onOpenCase?: (id: string) => void;
   showDots?: (check: string | null) => void;
 }

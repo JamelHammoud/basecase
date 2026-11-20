@@ -55,7 +55,7 @@ it('rehearses an existing arm Case at an entered placement and refuses an unreac
     .poll(() => panel.locator('[data-workbench-evidence="entered"]').getAttribute('data-passed'))
     .toBe('true');
   expect(await panel.locator('[data-workbench-evidence="entered"]').getAttribute('data-unit')).toBe('bench-arm');
-  await panel.locator('[data-workbench-evidence="entered"]').focus();
+  await panel.locator('[data-workbench-evidence="entered"]').hover();
   await expect.poll(() => app.page.getByRole('tooltip').textContent()).toMatch(/Case [0-9a-f]{8}Robot [0-9a-f]{8}/);
   await panel.getByLabel('X', { exact: true }).fill('10000');
   await panel.getByLabel('X', { exact: true }).press('Enter');

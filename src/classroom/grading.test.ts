@@ -47,7 +47,7 @@ describe('classroom production grading pipeline', () => {
         await settleClassroomWorkers();
         expect(workers.every((worker) => worker.terminated)).toBe(true);
       });
-      it.each(seedBatches(20, 4).map((seeds) => ({ seeds })))(
+      it.each(seedBatches(20, 20).map((seeds) => ({ seeds })))(
         'evaluates prescribed seeds $seeds',
         async ({ seeds }) => {
           batches.push(await runClassroomSeeds(resources, prepared, seeds));
@@ -122,7 +122,7 @@ describe('classroom production grading pipeline', () => {
         await settleClassroomWorkers();
         expect(workers.every((worker) => worker.terminated)).toBe(true);
       });
-      it.each(seedBatches(20, 4).map((seeds) => ({ seeds })))(
+      it.each(seedBatches(20, 20).map((seeds) => ({ seeds })))(
         'recomputes prescribed seeds $seeds without trusting submitted evidence',
         async ({ seeds }) => {
           batches.push(await runClassroomSeeds(resources, prepared, seeds));

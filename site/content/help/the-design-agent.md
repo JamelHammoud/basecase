@@ -56,7 +56,7 @@ After each edit, the agent sees the same Checks as the **Build** tab. It never p
 
 Study measurements stay separate from the Build verdict. Only **Checks** in the **Build** tab say a design is ready.
 
-If an edit adds a blocker, the agent follows up on its own, up to twice per message. The follow-up shows in the chat as “Fix what the last change added: 2 problems.” above the new problems. To turn this off, go to **Settings** ▸ **Build**.
+To ask for repairs, send `/fix` in the chat or click **Fix** on a problem in **Checks**.
 
 ## What you keep control of
 

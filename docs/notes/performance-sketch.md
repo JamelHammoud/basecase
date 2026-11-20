@@ -2,6 +2,18 @@
 
 Implementation: [Sketch](../guide/inspector-and-selection.md#performance-sketch). Shared requirements: [Performance](../guide/performance.md).
 
+## Four-bar classification sorts one length list
+
+Whole-app search found one Grashof classifier, `grashofClass` in `utils/linkageKinematics.ts`. `utils/linkage.ts` uses it when scoring every fitted candidate for both Sketch Path and agent synthesis. It now sorts the length list directly instead of copying it and shares a module-local class table instead of recreating it. Sorting, slack arithmetic, change-point tolerance and first-shortest tie priority stay unchanged.
+
+Each classification removes one four-entry temporary array. A classification that reaches the shortest-link lookup removes a second four-entry array. A synthesis scores 72 candidate fits, removing 72 to 144 temporary arrays depending on their classes. The retained sorted list still allocates once per call. These are source-derived allocation counts, not heap measurements or timings. No complete interaction speedup is claimed.
+
+`linkageClassification.test.ts` compares the previous classifier across 1,296 ordered length combinations and their crank edits. It covers all six classes, first-shortest ties and input preservation. Additional cases cover change-point tolerance boundaries, signed zero, negative lengths and nonfinite values in every role. Existing `linkage.test.ts` retains complete seeded synthesis coverage. No timeout, retry or quarantine changes.
+
+On November 20, 2026, the changed-file check passed formatting, lint, docs, site copy and types. Related tests passed 751 files and 5,588 tests, with one existing file and test skipped, in 74.55 seconds. The log is `scratch/check-changed.log`. This local result does not establish browser or Windows reliability.
+
+The steps and captured states in [Design a linkage from a path](../../site/content/help/design-a-linkage-from-a-path.md) remain accurate. Classification results, accepted candidates, ranking and inserted geometry are unchanged, so the article and screenshots stay unchanged.
+
 ## Shared dimension preparation
 
 On November 17, 2026, the real OpenSCAD ten-assembly matrix on macOS arm64 and Node 26.13.0 compiled exactly two affected CAD parts per edit. One changed-file check sample measured 60.68 to 121.46 ms per complete preparation, retaining 3 to 12 unrelated catalog objects by identity. The preceding isolated native run measured 33 to 40 ms. These are single local samples under different contention, not percentiles or CI thresholds. Actual hole raycasts, Sketch geometry, mates, references and BOM assertions run with these samples.

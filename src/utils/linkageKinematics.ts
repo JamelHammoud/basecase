@@ -26,6 +26,7 @@ export interface FourBarPose {
 
 const DEG = Math.PI / 180;
 const CHANGE_POINT_TOLERANCE = 1e-9;
+const CLASS_BY_SHORTEST: GrashofClass[] = ['double-crank', 'crank-rocker', 'double-rocker', 'rocker-crank'];
 
 export const toRadians = (deg: number) => deg * DEG;
 export const toDegrees = (rad: number) => rad / DEG;
@@ -118,18 +119,24 @@ export function linkAngle(l: Links, thetaDeg: number, link: 'coupler' | 'rocker'
 }
 
 export function grashofClass(l: FourBar): GrashofClass {
-  const links = [l.ground, l.crank, l.coupler, l.rocker];
-  const sorted = [...links].sort((a, b) => a - b);
+  const sorted = [l.ground, l.crank, l.coupler, l.rocker].sort((a, b) => a - b);
   const slack = sorted[1] + sorted[2] - sorted[0] - sorted[3];
 
   if (Math.abs(slack) < CHANGE_POINT_TOLERANCE * sorted[3]) return 'change-point';
 
   if (slack < 0) return 'triple-rocker';
 
-  const shortest = links.indexOf(sorted[0]);
-  const byShortest: GrashofClass[] = ['double-crank', 'crank-rocker', 'double-rocker', 'rocker-crank'];
+  let shortest = -1;
 
-  return byShortest[shortest];
+  if (l.rocker === sorted[0]) shortest = 3;
+
+  if (l.coupler === sorted[0]) shortest = 2;
+
+  if (l.crank === sorted[0]) shortest = 1;
+
+  if (l.ground === sorted[0]) shortest = 0;
+
+  return CLASS_BY_SHORTEST[shortest];
 }
 
 const deviation = (cos: number) => {

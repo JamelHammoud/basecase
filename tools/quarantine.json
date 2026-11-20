@@ -49,11 +49,19 @@
   },
   {
     "file": "e2e/kit.e2e.test.ts",
+    "test": "downloads a reconciled kit through Export on desktop with matching packing, guide, servo map and 3MF mesh",
+    "issue": 1611,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44690321738 at a008932d1 failed two separate Windows desktop boundaries. The first attempt delivered the archive but captured two guide jobs instead of one. Its retry exhausted the unchanged 10000 ms download wait despite completed preparation, Packing archive and the Exported Kit arm toast. Last full green 44558099086 already required a retry for this unchanged declaration before the sole intervening agent-adapter update. Same-revision Windows diagnostic 44691753110 passed in 15609.7596 ms with one worker, zero retries and quarantine off, confirming intermittency. The fixture captures every guide render and automatic guide generation can overlap export, but job identity and download delivery timing are untraced, so no common root cause is established. Existing manufacturing export owner #1611 owns both desktop signatures separately, cleanup and at least ten baseline and ten candidate equal-load Windows observations with retries disabled before restoration. Other platforms and fast Kit reconciliation, guide generation, worker ownership, interruption and geometry coverage remain active. No assertion, timeout or retry changes."
+  },
+  {
+    "file": "e2e/kit.e2e.test.ts",
     "test": "downloads a reconciled kit through Export on web with matching packing, guide, servo map and 3MF mesh",
     "issue": 1611,
     "until": "2026-11-30",
     "platform": "win32",
-    "reason": "Run 44034821423 missed the unchanged 10000 ms download wait on both Windows web attempts, with Exporting kit still visible and completed preparation ending at Checking the build order. The Windows desktop case passed in 13476 ms and Linux web passed at the same revision in 9322 ms. Full green run 43948835889 passed Windows web in 12449 ms without retries, with unchanged kit tests, guide-worker fixture, kit producers, guide generation and worker RPC sources. Focused Windows diagnostic 44036302249 passed the exact web case at the failing revision in 23690 ms with one worker and retries disabled, confirming intermittent behavior. The pending guide input, worker startup, fixture route or reply boundary is not established. Issue #1611 owns tracing from boot through preparation and delivery, plus equal-load baseline and candidate measurements before restoration. Desktop Windows, other platforms and all fast kit producer and guide coverage remain active."
+    "reason": "Run 44034821423 missed the unchanged 10000 ms download wait on both Windows web attempts, with Exporting kit still visible and completed preparation ending at Checking the build order. The Windows desktop case passed in 13476 ms and Linux web passed at the same revision in 9322 ms. Full green run 43948835889 passed Windows web in 12449 ms without retries, with unchanged kit tests, guide-worker fixture, kit producers, guide generation and worker RPC sources. Focused Windows diagnostic 44036302249 passed the exact web case at the failing revision in 23690 ms with one worker and retries disabled, confirming intermittent behavior. The pending guide input, worker startup, fixture route or reply boundary is not established. Issue #1611 owns tracing from boot through preparation and delivery, plus equal-load baseline and candidate measurements before restoration. Desktop Windows has a separate quarantine under the same owner. Other platforms and all fast kit producer and guide coverage remain active."
   },
   {
     "file": "src/study/visibilityMatrix.test.ts",

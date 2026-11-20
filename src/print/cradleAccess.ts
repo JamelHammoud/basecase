@@ -101,6 +101,9 @@ export function checkCradleAccess(api: ManifoldApi, geometry: CradleGeometry, ac
     const cradle = strictSolid(api, world, resources);
     const solids = new Map(access.sources.map((source) => [source.id, accessSolid(api, source, access, resources)]));
 
+    if ([...solids.values()].some((solid) => !resources.own(solid.intersect(cradle)).isEmpty()))
+      throw new CradleError('move');
+
     for (const move of access.moves) {
       const source = solids.get(move.partId);
 

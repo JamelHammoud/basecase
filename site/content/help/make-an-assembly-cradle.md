@@ -19,27 +19,28 @@ Make temporary tooling to hold an assembly at a step, then export its plate with
 5. In **Clearance**, enter the space around the assembly.
 6. In **Base thickness**, enter the base's thickness.
 7. In **Support depth**, enter how far the walls rise around the assembly.
-8. Click **Make Assembly Cradle**.
-9. Click **Print**.
-10. Press [[⌘K]], then choose **Export 3MF Plates**.
-11. Press [[Esc]] to return to the same assembly step.
-12. Above the canvas, click **Show Removal**.
 
 ![The cradle options with a subassembly and resting face selected](/help/make-an-assembly-cradle/options.png)
+
+8. Click **Make Assembly Cradle**.
 
 You can see the cradle's dimensions in the prepared result. If you change an option, you clear that result. Make the cradle again before opening Print.
 
 ![The prepared cradle with its dimensions and Print action](/help/make-an-assembly-cradle/prepared.png)
 
-In Print, you have one temporary cradle. Its 3MF retains the source scene, assembly step, selected part identities and dimensions.
+9. Click **Print**.
+
+In **Print**, you have one temporary cradle. Its 3MF retains the source scene, assembly step, selected part identities and the cradle's dimensions.
 
 ![The temporary assembly cradle on its Print plate](/help/make-an-assembly-cradle/print.png)
 
-Click **Show Removal** to move the tooling away from the assembly. Click **Use Cradle** to restore its working position.
+10. In **Export**, choose **3MF Plates**.
+
+Press [[Esc]] to return to the same assembly step. Above the canvas, click **Show Removal** to move the tooling away from the assembly. Click **Use Cradle** to restore its working position.
 
 ![The cradle moved below the subassembly to show removal](/help/make-an-assembly-cradle/removal.png)
 
-There are no measurements of holding strength or physical printer fit. You can't establish either through geometric checks.
+Holding strength and physical printer fit haven't been measured.
 
 The cavity clears the assembly's convex footprint, so you may find extra space in concave recesses. You won't get locating pins in internal holes.
 

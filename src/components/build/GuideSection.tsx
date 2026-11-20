@@ -143,7 +143,11 @@ export const GuideSection: React.FC<GuideSectionProps> = ({ guide, sceneName, ca
             Make Guide
           </Button>
         )}
-        {guide.play && <Button variant="secondary" fullWidth disabled={!canGenerate || !!progress} onClick={guide.play}>Build Along</Button>}
+        {guide.play && (
+          <Button variant="secondary" fullWidth disabled={!canGenerate || !!progress} onClick={guide.play}>
+            Build Along
+          </Button>
+        )}
       </div>
     </Section>
   );

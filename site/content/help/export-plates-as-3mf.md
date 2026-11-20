@@ -35,7 +35,7 @@ Basecase saves the files to your downloads. If the exported plates use one mater
 
 Inside each file, the plates are named Plate 1, Plate 2, and so on, and they're laid out the way Bambu Studio lays out plates. Parts keep their names and the orientation you chose in Print mode.
 
-An open [assembly cradle](/help/make-an-assembly-cradle) exports its temporary tooling, source identities and dimensions instead of the robot.
+An open [assembly cradle](/help/make-an-assembly-cradle) exports its temporary tooling, source identities and cradle dimensions instead of the robot.
 
 While **Print Fit Test** is open, this exports its coupons instead of the design's full plates. A comparison includes its dimension values and source identities, as [Compare clearances on a fit test plate](/help/compare-fit-clearances) explains.
 

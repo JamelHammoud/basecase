@@ -24,6 +24,7 @@ export interface CradleActionContext {
   options: CradleOptions;
   latest: RefObject<CradleOptions>;
   controller: RefObject<AbortController | null>;
+  faceRun: RefObject<number>;
   choices: ReturnType<typeof cradleSelections>;
   selected: string;
   current: boolean;
@@ -43,6 +44,7 @@ export interface CradleActionContext {
 
 export async function loadCradleFaces(context: CradleActionContext, id: string) {
   const { choices, options, latest, setDirections, setOrigin } = context;
+  const run = ++context.faceRun.current;
   const { docs } = options;
   const choice = choices.find((entry) => entry.id === id);
   const view = options.viewportRef.current;
@@ -67,7 +69,7 @@ export async function loadCradleFaces(context: CradleActionContext, id: string) 
     }
   }
 
-  if (latest.current.docs.partsRef.current === docs.parts) setDirections(faces);
+  if (context.faceRun.current === run && latest.current.docs.partsRef.current === docs.parts) setDirections(faces);
 }
 
 export async function makeAssemblyCradle(context: CradleActionContext) {

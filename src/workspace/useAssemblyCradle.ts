@@ -5,7 +5,7 @@ import {
   makeAssemblyCradle,
   printAssemblyCradle,
 } from './assemblyCradleActions';
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import type { Viewport3DHandle } from '../three/viewport/types';
 import { cradleSelections } from '../print/cradleSelection';
@@ -18,6 +18,7 @@ import { useLatestRef } from '../utils/useLatestRef';
 import { cradleView } from './cradleView';
 import { cradleSourcesCurrent } from './cradleSources';
 import type { DesignParameters } from './useDesignParameters';
+import { useCradleLifetime } from './useCradleLifetime';
 
 export interface CradleOptions {
   parameters: Pick<DesignParameters, 'status'>;
@@ -36,9 +37,10 @@ export interface CradleResult {
 }
 
 export function useAssemblyCradle(options: CradleOptions) {
-  const { docs, buildAlong, scene, printing } = options;
+  const { docs, buildAlong } = options;
   const latest = useLatestRef(options);
   const controller = useRef<AbortController | null>(null);
+  const faceRun = useRef(0);
   const [open, setOpen] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [selected, setSelected] = useState('');
@@ -52,6 +54,7 @@ export function useAssemblyCradle(options: CradleOptions) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CradleResult | null>(null);
   const step = buildAlong.sourceStep;
+  const [sheetStep, setSheetStep] = useState(step);
   const current = sourceSessionCurrent(options);
   const choices = step ? cradleSelections(docs.parts, docs.project.joints ?? [], step) : [];
   const valid = currentCradleResult(result, options, current);
@@ -59,31 +62,22 @@ export function useAssemblyCradle(options: CradleOptions) {
 
   if (result && !valid) setResult(null);
 
-  const firstId = choices[0]?.id ?? '';
-  const closeTemporary = useEffectEvent(() => printing.closeTemporary());
+  if (sheetStep !== step || (open && !current)) {
+    setSheetStep(step);
+    setOpen(false);
+  }
 
-  useEffect(
-    () => () => {
-      controller.current?.abort();
-      closeTemporary();
-    },
-    [
-      docs.parts,
-      docs.project,
-      scene.sceneId,
-      buildAlong.index,
-      buildAlong.sessionId,
-      buildAlong.active,
-      options.active,
-      options.parameters.status.state,
-    ],
-  );
+  const firstId = choices[0]?.id ?? '';
+
+  useCradleLifetime(options, controller, faceRun);
 
   const reset = () => {
     controller.current?.abort();
+    faceRun.current++;
     setResult(null);
     setError(null);
     setBusy(false);
+    setRemoving(false);
   };
   const close = () => {
     reset();
@@ -97,6 +91,7 @@ export function useAssemblyCradle(options: CradleOptions) {
     options,
     latest,
     controller,
+    faceRun,
     choices,
     selected,
     current,
@@ -155,8 +150,10 @@ export function useAssemblyCradle(options: CradleOptions) {
 
 export type AssemblyCradle = ReturnType<typeof useAssemblyCradle>;
 
-function sourceSessionCurrent({ docs, buildAlong, parameters }: CradleOptions): boolean {
+function sourceSessionCurrent({ active, docs, buildAlong, parameters }: CradleOptions): boolean {
   return (
+    active &&
+    buildAlong.active &&
     !!buildAlong.sourceStep &&
     buildAlong.sourceParts === docs.parts &&
     buildAlong.sourceProject === docs.project &&

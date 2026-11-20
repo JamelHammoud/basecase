@@ -88,3 +88,17 @@ it('enlarges the key shaft for its declared size and refuses unresolved envelope
     checkCradleAccess(api, geometry, { sources, moves: [], drivers: [{ chain, tool: 'L-key', radiusMm: NaN }] }),
   ).toThrow('cradle:driver');
 });
+
+it('refuses a stationary context part intersecting the cradle without any insertion or tool request', () => {
+  const input = cradleFixture(api, 0);
+  const geometry = makeCradle(api, input);
+  const obstacle = new THREE.BoxGeometry(4, 4, 4).translate(10, 10, -1).toNonIndexed();
+  const source = { id: 'stationary context', positions: new Float32Array(obstacle.attributes.position.array) };
+  const access = { sources: [...input.sources, source], moves: [], drivers: [] };
+
+  expect(() => checkCradleAccess(api, geometry, access)).toThrow('cradle:move');
+  obstacle.translate(0, 0, 80);
+  source.positions = new Float32Array(obstacle.attributes.position.array);
+  expect(() => checkCradleAccess(api, geometry, access)).not.toThrow();
+  obstacle.dispose();
+});

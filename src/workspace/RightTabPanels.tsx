@@ -1,3 +1,4 @@
+import { BuildRecordsSection } from '../components/build/BuildRecordsSection';
 import { Activity, useState, type ReactNode } from 'react';
 import { AcpStudioPanel } from '../components/AcpStudioPanel';
 import { DesktopDownload } from '../components/agent/DesktopDownload';
@@ -70,12 +71,21 @@ function BuildTab({ core, agent, actions }: RightTabPanelsProps) {
   const { docs, parts, project, scene, setSelectedIds, showToast, guide, printing, studio, tool, simTraining } = core;
   const { setProject } = docs;
 
+  if (core.buildAlong.frozen)
+    return (
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        <BuildRecordsSection core={core} />
+      </div>
+    );
+
   return (
     <BuildPanel
+      builds={<BuildRecordsSection core={core} />}
       onDefineBoard={() => void actions.board.define()}
       cableRoutes={core.cableRoutes}
       parts={parts}
       sceneName={scene.sceneName}
+      sceneId={scene.sceneId}
       project={project}
       onChangeProject={(patch: Partial<ProjectSettings>) => setProject((p) => ({ ...p, ...patch }))}
       printing={printing}

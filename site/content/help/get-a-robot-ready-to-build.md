@@ -37,6 +37,8 @@ covers:
 
 Clear every problem the Build tab finds before you print the parts, buy them, and put the robot together.
 
+If a saved build is open, click **Done** first to return to the editable design and its current Checks.
+
 1. Click **Build** at the top of the right panel.
 2. Look at the header of **Checks**. It reads **Ready to build** or shows how many problems are left, such as **3 to fix**.
 3. To open a check, click one with a red mark.
@@ -102,5 +104,7 @@ Cases never count toward Ready to build. To ignore one, right-click the note und
 Green paths passed, and red paths failed. Click a red path to inspect that seed's first failure on the joint timeline. For the steps, see [Replay a failing seed](/help/replay-a-failing-seed).
 
 In Simulate, the icon beside the Case's name shows the status of its row. To go back to the row, click the icon.
+
+Selecting a [supplier offer](/help/compare-supplier-offers) records purchasing evidence. It doesn’t clear a blocker or grant Ready to build.
 
 To learn why each check exists, see [The path from design to build](/help/from-design-to-build). Next, [price the parts and set a budget](/help/price-the-parts-and-set-a-budget).

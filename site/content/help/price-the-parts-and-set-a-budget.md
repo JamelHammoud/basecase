@@ -77,3 +77,5 @@ Press [[⌘,]], choose **Build**, then pick one of 30 currencies in **Currency**
 To plan your build around the hours available, [set a time budget](/help/set-a-time-budget).
 
 Next, [buy the parts for a robot](/help/buy-the-parts-for-a-robot).
+
+For availability and delivery evidence, [compare supplier offers](/help/compare-supplier-offers). Their separate purchasing totals don’t replace the prices used by Budget.

@@ -83,6 +83,7 @@ export function codexArgs(options, files) {
     `model_reasoning_effort="${policy?.effort || CODEX_EFFORT}"`,
     '-c',
     'service_tier="default"',
+    ...(sandbox?.tools.some((tool) => tool === 'WebSearch' || tool === 'WebFetch') ? ['-c', 'web_search="live"'] : []),
     ...(options.name === 'voice'
       ? [
           '-c',
@@ -179,9 +180,6 @@ function executeCodex(options, files, execute) {
 }
 
 export function runCodex(options, execute = run) {
-  if (options.sandbox?.tools.length > 0)
-    return { ok: false, error: 'Codex exec cannot enforce scoped tool allowlists' };
-
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-codex-'));
   const schemaFile = path.join(dir, 'schema.json');
   const outFile = path.join(dir, 'answer.json');

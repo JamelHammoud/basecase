@@ -2,6 +2,14 @@
 
 Implementation: [Strength and Lighten](../guide/build.md#performance-strength-and-lighten). Shared requirements: [Performance](../guide/performance.md).
 
+## Lighten retains neighborhood weight totals
+
+A whole-app search found one density-filter constructor and one sensitivity consumer, both in `strength/lightenFilter.ts`. All Lighten entry points share them through `lightenOptimize.ts`. Neighbor weights stay fixed across the optimizer's 14 updates. Filter construction now accumulates each row's total in its existing neighbor loop. Sensitivity updates retain the numerator calculation and density clamp, and read the saved denominator weight.
+
+On a dense 10 × 10 × 6 grid with unit spacing and radius 1.5, independent integer-neighbor enumeration counts 9,304 retained entries. Weight-total additions across construction and 14 updates fall from 130,256 to 9,304. The 600-cell filter adds a 4,800-byte Float64 buffer. At the 40,000-cell optimizer limit this buffer costs 320,000 bytes. It belongs to the filter and ends with that optimization. These are structural operation and storage counts, without wall-clock measurements or a claim about complete Lighten latency.
+
+`lightenNeighborhoods.test.ts` compares full filters against independent element-pair enumeration across sparse anisotropic grids, reversed element order, singleton axes, empty meshes and edited cell sizes. A changing-field comparison checks exact sensitivity results against independently summed row weights for 14 density and gradient fields, including zero density and signed gradients. Inputs and retained filters must remain unchanged. Existing `lightenDensity.test.ts` and `lighten.test.ts` retain density-update and complete optimization coverage. No browser behavior, timeout, retry or quarantine changes.
+
 ## Elastic block lookups search sorted rows
 
 A whole-app search found one sparse elastic block lookup, in `strength/elasticPattern.ts`. It serves all 64 destination queries per hexahedral element and diagonal lookup during block-Jacobi setup. Strength and Lighten share both consumers. Each row already has sorted unique columns, with at most 27 neighbors, so binary search replaces the repeated scan without new storage or retained state.

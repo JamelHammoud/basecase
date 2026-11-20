@@ -1,11 +1,13 @@
+import { usePurchaseSheet } from './build/usePurchaseSheet';
+import { SupplierOffers } from './build/SupplierOffers';
 import { supportByMaterial } from './build/supportByMaterial';
 import { CableRoutesSection } from './build/CableRoutesSection';
 import type { CableRoutes } from '../workspace/useCableRoutes';
-import React, { useState } from 'react';
+import React from 'react';
 import { useScrollFade } from '../design-system';
 import { BoardBuildAction } from './build/BoardBuildAction';
-import type { ProjectSettings, PurchaseRecord, ScenePart } from '../types/robotics';
-import { onHandOf, withPrice } from '../utils/onHand';
+import type { ProjectSettings, ScenePart } from '../types/robotics';
+import { onHandOf } from '../utils/onHand';
 import type { ShowToast } from '../workspace/types';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import { useMoney } from '../utils/useMoney';
@@ -30,10 +32,12 @@ import type { Viewport3DHandle } from './Viewport3D';
 import { useBomWiring } from './build/useBomWiring';
 
 interface BuildPanelProps {
+  builds?: React.ReactNode;
   cableRoutes: CableRoutes;
   onDefineBoard: () => void;
   parts: ScenePart[];
   sceneName: string;
+  sceneId: string;
   project: ProjectSettings;
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
   printing: Printing;
@@ -58,6 +62,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   cableRoutes,
   parts,
   sceneName,
+  sceneId,
   project,
   onChangeProject,
   printing,
@@ -73,31 +78,26 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   guide,
   readiness,
   viewportRef,
+  ...rest
 }) => {
   const [purchases, savePurchase] = usePurchases();
   const { measures, report: print } = printing;
-  const [checking, setChecking] = useState<BomLine | null>(null);
+  const { checking, setChecking, savePrice } = usePurchaseSheet(purchases, savePurchase);
   const { ref: setScroller, style: fadeStyle } = useScrollFade();
   const measuredWiring = useBomWiring({ parts, project }, viewportRef, onToast);
   const wiring = measuredWiring ?? currentWiring(readiness);
   const bom = buildBom({ parts, project, purchases, measures, supportG: supportByMaterial(print), wiring });
-  const file = fileStem(sceneName);
   const money = useMoney();
-  const tether = sceneTether({ parts, project });
 
   const exportCsv = () => {
     const names = Object.fromEntries(parts.map((p) => [p.id, p.name]));
 
-    download(`${file}-bom.csv`, bomToCsv(bom, names, money), 'text/csv');
+    download(`${fileStem(sceneName)}-bom.csv`, bomToCsv(bom, names, money), 'text/csv');
     onToast('Exported bill of materials');
   };
   const exportMarkdown = () => {
-    download(`${file}-bom.md`, bomToMarkdown(bom, sceneName, money), 'text/markdown');
+    download(`${fileStem(sceneName)}-bom.md`, bomToMarkdown(bom, sceneName, money), 'text/markdown');
     onToast('Exported bill of materials');
-  };
-  const savePrice = async (line: BomLine, record: PurchaseRecord | null) => {
-    await savePurchase(line.key, withPrice(purchases[line.key], record));
-    setChecking(null);
   };
   const saveOnHand = (line: BomLine, count: number) =>
     saveLineOnHand({ line, count, purchases, savePurchase, onToast });
@@ -105,6 +105,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       <div ref={setScroller} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        {rest.builds}
         <BoardBuildAction exists={!!project.electronicsBoard} onClick={onDefineBoard} />
         <ChecksSection
           readiness={readiness.current}
@@ -141,7 +142,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
               onIgnoreRule: (finding) => onChangeProject({ readiness: ignoreRule(project.readiness, finding) }),
               onSelectParts,
             },
-            tether: tether && { tether, onChange: (next) => onChangeProject({ tether: next }) },
+            tether: tetherControl(parts, project, onChangeProject),
             onOpenCase,
             showDots: readiness.showDots,
           }}
@@ -168,6 +169,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
         <GuideSection guide={guide} sceneName={sceneName} canGenerate={parts.some(isBuilt)} />
         <PlatesSection printing={printing} />
       </div>
+      <SupplierOffers bom={bom} purchases={purchases} scene={sceneId} save={savePurchase} />
       {checking && (
         <CheckSheet
           line={checking}
@@ -178,3 +180,11 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
     </div>
   );
 };
+
+function tetherControl(parts: ScenePart[], project: ProjectSettings, onChange: BuildPanelProps['onChangeProject']) {
+  const tether = sceneTether({ parts, project });
+
+  return tether
+    ? { tether, onChange: (next: NonNullable<ProjectSettings['tether']>) => onChange({ tether: next }) }
+    : undefined;
+}

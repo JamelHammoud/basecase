@@ -1,3 +1,4 @@
+import { csvCell } from './csvCell';
 import { supplierOrderQty } from './purchaseIdentity';
 import { Bom, BomLine, FILAMENT_MARGIN, PriceStatus, STALE_DAYS, localDate } from './bomTypes';
 import { bomCategories } from './bomCategories';
@@ -45,12 +46,6 @@ const csvHead = (code: string) => [
   'Identity Source',
 ];
 
-const csvCell = (v: unknown) => {
-  const raw = v === undefined || v === null ? '' : String(v);
-  const s = /^\s*[=+@-]/.test(raw) ? `'${raw}` : raw;
-
-  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
 const recordCells = (l: BomLine) => [
   l.record?.asin ?? '',
   l.record?.title ?? '',

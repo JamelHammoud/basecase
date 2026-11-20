@@ -48,7 +48,7 @@ From the bill of materials, you can fill an Amazon cart, open listings in other 
 
 You can also press [[⌘K]] and choose **Buy All**.
 
-Basecase leaves any parts you [already own](/help/count-the-parts-you-already-own) out of the cart. Pack counts come from the price you checked, so six servos sold in pairs go in as 3, and 13 screws sold by the hundred go in as 1. If a line has no saved pack size, it goes in by the piece.
+Basecase leaves any parts you [already own](/help/count-the-parts-you-already-own) out of the cart. Completing a [named build](/help/resume-a-robot-build) leaves those on-hand counts unchanged. Pack counts come from the price you checked, so six servos sold in pairs go in as 3, and 13 screws sold by the hundred go in as 1. If a line has no saved pack size, it goes in by the piece.
 
 Other stores don't take a shared cart, so you open their listings one at a time. To buy a line with no store link, hover over it and click the link at its right end to search Amazon.
 
@@ -65,6 +65,8 @@ Each product and length has its own line, price and on-hand count. Extra cables 
 Power connections use the same routing check. Without a selected compatible cable, the list keeps a pigtail for each battery plug and barrel jack on the power path, such as the XT60 on a LiPo.
 
 To find links for one part, select it and look in the **Product** section of the Inspector. It has **Buy on Amazon** or **Find on Amazon**, **Datasheet** and **Product Page**.
+
+Compare dated quotes and export a selected purchasing plan with [Compare supplier offers](/help/compare-supplier-offers).
 
 **Note:** Basecase never places an order or reads store pages. You buy everything in the store yourself.
 

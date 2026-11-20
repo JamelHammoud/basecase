@@ -20,7 +20,6 @@ covers:
   - src/components/simulate/TrainSection.tsx
   - src/components/simulate/SkillsList.tsx
   - src/components/SimulatePanel.tsx
-  - src/workspace/RightTabPanels.tsx
   - src/workspace/useSkills.ts
   - src/skills/teach.ts
   - src/skills/teachExamples.ts
@@ -57,6 +56,8 @@ The agent tells you what each method tried. If a design change would make the sk
 ## When the design changes
 
 A skill belongs to the design it was trained on. Changing a color or a name keeps the skill ready. Changing mass, size or [self-contact](/help/simulate-self-contact) shows **Recheck** when the proved physics no longer matches. A body fit or rollback can also change that physics.
+
+You can [compare supplier offers](/help/compare-supplier-offers) for the robot’s current parts without changing the design used by its skill.
 
 If you change a joint, the row shows **Train**. Either button sends your words back to the agent.
 

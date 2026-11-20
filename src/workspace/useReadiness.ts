@@ -177,7 +177,7 @@ export function useSceneReadiness(
     project: docs.project,
     printer: printing.printer,
     printerCount: studio.printers.printers.length,
-    slices: printing.job.slices,
+    slices: printing.designSlices,
     partsRef: docs.partsRef,
     projectRef: docs.projectRef,
     viewportRef,

@@ -58,10 +58,28 @@ const strictGuideClient = () =>
     throw new Error('Kit export needs a worker.');
   });
 
-export async function generateGuidePlan(input: Omit<PlanGuideJob, 'meshes'>): Promise<GuidePlan> {
+export async function generateGuidePlan(
+  input: Omit<PlanGuideJob, 'meshes'>,
+  run?: { signal: AbortSignal },
+): Promise<GuidePlan> {
   const parts = input.parts.filter(isBuilt);
+  const planning = run ? strictGuideClient() : client;
+  const cancel = () => planning.dispose();
 
-  return client.call('plan', { ...input, parts: packParts(parts), meshes: await sourcedMeshFiles(parts) });
+  run?.signal.throwIfAborted();
+  run?.signal.addEventListener('abort', cancel, { once: true });
+
+  try {
+    const meshes = await sourcedMeshFiles(parts);
+
+    run?.signal.throwIfAborted();
+
+    return await planning.call('plan', { ...input, parts: packParts(parts), meshes });
+  } finally {
+    run?.signal.removeEventListener('abort', cancel);
+
+    if (run) planning.dispose();
+  }
 }
 
 const identities = new WeakMap<ScenePart, string>();

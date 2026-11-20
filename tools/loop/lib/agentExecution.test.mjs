@@ -125,20 +125,20 @@ describe('agent routing', () => {
     expect(mocks.claude).not.toHaveBeenCalled();
   });
 
-  it('keeps scoped research on the runner that enforces its tool allowlist', () => {
-    const release = vi.fn();
+  it('runs research on Codex while Claude is held and withholds GitHub credentials', () => {
     const sandbox = { tools: ['Read', 'WebSearch'], allow: ['Read', 'WebSearch'] };
 
-    mocks.reserve.mockReturnValue(release);
-    mocks.claude.mockReturnValue({ ok: true, output: { changed: false } });
+    mocks.claudeHeld = { until: Date.now() + 60_000 };
+    mocks.codex.mockReturnValue({ ok: true, output: { changed: false } });
 
-    expect(runAgent({ ...task, sandbox })).toMatchObject({ provider: 'claude', overflow: true });
-    expect(mocks.codex).not.toHaveBeenCalled();
-    expect(mocks.claude.mock.calls[0][0].sandbox).toEqual(sandbox);
-    expect(release).toHaveBeenCalledOnce();
+    expect(runAgent({ ...task, name: 'ideas', sandbox })).toMatchObject({ provider: 'codex' });
+    expect(mocks.codex.mock.calls[0][0]).toMatchObject({ sandbox, env: { GH_TOKEN: '' } });
+    expect(mocks.claude).not.toHaveBeenCalled();
+    expect(mocks.reserve).not.toHaveBeenCalled();
   });
 
-  it('never widens research permissions when protected capacity is unavailable', () => {
+  it('waits for capacity when Codex is held and research overflow is unavailable', () => {
+    mocks.codexHeld = { until: Date.now() + 60_000 };
     mocks.reserve.mockReturnValue(null);
 
     expect(() => runAgent({ ...task, sandbox: { tools: ['Read'], allow: ['Read'] } })).toThrow('limited');

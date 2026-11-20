@@ -1,4 +1,5 @@
 import type { FitPlateIdentity } from '../../print/fitVariantIdentity';
+import type { CradleIdentity } from '../../print/cradleTypes';
 import { bedDown, labelMeshes, type Unlabeled } from '../../print/labels/partLabels';
 import type { LabelTarget } from '../../print/labels/labelPick';
 import { weld, writeThreeMf, type MeshData, type ThreeMfProject } from '../../print/threeMf';
@@ -6,6 +7,7 @@ import type { Placed } from './collide';
 import type { ShapeSolid } from './shapeSolid';
 
 export interface ThreeMfFileSpec {
+  cradle?: CradleIdentity;
   fitTest?: FitPlateIdentity;
   key: string;
   plates: Array<{ number: number; name: string }>;
@@ -70,6 +72,7 @@ export async function plateFiles(task: ThreeMfTask, ctx: PlateContext): Promise<
           items,
           project: file.project,
           fitTest: file.fitTest,
+          cradle: file.cradle,
         }),
       ];
     }),

@@ -6,6 +6,7 @@ export interface DensityFilter {
   start: Int32Array;
   near: Int32Array;
   weight: Float64Array;
+  totalWeight: Float64Array;
 }
 
 function offsetsFor(h: V3, radius: number): Array<[number, number, number, number]> {
@@ -31,6 +32,7 @@ export function densityFilter(mesh: HexMesh, radius: number): DensityFilter {
   const elementOf = new Int32Array(grid.solid.length).fill(-1);
   const offsets = offsetsFor(grid.h, radius);
   const start = new Int32Array(mesh.cells.length + 1);
+  const totalWeight = new Float64Array(mesh.cells.length);
   const near: number[] = [];
   const weight: number[] = [];
 
@@ -39,6 +41,7 @@ export function densityFilter(mesh: HexMesh, radius: number): DensityFilter {
     const x = cell % nx;
     const y = Math.floor(cell / nx) % ny;
     const z = Math.floor(cell / (nx * ny));
+    let sumWeight = 0;
 
     for (const [dx, dy, dz, w] of offsets) {
       const i = x + dx;
@@ -53,28 +56,28 @@ export function densityFilter(mesh: HexMesh, radius: number): DensityFilter {
 
       near.push(other);
       weight.push(w);
+      sumWeight += w;
     }
 
     start[e + 1] = near.length;
+    totalWeight[e] = sumWeight;
   });
 
-  return { start, near: Int32Array.from(near), weight: Float64Array.from(weight) };
+  return { start, near: Int32Array.from(near), weight: Float64Array.from(weight), totalWeight };
 }
 
 export function filteredSensitivity(filter: DensityFilter, density: Float64Array, raw: Float64Array): Float64Array {
   return density.map((value, e) => {
     let sum = 0;
-    let weights = 0;
 
     for (let i = filter.start[e]; i < filter.start[e + 1]; i++) {
       const other = filter.near[i];
       const w = filter.weight[i];
 
       sum += w * density[other] * raw[other];
-      weights += w;
     }
 
-    return sum / (Math.max(0.001, value) * weights);
+    return sum / (Math.max(0.001, value) * filter.totalWeight[e]);
   });
 }
 

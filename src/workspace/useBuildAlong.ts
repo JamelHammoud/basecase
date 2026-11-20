@@ -1,7 +1,10 @@
+import { useFrozenBuildAlong } from './useFrozenBuildAlong';
+import { stepView, type Session } from './buildAlongSession';
+import { localBuilds } from '../kit/buildRecords';
+import type { ShowToast } from './types';
 import { useRef, useState, type RefObject } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
-import { buildAlongSteps, type BuildAlongStep } from '../guide/buildAlong';
-import type { BuildStepView, ViewShot } from '../three/viewport/types';
+import { buildAlongSteps } from '../guide/buildAlong';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { BuildGuide } from './useBuildGuide';
 import type { GuidePlan } from '../guide/guideTypes';
@@ -9,27 +12,11 @@ import type { WiringScene } from '../wiring/netlist';
 
 interface BuildAlongOptions {
   guide: BuildGuide;
+  showToast: ShowToast;
   projectRef: RefObject<ProjectSettings>;
   partsRef: RefObject<ScenePart[]>;
   viewportRef: RefObject<Viewport3DHandle | null>;
 }
-
-interface Session {
-  steps: BuildAlongStep[];
-  stepParts: string[][];
-  views: BuildStepView[];
-  index: number;
-  camera: ViewShot;
-}
-
-const stepView = (step: BuildAlongStep): BuildStepView => ({
-  shown: step.shown,
-  moves: step.moves,
-  arrows: step.arrows,
-  removing: step.repairPhase === 'remove',
-  labels: step.servos.map((s) => ({ partId: s.partId, text: `${s.joint}, ID ${s.id}` })),
-  routes: step.routes.flatMap((net) => (net.route?.points.length ? [{ points: net.route.points }] : [])),
-});
 
 const sameRoutingProject = (before: ProjectSettings, after: ProjectSettings) =>
   before.joints === after.joints &&
@@ -43,10 +30,24 @@ async function planWiring(viewport: Viewport3DHandle | null, plan: GuidePlan | n
   return viewport.wiring(scene).catch(() => null);
 }
 
-export function useBuildAlong({ guide, partsRef, projectRef, viewportRef }: BuildAlongOptions) {
+function buildAlongSource(session: Session | null) {
+  if (!session?.cradleSource)
+    return { sessionId: 0, plan: null, sourceStep: null, sourceParts: null, sourceProject: null };
+
+  return {
+    sessionId: session.cradleSource.id,
+    plan: session.cradleSource.plan,
+    sourceStep: session.cradleSource.plan.steps[session.index],
+    sourceParts: session.cradleSource.parts,
+    sourceProject: session.cradleSource.project,
+  };
+}
+
+export function useBuildAlong({ guide, showToast, partsRef, projectRef, viewportRef }: BuildAlongOptions) {
   const [session, setSession] = useState<Session | null>(null);
   const [opening, setOpening] = useState(false);
   const openingRef = useRef(0);
+  const [creating, setCreating] = useState(false);
 
   const openPlan = async (source: () => Promise<GuidePlan | null>) => {
     const run = ++openingRef.current;
@@ -79,6 +80,7 @@ export function useBuildAlong({ guide, partsRef, projectRef, viewportRef }: Buil
     const steps = buildAlongSteps(plan, project.joints ?? [], nets);
 
     setSession({
+      cradleSource: { id: run, plan, parts, project: projectRef.current },
       steps,
       stepParts: plan.steps.map((s) => s.partIds),
       views: steps.map(stepView),
@@ -101,10 +103,39 @@ export function useBuildAlong({ guide, partsRef, projectRef, viewportRef }: Buil
     setSession(null);
   };
 
-  const go = (delta: number) =>
+  const { openFrozen, saveProgress, saving } = useFrozenBuildAlong({
+    session,
+    setSession,
+    openingRef,
+    setOpening,
+    viewportRef,
+    showToast,
+  });
+  const go = (delta: number) => {
+    if (session?.frozen) {
+      void saveProgress((record) =>
+        localBuilds.navigate(record.id, Math.min(record.count - 1, Math.max(0, record.index + delta))),
+      );
+
+      return;
+    }
+
     setSession((s) => s && { ...s, index: Math.min(s.steps.length - 1, Math.max(0, s.index + delta)) });
+  };
+  const complete = () =>
+    saveProgress((record) =>
+      localBuilds.complete(record.id, session?.index ?? 0, !record.completed[String(session?.index ?? 0)]),
+    );
 
   return {
+    frozen: session?.frozen ?? null,
+    saving,
+    complete,
+    creating,
+    requestCreate: () => setCreating(true),
+    cancelCreate: () => setCreating(false),
+    openFrozen,
+    ...buildAlongSource(session),
     active: !!session || opening,
     opening,
     progress: opening ? guide.progress : null,

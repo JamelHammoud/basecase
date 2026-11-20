@@ -1,4 +1,4 @@
-import type { PurchaseIdentity } from './purchasing';
+import type { PurchaseIdentity, PurchasingEvidence } from './purchasing';
 import type { SheetFields } from './sheet';
 import type { Case } from '../cases/schema';
 import type { Routine, TransitionProof } from '../routines/schema';
@@ -319,7 +319,7 @@ export interface PurchaseRecord {
   onHand?: number;
 }
 
-export type StoredPurchase = PurchaseRecord | { onHand: number };
+export type StoredPurchase = (PurchaseRecord | { onHand?: number }) & PurchasingEvidence;
 
 export type Purchases = Record<string, StoredPurchase>;
 

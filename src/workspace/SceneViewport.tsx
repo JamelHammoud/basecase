@@ -1,10 +1,11 @@
+import { FrozenBuildView } from '../components/build/FrozenBuildView';
 import { cableRouteView } from './cableRouteView';
 import { drilledOperands } from '../booleans/picking';
 import { importedPlacement } from '../cases/importedWorld';
 import { caseWorldView } from '../cases/worldView';
 import { AgentCursor } from '../components/AgentCursor';
 import { AnnotationLayer } from '../components/Annotations';
-import { BuildAlongBar } from '../components/build/BuildAlongBar';
+import { AssemblyBar } from './AssemblyBar';
 import { CameraStrip } from '../components/cameras/CameraStrip';
 import { DriveOverlay } from '../components/simulate/DriveOverlay';
 import { Viewport3D } from '../components/Viewport3D';
@@ -71,6 +72,12 @@ function pickPointFor(core: WorkspaceCore) {
   return core.cableRoutes.net ? core.cableRoutes.pick : core.sketching.notePick;
 }
 
+function canvasOverlay(core: WorkspaceCore, actions: WorkspaceActions, active: boolean) {
+  if (core.buildAlong.frozen) return <FrozenBuildView core={core} active={active} />;
+
+  return !core.caseRun.open && cameraStripFor(core, actions);
+}
+
 export function SceneViewport({ active, core, actions, agent }: SceneViewportProps) {
   const {
     viewportRef,
@@ -85,8 +92,8 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
     posing,
     simTraining: { sim },
   } = core;
-  const { edits } = actions;
   const { cursors, lanes } = agent;
+  const edits = actions.edits;
   const shownParts = shownPartsFor(core);
   const boardParts = useBoardPreview(shownParts, project.electronicsBoard);
 
@@ -133,7 +140,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         fixedCameras={project.cameras}
         earth={actions.earth.view}
         checkDots={core.readiness.dots}
-        paused={!active || !!core.printing.mode}
+        paused={!active || !!core.printing.mode || !!core.buildAlong.frozen}
         pose={posing.deltas}
         worldParts={sim.guestParts.length ? [...sim.worldParts, ...sim.guestParts] : sim.worldParts}
         importedWorld={worldViewFor(core)}
@@ -148,7 +155,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
           }
         }
         onAxisPick={actions.joints.onAxisPick}
-        buildStep={core.buildAlong.view}
+        buildStep={core.buildAlong.frozen ? null : (core.cradle.view ?? core.buildAlong.view)}
         cableRoute={cableRouteView(core)}
         skeleton={core.skeleton.view}
         onSkeletonDrag={core.skeleton.onViewportDrag}
@@ -156,13 +163,8 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
       />
       <SkeletonServoMenu skeleton={core.skeleton} />
       <DriveOverlay sim={sim} />
-      <BuildAlongBar
-        buildAlong={core.buildAlong}
-        active={active && !core.printing.mode}
-        ready={core.printing.readySteps(core.buildAlong.stepParts)}
-        onPrint={core.printing.openRepairPlate}
-      />
-      {!core.caseRun.open && cameraStripFor(core, actions)}
+      <AssemblyBar core={core} active={active} />
+      {canvasOverlay(core, actions, active)}
       <AnnotationLayer
         annotations={annotations.annotations}
         parts={parts}

@@ -15,6 +15,17 @@ export default function buildStudio(studio: Studio) {
 
       return made && { html: made.html, pages: made.record.pages, steps: made.record.steps };
     },
+    frozenBuild: () => {
+      const frozen = studio().core.buildAlong.frozen;
+
+      return frozen
+        ? {
+            record: frozen.record,
+            dimensions: frozen.parts.map((part) => part.dimensions),
+            guide: frozen.kit.manifest.guide,
+          }
+        : null;
+    },
     buildAlongSteps: () => studio().core.buildAlong.steps,
     buildAlongRoutes: () => studio().core.buildAlong.step?.routes ?? [],
     openBuildAlong: (plan: GuidePlan) => studio().core.buildAlong.openPlan(async () => plan),

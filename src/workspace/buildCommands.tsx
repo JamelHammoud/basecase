@@ -1,3 +1,4 @@
+import { setSupplierOffersOpen } from '../components/build/offerDialog';
 import { cableCommands } from './cableCommands';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { ReactNode } from 'react';
@@ -44,6 +45,17 @@ function buildAlongCommand({ core }: CommandInputs): Command[] {
 
   return [
     {
+      id: 'create-build',
+      group: 'Scene',
+      label: 'Make Build',
+      icon: <PackageIcon />,
+      keywords: 'kit frozen assembly progress',
+      run: () => {
+        core.tool.openRightTab('build');
+        core.buildAlong.requestCreate();
+      },
+    },
+    {
       id: 'build-along',
       group: 'Scene',
       label: 'Build Along',
@@ -86,7 +98,39 @@ function guideCommands({ core }: CommandInputs): Command[] {
   return guide.stale ? [open, make('guide-update', 'Update Build Guide', <RefreshIcon />)] : [open];
 }
 
+function supplierOfferCommands({ core }: CommandInputs): Command[] {
+  if (core.buildAlong?.frozen) return [];
+
+  return [
+    {
+      id: 'supplier-offers',
+      group: 'Scene',
+      label: 'Supplier Offers',
+      icon: <PackageIcon />,
+      keywords: 'quote import purchasing csv supplier arrival',
+      run: () => {
+        core.tool.openRightTab('build');
+        setSupplierOffersOpen(true);
+      },
+    },
+  ];
+}
+
 export const buildCommands = (inputs: CommandInputs): Command[] => [
+  ...supplierOfferCommands(inputs),
+
+  ...(inputs.core.cradle?.available
+    ? [
+        {
+          id: 'make-assembly-cradle',
+          group: 'Scene' as const,
+          label: 'Make Assembly Cradle',
+          icon: <PackageIcon />,
+          keywords: 'assembly fixture cradle tooling print',
+          run: inputs.core.cradle.show,
+        },
+      ]
+    : []),
   ...(inputs.core.project.electronicsBoard
     ? [
         {

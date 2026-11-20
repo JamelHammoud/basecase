@@ -795,3 +795,18 @@ The two unchanged-help preflight findings were checked against the final sampler
 - [Joints and kinematics](../../site/content/help/joints-and-kinematics.md): the guide addition describes temporary storage inside animation sampling. It changes no joint field, import source, parent or child relationship, hardware following, mounting frame, closed loop, deletion behavior, modeled-versus-posed distinction, inverse kinematics or selected-robot scope. Rest pose remains the control name in `PosesSection.tsx`. Every section remains accurate. This article has no screenshots.
 
 Both articles remain unchanged under preflight's explicit allowance for accurate articles. No user-facing copy or captures are added.
+
+
+## Xacro markup dispatch checks prefixes directly
+
+Whole-app search found one bound `startsWith` method and its per-token search callback, in `utils/robotImport/xml.ts`. Main xacro documents and included files share this parser. Plain URDF and MJCF use the browser DOM parser. Dispatch now scans the existing two-entry prefix table directly and calls `startsWith` on the source string. Prefix order, cursor positions, skipped content, CDATA, declaration refusal and opening or closing tag handling stay unchanged.
+
+For M markup tokens, the change removes M bound functions and M search callbacks. The existing 2,000-sibling XML fixture has 6,002 markup tokens, removing 12,004 temporary function objects by source accounting. These are allocation counts from the code, not heap measurements or timings. No complete-import speedup is claimed.
+
+`xml.test.ts` retains mixed comments, processing instructions, CDATA, namespaced tags, entities, attribute order, round trips and malformed-tag recovery. Its failure matrix also covers unclosed processing instructions, unclosed CDATA and an unsupported entity declaration. Existing xacro tests cover includes and expansion. No timeout, retry or quarantine changes apply.
+
+Rechecked [Import a robot](../../site/content/help/import-a-robot.md) and [A robot won't import from a link or folder](../../site/content/help/troubleshoot-app-robot-import-fails.md). Description selection, import actions, refusal messages and recovery steps remain unchanged. Temporary function removal changes no user action or screen state, so the articles and captures remain accurate.
+
+[Joints and kinematics](../../site/content/help/joints-and-kinematics.md) also remains accurate. Imported joint fields, ownership, passive behavior, posing and inverse kinematics are untouched. Preflight reports all three covered articles mechanically because their covered paths changed. Each was read against this change and needs no correction.
+
+On November 20, 2026, the changed-file check passed formatting, lint, docs, site copy, types and 408 tests across 56 related files. The log is `scratch/check-changed.log`. Copy diff reports zero added, changed or removed strings. These local checks establish no browser or Windows timing result.

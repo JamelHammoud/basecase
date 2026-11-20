@@ -37,7 +37,9 @@ covers:
 
 Every check the Build tab runs, with the problems each one reports in the words the app uses.
 
-Checks list the worst first: red, then amber, then green, then gray for Not run. A red row holds at least one blocker, which stops Ready to build. An amber row holds only notes.
+In the editable design, Checks list the worst first: red, then amber, then green, then gray for Not run. A red row holds at least one blocker, which stops Ready to build. An amber row holds only notes.
+
+A [saved build](/help/resume-a-robot-build) shows its retained measurements and recorded freshness. Its findings are read-only.
 
 ## Build checks
 

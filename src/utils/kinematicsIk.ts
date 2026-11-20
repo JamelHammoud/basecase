@@ -192,7 +192,9 @@ function iterate(pb: IkProblem, state: IkState, tol: number): boolean {
 }
 
 export function solveIK(rig: Rig, start: JointValues, targets: IkTarget[], opts: IkOptions = {}): IkResult {
-  requireNoTendons(rig.joints);
+  const robots = new Set(targets.map((target) => rig.robotOf.get(target.partId)));
+
+  requireNoTendons(rig.joints.filter((joint) => !targets.length || robots.has(rig.robotOf.get(joint.id))));
 
   const pb = ikProblem(rig, targets, opts);
   const values: JointValues = { ...start };

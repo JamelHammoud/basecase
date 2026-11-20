@@ -27,6 +27,7 @@ export function TendonLawFields({ law, onChange }: { law: TendonLaw; onChange: (
             aria-label="Length"
             unit="mm"
             value={law.lengthMm}
+            precision={6}
             onChange={(lengthMm) => onChange({ kind: 'fixed', lengthMm })}
           />
         </FieldRow>
@@ -40,6 +41,7 @@ export function TendonLawFields({ law, onChange }: { law: TendonLaw; onChange: (
               <NumberInput
                 aria-label={label}
                 value={law[key]}
+                precision={6}
                 unit={['mm', 'N/mm', 'N s/mm'][i]}
                 onChange={(value) => onChange({ ...law, [key]: value })}
               />

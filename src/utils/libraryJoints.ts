@@ -17,18 +17,29 @@ function mappedId(names: Map<string, string>, id: string): string {
   return mapped;
 }
 
+function assertCapturedTendons(joints: readonly RobotJoint[], selected: Set<string>, included: Set<string>) {
+  const byId = new Map(joints.map((joint) => [joint.id, joint]));
+
+  for (const motor of joints) {
+    if (!motor.tendon) continue;
+
+    const ids = [motor.id, ...motor.tendon.terms.map((term) => term.joint)];
+    const touched = ids.some((id) => {
+      const joint = byId.get(id);
+
+      return joint && jointPartIds(joint).some((part) => selected.has(part));
+    });
+
+    if (touched && ids.some((id) => !included.has(id))) throw new Error('Save the complete assembly to Library again.');
+  }
+}
+
 export function capturedJoints(joints: readonly RobotJoint[], parts: ScenePart[], center: number[]): RobotJoint[] {
   const selected = new Set(parts.map((part) => part.id));
   const included = joints.filter((joint) => jointPartIds(joint).every((id) => selected.has(id)));
   const jointIds = new Set(included.map((joint) => joint.id));
 
-  for (const joint of joints) {
-    const terms = joint.tendon?.terms ?? [];
-    const touched = jointIds.has(joint.id) || terms.some((term) => jointIds.has(term.joint));
-
-    if (terms.length && touched && (!jointIds.has(joint.id) || terms.some((term) => !jointIds.has(term.joint))))
-      throw new Error('Save the complete assembly to Library again.');
-  }
+  assertCapturedTendons(joints, selected, jointIds);
 
   return included.map((source) => {
     const joint = structuredClone(source);

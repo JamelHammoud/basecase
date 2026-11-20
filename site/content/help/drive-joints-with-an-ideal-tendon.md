@@ -41,7 +41,7 @@ To open the editor, you can select the motor joint and choose **Edit Tendon** in
 Click **Delete** in the editor to delete the tendon after confirmation. Click **Cancel** to discard unsaved edits.
 
 With a shared tendon, you constrain total excursion. Loads and springs determine how underactuated output joints share that motion.
-You can use the model to predict ideal transmission behavior. It does not account for routing, slack, friction or durability measurements.
+You can use the model to predict ideal transmission behavior. It doesn’t account for routing, slack, friction or durability measurements.
 You can't use these tendon declarations for training, IK or robot deployment.
 
 [Try a Case](/help/try-a-case) to save motor actions and independent joint observations, then reopen the try from Results.

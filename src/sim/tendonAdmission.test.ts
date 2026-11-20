@@ -107,6 +107,9 @@ it('exports original transmission declarations and explicitly marks the unsuppor
 
   expect(urdf).toContain('unsupported="ideal-tendons"');
   expect(() => parseUrdf(parseXml(urdf))).toThrow(/Basecase scene/);
+  expect(() =>
+    parseUrdf(parseXml(urdf.replace('<basecase unsupported=', '<basecase/><basecase unsupported='))),
+  ).toThrow(/Basecase scene/);
   expect(() => parseMjcf(parseXml(model.xml))).toThrow(/Basecase scene/);
 
   const files = robotPackageFiles({

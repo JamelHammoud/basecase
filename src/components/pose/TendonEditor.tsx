@@ -3,6 +3,7 @@ import { TendonLawFields } from './TendonLawFields';
 import { Button, FieldRow, Modal, NumberInput, Select } from '../../design-system';
 import type { IdealTendon, TendonTerm } from '../../types/tendon';
 import type { RobotJoint } from '../../types/robotics';
+import { errorMessage } from '../../utils/errorMessage';
 
 interface Props {
   motor: RobotJoint;
@@ -36,7 +37,7 @@ export function TendonEditor({ motor, outputs, onSave, onDelete, onClose }: Prop
       onSave(draft);
       onClose();
     } catch (error) {
-      setProblem(error instanceof Error ? error.message : String(error));
+      setProblem(errorMessage(error));
     }
   };
   const changeCoefficient = (index: number, coefficient: number) =>
@@ -65,6 +66,7 @@ export function TendonEditor({ motor, outputs, onSave, onDelete, onClose }: Prop
           <NumberInput
             aria-label="Spool coefficient"
             value={draft.spool.coefficient}
+            precision={6}
             unit="mm/rad"
             onChange={(coefficient) => setDraft({ ...draft, spool: { coefficient, unit: 'mm/rad' } })}
           />
@@ -77,6 +79,7 @@ export function TendonEditor({ motor, outputs, onSave, onDelete, onClose }: Prop
               <NumberInput
                 aria-label={`${name} coefficient`}
                 value={term.coefficient}
+                precision={6}
                 unit={term.unit}
                 onChange={(value) => changeCoefficient(i, value)}
               />

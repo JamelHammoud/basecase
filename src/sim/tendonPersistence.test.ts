@@ -7,6 +7,7 @@ import { withTendons } from '../joints/tendons';
 import { docFromParts, pushHistory, trackedOf, travelProject } from '../workspace/docHistory';
 import { declareJoints } from '../workspace/agentBuildRequests';
 import { getRig } from '../agent/agentPose';
+import { box } from './fixtures/parts';
 
 it('preserves tendon identity through scene bytes, Library placement and repeated joint IDs', async () => {
   const { input } = tendonMechanism();
@@ -34,6 +35,18 @@ it('preserves tendon identity through scene bytes, Library placement and repeate
       [0, 0, 0],
     ),
   ).toThrow(/complete assembly/i);
+});
+
+it('refuses partial tendon geometry even when the selection includes no complete joint', () => {
+  const { input } = tendonMechanism();
+
+  for (const id of ['link_0', 'spool_0', 'servo_0', 'base']) {
+    const selected = input.parts.filter((part) => part.id === id);
+
+    expect(() => capturedJoints(input.project.joints, selected, [0, 0, 0])).toThrow(/complete assembly/i);
+  }
+
+  expect(capturedJoints(input.project.joints, [box('unrelated', [0, 0, 0], [10, 10, 10], 10)], [0, 0, 0])).toEqual([]);
 });
 
 it('uses one atomic transaction for agent declarations and the joint undo history', () => {

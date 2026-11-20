@@ -138,4 +138,20 @@ it('refuses a singular declaration without changing the scene and supports undo 
   await expect
     .poll(async () => (await sceneJoints(app)).find((j) => j.id === 'motor_0')?.tendon?.terms[0].coefficient)
     .toBe(10);
+  await command(app, 'Edit Tendon');
+  await app.page.getByRole('textbox', { name: 'Spool coefficient', exact: true }).fill('-0.01');
+  await app.page.getByRole('textbox', { name: 'Output 1 coefficient', exact: true }).fill('0.000001');
+  await app.page.getByRole('combobox', { name: 'Tendon law', exact: true }).selectOption('elastic');
+  await app.page.getByRole('textbox', { name: 'Damping', exact: true }).fill('0.0125');
+  await app.page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect
+    .poll(async () => (await sceneJoints(app)).find((j) => j.id === 'motor_0')?.tendon)
+    .toEqual({
+      spool: { coefficient: -0.01, unit: 'mm/rad' },
+      terms: [{ joint: 'output_0', coefficient: 0.000001, unit: 'mm/rad' }],
+      law: { kind: 'elastic', restLengthMm: 0, stiffnessNPerMm: 1, dampingNsPerMm: 0.0125 },
+    });
+  await command(app, 'Edit Tendon');
+  await expect.poll(() => app.page.getByRole('textbox', { name: 'Damping', exact: true }).inputValue()).toBe('0.0125');
+  await app.page.getByRole('button', { name: 'Cancel', exact: true }).click();
 });

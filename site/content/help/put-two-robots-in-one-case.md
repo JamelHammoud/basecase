@@ -19,6 +19,7 @@ covers:
 Pick up a block with one gripper, pass it to the other arm, and place it on a floor spot while both arms' joints are recorded together.
 
 Both arms must have grippers and be open in separate scene tabs.
+This handoff needs arms without ideal tendon transmissions. Its reference moves the grippers with end-effector targets.
 
 1. Open each arm's scene in its own tab.
 2. In the first arm's tab, open **Play** ▸ **Cases** and click **New Case**.

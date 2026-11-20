@@ -8,6 +8,7 @@ import type { ScenePart } from '../types/robotics';
 import { prettyJointName } from '../utils/kinematics';
 import { useLatestRef } from '../utils/useLatestRef';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { useTendonEdit } from './useTendonEdit';
 
 interface Pick {
   type: HandJointType;
@@ -47,6 +48,7 @@ function useHoverQueue(ask: (hit: AxisPickHit) => Promise<boolean>, setReady: (r
 }
 
 export function useHandJoints(core: WorkspaceCore) {
+  const tendons = useTendonEdit(core);
   const { docs, parts, selectedIds, setSelectedIds, viewportRef, posing, tool } = core;
   const [pick, setPick] = useState<Pick | null>(null);
   const selectedRef = useLatestRef(selectedIds);
@@ -126,6 +128,7 @@ export function useHandJoints(core: WorkspaceCore) {
     docs.commitJoints((p) => ({ ...p, joints: withRange(p.joints ?? [], id, range) }), { key: id, live: !!live });
 
   return {
+    ...tendons,
     canJoin,
     picking,
     start,

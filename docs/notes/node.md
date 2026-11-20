@@ -2,6 +2,14 @@
 
 Knowledge preserved from code comments. Complements AGENTS.md; nothing here repeats it.
 
+## Article image validation
+
+Pull request #1949 replaces six article captures that showed startup instead of their captions' states. The shared capture helper waits for the requested locator, boot removal, cleared startup classes and loaded fonts. It validates the screenshot buffer before writing, so readiness and image validation failures preserve an existing destination.
+
+Review reproduced a gap in blank detection with 500 × 300 solid PNGs. Neutral `#121212` and white returned `is blank`, but solid red and `#0d99ff` passed. Comparing the overall darkest and brightest channel confused a uniform color with spatial detail. Blank detection now compares each RGB channel's range across pixels. The original observations are retained in `scratch/image-health-before.json`. A single macOS scan of the committed article assets found no problems and took 13,014 ms. This is one local observation, not a hosted-platform timing estimate.
+
+The detector decodes PNG, JPEG, WebP and AVIF assets in all three article directories, reduces each to at most 360 × 360 pixels and flattens transparency against `#121212`. It rejects an image when every channel's range is at most 4. Its startup heuristic rejects more than 98% of pixels within 3 of RGB 18. Sparse valid content can match that heuristic, and other loading screens can pass. Neither pixel validation nor the synthetic browser fixture proves that a caption matches its screenshot. Caption-specific locators and the real app fixture remain necessary. The owning [copy guide](../guide/copy.md) lists the regression coverage. Browser execution remains with CI during review.
+
 ## Vitest cache ownership
 
 Step #1759 follows the individual `ENOTEMPTY` observation recorded under the earlier unit-shard repair. That named check stopped before tests while clearing a cache reached through linked `node_modules`. A scratch preload assigning `fsModuleCachePath` per workspace let the same named check pass. Those observations do not establish an abort rate or explain product startup failures.

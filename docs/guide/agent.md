@@ -326,3 +326,10 @@ The existing `simulate` tool accepts `self_contact: { robot, enabled, exclusions
 ## Authored cable routes
 
 The ordinary cable editor stores stock and ordered owner-local anchors in `project.wiring`. Existing `get_bom`, budget and verification consumers use the measured netlist from that declaration. Read Cable reach as the existing conservative routing contract, not flexible-cable physics, bend-radius certification or whole-robot readiness. A route edit keeps the netlist's exact named connectors, bus order and servo IDs. Adding an extra cable purchase does not select that stock for a route. [Build](build.md#editable-cable-routes) owns route editing and its coverage.
+
+
+## Authored ideal tendon transmissions
+
+`define_joints` accepts optional `tendon` on a catalog motor spool joint. `electron/cad-mcp/tendonSchema.mjs` bounds signed coefficients, units, output references and the fixed or elastic law. Omission preserves an existing declaration, and null deletes it. `get_rig` reports the authored coefficients and law beside the motor ID. The renderer uses `withTendons`, the same atomic transaction as the Pose editor. A failed declaration refuses the complete transmission edit without applying the valid subset of a batch. Referenced outputs must be passive coordinates on the same robot. The tool does not generate pulley geometry or infer physical cable properties.
+
+The existing joint history contains the declaration, and model fingerprints include its physics. `sim/tendonPersistence.test.ts` covers the authoring transaction, history and reference remapping. [Joints and motion](joints-and-motion.md#ideal-fixed-tendons) documents the schema bounds and [simulation evidence](../notes/testing-simulate.md#ideal-tendon-transmissions) records current execution scope.

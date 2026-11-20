@@ -58,7 +58,7 @@ function policySpecFile({ record, spec }: PackagedPolicy, joints: ReadonlyMap<st
 export const jsonBytes = (v: unknown) => new TextEncoder().encode(`${JSON.stringify(v, null, 2)}\n`);
 
 export function policyFiles(policies: PackagedPolicy[], model: Pick<SimModel, 'joints'>): Record<string, Uint8Array> {
-  if (!policies.length) return {};
+  if (!policies.length || model.joints.some((joint) => joint.tendon)) return {};
 
   const joints = indexJoints(model.joints);
   const passive = new Set([...joints].filter(([, j]) => j.actuator < 0).map(([id]) => id));

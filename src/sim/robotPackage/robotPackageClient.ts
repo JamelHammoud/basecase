@@ -1,4 +1,5 @@
 import type { ScenePart } from '../../types/robotics';
+import { requireNoTendons } from '../../joints/tendonAdmission';
 import { workerClient } from '../../utils/workerRpc';
 import type { RobotPackageJob } from './buildRobotPackage';
 import type { JointMap, JointMapInput } from './jointMap';
@@ -30,5 +31,7 @@ export function exportRobotPackageZip(job: RobotPackageJob): Promise<Uint8Array>
 }
 
 export function exportRobotJointMap(input: JointMapInput): Promise<JointMap> {
+  requireNoTendons(input.project.joints ?? []);
+
   return client.call('jointMap', { ...input, parts: input.parts.map(withoutMeshes) });
 }

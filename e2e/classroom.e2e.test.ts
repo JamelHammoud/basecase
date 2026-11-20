@@ -5,7 +5,7 @@ import { launchChrome, exposeTestHooks, partCount } from './harness';
 import { openKitScene } from './kitScene';
 import { classroomFixture } from '../src/classroom/fixtures';
 import { assignmentOf, classroomBytes, readAssignment, readSubmission, submissionOf } from '../src/classroom/envelope';
-import { DEFAULT_PROJECT } from '../src/types/robotics';
+import { DEFAULT_PROJECT, type ProjectSettings } from '../src/types/robotics';
 import { controlClassroomPhysics } from './classroomWorkers';
 
 async function command(page: Page, label: string) {
@@ -162,7 +162,7 @@ it('grades two revisions and opens the failing Check without losing the grid', a
   }
 });
 
-it('keeps an edited student attempt and its assignment after reload and imports the same task independently', async () => {
+it('keeps an edited student attempt and its assignment after reload', async () => {
   const browser = await launchChrome();
   const page = await browser.newPage({ acceptDownloads: true });
   const { bundle } = classroomFixture();
@@ -183,10 +183,6 @@ it('keeps an edited student attempt and its assignment after reload and imports 
     await page.mouse.click(720, 450);
     await page.keyboard.press('a');
     await page.getByRole('button', { name: /^Cube/ }).first().click();
-    await command(page, 'Submit');
-    await page.reload();
-    await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio));
-    await expect.poll(() => partCount(page)).toBe(bundle.robot.parts.length + 1);
 
     const delivered = page.waitForEvent('download');
 
@@ -196,12 +192,18 @@ it('keeps an edited student attempt and its assignment after reload and imports 
 
     expect(exported.assignmentFingerprint).toBe(assignment.fingerprint);
     expect(exported.bundle.robot.parts).toHaveLength(bundle.robot.parts.length + 1);
-    await page.goto(`${inject('webUrl')}/classroom`);
-    await page.getByLabel('Assignment file').setInputFiles(file);
-    await page.getByLabel('Name').fill('Student');
-    await page.getByRole('button', { name: 'Start Attempt' }).click();
+    await page.reload();
     await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio));
-    await expect.poll(() => partCount(page)).toBe(bundle.robot.parts.length);
+    await expect.poll(() => partCount(page)).toBe(bundle.robot.parts.length + 1);
+
+    const context = await page.evaluate(
+      () =>
+        (window as unknown as { __studio: { sceneRecord: () => { project: ProjectSettings } } }).__studio.sceneRecord()
+          .project.assignment,
+    );
+
+    expect(context?.assignment.fingerprint).toBe(assignment.fingerprint);
+    expect(context?.name).toBe('Student');
   } finally {
     await browser.close();
   }

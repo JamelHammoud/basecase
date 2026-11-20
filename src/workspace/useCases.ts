@@ -33,8 +33,11 @@ import { useTrainingImages } from './useTrainingImages';
 import { plural } from '../../electron/plural.mjs';
 import type { SkillsRuntime } from '../skills/skillsRuntime';
 import type { CaseRobotInput } from './caseChecks';
+import { useCaseWorkbench } from './useCaseWorkbench';
+import { readPlacements, type PlacementUpdate } from '../cases/workbench/retention';
 
 interface CasesOptions {
+  commitWorkbenchPlacements: (update: PlacementUpdate) => void;
   fixtures?: CustomModelDefinition[];
   parts: ScenePart[];
   project: ProjectSettings;
@@ -99,11 +102,11 @@ export function useCases(options: CasesOptions) {
   const cases = readCases(project.cases);
   const [activeId, setActiveId] = useState<string | null>(null);
   const active = cases.find((c) => c.id === activeId) ?? null;
+  const workbench = useCaseWorkbench({ ...options, active });
   const { shown, onTry, onTries } = useStoredTries({ project, setProject, sceneId, cases, sim, showToast });
   const tries = worstFirst(shown((project.tries ?? []).filter((t) => t.caseId === activeId)));
   const fromSim = simTries(tries);
   const hasRobot = rig.robots.length > 0;
-  const fixedBase = hasRobot && robotFacts(rig, parts).morphology === 'fixed';
 
   const stage = (kase: Case | null) => {
     const staged = kase && stageCase(kase, { rig, parts }, partners());
@@ -163,6 +166,7 @@ export function useCases(options: CasesOptions) {
         setProject((p) => ({
           ...p,
           cases: (p.cases ?? []).filter((c) => c.id !== id),
+          workbenchPlacements: readPlacements(p.workbenchPlacements).filter((record) => record.caseId !== id),
           tries: dropTries(p.tries, goes, showToast),
         }));
         CASE_STORES.delete(caseStoreKey(sceneId, id));
@@ -182,8 +186,6 @@ export function useCases(options: CasesOptions) {
     sceneTries: project.tries ?? [],
   });
   const multiply = useTryMultiply({ sim, rig, parts, active, tries: fromSim, partners, onTries, showToast });
-  const removeTry = (record: TryRecord) =>
-    confirmRemoveTry(record, { tries, multiply, timeline, setProject, showToast });
 
   const fromTries: TriesTraining = useTriesTraining({
     ...{ sim, cases, caseRobot, showToast },
@@ -208,6 +210,7 @@ export function useCases(options: CasesOptions) {
   });
 
   return {
+    workbench,
     cases,
     active,
     sceneId,
@@ -218,14 +221,14 @@ export function useCases(options: CasesOptions) {
     fromTries,
     tries,
     hasRobot,
-    fixedBase,
+    fixedBase: hasRobot && robotFacts(rig, parts).morphology === 'fixed',
     open,
     openCheck: trails.openCheck,
     add,
     addAndTry,
     remove,
     naming,
-    removeTry,
+    removeTry: (record: TryRecord) => confirmRemoveTry(record, { tries, multiply, timeline, setProject, showToast }),
     saveGesture: (gesture: CaseGesture) => active && saveGesture(setProject, { id: active.id, gesture }),
     timeline,
     attempt,

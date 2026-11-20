@@ -84,7 +84,7 @@ Basecase names a new Case after its goal and world, such as Touch the Dots. To r
 
 ![A Case named Touch Three Dots in its rename field in the Cases tab](/help/make-a-case/rename.png)
 
-To delete a Case, right-click it and choose **Delete**. Its tries are deleted with it, so Basecase asks you first.
+To delete a Case, right-click it and choose **Delete**. Its tries and retained workbench placements are deleted with it, so Basecase asks you first.
 
 To run the open Case on the robot in another open scene, choose **Compare With** in the Case's menu, as described in [Compare two robots on a Case](/help/compare-two-robots-on-a-case). With a wheeled or legged robot, the same menu has **Export Case Mat**, which saves the Case as a floor mat you can print. To use the mat, see [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 

@@ -5,6 +5,7 @@ import type { BodyHistory } from '../reality/bodyTypes';
 import type { StudyRecord } from '../study/types';
 import type { InterfacePlan } from './interfaces';
 import type { RobotSkeleton } from './skeleton';
+import type { RetainedPlacement } from '../cases/workbench/retention';
 
 export interface BuildGuideRecord {
   id: string;
@@ -24,6 +25,7 @@ export interface LeaderLink {
 }
 
 export interface ProjectRecords {
+  workbenchPlacements?: RetainedPlacement[];
   assignment?: AssignmentContext;
   buildGuide?: BuildGuideRecord;
   leads?: LeaderLink;

@@ -2,6 +2,33 @@
 
 Coverage: [cases](../guide/cases.md#testing-coverage). Shared contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
 
+## Measured workbench placement
+
+Issue #1927 adds nominal entered-placement rehearsal through the existing Case pipeline. The workbench suite uses real WASM MuJoCo and the ordinary contract evaluator. Its generated tasks are:
+
+| Task | Physical evidence |
+| --- | --- |
+| Block sorting | Lift and place the selected block at its authored spot |
+| Tray packing | The same lift-and-place contract inside four fixed tray walls |
+| Drawer opening | Passive slider travel and handle contact |
+| Hinged-lid opening | Passive hinge travel and handle contact |
+| Lever operation | Rotated lever geometry, hinge travel and contact |
+| Button pressing | Spring-loaded button travel and contact |
+| Cylinder transfer | A physical cylinder with the existing lift-and-place contract |
+| Shelf placement | Lift and placement on a fixed 35 mm shelf |
+| Conveyor pickup | Pickup from a stopped conveyor surface |
+| Fixed receptacle insertion | Placement inside fixed receptacle walls |
+
+The two arm geometries differ by five percent. Alternate tasks use a 1 mm end-effector binding offset. Generated bench translations and yaw rotations cancel through independently composed base coordinates, preserving physical task outcomes against ordinary unrelocated rollouts. Tests retain original contracts and physical parameters, check actual tool and object travel, and refuse distant base placements. One unchanged drawer workbench passes with its clear base placement and becomes obstructed when the base moves into a fixed obstacle. A separate 5 mm and 3-degree relative base change passes physically. A vertical-placement test checks the transformed implicit floor in the emitted model. Separate real-engine controls penetrate the welded base into a fixture and the floor. Their task contracts still pass, but native geometry-distance validation refuses both placements. MuJoCo suppresses welded-body contacts, so recorded contacts alone cannot detect these overlaps.
+
+Transform tests independently compute trigonometric composition, inverse point transforms and orientation changes. They check joint axes and origins, point probes, unmodified dimensions and resistance, and identity under automatic reach adaptation. Other cases cover malformed poses, unsupported joint or velocity semantics, unit isolation, Case and binding changes, a one-bit mesh-coordinate change, corrupt retained fingerprints, cancellation before posting and after posting, source retention, undo/redo and compressed scene-file reopening. The native lifecycle test terminates a warmed production Case worker and awaits its exit while preserving prior evidence.
+
+The initial focused check selected eleven related files and passed 47 tests. A later physics, transport and source selection passed 30 tests in 5.11 seconds. The native worker lifecycle test passed in a 1.51-second invocation. These are local macOS observations, not CI rates. Later owning-file checks supersede them for the final revision.
+
+The documentation capture opened the existing generated drawer Case through Scenes and Cases, entered a 5 mm and 3-degree placement for `bench-arm`, ran rehearsal and captured its passed and unreachable states. It asserted no robot connect or command calls. That dev-server capture took 31.69 seconds including startup and screenshots. A subsequent attempt to capture the identity tooltip failed in `openApp` at the unchanged 30000 ms `page.goto` deadline before reaching its body. The Vite servers then reported a close timeout. This is retained as a local startup gap, without a demonstrated cause or a flake-rate claim. No deadline, retry, shared harness or quarantine changed.
+
+The committed browser declarations separate entry and unreachable refusal from undo and real scene-library reopening. They have not been run locally as e2e declarations. Linux and Windows delivery remain CI-owned. The conveyor fixture is stopped, and the sorting and packing contracts operate on one selected object. The matrix establishes no moving-belt tracking, physical registration accuracy, camera registration, motor execution or learned-policy relocation. Existing recording and platform quarantine owners remain unchanged.
+
 ## Fixture spring coverage
 
 `src/cases/fixtureSprings.test.ts` checks hinge and slide spring declarations through Case parsing, compressed scene files, reach scaling and generated MJCF. Both force fixtures disable gravity, have no actuators and compare passive force against the declared SI stiffness and rest coordinate. Rejection cases include negative stiffness, infinite stiffness, a nonfinite rest coordinate and a rest coordinate outside the stops. Legacy Cases keep absent spring fields absent.

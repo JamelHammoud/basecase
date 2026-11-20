@@ -12,19 +12,21 @@ export async function imageProblem(input) {
       .raw()
       .toBuffer({ resolveWithObject: true });
     let dark = 0;
-    let minimum = 255;
-    let maximum = 0;
+    const minimum = [255, 255, 255];
+    const maximum = [0, 0, 0];
 
     for (let i = 0; i < data.length; i += info.channels) {
       const values = [data[i], data[i + 1], data[i + 2]];
 
       if (values.every((value) => Math.abs(value - 18) <= 3)) dark++;
 
-      minimum = Math.min(minimum, ...values);
-      maximum = Math.max(maximum, ...values);
+      for (let channel = 0; channel < 3; channel++) {
+        minimum[channel] = Math.min(minimum[channel], values[channel]);
+        maximum[channel] = Math.max(maximum[channel], values[channel]);
+      }
     }
 
-    if (maximum - minimum <= 4) return 'is blank';
+    if (maximum.every((value, channel) => value - minimum[channel] <= 4)) return 'is blank';
 
     if (dark / (info.width * info.height) > 0.98) return 'shows the Basecase loading screen';
 

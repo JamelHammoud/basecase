@@ -31,18 +31,22 @@ describe('article image health', () => {
     expect(await imageProblem(image)).toBe('shows the Basecase loading screen');
   });
 
-  it('rejects a dim startup animation, blank captures and HTML returned for a missing image', async () => {
+  it('rejects a dim startup animation and HTML returned for a missing image', async () => {
     expect(await imageProblem(await sharp(loader('#444444')).png().toBuffer())).toContain('loading screen');
+
+    expect(await imageProblem(Buffer.from('<html class="booting">Basecase</html>'))).toBe(
+      'cannot be decoded as an image',
+    );
+  });
+
+  it.each(['#121212', '#ffffff', '#ff0000', '#0d99ff'])('rejects a blank %s capture', async (background) => {
     expect(
       await imageProblem(
-        await sharp({ create: { width: 500, height: 300, channels: 3, background: '#121212' } })
+        await sharp({ create: { width: 500, height: 300, channels: 3, background } })
           .png()
           .toBuffer(),
       ),
     ).toBe('is blank');
-    expect(await imageProblem(Buffer.from('<html class="booting">Basecase</html>'))).toBe(
-      'cannot be decoded as an image',
-    );
   });
 
   it('accepts a dark page with visible content', async () => {

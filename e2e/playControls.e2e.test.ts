@@ -5,7 +5,8 @@ interface SimState {
   playing: boolean;
   drive: string;
   controller: { kind: string };
-  stats: { robots: Array<{ travelled: number; speed: number }> } | null;
+  robots: string[];
+  stats: { robots: Array<{ speed: number; travelled: number }> } | null;
 }
 
 let app: App;
@@ -13,7 +14,13 @@ let app: App;
 const simState = () =>
   app.page.evaluate(() => (window as unknown as { __studio: { simState: () => SimState } }).__studio.simState());
 
-const rover = async () => (await simState()).stats?.robots[0] ?? { travelled: 0, speed: 1 };
+const rover = async () => (await simState()).stats?.robots[0] ?? { speed: 1, travelled: 1 };
+
+const roverPosition = (key: string) =>
+  app.page.evaluate(
+    (key) => (window as unknown as { __studio: { simRoots: () => Record<string, number[]> } }).__studio.simRoots()[key],
+    key,
+  );
 
 const controller = () => app.page.locator(shown('select[aria-label="Controller"]'));
 
@@ -48,9 +55,19 @@ describe('Simulate controls while a Case drives the rover', () => {
     await expect.poll(async () => (await simState()).playing).toBe(true);
     await expect.poll(async () => (await rover()).speed, { timeout: 20000 }).toBeLessThan(0.01);
 
-    const from = (await rover()).travelled;
+    const key = (await simState()).robots[0];
+    const from = await roverPosition(key);
 
     await page.locator(shown('button'), { hasText: /^Push$/ }).click();
-    await expect.poll(async () => (await rover()).travelled - from, { timeout: 15000 }).toBeGreaterThan(0.1);
+    await expect
+      .poll(
+        async () => {
+          const to = await roverPosition(key);
+
+          return Math.hypot(to[0] - from[0], to[1] - from[1]);
+        },
+        { timeout: 15000 },
+      )
+      .toBeGreaterThan(0.1);
   });
 });

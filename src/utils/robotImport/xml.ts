@@ -82,16 +82,15 @@ function openTag(c: Cursor) {
 }
 
 function markup(c: Cursor) {
-  const rest = c.text.startsWith.bind(c.text);
-  const skipped = SKIPPED.find(([open]) => rest(open, c.at));
+  for (const [open, close] of SKIPPED) {
+    if (!c.text.startsWith(open, c.at)) continue;
 
-  if (skipped) {
-    c.at = endOf(c, skipped[1]);
+    c.at = endOf(c, close);
 
     return;
   }
 
-  if (rest('<![CDATA[', c.at)) {
+  if (c.text.startsWith('<![CDATA[', c.at)) {
     const end = endOf(c, ']]>');
 
     c.stack[c.stack.length - 1].children.push(c.text.slice(c.at + 9, end - 3));
@@ -100,9 +99,9 @@ function markup(c: Cursor) {
     return;
   }
 
-  if (rest('<!', c.at)) throw new XmlError('Document type declarations aren’t read');
+  if (c.text.startsWith('<!', c.at)) throw new XmlError('Document type declarations aren’t read');
 
-  if (rest('</', c.at)) closeTag(c);
+  if (c.text.startsWith('</', c.at)) closeTag(c);
   else openTag(c);
 }
 

@@ -12,6 +12,7 @@ describe('pull requests too small for an agent review', () => {
   it('takes a package bump and a few changed lines of help', () => {
     expect(isSmall(pull(['package.json', 'package-lock.json'], 400, 400, ['loop:update']))).toBe(true);
     expect(isSmall(pull(['site/content/help/export.md'], 6, 6))).toBe(true);
+    expect(isSmall(pull(['site/content/help/export.md'], 15, 15))).toBe(true);
   });
 
   it.each([
@@ -26,6 +27,7 @@ describe('pull requests too small for an agent review', () => {
 
   it('reviews anything larger, wider, or touching the loop, CI, IPC or dependencies', () => {
     expect(isSmall(pull(['src/a.ts'], 40, 2))).toBe(false);
+    expect(isSmall(pull(['site/content/help/export.md'], 15, 16))).toBe(false);
     expect(isSmall(pull(['a', 'b', 'c', 'd', 'e', 'f'], 6, 0))).toBe(false);
     expect(isSmall(pull(['electron/main.mjs'], 2, 2))).toBe(false);
     expect(isSmall(pull(['tools/loop/lanes/merge.mjs'], 2, 2))).toBe(false);

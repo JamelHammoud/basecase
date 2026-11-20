@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { dispatch } from '../lib/dispatch.mjs';
 import ux, { AREAS, completeAudit, schedule } from './ux.mjs';
 
 function world(output = {}) {
@@ -23,6 +24,25 @@ function world(output = {}) {
 }
 
 describe('the daily UI and UX audit', () => {
+  it.each([
+    { openWaiting: 12, queuedRuns: 0, starts: false },
+    { openWaiting: 0, queuedRuns: 20, starts: false },
+    { openWaiting: 0, queuedRuns: 0, starts: true },
+  ])('observes global producer limits with %j independently of the refinement queue', async (counts) => {
+    const { log, deps } = world();
+
+    await dispatch({
+      lane: 'ux',
+      module: { schedule, default: (context) => ux(context, deps) },
+      context: { log },
+      capacity: () => ({ sessions: 0, loadPerCore: 0 }),
+      counts: () => ({ ...counts, byLane: { refine: 3 } }),
+    });
+    expect(deps.checkedRun).toHaveBeenCalledTimes(Number(counts.starts));
+    expect(deps.openBranch).toHaveBeenCalledTimes(Number(counts.starts));
+    expect(deps.publish).toHaveBeenCalledTimes(Number(counts.starts));
+  });
+
   it('runs independently and requires evidence for every surface before publishing', () => {
     const { log, deps } = world();
 

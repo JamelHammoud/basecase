@@ -105,4 +105,6 @@ Green paths passed, and red paths failed. Click a red path to inspect that seed'
 
 In Simulate, the icon beside the Case's name shows the status of its row. To go back to the row, click the icon.
 
+Selecting a [supplier offer](/help/compare-supplier-offers) records purchasing evidence. It doesn’t clear a blocker or grant Ready to build.
+
 To learn why each check exists, see [The path from design to build](/help/from-design-to-build). Next, [price the parts and set a budget](/help/price-the-parts-and-set-a-budget).

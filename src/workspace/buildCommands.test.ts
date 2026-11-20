@@ -4,7 +4,7 @@ import { DEFAULT_PROJECT, type ScenePart } from '../types/robotics';
 import { buildCommands } from './buildCommands';
 import type { CommandInputs } from './sceneCommands';
 
-function commandsFor(parts: ScenePart[]) {
+function commandsFor(parts: ScenePart[], frozen = false) {
   const open = vi.fn();
   const generate = vi.fn();
   const inputs = {
@@ -14,12 +14,17 @@ function commandsFor(parts: ScenePart[]) {
       printing: { measures: {} },
       readiness: { current: null, fingerprint: '' },
       guide: { record: null, progress: null, generate },
-      buildAlong: { open },
+      buildAlong: { open, frozen },
     },
   } as unknown as CommandInputs;
 
   return { commands: buildCommands(inputs), open, generate };
 }
+
+it('offers purchasing only for the editable scene that mounts its sheet', () => {
+  expect(commandsFor([]).commands.map((command) => command.id)).toContain('supplier-offers');
+  expect(commandsFor([], true).commands.map((command) => command.id)).not.toContain('supplier-offers');
+});
 
 describe('Build Along command', () => {
   const part = box('base', [0, 0, 0], [20, 20, 20], 50);

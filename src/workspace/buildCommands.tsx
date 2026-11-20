@@ -1,3 +1,4 @@
+import { setSupplierOffersOpen } from '../components/build/offerDialog';
 import { cableCommands } from './cableCommands';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { ReactNode } from 'react';
@@ -97,7 +98,26 @@ function guideCommands({ core }: CommandInputs): Command[] {
   return guide.stale ? [open, make('guide-update', 'Update Build Guide', <RefreshIcon />)] : [open];
 }
 
+function supplierOfferCommands({ core }: CommandInputs): Command[] {
+  if (core.buildAlong?.frozen) return [];
+
+  return [
+    {
+      id: 'supplier-offers',
+      group: 'Scene',
+      label: 'Supplier Offers',
+      icon: <PackageIcon />,
+      keywords: 'quote import purchasing csv supplier arrival',
+      run: () => {
+        core.tool.openRightTab('build');
+        setSupplierOffersOpen(true);
+      },
+    },
+  ];
+}
+
 export const buildCommands = (inputs: CommandInputs): Command[] => [
+  ...supplierOfferCommands(inputs),
   ...(inputs.core.project.electronicsBoard
     ? [
         {

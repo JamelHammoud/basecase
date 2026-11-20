@@ -100,6 +100,7 @@ export interface AxisPickHit {
 }
 
 export interface BuildStepView {
+  tooling?: import('./buildTooling').BuildTooling;
   shown: string[];
   moves: Array<{ partId: string; offset: Vec3 }>;
   arrows: Array<{ from: Vec3; to: Vec3 }>;

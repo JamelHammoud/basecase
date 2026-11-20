@@ -6,6 +6,8 @@ import type { Studio } from './types';
 const EXPECTED_NAMES = [
   'addCase',
   'agentRequest',
+  'assemblyCradleState',
+  'assemblyRobotWeight',
   'attachRobot',
   'bodyCalibrations',
   'bodyChecks',

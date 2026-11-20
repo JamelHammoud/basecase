@@ -23,6 +23,10 @@ it(
     const { page } = app;
     const { pane, dialog, before, saved } = await openVisionInspection(app);
 
+    expect(before.runs[0].status).toBe('retained');
+    expect(before.runs[0].report.metrics.primary).toBe(1);
+    expect(before.runs[0].incumbentReport.metrics.primary).toBe(0);
+
     const predictions = dialog.locator('[data-prediction]');
 
     await expect.poll(() => predictions.count()).toBe(1);

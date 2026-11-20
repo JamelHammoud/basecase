@@ -11,11 +11,12 @@ import type { VisionManifest } from '../../../vision/manifest';
 import { retainedVisionBindings } from '../../../vision/training/modelBindings';
 import {
   loadVisionRuns,
-  trainVisionDataset,
   setVisionTrainingBackendTestPort,
   setVisionTrainingTestPort,
 } from '../../../vision/training/service';
 import { realTrainingImages } from '../visionBackendFixture';
+import { trainInspectionFixture } from '../inspectionTrainingFixture';
+import type { TrainingServicePorts } from '../../../vision/training/serviceTypes';
 import type { Studio } from '../types';
 
 const manifest = (model: VisionManifest['model'], classes: string[]): VisionManifest => ({
@@ -29,6 +30,7 @@ const manifest = (model: VisionManifest['model'], classes: string[]): VisionMani
 });
 
 export default function visionBackendStudio(studio: Studio) {
+  let inspectionBackend: TrainingServicePorts['train'] | undefined;
   const controls = {
     configureVisionBackend: async (input: { baseline: number[]; candidate: number[] }) => {
       const baseline = new Uint8Array(input.baseline);
@@ -37,7 +39,7 @@ export default function visionBackendStudio(studio: Studio) {
       const newHash = await saveDatasetContent(candidate);
 
       setVisionTrainingTestPort();
-      setVisionTrainingBackendTestPort(async (_prepared, task) => ({
+      inspectionBackend = async (_prepared, task) => ({
         baseline: manifest(
           { source: 'local', sha256: oldHash, bytes: baseline.length },
           task.classes.map((category) => category.name),
@@ -49,7 +51,8 @@ export default function visionBackendStudio(studio: Studio) {
         jobId: 'controlled-vision-backend',
         checkpoint: newHash,
         parity: { maxAbsoluteError: 0, tolerance: 0.0001 },
-      }));
+      });
+      setVisionTrainingBackendTestPort(inspectionBackend);
     },
     seedVisionBackendDataset: async () => {
       const set = await realTrainingImages();
@@ -80,6 +83,8 @@ export default function visionBackendStudio(studio: Studio) {
       return dataset;
     },
     prepareVisionInspection: async (count = 1) => {
+      if (!inspectionBackend) throw new Error('Configure the inspection fixture backend first.');
+
       const dataset = await controls.seedVisionBackendDataset();
       const { core } = studio();
       const stored = await seedDatasetTry(
@@ -110,7 +115,7 @@ export default function visionBackendStudio(studio: Studio) {
       }));
       await saveDataset(latest);
 
-      const run = await trainVisionDataset(latest, 'detect', { limits: { maxInferenceMs: 60000 } });
+      const run = await trainInspectionFixture(latest, inspectionBackend);
 
       studio().core.triesView.close();
 

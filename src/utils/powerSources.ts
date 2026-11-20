@@ -115,13 +115,18 @@ const SUPPLY_VOLTS = [48, 24, 12, 7.4, 6, 5];
 const DEFAULT_TETHER_A = 10;
 
 export function suggestedTether(parts: ScenePart[]): Tether {
-  const ranges = parts.flatMap((p) => {
+  let low = 0;
+  let high = Infinity;
+
+  for (const p of parts) {
     const act = p.kind === 'component' && p.componentId ? actuatorOf(p.componentId, p.componentVariant) : undefined;
 
-    return act ? [act.volts] : [];
-  });
-  const low = Math.max(0, ...ranges.map((r) => r[0]));
-  const high = Math.min(Infinity, ...ranges.map((r) => r[1]));
+    if (!act) continue;
+
+    low = Math.max(low, act.volts[0]);
+    high = Math.min(high, act.volts[1]);
+  }
+
   const volts = SUPPLY_VOLTS.find((v) => v >= low && v <= high) ?? (Number.isFinite(high) ? high : 12);
 
   return { volts, amps: DEFAULT_TETHER_A };

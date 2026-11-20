@@ -52,7 +52,7 @@ To put the old count back, click **Undo** in the toast. To clear a count, type 0
 - Filament is counted in grams, including every copy set in Print mode.
 - Printed parts from a print service have no **On hand**. Their quoted price covers every copy.
 - A count belongs to the part, so every scene that uses the part takes your count off what's left to buy.
-- Basecase doesn't take parts off your count when you build a robot, so update the count yourself after a build.
+- Completing steps in a [named build](/help/resume-a-robot-build) leaves your on-hand count unchanged. Update the count yourself after a build.
 - The Budget check and **Buy All** leave out the parts you own.
 
 Connectors added by a [board placement](/help/fit-an-electronics-board) use the same catalog product’s on-hand count as connectors placed separately. A [robot kit](/help/export-a-robot-kit) still packs every connector the assembly needs, including the ones you own.

@@ -52,4 +52,4 @@ You use the same selection for the comparison and download, with a separate tota
 
 Use **Edit Match** to correct packaging or reconfirm a changed listing. You keep the original quote intact. After a reload, you keep your offers and selections. If you edit owned stock, you get an updated calculation of the remaining demand.
 
-Use the arrival estimate for purchasing alone. You still need to resolve printing, fabrication and assembly as separate inputs. Selecting an offer does not place an order, reserve stock or change Checks. You can use the existing [BOM export](/help/export-remaining-purchases) without offers.
+Use the arrival estimate for purchasing alone. You still need to resolve printing, fabrication and assembly as separate inputs. Selecting an offer doesn’t place an order, reserve stock or change Checks. You can use the existing [BOM export](/help/export-remaining-purchases) without offers.

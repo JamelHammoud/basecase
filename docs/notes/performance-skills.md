@@ -2,6 +2,16 @@
 
 Implementation: [Skill feasibility and moves](../guide/skills.md#performance-skill-feasibility-and-moves). Shared requirements: [Performance](../guide/performance.md).
 
+## Coaching jerk accumulation
+
+A whole-app search found one coaching jerk calculation, in `skills/coachSignals.ts`. Both baseline and candidate signal measurements use it. Other squared-sample accumulators, including dataset statistics, already keep totals directly and need no change.
+
+For T trace frames and J actuated joints, the previous calculation retained max(0, T − 2) × J squared values in one temporary list, then reduced it. The calculation now retains two scalar accumulators and removes that list's pushes and reduction reads. A 1,001-frame trace with 12 joints removes 11,988 stored values and 11,988 reduction reads. These are code-derived operation counts, not timings or a claim about complete coaching speed. Recorded velocity frames remain unchanged.
+
+A local parity probe compared the previous and current functions with `Object.is` across 145 cases. It covered zero through 1,001 frames, zero through 24 joints, four timesteps including zero, signed zero and nonfinite inputs. Every result matched exactly. Summation and finite-difference order remain unchanged. The probe lives in ignored scratch storage and is not a committed test.
+
+`coach.test.ts` retains the real MuJoCo Walk-versus-hold comparison for jerk, speed, foot clearance, contact impulse and base height. This refinement adds no test, quarantine, timeout or retry. It changes no action, label or screen state, so help steps and screenshots remain accurate.
+
 ## Local source preparation
 
 `localKitSource.ts` scans scene metadata and ranks compatible references by current robot key, creation time and hash. It reads only the selected artifact. Missing, malformed, hash-mismatched or incompatible selected artifacts return to the cold path without loading another candidate. Source and target schemas admit at most 256 action joints. Mapping uses the shared Install Skill converter, then validates the resulting policy again. No candidate is evaluated in physics during selection.

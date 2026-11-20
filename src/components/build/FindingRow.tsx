@@ -15,6 +15,7 @@ export interface FindingActions {
 }
 
 export interface FindingContext {
+  readOnly?: boolean;
   focusedCheck?: string;
   parts: ScenePart[];
   panScroll: boolean;
@@ -91,7 +92,7 @@ export const BlockerRow: React.FC<FindingRowProps> = ({ finding, context, childr
     <li
       data-finding={finding.key}
       className="flex items-start gap-2 py-1.5 pl-[31px] pr-[7px]"
-      onContextMenu={onContextMenu}
+      onContextMenu={context.readOnly ? undefined : onContextMenu}
     >
       <FindingText finding={finding} context={context}>
         {children}
@@ -110,7 +111,7 @@ export const NoteRow: React.FC<FindingRowProps> = ({ finding, context, children 
     <li
       data-finding={finding.key}
       className="group relative py-1.5 pl-[31px] pr-[7px] rounded-lg hover:bg-[#333333]"
-      onContextMenu={onContextMenu}
+      onContextMenu={context.readOnly ? undefined : onContextMenu}
     >
       <FindingText finding={finding} context={context} muted>
         {children}

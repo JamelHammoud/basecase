@@ -61,4 +61,6 @@ A [board placement](/help/fit-an-electronics-board) appears among fabricated boa
 
 Before assembly, [compare supplier offers](/help/compare-supplier-offers) to prepare a dated purchasing plan for the parts in the guide. Its arrival estimate excludes printing and assembly time.
 
+For instructions that keep their original design and saved assembly progress, [resume a robot build](/help/resume-a-robot-build).
+
 To print the parts the guide uses, see [Print a robot's parts](/help/print-a-robots-parts).

@@ -20,7 +20,6 @@ covers:
   - src/components/simulate/TrainSection.tsx
   - src/components/simulate/SkillsList.tsx
   - src/components/SimulatePanel.tsx
-  - src/workspace/RightTabPanels.tsx
   - src/workspace/useSkills.ts
   - src/skills/teach.ts
   - src/skills/teachExamples.ts

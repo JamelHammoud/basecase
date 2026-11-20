@@ -37,6 +37,8 @@ covers:
 
 Clear every problem the Build tab finds before you print the parts, buy them, and put the robot together.
 
+If a saved build is open, click **Done** first to return to the editable design and its current Checks.
+
 1. Click **Build** at the top of the right panel.
 2. Look at the header of **Checks**. It reads **Ready to build** or shows how many problems are left, such as **3 to fix**.
 3. To open a check, click one with a red mark.

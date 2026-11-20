@@ -48,7 +48,7 @@ From the bill of materials, you can fill an Amazon cart, open listings in other 
 
 You can also press [[⌘K]] and choose **Buy All**.
 
-Basecase leaves any parts you [already own](/help/count-the-parts-you-already-own) out of the cart. Pack counts come from the price you checked, so six servos sold in pairs go in as 3, and 13 screws sold by the hundred go in as 1. If a line has no saved pack size, it goes in by the piece.
+Basecase leaves any parts you [already own](/help/count-the-parts-you-already-own) out of the cart. Completing a [named build](/help/resume-a-robot-build) leaves those on-hand counts unchanged. Pack counts come from the price you checked, so six servos sold in pairs go in as 3, and 13 screws sold by the hundred go in as 1. If a line has no saved pack size, it goes in by the piece.
 
 Other stores don't take a shared cart, so you open their listings one at a time. To buy a line with no store link, hover over it and click the link at its right end to search Amazon.
 

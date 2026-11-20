@@ -99,7 +99,7 @@ export const ChecksSection: React.FC<ChecksSectionProps> = ({ readiness, checkin
             />
           ))}
       </ul>
-      {readiness && <IgnoredChecks readiness={readiness} context={context} restore={restore} />}
+      {readiness && !context.readOnly && <IgnoredChecks readiness={readiness} context={context} restore={restore} />}
     </Section>
   );
 };

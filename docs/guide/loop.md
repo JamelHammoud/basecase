@@ -334,6 +334,8 @@ Check calls the reusable Electrical export workflow for wiring, schematic export
 
 The `ios` job pins `macos-26-intel` for its existing simulator build and XCTests. The Intel pool avoids the hosted arm64 capacity failure without changing job selection, required results, tests or timeouts. [Scan app](scan-app.md#tests) records coverage and [Node-side notes](../notes/node.md#ios-runner-capacity) retain the incident evidence.
 
+The nightly `app` matrix pins its macOS arm64 build to `macos-15` after the `macos-latest` job was abandoned before runner assignment. It retains native Forge and daemon builds, closed-linkage training, unsigned arm64 packaging and the existing [packaged-app tests](running-and-testing.md#0e-tests). Windows packaging and the aggregate requirement for app success remain intact. The pin selects the supported prior macOS generation while keeping native arm64 execution. It does not guarantee capacity across GitHub's arm64 fleet. [Packaged macOS runner evidence](../notes/node.md#packaged-macos-runner-capacity) records the failure, prior green run and hosted verification gap.
+
 The selector fixtures share Git preparation for generated titles, then execute the complete title inventory, changed parameterized cases and changed direct cases in separate tests with one Vitest launch each. They also cover Vitest's `%c` title substitution and shared setup removals combined with declaration edits in one diff hunk. Removing a declaration alone still leaves neighboring tests unselected.
 
 ### Browser assertion scope

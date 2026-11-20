@@ -106,16 +106,18 @@ const spread = (xs: number[]) => Math.max(...xs) - Math.min(...xs);
 const mean = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0);
 
 function jerk(velocities: number[][], dt: number): number {
-  const squares: number[] = [];
+  let total = 0;
+  let count = 0;
 
   for (let t = 1; t + 1 < velocities.length; t++)
     velocities[t].forEach((v, j) => {
       const a = (velocities[t + 1][j] - 2 * v + velocities[t - 1][j]) / (dt * dt);
 
-      squares.push(a * a);
+      total += a * a;
+      count++;
     });
 
-  return Math.sqrt(mean(squares));
+  return count ? Math.sqrt(total / count) : 0;
 }
 
 function summary(trace: Trace, environment: Environment): CoachSignals {

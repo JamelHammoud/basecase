@@ -60,6 +60,7 @@ it('imports, confirms and retains selected supplier evidence through a real purc
       'Line Total': '20',
     });
     await page.reload();
+    await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio));
     await openPurchasingRobot(page);
     await page.getByRole('button', { name: 'Export bill of materials', exact: true }).click();
     await page.getByRole('menuitem', { name: 'Supplier Offers', exact: true }).click();

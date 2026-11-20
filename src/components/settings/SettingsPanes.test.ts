@@ -25,7 +25,7 @@ const panes: Record<string, ReactElement> = {
     onReconnectAcp: async () => {},
   }),
   Build: createElement(BuildPane, {
-    prefs: { autoGuide: true, setAutoGuide: noop, autoFixBlockers: true, setAutoFixBlockers: noop },
+    prefs: { autoGuide: true, setAutoGuide: noop },
   }),
 };
 

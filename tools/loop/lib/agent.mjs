@@ -199,7 +199,7 @@ export function runAgent({
 
   if (options.hours <= 0) return { ok: false, session: continuation, error: 'Task execution deadline exhausted' };
 
-  if (policy.provider === 'claude' || sandbox?.tools.length > 0) return overflow(options);
+  if (policy.provider === 'claude') return overflow(options);
 
   if (!primaryAllowed()) return overflow(options);
 

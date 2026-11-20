@@ -31,15 +31,29 @@ function options(extra = {}) {
   };
 }
 
-describe('Codex execution', () => {
-  it('refuses scoped tool access instead of substituting a workspace shell sandbox', () => {
-    const execute = vi.fn();
-    const result = runCodex(options({ sandbox: { tools: ['Read'], allow: ['Read'] } }), execute);
+describe('Codex research', () => {
+  it.each([
+    ['ideas', ['Read', 'Grep', 'Glob', 'WebSearch', 'WebFetch'], 'read-only'],
+    ['market', ['Read', 'Grep', 'Glob', 'Edit', 'Write', 'WebSearch', 'WebFetch'], 'workspace-write'],
+  ])('executes %s research with live web access and its filesystem sandbox', (name, tools, mode) => {
+    const execute = vi.fn((_command, args) => {
+      fs.writeFileSync(args[args.indexOf('-o') + 1], '{"changed":false}');
 
-    expect(result).toEqual({ ok: false, error: 'Codex exec cannot enforce scoped tool allowlists' });
-    expect(execute).not.toHaveBeenCalled();
+      return { ok: true, out: events.map((event) => JSON.stringify(event)).join('\n'), err: '' };
+    });
+    const result = runCodex(options({ name, sandbox: { tools, allow: tools } }), execute);
+    const args = execute.mock.calls[0][1];
+
+    expect(result).toMatchObject({ ok: true, output: { changed: false }, session: null });
+    expect(args).toContain('web_search="live"');
+    expect(args[args.indexOf('--sandbox') + 1]).toBe(mode);
+    expect(args).toContain('approval_policy="never"');
+    expect(args).toContain('--ephemeral');
+    expect(args).not.toContain('--dangerously-bypass-approvals-and-sandbox');
   });
+});
 
+describe('Codex execution', () => {
   it('repairs only a malformed answer using the same thread and accounts for both turns', () => {
     const calls = [];
     const execute = (_command, args, settings) => {

@@ -6,20 +6,21 @@ import { MAX_WORLD_BYTES } from '../cases/worldImport/limits';
 vi.mock('../cases/worldImportClient', () => ({ importWorldInWorker: vi.fn(async (request) => request) }));
 
 describe('world drop batches', () => {
-  it('keeps RoomPlan drops separate from unrelated files while batching mesh resources together', () => {
+  it('keeps RoomPlan drops separate from unrelated files while batching mesh resources together', async () => {
     const room = new File([], 'kitchen.json');
     const second = new File([], 'bedroom.json');
     const image = new File([], 'photo.png');
     const mesh = new File([], 'kitchen.gltf');
+    const splat = new File([], 'kitchen.spz');
     const buffer = new File([], 'kitchen.bin');
 
-    expect(splitWorldDrop([room, second, image])).toEqual({
+    expect(await splitWorldDrop([room, second, image])).toEqual({
       worlds: [[room], [second]],
       remaining: [image],
       worldFolders: false,
     });
-    expect(splitWorldDrop([mesh, buffer, image])).toEqual({
-      worlds: [[mesh, buffer, image]],
+    expect(await splitWorldDrop([mesh, buffer, image, splat])).toEqual({
+      worlds: [[mesh, buffer, image, splat]],
       remaining: [],
       worldFolders: true,
     });
@@ -27,10 +28,19 @@ describe('world drop batches', () => {
 
   it.each(['robot.urdf', 'scene.basecase', 'motion.bvh', 'recording.mcap', 'dataset.zip'])(
     'keeps %s on its existing import route alongside JSON or mesh resources',
-    (name) => {
+    async (name) => {
       const files = [new File([], name), new File([], 'metadata.json'), new File([], 'part.glb')];
 
-      expect(splitWorldDrop(files)).toEqual({ worlds: [], remaining: files, worldFolders: false });
+      expect(await splitWorldDrop(files)).toEqual({ worlds: [], remaining: files, worldFolders: false });
+    },
+  );
+
+  it.each(['obj', 'fbx', 'glb', 'gltf', 'ply'])(
+    'imports an ordinary %s drop as parts without world limits',
+    async (ext) => {
+      const file = new File([], `model.${ext}`);
+
+      expect(await splitWorldDrop([file])).toEqual({ worlds: [], remaining: [file], worldFolders: false });
     },
   );
 
@@ -43,9 +53,11 @@ describe('world drop batches', () => {
     expect(importWorldInWorker).toHaveBeenLastCalledWith({
       files: names.map((name) => ({ name, bytes: new TextEncoder().encode(name) })),
     });
-    expect(splitWorldDrop(files).worlds).toEqual([files]);
-    expect(splitWorldDrop([new File([], 'capture.PLY')]).worlds).toHaveLength(1);
-    expect(splitWorldDrop([new File([], 'robot.urdf'), new File([], 'part.stl')]).worlds).toEqual([]);
+    expect((await splitWorldDrop(files)).worlds).toEqual([files]);
+    expect(
+      (await splitWorldDrop([new File(['ply\nproperty float f_dc_0\nend_header\n'], 'capture.PLY')])).worlds,
+    ).toHaveLength(1);
+    expect((await splitWorldDrop([new File([], 'robot.urdf'), new File([], 'part.stl')])).worlds).toEqual([]);
   });
 
   it('refuses an oversized batch before reading any bytes', async () => {

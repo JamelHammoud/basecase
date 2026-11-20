@@ -32,7 +32,7 @@ Bring a captured or generated place into a Case so your robot can drive through 
 The capture must have a GLB, glTF or OBJ collider mesh. A splat alone can't supply the floor or walls.
 
 1. Open a scene with a robot.
-2. Drop the world's GLB, glTF or OBJ collider onto the canvas, together with its SPZ or PLY splat if it has one. Include any separate buffers, materials and texture folders in the same drop.
+2. Press [[⌘K]], choose **Import World**, and select the world's GLB, glTF or OBJ collider and its companion files. You can also drop a collider together with its SPZ or Gaussian PLY splat and any texture folders onto the canvas.
 3. In **New Case**, choose a goal for the robot. The world is already picked under **World**, named after the collider file.
 
 ![New Case with Kitchen picked as the World and Reach a Spot chosen](/help/import-a-world/new-case.png)
@@ -47,7 +47,9 @@ The capture must have a GLB, glTF or OBJ collider mesh. A splat alone can't supp
 
 A mesh without a splat shows its own colors or textures. Keep every linked file inside the dropped set, because Basecase doesn’t download missing resources.
 
-The dropped files can total up to 64 MB, with up to 200,000 collider triangles and 1,000,000 splat points. Basecase reads the world as meters unless its largest extent is at least 1,000 units, which it reads as millimeters. It levels the largest upward-facing plane to the floor.
+World files can total up to 64 MB, with up to 200,000 collider triangles and 1,000,000 splat points. Basecase reads the world as meters unless its largest extent is at least 1,000 units, which it reads as millimeters. It levels the largest upward-facing plane to the floor.
+
+These limits apply to captured worlds. To bring a model in as editable parts, use **Import** or drop it without a splat. Model imports have no captured-world size or triangle limit.
 
 The canvas, camera tiles and exported dataset videos show the imported splat, or the mesh when there is no splat. Depth follows the collider.
 

@@ -36,7 +36,7 @@ Every file type Basecase opens and saves, with the units it assumes and its size
 
 | Format | How it comes in | Units Basecase assumes |
 |---|---|---|
-| STL, 3MF, PLY | [Import a file](/help/import-a-file), as one part per file | Millimeters, Z up |
+| STL, 3MF, PLY | [Import a file](/help/import-a-file), as editable mesh parts | Millimeters, Z up |
 | OBJ | Import a mesh | Millimeters, Y up |
 | GLB, glTF, DAE | Import a mesh | Meters |
 | FBX | Import a mesh | Centimeters |
@@ -46,13 +46,15 @@ Every file type Basecase opens and saves, with the units it assumes and its size
 | `.basecase` | [Open a shared scene](/help/open-a-shared-scene) |, |
 | PNG, JPEG and other images | Dropped on the canvas, as a flat reference image |, |
 | BVH | **File** ▸ **Import**, as motion for a robot with joints |, |
-| GLB, glTF, OBJ dropped on the canvas | [Import a captured world](/help/import-a-world), as a Case world | Meters, or millimeters when the largest extent is at least 1,000 units |
+| GLB, glTF, OBJ through **Import World** | [Import a captured world](/help/import-a-world), as a Case world | Meters, or millimeters when the largest extent is at least 1,000 units |
 | SPZ, PLY dropped with a collider mesh | The Case world's splat appearance | The collider's units and placement |
 | RoomPlan JSON | [Import a scanned room as a Case world](/help/import-a-scanned-room) | Meters |
 
-A mesh imported as a part that comes in smaller than 1 mm across is read as meters and scaled up 1,000 times. Use **Import** to bring GLB, glTF, OBJ or PLY files in as parts.
+A mesh imported as a part that comes in smaller than 1 mm across is read as meters and scaled up 1,000 times. Use **Import** or drop a model on the canvas to bring it in as editable parts. Ordinary polygon PLY files import as parts, while Gaussian PLY files need a world collider. Model parts keep their objects, material groups and source coordinates.
 
 ## Limits
+
+Ordinary mesh imports have no captured-world byte or triangle limit. Texture maps and animation clips are omitted from model parts.
 
 - A STEP or IGES file can be up to 200 MB and 1,000 bodies.
 - A robot zip can be up to 200 MB to download, and 600 MB once unzipped.

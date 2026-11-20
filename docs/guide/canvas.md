@@ -4,6 +4,9 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 12. 3D Canvas
 
+Imported mesh parts retain per-material colors, vertex colors, roughness, metalness, opacity and two-sided rendering (`partMesh/importedMeshes.ts`). These properties apply to solids. Selection highlighting and cutout or reference styles continue to use their own materials. Imported vertex colors remain attached through creased normals and size changes.
+
+
 Collision baseline keys and crease adjacency share `electron/cad-kernel/pairKey.mjs` with the other unordered string-pair paths (§0f). It preserves lexical ordering and the existing separator without sorting a temporary pair.
 
 Screw recess construction shares `three/hardwareRecessGeometry.ts` across socket, pan, button, countersunk and set screws. Cleanup reads indexed triangles directly and reloads three vectors per triangle, preserving the strict squared-cross-product cutoff of `1e-12`. Material groups write positions and normals directly into their own Float32 buffers. Cleanup disposes its input geometry without modifying source attributes. Recess materials, edge flags and triangle order stay unchanged.

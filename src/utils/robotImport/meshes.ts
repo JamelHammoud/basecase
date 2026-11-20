@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { MeshoptDecoder } from 'meshoptimizer';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js';
@@ -33,10 +34,12 @@ function collect(root: THREE.Object3D): THREE.BufferGeometry | null {
   return geos.length ? mergeGeometries(geos, false) : null;
 }
 
-function daeScene(text: string): THREE.Object3D | null {
-  const dae = new ColladaLoader().parse(text, '');
+function daeScene(text: string, options: MeshSceneOptions): THREE.Object3D | null {
+  const dae = new ColladaLoader(options.manager).parse(text, '');
 
   if (!dae) return null;
+
+  if (options.sceneAxes) return dae.scene;
 
   if (/<up_axis>\s*Z_UP/i.test(text)) dae.scene.rotation.set(0, 0, 0);
   else if (/<up_axis>\s*Y_UP/i.test(text)) dae.scene.rotation.set(Math.PI / 2, 0, 0);
@@ -45,16 +48,24 @@ function daeScene(text: string): THREE.Object3D | null {
 }
 
 class NoTextures extends THREE.Loader<THREE.Texture> {
-  load() {
-    return new THREE.Texture();
+  load(_url: string, onLoad?: (texture: THREE.Texture) => void) {
+    const texture = new THREE.Texture();
+
+    queueMicrotask(() => onLoad?.(texture));
+
+    return texture;
   }
 }
 
-function fbxScene(data: ArrayBuffer): THREE.Object3D {
+export function texturelessManager() {
   const manager = new THREE.LoadingManager();
 
   manager.addHandler(/./, new NoTextures());
 
+  return manager;
+}
+
+function fbxScene(data: ArrayBuffer, manager = texturelessManager()): THREE.Object3D {
   const root = new FBXLoader(manager).parse(data, '');
   const unit = Number(root.userData.unitScaleFactor);
 
@@ -69,39 +80,58 @@ function positionsOnly(g: THREE.BufferGeometry): THREE.BufferGeometry {
   return new THREE.BufferGeometry().setAttribute('position', flat.getAttribute('position'));
 }
 
-export async function loadMesh(data: ArrayBuffer, path: string): Promise<THREE.BufferGeometry | null> {
+interface MeshSceneOptions {
+  manager?: THREE.LoadingManager;
+  sceneAxes?: boolean;
+}
+
+async function gltfScene(data: ArrayBuffer, options: MeshSceneOptions) {
+  const dracoModule = options.sceneAxes ? await import('../../earth/draco') : null;
+  const draco = dracoModule?.dracoLoader();
+  const loader = new GLTFLoader(options.manager).setMeshoptDecoder(MeshoptDecoder);
+
+  if (draco) loader.setDRACOLoader(draco);
+
+  try {
+    return (await loader.parseAsync(data, '')).scene;
+  } finally {
+    draco?.dispose();
+  }
+}
+
+export async function loadMeshScene(
+  data: ArrayBuffer,
+  path: string,
+  options: MeshSceneOptions = {},
+): Promise<THREE.Object3D | null> {
   const ext = path.split('.').pop()!.toLowerCase();
+  const manager = options.manager;
 
-  if (ext === 'stl') {
-    const g = new STLLoader().parse(data);
-    const out = new THREE.BufferGeometry();
+  if (ext === 'stl') return new THREE.Mesh(new STLLoader().parse(data));
 
-    out.setAttribute('position', g.getAttribute('position'));
+  if (ext === 'obj') return new OBJLoader().parse(new TextDecoder().decode(data));
 
-    return out;
+  if (ext === 'dae') return daeScene(new TextDecoder().decode(data), options);
+
+  if (ext === 'fbx') return fbxScene(data, manager);
+
+  if (ext === '3mf') return new ThreeMFLoader(manager).parse(data);
+
+  if (ext === 'ply') {
+    const geometry = new PLYLoader().parse(data);
+
+    return new THREE.Mesh(options.sceneAxes ? geometry : positionsOnly(geometry));
   }
 
-  if (ext === 'obj') return collect(new OBJLoader().parse(new TextDecoder().decode(data)));
-
-  if (ext === 'dae') {
-    const scene = daeScene(new TextDecoder().decode(data));
-
-    return scene ? collect(scene) : null;
-  }
-
-  if (ext === 'fbx') return collect(fbxScene(data));
-
-  if (ext === '3mf') return collect(new ThreeMFLoader().parse(data));
-
-  if (ext === 'ply') return positionsOnly(new PLYLoader().parse(data));
-
-  if (ext === 'glb' || ext === 'gltf') {
-    const gltf = await new GLTFLoader().parseAsync(data, '');
-
-    return collect(gltf.scene);
-  }
+  if (ext === 'glb' || ext === 'gltf') return gltfScene(data, options);
 
   return null;
+}
+
+export async function loadMesh(data: ArrayBuffer, path: string): Promise<THREE.BufferGeometry | null> {
+  const scene = await loadMeshScene(data, path);
+
+  return scene ? collect(scene) : null;
 }
 
 function hullGeometry(points: number[]): THREE.BufferGeometry | null {

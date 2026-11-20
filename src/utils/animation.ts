@@ -46,14 +46,20 @@ function blendRotation(a: V3 | undefined, b: V3 | undefined, u: number): V3 {
   return [e.x / D2R, e.y / D2R, e.z / D2R];
 }
 
+function blendRootAxis(ks: AnimationKeyframe[], axis: number, blend: Blend, smooth: boolean): number {
+  if (!smooth) return blend(0, rootAxis(ks[1], axis), rootAxis(ks[2], axis), 0);
+
+  return blend(rootAxis(ks[0], axis), rootAxis(ks[1], axis), rootAxis(ks[2], axis), rootAxis(ks[3], axis));
+}
+
 function blendRoot(ks: AnimationKeyframe[], blend: Blend, u: number, smooth: boolean): RootOffset | undefined {
   if (ks.every((k) => !k.root)) return undefined;
 
-  const position = [0, 1, 2].map((i) =>
-    smooth
-      ? blend(rootAxis(ks[0], i), rootAxis(ks[1], i), rootAxis(ks[2], i), rootAxis(ks[3], i))
-      : lerp(rootAxis(ks[1], i), rootAxis(ks[2], i), u),
-  ) as V3;
+  const position: V3 = [
+    blendRootAxis(ks, 0, blend, smooth),
+    blendRootAxis(ks, 1, blend, smooth),
+    blendRootAxis(ks, 2, blend, smooth),
+  ];
 
   return { position, rotation: blendRotation(ks[1].root?.rotation, ks[2].root?.rotation, u) };
 }

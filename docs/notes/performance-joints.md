@@ -781,3 +781,17 @@ Rechecked [Design a linkage from a path](../../site/content/help/design-a-linkag
 [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) also covers the owning guide. Its joint fields, source list, closed-loop behavior, posing and IK describe unchanged downstream behavior. It has no screenshots. Preflight reports both unchanged articles as reminders, and their current content remains accurate under its stated allowance.
 
 Focused validation passed formatting, ESLint, documentation, site copy for 330 pages, types and 106 related tests across 16 files. Related tests took 1.66 seconds. The session log is `scratch/check-alignment.log`. Copy accounting reports zero added, changed or removed strings. No timeout, retry or quarantine changes apply.
+
+
+## Animation root positions write directly into the output tuple
+
+A whole-app search found one root-position interpolation implementation, `blendRoot` in `src/utils/animation.ts`. Pose playback, simulation controllers, motion references and agent pose checks share `sampleAnimation`. Each root-bearing sample now writes three axes directly into its returned position tuple. It removes one three-element axis-index array and its mapping callback per sample. Samples without roots still return before position interpolation. Linear samples use the existing linear blend closure, retaining the same arithmetic and endpoint-only coordinate reads. Smooth samples retain their four supporting coordinates and prepared time powers.
+
+On November 20, 2026, `scratch/animation-root-parity.test.ts` compared complete returned poses with the preceding source for 640 samples. Fixtures combine linear and smooth interpolation, looping and clamping, all sixteen root-presence combinations across four frames, signed-zero coordinates and ten boundary or interior times. Every comparison passed. Existing animation tests cover sparse channels, endpoint reads, root rotation, later edits and independently owned output. No timing assertion, measured heap claim or complete playback latency claim follows from the source-derived allocation count.
+
+The two unchanged-help preflight findings were checked against the final sampler and guide diff:
+
+- [Animate a robot with a walk cycle or motion capture](../../site/content/help/animate-a-robot.md): walk creation, BVH selection, retarget settings, automatic playback, looping, scrubbing and row actions are unchanged. `AnimationsSection.tsx` retains Walk Cycle, Import BVH, Play, Pause, Loop, Rename and Delete. `RetargetSheet.tsx` retains None, In place, Frame rate and its 25 mm reporting threshold. The menu, retarget sheet and playing-row menu captured in its three images describe those unchanged states. Root-position arithmetic matches the preceding implementation in the comparison above, so no step, label or screenshot needs replacement.
+- [Joints and kinematics](../../site/content/help/joints-and-kinematics.md): the guide addition describes temporary storage inside animation sampling. It changes no joint field, import source, parent or child relationship, hardware following, mounting frame, closed loop, deletion behavior, modeled-versus-posed distinction, inverse kinematics or selected-robot scope. Rest pose remains the control name in `PosesSection.tsx`. Every section remains accurate. This article has no screenshots.
+
+Both articles remain unchanged under preflight's explicit allowance for accurate articles. No user-facing copy or captures are added.

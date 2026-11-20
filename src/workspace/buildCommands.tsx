@@ -44,6 +44,17 @@ function buildAlongCommand({ core }: CommandInputs): Command[] {
 
   return [
     {
+      id: 'create-build',
+      group: 'Scene',
+      label: 'Make Build',
+      icon: <PackageIcon />,
+      keywords: 'kit frozen assembly progress',
+      run: () => {
+        core.tool.openRightTab('build');
+        core.buildAlong.requestCreate();
+      },
+    },
+    {
       id: 'build-along',
       group: 'Scene',
       label: 'Build Along',

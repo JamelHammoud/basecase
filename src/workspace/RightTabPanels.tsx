@@ -1,3 +1,4 @@
+import { BuildRecordsSection } from '../components/build/BuildRecordsSection';
 import { Activity, useState, type ReactNode } from 'react';
 import { AcpStudioPanel } from '../components/AcpStudioPanel';
 import { DesktopDownload } from '../components/agent/DesktopDownload';
@@ -72,6 +73,7 @@ function BuildTab({ core, agent, actions }: RightTabPanelsProps) {
 
   return (
     <BuildPanel
+      builds={<BuildRecordsSection core={core} />}
       onDefineBoard={() => void actions.board.define()}
       cableRoutes={core.cableRoutes}
       parts={parts}

@@ -1,3 +1,4 @@
+import { BuildCompletion } from './BuildCompletion';
 import React from 'react';
 import {
   Button,
@@ -49,7 +50,7 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
               title="Previous step"
               shortcut="←"
               tooltipSide="bottom"
-              disabled={index <= 0}
+              disabled={index <= 0 || buildAlong.saving}
               icon={<ChevronLeftIcon className="w-4 h-4" />}
               onClick={buildAlong.previous}
             />
@@ -62,7 +63,7 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
               title="Next step"
               shortcut="→"
               tooltipSide="bottom"
-              disabled={index >= count - 1}
+              disabled={index >= count - 1 || buildAlong.saving}
               icon={<ChevronRightIcon className="w-4 h-4" />}
               onClick={buildAlong.next}
             />
@@ -73,6 +74,7 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
             Print
           </Button>
         )}
+        <BuildCompletion buildAlong={buildAlong} />
         <IslandDivider />
         <Button size="sm" variant="ghost" onClick={buildAlong.close} shortcut="Esc" tooltipSide="bottom">
           Done

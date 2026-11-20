@@ -3,7 +3,9 @@ import { drawingsClient } from '../sheet/drawingsClient';
 import type { DrawingOptions } from '../sheet/drawingTypes';
 import { provenOrderOf } from '../assembly/provenOrder';
 import { knownPurchases } from '../components/build/usePurchases';
-import { generateGuide } from '../guide/generateGuide';
+import { frozenSourceFingerprint } from '../kit/frozenClient';
+import { guideFingerprint } from '../guide/guideFingerprint';
+import { generateGuide, generateGuidePlan } from '../guide/generateGuide';
 import { stepPartsOf } from '../guide/guideSteps';
 import { checkKitSource } from '../kit/limits';
 import { kitStages } from './kitStage';
@@ -20,6 +22,7 @@ export interface KitRun {
   signal: AbortSignal;
   current: () => WorkspaceCore;
   drawingOptions?: DrawingOptions;
+  assemblyOnly?: boolean;
 }
 
 export function kitGuard(core: WorkspaceCore, run: KitRun) {
@@ -80,30 +83,15 @@ export async function prepareKit(core: WorkspaceCore, run: KitRun) {
 
   guard();
 
-  const drawingClient = drawingsClient();
-  const stopDrawings = () => drawingClient.dispose();
-
-  run.signal.addEventListener('abort', stopDrawings, { once: true });
-
-  const drawings = await stage('Drawings', async () => {
-    try {
-      return await drawingClient.call('files', {
-        source: { id: core.scene.sceneId, name, fingerprint: '' },
-        sourceSnapshot: { parts, project },
-        purchases,
-        parts: parts.filter((part) => part.id !== project.electronicsBoard?.partId),
-        options: run.drawingOptions ?? { frame: 'part', plane: 'xy', scale: 0.2 },
-      });
-    } finally {
-      run.signal.removeEventListener('abort', stopDrawings);
-      drawingClient.dispose();
-    }
-  });
+  const drawings = await prepareKitDrawings(core, run, purchases);
 
   guard();
 
+  const designFingerprint =
+    drawings?.manifest.source.fingerprint ??
+    (project.electronicsBoard ? await frozenSourceFingerprint({ parts, project }, run.signal) : undefined);
   const electrical = project.electronicsBoard
-    ? await stage('Electronics', () => kitElectricalExport(core, run, drawings.manifest.source.fingerprint))
+    ? await stage('Electronics', () => kitElectricalExport(core, run, designFingerprint!))
     : undefined;
 
   guard();
@@ -115,16 +103,29 @@ export async function prepareKit(core: WorkspaceCore, run: KitRun) {
   guard();
 
   const order = { ...provenOrderOf(parts, geometry), timedOut: geometry.timedOut };
-  const guide = await stage('Build guide', () =>
-    generateGuide({
-      title: name,
-      parts,
-      project,
-      signal: run.signal,
-      persist: false,
-      order: async () => order,
-    }),
-  );
+  const guide = run.assemblyOnly
+    ? await stage('Build guide', async () => ({
+        plan: await generateGuidePlan({ title: name, parts, project, geometry }),
+        html: '',
+        record: {
+          id: '',
+          pages: 0,
+          steps: 0,
+          generatedAt: '',
+          fingerprint: guideFingerprint(name, parts, project),
+          orderTimedOut: geometry.timedOut,
+        },
+      }))
+    : await stage('Build guide', () =>
+        generateGuide({
+          title: name,
+          parts,
+          project,
+          signal: run.signal,
+          persist: false,
+          order: async () => order,
+        }),
+      );
 
   guard();
 
@@ -165,7 +166,7 @@ export async function prepareKit(core: WorkspaceCore, run: KitRun) {
     name,
     electrical,
     drawings,
-    designFingerprint: drawings.manifest.source.fingerprint,
+    designFingerprint,
     parts,
     project,
     purchases,
@@ -209,7 +210,7 @@ export async function exportKitResult(core: WorkspaceCore, run: KitRun) {
         job,
         [
           ...Object.values(job.files),
-          ...Object.values(job.drawings.files),
+          ...Object.values(job.drawings?.files ?? {}),
           ...Object.values(job.electrical?.files ?? {}),
         ].map((file) => file.buffer as ArrayBuffer),
       ),
@@ -222,4 +223,32 @@ export async function exportKitResult(core: WorkspaceCore, run: KitRun) {
     run.signal.removeEventListener('abort', stop);
     client.dispose();
   }
+}
+
+async function prepareKitDrawings(core: WorkspaceCore, run: KitRun, purchases: import('../types/robotics').Purchases) {
+  const { parts, project } = core;
+  const name = core.scene.sceneName;
+  const stage = kitStages(kitGuard(core, run));
+
+  if (run.assemblyOnly) return undefined;
+
+  const drawingClient = drawingsClient();
+  const stopDrawings = () => drawingClient.dispose();
+
+  run.signal.addEventListener('abort', stopDrawings, { once: true });
+
+  return stage('Drawings', async () => {
+    try {
+      return await drawingClient.call('files', {
+        source: { id: core.scene.sceneId, name, fingerprint: '' },
+        sourceSnapshot: { parts, project },
+        purchases,
+        parts: parts.filter((part) => part.id !== project.electronicsBoard?.partId),
+        options: run.drawingOptions ?? { frame: 'part', plane: 'xy', scale: 0.2 },
+      });
+    } finally {
+      run.signal.removeEventListener('abort', stopDrawings);
+      drawingClient.dispose();
+    }
+  });
 }

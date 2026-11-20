@@ -124,6 +124,8 @@ function checkFreshness(job: KitJob): KitManifest['checks']['freshness'] {
 export async function buildKit(job: KitJob): Promise<Uint8Array> {
   checkKitSource(job.parts);
 
+  if (!job.guide.html) throw new Error('Update the build guide before exporting the kit.');
+
   const sourceBytes =
     [
       ...Object.values(job.files),

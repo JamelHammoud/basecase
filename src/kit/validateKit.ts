@@ -36,7 +36,7 @@ export function validateKit(job: KitJob, bom: Bom) {
 
   validateGuide(job, solids);
 
-  if (job.guide.fingerprint !== guideFingerprint(job.name, job.parts, job.project) || !job.guide.html)
+  if (job.guide.fingerprint !== guideFingerprint(job.name, job.parts, job.project))
     throw new Error('Update the build guide before exporting the kit.');
 
   for (const part of solids) validatePart(part, job);

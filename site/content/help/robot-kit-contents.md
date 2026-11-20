@@ -62,6 +62,8 @@ Native software validation establishes neither electrical performance nor physic
 
 ## Checks and limits
 
+Individual build names and completion records stay in the local app or browser profile. They aren’t included in this archive. [Resume a robot build](/help/resume-a-robot-build) covers those records.
+
 Checks retain their original measurement time and are recorded as current, stale or not run. Exporting neither changes readiness nor proves physical fit. Unproven steps remain marked, and the manifest records an assembly search that reached its time limit.
 
 Missing sheet profiles and identities stop export. Hidden solids, missing geometry, omitted printable output and duplicate plate filenames also stop export. Archive contents are limited to 256 MB before compression. Drawing preparation limits a kit to 256 scene parts. Drawings occupy at most 64 MB before compression.

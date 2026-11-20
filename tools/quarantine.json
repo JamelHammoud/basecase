@@ -36,6 +36,14 @@
     "test": "creates on a canvas-picked generated deck, follows Inspector edits, undoes, redoes and reopens the actual file",
     "issue": 1621,
     "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44787608654 completed Inspector edits and undo/redo, then missed the unchanged download poll. Its shared-app retry exported and reopened a tab with the saved support id, then missed the mesh-triangle poll with zero triangles. Last full green 44697629334 passed in 27083 ms with unchanged test, helper, harness, export, support, thumbnail and scene-file sources and lockfile. No responsible merge or changed environment component is established. Export command delivery, preview preparation, encoding, download registration, imported document and viewport identity, worker validation and retained retry state remain distinct unresolved boundaries. Existing priority Sketch browser owner #1621 owns Linux tracing alongside its Windows cases and at least ten baseline and ten candidate observations at equal load with retries disabled before restoration. Linux replacement and both macOS declarations remain active, alongside fast support integration, serialization, history, queue and failure tests. Same-revision Linux diagnostic 44790006919 passed the complete declaration in 19506.501087 ms with one worker, retries disabled and quarantine off, confirming intermittency without establishing a cause or failure rate."
+  },
+  {
+    "file": "e2e/sketchSupport.e2e.test.ts",
+    "test": "creates on a canvas-picked generated deck, follows Inspector edits, undoes, redoes and reopens the actual file",
+    "issue": 1621,
+    "until": "2026-11-28",
     "platform": "win32",
     "reason": "Run 44042519036 missed the unchanged 10000 ms download poll on the first Windows attempt. The retry reused the beforeAll app, exported and reopened the file with the support id retained, then missed the mesh-triangle poll with zero triangles. Linux passed in 14818 ms at the same revision, and the explicit replacement case passed Windows in 6828 ms. Commit 08e3b77a6 introduced the walkthrough after the last green. Thumbnail preparation, file delivery, support validation, active viewport and retained retry state are not distinguished. Issue #1621 owns production-path tracing and equal-load baseline and candidate measurements. Other platforms and fast support integration, serialization, history and failure coverage remain active. The replacement browser case is separately quarantined on Windows under the same owner. Focused Windows diagnostic 44111175052 passed the exact test at the same revision in 15982 ms with one worker and retries disabled, confirming intermittent behavior without establishing its cause."
   },

@@ -125,6 +125,7 @@ const EXPECTED_NAMES = [
   'shownParts',
   'simPins',
   'simRecordingFrame',
+  'simRoots',
   'simState',
   'simTool',
   'sketchPath',

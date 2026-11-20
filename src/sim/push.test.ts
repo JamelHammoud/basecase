@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { fixtureModel } from '../skills/fixtureModels';
 import { SimEngine } from './engine';
 import { pushRequest } from './push';
+import { rootPositions } from './rootPositions';
 
 let mj: MainModule;
 
@@ -17,17 +18,19 @@ function pushed(id: string, angle: number) {
   engine.setController({ kind: 'hold' });
   engine.step(1);
 
-  const before = engine.stats().robots[0];
+  const key = model.robots[0].key;
+  const before = rootPositions(model, engine.poses())[key];
   const push = pushRequest(model, undefined, angle)!;
 
   engine.pushRobot(push.robot, push.force);
   engine.step(1.5);
 
   const after = engine.stats().robots[0];
+  const position = rootPositions(model, engine.poses())[key];
 
   engine.dispose();
 
-  return { moved: after.travelled - before.travelled, fellAt: after.fellAt };
+  return { moved: Math.hypot(position[0] - before[0], position[1] - before[1]), fellAt: after.fellAt };
 }
 
 describe('Push', () => {

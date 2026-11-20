@@ -7,6 +7,7 @@ import type { DriveCommand } from '../../../sim/driveTypes';
 import { inputEvents } from '../../../sim/inputEvents';
 import { feedVoice } from '../../../voice/voiceSession';
 import { devSimState } from '../simState';
+import { rootPositions } from '../../../sim/rootPositions';
 import type { Studio, StudioContext } from '../types';
 
 type Payload = Record<string, unknown>;
@@ -85,6 +86,7 @@ export default function simStudio(studio: Studio) {
       return at;
     },
     simState: () => devSimState(studio().core, studio().jointsRef.current),
+    simRoots: () => rootPositions(sim().modelNow(), studio().posesRef.current),
     simTool: (kind: string, payload: Payload) => studio().agent.requests.simTool(kind, payload),
     drive: (command: DriveCommand) => sim().drive.setKeys(command),
     driveWith: (inputs: string[]) => sim().drive.start(undefined, { inputs }),

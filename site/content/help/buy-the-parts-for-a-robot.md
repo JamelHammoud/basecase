@@ -66,6 +66,8 @@ Power connections use the same routing check. Without a selected compatible cabl
 
 To find links for one part, select it and look in the **Product** section of the Inspector. It has **Buy on Amazon** or **Find on Amazon**, **Datasheet** and **Product Page**.
 
+Compare dated quotes and export a selected purchasing plan with [Compare supplier offers](/help/compare-supplier-offers).
+
 **Note:** Basecase never places an order or reads store pages. You buy everything in the store yourself.
 
 After you buy, record what you paid. See [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget).

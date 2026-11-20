@@ -1,6 +1,6 @@
+import { listPurchases, savePurchase } from './webPurchases';
 import { boardImportMessage } from '../../../wiring/boardRoutingFindings';
-import type { AcpStatusInfo, CustomModelDefinition, Purchases, StoredPurchase } from '../../../types/robotics';
-import { checkedPrice, isOnHandCount } from '../../onHand';
+import type { AcpStatusInfo, CustomModelDefinition, StoredPurchase } from '../../../types/robotics';
 import type { TrainerStatus } from '../types';
 import { idbAll, idbDelete, idbGet, idbPut } from './idb';
 import { trainedPolicy, trainedSkill } from './webTrained';
@@ -45,31 +45,6 @@ async function deleteModel(id: string) {
   await idbDelete('models', id);
 
   return OK;
-}
-
-const listPurchases = async () => (await idbGet<Purchases>('settings', 'purchases')) ?? {};
-
-function storedRecord(record: StoredPurchase): StoredPurchase | null {
-  if (record.onHand !== undefined && !isOnHandCount(record.onHand)) throw new Error('On hand must be a whole count');
-
-  const price = checkedPrice(record);
-
-  if (price) return { ...price, checkedAt: price.checkedAt || new Date().toLocaleDateString('en-CA') };
-
-  return record.onHand ? { onHand: record.onHand } : null;
-}
-
-async function savePurchase({ key, record }: { key: string; record: StoredPurchase | null }) {
-  const all = await listPurchases();
-
-  const stored = record && storedRecord(record);
-
-  if (stored) all[key] = stored;
-  else delete all[key];
-
-  await idbPut('settings', 'purchases', all);
-
-  return all;
 }
 
 const uploadedImage = (body: Body) => ({

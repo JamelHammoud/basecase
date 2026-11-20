@@ -1,3 +1,4 @@
+import { checkedPurchasingEvidence } from './offerValidation.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -18,7 +19,10 @@ const validOnHand = (n) => n === undefined || (Number.isInteger(n) && n >= 0 && 
 function storedRecord(record) {
   if (!validOnHand(record.onHand)) throw new Error('On hand must be a whole count');
 
-  if (record.priceUsd === undefined) return record.onHand ? { onHand: record.onHand } : null;
+  const evidence = checkedPurchasingEvidence(record);
+
+  if (record.priceUsd === undefined)
+    return record.onHand || Object.keys(evidence).length ? { onHand: record.onHand, ...evidence } : null;
 
   return { ...record, checkedAt: record.checkedAt || new Date().toLocaleDateString('en-CA') };
 }
@@ -33,7 +37,11 @@ export function savePurchase(libraryDir, { key, record }) {
   if (stored) all[key] = stored;
   else delete all[key];
 
-  fs.writeFileSync(purchasesFile(libraryDir), JSON.stringify(all, null, 2), 'utf-8');
+  const file = purchasesFile(libraryDir);
+  const temporary = `${file}.pending`;
+
+  fs.writeFileSync(temporary, JSON.stringify(all, null, 2), 'utf-8');
+  fs.renameSync(temporary, file);
 
   return all;
 }

@@ -1,3 +1,4 @@
+import { setSupplierOffersOpen } from '../components/build/offerDialog';
 import { cableCommands } from './cableCommands';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { ReactNode } from 'react';
@@ -87,6 +88,17 @@ function guideCommands({ core }: CommandInputs): Command[] {
 }
 
 export const buildCommands = (inputs: CommandInputs): Command[] => [
+  {
+    id: 'supplier-offers',
+    group: 'Scene',
+    label: 'Supplier Offers',
+    icon: <PackageIcon />,
+    keywords: 'quote import purchasing csv supplier arrival',
+    run: () => {
+      inputs.core.tool.openRightTab('build');
+      setSupplierOffersOpen(true);
+    },
+  },
   ...(inputs.core.project.electronicsBoard
     ? [
         {

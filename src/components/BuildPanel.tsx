@@ -1,11 +1,13 @@
+import { usePurchaseSheet } from './build/usePurchaseSheet';
+import { SupplierOffers } from './build/SupplierOffers';
 import { supportByMaterial } from './build/supportByMaterial';
 import { CableRoutesSection } from './build/CableRoutesSection';
 import type { CableRoutes } from '../workspace/useCableRoutes';
-import React, { useState } from 'react';
+import React from 'react';
 import { useScrollFade } from '../design-system';
 import { BoardBuildAction } from './build/BoardBuildAction';
-import type { ProjectSettings, PurchaseRecord, ScenePart } from '../types/robotics';
-import { onHandOf, withPrice } from '../utils/onHand';
+import type { ProjectSettings, ScenePart } from '../types/robotics';
+import { onHandOf } from '../utils/onHand';
 import type { ShowToast } from '../workspace/types';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import { useMoney } from '../utils/useMoney';
@@ -34,6 +36,7 @@ interface BuildPanelProps {
   onDefineBoard: () => void;
   parts: ScenePart[];
   sceneName: string;
+  sceneId: string;
   project: ProjectSettings;
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
   printing: Printing;
@@ -58,6 +61,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   cableRoutes,
   parts,
   sceneName,
+  sceneId,
   project,
   onChangeProject,
   printing,
@@ -76,7 +80,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
 }) => {
   const [purchases, savePurchase] = usePurchases();
   const { measures, report: print } = printing;
-  const [checking, setChecking] = useState<BomLine | null>(null);
+  const { checking, setChecking, savePrice } = usePurchaseSheet(purchases, savePurchase);
   const { ref: setScroller, style: fadeStyle } = useScrollFade();
   const measuredWiring = useBomWiring({ parts, project }, viewportRef, onToast);
   const wiring = measuredWiring ?? currentWiring(readiness);
@@ -94,10 +98,6 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   const exportMarkdown = () => {
     download(`${file}-bom.md`, bomToMarkdown(bom, sceneName, money), 'text/markdown');
     onToast('Exported bill of materials');
-  };
-  const savePrice = async (line: BomLine, record: PurchaseRecord | null) => {
-    await savePurchase(line.key, withPrice(purchases[line.key], record));
-    setChecking(null);
   };
   const saveOnHand = (line: BomLine, count: number) =>
     saveLineOnHand({ line, count, purchases, savePurchase, onToast });
@@ -168,6 +168,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
         <GuideSection guide={guide} sceneName={sceneName} canGenerate={parts.some(isBuilt)} />
         <PlatesSection printing={printing} />
       </div>
+      <SupplierOffers bom={bom} purchases={purchases} scene={sceneId} save={savePurchase} />
       {checking && (
         <CheckSheet
           line={checking}

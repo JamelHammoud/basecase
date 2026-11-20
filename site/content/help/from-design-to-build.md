@@ -86,6 +86,8 @@ For a broken part, [Repair a part](/help/repair-a-part) plays the measured teard
 
 To fit a weekend build into the hours available, [set a time budget](/help/set-a-time-budget) beside the money budget. The Time check adds printing, estimated assembly and servo setup. It fails over budget, warns above 90%, and remains a note without a budget.
 
+[Compare supplier offers](/help/compare-supplier-offers) checks dated quotes against remaining purchases. Its arrival estimate excludes printing and assembly and doesn’t change Checks.
+
 ## What the checks can't promise
 
 An imported Onshape robot can be ready to build with motions held fixed. Cylindrical mates keep their hinges, with their slides listed under **Fixed Mates** as notes. [Import an Onshape assembly as a robot](/help/import-an-onshape-assembly) explains which mates move and how to bring in changes.

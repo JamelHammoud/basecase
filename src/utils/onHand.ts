@@ -1,3 +1,4 @@
+import type { PurchasingEvidence } from '../types/purchasing';
 import type { PurchaseRecord, StoredPurchase } from '../types/robotics';
 
 export const MAX_ON_HAND = 100_000;
@@ -23,21 +24,32 @@ export function ownedSplit(qty: number, onHand: number): OwnedSplit {
   return { owned, toBuy: qty - owned };
 }
 
+function purchasingEvidence(stored: StoredPurchase | undefined): PurchasingEvidence {
+  return {
+    ...(stored?.supplierOffers && { supplierOffers: stored.supplierOffers }),
+    ...(stored?.purchasePlan && { purchasePlan: stored.purchasePlan }),
+  };
+}
+
 export function withOnHand(stored: StoredPurchase | undefined, count: number): StoredPurchase | null {
   const price = checkedPrice(stored);
   const onHand = count > 0 ? count : undefined;
 
-  if (price) return { ...price, onHand };
+  if (price) return { ...stored, ...price, onHand };
 
-  return onHand ? { onHand } : null;
+  const evidence = purchasingEvidence(stored);
+
+  return onHand || Object.keys(evidence).length ? { ...evidence, onHand } : null;
 }
 
 export function withPrice(stored: StoredPurchase | undefined, record: PurchaseRecord | null): StoredPurchase | null {
   const onHand = onHandOf(stored) || undefined;
 
-  if (record) return { ...record, onHand };
+  if (record) return { ...purchasingEvidence(stored), ...record, onHand };
 
-  return onHand ? { onHand } : null;
+  const evidence = purchasingEvidence(stored);
+
+  return onHand || Object.keys(evidence).length ? { ...evidence, onHand } : null;
 }
 
 export const isOnHandCount = (count: unknown): count is number =>

@@ -65,3 +65,5 @@ This message is a note and doesn't block Ready to build. The parts it lists have
 2. Type the price, then click **Save**.
 
 A line under **Printed parts** has no **Add Price**. Its price comes from the [print service's quote](/help/price-printed-parts-from-a-print-service). If the service can't print a part, its line says why in amber.
+
+Selecting a [supplier offer](/help/compare-supplier-offers) doesn’t confirm a sourced part or clear these blockers.

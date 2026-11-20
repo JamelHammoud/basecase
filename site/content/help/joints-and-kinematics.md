@@ -100,6 +100,8 @@ Measurements, clash checks, and range sweeps always use the modeled pose. If you
 
 Walk cycles and poses from the agent set targets for hands and feet instead of angles. Inverse kinematics finds joint angles that reach each target while staying within every joint's range. Torso joints are stiffer, so the limbs move first to reach a target.
 
+Authored [ideal tendons](/help/drive-joints-with-an-ideal-tendon) refuse IK. Command motor spool angles and let simulation resolve the passive outputs.
+
 ## Several robots in one scene
 
 Basecase finds each robot in the scene separately, with its own joints, weight, and feet. The Pose tab, walk cycles, and BVH animation import work only on the selected robot. Without robot joints, importing a BVH opens Design From Motion instead.

@@ -267,3 +267,10 @@ The Motor Kit's optional `KitWarm.initialMinutes` caps only its first Forge inpu
 - `npm run build:forge` builds the trainer and stages it in the gitignored `forge/dist/` (`tools/forge/stage.mjs`). On macOS it copies `libmujoco.<version>.dylib` (the version `fetch.rs` pins) beside the binary and points the binary at it with `install_name_tool`, because DeepMind's `mujoco.framework` has no root binary and codesign refuses it as a bundle. electron-builder ships `forge/dist/` as `Resources/forge/` and signs both files; Windows ships `forge-train.exe` and `mujoco.dll`, signed through `signExts`. CI builds Forge before packaging (`check.yml`, `release.yml`).
 
 `src/forge/selfContact.test.ts` compiles the generated folding-arm MJCF in WASM MuJoCo, feeds its fields to the shipped Forge WASM and requires an explicit contact-exclusion refusal. It does not start GPU training. Native C/WASM replay tests cover the ten generated self-contact mechanisms at the existing 1e-6 state tolerance and exact contact identity. The native engine’s existing exclusion admission and fallback remain unchanged. [Self-contact coverage](simulate.md#self-contact).
+
+
+### Authored ideal tendons
+
+Authored fixed tendons compile into ordinary MuJoCo tendon elements plus an equality or an elastic law. The existing `forge-ir` counts refuse `neq` and `ntendon` before accelerated lowering. Native MuJoCo remains the physics oracle for the same MJCF. Studio training and Kit job creation refuse authored tendons, without passing passive outputs off as action channels. No accelerated tendon solver or training support is admitted.
+
+`src/forge/selfContact.test.ts` feeds all ten generated tendon mechanisms into the shipped accelerated engine and checks equality refusal. A separate elastic declaration checks tendon-count refusal without an equality. `src/sim/fixtures/tendonParity.test.ts` compares their half-second WASM trajectories with pinned native C MuJoCo. [Execution evidence](../notes/testing-simulate.md#ideal-tendon-transmissions) records limits and [Joints and motion](joints-and-motion.md#ideal-fixed-tendons) owns authoring.

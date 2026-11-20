@@ -9,8 +9,11 @@ import { jointFrom, jointProblem, withJoints } from '../joints/declare';
 import type { Vec3 } from './types';
 import { plural } from '../../electron/plural.mjs';
 import { lengthLabel } from '../utils/size';
+import { withTendons } from '../joints/tendons';
+import type { IdealTendon } from '../types/tendon';
 
 export interface JointSpec {
+  tendon?: IdealTendon | null;
   id: string;
   name?: string;
   type?: RobotJoint['type'];
@@ -138,7 +141,23 @@ export function declareJoints(
 
   const drift = made.map((m) => skeletonDrift(m, plannedJoint(project, m.id))).filter((x): x is string => !!x);
 
-  const next = withJoints(project, made, pl.replace);
+  const merged = withJoints(project, made, pl.replace);
+  const edits = pl.joints
+    .filter((joint) => joint.tendon !== undefined)
+    .map((joint) => ({ motor: joint.id, tendon: joint.tendon! }));
+
+  if (problems.length && (edits.length || project.joints?.some((j) => j.tendon))) throw new Error(problems.join('\n'));
+
+  const previous = new Map((project.joints ?? []).filter((j) => j.tendon).map((j) => [j.id, j.tendon]));
+  const preserving = {
+    ...merged,
+    joints: merged.joints.map((joint) => {
+      const tendon = previous.get(joint.id);
+
+      return tendon ? { ...joint, tendon } : joint;
+    }),
+  };
+  const next = withTendons(preserving, parts, edits);
   const text =
     `${plural(next.joints.length, 'joint')} declared.` +
     (made.length ? `\n${made.map((j) => jointLine(j, pl.joints, project)).join('\n')}` : '') +

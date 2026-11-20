@@ -1,7 +1,7 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import type { RobotAnimation, RobotPoseState } from '../types/robotics';
 import { loopInitial } from './loopInitial';
-import { controlValues } from './controlValues';
+import { controlValues, assertTendonController } from './controlValues';
 import { primeCtrlHistory } from './ctrlHistory';
 import * as THREE from 'three';
 import { createDrive, type DriveCommand, type DriveHand, type DriveLoop, type DriveSetup } from './drive';
@@ -196,6 +196,8 @@ export class SimEngine {
   }
 
   setController(c: Controller) {
+    assertTendonController(c, this.sim.joints);
+
     this.controller = c;
     this.given.clear();
     this.policyState?.eyes?.dispose();

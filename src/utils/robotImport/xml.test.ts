@@ -37,6 +37,9 @@ describe('xacro XML cursor', () => {
       ['<robot/><robot/>', 'Expected one root element'],
       ['<!DOCTYPE robot><robot/>', 'Document type declarations aren’t read'],
       ['<robot><!-- missing', 'Unclosed -->'],
+      ['<?xml missing', 'Unclosed ?>'],
+      ['<robot><![CDATA[missing', 'Unclosed ]]>'],
+      ['<robot><!ENTITY name "value"/></robot>', 'Document type declarations aren’t read'],
     ];
 
     for (const [source, message] of failures) {

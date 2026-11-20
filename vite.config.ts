@@ -7,6 +7,7 @@ import { defineConfig, type ResolvedConfig } from 'vite';
 import { bridgeMiddlewarePlugin } from './electron/vite-bridge-middleware.mjs';
 import { buildKernelBundle } from './tools/kernelBundle.mjs';
 import { VOICE_MODEL_PATH } from './src/voice/voiceModelPath.ts';
+import { webOnnxAssets } from './tools/webOnnxAssets.ts';
 
 const ISOLATION_HEADERS = {
   'Cross-Origin-Opener-Policy': 'same-origin',
@@ -64,7 +65,9 @@ export default defineConfig(({ mode }) => ({
     hmr: hmrPort ? { host: 'localhost', clientPort: hmrPort } : undefined,
   },
   preview: { headers: ISOLATION_HEADERS },
+  worker: { plugins: () => (mode === 'web' ? [webOnnxAssets()] : []) },
   plugins: [
+    ...(mode === 'web' ? [webOnnxAssets()] : []),
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),

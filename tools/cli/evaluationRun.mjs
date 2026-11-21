@@ -237,6 +237,8 @@ export async function runEvaluation(root, options, context) {
   if (!options.output) throw new Error('Choose an output folder.');
 
   const started = performance.now();
+  const { evaluationPreparations } = await context.load('src/cases/evaluation.ts');
+  const preparationStart = evaluationPreparations();
   const declaration = checkedDeclaration(JSON.parse(readFile(root, 'evaluation.json')));
   const files = checkedFiles(root, declaration.files);
   const report = initialReport(declaration);
@@ -305,9 +307,7 @@ export async function runEvaluation(root, options, context) {
       process.off('SIGTERM', stop);
     }
 
-    const { evaluationPreparations } = await context.load('src/cases/evaluation.ts');
-
-    report.metrics.geometryPreparations = evaluationPreparations();
+    report.metrics.geometryPreparations = evaluationPreparations() - preparationStart;
     report.metrics.totalMs = performance.now() - started;
     report.metrics.peakRss = process.resourceUsage().maxRSS * 1024;
     report.metrics.bytes = Object.keys(report.files).reduce(

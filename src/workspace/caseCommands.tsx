@@ -14,7 +14,11 @@ import {
   StopIcon,
   SwapIcon,
 } from '../design-system';
-import type { WorldAsset } from '../cases/worldAssets';
+import { registerWorldAsset, type WorldAsset } from '../cases/worldAssets';
+import { readDroppedWorld } from './worldImport';
+import type { DroppedFolder } from './droppedFolders';
+import { pickFiles } from '../utils/pickFiles';
+import { errorMessage } from '../utils/errorMessage';
 import type { Room } from '../cases/roomPlan';
 import { INPUT_COMMANDS } from './inputCommands';
 import { showLeftTab } from './showView';
@@ -53,6 +57,32 @@ export const showWorldCase = (core: WorkspaceCore, hash: string, asset: WorldAss
   showCases(core);
   core.simTraining.cases.builder.startInWorld(hash, asset);
 };
+
+export async function openWorldFiles(core: WorkspaceCore, files: File[], folders?: DroppedFolder[]) {
+  if (!files.length) return;
+
+  try {
+    const prepared = await readDroppedWorld(files, folders);
+
+    if (prepared.kind === 'room') return showRoomCase(core, prepared.room);
+
+    const asset = { world: prepared.world, pieces: prepared.pieces };
+
+    registerWorldAsset(prepared.hash, asset, prepared.serializedJson);
+    showWorldCase(core, prepared.hash, asset);
+  } catch (error) {
+    core.showToast(errorMessage(error), { tone: 'error' });
+  }
+}
+
+const importWorldCommand = (core: WorkspaceCore): Command => ({
+  id: 'import-world',
+  group: 'Simulate',
+  label: 'Import World',
+  icon: <DownloadIcon />,
+  keywords: 'capture environment room collider glb gltf obj splat spz ply',
+  run: async () => openWorldFiles(core, await pickFiles('', true)),
+});
 
 const runCaseCommand = (core: WorkspaceCore): Command => ({
   id: 'case-run',
@@ -318,6 +348,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
       run: () => showCases(core),
     },
     ...newCase,
+    importWorldCommand(core),
     ...workbenchCommands(core),
     ...images,
     drive,

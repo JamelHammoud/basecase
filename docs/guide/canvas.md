@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 12. 3D Canvas
 
+Imported mesh parts retain per-material colors, vertex colors, roughness, metalness, opacity and two-sided rendering (`partMesh/importedMeshes.ts`). These properties apply to solids. Selection highlighting and cutout or reference styles continue to use their own materials. Imported vertex colors remain attached through creased normals and size changes.
+
 Stress overlay cell placement writes scalar coordinates directly into instance translations, without temporary index, axis or center arrays. Lighten uses the same arithmetic in its cell-center helper. [Coverage and evidence](build.md#performance-strength-and-lighten).
 
 Marquee selection reuses one coordinate vector and one cleared intersection array throughout its 49 ray-grid probes. Hits feed the existing selection set directly. Vertex sampling, overlapping-surface selection and exclusions keep their existing behavior. [Selection coverage and evidence](inspector-and-selection.md#performance-selection).
@@ -95,6 +97,8 @@ Coplanar contact scans (`three/analysis/collide.ts`) reuse one triangle and its 
 - **Shift while using the gizmo** turns off grid, angle and scale snapping for smooth motion. A “Snapping off” glass chip shows while dragging. Commits keep 0.1 mm / 0.1° precision instead of rounding to 0.5 mm / 1°. Shift-dragging a gizmo handle never starts a box select (`transformControls.axis` check).
 
 ## Performance: mesh preparation
+
+- **Model imports preserve source detail in workers.** `utils/modelMesh.ts` extracts mesh objects, material groups and loaded poses in the geometry worker, with transferred position and vertex-color buffers. DAE and 3MF retain their DOM parsing exception. Placement and exact vertex welding run in the worker for every format. The importer applies the small-model unit correction once to the complete model and retains source coordinates without the robot-link path's 0.01 mm rounding. `three/importWeld.test.ts` checks coordinate recovery and color seams without timing assertions.
 
 Analysis-worker retention walks the shape and geometry maps directly and deletes stale entries during traversal. It disposes each discarded prepared solid once and preserves live solids. Cleanup creates no copied or filtered key lists. `three/analysis/analysisRetention.test.ts` covers mixed retention, repeated cleanup, missing data and reloading. [Evidence](../notes/performance-geometry.md#analysis-worker-retention-walks-caches-directly).
 

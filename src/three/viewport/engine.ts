@@ -31,7 +31,7 @@ import { BuildStepLayer } from './buildStep';
 import { currentView, focusOn, frameLayer, frameScene, lookThrough, setCameraPreset } from './cameraOps';
 import { snapshotSolidsWith } from './analysisSnapshots';
 import { CanvasSizer } from './canvasSizer';
-import { captureScreenshot, captureViews } from './captures';
+import { captureScreenshot, captureViews, renderPose } from './captures';
 import { silhouetteShots } from './fitCapture';
 import { FollowCamera } from './followCamera';
 import { Gizmo } from './gizmo';
@@ -326,6 +326,7 @@ export class ViewportEngine {
       },
       setCameraPreset: (preset) => camera(() => setCameraPreset(ctx.stage, preset)),
       currentView: () => currentView(ctx.stage),
+      renderPose: () => renderPose(ctx),
       lookThrough: (shot) => camera(() => lookThrough(ctx.stage, shot)),
       focusSelected: () => camera(() => focusOn(ctx.stage, ctx.layer.get(this.props.selectedPartIds[0] ?? ''))),
       zoomBy: (factor) => camera(() => zoomCamera(ctx.stage, factor)),

@@ -1,3 +1,4 @@
+import { sceneAppearanceParts } from '../appearance/sceneParts';
 import { findPartDeep } from '../booleans/parts';
 import { Inspector } from '../components/Inspector';
 import { SculptAndDrawStudio } from '../components/SculptAndDrawStudio';
@@ -95,6 +96,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
 
   return (
     <Inspector
+      appearanceBaselineParts={sceneAppearanceParts(core.project, [])}
       parameters={core.parameters}
       board={core.project.electronicsBoard}
       onUpdateBoard={actions.board.update}

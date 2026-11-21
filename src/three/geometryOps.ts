@@ -54,6 +54,8 @@ export interface CreaseEdgesJob {
 }
 
 export interface CreasedJob {
+  colors?: ArrayLike<number>;
+  uvs?: ArrayLike<number>;
   positions: ArrayLike<number>;
   indices: ArrayLike<number>;
   creaseDeg: number;
@@ -280,8 +282,15 @@ export const geometryHandlers = {
     const geometry = creasedGeometry(job, job.creaseDeg, job.scale);
     const position = geometry.getAttribute('position').array as Float32Array;
     const normal = geometry.getAttribute('normal').array as Float32Array;
+    const uv = geometry.getAttribute('uv')?.array as Float32Array | undefined;
+    const color = geometry.getAttribute('color')?.array as Float32Array | undefined;
 
-    return reply({ position, normal }, [position.buffer, normal.buffer]);
+    return reply({ position, normal, uv, color }, [
+      position.buffer,
+      normal.buffer,
+      ...(uv ? [uv.buffer] : []),
+      ...(color ? [color.buffer] : []),
+    ]);
   },
   component: async (data: ArrayBuffer) => {
     const arrays = await componentArrays(data);

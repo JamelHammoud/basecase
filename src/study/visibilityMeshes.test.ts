@@ -4,7 +4,7 @@ import { visibilityMeshFiles } from './visibilityMeshes';
 
 vi.mock('../three/componentMeshes', () => ({
   componentMeshUrl: (id: string) => `/parts/${id}.glb`,
-  sourcedMeshFiles: async () => ({}),
+  renderMeshFiles: async () => ({}),
 }));
 
 afterEach(() => vi.unstubAllGlobals());
@@ -20,7 +20,12 @@ it('supplies catalog bytes before source-model preparation and reuses the immuta
 
   expect(fetch).toHaveBeenCalledExactlyOnceWith('/parts/raspberry-pi-camera-3.glb');
   expect(repeated).toBe(first);
-  expect(new Uint8Array(first['raspberry-pi-camera-3'])).toEqual(Uint8Array.of(1, 2, 3));
+
+  const binary = first['raspberry-pi-camera-3'];
+
+  if (!(binary instanceof ArrayBuffer)) throw new Error('Expected component bytes');
+
+  expect(new Uint8Array(binary)).toEqual(Uint8Array.of(1, 2, 3));
 });
 
 it('keeps unknown catalog IDs out of asset URLs and rejects missing catalog geometry', async () => {

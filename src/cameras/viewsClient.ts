@@ -1,4 +1,4 @@
-import { sourcedMeshFiles } from '../three/componentMeshes';
+import { renderMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import { workerClient } from '../utils/workerRpc';
 import * as defaultVision from './visionSession';
@@ -81,7 +81,7 @@ export function cameraFeed(
         ...job,
         parts: packParts(job.parts),
         world: packParts(job.world),
-        meshes: await sourcedMeshFiles(all),
+        meshes: await renderMeshFiles(all),
       });
     },
     frame: async (request) => {

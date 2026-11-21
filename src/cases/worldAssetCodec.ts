@@ -1,3 +1,4 @@
+import type { SerializedTextureAsset } from '../appearance/textureAsset';
 import { bytesToBase64 } from '../utils/base64';
 import type { WorldAsset } from './worldAssets';
 
@@ -62,4 +63,4 @@ export function serializeWorldAsset({ world, pieces }: WorldAsset) {
 }
 
 export type SerializedWorldAsset = ReturnType<typeof serializeWorldAsset>;
-export type SerializedWorldAssets = Record<string, SerializedWorldAsset>;
+export type SerializedWorldAssets = Record<string, SerializedWorldAsset | SerializedTextureAsset>;

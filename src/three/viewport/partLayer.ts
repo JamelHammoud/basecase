@@ -1,3 +1,6 @@
+import { onlyAppearanceChanged, reuseAppearanceMaterials } from '../../appearance/reuse';
+import { applyAppearance } from '../../appearance/render';
+import { prepareAppearance } from '../../appearance/textures';
 import * as THREE from 'three';
 import type { ScenePart } from '../../types/robotics';
 import { applyPartTransform, buildPartGroup, releasePartGroup } from '../buildPartMesh';
@@ -34,6 +37,8 @@ const FRAME_BUDGET_MS = 6;
 const UPLOAD_VERTICES_PER_FRAME = 200_000;
 
 interface PendingBuild {
+  appearance?: ReturnType<typeof prepareAppearance>;
+  ready?: Promise<void>;
   part: ScenePart;
   selected: boolean;
   meshVersion: number;
@@ -54,6 +59,8 @@ export class PartLayer {
 
   private readonly waiting = new Map<string, PendingBuild>();
 
+  private readonly failures = new Map<string, unknown>();
+
   private readonly uploaded = new WeakSet<THREE.BufferGeometry>();
 
   private readonly root: THREE.Group;
@@ -62,10 +69,18 @@ export class PartLayer {
 
   private readonly batches: PartBatches | null;
 
-  constructor(root: THREE.Group, onReady: () => void = () => {}, batches: PartBatches | null = null) {
+  private readonly renderer: THREE.WebGLRenderer | null;
+
+  constructor(
+    root: THREE.Group,
+    onReady: () => void = () => {},
+    batches: PartBatches | null = null,
+    renderer: THREE.WebGLRenderer | null = null,
+  ) {
     this.root = root;
     this.onReady = onReady;
     this.batches = batches;
+    this.renderer = renderer;
   }
 
   get(id: string): THREE.Group | undefined {
@@ -100,8 +115,8 @@ export class PartLayer {
       changed = true;
     }
 
-    this.pending.clear();
-    this.waiting.clear();
+    this.clearPending();
+    this.failures.clear();
 
     for (const part of visible) {
       changed = this.upsert({ part, selected: selected.has(part.id), meshVersion }) || changed;
@@ -144,11 +159,22 @@ export class PartLayer {
   }
 
   buildAll(): boolean {
-    for (const next of this.waiting.values()) this.pending.add(next);
+    for (const [id, next] of this.waiting) {
+      if (next.appearance?.pending) continue;
 
-    this.waiting.clear();
+      this.waiting.delete(id);
+      this.pending.add(next);
+    }
 
     return this.buildPending();
+  }
+
+  async whenReady(): Promise<void> {
+    await Promise.all([...this.waiting.values()].map((next) => next.ready));
+
+    if (this.failures.size) throw this.failures.values().next().value;
+
+    this.buildAll();
   }
 
   applyPose(skip?: THREE.Object3D | null): void {
@@ -224,14 +250,23 @@ export class PartLayer {
       return;
     }
 
-    this.batches?.remove(entry.group);
-    releasePartGroup(entry.group);
-    entry.group.clear();
-    build(entry.group);
-    this.batches?.add(entry.group);
+    const lease = prepareAppearance([entry.part]);
+
+    try {
+      this.batches?.remove(entry.group);
+      releasePartGroup(entry.group);
+      entry.group.clear();
+      build(entry.group);
+      applyAppearance(entry.group, entry.part);
+      this.batches?.add(entry.group);
+    } finally {
+      lease.release();
+    }
   }
 
   dispose(): void {
+    this.clearPending();
+
     for (const [id, entry] of this.entries) this.remove(id, entry);
   }
 
@@ -290,10 +325,19 @@ export class PartLayer {
     return false;
   }
 
+  private clearPending(): void {
+    for (const next of [...this.pending, ...this.waiting.values()]) next.appearance?.release();
+
+    this.pending.clear();
+    this.waiting.clear();
+  }
+
   private queue(next: PendingBuild): void {
+    next.appearance = prepareAppearance([next.part]);
+
     const prepared = preparePart(next.part);
 
-    if (!prepared) {
+    if (!prepared && !next.appearance.ready) {
       this.pending.add(next);
 
       return;
@@ -302,18 +346,39 @@ export class PartLayer {
     const id = next.part.id;
 
     this.waiting.set(id, next);
-    void prepared.then(() => {
-      if (this.waiting.get(id) !== next) return;
+    next.ready = Promise.all([prepared, next.appearance.ready]).then(
+      () => {
+        if (this.waiting.get(id) !== next) return;
 
-      this.waiting.delete(id);
-      this.pending.add(next);
-      this.onReady();
-    });
+        this.waiting.delete(id);
+        this.pending.add(next);
+        this.onReady();
+      },
+      (error: unknown) => {
+        if (this.waiting.get(id) !== next) return;
+
+        this.waiting.delete(id);
+        this.failures.set(id, error);
+        next.appearance?.release();
+        this.onReady();
+      },
+    );
   }
 
-  private build({ part, selected, meshVersion }: PendingBuild): number {
+  private build(next: PendingBuild): number {
+    try {
+      return this.buildPrepared(next);
+    } finally {
+      next.appearance?.release();
+    }
+  }
+
+  private buildPrepared({ part, selected, meshVersion }: PendingBuild): number {
     const old = this.entries.get(part.id);
     const group = buildPartGroup(part, selected, { shareGeometry: true, lateEdges: true });
+
+    if (old && old.selected === selected && old.meshVersion === meshVersion && onlyAppearanceChanged(old.part, part))
+      reuseAppearanceMaterials(old.group, group, (texture) => this.renderer?.initTexture(texture));
 
     if (old) this.remove(part.id, old);
 

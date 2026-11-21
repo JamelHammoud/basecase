@@ -1,3 +1,4 @@
+import { physicalParts } from '../../appearance/physical';
 import { isUnitName } from '../../../electron/robot/units.mjs';
 import type { CaseRobot, CaseResult } from '../runCase';
 import type { Case } from '../schema';
@@ -124,7 +125,7 @@ export function placementIdentity(input: {
   const pose = readWorkbenchPose(input.pose);
   const caseHash = caseRevision(kase);
   const robotHash = hashOf({
-    parts: robot.parts,
+    parts: physicalParts(robot.parts),
     joints: robot.joints,
     measures: robot.measures,
     selfContact: robot.selfContact,

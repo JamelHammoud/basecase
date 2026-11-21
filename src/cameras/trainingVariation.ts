@@ -1,3 +1,5 @@
+import { planarMaterial } from '../appearance/render';
+import type { Appearance } from '../appearance/model';
 import * as THREE from 'three';
 import type { Posed } from '../datasets/renderVideos';
 import type { V3 } from '../utils/kinematics';
@@ -30,6 +32,9 @@ function varySurface(mesh: THREE.Mesh, variation: SurfaceVariation): void {
   const materials = Array.isArray(original) ? original : [original];
   const varied = materials.map((material) => {
     const clone = material.clone();
+
+    if (clone instanceof THREE.MeshStandardMaterial && material.userData.appearance)
+      planarMaterial(clone, material.userData.appearance as Appearance);
 
     if (!(clone instanceof THREE.MeshStandardMaterial) && !(clone instanceof THREE.MeshBasicMaterial)) return clone;
 

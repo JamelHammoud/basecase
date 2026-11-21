@@ -1,10 +1,10 @@
 import { COMPONENT_BY_ID } from '../data/components';
-import { componentMeshUrl, sourcedMeshFiles, type MeshFiles } from '../three/componentMeshes';
+import { componentMeshUrl, renderMeshFiles, type RenderMeshFiles } from '../three/componentMeshes';
 import type { ScenePart } from '../types/robotics';
 
-const files = new WeakMap<ScenePart[], Promise<MeshFiles>>();
+const files = new WeakMap<ScenePart[], Promise<RenderMeshFiles>>();
 
-export function visibilityMeshFiles(parts: ScenePart[]): Promise<MeshFiles> {
+export function visibilityMeshFiles(parts: ScenePart[]): Promise<RenderMeshFiles> {
   const kept = files.get(parts);
 
   if (kept) return kept;
@@ -17,7 +17,7 @@ export function visibilityMeshFiles(parts: ScenePart[]): Promise<MeshFiles> {
     ),
   ];
   const loading = Promise.all([
-    sourcedMeshFiles(parts),
+    renderMeshFiles(parts),
     Promise.all(
       ids.map(async (id) => {
         const response = await fetch(componentMeshUrl(id));

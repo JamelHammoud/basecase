@@ -1,3 +1,4 @@
+import { validPartAppearances } from '../appearance/validation';
 import { Euler, Vector3 } from 'three';
 import type { ScenePart } from '../types/robotics';
 import { partEdges } from '../utils/partEdges';
@@ -23,6 +24,8 @@ function modifiedGeometry(part: ScenePart): boolean {
 }
 
 export function selectedPickGeometryProblem(part: ScenePart): string | null {
+  if (!validPartAppearances([part])) return 'The scene’s parts are damaged.';
+
   const primitive = ['box', 'cube', 'cylinder'].includes(part.kind);
 
   if (!primitive || modifiedGeometry(part) || part.role !== 'solid')

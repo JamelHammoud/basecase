@@ -1,3 +1,4 @@
+import { physicalParts } from '../appearance/physical';
 import { loadDatasetContent, saveDatasetContent } from '../datasets/datasetStore/content';
 import { encodeJson, decodeJson } from '../datasets/snapshotWorker';
 import { datasetContentHash } from '../datasets/contentHash';
@@ -43,7 +44,7 @@ const defaults: BodyEvidencePorts = {
 
 export async function bodySourceKey(parts: ScenePart[], project: ProjectSettings): Promise<string> {
   const source = { ...project, bodyEvidence: undefined };
-  const bytes = await encodeJson({ parts, project: source });
+  const bytes = await encodeJson({ parts: physicalParts(parts), project: source });
 
   if (bytes.byteLength > BODY_EVIDENCE_BYTES) throw new Error('Body analysis source exceeds its storage limit.');
 

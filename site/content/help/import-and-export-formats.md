@@ -56,6 +56,8 @@ A mesh imported as a part that comes in smaller than 1 mm across is read as mete
 
 Ordinary mesh imports have no captured-world byte or triangle limit. Texture maps and animation clips are omitted from model parts.
 
+[Part textures](/help/apply-finishes-and-textures) accept PNG, JPEG and WebP images up to 8 MB and 4 million pixels each. A scene can hold up to 32 MB and 8 million pixels of part textures. These limits are separate from captured-world limits.
+
 - A STEP or IGES file can be up to 200 MB and 1,000 bodies.
 - A robot zip can be up to 200 MB to download, and 600 MB once unzipped.
 - Each downloaded robot description or companion file can be up to 200 MB.
@@ -78,7 +80,7 @@ Every export is in the **Export** menu at the top right of the window.
 | **Drawings** | `<scene>-drawings.zip` | PDF, editable SVG and a source manifest for [dimensioned drawings](/help/export-dimensioned-drawings) |
 | **STEP**, in the desktop app only | `<scene>.step` | Every visible solid part as its own body, in millimeters, Z up, as [Export a STEP file](/help/export-a-step-file) explains |
 | **Schematic** | `<scene>-schematic.zip` | An editable KiCad project with requirements and source identities. Supported routed boards can include checked [fabrication files](/help/export-board-fabrication-files) |
-| **Scene** | `<scene>.basecase` | The scene, including its imported worlds, shared parameters and dimension bindings, to open in Basecase |
+| **Scene** | `<scene>.basecase` | The scene, including part finishes and local textures, imported worlds, shared parameters and dimension bindings, to open in Basecase |
 | **Kit** | `<scene>-kit.zip` | Plates, mechanical drawings, sheet DXF files, illustrated guide, packing, provenance and joint identities, listed in [Robot kit contents](/help/robot-kit-contents) |
 | **Robot Package** | `<scene>-robot.zip` | MJCF, URDF, meshes, joint map, policies and ROS 2 package files, listed in [Robot package contents](/help/robot-package-contents) |
 | **Copy as Markdown** | The clipboard | The scene as a Markdown spec: its goal and every part with its size |

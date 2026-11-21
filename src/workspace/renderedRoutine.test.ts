@@ -13,7 +13,7 @@ const rendering = vi.hoisted(() => ({
 }));
 
 vi.mock('../routines/renderedVisionClient', () => ({ runRenderedVisionScenario: rendering.run }));
-vi.mock('../three/componentMeshes', () => ({ sourcedMeshFiles: rendering.meshes }));
+vi.mock('../three/componentMeshes', () => ({ renderMeshFiles: rendering.meshes }));
 vi.mock('./routineVision', () => ({ prepareRoutineVision: rendering.prepare }));
 
 beforeEach(() => {

@@ -19,6 +19,9 @@ describe('world restore worker operation', () => {
       serializeWorldAssets({ [hash]: asset }),
     );
     const restored = result[0];
+
+    if (!('world' in restored.asset)) throw new Error('Expected a world asset');
+
     const { mesh, splat } = restored.asset.world;
     const buffers = [
       mesh.positions.buffer,

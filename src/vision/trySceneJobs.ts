@@ -7,7 +7,7 @@ import type { StoredTry } from '../cases/tryFile';
 import { registerWorldAsset, type WorldAssets } from '../cases/worldAssets';
 import { caseWorldView } from '../cases/worldView';
 import { calibratedModel } from '../sim/calibratedModel';
-import type { MeshFiles } from '../three/componentMeshes';
+import type { RenderMeshFiles } from '../three/componentMeshes';
 import { headlessParts } from '../three/headlessParts';
 import { DEFAULT_PROJECT, type SavedSceneRecord } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
@@ -19,7 +19,7 @@ export interface TrySceneInput {
   scene: Pick<SavedSceneRecord, 'parts' | 'project'>;
   stored: StoredTry;
   partners: SlotRobot[];
-  meshes: MeshFiles;
+  meshes: RenderMeshFiles;
   assets: WorldAssets;
 }
 

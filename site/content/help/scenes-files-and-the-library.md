@@ -38,6 +38,8 @@ A scene also keeps its [electronics board](/help/fit-an-electronics-board), incl
 
 Each imported world is stored once per scene, including its mesh, colliders, textures and optional splat. Cases in that scene share the same world data.
 
+[Part finishes and textures](/help/apply-finishes-and-textures) save with the scene too. Parts that use the same image share one stored copy. The images travel in the scene's `.basecase` file.
+
 Basecase saves your scene 1.2 seconds after your last change, and again when you switch tabs, close a scene or quit. If you open a blank scene and close it without making a change, Basecase discards it.
 
 You can undo your last 50 steps in each scene.
@@ -51,6 +53,8 @@ Each scene is a JSON file in `library/scenes`. On a Mac, that folder is inside `
 ## Scenes and Library models
 
 The Library holds models, tries and datasets. Your scenes aren't in it. A model is a part or group of parts you've saved to drop into any scene, such as a servo bracket, a wheel hub or a gripper.
+
+Library models don't embed local texture images. To move textured parts to another computer, share the scene file.
 
 Build a whole robot in a scene, and keep the pieces you reuse from robot to robot in the Library. To learn how, see [Save a model to the Library](/help/save-a-model-to-the-library).
 

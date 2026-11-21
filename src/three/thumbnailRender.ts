@@ -1,7 +1,9 @@
+import { prepareAppearance } from '../appearance/textures';
+import { prepareParts } from './partMesh/prepare';
 import * as THREE from 'three';
 import type { ScenePart } from '../types/robotics';
 import { buildPartGroup, releasePartGroup } from './buildPartMesh';
-import { loadComponentMesh, provideMeshFiles, type MeshFiles } from './componentMeshes';
+import { loadComponentMesh, provideMeshFiles, type RenderMeshFiles } from './componentMeshes';
 import { canvasBlob, drawThumbnail, type ThumbnailCanvas } from './thumbnailStage';
 
 export interface ThumbnailJob {
@@ -10,7 +12,7 @@ export interface ThumbnailJob {
   mime?: string;
   quality?: number;
   cropWidth?: number;
-  meshes?: MeshFiles;
+  meshes?: RenderMeshFiles;
 }
 
 interface Box {
@@ -26,6 +28,19 @@ export async function loadPartMeshes(parts: ScenePart[]): Promise<void> {
   const ids = new Set(parts.flatMap((p) => (p.componentId ? [p.componentId] : [])));
 
   await Promise.allSettled([...ids].map((id) => loadComponentMesh(id)));
+  await prepareParts(parts);
+}
+
+export async function withPreparedParts<T>(parts: ScenePart[], run: () => T | Promise<T>): Promise<T> {
+  const lease = prepareAppearance(parts);
+
+  try {
+    await Promise.all([lease.ready, loadPartMeshes(parts)]);
+
+    return await run();
+  } finally {
+    lease.release();
+  }
 }
 
 function opaqueBounds(data: Uint8ClampedArray, width: number, height: number): Box | null {
@@ -99,8 +114,11 @@ export async function renderThumbnailJob(job: ThumbnailJob): Promise<Blob | null
   if (!job.parts.length) return null;
 
   provideMeshFiles(job.meshes);
-  await loadPartMeshes(job.parts);
 
+  return withPreparedParts(job.parts, () => drawPreparedThumbnail(job));
+}
+
+async function drawPreparedThumbnail(job: ThumbnailJob): Promise<Blob | null> {
   const groups = job.parts.map((part) => buildPartGroup(part, false, { shareGeometry: true }));
   const root = new THREE.Group().add(...groups);
 

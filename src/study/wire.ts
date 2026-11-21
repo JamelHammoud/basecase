@@ -7,7 +7,7 @@ type WireValue = string | number | boolean | null | undefined | { ref: string };
 type WireNode =
   | { kind: 'object'; entries: Array<[string, WireValue]> }
   | { kind: 'array'; values: WireValue[] }
-  | { kind: 'binary'; value: ArrayBufferView | ArrayBuffer }
+  | { kind: 'binary'; value: ArrayBufferView | ArrayBuffer | Blob }
   | { kind: 'numbers'; value: Float64Array };
 
 export interface StudyPacket {
@@ -57,7 +57,8 @@ class StudyWireCodec {
   }
 
   private node(value: object, assets: StudyPacket['assets']): WireNode {
-    if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer) return { kind: 'binary', value };
+    if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer || value instanceof Blob)
+      return { kind: 'binary', value };
 
     if (Array.isArray(value) && value.length > 32 && value.every((item) => typeof item === 'number'))
       return { kind: 'numbers', value: Float64Array.from(value) };

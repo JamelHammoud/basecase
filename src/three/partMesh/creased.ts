@@ -6,6 +6,7 @@ import { objectKey } from './sharedGeometry';
 export interface MeshSource {
   positions: number[];
   indices: number[];
+  uvs?: number[];
   baseSize: [number, number, number];
   colors?: number[];
 }
@@ -21,7 +22,12 @@ export const creaseKey = (src: MeshSource, creaseDeg: number, scale: number[]) =
   `${objectKey(src)}|crease${creaseDeg}|${scale.join(',')}`;
 
 export function creasedGeometry(
-  src: { positions: ArrayLike<number>; indices: ArrayLike<number>; colors?: ArrayLike<number> },
+  src: {
+    positions: ArrayLike<number>;
+    indices: ArrayLike<number>;
+    colors?: ArrayLike<number>;
+    uvs?: ArrayLike<number>;
+  },
   creaseDeg: number,
   scale: number[],
 ): THREE.BufferGeometry {
@@ -34,14 +40,27 @@ export function creasedGeometry(
 
   if (src.colors) geometry.setAttribute('color', new THREE.Float32BufferAttribute(src.colors as number[], 3));
 
+  if (src.uvs) geometry.setAttribute('uv', new THREE.Float32BufferAttribute(src.uvs as number[], 2));
+
   geometry = toCreasedNormals(geometry, THREE.MathUtils.degToRad(creaseDeg));
   geometry.scale(scale[0], scale[1], scale[2]);
 
   return geometry;
 }
 
-export function geometryFromArrays(position: Float32Array, normal: Float32Array): THREE.BufferGeometry {
-  return new THREE.BufferGeometry()
+export function geometryFromArrays(
+  position: Float32Array,
+  normal: Float32Array,
+  uv?: Float32Array,
+  color?: Float32Array,
+): THREE.BufferGeometry {
+  const geometry = new THREE.BufferGeometry()
     .setAttribute('position', new THREE.BufferAttribute(position, 3))
     .setAttribute('normal', new THREE.BufferAttribute(normal, 3));
+
+  if (uv) geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+
+  if (color) geometry.setAttribute('color', new THREE.BufferAttribute(color, 3));
+
+  return geometry;
 }

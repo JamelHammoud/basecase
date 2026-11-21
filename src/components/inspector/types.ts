@@ -18,6 +18,7 @@ export const materialTag = (part: ScenePart): string =>
   MATERIALS.find((m) => m.value === part.mechanicalTag)?.value ?? PRINTED_TAG;
 
 export interface InspectorProps {
+  appearanceBaselineParts?: ScenePart[];
   parameters?: import('../../workspace/useDesignParameters').DesignParameters;
   board?: import('../../wiring/boardTypes').ElectronicsBoard;
   onUpdateBoard?: (board: import('../../wiring/boardTypes').ElectronicsBoard) => void;
@@ -29,7 +30,7 @@ export interface InspectorProps {
   globalGoal: string;
   onChangeGoal: (goal: string, live?: Phase) => void;
   snapStepMm: number;
-  onUpdate: (patch: Partial<ScenePart>, live?: Phase) => void;
+  onUpdate: (patch: Partial<ScenePart> | ((part: ScenePart) => Partial<ScenePart>), live?: Phase) => void;
   measurePart: (id: string) => Promise<MeshMeasure | undefined>;
   onDuplicate: () => void;
   onMirror: (view: PlaneView) => void;
@@ -43,7 +44,7 @@ export interface InspectorProps {
   onOpenAnnotation: (id: string) => void;
   onAddComment: () => void;
   selectedParts: ScenePart[];
-  onUpdateMany: (patch: Partial<ScenePart>) => void;
+  onUpdateMany: (patch: Partial<ScenePart> | ((part: ScenePart) => Partial<ScenePart>), live?: Phase) => void;
   onBoolean: (op: 'subtract' | 'union' | 'intersect') => void;
   onGroup: () => void;
   onUngroup: () => void;

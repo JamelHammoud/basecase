@@ -1,5 +1,5 @@
 import { workerClient } from '../utils/workerRpc';
-import { sourcedMeshFiles } from './componentMeshes';
+import { renderMeshFiles } from './componentMeshes';
 import { packParts } from './packedMesh';
 import { renderThumbnailJob, type ThumbnailJob } from './thumbnailRender';
 
@@ -32,7 +32,7 @@ async function renderBlob(job: ThumbnailJob): Promise<Blob | null> {
     return await client.call('render', {
       ...job,
       parts: packParts(job.parts),
-      meshes: await sourcedMeshFiles(job.parts),
+      meshes: await renderMeshFiles(job.parts),
     });
   } catch {
     workerFailed = true;

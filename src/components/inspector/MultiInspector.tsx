@@ -1,3 +1,5 @@
+import { FinishControls } from './FinishControls';
+import { appearanceOf, editAppearance } from '../../appearance/model';
 import React from 'react';
 import type { ScenePart } from '../../types/robotics';
 import { AlignBar, StripButton, StripGroup } from '../AlignBar';
@@ -175,10 +177,16 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
   </>
 );
 
-const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoolean, onUpdateMany }) => {
+const MultiAppearance: React.FC<InspectorProps> = ({
+  selectedParts,
+  parts,
+  appearanceBaselineParts,
+  onBoolean,
+  onUpdateMany,
+}) => {
   const base = selectedParts[0];
-  const colors = new Set(selectedParts.map((p) => p.color.toLowerCase()));
-  const allSolid = selectedParts.every((p) => p.role === 'solid' && !sheetOf(p));
+  const colors = new Set(selectedParts.map((p) => appearanceOf(p).baseColor.toLowerCase()));
+  const allSolid = selectedParts.every((p) => p.role === 'solid' && !sheetOf(p) && !p.componentId);
   const materials = new Set(selectedParts.map(materialTag));
 
   return (
@@ -206,11 +214,27 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
 
       <Section title="Appearance">
         <ColorField
-          value={base.color}
+          value={appearanceOf(base).baseColor}
           mixed={colors.size > 1}
           suggestions={parts.map((p) => p.color)}
-          onChange={(color) => onUpdateMany({ color })}
+          onChange={(color, live) =>
+            onUpdateMany(
+              (part) =>
+                part.appearance || part.componentId
+                  ? { appearance: editAppearance(part, { baseColor: color }) }
+                  : { color },
+              live,
+            )
+          }
         />
+        {selectedParts.every((part) => part.role === 'solid') && (
+          <FinishControls
+            parts={selectedParts}
+            sceneParts={parts}
+            baselineParts={appearanceBaselineParts}
+            onChange={onUpdateMany}
+          />
+        )}
         {allSolid && (
           <Select
             aria-label="Material"

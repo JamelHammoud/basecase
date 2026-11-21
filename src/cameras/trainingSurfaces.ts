@@ -1,3 +1,5 @@
+import { planarMaterial } from '../appearance/render';
+import type { Appearance } from '../appearance/model';
 import * as THREE from 'three';
 
 type SurfaceMaterial = THREE.MeshStandardMaterial | THREE.MeshBasicMaterial;
@@ -10,6 +12,10 @@ interface Surface {
 
 function surface(original: SurfaceMaterial): Surface {
   const material = original.clone();
+
+  if (material instanceof THREE.MeshStandardMaterial && original.userData.appearance)
+    planarMaterial(material, original.userData.appearance as Appearance);
+
   const pixels = new Uint8Array(8 * 8 * 4);
   const map = new THREE.DataTexture(pixels, 8, 8);
 

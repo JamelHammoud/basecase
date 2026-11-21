@@ -1,20 +1,21 @@
+import { serializeTextureAsset } from '../appearance/textureAsset';
 import { refuse } from './validate';
 import { serializeWorldAsset } from './worldAssetCodec';
 import { MAX_WORLD_ASSET_BYTES, MAX_WORLD_DATA_BYTES } from './worldAssetReader';
-import type { WorldAsset } from './worldAssets';
+import type { SceneAsset, WorldAsset } from './worldAssets';
 
-const json = new WeakMap<WorldAsset, string>();
+const json = new WeakMap<SceneAsset, string>();
 
 export const isWorldAssetHash = (hash: string) => /^[a-f0-9]{64}$/.test(hash);
 
-export const cacheWorldAssetJson = (asset: WorldAsset, value: string) => json.set(asset, value);
+export const cacheWorldAssetJson = (asset: SceneAsset, value: string) => json.set(asset, value);
 
-export function worldAssetJson(asset: WorldAsset): string {
+export function worldAssetJson(asset: SceneAsset): string {
   const known = json.get(asset);
 
   if (known) return known;
 
-  const result = JSON.stringify(serializeWorldAsset(asset));
+  const result = JSON.stringify('texture' in asset ? serializeTextureAsset(asset) : serializeWorldAsset(asset));
 
   json.set(asset, result);
 

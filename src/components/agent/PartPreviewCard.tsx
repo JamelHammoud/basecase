@@ -1,6 +1,6 @@
 import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { mountPartPreview, nextPreviewOrder } from '../../three/partPreview';
-import { loadPartMeshes } from '../../three/thumbnailRender';
+import { withPreparedParts } from '../../three/thumbnailRender';
 import type { ScenePart } from '../../types/robotics';
 import { overallSize } from '../layers/layerRows';
 import { sizeLabel } from '../../utils/size';
@@ -36,14 +36,12 @@ function usePreviewCanvas(shown: ScenePart[], panScroll: boolean) {
     let unmount: (() => void) | undefined;
     let cancelled = false;
 
-    loadPartMeshes(shown)
-      .then(() => {
-        if (cancelled || !ref.current || !shown.length) return;
+    withPreparedParts(shown, () => {
+      if (cancelled || !ref.current || !shown.length) return;
 
-        unmount = mountPartPreview(ref.current, shown, { panScroll: isPanScroll, order });
-        setReady(true);
-      })
-      .catch(() => {});
+      unmount = mountPartPreview(ref.current, shown, { panScroll: isPanScroll, order });
+      setReady(true);
+    }).catch(() => {});
 
     return () => {
       cancelled = true;

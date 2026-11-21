@@ -1,3 +1,4 @@
+import { finishAppearance } from '../../appearance/model';
 import { expect, it } from 'vitest';
 import { DEFAULT_PROJECT } from '../../types/robotics';
 import { decodeSceneFile, encodeSceneFile, sharedScene } from '../../utils/sceneFile';
@@ -37,4 +38,24 @@ it('undoes and redoes per-unit placement without editing the authored Case and p
 
   expect(opened.project!.workbenchPlacements).toEqual([record]);
   expect(opened.project!.cases).toEqual(project.cases);
+});
+
+it('retains physical placement identity when a visual finish changes', () => {
+  const arm = fixtureRobots().find((robot) => robot.id === 'arm-6dof')!;
+  const made = buildCase({ goal: 'drawer', world: 'floor' }, builderRobot(buildRig(arm.joints, arm.parts), arm.parts));
+
+  if (!made.ok) throw new Error(made.problem);
+
+  const input = {
+    unit: 'bench-a',
+    kase: made.kase,
+    robot: caseRobot(arm),
+    pose: { position: [0, 0, 0] as [number, number, number], yawDeg: 0 },
+  };
+  const painted = {
+    ...input.robot,
+    parts: arm.parts.map((part) => ({ ...part, appearance: finishAppearance('paint', '#ff0000') })),
+  };
+
+  expect(placementIdentity({ ...input, robot: painted })).toEqual(placementIdentity(input));
 });

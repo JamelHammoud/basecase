@@ -163,3 +163,5 @@ The view edits the Routine itself; the graph stays the truth and a hand edit is 
 - **Skills (§8i):** pass Motor Kit contracts as `skills` and set `modelHash` to the compiled-physics hash; proofs come from `SkillContract.transitions`. `needs-training` errors are the node's Train button. `fixtureSkills.ts` stands in until then.
 - **Robot daemon (§8k):** link the crate natively: feed `FactBoard`, call `tick` at 20 Hz, act on `run` events by token, read `IntentSlot` from the control thread through `ControlReader`.
 - **Sentence-to-flow:** the agent tool emits a `Routine` and calls `compileRoutine`; the graph stays the truth.
+
+Rendered scenarios use the shared `renderMeshFiles` transport for robot finishes. It carries local texture Blob handles alongside component geometry to the existing camera worker. Source appearance and pixel evidence therefore follow the same material path as live camera captures, without adding a Routine material format. [Camera appearance contract](cameras.md#editable-robot-appearance) and [verification evidence](../notes/performance-viewport.md#editable-appearance).

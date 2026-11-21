@@ -1,3 +1,6 @@
+import { textureHashes } from '../appearance/model';
+import { getTextureAsset } from '../cases/worldAssets';
+import { provideTextureBlob } from '../appearance/textures';
 import * as THREE from 'three';
 import { useSyncExternalStore } from 'react';
 import { loadSourced } from '../data/loadSourced';
@@ -46,11 +49,24 @@ async function sourcedBytes(id: string): Promise<ArrayBuffer> {
 }
 
 export type MeshFiles = Record<string, ArrayBuffer>;
+export type RenderMeshFiles = Record<string, ArrayBuffer | Blob>;
 
 const provided = new Map<string, ArrayBuffer>();
 
-export function provideMeshFiles(files: MeshFiles = {}) {
+function provideTextureFile(hash: string, bytes: ArrayBuffer | Blob): void {
+  if (bytes instanceof Blob) provideTextureBlob(hash, bytes);
+}
+
+export function provideMeshFiles(files: RenderMeshFiles = {}) {
   for (const [id, bytes] of Object.entries(files)) {
+    if (id.startsWith('texture:')) {
+      provideTextureFile(id.slice(8), bytes);
+
+      continue;
+    }
+
+    if (!(bytes instanceof ArrayBuffer)) continue;
+
     provided.set(id, bytes);
     entries.delete(id);
     pending.delete(id);
@@ -64,6 +80,22 @@ export async function sourcedMeshFiles(parts: Pick<ScenePart, 'componentId'>[]):
   const files = await Promise.all([...ids].map(async (id) => [id, await platformBridge.sourcedMesh(id)] as const));
 
   return Object.fromEntries(files.filter((file): file is readonly [string, ArrayBuffer] => !!file[1]));
+}
+
+export function textureMeshFiles(parts: Pick<ScenePart, 'appearance' | 'boolean' | 'customNodes'>[]): RenderMeshFiles {
+  return Object.fromEntries(
+    textureHashes(parts).flatMap((hash) => {
+      const asset = getTextureAsset(hash);
+
+      return asset ? [[`texture:${hash}`, asset.encoded] as const] : [];
+    }),
+  );
+}
+
+export async function renderMeshFiles(
+  parts: Pick<ScenePart, 'componentId' | 'appearance' | 'boolean' | 'customNodes'>[],
+): Promise<RenderMeshFiles> {
+  return { ...(await sourcedMeshFiles(parts)), ...textureMeshFiles(parts) };
 }
 
 export function forgetComponentMesh(id: string) {
@@ -97,10 +129,18 @@ const shared = (geometry: THREE.BufferGeometry) => {
   return geometry;
 };
 
+function componentGeometry(position: Float32Array, normal: Float32Array, uv?: Float32Array): THREE.BufferGeometry {
+  const geometry = geometryFromArrays(position, normal);
+
+  if (uv) geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+
+  return geometry;
+}
+
 function componentFromArrays(arrays: ComponentArrays): LoadedComponent {
   return {
-    pieces: arrays.pieces.map(({ position, normal, color, metalness, roughness }) => ({
-      geometry: shared(geometryFromArrays(position, normal)),
+    pieces: arrays.pieces.map(({ position, normal, uv, color, metalness, roughness }) => ({
+      geometry: shared(componentGeometry(position, normal, uv)),
       color,
       metalness,
       roughness,
@@ -153,7 +193,7 @@ export function getComponentMesh(id: string): LoadedComponent | null {
 }
 
 export async function componentMeshesReady(ids: Iterable<string>): Promise<string[]> {
-  const unique = [...new Set(ids)];
+  const unique = [...new Set(ids)].filter((id) => !id.startsWith('texture:'));
   const loads = await Promise.allSettled(unique.map((id) => loadComponentMesh(id)));
 
   return unique.filter((_, i) => loads[i].status === 'rejected');

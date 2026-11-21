@@ -8,7 +8,7 @@ import type { StoredTry } from '../cases/tryFile';
 import { sceneWorldAssets } from '../cases/worldAssets';
 import { caseWorldView } from '../cases/worldView';
 import type { Simulation } from '../sim/useSimulation';
-import { sourcedMeshFiles } from '../three/componentMeshes';
+import { renderMeshFiles } from '../three/componentMeshes';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { buildRig, type Rig } from '../utils/kinematics';
 import { loadSceneRecord } from '../utils/sceneRecords';
@@ -47,7 +47,7 @@ async function currentScene(stored: StoredTry, current: FrameLabelSceneContext):
     model,
     rig,
     views: cameraViews(parts, world, current.project.cameras),
-    meshes: await sourcedMeshFiles([...parts, ...world]),
+    meshes: await renderMeshFiles([...parts, ...world]),
     ...(staged ? { kase: staged.kase, imported: caseWorldView(staged.kase) } : {}),
   };
 }
@@ -64,7 +64,7 @@ export async function loadFrameLabelScene(stored: StoredTry, current: FrameLabel
 
   const partners = current.partners();
   const world = scene.project?.cases?.flatMap((kase) => caseWorldItems(kase)) ?? [];
-  const meshes = await sourcedMeshFiles([...scene.parts, ...world, ...partners.flatMap((robot) => robot.parts)]);
+  const meshes = await renderMeshFiles([...scene.parts, ...world, ...partners.flatMap((robot) => robot.parts)]);
   const rebuilt = await buildTryScene({ scene, stored, partners, meshes, assets: sceneWorldAssets(scene.project) });
 
   if (!rebuilt.model || (await sha256(rebuilt.model.xml)) !== stored.robot.modelHash)

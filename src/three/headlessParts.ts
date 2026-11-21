@@ -5,7 +5,7 @@ import type { RobotJoint, ScenePart } from '../types/robotics';
 import { fastenersIn, measuresIn } from './analysis/analysisPool';
 import { snapshotShapes } from './analysis/sceneShapes';
 import { buildPartGroup } from './buildPartMesh';
-import { componentMeshesReady, provideMeshFiles, type MeshFiles } from './componentMeshes';
+import { componentMeshesReady, provideMeshFiles, type RenderMeshFiles } from './componentMeshes';
 import { localTriangles, type MeshMeasure } from './meshMeasure';
 import { prepareParts } from './partMesh/prepare';
 
@@ -34,7 +34,7 @@ async function clampedJoints(joints: RobotJoint[], parts: ScenePart[], objects: 
 export async function headlessParts(
   parts: ScenePart[],
   joints: RobotJoint[],
-  meshes: MeshFiles,
+  meshes: RenderMeshFiles,
 ): Promise<HeadlessParts> {
   provideMeshFiles(meshes);
   await componentMeshesReady(Object.keys(meshes));

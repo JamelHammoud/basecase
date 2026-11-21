@@ -60,6 +60,23 @@ function poseOf(matrix: Matrix4) {
   };
 }
 
+export function boardHostPlacementChanged(
+  before: ScenePart[],
+  after: ScenePart[],
+  board: ElectronicsBoard | undefined,
+): boolean {
+  const original = before.find((part) => part.id === board?.partId);
+  const next = after.find((part) => part.id === board?.partId);
+
+  if (!original || !next) return original !== next;
+
+  return (
+    original.dimensions.height !== next.dimensions.height ||
+    original.position.some((value, index) => value !== next.position[index]) ||
+    original.rotation.some((value, index) => value !== next.rotation[index])
+  );
+}
+
 export function mountedBoardParts(parts: ScenePart[], board: ElectronicsBoard | undefined) {
   const host = parts.find((part) => part.id === board?.partId);
 

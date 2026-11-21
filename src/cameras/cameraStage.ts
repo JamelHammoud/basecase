@@ -1,6 +1,6 @@
 import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import type { SimModel } from '../sim/mjcfTypes';
-import type { MeshFiles } from '../three/componentMeshes';
+import type { RenderMeshFiles } from '../three/componentMeshes';
 import type { ScenePart } from '../types/robotics';
 import { LiveStage } from './liveStage';
 import type { ShotVisionResult } from './shotVision';
@@ -12,7 +12,7 @@ export { LARGE_SIZE, TILE_SIZE } from './liveStage';
 export interface CameraStageJob {
   parts: ScenePart[];
   world: ScenePart[];
-  meshes?: MeshFiles;
+  meshes?: RenderMeshFiles;
   imported?: ImportedWorldView | null;
   model: SimModel | null;
   views: CameraView[];

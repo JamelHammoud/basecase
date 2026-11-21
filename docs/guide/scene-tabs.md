@@ -112,6 +112,18 @@ The history transport is capped at 64 MiB, 1,000 versions, 100,000 content block
 
 Ordinary scene settings retain the board’s host identity, local constraints, placements and mounting-hardware references. Document history tracks the board with its parts, including the screws and standoffs created with it. The existing whole-project version commit remains available beside the board commit after the scene-history integration. Portable decoding refuses malformed board records before Inspector controls read them. `wiring/boardPackage.test.ts`, `workspace/boardHistory.test.ts` and `wiring/boardValidation.test.ts` cover deterministic round trips, undo and redo, and damaged imports. [Board coverage](build.md#board-placement-records) and [evidence](../notes/testing-build.md#board-placement-records).
 
+### Appearance assets
+
+The existing hash-keyed `worldAssets` table accepts a texture variant alongside imported worlds. A texture record contains local encoded bytes and its verified MIME type. Its key is the SHA-256 of the encoded bytes. Parts contain only appearance values, texture hashes and mapping declarations. A repeated image is serialized once even when several parts or texture slots reference it. Study baselines also retain referenced texture content.
+
+`sceneJson` reuses cached immutable asset JSON. Portable `sharedScene` includes current referenced textures alongside existing imported-world content. `restoreWorldAssets` validates and registers both variants in its worker, while its returned world table remains compatible with world-only consumers. Ordinary scene loading and portable decoding validate appearance records before rendering. Missing texture content leaves the finish's scalar values and geometry intact, without fetching a URL.
+
+The appearance integration tests cover ordinary serialization, gzip scene-file round trips, shared hashes and undo/redo. The browser declaration saves Inspector edits to IndexedDB and reloads the scene. Portable export and reopening remain integration coverage, without a dedicated browser export assertion. [Inspector](inspector-and-selection.md#editable-visual-finishes) owns the editing contract, and [Viewport evidence](../notes/performance-viewport.md#editable-appearance) records current verification limits.
+
+The session asset registry bounds retained encoded texture content to 256 MiB across scenes and history operations. A restore checks the combined additions before registration, so capacity refusal cannot publish a partial asset table. Reopening Basecase releases unused session content while ordinary scene files retain their referenced assets.
+
+Appearance asset collection also visits selected-object geometry saved inside current Cases, Study baseline Cases and assigned Cases. Validation checks their appearance declarations before rendering. Portable export retains these images even after the original scene part is removed. `appearance/assets.test.ts` covers snapshot-only round trips and rejects a shader-axis injection in captured geometry.
+
 ### Portable scene size limits
 
 Portable scene JSON is capped at 128 MiB of decoded UTF-8, for gzip and plain files alike. `utils/readCapped.ts` counts streamed bytes before retaining each chunk, cancels at the first excess chunk and releases its reader. Gzip output reaches that reader before JSON parsing, so compressed file size cannot bypass the budget. Malformed gzip keeps the ordinary scene-format error. Oversized input reports the size limit and asks the sender to reduce meshes or images before exporting again.

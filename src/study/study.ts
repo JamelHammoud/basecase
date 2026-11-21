@@ -1,3 +1,4 @@
+import { appearanceParts } from '../appearance/model';
 import { caseRow } from '../readiness/caseChecks';
 import { supplyVolts } from '../cases/exploreDesigns';
 import { robotTotals } from '../cases/caseCompare';
@@ -20,10 +21,16 @@ export { studyScene } from './scene';
 export { defaultStudyKnobs } from './defaults';
 export type * from './types';
 
+const renderedFingerprints = new WeakMap<ScenePart[], WeakMap<ProjectSettings, string>>();
 const fingerprints = new WeakMap<ScenePart[], WeakMap<ProjectSettings, string>>();
 
-export function studyFingerprint(parts: ScenePart[], project: ProjectSettings): string {
-  const byProject = fingerprints.get(parts) ?? new WeakMap<ProjectSettings, string>();
+export function studyFingerprint(
+  parts: ScenePart[],
+  project: ProjectSettings,
+  rendered = !!project.study?.visibility,
+): string {
+  const cache = rendered ? renderedFingerprints : fingerprints;
+  const byProject = cache.get(parts) ?? new WeakMap<ProjectSettings, string>();
   const kept = byProject.get(project);
 
   if (kept) return kept;
@@ -34,11 +41,20 @@ export function studyFingerprint(parts: ScenePart[], project: ProjectSettings): 
 
   const key = readinessFingerprint(parts, {
     project: settings,
-    transforms: parts.map((part) => [part.id, part.position, part.rotation, part.cameraLens, part.mates, part.frame]),
+    appearances: rendered ? appearanceParts(parts).map((part) => part.appearance) : undefined,
+    transforms: parts.map((part) => [
+      part.id,
+      part.position,
+      part.rotation,
+      part.cameraLens,
+      part.mates,
+      part.frame,
+      ...(rendered ? [part.color, part.appearance] : []),
+    ]),
   });
 
   byProject.set(project, key);
-  fingerprints.set(parts, byProject);
+  cache.set(parts, byProject);
 
   return key;
 }

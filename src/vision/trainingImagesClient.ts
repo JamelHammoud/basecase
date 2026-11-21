@@ -1,7 +1,7 @@
 import { caseWorldView } from '../cases/worldView';
 import { newDataset, type Dataset } from '../datasets/datasetFile';
 import { loadDatasets, saveDataset } from '../datasets/datasetStore';
-import { sourcedMeshFiles } from '../three/componentMeshes';
+import { renderMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import { workerClient } from '../utils/workerRpc';
 import { frameSetManifestHash, type TrainingFrame } from './frameSet';
@@ -103,7 +103,7 @@ export async function makeTrainingImages(
       parts: packParts(job.parts),
       rig: job.rig && { ...job.rig, parts: [] },
       world: job.world && packParts(job.world),
-      meshes: await sourcedMeshFiles([...job.parts, ...(job.world ?? [])]),
+      meshes: await renderMeshFiles([...job.parts, ...(job.world ?? [])]),
     });
     const frames: FrameSetManifest['frames'] = [];
     const classCounts: Record<string, number> = Object.create(null);

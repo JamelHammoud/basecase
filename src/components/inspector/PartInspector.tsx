@@ -89,7 +89,15 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
         </>
       )}
 
-      {styled && <AppearanceSection part={part} onUpdate={onUpdate} parts={props.parts} isSheet={!!sheetOf(part)} />}
+      {!isImage && (
+        <AppearanceSection
+          part={part}
+          onUpdate={onUpdate}
+          parts={props.parts}
+          isSheet={!!sheetOf(part)}
+          baselineParts={props.appearanceBaselineParts}
+        />
+      )}
 
       <SimReadySection key={part.id} part={part} />
 

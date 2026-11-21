@@ -36,7 +36,7 @@ The ZIP contains COCO and Ultralytics YOLO packages with train, validation and t
 
 Exporting saves the image bytes, annotations and split assignments in a dataset version. Camera views from the same source run stay in one split. To export those saved images after editing the working dataset, choose the version in **Dataset version** before exporting.
 
-The Case supplies object pose variation, named points and declared color classes. The picker repeats seed 1. The same Case, camera settings and rendering environment reproduce the same image and label bytes.
+The Case supplies object pose variation, named points and declared color classes. The picker repeats seed 1. The same Case, part finishes, camera settings and rendering environment reproduce the same image and label bytes.
 
 In a [captured world](/help/import-a-world), the images show the splat, or the mesh when there is no splat. Depth uses the collider surfaces the robot collides with. The captured world has no object labels of its own.
 

@@ -759,6 +759,12 @@ The Finger mounts engineering row validates the declared two-M3 interface, match
 
 `gripperFingers/manufacturing.test.ts` sends all ten selected target assemblies through ordinary print planning, actual 3MF production, Kit reconciliation and ZIP export. It retains the physical matrix’s rotated grippers, alternate mounting dimensions and jaw travel. It checks exact finger identities and quantities and four screws, washers and nuts. [Manufacturing evidence](../notes/testing-build.md#replacement-finger-outputs).
 
+Visual finishes are independent of manufacturing materials. Appearance edits preserve BOM inputs, mass declarations, actuator specifications and engineering-only Study fingerprints. Camera-visibility Study uses a separate rendered fingerprint that includes color and appearance. `appearance/appearance.test.ts` compares the production BOM, mass and physics consumers across ten generated robot geometries. [Inspector finish contract](inspector-and-selection.md#editable-visual-finishes) and [verification evidence](../notes/performance-viewport.md#editable-appearance).
+
+Board modules follow a host edit only when its position, rotation or physical height changes. A visual finish edit therefore preserves module poses and hardware identities, including an existing placement fault. `appearance/document.test.ts` exercises two-part finishes through the production document commit, undo and redo with a board present.
+
+Readiness excludes nested appearance records as well as root finishes. Camera Study fingerprints include nested appearance declarations independently, so optical evidence still becomes out of date. The shared physical projection preserves geometry, manufacturing and declared properties.
+
 ## Resistive motor-current replay
 
 Browser resistance entry locates cables by their existing `data-replay-cable` identities. The imported fixture renames an actuator to exercise long labels, so its original display names cannot identify the rendered rows.

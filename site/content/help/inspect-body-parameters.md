@@ -29,7 +29,7 @@ You can use body analysis in the desktop app if the try includes saved model evi
 
 You can choose **Analyze Try** from [[⌘K]]. To reopen a saved analysis, choose another try in the same picker.
 
-If you edit the source, you'll see **Out of date** on saved results. You can still read the saved parameters and method.
+Edits to the physical source mark saved results **Out of date**. Visual finishes keep their physical evidence current. You can still read the saved parameters and method.
 
 ![Historical body evidence remains readable after a source edit](/help/inspect-body-parameters/historical.png)
 

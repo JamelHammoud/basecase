@@ -184,6 +184,18 @@ DSN and SES data pass the bounded S-expression reader and allowlists before Java
 
 The focused native and contract tests cover missing tools, existing copper, malformed requests, undeclared or unsupported requirements, cancelled starts, malformed sessions and independent copper-exclusion geometry. The lifecycle tests also cover active cancellation, obsolete scene and electrical replies, native failure, excessive output and sampled RSS refusal. Real routing and native fault results, plus the distinction between local macOS observations and configured Linux/Windows CI, are recorded in [Build evidence](../notes/testing-build.md#local-board-routing).
 
+### Local appearance textures
+
+Appearance texture references accept lowercase SHA-256 identifiers, never URLs or file paths. The existing scene asset restore worker verifies the digest and MIME type against embedded bytes. It bounds base64 before allocation, checks image dimensions before decoding and fully decodes supported images in the browser worker. PNG, JPEG and WebP are accepted. SVG and arbitrary text are refused. A texture is limited to 8 MiB and 4,194,304 pixels. The texture table shares limits of 32 MiB and 8,388,608 pixels per scene.
+
+Local file preparation reads, hashes, decodes and serializes outside the interaction thread. Cancelled or superseded imports close their prepared bitmap before asset registration. Missing asset hashes cause no remote request. The renderer's existing mesh-file messages carry validated texture Blob handles to camera, thumbnail and video workers, without adding an HTTP route or IPC channel. `appearance/assets.test.ts` exercises forged hashes, MIME mismatch, malformed and oversized data, remote reference refusal and cancellation. [Verification evidence](../notes/performance-viewport.md#editable-appearance).
+
+Appearance validation also covers nested custom/boolean records and captured Study baselines. Projection axes accept only XY, XZ and YZ before reaching shader construction. `utils/sceneRecords.test.ts` seeds a projection-code injection in a saved baseline and requires refusal before rendering.
+
+Decoded finish images reserve their advertised pixel count before allocation. The decoder checks actual dimensions against that count. In-flight reservations and retained images share a 75,497,472-pixel limit per rendering realm. Imports reserve the maximum accepted image size while their worker validates the file. `appearance/ownership.test.ts` exercises refusal before excess decode allocation and release after failed or cancelled preparation.
+
+Captured Case geometry uses the same appearance validation as scene parts. Mapping kind and projection axes require strings from their declared enums. Shader projection expressions come from a fixed lookup, never interpolated input. The captured-object asset test rejects malformed mapping data through the real portable scene decoder.
+
 ### SimReady catalog downloads
 
 Search and `electron/simready/assets.mjs` share the explicit dataset list and URL parser in `electron/simready/catalog.mjs`. Only HTTPS Hugging Face blob or resolve URLs at pinned commits in those datasets are accepted. Another dataset in an allowed maker namespace is refused too. Portable scene decoding validates SimReady URLs, matching visual cache keys and finite transforms before rendering. Rendering reads only the local converted visual cache. A cache miss leaves collision geometry visible and requires Download Textures in the Inspector or command palette before a package reaches the converter. Search insertion remains an explicit download action.

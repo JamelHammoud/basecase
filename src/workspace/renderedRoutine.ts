@@ -1,5 +1,5 @@
 import { cameraViews, stripParts } from '../cameras/views';
-import { sourcedMeshFiles } from '../three/componentMeshes';
+import { renderMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import { runRenderedVisionScenario } from '../routines/renderedVisionClient';
 import type { Plan } from '../routines/planTypes';
@@ -45,7 +45,7 @@ export async function runRenderedRoutine(
 
     if (!input.current()) return { started: false as const };
 
-    const meshes = await sourcedMeshFiles([...parts, ...world]);
+    const meshes = await renderMeshFiles([...parts, ...world]);
 
     if (!input.current()) return { started: false as const };
 

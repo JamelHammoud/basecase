@@ -18,7 +18,7 @@ import { inspectReport, reportHtml } from './evaluationReport.mjs';
 function saveReport(root, report) {
   const sealed = { ...report, id: identity(report) };
 
-  const files = { 'comparison.json': json(sealed), 'report.html': Buffer.from(reportHtml(sealed)) };
+  const files = { 'report.html': Buffer.from(reportHtml(sealed)), 'comparison.json': json(sealed) };
 
   if (Object.values(files).reduce((sum, bytes) => sum + bytes.length, 0) > LIMITS.reportBytes)
     throw new Error('Comparison report exceeds its limits.');

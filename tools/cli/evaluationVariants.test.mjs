@@ -138,22 +138,7 @@ it('bounds failure retention while completing every declared short trial', async
 
   fs.writeFileSync(f.baseline, bytes);
   fs.writeFileSync(f.candidate, bytes);
-  expect(
-    (
-      await invokeEvaluation(
-        'freeze',
-        f.baseline,
-        '--candidate',
-        f.candidate,
-        '--package',
-        f.package,
-        '--seeds',
-        Array.from({ length: 16 }, (_, i) => i).join(','),
-        '--conditions',
-        'fixed',
-      )
-    ).code,
-  ).toBe(0);
+  expect(await freeze(f, { seeds: Array.from({ length: 16 }, (_, i) => i).join(','), conditions: 'fixed' })).toBe(0);
 
   const run = await runEvaluation(f.package, { output: f.output }, evaluationContext);
   const report = JSON.parse(fs.readFileSync(path.join(f.output, 'comparison.json')));

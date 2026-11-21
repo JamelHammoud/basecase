@@ -54,7 +54,7 @@ A completed comparison exits 1 if a passing baseline trial fails in the candidat
 
 You can evaluate up to 16 Cases, 32 distinct seeds and 600 simulated seconds across both revisions. You can simulate each Case for up to 30 seconds and record up to eight failures within a shared 16 MiB budget.
 
-To cancel an evaluation on any platform, pass `--stop-file stop-evaluation` when running, then create that file. If you interrupt the evaluation, its output remains incomplete.
+To cancel an evaluation on any platform, pass `--stop-file stop-evaluation` when running, then create that file. If you interrupt the evaluation, open `comparison/report.html` to read its last incomplete checkpoint.
 
 To verify a copied report without running physics, use `node tools/cli/basecase.mjs evaluation inspect comparison`.
 

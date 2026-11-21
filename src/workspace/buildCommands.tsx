@@ -118,6 +118,18 @@ function supplierOfferCommands({ core }: CommandInputs): Command[] {
 }
 
 export const buildCommands = (inputs: CommandInputs): Command[] => [
+  ...(inputs.core.buildAlong?.frozen
+    ? [
+        {
+          id: 'import-build-photos',
+          group: 'Scene' as const,
+          label: 'Import Photos',
+          icon: <PackageIcon />,
+          keywords: 'build assembly photograph image',
+          run: () => void inputs.core.buildAlong.photos.importPhotos(),
+        },
+      ]
+    : []),
   ...powerReplayCommands(inputs),
   ...supplierOfferCommands(inputs),
 

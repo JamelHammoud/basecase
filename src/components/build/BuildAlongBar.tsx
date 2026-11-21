@@ -1,3 +1,4 @@
+import { BuildPhotoImport } from './BuildPhotoImport';
 import { BuildCompletion } from './BuildCompletion';
 import React from 'react';
 import {
@@ -78,6 +79,7 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
           </Button>
         )}
         <BuildCompletion buildAlong={buildAlong} />
+        <BuildPhotoImport buildAlong={buildAlong} />
 
         <CradleBarActions cradle={cradle} />
         <IslandDivider />

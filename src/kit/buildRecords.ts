@@ -5,6 +5,7 @@ import { isHash } from '../skills/hash';
 import { frozenClient } from './frozenClient';
 import type { PreparedFrozenKit, FrozenAsset } from './frozenContent';
 import { KIT_MAX_BYTES } from './limits';
+import { photoIndex, prunePhotos } from './photoRecords';
 
 export interface BuildRecord {
   id: string;
@@ -215,7 +216,7 @@ export function createBuildStore(storage: BuildStorage, limits = { maxBytes: KIT
       return { ...record, completed: next };
     });
   const remove = (id: string) =>
-    storage.update(['index', recordKey(id)], ([value, saved]) => {
+    storage.update(['index', recordKey(id), 'observations'], ([value, saved, observations]) => {
       const index = indexOf(value);
       const record = recordOf(saved);
       const records = index.records.filter((item) => item.id !== id);
@@ -226,10 +227,11 @@ export function createBuildStore(storage: BuildStorage, limits = { maxBytes: KIT
       const retained = new Set(Object.entries(kits).flatMap(([hash, dependencies]) => [hash, ...dependencies]));
       const removed = Object.keys(index.assets).filter((hash) => !retained.has(hash));
       const assets = Object.fromEntries(Object.entries(index.assets).filter(([hash]) => retained.has(hash)));
+      const photos = prunePhotos(photoIndex(observations), (photo) => photo.build !== id);
 
       return {
-        puts: { index: { records, assets, kits } },
-        deletes: [recordKey(id), ...removed.map(assetKey)],
+        puts: { index: { records, assets, kits }, ...photos.puts },
+        deletes: [recordKey(id), ...removed.map(assetKey), ...photos.deletes],
         result: undefined,
       };
     });

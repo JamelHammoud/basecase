@@ -64,3 +64,5 @@ You can access your builds on this device, within this app or browser profile. Y
 For temporary instructions without saved progress, use [Build Along](/help/build-along).
 
 [Allocate parts to robot builds](/help/allocate-parts-to-robot-builds) covers component reservations, individual printed copies and confirmed returns. Deleting a build releases none of its assigned materials.
+
+[Keep assembly photos with a robot build](/help/keep-assembly-photos) explains importing photographs beside an exact saved step. Completion reversal keeps those images.

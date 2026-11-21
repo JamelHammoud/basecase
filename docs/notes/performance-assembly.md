@@ -168,3 +168,31 @@ The same phase record separates file I/O from total wall and process CPU.
 | Completion recovery | 7.29 ms | 8.44 ms | 0.08 ms | 0.27 ms | 0.15 ms |
 
 These individual samples do not establish a latency guarantee or a cause for the earlier 43.32 ms sample. No geometry is prepared or transmitted by these ownership changes.
+
+## Frozen build photographs
+
+Preparation, bitmap decode, thumbnail encoding, SHA-256 and retained-content verification run in `kit/photo.worker.ts`. The interaction thread passes immutable Blobs and bounded observation metadata through existing strict IndexedDB transactions. It never converts full-size raster bytes or serializes images into JSON. Thumbnails use at most a 320-pixel longest edge. Only an enlarged selection creates an original-image object URL, and view cleanup revokes each URL.
+
+The storage ceiling is 256 MiB of unique original-plus-thumbnail content and 2,000 associations, separate from frozen Kit storage. Per-step metadata is bounded to 20 photographs. Duplicate imports at one destination reuse the association, and identical originals across builds share retained bytes. Completion writes still read only their original build record. Deletion scans bounded observation metadata and removes unreferenced content in the same transaction as the build record.
+
+The November 20, 2026 observation used macOS arm64, Node 26.13.0 and headless Chrome through `openApp`. The documentation harness served the development app because this checkout had no production bundle. Two builds were created through ordinary Build controls. Generated PNG data, including bounded trailing padding, exercised the exact original-byte ceiling without a camera. The largest image was 4,096 × 4,096 pixels and 20,971,520 original bytes. Its 320 × 320 JPEG thumbnail occupied 1,360 bytes.
+
+| Observation | Result |
+| --- | ---: |
+| Worker preparation through available thumbnail, including startup, decoding and hashing | 202.34 ms |
+| First durable association, including worker verification and transaction commit | 394.71 ms |
+| Preparing and attaching eighteen additional generated images | 3,312.79 ms |
+| One build at the twenty-photo step limit | 268,435,456 unique image bytes |
+| Observation index at that step and byte ceiling | 7,663 UTF-8 JSON bytes |
+| Twenty retained builds, with the stress image shared into eighteen additional builds | 268,435,456 unique image bytes |
+| Observation index for that twenty-build workload | 13,135 UTF-8 JSON bytes |
+| Refusing an addition at a 2,000-association fixture | 60.25 ms |
+| Deleting one association from that fixture | 5.56 ms |
+
+The one-build baseline already contained the small generated bracket image used by the help article. After adding the maximum-size stress image, those two associations retained 20,990,828 unique bytes and an 835-byte index. Filling its step to twenty images reached the separate 256 MiB ceiling exactly. The second ordinary-control build remained without an attachment. Eighteen additional records were created through the production group store and shared the stress image without increasing image content bytes.
+
+The metadata-limit observation created 100 builds through the production store, then seeded the cross-product of their identities, two retained guide steps and twenty already-retained images into the real IndexedDB observation index. That bounded fixture contained 2,000 distinct associations. Refusal and deletion then used the unmodified production photograph store. This measures bounded metadata processing, not the cumulative cost of importing 2,000 files. The refused operation includes image verification before transaction refusal.
+
+A Chrome main-thread CPU profile sampled 6.39 ms of self time in `buildPhotos.ts`, 9.81 ms in `keyValueAtomic.ts` and 17.92 ms in the shared worker RPC helper across the whole setup and limit workload. These are sampled self times, not complete interaction latency or longest-task bounds. The profile also includes 92.09 ms of fixture-only synchronous Kit serialization from the scratch setup. Ordinary Build creation retains its existing worker path. No production image conversion or hashing runs on the interaction thread.
+
+Twenty sequential original-image opens included real store reads, worker hash checks, browser decoding and URL revocation. They ranged from 79.20 to 239.28 ms. After explicit garbage collection before and after that sequence, Chrome reported JavaScript heap use of 83,673,748 and 83,699,404 bytes, a 25,656-byte increase. Backing storage remained 78,424,640 bytes. These readings exclude physical IndexedDB disk usage, native decoded-image caches, peak worker memory and GPU memory. They establish neither a memory leak bound nor production, Linux or Windows latency. Raw measurements, the main-thread profile and the capture log remain in `scratch/photo-measurements.json`, `scratch/photo-main-thread-profile.json` and `scratch/photo-capture.log`.

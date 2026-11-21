@@ -51,6 +51,26 @@ describe('SimReady download boundaries', () => {
     expect(fetcher.mock.calls.map(([url]) => url)).toContain(next);
   });
 
+  it.each([false, true])('refuses listing redirects before leaving the origin, paginated: %s', async (paginated) => {
+    const dir = temporaryFolder();
+    const next = 'https://huggingface.co/api/next';
+    const fetcher = vi.fn(async (url) => {
+      if (paginated && url !== next) {
+        return Response.json([], { headers: { link: `<${next}>; rel="next"` } });
+      }
+
+      return Response.redirect('https://other.example/listing');
+    });
+
+    vi.stubGlobal('fetch', fetcher);
+    await expect(downloadAsset(asset, dir, vi.fn())).rejects.toThrow('couldn’t finish');
+    expect(fetcher).toHaveBeenCalledTimes(paginated ? 2 : 1);
+
+    for (const [, options] of fetcher.mock.calls) expect(options).toEqual({ redirect: 'manual' });
+
+    expect(fs.readdirSync(dir)).toEqual([]);
+  });
+
   it.each([
     null,
     {},

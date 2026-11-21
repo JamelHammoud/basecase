@@ -48,7 +48,7 @@ async function listTree(a) {
   for (let page = 0; next && page < 50; page++) {
     if (!URL.canParse(next) || new URL(next).origin !== HF) throw refused({ status: 200 });
 
-    const res = await fetch(next);
+    const res = await fetch(next, { redirect: 'manual' });
 
     if (!res.ok) throw refused(res);
 

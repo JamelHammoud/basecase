@@ -106,11 +106,29 @@ const actuatorKinds = (xml: string) =>
     ([, k, j]) => `${k} ${j}`,
   );
 
+const models = new WeakMap<
+  SimModel,
+  { source: Pick<SimModel, 'version' | 'xml' | 'initial' | 'robots' | 'joints'>; hashes: ModelHashes }
+>();
+
+export function rememberModelHashes(model: SimModel, hashes: ModelHashes): ModelHashes {
+  const { version, xml, initial, robots, joints } = model;
+
+  models.set(model, { source: { version, xml, initial, robots, joints }, hashes: Object.freeze(hashes) });
+
+  return hashes;
+}
+
 export function modelHashes(model: SimModel): ModelHashes {
+  const cached = models.get(model);
+
+  if (cached && Object.entries(cached.source).every(([key, value]) => model[key as keyof SimModel] === value))
+    return cached.hashes;
+
   const xml = physicalXml(model.xml);
   const actuatorXml = ACTUATOR_SECTION.exec(xml)?.[0] ?? '';
 
-  return {
+  return rememberModelHashes(model, {
     topology: hashOf({
       version: model.version,
       structure: structure(xml),
@@ -128,7 +146,7 @@ export function modelHashes(model: SimModel): ModelHashes {
       xml: actuatorXml,
       joints: model.joints.map((j) => ({ id: j.id, effort: j.effort, drive: j.drive, actuator: j.actuator })),
     }),
-  };
+  });
 }
 
 export const contractHash = (contract: Contract) => hashOf(contract);

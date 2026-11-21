@@ -1,48 +1,66 @@
-import { useEffectEvent, useLayoutEffect, useRef } from 'react';
-import { findPartDeep, parentBoolean } from '../../booleans/parts';
+import { useEffectEvent, useLayoutEffect, useRef, useState } from 'react';
 import type { ScenePart } from '../../types/robotics';
+import type { LayerListRow } from './dataRows';
+import { layerRange, layerSlots, selectedRowIndex, LAYER_ROW_HEIGHT, LAYER_ROW_PITCH } from './layerWindow';
 
-const findRow = (scroller: HTMLElement, key: string) =>
-  scroller.querySelector<HTMLElement>(`[data-layer-row="${CSS.escape(key)}"]`);
+interface LayerView {
+  parts: ScenePart[];
+  rows: LayerListRow[];
+  primaryId: string | undefined;
+  editingId: string | null;
+  open: boolean;
+}
 
-const rowFor = (scroller: HTMLElement, parts: ScenePart[], id: string): HTMLElement | null => {
-  const row = findRow(scroller, `part:${id}`);
-
-  if (row) return row;
-
-  const parent = parentBoolean(parts, id);
-
-  if (parent) return rowFor(scroller, parts, parent.id);
-
-  const group = parts.find((p) => p.id === id)?.group;
-
-  return group ? findRow(scroller, `group:${group.id}`) : null;
-};
-
-const centerRow = (scroller: HTMLElement, row: HTMLElement) => {
-  const view = scroller.getBoundingClientRect();
-  const box = row.getBoundingClientRect();
-
-  if (box.top >= view.top && box.bottom <= view.bottom) return;
-
-  scroller.scrollTop += box.top - view.top - (view.height - box.height) / 2;
-};
-
-export const useRevealSelection = (parts: ScenePart[], primaryId: string | undefined, open: boolean) => {
+export const useRevealSelection = ({ parts, rows, primaryId, editingId, open }: LayerView) => {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const [view, setView] = useState({ top: 0, height: 720 });
+  const selected = selectedRowIndex(rows, parts, primaryId);
+  const present = parts.length > 0;
+  const measure = useEffectEvent(() => {
+    const scroller = scrollerRef.current;
+    const list = listRef.current;
+
+    if (!scroller || !list) return;
+
+    const top = scroller.getBoundingClientRect().top - list.getBoundingClientRect().top;
+    const next = { top, height: scroller.clientHeight };
+
+    setView((current) => (current.top === next.top && current.height === next.height ? current : next));
+  });
   const reveal = useEffectEvent(() => {
     const scroller = scrollerRef.current;
+    const list = listRef.current;
 
-    if (!scroller || !primaryId || !findPartDeep(parts, primaryId)) return;
+    if (!scroller || !list || selected < 0) return;
 
-    const row = rowFor(scroller, parts, primaryId);
+    const top = list.getBoundingClientRect().top - scroller.getBoundingClientRect().top + selected * LAYER_ROW_PITCH;
 
-    if (row) centerRow(scroller, row);
+    if (top >= 0 && top + LAYER_ROW_HEIGHT <= scroller.clientHeight) return;
+
+    scroller.scrollTop += top - (scroller.clientHeight - LAYER_ROW_HEIGHT) / 2;
+    measure();
   });
 
   useLayoutEffect(() => {
-    if (open) reveal();
-  }, [open, primaryId]);
+    const scroller = scrollerRef.current;
 
-  return scrollerRef;
+    if (!open || !scroller) return;
+
+    const observer = new ResizeObserver(measure);
+
+    observer.observe(scroller);
+    scroller.addEventListener('scroll', measure, { passive: true });
+    measure();
+
+    return () => {
+      observer.disconnect();
+      scroller.removeEventListener('scroll', measure);
+    };
+  }, [open, present]);
+  useLayoutEffect(() => {
+    if (open) reveal();
+  }, [open, primaryId, selected]);
+
+  return { scrollerRef, listRef, slots: layerSlots(rows, layerRange(rows.length, view.top, view.height), editingId) };
 };

@@ -24,6 +24,7 @@ const worker = workerClient<typeof textureHandlers>(
 );
 
 interface TextureEntry {
+  opaque: boolean;
   texture: THREE.Texture;
   image: NonNullable<ReturnType<typeof images.get>>;
   refs: number;
@@ -161,7 +162,7 @@ export function acquireTexture(
   hash: string,
   appearance: Appearance,
   color: boolean,
-): { texture: THREE.Texture; release: () => void } | null {
+): { texture: THREE.Texture; opaque: boolean; release: () => void } | null {
   const image = images.get(hash);
 
   if (!image) return null;
@@ -186,7 +187,7 @@ export function acquireTexture(
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat.set(scale, scale);
     texture.rotation = THREE.MathUtils.degToRad(mapping.rotation);
-    entry = { texture, image, refs: 0 };
+    entry = { texture, image, refs: 0, opaque: getTextureAsset(hash)?.opaque ?? false };
     textures.set(key, entry);
     image.refs++;
   }
@@ -198,6 +199,7 @@ export function acquireTexture(
 
   return {
     texture: owned.texture,
+    opaque: owned.opaque,
     release: () => {
       if (released) return;
 

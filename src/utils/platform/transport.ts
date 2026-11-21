@@ -1,4 +1,6 @@
 import type { ElectronApi } from './types';
+import { imageWorker } from '../imageEncode';
+import { imageHandlers } from '../imageOps';
 import { webRequest } from './web/webBackend';
 import { IS_WEB_DEMO } from './webDemo';
 
@@ -20,11 +22,19 @@ export async function post<T>(path: string, body: unknown, options: { json?: boo
   return res.json();
 }
 
+async function jsonBody(json: string): Promise<string | Blob> {
+  if (IS_WEB_DEMO) return json;
+
+  if (typeof window === 'undefined') return imageHandlers.jsonBody(json).result;
+
+  return imageWorker.call('jsonBody', json);
+}
+
 export async function postJson<T>(path: string, json: string): Promise<T> {
   const res = await send(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: json,
+    body: await jsonBody(json),
   });
 
   return res.json();

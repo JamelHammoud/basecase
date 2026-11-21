@@ -6,7 +6,8 @@ import { printReportsIn } from '../three/analysis/analysisPool';
 import { snapshotShapes } from '../three/analysis/sceneShapes';
 import { DEFAULT_PROJECT, type ScenePart } from '../types/robotics';
 import { shapeKey } from '../print/shapeKey';
-import { printReportOf, type PrintReport } from './printReport';
+import { type PrintReport } from './printReport';
+import { printReportOf } from './printReportPreparation';
 
 const box = (id: string, size: [number, number, number], extra: Partial<ScenePart> = {}): ScenePart => ({
   id,

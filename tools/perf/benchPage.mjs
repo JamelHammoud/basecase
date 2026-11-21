@@ -46,6 +46,8 @@ export async function serveStatic(root) {
 }
 
 function installProbes(sceneId) {
+  if (window.__workflow) return;
+
   localStorage.setItem('open-scenes', JSON.stringify({ ids: [sceneId], tabIds: ['main'], active: 0 }));
 
   class FakeSource {
@@ -95,8 +97,8 @@ async function stubBackend(page, { sceneText, responses }) {
 const GPU_ARGS = ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'];
 const CPU_ARGS = ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'];
 
-export async function openBenchPage({ url, scene, gpu, probes }) {
-  const browser = await chromium.launch({ channel: 'chrome', headless: true, args: gpu ? GPU_ARGS : CPU_ARGS });
+export async function openBenchPage({ url, scene, gpu, probes, setup, headless = true }) {
+  const browser = await chromium.launch({ channel: 'chrome', headless, args: gpu ? GPU_ARGS : CPU_ARGS });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
   const responses = new Map();
@@ -107,10 +109,12 @@ export async function openBenchPage({ url, scene, gpu, probes }) {
 
   if (probes) await page.addInitScript(probes);
 
+  const prepared = await setup?.(page);
+
   await page.goto(url);
   await page.waitForSelector('nav[aria-label="Sidebar views"]', { timeout: 60000 });
 
-  return { browser, page, errors, responses };
+  return { browser, page, errors, responses, prepared };
 }
 
 export async function waitQuiet(page, { quietMs = 4000, maxMs = 180000 } = {}) {

@@ -17,6 +17,7 @@ export function fittedSize(width: number, height: number, maxSide?: number) {
 }
 
 export const imageHandlers = {
+  jsonBody: (json: string) => reply(new Blob([json], { type: 'application/json' })),
   encode: async ({ bitmap, maxSide, type, quality, background }: EncodeJob) => {
     const { width, height } = fittedSize(bitmap.width, bitmap.height, maxSide);
     const canvas = new OffscreenCanvas(width, height);

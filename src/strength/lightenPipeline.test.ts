@@ -12,7 +12,7 @@ import { snapshotShapes } from '../three/analysis/sceneShapes';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { runEngineering, STRENGTH_CHECK } from '../utils/engineering';
 import type { EngineeringInputs, ServoOutput } from '../utils/engineeringTypes';
-import { printReportOf } from '../utils/printReport';
+import { printReportOf } from '../utils/printReportPreparation';
 import { loadManifold, solidOfMesh } from '../wrap/manifold';
 import { lightenedPart } from '../workspace/lighten';
 import { frozenInterfaces } from '../workspace/lightenInterfaces';

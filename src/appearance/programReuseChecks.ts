@@ -12,7 +12,7 @@ export async function programReuseChecks(
   textured: ScenePart,
 ) {
   const root = new THREE.Group();
-  const layer = new PartLayer(root, () => {}, null, renderer);
+  const layer = new PartLayer(root, () => queueMicrotask(() => layer.buildPending()), null, renderer);
   const original = box('program-reuse', [0, 0, 0], [40, 40, 40], 10);
   const selected = new Set([original.id]);
   const programs = () => renderer.info.programs?.map((program) => program.id) ?? [];

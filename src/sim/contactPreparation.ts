@@ -7,6 +7,7 @@ import { adoptModelParts, isSolidPart } from './mjcfEmbedded';
 import { partEdges } from '../utils/partEdges';
 import type { MjcfInput, SimModel } from './mjcfTypes';
 import { fingerCollisionPieces } from '../gripperFingers/collision';
+import { modelHashes, type ModelHashes } from '../skills/artifacts';
 
 export interface ContactHullEntry {
   hash: string;
@@ -21,6 +22,7 @@ export interface ContactPreparationJob {
 
 export interface ContactPreparationResult {
   model: SimModel;
+  hashes: ModelHashes;
   cache: ContactHullEntry[];
   metrics: { prepared: number; reused: number; hullBytes: number; sourceBytes: number; preparationMs: number };
 }
@@ -75,6 +77,9 @@ async function preparedHulls(part: ScenePart, triangles: Float32Array, hit?: Con
   ).map((hull) => hull.positions);
 }
 
+const needsContactValidation = (input: ContactPreparationJob['input'], enabled: Set<string>) =>
+  enabled.size > 0 || input.parts.some((part) => part.gripperFinger?.role === 'finger');
+
 export async function prepareContactJob(job: ContactPreparationJob): Promise<ContactPreparationResult> {
   const started = performance.now();
   const triangles = (id: string) => job.triangles[id] ?? null;
@@ -125,14 +130,16 @@ export async function prepareContactJob(job: ContactPreparationJob): Promise<Con
 
   const model = buildMjcf({ ...input, robotHulls, partTriangles: triangles, worldTriangles: triangles });
 
-  await assertContactStart(
-    model,
-    job.input.project.selfContact,
-    new Map(input.parts.map((part) => [part.id, part.name])),
-  );
+  if (needsContactValidation(input, enabled))
+    await assertContactStart(
+      model,
+      job.input.project.selfContact,
+      new Map(input.parts.map((part) => [part.id, part.name])),
+    );
 
   return {
     model,
+    hashes: modelHashes(model),
     cache: [...used.values()],
     metrics: {
       prepared,

@@ -51,6 +51,7 @@ interface Controlled {
 }
 
 export interface RunsJob extends Controlled {
+  stopFlag?: Int32Array;
   type: 'runs';
   kase: Case;
   modelHash: string;
@@ -189,7 +190,14 @@ export class CaseCheckSession {
       return { type: 'replay', film: caseFilm(result, held.parts) };
     }
 
-    const result = await runSeeds(mj, job.kase, robot, { seeds: job.seeds, stop: job.stop, ...controlOf(job) });
+    const stopFlag = job.stopFlag;
+    const cancelled = stopFlag ? () => Atomics.load(stopFlag, 0) !== 0 : undefined;
+    const result = await runSeeds(mj, job.kase, robot, {
+      seeds: job.seeds,
+      stop: job.stop,
+      cancelled,
+      ...controlOf(job),
+    });
 
     return { type: 'runs', result };
   }

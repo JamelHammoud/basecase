@@ -80,7 +80,28 @@ function solidHit(target: Placed, from: THREE.Vector3, probe: MoveProbe): number
   return held ? hit : null;
 }
 
-const samplesOf = (p: Placed) => worldPoints(gridSamples(p.solid, GRID_CELLS), p.matrix);
+interface WorldSamples {
+  source: Float32Array;
+  matrix: number[];
+  points: THREE.Vector3[];
+}
+
+const worldSamples = new WeakMap<Placed, WorldSamples>();
+
+function samplesOf(part: Placed): THREE.Vector3[] {
+  const source = gridSamples(part.solid, GRID_CELLS);
+  const matrix = part.matrix.elements;
+  const cached = worldSamples.get(part);
+
+  if (cached?.source === source && cached.matrix.every((value, index) => Object.is(value, matrix[index])))
+    return cached.points;
+
+  const points = worldPoints(source, part.matrix);
+
+  worldSamples.set(part, { source, matrix: [...matrix], points });
+
+  return points;
+}
 
 function sweptBox(p: Placed, dir: THREE.Vector3, travel: number) {
   return p.box.clone().union(p.box.clone().translate(dir.clone().multiplyScalar(travel)));

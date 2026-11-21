@@ -8,7 +8,7 @@ import { useFitVariants, type FitVariantOptions } from './useFitVariants';
 import type { FitCoupon } from '../three/analysis/fitCoupons';
 import type { Viewport3DHandle } from '../three/viewport/types';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
-import { printReportOf } from '../utils/printReport';
+import { printReportOf } from '../utils/printReportPreparation';
 import type { PlateFiles, WrittenPlates } from './usePlateWriter';
 
 interface FitTestOptions extends FitVariantOptions {

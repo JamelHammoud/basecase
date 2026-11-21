@@ -324,3 +324,25 @@ limit status for those source or XML bounds. Encoding beyond the 64 MiB payload 
 Reports and atomic writes have reserved capacity. No deadline, retry, wait or merge gate was added.
 [Coverage and failure evidence](testing-simulate.md#portable-cli-evaluation) records the generated workflows and
 interruption controls. Raw measurement and check paths are retained in the task handoff.
+
+## Automatic model preparation during agent edits
+
+The [workspace investigation](performance-workspace.md#agent-edit-production-investigation) owns the production agent-edit profile, model-preparation change, focused coverage and remaining interaction measurement gaps. It does not establish complete workflow responsiveness or a controlled speedup.
+
+
+### Preparation inside existing workers
+
+The warm-worker Case trace created 56 distinct dedicated-worker threads in the candidate, compared with ten in the baseline. These are distinct threads seen during tracing, not peak simultaneous counts. The dispatch predicate checked whether a realm could create workers, which is true inside browser workers too. Ordinary per-seed preparation therefore created child workers. Existing worker realms now run the preparation there. Renderer calls continue to dispatch off the interaction thread. The realm regression in `scenePreparation.test.ts` checks a worker-capable realm without a window, exact model parity and physical hashes. Renderer dispatch and stale-result tests explicitly supply a window and retain their worker and termination assertions. The current-main v6 pair characterizes this correction. Articulated Case completion fell from 4,160 ms to 2,671 ms, and worker CPU from 8,595.6 ms to 6,726.2 ms. Both observations completed twenty of twenty seeded runs. The full matrix and its shared-host limits are in the [workspace comparison](performance-workspace.md#current-main-opaque-texture-batching-comparison).
+
+
+### Borrowed triangles inside worker preparation
+
+The renderer catalog profile sampled 21.295 ms in contact-job preparation across the operation. That path still made a second triangle copy after the viewport returned owned arrays. Existing worker realms used the same transfer-oriented helper even after nested preparation dispatch was removed. Local preparation now borrows immutable arrays instead. Renderer dispatch continues to copy before transferring. The ownership regression test checks that source buffers remain attached and unchanged, no local `slice` occurs and the prepared model equals the pure model. This removes an allocation source, without establishing the cause of the earlier process-memory gap. The [report-worker continuation](performance-workspace.md#report-worker-continuation) includes this ownership correction. It reports combined pipeline results, without isolating its contribution.
+
+## Ordinary model preparation stays local in worker realms
+
+The first merged fe8b selection reported eight test deadlines and one electrical setup deadline. Those failures do not establish a shared cause. Tracing the changed preparation path separately found ordinary existing-worker calls entering contact-job collection and eagerly hashing the resulting model even when neither was needed. The previous headless path built the ordinary calibrated model directly.
+
+The strengthened realm test adds an unused cutout source to the production arm fixture. Before correction, preparation read that cutout’s triangles. The direct model builder does not request them. The test also retains exact complete-model and physical-hash parity and the existing no-nested-worker assertion. It failed before correction, with four other tests passing. After correction all five tests passed in 135 ms. Logs are `scratch/check-fe8b-realm-acceptance.log` and `scratch/check-fe8b-realm-current.log`.
+
+Renderer preparation still dispatches through the existing contact worker. Existing worker and headless callers use direct calibrated MJCF preparation for ordinary models, checking cancellation before and after. Contact-enabled and replacement-finger models retain contact preparation and native validation in their existing realm. No seed count, physics setting, Check deadline or restoration condition changed. The [workspace comparison](performance-workspace.md#final-merged-workflow-comparison-on-fe8b) retains the pre-correction source and final characterization separately.

@@ -74,7 +74,7 @@ describe('applyAgentOps with mates', () => {
 
     expect(summary).toContain('Moved with their mates: lid.');
     placed('lid', 'under').forEach((v, k) => expect(v).toBeCloseTo(placed('base', 'top')[k], 2));
-    expect(commits).toEqual([true, false]);
+    expect(commits).toEqual([false]);
     expect(actors.editsFor('main/agent-1', 'Left leg')?.sort()).toEqual(['base', 'lid']);
   });
 });

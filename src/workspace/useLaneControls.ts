@@ -7,6 +7,7 @@ import type { AgentLane } from './agentLanes';
 import { completedEdits, recordEdit } from './runEdits';
 import type { AgentLanes } from './useAgentLanes';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { stopAgentRequests } from './agentRequestScope';
 
 interface LaneControlOptions {
   core: WorkspaceCore;
@@ -70,6 +71,7 @@ export function useLaneControls(options: LaneControlOptions) {
   const stop = (id = lanes.currentId) => {
     core.parameters.cancel();
     flagsOf(id).stopped = true;
+    stopAgentRequests(flagsOf(id));
     platformBridge.cancelAcp(keyOf(id)).catch(() => {});
   };
 

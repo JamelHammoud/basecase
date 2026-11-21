@@ -6,11 +6,12 @@ import { fullDate } from '../utils/timeAgo';
 import { workerClient, type Reply } from '../utils/workerRpc';
 import { guideFingerprint } from './guideFingerprint';
 import { isBuilt } from './guidePlan';
-import { stepPartsOf } from './guideSteps';
+import { guideStepParts, preparedStepParts, stepPartsOf, type GuideStepSettings } from './guideSteps';
 import type { GuidePortMessage } from './guidePort';
 import type { GuidePlan } from './guideTypes';
 import type { GuideJob, GuideProgress, RenderedGuide } from './renderGuide';
 import type { PlanGuideJob } from './planGuide';
+import { itemKeyOf, rememberItemKeys } from './guideItems';
 
 export type { GuideProgress } from './renderGuide';
 
@@ -37,6 +38,7 @@ export interface GeneratedGuide {
 type RenderPayload = { job: GuideJob; port: MessagePort };
 
 type GuideHandlers = {
+  steps: (job: { parts: ScenePart[]; project: GuideStepSettings; keys: string[] }) => Reply<string[][]>;
   render: (payload: RenderPayload) => Promise<Reply<RenderedGuide | null>>;
   plan: (job: PlanGuideJob) => Promise<Reply<GuidePlan>>;
 };
@@ -46,6 +48,11 @@ const localHandlers = async (): Promise<GuideHandlers> => {
   const { planGuide } = await import('./planGuide');
 
   return {
+    steps: ({ parts, project, keys }) => {
+      rememberItemKeys(parts, keys);
+
+      return { result: guideStepParts(parts, project) };
+    },
     render: async ({ job, port }) => ({ result: await renderGuideOnPort(job, port) }),
     plan: async (job) => ({ result: await planGuide(job) }),
   };
@@ -57,6 +64,18 @@ const strictGuideClient = () =>
   workerClient<GuideHandlers>(spawnGuide, async () => {
     throw new Error('Kit export needs a worker.');
   });
+
+export function generateGuideSteps(parts: ScenePart[], project: GuideStepSettings): Promise<string[][]> {
+  return preparedStepParts(parts, project, () => {
+    const built = parts.filter(isBuilt);
+
+    return client.call('steps', {
+      parts: packParts(built),
+      keys: built.map(itemKeyOf),
+      project: { material: project.material, infillPct: project.infillPct, joints: project.joints },
+    });
+  });
+}
 
 export async function generateGuidePlan(
   input: Omit<PlanGuideJob, 'meshes'>,

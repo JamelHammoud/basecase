@@ -36,7 +36,8 @@ it('waits for Case world texture acquisition before reporting mesh or capture re
     ...box('captured-object', [0, 0, 0], [20, 20, 20], 10),
     appearance: { ...finishAppearance('paint', '#ffffff'), textures: { baseColor: hash } },
   };
-  const context = { layer: new PartLayer(new THREE.Group()), world: new PartLayer(new THREE.Group()) };
+  const world = new PartLayer(new THREE.Group(), () => queueMicrotask(() => world.buildPending()));
+  const context = { layer: new PartLayer(new THREE.Group()), world };
   const complete = vi.fn();
   const capture = vi.fn(() => {
     const mesh = context.world.get(part.id)!.children[0] as THREE.Mesh;

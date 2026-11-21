@@ -15,7 +15,7 @@ import { DEFAULT_PROJECT, type RobotJoint, type ScenePart } from '../types/robot
 import { buildBom, isPrinted } from './bom';
 import { runEngineering } from './engineering';
 import { buildRig } from './kinematics';
-import { printReportOf } from './printReport';
+import { printReportOf } from './printReportPreparation';
 
 const panel = (id: string, extra: Partial<ScenePart> = {}): ScenePart => ({
   id,

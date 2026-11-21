@@ -29,6 +29,7 @@ import {
   castGrippers,
   factSampler,
   hookRecorder,
+  configuredEngine,
   logicPlan,
   startLogic,
   type LogicOptions,
@@ -79,6 +80,7 @@ export interface RunOptions extends LogicOptions {
   fixedCase?: boolean;
   worldRandomization?: boolean;
   checkpoint?: () => Promise<void>;
+  cancelled?: () => boolean;
   worldFloorMm?: number;
   controller: 'limp' | 'reference' | 'policy';
   seed?: number;
@@ -91,6 +93,10 @@ export interface RunOptions extends LogicOptions {
   limp?: string[];
   world?: WorldEvent[];
   worldColliders?: WorldItem[];
+}
+
+export function assertCaseRunning(options: Pick<RunOptions, 'cancelled'>) {
+  if (options.cancelled?.()) throw AbortSignal.abort().reason;
 }
 
 const JUDGE_EVERY_TICKS = 12;
@@ -144,6 +150,7 @@ function walkFor(setup: RobotDrive | null, facts: RobotFacts, options: RunOption
 
 interface Rollout {
   checkpoint?: () => Promise<void>;
+  cancelled?: () => boolean;
   engine: SimEngine;
   kase: Case;
   steer: GroundSteer | null;
@@ -183,7 +190,11 @@ async function roll(rollout: Rollout): Promise<CaseFrame[]> {
   const ticks = Math.round(kase.task.seconds / RECORD_DT);
 
   for (let tick = 0; tick < ticks; tick++) {
+    assertCaseRunning(rollout);
+
     if (rollout.checkpoint && tick % 50 === 0) await rollout.checkpoint();
+
+    assertCaseRunning(rollout);
 
     const t = tick * RECORD_DT;
 
@@ -262,18 +273,6 @@ export function startEngine(mj: MainModule, model: SimModel, options: EngineStar
     varyFixtureResistance(mj, arena.engine, options.seed!);
     arena.engine.setController(controller);
   });
-}
-
-function configuredEngine(started: Started, configure: () => void): Started {
-  try {
-    configure();
-
-    return started;
-  } catch (error) {
-    started.dispose();
-
-    throw error;
-  }
 }
 
 function refused(authored: Case, refusal: string, model: SimModel): CaseResult {
@@ -356,14 +355,21 @@ function fitted(authored: Case, robot: CaseRobot, options: RunOptions): Fitted |
 }
 
 async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Promise<CaseResult> {
+  assertCaseRunning(options);
+
   const jitter = options.seed === undefined || options.worldRandomization === false ? null : worldRandom(options.seed);
   const kase = jitter ? reseededGround(jitteredWorld(fit.scaled, jitter), jitter) : fit.scaled;
   const world = await preparedWorldItems(caseWorldItems(kase, options.worldColliders));
+
+  assertCaseRunning(options);
+
   const model = await preparedCalibratedModel(
     { ...fit.input, world, fixedBase: fixedBaseFor(fit.cast), worldFloorMm: options.worldFloorMm },
     options.project?.servoCalibrations,
   );
   const { plan, refusal: logicRefusal } = logicPlan(kase, options);
+
+  assertCaseRunning(options);
 
   if (logicRefusal) return refused(fit.scaled, logicRefusal, model);
 
@@ -421,6 +427,7 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
       judge,
       changes,
       checkpoint: options.checkpoint,
+      cancelled: options.cancelled,
     });
     const trace = { dt: RECORD_DT, signals };
     const verdict = await evaluateContract(kase.task.contract, trace);

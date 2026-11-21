@@ -14,10 +14,10 @@ export function TryOwnership({ recording }: { recording: Recording | null }) {
       <code className="text-white/60 break-all">{teaching.policy}</code>
       <dl className="flex max-h-[20vh] flex-col gap-y-1 overflow-y-auto" tabIndex={0} data-timeline-scroll>
         {teaching.ownership.map((interval, index) => (
-          <div key={index} className="flex shrink-0 flex-wrap gap-x-2" data-owner={interval.owner}>
-            <dt className="flex-1">{OWNER_LABEL[interval.owner]}</dt>
-            <dd className="grow shrink-0 whitespace-nowrap tabular text-white/60">
-              {runClock(interval.at)}–{runClock(interval.until)}
+          <div key={index} className="shrink-0 px-1" data-owner={interval.owner}>
+            <dt>{OWNER_LABEL[interval.owner]}</dt>
+            <dd className="whitespace-nowrap tabular text-white/60">
+              {`${runClock(interval.at)}–${runClock(interval.until)}`}
             </dd>
           </div>
         ))}

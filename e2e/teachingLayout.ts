@@ -1,10 +1,38 @@
 import { expect } from 'vitest';
-import type { Page } from 'playwright-core';
+import type { Locator, Page } from 'playwright-core';
 import { expectPanelReadable } from './appearanceLayout';
 import type { App } from './harness';
 import { Buffer } from 'node:buffer';
 import { decodeRecording, encodeRecording } from '../src/cases/recordingFile';
 import { ownershipIntervals } from '../src/sim/teachingRecording';
+
+export async function expectOwnershipReadable(ownership: Locator) {
+  try {
+    await expectPanelReadable(ownership);
+  } catch (cause) {
+    const geometry = await ownership.evaluate((root) => {
+      const range = document.createRange();
+      const bounds = (element: Element) => element.getBoundingClientRect().toJSON();
+
+      return {
+        root: bounds(root),
+        list: bounds(root.querySelector('dl')!),
+        rows: [...root.querySelectorAll('dt, dd')].map((element) => {
+          range.selectNodeContents(element);
+
+          return {
+            text: element.textContent,
+            box: bounds(element),
+            lines: [...range.getClientRects()].map((rect) => rect.toJSON()),
+            font: getComputedStyle(element).font,
+          };
+        }),
+      };
+    });
+
+    throw new Error(`Ownership text geometry: ${JSON.stringify(geometry)}`, { cause });
+  }
+}
 
 export async function expectTeachingLayout(page: Page, owner?: 'policy' | 'operator') {
   const section = page
@@ -47,7 +75,7 @@ export async function expectOwnershipScrolling(app: App, id: string) {
   const list = ownership.locator('dl');
 
   await expect.poll(() => ownership.locator('[data-owner]').count()).toBe(40);
-  await expectPanelReadable(ownership);
+  await expectOwnershipReadable(ownership);
 
   const bounds = (await timeline.boundingBox())!;
   const canvas = (await app.page.locator('canvas:not([inert] *):visible').first().boundingBox())!;

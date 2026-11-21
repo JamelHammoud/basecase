@@ -11,7 +11,7 @@ import { hashOf } from '../src/skills/hash';
 import { narrowBuildPanel } from './buildAllocationLayout';
 import { narrowBodyMotionPanel } from './bodyMotionLayout';
 import { expectPanelReadable } from './appearanceLayout';
-import { expectOwnershipScrolling } from './teachingLayout';
+import { expectOwnershipReadable, expectOwnershipScrolling } from './teachingLayout';
 
 let app: App;
 
@@ -46,7 +46,7 @@ it(
     expect(await ownership.locator('[data-owner="operator"]').count()).toBe(2);
     expect(await ownership.locator('[data-owner="policy"]').count()).toBe(3);
     expect(await ownership.getAttribute('data-policy')).toBe(hashOf(policy));
-    await expectPanelReadable(ownership);
+    await expectOwnershipReadable(ownership);
     await expectOwnershipScrolling(app, id);
     expect(app.errors).toEqual([]);
   },

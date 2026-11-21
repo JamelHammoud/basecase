@@ -1171,3 +1171,11 @@ The other six articles remain unchanged for these specific reasons:
 | Point the agent at a part | Quote Part retains its label, availability and `partQuote` handler. The new conversion action follows it without replacing it. Annotation and message quoting are unchanged, and the article has no screenshots. |
 
 Preflight continues to emit an unchanged-article reminder for those six files because it matches whole covered modules. The requested code comparison is complete. No article metadata, screenshot or implementation was changed solely to suppress that reminder.
+
+### Recovery review corrections
+
+Review traced conversion through the shared part menu, command palette, progress toast and reopened Sketch panel. The worker previously observed document edits and unmounting but did not receive the workspace's active flag. Since inactive scene tabs stay mounted, switching tabs could leave recovery running and commit its result out of view. Recovery now aborts on workspace deactivation and checks current activity before starting and publishing. The fast worker test covers refusing an inactive start. A third browser declaration holds only the recovery worker's message boundary, switches tabs, observes termination and returns to the original mesh with no lingering progress toast.
+
+The existing browser walkthroughs now exercise both palette and right-click entry points. The depth walkthrough resizes the Inspector to its supported 290 px minimum and measures the Thickness label, entered value and unit for overlap. It checks the shared 32 px input height and Escape restoring the prior value. Browser execution remains with CI. The changelog names the entry points without walking through the controls. No deadline, retry, quarantine or existing assertion was weakened.
+
+The review's ten-file changed check passed formatting, lint, documentation, all 356 site pages, types and 47 related tests across seven files. The log is `scratch/review-1969-final-check.log`. No browser test was executed locally.

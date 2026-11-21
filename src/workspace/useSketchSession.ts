@@ -35,6 +35,7 @@ export interface SketchTarget {
 }
 
 interface SessionOptions {
+  active: boolean;
   docs: {
     parts: ScenePart[];
     project: ProjectSettings;
@@ -101,6 +102,7 @@ function validPickedSource(part: ScenePart, pick: Pick, showToast: ShowToast) {
 }
 
 export function useSketchSession({
+  active,
   docs,
   viewportRef,
   selectedIds,
@@ -112,6 +114,7 @@ export function useSketchSession({
   const { showToast } = toasts;
   const { partsRef, commitParts } = docs;
   const recovery = useImportRecovery({
+    activeWorkspace: active,
     parts: docs.parts,
     project: docs.project,
     partsRef,

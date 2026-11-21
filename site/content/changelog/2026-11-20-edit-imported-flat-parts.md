@@ -6,7 +6,7 @@ image: /changelog/edit-imported-flat-parts/cover.png
 
 You can turn an imported flat custom part into a Sketch extrusion and change its thickness without redrawing the outline or through-holes. Catalog products remain reference parts.
 
-Select the part and choose **Convert to Sketch** in the command palette or its right-click menu. Double-click the converted part to open the polygonal outline in Sketch.
+**Convert to Sketch** is in the command palette and the selected part's right-click menu. The converted outline opens in the ordinary Sketch editor.
 
 If a downloaded mounting plate fits your robot's hole pattern but needs thicker stock, you can convert it and change the thickness. Basecase recovers the outline and keeps the part's identity, world placement, material and group. It retains the original mesh and saves the original scene in Scene History before replacing the geometry.
 

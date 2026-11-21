@@ -33,7 +33,7 @@ afterEach(() => {
   RecoveryWorker.behavior.failPost = false;
 });
 
-function session(source: ScenePart) {
+function session(source: ScenePart, activeWorkspace = true) {
   const partsRef = { current: [source] };
   const projectRef = { current: DEFAULT_PROJECT };
   const commitParts = vi.fn((update: (parts: ScenePart[]) => ScenePart[]) => {
@@ -46,6 +46,7 @@ function session(source: ScenePart) {
 
   function Host() {
     controls = useImportRecovery({
+      activeWorkspace,
       parts: partsRef.current,
       project: projectRef.current,
       partsRef,
@@ -65,6 +66,18 @@ function session(source: ScenePart) {
 }
 
 describe('import recovery worker and atomic scene application', () => {
+  it('does not start conversion from an inactive workspace', async () => {
+    vi.stubGlobal('Worker', RecoveryWorker);
+
+    const fixture = session(stepDerivedPart(plateTriangles()), false);
+    const previousWorkers = RecoveryWorker.instances.length;
+
+    await fixture.controls.convert(fixture.partsRef.current[0].id);
+    expect(RecoveryWorker.instances).toHaveLength(previousWorkers);
+    expect(fixture.captureVersion).not.toHaveBeenCalled();
+    expect(fixture.commitParts).not.toHaveBeenCalled();
+  });
+
   it('terminates on success, refusal, worker failure and cancellation without an interaction-thread fallback', async () => {
     vi.stubGlobal('Worker', RecoveryWorker);
 

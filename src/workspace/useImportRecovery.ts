@@ -2,12 +2,14 @@ import { findPartDeep } from '../booleans/parts';
 import { useEffect, useRef, type RefObject } from 'react';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { errorMessage } from '../utils/errorMessage';
+import { useLatestRef } from '../utils/useLatestRef';
 import { recoverImportAsync } from '../utils/sketch/recoveryWorker';
 import { validateRecoveryEntry } from '../utils/sketch/recoverySource';
 import { validateRecoveryReferences } from './importRecoveryReferences';
 import type { CommitParts, ShowToast } from './types';
 
 interface ImportRecoveryOptions {
+  activeWorkspace: boolean;
   parts: ScenePart[];
   project: ProjectSettings;
   partsRef: RefObject<ScenePart[]>;
@@ -19,6 +21,7 @@ interface ImportRecoveryOptions {
 }
 
 export function useImportRecovery({
+  activeWorkspace,
   parts,
   project,
   partsRef,
@@ -29,10 +32,13 @@ export function useImportRecovery({
   captureVersion,
 }: ImportRecoveryOptions) {
   const active = useRef<AbortController | null>(null);
+  const workspace = useLatestRef(activeWorkspace);
 
-  useEffect(() => () => active.current?.abort(), [parts, project]);
+  useEffect(() => () => active.current?.abort(), [activeWorkspace, parts, project]);
 
   const convert = async (id: string) => {
+    if (!workspace.current) return;
+
     active.current?.abort();
 
     const before = partsRef.current;
@@ -45,7 +51,8 @@ export function useImportRecovery({
 
     active.current = abort;
 
-    const current = () => !abort.signal.aborted && partsRef.current === before && projectRef.current === project;
+    const current = () =>
+      workspace.current && !abort.signal.aborted && partsRef.current === before && projectRef.current === project;
     const discard = () => {
       if (active.current === abort) dismissToast();
     };

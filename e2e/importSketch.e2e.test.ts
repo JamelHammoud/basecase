@@ -4,6 +4,7 @@ import { openApp, shown, type App } from './harness';
 import { plateTriangles } from '../src/sheet/sheet.fixtures';
 import { detectSheet } from '../src/sheet/detectSheet';
 import { binaryStl } from '../src/utils/stlBytes';
+import { assertRecoveryThicknessLayout, holdRecoveryWorker } from './importSketch.helpers';
 import {
   clickSupportPoint,
   pickSupportFile,
@@ -56,10 +57,15 @@ async function importPlate() {
   return source;
 }
 
-async function convertPlate() {
+async function convertPlate(contextMenu = false) {
   const source = await importPlate();
 
-  await supportCommand(app.page, 'Convert to Sketch');
+  if (contextMenu) {
+    await app.page.mouse.down({ button: 'right' });
+    await app.page.mouse.up({ button: 'right' });
+    await app.page.getByRole('menuitem', { name: 'Convert to Sketch', exact: true }).click();
+  } else await supportCommand(app.page, 'Convert to Sketch');
+
   await expect.poll(async () => (await supportParts(app.page))[0].sketch?.mode).toBe('extrude');
 
   const converted = (await supportParts(app.page))[0];
@@ -90,6 +96,7 @@ describe('recover imported flat geometry in Sketch', () => {
       await supportPlane(app.page).waitFor();
       await supportField(app.page, 'Thickness', '6');
       await expect.poll(async () => (await supportParts(app.page))[0].sketch?.depth).toBe(6);
+      await assertRecoveryThicknessLayout(app.page);
       expect((await supportParts(app.page))[0].id).toBe(converted.id);
       await app.page.keyboard.press('ControlOrMeta+z');
       await expect.poll(async () => (await supportParts(app.page))[0].sketch?.depth).toBe(3);
@@ -111,7 +118,7 @@ describe('recover imported flat geometry in Sketch', () => {
   );
 
   it('saves and reopens the converted scene with ordinary Sketch editing available', { retry: 0 }, async () => {
-    const converted = await convertPlate();
+    const converted = await convertPlate(true);
 
     await supportCommand(app.page, 'Export Scene');
     await expect.poll(async () => (await supportDownload(app.page))?.name.endsWith('.basecase')).toBe(true);
@@ -133,6 +140,37 @@ describe('recover imported flat geometry in Sketch', () => {
     await supportField(app.page, 'Thickness', '4');
     await expect.poll(async () => (await supportParts(app.page))[0].sketch?.depth).toBe(4);
     expect((await supportParts(app.page))[0].mesh).toEqual(converted.mesh);
+    expect(app.errors).toEqual([]);
+  });
+
+  it('cancels recovery when switching scene tabs and keeps the original import', async () => {
+    const source = await importPlate();
+    const originalTab = app.page
+      .locator('[role="tab"][aria-selected="true"]')
+      .filter({ has: app.page.locator('[data-tab-close]') });
+    const tabIndex = await originalTab.evaluate((tab) => [...tab.parentElement!.children].indexOf(tab));
+    const blocked = await holdRecoveryWorker(app.page);
+
+    try {
+      await supportCommand(app.page, 'Convert to Sketch');
+      await expect.poll(() => blocked.started()).toBe(true);
+      await app.page.locator(shown('[role="status"]')).filter({ hasText: 'Converting to Sketch' }).waitFor();
+      await app.page.keyboard.press('ControlOrMeta+t');
+      await expect.poll(() => blocked.terminated()).toBe(true);
+      await app.page
+        .locator('[role="tab"]')
+        .filter({ has: app.page.locator('[data-tab-close]') })
+        .nth(tabIndex)
+        .click();
+      await expect.poll(async () => (await supportParts(app.page))[0]?.id).toBe(source.id);
+      expect((await supportParts(app.page))[0].kind).toBe('mesh');
+      await expect
+        .poll(() => app.page.locator(shown('[role="status"]')).filter({ hasText: 'Converting to Sketch' }).count())
+        .toBe(0);
+    } finally {
+      await blocked.restore();
+    }
+
     expect(app.errors).toEqual([]);
   });
 });

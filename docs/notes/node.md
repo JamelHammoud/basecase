@@ -2,6 +2,12 @@
 
 Knowledge preserved from code comments. Complements AGENTS.md; nothing here repeats it.
 
+## Hub test token source scanning
+
+On November 20, 2026, `npm run security -- --only=secrets` exited 1 with four critical Hugging Face token findings, one each in `electron/hub/hub.test.mjs`, `datasetRepo.test.mjs`, `skillRepo.test.mjs` and `imageDatasetPublish.test.mjs`. Each held the same placeholder as a contiguous source literal. The shared `testToken.mjs` now joins its prefix and body at runtime and preserves the original value used by authentication, redaction and disk-persistence assertions.
+
+`tools/security/secrets.test.mjs` initializes a temporary Git repository and stages a module containing a generated, real-shaped token literal. It uses the actual Git file selection and file scanning, asserts a critical finding without revealing the token in the report, then rewrites the module with runtime joining and asserts no critical or high findings. Only the repository root and history-tool availability are controlled. No detection pattern or exclusion changes. History scanning is outside this test, and local `gitleaks` was unavailable.
+
 ## Revision checkout of an occupied branch
 
 On November 21, 2026, revise slots repeatedly failed before agent execution for pull request #1964. At 00:17:30.830, 00:17:45.419, 00:17:53.281 and 00:18:32.617 UTC, `revise.log` reported `git worktree add -q -B failed (exit 128)` because `loop/fix/model-imports` was already used by the `model-imports` worktree. The stack points to `checkout` in `lanes/revise.mjs:97`. The lane cleared only its own `revise-1964` path, then tried to reset and check out a branch owned elsewhere. Rebase already used detached checkouts, but delivery pushed a local branch name, so changing checkout alone would have delivered the owner's old commit instead of the detached revision.

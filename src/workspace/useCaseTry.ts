@@ -237,7 +237,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
 
     if (reply && saved.current) saved.current.recordId = reply.id;
 
-    if (!lease.current(input.ticket) || !reply?.owner) return finish();
+    if (!lease.current(input.ticket) || !reply?.owner) return reply ? finish() : undefined;
 
     setStartedAt(reply.startedAt);
     setOwner(reply.owner);

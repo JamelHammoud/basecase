@@ -52,9 +52,13 @@ export async function startCaseTeaching(input: {
   logic: Awaited<ReturnType<typeof caseLogicPlan>>;
   joints: RobotJoint[];
 }) {
-  const source = await caseTeaching(input.scene);
+  const source = await caseTeaching(input.scene).catch((error: unknown) => {
+    if (input.current()) throw error;
 
-  if (!input.current()) return null;
+    return null;
+  });
+
+  if (!source || !input.current()) return null;
 
   const reply = await input.sim.teaching.start({
     ...source,

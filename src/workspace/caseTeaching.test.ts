@@ -8,10 +8,11 @@ import { teachingPolicy } from '../sim/fixtures/teachingPolicy';
 import { triesSkill } from '../skills/triesTraining';
 import { skillRecord } from '../skills/skillRecords';
 import { buildRig } from '../utils/kinematics';
-import { caseTeaching } from './caseTeaching';
+import { caseTeaching, startCaseTeaching } from './caseTeaching';
 import { useRoutineSkills, type SceneRoutineSkills } from './useRoutineSkills';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { sha256Hex } from '../skills/hash';
+import type { Simulation } from '../sim/useSimulation';
 
 it('admits a fresh saved Case policy before the asynchronous skill rows are ready', async () => {
   const robot = fixtureRobot('arm-3dof');
@@ -61,3 +62,42 @@ it('admits a fresh saved Case policy before the asynchronous skill rows are read
     caseTeaching({ model, kase: { ...kase, id: 'other-case' }, rig, parts: robot.parts, skills }),
   ).rejects.toThrow('Train a policy');
 });
+
+it.each([false, true])(
+  'reports a source refusal only while teaching startup is current, cancelled=%s',
+  async (cancelled) => {
+    const robot = fixtureRobot('arm-3dof');
+    const rig = buildRig(robot.joints, robot.parts);
+    const made = buildCase({ goal: 'touch', world: 'floor' }, builderRobot(rig, robot.parts));
+
+    if (!made.ok) throw new Error(made.problem);
+
+    const start = vi.fn();
+    let current = true;
+    const pending = startCaseTeaching({
+      scene: {
+        model: fixtureModel(robot.id),
+        kase: made.kase,
+        rig,
+        parts: robot.parts,
+        skills: {
+          own: async () => {
+            current = !cancelled;
+
+            return [];
+          },
+          handoffs: () => undefined,
+        },
+      },
+      sim: { teaching: { start } } as unknown as Simulation,
+      current: () => current,
+      logic: { plan: null, kit: null },
+      joints: robot.joints,
+    });
+
+    if (cancelled) await expect(pending).resolves.toBeNull();
+    else await expect(pending).rejects.toThrow('Train a policy');
+
+    expect(start).not.toHaveBeenCalled();
+  },
+);

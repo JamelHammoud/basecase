@@ -1,5 +1,13 @@
 # Cases testing evidence
 
+## Teaching admission cancellation review
+
+Review of pull request #2026 reproduced a cancelled teaching startup entering ordinary recording finalization after its saved-policy load finished. `startCaseTeaching` returns null when the startup lease has expired before dispatch. `beginTeaching` nevertheless called `finish`, which requested `stopRecording(undefined)`. If Stop had already disposed the simulator, the worker had no engine and returned no recording reply. The finish guard then remained set, preventing later tries from finishing. If a new try had begun instead, that ordinary stop request could consume its recording and stop its drive.
+
+The regression in `useCaseTry.test.ts` holds admission, cancels its lease and releases a null result. The baseline failed because it requested ordinary recording finalization. Evidence is `scratch/review-2026-startup-red.log`. A cancelled admission now returns before touching finalization. Acknowledged starts retain identified completion, including starts whose lease expires while the worker replies. The regression covers cancellation alone and cancellation followed by a new ordinary try, checking that the obsolete continuation neither finalizes its recording nor stops its drive. `caseTeaching.test.ts` additionally covers late source refusal. A cancelled source lookup returns null instead of reaching the old attempt’s failure handler, while a current lookup still reports its refusal.
+
+The six-file `check:changed` passed formatting, ESLint, documentation, site validation across 385 pages, TypeScript and all twelve related tests across five files. The related phase reported 724 ms. Evidence is `scratch/review-2026-admission-check.log`. These are hook and admission checks, without a local browser execution. The existing Case controls, Library ownership and dataset browser declarations remain for CI.
+
 ## Teaching rebuild after the navigation failure
 
 The closed attempt’s final [Linux browser Check](https://github.com/JamelHammoud/basecase/actions/runs/44882615261/job/136780996910) passed the dataset correction and frozen warm-start declaration in 20.854 seconds. The continuous-try declaration reached ownership readability, then failed while waiting for a timeline Close button. It took 52.275 seconds, including the unchanged 30-second locator deadline. This establishes neither completion of the long-history assertions nor a Windows pass.

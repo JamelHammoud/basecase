@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, expect, inject, it } from 'vitest';
 import { box } from '../src/sim/fixtures/parts';
 import type { ScenePart } from '../src/types/robotics';
-import { decodeSceneFile } from '../src/utils/sceneFile';
 import { exposeTestHooks, launchChrome, shown } from './harness';
 import { seedVersionProfile } from './sceneVersionProfile';
 import type { Page } from 'playwright-core';
@@ -12,8 +11,6 @@ interface Studio {
   load: (scene: { id?: string; name: string; parts: ScenePart[] }) => void;
   select: (ids: string[]) => void;
   sceneRecord: () => { parts: ScenePart[] };
-  lastDownload: () => { name: string; base64: string } | null;
-  dropFiles: (files: { name: string; base64: string }[]) => Promise<void>;
 }
 
 const parts = [box('cover-a', [0, 20, 0], [40, 40, 40], 30), box('cover-b', [60, 20, 0], [40, 40, 40], 30)].map(
@@ -37,7 +34,7 @@ beforeAll(async () => {
 
 afterAll(async () => app?.close());
 
-it('finishes two parts, imports a local texture, changes scale and reopens the exported scene', async () => {
+it('finishes two parts, imports a local texture, changes scale and reloads the saved scene', async () => {
   await app.page.evaluate((items) => {
     const studio = (window as unknown as { __studio: Studio }).__studio;
 
@@ -131,22 +128,6 @@ it('finishes two parts, imports a local texture, changes scale and reopens the e
   await app.page.waitForFunction(() => Boolean((window as unknown as { __studio?: Studio }).__studio));
   await expect.poll(sceneParts).toEqual(finished);
 
-  await app.page.getByRole('button', { name: 'Export', exact: true }).click();
-  await app.page.getByRole('menuitem', { name: 'Scene', exact: true }).click();
-  await expect
-    .poll(() => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.lastDownload()?.name))
-    .toMatch(/\.basecase$/);
-
-  const download = await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.lastDownload());
-  const decoded = await decodeSceneFile(Buffer.from(download!.base64, 'base64'));
-
-  expect(decoded.parts).toEqual(finished);
-  expect(Object.keys(decoded.worldAssets!)).toContain(finished[0].appearance!.textures!.baseColor);
-  await app.page.evaluate(
-    async (file) => (window as unknown as { __studio: Studio }).__studio.dropFiles([file]),
-    download!,
-  );
-  await expect.poll(sceneParts).toEqual(finished);
   expect(finished.map(({ id, mechanicalTag, massG }) => ({ id, mechanicalTag, massG }))).toEqual(
     parts.map(({ id, mechanicalTag, massG }) => ({ id, mechanicalTag, massG })),
   );

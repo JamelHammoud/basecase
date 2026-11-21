@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
 import { cameraViews, findView, stripParts } from '../cameras/views';
 import { castOf, stageCase } from '../cases/caseCast';
-import { worldItem, type Case } from '../cases/schema';
+import { type Case } from '../cases/schema';
+import { caseWorldItems } from '../cases/importedWorldItems';
 import type { SlotRobot } from '../cases/slots';
 import type { Simulation } from '../sim/useSimulation';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
@@ -33,7 +34,7 @@ export function useTrainingImages(options: ImageOptions) {
   const busy = useRef(false);
   const staged = active ? stageCase(active, { rig, parts }, partners()) : null;
   const cast = staged ? castOf(staged, { rig, parts }) : { parts, rig };
-  const world = staged ? staged.kase.world.objects.map(worldItem) : sim.worldParts;
+  const world = staged ? caseWorldItems(staged.kase) : sim.worldParts;
   const views = cameraViews(stripParts(cast.parts), world, project.cameras);
   const classes = staged ? trainingImageClasses(stripParts(cast.parts), staged.kase, cast.rig) : [];
 
@@ -49,7 +50,7 @@ export function useTrainingImages(options: ImageOptions) {
     try {
       const staged = stageCase(kase, { rig, parts }, partners());
       const cast = castOf(staged, { rig, parts });
-      const world = staged.kase.world.objects.map(worldItem);
+      const world = caseWorldItems(staged.kase);
       const currentViews = cameraViews(stripParts(cast.parts), world, project.cameras);
       const result = await makeTrainingImages(
         {

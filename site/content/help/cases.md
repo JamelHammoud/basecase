@@ -53,9 +53,9 @@ A Case's logic and console can read camera detections, including object counts, 
 
 ## One Case, many robots
 
-You write a Case once, then run it on any robot that fits its slot. For an arm, Basecase measures how far the arm reaches from its shoulder and scales the whole world to match. Write Touch the Dots on one arm, and the next arm can reach the same dots.
+You write a Case once, then run it on any robot that fits its slot. Arm Cases with generated targets scale their world to the arm’s reach from its shoulder. Write Touch the Dots on one arm, and the next arm can reach the same dots.
 
-Imported rooms and captured worlds keep their true size for every robot.
+Imported rooms, captured worlds and selected-object pickups keep their true size for every robot.
 
 ## Tries
 
@@ -78,6 +78,7 @@ A Case can also supply labeled images without a recorded try. **Make Training Im
 ## Where Cases come from
 
 - **New Case** builds a Case from a goal and a world. For steps, see [Make a Case](/help/make-a-case).
+- **Test Grasp** keeps a selected box or cylinder at its supplied dimensions, weight and friction. See [Design gripper fingers](/help/design-gripper-fingers).
 - **Ask the Agent** lets you describe a Case in words: type `/case` in the agent's box.
 - **The agent** builds a Case once you tell it what to do with a robot, such as play a block game, and opens the Case mid-run.
 - **Replay in Sim** in **Operate** builds a Case from the 20 seconds before a servo fault. To learn how, see [Replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation).

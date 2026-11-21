@@ -128,6 +128,7 @@ export interface CustomModelDefinition {
 }
 
 export interface ScenePart extends PartRelations, BooleanFields, SheetFields {
+  gripperFinger?: import('../gripperFingers/types').FingerReference;
   id: string;
   name: string;
   kind: PartKind;

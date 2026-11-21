@@ -86,7 +86,7 @@ export async function enterReplayResistance(dialog: Locator, fixture: ReturnType
   await dialog.getByLabel('Junction evidence').fill('Generated paired harness and ideal junctions');
 
   for (const cable of fixture.cables) {
-    const fields = dialog.locator('[data-replay-cable]').filter({ hasText: cable.name });
+    const fields = dialog.locator(`[data-replay-cable=${JSON.stringify(cable.id)}]`);
 
     await fields.getByLabel('Outgoing resistance (Ω)').fill('0.01');
     await fields.getByLabel('Return resistance (Ω)').fill('0.015');

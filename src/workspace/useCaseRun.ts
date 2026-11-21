@@ -39,7 +39,7 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
   const { sim, cases } = simTraining;
   const [back, setBack] = useState<Return | null>(null);
   const activeId = cases.active?.id ?? null;
-  const live = back !== null && back.caseId === activeId;
+  const live = (back !== null && back.caseId === activeId) || cases.attempt.branching;
   const { timeline } = cases;
   const [dismissed, setDismissed] = useState<Recording | null>(null);
   const playback = timeline.open && !!timeline.recording && dismissed !== timeline.recording;
@@ -68,6 +68,12 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
   };
 
   const leave = () => {
+    if (cases.attempt.branching) {
+      cases.attempt.end();
+
+      return;
+    }
+
     if (playback) setDismissed(timeline.recording);
 
     if (live && back) restore(back);

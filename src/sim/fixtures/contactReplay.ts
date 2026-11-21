@@ -1,6 +1,7 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import type { SimModel } from '../mjcfTypes';
 import { pairKey } from '../../../electron/cad-kernel/pairKey.mjs';
+import { integrationState } from '../integrationState';
 
 export interface PhysicsSample {
   step: number;
@@ -19,19 +20,6 @@ export interface ContactReplay {
   bodyNames: string[];
   controls: number[][];
   expected: PhysicsSample[];
-}
-
-function integrationState(mj: MainModule, model: MjModel, data: MjData): number[] {
-  const signature = mj.mjtState.mjSTATE_INTEGRATION.value;
-  const buffer = new mj.DoubleBuffer(mj.mj_stateSize(model, signature));
-
-  try {
-    mj.mj_getState(model, data, buffer, signature);
-
-    return Array.from(buffer.GetView() as Float64Array);
-  } finally {
-    buffer.delete();
-  }
 }
 
 function contactBodies(mj: MainModule, model: MjModel, data: MjData): string[] {
@@ -78,7 +66,7 @@ export function captureContactReplay(mj: MainModule) {
   const expected: PhysicsSample[] = [];
   const step = (model: MjModel, data: MjData) => {
     if (!state) {
-      state = integrationState(mj, model, data);
+      state = Array.from(integrationState(mj, model, data));
       actuatorForceRange = Array.from(model.actuator_forcerange);
       bodyNames = Array.from({ length: model.nbody }, (_, i) => mj.mj_id2name(model, mj.mjtObj.mjOBJ_BODY.value, i));
       expected.push(sample(mj, model, data, 0));

@@ -24,6 +24,7 @@ function sourceOf(sample: FrozenTrySample) {
     case_hash: stored.case?.hash ?? null,
     seed: stored.seed,
     source: stored.sourceTry,
+    ...(stored.branch ? { branch: stored.branch } : {}),
     recording_hash: sample.recording,
     source_run: sample.source,
     from_frame: sample.from,

@@ -3,6 +3,7 @@ import { isMovable, type Rig } from '../utils/kinematics';
 import { autoMapRobot } from '../utils/mocapBones';
 import { CONTROL_DT } from './driveTiming';
 import type { DriveCommand, DriveLoop, DriveOutput } from './driveTypes';
+import type { DriveState } from './driveState';
 
 export interface PoseJoint {
   id: string;
@@ -56,9 +57,9 @@ const toward = (from: number, to: number, step: number) => from + Math.max(-step
 export class PoseDrive implements DriveLoop {
   private readonly setup: PoseSetup;
 
-  private readonly values: JointValues;
+  private values: JointValues;
 
-  private readonly goal: JointValues;
+  private goal: JointValues;
 
   private out: JointValues;
 
@@ -79,6 +80,23 @@ export class PoseDrive implements DriveLoop {
 
       if (value !== undefined && Number.isFinite(value)) this.goal[id] = within(value, range);
     }
+  }
+
+  snapshot(): DriveState {
+    return structuredClone({ kind: 'pose', values: this.values, goal: this.goal, out: this.out, nextAt: this.nextAt });
+  }
+
+  restore(state: DriveState): boolean {
+    if (state.kind !== 'pose') return false;
+
+    const copy = structuredClone(state);
+
+    this.values = copy.values;
+    this.goal = copy.goal;
+    this.out = copy.out;
+    this.nextAt = copy.nextAt;
+
+    return true;
   }
 
   tick(time: number): DriveOutput {

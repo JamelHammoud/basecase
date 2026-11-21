@@ -7,6 +7,7 @@ import { PoseDrive, type PoseSetup } from './drivePose';
 import { CONTROL_DT } from './driveTiming';
 import type { DriveCommand, DriveHand, DriveLoop, DriveOutput } from './driveTypes';
 import { wheelSpeeds } from './wheelSpeeds';
+import type { DriveState } from './driveState';
 
 export type { DriveCommand, DriveHand, DriveLoop, DriveOutput } from './driveTypes';
 export { CONTROL_DT } from './driveTiming';
@@ -134,6 +135,35 @@ class ArmDrive implements DriveLoop {
     return this.setup.reachMm * REACH_PER_SECOND;
   }
 
+  snapshot(): DriveState {
+    return structuredClone({
+      kind: 'arm',
+      values: this.values,
+      goal: this.goal,
+      aim: this.aim,
+      command: this.cmd,
+      nextAt: this.nextAt,
+      side: this.side,
+      held: this.held,
+    });
+  }
+
+  restore(state: DriveState): boolean {
+    if (state.kind !== 'arm') return false;
+
+    const copy = structuredClone(state);
+
+    this.values = copy.values;
+    this.goal = copy.goal;
+    this.aim = copy.aim;
+    this.cmd = copy.command;
+    this.nextAt = copy.nextAt;
+    this.side = copy.side;
+    this.held = copy.held;
+
+    return true;
+  }
+
   private moveAim() {
     const { v, aux, target } = this.cmd;
 
@@ -236,6 +266,20 @@ class RoverDrive implements DriveLoop {
     this.cmd = c;
   }
 
+  snapshot(): DriveState {
+    return structuredClone({ kind: 'rover', command: this.cmd, speed: this.speed, lastTime: this.lastTime });
+  }
+
+  restore(state: DriveState): boolean {
+    if (state.kind !== 'rover') return false;
+
+    this.cmd = structuredClone(state.command);
+    this.speed = state.speed;
+    this.lastTime = state.lastTime;
+
+    return true;
+  }
+
   tick(time: number): DriveOutput {
     const { wheels, maxSpeedMmS, maxTurnRadS } = this.setup;
     const elapsed = Math.max(0, time - (this.lastTime ?? time));
@@ -265,6 +309,30 @@ class TeamDrive implements DriveLoop {
 
   command(c: DriveCommand, measured?: JointValues) {
     this.members.find((m) => m.slot === (c.slot ?? 0))?.drive.command(c, measured);
+  }
+
+  snapshot(): DriveState | null {
+    const members = this.members.flatMap(({ slot, drive }) => {
+      const state = drive.snapshot?.();
+
+      return state ? [{ slot, state }] : [];
+    });
+
+    return members.length === this.members.length ? { kind: 'team', members } : null;
+  }
+
+  restore(state: DriveState): boolean {
+    if (state.kind !== 'team' || state.members.length !== this.members.length) return false;
+
+    const compatible = this.members.every(({ slot, drive }, i) => {
+      const member = state.members[i];
+
+      return slot === member.slot && member.state.kind === drive.snapshot?.()?.kind;
+    });
+
+    if (!compatible) return false;
+
+    return this.members.every(({ drive }, i) => !!drive.restore?.(state.members[i].state));
   }
 
   tick(time: number): DriveOutput {

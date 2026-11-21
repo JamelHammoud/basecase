@@ -19,6 +19,8 @@ import { routePolicy, RouteRunner, type RouteController } from './route';
 import { readHoldValues, readJointAngles, readJointStates } from './jointReadout';
 import { Scanner } from './scanner';
 import { BodyContacts } from './contacts';
+import { readEngineStats, type EngineRobot } from './engineReadout';
+import { EngineContinuation } from './engineContinuation';
 
 export type Controller =
   | { kind: 'hold'; values?: Record<string, number> }
@@ -41,21 +43,14 @@ export class SimEngine {
   private contacts: BodyContacts;
   private jointQpos: number[];
   private jointDof: number[];
-  private robots: Array<{
-    key: string;
-    rootQpos: number;
-    rootDof: number;
-    rootBody: number;
-    floating: boolean;
-    joints: number[];
-    startZ: number;
-    startXY: [number, number];
-  }>;
+  private robots: EngineRobot[];
   private controller: Controller = { kind: 'hold' };
   private drive: DriveLoop | null = null;
   private arms: PoseDrive | null = null;
   private route: RouteRunner | null = null;
+  beforeStepHook: (() => void) | null = null;
   stepHook: (() => void) | null = null;
+  continuationHook: (() => void) | null = null;
   commandHook: ((c: DriveCommand) => void) | null = null;
   private given = new Map<number, DriveCommand>();
   private peaks: Float64Array;
@@ -69,6 +64,7 @@ export class SimEngine {
   readonly scanner: Scanner | null;
   private mj: MainModule;
   readonly sim: SimModel;
+  readonly continuation: EngineContinuation;
 
   constructor(mj: MainModule, sim: SimModel) {
     this.mj = mj;
@@ -107,6 +103,24 @@ export class SimEngine {
     });
     this.peaks = new Float64Array(sim.joints.length);
     this.saturated = new Float64Array(sim.joints.length);
+    this.continuation = new EngineContinuation({
+      mj,
+      sim,
+      model: this.model,
+      data: this.data,
+      busy: () => !!this.scanner || this.pushes.active || this.grab.active,
+      runtime: () => ({
+        controller: this.controller,
+        drive: this.drive,
+        faults: this.faults,
+        peaks: this.peaks,
+        saturated: this.saturated,
+        fellAt: this.fellAt,
+        robots: this.robots,
+        given: this.given,
+      }),
+      setController: (controller) => this.setController(controller),
+    });
     this.reset();
   }
 
@@ -297,12 +311,6 @@ export class SimEngine {
     this.faults.set(j.actuator, kind, j.drive === 'position' ? this.data.qpos[this.jointQpos[i]] : 0);
   }
 
-  private faultField(actuator: number): { fault?: FaultKind } {
-    const fault = actuator >= 0 ? this.faults.kindOf(actuator) : undefined;
-
-    return fault ? { fault } : {};
-  }
-
   private applyControl() {
     const { data } = this;
     const c = this.controller;
@@ -364,9 +372,9 @@ export class SimEngine {
     const { mj, model, data } = this;
     const steps = Math.max(1, Math.round(seconds / this.dt));
     const { joints } = this.sim;
-    const n = joints.length;
 
     for (let s = 0; s < steps; s++) {
+      this.beforeStepHook?.();
       this.applyControl();
       this.faults.apply(data.ctrl);
       this.pushes.apply();
@@ -378,7 +386,7 @@ export class SimEngine {
 
       const force = data.actuator_force;
 
-      for (let i = 0; i < n; i++) {
+      for (let i = 0; i < joints.length; i++) {
         const actuator = joints[i].actuator;
         const u = actuator >= 0 ? Math.abs(force[actuator]) / joints[i].effort : 0;
 
@@ -388,6 +396,7 @@ export class SimEngine {
       }
 
       this.checkFalls();
+      this.continuationHook?.();
     }
   }
 
@@ -409,34 +418,21 @@ export class SimEngine {
   }
 
   stats(rtf = 1): SimStats {
-    const { data } = this;
-
-    return {
-      time: data.time,
+    return readEngineStats(
+      {
+        data: this.data,
+        sim: this.sim,
+        robots: this.robots,
+        fellAt: this.fellAt,
+        peaks: this.peaks,
+        saturated: this.saturated,
+        faults: this.faults,
+        drive: this.drive,
+        tiltOf: (r) => this.tiltOf(r),
+        handAt: (h) => this.handAt(h),
+      },
       rtf,
-      robots: this.robots.map((r) => {
-        const x = data.xpos[r.rootBody * 3],
-          y = data.xpos[r.rootBody * 3 + 1];
-
-        return {
-          key: r.key,
-          fellAt: this.fellAt.get(r.key) ?? null,
-          height: data.xpos[r.rootBody * 3 + 2] - r.startZ,
-          tilt: this.tiltOf(r),
-          travelled: Math.hypot(x - r.startXY[0], y - r.startXY[1]),
-          forward: -(y - r.startXY[1]),
-          speed: r.rootDof >= 0 ? Math.hypot(data.qvel[r.rootDof], data.qvel[r.rootDof + 1]) : 0,
-        };
-      }),
-      joints: this.sim.joints.map((j, i) => ({
-        id: j.id,
-        peak: this.peaks[i],
-        saturatedS: this.saturated[i],
-        ...this.faultField(j.actuator),
-      })),
-      ...(this.drive?.hand ? { effector: this.handAt(this.drive.hand) } : {}),
-      ...(this.drive?.hands ? { effectors: this.drive.hands.map((h) => this.handAt(h)) } : {}),
-    };
+    );
   }
 
   private holdValues(): Record<string, number> {

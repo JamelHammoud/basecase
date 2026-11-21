@@ -101,6 +101,7 @@ async function liveEpisodes(input: DatasetJobInput) {
       case_hash: record.manifest.caseHash,
       seed: record.manifest.seed,
       source: record.manifest.source ?? null,
+      ...(record.manifest.branch ? { branch: record.manifest.branch } : {}),
     },
   }));
 

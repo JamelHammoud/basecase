@@ -20,6 +20,10 @@ export class PushForce {
     this.data = data;
   }
 
+  get active(): boolean {
+    return this.push !== null;
+  }
+
   start(body: number, sceneForce: [number, number, number], timing: PushTiming & { tilt: () => number }) {
     const { seconds = 0.15, releaseDeg, tilt } = timing;
 

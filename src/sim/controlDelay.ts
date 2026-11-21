@@ -1,5 +1,11 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 
+export interface ControlDelayState {
+  history: Float64Array[];
+  next: number;
+  count: number;
+}
+
 export class ControlDelay {
   private history: Float64Array[] = [];
   private next = 0;
@@ -13,6 +19,16 @@ export class ControlDelay {
     this.count = steps;
     this.history = [];
     this.next = 0;
+  }
+
+  snapshot(): ControlDelayState {
+    return { history: this.history.map((row) => row.slice()), next: this.next, count: this.count };
+  }
+
+  restore(state: ControlDelayState) {
+    this.history = state.history.map((row) => row.slice());
+    this.next = state.next;
+    this.count = state.count;
   }
 
   apply(ctrl: Float64Array) {

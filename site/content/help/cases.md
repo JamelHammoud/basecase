@@ -63,7 +63,7 @@ To take a try, drive the robot through the Case. Basecase records the try 50 tim
 
 You can also run a wheeled or legged robot through a Case in the real world, on the Case printed as a floor mat. A camera tracks the robot, and Basecase judges the run with the same contract. To set it up, see [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 
-[Multiply](/help/multiply-a-try-into-demonstrations) turns a passed try into up to 50 varied passing tries. Results shows the count on that try's row.
+[Multiply](/help/multiply-a-try-into-demonstrations) turns a passed simulation try with recorded commands into up to 50 varied passing tries. Results shows the count on that try's row. Generated tries and branches can't be multiplied.
 
 Teleop data from another source can come in as tries too (see [Import robot data as tries](/help/import-robot-data-as-tries)). Every session on a connected robot becomes a try marked **Operate** (see [Keep a robot session as a try](/help/keep-a-robot-session-as-a-try)). A Case in the scene judges an imported or Operate try when its goal reads only what the try recorded. Otherwise you can mark the try passed or failed yourself, as in [Label a try](/help/label-a-try).
 

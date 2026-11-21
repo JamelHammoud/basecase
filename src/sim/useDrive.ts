@@ -1,3 +1,4 @@
+import { continuationDriveClass } from './continuationDrive';
 import { useVisionScope } from '../cameras/visionScope';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
@@ -54,6 +55,7 @@ export interface SimDrive {
   offersPose: boolean;
   fell: boolean;
   start: (team?: DriveTeam, options?: DriveStartOptions) => Promise<boolean>;
+  resume: (controller: Controller) => boolean;
   refusal: () => string | null;
   stop: () => void;
   respawn: () => void;
@@ -372,6 +374,20 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     offersPose: poseOffer({ rig: inputs.rig, parts: inputs.parts, robotKey }),
     fell: active && !!robotStat && robotStat.fellAt !== null,
     start,
+    resume: (controller) => {
+      const next = continuationDriveClass(controller);
+
+      if (!next || simStatus !== 'ready') return false;
+
+      closeSession(session);
+      session.current = ['keys', 'gamepad'];
+      reset(next, null);
+      setCls(next);
+      send({ type: 'command', ...IDLE });
+      setDriveStatus('on');
+
+      return true;
+    },
     refusal: () => refused.current,
     stop,
     respawn,

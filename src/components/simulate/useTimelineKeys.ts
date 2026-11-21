@@ -28,7 +28,8 @@ export const timelineKeyHandlers = (t: TimelineKeys, onEdited: () => void = () =
   },
 });
 
-const typing = (el: Element | null) => isTextEntry(el) && !(el instanceof HTMLInputElement && el.type === 'range');
+const typing = (el: Element | null) =>
+  el instanceof HTMLSelectElement || (isTextEntry(el) && !(el instanceof HTMLInputElement && el.type === 'range'));
 
 const ignored = (e: KeyboardEvent) =>
   e.metaKey || e.ctrlKey || e.altKey || typing(document.activeElement) || isModalOpen();

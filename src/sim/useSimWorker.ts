@@ -35,10 +35,10 @@ function noteFrame(latest: LatestFrame, msg: Extract<SimResponse, { type: 'frame
 
 const NO_LOOKS: WorldLooks = {};
 
-type RecordingReply = Extract<SimResponse, { type: 'recorded' | 'scrubbed' | 'sought' }>;
+type RecordingReply = Extract<SimResponse, { type: 'recorded' | 'scrubbed' | 'sought' | 'branched' }>;
 
 const isRecordingReply = (msg: SimResponse): msg is RecordingReply =>
-  msg.type === 'recorded' || msg.type === 'scrubbed' || msg.type === 'sought';
+  msg.type === 'recorded' || msg.type === 'scrubbed' || msg.type === 'sought' || msg.type === 'branched';
 
 export const newSimWorker = () => new Worker(new URL('./sim.worker.ts', import.meta.url), { type: 'module' });
 
@@ -61,6 +61,7 @@ export function useSimWorker(
   const [loading] = useState(() => new SimLoads());
   const recordingLink = useRecordingLink(workerRef);
   const recordingReply = recordingLink.reply;
+  const cancelRecording = recordingLink.cancel;
 
   const send = useCallback((msg: SimRequest) => workerRef.current?.postMessage(msg), []);
 
@@ -102,6 +103,7 @@ export function useSimWorker(
       }
 
       if (msg.type === 'error') {
+        cancelRecording();
         setError(msg.message);
         setStatus('error');
         setPlaying(false);
@@ -126,7 +128,7 @@ export function useSimWorker(
       setStats(msg.stats);
       setPlaying(msg.playing);
     },
-    [viewportRef, modelRef, poseListeners.listeners, recordingReply, routines.hookRef, loading],
+    [viewportRef, modelRef, poseListeners.listeners, recordingReply, routines.hookRef, loading, cancelRecording],
   );
 
   const worker = useCallback(() => {
@@ -136,6 +138,7 @@ export function useSimWorker(
 
     w.onmessage = handle;
     w.onerror = (e) => {
+      cancelRecording();
       setError(e.message || 'The simulator stopped.');
       setStatus('error');
       setPlaying(false);
@@ -144,7 +147,7 @@ export function useSimWorker(
     workerRef.current = w;
 
     return w;
-  }, [handle, attachCameras, loading]);
+  }, [handle, attachCameras, loading, cancelRecording]);
 
   useEffect(
     () => () => {
@@ -156,10 +159,7 @@ export function useSimWorker(
   useVisionLink(workerRef);
 
   return {
-    stopRecording: recordingLink.stopRecording,
-    scrub: recordingLink.scrub,
-    seek: recordingLink.seek,
-    sought: recordingLink.sought,
+    ...recordingMethods(recordingLink),
     status,
     setStatus,
     playing,
@@ -183,6 +183,18 @@ export function useSimWorker(
     startRoutine: routines.start,
     subscribePoses: poseListeners.subscribe,
     connectCameras,
+  };
+}
+
+function recordingMethods(link: ReturnType<typeof useRecordingLink>) {
+  return {
+    stopRecording: link.stopRecording,
+    branch: link.branch,
+    checkpoints: link.points,
+    cancelRecording: link.cancel,
+    scrub: link.scrub,
+    seek: link.seek,
+    sought: link.sought,
   };
 }
 

@@ -5,6 +5,7 @@ import { readLabels, type TryLabels } from './tryLabels';
 import type { TryRecord } from './tries';
 import { readMotion } from './trySearch/motion';
 import type { MotionTrace } from './trySearch/types';
+import { readTryBranch, type TryBranch } from './tryBranch';
 
 export const TRY_FILE_VERSION = 1;
 
@@ -45,6 +46,7 @@ export const originLabel = (origin: TryOrigin | undefined) => {
 };
 
 export interface StoredTry {
+  branch?: TryBranch;
   version: typeof TRY_FILE_VERSION;
   id: string;
   sceneId: string;
@@ -75,6 +77,7 @@ export interface StoredTry {
 }
 
 export interface TrySummary {
+  branch?: TryBranch;
   id: string;
   sceneId: string;
   robot: string;
@@ -138,6 +141,7 @@ export function storedTryOf(record: TryRecord, context: TryContext): StoredTry {
     outcome: { verdict: record.passed ? 'passed' : 'failed', margin: record.margin },
     seed: manifest.seed,
     sourceTry: manifest.source ?? null,
+    ...(manifest.branch ? { branch: structuredClone(manifest.branch) } : {}),
     faults: manifest.faults ?? [],
     ...(manifest.commands !== undefined ? { commands: manifest.commands } : {}),
     ...(manifest.world !== undefined ? { world: manifest.world } : {}),
@@ -165,6 +169,7 @@ export function tryRecordOf(stored: StoredTry): TryRecord {
       ...(stored.commands !== undefined ? { commands: stored.commands } : {}),
       ...(stored.world !== undefined ? { world: stored.world } : {}),
       ...(stored.sourceTry ? { source: stored.sourceTry } : {}),
+      ...(stored.branch ? { branch: structuredClone(stored.branch) } : {}),
     },
     ...(stored.source === 'generated' ? { generated: true as const } : {}),
     ...(stored.source === 'real' ? { real: true as const } : {}),
@@ -187,6 +192,7 @@ export const summaryRecord = (summary: TrySummary): TryRecord =>
     outcome: summary.outcome,
     seed: summary.seed,
     sourceTry: summary.sourceTry,
+    ...(summary.branch ? { branch: summary.branch } : {}),
     faults: [],
   });
 
@@ -294,10 +300,28 @@ const hasSearchFields = (v: Raw) =>
   (v.motion === undefined || readMotion(v.motion) !== null) &&
   (v.labels === undefined || readLabels(v.labels) !== null);
 
+function branchFits(value: Raw): boolean {
+  if (value.branch === undefined) return true;
+
+  const branch = readTryBranch(value.branch);
+
+  return (
+    !!branch &&
+    !!value.sourceTry &&
+    value.sourceTry !== value.id &&
+    value.source === 'case' &&
+    value.case !== null &&
+    branch.frame < (value.frames as number) &&
+    branch.time <= (value.seconds as number)
+  );
+}
+
 export function readStoredTry(value: unknown): StoredTry | null {
   const valid = isObject(value) && hasIds(value) && hasNumbers(value) && hasImportFields(value);
 
   if (!valid || !hasSearchFields(value)) return null;
+
+  if (!branchFits(value)) return null;
 
   const robot = readRobot(value.robot);
   const kase = readCase(value.case);
@@ -307,6 +331,7 @@ export function readStoredTry(value: unknown): StoredTry | null {
   if (!robot || kase === undefined || !outcome || faults.some((f) => !f)) return null;
 
   const labels = value.labels === undefined ? null : readLabels(value.labels);
+  const branch = readTryBranch(value.branch);
 
   return {
     ...(value as unknown as StoredTry),
@@ -315,6 +340,7 @@ export function readStoredTry(value: unknown): StoredTry | null {
     outcome,
     faults: faults as RecordedFault[],
     ...(labels ? { labels } : {}),
+    ...(branch ? { branch } : {}),
   };
 }
 
@@ -333,6 +359,7 @@ export const summaryOf = (stored: StoredTry, held: { recording: boolean; strip: 
   outcome: stored.outcome,
   seed: stored.seed,
   sourceTry: stored.sourceTry,
+  ...(stored.branch ? { branch: structuredClone(stored.branch) } : {}),
   origin: originLabel(stored.origin),
   task: stored.task ?? null,
   tags: stored.labels?.tags ?? [],

@@ -20,6 +20,7 @@ import { useCaseBuilder } from './useCaseBuilder';
 import { useCaseNames } from './useCaseNames';
 import type { RoutineSkills } from './routineCheck';
 import { useAddAndTry } from './useAddAndTry';
+import { caseTryCallbacks, caseBranchActions } from './caseBranchActions';
 import { useCaseTry } from './useCaseTry';
 import { useRealRobotTries } from './useRealRobotTries';
 import { useDatasetExport } from './useDatasetExport';
@@ -199,8 +200,7 @@ export function useCases(options: CasesOptions) {
     joints: project.joints ?? [],
     active,
     scope: project.cases?.find((kase) => kase.id === activeId) ?? null,
-    onTry,
-    onRefuse: (message) => showToast(message),
+    ...caseTryCallbacks(project.cases, onTries, onTry, showToast),
   });
 
   const addAndTry = useAddAndTry({ add, active, attempt });
@@ -210,6 +210,7 @@ export function useCases(options: CasesOptions) {
   });
 
   return {
+    branch: caseBranchActions({ timeline, attempt, sim, cases, rig, parts, partners, activate: setActiveId }),
     workbench,
     cases,
     active,

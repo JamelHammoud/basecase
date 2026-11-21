@@ -114,7 +114,7 @@ The history transport is capped at 64 MiB, 1,000 versions, 100,000 content block
 
 ### Editable board persistence
 
-Ordinary scene settings retain the board’s host identity, local constraints, placements and mounting-hardware references. Document history tracks the board with its parts, including the screws and standoffs created with it. The existing whole-project version commit remains available beside the board commit after the scene-history integration. Portable decoding refuses malformed board records before Inspector controls read them. `wiring/boardPackage.test.ts`, `workspace/boardHistory.test.ts` and `wiring/boardValidation.test.ts` cover deterministic round trips, undo and redo, and damaged imports. [Board coverage](build.md#board-placement-records) and [evidence](../notes/testing-build.md#board-placement-records).
+Ordinary scene settings retain the board’s host identity, local constraints, placements and mounting-hardware references. Document history tracks the board with its parts, including the screws and standoffs created with it. The existing whole-project version commit remains available beside the board commit after the scene-history integration. Portable decoding refuses malformed board records before Inspector controls read them. `wiring/boardPackage.test.ts`, `workspace/boardHistory.test.ts` and `wiring/boardValidation.test.ts` cover deterministic round trips, undo and redo, and damaged imports. [Board coverage](build.md#board-placement-records) and [evidence](../notes/testing-electrical.md#board-placement-records).
 
 ### Appearance assets
 

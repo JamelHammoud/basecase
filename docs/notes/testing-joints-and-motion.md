@@ -24,6 +24,10 @@ The history integration test compresses and decodes a real scene, exercises push
 
 In pull request #1293, Linux CI reported the failing browser test at 40.576 seconds with one retry. Reopening the export expected two tabs but retained one. The generic browser harness returns `{}` for both `save-scene` and `scene`, so it cannot persist and reopen the exported record. The redundant export and reopen phase was removed instead of adding storage stubs or extending its wait. `src/sim/passiveHistory.test.ts` retains real scene compression and reload coverage, including the complete joint declaration and document undo and redo. The revised browser path has not been timed locally. CI owns its execution.
 
+
+
+Passive declarations do not create missing-servo or torque-estimate warnings. They remain in the rig and range sweeps. Payload mapping rejects a chain containing passive motion rather than using an old effort rating as a motor. Walk and falls keys hash full declarations, so changes invalidate cached evidence without a new version or cache format.
+
 ## Leader context menu
 
 Issue [#1441](https://github.com/JamelHammoud/basecase/issues/1441) reports `offers Make a Leader on a part of the arm` at 34 seconds in [run 43864963744](https://github.com/JamelHammoud/basecase/actions/runs/43864963744). The test switched back to the first scene after the leader creation test, opened Layers, right-clicked `link3` and counted one Make a Leader menu item. It never invoked that item. The exact source of the elapsed time was not established or reproduced locally.

@@ -44,5 +44,11 @@ export function importedWorldItems(ref: ImportedWorldRef | undefined): WorldItem
 }
 
 export function caseWorldItems(kase: Pick<Case, 'world'>, worldColliders?: WorldItem[]): WorldItem[] {
-  return [...kase.world.objects.map(worldItem), ...(worldColliders ?? importedWorldItems(kase.world.imported))];
+  const objects = kase.world.objects.map((object) => {
+    const item = worldItem(object);
+
+    return object.id === kase.world.pickTarget ? { ...item, sourcePartId: object.id } : item;
+  });
+
+  return [...objects, ...(worldColliders ?? importedWorldItems(kase.world.imported))];
 }

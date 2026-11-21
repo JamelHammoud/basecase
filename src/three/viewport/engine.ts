@@ -1,3 +1,4 @@
+import { syncSceneParts } from './sceneSources';
 import { wiringReader } from './wiringReader';
 import type * as THREE from 'three';
 import { fastenerInput } from '../../assembly/fastenerSpec';
@@ -230,7 +231,7 @@ export class ViewportEngine {
 
     if (meshChanged || previous.worldParts !== props.worldParts) this.syncWorld();
 
-    if (meshChanged || changed(previous, props, ['parts', 'selectedPartIds'])) this.syncScene();
+    if (meshChanged || changed(previous, props, ['parts', 'selectedPartIds', 'worldParts'])) this.syncScene();
     else if (props.pose !== previous.pose || props.poseOwners !== previous.poseOwners) this.applyPose();
 
     if (changed(previous, props, GIZMO_KEYS) || Boolean(previous.onGrab) !== Boolean(props.onGrab))
@@ -433,9 +434,7 @@ export class ViewportEngine {
   }
 
   private syncScene(): void {
-    const { parts, selectedPartIds } = this.props;
-
-    this.ctx.layer.sync(parts, new Set(selectedPartIds), this.meshVersion);
+    syncSceneParts(this.ctx, this.props, this.meshVersion);
     this.afterBuild();
     this.scheduleBuilds();
   }

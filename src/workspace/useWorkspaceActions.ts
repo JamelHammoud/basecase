@@ -18,6 +18,7 @@ import { useSelectionOps } from './useSelectionOps';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { useWrapRobot } from './useWrapRobot';
 import { useBoard } from './useBoard';
+import { useGripperFingers } from './useGripperFingers';
 
 export function useWorkspaceActions(core: WorkspaceCore) {
   const pose = usePoseActions(core);
@@ -50,6 +51,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
   });
 
   return {
+    fingers: useGripperFingers(core),
     board: useBoard(core),
     pose,
     robots,

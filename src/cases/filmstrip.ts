@@ -5,6 +5,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 import { framePoses } from '../sim/recorder';
 import type { ScenePart } from '../types/robotics';
+import { withoutWorldSources } from './sourceParts';
 import type { V3 } from '../utils/kinematics';
 
 export interface FilmBox {
@@ -37,7 +38,9 @@ export const partBox = (p: ScenePart, world: boolean): FilmBox => ({
 });
 
 export const filmBoxes = (parts: ScenePart[], world: ScenePart[]): FilmBox[] => [
-  ...parts.filter((p) => p.visible && p.role === 'solid').map((p) => partBox(p, false)),
+  ...withoutWorldSources(parts, world)
+    .filter((p) => p.visible && p.role === 'solid')
+    .map((p) => partBox(p, false)),
   ...world.map((p) => partBox(p, true)),
 ];
 

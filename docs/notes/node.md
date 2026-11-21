@@ -818,6 +818,15 @@ Review of #1963 reproduced a producer-registration defect in the new daily `ux` 
 
 Review also removed duplicated documentation guidance, aligned the audit and review briefs with CI-owned browser execution and kept each audit fix pull request focused on one shared cause. Coverage requires a nonempty report per area. It does not mechanically establish that the source or browser evidence is accurate. No live audit, browser assertion run, visual judgment, hosted scheduling observation or throughput measurement was performed in this review. The daily audit and broader review selection have no measured throughput improvement yet.
 
+## IPv6 embedded IPv4 fetch filter
+
+Issue #1945 reports that `isPublicAddress` at `787b1efd9` accepted IPv4-compatible loopback, 6to4 loopback, local-use NAT64 loopback, Teredo, site-local and IPv4-translated loopback addresses. The affected inputs are retained in `electron/publicFetch.test.mjs`, alongside dotted and hexadecimal mapped forms, site-local upper-bound coverage, documentation and discard-only addresses. Each rejected URL must fail before the stubbed fetch receives a request. Public native IPv6, mapped IPv4, 6to4 and Teredo client addresses remain accepted.
+
+The reported Teredo address decodes to 192.0.2.45, an IPv4 documentation address. The IPv4 denylist now includes all three documentation subnets so the same rule covers direct, mapped and tunnel addresses. The standard NAT64 range remains refused outright. Local-use NAT64, obsolete compatible and translated forms are also refused outright. 6to4 checks its gateway IPv4 address and Teredo checks its inverted client IPv4 address. Scoped literals fail the address predicate and URL parsing refuses scoped URL hosts.
+
+These deterministic tests establish filtering and URL normalization behavior, not private-host reachability. No tunnel or NAT64 route was configured and no request to a private host was attempted. Actual SSRF impact depends on host routing. DNS resolution followed by a separate fetch resolution retains the existing rebinding window.
+
+Review reproduced four further omissions at `a8e336e5c`: `100:0:0:1::1`, `2001:2::1`, `3fff::1` and `5f00::1` each returned true from `isPublicAddress`, and a request to `http://[5f00::1]/` reached a stubbed fetch once. The [IANA IPv6 special-purpose registry](https://www.iana.org/assignments/iana-ipv6-special-registry/) marks their dummy, benchmarking, documentation and SRv6 allocations as not globally reachable. Those four prefixes are now refused, with lower and upper range probes in `electron/publicFetch.test.mjs`. The same file checks rejection of a mixed public/private DNS answer list, refusal of a nonpublic IPv6 redirect before a second fetch, and scoped literals. These probes use stubs, not live network routes.
 
 ## ACP permission tool identity
 

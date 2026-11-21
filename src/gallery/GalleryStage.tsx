@@ -1,4 +1,4 @@
-import React, { useEffect, useEffectEvent, useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef } from 'react';
 import type { SeedReplay } from '../cases/seedReplay';
 import { GalleryReplayControls } from './GalleryReplayControls';
 import { scaledToReach } from '../cases/scale';
@@ -31,7 +31,7 @@ export const GalleryStage: React.FC<{
   const velocity = useRef<VelocitySource | null>(null);
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const { parts, joints } = bundle.robot;
-  const project: ProjectSettings = { ...DEFAULT_PROJECT, joints };
+  const project = useMemo<ProjectSettings>(() => ({ ...DEFAULT_PROJECT, joints }), [joints]);
   const rig = buildRig(joints, parts);
   const sim = useSimulation({ parts, project, rig, pose: undefined, viewportRef, restDeltas: NO_POSE, velocity });
   const { drive } = sim;

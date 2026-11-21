@@ -802,6 +802,8 @@ Windows retains Open Scene, and Linux and macOS retain all five tests. The Windo
 
 [Incident evidence and limits](../notes/testing-gallery.md).
 
+Gallery startup retains its project object with `useMemo` keyed by the bundle's joints. Compiler output leaves this object allocation inside every render without an explicit memo. Simulation cancels preparation when project identity changes, so a loading render must retain the same project. The existing gallery rover, shared joystick and isolation walkthroughs require successful startup before driving or mounting code panels. [Startup cancellation evidence](../notes/testing-gallery.md#gallery-project-identity-during-startup) records the failed CI assertions and compiler inspection.
+
 ### Recorded video
 
 `src/vision/tryFrameVideo.test.ts` is quarantined through 28 November 2026 under [#1400](https://github.com/JamelHammoud/basecase/issues/1400) after setup failures on Linux and Windows, pending startup tracing and measured restoration. Active coverage temporarily lacks its combined real MP4 decoding acceptance. Real decoded-pixel, clip-offset and rotation assertions and both deadlines remain unchanged in quarantine observations. `src/vision/tryFrameMedia.test.ts` retains clip-offset, boundary, drawing and disposal checks, while `src/vision/tryFrames.test.ts` checks saved-try extraction, timestamps, labels and source validation on every platform.

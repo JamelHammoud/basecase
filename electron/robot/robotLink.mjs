@@ -4,7 +4,6 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   calibrationMounts,
-  checkedCommand,
   checkedMounts,
   checkedRobotSpec,
   daemonArgs,
@@ -17,15 +16,17 @@ import {
 import { emulatedHorn, statusWithLinkAngles } from './emulatedHorns.mjs';
 import { threadPipe, workerPipe } from './daemonPipe.mjs';
 import { measuredRadians } from './intentPacer.mjs';
-import { OperateRecorder } from './operateRecorder.mjs';
+import { OperateRecorder, RECORDING_STORAGE_FAILURE } from './operateRecorder.mjs';
 import { readRecordedRun } from './recordedRun.mjs';
 import { checkedPolicyRefs } from './robotPolicy.mjs';
 import { UNITS_FILE, unitsJson } from './servoUnits.mjs';
+import { BenchControl, UNDOCUMENTED } from './benchControl.mjs';
+
+export { UNDOCUMENTED } from './benchControl.mjs';
 
 export const DAEMON_ENV = 'BASECASE_ROBOT_DAEMON';
 export const DAEMON_FILE = process.platform === 'win32' ? 'robot-daemon.exe' : 'robot-daemon';
 export const NOT_CONNECTED = { ok: false, message: 'Connect an emulated robot first.' };
-export const UNDOCUMENTED = { ok: false, message: 'The robot only takes the documented commands.' };
 
 const NEVER_STARTED = 'The robot daemon stopped before it started.';
 const UNSAVED = { ok: false, message: "Couldn't save the calibration." };
@@ -76,7 +77,8 @@ const CENTERED = { zero_counts: 2048, direction: 1 };
 
 function statusRadians(status, session) {
   const joints = Array.isArray(status.joints) ? status.joints : [];
-  const mounts = isServoFamily(session.spec) ? session.calibration.joints : [];
+  const calibration = session.recorder?.session?.bodyMotion ? session.motionCalibration : session.calibration;
+  const mounts = isServoFamily(session.spec) ? calibration.joints : [];
 
   return session.spec.ids.map((id) => {
     const position = joints.find((j) => j?.id === id)?.position;
@@ -153,7 +155,15 @@ export class RobotLink {
 
     const calibration = isServoFamily(s.spec) ? calibrationMounts(s.calibration) : null;
 
-    return { connected: true, spec: s.spec, hello: s.hello, status: s.status, mode: s.mode, calibration };
+    return {
+      connected: true,
+      spec: s.spec,
+      hello: s.hello,
+      status: s.status,
+      mode: s.mode,
+      calibration,
+      control: this.controlFor(s).snapshot(),
+    };
   }
 
   connect(ask) {
@@ -174,6 +184,12 @@ export class RobotLink {
     return { ok: true };
   }
 
+  controlFor(session) {
+    session.control ??= new BenchControl({ session, emit: this.emit, clock: this.clock });
+
+    return session.control;
+  }
+
   recorderFor(session, policy) {
     if (!this.tries) return null;
 
@@ -183,7 +199,8 @@ export class RobotLink {
       radians: (status) => statusRadians(status, session),
       clock: this.clock,
       onClosed: ({ joints, ...closed }) => {
-        this.lastRecording = closed.manifest && joints ? { id: closed.id, joints } : null;
+        this.lastRecording =
+          closed.manifest && joints ? { id: closed.id, joints, bodyMotion: closed.manifest.bodyMotion } : null;
         this.emit({ event: 'recorded', ...closed });
       },
     });
@@ -217,9 +234,14 @@ export class RobotLink {
     session.recorder = this.recorderFor(session, policy);
     this.session = session;
     session.pipe = this.openPipe({
+      clock: this.clock,
       binary: this.binary,
       args: daemonArgs(spec, artefacts, this.seed),
       on: {
+        intent: (joints, tag) => this.recordDelivered(session, joints, tag),
+        idle: () => {
+          if (this.session === session) this.controlFor(session).flushCompletion();
+        },
         line: (line) => this.onLine(session, line),
         stderr: (chunk) => {
           session.stderr = `${session.stderr}${chunk}`.slice(-2000);
@@ -242,18 +264,24 @@ export class RobotLink {
 
     if (event.event === 'hello') session.hello = event;
 
-    if (event.event === 'status') session.status = event;
+    if (event.event === 'status') {
+      session.status = event;
+      session.heardAt = this.clock();
+    }
+
+    if (event.event === 'stopped') this.controlFor(session).revoke(false, 'fault');
 
     if (typeof event.mode === 'string' && event.event !== 'completed') this.onMode(session, event);
 
     if (event.event === 'fault') {
       this.emit(event);
-      session.recorder?.event(event);
+      this.recordSafely(session, () => session.recorder?.event(event));
+      this.controlFor(session).revoke(false, 'fault');
 
       return;
     }
 
-    session.recorder?.event(event);
+    this.recordSafely(session, () => session.recorder?.event(event));
     this.emit(event);
   }
 
@@ -264,7 +292,9 @@ export class RobotLink {
   onMode(session, event) {
     session.mode = event.mode;
 
-    if (motorsRun(event.mode))
+    if (event.mode !== 'test') this.controlFor(session).revoke(true, 'stale');
+
+    if (motorsRun(event.mode) && !this.controlFor(session).paused)
       session.pipe.drive(measuredRadians(session.status, session.spec.ids, session.calibration.joints));
     else session.pipe.idle();
   }
@@ -278,9 +308,11 @@ export class RobotLink {
 
     if (!session) return NOT_CONNECTED;
 
-    const command = checkedCommand(ask, session.spec.ids.length);
+    const checked = this.controlFor(session).command(ask);
 
-    if (!command) return UNDOCUMENTED;
+    if (!checked.command) return checked;
+
+    const { command } = checked;
 
     if (command.cmd === 'intent') this.intend(session, command.joints);
     else this.write(session, command);
@@ -289,9 +321,39 @@ export class RobotLink {
   }
 
   intend(session, joints) {
-    session.pipe.hold(joints);
+    const control = this.controlFor(session);
 
-    if (motorsRun(session.mode) && session.status?.run === 'running') session.recorder?.intent(joints);
+    session.pipe.hold(control.held ? { joints, tag: control.snapshot() } : joints);
+
+    if (motorsRun(session.mode) && session.status?.run === 'running' && !session.recorder?.session?.bodyMotion)
+      session.recorder?.intent(joints);
+  }
+
+  recordDelivered(session, joints, tag) {
+    const motion = session.recorder?.session?.bodyMotion;
+
+    if (
+      this.session !== session ||
+      !motion ||
+      tag?.connection !== motion.connection ||
+      tag?.revision !== motion.revision
+    )
+      return;
+
+    this.recordSafely(session, () => session.recorder.intent(joints, tag.at));
+  }
+
+  recordSafely(session, write) {
+    try {
+      write();
+
+      return true;
+    } catch {
+      this.controlFor(session).revoke(true, 'storage');
+      session.recorder?.failMotion();
+
+      return false;
+    }
   }
 
   readRun() {
@@ -304,7 +366,14 @@ export class RobotLink {
     if (!recorder) return this.session ? { ok: true } : NOT_CONNECTED;
 
     const scene = ask && typeof ask === 'object' && Object.keys(ask).join() === 'scene';
-    const taken = scene ? recorder.setContext(ask.scene) : recorder.sample(ask);
+    let taken = false;
+    const written = this.recordSafely(this.session, () => {
+      taken = scene ? recorder.setContext(ask.scene) : recorder.sample(ask);
+    });
+
+    if (!written) return { ok: false, message: RECORDING_STORAGE_FAILURE };
+
+    if (taken && scene && recorder.motionContextChanged()) this.controlFor(this.session).revoke(true, 'stale');
 
     return taken ? { ok: true } : UNDOCUMENTED;
   }
@@ -344,6 +413,7 @@ export class RobotLink {
 
     if (!session) return { ok: true };
 
+    this.controlFor(session).revoke(true, 'stale');
     session.recorder?.setPolicy(hashOf(policy));
     this.write(session, { cmd: 'recheck' });
 
@@ -358,6 +428,8 @@ export class RobotLink {
     const mounts = isServoFamily(session.spec) ? checkedMounts(ask, session.spec) : null;
 
     if (!mounts) return UNDOCUMENTED;
+
+    this.controlFor(session).revoke(true, 'stale');
 
     const calibration = mountedCalibration(session.calibration, mounts);
 
@@ -375,6 +447,7 @@ export class RobotLink {
 
     if (!session) return { ok: true };
 
+    this.controlFor(session).revoke(true, 'disconnect');
     session.asked = true;
     clearInterval(session.aliveTimer);
     session.pipe.end();
@@ -387,6 +460,8 @@ export class RobotLink {
     if (this.session !== session) return;
 
     clearInterval(session.aliveTimer);
+    this.controlFor(session).revoke(false, 'disconnect');
+    this.controlFor(session).flushCompletion('disconnect');
     session.recorder?.close('disconnect');
     this.session = null;
     clearTimeout(session.killTimer);

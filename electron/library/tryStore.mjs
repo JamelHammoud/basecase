@@ -352,7 +352,11 @@ export class TryStore {
 function quietly(work) {
   try {
     work();
-  } catch {}
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export const sessionSink = (store) => ({

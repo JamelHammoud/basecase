@@ -27,11 +27,15 @@ export async function analyzeBodyEvidence(
 
   if (!action.current()) return null;
 
-  if (outcome.kind !== 'analyzed') return outcome;
+  if (outcome.kind !== 'analyzed' && !saved.experiment) return outcome;
 
   if (!(await ports.unchanged(action.reference)) || !action.current()) return null;
 
-  const next = await ports.remember({ ...saved, result: outcome });
+  const next = await ports.remember({
+    ...saved,
+    result: outcome.kind === 'analyzed' ? outcome : undefined,
+    refusal: outcome.kind === 'refused' ? outcome.reason : undefined,
+  });
 
   if (!action.current()) return null;
 

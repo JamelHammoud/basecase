@@ -14,6 +14,7 @@ export interface RunIntent {
 }
 
 export interface RobotRun {
+  observations?: 'servo-independent-1';
   joints: string[];
   statuses: RunStatus[];
   intents: RunIntent[];

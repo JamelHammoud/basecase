@@ -28,7 +28,9 @@ import { useRobot } from '../robot/useRobot';
 import type { Simulation } from '../sim/useSimulation';
 import type { BodyRecordingContext } from '../reality/bodyRecordingEvidence';
 import { bodyRecordingContext, retainBodyRecording } from '../reality/bodyRecordingEvidence';
-import { withBodyEvidence } from '../reality/bodyEvidence';
+import { readBodyEvidenceContent, withBodyEvidence } from '../reality/bodyEvidence';
+import { retainBodyExperiment } from '../reality/bodyExperimentEvidence';
+import type { SimModel } from '../sim/mjcfTypes';
 import { unitHistories } from '../reality/projectCalibrations';
 import type { BodyProjectUpdate } from '../reality/bodyEvidence';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
@@ -52,13 +54,23 @@ const SAFE_ID = /^[\w-]{1,128}$/;
 const recordedTry = (event: RobotEvent): StoredTry | null =>
   event.event === 'recorded' ? readStoredTry(event.manifest) : null;
 
-async function replayed(sim: Simulation, stored: StoredTry, video: VideoSegment | null) {
+async function experimentOriginal(stored: StoredTry) {
+  if (!stored.bodyMotion) return null;
+
+  const original = await readBodyEvidenceContent(stored.bodyMotion.recommendation);
+
+  if (!original) throw new Error('Couldn’t read the saved body evidence.');
+
+  return original;
+}
+
+async function replayed(sim: Simulation, stored: StoredTry, video: VideoSegment | null, original?: SimModel) {
   const text = await loadSession(stored.id);
   const log = text ? readOperateLog(text) : null;
 
   if (!log?.statuses.length) return;
 
-  const model = sim.modelNow() ?? (await sim.buildModel());
+  const model = original ?? sim.modelNow() ?? (await sim.buildModel());
   const episode = operateEpisode(log, stored.robot.joints.length);
   const job = openDataImport();
 
@@ -161,13 +173,20 @@ export function useOperateTries({
 
     const unit = unitOfEvent(event);
     const session = await loadSession(stored.id);
+
+    if (stored.bodyMotion) noteStoredTry(stored);
+
+    const original = await experimentOriginal(stored);
+
+    await replayed(sim, stored, video, original?.snapshot.request.model);
+
     const evidence =
       session &&
-      (await retainBodyRecording({ context: contexts.current.get(unit) ?? null, stored, session, project }).catch(
-        () => null,
-      ));
-
-    await replayed(sim, stored, video);
+      (await (original
+        ? retainBodyExperiment({ recommendation: original.reference, stored, session })
+        : retainBodyRecording({ context: contexts.current.get(unit) ?? null, stored, session, project }).catch(
+            () => null,
+          )));
 
     if (evidence) updateProject((current) => withBodyEvidence(current, evidence));
   });

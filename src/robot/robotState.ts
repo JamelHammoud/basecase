@@ -69,7 +69,12 @@ const TEST_LADDER = LADDER.slice(0, LADDER.indexOf('test') + 1);
 export const ladderFor = (spec: { family: RobotFamily } | null | undefined): readonly RobotMode[] =>
   spec && TEST_TOP_FAMILIES.includes(spec.family) ? TEST_LADDER : LADDER;
 
-export type ConnectReply = { ok: true } | { ok: false; message: string };
+export interface RobotControl {
+  connection: string;
+  revision: number;
+}
+
+export type ConnectReply = { ok: true; control?: RobotControl } | { ok: false; message: string };
 
 export interface JointStatus {
   id: number | null;
@@ -130,6 +135,7 @@ export interface RobotMount {
 }
 
 export interface RobotLinkState {
+  control?: RobotControl;
   endpoint?: { host: string; port: number };
   connected: boolean;
   spec: RobotSpec | null;

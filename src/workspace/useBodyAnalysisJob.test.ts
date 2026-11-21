@@ -18,7 +18,10 @@ vi.mock('react', () => ({
   useRef: (current: unknown) => ({ current }),
   useState: (value: unknown) => [value, vi.fn()],
 }));
-vi.mock('../robot/robotStore', () => ({ selectedUnit: () => state.unit }));
+vi.mock('../robot/robotStore', () => ({
+  selectedUnit: () => state.unit,
+  robotSnapshot: () => ({ link: 'connected' }),
+}));
 vi.mock('../reality/bodyClient', () => ({
   bodyClient: () => ({ recommend: state.recommend, dispose: state.dispose }),
 }));
@@ -70,6 +73,7 @@ it.each(['unit', 'scene', 'source', 'calibration', 'cancel'])(
 
     job.run('recommend', [0]);
     await vi.waitFor(() => expect(state.recommend).toHaveBeenCalledOnce());
+    expect(state.recommend.mock.calls[0][0].speedRadS).toBe(0.5);
 
     if (cause === 'unit') state.unit = 'arm-b';
 

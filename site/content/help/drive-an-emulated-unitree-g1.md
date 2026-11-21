@@ -34,3 +34,5 @@ Scenes with ideal tendons run in Simulate. Operate refuses those scenes, includi
 For a fault or disconnect, [inspect the unit's retained problems](/help/inspect-fleet-problems). Acknowledging an incident doesn't hand control back to the app.
 
 In this build, a real G1 stays locked, so only the emulated G1 can connect.
+
+The emulated G1 can’t execute a [recommended body motion](/help/run-a-recommended-body-motion). Running a recommendation requires a local emulated Feetech or Dynamixel unit.

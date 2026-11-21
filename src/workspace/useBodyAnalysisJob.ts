@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { bodyClient } from '../reality/bodyClient';
-import { selectedUnit } from '../robot/robotStore';
+import { selectedUnit, robotSnapshot } from '../robot/robotStore';
 import { withBodyEvidence, type BodyEvidenceRef } from '../reality/bodyEvidence';
 import type { BodyAnalysisOutcome } from '../reality/bodyAnalysisTypes';
 import type { BodyMotionOutcome } from '../reality/bodyMotionTypes';
@@ -8,8 +8,13 @@ import { analyzeBodyEvidence, bodyAnalysisCurrent } from './bodyAnalysisAction';
 import { recommendBodyEvidence } from './bodyMotionAction';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { errorMessage } from '../utils/errorMessage';
+import type { BodyExperimentEvidence } from '../reality/bodyExperimentTypes';
 
 export interface BodyInvestigationOutcome {
+  experiment?: BodyExperimentEvidence;
+  prediction?: BodyMotionOutcome;
+  commands?: number;
+  samples?: number;
   analysis?: BodyAnalysisOutcome | null;
   motion?: BodyMotionOutcome;
 }
@@ -86,8 +91,12 @@ export function useBodyAnalysisJob(input: {
           ? { analysis: await analyzeBodyEvidence({ ...action, analyze: client.analyze }) }
           : {
               motion:
-                (await recommendBodyEvidence({ ...action, selected: parameters, recommend: client.recommend })) ??
-                undefined,
+                (await recommendBodyEvidence({
+                  ...action,
+                  selected: parameters,
+                  recommend: client.recommend,
+                  speedRadS: robotSnapshot(unit).link === 'connected' ? 0.5 : undefined,
+                })) ?? undefined,
             };
 
       if (Object.values(outcome).some(Boolean) && state.current.generation === ticket && selectedUnit() === unit)

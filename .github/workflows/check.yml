@@ -134,11 +134,11 @@ jobs:
           mapfile -t files < <(git diff --name-only --diff-filter=ACMR HEAD^1 HEAD)
           if [ "${#files[@]}" -eq 0 ]; then echo "Nothing changed to check."; exit 0; fi
           node tools/check-changed.mjs "${files[@]}"
-      - name: Test robot daemon arguments when its Rust code changed
-        if: ${{ github.event_name == 'pull_request' }}
+      - name: Test robot daemon arguments and bounded recordings
+        if: ${{ matrix.shard == '1/1' || matrix.shard == '1/2' }}
         run: |
-          if git diff --name-only HEAD^1 HEAD | grep -q '^hw/'; then
-            cargo test --locked --manifest-path hw/Cargo.toml -p robot-daemon --bin robot-daemon
+          if [ "${{ github.event_name }}" != 'pull_request' ] || git diff --name-only HEAD^1 HEAD | grep -q '^hw/'; then
+            cargo test --locked --manifest-path hw/Cargo.toml -p robot-daemon --bin robot-daemon --test body_motion
           fi
       - name: Check types and unit tests
         if: ${{ github.event_name != 'pull_request' }}

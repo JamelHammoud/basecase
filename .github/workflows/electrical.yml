@@ -30,8 +30,7 @@ jobs:
       - name: Install pinned local routing tools
         if: steps.routing.outputs.needed == 'true'
         run: node tools/electrical/installRouter.mjs --directory scratch/routing-tools
-      - name: Install pinned KiCad CLI for native Windows fabrication checks
-        if: runner.os == 'Windows'
+      - name: Install pinned KiCad for native fabrication checks
         run: node tools/electrical/installCli.mjs
       - name: Validate KiCad 9.0.6 ERC, PCB pads and DRC fault controls
         if: runner.os == 'Linux'

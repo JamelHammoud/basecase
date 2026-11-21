@@ -38,6 +38,8 @@ Body fitting runs in the desktop app. Real motors stay locked in the current run
 
 You can also choose **Fit Body** from [[⌘K]]. The fit uses up to the last 20 seconds of the current run, or the latest completed run after disconnect.
 
+In **Analyze Try**, **Fit Body** uses the selected recording. [Recommended servo-emulator recordings](/help/run-a-recommended-body-motion) can’t establish body mass, payload or floor contact.
+
 If you change the robot or its calibration while fitting runs, Basecase discards the result. Click **Fit Body** again after your changes.
 
 ![Can’t tell in Operate after an inconclusive body fit](/help/fit-a-robots-body-from-a-recorded-run/cant-tell.png)

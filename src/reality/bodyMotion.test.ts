@@ -5,6 +5,7 @@ import { analyzeBody } from './bodyAnalysis';
 import { bodyAnalysisScenario, BODY_ANALYSIS_SCENARIOS } from './bodyAnalysisMatrix.fixtures';
 import { recommendBodyMotion } from './bodyMotion';
 import { BODY_MOTION_LIMITS } from './bodyMotionTypes';
+import { fitBody } from './fitBody';
 
 let mj: MainModule;
 
@@ -15,6 +16,13 @@ beforeAll(async () => {
 describe('next motion through production MuJoCo', () => {
   it.each(BODY_ANALYSIS_SCENARIOS)('returns a supported preview or truthful refusal for %s', async (name) => {
     const { request } = await bodyAnalysisScenario(mj, name);
+    const observed = { ...request, run: { ...request.run, observations: 'servo-independent-1' as const } };
+
+    expect(await analyzeBody(observed, { mj })).toEqual({ kind: 'refused', reason: 'backend', replays: 0 });
+    expect((await fitBody({ mj, model: request.model, robot: request.robot, run: observed.run })).verdict).toBe(
+      'cant-tell',
+    );
+
     const result = await analyzeBody(request, { mj });
 
     if (result.kind !== 'analyzed') throw new Error(result.reason);

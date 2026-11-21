@@ -13,6 +13,7 @@ import { median } from './verdict';
 import { bodyParameters, emptyBodyFit, unpackBodyParameters, type BodyParameter } from './bodyParameters';
 
 export interface BodyFitRequest {
+  validation?: RobotRun;
   model: SimModel;
   run: RobotRun;
   robot: string;
@@ -122,7 +123,7 @@ export async function fitBody(asked: BodyFitRequest): Promise<BodyCalibration> {
     ),
   };
 
-  if (!usable(request)) return result;
+  if (!supportedFitRequest(request)) return result;
 
   const joints = excitedBodyJoints(request.model, request.robot, request.run);
 
@@ -131,12 +132,14 @@ export async function fitBody(asked: BodyFitRequest): Promise<BodyCalibration> {
   const units = bodyErrorUnits(request.model, request.run, joints);
   const residuals = prepareBodyResiduals(request.run, joints);
   const ctx = { ...request, mj: request.mj ?? (await loadedMujoco()) };
-  const presetErrorRad = error(residuals.check(replayBody(ctx, emptyBodyFit())));
+  const validation = asked.validation ? { ...ctx, run: bodyRunWindow(asked.validation) } : ctx;
+  const check = asked.validation ? prepareBodyResiduals(validation.run, joints).check : residuals.check;
+  const presetErrorRad = error(check(replayBody(validation, emptyBodyFit())));
 
   if (presetErrorRad < 1e-6) return { ...result, evidence: { ...result.evidence, presetErrorRad, units } };
 
   const fitted = fitRun(ctx, bodyParameters(request.model, request.robot), residuals.fit);
-  const fittedErrorRad = error(residuals.check(fitted.predicted));
+  const fittedErrorRad = error(check(asked.validation ? replayBody(validation, fitted.fit) : fitted.predicted));
   const gain = 1 - fittedErrorRad / presetErrorRad;
   const kept = Number.isFinite(gain) && gain >= BODY_RUNG.passGain && believable(request.run, fittedErrorRad, joints);
 
@@ -146,4 +149,21 @@ export async function fitBody(asked: BodyFitRequest): Promise<BodyCalibration> {
     fit: kept ? fitted.fit : emptyBodyFit(),
     evidence: { presetErrorRad, fittedErrorRad, gain, units },
   };
+}
+
+function independentValidation(request: BodyFitRequest, validation: RobotRun): boolean {
+  return (
+    validation.observations !== 'servo-independent-1' &&
+    usable({ ...request, run: bodyRunWindow(validation), validation: undefined }) &&
+    request.run.joints.join('\0') === validation.joints.join('\0') &&
+    JSON.stringify(request.run.intents) !== JSON.stringify(validation.intents)
+  );
+}
+
+function supportedFitRequest(request: BodyFitRequest): boolean {
+  return (
+    usable(request) &&
+    request.run.observations !== 'servo-independent-1' &&
+    (!request.validation || independentValidation(request, request.validation))
+  );
 }

@@ -10,6 +10,7 @@ import type { BodyEvidenceSnapshot } from '../reality/bodyEvidence';
 const state = vi.hoisted(() => ({ values: [] as unknown[], index: 0, tries: [] as TrySummary[] }));
 
 vi.mock('react', () => ({
+  useEffectEvent: (callback: unknown) => callback,
   useEffect: vi.fn(),
   useLayoutEffect: vi.fn(),
   useRef: (current: unknown) => ({ current }),

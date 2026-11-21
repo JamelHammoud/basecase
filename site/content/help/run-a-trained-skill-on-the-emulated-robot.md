@@ -40,6 +40,8 @@ The policy runs in the app's simulation, and the selected robot copies what the 
 
 To run a trained policy, skip step 4 and choose the policy under **Control**. When you try a Case or run a Routine, the app streams it to the robot the same way.
 
+A [recommended body motion](/help/run-a-recommended-body-motion) owns the unit’s targets while it runs. In **Analyze Try**, choose **Cancel** to stop it before driving from the simulation.
+
 ## What the safety layer changes
 
 In **Test**, the safety layer limits each joint to 30% torque and 0.5 rad/s. A goal moves at most 0.02 rad every 20 ms and stays no more than 0.25 rad ahead of the servo's measured position, so a fast skill looks slower on the servos than on the canvas.

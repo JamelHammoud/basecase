@@ -1301,5 +1301,69 @@
     "until": "2026-11-28",
     "platform": "linux",
     "reason": "Check 44885120824 passed minimum-width Build layout, mounted another Build tab and selected the original, then exhausted 30000 ms clicking Build in openBuildReplay. The resolved tab became invisible. Active-tab handoff, panel state and actionability remain unresolved under existing owner #2016, separately from Windows electrical-row and retained-result failures. Linux retains the historical replay story and analytical solver, conservation, identity, persistence and disposal tests. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. No flake rate is claimed."
+  },
+  {
+    "file": "tools/electrical/fixtureBundle.test.mjs",
+    "test": "bundles and imports the real routeFixtures.ts dependency graph in Node",
+    "issue": 2018,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44887426902 exceeded the unchanged 5000 ms callback deadline for the route graph. Exact-revision diagnostic 44889745027 passed in 2374.964 ms with one worker and retries disabled, confirming intermittency without a rate or cause. Existing owner #2018 separates bundling, import, assertions and cleanup for both real graphs. Linux and macOS retain both probes, and ordinary electrical pipeline checks remain active on Windows. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on this platform with retries disabled. No flake rate is claimed."
+  },
+  {
+    "file": "src/reality/bodyMotion.test.ts",
+    "test": "next motion through production MuJoCo > returns a supported preview or truthful refusal for stationary rover",
+    "issue": 2017,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44887426902 exceeded the unchanged 5000 ms stationary-rover callback deadline on Linux. Exact-revision diagnostic 44889747894 passed in 4776.298395 ms with one worker and retries disabled, confirming intermittency without a rate or cause. Existing owner #2017 keeps fixture construction, analysis, deep comparison, candidate physics and repeated selection separate on each platform. The other nine scenarios, refusal, worker and lifecycle coverage remain active, and macOS retains the complete matrix. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on this platform with retries disabled. No flake rate is claimed."
+  },
+  {
+    "file": "tools/fleet/buildRepairReference.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44887426902 and exact-revision diagnostic 44889753590 exhausted the unchanged 10000 ms fleetFixture beforeAll deadline before authorization assertions. Existing owner #1401 separates PostgreSQL initialization, readiness, migration, HTTP startup and cleanup. Whole-file quarantine is required because setup precedes declaration filtering. macOS and fast repair identity, Fleet authorization and handler checks remain active. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on this platform with retries disabled. No flake rate is claimed."
+  },
+  {
+    "file": "src/three/composition/render.test.ts",
+    "test": "",
+    "issue": 2022,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44887426902 completed shared setup and twelve renderer declarations, then exceeded the unchanged 5000 ms scalar-cover-alpha callback deadline. Exact-revision diagnostic 44889750784 instead exhausted the unchanged 15000 ms shared setup deadline before any assertion. Existing composition owner #2022 retains these separate paths and coordinates shared setup with #1400. Whole-file quarantine covers the observed hook failure. Windows and macOS retain all thirteen renderer declarations. Linux retains scene, settings, client, workspace lifecycle and composition browser coverage. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on this platform with retries disabled. No flake rate is claimed."
+  },
+  {
+    "file": "e2e/appearance.e2e.test.ts",
+    "test": "finishes two parts, imports a local texture, changes scale and reloads the saved scene",
+    "issue": 2028,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44887426902 observed live and stored scale 25, then reloaded both parts at scale 10. Another attempt exhausted the unchanged 180000 ms callback deadline. Existing owner #2028 owns the Linux writer, autosave, transaction and reload boundaries independently of Windows. Original-first mixed editing and real asset, history and portable-file matrices remain active. macOS retains the combined story. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on this platform with retries disabled. No flake rate is claimed. Exact-revision diagnostic 44889803768 passed in 14177.22926 ms, confirming Linux intermittency without a rate."
+  },
+  {
+    "file": "e2e/buildRecords.e2e.test.ts",
+    "test": "resumes two independent frozen builds through Build after reload and source edits",
+    "issue": 2013,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44887426902 created and reopened both builds, then exhausted the unchanged 30000 ms action deadline finding Width (X) after source selection and Inspect. Existing owner #2013 owns the Linux source-selection and Inspector boundary separately from Windows creation and photos. macOS and the frozen-Kit, transaction, source-identity, repair, allocation and photo pipelines remain active. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on this platform with retries disabled. No flake rate is claimed. Exact-revision diagnostic 44889807034 instead missed Mark Incomplete after reload at line 60, before source editing, so reload and Inspector delivery remain separate unresolved paths."
+  },
+  {
+    "file": "e2e/print.e2e.test.ts",
+    "test": "puts the base on plate 1 and gives two idle printers different plates with Start Next",
+    "issue": 1853,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44887426902 reached build-order plate layout, then exhausted the unchanged 30000 ms action deadline on Voron B Start Next as its disabled button detached. Another attempt stalled finding Settings Printers, which is a separate boundary. Existing owner #1853 retains both paths independently from Windows. Linux retains the other print stories and fast fit, label, plan, tracker and fleet pipelines. macOS retains the complete browser story. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on this platform with retries disabled. No flake rate is claimed. Exact-revision diagnostic 44889810074 clicked Start Print but received zero backend sends at line 397, retaining a separate delivery failure."
+  },
+  {
+    "file": "e2e/continuation.e2e.test.ts",
+    "test": "cancels a manual branch when switching scenes and leaves the retained source unchanged",
+    "issue": 1026,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44887426902 never reached the source try clock at 1.5 seconds in one attempt and found no saved source try in another, before branch creation or scene switching. Existing reference-recording owner #1026 retains startup, clock, recording and persistence boundaries separately. Linux and macOS retain the browser declaration, while Windows retains fast checkpoint, cancellation, source-identity and persistence coverage. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on this platform with retries disabled. No flake rate is claimed. Exact-revision diagnostic 44889813364 passed in 24648.1903 ms, confirming intermittency without a rate."
   }
 ]

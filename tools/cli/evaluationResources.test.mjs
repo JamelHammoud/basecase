@@ -2,11 +2,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import loadMujoco from '@mujoco/mujoco';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { evaluationFixture } from './evaluationFixture.mjs';
 import { runEvaluation } from './evaluationRun.mjs';
 import { freezeEvaluation } from './evaluationFreeze.mjs';
 import { evaluationContext } from './evaluationContext.fixtures.mjs';
+import { inspectReport } from './evaluationReport.mjs';
 import { evaluationPreparations } from '../../src/cases/evaluation';
 import { decodeSceneFile } from '../../src/utils/sceneFile';
 import { checkCase, sceneRobot } from '../../src/cases/sceneCheck';
@@ -32,7 +33,24 @@ it('reuses frozen geometry and matches nominal outcomes from ordinary scene chec
       ),
     ).toBe(0);
     expect(evaluationPreparations() - before).toBe(2);
-    expect(await runEvaluation(fixture.package, { output: fixture.output }, evaluationContext)).toBe(1);
+
+    const rename = fs.renameSync;
+    const published = [];
+    const publication = vi.spyOn(fs, 'renameSync').mockImplementation((from, to) => {
+      rename(from, to);
+
+      if (to !== path.join(fixture.output, 'comparison.json')) return;
+
+      published.push(inspectReport(fixture.output).status);
+    });
+
+    try {
+      expect(await runEvaluation(fixture.package, { output: fixture.output }, evaluationContext)).toBe(1);
+    } finally {
+      publication.mockRestore();
+    }
+
+    expect(published).toEqual(['incomplete', 'incomplete', 'incomplete', 'complete']);
     expect(evaluationPreparations() - before).toBe(2);
 
     const report = JSON.parse(fs.readFileSync(path.join(fixture.output, 'comparison.json'), 'utf8'));

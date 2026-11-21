@@ -84,10 +84,12 @@ it(
       await app.page.getByRole('button', { name: 'Start Repair', exact: true }).click();
       await expect.poll(async () => (await selectedBuild(app.page)).repairs?.length).toBe(1);
       await app.page.getByRole('button', { name: 'Complete Step', exact: true }).click();
+      await app.page.getByRole('button', { name: 'Mark Incomplete', exact: true }).waitFor();
       await app.page.reload();
       await app.page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio));
       await app.page.getByRole('tab', { name: /Build$/ }).click();
       await app.page.getByRole('button', { name: 'Arm 1', exact: true }).click();
+      await app.page.getByRole('button', { name: 'Mark Incomplete', exact: true }).waitFor();
 
       const resumed = await selectedBuild(app.page);
       const repair = resumed.repairs!.at(-1)!;

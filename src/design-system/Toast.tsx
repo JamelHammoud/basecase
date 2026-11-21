@@ -16,13 +16,19 @@ export const Toast: React.FC<{ toast: ToastData; onDismiss: () => void }> = ({ t
     <div
       role="status"
       aria-live="polite"
-      className="glass-menu rounded-full h-[40px] pl-3.5 pr-1.5 flex items-center gap-2 text-[13.5px] text-white/90 animate-toast-in"
+      className={`glass-menu max-w-full pl-3.5 pr-1.5 flex items-center gap-2 text-[13.5px] text-white/90 animate-toast-in ${
+        tone === 'error' ? 'rounded-[20px] min-h-[40px] py-2' : 'rounded-full h-[40px]'
+      }`}
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
       {tone === 'success' && <TickIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />}
       {tone === 'error' && <AlertIcon className="w-3.5 h-3.5 text-red-400 shrink-0" />}
       {tone === 'progress' && <Spinner className="w-3.5 h-3.5 text-white/60" />}
-      <span className={`truncate max-w-md ${toast.action ? '' : 'pr-1.5'}`}>{toast.message}</span>
+      <span
+        className={`min-w-0 max-w-md ${tone === 'error' ? '[overflow-wrap:anywhere]' : 'truncate'} ${toast.action ? '' : 'pr-1.5'}`}
+      >
+        {toast.message}
+      </span>
       {toast.action && (
         <button
           type="button"
@@ -30,7 +36,7 @@ export const Toast: React.FC<{ toast: ToastData; onDismiss: () => void }> = ({ t
             toast.action?.onClick();
             onDismiss();
           }}
-          className="h-[32px] px-3 rounded-full text-[13px] font-medium text-[#5cb8ff] hover:bg-white/[0.08] cursor-default transition-colors"
+          className="h-[32px] shrink-0 px-3 rounded-full text-[13px] font-medium text-[#5cb8ff] hover:bg-white/[0.08] cursor-default transition-colors"
         >
           {toast.action.label}
         </button>

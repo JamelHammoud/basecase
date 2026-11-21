@@ -219,6 +219,10 @@ export interface ProjectSettings extends ProjectRecords, PrintService, ProjectBu
   poses?: RobotPose[];
   animations?: RobotAnimation[];
   policies?: PolicyRecord[];
+  powerReplay?: {
+    baseline: import('../wiring/powerReplayTypes').PowerReplayRecord;
+    comparison?: import('../wiring/powerReplayTypes').PowerReplayRecord;
+  };
   walk?: StoredWalk;
   falls?: StoredFalls;
   marks?: SceneMark[];

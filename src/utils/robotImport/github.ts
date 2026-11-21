@@ -1,4 +1,4 @@
-import { fetchBytes, RAW, unopenedRepo } from './sources';
+import { MAX_ROBOT_FILE_BYTES, MAX_ROBOT_LIST_BYTES, fetchBytes, RAW, unopenedRepo } from './sources';
 import type { Tree } from './tree';
 
 export interface RepoLink {
@@ -30,7 +30,7 @@ interface Listing {
 
 async function listing(link: RepoLink, ref: string): Promise<string[] | null> {
   const url = `${API}/repos/${link.owner}/${link.repo}/git/trees/${encodeURIComponent(ref)}?recursive=1`;
-  const body = await fetchBytes(url).catch(() => null);
+  const body = await fetchBytes(url, MAX_ROBOT_LIST_BYTES).catch(() => null);
 
   if (!body) return null;
 
@@ -69,7 +69,7 @@ export async function githubTree(link: RepoLink, url: string): Promise<{ tree: T
     tree: {
       paths: found.paths,
       urlOf,
-      read: (path) => fetchBytes(urlOf(path)).catch(() => null),
+      read: (path) => fetchBytes(urlOf(path), MAX_ROBOT_FILE_BYTES).catch(() => null),
     },
   };
 }

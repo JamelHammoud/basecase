@@ -1,5 +1,7 @@
 import { sceneAppearanceParts } from '../appearance/sceneParts';
 import { textureHashes } from '../appearance/model';
+import { MB } from '../../electron/fileSize.mjs';
+import { readCapped, TooLargeError } from './readCapped';
 import { validSimReadyFields } from '../simready/validation';
 import { validateFixtureImports } from '../cases/fixtureImports';
 import { withValidStudy } from '../study/record';
@@ -20,6 +22,8 @@ import {
 } from '../cases/worldAssets';
 
 export const SCENE_FILE_EXTENSION = 'basecase';
+
+export const MAX_SCENE_BYTES = 128 * MB;
 
 const FORMAT = 'basecase-scene';
 const VERSION = 1;
@@ -150,11 +154,19 @@ export async function encodeSceneFile(scene: SharedScene): Promise<Uint8Array> {
 
 async function readJson(bytes: Uint8Array): Promise<unknown> {
   const gzipped = bytes[0] === GZIP_MAGIC[0] && bytes[1] === GZIP_MAGIC[1];
-  const raw = gzipped ? await pipe(bytes, new DecompressionStream('gzip')).catch(() => null) : bytes;
 
   try {
-    return raw ? JSON.parse(new TextDecoder().decode(raw)) : null;
-  } catch {
+    const source = new Blob([bytes as BlobPart]).stream();
+    const stream = gzipped ? source.pipeThrough(new DecompressionStream('gzip')) : source;
+    const raw = await readCapped(new Response(stream), MAX_SCENE_BYTES);
+
+    return JSON.parse(new TextDecoder().decode(raw));
+  } catch (error) {
+    if (error instanceof TooLargeError)
+      throw new Error('That scene exceeds 128 MB. Remove large meshes or images and export it again.', {
+        cause: error,
+      });
+
     return null;
   }
 }

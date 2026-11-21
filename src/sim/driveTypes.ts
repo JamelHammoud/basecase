@@ -1,5 +1,6 @@
 import type { JointValues } from '../types/robotics';
 import type { V3 } from '../utils/kinematics';
+import type { DriveState } from './driveState';
 
 export interface DriveCommand {
   slot?: number;
@@ -27,4 +28,8 @@ export interface DriveLoop {
   command(c: DriveCommand, measured?: JointValues): void;
 
   tick(time: number): DriveOutput;
+
+  snapshot?(): DriveState | null;
+
+  restore?(state: DriveState): boolean;
 }

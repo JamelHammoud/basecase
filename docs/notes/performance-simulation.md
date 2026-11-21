@@ -2,6 +2,37 @@
 
 Implementation: [Simulation](../guide/simulate.md#performance-simulation). Shared requirements: [Performance](../guide/performance.md).
 
+## Continuation runtime snapshots
+
+The existing worker owns capture, source validation, decoding, restoration and recording splicing. Each checkpoint owns its MuJoCo integration row, realized model arrays, drive/fault history, wrapper delay and world state. The recording retains at most 120 points and 8 MiB. The oldest checkpoints leave first. The renderer receives selection identities and point summaries. Completed recordings use the existing transferable binary arrays. Cancellation clears the source, recorder and step/event hooks.
+
+A standalone macOS arm64 observation used Node 26.13.1, Apple M5 Pro and the pinned MuJoCo runtime version code 4,000,000. It drove production worker messages through load, scripted Case recording, scrub, branch and cancellation. A one-joint pose drive had 6 ms wrapper latency. The large model added 4,000 fixed box geoms and realized friction 1.1234567890123456 to exercise retained model arrays. Both models were warmed before each recording. These are single local observations, without a stable overhead rate.
+
+| Observation | Point limit | Byte limit |
+| --- | --- | --- |
+| Simulated duration | 122 s | 44 s |
+| Recorded frames | 6,101 | 2,201 |
+| Retained checkpoints | 120 | 43 |
+| Checkpoint bytes | 284,141 B | 8,357,918 B |
+| Ordinary recording bytes | 512,936 B | 185,336 B |
+| Recording bytes with retention | 797,104 B | 8,543,280 B |
+| Ordinary recording time | 231.94 ms | 1,745.91 ms |
+| Recording with retention | 220.37 ms | 1,864.82 ms |
+| Scrub selection and inspection reconstruction | 214.64 ms | 2,563.65 ms |
+| Branch restoration with source-byte validation | 36.06 ms | 190.51 ms |
+| Cancellation dispatch and hook release | 0.0788 ms | 0.0243 ms |
+| RSS before retention | 193,544,192 B | 194,756,608 B |
+| Sampled peak RSS during retention | 194,740,224 B | 223,330,304 B |
+| RSS after restoration | 215,777,280 B | 312,016,896 B |
+
+The byte-limit run evicted its earliest checkpoints and stayed below 8,388,608 bytes. Its retained recording took 118.91 ms longer than the ordinary observation, about 6.8%. The smaller observation had reversed timing, so it establishes no speedup. Complete-file overhead was 284,168 and 8,357,944 bytes. It includes the binary extension header and padding. These single pairs establish no stable overhead rate.
+
+Selection includes existing effort reconstruction and checkpoint decoding/identity hashing, rather than restore alone. Restoration includes hashing freshly supplied recording bytes and reapplying world, full engine and wrapper state. The current observer prepares those bytes before starting the restore timer. Earlier observations also timed the driver's binary encoding and are not directly comparable. The observer asserts a non-null restored session and no recording after cancellation.
+
+RSS includes Node, imported modules, WASM, recordings and uncollected allocations. The observer does not force collection or establish isolated allocation size. Cancellation leaves RSS allocated and makes no reclamation claim. In-process worker message dispatch excludes browser scheduling and transport. Browser screenshots exercised timeline selection, manual takeover, saving and portable import, without measuring those resource limits. Raw observations and the standalone measurement source are retained by the task handoff.
+
+The initial 4,000-geom scratch test completed its assertions and wrote observations but exceeded Vitest’s unchanged five-second callback budget. Resource observation moved to a standalone script, with no deadline change, retry or new CI check. Earlier small-arm engine-only observations excluded worker restoration and byte-limit retention and are superseded by the table above.
+
 ## Robot exports index joint identities
 
 `src/sim/robotPackage/jointLookup.test.ts` compares every generated file byte for byte with scan-based joint lookup across all fixture robots. The reference replaces only index lookup with the previous first-match `find`, keeping geometry, serializers and package metadata identical. It also checks reversed model order, two policies with different action orders and an unknown joint, duplicate model and scene ids, independently missing model and scene joints, empty lists and edits between calls.

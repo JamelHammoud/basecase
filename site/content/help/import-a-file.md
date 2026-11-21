@@ -76,6 +76,7 @@ Other files come in like this:
 - A BVH motion file opens the retarget sheet for the selected robot.
 - An image comes in as a reference image.
 - A `.basecase` file opens in a new tab.
+- A `.tries.zip` file restores saved simulation tries with their available parents. See [Branch a simulated try](/help/branch-a-simulated-try).
 - A `.mcap` or `.bag` recording, or a zip that holds a LeRobot dataset, comes in as tries on the robot in the scene. See [Import robot data as tries](/help/import-robot-data-as-tries).
 - A COCO, YOLO or Pascal VOC dataset folder or zip adds labeled images to the Library. See [Import an image dataset](/help/import-an-image-dataset).
 

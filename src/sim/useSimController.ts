@@ -12,5 +12,5 @@ export function useSimController(send: (msg: SimRequest) => void) {
     [send],
   );
 
-  return [controller, setController] as const;
+  return [controller, setController, setControllerState] as const;
 }

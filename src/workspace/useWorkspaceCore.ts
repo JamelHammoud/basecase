@@ -1,3 +1,4 @@
+import { useBranchFocus } from './useBranchFocus';
 import { useCableRoutes } from './useCableRoutes';
 import { useAssemblyCradle } from './useAssemblyCradle';
 import { useWorkspaceVersioning } from './useWorkspaceVersioning';
@@ -118,6 +119,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   const simTraining = useSimTraining({ workspaceId, scene, docs, posing, viewportRef, showToast, studio });
 
+  useBranchFocus(active, simTraining.cases.attempt);
   useRobotSync({ active, sceneId: scene.sceneId, docs, training: simTraining, showToast });
 
   const { guide, buildAlong } = useSceneGuide({ sceneName: scene.sceneName, docs, showToast, viewportRef });

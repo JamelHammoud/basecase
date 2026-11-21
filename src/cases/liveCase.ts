@@ -1,13 +1,14 @@
 import type { VisionResult } from '../vision/types';
 import type { Controller, SimEngine } from '../sim/engine';
 import { torqueShare } from '../sim/torqueShare';
+import { framePoses, type Recording } from '../sim/recorder';
 import { NO_BODY, routineBody } from '../routines/physicsBody';
 import type { RoutineKit } from '../routines/physicsKit';
 import type { Plan } from '../routines/planTypes';
 import type { RobotJoint } from '../types/robotics';
 import { caseFactReader, caseSignalNames, sampleSignals, type CaseFactReader, type CaseFacts } from './caseFacts';
 import { CaseLogicRun, judgeSoFar, usesBodySkills } from './caseLogic';
-import type { Case } from './schema';
+import { caseSlots, type Case } from './schema';
 
 export interface LiveCaseInput {
   kase: Case;
@@ -31,9 +32,11 @@ export class LiveCase {
   private judgedAt = 0;
   private t = 0;
   private owed = 0;
+  private readonly startedAt: number;
 
-  private constructor(engine: SimEngine, kase: Case, logic: CaseLogicRun | null) {
+  private constructor(engine: SimEngine, kase: Case, logic: CaseLogicRun | null, startedAt = engine.data.time) {
     this.engine = engine;
+    this.startedAt = startedAt;
     this.kase = kase;
     this.logic = logic;
     this.reader = caseFactReader(kase, engine.sim);
@@ -56,12 +59,45 @@ export class LiveCase {
     return new LiveCase(engine, kase, logic);
   }
 
+  static resume(
+    engine: SimEngine,
+    input: { kase: Case; recording: Recording; branch: { frame: number }; started: number; deadline: number },
+  ): LiveCase {
+    const { kase, recording, branch, started, deadline } = input;
+    const live = new LiveCase(engine, kase, null, deadline - kase.task.seconds);
+
+    for (let frame = 0; frame <= branch.frame; frame++) {
+      const elapsed = started + recording.t[frame] - live.startedAt;
+      const read = live.reader.read(framePoses(recording, frame), elapsed, recording.torque?.[frame]);
+
+      sampleSignals(read, live.names, live.signals);
+      live.latest = { ...live.latest, ...read };
+    }
+
+    live.t = engine.data.time - live.startedAt;
+    live.judge();
+
+    return live;
+  }
+
   get facts(): CaseFacts {
     return { ...this.latest, ...this.logic?.cameraFacts() };
   }
 
   get driving(): boolean {
     return this.logic?.driving ?? true;
+  }
+
+  continuationSource(): Case | null {
+    if (this.logic || caseSlots(this.kase).length !== 1) return null;
+
+    if (this.kase.console?.panels.some((panel) => panel.kind === 'code')) return null;
+
+    return this.kase.console?.input.includes('code') ? null : this.kase;
+  }
+
+  get continuationDeadline(): number {
+    return this.startedAt + this.kase.task.seconds;
   }
 
   acceptVision(result: VisionResult, ageMs = 0) {

@@ -68,4 +68,4 @@ Deleting a try also deletes its variations. The confirmation shows how many.
 
 ## In the dataset
 
-**Make Dataset** in Results includes the variations along with the try they came from. See [Make a dataset from tries](/help/make-a-dataset-from-tries). [Export Dataset](/help/export-a-lerobot-dataset) writes each variation as its own episode. In `meta/basecase.json`, each episode lists its `seed` and its `source`, which is the try it was made from. For a try you drove, `source` is null.
+**Make Dataset** in Results includes the variations along with the try they came from. See [Make a dataset from tries](/help/make-a-dataset-from-tries). [Export Dataset](/help/export-a-lerobot-dataset) writes each variation as its own episode. In `meta/basecase.json`, each episode lists its `seed` and its `source`, which is the try it was made from. For a try without a parent, `source` is null. A branched try also keeps its checkpoint, time and method version in `branch`.

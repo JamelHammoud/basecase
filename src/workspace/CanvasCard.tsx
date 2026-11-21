@@ -1,5 +1,6 @@
 import { MeasureToolbar } from '../components/MeasureToolbar';
 import { PlateBar } from '../components/print/PlateBar';
+import { exportTimelineTry } from './tryFileActions';
 import { TryTimeline } from '../components/simulate/TryTimeline';
 import { TriesMode } from '../components/tries/TriesMode';
 import { useDatasetMode } from './useDatasetMode';
@@ -79,6 +80,12 @@ function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
       {active && !core.printing.mode && (
         <TryTimeline
           timeline={core.simTraining.cases.timeline}
+          cases={core.simTraining.cases}
+          onExport={() => void exportTimelineTry(core)}
+          onBranch={() => {
+            core.tool.setRightTab('sim');
+            void core.simTraining.cases.branch.run();
+          }}
           rig={core.posing.rig}
           closable={!core.caseRun.doneClosesTimeline}
           onSelectParts={core.setSelectedIds}

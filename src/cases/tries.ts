@@ -10,6 +10,7 @@ import { probeReader, type ProbeWorld } from './probes';
 import { robotFacts, type EndEffector } from './robotFit';
 import { CASE_FORMAT_VERSION, caseSlots, type Case } from './schema';
 import { slotKeys } from './slots';
+import type { TryBranch } from './tryBranch';
 
 export interface TryManifest {
   formatVersion: typeof CASE_FORMAT_VERSION;
@@ -22,6 +23,7 @@ export interface TryManifest {
   commands?: number;
   world?: number;
   source?: string;
+  branch?: TryBranch;
 }
 
 export interface TryRecord {
@@ -125,7 +127,8 @@ export async function tryManifest(kase: Case, model: SimModel, recording: Record
   };
 }
 
-export const multipliable = (t: TryRecord) => t.passed && !t.generated && !t.real && !!t.manifest.commands;
+export const multipliable = (t: TryRecord) =>
+  t.passed && !t.generated && !t.real && !t.manifest.branch && !!t.manifest.commands;
 
 export const simTries = (tries: TryRecord[]) => tries.filter((t) => !t.real);
 

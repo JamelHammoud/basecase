@@ -1,0 +1,2 @@
+export const CONTINUATION_MAX_BYTES = 8 * 1024 * 1024;
+export const CONTINUATION_MAX_POINTS = 120;

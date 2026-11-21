@@ -1,3 +1,4 @@
+import { canExportTry, exportTimelineTry } from './tryFileActions';
 import type { Command } from '../components/CommandPalette';
 import {
   CameraIcon,
@@ -40,6 +41,8 @@ export const STAYS_IN_RUN = new Set([
   'drive-respawn',
   'case-try',
   'case-try-reference',
+  'case-branch-try',
+  'case-export-try',
   'case-multiply',
   'case-add-panel',
   'case-export-dataset',
@@ -232,7 +235,7 @@ function studyCommands({ study }: WorkspaceCore): Command[] {
   ];
 }
 
-function referenceCommands(core: WorkspaceCore): Command[] {
+function referenceCommands(core: CommandInputs['core']): Command[] {
   const { cases } = core.simTraining;
   const { tool } = core;
 
@@ -251,6 +254,40 @@ function referenceCommands(core: WorkspaceCore): Command[] {
         },
       ]
     : [];
+}
+
+function timelineCommands(core: CommandInputs['core']): Command[] {
+  const { cases } = core.simTraining;
+  const { tool } = core;
+
+  return [
+    ...(canExportTry(cases.timeline)
+      ? [
+          {
+            id: 'case-export-try',
+            group: 'Simulate',
+            label: 'Export Try',
+            icon: <DownloadIcon />,
+            run: () => void exportTimelineTry(core),
+          },
+        ]
+      : []),
+    ...(cases.branch.available
+      ? [
+          {
+            id: 'case-branch-try',
+            group: 'Simulate',
+            label: 'Branch Try',
+            icon: <DuplicateIcon />,
+            keywords: 'checkpoint recovery continuation attempt',
+            run: () => {
+              tool.setRightTab('sim');
+              void cases.branch.run();
+            },
+          },
+        ]
+      : []),
+  ];
 }
 
 export function caseCommands({ core }: CommandInputs): Command[] {
@@ -355,6 +392,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...respawn,
     ...tryIt,
     ...referenceCommands(core),
+    ...timelineCommands(core),
     ...caseRun,
     ...addPanelCommands(core),
     ...renameCommands(core),

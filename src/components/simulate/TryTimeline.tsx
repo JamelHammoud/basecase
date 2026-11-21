@@ -11,10 +11,16 @@ import { TimelineLane } from './TimelineLane';
 import { useSegmentUndo } from './useSegmentUndo';
 import { useTimelineKeys } from './useTimelineKeys';
 import { SavedTimelinePanel } from './SavedTimelinePanel';
+import { canExportTry } from '../../workspace/tryFileActions';
+import { BranchTryControls } from './BranchTryControls';
+import type { Cases } from '../../workspace/useCases';
 import { negative } from '../../../electron/minus.mjs';
 
 interface TryTimelineProps {
   timeline: Timeline;
+  cases: Cases;
+  onBranch: () => void;
+  onExport: () => void;
   rig: Rig;
   closable: boolean;
   onSelectParts: (ids: string[]) => void;
@@ -23,7 +29,16 @@ interface TryTimelineProps {
 
 const ic = 'w-4 h-4';
 
-export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, closable, onSelectParts, onAddFrames }) => {
+export const TryTimeline: React.FC<TryTimelineProps> = ({
+  timeline,
+  rig,
+  closable,
+  onSelectParts,
+  onAddFrames,
+  cases,
+  onBranch,
+  onExport,
+}) => {
   const root = useRef<HTMLDivElement | null>(null);
   const focus = () => root.current?.focus({ preventScroll: true });
   const onUndoKey = useSegmentUndo({ root, labels: timeline.labels, open: timeline.open });
@@ -82,6 +97,12 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, closabl
         ))}
       </div>
       <div className="flex items-center gap-2">
+        <BranchTryControls cases={cases} onBranch={onBranch} />
+        {canExportTry(timeline) && (
+          <Button variant="ghost" size="xs" onClick={onExport}>
+            Export Try
+          </Button>
+        )}
         {timeline.trips[0] && <span className="text-[13px] text-red-400">{failureText(timeline.trips[0].label)}</span>}
         <IconButton
           icon={timeline.playing ? <PauseIcon className={ic} /> : <RunIcon className={ic} />}

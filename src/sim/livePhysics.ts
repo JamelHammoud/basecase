@@ -1,5 +1,5 @@
 import type { MainModule } from '@mujoco/mujoco';
-import { ControlDelay } from './controlDelay';
+import { ControlDelay, type ControlDelayState } from './controlDelay';
 import type { SimEngine } from './engine';
 
 export interface SimPhysics {
@@ -35,6 +35,15 @@ export class LivePhysics {
 
   module(mj: MainModule): MainModule {
     return this.delay.module(mj);
+  }
+
+  snapshot() {
+    return { active: this.active, delay: this.delay.snapshot() };
+  }
+
+  restore(state: { active: boolean; delay: ControlDelayState }) {
+    this.active = state.active;
+    this.delay.restore(state.delay);
   }
 
   attach(engine: SimEngine) {

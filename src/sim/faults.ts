@@ -21,8 +21,17 @@ interface Lag {
   primed: boolean;
 }
 
+export interface ActuatorFaultState {
+  range: Float64Array;
+  saved: Array<[number, [number, number]]>;
+  kinds: Array<[number, FaultKind]>;
+  held: Array<[number, number]>;
+  lags: Array<[number, Lag]>;
+  limpAll: boolean;
+}
+
 export class ActuatorFaults {
-  private readonly range: MjModel['actuator_forcerange'];
+  private readonly model: MjModel;
   private readonly lagSteps: number;
   private readonly nu: number;
   private readonly saved = new Map<number, [number, number]>();
@@ -32,13 +41,48 @@ export class ActuatorFaults {
   private limpAll = false;
 
   constructor(model: MjModel) {
-    this.range = model.actuator_forcerange;
+    this.model = model;
     this.nu = model.nu;
     this.lagSteps = Math.max(1, Math.round(LAG_S / model.opt.timestep));
   }
 
+  private get range(): Float64Array {
+    return this.model.actuator_forcerange as Float64Array;
+  }
+
   kindOf(actuator: number): FaultKind | undefined {
     return this.kinds.get(actuator);
+  }
+
+  snapshot(): ActuatorFaultState {
+    return structuredClone({
+      range: Float64Array.from(this.range),
+      saved: [...this.saved],
+      kinds: [...this.kinds],
+      held: [...this.held],
+      lags: [...this.lags],
+      limpAll: this.limpAll,
+    });
+  }
+
+  restore(state: ActuatorFaultState) {
+    const copy = structuredClone(state);
+
+    this.range.set(copy.range);
+    this.saved.clear();
+    this.kinds.clear();
+    this.held.clear();
+    this.lags.clear();
+
+    for (const [a, range] of copy.saved) this.saved.set(a, range);
+
+    for (const [a, kind] of copy.kinds) this.kinds.set(a, kind);
+
+    for (const [a, value] of copy.held) this.held.set(a, value);
+
+    for (const [a, lag] of copy.lags) this.lags.set(a, lag);
+
+    this.limpAll = copy.limpAll;
   }
 
   setLimpAll(limp: boolean) {
@@ -87,7 +131,7 @@ export class ActuatorFaults {
     const at = actuator * 2;
 
     if (scale === 1) {
-      this.restore(actuator, saved);
+      this.restoreRange(actuator, saved);
 
       return;
     }
@@ -99,7 +143,7 @@ export class ActuatorFaults {
     this.range[at + 1] = base[1] * scale;
   }
 
-  private restore(actuator: number, saved: [number, number] | undefined) {
+  private restoreRange(actuator: number, saved: [number, number] | undefined) {
     if (!saved) return;
 
     this.range[actuator * 2] = saved[0];

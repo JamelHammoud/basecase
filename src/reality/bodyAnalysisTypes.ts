@@ -34,6 +34,7 @@ export interface BodyAnalysisSource {
 }
 
 export interface BodyAnalysisRequest {
+  observations?: 'servo-independent-1';
   model: SimModel;
   nominal?: BodyFit;
   run: RobotRun;
@@ -64,7 +65,7 @@ export interface BodyAnalysisDirection {
 }
 
 export type BodyAnalysisRefusal =
-  'cancelled' | 'provenance' | 'units' | 'recording' | 'budget' | 'unsupported' | 'numerical';
+  'cancelled' | 'provenance' | 'units' | 'recording' | 'budget' | 'unsupported' | 'numerical' | 'backend';
 
 export interface BodyAnalysisResult {
   kind: 'analyzed';

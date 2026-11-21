@@ -43,6 +43,8 @@ export async function analyzeBody(
 
   if (options.cancelled?.()) return refused('cancelled');
 
+  if (!supportedObservations(request)) return refused('backend');
+
   const problem = await bodyAnalysisProblem(request).catch(() => 'unsupported' as const);
 
   if (problem) return refused(problem);
@@ -123,4 +125,8 @@ export async function analyzeBody(
 
     return refused(options.cancelled?.() ? 'cancelled' : 'numerical');
   }
+}
+
+function supportedObservations(request: BodyAnalysisRequest): boolean {
+  return request.observations !== 'servo-independent-1' && request.run.observations !== 'servo-independent-1';
 }

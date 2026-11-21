@@ -1,7 +1,7 @@
 import { Button, Spinner } from '../../design-system';
 import type { BodyAnalysisResult as AnalysisResult } from '../../reality/bodyAnalysisTypes';
 import type { BodyAnalysisView } from '../../workspace/useBodyAnalysis';
-import { BodyMotionPreview } from './BodyMotionPreview';
+import { BodyRecommendedMotion } from './BodyRecommendedMotion';
 
 import { BodyAnalysisMethod } from './BodyAnalysisMethod';
 import { BodyAnalysisParameters } from './BodyAnalysisParameters';
@@ -20,9 +20,9 @@ export function BodyAnalysisResult({
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-3 break-words text-[13px] text-white/60 [overflow-wrap:anywhere]">
-      <p className="text-white/90">
+      <p hidden={!checking && applicable} className="text-white/90">
         {checking && <Spinner />}
-        {!checking && (applicable ? 'Current source' : 'Out of date')}
+        {!checking && !applicable && 'Out of date'}
       </p>
       <p>
         {result.source.unit} {result.source.recording}
@@ -38,9 +38,7 @@ export function BodyAnalysisResult({
           Preview Motion
         </Button>
       )}
-      {analysis.motion?.kind === 'recommended' && (
-        <BodyMotionPreview key={analysis.motion.plan.id} motion={analysis.motion} />
-      )}
+      <BodyRecommendedMotion analysis={analysis} />
       {analysis.motion?.kind === 'no-improvement' && <BodyAnalysisRefusal />}
       {analysis.motion?.kind === 'refused' && <BodyAnalysisRefusal reason={analysis.motion.reason} />}
       <BodyAnalysisMethod result={result} analysis={analysis} />

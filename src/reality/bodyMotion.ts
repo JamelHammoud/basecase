@@ -103,6 +103,7 @@ export async function recommendBodyMotion(
   const budget = { remainingSteps: total, cancelled: options.cancelled };
   const candidates: BodyMotionCandidate[] = [];
   const evidence = () => ({
+    ...(input.speedRadS === undefined ? {} : { speedRadS: input.speedRadS }),
     method: METHOD,
     selected: Array.isArray(input?.selected) ? input.selected.slice(0, 24) : [],
     candidates,
@@ -123,7 +124,7 @@ export async function recommendBodyMotion(
 
     if (!hasWeakTargets(input)) return { ...evidence(), kind: 'no-improvement' };
 
-    const plans = bodyMotionPlans(input.request);
+    const plans = bodyMotionPlans(input.request, input.speedRadS);
 
     if (!plans.length) return { ...evidence(), kind: 'no-improvement' };
 
@@ -203,11 +204,17 @@ function searchPlans(context: {
 }
 
 async function motionProblem(input: BodyMotionRequest) {
+  if (!validMotionSpeed(input.speedRadS)) return 'unsupported' as const;
+
   const problem = await bodyAnalysisProblem(input.request);
 
   if (problem) return problem;
 
   return matchingAnalysis(input) ? null : 'provenance';
+}
+
+function validMotionSpeed(speed: number | undefined): boolean {
+  return speed === undefined || (Number.isFinite(speed) && speed > 0 && speed <= LIMITS.speedRadS);
 }
 
 function motionFailure(error: unknown, cancelled?: () => boolean) {

@@ -48,6 +48,8 @@ Hover a unit's row to find **Roll Back** when it has a previous policy. This res
 
 View organization inventory and timestamped connection status through [Open Basecase Fleet](/help/open-basecase-fleet). The live servo readings described below follow the selected studio connection.
 
+For a [recommended body motion](/help/run-a-recommended-body-motion), open **Method** in **Analyze Try** for completion, connection identity and recorded command and observation counts. These describe the saved run, while the servo rows show current readings.
+
 A row with history offers **Inspect Problems**. [Inspect fleet problems](/help/inspect-fleet-problems) to acknowledge an incident or open its kept try. History stays on this computer across studio restarts, bounded to 128 incidents and 256 KiB. Acknowledgment leaves an active fault active.
 
 ## The header

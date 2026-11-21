@@ -1,7 +1,8 @@
-import { Modal, Select, Spinner } from '../../design-system';
+import { Button, Modal, Select, Spinner } from '../../design-system';
 import type { BodyAnalysisView } from '../../workspace/useBodyAnalysis';
 import { BodyAnalysisResult } from './BodyAnalysisResult';
 import { BodyAnalysisRefusal } from './BodyAnalysisRefusal';
+import { BodyExperimentMethod } from './BodyExperimentMethod';
 
 export function BodyAnalysis({ analysis }: { analysis: BodyAnalysisView }) {
   return (
@@ -31,6 +32,18 @@ export function BodyAnalysis({ analysis }: { analysis: BodyAnalysisView }) {
         />
         {analysis.problem && <p className="text-[13px] text-amber-400">{analysis.problem}</p>}
         {analysis.result?.kind === 'refused' && <BodyAnalysisRefusal reason={analysis.result.reason} />}
+        {analysis.experiment && <BodyExperimentMethod analysis={analysis} />}
+        {analysis.experiment && (
+          <Button
+            variant="secondary"
+            disabled={
+              analysis.pending || !analysis.applicable || analysis.experiment.recording.completion !== 'completed'
+            }
+            onClick={analysis.fit}
+          >
+            Fit Body
+          </Button>
+        )}
         {analysis.result?.kind === 'analyzed' && (
           <BodyAnalysisResult
             result={analysis.result}

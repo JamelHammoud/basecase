@@ -7,6 +7,9 @@ import type { RobotRun } from '../robot/runBuffer';
 import type { ProjectSettings } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import { errorMessage } from '../utils/errorMessage';
+import { bodySourceKey, readBodyEvidence, type BodyEvidenceRef } from '../reality/bodyEvidence';
+import { bodyRecordingUnchanged } from '../reality/bodyRecordingIdentity';
+import { BODY_EMULATOR_LIMIT } from '../reality/bodyExperimentTypes';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 type UpdateProject = (patch: (project: ProjectSettings) => ProjectSettings) => void;
@@ -61,8 +64,9 @@ export async function fitRecordedBody(
     updateProject: UpdateProject;
   },
 ) {
-  const { model, run, robot, fit, updateProject } = input;
-  const result = await fit({ model, run, robot });
+  const { fit, updateProject, ...request } = input;
+  const { robot } = request;
+  const result = await fit(request);
 
   updateProject((project) => ({
     ...project,
@@ -96,7 +100,7 @@ export function bodyRobot(core: WorkspaceCore, wanted?: string): string | null {
   return matched[0]?.key ?? (robots.length === 1 ? robots[0].key : null);
 }
 
-async function fitBodyAttempt(core: WorkspaceCore, wanted?: string) {
+async function fitBodyAttempt(core: WorkspaceCore, wanted?: string, reference?: BodyEvidenceRef) {
   const robot = bodyRobot(core, wanted);
 
   if (!robot) return { text: 'Choose a robot with joints before fitting its body.', recorded: false };
@@ -113,9 +117,16 @@ async function fitBodyAttempt(core: WorkspaceCore, wanted?: string) {
 
     seededRun = null;
 
-    const run = given ?? (await platformBridge.robotReadRun(unit));
+    const saved = reference ? await readBodyEvidence(reference) : null;
+    const run = reference ? saved?.request.run : (given ?? (await platformBridge.robotReadRun(unit)));
 
     if (!run) return { text: 'Record a robot run in Operate before fitting its body.', recorded: false };
+
+    if (!(await bodyFitReferenceCurrent(core, reference, unit)))
+      return { text: 'The source changed.', recorded: false };
+
+    if (saved?.request.observations === 'servo-independent-1' || run.observations === 'servo-independent-1')
+      return { text: BODY_EMULATOR_LIMIT, recorded: false };
 
     const snapshot = () =>
       JSON.stringify({
@@ -151,8 +162,22 @@ async function fitBodyAttempt(core: WorkspaceCore, wanted?: string) {
   }
 }
 
+async function bodyFitReferenceCurrent(core: WorkspaceCore, reference: BodyEvidenceRef | undefined, unit: string) {
+  if (!reference) return true;
+
+  return (
+    reference.unit === unit &&
+    (await bodyRecordingUnchanged(reference)) &&
+    reference.sourceKey === (await bodySourceKey(core.docs.partsRef.current, core.docs.projectRef.current))
+  );
+}
+
 export async function fitBodyFor(core: WorkspaceCore, wanted?: string): Promise<string> {
   return (await fitBodyAttempt(core, wanted)).text;
+}
+
+export async function fitBodyEvidence(core: WorkspaceCore, reference: BodyEvidenceRef): Promise<string> {
+  return (await fitBodyAttempt(core, undefined, reference)).text;
 }
 
 export function fitBodyFromUi(core: WorkspaceCore) {

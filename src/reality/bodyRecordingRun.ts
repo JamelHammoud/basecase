@@ -1,19 +1,23 @@
 import { readOperateLog, type OperateLog } from '../robot/operateLog';
 import type { RobotRun } from '../robot/runBuffer';
 import { BODY_ANALYSIS_LIMITS as LIMITS } from './bodyAnalysisTypes';
+import { recordedMotionMatches, type MotionRecording } from '../../electron/robot/bodyMotionRecording.mjs';
 
 export interface BodyRecordingRequest {
+  motion?: MotionRecording;
   session: string;
   id: string;
   joints: string[];
 }
 
-export function readBodyRecording({ session, joints }: BodyRecordingRequest): RobotRun | null {
+export function readBodyRecording({ session, joints, motion }: BodyRecordingRequest): RobotRun | null {
   if (session.length > 1_048_576 || joints.length > LIMITS.joints) return null;
 
   const log = checkedSession(session, joints.length);
 
-  if (!log?.statuses.length) return null;
+  if (!log || (motion && !recordedMotionMatches(session, motion))) return null;
+
+  if (!log.statuses.length) return motion ? emptyRecordedMotion(joints, motion) : null;
 
   const end = log.statuses.at(-1)!.t;
   const statuses = log.statuses.filter((sample) => sample.t >= end - LIMITS.durationMs / 1000);
@@ -24,6 +28,7 @@ export function readBodyRecording({ session, joints }: BodyRecordingRequest): Ro
   if (previous) intents.unshift(previous);
 
   return {
+    ...(motion ? { observations: motion.backend } : {}),
     joints: [...joints],
     statuses: statuses.map((sample) => ({ at: sample.t * 1000, positions: sample.q })),
     intents: intents.map((sample) => ({ at: sample.t * 1000, joints: sample.q })),
@@ -31,6 +36,10 @@ export function readBodyRecording({ session, joints }: BodyRecordingRequest): Ro
     faultAt: 0,
     message: '',
   };
+}
+
+function emptyRecordedMotion(joints: string[], motion: MotionRecording): RobotRun {
+  return { joints, statuses: [], intents: [], faultJoint: null, faultAt: 0, message: '', observations: motion.backend };
 }
 
 function checkedSession(text: string, joints: number): OperateLog | null {

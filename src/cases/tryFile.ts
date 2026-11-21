@@ -6,6 +6,7 @@ import type { TryRecord } from './tries';
 import { readMotion } from './trySearch/motion';
 import type { MotionTrace } from './trySearch/types';
 import { readTryBranch, type TryBranch } from './tryBranch';
+import { checkedMotionRecording, type MotionRecording } from '../../electron/robot/bodyMotionRecording.mjs';
 
 export const TRY_FILE_VERSION = 1;
 
@@ -46,6 +47,7 @@ export const originLabel = (origin: TryOrigin | undefined) => {
 };
 
 export interface StoredTry {
+  bodyMotion?: MotionRecording;
   branch?: TryBranch;
   version: typeof TRY_FILE_VERSION;
   id: string;
@@ -69,7 +71,7 @@ export interface StoredTry {
   videos?: TryVideo[];
   outOfRange?: number;
   family?: string;
-  ended?: 'rung' | 'disconnect' | 'fault';
+  ended?: 'rung' | 'disconnect' | 'fault' | 'motion';
   policy?: string;
   motion?: MotionTrace;
   labels?: TryLabels;
@@ -296,6 +298,7 @@ const hasImportFields = (v: Raw) =>
   readOrigin(v.origin) !== null;
 
 const hasSearchFields = (v: Raw) =>
+  motionFits(v) &&
   (v.task === undefined || v.task === null || isText(v.task, MAX_TASK)) &&
   (v.motion === undefined || readMotion(v.motion) !== null) &&
   (v.labels === undefined || readLabels(v.labels) !== null);
@@ -314,6 +317,16 @@ function branchFits(value: Raw): boolean {
     branch.frame < (value.frames as number) &&
     branch.time <= (value.seconds as number)
   );
+}
+
+function motionFits(value: Raw): boolean {
+  return value.bodyMotion === undefined || (value.source === 'operate' && !!checkedMotionRecording(value.bodyMotion));
+}
+
+function motionFields(value: Raw) {
+  const bodyMotion = checkedMotionRecording(value.bodyMotion);
+
+  return bodyMotion ? { bodyMotion } : {};
 }
 
 export function readStoredTry(value: unknown): StoredTry | null {
@@ -335,6 +348,7 @@ export function readStoredTry(value: unknown): StoredTry | null {
 
   return {
     ...(value as unknown as StoredTry),
+    ...motionFields(value),
     robot,
     case: kase,
     outcome,

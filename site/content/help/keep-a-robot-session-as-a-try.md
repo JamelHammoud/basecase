@@ -28,7 +28,9 @@ Every session on a connected robot becomes a try in the Library, so you can repl
 
 Each connected unit records its own session. A fault or disconnect ends only that unit's recording.
 
-There is nothing to turn on. A session counts as a try when it lasts over 2 seconds and a joint moves more than half a degree.
+There is nothing to turn on. An ordinary session counts as a try when it lasts over 2 seconds and a joint moves more than half a degree.
+
+[Recommended motion recordings](/help/run-a-recommended-body-motion) also keep short or interrupted runs, with their completion status.
 
 1. Connect the emulated robot. See [Connect an emulated robot](/help/connect-an-emulated-robot).
 2. Move the robot. In **Look**, move the arm by hand. In **Test**, drive it from **Simulate** with the keys, a gamepad, a phone or your computer's camera.

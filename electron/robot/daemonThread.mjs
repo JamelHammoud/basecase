@@ -8,6 +8,8 @@ const pipe = threadPipe({
     line: (line) => parentPort.postMessage({ line }),
     stderr: (stderr) => parentPort.postMessage({ stderr }),
     exit: (error) => parentPort.postMessage({ exit: true, error }),
+    intent: (intent, tag) => parentPort.postMessage({ intent, tag }),
+    idle: () => parentPort.postMessage({ idle: true }),
   },
 });
 

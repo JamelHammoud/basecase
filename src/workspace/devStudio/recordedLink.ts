@@ -1,4 +1,5 @@
 import { OperateRecorder } from '../../../electron/robot/operateRecorder.mjs';
+import { BenchControl } from '../../../electron/robot/benchControl.mjs';
 import { readStoredTry } from '../../cases/tryFile';
 import { keepSession } from '../../cases/tryStore';
 import { DEFAULT_UNIT } from '../../../electron/robot/units.mjs';
@@ -10,6 +11,8 @@ import { statusPositions } from '../../robot/runBuffer';
 type Listener = (event: RobotEvent) => void;
 
 interface Recording {
+  control?: BenchControl;
+  session?: Record<string, unknown>;
   recorder: OperateRecorder | null;
   state: RobotState;
   texts: Map<string, string>;
@@ -43,15 +46,49 @@ function recorderFor(rec: Recording, event: RobotEvent, forward: Listener) {
   });
 }
 
-function observe(rec: Recording, event: RobotEvent, forward: Listener) {
+function observe(rec: Recording, event: RobotEvent, forward: Listener, link: RobotLinkApi) {
   const closing = event.event === 'link' && event.state !== 'connected';
 
-  if (closing) rec.recorder?.close('disconnect');
-
-  if (event.event === 'link' && event.state === 'connected') rec.recorder = recorderFor(rec, event, forward);
+  if (closing) {
+    rec.control?.revoke(false, 'disconnect');
+    rec.recorder?.close('disconnect');
+  }
 
   rec.state = applyRobotEvent(rec.state, event);
+
+  if (event.event === 'link' && event.state === 'connected') {
+    rec.recorder = recorderFor(rec, event, forward);
+    rec.session = {
+      spec: rec.state.spec,
+      recorder: rec.recorder,
+      pipe: {
+        idle: () => {},
+        write: (command: Record<string, unknown>) => void link.robotCommand?.(command, unitOfEvent(event)),
+      },
+    };
+    rec.control = new BenchControl({
+      session: rec.session,
+      emit: (controlEvent) => {
+        const announce = () => forward({ ...controlEvent, unit: unitOfEvent(event) });
+
+        if (controlEvent.held === false) void rec.saving.then(announce);
+        else announce();
+      },
+      clock: () => Date.now(),
+    });
+  }
+
+  Object.assign(rec.session ?? {}, {
+    mode: rec.state.mode,
+    status: rec.state.status,
+    hello: { emulated: rec.state.emulated },
+    calibration: { joints: rec.state.calibration, class: rec.state.spec?.class },
+    heardAt: Date.now(),
+  });
   rec.recorder?.event(event);
+
+  if (event.event === 'fault') rec.control?.revoke(false, 'fault');
+
   forward({ ...event, context: rec.recorder?.incidentContext() });
 
   if (closing) rec.recorder = null;
@@ -80,15 +117,32 @@ export function recordedLink(link: RobotLinkApi): RobotLinkApi {
   return {
     ...link,
     onRobotEvent: (callback) =>
-      link.onRobotEvent?.((event) => observe(recordingOf(unitOfEvent(event)), event, callback)) ?? (() => {}),
+      link.onRobotEvent?.((event) => observe(recordingOf(unitOfEvent(event)), event, callback, link)) ?? (() => {}),
     robotCommand: async (command, unit) => {
-      const reply = (await link.robotCommand?.(command, unit)) ?? { ok: false, message: '' };
       const rec = recordingOf(unit);
+      const checked = rec.control?.command(command);
+
+      if (checked && !('command' in checked)) return checked;
+
+      const applied = checked?.command ?? command;
+      const reply = (await link.robotCommand?.(applied, unit)) ?? { ok: false, message: '' };
 
       if (reply.ok && command.cmd === 'intent' && rec.state.status?.run === 'running')
         rec.recorder?.intent(command.joints as number[]);
 
       return reply;
+    },
+    robotState: async (unit) => {
+      const state = await link.robotState?.(unit);
+      const rec = recordingOf(unit);
+
+      return {
+        ...(state ?? { connected: false, spec: null, hello: null, status: null }),
+        connected: rec.state.link === 'connected',
+        spec: rec.state.spec,
+        calibration: rec.state.calibration,
+        control: rec.control?.snapshot(),
+      };
     },
     robotRecord: async (sample, unit) => {
       const rec = recordingOf(unit);

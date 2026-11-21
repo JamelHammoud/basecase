@@ -185,7 +185,7 @@ describe('recorded body parameter analysis', () => {
       await app.page.getByPlaceholder('Search commands').fill('Analyze Try');
       await app.page.getByPlaceholder('Search commands').press('Enter');
       await app.page.getByRole('combobox', { name: 'Try' }).selectOption(historicalTry);
-      await app.page.getByText('Current source', { exact: true }).waitFor();
+      await app.page.locator('[data-testid="body-analysis"][data-applicable="true"]').waitFor();
       await app.page.locator('[data-testid="body-analysis"] summary').press('Enter');
       expect(await app.page.locator('[data-testid="body-analysis"] details').getAttribute('open')).not.toBeNull();
       await expectReadable('[role="dialog"][aria-label="Analyze Try"]');

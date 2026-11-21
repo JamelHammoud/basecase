@@ -31,6 +31,7 @@ export const BODY_MOTION_METHOD = Object.freeze({
 });
 
 export interface BodyMotionRequest {
+  speedRadS?: number;
   request: BodyAnalysisRequest;
   result: BodyAnalysisResult;
   selected: number[];
@@ -68,6 +69,7 @@ export interface BodyMotionPreview {
 }
 
 interface BodyMotionEvidence {
+  speedRadS?: number;
   method: typeof BODY_MOTION_METHOD;
   selected: number[];
   candidates: BodyMotionCandidate[];

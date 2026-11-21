@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { runInNewContext } from 'node:vm';
+import { describe, expect, it, vi } from 'vitest';
 import { CODE_PANEL_TOKENS } from '../../design-system/codeTokens';
 import { CODE_PANEL_CSP, CODE_PANEL_SANDBOX, codePanelDocument, codeSourceFirstLine } from './codeDocument';
 
@@ -15,6 +16,7 @@ describe('a code panel’s document', () => {
     expect(doc.endsWith(source)).toBe(true);
     expect(CODE_PANEL_CSP.split('; ')).toEqual([
       "default-src 'none'",
+      "webrtc 'block'",
       "script-src 'unsafe-inline'",
       "style-src 'unsafe-inline'",
       'img-src data: blob:',
@@ -39,4 +41,30 @@ describe('a code panel’s document', () => {
     expect(lines[codeSourceFirstLine() - 1].endsWith('<p>one</p>')).toBe(true);
     expect(lines[codeSourceFirstLine()]).toBe('<p>two</p>');
   });
+});
+
+it('blocks both peer connection constructors before panel code and prevents restoring them without CSP support', () => {
+  const connect = vi.fn();
+  const context = {
+    window: {
+      RTCPeerConnection: connect,
+      webkitRTCPeerConnection: connect,
+      parent: { postMessage: vi.fn() },
+      addEventListener: vi.fn(),
+    },
+  };
+  const scripts = codePanelDocument(`<script>
+    for (const name of ['RTCPeerConnection', 'webkitRTCPeerConnection']) {
+      try { new window[name]({ iceServers: [{ urls: 'turn:127.0.0.1:3478' }] }); } catch {}
+      if (typeof window[name] !== 'undefined') throw new Error(name + ' is available');
+      if (Reflect.deleteProperty(window, name)) throw new Error(name + ' can be deleted');
+      if (Reflect.set(window, name, Function)) throw new Error(name + ' can be replaced');
+      try { Object.defineProperty(window, name, { value: Function }); } catch {}
+      if (typeof window[name] !== 'undefined') throw new Error(name + ' was restored');
+    }
+  </script>`).matchAll(/<script>([\s\S]*?)<\/script>/g);
+
+  for (const [, script] of scripts) runInNewContext(script, context);
+
+  expect(connect).not.toHaveBeenCalled();
 });

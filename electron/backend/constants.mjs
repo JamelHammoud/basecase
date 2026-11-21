@@ -3,8 +3,15 @@ export const LEGACY_AGENT_COMMAND = 'node electron/acp-3d-agent.mjs';
 export const CODEX_AGENT_COMMAND = 'node node_modules/@agentclientprotocol/codex-acp/dist/index.js';
 export const GEMINI_AGENT_COMMAND = 'node node_modules/@google/gemini-cli/bundle/gemini.js --acp';
 
-export const SAFE_TOOL_PATTERN =
-  /robotics_cad|TodoWrite|WebSearch|WebFetch|\b(write_todos|update_plan|web_fetch|google_web_search)\b/i;
+export const SAFE_TOOLS = new Set([
+  'TodoWrite',
+  'WebSearch',
+  'WebFetch',
+  'write_todos',
+  'update_plan',
+  'web_fetch',
+  'google_web_search',
+]);
 
 export const CAD_SERVER = 'robotics_cad';
 

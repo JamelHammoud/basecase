@@ -1,16 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CAD_SERVER, SAFE_TOOL_PATTERN } from './constants.mjs';
+import { CAD_SERVER, SAFE_TOOLS } from './constants.mjs';
 
 export function isSafeToolCall(call) {
-  const label = `${call._meta?.claudeCode?.toolName ?? ''} ${call.title ?? ''} ${call.kind ?? ''}`;
+  const name = call._meta?.claudeCode?.toolName ?? call.name;
 
-  return (
-    call.rawInput?.server === CAD_SERVER ||
-    SAFE_TOOL_PATTERN.test(label) ||
-    call.kind === 'fetch' ||
-    call.kind === 'think'
-  );
+  return typeof name === 'string' && (SAFE_TOOLS.has(name) || name.startsWith(`mcp__${CAD_SERVER}__`));
 }
 
 const definedEntries = (value) => Object.fromEntries(Object.entries(value ?? {}).filter(([, v]) => v != null));

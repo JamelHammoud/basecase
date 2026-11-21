@@ -251,6 +251,15 @@ Review #2008 found that subtracting the minimum before response from the minimum
 
 The review changed-file check passed formatting, lint, documentation, site copy across 381 pages, types and 104 related tests across 26 files. Evidence is in `scratch/review-2008-check.log`. Subsequent fixture and hook-test corrections are checked separately in `scratch/review-2008-final-check.log`. No browser, preview server or screenshot inspection ran in the review session.
 
+## Motion and placement exclusions on 21 November
+
+Windows Check 44878070469 exceeded the unchanged 5000 ms callback deadline for the stationary-rover motion scenario. Fixture construction, nominal body analysis, deep input comparison, bounded candidate physics, repeated selection and artifact writing were not separately timed. The other nine scenarios passed. Exact-revision diagnostic 44879964066 passed the same declaration in 4945.0042 ms with one worker and retries disabled. It used x64 Node 26.13.1 and Windows image `20261116.315.1`. This is intermittent budget exhaustion, not a measured rate or identified cause.
+
+Only that Windows declaration is quarantined through 28 November 2026 under priority [#2017](https://github.com/JamelHammoud/basecase/issues/2017). The remaining scenarios, refusal, immutable-source, worker, cancellation and lifecycle tests remain active. Other platforms retain the full matrix.
+
+The entered-workbench browser story dispatched rehearsal on Windows but the entered evidence never became applicable at line 56. Preparation, worker execution, stale-source checks and UI installation are separate unresolved boundaries. The persistence story passed on retry, while Linux passed both. Priority [#2021](https://github.com/JamelHammoud/basecase/issues/2021) owns only the entry/rehearsal Windows declaration, quarantined through 28 November. Its independent persistence story and ten-task placement, source identity, transport and real WASM rehearsal matrix remain active.
+
+Restore each path after a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. Preserve the current deadlines, bounded work, truthful refusal, source hashes, unreachable refusal and zero daemon command assertions. No physical-device accuracy or candidate-rate improvement is claimed.
 
 ## Selected motion execution
 

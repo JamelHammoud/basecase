@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { openApp, shown, type App } from './harness';
 import { box } from '../src/sim/fixtures/parts';
-import { loadSupportScene, supportCommand, supportParts } from './sketchSupport.helpers';
+import { loadSupportScene, supportCommand, supportParts, supportTriangles } from './sketchSupport.helpers';
 
 let app: App;
 
@@ -58,5 +58,13 @@ it('binds two Inspector dimensions and changes them through a shared parameter',
       ['Deck', 120],
       ['Mount', 104],
     ]);
+  await expect
+    .poll(async () => {
+      const vertices = await supportTriangles(app.page, 'Mount');
+      const x = vertices.filter((_, index) => index % 3 === 0);
+
+      return Math.max(...x) - Math.min(...x);
+    })
+    .toBe(104);
   expect(app.errors).toEqual([]);
 });

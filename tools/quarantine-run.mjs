@@ -4,9 +4,11 @@ import path from 'node:path';
 import { ROOT, activeEntries, configFor, entryMatches, loadQuarantine, onPlatform, today } from './quarantine.mjs';
 import { quarantineShard } from './quarantineShard.mjs';
 import { runQuarantineProcess } from './quarantineProcess.mjs';
+import { IS_WINDOWS } from '../electron/executables.mjs';
 
 const VITEST = path.join(ROOT, 'node_modules', 'vitest', 'vitest.mjs');
-const deadline = process.env.GITHUB_ACTIONS ? Date.now() + 45000 : Infinity;
+const observationMs = IS_WINDOWS ? 15000 : 45000;
+const deadline = process.env.GITHUB_ACTIONS ? Date.now() + observationMs : Infinity;
 
 function readReport(output) {
   try {

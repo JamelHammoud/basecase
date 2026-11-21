@@ -7,6 +7,7 @@ import { PortSnap } from './portSnap';
 import { roundedUpdate } from './transformRounding';
 import type { Vec3 } from './types';
 import type { ViewportContext } from './viewportContext';
+import { watchGizmoAttachment } from './gizmoAttachment';
 
 interface PivotStart {
   position: THREE.Vector3;
@@ -42,6 +43,8 @@ export class Gizmo {
 
   private readonly ctx: ViewportContext;
 
+  private readonly stopWatching: () => void;
+
   constructor(ctx: ViewportContext) {
     this.ctx = ctx;
     this.snap = new PortSnap(ctx);
@@ -49,6 +52,7 @@ export class Gizmo {
     const { scene, camera, renderer } = ctx.stage;
 
     this.controls = new TransformControls(camera, renderer.domElement);
+    this.stopWatching = watchGizmoAttachment(this.controls);
     this.controls.setSize(0.95);
     this.controls.setColors(THEME_COLORS.axisX, THEME_COLORS.axisY, THEME_COLORS.axisZ, THEME_COLORS.gizmoActive);
     scene.add(this.controls.getHelper(), this.pivot, this.jointPivot, this.hand);
@@ -60,6 +64,7 @@ export class Gizmo {
   }
 
   dispose(): void {
+    this.stopWatching();
     this.controls.dispose();
     this.snap.dispose();
   }

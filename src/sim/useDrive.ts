@@ -43,6 +43,7 @@ export interface DriveTeam {
 export type Autopilot = (frame: SimFrame) => DriveCommand;
 
 export interface DriveStartOptions {
+  inPlace?: boolean;
   inputs?: readonly string[];
   current?: () => boolean;
 }
@@ -283,19 +284,21 @@ export function useDrive(inputs: DriveInputs): SimDrive {
   useEffect(() => () => closeSession(session), [session]);
 
   const begin = useCallback(
-    (access: Extract<DriveAccess, { kind: 'ready' | 'policy' }>, team?: DriveTeam) => {
+    (access: Extract<DriveAccess, { kind: 'ready' | 'policy' }>, team?: DriveTeam, inPlace = false) => {
       const controller = controllerFor(access, team);
 
       reset(access.cls, access.kind === 'policy' ? access.velocity.topSpeed : null);
       setCls(access.cls);
+      viewportRef.current?.followPart(access.followPart);
+      setDriveStatus('on');
+
+      if (inPlace) return;
+
       latest.current.setController(controller);
       latest.current.send({ type: 'respawn', robot: robotKey });
 
       if (team?.script.length && access.kind === 'ready')
         latest.current.send({ type: 'script', commands: team.script });
-
-      viewportRef.current?.followPart(access.followPart);
-      setDriveStatus('on');
     },
     [robotKey, viewportRef, reset],
   );
@@ -346,7 +349,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
         return false;
       }
 
-      begin(access, team);
+      begin(access, team, options?.inPlace);
 
       return true;
     },

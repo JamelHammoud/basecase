@@ -50,6 +50,8 @@ You can step through a Case try one frame at a time. For each joint, you can see
 
 A [vision model comparison](/help/inspect-vision-comparisons) opens its source try at the evaluated image's recorded frame.
 
+While the ownership list has focus, [[Home]], [[End]] and [[Space]] scroll that list. Click a joint lane to use those playback keys again.
+
 For ordinary tries, Basecase recalculates effort from the recording when the timeline opens, so its peaks match Peak torque in Results.
 
 Frozen evaluation failures keep their recorded effort measurements. See [Compare robot revisions](/help/compare-robot-revisions).

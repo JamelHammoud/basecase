@@ -461,3 +461,11 @@ Historical cross-owner observations remain in the linked summaries. Add new evid
 
 - [Nightly build exclusions on 21 November](node.md#nightly-build-exclusions-on-21-november).
 - [Additional build and replay boundaries in Check 44885120824](node.md#additional-build-and-replay-boundaries-in-check-44885120824).
+
+## Linux frozen builds in Check 44887426902
+
+The Linux frozen-build declaration created and reopened both independent builds and their step states, then selected the source arm, clicked Inspect and exhausted 30000 ms finding Width (X) at line 75. This adds Linux to existing [#2013](https://github.com/JamelHammoud/basecase/issues/2013) through 28 November 2026, without conflating source selection or Inspector mounting with Windows build creation and photo handling. macOS retains the complete story. Frozen-Kit identity, strict transactions, concurrent allocations, repair and photo pipelines remain active on Linux and Windows, without replacing browser navigation after reload.
+
+Restore each path only after a demonstrated correction and ten baseline and ten candidate equal-load observations on its excluded platform with retries disabled and current deadlines and assertions intact. No flake rate or candidate hosted completion is claimed. Existing #2029 exclusions already cover the photo-import, tendon and Current replay failures in this run, and are not duplicated.
+
+The same failed published revision produced an additional focused observation. [Linux frozen builds 44889807034](https://github.com/JamelHammoud/basecase/actions/runs/44889807034) failed earlier than the nightly, missing Mark Incomplete after reload at line 60 in 63335.565178 ms, with a 75312 ms process. This leaves reload persistence and build opening unresolved separately from the nightly's later source Inspector boundary. The observation retained Vite-server cleanup warnings. It used one worker, quarantine off, retries disabled, x64 Node 26.13.1 and four CPUs on Ubuntu image `20261116.202.1`. Ticket `476a5dac-3888-418b-aa0b-ce2792bf33bb` retains the verified artifact. This observation does not establish a common cause or candidate result.

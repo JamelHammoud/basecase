@@ -5,6 +5,7 @@ export interface SourceAssignment {
   source: string;
   content: string;
   explicit?: TrySplit;
+  preferTrain?: boolean;
 }
 
 export function assignSources(inputs: SourceAssignment[], seed: number): TrySplit[] {
@@ -43,7 +44,11 @@ export function assignSources(inputs: SourceAssignment[], seed: number): TrySpli
     explicit.set(keys[i], input.explicit);
   });
 
-  const held = new Set(splitOf([...new Set(keys)], seed).validation);
+  const preferred = new Set(
+    inputs.flatMap((input, i) => (input.preferTrain && !explicit.has(keys[i]) ? [keys[i]] : [])),
+  );
+  const candidates = [...new Set(keys)].filter((key) => !preferred.has(key));
+  const held = new Set(splitOf(candidates, seed).validation);
 
   return keys.map((key) => explicit.get(key) ?? (held.has(key) ? 'validation' : 'train'));
 }

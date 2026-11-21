@@ -1,6 +1,17 @@
 import type { MjData, MjModel } from '@mujoco/mujoco';
 import type { SimModel } from './mjcfTypes';
 
+export function readBodyPoses(data: MjData, bodies: number[], out: Float64Array): Float64Array {
+  const { xpos, xquat } = data;
+
+  bodies.forEach((body, i) => {
+    out.set(xpos.subarray(body * 3, body * 3 + 3), i * 7);
+    out.set(xquat.subarray(body * 4, body * 4 + 4), i * 7 + 3);
+  });
+
+  return out;
+}
+
 export function readJointStates(sim: SimModel, data: MjData, jointQpos: number[], out: Float64Array): Float64Array {
   const { ctrl, qpos, actuator_force: force } = data;
 

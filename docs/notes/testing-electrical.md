@@ -372,3 +372,9 @@ Historical cross-owner observations remain in the linked summaries. Add new evid
 - [Windows manufacturing export deadlines](node.md#windows-manufacturing-export-deadlines).
 - [Nightly readiness and parameter repair](node.md#nightly-readiness-and-parameter-repair).
 - [Nightly build exclusions on 21 November](node.md#nightly-build-exclusions-on-21-november).
+
+## Windows route fixture in Check 44887426902
+
+The real route-fixture bundle/import probe exceeded 5000 ms on Windows. [Exact-revision diagnostic 44889745027](https://github.com/JamelHammoud/basecase/actions/runs/44889745027) passed in 2374.964 ms with a 2961 ms process, one worker, quarantine off and retries disabled. It used x64 Node 26.13.1, four CPUs and Windows image `20261116.315.1`. Existing [#2018](https://github.com/JamelHammoud/basecase/issues/2018) now owns both real fixture graph exclusions on Windows through 28 November. Linux and macOS retain both probes, and Windows retains ordinary electrical pipeline checks. Bundling, file writing, import, assertions and temporary-file cleanup remain separate unresolved stages. Ticket `3561b1a0-5982-4592-96cb-2400d18c5abe` retains the verified artifact.
+
+Restore each path only after a demonstrated correction and ten baseline and ten candidate equal-load observations on its excluded platform with retries disabled and current deadlines and assertions intact. No flake rate or candidate hosted completion is claimed. Existing #2029 exclusions already cover the photo-import, tendon and Current replay failures in this run, and are not duplicated.

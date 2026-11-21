@@ -35,6 +35,7 @@ import { useContactSettings, useSceneModel, useStopOnEdit } from './useSceneMode
 import type { AmpModel } from '../utils/servoAmps';
 import type { FallPlan, FallRun } from './fallRuns';
 import type { SelfContactSetting, SelfContactSettings } from './selfContact';
+import type { TeachingLink } from './teachingLink';
 
 export { fallsOn } from './useSimRuns';
 
@@ -52,6 +53,7 @@ export interface SimRun {
 }
 
 export interface Simulation {
+  teaching: TeachingLink;
   selfContact: SelfContactSettings;
   configureSelfContact: (robot: string, setting: SelfContactSetting) => void;
   status: SimStatus;
@@ -85,7 +87,7 @@ export interface Simulation {
   resetTo: (pose: RobotPoseState) => void;
   drive: SimDrive;
   record: () => void;
-  stopRecording: () => Promise<Recording | null>;
+  stopRecording: (recordId?: number) => Promise<Recording | null>;
   scrub: (r: Recording | null, efforts?: RecordedEfforts) => Promise<RecordedEfforts | null>;
   seek: (frame: number) => void;
   sought: () => Sought | null;
@@ -170,7 +172,7 @@ export function useSimulation(props: SimInputs): Simulation {
   const stop = useCallback(() => {
     cancelPreparation();
     cancelStart();
-    cancelRecording();
+    cancelRecording(true);
     send({ type: 'dispose' });
     modelRef.current = null;
     setModel(null);
@@ -223,6 +225,7 @@ export function useSimulation(props: SimInputs): Simulation {
   };
 
   return {
+    teaching: sw.teaching,
     ...contactSettings,
     status,
     playing,

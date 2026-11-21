@@ -7,6 +7,7 @@ use crate::mlp::{BackwardSets, Mlp, Scratch};
 use crate::normalizer::Normalizer;
 use crate::rng::Rng;
 use crate::update::{sized, ACTOR_OUT_GAIN};
+use crate::warm::WarmStart;
 use std::ops::Range;
 
 pub const MAX_EPOCHS: usize = 600;
@@ -225,7 +226,38 @@ struct Best {
 pub fn fit(demos: &Demos, settings: &Settings, watch: &mut dyn FnMut(&Epoch) -> bool) -> Fitted {
     let (norm, constant) = normalizer(&demos.train, demos.nobs);
     let mask: Vec<usize> = settings.mask.iter().chain(&constant).copied().collect();
-    let mut learner = Learner::new(demos, &mask, settings.seed);
+    let learner = Learner::new(demos, &mask, settings.seed);
+
+    fit_initialized(demos, settings, (norm, learner, false), watch)
+}
+
+pub fn fit_warm(
+    demos: &Demos,
+    settings: &Settings,
+    warm: &WarmStart,
+    watch: &mut dyn FnMut(&Epoch) -> bool,
+) -> Result<Fitted, String> {
+    let mut learner = Learner::new(demos, &[], settings.seed);
+
+    warm.state
+        .actor
+        .load_into(&learner.net, &mut learner.params, demos.nact)?;
+
+    Ok(fit_initialized(
+        demos,
+        settings,
+        (warm.norm.clone(), learner, true),
+        watch,
+    ))
+}
+
+fn fit_initialized(
+    demos: &Demos,
+    settings: &Settings,
+    initial: (Normalizer, Learner, bool),
+    watch: &mut dyn FnMut(&Epoch) -> bool,
+) -> Fitted {
+    let (norm, mut learner, retain_initial) = initial;
     let (train_obs, held_obs) = (normalized(&norm, &demos.train), normalized(&norm, &demos.held));
     let mut batches = Batches {
         order: (0..demos.train.count as u32).collect(),
@@ -240,7 +272,11 @@ pub fn fit(demos: &Demos, settings: &Settings, watch: &mut dyn FnMut(&Epoch) -> 
     };
     let mut best = Best {
         params: learner.params.clone(),
-        loss: f64::INFINITY,
+        loss: if retain_initial {
+            learner.current_loss(&held_obs, &demos.held.actions)
+        } else {
+            f64::INFINITY
+        },
         epoch: 0,
     };
     let started = Instant::now();

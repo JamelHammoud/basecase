@@ -11,6 +11,8 @@ A Routine is an inspectable flowchart that runs as one background skill plus pri
 - **Sim runs the code the robot runs.** One coordinator crate builds natively and to WASM.
 - **A Routine is data, never code.** `Routine` (`schema.ts`) is plain JSON: it survives `structuredClone`, a file and a hash. No callbacks, no scripts.
 
+The studio skill loader exposes ready skills by default. An explicit Case id loads its saved records through the same cache for teaching admission. That caller validates current bindings and passing evidence before execution. Routine compilation keeps its ready-only source list.
+
 ### Shape
 
 - **Base:** one `do` step that loops for the life of the Routine. Its `timeoutMs` is how long the Routine runs (the greeting walks for 5 min). When it runs out or fails, its path runs, then the robot stops with `safeStop`. Reactions only fire while the base runs, never on its path.

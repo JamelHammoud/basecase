@@ -8,12 +8,14 @@ export type SnapshotDataset = Pick<Dataset, 'id' | 'name' | 'createdAt' | 'caseI
 
 export interface DatasetSample {
   tryId: string;
+  target?: 'correction';
   from?: number;
   to?: number;
 }
 
 export interface FrozenTrySample {
   tryId: string;
+  target?: 'correction';
   from: number;
   to: number;
   recording: string;
@@ -41,6 +43,10 @@ const modelHashFits = (hash: unknown, samples: unknown[]) => isHash(hash) || (ha
 
 export function isDatasetSample(v: unknown): v is DatasetSample {
   if (!object(v) || !id(v.tryId)) return false;
+
+  if (v.target !== undefined && v.target !== 'correction') return false;
+
+  if (v.target === 'correction' && (v.from === undefined || v.to === undefined)) return false;
 
   if (v.from === undefined && v.to === undefined) return true;
 

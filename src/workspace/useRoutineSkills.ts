@@ -36,7 +36,7 @@ const ownRow = (row: SkillRow) => row.state.kind === 'ready' && !!row.record;
 export function useRoutineSkills({ rows, load, project, setProject }: RoutineSkillsInput): SceneRoutineSkills {
   'use memo';
 
-  const latest = useLatestRef({ rows, handoffs: project.handoffs, load });
+  const latest = useLatestRef({ rows, records: project.skills ?? [], handoffs: project.handoffs, load });
   const cache = useRef(new Map<string, Promise<Skill | null>>());
 
   const loaded = (record: SkillRecord) => {
@@ -47,10 +47,12 @@ export function useRoutineSkills({ rows, load, project, setProject }: RoutineSki
     return known;
   };
 
-  const own = async (): Promise<OwnSkill[]> => {
+  const own = async (caseId?: string): Promise<OwnSkill[]> => {
+    const candidates = caseId
+      ? latest.current.records.filter((record) => record.case?.id === caseId)
+      : latest.current.rows.filter(ownRow).map((row) => row.record!);
     const found = await Promise.all(
-      latest.current.rows.filter(ownRow).map(async (row) => {
-        const record = row.record!;
+      candidates.map(async (record) => {
         const skill = await loaded(record);
 
         return skill ? [{ hash: record.hash, skill, record }] : [];

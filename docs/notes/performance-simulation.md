@@ -1,6 +1,24 @@
 # Simulation performance
 
+## Teaching control-boundary storage
+
+The optional channel retains `8 + 1 + 8 × (nu + nq + nv) + 4 × action_width` bytes per physics boundary. The generated three-joint arm has three entries in each vector, giving 93 bytes per boundary. This is an array-layout calculation, excluding existing frame recordings, metadata, geometric buffer growth and the final slicing copies. It is not a measured worker-memory peak.
+
+Ordinary recordings allocate only one element per optional channel buffer and append no teaching rows. Enabled capture shares the existing recorder and its worker. Buffers grow geometrically and are transferred with the other recording arrays. Correction extraction and portable decoding have no timing assertions. Ordinary stepping constructs no teaching boundary payload, and the ordinary recorder installs no teaching hook. Latency ownership buffers remain empty until a teaching session uses them. A local shared-host observation on macOS arm64, Node 26.13.0 and MuJoCo 4.0.0 measured four simulated seconds at a 2 ms physics step. After one warmup, five alternating observations gave median unrecorded teaching time of 19.719 ms, ordinary policy recording time of 19.193 ms and teaching recording time of 24.291 ms. Ordinary recording has a different controller path, so its lower median is not a controlled overhead baseline. Against unrecorded teaching, the observed median increment was 4.572 ms, or 1.143 ms per simulated second. Host load and garbage collection were uncontrolled. No speed or platform guarantee follows.
+
+The teaching record encoded to 315,984 bytes, versus 129,432 bytes for an ordinary record with the same three-joint model and source actor. Its six boundary arrays occupied exactly 186,000 bytes across 2,000 boundaries. These are retained array and encoded sizes, not worker-memory peaks. Observations are retained in `scratch/teaching-recording-measure.json`.
+
+After integration with main `6042d2712`, a separate worker-thread observation decoded six frozen content blobs, reconstructed four original episodes and four correction windows, validated content identity and prepared a native warm-start job. Preparation took 171.909 ms inside the worker. Worker heap usage rose from 34,308,160 to 53,018,024 bytes and ArrayBuffer usage rose from 1,806,267 to 3,345,135 bytes. These are before-and-after observations, not peak measurements. The renderer sent frozen bytes once and received the prepared job. Startup and message-copy time are excluded from the worker duration.
+
+The two recorded corrections each covered four simulated seconds and 3.52 operator-controlled seconds. Collection plus scoring took 19.835 and 17.693 ms in the accelerated, reference-driven experiment. This measures simulation work and correction duration, not a person's reaction or task-completion time. [Learning evidence](testing-skills.md#simulated-correction-extraction) records the worse recovery outcome and equal update budgets.
+
 Implementation: [Simulation](../guide/simulate.md#performance-simulation). Shared requirements: [Performance](../guide/performance.md).
+
+### Acceptance workload observation
+
+The complete chest fixture runs for 27 simulated seconds and retains 13,500 control boundaries. One standalone phase profile measured reference generation at 406.374 ms, the stationary negative at 166.257 ms and continuous teaching at 289.206 ms. Portable encoding and decoding took 22.614 ms. Complete-try scoring took 14.811 ms, with scoring without ownership metadata at 14.466 ms. This is one macOS observation, without a platform guarantee. The phase log is `scratch/recovery-finish/chest-phases.log`.
+
+The acceptance matrices now share each immutable reference recording between physical reference/negative validation and continuous teaching assertions. The early-deadline declaration reuses the existing reach reference. They retain the original Case lengths, timestep, native teaching actor, physics boundaries and assertions. [Testing evidence](testing-cases.md#recovery-after-the-retained-deadline-failures) records the default-parallel deadline and passing single-worker comparison. No product or CI wait was added.
 
 ## Continuation runtime snapshots
 

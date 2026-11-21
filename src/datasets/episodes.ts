@@ -29,10 +29,10 @@ export interface EpisodeData {
   segments?: DatasetSegment[];
 }
 
-export const datasetStride = (dt: number) => Math.max(1, Math.round(1 / (dt * DATASET_FPS)));
+export const datasetStride = (dt: number, fps = DATASET_FPS) => Math.max(1, Math.round(1 / (dt * fps)));
 
-export function sampledFrames(recording: Pick<Recording, 'frames' | 'dt'>): number[] {
-  const stride = datasetStride(recording.dt);
+export function sampledFrames(recording: Pick<Recording, 'frames' | 'dt'>, fps = DATASET_FPS): number[] {
+  const stride = datasetStride(recording.dt, fps);
 
   return Array.from({ length: Math.ceil(recording.frames / stride) }, (_, k) => k * stride);
 }
@@ -106,18 +106,25 @@ function scanRows(recording: Recording, frames: number[]): Float32Array | undefi
   return out;
 }
 
-export function episodeData(recording: Recording, model: SimModel, task: string, slots?: DatasetSlot[]): EpisodeData {
+export function episodeData(
+  recording: Recording,
+  model: SimModel,
+  task: string,
+  options?: DatasetSlot[] | { fps: number },
+): EpisodeData {
+  const slots = Array.isArray(options) ? options : undefined;
+  const fps = options && !Array.isArray(options) ? options.fps : DATASET_FPS;
   const { joints } = datasetJoints(model, slots);
   const index = jointIndices(model.joints, joints);
   const address = recording.jointQpos ?? new Int32Array();
-  const frames = sampledFrames(recording);
+  const frames = sampledFrames(recording, fps);
   const width = joints.length;
   const state = new Float32Array(frames.length * width);
   const action = new Float32Array(frames.length * width);
   const timestamps = new Float32Array(frames.length);
 
   frames.forEach((f, row) => {
-    timestamps[row] = row / DATASET_FPS;
+    timestamps[row] = row / fps;
     index.forEach((jointIndex, col) => {
       state[row * width + col] = recording.qpos[f * recording.nq + address[jointIndex]];
       action[row * width + col] = recording.ctrl[f * recording.nu + joints[col].actuator];

@@ -204,7 +204,6 @@ export function useCases(options: CasesOptions) {
     ...caseTryCallbacks(project.cases, onTries, showToast),
   });
 
-  const addAndTry = useAddAndTry({ add, active, attempt });
   const real = useRealRobotTries({
     ...{ sim, rig, parts, active, tries, partners, attempt, timeline, onTry },
     viewportRef: options.viewportRef,
@@ -227,10 +226,11 @@ export function useCases(options: CasesOptions) {
     tries,
     hasRobot: rig.robots.length > 0,
     fixedBase: rig.robots.length > 0 && robotFacts(rig, parts).morphology === 'fixed',
+    canTeach: (project.skills ?? []).some((record) => record.case?.id === activeId && record.evidence?.passed),
     open,
     openCheck: trails.openCheck,
     add,
-    addAndTry,
+    addAndTry: useAddAndTry({ add, active, attempt }),
     remove,
     naming,
     removeTry: (record: TryRecord) => confirmRemoveTry(record, { tries, multiply, timeline, setProject, showToast }),

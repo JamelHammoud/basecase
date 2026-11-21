@@ -517,3 +517,11 @@ Historical cross-owner observations remain in the linked summaries. Add new evid
 
 - [Nightly build exclusions on 21 November](node.md#nightly-build-exclusions-on-21-november).
 - [Additional build and replay boundaries in Check 44885120824](node.md#additional-build-and-replay-boundaries-in-check-44885120824).
+
+## Linux dispatch in Check 44887426902
+
+The Linux build-order printing declaration reached the three-plate layout, then exhausted 30000 ms clicking Voron B Start Next. The resolved disabled button became detached. A later attempt stalled earlier opening Settings Printers, and is not evidence that the first dispatch stage succeeded. The declaration joins existing [#1853](https://github.com/JamelHammoud/basecase/issues/1853) only on Linux through 28 November 2026. Linux retains the other print stories plus fast fit, label, plan, tracker and fleet checks. macOS retains the complete fleet dispatch story. The owner must separate printer status, reservations, button replacement, dialog dispatch and shared state between attempts.
+
+Restore each path only after a demonstrated correction and ten baseline and ten candidate equal-load observations on its excluded platform with retries disabled and current deadlines and assertions intact. No flake rate or candidate hosted completion is claimed. Existing #2029 exclusions already cover the photo-import, tendon and Current replay failures in this run, and are not duplicated.
+
+The same failed published revision produced an additional focused observation. [Linux printing 44889810074](https://github.com/JamelHammoud/basecase/actions/runs/44889810074) clicked Start Print but received zero sends at line 397, failing in 20463.420997 ms with a 44940 ms process. This adds backend delivery to the separate status, reservation and dialog boundaries. The observation retained Vite-server cleanup warnings. It used one worker, quarantine off, retries disabled, x64 Node 26.13.1 and four CPUs on Ubuntu image `20261116.202.1`. Ticket `ae80936c-1f83-43ac-b0a0-841e3e7efb20` retains the verified artifact. This observation does not establish a common cause or candidate result.

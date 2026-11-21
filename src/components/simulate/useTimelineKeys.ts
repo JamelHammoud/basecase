@@ -31,8 +31,12 @@ export const timelineKeyHandlers = (t: TimelineKeys, onEdited: () => void = () =
 const typing = (el: Element | null) =>
   el instanceof HTMLSelectElement || (isTextEntry(el) && !(el instanceof HTMLInputElement && el.type === 'range'));
 
+const scrolling = (e: KeyboardEvent) =>
+  document.activeElement?.closest('[data-timeline-scroll]') &&
+  ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key);
+
 const ignored = (e: KeyboardEvent) =>
-  e.metaKey || e.ctrlKey || e.altKey || typing(document.activeElement) || isModalOpen();
+  e.metaKey || e.ctrlKey || e.altKey || typing(document.activeElement) || scrolling(e) || isModalOpen();
 
 export function useTimelineKeys(timeline: TryTimeline, onEdited: () => void) {
   const onKey = useEffectEvent((e: KeyboardEvent) => {

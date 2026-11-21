@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
-import { type MainModule } from '@mujoco/mujoco';
+import type { MainModule } from '@mujoco/mujoco';
 import { loadMujoco } from './loadMujoco';
-import { frameContacts, Recorder, recordingTransfer, type Recording } from './recorder';
+import { frameContacts, type Recorder, type Recording } from './recorder';
 import { effortsTransfer, fitsRecording, recordedEfforts, setRecordedFrame } from './recordedFrames';
 import { SimEngine, type Controller } from './engine';
 import { commandTimeline, runFor, stepScriptedCase, type ScriptTimeline } from './simRun';
@@ -14,8 +14,10 @@ import type { WorldMoves } from './worldMoves';
 import type { WorldChange } from '../cases/worldSet';
 import { runFalls } from './fallRuns';
 import { LivePhysics } from './livePhysics';
-import { sha256Hex } from '../skills/hash';
+import { liveGrab } from './liveGrab';
+import { liveRecorder, sendRecording } from './liveRecorder';
 import { ContinuationSession } from './continuationSession';
+import { LiveTeaching, handleTeaching } from './liveTeaching';
 import type { SimRequest, SimResponse } from './simMessages';
 
 export type { SimRequest, SimResponse } from './simMessages';
@@ -40,6 +42,9 @@ let driveController: Controller = { kind: 'hold' };
 let cameraPort: MessagePort | null = null;
 let script: ScriptTimeline | null = null;
 let scanShown = -1;
+const teachingSession = new LiveTeaching();
+let teachingRecordId: number | null = null;
+const completedTeaching = new Set<number>();
 const poseGate = new PoseGate();
 const livePhysics = new LivePhysics();
 const continuation = new ContinuationSession();
@@ -108,7 +113,7 @@ function loop() {
   last = now;
 
   const t0 = performance.now();
-  const seconds = Math.min(wall * speed, continuation.remaining() ?? Infinity);
+  const seconds = teachingSession.seconds(engine, Math.min(wall * speed, continuation.remaining() ?? Infinity));
 
   if ((continuation.remaining() ?? Infinity) <= 1e-9) {
     halt();
@@ -129,8 +134,15 @@ function loop() {
 
   rtf = rtf * 0.9 + (wall > 0 ? achieved / wall : 1) * 0.1;
   postLooks();
+
+  if (teachingSession.expired(engine)) {
+    halt();
+    finishTeaching();
+  }
+
   frame();
-  timer = setTimeout(loop, 16) as unknown as number;
+
+  if (playing) timer = setTimeout(loop, 16) as unknown as number;
 }
 
 function advanceRoutine(routine: LiveRoutine, seconds: number) {
@@ -145,6 +157,7 @@ function advanceRoutine(routine: LiveRoutine, seconds: number) {
 }
 
 async function startRoutine(msg: Msg<'routine'>) {
+  finishTeaching();
   continuation.select(null);
   recorder?.invalidateContinuation();
   mj ??= await loadMujoco();
@@ -156,6 +169,8 @@ async function startRoutine(msg: Msg<'routine'>) {
 }
 
 async function startCase(msg: Msg<'case'>) {
+  finishTeaching();
+
   if (!engine) throw new Error('Nothing loaded');
 
   liveCase = await LiveCase.start(engine, msg, () => driveController);
@@ -169,15 +184,32 @@ function setController(c: Controller) {
   engine?.setController(c);
 }
 
-function errorText(e: unknown): string {
-  const s = errorMessage(e);
-
-  return s.replace(/^Error:\s*/, '');
-}
+const errorText = (e: unknown) => errorMessage(e).replace(/^Error:\s*/, '');
 
 type Msg<K extends SimRequest['type']> = Extract<SimRequest, { type: K }>;
 
+function teaching(msg: Msg<'teaching'>) {
+  return handleTeaching({
+    engine,
+    msg,
+    session: teachingSession,
+    recording: !!currentRecorder() || !!live || !!watching,
+    start: startTeachingCase,
+    post,
+  });
+}
+
+function startTeachingCase(value: LiveCase, msg: Msg<'teaching'> & { phase: 'start' }) {
+  liveCase = value;
+  driveController = msg.controller;
+  script = null;
+  record({ type: 'record', on: true });
+  teachingRecordId = msg.id;
+  play();
+}
+
 async function watch(msg: Msg<'watch'>) {
+  finishTeaching();
   continuation.select(null);
   recorder?.invalidateContinuation();
   mj ??= await loadMujoco();
@@ -198,9 +230,11 @@ async function load(msg: Msg<'load'>) {
 
   if (generation !== loadGeneration) return;
 
+  finishTeaching();
   continuation.select(null);
-  engine?.dispose();
   recorder?.invalidateContinuation();
+  engine?.dispose();
+  teachingSession.reset();
   engine = null;
   live = null;
   watching = null;
@@ -225,38 +259,49 @@ async function load(msg: Msg<'load'>) {
 }
 
 function record(msg: Msg<'record'>) {
-  if (!engine) return;
+  if (msg.recordId !== undefined && completedTeaching.has(msg.recordId)) return;
 
-  if (msg.on) {
-    continuation.select(null);
-
-    const source = script && !live && !watching ? liveCase?.continuationSource() : null;
-    const checkpoints =
-      source && world
-        ? {
-            caseHash: sha256Hex(JSON.stringify(source)),
-            seconds: source.task.seconds,
-            deadline: liveCase?.continuationDeadline,
-            world,
-            physics: () => livePhysics.snapshot(),
-          }
-        : undefined;
-
-    recorder = new Recorder(engine, driveController, world, checkpoints);
-    engine.stepHook = recorder.hook;
-    engine.commandHook = recorder.command;
-    engine.continuationHook = recorder.continuationHook;
+  if (msg.recordId !== undefined && msg.recordId !== teachingRecordId) {
+    post({ type: 'recorded', recording: null, recordId: msg.recordId });
 
     return;
   }
 
-  const recording = continuation.finish() ?? recorder?.finish() ?? null;
+  if (!engine) return;
 
+  if (msg.on) return startRecording(engine);
+
+  const recording = continuation.finish() ?? recorder?.finish() ?? null;
+  const recordId = teachingRecordId ?? undefined;
+
+  if (recordId !== undefined) completedTeaching.add(recordId);
+
+  teachingRecordId = null;
   engine.stepHook = null;
   engine.commandHook = null;
   engine.continuationHook = null;
+  engine.controlHook = null;
   recorder = null;
-  post({ type: 'recorded', recording }, recording ? recordingTransfer(recording) : []);
+  teachingSession.reset();
+  sendRecording(post, recording, recordId);
+}
+
+function startRecording(target: SimEngine) {
+  if (recorder) return;
+
+  continuation.select(null);
+
+  recorder = liveRecorder({
+    engine: target,
+    controller: driveController,
+    world,
+    kase: script && !live && !watching ? liveCase : null,
+    physics: () => livePhysics.snapshot(),
+  });
+}
+
+function finishTeaching() {
+  if (teachingRecordId !== null) record({ type: 'record', on: false, recordId: teachingRecordId });
 }
 
 function halt() {
@@ -301,12 +346,6 @@ function play() {
   loop();
 }
 
-function grab(msg: Msg<'grab'>) {
-  if (msg.phase === 'start') engine?.grabStart(msg.body, msg.point);
-  else if (msg.phase === 'move') engine?.grabMove(msg.point, msg.turn);
-  else engine?.grabEnd();
-}
-
 function run(msg: Msg<'run'>) {
   if (!engine) throw new Error('Nothing loaded');
 
@@ -314,6 +353,7 @@ function run(msg: Msg<'run'>) {
 }
 
 const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<void> } = {
+  teaching,
   load,
   play,
   pause: () => {
@@ -323,6 +363,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   reset: (msg) => {
     continuation.select(null);
     recorder?.invalidateContinuation();
+    finishTeaching();
     engine?.reset(msg.initial);
     world?.reset();
     postLooks();
@@ -333,10 +374,11 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   },
   controller: (msg) => {
     recorder?.invalidateContinuation();
+    finishTeaching();
     script = null;
     setController(msg.controller);
   },
-  grab,
+  grab: (msg) => liveGrab(engine, msg),
   push: (msg) => {
     engine?.pushRobot(msg.robot, msg.force, { seconds: msg.seconds, releaseDeg: msg.releaseDeg });
   },
@@ -349,6 +391,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   respawn: (msg) => {
     continuation.select(null);
     recorder?.invalidateContinuation();
+    finishTeaching();
     engine?.respawn(msg.robot);
     frame();
   },
@@ -414,6 +457,8 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   },
   dispose: () => {
     continuation.select(null);
+    finishTeaching();
+    teachingSession.reset();
     loadGeneration++;
     playing = false;
     live = null;
@@ -425,6 +470,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     engine?.dispose();
     engine = null;
     world = null;
+    post({ type: 'disposed' });
   },
 };
 

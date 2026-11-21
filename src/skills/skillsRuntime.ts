@@ -25,7 +25,8 @@ import { SkillsRuntimeJobs } from './skillsRuntimeJobs';
 import { runMoveWork } from './runtimeMove';
 import { DESIGN_CHANGED, type RecoverableSkillJob } from './skillRecovery';
 import { runRuntimeRecheck } from './runtimeRecheck';
-import { runTries, type TriesPlan } from './triesRun';
+import type { TriesPlan } from './triesRun';
+import { runTriesTask } from './runtimeTries';
 
 export type { ForgeFactory, ForgeFactoryOptions, JobRow } from './skillsRuntimeTypes';
 export type { KitInstall, RaceReport, RuntimeDeps } from './skillsRuntimeTypes';
@@ -224,28 +225,26 @@ export class SkillsRuntime extends SkillsRuntimeJobs {
   learnFromTries(plan: TriesPlan): string | null {
     if (this.user) return BUSY;
 
+    const revision = this.designRevision;
+
     this.running = this.start({
       recoverable: true,
       target: `goal:${plan.kase.name}`,
       label: plan.kase.name,
       model: plan.model,
       background: false,
-      work: async (forge) => {
-        await this.deps.recovery?.capture({
-          type: 'tries',
-          model: plan.model,
-          kase: plan.kase,
-          job: plan.job,
-          datasetId: plan.datasetId,
-        });
-
-        return runTries(plan, {
-          forge,
-          design: designOf(plan.model),
-          save: this.deps.save,
-          onRecord: this.deps.onRecord,
-        }).catch((e: unknown) => plan.done({ runs: null, kept: false, problem: errorMessage(e) }));
-      },
+      work: (forge, signal) =>
+        runTriesTask(
+          plan,
+          {
+            forge,
+            design: designOf(plan.model),
+            save: this.deps.save,
+            onRecord: this.deps.onRecord,
+            assertCurrent: () => this.assertDesignCurrent(revision, signal),
+          },
+          this.deps.recovery,
+        ),
     });
 
     return null;

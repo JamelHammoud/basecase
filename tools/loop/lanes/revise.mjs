@@ -94,7 +94,7 @@ function checkout(pull) {
   const dir = path.join(WORKTREES, `revise-${pull.number}`);
 
   clearPath(dir);
-  git(['worktree', 'add', '-q', '-B', pull.headRefName, dir, `origin/${pull.headRefName}`], HOME_CHECKOUT);
+  git(['worktree', 'add', '-q', '--detach', dir, `origin/${pull.headRefName}`], HOME_CHECKOUT);
   linkModules(dir);
 
   return { dir };

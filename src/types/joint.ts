@@ -2,6 +2,7 @@ import type { OnshapeMate } from './robotLink';
 import type { LoopClosure } from './loopClosure';
 
 export interface RobotJoint {
+  tendon?: import('./tendon').IdealTendon;
   id: string;
   name: string;
   type: 'revolute' | 'prismatic' | 'fixed';

@@ -36,7 +36,7 @@ Every file type Basecase opens and saves, with the units it assumes and its size
 
 | Format | How it comes in | Units Basecase assumes |
 |---|---|---|
-| STL, 3MF, PLY | [Import a file](/help/import-a-file), as one part per file | Millimeters, Z up |
+| STL, 3MF, PLY | [Import a file](/help/import-a-file), as editable mesh parts | Millimeters, Z up |
 | OBJ | Import a mesh | Millimeters, Y up |
 | GLB, glTF, DAE | Import a mesh | Meters |
 | FBX | Import a mesh | Centimeters |
@@ -46,13 +46,15 @@ Every file type Basecase opens and saves, with the units it assumes and its size
 | `.basecase` | [Open a shared scene](/help/open-a-shared-scene) |, |
 | PNG, JPEG and other images | Dropped on the canvas, as a flat reference image |, |
 | BVH | **File** ▸ **Import**, as motion for a robot with joints |, |
-| GLB, glTF, OBJ dropped on the canvas | [Import a captured world](/help/import-a-world), as a Case world | Meters, or millimeters when the largest extent is at least 1,000 units |
+| GLB, glTF, OBJ through **Import World** | [Import a captured world](/help/import-a-world), as a Case world | Meters, or millimeters when the largest extent is at least 1,000 units |
 | SPZ, PLY dropped with a collider mesh | The Case world's splat appearance | The collider's units and placement |
 | RoomPlan JSON | [Import a scanned room as a Case world](/help/import-a-scanned-room) | Meters |
 
-A mesh imported as a part that comes in smaller than 1 mm across is read as meters and scaled up 1,000 times. Use **Import** to bring GLB, glTF, OBJ or PLY files in as parts.
+A mesh imported as a part that comes in smaller than 1 mm across is read as meters and scaled up 1,000 times. Use **Import** or drop a model on the canvas to bring it in as editable parts. Ordinary polygon PLY files import as parts, while Gaussian PLY files need a world collider. Model parts keep their objects, material groups and source coordinates.
 
 ## Limits
+
+Ordinary mesh imports have no captured-world byte or triangle limit. Texture maps and animation clips are omitted from model parts.
 
 - A STEP or IGES file can be up to 200 MB and 1,000 bodies.
 - A robot zip can be up to 200 MB to download, and 600 MB once unzipped.
@@ -66,7 +68,7 @@ Every export is in the **Export** menu at the top right of the window.
 |---|---|---|
 | **Image** | `<scene>.png` | The canvas as you see it, without the grid, gizmos and other helpers |
 | **STL** | `<scene>.stl` | Every visible solid part as one binary mesh, in millimeters, Z up |
-| **3MF Plates** | `<scene>.3mf`, or one file per material | The printed parts laid out on plates, with [guide letters](/help/label-printed-parts) while **Label parts** is on. An open [fit test](/help/compare-fit-clearances) exports its coupons, with comparison identities when variants are prepared |
+| **3MF Plates** | `<scene>.3mf`, or one file per material | The printed parts laid out on plates, with [guide letters](/help/label-printed-parts) while **Label parts** is on. An open [fit test](/help/compare-fit-clearances) exports its coupons, with comparison identities when variants are prepared. An open [assembly cradle](/help/make-an-assembly-cradle) exports its tooling and source identities |
 | **Cut Files** | `<scene>-cut-files.zip` | One DXF per [sheet part](/help/cut-parts-from-sheet), with its outline and holes in millimeters |
 | **Drawings** | `<scene>-drawings.zip` | PDF, editable SVG and a source manifest for [dimensioned drawings](/help/export-dimensioned-drawings) |
 | **STEP**, in the desktop app only | `<scene>.step` | Every visible solid part as its own body, in millimeters, Z up, as [Export a STEP file](/help/export-a-step-file) explains |

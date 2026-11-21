@@ -5,7 +5,6 @@ import { CableRoutesSection } from './build/CableRoutesSection';
 import type { CableRoutes } from '../workspace/useCableRoutes';
 import React from 'react';
 import { useScrollFade } from '../design-system';
-import { BoardBuildAction } from './build/BoardBuildAction';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { ShowToast } from '../workspace/types';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
@@ -104,13 +103,12 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       <div ref={setScroller} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-        {rest.builds}
-        <BoardBuildAction exists={!!project.electronicsBoard} onClick={onDefineBoard} />
         <ChecksSection
           readiness={readiness.current}
           checking={readiness.checking}
           context={{
             focusedCheck: project.assignment?.inspection?.check,
+            board: { exists: !!project.electronicsBoard, onClick: onDefineBoard },
             parts,
             panScroll,
             actions: {
@@ -166,6 +164,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
           onExportMarkdown={exportMarkdown}
         />
         <GuideSection guide={guide} sceneName={sceneName} canGenerate={parts.some(isBuilt)} />
+        {rest.builds}
         <PlatesSection printing={printing} />
       </div>
       <SupplierOffers bom={bom} purchases={purchases} scene={sceneId} save={savePurchase} />

@@ -29,7 +29,8 @@ Simulation records the joint's motion. You can’t command it through live drive
 You can pose it with its slider before starting simulation.
 [Sketch four-bars](/help/simulate-a-four-bar) derive their passive angles from the crank instead.
 
-Passive joints don’t model cables or tendons. They are simulated mechanisms with no claim of physical validation.
+[Drive joints with an ideal tendon](/help/drive-joints-with-an-ideal-tendon) to connect passive outputs to a catalog motor spool.
+These simulated mechanisms make no claim of physical validation.
 
 Choose **Powered** in the same menu to restore powered behavior.
 Reassign any motors through the design agent, or undo the passive edit with [[⌘Z]].

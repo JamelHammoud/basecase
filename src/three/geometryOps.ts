@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { weldImportedMesh } from './importWeld';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { MeshoptSimplifier } from 'meshoptimizer/simplifier';
 import { reply } from '../utils/workerRpc';
@@ -15,6 +16,7 @@ import { localTriangles } from './meshMeasure';
 import { worldCollision } from './worldCollision';
 import type { WorldItem } from '../sim/mjcfTypes';
 import type { ScenePart } from '../types/robotics';
+import { loadModelMesh, type ModelMeshJob } from '../utils/modelMesh';
 import { regenerateSketchParts } from './sketchSupportOps';
 import { sketchFace, type SketchFaceJob } from './sketchFaceOps';
 import { regenerateParameterGeometry } from '../utils/designParameters/geometry';
@@ -24,17 +26,22 @@ import type { ParameterDesign } from '../utils/designParameters/mutations';
 import { fitComparisonParts, writeFitPlate, type FitPlateWrite } from '../print/fitPlateWriter';
 import { fitVariantCoupons, type FitVariantCut } from '../print/fitVariantGeometry';
 import type { ParameterGeometryJob } from '../utils/designParameters/transaction';
+import { prepareCradleJob, type CradleJob } from '../print/cradleJob';
+import { writeCradlePlate } from '../print/cradlePlate';
 
 type Vec3 = [number, number, number];
 
 export interface LinkMeshJob {
   soup: Float32Array;
   target: number;
+  preserveDetail?: boolean;
+  colors?: Float32Array;
 }
 
 export interface LinkMesh {
   positions: number[];
   indices: number[];
+  colors?: number[];
   center: Vec3;
   size: Vec3;
 }
@@ -80,6 +87,7 @@ function weld(soup: Float32Array) {
   return {
     positions: welded.getAttribute('position').array as Float32Array,
     indices: new Uint32Array(welded.index!.array as ArrayLike<number>),
+    colors: welded.getAttribute('color')?.array as Float32Array | undefined,
   };
 }
 
@@ -88,11 +96,11 @@ export async function simplifyMesh(soup: Float32Array, target: number) {
 
   await MeshoptSimplifier.ready.catch(() => {});
 
-  if (indices.length / 3 <= target || !MeshoptSimplifier.supported) return { positions, indices };
+  if (indices.length / 3 <= target || !MeshoptSimplifier.supported) return { positions, indices, colors: undefined };
 
   const [out] = MeshoptSimplifier.simplify(indices, positions, 3, Math.max(target * 3, MIN_INDICES), 0.002, ['Prune']);
 
-  return { positions, indices: out.length >= MIN_INDICES ? (out as Uint32Array) : indices };
+  return { positions, indices: out.length >= MIN_INDICES ? (out as Uint32Array) : indices, colors: undefined };
 }
 
 function bounds(positions: Float32Array) {
@@ -103,33 +111,41 @@ function bounds(positions: Float32Array) {
 
 const centi = (v: number) => Math.round(v * 100) / 100;
 
-function compactMesh(positions: Float32Array, indices: Uint32Array, center: THREE.Vector3) {
+function compactMesh(positions: Float32Array, indices: Uint32Array, center: THREE.Vector3, preserveDetail = false) {
   const used = new Int32Array(positions.length / 3).fill(-1);
   const pos: number[] = [];
   const idx: number[] = [];
+  const vertices: number[] = [];
+  const coordinate = preserveDetail ? (v: number) => v : centi;
 
   for (const i of indices) {
     if (used[i] < 0) {
       used[i] = pos.length / 3;
+      vertices.push(i);
       pos.push(
-        centi(positions[i * 3] - center.x),
-        centi(positions[i * 3 + 1] - center.y),
-        centi(positions[i * 3 + 2] - center.z),
+        coordinate(positions[i * 3] - center.x),
+        coordinate(positions[i * 3 + 1] - center.y),
+        coordinate(positions[i * 3 + 2] - center.z),
       );
     }
 
     idx.push(used[i]);
   }
 
-  return { pos, idx };
+  return { pos, idx, vertices };
 }
 
-export async function linkMesh({ soup, target }: LinkMeshJob): Promise<LinkMesh> {
-  const { positions, indices } = await simplifyMesh(soup, target);
+export async function linkMesh({ soup, target, preserveDetail, colors: sourceColors }: LinkMeshJob): Promise<LinkMesh> {
+  const { positions, indices, colors } = preserveDetail
+    ? weldImportedMesh(soup, sourceColors)
+    : await simplifyMesh(soup, target);
   const { center, size } = bounds(positions);
-  const { pos, idx } = compactMesh(positions, indices, center);
+  const { pos, idx, vertices } = compactMesh(positions, indices, center, preserveDetail);
+  const compactColors = colors
+    ? vertices.flatMap((i) => [colors[i * 3], colors[i * 3 + 1], colors[i * 3 + 2]])
+    : undefined;
 
-  return { positions: pos, indices: idx, center: center.toArray(), size: size.toArray() };
+  return { positions: pos, indices: idx, colors: compactColors, center: center.toArray(), size: size.toArray() };
 }
 
 export function linkSoup(pieces: SoupPiece[]): LinkSoup {
@@ -180,6 +196,19 @@ async function parseMesh({ data, path }: ParseMeshJob): Promise<Float32Array | n
 const transferLines = (lines: Float32Array) => reply(lines, [lines.buffer]);
 
 export const geometryHandlers = {
+  cradlePrepare: async (job: CradleJob) => {
+    const result = await prepareCradleJob(job);
+
+    return reply(result, [result.geometry.positions.buffer, result.geometry.normals.buffer]);
+  },
+  cradlePlate: async (job: Parameters<typeof writeCradlePlate>[0]) => {
+    const result = await writeCradlePlate(job);
+
+    return reply(
+      result,
+      Object.values(result.files).map((file) => file.buffer),
+    );
+  },
   fitComparisonParts: (comparison: FitComparison) => reply(fitComparisonParts(comparison)),
   fitSourceHash: async (design: ParameterDesign) => reply(await fitSourceHash(design)),
   fitPlateWrite: async (job: FitPlateWrite) => {
@@ -256,6 +285,16 @@ export const geometryHandlers = {
     const arrays = await componentArrays(data);
 
     return reply(arrays, componentTransfers(arrays));
+  },
+  parseModel: async (job: ModelMeshJob) => {
+    const pieces = await loadModelMesh(job);
+
+    return reply(
+      pieces,
+      pieces.flatMap((piece) =>
+        piece.colors ? [piece.positions.buffer, piece.colors.buffer] : [piece.positions.buffer],
+      ),
+    );
   },
   parseMesh: async (job: ParseMeshJob) => {
     const positions = await parseMesh(job);

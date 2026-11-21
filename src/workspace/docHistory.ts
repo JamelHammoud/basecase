@@ -31,6 +31,7 @@ export const withCaseConsoles = (cases: Case[] | undefined, consoles: Consoles) 
   cases?.map((c) => (c.id in consoles ? { ...c, console: consoles[c.id] } : c));
 
 export const trackedOf = ({
+  workbenchPlacements,
   wiring,
   pose,
   joints,
@@ -41,6 +42,7 @@ export const trackedOf = ({
   dimensionalRequirements,
   selfContact,
 }: ProjectSettings): Omit<Snapshot, 'parts'> => ({
+  workbenchPlacements,
   wiring,
   electronicsBoard,
   designParameters,
@@ -65,6 +67,7 @@ function supplyFor(next: Snapshot | undefined, project: ProjectSettings): Partia
 
 function restoredProject(to: Snapshot, here: Snapshot, cases: Case[] | undefined): Partial<ProjectSettings> {
   return {
+    ...('workbenchPlacements' in to ? { workbenchPlacements: to.workbenchPlacements } : {}),
     ...('wiring' in to ? { wiring: to.wiring } : {}),
     ...('selfContact' in to ? { selfContact: to.selfContact } : {}),
     ...('designParameters' in to ? { designParameters: to.designParameters } : {}),

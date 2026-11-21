@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { geometryWorker } from '../three/geometryWorker';
 import type { ScenePart } from '../types/robotics';
-import { parseMeshFile } from '../utils/meshFile';
+import { loadModelMesh, type ModelMeshPiece } from '../utils/modelMesh';
+import { centerSizeRange } from '../utils/centerSizeRange';
 import { extensionOf } from './importRoute';
 import { PRINTED_TAG } from './partFactories';
 import type { Vec3 } from './types';
@@ -15,63 +16,123 @@ export function importMatrix(ext: string): THREE.Matrix4 {
   const scale = MM_PER_UNIT[ext] ?? 1;
   const matrix = new THREE.Matrix4().makeScale(scale, scale, scale);
 
-  return Z_UP.has(ext) ? new THREE.Matrix4().makeRotationX(-Math.PI / 2).multiply(matrix) : matrix;
+  return Z_UP.has(ext)
+    ? new THREE.Matrix4().set(1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1).multiply(matrix)
+    : matrix;
 }
 
-async function placedSoup(positions: Float32Array, ext: string) {
-  const placed = await geometryWorker.call(
-    'linkSoup',
-    [{ positions, matrix: importMatrix(ext).toArray() }],
-    [positions.buffer],
+async function placedPieces(pieces: ModelMeshPiece[], ext: string) {
+  const placed = await Promise.all(
+    pieces.map(async (piece) => ({
+      ...piece,
+      ...(await geometryWorker.call(
+        'linkSoup',
+        [{ positions: piece.positions, matrix: importMatrix(ext).toArray() }],
+        [piece.positions.buffer],
+      )),
+    })),
   );
-  const extent = Math.max(...placed.max.map((v, i) => v - placed.min[i]));
+  const min = [0, 1, 2].map((axis) => placed.reduce((min, p) => Math.min(min, p.min[axis]), Infinity));
+  const max = [0, 1, 2].map((axis) => placed.reduce((max, p) => Math.max(max, p.max[axis]), -Infinity));
+  const extent = Math.max(...max.map((v, i) => v - min[i]));
+  const scale = extent > 0 && extent < SMALLEST_MM ? 1000 : 1;
 
-  if (extent >= SMALLEST_MM || extent === 0) return placed.soup;
+  return Promise.all(
+    placed.map(async (piece) => {
+      const soup = piece.soup;
+      const scaled =
+        scale === 1
+          ? piece
+          : await geometryWorker.call(
+              'linkSoup',
+              [{ positions: soup, matrix: new THREE.Matrix4().makeScale(scale, scale, scale).toArray() }],
+              [soup.buffer],
+            );
+      const mesh = await geometryWorker.call(
+        'linkMesh',
+        { soup: scaled.soup, target: scaled.soup.length / 9, preserveDetail: true, colors: piece.colors },
+        [scaled.soup.buffer, ...(piece.colors ? [piece.colors.buffer] : [])],
+      );
 
-  const metres = new THREE.Matrix4().makeScale(1000, 1000, 1000).toArray();
-  const scaled = await geometryWorker.call(
-    'linkSoup',
-    [{ positions: placed.soup, matrix: metres }],
-    [placed.soup.buffer],
+      return { ...mesh, name: piece.name, color: piece.color, material: piece.material };
+    }),
   );
-
-  return scaled.soup;
 }
 
-const round = (v: number) => Math.round(v * 100) / 100;
-
-export interface MeshImport {
+interface ModelImport {
   file: File;
-  id: string;
+  newId: (prefix: string) => string;
   at?: Vec3 | null;
+  resources?: File[];
 }
 
-export async function meshPartFromFile({ file, id, at }: MeshImport): Promise<ScenePart> {
+export async function meshPartsFromFile({ file, newId, at, resources = [] }: ModelImport): Promise<ScenePart[]> {
   const ext = extensionOf(file.name);
-  const positions = await parseMeshFile(await file.arrayBuffer(), file.name);
-
-  if (!positions?.length) throw new Error('No triangles found.');
-
-  const soup = await placedSoup(positions, ext);
-  const mesh = await geometryWorker.call('linkMesh', { soup, target: soup.length / 9 }, [soup.buffer]);
-  const baseSize: Vec3 = [Math.max(mesh.size[0], 0.01), Math.max(mesh.size[1], 0.01), Math.max(mesh.size[2], 0.01)];
-  const base = at ?? [0, 0, 0];
-  const name = file.name.replace(/\.[^.]+$/, '') || 'Mesh';
-
-  return {
-    id,
-    name,
-    kind: 'mesh',
-    category: 'structure',
-    role: 'solid',
-    position: [base[0], round(base[1] + baseSize[1] / 2), base[2]],
-    rotation: [0, 0, 0],
-    dimensions: { width: round(baseSize[0]), height: round(baseSize[1]), depth: round(baseSize[2]) },
-    color: IMPORTED_COLOR,
-    note: '',
-    mechanicalTag: PRINTED_TAG,
-    visible: true,
-    locked: false,
-    mesh: { positions: mesh.positions, indices: mesh.indices, baseSize, source: file.name, file: file.name },
+  const data = await file.arrayBuffer();
+  const job = {
+    data,
+    path: file.name,
+    resources: await Promise.all(
+      resources.map(async (resource) => ({
+        name: resource.webkitRelativePath || resource.name,
+        data: await resource.arrayBuffer(),
+      })),
+    ),
   };
+  const pieces = /\.(dae|3mf)$/i.test(file.name)
+    ? await loadModelMesh(job)
+    : await geometryWorker.call('parseModel', job, [data, ...job.resources.map((r) => r.data)]);
+
+  if (!pieces.length) throw new Error('No triangles found.');
+
+  const meshes = await placedPieces(pieces, ext);
+  const bounds = [0, 1, 2].map((axis) =>
+    centerSizeRange(
+      meshes,
+      (m) => m.center[axis],
+      (m) => m.size[axis],
+    ),
+  );
+  const mid = bounds.map(({ min, max }) => (min + max) / 2);
+  const base = at ?? [0, 0, 0];
+  const name =
+    file.name
+      .split('/')
+      .at(-1)!
+      .replace(/\.[^.]+$/, '') || 'Mesh';
+  const group = meshes.length > 1 ? { group: { id: newId('group'), name } } : {};
+
+  return meshes.map((mesh, i) => {
+    const baseSize = mesh.size.map((v) => (v > 0 ? v : 0.01)) as Vec3;
+
+    return {
+      id: newId('mesh'),
+      name: mesh.name || (meshes.length > 1 ? `${name} ${i + 1}` : name),
+      kind: 'mesh',
+      category: 'structure',
+      role: 'solid',
+      position: [
+        base[0] + mesh.center[0] - mid[0],
+        base[1] + mesh.center[1] - bounds[1].min,
+        base[2] + mesh.center[2] - mid[2],
+      ],
+      rotation: [0, 0, 0],
+      dimensions: { width: baseSize[0], height: baseSize[1], depth: baseSize[2] },
+      color: mesh.color || IMPORTED_COLOR,
+      note: '',
+      mechanicalTag: PRINTED_TAG,
+      visible: true,
+      locked: false,
+      mesh: {
+        positions: mesh.positions,
+        indices: mesh.indices,
+        baseSize,
+        source: file.name,
+        file: file.name,
+        material: mesh.material,
+        colors: mesh.colors,
+      },
+      ...group,
+    };
+  });
 }

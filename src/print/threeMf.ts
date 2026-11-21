@@ -1,4 +1,5 @@
 import type { FitPlateIdentity } from './fitVariantIdentity';
+import type { CradleIdentity } from './cradleTypes';
 import { strToU8, zipSync } from 'three/examples/jsm/libs/fflate.module.js';
 
 export interface MeshData {
@@ -20,6 +21,7 @@ export interface ThreeMfItem {
 }
 
 export interface ThreeMfInput {
+  cradle?: CradleIdentity;
   fitTest?: FitPlateIdentity;
   objects: ThreeMfObject[];
   items: ThreeMfItem[];
@@ -155,7 +157,7 @@ const RELS = `<?xml version="1.0" encoding="UTF-8"?>
 export function writeThreeMf(input: ThreeMfInput): Uint8Array {
   const files: Record<string, Uint8Array> = {
     '[Content_Types].xml': strToU8(
-      input.fitTest
+      input.fitTest || input.cradle
         ? CONTENT_TYPES.replace('</Types>', '<Default Extension="json" ContentType="application/json"/>\n</Types>')
         : CONTENT_TYPES,
     ),
@@ -170,7 +172,12 @@ export function writeThreeMf(input: ThreeMfInput): Uint8Array {
 
   if (input.fitTest) files['Metadata/basecase-fit-test.json'] = strToU8(JSON.stringify(input.fitTest));
 
-  return zipSync(files, { level: 6, ...(input.project || input.fitTest ? { mtime: new Date(1980, 0, 1) } : {}) });
+  if (input.cradle) files['Metadata/basecase-assembly-cradle.json'] = strToU8(JSON.stringify(input.cradle));
+
+  return zipSync(files, {
+    level: 6,
+    ...(input.project || input.fitTest || input.cradle ? { mtime: new Date(1980, 0, 1) } : {}),
+  });
 }
 
 export interface ThreeMfProject {

@@ -1,5 +1,6 @@
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import type { V3 } from './kinematics';
+import { remappedTendon } from '../joints/tendonReferences';
 
 export const jointPartIds = (joint: RobotJoint): string[] => [
   ...joint.parent,
@@ -16,10 +17,29 @@ function mappedId(names: Map<string, string>, id: string): string {
   return mapped;
 }
 
+function assertCapturedTendons(joints: readonly RobotJoint[], selected: Set<string>, included: Set<string>) {
+  const byId = new Map(joints.map((joint) => [joint.id, joint]));
+
+  for (const motor of joints) {
+    if (!motor.tendon) continue;
+
+    const ids = [motor.id, ...motor.tendon.terms.map((term) => term.joint)];
+    const touched = ids.some((id) => {
+      const joint = byId.get(id);
+
+      return joint && jointPartIds(joint).some((part) => selected.has(part));
+    });
+
+    if (touched && ids.some((id) => !included.has(id))) throw new Error('Save the complete assembly to Library again.');
+  }
+}
+
 export function capturedJoints(joints: readonly RobotJoint[], parts: ScenePart[], center: number[]): RobotJoint[] {
   const selected = new Set(parts.map((part) => part.id));
   const included = joints.filter((joint) => jointPartIds(joint).every((id) => selected.has(id)));
   const jointIds = new Set(included.map((joint) => joint.id));
+
+  assertCapturedTendons(joints, selected, jointIds);
 
   return included.map((source) => {
     const joint = structuredClone(source);
@@ -60,6 +80,7 @@ export function placedJoints(
       parentJoint: joint.parentJoint ? mappedId(names, joint.parentJoint) : undefined,
       ...(joint.actuators ? { actuators: joint.actuators.map(partId) } : {}),
       ...(joint.loop ? { loop: { ...joint.loop, driver: mappedId(names, joint.loop.driver) } } : {}),
+      ...remappedTendon(joint.tendon, (id) => mappedId(names, id)),
       origin: joint.origin.map((value, i) => value + base[i]) as V3,
       frame: joint.frame ? { ...joint.frame, part: partId(joint.frame.part) } : undefined,
     };

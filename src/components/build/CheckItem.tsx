@@ -8,6 +8,10 @@ import { EnvelopeRows, FindingPlot, unlisted } from './EnvelopeRows';
 import { BlockerRow, NoteRow, type FindingContext } from './FindingRow';
 import { TetherFields } from './TetherFields';
 import { tetherFieldsFor } from './tetherRows';
+import { BoardBuildAction } from './BoardBuildAction';
+
+const boardFor = (check: CheckSummary, context: FindingContext) =>
+  check.name === 'Electrical connections' && !context.readOnly ? context.board : undefined;
 
 export const CheckItem: React.FC<{
   check: CheckSummary;
@@ -23,7 +27,8 @@ export const CheckItem: React.FC<{
   const count = blockers.length + notes.length;
   const detail = shownDetail(check, [...blockers, ...notes]);
   const fields = tetherFieldsFor(check.name, context.tether?.tether);
-  const hasBody = count > 0 || fields.length > 0 || !!detail || !!check.envelopes?.length;
+  const board = boardFor(check, context);
+  const hasBody = [board, count, fields.length, detail, check.envelopes?.length].some(Boolean);
   const showDots = context.showDots;
 
   useEffect(() => {
@@ -49,6 +54,7 @@ export const CheckItem: React.FC<{
         <div className="pb-1">
           {detail && <p className="pl-[31px] pr-[7px] pb-0.5 text-[12.5px] leading-[17px] text-white/50">{detail}</p>}
           {context.tether && fields.length > 0 && <TetherFields fields={fields} control={context.tether} />}
+          {board && <BoardBuildAction {...board} />}
           <ul>
             {blockers.map((finding) => (
               <BlockerRow key={finding.key} finding={finding} context={context}>

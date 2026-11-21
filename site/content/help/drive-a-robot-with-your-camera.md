@@ -29,6 +29,8 @@ covers:
 
 Move your arms in front of your computer's camera, and a humanoid or a robot arm in the simulation moves its arms the same way.
 
+Ideal tendon models accept motor pose inputs. Simulation resolves their passive outputs without hand-position IK.
+
 This works on humanoids and fixed arms. A rover, or a robot with legs and no arms, drives the same way it does with **Drive**, and the camera stays off. The camera's picture stays on your computer, and Basecase saves it only as the video of a session on a connected robot. See [Keep a robot session as a try](/help/keep-a-robot-session-as-a-try).
 
 1. Click **Simulate** at the top of the right panel.

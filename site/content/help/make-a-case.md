@@ -60,7 +60,7 @@ Basecase opens the Case in the **Simulate** tab and shows its world on the canva
 
 **Tip:** You can also find **New Case** in [[⌘K]]. The card opens with the focus on **Make Case**, so you can press [[↩]] to make the Case as long as you haven't clicked a field.
 
-To use a captured or generated place, drop its collider mesh onto the canvas. New Case opens with that world picked. See [Import a captured world](/help/import-a-world) for the files to include.
+To use a captured or generated place, press [[⌘K]] and choose **Import World**. Select its collider mesh and companion files. New Case opens with that world picked. See [Import a captured world](/help/import-a-world) for the files to include.
 
 To use an imported ROS recording's scan map, choose **Make World** from the **Map** row's menu in **Layers**. New Case opens with **Map** picked under **World**. For a planar scan, it identifies the estimated floor and 1 m obstacle height. See [Map a robot run](/help/map-a-robot-run) for the steps and limits.
 
@@ -84,7 +84,7 @@ Basecase names a new Case after its goal and world, such as Touch the Dots. To r
 
 ![A Case named Touch Three Dots in its rename field in the Cases tab](/help/make-a-case/rename.png)
 
-To delete a Case, right-click it and choose **Delete**. Its tries are deleted with it, so Basecase asks you first.
+To delete a Case, right-click it and choose **Delete**. Its tries and retained workbench placements are deleted with it, so Basecase asks you first.
 
 To run the open Case on the robot in another open scene, choose **Compare With** in the Case's menu, as described in [Compare two robots on a Case](/help/compare-two-robots-on-a-case). With a wheeled or legged robot, the same menu has **Export Case Mat**, which saves the Case as a floor mat you can print. To use the mat, see [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 

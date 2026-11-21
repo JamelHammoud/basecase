@@ -118,6 +118,19 @@ function supplierOfferCommands({ core }: CommandInputs): Command[] {
 
 export const buildCommands = (inputs: CommandInputs): Command[] => [
   ...supplierOfferCommands(inputs),
+
+  ...(inputs.core.cradle?.available
+    ? [
+        {
+          id: 'make-assembly-cradle',
+          group: 'Scene' as const,
+          label: 'Make Assembly Cradle',
+          icon: <PackageIcon />,
+          keywords: 'assembly fixture cradle tooling print',
+          run: inputs.core.cradle.show,
+        },
+      ]
+    : []),
   ...(inputs.core.project.electronicsBoard
     ? [
         {

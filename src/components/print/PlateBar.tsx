@@ -45,7 +45,7 @@ export const PlateBar: React.FC<{ printing: Printing; plates: Plate[] }> = ({ pr
           </button>
         ))}
       </div>
-      {!printing.fitTest && (
+      {!printing.temporaryPrint && (
         <>
           <IslandDivider />
           <Button size="sm" variant="ghost" onClick={arrange} disabled={!arrangeable.length}>

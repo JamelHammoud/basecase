@@ -13,7 +13,6 @@ import {
   type PromptOptions,
 } from './agentPrompt';
 import { newId } from './helpers';
-import { readinessGate } from './readinessGate';
 import { STOPPED_REASONS } from './liveRuns';
 import type { AgentCursors } from './useAgentCursors';
 import type { QueuedPrompt } from './agentLanes';
@@ -110,15 +109,11 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
       const res = await platformBridge.sendAcpPrompt({ ...payload, workspaceId: keyOf(id) });
 
       applyResult(id, res, modelCountBefore);
-
-      return !STOPPED_REASONS.has(res.stopReason);
     } catch (err) {
       const reason = failureReason(err);
 
       setMessages(id, markLastAgentFailed(reason));
       showToast(`The agent couldn’t finish. ${reason}`, { tone: 'error' });
-
-      return false;
     }
   };
 
@@ -153,17 +148,14 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
 
       if (flags.stopped || !alive()) return;
 
-      const gate = readinessGate(core);
-
-      gate.begin();
+      void core.readiness.checkNow().then(() => core.readiness.startTurn());
 
       while (payload) {
-        const finished = await runOnce(id, payload);
-        const next = alive() && !flags.stopped ? takeNext(id) : undefined;
-        const followUp = !next && finished && alive() && !flags.stopped ? await gate.followUp() : null;
-        const queued = next ?? (followUp ? { id: newId('queued'), params: followUp } : undefined);
+        await runOnce(id, payload);
 
-        payload = queued && startQueued(id, queued);
+        const next = alive() && !flags.stopped ? takeNext(id) : undefined;
+
+        payload = next && startQueued(id, next);
       }
     } catch (error) {
       setMessages(id, markLastAgentFailed(failureReason(error)));

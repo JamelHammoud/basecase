@@ -35,7 +35,7 @@ async function exportPrintPlates(core: WorkspaceCore) {
 
   if (!viewport) return;
 
-  const report = printing.fitTest
+  const report = printing.temporaryPrint
     ? printing.report
     : await printReportOf(parts, { project, printer }, viewport.printShapes);
 
@@ -59,6 +59,18 @@ async function exportPrintPlates(core: WorkspaceCore) {
   }
 
   showToast(`Exported ${plural(report.plan.plates.length, 'plate')} as 3MF`);
+}
+
+async function safePrintExport(core: WorkspaceCore) {
+  try {
+    await exportPrintPlates(core);
+  } catch (failure) {
+    const message = errorMessage(failure);
+
+    core.showToast(message.startsWith('cradle:') ? 'The assembly step changed. Make the cradle again.' : message, {
+      tone: 'error',
+    });
+  }
 }
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
@@ -180,7 +192,7 @@ export function useExportActions(core: WorkspaceCore) {
     exportStl,
     exportStep,
     exportImage,
-    export3mf: () => exportPrintPlates(core),
+    export3mf: () => safePrintExport(core),
     exportScene,
     airDrop,
     copyBrief,

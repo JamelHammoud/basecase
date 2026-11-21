@@ -13,15 +13,18 @@ import {
 import type { BuildAlong } from '../../workspace/useBuildAlong';
 import { useBuildAlongKeys } from '../../workspace/useBuildAlongKeys';
 import { BuildAlongItems } from './BuildAlongItems';
+import { CradleBarActions } from './CradleBarActions';
+import type { AssemblyCradle } from '../../workspace/useAssemblyCradle';
 
 interface BuildAlongBarProps {
+  cradle?: AssemblyCradle;
   buildAlong: BuildAlong;
   active: boolean;
   ready: boolean[];
   onPrint: (id: string) => void;
 }
 
-export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active, ready, onPrint }) => {
+export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active, ready, onPrint, cradle }) => {
   const { step, index, count, opening, progress } = buildAlong;
   const partsReady = !!step && step.repairPhase !== 'remove' && ready[index];
 
@@ -75,6 +78,8 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
           </Button>
         )}
         <BuildCompletion buildAlong={buildAlong} />
+
+        <CradleBarActions cradle={cradle} />
         <IslandDivider />
         <Button size="sm" variant="ghost" onClick={buildAlong.close} shortcut="Esc" tooltipSide="bottom">
           Done

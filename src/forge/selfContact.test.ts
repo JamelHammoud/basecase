@@ -3,6 +3,10 @@ import loadMujoco from '@mujoco/mujoco';
 import { expect, it } from 'vitest';
 import { selfContactArm } from '../sim/fixtures/selfContactArm';
 import { answer, integrationField, type FieldValue } from './forgeFields';
+import { tendonMechanism, tendonMechanisms } from '../sim/fixtures/tendonMechanisms';
+import { withTendons } from '../joints/tendons';
+import { buildRig } from '../utils/kinematics';
+import { buildMjcf } from '../sim/mjcf';
 
 interface Exports {
   memory: WebAssembly.Memory;
@@ -35,9 +39,33 @@ function prepare(exports: Exports): { missing?: string[]; refused?: string; read
   return JSON.parse(new TextDecoder().decode(new Uint8Array(exports.memory.buffer, pointer, length)));
 }
 
-it('refuses self-contact exclusions in the shipped accelerated engine instead of changing physics', async () => {
+function elasticTendonXml() {
+  const { input } = tendonMechanism();
+  const motor = input.project.joints.find((joint) => joint.tendon)!;
+  const project = withTendons(input.project, input.parts, [
+    {
+      motor: motor.id,
+      tendon: {
+        ...motor.tendon!,
+        law: { kind: 'elastic', restLengthMm: 0, stiffnessNPerMm: 0.4, dampingNsPerMm: 0.01 },
+      },
+    },
+  ]);
+
+  return buildMjcf({ ...input, project, rig: buildRig(project.joints, input.parts) }).xml;
+}
+
+it.each([
+  { name: 'self-contact exclusions', xml: () => selfContactArm(true).xml, refusal: 'contact exclusions' },
+  { name: 'elastic ideal tendon', xml: elasticTendonXml, refusal: 'tendons' },
+  ...tendonMechanisms.map((spec) => ({
+    name: `ideal tendon ${spec.name}`,
+    xml: () => tendonMechanism(spec).model.xml,
+    refusal: 'equality constraints',
+  })),
+])('refuses $name in the shipped accelerated engine instead of changing physics', async ({ xml, refusal }) => {
   const mj = await loadMujoco();
-  const model = mj.MjModel.from_xml_string(selfContactArm(true).xml);
+  const model = mj.MjModel.from_xml_string(xml());
   const bytes = fs.readFileSync(new URL('./forge.wasm', import.meta.url));
   const refuse = () => 1;
   const { instance } = await WebAssembly.instantiate(bytes, {
@@ -65,7 +93,7 @@ it('refuses self-contact exclusions in the shipped accelerated engine instead of
     }
 
     expect(result.ready).not.toBe(true);
-    expect(result.refused).toContain('contact exclusions');
+    expect(result.refused).toContain(refusal);
   } finally {
     model.delete();
   }

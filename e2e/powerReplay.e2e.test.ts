@@ -20,7 +20,7 @@ it(
       await assertReplayFields(dialog);
       await dialog.getByRole('button', { name: 'Replay', exact: true }).click();
       await dialog.locator('[data-replay-result]').waitFor();
-      await assertReplayResults(dialog);
+      await assertReplayResults(dialog, fixture.trace.windowS);
       await dialog.getByRole('button', { name: 'Select Lowest Voltage', exact: true }).click();
       expect(await dialog.locator('[data-replay-result]').getAttribute('data-part')).toBe('motor2');
       expect(await dialog.locator('[data-replay-selection]').getAttribute('data-replay-selection')).toBe('motor2');

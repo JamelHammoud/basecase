@@ -87,13 +87,14 @@ export async function assertReplayFields(dialog: Locator) {
   }
 }
 
-export async function assertReplayResults(dialog: Locator) {
+export async function assertReplayResults(dialog: Locator, windowS: number) {
   const time = dialog.getByRole('slider', { name: 'Time', exact: true });
 
   await time.focus();
   await time.press('Home');
   await time.press('ArrowRight');
-  expect(await dialog.locator('[data-replay-selection]').getAttribute('data-replay-time')).toBe('0.026');
+  expect(await time.inputValue()).toBe('1');
+  expect(await dialog.locator('[data-replay-selection]').getAttribute('data-replay-time')).toBe(String(windowS));
   expect(await dialog.getByText(/ V at 0\.026 s$/).count()).toBe(1);
 
   const clipped = await dialog.locator('button').evaluateAll((buttons) =>

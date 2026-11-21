@@ -28,6 +28,7 @@ export function caseBranchActions({ timeline, attempt, sim, cases, rig, parts, p
       !timeline.comparison.active &&
       attempt.phase === 'idle' &&
       !!timeline.scene &&
+      !timeline.recording?.evaluation &&
       sim.checkpoints.some((point) => point.frame === timeline.frame),
     points: sim.checkpoints,
     run: async () => {

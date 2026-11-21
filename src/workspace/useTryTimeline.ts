@@ -1,22 +1,15 @@
+import type { SeedReplay } from '../cases/seedReplay';
+import type { TimelineSource } from './tryTimelineSource';
+import { showTimeline } from './tryTimelineShow';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { timelineLanes } from '../cases/timelineLanes';
 import type { TryRecord } from '../cases/tries';
-import { timelineSourceCurrent, readTimelineSource, type TimelineSource } from './tryTimelineSource';
-import type { SeedReplay } from '../cases/seedReplay';
 import { useVisionScope } from '../cameras/visionScope';
 import type { Simulation } from '../sim/useSimulation';
 import { useTimelinePlayback } from './useTimelinePlayback';
 import { useTryLabels } from './useTryLabels';
 import { useSavedTimeline } from './useSavedTimeline';
-import { loadManifests } from '../cases/tryStore';
-import {
-  prepareOpening,
-  restoreSeedWorld,
-  timelineOrigin,
-  type Opened,
-  type TimelineOptions,
-  type TimelineOrigin,
-} from './tryTimelineOpening';
+import { restoreSeedWorld, type Opened, type TimelineOptions, type TimelineOrigin } from './tryTimelineOpening';
 
 export type { TryScene } from './tryTimelineOpening';
 
@@ -41,14 +34,6 @@ const openedView = (opened: Opened | null) => ({
   scene: opened?.scene ?? null,
   trips: opened?.trips ?? [],
 });
-
-async function isTopicTry(record: TryRecord) {
-  if (record.manifest.modelHash) return false;
-
-  const stored = (await loadManifests([record.id]))[0];
-
-  return stored?.source === 'import' && stored.robot.joints.length === 0;
-}
 
 function comparisonAllowed(opened: Opened | null, sim: Simulation) {
   return !opened && !sim.drive.active;
@@ -83,38 +68,11 @@ export function useTryTimeline(options: TimelineOptions) {
 
   useEffect(() => () => closeRecordedCameras(), [closeRecordedCameras]);
 
-  const show = async (record: TryRecord, at?: number, seeded?: SeedReplay, source: TimelineSource = () => true) => {
-    const current = timelineSourceCurrent(source);
-    const previous = pending.current?.current() ? pending.current.origin : opened;
-    const ticket = ++opening.current;
-    const valid = () => ticket === opening.current && current();
-
-    saved.close();
-
-    const topicOnly = await isTopicTry(record);
-
-    if (!valid()) return false;
-
-    if (topicOnly) return saved.show([record.id], at);
-
-    const [recording, manifests] = await readTimelineSource(record.id, seeded, source);
-
-    if (!recording || !valid()) return false;
-
-    const origin = timelineOrigin(sim, seeded, previous);
-
-    pending.current = { origin, current: valid };
-
-    const prepared = await prepareOpening(options, record, recording, { seeded, previous: origin, current: valid });
-
-    if (!prepared || !valid()) return false;
-
-    openRecordedCameras(manifests[0] ?? null);
-    setOpened(prepared);
-    playback.reset(at ?? prepared.trips[0]?.frame ?? 0, recording.frames);
-
-    return true;
-  };
+  const show = (record: TryRecord, at?: number, seeded?: SeedReplay, source?: TimelineSource) =>
+    showTimeline(
+      { options, opened, opening, pending, saved, setOpened, reset: playback.reset, openRecordedCameras },
+      { record, at, seeded, source },
+    );
 
   const close = () => {
     opening.current++;
@@ -168,7 +126,7 @@ export function useTryTimeline(options: TimelineOptions) {
     loop: controls.loop,
     show,
     branchSource: () => {
-      if (!opened?.scene) return null;
+      if (!opened?.scene || opened.recording.evaluation) return null;
 
       const ticket = opening.current;
       const at = movement.current;

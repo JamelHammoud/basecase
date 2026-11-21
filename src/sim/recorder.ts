@@ -33,6 +33,7 @@ export interface Recording {
   actionQpos?: Float64Array;
   actionQvel?: Float64Array;
   actionPrevious?: Float32Array;
+  evaluation?: import('../cases/evaluationReplayValidation').EvaluationReplay;
   transmission?: {
     motors: Array<{ joint: string; actuator: number; tendon: IdealTendon }>;
     observations: Array<{ joint: string; qpos: number; dof: number }>;

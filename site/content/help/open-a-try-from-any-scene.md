@@ -53,7 +53,7 @@ Saved camera videos play at the timeline's playhead. Detection runs on those fra
 
 To delete tries, select them, press [[⌫]], then click **Delete**. Hold [[⌘]] or [[⇧]] while you click to select more than one try. Deleting a try also deletes any Variations that came from it.
 
-**Note:** Ordinary joint playback requires a compatible scene robot. Topic-only imports and comparison read saved evidence without that match. If a try's Case isn't in the open scene, or it's an imported try with no Case, the try plays through the default cards, titled with the robot's name. A try imported from a ROS recording adds a column of cards for its topics. See [Play a ROS recording's topics in the console](/help/play-a-ros-recordings-topics-in-the-console). Clicking a real try selects it but doesn't open the timeline.
+**Note:** Ordinary joint playback requires a compatible scene robot. Topic-only imports and comparison read saved evidence without that match. If an ordinary try's Case isn't in the scene, or an ordinary import has no Case, playback uses default cards titled with the robot's name. A try imported from a ROS recording adds a column of cards for its topics. See [Play a ROS recording's topics in the console](/help/play-a-ros-recordings-topics-in-the-console). Clicking a real try selects it but doesn't open the timeline.
 
 If you recorded tries before the Library held them, Basecase moves them into the Library the first time you open their scene. On a Mac, Basecase stores tries in `library/tries` inside `~/Library/Application Support/Basecase`, with one folder per try.
 

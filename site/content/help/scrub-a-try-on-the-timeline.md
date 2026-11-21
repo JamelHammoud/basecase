@@ -52,7 +52,9 @@ A [vision model comparison](/help/inspect-vision-comparisons) opens its source t
 
 While the ownership list has focus, [[Home]], [[End]] and [[Space]] scroll that list. Click a joint lane to use those playback keys again.
 
-When the timeline opens, Basecase recalculates effort from the recording, so its peaks match Peak torque in Results.
+For ordinary tries, Basecase recalculates effort from the recording when the timeline opens, so its peaks match Peak torque in Results.
+
+Frozen evaluation failures keep their recorded effort measurements. See [Compare robot revisions](/help/compare-robot-revisions).
 
 If the try has saved camera videos, the camera cards show those videos at the playhead. Detection runs on that frame even while playback is paused. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see) for the boxes and their limits.
 
@@ -62,4 +64,4 @@ To split, merge, rename or tag segments, see [Label a try](/help/label-a-try).
 
 For more on the cards around the canvas, see [Play a try through its console](/help/play-a-try-through-its-console).
 
-Joint playback can't open a try recorded before you added or removed a joint. You can [Compare saved tries](/help/compare-saved-tries) without that match. To open a try from another scene, use the Library. See [Open a try from any scene](/help/open-a-try-from-any-scene).
+Ordinary joint playback can't open a try recorded before you added or removed a joint. You can [Compare saved tries](/help/compare-saved-tries) without that match. To open a try from another scene, use the Library. See [Open a try from any scene](/help/open-a-try-from-any-scene).

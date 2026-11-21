@@ -6,12 +6,43 @@ import { parseArgs } from 'node:util';
 import { createJiti } from 'jiti';
 import { isSafeFileId } from '../../electron/backend/constants.mjs';
 import { installRobot } from '../../electron/robot/robotInstall.mjs';
+import { freezeEvaluation } from './evaluationFreeze.mjs';
+import { runEvaluation, inspectEvaluation } from './evaluationRun.mjs';
 
 process.noDeprecation = true;
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const USAGE =
   'Usage: basecase check <scene.basecase> [--case <id>] [--json] | basecase export <scene.basecase> --package <dir> | basecase robot install <user@host> [--package <dir> | --scene <scene.basecase>] [--family <family>] [--key <file>] [--pairing-code <code>]';
+const EVALUATION_USAGE =
+  'Usage: basecase evaluation freeze <baseline.basecase> --candidate <candidate.basecase> --package <dir> [--case <id>] [--seeds <ordered,seeds>] [--conditions fixed|randomized] [--policy reference|<policy.json>] [--candidate-policy reference|<policy.json>] [--randomization nominal|case] [--json]\n       basecase evaluation run <package> --output <dir> [--stop-file <file>]\n       basecase evaluation inspect <report-dir>';
+const EVALUATION_OPTIONS = new Set([
+  'candidate',
+  'seeds',
+  'conditions',
+  'output',
+  'policy',
+  'candidate-policy',
+  'stop-file',
+  'randomization',
+  'help',
+]);
+const EVALUATION_PHASE_OPTIONS = {
+  freeze: new Set([
+    'candidate',
+    'package',
+    'case',
+    'seeds',
+    'conditions',
+    'policy',
+    'candidate-policy',
+    'randomization',
+    'json',
+  ]),
+  run: new Set(['output', 'stop-file']),
+  inspect: new Set(),
+};
+
 const EXIT = Object.freeze({ passed: 0, failed: 1, unreadable: 2 });
 const jiti = createJiti(import.meta.url, {
   alias: { 'manifold-3d/manifold.wasm?url': fileURLToPath(new URL('./assetUrl.mjs', import.meta.url)) },
@@ -33,6 +64,15 @@ function readArgs(argv) {
         key: { type: 'string' },
         'pairing-code': { type: 'string' },
         family: { type: 'string' },
+        candidate: { type: 'string' },
+        policy: { type: 'string' },
+        'candidate-policy': { type: 'string' },
+        'stop-file': { type: 'string' },
+        randomization: { type: 'string' },
+        seeds: { type: 'string' },
+        conditions: { type: 'string' },
+        output: { type: 'string' },
+        help: { type: 'boolean' },
       },
     });
   } catch {
@@ -141,9 +181,14 @@ async function main(argv) {
   const { positionals, values } = readArgs(argv);
   const [command, file, ...extra] = positionals;
 
+  if (command !== 'evaluation' && Object.keys(values).some((key) => EVALUATION_OPTIONS.has(key)))
+    throw new Unreadable(USAGE);
+
   if (command === 'robot') return installComputer(positionals, values);
 
   globalThis.fetch = () => Promise.reject(new Error('offline'));
+
+  if (command === 'evaluation') return evaluationCommand([file, ...extra], values);
 
   if (!file || extra.length) throw new Unreadable(USAGE);
 
@@ -152,6 +197,29 @@ async function main(argv) {
   if (command === 'export') return exportPackage(file, values.package);
 
   throw new Unreadable(USAGE);
+}
+
+async function evaluationCommand(positionals, values) {
+  const [operation, target, ...rest] = positionals;
+
+  if (values.help) {
+    console.log(EVALUATION_USAGE);
+
+    return EXIT.passed;
+  }
+
+  if (!target || rest.length) throw new Unreadable(EVALUATION_USAGE);
+
+  if (Object.keys(values).some((key) => !EVALUATION_PHASE_OPTIONS[operation]?.has(key)))
+    throw new Unreadable(EVALUATION_USAGE);
+
+  if (operation === 'freeze') return freezeEvaluation(target, values, { load, root: ROOT });
+
+  if (operation === 'run') return runEvaluation(target, values, { load, root: ROOT });
+
+  if (operation === 'inspect') return inspectEvaluation(target, { load });
+
+  throw new Unreadable(EVALUATION_USAGE);
 }
 
 async function installComputer(positionals, values) {

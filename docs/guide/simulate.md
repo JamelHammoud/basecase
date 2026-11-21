@@ -149,6 +149,32 @@ Captured fixture geometry uses the existing geometry worker and world decomposit
 
 Live Case reference scripts apply commands at each existing 20 ms Case step through `stepScriptedCase`, independent of render-loop batching and simulation speed. Other live inputs and ordinary non-Case script scheduling keep their existing timing. `fixtureLive.test.ts` requires a passing recorded chest chore at 20, 80 and 300 ms rendering batches.
 
+## Portable CLI evaluation
+
+The CLI freezes prepared geometry, calibration, reference or retained policy inputs, selected Cases and ordered seeds.
+`evaluationRunner` calls the existing production `caseRunner` with the frozen project and Case coordinates. Fixed
+worlds disable world jitter independently from physical draws. Both revisions retain the same randomization settings.
+The model uses the source project's active servo and body calibration through `preparedCalibratedModel`. Ordinary
+Checks and existing callers keep their previous defaults. Missing reference drives are unsupported combinations.
+
+A `RunOptions.checkpoint` callback runs every 50 recording ticks, allowing the CLI's stop-file or interruption request
+to cancel a rollout within one simulated second. It adds no pause, retry or longer deadline. Native engines are disposed
+on completion and errors. The CLI runs one trial at a time and leaves intermediate artifacts explicitly incomplete.
+
+Portable failures use the existing recording and try archive formats. The evaluation extension preserves the model,
+source scene and GLBs, realized Case, seed, trace, recorded efforts and failure frames. Ordinary import restores the
+source scene. The existing timeline uses the retained model and precomputed efforts, without recomputing physics from
+the current scene or calibration. The exact model also remains a separately hashed sidecar. External model includes,
+file attributes and plugins are refused before native compilation. Desktop recording decoding and source integrity
+checks use the existing archive worker.
+The compressed recording extension bounds decompression to 64 MiB. GLB resources must be embedded binary or raster
+data before geometry loading. Evaluation recording encoding uses the existing worker on desktop and web.
+
+[Coverage and limitations](../notes/testing-simulate.md#portable-cli-evaluation) record generated workflow reproduction,
+retained-policy and calibration checks, actual CLI interruption and browser delivery. [Resource measurements](../notes/performance-simulation.md#portable-cli-evaluation)
+compare nominal seeded evaluations with repeated existing CLI checks under equal physical inputs. These generated
+outcomes establish no physical-transfer claim and do not replace Arena or skill retention.
+
 ## Testing coverage
 
 - **Continuation state and retention.** The four runtime snapshot files retain native delay, contacts, all fault kinds, arm/rover/pose/team state and hidden-world coverage. `engineContinuation.test.ts` compares uninterrupted execution with complete engine restoration, including a spanning fault, realized physics, full integration rows, contacts and accumulated stats. It refuses edited models, runtime versions and unsupported force/controller state. `continuationFile.test.ts` exercises the existing binary recording extension, malformed metadata and legacy recordings. `continuationCapture.test.ts` checks 122 seconds of actual physics against both retention bounds and invalidation. `continuationWorker.test.ts` drives production worker messages for a scripted arm, faults, world changes and reset invalidation. `continuationSession.test.ts` declares source-bound restoration, fault/world scheduling, immutable prefix splicing, cancellation and identical delayed-contact continuation. `continuationTakeover.test.ts` drives production scrub, seek, branch, command, playback and recording messages. `continuationMatrix.test.ts` covers ten generated scripted contact tasks through the production WASM pipeline, comparing integration drift, actuator history, sampled contacts, scheduled events and complete contract outcomes. Nine rows require active recorded contact at their retained checkpoint. The pan-tilt row exercises free motion. The spring fixture branches under load and must return after release. It also changes commands and preserves source bytes. Position/integration/history drift is bounded at 1e-10, sampled Float32 velocities/controls at 1e-6, with exact contact identities and event times. The browser declaration drives Library, checkpoint selection, manual takeover, save and opening the saved child. Archive and real-store tests cover portable transport and source reopening. [Coverage and failures](../notes/testing-simulate.md#continuation-runtime-snapshots).

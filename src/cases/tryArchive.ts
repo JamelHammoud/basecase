@@ -49,8 +49,9 @@ export async function exportTryArchive(id: string, ports: Ports = PORTS): Promis
   return tryArchiveWorker.call('encode', entries);
 }
 
-export async function importTryArchive(bytes: Uint8Array, ports: Ports = PORTS): Promise<void> {
+export async function importTryArchive(bytes: Uint8Array, ports: Ports = PORTS) {
   const entries = await tryArchiveWorker.call('decode', bytes);
+
   const existing = new Map(
     (await ports.manifests(entries.map((entry) => entry.stored.id))).map((stored) => [stored.id, stored]),
   );
@@ -69,6 +70,8 @@ export async function importTryArchive(bytes: Uint8Array, ports: Ports = PORTS):
   }
 
   if (additions.length) await ports.keep(additions);
+
+  return entries;
 }
 
 export const isTryArchiveName = (name: string) => /\.tries\.zip$/i.test(name);

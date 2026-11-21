@@ -1,3 +1,4 @@
+import { tryArchiveWorker } from '../tryArchiveClient';
 import type { Recording } from '../../sim/recorder';
 import { indexedDbStore } from '../../utils/keyValueStore';
 import { encodeRecording } from '../recordingFile';
@@ -44,6 +45,8 @@ export const webTries: TryBackend = {
   recording: async (id) => (await recordings.get(id)) ?? null,
   recordingBytes: async (id) => {
     const recording = await recordings.get(id);
+
+    if (recording?.evaluation) return tryArchiveWorker.call('encodeRecording', recording);
 
     return recording ? encodeRecording(recording) : null;
   },

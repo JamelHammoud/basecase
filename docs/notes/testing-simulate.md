@@ -509,3 +509,69 @@ The review's correction selection passed formatting, lint, types, documentation 
 An isolated checkout of the exact base revision, `94a1bb558107b826888e88fe710c5c84652b44bd`, ran those two unchanged vision-resource files with the same four-worker limit and existing deadlines. Both 1,000-image cases also timed out there, while both small cases passed. This reproduces the two failures without tendon code. Shared-host load remained uncontrolled, so the comparison establishes neither a timing regression nor a failure rate. URDF admission coverage additionally places an unrelated root Basecase extension before the unsupported tendon marker, requiring the same import refusal.
 
 The final import correction passed `check:changed`, including 421 tests across 57 files, formatting, lint, types, documentation and all 350 site pages. The final prose-only check also passed all 350 pages. Browser execution remains with CI.
+
+## Portable CLI evaluation
+
+`evaluationMatrix.test.ts` runs ten generated workflow classes through production WASM `caseRunner`. Each admitted
+row compares an unchanged seeded control and an independently created production runner, requiring exact margins,
+failures, final coordinates and recorded poses. Admitted rows also round-trip their exact model, Case, outcome and
+margin through ordinary portable recording bytes. Cases remain at their authored coordinates. Seeds draw physics
+independently from world jitter. A separate dynamic pickup checks fixed and randomized placements and repeats the
+randomized rollout exactly.
+
+| Generated workflow | Existing controller and Case | Observed outcome |
+| --- | --- | --- |
+| Rover navigation | Reference rover, reach the flag | Passed |
+| Fixed-arm pickup | Reference arm, generated pick | Passed |
+| Quadruped standing | Existing pose reference, upright contract | Passed |
+| Hexapod traversal | Existing walking reference | Passed |
+| Biped balance | Retained stationary policy, upright contract | Passed |
+| Pan-tilt observation | Existing joint motion with geometric arm contract | Failed |
+| Gripper transfer | Reference arm, circular-cylinder pick | Passed |
+| Conveyor handling | Reference arm, stopped conveyor pickup | Passed |
+| Passive-drawer manipulation | Existing arm/drawer task | Passed |
+| Closed-linkage motion | Generated linkage with arm Case | Explicit unsupported reference refusal |
+
+The pan-tilt row checks geometric motion and retained failure, not camera-image perception. The stopped conveyor
+checks its supported pickup subset, not arbitrary moving-belt manipulation. The closed-linkage refusal requires
+that exact workflow name, preventing unrelated unsupported rows from silently passing the matrix. No replacement
+controller or verdict system was introduced.
+
+`evaluationExecution.test.ts` checks common-world pinning after a changed robot placement, in-rollout cancellation
+at the second checkpoint with actual `SimEngine.dispose`, recovery through a subsequent rollout and active body calibration in real model XML.
+The CLI policy variant loads an ordinary retained `PolicySpec` and records controller-only changes. Existing policy
+observation/export code supplies clock, observation and action schemas. Frozen source projects reach ordinary servo
+and body calibrated model preparation. Supply voltage uses the same source-project helper as ordinary scene execution.
+
+Ordinary portable recordings include a bounded compressed evaluation extension. Exact source meshes, model inputs,
+realized Case, trace, effort rows and failure frames survive import and re-export. Encoding, decoding and source
+integrity checks run in the existing archive worker for persisted evaluation recordings. Native replay receives its
+retained model and measurements, without recomputing the current scene. Model includes, file attributes, plugins,
+external mesh resources and oversized decompression are refused before native or geometry loading.
+
+The actual CLI interruption declarations test stop-file cancellation and forcible termination after initial output.
+The initial report precedes WASM startup. Cancellation checkpoints run every simulated second, release native resources
+and never promote incomplete evidence to a passing report. Intermediate reports can have fewer pairs, while complete
+reports must have every declared Case/seed pair with both revision identities. Corrupt inputs fail before execution.
+Engine mismatches leave an incomplete artifact with an engine problem category.
+
+The article capture on macOS imported an emitted failure, opened its existing timeline, opened another scene and
+reopened the failure with its source scene. Mechanical capture corrections reused the existing scene-file fixture
+and matched the New Scene command's displayed shortcut. A fresh browser context captured the static report without
+an active WebGL page. The successful capture reported an existing Vite shutdown warning after passing its assertions.
+The committed browser declaration remains assigned to CI. No browser quarantine or restoration condition changed.
+
+[Resource observations](performance-simulation.md#portable-cli-evaluation) compare the same nominal physical inputs
+with repeated existing CLI checks. These generated scenes do not establish native C parity, physical transfer or
+statistical confidence. Existing native parity and skill-retention authority remain unchanged.
+
+The full changed-path selection passed 3,673 tests across 521 files, with one existing skipped file, in 188.63 seconds.
+Formatting, lint, documentation, 377 site pages and types passed. The later snapshot-retention and second-checkpoint
+correction passed all five focused execution/resource tests in 4.30 seconds. Native engines are released after a
+simulated second has actually advanced. Source scenes or meshes beyond 8 MiB and model XML beyond 4 MiB keep a recording-limit status rather
+than publishing an unreadable archive. Snapshot identities are validated before archive publication.
+
+The final delivery selection passed all 17 tests across three files in 6.74 seconds. It includes ordinary binary
+recording round trips for every admitted generated workflow, actual CLI weak-rover regression, retained controller
+and geometry changes, randomized reproduction, integrity refusal and bounded retention. Formatting, lint, types,
+documentation and 377 site pages passed. The committed browser declaration and Linux/Windows execution remain in CI.

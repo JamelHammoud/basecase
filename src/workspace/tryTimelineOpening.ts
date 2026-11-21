@@ -15,6 +15,7 @@ import type { ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 
 export interface TimelineOptions {
+  ensureEvaluationScene?: (input: { record: TryRecord; recording: Recording }) => Promise<boolean>;
   sim: Simulation;
   rig: Rig;
   parts: ScenePart[];
@@ -132,7 +133,7 @@ export async function prepareOpening(
 
   if (!efforts || !current()) return null;
 
-  const scene = replayScene(sceneOf(options, record, recording), seeded);
+  const scene = recording.evaluation ? null : replayScene(sceneOf(options, record, recording), seeded);
   const trips = seeded?.trips ?? (await tripsOf(scene));
 
   return { record, recording, efforts, trips, scene, before, restore };

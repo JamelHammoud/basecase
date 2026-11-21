@@ -1,7 +1,7 @@
 import type { PolicyRecord } from '../../types/robotics';
 import { eyeRays } from '../eyes';
 import type { SimJoint, SimModel } from '../mjcfTypes';
-import type { PolicySpec } from '../policy';
+import { CLOCK_SIZE, type PolicySpec } from '../policy';
 import { indexJoints } from '../../utils/robotImport/jointIndex';
 
 export interface PackagedPolicy {
@@ -16,7 +16,7 @@ interface ObservationTerm {
   part?: string;
 }
 
-function observation(spec: PolicySpec): ObservationTerm[] {
+export function policyObservation(spec: PolicySpec): ObservationTerm[] {
   const n = spec.joints.length;
 
   return [
@@ -28,6 +28,7 @@ function observation(spec: PolicySpec): ObservationTerm[] {
     { name: 'joint_velocity', size: n },
     { name: 'last_action', size: n },
     ...(spec.eyes ?? []).map((e) => ({ name: 'depth_rays', size: eyeRays(e), part: e.part })),
+    ...(spec.clock ? [{ name: 'clock', size: CLOCK_SIZE }] : []),
   ];
 }
 
@@ -39,7 +40,7 @@ function policySpecFile({ record, spec }: PackagedPolicy, joints: ReadonlyMap<st
     mujoco: spec.mujoco,
     control_dt: spec.controlDt,
     command: spec.command,
-    observation: observation(spec),
+    observation: policyObservation(spec),
     action: {
       joints: spec.joints.map((id) => joints.get(id)?.name ?? id),
       default_pose: spec.defaultPose,

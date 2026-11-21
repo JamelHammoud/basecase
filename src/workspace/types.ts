@@ -39,6 +39,7 @@ export interface WorkspaceSeed {
   blank?: boolean;
   unsaved?: boolean;
   playCase?: string;
+  openTry?: string;
 }
 
 export interface WorkspaceMeta {

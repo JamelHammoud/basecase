@@ -52,7 +52,7 @@ You have the same time limit as the original recording. The result includes fail
 
 ![Both tries restored through the imported portable file](/help/branch-a-simulated-try/imported.png)
 
-You need the matching robot scene to replay an imported try.
+You need the matching robot scene to replay an imported branch.
 
 You can play back a branch with a missing parent. Restore the parent before using that branch in a dataset to keep its shared beginning in one split.
 

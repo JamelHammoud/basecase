@@ -1,3 +1,4 @@
+import { provideMeshFiles } from '../three/componentMeshes';
 import { exportTryArchive, importTryArchive, isTryArchiveName } from '../cases/tryArchive';
 import { MAX_UNPACKED_BYTES } from '../utils/robotImport/archive';
 import { TRY_FILE_ERROR, TRY_FILE_LIMIT } from '../cases/tryArchiveJobs';
@@ -10,7 +11,7 @@ export const canExportTry = (timeline: TryTimeline) =>
   timeline.open &&
   !timeline.comparison.active &&
   !!timeline.record &&
-  !!(timeline.record.manifest.branch || timeline.recording?.continuation);
+  !!(timeline.record.manifest.branch || timeline.recording?.continuation || timeline.recording?.evaluation);
 
 export async function exportTimelineTry(core: WorkspaceCore) {
   const timeline = core.simTraining.cases.timeline;
@@ -44,7 +45,10 @@ export function importTryFiles(core: WorkspaceCore, files: File[]): boolean {
     for (const file of archives) {
       if (file.size > MAX_UNPACKED_BYTES) throw new Error(TRY_FILE_LIMIT);
 
-      await importTryArchive(new Uint8Array(await file.arrayBuffer()));
+      const entries = await importTryArchive(new Uint8Array(await file.arrayBuffer()));
+      const source = entries.find((entry) => entry.recording.evaluation)?.recording.evaluation;
+
+      if (source) await openEvaluationScene(core, source);
     }
 
     core.simTraining.triesPlaces.setPlace({ open: true, robot: null, dataset: null });
@@ -53,4 +57,12 @@ export function importTryFiles(core: WorkspaceCore, files: File[]): boolean {
   void run().catch((error: unknown) => core.showToast(errorMessage(error), { tone: 'error' }));
 
   return true;
+}
+
+async function openEvaluationScene(
+  core: WorkspaceCore,
+  source: import('../cases/evaluationReplayValidation').EvaluationReplay,
+) {
+  provideMeshFiles(Object.fromEntries(Object.entries(source.meshes).map(([id, bytes]) => [id, bytes.slice().buffer])));
+  await core.studio.importSceneFile(new File([source.scene.slice().buffer], `${source.revision}.basecase`));
 }

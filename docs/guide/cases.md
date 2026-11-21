@@ -93,6 +93,62 @@ The ordinary Study table, shift-click comparison, plot metric, hover preview and
 - `basecase export <scene.basecase> --package <dir>` writes the Robot Package (§8d) from the same loader (`scenePackageFiles`, `src/sim/robotPackage/scenePackage.ts`): rest pose, the scene's active calibrations, no policies (a scene file carries none). Every file path must land inside `<dir>`.
 - **Tests:** `tools/cli/basecase.test.mjs` runs the bin as a child process on a scene made in code, the fixture rover on 0.25 N·m wheel motors with Reach a Spot: exit 0 with its JSON; wheels at 30% strength exit 1 with Missed; a missing file, a file that isn't a scene, bad arguments and a `../../etc/passwd` Case id exit 2; the CLI's verdict and margin equal `runCase` on the same robot built from the fixture's own meshes; export writes the package.
 
+### Portable CLI evaluation
+
+`basecase evaluation --help` lists freeze, run and inspect. Freeze accepts baseline and candidate scene files,
+a package directory, selected Case id, explicit ordered unsigned seeds and fixed or randomized world conditions.
+Selected authored Cases must match exactly. Both revisions run that declaration without per-robot reach scaling.
+Reference controllers and retained `PolicySpec` files are supported. `--policy` chooses a shared controller and
+`--candidate-policy` changes only the candidate. Policy dimensions, observation/action schema, action bindings and
+engine identity are checked. Unsupported reference drives and multi-slot Cases are explicitly refused.
+
+The frozen package contains ordinary scene files, exact prepared geometry, local GLBs including nested and Case-world
+components, world assets, controller schemas, active calibration inputs, randomization settings, source hashes and
+engine provenance. Scene calibration follows the ordinary calibrated model path. No scripts, external URLs, traversal
+or symbolic links are accepted as package assets. Run verifies all declared hashes before execution. It does not use
+a result cache. Geometry preparation occurs twice at freeze and not during seeded execution. One fitted runner per
+Case and revision reuses those immutable inputs. The runner hash covers implementation sources and the dependency lock.
+
+`--conditions fixed` disables world jitter but retains seeded physics. `randomized` also varies dynamic world objects,
+fixture conditions and terrain through the existing seeded runner. `--randomization nominal` selects unit friction,
+mass and strength with zero latency. The default retains `CASE_RANDOMIZATION`. Randomization settings and zero joint
+noise are frozen alongside the ordered seeds. Both revisions always receive the same declared conditions.
+
+Execution is sequential. Limits are 16 Cases, 32 distinct seeds, 30 seconds per Case and 600 simulated seconds across
+both revisions, with at most 300,000 scored steps at the production model's 2 ms physics step. Recorded-effort
+reconstruction adds at most 120,000 steps for the retained failures. Policies are limited to one million weights,
+a control interval of at least 2 ms and one billion weight applications per evaluation. Individual files are limited to 32 MiB. The aggregate
+output is bounded to 128 MiB, reserving 16 MiB for eight failure archives and model inputs and 4 MiB for reports and
+atomic writes. JSON and HTML together are capped at 1 MiB. A stop file works across platforms. POSIX interruption is
+also handled. The production rollout yields to cancellation at one simulated second intervals and always disposes
+its engine. A complete report is written only after every paired trial finishes. Intermediate writes stay incomplete.
+
+Output copies frozen inputs beside `comparison.json` and `report.html`. Every trial retains its revision, model hash,
+seed, pass, margin and named failures. Pairs also retain margin differences and paired pass losses/gains. Input changes
+identify robot geometry, joints, controller and calibration. Unsupported models and cancellation carry separate
+problem categories, rather than task-failure verdicts. Exit 0 means a completed comparison without paired pass losses,
+1 means a paired pass loss and 2 means incomplete execution or evidence refusal. These exits do not replace Checks,
+Arena or skill retention. Content hashes detect mismatches and do not authenticate an author.
+
+Failures use ordinary `.tries.zip` archives and the existing binary recording codec. A bounded evaluation extension
+keeps the exact source scene and component meshes, model, realized Case, trace, efforts and trip frames. Import validates
+that extension and ordinary manifest identities before saving anything, then opens the source scene through ordinary
+scene import. Library and the existing timeline load its retained model and failure without borrowing the current
+scene, policy or calibration. Opening from a different or edited scene opens a new source scene and its timeline,
+preserving the working design. Scene matching and asset checks run in the archive worker. Closing restores the previous simulation. The snapshot is inspectable and exportable,
+but does not enable branching against a different live source. Validation and desktop recording decoding run through
+the existing archive worker. Model includes, external files, plugins and executable XML declarations are refused.
+Evaluation payloads use a deterministic compressed binary extension with a 64 MiB decompression limit. Retained
+source scenes and individual meshes are limited to 8 MiB, with model XML capped at 4 MiB. Larger snapshots retain
+a recording-limit status. Encoding beyond the 64 MiB payload limit leaves execution incomplete. Embedded GLB
+resources are checked before geometry loading. External, local and executable resource URIs are refused. Persisted
+evaluation encoding also runs in the archive worker, including web storage.
+
+`inspect` verifies the copied declaration, assets, identities, ordered pair coverage, margins, pass changes and static
+HTML without loading MuJoCo. The report stays readable as a static file. Tests, limitations and observations are in
+[portable evaluation evidence](../notes/testing-cases.md#portable-cli-evaluation). Help is
+[Compare robot revisions](../../site/content/help/compare-robot-revisions.md).
+
 ### Making a Case
 
 The pick builder accepts an optional `CaseSpec.pickTarget` containing an independent rigid box, cube or circular cylinder. It snapshots the source part id, authored geometry, pose, supplied mass and declared friction. Shape modifiers and catalog parts are outside this input subset. The object must start on the floor and fit strictly between the recognized open and closed jaw gaps. Refusals return through the builder without editing the scene. Callers without this input retain the generated-block behavior.

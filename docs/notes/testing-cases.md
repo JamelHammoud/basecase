@@ -547,3 +547,82 @@ The changelog no longer walks through the UI. The help article and changelog dis
 The review checks ran on macOS at merged head `e0137228f1273bf70c64be0aa95bf809b5c11be7` plus these corrections. The two-worker related run in `scratch/review-1968-check-final.log` passed formatting, lint, docs, site copy across 358 pages and types. It passed 4,293 tests across 579 files, including all twenty replacement grasp rows. Seven declarations reached the unchanged 5,000 ms deadline: native complete history at 5,074 ms, the electrical Kit pan-tilt and sensor-rich composition rows, its changed-hash, changed-hole and changed-bottom-side refusals, and the 1,000-image evidence resource row at 5,006 ms. No assertion failure was reported. The deadlines identify declarations, not the internal setup or behavior stage that consumed the time.
 
 The single-worker focused check in `scratch/review-1968-focused-check.log` then passed all 25 tests in generation, native lifecycle and electrical Kit in 42.61 seconds. The single-worker evidence-resource check passed both rows in 1.24 seconds in `scratch/review-1968-vision-check.log`. The selection-hook correction check passed six related tests in `scratch/review-1968-selection-final.log`. Each reported failure therefore has a subsequent passing observation at the same source inputs. This establishes intermittent local execution, without a measured failure rate or an attributed cause. Assertions, deadlines, retries and quarantines remain unchanged. Browser execution remains with CI.
+
+## Portable CLI evaluation
+
+`tools/cli/evaluation.test.mjs` creates ordinary baseline and 30%-motor rover scenes. It invokes the actual freeze,
+run and inspect commands with ordered seeds 7 and 3. Both passing baseline trials become candidate failures, with
+exit 1 and matching JSON/HTML identities. Ordinary archive decoding checks the saved seed, source revision and model.
+Independent production `runCase` execution reproduces the weak-rover outcome, margin and failure.
+
+`evaluationVariants.test.mjs` covers unchanged controls, altered chassis geometry, a changed retained policy,
+randomized conditions, missing geometry, corrupt bytes, mismatched engines, rejected run-time seed overrides and
+eight-recording retention across sixteen paired trials. `evaluationFiles.test.mjs` covers changed Case contracts,
+duplicate and out-of-range seeds, rounded physics budgets, declaration identity, unsafe paths, symbolic links,
+missing/corrupt files, HTML escaping and forged completion without complete ordered pair coverage.
+
+`evaluationInterruption.test.mjs` observes the initial incomplete report from an actual running CLI child. One
+case creates its stop file. Another terminates the process before completion. Both require incomplete output rather
+than a complete passing report. Production checkpoint coverage separately verifies engine disposal after cancellation.
+
+`evaluationReplay.test.ts` retains exact source scene, model, realized Case, trace, efforts and failure frames through
+ordinary binary bytes. Re-encoding must reproduce those bytes exactly. Changed identity and executable XML are refused.
+`evaluationAssets.test.ts` refuses external, relative, file and executable data resources in GLBs before loading them.
+It also checks the decompression bound before allocation. `workspace/evaluationScene.test.ts` verifies source restoration
+from an altered working scene while preserving that working scene. Matching source inputs avoid another source tab.
+
+`e2e/evaluation.e2e.test.ts` declares actual CLI generation followed by ordinary Import, Library and timeline controls.
+It checks the stored revision, seed, evaluation identity and failed outcome. It then opens a new scene and reopens
+the saved failure, requiring its source tab and timeline again. The declaration has no retries and uses existing
+browser deadlines. Browser execution on Linux and Windows belongs to CI. A separate throwaway article capture drove
+those same import and reopening states on macOS and captured the timeline and static report.
+
+The first retained implementation lacked source restoration, policy/calibration support, common-world pinning,
+interruption coverage and launch documentation. Those gaps now have implementation and focused coverage. Initial
+continuation checks exposed React ref access during render, a missing declaration for the shared CLI fixture and
+function/complexity limits. Event-only timeline helpers, a declaration file and extracted validation resolved them.
+The first retention fixture ran only 0.2 simulated seconds, below its ordinary contract's 0.3-second hold requirement.
+It now runs one second and retains all original outcome, completion, count and byte-bound assertions.
+
+Copy accounting remains the existing accounting. The scanner reports no added or removed strings on its counted UI
+surfaces. CLI help, report labels and new errors are separately inventoried in the answer. Shared `CompareRows` was
+inspected, with no demonstrated repeated visible copy to remove. Existing accessible names and recovery text remain.
+These results do not replace Checks or skill retention and establish no physical-transfer or statistical-confidence claim.
+No quarantine, restoration condition, timeout, retry or repository gate changed.
+
+The final 59-path `check:changed` selection passed formatting, lint, documentation, 377 site pages and types.
+It passed 3,673 tests across 521 files, with one existing skipped file, in 188.63 seconds of test execution.
+A subsequent correction strengthened cancellation to the second checkpoint, after physics had advanced, and validates
+retained snapshots before archive publication. Its three-path selection passed all five tests across two files in
+4.30 seconds, including fresh equal-workload resource measurements. Other production inputs from the broad selection remain unchanged.
+
+The final delivery selection passed all 17 tests across three files in 6.74 seconds. It includes ordinary binary
+recording round trips for every admitted generated workflow, actual CLI weak-rover regression, retained controller
+and geometry changes, randomized reproduction, integrity refusal and bounded retention. Formatting, lint, types,
+documentation and 377 site pages passed. The committed browser declaration and Linux/Windows execution remain in CI.
+
+### Covering help articles
+
+Preflight also names existing articles covering shared entry points. Their contents were checked against the final
+implementation. The Cases concept and timeline article now distinguish ordinary tries from frozen evaluation inputs.
+The new feature article supplies its own summary to the Library hub. Existing screenshots still show unchanged controls.
+
+| Unchanged article | Why its steps, labels and captures remain true |
+| --- | --- |
+| `check-your-robot-in-ci.md` | Legacy check/export arguments, default reference execution, line/JSON output and exit codes remain unchanged. |
+| `compare-saved-tries.md` | Two-source comparison stays on its existing saved-evidence path, with unchanged alignment, signals, clocks and source panels. |
+| `connect-a-robot-computer.md` | The robot install namespace, SSH inputs, pairing, emulation and connection controls are unchanged. |
+| `export-a-robot-package.md` | Export placement, availability, file layout, policy selection and MJCF/URDF behavior remain unchanged. |
+| `open-a-try-from-any-scene.md` | Library selection, playback, deletion and ordinary compatibility behavior remain unchanged. Evaluation source restoration is described by the feature's hub summary. |
+| `replay-a-failing-seed.md` | Existing callers keep the same seed randomization, temporary replay, trip selection and simulation restoration. |
+| `robot-package-contents.md` | The extracted policy schema still lists actual inputs and dimensions. Clock inputs now follow their actual runtime layout, within the existing documented spec fields. |
+| `try-a-case.md` | Driving, reference recording, Results, deletion, dataset collection and Checks authority are unchanged. |
+
+The structural preflight reminders remain for unchanged covering articles. No unrelated article or screenshot was
+edited solely to silence them.
+
+The preflight follow-up reread all nine remaining articles against their covered diffs. The branch article's generic
+imported-try requirement now says imported branch. Evaluation imports carry a source scene, while branch imports
+still require the matching robot scene. Its branch steps, labels and four captures remain accurate. The eight other
+articles retain the behaviors documented in the table above. No new screenshots or product strings are needed for
+this wording correction.

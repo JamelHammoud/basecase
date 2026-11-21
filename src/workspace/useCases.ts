@@ -38,6 +38,7 @@ import { useCaseWorkbench } from './useCaseWorkbench';
 import { readPlacements, type PlacementUpdate } from '../cases/workbench/retention';
 
 interface CasesOptions {
+  ensureEvaluationScene?: import('./tryTimelineOpening').TimelineOptions['ensureEvaluationScene'];
   commitWorkbenchPlacements: (update: PlacementUpdate) => void;
   fixtures?: CustomModelDefinition[];
   parts: ScenePart[];
@@ -177,7 +178,7 @@ export function useCases(options: CasesOptions) {
     });
   };
 
-  const timeline = useTryTimeline({ sim, rig, parts, cases, partners });
+  const timeline = useTryTimeline({ ...options, cases });
   const trails = useCaseTrails({ ...options, active, timeline, open });
 
   const builder = useCaseBuilder({ rig, parts, add, partners, fixtures: options.fixtures });

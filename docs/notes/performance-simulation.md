@@ -228,3 +228,51 @@ After merging main `94a1bb558107b826888e88fe710c5c84652b44bd`, the required rela
 
 
 The full related selection with four local workers repeated all ten preparation, stepping and recording measurements. Preparation ranged from 0.318 to 18.498 ms. One simulated second with recording ranged from 1.722 to 37.104 ms. Encoded recordings remained 6952 to 11624 bytes. Already-aborted and stale-source refusal together took 13.110 ms. All 13 native comparisons retained maximum drift below 1.86e-12 and identical contact identities. The complete command took 242.76 seconds, compared with 242.41 seconds for the earlier default-concurrency candidate command. Host load and caches were uncontrolled, so these totals establish no throughput improvement or regression. No persistent check or worker setting changes.
+
+## Portable CLI evaluation
+
+Freeze prepares each revision's immutable joint, measure and triangle data once. Run restores that data once per
+revision and reuses it across Cases and seeds. One active production trial runs at a time. No result cache, added
+worker pool, wait or retry is used. The preparation counter records two calls during freeze and zero during run.
+Repeated legacy CLI checks each call ordinary scene preparation again.
+
+`evaluationResources.test.mjs` measures actual CLI children on Apple M5 Pro, macOS arm64, Node 26.13.0 and MuJoCo 4.0.0,
+20 November 2026. Both revisions run the same generated rover Case. Baseline effort is 0.25 Nm and candidate effort
+is 0.075 Nm. Seeds are ordered 7 and 3. Fixed world placement and nominal physics make these two seeded workloads
+identical to repeated existing CLI checks. Every baseline and candidate margin must equal the corresponding legacy
+check exactly. The four legacy checks run sequentially and use the same files.
+
+These are single shared-host observations, without a timing threshold or a platform speed guarantee. Child startup,
+module loading and WASM loading are included in wall time. Reported per-trial costs include evidence retention on
+failures. They are not isolated physics costs. OS peak RSS comes from `process.resourceUsage().maxRSS` in each child.
+The sampled boundary RSS remains separately named. The retained byte count covers inputs and evidence, while the
+actual directory count also includes JSON and HTML reports.
+
+| Observation | Portable evaluation | Repeated existing checks |
+| --- | ---: | ---: |
+| Total child wall time, including freeze | 1918.52 ms | 2158.41 ms |
+| Freeze wall time | 765.49 ms | Included in each check |
+| Freeze internal preparation path | 704.53 ms | Not isolated |
+| Run wall / internal execution | 1153.04 / 1078.81 ms | Included in total |
+| Peak child RSS | 232.73 MiB | 221.28 MiB |
+| Retained inputs and evidence | 338,274 bytes | No retained files |
+| Actual report directory | 344,014 bytes | No report directory |
+
+| Seed | Evaluation baseline / candidate trial ms | Existing baseline / candidate CLI wall ms |
+| --- | ---: | ---: |
+| 7 | 139.99 / 162.29 | 549.61 / 547.26 |
+| 3 | 55.59 / 139.98 | 516.45 / 545.09 |
+
+The evaluation retains two prepared revisions and portable failures, so its peak memory exceeds a single legacy
+check in this observation. The measured wall time and preparation reuse do not establish a memory improvement.
+Candidate retention performs bounded effort reconstruction and deterministic payload encoding. Imported payloads
+are bounded to 64 MiB after decompression and validated in the existing archive worker. Desktop and web persistence
+encode evaluation recordings in that worker too.
+
+Execution allows 16 Cases, 32 seeds, 300,000 scored physics steps and one active trial. Recorded-effort reconstruction
+adds at most 120,000 steps. Total output is limited to 128 MiB. Eight failures share a 16 MiB budget, with source
+snapshots limited to 8 MiB per scene and mesh and 4 MiB of model XML. Oversized snapshots keep an explicit recording
+limit status for those source or XML bounds. Encoding beyond the 64 MiB payload limit leaves execution incomplete.
+Reports and atomic writes have reserved capacity. No deadline, retry, wait or merge gate was added.
+[Coverage and failure evidence](testing-simulate.md#portable-cli-evaluation) records the generated workflows and
+interruption controls. Raw measurement and check paths are retained in the task handoff.

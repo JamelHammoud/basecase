@@ -9,8 +9,8 @@ import { buildImageDataset } from '../../src/vision/imageDatasetBuild.ts';
 import { annotationFromInstances } from '../../src/vision/imageMasks.ts';
 import { readImagePackage } from '../../src/vision/imagePackage.ts';
 import { HubAccount } from './index.mjs';
+import { TOKEN } from './testToken.mjs';
 
-const TOKEN = 'hf_testTokenThatMustNeverLeak0123456789';
 const sealing = { available: () => false };
 let hub;
 let dir;

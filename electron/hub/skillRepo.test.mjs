@@ -6,8 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { startFakeHub } from '../../e2e/fakeHub.ts';
 import { HubAccount } from './index.mjs';
 import { SKILL_DOWNLOADS, SKILL_FILE_BYTES } from './skillRepo.mjs';
-
-const TOKEN = 'hf_testTokenThatMustNeverLeak0123456789';
+import { TOKEN } from './testToken.mjs';
 
 const sealing = {
   available: () => true,

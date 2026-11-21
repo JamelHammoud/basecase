@@ -151,6 +151,10 @@ The 64 MiB history budget bounds JSON before parsing. Graph readers bound versio
 
 `sceneRecovery.test.mjs`, `sceneVersions.test.ts` and `webSceneHistory.test.ts` cover corrupt records, forged hash paths, invalid metadata and aborted writes. The graph and resource contract is in [Scene tabs](scene-tabs.md#versions-linked-branches-and-selective-merge), with [storage evidence](../notes/performance-workspace.md#scene-version-codec-and-atomic-replacement).
 
+### Runtime and npm advisory coverage
+
+Node is pinned to 26.13.1 in `.nvmrc` with the same minimum in `engines.node`. Electron resolves to 45.4.1. The lockfile also resolves Hono to 4.13.19, `@hono/node-server` to 2.1.11 and `fast-xml-parser` to 5.12.1 after a nonforced npm audit fix. The security scanner checks the running Node release, repository pins, installed Electron and locked npm advisories. Vosk's UUID advisory remains an accepted risk in the security-audit skill because its bundle uses only argument-free `v4()` calls. No audit finding is suppressed. [Runtime update evidence](../notes/node.md#runtime-security-patch-update) records checks and remaining scan limits.
+
 ### Toolchain glob matching
 
 The root `picomatch` override resolves every transitive consumer to the exact `@ryotsu/picomatch@4.0.7-a` release. Upstream 4.0.7 is affected by [CVE-2026-112366](https://github.com/advisories/GHSA-fc5q-39xc-vjpf) and has no patched release. The lockfile pins the fork's registry tarball and integrity. Its runtime files were compared with upstream before adoption. It collapses redundant single-branch wildcard repetition and treats unsupported complex repeated forms literally. It also includes upstream fixes for POSIX bracket negation and punctuation, newline globstars and globstars beside literal extensions. No dependency install script or audit exclusion is added. Keep the default repeated-extglob safeguard enabled. Captured substrings and unsupported complex patterns can differ from upstream.

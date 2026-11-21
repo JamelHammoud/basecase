@@ -86,6 +86,7 @@ Dependency scans don't find bugs in our own code. Review each surface below, ide
 | Child processes | `electron/**` | `spawn` / `execFile` with argv arrays, never `shell: true` or string `exec` with interpolated input |
 
 **Accepted risks** (re-check each audit; fix when the reason no longer holds):
+- `vosk-browser@0.0.8` pins `uuid@9.0.0`, reported by [GHSA-w5hq-g745-h8pq](https://github.com/advisories/GHSA-w5hq-g745-h8pq). Its shipped `dist/vosk.js` bundles UUID and only calls `v4()` without arguments to assign recognizer ids. It never calls `v3`, `v5` or `v6` with a caller-supplied output buffer, so the affected partial-buffer-write path is not exposed. npm reports no compatible fix for Vosk's pinned dependency. No override or audit exclusion is applied. Recheck the bundled call sites when Vosk changes.
 - Bambu LAN (`electron/print/connectors/ftps.mjs`, `mqtt.mjs`) skips TLS verification: printers use Bambu's private CA. Pinning that CA and checking the CN against the serial would close it.
 - `npm start` and dev load `http://localhost:5173`, so a process that takes the port first gets the preload API. `--strictPort` on both scripts limits it; serving `dist/` through a custom protocol in production would close it.
 - `publicFetch` resolves DNS, then `fetch` resolves again (a rebinding window). Pinning the checked IP with an undici dispatcher would close it.

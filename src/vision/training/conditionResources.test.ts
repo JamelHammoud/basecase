@@ -34,14 +34,15 @@ async function fixture(count: number) {
   const member = { frameSetId: set.id, frameIds: set.frames.map((frame) => frame.id), hash: await frameSetHash(set) };
   const packed = await packImageSnapshots(set, member);
   const content = new Map<string, Uint8Array>();
-  const snapshot = [];
+  const snapshot = await Promise.all(
+    packed.map(async ({ sample, bytes }) => {
+      const hash = await datasetContentHash(bytes);
 
-  for (const { sample, bytes } of packed) {
-    const hash = await datasetContentHash(bytes);
+      content.set(hash, bytes);
 
-    content.set(hash, bytes);
-    snapshot.push({ ...sample, content: hash });
-  }
+      return { ...sample, content: hash };
+    }),
+  );
 
   const report = await evaluateTraining({
     task: metricTask(),

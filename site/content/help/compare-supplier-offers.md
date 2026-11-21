@@ -9,6 +9,7 @@ keywords:
   - purchasing plan
   - csv
 related:
+  - compare-purchasing-in-study
   - export-remaining-purchases
   - count-the-parts-you-already-own
 covers:

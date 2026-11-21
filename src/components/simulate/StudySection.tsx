@@ -1,3 +1,5 @@
+import { validSourcingRequirements } from '../../study/sourcing';
+import { StudySourcingField } from './StudySourcingField';
 import { validVisibilityRequest } from '../../study/visibilityPlan';
 import { StudyVisibilityField } from './StudyVisibilityField';
 import { useState } from 'react';
@@ -29,6 +31,7 @@ export function StudySection({ study }: { study: Study }) {
               }
             />
           ))}
+          <StudySourcingField study={study} />
           <Button
             fullWidth
             variant="primary"
@@ -36,6 +39,7 @@ export function StudySection({ study }: { study: Study }) {
             disabled={
               !study.running &&
               (!study.enabled.length ||
+                (!!study.sourcing && !validSourcingRequirements(study.sourcing)) ||
                 problems.some((id) => study.enabled.includes(id)) ||
                 (!!study.visibility.request && !validVisibilityRequest(study.visibility.request)))
             }

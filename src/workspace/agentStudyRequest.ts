@@ -1,3 +1,4 @@
+import { validSourcingRequirements } from '../study/sourcing';
 import { cameraKnobFrame } from '../study/cameraFrame';
 import { validVisibilityRequest } from '../study/visibilityPlan';
 import { validateStudyKnobs } from '../study/knobs';
@@ -75,6 +76,9 @@ export async function studyRequest(payload: Payload, ctx: StudyContext) {
   if (payload.visibility !== undefined && !validVisibilityRequest(payload.visibility))
     return { ok: false, problem: 'Choose a saved try, cameras, targets and 2 to 32 samples.' };
 
+  if (payload.sourcing !== undefined && !validSourcingRequirements(payload.sourcing))
+    return { ok: false, problem: 'Set purchasing destination, required arrival date and quantity.' };
+
   const knobs = asked?.map((knob) =>
     knob.kind === 'battery_offset' ? { ...knob, values: knob.values.map(toScene) } : cameraKnobFrame(knob, 'scene'),
   );
@@ -90,6 +94,7 @@ export async function studyRequest(payload: Payload, ctx: StudyContext) {
     limit: payload.cap as number | undefined,
     seed: payload.seed as number | undefined,
     visibility: payload.visibility,
+    sourcing: payload.sourcing,
   });
 
   return typeof result === 'string' ? { ok: false, problem: result } : studyReply(result, kase);

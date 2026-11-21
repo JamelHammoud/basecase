@@ -1,3 +1,4 @@
+import { validSourcingRequirements, type StudySourcingRequirements } from '../study/sourcing';
 import { validVisibilityRequest, type StudyVisibilityRequest } from '../study/visibilityPlan';
 import { visibilityMeshFiles } from '../study/visibilityMeshes';
 import { loadStudyVisibility } from './studyVisibility';
@@ -22,6 +23,7 @@ import type { SceneCaseSource } from './useCaseCompare';
 import { runStudyHold } from './studyHold';
 
 export interface StudyRequest {
+  sourcing?: StudySourcingRequirements;
   visibility?: StudyVisibilityRequest;
   knobs?: StudyKnob[];
   seed?: number;
@@ -89,6 +91,7 @@ interface StudyRunOptions {
   request: Required<Pick<StudyRequest, 'knobs' | 'seed' | 'limit'>> & {
     kase: Case | null;
     visibility?: StudyVisibilityRequest;
+    sourcing?: StudySourcingRequirements;
   };
   source: SceneCaseSource;
   sim: Simulation;
@@ -116,6 +119,9 @@ function studyRequestProblem(request: StudyRunOptions['request']): string | unde
 
   if (visibilityRequest && knobs.some((knob) => knob.kind !== 'camera_pose' && knob.kind !== 'camera_lens'))
     return 'Compare camera settings separately from mechanism changes on a fixed recording.';
+
+  if (request.sourcing && !validSourcingRequirements(request.sourcing))
+    return 'Set purchasing destination, required arrival date and quantity.';
 
   if (!knobs.length) return 'Choose a setting to study.';
 
@@ -156,6 +162,28 @@ function studyGrading(input: {
   };
 }
 
+async function prepareStudyBaseline({
+  source,
+  request,
+  session,
+}: Pick<StudyRunOptions, 'source' | 'request'> & { session: StudySession }) {
+  const visibilityRequest = request.visibility;
+  const knobs = request.knobs;
+  const purchasingInputs = request.sourcing
+    ? await session.captureSourcing({
+        requirements: request.sourcing,
+        purchases: await platformBridge.listPurchases(),
+        evaluatedAt: new Date().toISOString(),
+      })
+    : undefined;
+  const snapshot = { ...(await snapshotStudy(source, !!visibilityRequest)), sourcing: purchasingInputs };
+  const prepared = await prepareStudyMeshes(snapshot, knobs);
+  const base = visibilityRequest ? await prepareCameraStudy(prepared, session) : prepared;
+  const purchases = purchasingInputs?.purchases ?? knownPurchases() ?? (await platformBridge.listPurchases());
+
+  return { snapshot, base, purchases, purchasingInputs };
+}
+
 async function executeInSession({
   request,
   source,
@@ -173,10 +201,7 @@ async function executeInSession({
   if (problem) return problem;
 
   const designs = enumerateStudy(knobs, { seed, limit });
-  const snapshot = await snapshotStudy(source, !!visibilityRequest);
-  const prepared = await prepareStudyMeshes(snapshot, knobs);
-  const base = visibilityRequest ? await prepareCameraStudy(prepared, session) : prepared;
-  const purchases = knownPurchases() ?? (await platformBridge.listPurchases());
+  const { snapshot, base, purchases, purchasingInputs } = await prepareStudyBaseline({ source, request, session });
   const visibility = visibilityRequest
     ? await loadStudyVisibility({
         request: visibilityRequest,
@@ -206,6 +231,7 @@ async function executeInSession({
     const current = await grade(base, { knobs: [], selection: [], purchases, runs: await runs?.(base) });
     const record: StudyRecord = {
       knobs,
+      ...(purchasingInputs ? { sourcing: purchasingInputs } : {}),
       ...(visibilityRequest ? { visibility: visibilityRequest } : {}),
       seed,
       rows: [],

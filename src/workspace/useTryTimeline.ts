@@ -126,7 +126,7 @@ export function useTryTimeline(options: TimelineOptions) {
     loop: controls.loop,
     show,
     branchSource: () => {
-      if (!opened?.scene) return null;
+      if (!opened?.scene || opened.recording.evaluation) return null;
 
       const ticket = opening.current;
       const at = movement.current;

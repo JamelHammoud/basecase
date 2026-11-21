@@ -16,7 +16,9 @@ covers:
   - src/workspace/tryFileActions.ts
 ---
 
-Compare two robot revisions on identical Cases and seeds, then inspect recorded failures offline. You need a Basecase checkout with Node installed.
+Compare two robot revisions on identical Cases and seeds, then inspect recorded failures offline.
+
+You must use a Basecase checkout with Node installed.
 
 1. With **Export** ▸ **Scene**, save each revision as a `.basecase` file with the same Cases.
 2. In the checkout, freeze the revisions and ordered seeds:

@@ -7,6 +7,7 @@ import { evaluationFixture, invokeEvaluation } from '../tools/cli/evaluationFixt
 import { openApp, shown } from './harness';
 import { call, openSaved } from './continuation.helpers';
 import type { StoredTry } from '../src/cases/tryFile';
+import { evaluationReportLayout, evaluationTimelineLayout } from './evaluationLayout';
 
 it(
   'imports an actual CLI failure and opens its frozen identity and failure in the ordinary timeline',
@@ -41,6 +42,9 @@ it(
       const report = JSON.parse(fs.readFileSync(path.join(fixture.output, 'comparison.json'), 'utf8'));
       const trial = report.pairs[0].candidate;
       const archive = fs.readFileSync(path.join(fixture.output, trial.recording));
+
+      await evaluationReportLayout(app.page, fs.readFileSync(path.join(fixture.output, 'report.html'), 'utf8'));
+
       const chooser = app.page.waitForEvent('filechooser');
 
       await app.page.keyboard.press('ControlOrMeta+k');
@@ -63,6 +67,7 @@ it(
       expect(stored.outcome.verdict).toBe('failed');
       await openSaved(app, stored.id);
       await expect.poll(() => app.page.locator(shown('[data-testid="try-timeline"]')).innerText()).toContain('Missed');
+      await evaluationTimelineLayout(app.page);
       expect(stored.sceneId).toBe(report.evaluation);
       await app.page
         .locator(shown('button'))

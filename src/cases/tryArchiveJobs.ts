@@ -9,6 +9,7 @@ import { reply } from '../utils/workerRpc';
 import { sha256Hex, hashOf } from '../skills/hash';
 import { recordingTransfer, type Recording } from '../sim/recorder';
 import { readEvaluationReplay, evaluationScenePhysics } from './evaluationReplayValidation';
+import { evaluationComponents } from './evaluationAssets';
 import { decodeRecording, encodeRecording } from './recordingFile';
 import { readStoredTry, type StoredTry } from './tryFile';
 
@@ -158,6 +159,16 @@ function decodeChecked(bytes: Uint8Array) {
   }
 }
 
+async function checkEvaluationScene(recording: Pick<Recording, 'evaluation'>) {
+  const source = recording.evaluation;
+
+  if (!source) return;
+
+  const scene = await decodeSceneFile(source.scene);
+
+  if (evaluationComponents(scene).some((id) => !Object.hasOwn(source.meshes, id))) throw new Error(TRY_FILE_ERROR);
+}
+
 export const tryArchiveJobs = {
   evaluationScene: async (input: {
     scene: Uint8Array;
@@ -181,7 +192,7 @@ export const tryArchiveJobs = {
 
     return reply(recording, recording ? recordingTransfer(recording) : []);
   },
-  evaluation: (input: { source: unknown; stored: StoredTry; nbody: number; frames: number }) => {
+  evaluation: async (input: { source: unknown; stored: StoredTry; nbody: number; frames: number }) => {
     const source = readEvaluationReplay(input.source);
 
     if (
@@ -190,6 +201,8 @@ export const tryArchiveJobs = {
     )
       throw new Error(TRY_FILE_ERROR);
 
+    await checkEvaluationScene({ evaluation: source });
+
     return reply(true);
   },
   encode: (entries: PortableTry[]) => {
@@ -197,8 +210,10 @@ export const tryArchiveJobs = {
 
     return reply(bytes, [bytes.buffer]);
   },
-  decode: (bytes: Uint8Array) => {
+  decode: async (bytes: Uint8Array) => {
     const restored = decodeChecked(bytes);
+
+    for (const entry of restored) await checkEvaluationScene(entry.recording);
 
     return reply(
       restored,

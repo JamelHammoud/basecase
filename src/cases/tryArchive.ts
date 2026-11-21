@@ -1,4 +1,3 @@
-import { decodeSceneFile } from '../utils/sceneFile';
 import type { StoredTry } from './tryFile';
 import type { KeptTry } from './tryStore';
 import { keepTries, loadManifests, loadRecordingBytes } from './tryStore';
@@ -52,8 +51,6 @@ export async function exportTryArchive(id: string, ports: Ports = PORTS): Promis
 
 export async function importTryArchive(bytes: Uint8Array, ports: Ports = PORTS) {
   const entries = await tryArchiveWorker.call('decode', bytes);
-
-  for (const entry of entries) if (entry.recording.evaluation) await decodeSceneFile(entry.recording.evaluation.scene);
 
   const existing = new Map(
     (await ports.manifests(entries.map((entry) => entry.stored.id))).map((stored) => [stored.id, stored]),

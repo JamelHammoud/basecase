@@ -1,4 +1,14 @@
 import { readGltfDocument } from './worldImport/gltfAccessors';
+import { appearanceParts } from '../appearance/model';
+import { sceneAppearanceParts } from '../appearance/sceneParts';
+import type { ScenePart } from '../types/robotics';
+import type { SharedScene } from '../utils/sceneFile';
+
+export function evaluationComponents(scene: SharedScene): string[] {
+  const parts = appearanceParts(sceneAppearanceParts(scene.project, scene.parts)) as ScenePart[];
+
+  return [...new Set(parts.flatMap((part) => (part.componentId ? [part.componentId] : [])))];
+}
 
 export function offlineEvaluationMesh(bytes: Uint8Array): boolean {
   try {

@@ -1,7 +1,8 @@
 import { caseWorldItems } from '../cases/importedWorldItems';
 import type { SimModel } from '../sim/mjcfTypes';
 import { stageCase, stagedEffectors } from '../cases/caseCast';
-import type { Case } from '../cases/schema';
+import { caseSlots, type Case } from '../cases/schema';
+import type { EvaluationReplay } from '../cases/evaluationReplayValidation';
 import type { SlotRobot } from '../cases/slots';
 import { trySignals, type TryRecord, type TryScoring } from '../cases/tries';
 import { tripFrames, type Trip } from '../cases/tripFrames';
@@ -114,6 +115,17 @@ function replayScene(staged: TryScene | null, seeded: SeedReplay | undefined): T
   };
 }
 
+function evaluationScene(source: EvaluationReplay, options: TimelineOptions): TryScene {
+  const kase = source.kase;
+  const staged = { kase, slots: caseSlots(kase), guests: [], joined: { parts: [], joints: [] }, partners: [] };
+
+  return {
+    kase,
+    scoring: { kase, model: source.model, ...stagedEffectors(staged, options) },
+    trace: source.trace,
+  };
+}
+
 export async function prepareOpening(
   options: TimelineOptions,
   record: TryRecord,
@@ -133,7 +145,9 @@ export async function prepareOpening(
 
   if (!efforts || !current()) return null;
 
-  const scene = recording.evaluation ? null : replayScene(sceneOf(options, record, recording), seeded);
+  const scene = recording.evaluation
+    ? evaluationScene(recording.evaluation, options)
+    : replayScene(sceneOf(options, record, recording), seeded);
   const trips = seeded?.trips ?? (await tripsOf(scene));
 
   return { record, recording, efforts, trips, scene, before, restore };

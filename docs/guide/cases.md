@@ -149,7 +149,9 @@ keeps the exact source scene and component meshes, model, realized Case, trace, 
 that extension and ordinary manifest identities before saving anything, then opens the source scene through ordinary
 scene import. Library and the existing timeline load its retained model and failure without borrowing the current
 scene, policy or calibration. Opening from a different or edited scene opens a new source scene and its timeline,
-preserving the working design. Scene matching and asset checks run in the archive worker. Closing restores the previous simulation. The snapshot is inspectable and exportable,
+preserving the working design. The timeline exposes the retained Case console and trace without reach scaling.
+Frozen evaluation recordings remain unavailable as branch sources. Scene matching and asset checks run in the archive
+worker, including refusal of component references missing from the archive before persistence. Closing restores the previous simulation. The snapshot is inspectable and exportable,
 but does not enable branching against a different live source. Validation and desktop recording decoding run through
 the existing archive worker. Model includes, external files, plugins and executable XML declarations are refused.
 Evaluation payloads use a deterministic compressed binary extension with a 64 MiB decompression limit. Retained
@@ -162,6 +164,9 @@ evaluation encoding also runs in the archive worker, including web storage.
 HTML without loading MuJoCo. The report stays readable as a static file. Tests, limitations and observations are in
 [portable evaluation evidence](../notes/testing-cases.md#portable-cli-evaluation). Help is
 [Compare robot revisions](../../site/content/help/compare-robot-revisions.md).
+
+The static report wraps long input identities and keeps its paired table inside a focusable horizontal scroll region
+on narrow windows. Its ordinary recording links and the studio timeline retain keyboard access.
 
 ### Making a Case
 

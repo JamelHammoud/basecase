@@ -753,3 +753,35 @@ imported-try requirement now says imported branch. Evaluation imports carry a so
 still require the matching robot scene. Its branch steps, labels and four captures remain accurate. The eight other
 articles retain the behaviors documented in the table above. No new screenshots or product strings are needed for
 this wording correction.
+
+### Review of portable evaluation delivery
+
+Review found that evaluation timeline opening explicitly discarded its retained Case and trace. This hid authored
+console panels, recorded probe signals and agent-readable contract evidence even though the archive kept them.
+Opening now builds the inspection scene from the retained Case, model and trace without reach scaling. Both branch
+availability and branch-source access refuse evaluation recordings independently of that inspection scene.
+
+The source-scene test requires those retained objects to reach timeline preparation even when the active Case list
+is empty. It also forges a correctly hashed snapshot with an absent component mesh and requires import to fail before
+the persistence callback. Source scene decoding and component-reference checks now run in the archive worker during
+import and persisted-source validation. Missing archive meshes cannot fall back to the current catalog.
+
+The static report previously let its table overflow a narrow document. Its table now scrolls inside a focusable
+region while input hashes wrap. `evaluationLayout.ts` extends the actual CLI import browser declaration with measured
+report text bounds at 390 px, document containment and keyboard scrolling. It checks timeline canvas containment,
+joint names, values, units and action text at a 1100 px studio width, plus keyboard frame stepping and the absence of
+Branch Try. Browser execution remains assigned to CI, with no timeout, retry or assertion relaxation.
+
+The 14-path review check passed formatting, lint, docs, 383 site pages and types on macOS arm64 with Node 26.13.0.
+Its related selection passed 620 tests across 125 files and failed three declarations across two files in 39.17 seconds.
+Both declarations in `tools/cli/evaluation.test.mjs` exceeded their unchanged five-second deadlines, at 5,049 and
+5,005 ms. The hexapod row in `src/cases/evaluationMatrix.test.ts` exceeded the same deadline at 7,408 ms. The log
+reports deadline errors without value assertion mismatches. Other worktrees were running checks concurrently,
+but that observation does not establish the cause of these failures.
+
+The isolated three-path check passed all 13 tests across the source-scene test, CLI workflow file and workflow matrix
+in 3.70 seconds. It retained default worker selection, retries and quarantine configuration. Its assertions include
+the new timeline Case/trace preservation and pre-persistence missing-mesh refusal. Logs are
+`scratch/review-2012-check.log` and `scratch/review-2012-focused-check.log`. This focused pass establishes intermittent
+execution, not repaired deadlines or a passing broader selection. The two test files remain review blockers until
+their workload is made steady without weaker coverage, retries or increased deadlines.

@@ -1,9 +1,6 @@
-import { offlineEvaluationMesh } from './evaluationAssets';
+import { evaluationComponents, offlineEvaluationMesh } from './evaluationAssets';
 import { supplyVolts } from './exploreDesigns';
 import { DEFAULT_PROJECT } from '../types/robotics';
-import { appearanceParts } from '../appearance/model';
-import { sceneAppearanceParts } from '../appearance/sceneParts';
-import type { ScenePart } from '../types/robotics';
 import type { SharedScene } from '../utils/sceneFile';
 import type { MeshFiles } from '../three/componentMeshes';
 import { componentMeshesReady, provideMeshFiles } from '../three/componentMeshes';
@@ -20,16 +17,12 @@ let preparations = 0;
 
 export const evaluationPreparations = () => preparations;
 
+export { evaluationComponents } from './evaluationAssets';
+
 export interface PreparedEvaluationRobot {
   joints: CaseRobot['joints'];
   measures: Record<string, MeshMeasure | undefined>;
   triangles: Record<string, number[]>;
-}
-
-export function evaluationComponents(scene: SharedScene): string[] {
-  const parts = appearanceParts(sceneAppearanceParts(scene.project, scene.parts)) as ScenePart[];
-
-  return [...new Set(parts.flatMap((part) => (part.componentId ? [part.componentId] : [])))];
 }
 
 export async function prepareEvaluationRobot(scene: SharedScene, meshes: MeshFiles): Promise<PreparedEvaluationRobot> {

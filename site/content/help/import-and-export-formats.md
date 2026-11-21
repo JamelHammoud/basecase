@@ -71,7 +71,7 @@ SimReady parts in scene files must link to a supported catalog dataset. Their te
 
 ## Export
 
-Scene exports are in the **Export** menu at the top right of the window.
+Scene exports are in the **Export** menu at the top right of the window. For composed images, use [Render a robot image](/help/render-a-robot-image) from the bottom toolbar.
 
 | Menu item | File | What's in it |
 |---|---|---|

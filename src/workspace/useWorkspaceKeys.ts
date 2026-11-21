@@ -114,6 +114,12 @@ function viewKeys({ core, actions, ui }: WorkspaceKeyDeps): ShortcutHandlers {
   };
 
   const deselect = () => {
+    if (actions.exports.composition.open) {
+      actions.exports.composition.close();
+
+      return;
+    }
+
     if (core.sketching.cancelSupport()) return;
 
     if (core.cableRoutes?.net) {

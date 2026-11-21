@@ -1,17 +1,20 @@
 import { TextureFileField } from './TextureFileField';
 import { FieldRow, NumberInput, Select } from '../../design-system';
 import type { Appearance, AppearanceEdit } from '../../appearance/model';
+import { mixedAppearanceOption, sharedAppearanceValue as shared } from './appearanceSelection';
 
 interface Props {
-  appearance: Appearance;
+  appearances: Appearance[];
   uvSupported: boolean;
   onChange: (patch: AppearanceEdit, live?: boolean) => void;
   onFile: (slot: keyof NonNullable<Appearance['textures']>, file: File) => void;
   disabled: boolean;
 }
 
-export const TextureControls = ({ appearance, uvSupported, onChange, onFile, disabled }: Props) => {
-  const { mapping } = appearance;
+export const TextureControls = ({ appearances, uvSupported, onChange, onFile, disabled }: Props) => {
+  const mapping = shared(appearances.map(({ mapping }) => (mapping.kind === 'uv' ? 'uv' : mapping.plane)));
+  const normalY = shared(appearances.map((appearance) => appearance.normalY));
+  const usesNormal = appearances.some((appearance) => appearance.textures?.normal);
   const updateMapping = (patch: Partial<Appearance['mapping']>, live?: boolean) => onChange({ mapping: patch }, live);
 
   return (
@@ -27,7 +30,7 @@ export const TextureControls = ({ appearance, uvSupported, onChange, onFile, dis
               roughnessMetalness: 'Roughness / metalness texture',
             }[slot]
           }
-          loaded={!!appearance.textures?.[slot]}
+          loaded={appearances.some((appearance) => appearance.textures?.[slot])}
           disabled={disabled}
           onFile={(file) => onFile(slot, file)}
           onRemove={() => onChange({ textures: { [slot]: undefined } })}
@@ -35,8 +38,9 @@ export const TextureControls = ({ appearance, uvSupported, onChange, onFile, dis
       ))}
       <Select
         aria-label="Texture mapping"
-        value={mapping.kind === 'uv' ? 'uv' : mapping.plane}
+        value={mapping ?? 'mixed'}
         options={[
+          ...(mapping === null ? [mixedAppearanceOption] : []),
           { value: 'uv', label: 'Mesh UVs', disabled: !uvSupported },
           { value: 'xy', label: 'Front Projection' },
           { value: 'xz', label: 'Top Projection' },
@@ -53,19 +57,19 @@ export const TextureControls = ({ appearance, uvSupported, onChange, onFile, dis
       <FieldRow label="Scale">
         <NumberInput
           aria-label="Texture scale"
-          value={mapping.scale}
+          value={shared(appearances.map(({ mapping }) => mapping.scale))}
           min={0.01}
           max={100000}
           step={1}
           precision={2}
-          unit={mapping.kind === 'uv' ? '' : 'mm'}
+          unit={mapping === null || mapping === 'uv' ? '' : 'mm'}
           onChange={(scale, live) => updateMapping({ scale }, live)}
         />
       </FieldRow>
       <FieldRow label="Rotation">
         <NumberInput
           aria-label="Texture rotation"
-          value={mapping.rotation}
+          value={shared(appearances.map(({ mapping }) => mapping.rotation))}
           min={-360}
           max={360}
           step={1}
@@ -73,11 +77,12 @@ export const TextureControls = ({ appearance, uvSupported, onChange, onFile, dis
           onChange={(rotation, live) => updateMapping({ rotation }, live)}
         />
       </FieldRow>
-      {appearance.textures?.normal && (
+      {usesNormal && (
         <Select
           aria-label="Normal orientation"
-          value={String(appearance.normalY)}
+          value={normalY === null ? 'mixed' : String(normalY)}
           options={[
+            ...(normalY === null ? [mixedAppearanceOption] : []),
             { value: '1', label: 'OpenGL (+Y)' },
             { value: '-1', label: 'DirectX (−Y)' },
           ]}

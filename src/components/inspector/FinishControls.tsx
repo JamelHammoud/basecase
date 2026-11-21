@@ -1,11 +1,12 @@
 import { useTextureImport } from './useTextureImport';
 import { supportsMeshUvs } from './mappingSupport';
 import { useComponentMeshVersion } from '../../three/componentMeshes';
-import { Button, FieldRow, NumberInput, Select } from '../../design-system';
+import { Button, FieldRow, NumberInput, Select, Spinner } from '../../design-system';
 import { appearanceOf, FINISHES, applyFinish, type AppearanceEdit, editAppearance } from '../../appearance/model';
 import { getTextureAsset } from '../../cases/worldAssets';
 import type { ScenePart } from '../../types/robotics';
 import { TextureControls } from './TextureControls';
+import { mixedAppearanceOption, sharedAppearanceValue } from './appearanceSelection';
 
 interface Props {
   parts: ScenePart[];
@@ -26,10 +27,17 @@ export const FinishControls = ({ parts, sceneParts, baselineParts, onChange }: P
         (f) => f.roughness === base.roughness && f.metalness === base.metalness && f.opacity === base.opacity,
       )?.value ?? 'custom')
     : '';
-  const mixed = parts.some((part) => JSON.stringify(part.appearance) !== JSON.stringify(parts[0].appearance));
+  const appearances = parts.map(appearanceOf);
+  const mixed = parts.some(
+    (part, index) =>
+      Boolean(part.appearance) !== Boolean(parts[0].appearance) ||
+      (['roughness', 'metalness', 'opacity'] as const).some((key) => appearances[index][key] !== base[key]),
+  );
   const uvSupported = parts.every(supportsMeshUvs);
-  const unsupportedUv = base.mapping.kind === 'uv' && !uvSupported;
-  const missing = Object.values(base.textures ?? {}).some((hash) => !getTextureAsset(hash));
+  const unsupportedUv = parts.some((part) => appearanceOf(part).mapping.kind === 'uv' && !supportsMeshUvs(part));
+  const missing = appearances.some((appearance) =>
+    Object.values(appearance.textures ?? {}).some((hash) => !getTextureAsset(hash)),
+  );
 
   return (
     <>
@@ -40,7 +48,7 @@ export const FinishControls = ({ parts, sceneParts, baselineParts, onChange }: P
           { value: '', label: 'Original' },
           ...FINISHES,
           { value: 'custom', label: 'Custom', disabled: true },
-          ...(mixed ? [{ value: 'mixed', label: 'Mixed', disabled: true }] : []),
+          ...(mixed ? [mixedAppearanceOption] : []),
         ]}
         onChange={(event) => {
           const finish = event.target.value;
@@ -50,13 +58,13 @@ export const FinishControls = ({ parts, sceneParts, baselineParts, onChange }: P
           onChange((part) => applyFinish(part, finish));
         }}
       />
-      {parts[0].appearance && (
+      {parts.some((part) => part.appearance) && (
         <>
           {(['roughness', 'metalness', 'opacity'] as const).map((key) => (
             <FieldRow key={key} label={{ roughness: 'Roughness', metalness: 'Metalness', opacity: 'Opacity' }[key]}>
               <NumberInput
                 aria-label={{ roughness: 'Roughness', metalness: 'Metalness', opacity: 'Opacity' }[key]}
-                value={new Set(parts.map((part) => appearanceOf(part)[key])).size > 1 ? null : base[key]}
+                value={sharedAppearanceValue(appearances.map((appearance) => appearance[key]))}
                 min={0}
                 max={1}
                 step={0.01}
@@ -67,7 +75,7 @@ export const FinishControls = ({ parts, sceneParts, baselineParts, onChange }: P
             </FieldRow>
           ))}
           <TextureControls
-            appearance={base}
+            appearances={appearances}
             uvSupported={uvSupported}
             onChange={change}
             onFile={(slot, file) => {
@@ -83,7 +91,7 @@ export const FinishControls = ({ parts, sceneParts, baselineParts, onChange }: P
             </p>
           )}
           {texture.loading && (
-            <Button size="sm" onClick={texture.cancel}>
+            <Button size="sm" icon={<Spinner />} onClick={texture.cancel}>
               Cancel
             </Button>
           )}

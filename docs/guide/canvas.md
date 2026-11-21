@@ -301,7 +301,9 @@ Training color variations restore projection callbacks after cloning a material.
 
 Build guide drawings retain their deliberate schematic material overrides. STL and other geometry-only exports carry geometry. Appearance preservation applies to ordinary RGB captures, camera rendering, thumbnails and portable scene files.
 
-Viewport captures await texture readiness before completing geometry builds. Geometry-only preparation does not decode finishes. RGB thumbnail, preview, camera and dataset builders hold preparation leases through material acquisition. Sculpt replacement reapplies the finish and its projection under the same ownership contract.
+Viewport captures and mesh-readiness queries await texture acquisition in both authored parts and the Case world layer before completing geometry builds. `viewport/captureReadiness.test.ts` holds a captured object's decoder and checks both entry points against the actual layer. Geometry-only preparation does not decode finishes. RGB thumbnail, preview, camera and dataset builders hold preparation leases through material acquisition. Sculpt replacement reapplies the finish and its projection under the same ownership contract.
+
+Base-color maps enable transparency even when the scalar opacity is 1, allowing image alpha to reveal the scene behind a mesh. Such materials disable depth writes like other transparent finishes. Normal and roughness/metalness maps alone keep an opaque finish on its existing path. The real worker fixture checks a transparent image quadrant against the background alongside an opaque quadrant.
 
 Mapping variants share one Three.js Source per decoded image, while texture objects keep their own matrices. Creating another scale or rotation does not advance the shared source version or duplicate the upload for the same GPU sampling configuration. The renderer fixture asserts one GPU upload for simultaneous mapping variants and zero finish uploads after disposal.
 

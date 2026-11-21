@@ -31,7 +31,7 @@ Set projection scale in millimeters per repeat. For Mesh UV scale, use UV units 
 
 You can use normal maps with OpenGL or DirectX orientation. For combined roughness and metalness images, use green for roughness and blue for metalness.
 
-Use undo and redo to restore Appearance edits. You retain textures when you save a scene. Choose **Original** to restore the part's original rendering.
+Use undo and redo to restore Appearance edits. You retain textures when you save a scene. Choose **Original** to restore the part's original rendering. With different finishes selected, shared fields show their value and differing fields show **Mixed** or stay blank. Editing one field keeps the others on each part.
 
 You can retain at most 256 MB of encoded textures in a session. If you fill texture memory after repeated imports, reopen Basecase to release unused session content.
 

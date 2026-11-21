@@ -9,7 +9,7 @@ import { textureAsset, textureAssetHash, readTextureAsset, serializeTextureAsset
 import { finishAppearance, type Appearance } from './model';
 import { textureResources } from './textures';
 
-async function checker() {
+async function checker(transparent = false) {
   const canvas = new OffscreenCanvas(4, 4);
   const context = canvas.getContext('2d')!;
 
@@ -21,6 +21,8 @@ async function checker() {
   context.fillRect(0, 2, 2, 2);
   context.fillStyle = '#ffffff';
   context.fillRect(2, 2, 2, 2);
+
+  if (transparent) context.clearRect(0, 0, 2, 2);
 
   const bytes = new Uint8Array(await (await canvas.convertToBlob({ type: 'image/png' })).arrayBuffer());
   const asset = textureAsset(bytes);
@@ -103,8 +105,19 @@ export async function appearanceRenderChecks() {
     const resources = textureResources();
     const maximum = await measureMaximumTextures();
     const programReuse = await programReuseChecks(renderer, scene, camera, part);
+    const { hash: alphaHash } = await checker(true);
+    const alphaAppearance = { ...appearance, textures: { baseColor: alphaHash } };
+    const alphaLease = prepareAppearance([{ ...part, appearance: alphaAppearance }]);
+
+    await alphaLease.ready;
+    scene.background = new THREE.Color('#ff00ff');
+
+    const alpha = draw(alphaAppearance);
+
+    alphaLease.release();
 
     return {
+      alpha,
       maximum,
       programReuse,
       sharedUploads,

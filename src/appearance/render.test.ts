@@ -61,10 +61,16 @@ it('applies local color textures, preserves UV orientation and changes scale and
   const bottomLeft = pixel(result.uv, 12, 12);
   const topLeft = pixel(result.uv, 12, 52);
   const topRight = pixel(result.uv, 52, 52);
+  const hole = pixel(result.alpha, 12, 52);
+  const opaque = pixel(result.alpha, 52, 52);
 
   expect(bottomLeft[2] - bottomLeft[0]).toBeGreaterThan(80);
   expect(topLeft[0] - topLeft[2]).toBeGreaterThan(80);
   expect(topRight[1] - topRight[0]).toBeGreaterThan(80);
+  expect(hole[0]).toBeGreaterThan(240);
+  expect(hole[2]).toBeGreaterThan(240);
+  expect(hole[1]).toBeLessThan(15);
+  expect(opaque[1] - opaque[0]).toBeGreaterThan(80);
   expect(difference(result.uv, result.scaled)).toBeGreaterThan(0.15);
   expect(difference(result.uv, result.rotated)).toBeGreaterThan(0.15);
   expect(difference(result.uv, result.planar)).toBeGreaterThan(0.15);

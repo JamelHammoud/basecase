@@ -60,8 +60,6 @@ function finishMaterial(
   material.roughness = appearance.roughness;
   material.metalness = appearance.metalness;
   material.opacity = appearance.opacity;
-  material.transparent = appearance.opacity < 1;
-  material.depthWrite = appearance.opacity >= 1;
   material.vertexColors = false;
   material.map = null;
   material.normalMap = null;
@@ -88,6 +86,8 @@ function finishMaterial(
     }
   }
 
+  material.transparent = appearance.opacity < 1 || Boolean(material.map);
+  material.depthWrite = !material.transparent;
   material.userData.appearanceMappingSupported = mappingSupported;
   ownTextures(material, releases);
   planarMaterial(material, appearance);

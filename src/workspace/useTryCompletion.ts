@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent } from 'react';
+import { useEffect, useEffectEvent, useLayoutEffect } from 'react';
 import type { Simulation } from '../sim/useSimulation';
 import type { TryPhase } from './useCaseTry';
 
@@ -25,7 +25,7 @@ export function useFinishTry(input: {
 
   const subscribeStop = input.sim.subscribeStop;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const detach = subscribeStop(finishStopped);
 
     return () => {

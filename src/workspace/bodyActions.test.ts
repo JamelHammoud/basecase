@@ -66,7 +66,13 @@ describe('body fitting actions', () => {
       operateVisible,
     } as unknown as WorkspaceCore;
 
-    vi.mocked(bodyClient).mockReturnValue({ readRecording: vi.fn(), analyze: vi.fn(), fit: ctx.fit, dispose: vi.fn() });
+    vi.mocked(bodyClient).mockReturnValue({
+      readRecording: vi.fn(),
+      analyze: vi.fn(),
+      recommend: vi.fn(),
+      fit: ctx.fit,
+      dispose: vi.fn(),
+    });
     setBodyRun(run);
     await fitBodyFromUi(core);
     expect(ctx.project().bodyCalibrations?.arm.active).toBe(1);
@@ -127,7 +133,13 @@ describe('body fitting actions', () => {
       simTraining: { sim: { buildModel: vi.fn(async () => model) } },
     } as unknown as WorkspaceCore;
 
-    vi.mocked(bodyClient).mockReturnValue({ readRecording: vi.fn(), analyze: vi.fn(), fit: workerFit, dispose });
+    vi.mocked(bodyClient).mockReturnValue({
+      readRecording: vi.fn(),
+      analyze: vi.fn(),
+      recommend: vi.fn(),
+      fit: workerFit,
+      dispose,
+    });
     setBodyRun(run);
     await expect(fitBodyFor(core)).rejects.toThrow('robot changed during fitting');
     expect(ctx.project().bodyCalibrations).toBeUndefined();

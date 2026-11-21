@@ -33,28 +33,40 @@ export interface BodyReplayInput {
   robot: string;
   run: RobotRun;
   budget?: BodyReplayBudget;
+  engine?: SimEngine;
+  onFrame?: () => void;
 }
 
 export function replayBody(input: BodyReplayInput, fit: BodyFit): number[][] {
-  const { mj, model, robot, run } = input;
-  const engine = new SimEngine(mj, applyBodyFit(model, robot, fit));
-  const indices = run.joints.map((id) => model.joints.findIndex((j) => j.id === id));
-  const initial = { ...model.initial, values: { ...model.initial.values } };
+  if (input.engine) return replayRun(input.engine, input);
 
-  run.joints.forEach((id, i) => {
-    const joint = model.joints[indices[i]];
-    const p = run.statuses[0].positions[i];
+  return replayBodies({ ...input, runs: [input.run] }, fit)[0];
+}
 
-    if (joint && p !== null) initial.values[id] = p * (joint.type === 'revolute' ? 180 / Math.PI : 1000);
-  });
+export function replayBodies(input: Omit<BodyReplayInput, 'run'> & { runs: RobotRun[] }, fit: BodyFit): number[][][] {
+  const engine = new SimEngine(input.mj, applyBodyFit(input.model, input.robot, fit));
 
   try {
-    engine.reset(initial);
-
-    return replayFrames(engine, { ...input, indices });
+    return input.runs.map((run) => replayRun(engine, { ...input, run }));
   } finally {
     engine.dispose();
   }
+}
+
+function replayRun(engine: SimEngine, input: BodyReplayInput): number[][] {
+  const { model, run } = input;
+  const indices = run.joints.map((id) => model.joints.findIndex((joint) => joint.id === id));
+  const initial = { ...model.initial, values: { ...model.initial.values } };
+
+  run.joints.forEach((id, index) => {
+    const joint = model.joints[indices[index]];
+    const position = run.statuses[0].positions[index];
+
+    if (joint && position !== null) initial.values[id] = position * (joint.type === 'revolute' ? 180 / Math.PI : 1000);
+  });
+  engine.reset(initial);
+
+  return replayFrames(engine, { ...input, indices });
 }
 
 function replayFrames(engine: SimEngine, input: BodyReplayInput & { indices: number[] }): number[][] {
@@ -85,6 +97,7 @@ function replayFrames(engine: SimEngine, input: BodyReplayInput & { indices: num
     const angles = engine.jointAngles();
 
     predicted.push(indices.map((i) => angles[i]));
+    input.onFrame?.();
   }
 
   return predicted;

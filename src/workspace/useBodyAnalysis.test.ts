@@ -2,14 +2,16 @@ import { useEffect } from 'react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { openBodyAnalysis, useBodyAnalysis } from './useBodyAnalysis';
 import type { WorkspaceCore } from './useWorkspaceCore';
-import { bodySourceKey } from '../reality/bodyEvidence';
+import { bodySourceKey, readBodyEvidence } from '../reality/bodyEvidence';
 import type { BodyEvidenceRef } from '../reality/bodyEvidence';
 import type { TrySummary } from '../cases/tryFile';
+import type { BodyEvidenceSnapshot } from '../reality/bodyEvidence';
 
 const state = vi.hoisted(() => ({ values: [] as unknown[], index: 0, tries: [] as TrySummary[] }));
 
 vi.mock('react', () => ({
   useEffect: vi.fn(),
+  useLayoutEffect: vi.fn(),
   useRef: (current: unknown) => ({ current }),
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
   useState: (initial: unknown) => {
@@ -55,6 +57,34 @@ beforeEach(() => {
   state.index = 0;
   state.tries = [];
   vi.clearAllMocks();
+});
+
+it('keeps chosen parameters when the same retained analysis is decoded again', async () => {
+  const reference = {
+    unit: 'robot',
+    scene: 'arm',
+    recording: 'run-a',
+    modelHash: 'model',
+    sourceKey: 'physical',
+  } as BodyEvidenceRef;
+  const core = coreFor([reference]);
+  const saved = { result: { kind: 'analyzed' } } as BodyEvidenceSnapshot;
+
+  vi.mocked(readBodyEvidence).mockResolvedValue(saved);
+  openBodyAnalysis('arm');
+  useBodyAnalysis(core);
+  vi.mocked(useEffect).mock.calls.at(-1)![0]();
+  await Promise.resolve();
+  state.index = 0;
+
+  const first = useBodyAnalysis(core);
+
+  first.toggle(0);
+  vi.mocked(readBodyEvidence).mockResolvedValue(structuredClone(saved));
+  vi.mocked(useEffect).mock.calls.at(-1)![0]();
+  await Promise.resolve();
+  state.index = 0;
+  expect(useBodyAnalysis(core).parameters).toEqual([0]);
 });
 
 it('shows a source-check failure instead of leaving an unexplained disabled investigation', async () => {

@@ -5,6 +5,8 @@ import { workerClient } from '../utils/workerRpc';
 import type { BodyCalibration } from './bodyTypes';
 import type { measuredBodyAnalysis, BodyAnalysisMetrics } from './bodyAnalysisMetrics';
 import type { BodyAnalysisRequest } from './bodyAnalysisTypes';
+import type { BodyMotionRequest } from './bodyMotionTypes';
+import type { measuredBodyMotion } from './bodyMotionMetrics';
 
 export interface BodyFitRequest {
   model: SimModel;
@@ -16,13 +18,16 @@ type BodyHandlers = {
   readRecording: (request: BodyRecordingRequest) => Promise<{ result: RobotRun | null }>;
   analyze: (request: BodyAnalysisRequest) => Promise<{ result: Awaited<ReturnType<typeof measuredBodyAnalysis>> }>;
   fit: (request: BodyFitRequest) => Promise<{ result: BodyCalibration }>;
+  recommend: (request: BodyMotionRequest) => Promise<{ result: Awaited<ReturnType<typeof measuredBodyMotion>> }>;
 };
 
 let latest: BodyAnalysisMetrics | null = null;
 let cancellationMs = 0;
 let submissionMs = 0;
+let motion: Awaited<ReturnType<typeof measuredBodyMotion>>['metrics'] | null = null;
+let stopMotion: (() => void) | null = null;
 
-export const bodyAnalysisMetrics = () => ({ analysis: latest, cancellationMs, submissionMs });
+export const bodyAnalysisMetrics = () => ({ analysis: latest, motion, cancellationMs, submissionMs });
 
 export function bodyClient() {
   const client = workerClient<BodyHandlers>(
@@ -46,9 +51,23 @@ export function bodyClient() {
 
           return { result: await measuredBodyAnalysis(request) };
         },
+        recommend: async (request) => {
+          const { measuredBodyMotion } = await import('./bodyMotionMetrics');
+
+          return { result: await measuredBodyMotion(request) };
+        },
       };
     },
   );
+
+  const dispose = () => {
+    const started = performance.now();
+
+    client.dispose();
+    cancellationMs = performance.now() - started;
+
+    if (stopMotion === dispose) stopMotion = null;
+  };
 
   return {
     readRecording: (request: BodyRecordingRequest) => client.call('readRecording', request),
@@ -65,11 +84,25 @@ export function bodyClient() {
       return outcome;
     },
     fit: (request: BodyFitRequest) => client.call('fit', request),
-    dispose: () => {
-      const started = performance.now();
+    recommend: async (request: BodyMotionRequest) => {
+      stopMotion?.();
+      stopMotion = dispose;
 
-      client.dispose();
-      cancellationMs = performance.now() - started;
+      const started = performance.now();
+      const pending = client.call('recommend', request);
+
+      submissionMs = performance.now() - started;
+
+      try {
+        const result = await pending;
+
+        motion = result.metrics;
+
+        return result.outcome;
+      } finally {
+        if (stopMotion === dispose) stopMotion = null;
+      }
     },
+    dispose,
   };
 }

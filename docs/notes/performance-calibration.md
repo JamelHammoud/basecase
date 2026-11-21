@@ -68,3 +68,35 @@ The ten-scenario Node production-pipeline measurement used 100 replays in total.
 | unchanged control | 7 | 157.782 |
 
 No additional workflow wait, retry, gate or deadline increase is introduced. Local measurements are not Linux or Windows CI observations and establish no physical diagnostic accuracy.
+
+## Bounded motion selection
+
+The search has at most 6 two-second plans, 65 status frames per plan and one shared 1,000,000-step budget. Probes include every active body parameter, including nuisance parameters. The selected nominal pose replay shares that same counter. Candidate declarations, poses and geometry stay within the existing 8 MiB snapshot limit and 32-reference index. Geometry has an additional 32,768-vertex limit. One selection worker is admitted per renderer. Each open preview has one isolated graphics worker, one frame in flight and one latest requested frame index.
+
+Replay groups plans by physical fit and resets one engine between plans. It retains no engine pool. The initial candidate-by-candidate implementation compiled 42 models for a 6-plan, 3-parameter arm library. Grouped probe replay compiles 6 probe models and one selected nominal model. Removing unused candidate nominal replays lowers that arm's physics work from 43,000 to 37,000 steps at the retained 0.002-second timestep. These are operation counts. They do not establish a wall-time speedup.
+
+### Worker and interaction measurements
+
+The native pipeline test records selection time, actual steps, WASM capacity, sampled worker heap plus external bytes, synchronous submission and cancellation acknowledgement in `scratch/body-motion-worker-measurements.json`. Memory is sampled after completed operations. It is neither process RSS nor a continuous peak-allocation measurement. Cancellation acknowledgement includes the native thread's termination response after a warmed request was submitted, without locating the exact stopped physics step. The numerical cancellation test separately checks interruption during replay.
+
+On macOS arm64 with Node 26.13.0, the native worker observation measured 344.206 ms for selection and 37,000 steps. WASM capacity was 17,629,184 bytes. Sampled worker heap plus external bytes reached 28,776,453 bytes with one active worker. Synchronous submission took 0.101 ms. The termination call returned in 0.127 ms and native termination acknowledgement arrived in 4.377 ms. The retained preview encoded to 52,815 bytes. These single observations do not establish latency distributions.
+
+The article capture records browser worker and interaction observations in `scratch/body-motion-browser-measurements.json`. On macOS arm64 with Node 26.13.0 and the local Vite dev server, one offscreen capture measured 364.025 ms for selection and 37,000 physics steps. WASM capacity was 17,629,184 bytes. Physics submission took 0.140 ms, graphics submission 0.305 ms and the maximum observed bitmap-paint callback 0.145 ms across 2 frames. The observed workflow had no long tasks and sent zero robot commands. This is one development-server observation, not a production latency distribution or a Linux or Windows CI result.
+
+An earlier main-canvas preview capture observed long tasks of 1,036 ms and 742 ms across the same entry workflow. The current UI paints transferred bitmaps. Geometry preparation, WebGL setup and drawing happen in the existing offscreen camera stage. No main-thread rendering fallback, continuous rendering loop, wait, retry or deadline increase was added. The observations differ in implementation and host load, so they are not a controlled rate comparison. Two later setup attempts hit the existing navigation deadline before feature entry. Their evidence belongs to [testing notes](testing-robot-runtime.md#bounded-motion-selection).
+
+### Independent prediction comparison
+
+The generated witness compares two explicit explanations, including the planted one. It selects a different explanation only when its residual advantage exceeds the declared 0.0015 rad noise. It then evaluates on a separate 3.6-second command trajectory. This is a software discrimination test, not a fitted physical twin. Source, fixed and selected experiment durations are each 2 seconds. Fixed and selected motions obey the same range, speed, effort and work limits.
+
+The selected motion ties the compatible fixed shoulder hold in all three planted cases. For the 1.1 mass-scale case, both distinguish the alternatives where the stationary source does not. The original recording already distinguishes the larger combined mass and payload changes. The minimum profiled original-weak-direction response rises from approximately 2.65e-11 to 226.18 assumed-noise units for both motions. That local information response alone does not establish identification accuracy. The independent held-out replays supply the separate prediction-error check. Complete residuals, selected alternatives, bounds and scores are in `scratch/body-motion-validation-*.json`.
+
+| Planted forearm mass scale | Terminal payload, kg | Original held-out RMS error, rad | Fixed held-out RMS error, rad | Selected held-out RMS error, rad |
+| --- | ---: | ---: | ---: | ---: |
+| 1.1 | 0 | 0.02579144 | 0 | 0 |
+| 1.25 | 0.05 | 0 | 0 | 0 |
+| 1.4 | 0.1 | 0 | 0 | 0 |
+
+Zero means the planted explanation was chosen from the two declared alternatives and replayed exactly. It does not establish zero error for an estimated model or noisy physical measurements. The selector improves this witness only in the first case. The other two cases are unchanged.
+
+The selector spends simulation work to evaluate the library. It has not demonstrated less physical motion or better accuracy than this fixed baseline. The 18-second servo bench targets servo calibration and is incompatible with this two-second body-information comparison, so no bench speedup is claimed. No real robot, sensor noise distribution or physical transfer result is measured here.

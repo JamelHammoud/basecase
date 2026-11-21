@@ -24,6 +24,7 @@ covers:
   - src/reality/measuredJoints.ts
   - src/reality/bodyAnalysis.ts
   - src/reality/bodySensitivity.ts
+  - src/reality/bodyMotion.ts
 ---
 
 Run the robot in your scene under MuJoCo physics to find out whether it stands, walks and holds its weight before you print a part.
@@ -78,6 +79,8 @@ The newest active body version supplies the scene's floor friction, shared by ev
 You can [inspect body parameters in a saved try](/help/inspect-body-parameters) without changing calibration, policy, scene geometry or the Checks verdict. The analysis compares local changes in mass, payload and floor friction under the try's retained model.
 
 **Distinguishable** means a parameter produces a separate local response above the method's threshold. **Coupled** means different parameter changes can explain similar motion. **Poor excitation** means the response is too small under the assumed noise.
+
+For unresolved parameters, [preview a motion](/help/preview-a-motion-for-unresolved-body-parameters) to check a short simulated candidate against the original observations. Saved predictions reopen without moving the robot or rerunning the search.
 
 A wrist's mass and payload can produce similar motion, leaving little evidence to choose between them. A residual mismatch remains unresolved. These results don't identify a unique physical cause or assign probabilities.
 

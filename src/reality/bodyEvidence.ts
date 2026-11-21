@@ -4,6 +4,8 @@ import { encodeJson, decodeJson } from '../datasets/snapshotWorker';
 import { datasetContentHash } from '../datasets/contentHash';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { BodyAnalysisRequest, BodyAnalysisResult } from './bodyAnalysisTypes';
+import type { BodyMotionOutcome } from './bodyMotionTypes';
+import { safeBodyMotion } from './bodyMotionEvidence';
 
 export const BODY_EVIDENCE_BYTES = 8_388_608;
 export const BODY_EVIDENCE_COUNT = 32;
@@ -14,6 +16,7 @@ export interface BodyEvidenceSnapshot {
   calibration: unknown;
   result?: BodyAnalysisResult;
   sessionHash?: string;
+  motion?: BodyMotionOutcome;
 }
 
 export interface BodyEvidenceRef {
@@ -77,9 +80,13 @@ export async function readBodyEvidence(ref: BodyEvidenceRef, ports = defaults): 
 
   if (!bytes || bytes.byteLength > BODY_EVIDENCE_BYTES) return null;
 
-  const value = (await ports.decode(bytes)) as BodyEvidenceSnapshot | null;
+  try {
+    const value = (await ports.decode(bytes)) as BodyEvidenceSnapshot | null;
 
-  return matchesBodyReference(value, ref) ? value : null;
+    return matchesBodyReference(value, ref) ? value : null;
+  } catch {
+    return null;
+  }
 }
 
 function matchesBodyReference(value: BodyEvidenceSnapshot | null, ref: BodyEvidenceRef): boolean {
@@ -97,7 +104,8 @@ function matchesBodyReference(value: BodyEvidenceSnapshot | null, ref: BodyEvide
     Array.isArray(ref.joints) &&
     run.joints.join('\0') === ref.joints.join('\0') &&
     value.sourceKey === ref.sourceKey &&
-    safeBodyResult(value.result, source)
+    safeBodyResult(value.result, source) &&
+    safeBodyMotion(value)
   );
 }
 

@@ -39,11 +39,7 @@ async function importPlate() {
   });
   await app.page.keyboard.press('ControlOrMeta+k');
   await app.page.keyboard.type('Import');
-  await app.page
-    .locator(shown('button[data-idx]'))
-    .filter({ hasText: 'Import' })
-    .filter({ hasNotText: 'Robot' })
-    .click();
+  await app.page.getByRole('button', { name: 'Import', exact: true }).click();
   await expect.poll(async () => (await supportParts(app.page)).length).toBe(1);
 
   const source = (await supportParts(app.page))[0];

@@ -12,6 +12,6 @@ A wrist's mass and payload can produce similar motion. You might improve the fit
 
 In the results, you can distinguish small responses, coupled directions and residual mismatch under explicit noise assumptions. The method analyzes up to 256 status samples and retains its model, calibration, parameter bounds and interval. After source edits, the analysis no longer applies. Basecase preserves the historical evidence.
 
-You can run the analysis without sending robot commands or changing calibration or a Checks verdict. You cannot use this replay path with velocity-driven wheel commands. We use generated recordings to test the software's behavior. These tests do not establish physical diagnostic accuracy.
+You can run the analysis without sending robot commands or changing calibration or a Checks verdict. You can’t use this replay path with velocity-driven wheel commands. We use generated recordings to test the software's behavior. These tests don’t establish physical diagnostic accuracy.
 
 Steps are in [Inspect body parameters in a saved try](/help/inspect-body-parameters).

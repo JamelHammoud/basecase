@@ -1,10 +1,10 @@
 import { bodyClient, bodyAnalysisMetrics } from '../../../reality/bodyClient';
 import { rememberBodyEvidence, type BodyEvidenceSnapshot } from '../../../reality/bodyEvidence';
 import type { RobotRun } from '../../../robot/runBuffer';
+import type { SimModel } from '../../../sim/mjcfTypes';
 import { bodyRecordingContext, retainBodyRecording } from '../../../reality/bodyRecordingEvidence';
 import { withBodyEvidence } from '../../../reality/bodyEvidence';
 import { selectedUnit } from '../../../robot/robotStore';
-import { unitHistories } from '../../../reality/projectCalibrations';
 import { keepSession } from '../../../cases/tryStore';
 import type { StoredTry } from '../../../cases/tryFile';
 import type { Studio } from '../types';
@@ -12,14 +12,20 @@ import type { Studio } from '../types';
 export default function bodyAnalysisStudio(studio: Studio) {
   return {
     bodyAnalysisMetrics,
-    seedBodyEvidence: async ({ run, id, analyzed = false }: { run: RobotRun; id: string; analyzed?: boolean }) => {
+    seedBodyEvidence: async ({
+      run,
+      model,
+      id,
+      analyzed = false,
+    }: {
+      run: RobotRun;
+      model: SimModel;
+      id: string;
+      analyzed?: boolean;
+    }) => {
       const { core } = studio();
       const project = core.docs.projectRef.current;
       const unit = selectedUnit();
-      const model = await core.simTraining.sim.buildModel({
-        withoutBody: true,
-        calibrations: unitHistories(project, unit),
-      });
       const context = await bodyRecordingContext({
         model,
         project,

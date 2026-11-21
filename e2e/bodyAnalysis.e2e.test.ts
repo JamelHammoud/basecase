@@ -10,7 +10,7 @@ interface Studio {
   load: (scene: unknown) => void;
   attachRobot: (link: unknown) => void;
   bodyModel: () => Promise<SimModel>;
-  seedBodyEvidence: (input: { run: RobotRun; id: string; analyzed?: boolean }) => Promise<void>;
+  seedBodyEvidence: (input: { run: RobotRun; model: SimModel; id: string; analyzed?: boolean }) => Promise<void>;
   bodyCalibrations: () => unknown;
   bodyChecks: () => Promise<unknown>;
   sceneRecord: () => { parts: unknown[]; project: Record<string, unknown> };
@@ -47,12 +47,15 @@ beforeAll(async () => {
   const model = await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.bodyModel());
   const run = recordedBodyRun(await loadMujoco(), model);
 
-  await app.page.evaluate(async (run) => {
-    const studio = (window as unknown as { __studio: Studio }).__studio;
+  await app.page.evaluate(
+    async ({ run, model }) => {
+      const studio = (window as unknown as { __studio: Studio }).__studio;
 
-    await studio.seedBodyEvidence({ run, id: 'body-analysis-history', analyzed: true });
-    await studio.seedBodyEvidence({ run, id: 'body-analysis-arm' });
-  }, run);
+      await studio.seedBodyEvidence({ run, model, id: 'body-analysis-history', analyzed: true });
+      await studio.seedBodyEvidence({ run, model, id: 'body-analysis-arm' });
+    },
+    { run, model },
+  );
   baseline = await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.sceneRecord());
 }, 120000);
 

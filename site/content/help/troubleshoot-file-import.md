@@ -43,7 +43,9 @@ The converter gives up on a file after 2.5 minutes, and a detailed assembly can 
 
 ## “Couldn’t import” after picking a mesh
 
-Either Basecase doesn't read the file's format, or the file is damaged.
+The toast includes the reader's error. Model parts have no captured-world byte or triangle limit. For OBJ files, include any MTL files. For glTF files, include separate BIN buffers.
+
+If the format isn't supported or the file is damaged, try these steps.
 
 1. Make sure the file name ends in `.stl`, `.3mf`, `.obj`, `.ply`, `.fbx`, `.glb`, `.gltf` or `.dae`.
 2. Open the file in the app it came from and export it again as STL or 3MF.

@@ -5,15 +5,27 @@ import { fileSize } from '../../electron/fileSize.mjs';
 import type { DroppedFolder } from './droppedFolders';
 import { importKindOf } from './importRoute';
 
-const WORLD_MESH = /\.(?:glb|gltf|obj|spz|ply)$/i;
+const WORLD_SPLAT = /\.spz$/i;
 const OTHER_FLOWS = new Set(['robot', 'scene', 'data', 'motion', 'svg']);
 
-export function splitWorldDrop(files: File[]) {
+async function gaussianSplat(file: File) {
+  if (WORLD_SPLAT.test(file.name)) return true;
+
+  if (!/\.ply$/i.test(file.name)) return false;
+
+  const header = await file.slice(0, 65536).text();
+
+  return /^property\s+\w+\s+(?:f_dc_0|scale_0|rot_0)\s*$/m.test(header.split('end_header', 1)[0]);
+}
+
+export async function splitWorldDrop(files: File[]) {
   const otherFlow = files.some((file) => OTHER_FLOWS.has(importKindOf(file.name, { cad: true }) ?? ''));
 
   if (otherFlow) return { worlds: [], remaining: files, worldFolders: false };
 
-  if (files.some((file) => WORLD_MESH.test(file.name))) return { worlds: [files], remaining: [], worldFolders: true };
+  const splats = await Promise.all(files.map(gaussianSplat));
+
+  if (splats.some(Boolean)) return { worlds: [files], remaining: [], worldFolders: true };
 
   const rooms = files.filter((file) => /\.json$/i.test(file.name));
 

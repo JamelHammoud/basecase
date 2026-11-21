@@ -16,22 +16,53 @@ pub struct Robot {
     pub count: usize,
 }
 
+#[derive(Default)]
+struct StartOptions {
+    interface: bool,
+    pairing: Option<Value>,
+}
+
 impl Robot {
     pub fn start(family: &str, count: usize, class: &str) -> Self {
-        Self::start_network(family, count, class, false)
+        Self::start_network(family, count, class, StartOptions::default())
     }
 
     pub fn start_on_interface(family: &str, count: usize, class: &str) -> Self {
-        Self::start_network(family, count, class, true)
+        Self::start_network(
+            family,
+            count,
+            class,
+            StartOptions {
+                interface: true,
+                pairing: None,
+            },
+        )
     }
 
-    fn start_network(family: &str, count: usize, class: &str, interface: bool) -> Self {
+    pub fn start_with_pairing(family: &str, count: usize, class: &str, pairing: Value) -> Self {
+        Self::start_network(
+            family,
+            count,
+            class,
+            StartOptions {
+                interface: false,
+                pairing: Some(pairing),
+            },
+        )
+    }
+
+    fn start_network(family: &str, count: usize, class: &str, options: StartOptions) -> Self {
         let directory = std::env::temp_dir().join(format!(
             "robot-network-{}-{}",
             std::process::id(),
             robot_daemon::network::random_hex().unwrap()
         ));
         std::fs::create_dir_all(&directory).unwrap();
+
+        if let Some(pairing) = options.pairing {
+            std::fs::write(directory.join("pairing.json"), pairing.to_string()).unwrap();
+        }
+
         let ids: Vec<usize> = if family == "unitree-g1" {
             (13..=29).collect()
         } else {
@@ -53,7 +84,7 @@ impl Robot {
             directory.display().to_string(),
         ];
 
-        args.extend(match interface {
+        args.extend(match options.interface {
             true => vec![
                 "--listen-interface".into(),
                 robot_daemon::network::interfaces::interface_for("127.0.0.1").unwrap(),

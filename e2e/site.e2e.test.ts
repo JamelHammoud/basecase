@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { globalHeaders, headerProblems } from '../tools/site/headers.mjs';
 
 const TYPES: Record<string, string> = {
   '.html': 'text/html',
@@ -23,6 +24,7 @@ let outDir: string;
 let server: Server;
 let browser: Browser;
 let base: string;
+let hostingHeaders: Record<string, string>;
 
 const isFile = (file: string) => statSync(file, { throwIfNoEntry: false })?.isFile() ?? false;
 
@@ -44,7 +46,10 @@ const serveLikeWorkers = () =>
       return;
     }
 
-    response.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] ?? 'application/octet-stream' });
+    response.writeHead(200, {
+      ...hostingHeaders,
+      'Content-Type': TYPES[path.extname(file)] ?? 'application/octet-stream',
+    });
     response.end(readFileSync(file));
   });
 
@@ -76,6 +81,11 @@ const fontWeight = (page: Page, selector: string) =>
 beforeAll(async () => {
   outDir = mkdtempSync(path.join(tmpdir(), 'basecase-site-'));
   await build({ configFile: 'site/vite.config.ts', logLevel: 'silent', build: { outDir } });
+
+  const headers = readFileSync(path.join(outDir, '_headers'), 'utf8');
+
+  expect(headerProblems(headers, { full: true })).toEqual([]);
+  hostingHeaders = globalHeaders(headers);
   server = serveLikeWorkers();
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -86,6 +96,45 @@ afterAll(async () => {
   await browser?.close();
   server?.close();
   rmSync(outDir, { recursive: true, force: true });
+});
+
+it('enforces the built CSP against injected scripts, objects, base URLs and framing', async () => {
+  const { page } = await open('/');
+  const violations = await page.evaluateHandle(() => {
+    const blocked: string[] = [];
+
+    document.addEventListener('securitypolicyviolation', (event) => {
+      blocked.push(event.effectiveDirective);
+    });
+
+    const script = document.createElement('script');
+    const baseElement = document.createElement('base');
+    const object = document.createElement('object');
+
+    script.textContent = 'document.documentElement.dataset.injected = "yes"';
+    baseElement.href = 'https://example.com/';
+    object.data = '/favicon.svg';
+    document.head.append(script, baseElement);
+    document.body.append(object);
+
+    return blocked;
+  });
+
+  await expect
+    .poll(async () => (await violations.jsonValue()).sort())
+    .toEqual(['base-uri', 'object-src', 'script-src-elem']);
+  await violations.dispose();
+  expect(await page.locator('html').getAttribute('data-injected')).toBeNull();
+  expect(await page.evaluate(() => document.baseURI)).toBe(`${base}/`);
+
+  const framePage = await browser.newPage();
+  const errors: string[] = [];
+
+  framePage.on('console', (message) => errors.push(message.text()));
+  await framePage.setContent(`<iframe src="${base}/help"></iframe>`);
+  await expect.poll(() => errors.some((message) => message.includes('frame-ancestors'))).toBe(true);
+  await framePage.close();
+  await page.close();
 });
 
 describe('basecase.so', () => {

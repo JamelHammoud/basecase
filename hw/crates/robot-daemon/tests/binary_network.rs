@@ -251,3 +251,50 @@ fn preauthentication_drip_feed_has_an_absolute_five_second_deadline() {
     let key = robot.pair();
     let _connection = robot.connect(key);
 }
+
+#[test]
+fn five_bad_codes_limit_only_pairing_and_cannot_replace_saved_credentials() {
+    let robot = Robot::start("feetech", 2, "arm");
+
+    for _ in 0..5 {
+        assert!(pair_client::pair(robot.address, "654321").is_err());
+    }
+
+    assert!(pair_client::pair(robot.address, "123456").is_err());
+    let persisted: Value =
+        serde_json::from_slice(&std::fs::read(robot.directory.join("pairing.json")).unwrap()).unwrap();
+    assert_eq!(persisted["failures"], 5);
+    assert_eq!(persisted["code"], "123456");
+    let mut connection = robot.connect(robot.key());
+    assert_eq!(connection.event()["mode"], "look");
+}
+
+#[test]
+fn spent_and_expired_pairing_codes_require_the_fresh_robot_code_over_tcp() {
+    use std::time::SystemTime;
+    let future = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+        + 600;
+
+    for (failures, expires_at, refused_code) in [(9, future, "654321"), (0, 1, "123456")] {
+        let robot = Robot::start_with_pairing(
+            "feetech",
+            2,
+            "arm",
+            json!({
+                "key": "ab".repeat(32), "code": "123456", "failures": failures, "expires_at": expires_at
+            }),
+        );
+        assert!(pair_client::pair(robot.address, refused_code).is_err());
+        let persisted: Value =
+            serde_json::from_slice(&std::fs::read(robot.directory.join("pairing.json")).unwrap()).unwrap();
+        let fresh = persisted["code"].as_str().unwrap();
+        assert_ne!(fresh, "123456");
+        assert!(pair_client::pair(robot.address, "123456").is_err());
+        assert_eq!(pair_client::pair(robot.address, fresh).unwrap(), "ab".repeat(32));
+        let mut connection = robot.connect(robot.key());
+        assert_eq!(connection.event()["mode"], "look");
+    }
+}

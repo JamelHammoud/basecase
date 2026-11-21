@@ -44,6 +44,8 @@ A search that names a category, like `mug`, opens that category in Parts with yo
 
 A toast appears while the object downloads and converts. It closes when the object lands on the canvas, selected.
 
+Downloads are limited to 200 MiB per file and 600 MiB per package. A file larger than its listed size stops insertion before that file is saved.
+
 To browse instead of search, click a category under **Objects** in Parts, such as **Kitchen** or **Boxes and bins**.
 
 ![Parts scrolled to its Objects section, listing Kitchen, Food, Boxes and bins and the other categories](/help/add-objects-to-the-scene/objects.png)

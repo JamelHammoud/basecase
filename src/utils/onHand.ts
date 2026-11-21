@@ -1,5 +1,6 @@
 import type { PurchasingEvidence } from '../types/purchasing';
 import type { PurchaseRecord, StoredPurchase } from '../types/robotics';
+import { allocatedCount } from '../../electron/backend/buildAllocations.mjs';
 
 export const MAX_ON_HAND = 100_000;
 
@@ -16,7 +17,8 @@ export interface OnHandCount {
 export const checkedPrice = (stored: StoredPurchase | undefined): PurchaseRecord | undefined =>
   stored && 'priceUsd' in stored ? stored : undefined;
 
-export const onHandOf = (stored: StoredPurchase | undefined): number => stored?.onHand ?? 0;
+export const onHandOf = (stored: StoredPurchase | undefined): number =>
+  Math.max(0, (stored?.onHand ?? 0) - allocatedCount(stored));
 
 export function ownedSplit(qty: number, onHand: number): OwnedSplit {
   const owned = Math.min(qty, Math.max(0, onHand));
@@ -43,7 +45,7 @@ export function withOnHand(stored: StoredPurchase | undefined, count: number): S
 }
 
 export function withPrice(stored: StoredPurchase | undefined, record: PurchaseRecord | null): StoredPurchase | null {
-  const onHand = onHandOf(stored) || undefined;
+  const onHand = stored?.onHand || undefined;
 
   if (record) return { ...purchasingEvidence(stored), ...record, onHand };
 

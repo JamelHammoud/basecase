@@ -22,6 +22,130 @@ afterEach(() => {
   folders.splice(0).forEach((dir) => fs.rmSync(dir, { recursive: true, force: true }));
 });
 
+describe('SimReady download boundaries', () => {
+  it.each(['https://other.example/next', 'http://huggingface.co/next', 'not a URL'])(
+    'refuses pagination outside the Hugging Face origin: %s',
+    async (next) => {
+      const fetcher = vi.fn(async () =>
+        Response.json([{ type: 'file', path: asset.rootPath, size: 2 }], {
+          headers: { link: `<${next}>; rel="next"` },
+        }),
+      );
+
+      vi.stubGlobal('fetch', fetcher);
+      await expect(downloadAsset(asset, temporaryFolder(), vi.fn())).rejects.toThrow('couldn’t finish');
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('follows pagination on the Hugging Face origin', async () => {
+    const next = 'https://huggingface.co/api/next';
+    const fetcher = vi.fn(async (url) => {
+      if (url === next) return Response.json([{ type: 'file', path: asset.rootPath, size: 2 }]);
+
+      if (url.includes('/tree/')) return Response.json([], { headers: { link: `<${next}>; rel="next"` } });
+
+      return new Response('ok');
+    });
+
+    vi.stubGlobal('fetch', fetcher);
+    await downloadAsset(asset, temporaryFolder(), vi.fn());
+    expect(fetcher.mock.calls.map(([url]) => url)).toContain(next);
+  });
+
+  it.each([false, true])('refuses listing redirects before leaving the origin, paginated: %s', async (paginated) => {
+    const dir = temporaryFolder();
+    const next = 'https://huggingface.co/api/next';
+    const fetcher = vi.fn(async (url) => {
+      if (paginated && url !== next) {
+        return Response.json([], { headers: { link: `<${next}>; rel="next"` } });
+      }
+
+      return Response.redirect('https://other.example/listing');
+    });
+
+    vi.stubGlobal('fetch', fetcher);
+    await expect(downloadAsset(asset, dir, vi.fn())).rejects.toThrow('couldn’t finish');
+    expect(fetcher).toHaveBeenCalledTimes(paginated ? 2 : 1);
+
+    for (const [, options] of fetcher.mock.calls) expect(options).toEqual({ redirect: 'manual' });
+
+    expect(fs.readdirSync(dir)).toEqual([]);
+  });
+
+  it.each([
+    null,
+    {},
+    { path: 12, size: 1 },
+    { path: asset.rootPath },
+    { path: asset.rootPath, size: -1 },
+    { path: asset.rootPath, size: '2' },
+    { path: asset.rootPath, size: null },
+  ])('refuses malformed listing entries: %j', async (entry) => {
+    const fetcher = vi.fn(async () => Response.json([entry && { type: 'file', ...entry }]));
+
+    vi.stubGlobal('fetch', fetcher);
+    await expect(downloadAsset(asset, temporaryFolder(), vi.fn())).rejects.toThrow('couldn’t finish');
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['../escape.usd', 'Pack/../../escape.usd'])('refuses escaped file paths: %s', async (file) => {
+    const fetcher = vi.fn(async () => Response.json([{ type: 'file', path: file, size: 1 }]));
+
+    vi.stubGlobal('fetch', fetcher);
+    await expect(downloadAsset({ ...asset, rootPath: file }, temporaryFolder(), vi.fn())).rejects.toThrow(
+      'outside its folder',
+    );
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([false, true])('refuses understated response bytes before writing, content-length: %s', async (declared) => {
+    const dir = temporaryFolder();
+
+    vi.stubGlobal('fetch', async (url) => {
+      if (url.includes('/tree/')) return Response.json([{ type: 'file', path: asset.rootPath, size: 1 }]);
+
+      return new Response('too big', { headers: declared ? { 'content-length': '7' } : {} });
+    });
+    await expect(downloadAsset(asset, dir, vi.fn())).rejects.toThrow('larger than');
+    expect(fs.readdirSync(dir)).toEqual([]);
+  });
+
+  it('stops an oversized streamed file and cancels its body without writing', async () => {
+    const dir = temporaryFolder();
+    const chunk = new Uint8Array(8 * 1024 * 1024);
+    const cancel = vi.fn();
+    let pulls = 0;
+
+    vi.stubGlobal('fetch', async (url) => {
+      if (url.includes('/tree/')) {
+        return Response.json([{ type: 'file', path: asset.rootPath, size: 200 * 1024 * 1024 }]);
+      }
+
+      return new Response(
+        new ReadableStream({
+          pull(controller) {
+            pulls++;
+
+            if (pulls > 27) {
+              controller.close();
+
+              return;
+            }
+
+            controller.enqueue(chunk);
+          },
+          cancel,
+        }),
+      );
+    });
+    await expect(downloadAsset(asset, dir, vi.fn())).rejects.toThrow('larger than');
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(pulls).toBeLessThanOrEqual(27);
+    expect(fs.readdirSync(dir)).toEqual([]);
+  });
+});
+
 describe('SimReady file batches', () => {
   it('downloads each uncached file once with six active requests and complete progress', async () => {
     const dir = temporaryFolder();
@@ -76,7 +200,13 @@ describe('SimReady file batches', () => {
 
   it.each([
     [[{ path: 'Pack/other.usd', size: 1 }], 'main file is missing'],
-    [Array.from({ length: 4 }, () => ({ path: asset.rootPath, size: 200 * 1024 * 1024 })), 'larger than'],
+    [
+      Array.from({ length: 4 }, (_, i) => ({
+        path: i ? `Pack/${i}.usd` : asset.rootPath,
+        size: 200 * 1024 * 1024,
+      })),
+      'larger than',
+    ],
   ])('refuses an unusable listing before starting downloads', async (files, message) => {
     const fetcher = vi.fn(async () => Response.json(files.map((file) => ({ ...file, type: 'file' }))));
 

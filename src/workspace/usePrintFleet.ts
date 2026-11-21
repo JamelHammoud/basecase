@@ -10,8 +10,15 @@ import { shapeKey } from '../print/shapeKey';
 import type { ShowToast } from './types';
 import type { PrintJob } from './usePrintJob';
 import { reportsStatus, usePrintStatus } from './usePrintStatus';
+import { allocatePurchase } from '../components/build/usePurchases';
+import { productionCopySources } from '../kit/frozenClient';
+import type { Viewport3DHandle } from '../three/viewport/types';
+import { retainedPrintRecord } from '../../electron/backend/printAllocations.mjs';
 
 interface FleetOptions {
+  sceneId?: string;
+  labels: string;
+  viewport: () => Viewport3DHandle | null;
   printer: PrinterSetup;
   process?: string;
   printers: MyPrinter[];
@@ -26,6 +33,14 @@ interface FleetOptions {
   showToast: ShowToast;
 }
 
+async function capturedMeshes(plate: Plate, viewport: FleetOptions['viewport']) {
+  const meshes = await viewport()?.printMeshes([...new Set(plate.items.map((item) => item.id))]);
+
+  if (!meshes) throw new Error('The print geometry is missing.');
+
+  return meshes;
+}
+
 export function amsFor(plate: Plate, status: PrinterStatus | null) {
   const tray = status?.trays?.find((t) => t.type.toUpperCase().startsWith(plate.material));
 
@@ -34,10 +49,42 @@ export function amsFor(plate: Plate, status: PrinterStatus | null) {
   return { useAms: true, amsMapping: [tray.slot] };
 }
 
+export async function retainSentPrint(
+  plate: Plate,
+  target: Pick<PrinterSetup, 'label'>,
+  options: Pick<FleetOptions, 'recording' | 'parts' | 'labels' | 'viewport' | 'setRecords' | 'sceneId'>,
+) {
+  if (!options.recording) return;
+
+  const record = printRecordFor(plate, {
+    parts: options.parts,
+    keyOf: shapeKey,
+    printer: target.label,
+    now: new Date(),
+    labels: options.labels,
+    sceneId: options.sceneId,
+    origin: 'sent',
+    sourceKeys: await productionCopySources({
+      parts: options.parts,
+      meshes: await capturedMeshes(plate, options.viewport),
+    }),
+  });
+
+  const saved = await allocatePurchase({ kind: 'print', record });
+
+  options.setRecords((prev) => withRecord(prev, retainedPrintRecord(saved, record)));
+}
+
 export function usePrintFleet(options: FleetOptions) {
   const { printer, printers, records, setRecords, job, showToast } = options;
   const [sending, setSending] = useState<number | null>(null);
-  const statuses = usePrintStatus({ printers, records, setRecords, active: options.active || sending !== null });
+  const statuses = usePrintStatus({
+    printers,
+    records,
+    setRecords,
+    active: options.active || sending !== null,
+    onError: (error) => showToast(errorMessage(error), { tone: 'error' }),
+  });
   const statusOf = (setup: PrinterSetup) => (setup.mine ? (statuses[setup.mine.id] ?? null) : null);
   const fleet: FleetPrinter[] = printers
     .filter(reportsStatus)
@@ -67,14 +114,8 @@ export function usePrintFleet(options: FleetOptions) {
         printerId: target.mine.id,
         ...amsFor(plate, statusOf(target)),
       });
-      const record = printRecordFor(plate, {
-        parts: options.parts,
-        keyOf: shapeKey,
-        printer: target.label,
-        now: new Date(),
-      });
 
-      if (options.recording) setRecords((prev) => withRecord(prev, record));
+      await retainSentPrint(plate, target, options);
 
       showToast(sent.started ? `Sent plate ${plate.number} to ${target.label}` : sent.message);
     } catch (e) {

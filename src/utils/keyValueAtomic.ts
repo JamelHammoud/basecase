@@ -10,7 +10,11 @@ export type AtomicUpdate<T> = <R>(
   signal?: AbortSignal,
 ) => Promise<R>;
 
-export function keyValueAtomic<T>(open: () => Promise<IDBDatabase> | null, store: string): AtomicUpdate<T> {
+export function keyValueAtomic<T>(
+  open: () => Promise<IDBDatabase> | null,
+  store: string,
+  options: { close?: boolean } = {},
+): AtomicUpdate<T> {
   return async (keys, change, signal) => {
     signal?.throwIfAborted();
 
@@ -18,8 +22,11 @@ export function keyValueAtomic<T>(open: () => Promise<IDBDatabase> | null, store
 
     if (!db) throw new Error('Build storage is unavailable.');
 
+    const close = () => options.close !== false && db.close();
+
     if (signal?.aborted) {
-      db.close();
+      close();
+
       signal.throwIfAborted();
     }
 
@@ -53,12 +60,16 @@ export function keyValueAtomic<T>(open: () => Promise<IDBDatabase> | null, store
 
       transaction.oncomplete = () => {
         signal?.removeEventListener('abort', cancel);
-        db.close();
+
+        close();
+
         resolve(result);
       };
       transaction.onabort = () => {
         signal?.removeEventListener('abort', cancel);
-        db.close();
+
+        close();
+
         reject(failure ?? transaction.error);
       };
 

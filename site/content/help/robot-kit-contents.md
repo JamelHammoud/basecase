@@ -20,7 +20,7 @@ The files in a manufacturing kit archive connect assembly demand, remaining purc
 | `servos.csv` | Part identity, joint names, bus ID, family, catalog component and variant |
 | `joint_map.json` | The same joint-map entries used by Robot Package |
 | `plates/<material>.3mf` | Manufacturing geometry arranged on plates, one file per material |
-| `provenance.json` | Source parts, project, owned inventory, measurements, printer and plate plans, and design fingerprint |
+| `provenance.json` | Source parts, project, available inventory, measurements, printer and plate plans, and design fingerprint |
 | `sheets/<index>/<name>.dxf` | Each sheet part’s outline and holes in millimeters |
 | `drawings/drawings.pdf` | Dimensioned orthographic views with declared units and scale |
 | `drawings/*.svg` | Editable vector sheets from the same drawing preparation |
@@ -42,7 +42,7 @@ Packing counts every part the assembly needs, including owned parts. A module's 
 
 Each physical part appears at its first guide occurrence. Repeated modules retain their own identities and assembly references. Unassigned rows include consumables, equipment and extra quantities without a guide step.
 
-The manifest's `purchases` list keeps total demand, owned quantities and remaining purchases from the bill of materials. A printed service quote stays a purchase while the physical printed item is packed once.
+The manifest's `purchases` list keeps total demand, available owned quantities and remaining purchases from the bill of materials. A printed service quote stays a purchase while the physical printed item is packed once.
 
 ## Printed parts and servos
 
@@ -62,7 +62,7 @@ Native software validation establishes neither electrical performance nor physic
 
 ## Checks and limits
 
-Individual build names and completion records stay in the local app or browser profile. They aren’t included in this archive. [Resume a robot build](/help/resume-a-robot-build) covers those records.
+Individual build names and completion records stay in the local app or browser profile. They aren’t included in this archive. Local allocation ownership stays outside the archive too. [Resume a robot build](/help/resume-a-robot-build) covers those records.
 
 Checks retain their original measurement time and are recorded as current, stale or not run. Exporting neither changes readiness nor proves physical fit. Unproven steps remain marked, and the manifest records an assembly search that reached its time limit.
 

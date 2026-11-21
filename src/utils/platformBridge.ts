@@ -144,8 +144,16 @@ const libraryBridge = {
 
   listPurchases: (): Promise<Purchases> =>
     quietly(async () => (await electron()?.listPurchases()) ?? get('/purchases'), {}),
-  savePurchase: (key: string, record: StoredPurchase | null): Promise<Purchases> =>
-    electron()?.savePurchase({ key, record }) ?? post('/purchase-save', { key, record }),
+  savePurchase: (key: string, record: StoredPurchase | null, update: 'price' | 'stock' = 'price'): Promise<Purchases> =>
+    electron()?.savePurchase({ key, record, update }) ??
+    postOrThrow('/purchase-save', { key, record, update }, (body, response) =>
+      !response.ok || body.error ? String(body.error || 'Couldn’t save the purchase.') : null,
+    ),
+  allocatePurchase: (allocation: import('../kit/allocationTypes').AllocationRequest): Promise<Purchases> =>
+    electron()?.savePurchase({ allocation }) ??
+    postOrThrow('/purchase-save', { allocation }, (body, response) =>
+      !response.ok || body.error ? String(body.error || 'Couldn’t save the allocation.') : null,
+    ),
 
   listSourced: (): Promise<SourcedItem[]> =>
     quietly(async () => (await electron()?.listSourced()) ?? get('/sourced-parts'), []),

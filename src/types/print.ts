@@ -20,6 +20,14 @@ export interface PrintRecord {
   sentAt: string;
   state: 'sent' | 'printing' | 'printed' | 'failed' | 'cancelled' | 'reprint';
   note?: string;
+  copies?: Array<{ id: string; partId: string; index: number; key: string }>;
+  completion?: { enteredAt?: string; reportedAt?: string };
+  reconciledAt?: string;
+  sourceKeys?: Record<string, string>;
+  revision?: string;
+  sceneId?: string;
+  origin?: 'entered' | 'sent';
+  cycle?: string;
 }
 
 export interface PrintQuote {

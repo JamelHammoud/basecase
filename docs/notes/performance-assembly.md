@@ -123,3 +123,48 @@ Preparation starts when Make is clicked and ends when the committed build become
 The first whole-snapshot implementation retained 2,516,587 payload bytes for one build and 5,033,174 for twenty builds of the same source. The second UI preparation captured different Checks evidence, so there were two snapshots with duplicate geometry. That observation led to per-content assets for source parts, project, geometry, outputs and provenance, with small Kit-manifest roots retaining their own evidence. `buildRecords.test.ts` guards the same case by changing Checks while retaining identical dependency hashes, and verifies reference-aware deletion. Serialization and hashing stay in workers, progress changes read only their own build record. The composed adapter keeps the existing storage factory unchanged.
 
 The per-content implementation measured one preparation at 994 ms, one committed completion at 1.04 ms and reopening at 221.53 ms with the final composed adapter. One build retained 2,517,055 immutable payload bytes. Twenty retained 2,548,873 bytes across ten distinct assets, including the differing Checks snapshots. Their progress records occupied 4,185 JSON bytes and their shared index 5,505 bytes, for 2,558,563 total measured payload bytes. The browser reported no console or page errors. These single samples do not establish a timing distribution. The capture's server teardown reported that Vite remained open after its existing close deadline, although the capture passed. No timeout or retry was changed.
+
+## Atomic build groups
+
+The production `createMany` store operation validates one prepared Kit once for a group of one to twenty records. The existing worker client retains serialization, content hashing and integrity validation off the interaction thread. Group creation neither repeats geometry preparation per record nor changes the immutable asset representation.
+
+`kit/buildBatch.test.ts` measures operation counts with the production build-record store and its serialized memory storage fixture. Each of the ten generated designs creates one record and then twenty more from identical prepared content. An update spy requires two total storage transactions, one per group. The immutable asset byte count after twenty additional builds must equal the count after one. Record UUIDs, names and completion metadata remain independent. A rejected group leaves the existing index and immutable bytes unchanged.
+
+These are deterministic operation and retained-payload comparisons, not creation or reopening latency measurements. The fixture does not measure IndexedDB disk usage, transaction timing, worker transport, renderer responsiveness or metadata at the full one-hundred-build limit. This fixture does not measure allocation transaction cost. The workflow observations below cover that cost and metadata at the build-count limit. [Batch test evidence](testing-build.md#atomic-build-groups) distinguishes the tested store boundary from purchasing and print allocation.
+
+
+### Allocation preparation and measurement limits
+
+The frozen-content worker derives production signatures from canonical source fields and the captured local source mesh, including exact positions and triangle indices. Newly marked or sent print attempts reuse the analysis worker's mesh capture and transfer the returned owned buffers into that worker. Group creation still prepares geometry once, while allocation and return operations send only bounded ownership and source identities. Build demand reads retained signatures and manifest quantities without hashing geometry on the interaction thread.
+
+The current implementation retains at most 100 local build records and 256 MB of unique frozen content. Ownership history has separate explicit refusal bounds. Deterministic tests establish one atomic update per group and unchanged unique content bytes from one to twenty records. They do not establish interaction latency, disk footprint or metadata at the storage limit.
+
+The completed documentation capture used the production desktop renderer bundle on macOS arm64, Node 26.13.0 and headless Chromium through `openApp`. The separate web-demo target used the development server and was not the measured app. `scratch/production-capture-recovery-bundle.log` and `scratch/production-allocation-measurements.json` retain the final-source run and raw observations. Creation surrounds the ordinary dialog interactions through selectable committed builds. Reopening surrounds a saved-build click through visible allocation rows, including frozen-content loading and integrity verification but excluding final viewport drawing. These single-run observations include browser interactions and shared-host scheduling. They are not a latency budget, speedup comparison or Linux and Windows result.
+
+| Observation | One initial build | Twenty-build group added to the first | At the 100-build count limit |
+| --- | ---: | ---: | ---: |
+| Creation through controls | 17,428.42 ms | 5,681.93 ms | Not separately timed |
+| Retained build count | 1 | 21 | 100 |
+| Unique geometry payload bytes | 2,575,668 | 2,575,668 | 2,575,668 |
+| All unique immutable payload bytes | 2,664,662 | 2,734,883 | 3,039,126 |
+| Mutable record and index JSON bytes | 3,063 | 12,405 | 49,521 |
+
+The initial creation includes cold preparation while the group follows it in the same session. Each group prepares one Kit rather than one per robot. Different preparation evidence can create distinct small roots and project assets while geometry remains shared. Reopening the initial build took 11,525.52 ms. The twenty group members took 622.38 to 6,098.69 ms each, with a median of 2,507.74 ms and 47,528.49 ms summed across twenty sequential opens. No bound assertion is inferred from these samples.
+
+At 100 retained build records, one native purchase reservation took 0.91 ms through validation, current-file read and atomic replacement. The canonical purchasing file occupied 7,196 UTF-8 bytes, containing two component owners and two assigned physical copies from one five-output plate. This is one transaction sample, not a maximum-history or Windows measurement. The expected refused second motor reservation produced one HTTP 500 console entry. There were no pending requests at capture completion. The harness reported its existing Vite close warning after the passing capture. Byte counts measure application payloads, not physical IndexedDB disk use, compression or renderer memory. The 256 MB content ceiling is tested as an atomic refusal boundary rather than filled with geometry during this observation.
+
+An earlier native observation followed the recovery-safe record fields before the final-source bundle capture. A native observation using those fields retained 8,160 bytes with three component owners and 690,730 bytes at 200 attempts with 1,000 declared outputs. The small reservation took 43.32 ms and a return at the print-history bound took 4.34 ms. The observation is retained separately rather than treated as a speed comparison. Its unprofiled 43.32 ms result prompted a phase observation of the same final APIs.
+
+The final-source capture passed in 175.95 seconds through the unchanged 180-second documentation harness deadline. Its final Kit stage marks were 47.57 ms for measurement, 113.60 ms for build-order checking, 403.91 ms for the guide and 35.37 ms for joint mapping. These are stage wall times, not main-thread CPU profiles. Worker preparation and serialization remain off the interaction thread. The shared-host observations do not establish a reopen latency guarantee.
+
+Using that final capture’s retained records, the bounded native workload retained 8,216 bytes with three component owners and 690,786 bytes at 200 attempts and 1,000 declared copies. The reservation took 1.41 ms, the return at that bound 2.12 ms, and completion recovery 7.29 ms. Recovery retained exactly 200 attempts, and an additional explicit attempt was refused. The current phase data is `scratch/production-allocation-storage-profile.json`.
+
+The same phase record separates file I/O from total wall and process CPU.
+
+| Final native operation | Wall time | Process CPU | Read | Write | Rename |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Reservation | 1.41 ms | 1.25 ms | 0.05 ms | 0.16 ms | 0.12 ms |
+| Return at print bound | 2.12 ms | 2.17 ms | 0.15 ms | 0.27 ms | 0.15 ms |
+| Completion recovery | 7.29 ms | 8.44 ms | 0.08 ms | 0.27 ms | 0.15 ms |
+
+These individual samples do not establish a latency guarantee or a cause for the earlier 43.32 ms sample. No geometry is prepared or transmitted by these ownership changes.

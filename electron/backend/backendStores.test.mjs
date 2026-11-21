@@ -50,7 +50,7 @@ describe('agent policy', () => {
   ];
 
   it('allows CAD and web tools and rejects the rest', () => {
-    const cad = { toolCall: { title: 'mcp__robotics_cad__look' }, options };
+    const cad = { toolCall: { name: 'mcp__robotics_cad__look', title: 'mcp__robotics_cad__look' }, options };
     const shell = { toolCall: { title: 'Bash', kind: 'execute' }, options };
 
     expect(permissionOutcome(cad)).toEqual({
@@ -66,19 +66,20 @@ describe('agent policy', () => {
     });
   });
 
-  it('recognises Codex and Gemini CAD calls, including a permission request that only names the call', () => {
+  it('recalls tool identity when a permission request only names the call id', () => {
     const calls = rememberToolCalls();
 
     calls.note({
       sessionUpdate: 'tool_call',
       toolCallId: 'exec-1',
+      name: 'mcp__robotics_cad__get_scene',
       title: 'mcp.robotics_cad.get_scene',
       kind: 'execute',
       rawInput: { server: 'robotics_cad', tool: 'get_scene', arguments: {} },
     });
 
     expect(permissionOutcome({ toolCall: calls.complete({ toolCallId: 'exec-1' }), options }).safe).toBe(true);
-    expect(permissionOutcome({ toolCall: { title: 'write_todos' }, options }).safe).toBe(true);
+    expect(permissionOutcome({ toolCall: { name: 'write_todos' }, options }).safe).toBe(true);
     expect(
       permissionOutcome({
         toolCall: { title: 'run_shell_command', kind: 'execute', rawInput: { server: 'x' } },

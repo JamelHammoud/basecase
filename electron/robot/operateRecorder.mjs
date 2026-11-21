@@ -244,7 +244,7 @@ export class OperateRecorder {
 
     if (rung < 0) return;
 
-    if (rung < this.rung && this.session) this.close('rung');
+    if (rung < this.rung && this.session && !this.session.bodyMotion) this.close('rung');
 
     this.rung = rung;
 
@@ -299,13 +299,14 @@ export class OperateRecorder {
     const id = typeof event.id === 'number' ? event.id : null;
 
     this.write(session, { k: 'fault', code: String(event.code ?? ''), id, message: String(event.message ?? '') });
-    this.close('fault');
+
+    if (!session.bodyMotion) this.close('fault');
   }
 
   intent(joints, at) {
     const session = this.session;
 
-    if (!session || this.held) return;
+    if (!session || (this.held && !session.bodyMotion)) return;
 
     const q = fixedAll(joints);
     const key = q.join();

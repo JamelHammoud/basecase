@@ -1,11 +1,13 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { openBodyExperimentApp } from './bodyExperimentHarness';
 import type { App } from './harness';
+import { narrowBodyMotionPanel, expectBodyMotionLayout } from './bodyMotionLayout';
 
 let app: App;
 
 beforeAll(async () => {
   app = await openBodyExperimentApp({ second: true });
+  await narrowBodyMotionPanel(app.page);
 });
 afterAll(async () => {
   await app?.close();
@@ -31,13 +33,17 @@ it(
     await page.getByRole('dialog', { name: 'Analyze Try' }).getByRole('switch').first().click();
     await page.getByRole('button', { name: 'Preview Motion', exact: true }).click();
     await page.getByRole('button', { name: 'Run', exact: true }).click();
-    await page.getByRole('dialog', { name: 'Analyze Try' }).getByRole('button', { name: 'Stop', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Analyze Try' })
+      .getByRole('button', { name: 'Stop', exact: true })
+      .press('Enter');
     await page.locator('[data-experiment-completion="cancelled"]').waitFor({ state: 'attached' });
 
     const stopped = await counts();
 
     expect(stopped['robot-2']).toBe(before['robot-2']);
     await page.getByRole('button', { name: 'Method', exact: true }).click();
+    await expectBodyMotionLayout(page);
     expect(await counts()).toEqual(stopped);
     expect(await page.getByRole('button', { name: 'Fit Body', exact: true }).isDisabled()).toBe(true);
     expect(app.errors).toEqual([]);

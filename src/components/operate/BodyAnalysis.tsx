@@ -3,6 +3,7 @@ import type { BodyAnalysisView } from '../../workspace/useBodyAnalysis';
 import { BodyAnalysisResult } from './BodyAnalysisResult';
 import { BodyAnalysisRefusal } from './BodyAnalysisRefusal';
 import { BodyExperimentMethod } from './BodyExperimentMethod';
+import { BodyAnalysisSourceStatus } from './BodyAnalysisSourceStatus';
 
 export function BodyAnalysis({ analysis }: { analysis: BodyAnalysisView }) {
   return (
@@ -30,6 +31,7 @@ export function BodyAnalysis({ analysis }: { analysis: BodyAnalysisView }) {
           disabled={analysis.pending}
           onChange={(event) => analysis.pick(event.target.value)}
         />
+        <BodyAnalysisSourceStatus analysis={analysis} />
         {analysis.problem && <p className="text-[13px] text-amber-400">{analysis.problem}</p>}
         {analysis.result?.kind === 'refused' && <BodyAnalysisRefusal reason={analysis.result.reason} />}
         {analysis.experiment && <BodyExperimentMethod analysis={analysis} />}
@@ -45,12 +47,7 @@ export function BodyAnalysis({ analysis }: { analysis: BodyAnalysisView }) {
           </Button>
         )}
         {analysis.result?.kind === 'analyzed' && (
-          <BodyAnalysisResult
-            result={analysis.result}
-            applicable={analysis.applicable}
-            checking={!analysis.ready}
-            analysis={analysis}
-          />
+          <BodyAnalysisResult result={analysis.result} applicable={analysis.applicable} analysis={analysis} />
         )}
       </div>
     </Modal>

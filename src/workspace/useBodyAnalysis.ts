@@ -204,7 +204,7 @@ export function useBodyAnalysis(core: WorkspaceCore) {
         if (current) setReported({ selected, unit, outcome });
       })
       .catch(() => {
-        if (current) setProblem('The saved body evidence could not be read.');
+        if (current) setProblem('Couldn’t read the saved body evidence.');
       });
 
     return () => {

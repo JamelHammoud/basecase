@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TryStore, sessionSink } from '../library/tryStore.mjs';
 import { readStoredTry } from '../../src/cases/tryFile';
 import { readOperateLog } from '../../src/robot/operateLog';
+import { readBodyRecording } from '../../src/reality/bodyRecordingRun';
 import { linkWithFake } from './robotLinkFake.mjs';
 
 const HASH = 'a'.repeat(64);
@@ -136,6 +137,42 @@ describe('selected motions as ordinary Operate recordings', () => {
     expect(recorded).toHaveLength(1);
     expect(recorded[0].manifest.bodyMotion.completion).toBe(ending === 'stop' ? 'cancelled' : ending);
     expect(readStoredTry(recorded[0].manifest)).not.toBeNull();
+  });
+
+  it.each(['rung', 'fault'])('drains delivered commands before retaining an interrupted %s', (ending) => {
+    const session = rig.link.session;
+
+    session.pipe.idle = vi.fn();
+
+    const claimed = start();
+
+    expect(claimed.ok).toBe(true);
+    now += 30;
+    status();
+
+    if (ending === 'fault') say({ event: 'fault', code: 'stall' });
+    else say({ event: 'mode', mode: 'look' });
+
+    expect(rig.events.some((event) => event.event === 'recorded' && event.manifest?.bodyMotion)).toBe(false);
+    rig.link.recordDelivered(session, [0.01, -0.02], { ...claimed.control, at: now - 10 });
+    rig.link.controlFor(session).flushCompletion();
+
+    const [stored] = store.manifests(store.list().map((entry) => entry.id));
+    const text = store.session(stored.id).toString();
+    const run = readBodyRecording({
+      session: text,
+      id: stored.id,
+      joints: stored.robot.joints,
+      motion: stored.bodyMotion,
+    });
+
+    expect(stored.bodyMotion.completion).toBe(ending === 'fault' ? 'fault' : 'stale');
+    expect(run?.statuses).toHaveLength(1);
+    expect(run?.intents.map((entry) => entry.joints)).toEqual([[0.01, -0.02]]);
+    expect(JSON.parse(text.trim().split('\n').at(-1))).toMatchObject({
+      k: 'motion-end',
+      completion: stored.bodyMotion.completion,
+    });
   });
 
   it('refuses a recording declaration before commands when storage cannot open', () => {

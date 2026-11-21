@@ -59,7 +59,7 @@ async function experimentOriginal(stored: StoredTry) {
 
   const original = await readBodyEvidenceContent(stored.bodyMotion.recommendation);
 
-  if (!original) throw new Error('The saved body evidence could not be read.');
+  if (!original) throw new Error('Couldn’t read the saved body evidence.');
 
   return original;
 }

@@ -57,7 +57,7 @@ You can find the recording under **Tries** in **Library**. See [Open a try from 
 
 ![The actual Operate recording opened from Library](/help/run-a-recommended-body-motion/recording.png)
 
-To reopen its analysis, choose that recording in **Analyze Try**. You can read its original recommendation and observations after design edits.
+To reopen its analysis, choose that recording in **Analyze Try**. You can read its original recommendation and observations after design edits. **Out of date** marks evidence that no longer matches the source.
 
 **Fit Body** uses that selected recording. You can’t activate a body calibration with unsupported dynamics, even if the predicted motion had a higher information score.
 

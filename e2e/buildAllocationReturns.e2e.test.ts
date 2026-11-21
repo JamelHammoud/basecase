@@ -61,6 +61,8 @@ it(
 
       const dialog = app.page.getByRole('dialog', { name: 'Reconcile Quantity', exact: true });
 
+      await dialog.evaluate((element) => Promise.all(element.getAnimations().map((animation) => animation.finished)));
+
       for (const [index, part] of [tab, other].entries()) {
         const input = dialog.getByRole('textbox', { name: part.name, exact: true });
 

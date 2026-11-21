@@ -107,6 +107,7 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({
         />
         <Slider
           className="flex-1 min-w-[200px]"
+          stacked
           label={negative(timeline.origin + frame * timeline.dt, (seconds) => runClock(seconds))}
           value={frame}
           min={0}

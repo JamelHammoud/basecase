@@ -1,4 +1,4 @@
-import { readdir } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 
@@ -46,7 +46,7 @@ export async function siteImageProblems(publicDir) {
   const problems = [];
 
   for (const file of images) {
-    const problem = await imageProblem(path.join(publicDir, file));
+    const problem = await imageProblem(await readFile(path.join(publicDir, file)));
 
     if (problem) problems.push(`${file}: ${problem}`);
   }

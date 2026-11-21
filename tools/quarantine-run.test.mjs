@@ -88,14 +88,15 @@ it('retains missing evidence when interrupted reports are partial JSON', () => {
   expect(output).toContain('did not run e2e/probe.e2e.test.ts > observes fixture');
 });
 
-it('shares the Actions budget across configurations and retains the completed first report', () => {
+it.each([false, true])('shares the Actions budget and retains the first report on Windows=%s', (windows) => {
   const directory = fixture();
 
   fs.writeFileSync(
     path.join(directory, 'clock.mjs'),
     `import fs from 'node:fs';
 const now = Date.now;
-Date.now = () => now() + (fs.existsSync('spent') ? 45000 : 0);
+Object.defineProperty(process, 'platform', { value: ${windows ? "'win32'" : "'linux'"} });
+Date.now = () => now() + (fs.existsSync('spent') ? ${windows ? 15000 : 45000} : 0);
 `,
   );
 

@@ -45,3 +45,11 @@ export function useTryEvidence({ scope, parts, joints, partners }: Source) {
     },
   };
 }
+
+export function tryEvidenceAtFinish(recordId: number | undefined, current: () => boolean) {
+  if (recordId === undefined) return current;
+
+  const valid = current();
+
+  return () => valid;
+}

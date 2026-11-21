@@ -40,13 +40,15 @@ You can play a recorded try in its Case's own cards. The cameras, numbers, plots
 
 ![Touch the Dots playing a try at 2.1 s, with the wrist camera, the Base value and the arm at that moment, and the playhead on the Joints plot and the timeline](/help/play-a-try-through-its-console/console.png)
 
-6. To play or pause, press [[Space]].
+6. With a joint lane focused, press [[Space]] to play or pause.
 7. To play slower or faster, press [ or ]. The speed goes from 0.25× to 4×, and the speed button beside the slider shows the current speed.
 8. To loop part of the try, hold [[⇧]] and drag across a joint's lane on the timeline. Playing repeats that part until you hold [[⇧]] and click a joint's lane.
 
 ![A loop band across the timeline's joint lanes, with the playhead inside it](/help/play-a-try-through-its-console/loop.png)
 
 9. To stop playing, click **Done** or press [[Esc]]. You're back in the running Case.
+
+In a [teaching try](/help/correct-a-simulated-policy), [[Home]], [[End]] and [[Space]] scroll the focused ownership list. Click a joint lane to restore playback shortcuts.
 
 You can also play a try by clicking its row in the Simulate tab's Results, or its tile in **Library** ▸ **Tries**. When you stop playing, you're back where you were.
 
@@ -58,7 +60,7 @@ If a try has saved camera videos, their tiles show the recorded images at the pl
 
 **Note:** Joint playback requires the robot to fit as it is now. If you've added or removed a joint since the try was recorded, it won't open. Tries from a real robot don't play through these cards. [Compare saved tries](/help/compare-saved-tries) reads saved evidence without requiring a matching scene robot.
 
-While a try plays, the buttons in the cards turn off and Try It disappears. A try records the drive's command but not which input sent it, so every input shows the same command.
+While a try plays, the buttons in the cards turn off and Try It disappears. A manual try records the drive's command but not which input sent it, so every manual input shows the same command. Teaching tries also show policy and operator ownership intervals.
 
 The agent can read a try too. Ask it what happened in a try, and it reads the try's signals, its failures with their times, and the canvas at one moment.
 

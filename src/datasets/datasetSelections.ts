@@ -5,9 +5,13 @@ export function mergedDatasetSamples(dataset: Dataset, ids: string[], selected?:
   const added: DatasetSample[] = selected ?? ids.map((tryId) => ({ tryId }));
   const samples = [...before, ...added];
   const whole = new Set(samples.filter((sample) => sample.from === undefined).map((sample) => sample.tryId));
-  const retained = samples.filter((sample) => sample.from === undefined || !whole.has(sample.tryId));
+  const retained = samples.filter(
+    (sample) => sample.target === 'correction' || sample.from === undefined || !whole.has(sample.tryId),
+  );
 
   return [
-    ...new Map(retained.map((sample) => [JSON.stringify([sample.tryId, sample.from, sample.to]), sample])).values(),
+    ...new Map(
+      retained.map((sample) => [JSON.stringify([sample.tryId, sample.target, sample.from, sample.to]), sample]),
+    ).values(),
   ];
 }

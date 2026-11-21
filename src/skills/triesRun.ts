@@ -8,6 +8,7 @@ import { lastError, type ForgeJob, type ForgeRunner, type SkillSave } from './fo
 import { skillRecord, type SkillRecord } from './skillRecords';
 import { triesSkill } from './triesTraining';
 import { selectSeeds, selectionOf } from './seedSelection';
+import { teachingProvenance } from './triesTeaching';
 
 export interface TriesPlan {
   datasetId?: string;
@@ -34,12 +35,24 @@ export interface TriesPorts {
   design: string;
   save: SkillSave;
   onRecord: (record: SkillRecord) => void;
+  assertCurrent?: () => void;
 }
 
 export async function runTries(plan: TriesPlan, ports: TriesPorts) {
+  const assertCurrent = ports.assertCurrent ?? (() => {});
+
+  assertCurrent();
+
+  if (plan.job.job.warmPolicy && !(await ports.forge.canWarm?.()))
+    return plan.done({ runs: null, kept: false, problem: 'Use Forge to train from corrections.' });
+
+  assertCurrent();
+
   const startedAt = Date.now();
   const outcome = await selectSeeds(await ports.forge(plan.job));
   const policy = outcome.ok ? outcome.policy : null;
+
+  assertCurrent();
 
   if (!policy) return plan.done({ runs: null, kept: false, problem: lastError(outcome) });
 
@@ -47,11 +60,17 @@ export async function runTries(plan: TriesPlan, ports: TriesPorts) {
 
   if (selection) await ports.forge.selected?.(selection);
 
+  assertCurrent();
+
   const verdict = await plan.judge(policy).catch((e: unknown) => errorMessage(e));
 
   if (typeof verdict === 'string') return plan.done({ runs: null, kept: false, problem: verdict });
 
   const { runs } = verdict;
+  const teaching = teachingProvenance(plan.job.job);
+
+  assertCurrent();
+
   const steps = outcome.candidates?.reduce((sum, candidate) => sum + candidate.steps, 0) ?? policy.trainedSteps;
   const cost = { wallS: (Date.now() - startedAt) / 1000, steps };
   const { model, kase } = plan;
@@ -61,11 +80,12 @@ export async function runTries(plan: TriesPlan, ports: TriesPorts) {
     kase,
     policy,
     runs,
-    origin: { method: 'ask-for-demo', cost, training: selectionOf(policy) },
+    origin: { method: 'ask-for-demo', cost, training: selectionOf(policy), ...(teaching ? { teaching } : {}) },
   });
 
   if (made) {
     await ports.save(skillFiles(skillHash(made.skill)).skill, JSON.stringify(made.skill));
+    assertCurrent();
     ports.onRecord(
       skillRecord(made.skill, {
         kit: null,

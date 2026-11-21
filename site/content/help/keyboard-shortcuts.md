@@ -127,6 +127,8 @@ While a Case runs, [[⌘Z]], [[⇧⌘Z]] and [[⌘Y]] undo and redo only changes
 
 These keys work while a try plays on the timeline.
 
+While the ownership list has focus, [[Home]], [[End]] and [[Space]] scroll that list.
+
 | Action | Keys |
 |---|---|
 | Play or pause | [[Space]] |

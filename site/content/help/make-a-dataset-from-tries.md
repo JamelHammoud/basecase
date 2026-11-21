@@ -81,12 +81,12 @@ To assign conditions and inspect their support and model scores, follow [Compare
 
 - **Export Dataset** saves a LeRobot zip for tries, with COCO and YOLO folders for any images. See [Export a LeRobot dataset](/help/export-a-lerobot-dataset).
 - **Publish to Hugging Face** puts the dataset on the Hub. See [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
-- **Train from Tries** appears in a dataset without images once five of its tries have passed. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+- **Train from Tries** appears in a dataset without images once five samples fit the current robot. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 - **Train** fits a vision model when the dataset has images, including datasets that also hold tries. See [Train a vision model](/help/train-a-vision-model).
 
 **Note:** Publishing and both kinds of training are available in the desktop app.
 
-Failed tries stay in the dataset, while export, publishing and training leave them out. A try without a verdict, such as an [imported joint recording](/help/import-robot-data-as-tries), counts as a demonstration when it fits the robot model. Topic-only recordings remain available to [compare saved tries](/help/compare-saved-tries), but export and policy training leave them out. To exclude one, mark it failed in [Label a try](/help/label-a-try).
+Failed tries stay in the dataset. Export, publishing and ordinary demonstration training leave them out. Explicit [policy correction windows](/help/correct-a-simulated-policy) can train from failed tries. A try without a verdict, such as an [imported joint recording](/help/import-robot-data-as-tries), counts as a demonstration when it fits the robot model. Topic-only recordings remain available to [compare saved tries](/help/compare-saved-tries), but export and policy training leave them out. To exclude one, mark it failed in [Label a try](/help/label-a-try).
 
 Any quality flag excludes its selected samples from export, publishing and training. The same actions leave out the tries listed under [Tries that export leaves out](#tries-that-export-leaves-out).
 

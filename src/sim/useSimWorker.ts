@@ -1,3 +1,4 @@
+import { disposeSimWorker } from './disposeSimWorker';
 import { subscribeLiveSceneVision } from '../cameras/sceneVision';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
@@ -15,6 +16,7 @@ import { useRecordingLink } from './useRecordingLink';
 import type { WorldLooks } from '../cases/worldSet';
 import { SimLoads } from './simLoads';
 import { useVisionScope } from '../cameras/visionScope';
+import { useTeachingLink } from './useTeachingLink';
 
 interface LatestFrame {
   at: number;
@@ -63,11 +65,13 @@ export function useSimWorker(
   const recordingReply = recordingLink.reply;
   const cancelRecording = recordingLink.cancel;
 
-  const send = useCallback((msg: SimRequest) => workerRef.current?.postMessage(msg), []);
+  const { send, teaching } = useTeachingLink(workerRef);
 
   const handle = useCallback(
     (ev: MessageEvent<SimResponse>) => {
       const msg = ev.data;
+
+      if (msg.type === 'teaching') return teaching.reply(msg);
 
       if (loading.stale(msg)) return;
 
@@ -78,11 +82,7 @@ export function useSimWorker(
         return;
       }
 
-      if (msg.type === 'world') {
-        setWorldLooks(msg.looks);
-
-        return;
-      }
+      if (msg.type === 'world') return setWorldLooks(msg.looks);
 
       if (msg.type === 'routine') {
         routines.hookRef.current?.(msg);
@@ -90,14 +90,12 @@ export function useSimWorker(
         return;
       }
 
-      if (msg.type === 'watched') {
-        setWatched({ id: msg.id, margin: msg.margin });
-
-        return;
-      }
+      if (msg.type === 'watched') return setWatched({ id: msg.id, margin: msg.margin });
 
       if (isRecordingReply(msg)) {
         recordingReply(msg);
+
+        notifyTeachingCompletion(msg, teaching);
 
         return;
       }
@@ -128,7 +126,16 @@ export function useSimWorker(
       setStats(msg.stats);
       setPlaying(msg.playing);
     },
-    [viewportRef, modelRef, poseListeners.listeners, recordingReply, routines.hookRef, loading, cancelRecording],
+    [
+      viewportRef,
+      modelRef,
+      poseListeners.listeners,
+      recordingReply,
+      routines.hookRef,
+      loading,
+      cancelRecording,
+      teaching,
+    ],
   );
 
   const worker = useCallback(() => {
@@ -143,22 +150,18 @@ export function useSimWorker(
       setStatus('error');
       setPlaying(false);
       loading.cancel();
+      teaching.cancel();
     };
     workerRef.current = w;
 
     return w;
-  }, [handle, attachCameras, loading, cancelRecording]);
+  }, [handle, attachCameras, loading, cancelRecording, teaching]);
 
-  useEffect(
-    () => () => {
-      loading.cancel();
-      workerRef.current?.terminate();
-    },
-    [loading],
-  );
+  useDisposeSimulator({ loading, teaching, workerRef });
   useVisionLink(workerRef);
 
   return {
+    teaching,
     ...recordingMethods(recordingLink),
     status,
     setStatus,
@@ -307,4 +310,30 @@ function usePoseListeners() {
       };
     }, []),
   };
+}
+
+function useDisposeSimulator({
+  loading,
+  teaching,
+  workerRef,
+}: {
+  loading: SimLoads;
+  teaching: ReturnType<typeof useTeachingLink>['teaching'];
+  workerRef: React.RefObject<Worker | null>;
+}) {
+  useEffect(
+    () => () => {
+      loading.cancel();
+      teaching.cancel();
+
+      disposeSimWorker(workerRef.current);
+    },
+    [loading, teaching, workerRef],
+  );
+}
+
+function notifyTeachingCompletion(message: RecordingReply, teaching: ReturnType<typeof useTeachingLink>['teaching']) {
+  if (message.type !== 'recorded' || message.recordId === undefined) return;
+
+  teaching.completed(message.recordId);
 }

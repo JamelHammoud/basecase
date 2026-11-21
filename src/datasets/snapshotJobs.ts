@@ -7,6 +7,9 @@ import { datasetContentHash } from './contentHash';
 import { canExport } from './episodes';
 import { readSnapshotRecording, sampleRecording } from './snapshotRecording';
 import type { DatasetSnapshot, FrozenTrySample } from './snapshotTypes';
+import { correctionFrames } from '../sim/teachingRecording';
+import { hashOf } from '../skills/hash';
+import { snapshotTraining } from './snapshotTraining';
 
 interface InspectInput {
   bytes: Uint8Array;
@@ -19,10 +22,20 @@ interface RestoreInput {
 }
 
 export const snapshotJobs = {
+  train: (input: Parameters<typeof snapshotTraining>[0]) => {
+    const job = snapshotTraining(input);
+
+    return reply({ job, hash: hashOf(job) });
+  },
   inspect: ({ bytes, model }: InspectInput) => {
     const recording = readSnapshotRecording(bytes);
 
-    return reply({ frames: recording.frames, exportable: canExport(recording, model) });
+    return reply({
+      frames: recording.frames,
+      exportable: canExport(recording, model),
+      teaching: !!recording.teaching,
+      corrections: correctionFrames(recording),
+    });
   },
   restoreGroup: async ({ bytes, samples }: RestoreInput) => {
     const hash = await datasetContentHash(bytes);
@@ -30,7 +43,9 @@ export const snapshotJobs = {
     if (samples.some((sample) => sample.recording !== hash)) throw new Error('The dataset recording content changed.');
 
     const source = readSnapshotRecording(bytes);
-    const recordings = samples.map((sample) => sampleRecording(source, sample));
+    const recordings = samples.map((sample) =>
+      sample.target === 'correction' ? source : sampleRecording(source, sample),
+    );
 
     return reply(recordings, [...new Set(recordings.flatMap(recordingTransfer))]);
   },

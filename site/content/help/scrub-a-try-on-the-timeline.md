@@ -50,6 +50,8 @@ You can step through a Case try one frame at a time. For each joint, you can see
 
 A [vision model comparison](/help/inspect-vision-comparisons) opens its source try at the evaluated image's recorded frame.
 
+While the ownership list has focus, [[Home]], [[End]] and [[Space]] scroll that list. Click a joint lane to use those playback keys again.
+
 When the timeline opens, Basecase recalculates effort from the recording, so its peaks match Peak torque in Results.
 
 If the try has saved camera videos, the camera cards show those videos at the playhead. Detection runs on that frame even while playback is paused. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see) for the boxes and their limits.

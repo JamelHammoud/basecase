@@ -4,6 +4,8 @@ pub mod fit;
 mod split_tests;
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod warm_tests;
 
 use crate::deployed::Deployed;
 use crate::evaluate::{exact_action, CheckSample};
@@ -21,6 +23,10 @@ use std::path::Path;
 const CHECK_SAMPLES: usize = 16;
 
 pub fn input_mask(job: &Job) -> Vec<usize> {
+    if job.warm_start.is_some() {
+        return Vec::new();
+    }
+
     let nact = job.joints.len();
 
     last_action_columns(nact)
@@ -82,11 +88,16 @@ pub fn train(folder: &Path, job: &Job, mujoco: &str) -> Result<(), String> {
     let name = job.demos.as_deref().ok_or("job.json names no demos file")?;
     let demos = demos::load(&folder.join(name), job.joints.len())?;
     let mask = input_mask(job);
-    let fitted = fit::fit(&demos, &settings(job, &mask), &mut |epoch| {
+    let mut watch = |epoch: &Epoch| {
         progress(job, epoch);
 
         !should_stop(folder)
-    });
+    };
+    let settings = settings(job, &mask);
+    let fitted = match &job.warm_start {
+        Some(path) => fit::fit_warm(&demos, &settings, &crate::warm::load(&folder.join(path))?, &mut watch)?,
+        None => fit::fit(&demos, &settings, &mut watch),
+    };
     let exported = fitted.policy.as_exported();
     let run = Trained {
         job,

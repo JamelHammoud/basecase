@@ -66,7 +66,7 @@ it(
       );
       await app.page.getByRole('tab', { name: /Inspect$/ }).click();
       await app.page.getByRole('textbox', { name: 'Width (X)', exact: true }).fill('31');
-      await app.page.getByRole('textbox', { name: 'Width (X)', exact: true }).press('Tab');
+      await app.page.getByRole('textbox', { name: 'Width (X)', exact: true }).press('Enter');
       await app.page.keyboard.press('ControlOrMeta+p');
       await app.page.getByRole('button', { name: 'Mark Printed', exact: true }).click();
       await app.page.keyboard.press('Escape');

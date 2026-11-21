@@ -323,6 +323,8 @@ Windows Check 44878070469 completed both parameter-bound dimension updates, then
 
 The gizmo now watches only its current attachment's `removed` event. Removal detaches synchronously, selection changes release the previous listener, and disposal releases the current listener. The completed-build path still owns reattachment. No scene rebuild, geometry identity, render cadence or main-thread scheduling changes. `gizmoAttachment.test.ts` uses real Three controls and covers selection changes, removal before drawing, no console error and watcher disposal. The existing dimension browser assertion stays intact on every platform. This is lifecycle evidence, not a measured performance improvement or a hosted candidate result.
 
+Review extends the dimension-binding browser declaration to wait for the selected Mount mesh to measure 104 mm wide after the shared parameter changes, before checking the unchanged empty-console assertion. The earlier document-state predicate alone could finish before the viewport installed replacement geometry. The added measurement uses the existing production triangle reader. It does not force pending builds to complete. Browser execution remains with CI.
+
 ## Windows composition download observation
 
 Check 44878070469 reported all three composition declarations as passed after retries but retained an unhandled 30000 ms download rejection from line 80 of the PNG story. Its first attempt opened the finished arm and composition controls. The log does not establish whether worker computation, captured-source guards, export dispatch or download delivery stalled. A late handler for an event promise can report an unhandled rejection before a later retry passes.

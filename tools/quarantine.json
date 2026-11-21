@@ -1077,5 +1077,189 @@
     "until": "2026-11-28",
     "platform": "linux",
     "reason": "Check 44782838288 exhausted the unchanged 10000 ms beforeAll deadline awaiting fleetFixture, reporting 10020 ms before either adapter assertion ran. Last full green Check 44697629334 passed both cases in 9360 ms on the same Ubuntu image 20261116.202.1 with unchanged Fleet, PostgreSQL fixture, publisher, dependency and unit configuration sources. Exact-revision Linux diagnostic 44784441807 reproduced setup expiry in a 10751 ms process with one worker, zero retries and quarantine off on image 20261116.88.1. No assertion ran. No causative merge or changed environment component is established. Docker launch, readiness, connection, migrations, HTTP startup and cleanup are not separately traced. Existing open priority shared fixture owner #1401 owns tracing, a demonstrated fix and ten baseline and ten candidate equal-load Linux observations with retries disabled before restoration. Whole-file filtering is required because setup precedes individual-test filtering. macOS retains both adapter cases. Linux retains publisher, authorization and HTTP listener unit coverage, which does not replace authenticated TCP loopback, scoped publication and persistent-disconnect integration. Windows retains its separate setup quarantine. No deadline, retry or assertion changes."
+  },
+  {
+    "file": "e2e/buildRecords.e2e.test.ts",
+    "test": "resumes two independent frozen builds through Build after reload and source edits",
+    "issue": 2013,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 on Windows persisted two builds and completion, then missed step 2 after reload. Its fresh retry failed earlier waiting for the new build button. Creation preparation and reload navigation remain separate untraced boundaries. Same-revision Windows diagnostic 44879942911 passed in 93219.7853 ms with one worker, quarantine off and retries disabled, establishing intermittency without a rate or cause. Priority owner #2013 keeps these paths separate. Fast frozen-Kit, storage, concurrency, repair and photo pipeline coverage remains active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/buildAllocationReturns.e2e.test.ts",
+    "test": "labels historical quantities and confirms retained material returns at minimum panel width",
+    "issue": 2013,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 on Windows missed the new build button after Make in buildAllocationScene.ts:39. Preparation, source guards, worker delivery and IndexedDB commit are not separately traced. Priority owner #2013 keeps these paths separate. Fast frozen-Kit, storage, concurrency, repair and photo pipeline coverage remains active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/buildAllocations.e2e.test.ts",
+    "test": "allocates a rover motor and two printed copies to independent builds through reload",
+    "issue": 2013,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 on Windows missed the new build button after Make in buildAllocationScene.ts:39. No allocation assertion ran. Preparation, source guards, worker delivery and IndexedDB commit are not separately traced. Priority owner #2013 keeps these paths separate. Fast frozen-Kit, storage, concurrency, repair and photo pipeline coverage remains active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/buildAllocations.e2e.test.ts",
+    "test": "accepts only one reservation for the final motor from independent browser contexts",
+    "issue": 2013,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 on Windows exhausted 180000 ms without a final operation trace. Context startup, build creation, reservation synchronization and cleanup remain unresolved and are not presumed to share the single-context creation cause. Priority owner #2013 keeps these paths separate. Fast frozen-Kit, storage, concurrency, repair and photo pipeline coverage remains active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/buildRepair.e2e.test.ts",
+    "test": "repairs only the selected build through removal, reload, replacement and explicit physical return",
+    "issue": 2013,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 on Windows clicked Compare but never received the target preview at line 83. Preparation, source guards, worker comparison and UI delivery remain unresolved. Priority owner #2013 keeps these paths separate. Fast frozen-Kit, storage, concurrency, repair and photo pipeline coverage remains active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/buildPhotos.e2e.test.ts",
+    "test": "retains a photo through completion reversal and confirms individual deletion",
+    "issue": 2013,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 on Windows opened its frozen build and chose a PNG but missed the thumbnail at line 36. The independent photo import and reload story passed at the same revision. Chooser destination, decoding, transaction and thumbnail delivery remain separate. Priority owner #2013 keeps these paths separate. Fast frozen-Kit, storage, concurrency, repair and photo pipeline coverage remains active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "src/gripperFingers/pipeline.test.ts",
+    "test": "replacement-finger production pipeline > short-cylinder-v retains geometry, simulated grasp evidence and archive identity",
+    "issue": 2014,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44878070469 failed this case on Linux and Windows with margin -0.5, no failed labels and 319 grip frames. The macOS matrix passed all 20 cases on both Node 26.13.0 and pinned Node 26.13.1 with 320 grip frames for this case. Geometry, contact continuity and cross-platform numerical sensitivity are unresolved. Owner #2014 preserves the production contract. All 19 other matrix cases, geometry, lifecycle and manufacturing checks remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "src/gripperFingers/pipeline.test.ts",
+    "test": "replacement-finger production pipeline > short-cylinder-v retains geometry, simulated grasp evidence and archive identity",
+    "issue": 2014,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 failed this case on Linux and Windows with margin -0.5, no failed labels and 319 grip frames. The macOS matrix passed all 20 cases on both Node 26.13.0 and pinned Node 26.13.1 with 320 grip frames for this case. Geometry, contact continuity and cross-platform numerical sensitivity are unresolved. Owner #2014 preserves the production contract. All 19 other matrix cases, geometry, lifecycle and manufacturing checks remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/gripperFingers.e2e.test.ts",
+    "test": "runs the selected-cylinder reference and opens its saved grasp evidence",
+    "issue": 2014,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 opened the selected-object Case but Try Reference never produced one saved try at line 129. This stage precedes the verdict and is separate from the short-cylinder matrix failure. Owner #2014 retains recording and worker tracing. The first authoring browser story and fast geometry and grasp pipelines remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/continuation.e2e.test.ts",
+    "test": "branches a newly scripted Library try from the timeline and saves a manual recovery",
+    "issue": 1026,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 exhausted the source recording helper because the try clock never reached 1.5 seconds. Linux instead reached the timeline layout assertion, repaired separately without weakening it. Existing Case recording owner #1026 owns this Windows source-start and clock boundary. Legacy inspection, cancellation and fast capture, continuation, persistence and takeover checks remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/studySourcing.e2e.test.ts",
+    "test": "compares late and on-time actuator offers beside Checks from the Study command",
+    "issue": 2015,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 opened Study and executed alternatives but the result predicate at lines 36-44 stayed false. The historical purchasing story passed on Windows, and both passed on Linux. Owner #2015 owns preparation, feasibility grading and result delivery tracing. Fast Study and purchasing pipeline coverage remains active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/powerReplay.e2e.test.ts",
+    "test": "replays modeled current from Build, selects its limiting endpoint and compares an edited resistance",
+    "issue": 2016,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 narrowed Build to 290 px then exhausted the 30000 ms action waiting for Electrical connections. Owner #2016 keeps entry delivery separate from retained computation. Both stories passed on Linux. Analytical solver, energy conservation, identity, reopening, invalidation and disposal coverage remains active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/powerReplay.e2e.test.ts",
+    "test": "reopens retained replay evidence and preserves it as historical after a wiring edit",
+    "issue": 2016,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 opened Current replay but exhausted 30000 ms waiting for the retained result. Owner #2016 keeps entry delivery separate from retained computation. Both stories passed on Linux. Analytical solver, energy conservation, identity, reopening, invalidation and disposal coverage remains active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "src/reality/bodyMotion.test.ts",
+    "test": "next motion through production MuJoCo > returns a supported preview or truthful refusal for stationary rover",
+    "issue": 2017,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 exceeded the unchanged 5000 ms callback deadline. Exact-revision Windows diagnostic 44879964066 passed in 4945.0042 ms with one worker and retries disabled, confirming intermittency without a rate estimate or cause. Owner #2017 separates fixture, analysis, comparison, candidate physics and repeated selection. Nine other scenarios, refusal, lifecycle and worker checks remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "tools/electrical/fixtureBundle.test.mjs",
+    "test": "bundles and imports the real fixtures.ts dependency graph in Node",
+    "issue": 2018,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 exceeded 5000 ms on Windows. Exact-revision diagnostic 44879964048 passed in 1953.0529 ms with one worker and retries disabled, confirming intermittency without a rate estimate. Owner #2018 separates bundle, import, assertion and cleanup stages. The real routeFixtures dependency graph and ordinary electrical pipeline remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/repair.e2e.test.ts",
+    "test": "Repair > opens teardown from the part menu and prints one replacement at the swap step",
+    "issue": 2019,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44878070469 exceeded the unchanged 15000 ms action deadline. Last full green 44792356422 passed the unchanged declaration on both platforms. The log does not distinguish walkthrough opening, navigation, plate preparation, marking or closing. Owner #2019 retains those separate traces. The command-entry story, fast repair planning, plate selection and print-record coverage remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/repair.e2e.test.ts",
+    "test": "Repair > opens teardown from the part menu and prints one replacement at the swap step",
+    "issue": 2019,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 exceeded the unchanged 15000 ms action deadline. Last full green 44792356422 passed the unchanged declaration on both platforms. The log does not distinguish walkthrough opening, navigation, plate preparation, marking or closing. Owner #2019 retains those separate traces. The command-entry story, fast repair planning, plate selection and print-record coverage remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/tendons.e2e.test.ts",
+    "test": "authors and edits a remote elbow tendon in Pose, simulates it and reopens separate recorded channels",
+    "issue": 2020,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44878070469 authored coefficients and started simulation, then the physical output never exceeded 5 degrees at line 60. Its shared-app retry stalled earlier looking for the motor row. Same-revision Linux diagnostic 44879963935 passed in 23195.201577 ms with one worker, quarantine off and retries disabled, establishing intermittency without a rate. Owner #2020 keeps command delivery, physical response, recording and retained retry state separate. Windows passed at the same revision. The independent singular-declaration and undo/redo story and actual WASM tendon fixtures remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/workbenchPlacement.e2e.test.ts",
+    "test": "rehearses an existing arm Case at an entered placement and refuses an unreachable base without daemon commands",
+    "issue": 2021,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 entered placement and dispatched rehearsal but entered evidence never became applicable at line 56. The persistence story passed on retry. Owner #2021 distinguishes preparation, worker completion, source guards and delivery. Linux and the ten-task fast placement, persistence, transport and actual WASM rehearsal matrix remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/renderComposition.e2e.test.ts",
+    "test": "opens a finished arm, composes and downloads a transparent PNG while preserving the editing scene",
+    "issue": 2022,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 retained an unhandled 30000 ms download-event rejection from an earlier attempt even though its retry passed. Owner #2022 owns worker completion, export delivery, source identity and event-promise ownership. Linux passed all three stories. Windows retains field cancellation, saved settings and the fast composition renderer pipeline. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "e2e/classroom.e2e.test.ts",
+    "test": "keeps an edited student attempt and its assignment after reload",
+    "issue": 1508,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 edited the student attempt and invoked Submit, then exhausted the unchanged 30000 ms download event twice before reload. Last full green 44792356422 passed this story. Existing classroom download owner #1508 owns this additional declaration, separately from teacher reload owner #1754. Fast assignment, submission and scene persistence tests remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "src/cases/personCamera.test.ts",
+    "test": "",
+    "issue": 1400,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 exceeded its unchanged 15000 ms beforeAll deadline before the ten pixel assertions ran. MuJoCo load, bundling, server, browser, worker readiness and shader initialization are not individually traced. Existing OffscreenCanvas fixture owner #1400 owns stage tracing and cleanup. Whole-file quarantine is required because setup precedes declaration filtering. Real person physics, sensing, persistence and camera geometry checks remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "tools/fleet/buildRepairReference.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44878070469 exceeded the unchanged 10000 ms beforeAll deadline in fleetFixture before the authorization assertion ran. Existing Fleet fixture owner #1401 owns initialization, migration, connection and cleanup tracing. Whole-file quarantine is required because setup precedes declaration filtering. Fast build repair identity and Fleet authorization and handler checks remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
   }
 ]

@@ -87,7 +87,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
       aria-hidden={!open}
       inert={props.inert}
       className={`relative h-full shrink-0 overflow-hidden ${
-        props.resizing ? '' : 'transition-[width] duration-[240ms] ease-[cubic-bezier(0.2,0,0,1)]'
+        props.resizing || props.inert ? '' : 'transition-[width] duration-[240ms] ease-[cubic-bezier(0.2,0,0,1)]'
       }`}
       style={{ width: open ? width + LAYOUT.panelGap : 0 }}
     >

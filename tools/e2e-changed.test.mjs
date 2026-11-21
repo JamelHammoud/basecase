@@ -1,11 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { changedLines, sharedDeletions, testsAt } from './e2e-changed.mjs';
+import { changedLines, declarations, sharedDeletions, testsAt } from './e2e-changed.mjs';
 
 const select = (source, needle) =>
   testsAt(source, new Set([source.slice(0, source.indexOf(needle)).split('\n').length]));
 const matches = (selection, name) => new RegExp(selection.pattern).test(name);
 
 describe('changed browser declarations', () => {
+  it('keeps regular expression tests out of the browser declaration inventory', () => {
+    const source = `const supported = (file) => /\\.(spz|ply)$/i.test(file.name);
+it('imports a world', () => { supported(file); });`;
+
+    expect(declarations(source).tests).toEqual([{ start: 2, end: 2, pattern: '^imports a world$' }]);
+    expect(select(source, 'supported =').fallback).toBe(true);
+    expect(matches(select(source, 'supported(file)'), 'imports a world')).toBe(true);
+  });
+
   it('keeps insertion lines and deletion gaps distinct', () => {
     expect([...changedLines('@@ -6,2 +6,3 @@\n+x\n@@ -20 +21 @@\n+y')]).toEqual([6, 7, 8, 21]);
     expect([...changedLines('@@ -9,1 +8,0 @@\n-gone')]).toEqual([8.5]);

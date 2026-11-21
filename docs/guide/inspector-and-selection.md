@@ -349,3 +349,7 @@ Captured Case object geometry, captured Study Cases and assigned Cases retain ap
 ### Saved SimReady textures
 
 A selected SimReady mesh whose visual is absent from the local cache offers Download Textures after Appearance in the Inspector, keeping sizing and placement controls first. The collision mesh remains visible while the action runs. The button uses Spinner and stays disabled during the request, then disappears when the visual is ready. Failure uses the shared error tone and keeps the download action available. [SimReady](simready.md#catalog-download-consent-coverage) owns the request and test contract.
+
+### Replacement-finger coverage exclusions
+
+Only `short-cylinder-v` in the replacement-finger production matrix is quarantined on Linux and Windows through 28 November 2026 under [#2014](https://github.com/JamelHammoud/basecase/issues/2014). The other 19 geometry, grasp, replay and archive cases remain active, and macOS retains the complete matrix. The selected-cylinder saved-grasp browser declaration is separately quarantined only on Windows through that date under the same owner. Its authoring story, geometry, lifecycle and manufacturing tests remain active. [Distinct verdict and recording evidence](../notes/testing-simulate.md#gripper-and-tendon-exclusions-on-21-november) records the gaps without claiming a shared cause.

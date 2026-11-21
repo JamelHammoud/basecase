@@ -1495,3 +1495,26 @@ No physical supplier account, allocation ledger write, purchase, printer or robo
 The [Design agent](../../site/content/help/the-design-agent.md) hub's readiness rule now names purchasing evidence alongside Study measurements. Feature-specific instructions and navigation remain in the purchasing article's `hub_the_design_agent` field. The hub has no screenshots to replace, and its existing steps and labels remain accurate. The [Agent tools](../../site/content/help/agent-tools.md) reference now includes the sourcing inputs in its existing Study row.
 
 The contributing offer editor now starts with the selected Study row's saved destination and required arrival date, while reading current offers. `components/build/supplierOfferPlan.test.ts` verifies this initial context, an explicit Save and preservation of the ordinary Build editor's saved scene plan. Opening the editor performs no plan write. The first sourcing browser declaration also requires the editor's two requirement fields to match the Study request. The supplier-offer help article adds related navigation to the Study task, with its Build entry path and existing captures retained.
+
+## Nightly build exclusions on 21 November
+
+Check 44878070469 at `145ab720d6a280ec818fd859357398765b8f9740` failed six distinct Windows frozen-build declarations. Priority [#2013](https://github.com/JamelHammoud/basecase/issues/2013) owns their traces, with separate boundaries:
+
+| Declaration | Last evidenced stage | Unresolved boundary |
+| --- | --- | --- |
+| Independent frozen builds | Two builds and completion persisted | Step 2 after reload, followed by an earlier creation failure on a fresh retry |
+| Historical material returns | Make clicked | Preparation, source guards, worker, storage and new-button delivery |
+| Motor and print allocation | Make clicked | Same untraced creation boundaries, before allocation assertions |
+| Independent-context reservation | 180-second callback expired | Context creation, preparation, synchronization and cleanup lack a final stage trace |
+| Retained build repair | Compare clicked | Target comparison preview never appeared at line 83 |
+| Photo reversal and deletion | Frozen build opened and PNG chosen | Captured destination, decoding, commit and thumbnail delivery |
+
+The separate photo import and reload story passed on Windows. Linux passed the frozen-build declarations. These observations establish platform-specific failures but not one common cause. All six Windows declarations are quarantined through 28 November 2026. Fast frozen-Kit, strict transaction, allocation, concurrency, repair and photo tests remain active. They do not replace the ordinary browser paths. The published-workload [Windows records diagnostic 44879942911](https://github.com/JamelHammoud/basecase/actions/runs/44879942911), ticket `e080b132-9db1-4bf4-b03b-c1dc81a4f867`, passed the exact declaration in 93219.7853 ms with one worker, quarantine off and retries disabled. This establishes intermittency without a cause or rate. It does not observe the other five paths.
+
+The same run failed Current replay in two different Windows stages. The first story resized Build to 290 px, then could not click Electrical connections within 30000 ms. The second opened Current replay, then no retained result appeared within 30000 ms. Priority [#2016](https://github.com/JamelHammoud/basecase/issues/2016) owns both, separately. Both declarations are quarantined only on Windows through 28 November. Linux retained both, and the analytical solver, conservation, fingerprints, scene bytes, invalidation, reopening and disposal matrices remain active on Windows.
+
+The real electrical fixture bundle probe exceeded 5000 ms on Windows. Same-revision diagnostic 44879964048 passed it in 1953.0529 ms with one worker and no retries. The routeFixtures graph passed in the failing full run. Priority [#2018](https://github.com/JamelHammoud/basecase/issues/2018) owns graph construction, writing, import and cleanup tracing. Only the fixtures.ts declaration is quarantined on Windows through 28 November, preserving the real route graph and electrical pipelines.
+
+The part-menu Repair printing story exceeded its unchanged 15000 ms callback deadline on Linux and Windows. Last full green 44792356422 passed that unchanged declaration on both platforms. The log has no final stage distinguishing plan opening, navigation, plate preparation, marking or return to the walkthrough. Priority [#2019](https://github.com/JamelHammoud/basecase/issues/2019) owns it. Both platform-specific entries expire 28 November. macOS retains the full story. The separate command-entry declaration and fast repair planning, plate selection and print-record tests remain active.
+
+Every exclusion requires a demonstrated fix and at least ten baseline and ten candidate observations at equal load on the affected platform, retries disabled, before restoration. Keep the current assertions and deadlines. No flake rates or candidate browser results were measured in this repair.

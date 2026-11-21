@@ -32,7 +32,11 @@ export function changedLines(diff) {
 function chain(node) {
   if (ts.isIdentifier(node)) return [node.text];
 
-  if (ts.isPropertyAccessExpression(node)) return [...chain(node.expression), node.name.text];
+  if (ts.isPropertyAccessExpression(node)) {
+    const root = chain(node.expression);
+
+    return root.length ? [...root, node.name.text] : [];
+  }
 
   if (ts.isCallExpression(node)) return chain(node.expression);
 

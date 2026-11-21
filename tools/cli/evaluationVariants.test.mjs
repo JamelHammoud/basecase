@@ -9,6 +9,9 @@ import { stationaryEvaluationPolicy } from '../../src/cases/evaluationPolicy.fix
 import { sceneRobot } from '../../src/cases/sceneCheck';
 import { runCase } from '../../src/cases/runCase';
 import { identity, json } from './evaluationFiles.mjs';
+import { freezeEvaluation } from './evaluationFreeze.mjs';
+import { runEvaluation } from './evaluationRun.mjs';
+import { evaluationContext } from './evaluationContext.fixtures.mjs';
 
 const dirs = [];
 const fixture = async () => {
@@ -18,8 +21,12 @@ const fixture = async () => {
 
   return { ...(await evaluationFixture(dir)), dir };
 };
-const freeze = (f, ...args) =>
-  invokeEvaluation('freeze', f.baseline, '--candidate', f.candidate, '--package', f.package, '--seeds', '7', ...args);
+const freeze = (f, options = {}) =>
+  freezeEvaluation(
+    f.baseline,
+    { candidate: f.candidate, package: f.package, seeds: '7', ...options },
+    evaluationContext,
+  );
 
 afterEach(() => {
   for (const dir of dirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
@@ -34,8 +41,8 @@ it('compares a changed retained controller under the same robot, Case, engine an
 
   fs.copyFileSync(f.baseline, f.candidate);
   fs.writeFileSync(file, json(policy));
-  expect((await freeze(f, '--candidate-policy', file, '--conditions', 'fixed')).code).toBe(0);
-  expect((await invokeEvaluation('run', f.package, '--output', f.output)).code).toBe(1);
+  expect(await freeze(f, { 'candidate-policy': file, conditions: 'fixed' })).toBe(0);
+  expect(await runEvaluation(f.package, { output: f.output }, evaluationContext)).toBe(1);
 
   const report = JSON.parse(fs.readFileSync(path.join(f.output, 'comparison.json')));
 
@@ -52,8 +59,8 @@ it('pins the world when candidate geometry changes and records the geometric reg
   );
 
   fs.writeFileSync(f.candidate, await encodeSceneFile({ ...source, parts }));
-  expect((await freeze(f, '--conditions', 'fixed')).code).toBe(0);
-  expect((await invokeEvaluation('run', f.package, '--output', f.output)).code).toBe(1);
+  expect(await freeze(f, { conditions: 'fixed' })).toBe(0);
+  expect(await runEvaluation(f.package, { output: f.output }, evaluationContext)).toBe(1);
 
   const report = JSON.parse(fs.readFileSync(path.join(f.output, 'comparison.json')));
 
@@ -65,10 +72,10 @@ it('pins the world when candidate geometry changes and records the geometric reg
 it('independently reproduces a randomized-world paired outcome with the production runner', async () => {
   const f = await fixture();
 
-  expect((await freeze(f, '--conditions', 'randomized')).code).toBe(0);
+  expect(await freeze(f, { conditions: 'randomized' })).toBe(0);
   expect((await invokeEvaluation('run', f.package, '--output', f.output, '--seeds', '99')).code).toBe(2);
   expect(fs.existsSync(f.output)).toBe(false);
-  expect((await invokeEvaluation('run', f.package, '--output', f.output)).code).toBe(1);
+  expect(await runEvaluation(f.package, { output: f.output }, evaluationContext)).toBe(1);
 
   const report = JSON.parse(fs.readFileSync(path.join(f.output, 'comparison.json')));
   const mj = await loadMujoco();
@@ -95,10 +102,10 @@ it('refuses missing geometry, corrupt prepared bytes and a mismatched engine bef
       ),
     }),
   );
-  expect((await freeze(f)).code).toBe(2);
+  await expect(freeze(f)).rejects.toThrow('ENOENT');
   expect(fs.existsSync(f.package)).toBe(false);
   fs.copyFileSync(f.baseline, f.candidate);
-  expect((await freeze(f)).code).toBe(0);
+  expect(await freeze(f)).toBe(0);
 
   const manifest = path.join(f.package, 'evaluation.json');
   const declaration = JSON.parse(fs.readFileSync(manifest));
@@ -111,12 +118,14 @@ it('refuses missing geometry, corrupt prepared bytes and a mismatched engine bef
 
   const engineOutput = path.join(f.dir, 'engine-refusal');
 
-  expect((await invokeEvaluation('run', f.package, '--output', engineOutput)).code).toBe(2);
+  expect(await runEvaluation(f.package, { output: engineOutput }, evaluationContext)).toBe(2);
   expect(JSON.parse(fs.readFileSync(path.join(engineOutput, 'comparison.json'))).problem).toBe('engine');
 
   fs.writeFileSync(manifest, json(declaration));
   fs.writeFileSync(path.join(f.package, 'candidate', 'geometry.json'), 'corrupt');
-  expect((await invokeEvaluation('run', f.package, '--output', f.output)).stderr).toContain('Evaluation file differs:');
+  await expect(runEvaluation(f.package, { output: f.output }, evaluationContext)).rejects.toThrow(
+    'Evaluation file differs:',
+  );
   expect(fs.existsSync(f.output)).toBe(false);
 });
 
@@ -130,13 +139,26 @@ it('bounds failure retention while completing every declared short trial', async
   fs.writeFileSync(f.baseline, bytes);
   fs.writeFileSync(f.candidate, bytes);
   expect(
-    (await freeze(f, '--seeds', Array.from({ length: 16 }, (_, i) => i).join(','), '--conditions', 'fixed')).code,
+    (
+      await invokeEvaluation(
+        'freeze',
+        f.baseline,
+        '--candidate',
+        f.candidate,
+        '--package',
+        f.package,
+        '--seeds',
+        Array.from({ length: 16 }, (_, i) => i).join(','),
+        '--conditions',
+        'fixed',
+      )
+    ).code,
   ).toBe(0);
 
-  const run = await invokeEvaluation('run', f.package, '--output', f.output);
+  const run = await runEvaluation(f.package, { output: f.output }, evaluationContext);
   const report = JSON.parse(fs.readFileSync(path.join(f.output, 'comparison.json')));
 
-  expect(run.code, JSON.stringify(report)).toBe(0);
+  expect(run, JSON.stringify(report)).toBe(0);
 
   const archives = fs.readdirSync(f.output).filter((name) => name.endsWith('.tries.zip'));
 

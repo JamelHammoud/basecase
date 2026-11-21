@@ -7,32 +7,12 @@ import { decodeTryArchive } from '../../src/cases/tryArchiveJobs';
 import { runCase } from '../../src/cases/runCase';
 import loadMujoco from '@mujoco/mujoco';
 import * as sceneFile from '../../src/utils/sceneFile';
-import * as evaluation from '../../src/cases/evaluation';
 import * as sceneCheck from '../../src/cases/sceneCheck';
-import * as controller from '../../src/cases/evaluationController';
-import * as random from '../../src/cases/caseRandom';
 import { freezeEvaluation } from './evaluationFreeze.mjs';
 import { runEvaluation } from './evaluationRun.mjs';
-import * as componentMeshes from '../../src/three/componentMeshes';
-import * as assets from '../../src/cases/evaluationAssets';
-import * as replay from '../../src/cases/evaluationReplay';
-import * as recordingValues from '../../src/cases/recordingValues';
-import * as execution from '../../src/cases/evaluationExecution';
+import { evaluationContext as context } from './evaluationContext.fixtures.mjs';
 
 const dirs = [];
-const modules = {
-  'src/utils/sceneFile.ts': sceneFile,
-  'src/cases/evaluation.ts': evaluation,
-  'src/cases/sceneCheck.ts': sceneCheck,
-  'src/cases/evaluationController.ts': controller,
-  'src/cases/caseRandom.ts': random,
-  'src/three/componentMeshes.ts': componentMeshes,
-  'src/cases/evaluationAssets.ts': assets,
-  'src/cases/evaluationReplay.ts': replay,
-  'src/cases/recordingValues.ts': recordingValues,
-  'src/cases/evaluationExecution.ts': execution,
-};
-const context = { root: process.cwd(), load: async (file) => modules[file] };
 
 afterEach(() => {
   for (const dir of dirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });

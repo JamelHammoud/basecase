@@ -1261,5 +1261,13 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44878070469 exceeded the unchanged 10000 ms beforeAll deadline in fleetFixture before the authorization assertion ran. Existing Fleet fixture owner #1401 owns initialization, migration, connection and cleanup tracing. Whole-file quarantine is required because setup precedes declaration filtering. Fast build repair identity and Fleet authorization and handler checks remain active. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+  },
+  {
+    "file": "src/cases/personCamera.test.ts",
+    "test": "",
+    "issue": 1400,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44885120824 exceeded the unchanged 15000 ms beforeAll deadline before all ten rendered occlusion assertions. The same setup path is already quarantined on Windows under #1400. MuJoCo loading, bundling, server startup, browser launch, worker readiness and shader initialization are not separately traced, so the timeout does not establish a shared platform cause. Whole-file quarantine is required because setup precedes declaration filtering. Person physics, sensing, persistence and geometry coverage remain active. Restore only after stage tracing, a demonstrated fix and ten baseline and ten candidate equal-load observations on Linux with retries disabled and existing assertions and deadlines intact. macOS remains active."
   }
 ]

@@ -71,6 +71,7 @@ function CanvasToolbar({ core, actions, ui }: Pick<CanvasCardProps, 'core' | 'ac
 
 function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
   const { tool, marks, toasts } = core;
+  const editing = !core.buildAlong.frozen;
 
   return (
     <div className="absolute bottom-5 inset-x-0 z-20 flex flex-col items-center gap-[8px] pointer-events-none">
@@ -79,7 +80,7 @@ function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
           <Toast toast={toasts.toast} onDismiss={toasts.dismissToast} />
         </div>
       )}
-      {active && !core.printing.mode && (
+      {active && !core.printing.mode && editing && (
         <TryTimeline
           timeline={core.simTraining.cases.timeline}
           cases={core.simTraining.cases}
@@ -98,8 +99,10 @@ function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
           }}
         />
       )}
-      {tool.marking && !core.printing.mode && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
-      {!core.caseRun.open && !core.triesView.open && (
+      {tool.marking && !core.printing.mode && editing && (
+        <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />
+      )}
+      {!core.caseRun.open && !core.triesView.open && editing && (
         <div className="pointer-events-auto max-w-[calc(100%-24px)]">
           <CanvasToolbar core={core} actions={actions} ui={ui} />
         </div>

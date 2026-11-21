@@ -45,7 +45,7 @@ Your scene must have movable joints. Assign one exact catalog actuator to each d
 
 Basecase saves the archive to your downloads. To discard the export, click **Cancel** in the progress toast.
 
-To keep local assembly and repair progress outside the archive, [resume a robot build](/help/resume-a-robot-build).
+To keep local assembly and repair progress outside the archive, [resume a robot build](/help/resume-a-robot-build). Its [assembly photos](/help/keep-assembly-photos) stay in the local app or browser profile and aren’t included in the archive.
 
 ![The arm after the kit archive has downloaded](/help/export-a-robot-kit/exported.png)
 

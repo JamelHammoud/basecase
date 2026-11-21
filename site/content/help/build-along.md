@@ -40,4 +40,4 @@ In the editable design, a green check appears beside the step count when every p
 
 For a broken part, [Repair a part](/help/repair-a-part) opens a walkthrough of removal, replacement and reassembly in Build Along.
 
-To retain separate progress for physical copies of one design, [resume a robot build](/help/resume-a-robot-build). [Repair a robot build](/help/repair-a-robot-build) advances only the selected build to a checked revision.
+To retain separate progress for physical copies of one design, [resume a robot build](/help/resume-a-robot-build). You can [keep assembly photos](/help/keep-assembly-photos) beside each saved assembly step. [Repair a robot build](/help/repair-a-robot-build) advances only the selected build to a checked revision.

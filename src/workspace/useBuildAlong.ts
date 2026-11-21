@@ -1,6 +1,7 @@
 import { navigateFrozenHistory } from './frozenBuildSession';
 import { canRecordRepair } from '../kit/buildRepairState';
 import { useFrozenBuildAlong } from './useFrozenBuildAlong';
+import { useBuildPhotos } from './useBuildPhotos';
 import { stepView, type Session } from './buildAlongSession';
 import { localBuilds } from '../kit/buildRecords';
 import type { ShowToast } from './types';
@@ -51,6 +52,7 @@ export function useBuildAlong({ guide, showToast, partsRef, projectRef, viewport
   const openingRef = useRef(0);
   const [repairing, setRepairing] = useState(false);
   const [creating, setCreating] = useState(false);
+  const photos = useBuildPhotos(session, showToast);
 
   const openPlan = async (source: () => Promise<GuidePlan | null>) => {
     const run = ++openingRef.current;
@@ -160,6 +162,7 @@ export function useBuildAlong({ guide, showToast, partsRef, projectRef, viewport
     });
 
   return {
+    photos,
     frozen: session?.frozen ?? null,
     saving,
     complete,

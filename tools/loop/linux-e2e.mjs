@@ -6,7 +6,7 @@ import { run } from './lib/sh.mjs';
 
 import { fetchGit } from './lib/gitFetch.mjs';
 
-const IMAGE = 'node:26.13.0-bookworm';
+const IMAGE = 'node:26.13.1-bookworm';
 const ROOT = path.resolve(import.meta.dirname, '..', '..');
 const SETUP_TIMEOUT = 40 * 60 * 1000;
 const RUN_TIMEOUT = 30 * 60 * 1000;

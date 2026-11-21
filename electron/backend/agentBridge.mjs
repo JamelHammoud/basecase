@@ -3,8 +3,9 @@ import crypto from 'node:crypto';
 import { guardBridge } from '../bridgeGuard.mjs';
 import { DEFAULT_WORKSPACE, TOOL_USE_HEADER } from './constants.mjs';
 import { isLaneOf } from './liveRuns.mjs';
+import { readBridgeBody } from '../readBridgeBody.mjs';
+import { AGENT_BODY_BYTES } from '../bridgeBodyLimits.mjs';
 
-const MAX_BODY_BYTES = 80_000_000;
 const DEFAULT_TIMEOUT_MS = 60000;
 
 const RENDERER_TIMEOUTS_MS = new Map([
@@ -112,14 +113,12 @@ export class AgentBridge {
       return;
     }
 
-    let body = '';
-
-    req.on('data', (chunk) => {
-      body += chunk;
-
-      if (body.length > MAX_BODY_BYTES) req.destroy();
+    readBridgeBody({
+      req,
+      res,
+      limit: AGENT_BODY_BYTES,
+      onBody: (body) => this.answer({ ...route, body }, res),
     });
-    req.on('end', () => this.answer({ ...route, body }, res));
   }
 
   start() {

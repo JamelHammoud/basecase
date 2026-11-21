@@ -1,3 +1,5 @@
+import { readBridgeBody } from './readBridgeBody.mjs';
+import { bridgeBodyLimit } from './bridgeBodyLimits.mjs';
 import { electricalPostRoutes } from './electrical/routes.mjs';
 import { BasecaseBackendService } from './backend-service.mjs';
 import { guardBridge } from './bridgeGuard.mjs';
@@ -165,34 +167,11 @@ async function respondToPost({ routes, url, body, res }) {
 }
 
 function handlePost({ routes, url, req, res }) {
-  let body = '';
-  let length = 0;
-  let refused = false;
-
-  req.on('data', (chunk) => {
-    if (refused) return;
-
-    length += chunk.length;
-
-    if ((url.startsWith('/vision-training-') || url.startsWith('/electrical-')) && length > 24 * 1024 * 1024) {
-      refused = true;
-      body = '';
-      res.statusCode = 413;
-      res.end(
-        JSON.stringify({
-          error: url.startsWith('/electrical-')
-            ? 'The board request is too large'
-            : 'The training request is too large',
-        }),
-      );
-
-      return;
-    }
-
-    body += chunk.toString();
-  });
-  req.on('end', () => {
-    if (!refused) respondToPost({ routes, url, body, res });
+  readBridgeBody({
+    req,
+    res,
+    limit: bridgeBodyLimit(url),
+    onBody: (body) => respondToPost({ routes, url, body, res }),
   });
 }
 

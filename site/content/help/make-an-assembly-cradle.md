@@ -2,6 +2,7 @@
 title: Make an assembly cradle
 date: 2026-11-20
 collection: build-and-print
+type: task
 covers:
   - src/components/build/CradleSheet.tsx
   - src/components/build/CradleBarActions.tsx

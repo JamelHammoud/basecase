@@ -9,6 +9,7 @@ import { build } from 'rolldown';
 import { unzipSync, strFromU8 } from 'three/examples/jsm/libs/fflate.module.js';
 import { xmlConnections } from './netlist.mjs';
 import { checkBoard } from './boardCheck.mjs';
+import { fixtureBundle } from './fixtureBundle.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const output = path.join(root, 'scratch', 'electrical', 'acceptance');
@@ -138,16 +139,7 @@ async function main() {
     const bundle = path.join(temporary, 'fixtures.mjs');
 
     await build({
-      input: path.join(root, 'tools/electrical/fixtures.ts'),
-      platform: 'node',
-      transform: { define: { 'import.meta.env.MODE': '"production"', 'import.meta.env.BASE_URL': '"/"' } },
-      plugins: [
-        {
-          name: 'electrical-node-asset',
-          resolveId: (id) =>
-            id === 'manifold-3d/manifold.wasm?url' ? path.join(root, 'tools/cli/assetUrl.mjs') : null,
-        },
-      ],
+      ...fixtureBundle('./fixtures.ts'),
       output: { file: bundle, format: 'esm', codeSplitting: false },
     });
 

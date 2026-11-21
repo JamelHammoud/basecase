@@ -4,6 +4,7 @@ import { eachLimited } from '../eachLimited.mjs';
 import { serviceRefusal } from '../refusal.mjs';
 import { fileSize, MB } from '../fileSize.mjs';
 import { percent } from '../percent.mjs';
+import { readCapped } from '../publicFetch.mjs';
 
 const HF = 'https://huggingface.co';
 const SHA = /^[0-9a-f]{40}$/;
@@ -45,16 +46,28 @@ async function listTree(a) {
   let next = `${HF}/api/datasets/${a.namespace}/${a.dataset}/tree/${a.sha}/${encodeURIComponent(a.packageName)}?recursive=true`;
 
   for (let page = 0; next && page < 50; page++) {
-    const res = await fetch(next);
+    if (!URL.canParse(next) || new URL(next).origin !== HF) throw refused({ status: 200 });
+
+    const res = await fetch(next, { redirect: 'manual' });
 
     if (!res.ok) throw refused(res);
 
-    files.push(...(await res.json()).filter((e) => e.type === 'file'));
+    const entries = await res.json();
+
+    if (!Array.isArray(entries) || !entries.every(validEntry)) throw refused(res);
+
+    files.push(...entries.filter((e) => e.type === 'file'));
 
     next = /<([^>]+)>;\s*rel="next"/.exec(res.headers.get('link') ?? '')?.[1] ?? null;
   }
 
   return files;
+}
+
+function validEntry(entry) {
+  const size = entry?.size;
+
+  return typeof entry?.path === 'string' && Number.isFinite(size) && size >= 0;
 }
 
 export function neededFiles(entries) {
@@ -65,7 +78,7 @@ export function neededFiles(entries) {
 
     if (IMAGE.test(p) && NOT_ALBEDO.test(path.basename(p))) return false;
 
-    return (e.size ?? 0) <= MAX_FILE;
+    return e.size <= MAX_FILE;
   });
 }
 
@@ -77,36 +90,54 @@ function insideDir(dir, file) {
   return target;
 }
 
-async function downloadOne(a, entry, dir) {
+function addBytes(budget, size) {
+  if (budget.bytes + size > MAX_TOTAL) {
+    throw new Error(`The asset is larger than ${fileSize(MAX_TOTAL)}. Choose a smaller one.`);
+  }
+
+  budget.bytes += size;
+}
+
+async function downloadOne(a, entry, dir, budget) {
   const target = insideDir(dir, entry.path);
 
-  if (fs.existsSync(target) && fs.statSync(target).size === entry.size) return;
+  if (fs.existsSync(target) && fs.statSync(target).size === entry.size) {
+    addBytes(budget, entry.size);
+
+    return;
+  }
 
   const res = await fetch(fileUrl(a, entry.path));
 
   if (!res.ok) throw refused(res);
 
+  const data = await readCapped(res, Math.min(MAX_FILE, entry.size));
+
+  addBytes(budget, data.byteLength);
   fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.writeFileSync(target, Buffer.from(await res.arrayBuffer()));
+  fs.writeFileSync(target, data);
 }
 
 export async function downloadAsset(a, dir, say) {
   say('Listing files…');
 
   const files = neededFiles(await listTree(a));
-  const total = files.reduce((s, f) => s + (f.size ?? 0), 0);
+  const total = files.reduce((s, f) => s + f.size, 0);
 
-  if (total > MAX_TOTAL) throw new Error(`The asset is larger than ${fileSize(MAX_TOTAL)}. Choose a smaller one.`);
+  addBytes({ bytes: 0 }, total);
 
   if (!files.some((f) => f.path === a.rootPath)) throw new Error('The asset’s main file is missing.');
 
+  files.forEach((f) => insideDir(dir, f.path));
+
   let done = 0;
   let bytes = 0;
+  const budget = { bytes: 0 };
 
   await eachLimited(files, 6, async (f) => {
-    await downloadOne(a, f, dir);
+    await downloadOne(a, f, dir, budget);
     done++;
-    bytes += f.size ?? 0;
+    bytes += f.size;
     say(`Downloading ${percent(bytes / Math.max(total, 1))}`, { done, total: files.length });
   });
 

@@ -37,3 +37,34 @@ The app still supplies no real measured servo populations. This refinement chang
 Validation passed implementation formatting and lint, docs, site copy for 314 pages and types. The related run selected 367 files: 364 passed, two failed and one was skipped, with 2,329 passing tests and five failures. Three classroom cup-grading seed batches exceeded 5,000 ms, followed by an incomplete count of 15 rather than 20 runs. The rover-obstacle rendered visibility test exceeded 15,000 ms. Their cause was not established. No deadlines or quarantine entries changed, and the broad selection was not repeated. The log is `scratch/check-distance.log`.
 
 The initial run also found a formatting warning in the new parity test. After formatting it, the focused check on that test and the documentation passed all checks and both tests in 112 ms of Vitest time. That log is `scratch/check-distance-final.log`. Copy accounting is net zero, and preflight has no findings.
+
+## Recorded body parameter analysis
+
+The numerical implementation bounds an analysis to 24 parameters, 256 selected status samples and 16 joints. It performs one nominal replay and two probes per parameter, at most 49 replays. The generated two-link arm has three parameters and uses seven replays. A shared counter stops after 1,000,000 aggregate physics steps, independently of the preflight estimate. Each replay disposes its engine in the existing `finally` path, including cancellation. Jacobi decomposition retains bounded column copies and at most 24 parameter-direction vectors. Input validation accepts at most 4,096 status samples, 2,048 intents, 20 analyzed seconds and 1 MiB of XML.
+
+Evidence uses the existing worker JSON codec and content-addressed snapshot store. A snapshot is limited to 8 MiB, and the scene index retains at most 32 tries. A result replaces its input reference without evicting another try. Repeating identical analyses deduplicates. The underlying content store remains shared with existing snapshot consumers. Optional recording-evidence preparation does not reset the recorder's preparation key on failure. Closing the analysis sheet cancels its worker, and closed sheets do no source-fingerprint work.
+
+Production capture of the final source on Mac17,8, Apple M5 Pro with 18 logical CPUs and Node 26.13.0 measured seven replays in 300.885 ms of worker work, including that worker's MuJoCo initialization. The WASM high-water allocation was 17,629,184 bytes. The renderer's endpoint JavaScript heap observation was 36,596,325 bytes. A one-byte MuJoCo buffer exposes the backing WASM heap size after replay, and is immediately freed. The WASM heap grows monotonically, so this is its high-water allocation, not renderer peak heap or process RSS.
+
+Synchronous renderer submission took 0.140 ms. The entry-to-result automation window was 5,913.515 ms, excluding screenshots. Its PerformanceObserver recorded no long tasks, whose browser threshold is 50 ms. The CPU profile spans 6,166.785 ms including instrumentation, with 898 samples. Of those, 816 were idle and 23 were unattributed program samples. Named JavaScript, DOM and garbage-collection leaves account for about 54.7 ms of sampled intervals. This statistical profile does not establish precise CPU accounting or attribute every renderer interval to the feature. Physics and raw-session parsing remain in the worker. Raw observations are `scratch/body-browser-final-metrics.json` and `scratch/body-main-thread.cpuprofile`.
+
+The earlier capture measured 577.245 ms of worker work with the same seven replays and WASM allocation. Its interaction window included screenshots and long tasks of 118, 336 and 173 ms. The final observation separates screenshots and uses the final bundle. These single observations do not establish a performance improvement. The first cancellation probe completed analysis before the delayed automation click and retained a result. It is not an active cancellation observation. A second probe cancelled before submission and is not a worker-termination measurement. The final probe waits for actual worker submission before clicking the same Cancel control, without adding a workflow delay or changing a deadline.
+
+The final cancellation observation uses a generated 19.8-second arm run, rather than relying on automation to beat a 3.6-second run's completion. It waits for nonzero submission metrics, then clicks the actual Cancel button. UI acknowledgment took 11.925 ms, and the worker termination call returned in 0.005 ms. Submission took 0.305 ms. No analysis completed and the retained reference remained unanalyzed. This measures acknowledgment and termination-call return, not operating-system worker teardown or a confirmed physics instruction boundary. Per-step cancellation is independently exercised in the production replay tests. The final evidence is `scratch/body-long-cancellation-metrics.json` and `scratch/body-long-cancellation.log`.
+
+The ten-scenario Node production-pipeline measurement used 100 replays in total. Its WASM high-water allocation remained 17,629,184 bytes across all ten scenarios. This loads MuJoCo once before the scenario timings and does not measure browser worker startup. Raw observations are `scratch/body-matrix-measurements.json`.
+
+| Generated recording | Replays | Analysis time in Node, ms |
+| --- | ---: | ---: |
+| single-link arm | 5 | 134.208 |
+| two-link masses | 7 | 152.196 |
+| terminal payload | 7 | 121.050 |
+| coupled wrist | 7 | 142.289 |
+| horizontal arm | 5 | 101.899 |
+| informative rover | 17 | 689.335 |
+| stationary rover | 17 | 715.092 |
+| asymmetric quadruped | 21 | 1236.762 |
+| unexcited pan-tilt | 7 | 89.205 |
+| unchanged control | 7 | 157.782 |
+
+No additional workflow wait, retry, gate or deadline increase is introduced. Local measurements are not Linux or Windows CI observations and establish no physical diagnostic accuracy.

@@ -44,6 +44,8 @@ If you change the robot or its calibration while fitting runs, Basecase discards
 
 See [Bodies fitted from recordings](/help/simulation-in-basecase#bodies-fitted-from-recordings) for how a fit changes simulation, Checks and training.
 
+You can also [inspect body parameters in a saved try](/help/inspect-body-parameters) without changing a calibration.
+
 ## Restore the previous body
 
 1. In **Operate**, beside the active body version, click **Roll Back**.

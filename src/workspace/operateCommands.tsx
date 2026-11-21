@@ -15,6 +15,7 @@ import type { CommandInputs } from './sceneCommands';
 import { showLeftTab } from './showView';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { addRobotComputer } from './robotComputer';
+import { openBodyAnalysis } from './useBodyAnalysis';
 import { bodyRobot, fitBodyFromUi } from './bodyActions';
 
 const showOperateOf = (core: WorkspaceCore) => () => showLeftTab(core, 'operate');
@@ -201,6 +202,17 @@ export function operateCommands(inputs: CommandInputs): Command[] {
     ...setUpServosCommands(inputs, showOperate),
     ...(bodyRobot(core)
       ? [
+          {
+            id: 'analyze-body-run',
+            group: 'Operate',
+            label: 'Analyze Try',
+            icon: <OperateIcon />,
+            keywords: 'body parameter mass payload distinguishability recorded evidence',
+            run: () => {
+              showOperate();
+              openBodyAnalysis(core.scene.sceneId);
+            },
+          },
           {
             id: 'fit-body',
             group: 'Operate',

@@ -26,6 +26,12 @@ import { connectedUnits, unitOfEvent } from '../robot/robotUnits';
 import type { RobotEvent } from '../robot/robotState';
 import { useRobot } from '../robot/useRobot';
 import type { Simulation } from '../sim/useSimulation';
+import type { BodyRecordingContext } from '../reality/bodyRecordingEvidence';
+import { bodyRecordingContext, retainBodyRecording } from '../reality/bodyRecordingEvidence';
+import { withBodyEvidence } from '../reality/bodyEvidence';
+import { unitHistories } from '../reality/projectCalibrations';
+import type { BodyProjectUpdate } from '../reality/bodyEvidence';
+import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { RobotJoint } from '../types/robotics';
 import { errorMessage } from '../utils/errorMessage';
 import type { ShowToast } from './types';
@@ -35,6 +41,9 @@ interface OperateTriesInput {
   sceneId: string;
   joints: readonly RobotJoint[];
   sim: Simulation;
+  project: ProjectSettings;
+  parts: ScenePart[];
+  updateProject: BodyProjectUpdate;
   showToast: ShowToast;
 }
 
@@ -68,23 +77,44 @@ async function replayed(sim: Simulation, stored: StoredTry, video: VideoSegment 
   }
 }
 
-export function useOperateTries({ active, sceneId, joints, sim, showToast }: OperateTriesInput) {
+export function useOperateTries({
+  active,
+  sceneId,
+  joints,
+  sim,
+  showToast,
+  project,
+  parts,
+  updateProject,
+}: OperateTriesInput) {
   const robot = useRobot();
   const camera = useOperatorCamera();
   const sent = useRef('');
+  const contexts = useRef(new Map<string, BodyRecordingContext>());
   const stream = active && robot.link === 'connected' ? camera.stream : null;
 
   const sendScene = useEffectEvent(async (ids: string[]) => {
+    const unit = selectedUnit();
     const model = sim.modelNow() ?? (await sim.buildModel());
+    const modelHash = await sha256(model.xml);
 
     recordRobotSample({
       scene: {
         sceneId: SAFE_ID.test(sceneId) ? sceneId : 'scene',
         robot: model.robots.map((r) => r.name).join(', ') || 'Robot',
-        modelHash: await sha256(model.xml),
+        modelHash,
         joints: ids,
       },
     });
+
+    try {
+      const base = await sim.buildModel({ withoutBody: true, calibrations: unitHistories(project, unit) });
+      const context = await bodyRecordingContext({ model: base, project, parts, unit, scene: sceneId, joints: ids });
+
+      if (context?.modelHash === modelHash && contexts.current.size < 32) contexts.current.set(unit, context);
+    } catch {
+      contexts.current.delete(unit);
+    }
   });
 
   const syncScene = useEffectEvent(() => {
@@ -128,6 +158,16 @@ export function useOperateTries({ active, sceneId, joints, sim, showToast }: Ope
     if (!stored) return;
 
     if (!ours) return active ? noteStoredTry(stored) : undefined;
+
+    const unit = unitOfEvent(event);
+    const session = await loadSession(stored.id);
+    const evidence =
+      session &&
+      (await retainBodyRecording({ context: contexts.current.get(unit) ?? null, stored, session, project }).catch(
+        () => null,
+      ));
+
+    if (evidence) updateProject((current) => withBodyEvidence(current, evidence));
 
     await replayed(sim, stored, video);
   });

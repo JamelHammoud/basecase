@@ -1,6 +1,7 @@
 import type { AssignmentContext } from '../classroom/envelope';
 import type { EarthOrigin } from '../earth/earthOrigin';
 import type { CalibrationHistory } from '../reality/history';
+import type { BodyEvidenceRef } from '../reality/bodyEvidence';
 import type { BodyHistory } from '../reality/bodyTypes';
 import type { StudyRecord } from '../study/types';
 import type { InterfacePlan } from './interfaces';
@@ -32,6 +33,7 @@ export interface ProjectRecords {
   earth?: EarthOrigin;
   servoCalibrations?: Record<string, CalibrationHistory>;
   unitCalibrations?: Record<string, Record<string, CalibrationHistory>>;
+  bodyEvidence?: BodyEvidenceRef[];
   bodyCalibrations?: Record<string, BodyHistory>;
   study?: StudyRecord;
 }

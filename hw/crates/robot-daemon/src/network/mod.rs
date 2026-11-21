@@ -5,7 +5,7 @@ mod pairing;
 pub mod server;
 
 use hmac::{Hmac, Mac};
-pub use pairing::{auth_mac, random_hex, Pairing};
+pub use pairing::{auth_mac, random_hex, Pairing, PairingAttempts};
 use sha2::Sha256;
 use std::io::{BufRead, BufReader, Error, ErrorKind};
 use std::net::IpAddr;

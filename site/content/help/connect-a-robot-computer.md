@@ -21,6 +21,8 @@ covers:
   - electron/robot/robotInstall.mjs
   - electron/robot/networkRobotLink.mjs
   - tools/cli/basecase.mjs
+  - hw/crates/robot-daemon/src/network/pairing.rs
+  - hw/crates/robot-daemon/src/network/server.rs
 ---
 
 Run the daemon on a Linux computer and connect to it over your local network, with the robot's joint map and calibration from your scene.
@@ -56,10 +58,15 @@ The installer reports a failure if those prerequisites are missing.
 
 1. In **Play**, choose **Operate**.
 2. In **Robot**, choose the robot's name.
-3. In **Pairing code**, enter the six-digit code printed by the daemon on its first start.
+3. In **Pairing code**, enter the current six-digit code printed by the daemon.
 4. Click **Connect Robot**.
 
 ![Kitchen Arm selected in Operate with its pairing code entered](/help/connect-a-robot-computer/connect.png)
+
+The code lasts 10 minutes. After 10 failed exchanges, the daemon replaces it and prints a fresh code on the robot computer.
+An expired code is replaced when a computer next connects or the daemon restarts.
+To read the current code on the robot computer, run `journalctl --user -u basecase-robot --no-pager` and use the latest `Pairing code:` line.
+Each peer IP gets five attempts per minute. If your computer reaches that limit, wait one minute before reconnecting.
 
 Enter the code once. Later connections use the key saved on both computers, so leave the code blank.
 The pairing follows the robot when its IP address changes. If DHCP changes its address while the service is running, restart the service over SSH with `systemctl --user restart basecase-robot`, then reconnect.

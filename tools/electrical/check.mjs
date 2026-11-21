@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { build } from 'rolldown';
+import { buildElectricalFixtures } from './fixtureBundle.mjs';
 import { unzipSync, strFromU8 } from 'three/examples/jsm/libs/fflate.module.js';
 import { xmlConnections } from './netlist.mjs';
 import { checkBoard } from './boardCheck.mjs';
@@ -137,19 +137,7 @@ async function main() {
   try {
     const bundle = path.join(temporary, 'fixtures.mjs');
 
-    await build({
-      input: path.join(root, 'tools/electrical/fixtures.ts'),
-      platform: 'node',
-      transform: { define: { 'import.meta.env.MODE': '"production"', 'import.meta.env.BASE_URL': '"/"' } },
-      plugins: [
-        {
-          name: 'electrical-node-asset',
-          resolveId: (id) =>
-            id === 'manifold-3d/manifold.wasm?url' ? path.join(root, 'tools/cli/assetUrl.mjs') : null,
-        },
-      ],
-      output: { file: bundle, format: 'esm', codeSplitting: false },
-    });
+    await buildElectricalFixtures({ input: 'tools/electrical/fixtures.ts', file: bundle });
 
     const { acceptanceFixtures } = await import(pathToFileURL(bundle).href);
     const selectedName = process.argv.includes('--fixture')

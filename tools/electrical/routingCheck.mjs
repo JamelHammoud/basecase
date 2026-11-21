@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { routeTools } from '../../electron/electrical/routeTools.mjs';
 import { pathToFileURL } from 'node:url';
-import { build } from 'rolldown';
+import { buildElectricalFixtures } from './fixtureBundle.mjs';
 import { routeNativeBoard } from '../../electron/electrical/route.mjs';
 import { runNativeBoard } from '../../electron/electrical/validate.mjs';
 import { routingFaults } from './routingFaults.mjs';
@@ -17,18 +17,7 @@ if (process.argv.includes('--docker')) process.env.BASECASE_KICAD_DOCKER = '1';
 const output = path.resolve('scratch/electrical/routing');
 
 await fs.mkdir(output, { recursive: true });
-await build({
-  input: 'tools/electrical/routeFixtures.ts',
-  platform: 'node',
-  transform: { define: { 'import.meta.env.MODE': '"production"', 'import.meta.env.BASE_URL': '"/"' } },
-  plugins: [
-    {
-      name: 'native-routing-assets',
-      resolveId: (id) => (id === 'manifold-3d/manifold.wasm?url' ? path.resolve('tools/cli/assetUrl.mjs') : null),
-    },
-  ],
-  output: { file: path.join(output, 'fixtures.mjs'), format: 'esm', codeSplitting: false },
-});
+await buildElectricalFixtures({ input: 'tools/electrical/routeFixtures.ts', file: path.join(output, 'fixtures.mjs') });
 
 const { routingFixtures, acceptBoardRoute, finishBoardExport, encodeSceneFile, decodeSceneFile, nativeKitFixture } =
   await import(pathToFileURL(path.join(output, 'fixtures.mjs')).href);

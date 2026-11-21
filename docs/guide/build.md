@@ -841,3 +841,11 @@ Closing an enlarged photo returns focus to its thumbnail. Escape within the phot
 The damaged-photo browser path waits for the frozen view to mount after reopening before checking its retained attachment. This separates asynchronous Kit verification from photo loading and deletion assertions.
 
 Step callouts wrap within the available header width, including component names without spaces. Their height grows with the text so the frozen CAD and photo panes remain below the whole header. The photo browser flow uses long component names and measures their bounds before and after step navigation at the minimum window and Build-panel widths.
+
+### Frozen-build and replay browser exclusions
+
+Through 28 November 2026, six frozen-build declarations are quarantined only on Windows under [#2013](https://github.com/JamelHammoud/basecase/issues/2013): independent frozen builds, historical material returns, component and print allocations, independent-context reservation, repair comparison and photo deletion. The separate photo import and reload story remains active. Other platforms retain every declaration. Fast frozen-Kit, strict transaction, concurrency, repair, allocation and photo pipeline checks remain active on Windows. They do not replace ordinary browser creation, navigation, reservation, comparison or image import.
+
+Both Current replay browser declarations are quarantined only on Windows through that date under [#2016](https://github.com/JamelHammoud/basecase/issues/2016). Analytical circuits, conservation, fingerprints, retained reopening, scene bytes, source invalidation and disposal tests remain active. The real `fixtures.ts` bundle/import probe is quarantined only on Windows through that date under [#2018](https://github.com/JamelHammoud/basecase/issues/2018), while the real `routeFixtures.ts` graph and electrical pipeline checks remain active.
+
+The part-menu Repair replacement-printing declaration is quarantined on Linux and Windows through that date under [#2019](https://github.com/JamelHammoud/basecase/issues/2019). The command-entry story, fast repair planner, plate selection and print-record checks remain active. macOS retains the complete print walkthrough. [Failure boundaries and restoration conditions](../notes/testing-build.md#nightly-build-exclusions-on-21-november) distinguish every excluded path.

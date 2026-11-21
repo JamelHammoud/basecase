@@ -25,7 +25,7 @@ export function RightPanel({ core, actions, ui, agent }: RightPanelProps) {
       aria-hidden={!isRightOpen}
       inert={hidden}
       className={`relative h-full shrink-0 overflow-hidden ${
-        resizingPanel === 'right' ? '' : 'transition-[width] duration-[240ms] ease-[cubic-bezier(0.2,0,0,1)]'
+        resizingPanel === 'right' || hidden ? '' : 'transition-[width] duration-[240ms] ease-[cubic-bezier(0.2,0,0,1)]'
       }`}
       style={{ width: isRightOpen ? panelWidths.right + LAYOUT.panelGap : 0 }}
     >

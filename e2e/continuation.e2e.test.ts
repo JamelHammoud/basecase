@@ -21,9 +21,18 @@ it('branches a newly scripted Library try from the timeline and saves a manual r
   const source = await recordSource(app);
   const original = (await call<{ data: string }>(app.page, 'tries-recording', source.id)).data;
 
-  await openSaved(app, source.id);
   await app.page.setViewportSize({ width: 1240, height: 720 });
+  await openSaved(app, source.id);
   await assertContinuationLayout(app.page);
+
+  const scrubber = app.page.getByTestId('timeline-playback').getByRole('slider');
+  const lastFrame = await scrubber.getAttribute('max');
+
+  await scrubber.press('End');
+  await expect.poll(() => app!.page.getByTestId('try-timeline').getAttribute('data-frame')).toBe(lastFrame);
+  await assertContinuationLayout(app.page);
+  await scrubber.press('Home');
+  await expect.poll(() => app!.page.getByTestId('try-timeline').getAttribute('data-frame')).toBe('0');
   await app.page.getByLabel('Checkpoint', { exact: true }).selectOption('50');
   await app.page.getByTestId('try-timeline').press('ArrowRight');
   await expect.poll(() => app!.page.getByTestId('try-timeline').getAttribute('data-frame')).toBe('51');

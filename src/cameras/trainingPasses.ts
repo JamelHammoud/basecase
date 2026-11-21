@@ -1,13 +1,19 @@
+import type { Appearance } from '../appearance/model';
 import * as THREE from 'three';
 import type { Posed } from '../datasets/renderVideos';
 import { LensRenderer, type LensShot } from './lensRender';
 import { decodeTrainingPixels, trainingInstances } from './trainingLabels';
 
 const VERTEX = `
+uniform bool projectAppearance;
+uniform vec3 projectionU;
+uniform vec3 projectionV;
+uniform float projectionScale;
 varying vec3 worldPoint;
 varying vec2 meshUv;
 void main() {
   meshUv = uv;
+  if (projectAppearance) meshUv = vec2(dot(position, projectionU), dot(position, projectionV)) / projectionScale;
   vec4 world = modelMatrix * vec4(position, 1.0);
   worldPoint = world.xyz;
   gl_Position = projectionMatrix * viewMatrix * world;
@@ -45,6 +51,18 @@ void main() {
 
 const encodedId = (id: number) => new THREE.Vector3((id >>> 16) & 255, (id >>> 8) & 255, id & 255);
 
+function projectionUniforms(original: THREE.Material) {
+  const mapping = (original.userData.appearance as Appearance | undefined)?.mapping;
+  const plane = mapping?.plane ?? 'xy';
+
+  return {
+    projectAppearance: { value: mapping?.kind === 'planar' },
+    projectionU: { value: plane === 'yz' ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0) },
+    projectionV: { value: plane === 'xy' ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1) },
+    projectionScale: { value: mapping?.scale ?? 1 },
+  };
+}
+
 function labelMaterial(id: number, origin: THREE.Vector3, original: THREE.Material): THREE.ShaderMaterial {
   const textured = original as THREE.MeshBasicMaterial;
   const map = textured.map;
@@ -57,6 +75,7 @@ function labelMaterial(id: number, origin: THREE.Vector3, original: THREE.Materi
     vertexShader: VERTEX,
     fragmentShader: FRAGMENT,
     uniforms: {
+      ...projectionUniforms(original),
       label: { value: encodedId(id) },
       origin: { value: origin },
       distancePass: { value: false },
@@ -205,6 +224,7 @@ export class TrainingPasses {
       original.alphaTest,
       textured.map?.uuid,
       textured.alphaMap?.uuid,
+      JSON.stringify((original.userData.appearance as Appearance | undefined)?.mapping),
     ].join(':');
     const known = this.materials.get(key);
 

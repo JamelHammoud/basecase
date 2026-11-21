@@ -31,7 +31,7 @@ export interface StudyScene {
   project: ProjectSettings;
   measures: Record<string, MeshMeasure | undefined>;
   triangles: Record<string, Float32Array>;
-  meshFiles?: Record<string, ArrayBuffer>;
+  meshFiles?: import('../three/componentMeshes').RenderMeshFiles;
   printer?: PrinterSetup;
   servoOutputs?: Record<string, ServoOutput>;
 }

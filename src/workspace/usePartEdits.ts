@@ -1,3 +1,5 @@
+import { sceneAppearanceParts } from '../appearance/sceneParts';
+import { sceneTextureAssets } from '../cases/worldAssets';
 import { followHandEdit } from '../agent/mateFollow';
 import type { HardwareSpec } from '../data/hardware';
 import type { PartPlacement, PartTransformUpdate } from '../three/viewport/types';
@@ -19,8 +21,19 @@ function applyPatch(p: ScenePart, patch: Partial<ScenePart>): ScenePart {
 }
 
 const patchWhere =
-  (match: (p: ScenePart) => boolean, patch: (p: ScenePart) => Partial<ScenePart>) => (prev: ScenePart[]) =>
-    prev.map((p) => (match(p) ? applyPatch(p, patch(p)) : p));
+  (
+    match: (p: ScenePart) => boolean,
+    patch: (p: ScenePart) => Partial<ScenePart>,
+    baseline: () => ScenePart[] = () => [],
+  ) =>
+  (prev: ScenePart[]) => {
+    const next = prev.map((p) => (match(p) ? applyPatch(p, patch(p)) : p));
+
+    if (next.some((part, index) => part.appearance !== prev[index].appearance))
+      sceneTextureAssets([...next, ...baseline()]);
+
+    return next;
+  };
 
 const followingMates =
   (commit: CommitParts): CommitParts =>
@@ -83,7 +96,10 @@ function useSelectionMoves({ docs, selectedIds, selection, parts }: WorkspaceCor
 
   const commitParts = followingMates(docs.commitParts);
 
-  const updateSelectedPart = (patch: Partial<ScenePart>, live?: boolean) => {
+  const updateSelectedPart = (
+    patch: Partial<ScenePart> | ((part: ScenePart) => Partial<ScenePart>),
+    live?: boolean,
+  ) => {
     const id = selection.selectedPartId;
 
     if (!id) return;
@@ -91,7 +107,8 @@ function useSelectionMoves({ docs, selectedIds, selection, parts }: WorkspaceCor
     commitParts(
       patchWhere(
         (p) => p.id === id,
-        () => patch,
+        (part) => (typeof patch === 'function' ? patch(part) : patch),
+        () => sceneAppearanceParts(docs.projectRef.current, []),
       ),
       !!live,
     );
@@ -174,14 +191,19 @@ export function usePartEdits(core: WorkspaceCore) {
     commitParts((prev) => prev.map((p) => (p.id === id ? withHardware(p, spec) : p)), live);
   };
 
-  const updateSelectedParts = (patch: Partial<ScenePart>) => {
+  const updateSelectedParts = (
+    patch: Partial<ScenePart> | ((part: ScenePart) => Partial<ScenePart>),
+    live?: boolean,
+  ) => {
     const ids = new Set(selectedIds);
 
     commitParts(
       patchWhere(
         (p) => ids.has(p.id),
-        () => patch,
+        (part) => (typeof patch === 'function' ? patch(part) : patch),
+        () => sceneAppearanceParts(docs.projectRef.current, []),
       ),
+      live,
     );
   };
 

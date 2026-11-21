@@ -35,6 +35,8 @@ A saved [electronics board](/help/fit-an-electronics-board) keeps its mounting c
 
 Imported worlds come with the scene, including their colliders, textures and optional splats. You don't need the original capture files.
 
+Part finishes and their local texture images come with the scene too. If an image is missing, the part keeps its color, roughness, metalness and opacity. Basecase doesn't download missing textures.
+
 You can also choose **File** ▸ **Open Scene File**, or drop the file on the canvas. Double-clicking a `.basecase` file in Finder or File Explorer doesn't open it in Basecase.
 
 If the file won't open, see [Scene file doesn't open](/help/troubleshoot-scene-files).

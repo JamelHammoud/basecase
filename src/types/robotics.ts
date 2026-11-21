@@ -139,6 +139,7 @@ export interface ScenePart extends PartRelations, BooleanFields, SheetFields {
   dimensions: PartDimensions;
   color: string;
   opacity?: number;
+  appearance?: import('../appearance/model').Appearance;
   note: string;
   mechanicalTag?: string;
   visible: boolean;

@@ -1,12 +1,18 @@
 import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import type { SimModel } from '../sim/mjcfTypes';
-import type { MeshFiles } from '../three/componentMeshes';
+import type { RenderMeshFiles } from '../three/componentMeshes';
 import type { ScenePart } from '../types/robotics';
 import type { CameraView } from './views';
 import type { VisionAssignment } from './visionFrames';
 
 export type FeedRequest =
-  | { type: 'scene'; parts: ScenePart[]; world: ScenePart[]; meshes: MeshFiles; imported?: ImportedWorldView | null }
+  | {
+      type: 'scene';
+      parts: ScenePart[];
+      world: ScenePart[];
+      meshes: RenderMeshFiles;
+      imported?: ImportedWorldView | null;
+    }
   | { type: 'model'; model: SimModel | null }
   | { type: 'views'; views: CameraView[]; sizes: Record<string, [number, number]> }
   | { type: 'port'; port: MessagePort }

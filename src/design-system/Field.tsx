@@ -135,14 +135,14 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(({ 
 TextArea.displayName = 'TextArea';
 
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  options: Array<{ value: string; label: string }>;
+  options: Array<{ value: string; label: string; disabled?: boolean }>;
 }
 
 export const Select: React.FC<SelectProps> = ({ options, className = '', ...props }) => (
   <div className="relative w-full">
     <select className={`${fieldBase} h-[32px] pl-2.5 pr-8 appearance-none cursor-default ${className}`} {...props}>
       {options.map((o) => (
-        <option key={o.value} value={o.value} className="bg-[#282828] text-white">
+        <option key={o.value} value={o.value} disabled={o.disabled} className="bg-[#282828] text-white">
           {o.label}
         </option>
       ))}

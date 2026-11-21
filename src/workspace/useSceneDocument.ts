@@ -29,7 +29,7 @@ import { useBooleanResults } from './useBooleanResults';
 import { useSketchSupportResults } from './useSketchSupportResults';
 import { projectFromSeed } from './helpers';
 import type { CommitParts, DocState, Snapshot, WorkspaceSeed } from './types';
-import { mountedBoardParts } from '../wiring/boardMounts';
+import { boardHostPlacementChanged, mountedBoardParts } from '../wiring/boardMounts';
 import { permittedParameterEdit } from './parameterEditGuard';
 import type { PlacementUpdate } from '../cases/workbench/retention';
 
@@ -149,8 +149,7 @@ export function useSceneDocument(seed?: WorkspaceSeed, refused?: (reason: string
     }
 
     const board = projectRef.current.electronicsBoard;
-    const hostChanged =
-      board && edited.find((part) => part.id === board.partId) !== d.parts.find((part) => part.id === board.partId);
+    const hostChanged = boardHostPlacementChanged(d.parts, edited, board);
     const parts = hostChanged ? mountedBoardParts(edited, board) : edited;
     const kept = new Set(parts.map((p) => p.id));
     const nextJoints = jointsWithoutParts(joints, new Set(d.parts.filter((p) => !kept.has(p.id)).map((p) => p.id)));

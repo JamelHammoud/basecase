@@ -138,7 +138,12 @@ function studyGrading(input: {
   return async (scene, options) => {
     const row = await session.grade(scene, { ...options, kase: kase ?? undefined });
 
-    if (visibility) return { ...row, visibility: await visibility.measure(scene) };
+    if (visibility)
+      return {
+        ...row,
+        sceneKey: studyFingerprint(scene.parts, scene.project, true),
+        visibility: await visibility.measure(scene),
+      };
 
     const hold = await runStudyHold(scene, sim, { pose: scene.project.pose, posedFloor, measure: session.hold }).catch(
       errorMessage,
@@ -207,7 +212,7 @@ async function executeInSession({
       current: { ...current, label: source.sceneName },
       caseId: kase?.id,
       caseKey: kase ? jsonHash(kase) : undefined,
-      baseKey: studyFingerprint(base.parts, base.project),
+      baseKey: studyFingerprint(base.parts, base.project, !!visibilityRequest),
       total: designs.length,
       base: { parts: base.parts, project: base.project },
     };

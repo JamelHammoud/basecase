@@ -1,4 +1,6 @@
 import { syncSceneParts } from './sceneSources';
+
+import { readyCapture, readyMeshes } from './captureReadiness';
 import { wiringReader } from './wiringReader';
 import type * as THREE from 'three';
 import { fastenerInput } from '../../assembly/fastenerSpec';
@@ -22,7 +24,6 @@ import {
 } from '../analysis/analysisPool';
 import { snapshotShapes } from '../analysis/sceneShapes';
 import { strengthHandle } from './strengthHandle';
-import { componentMeshesReady } from '../componentMeshes';
 import { exportUsdz } from '../usdz/usdzExport';
 import { SkeletonOverlay } from './skeletonOverlay';
 import { BlueprintUnderlay } from './blueprint';
@@ -121,8 +122,8 @@ export class ViewportEngine {
 
     batches.attach(stage.scene);
 
-    const layer = new PartLayer(stage.partsRoot, () => this.scheduleBuilds(), batches);
-    const world = new PartLayer(stage.worldRoot, () => this.buildWorld());
+    const layer = new PartLayer(stage.partsRoot, () => this.scheduleBuilds(), batches, stage.renderer);
+    const world = new PartLayer(stage.worldRoot, () => this.buildWorld(), null, stage.renderer);
     const loop = new RenderLoop(stage, (id) => layer.get(id));
 
     this.props = options.props;
@@ -302,11 +303,12 @@ export class ViewportEngine {
     };
 
     const wiring = wiringReader(ctx, () => this.complete());
+    const capture = <T>(run: () => T | Promise<T>) => readyCapture(ctx, () => this.complete(), run);
 
     this.cleanups.push(wiring.dispose);
 
     return {
-      captureScreenshot: (maxSide) => captureScreenshot(ctx, this.gizmo.controls.getHelper(), maxSide),
+      captureScreenshot: (maxSide) => capture(() => captureScreenshot(ctx, this.gizmo.controls.getHelper(), maxSide)),
       captureViews: (views, onlyIds, opts) => {
         const run = () =>
           captureViews(ctx, {
@@ -320,7 +322,7 @@ export class ViewportEngine {
             marks: opts?.silhouette || onlyIds?.length ? undefined : this.markLayer.bounds(),
           });
 
-        return onlyIds?.length || opts?.silhouette || opts?.labels ? unbatched(run) : run();
+        return capture(() => (onlyIds?.length || opts?.silhouette || opts?.labels ? unbatched(run) : run()));
       },
       setCameraPreset: (preset) => camera(() => setCameraPreset(ctx.stage, preset)),
       currentView: () => currentView(ctx.stage),
@@ -383,7 +385,7 @@ export class ViewportEngine {
             : query,
         ),
       jointAxes: (ids) => jointAxesIn(restShapes(ids), ids),
-      meshesReady: () => componentMeshesReady(this.props.parts.flatMap((p) => p.componentId ?? [])),
+      meshesReady: () => readyMeshes(ctx, this.props.parts),
       sweepClashes: (sweeps) => sweepsIn(restSolids(false), sweeps),
       ...strengthHandle(restShapes),
       pickAt: (x, y) => measure.pickAt(ctx, x, y),
@@ -465,9 +467,7 @@ export class ViewportEngine {
     this.ctx.loop.finishSpawns();
     this.ctx.layer.queueLoadedComponents();
 
-    if (!this.ctx.layer.hasPending) {
-      return;
-    }
+    if (!this.ctx.layer.hasPending) return;
 
     cancelAnimationFrame(this.buildFrame);
     this.ctx.layer.buildAll();

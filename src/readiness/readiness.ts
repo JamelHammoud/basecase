@@ -1,3 +1,4 @@
+import { physicalParts } from '../appearance/physical';
 import { itemKeyOf } from '../guide/guideItems';
 import { hashText, jsonHash, numbersHash } from '../utils/geometryHash';
 import type { MessageQuote, ScenePart, ProjectSettings } from '../types/robotics';
@@ -49,7 +50,9 @@ function readingsLine(p: ScenePart): string {
 export function readinessFingerprint(parts: ScenePart[], extra: unknown): string {
   return hashText(
     [
-      ...parts.map((p) => `${partLine(p)}|${readingsLine(p)}`).sort(),
+      ...physicalParts(parts)
+        .map((p) => `${partLine(p)}|${readingsLine(p)}`)
+        .sort(),
       JSON.stringify(extra),
       supportedSketchEvidence(parts),
       parameterGeometryEvidence(parts),

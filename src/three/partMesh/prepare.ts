@@ -32,13 +32,20 @@ function creased(part: ScenePart, src: MeshSource, creaseDeg: number): Promise<v
 
   return once(key, async () => {
     const { positions, indices } = packedMesh(src);
-    const { position, normal } = await geometryWorker.call('creased', { positions, indices, creaseDeg, scale });
+    const { position, normal, uv, color } = await geometryWorker.call('creased', {
+      positions,
+      indices,
+      uvs: src.uvs,
+      colors: src.colors,
+      creaseDeg,
+      scale,
+    });
 
-    offerShared(key, geometryFromArrays(position, normal), disposeCachedGeometry);
+    offerShared(key, geometryFromArrays(position, normal, uv, color), disposeCachedGeometry);
   });
 }
 
-export function preparePart(part: ScenePart): Promise<void> | null {
+function prepareGeometry(part: ScenePart): Promise<void> | null {
   if (part.sculptMesh) return null;
 
   if ((part.kind === 'mesh' || part.kind === 'boolean') && part.mesh) return creased(part, part.mesh, MESH_CREASE_DEG);
@@ -47,6 +54,8 @@ export function preparePart(part: ScenePart): Promise<void> | null {
 
   return null;
 }
+
+export const preparePart = prepareGeometry;
 
 export async function prepareParts(parts: ScenePart[]): Promise<void> {
   await Promise.all(parts.map(preparePart));

@@ -1,6 +1,6 @@
 import type { VideoCodec } from 'mediabunny';
 import type { ImportedWorldView } from '../three/viewport/importedWorld';
-import type { MeshFiles } from '../three/componentMeshes';
+import type { RenderMeshFiles } from '../three/componentMeshes';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 import type { ScenePart } from '../types/robotics';
@@ -31,7 +31,7 @@ export interface DatasetJob {
   robotType: string;
   parts: ScenePart[];
   world: ScenePart[];
-  meshes?: MeshFiles;
+  meshes?: RenderMeshFiles;
   imported?: ImportedWorldView | null;
   model: SimModel;
   cameras: DatasetCamera[];

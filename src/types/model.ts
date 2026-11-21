@@ -15,5 +15,6 @@ export interface ModelMeshData {
   file?: string;
   material?: ModelMaterial;
   colors?: number[];
+  uvs?: number[];
   visual?: { key: string; node: string; matrix: number[] };
 }

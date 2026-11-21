@@ -41,7 +41,7 @@ At least one check still holds a blocker, often one you haven't opened.
 2. In **Checks**, open the first check with a blocker if it’s closed. Basecase lists the worst ones first.
 3. To select a part, click its name under a problem.
 4. Use the action beside the problem, or change the part yourself.
-5. Wait a moment after your last edit. The header reads **Checking…**, then shows the new verdict.
+5. After changing an engineering input, wait a moment. The header reads **Checking…**, then shows the new verdict.
 
 **Edit Route** opens the cable editor for a supported **Cable reach** finding. [Route a robot cable](/help/route-a-robot-cable) covers its controls. **Fix** sends the problem to the agent when no direct fix applies.
 

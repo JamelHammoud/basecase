@@ -45,7 +45,7 @@ Basecase can refuse a placement during reach and static-fixture contact checks e
 
 Basecase saves the placement and its result with the scene. You can save 128 placements in each scene. In the **Entered** result, Basecase retains the unit, Case and robot identities.
 Focus or hover over **Entered** to inspect the Case and robot fingerprints.
-If you change the Case, geometry, tool binding or placement, Basecase hides the previous verdict.
+If you change the Case, geometry, tool binding or placement, Basecase hides the previous verdict. Changing only a part's visual finish keeps the verdict.
 Press [[⌘Z]] to undo a completed placement, or [[⇧⌘Z]] to redo it.
 
 You can open these fields with [[⌘K]] and **Edit Workbench Placement**.

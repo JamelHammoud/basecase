@@ -7,8 +7,8 @@ import { applyDeltas, BACKGROUND, floor, posed, type Posed } from '../datasets/r
 import { simDeltas, worldDeltas } from '../sim/mjcfFrames';
 import type { SimModel } from '../sim/mjcfTypes';
 import { releasePartGroup } from '../three/buildPartMesh';
-import { provideMeshFiles, type MeshFiles } from '../three/componentMeshes';
-import { loadPartMeshes } from '../three/thumbnailRender';
+import { provideMeshFiles, type RenderMeshFiles } from '../three/componentMeshes';
+import { withPreparedParts } from '../three/thumbnailRender';
 import { softwareGl } from '../three/softwareGl';
 import { createStudioScene } from '../three/thumbnailStage';
 import type { ScenePart } from '../types/robotics';
@@ -111,7 +111,7 @@ export class LiveStage {
 
   private readonly world: Layer;
 
-  private meshFiles?: MeshFiles;
+  private meshFiles?: RenderMeshFiles;
 
   private model: SimModel | null = null;
 
@@ -147,7 +147,7 @@ export class LiveStage {
   setScene(
     parts: ScenePart[],
     world: ScenePart[],
-    meshes?: MeshFiles,
+    meshes?: RenderMeshFiles,
     imported?: ImportedWorldView | null,
   ): Promise<boolean> {
     const ticket = ++this.sceneTicket;
@@ -162,7 +162,7 @@ export class LiveStage {
   private async syncScene(
     parts: ScenePart[],
     world: ScenePart[],
-    meshes?: MeshFiles,
+    meshes?: RenderMeshFiles,
     imported?: ImportedWorldView | null,
   ): Promise<boolean> {
     const ticket = this.sceneTicket;
@@ -172,18 +172,18 @@ export class LiveStage {
       this.meshFiles = meshes;
     }
 
-    await loadPartMeshes([...this.parts.changed(parts), ...this.world.changed(world)]);
+    return withPreparedParts([...this.parts.changed(parts), ...this.world.changed(world)], async () => {
+      if (ticket !== this.sceneTicket) return false;
 
-    if (ticket !== this.sceneTicket) return false;
+      this.surfacePool.dispose();
+      this.parts.sync(parts);
+      this.world.sync(world.filter((part) => !imported || part.visible !== false));
+      this.ground.visible = !imported;
+      await this.captured.set(imported ?? null);
+      await this.lens.warm(this.scene).catch(() => undefined);
 
-    this.surfacePool.dispose();
-    this.parts.sync(parts);
-    this.world.sync(world.filter((part) => !imported || part.visible !== false));
-    this.ground.visible = !imported;
-    await this.captured.set(imported ?? null);
-    await this.lens.warm(this.scene).catch(() => undefined);
-
-    return ticket === this.sceneTicket;
+      return ticket === this.sceneTicket;
+    });
   }
 
   setModel(model: SimModel | null): void {

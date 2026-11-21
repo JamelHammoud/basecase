@@ -321,3 +321,23 @@ Motion validation normalizes axis directions for distance measurements without r
 Freeze and Delete retains literal parameter bindings. Unbind can remove a finger binding while keeping its native CAD value. Hardware regeneration reads that current CAD thickness, so later linked length or mounting edits still work. Pair geometry and mechanical constraints remain mandatory.
 
 Finger commands also require the existing Case builder to offer the pick goal. Generation requires a selected declared carriage owned by one of that builder’s jaws, so a loose spare cannot redirect generation to a different pair. A selected rigid object without a compatible gripper does not expose Test Grasp.
+
+### Editable visual finishes
+
+Appearance has a Finish selector for solids, including catalog components and sheets. Original restores the legacy rendering. Matte Polymer, Brushed Metal, Rubber, Paint and Transparent Cover set independent roughness, metalness and opacity values. Color edits a finish's base color when one exists. Manufacturing material, catalog and variant identities, mass and joints stay separate.
+
+`src/appearance/model.ts` owns the optional `ScenePart.appearance` contract. Its RGB hex color is sRGB. Roughness, metalness and opacity range from 0 to 1. Textures reference SHA-256 content in the existing scene asset table. Base color uses sRGB, normal data uses tangent-space OpenGL +Y or DirectX −Y, and a combined roughness/metalness image uses its green and blue channels. Choosing another preset keeps texture references and mapping.
+
+Texture Load and Replace accept local PNG, JPEG and WebP files. Each file is limited to 8 MiB and 4,194,304 pixels. Referenced scene textures share limits of 32 MiB and 8,388,608 pixels. Preparing, decoding, hashing and serializing image content run in workers. Cancel, selection changes and intervening part edits discard a late import and close its bitmap before registering content. Remove texture clears that slot through ordinary editing.
+
+Mesh UVs keep supported authored coordinates. Front, Top and Side Projection use local mesh XY, XZ and YZ coordinates. Scale is millimeters per repeat for a projection and UV units per repeat for Mesh UVs. Rotation is degrees around the mapping origin. Projection remains reproducible on generated geometry without changing its vertices. A mesh without UVs keeps the scalar finish and reports the unsupported UV choice. Missing assets keep geometry and scalar values, with replacement available in Appearance.
+
+Multi-selection applies one transaction. Numeric scrubbing uses the existing live-edit history boundary. Per-field edits preserve each selected part's other finish values and base color. Undo and redo restore the original part records and their asset references. The existing scene asset table carries textures through autosave, scene versions and portable exports.
+
+`appearance/appearance.test.ts` exercises ten generated robot geometries through rendering, persistence and engineering consumers. `appearance/assets.test.ts` covers content deduplication, history, refusal, missing assets, color spaces, transforms, cancellation and disposal. `e2e/appearance.e2e.test.ts` declares the Inspector multi-selection, texture-load, scale, undo, redo and exported-file reopening workflow. Renderer pixel coverage belongs to [Canvas](canvas.md#visual-finish-consumption). Execution evidence and limits are in [Viewport evidence](../notes/performance-viewport.md#editable-appearance).
+
+Texture import state is bound to the selected immutable records, current scene parts and captured Study baseline. A superseding edit immediately stops presenting the old import as active. The commit also checks the latest referenced texture budget, preserving an atomic refusal if document state changed during preparation. Study baseline texture references count toward the same scene limits.
+
+Import cancellation compares selected immutable records, scene records and baseline records. Recreating an array around the same records keeps the import active. Changing a record or choosing Cancel discards the late result. The browser walkthrough gates the real texture worker at startup, cancels through the Inspector and then loads the same image successfully.
+
+Captured Case object geometry, captured Study Cases and assigned Cases retain appearance asset references alongside scene parts. They count toward the same import budget before registration and commit. A removed scene source therefore cannot make a captured object lose its portable texture.

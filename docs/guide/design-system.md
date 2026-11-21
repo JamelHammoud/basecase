@@ -77,3 +77,5 @@ Measurements and limits: [Trace plots performance evidence](../notes/performance
 `menuOrder.ts` partitions entries during one source pass. It holds the first interior divider until another ordinary entry needs it, dropping leading, trailing and repeated dividers without a filtered intermediate list. Destructive entries retain their order and append to the ordinary result behind one new divider. Every `ContextMenu` shares this path, including canvas, list and camera menus. Popover children keep their caller-defined order.
 
 `menuOrder.test.ts` compares all 4,096 six-entry combinations of ordinary actions, destructive actions, headings and dividers against the preceding algorithm. It also checks entry identity, frozen input arrays, later edits, independent results and empty menus. [Evidence and limits](../notes/performance-layout.md#context-menu-ordering-partitions-in-one-source-pass).
+
+`Select` options accept an optional `disabled` flag. Appearance uses it for display-only Custom and Mixed values, so choosing a named finish remains an explicit edit.

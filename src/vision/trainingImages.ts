@@ -1,6 +1,6 @@
 import { loadCameraStage, renderTrainingFrame } from '../cameras/cameraStage';
 import type { CameraTrainingFrame, CameraTrainingRequest } from '../cameras/trainingTypes';
-import type { MeshFiles } from '../three/componentMeshes';
+import type { RenderMeshFiles } from '../three/componentMeshes';
 import { frameHash, type ImageAnnotation, type TrainingFrame } from './frameSet';
 import { annotationFromInstances } from './imageMasks';
 import {
@@ -12,7 +12,7 @@ import {
 } from './trainingPlan';
 
 export interface LoadedTrainingJob extends TrainingImagesJob {
-  meshes?: MeshFiles;
+  meshes?: RenderMeshFiles;
 }
 
 export interface TrainingHeader {

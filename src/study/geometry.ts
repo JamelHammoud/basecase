@@ -3,7 +3,7 @@ import { portsOf, worldPort } from '../agent/ports';
 import { COMPONENT_BY_ID, actuatorOf } from '../data/components';
 import { isSourcedId, registerSourced } from '../data/sourcedItems';
 import { buildPartGroup, releasePartGroup } from '../three/buildPartMesh';
-import { loadComponentMesh, provideMeshFiles, type MeshFiles } from '../three/componentMeshes';
+import { loadComponentMesh, provideMeshFiles, type RenderMeshFiles } from '../three/componentMeshes';
 import { localTriangles, rigidFrame } from '../three/meshMeasure';
 import { worldMeasure } from '../three/analysis/shapeReports';
 import { solidFromPositions } from '../three/analysis/shapeSolid';
@@ -13,9 +13,9 @@ import type { ServoOutput } from '../utils/engineeringTypes';
 import type { V3 } from '../utils/kinematics';
 import type { StudyScene } from './types';
 
-const prepared = new WeakSet<MeshFiles>();
+const prepared = new WeakSet<RenderMeshFiles>();
 
-function provideStudyMeshes(files: MeshFiles | undefined) {
+function provideStudyMeshes(files: RenderMeshFiles | undefined) {
   if (!files || prepared.has(files)) return;
 
   provideMeshFiles(files);

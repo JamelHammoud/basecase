@@ -76,6 +76,8 @@ This is a note. Some faces are close to flat and hang over air, so they need sup
 
 The part is set to print, but its name ends in a word like Glass, or its note starts with clear acrylic.
 
+Choosing **Transparent Cover** under **Finish** changes how the part looks. It doesn't change its manufacturing setting or clear this check.
+
 1. Select the part.
 2. For a flat part, [cut it from acrylic sheet](/help/cut-parts-from-sheet).
 3. For another shape, under **Appearance**, set **Material** to **Off-the-shelf** and source the part.

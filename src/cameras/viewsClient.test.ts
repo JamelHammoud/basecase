@@ -31,7 +31,7 @@ vi.mock('./visionSession', () => ({
   ensureVisionCamera: stage.ensure,
   visionAssignments: () => [{ camera: 'scene', modelId: 'objects', fps: 5 }],
 }));
-vi.mock('../three/componentMeshes', () => ({ sourcedMeshFiles: async () => ({}) }));
+vi.mock('../three/componentMeshes', () => ({ renderMeshFiles: async () => ({}) }));
 
 interface Request {
   id: number;

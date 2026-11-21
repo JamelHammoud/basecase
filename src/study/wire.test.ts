@@ -83,7 +83,12 @@ describe('Study geometry handles', () => {
     const second = reader.read(structuredClone(packet));
 
     expect(second.meshFiles?.['sourced.glb']).toBe(first.meshFiles?.['sourced.glb']);
-    expect(new Uint8Array(second.meshFiles!['sourced.glb'])).toEqual(new Uint8Array(bytes));
+
+    const binary = second.meshFiles!['sourced.glb'];
+
+    if (!(binary instanceof ArrayBuffer)) throw new Error('Expected component bytes');
+
+    expect(new Uint8Array(binary)).toEqual(new Uint8Array(bytes));
     expect(packet.assets.filter((asset) => asset.node.kind === 'binary')).toEqual([]);
   });
 
@@ -94,4 +99,23 @@ describe('Study geometry handles', () => {
 
     expect(() => new StudyWireReader().read(writer.write(scene))).toThrow('geometry handle');
   });
+});
+
+it('retains encoded texture Blobs as shared binary handles across a worker packet', async () => {
+  const writer = new StudyWireWriter();
+  const reader = new StudyWireReader();
+  const scene = {
+    parts: [],
+    project: DEFAULT_PROJECT,
+    triangles: {},
+    measures: {},
+    meshFiles: { 'texture:local': new Blob(['texture']) },
+  };
+  const packet = writer.write(scene);
+  const restored = reader.read(structuredClone(packet));
+  const texture = restored.meshFiles!['texture:local'];
+
+  expect(texture).toBeInstanceOf(Blob);
+  expect(await (texture as Blob).text()).toBe('texture');
+  expect(writer.write(scene).assets.filter((asset) => asset.node.kind === 'binary')).toEqual([]);
 });

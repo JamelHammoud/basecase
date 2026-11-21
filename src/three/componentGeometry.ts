@@ -9,6 +9,7 @@ type Vec3 = [number, number, number];
 export interface ComponentPieceArrays {
   position: Float32Array;
   normal: Float32Array;
+  uv?: Float32Array;
   color: string;
   metalness: number;
   roughness: number;
@@ -46,6 +47,10 @@ function creasedPieces(scene: THREE.Object3D) {
 
     plain.setAttribute('position', mesh.geometry.getAttribute('position').clone());
 
+    const uv = mesh.geometry.getAttribute('uv');
+
+    if (uv) plain.setAttribute('uv', uv.clone());
+
     plain.setIndex(mesh.geometry.index);
 
     plain.applyMatrix4(mesh.matrixWorld);
@@ -81,6 +86,7 @@ export async function componentArrays(data: ArrayBuffer): Promise<ComponentArray
     pieces: pieces.map(({ geometry, color }) => ({
       position: geometry.getAttribute('position').array as Float32Array,
       normal: geometry.getAttribute('normal').array as Float32Array,
+      ...(geometry.getAttribute('uv') ? { uv: geometry.getAttribute('uv').array as Float32Array } : {}),
       color: '#' + color.getHexString(THREE.SRGBColorSpace),
       ...finish(color),
     })),
@@ -91,5 +97,5 @@ export async function componentArrays(data: ArrayBuffer): Promise<ComponentArray
 
 export const componentTransfers = (arrays: ComponentArrays): Transferable[] => [
   arrays.edges.buffer,
-  ...arrays.pieces.flatMap((p) => [p.position.buffer, p.normal.buffer]),
+  ...arrays.pieces.flatMap((p) => [p.position.buffer, p.normal.buffer, ...(p.uv ? [p.uv.buffer] : [])]),
 ];

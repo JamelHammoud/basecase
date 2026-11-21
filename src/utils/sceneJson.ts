@@ -2,7 +2,7 @@ import { historyLiteral } from '../workspace/versionClient';
 import type { ScenePart } from '../types/robotics';
 import { timeSlicer } from './yieldToMain';
 import type { ProjectSettings } from '../types/robotics';
-import { sceneWorldAssets, worldAssetJson } from '../cases/worldAssets';
+import { sceneAssets, worldAssetJson } from '../cases/worldAssets';
 import type { StudyRecord, StudyRow, StudyKnob } from '../study/types';
 
 const partJson = new WeakMap<ScenePart, string>();
@@ -67,7 +67,7 @@ export async function sceneJson(payload: { parts: ScenePart[] } & Record<string,
   const { parts, project, history, ...rest } = payload;
   const items = await partsJson(parts);
   const settings = project ? `"project":${await projectJson(project as ProjectSettings)}` : '';
-  const assets = sceneWorldAssets(project as ProjectSettings | undefined);
+  const assets = sceneAssets(project as ProjectSettings | undefined, parts);
   const assetEntries = Object.entries(assets).map(
     ([hash, asset]) => `${JSON.stringify(hash)}:${worldAssetJson(asset)}`,
   );

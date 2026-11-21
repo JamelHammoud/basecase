@@ -1,3 +1,5 @@
+import { FinishControls } from './FinishControls';
+import { appearanceOf, editAppearance } from '../../appearance/model';
 import React, { useState } from 'react';
 import type { ScenePart } from '../../types/robotics';
 import {
@@ -196,19 +198,27 @@ export const ShapeSection: React.FC<PartSectionProps> = ({ part, onUpdate: updat
   );
 };
 
-export const AppearanceSection: React.FC<PartSectionProps & { parts: ScenePart[]; isSheet?: boolean }> = ({
-  part,
-  onUpdate,
-  parts,
-  isSheet,
-}) => (
+export const AppearanceSection: React.FC<
+  PartSectionProps & { parts: ScenePart[]; isSheet?: boolean; baselineParts?: ScenePart[] }
+> = ({ part, onUpdate, parts, isSheet, baselineParts }) => (
   <Section title="Appearance">
     <ColorField
-      value={part.color}
+      value={appearanceOf(part).baseColor}
       suggestions={parts.map((p) => p.color)}
-      onChange={(color, live) => onUpdate({ color }, live)}
+      onChange={(color, live) =>
+        onUpdate(
+          (current) =>
+            current.appearance || current.componentId
+              ? { appearance: editAppearance(current, { baseColor: color }) }
+              : { color },
+          live,
+        )
+      }
     />
-    {part.role === 'solid' && !isSheet && (
+    {part.role === 'solid' && (
+      <FinishControls parts={[part]} sceneParts={parts} baselineParts={baselineParts} onChange={onUpdate} />
+    )}
+    {part.role === 'solid' && !isSheet && !part.componentId && (
       <Select
         aria-label="Material"
         value={materialTag(part)}

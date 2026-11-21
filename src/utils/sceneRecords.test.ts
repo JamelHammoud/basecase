@@ -45,3 +45,19 @@ describe('loading saved scene worlds', () => {
     await expect(loadSceneRecord('world')).rejects.toThrow('missing');
   });
 });
+
+it('refuses an appearance projection hidden in a saved Study baseline before rendering it', async () => {
+  const part = {
+    appearance: {
+      baseColor: '#ffffff',
+      roughness: 0.5,
+      metalness: 0,
+      opacity: 1,
+      normalY: 1,
+      mapping: { kind: 'planar', plane: 'xy; for (;;) {}', scale: 1, rotation: 0 },
+    },
+  };
+
+  getScene.mockResolvedValue({ ...record(''), project: { study: { base: { parts: [part] } } } });
+  await expect(loadSceneRecord('world')).rejects.toThrow('parts are damaged');
+});

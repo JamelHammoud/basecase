@@ -40,7 +40,7 @@ vi.mock('../utils/workerRpc', () => ({
     dispose: state.dispose,
   }),
 }));
-vi.mock('../three/componentMeshes', () => ({ sourcedMeshFiles: async () => ({}) }));
+vi.mock('../three/componentMeshes', () => ({ renderMeshFiles: async () => ({}) }));
 vi.mock('../datasets/datasetStore', () => ({
   saveDataset: state.saveDataset,
   loadDatasets: async () => state.datasets,

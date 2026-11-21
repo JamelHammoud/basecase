@@ -40,13 +40,19 @@ The sender's Basecase is newer than yours, and it saved something your version c
 
 ## “The scene’s parts are damaged”
 
-At least one part is missing its id, its kind or its position, or has damaged sheet settings. A sheet needs a supported material, a positive thickness and a usable thickness transform. Ask the sender to export the scene again.
+At least one part is missing its id, its kind or its position, or has damaged sheet or appearance settings. A sheet needs a supported material, a positive thickness and a usable thickness transform. Ask the sender to export the scene again.
 
 ## The message names a world asset
 
 The scene's imported world is missing, damaged or over its size limits. Basecase also refuses world data whose content doesn't match its saved hash.
 
 Ask the sender to reopen the original scene and export it again with **Export** ▸ **Scene**. The exported file must include the world's mesh, colliders and any textures or splat.
+
+## The message names a texture
+
+A local texture is damaged, over its size limit or different from its saved content hash.
+
+Ask the sender to replace that image in **Appearance**, then export the scene again. See [Apply finishes and textures](/help/apply-finishes-and-textures).
 
 ## The message names a fixture
 

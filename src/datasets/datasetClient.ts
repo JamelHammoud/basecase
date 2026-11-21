@@ -1,4 +1,4 @@
-import { sourcedMeshFiles } from '../three/componentMeshes';
+import { renderMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import { recordingTransfer } from '../sim/recorder';
 import { workerClient } from '../utils/workerRpc';
@@ -35,7 +35,7 @@ async function build<K extends 'zip' | 'files'>(output: K, job: DatasetSpec) {
     ...job,
     parts: packParts(job.parts),
     world: packParts(job.world),
-    meshes: await sourcedMeshFiles(all),
+    meshes: await renderMeshFiles(all),
   };
 
   return client.call(output, packed, [...new Set(job.episodes.flatMap((e) => recordingTransfer(e.recording)))]);

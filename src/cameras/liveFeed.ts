@@ -1,6 +1,6 @@
 import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import type { SimModel } from '../sim/mjcfTypes';
-import { sourcedMeshFiles } from '../three/componentMeshes';
+import { renderMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import type { ScenePart } from '../types/robotics';
 import { errorMessage } from '../utils/errorMessage';
@@ -144,7 +144,7 @@ export class LiveFeed {
     this.sent = { ...this.sent, parts, world, imported };
 
     const ticket = ++this.sceneTicket;
-    const meshes = await sourcedMeshFiles([...parts, ...world]);
+    const meshes = await renderMeshFiles([...parts, ...world]);
 
     if (ticket === this.sceneTicket)
       this.post({ type: 'scene', parts: packParts(parts), world: packParts(world), meshes, imported });

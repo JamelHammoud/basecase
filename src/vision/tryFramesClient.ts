@@ -1,4 +1,4 @@
-import { sourcedMeshFiles } from '../three/componentMeshes';
+import { renderMeshFiles, textureMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import { reply, workerClient } from '../utils/workerRpc';
 import { frameSetManifestHash, type FrameSet, type TrainingFrame } from './frameSet';
@@ -32,7 +32,9 @@ async function packedScene(scene: TryFrameScene | undefined): Promise<TryFrameSc
     parts: packParts(scene.parts),
     world: packParts(scene.world),
     rig: scene.rig && { ...scene.rig, parts: [] },
-    meshes: scene.meshes ?? (await sourcedMeshFiles([...scene.parts, ...scene.world])),
+    meshes: scene.meshes
+      ? { ...scene.meshes, ...textureMeshFiles([...scene.parts, ...scene.world]) }
+      : await renderMeshFiles([...scene.parts, ...scene.world]),
   };
 }
 

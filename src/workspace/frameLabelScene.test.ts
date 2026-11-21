@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({ load: vi.fn(), build: vi.fn(), meshes: vi.fn(a
 
 vi.mock('../utils/sceneRecords', () => ({ loadSceneRecord: mocks.load }));
 vi.mock('../vision/trySceneClient', () => ({ buildTryScene: mocks.build }));
-vi.mock('../three/componentMeshes', () => ({ sourcedMeshFiles: mocks.meshes }));
+vi.mock('../three/componentMeshes', () => ({ renderMeshFiles: mocks.meshes }));
 
 async function fixture() {
   const robot = fixtureRobots()[0];

@@ -1,3 +1,4 @@
+import { applyAppearance } from '../appearance/render';
 import * as THREE from 'three';
 import type { ScenePart, SculptMeshData } from '../types/robotics';
 import { partBuilders } from './partMesh/builders';
@@ -27,6 +28,7 @@ export function buildPartGroup(part: ScenePart, isSelected: boolean, options: Bu
   const build = hasSculptMesh(part) ? sculptedPart : BUILDERS[part.kind];
 
   build?.(ctx);
+  applyAppearance(ctx.group, part);
 
   if (part.sheetTransform) applySheetTransform(ctx.group, part.sheetTransform);
 

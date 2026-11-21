@@ -1,3 +1,4 @@
+import { applyAppearance } from '../../appearance/render';
 import * as THREE from 'three';
 import type { CustomModelSubNode, PartRole, ScenePart } from '../../types/robotics';
 import { applyDeformersToBufferGeometry, buildBufferGeometryFromSculptData } from '../sculptEngine';
@@ -174,7 +175,14 @@ export const customModelBuilder =
           }
         : node;
 
-      container.add(buildCustomSubNode(sized, parent, build));
+      const child = buildCustomSubNode(sized, parent, build);
+
+      applyAppearance(child, {
+        appearance: sized.part?.appearance,
+        role: part.role === 'cutout' ? part.role : sized.role,
+        kind: sized.primitiveKind ?? 'custom_model',
+      });
+      container.add(child);
     }
 
     if (nodes.length > 1 && !allAtOrigin) fitToPart(container, ctx);

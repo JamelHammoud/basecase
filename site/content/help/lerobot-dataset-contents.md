@@ -89,6 +89,8 @@ Frames are 25 a second: every second frame of the try's 50 Hz recording. Powered
 
 Camera parts are the ones under **Cameras** and **Depth Cameras** in Parts. A fisheye lens records as a fisheye. Every video is 640 × 480, encoded as H.264, or VP9 or AV1 where H.264 isn't available, with a key frame each second.
 
+Camera videos render the parts' declared finishes and available local textures. Missing textures leave the finish's color, roughness, metalness and opacity in place.
+
 In a [captured world](/help/import-a-world), every camera video shows the Case's splat, or its mesh when there is no splat. The world keeps the same placement as in the Case.
 
 ## Versions

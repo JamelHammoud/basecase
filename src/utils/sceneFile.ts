@@ -1,13 +1,18 @@
+import { sceneAppearanceParts } from '../appearance/sceneParts';
+import { textureHashes } from '../appearance/model';
 import { validateFixtureImports } from '../cases/fixtureImports';
 import { withValidStudy } from '../study/record';
 import type { Skill } from '../skills/artifacts';
 import { readSkillBundle } from '../skills/bundle';
 import type { ProjectSettings, SavedSceneRecord, SceneAnnotation, ScenePart } from '../types/robotics';
+import { validAppearance, validPartAppearances, validSceneAppearances } from '../appearance/validation';
 import { validSheetFields } from '../sheet/validation';
 import { validBoardDefinition } from '../wiring/boardValidation';
 import { validateParameterScene } from './designParameters/verification';
 import {
   restoreWorldAssets,
+  sceneAssets,
+  sceneTextureAssets,
   sceneWorldAssets,
   serializeWorldAssets,
   type SerializedWorldAssets,
@@ -50,7 +55,12 @@ const isPart = (value: unknown): value is ScenePart =>
   typeof value.id === 'string' &&
   typeof value.kind === 'string' &&
   isVec3(value.position) &&
-  validSheetFields(value);
+  validSheetFields(value) &&
+  validAppearance(value.appearance);
+
+function validParts(value: unknown): value is ScenePart[] {
+  return Array.isArray(value) && value.every(isPart) && validPartAppearances(value);
+}
 
 function localProject(project: ProjectSettings | undefined): ProjectSettings | undefined {
   if (!isObject(project)) return undefined;
@@ -67,6 +77,9 @@ function localProject(project: ProjectSettings | undefined): ProjectSettings | u
   delete rest.buildGuide;
 
   const portable = withValidStudy(rest);
+
+  if (!validSceneAppearances([], portable)) throw new Error('The scene’s parts are damaged.');
+
   const study = portable.study;
 
   if (!study) return portable;
@@ -93,6 +106,21 @@ function cleanPart(part: ScenePart): ScenePart {
   return rest;
 }
 
+function portableAssets(record: Omit<SavedSceneRecord, 'id' | 'updatedAt' | 'partCount'>): SerializedWorldAssets {
+  const parts = sceneAppearanceParts(record.project, record.parts);
+  const referenced = new Set(textureHashes(parts));
+  const previous =
+    record.worldAssets &&
+    Object.fromEntries(
+      Object.entries(record.worldAssets).filter(([hash, asset]) => !('texture' in asset) || referenced.has(hash)),
+    );
+
+  return {
+    ...(previous ?? serializeWorldAssets(sceneWorldAssets(record.project))),
+    ...serializeWorldAssets(sceneTextureAssets(parts)),
+  };
+}
+
 export function sharedScene(record: Omit<SavedSceneRecord, 'id' | 'updatedAt' | 'partCount'>): SharedScene {
   return {
     name: record.name,
@@ -102,7 +130,7 @@ export function sharedScene(record: Omit<SavedSceneRecord, 'id' | 'updatedAt' | 
     project: localProject(record.project),
     previewDataUrl: record.previewDataUrl,
     sizeMm: record.sizeMm,
-    worldAssets: record.worldAssets ?? serializeWorldAssets(sceneWorldAssets(record.project)),
+    worldAssets: portableAssets(record),
   };
 }
 
@@ -144,7 +172,7 @@ function checkedFile(file: unknown): Record<string, unknown> {
 export async function decodeSceneFile(bytes: Uint8Array): Promise<SharedScene> {
   const scene = checkedFile(await readJson(bytes));
 
-  if (!Array.isArray(scene.parts) || !scene.parts.every(isPart)) {
+  if (!validParts(scene.parts)) {
     throw new Error('The scene’s parts are damaged.');
   }
 
@@ -157,7 +185,7 @@ export async function decodeSceneFile(bytes: Uint8Array): Promise<SharedScene> {
 
   validateFixtureImports(project?.cases);
   validateParameterScene({ parts: scene.parts, project });
-  sceneWorldAssets(project, assets);
+  sceneAssets(project, scene.parts, assets);
 
   return {
     name: typeof scene.name === 'string' && scene.name.trim() ? scene.name.trim() : 'Untitled',

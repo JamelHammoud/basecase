@@ -1,8 +1,9 @@
+import { validSceneAppearances } from '../appearance/validation';
 import type { SavedSceneRecord } from '../types/robotics';
 import { platformBridge } from './platformBridge';
 import { upgradeSceneRecord } from './robotUpgrade';
 import { sceneWritten } from './sceneWrites';
-import { restoreWorldAssets, sceneWorldAssets } from '../cases/worldAssets';
+import { restoreWorldAssets, sceneAssets } from '../cases/worldAssets';
 import { validateParameterScene } from './designParameters/verification';
 
 export async function loadSceneRecord(id: string): Promise<SavedSceneRecord | null> {
@@ -16,9 +17,11 @@ export async function loadSceneRecord(id: string): Promise<SavedSceneRecord | nu
 
   const assets = await restoreWorldAssets(record.worldAssets);
 
+  if (!validSceneAppearances(record.parts, record.project)) throw new Error('The scene’s parts are damaged.');
+
   validateParameterScene(record);
 
-  sceneWorldAssets(record.project, assets);
+  sceneAssets(record.project, record.parts, assets);
 
   const upgraded = await upgradeSceneRecord(record).catch(() => null);
 

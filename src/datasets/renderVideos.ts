@@ -12,8 +12,8 @@ import {
   type VideoCodec,
 } from 'mediabunny';
 import { buildPartGroup, releasePartGroup } from '../three/buildPartMesh';
-import { provideMeshFiles, type MeshFiles } from '../three/componentMeshes';
-import { loadPartMeshes } from '../three/thumbnailRender';
+import { provideMeshFiles, type RenderMeshFiles } from '../three/componentMeshes';
+import { withPreparedParts } from '../three/thumbnailRender';
 import { createStudioScene } from '../three/thumbnailStage';
 import { simDeltas, worldDeltas } from '../sim/mjcfFrames';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -72,16 +72,23 @@ export function floor(): THREE.Mesh {
   return mesh;
 }
 
-export async function createRenderStage(
+export function createRenderStage(
   parts: ScenePart[],
   world: ScenePart[],
-  meshes?: MeshFiles,
+  meshes?: RenderMeshFiles,
+  options: { size?: [number, number]; imported?: ImportedWorldView | null } = {},
+) {
+  provideMeshFiles(meshes);
+
+  return withPreparedParts([...parts, ...world], () => buildRenderStage(parts, world, options));
+}
+
+async function buildRenderStage(
+  parts: ScenePart[],
+  world: ScenePart[],
   options: { size?: [number, number]; imported?: ImportedWorldView | null } = {},
 ) {
   const [width, height] = options.size ?? [FRAME_WIDTH, FRAME_HEIGHT];
-
-  provideMeshFiles(meshes);
-  await loadPartMeshes([...parts, ...world]);
 
   const renderer = new THREE.WebGLRenderer({
     canvas: new OffscreenCanvas(width, height),

@@ -1427,3 +1427,9 @@ Review of the revised #2002 found that Close removed the focused control without
 The first focused check caught unformatted assertions and an unsupported ref on the shared Button primitive. Focus restoration now queries the selected button through the photo pane's own element ref. The initial log is `scratch/review-2002-keyboard-check.log`.
 
 The corrected five-file selection passed formatting, lint, documentation, TypeScript, all 372 site pages and thirteen related tests across seven files. Its log is `scratch/review-2002-keyboard-verified.log`. These fast checks do not execute the browser keyboard assertions.
+
+### Damaged-photo reopen readiness
+
+The next Check passed the import, navigation and reload browser declaration in 59.77 seconds. The completion-reversal and deletion declaration failed after 36.13 seconds at its first photo-button count after reopening. That poll saw zero buttons and expired at the existing ten-second deadline. It did not establish whether the frozen view had mounted. The aggregate Check failed solely because `e2e-changed` failed, with its required jobs and copy job successful.
+
+Reopening verifies the retained Kit in a worker before mounting the frozen view. The damaged-photo path now waits for that view through the same existing visible-state locator used by the first declaration. Its photo-button count, ended shimmer, absent damaged image, canceled deletion and confirmed deletion assertions remain intact. No timeout, retry or production behavior changes. CI must establish whether this readiness correction resolves the observed failure. No browser test ran locally.

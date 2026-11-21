@@ -122,6 +122,7 @@ it('retains a photo through completion reversal and confirms individual deletion
     await damageBuildPhoto(app.page);
     await app.page.getByRole('button', { name: 'Done', exact: true }).click();
     await app.page.getByRole('button', { name: 'Photo deletion', exact: true }).click();
+    await app.page.locator('[data-frozen-build]').waitFor({ state: 'visible' });
     await expect.poll(() => app.page.locator('[data-build-photos] button').count()).toBe(1);
     await expect.poll(() => app.page.locator('[data-build-photos] .shimmer').count()).toBe(0);
     expect(await app.page.locator('[data-build-photos] img').count()).toBe(0);

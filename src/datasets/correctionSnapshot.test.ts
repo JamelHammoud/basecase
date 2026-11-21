@@ -9,6 +9,8 @@ import { resolveSnapshot, restoreSamples, snapshotHash } from './datasetSnapshot
 import { mergedDatasetSamples } from './datasetSelections';
 import { isDatasetSample } from './snapshotTypes';
 import { assignSources } from './snapshotSplits';
+import { correctionFrames } from '../sim/teachingRecording';
+import { correctionEpisode } from './demos';
 
 it('fits explicitly selected corrections as one source group while preserving independent validation and explicit splits', () => {
   const sources = [
@@ -174,4 +176,31 @@ it('retains explicit correction selections beside an ordinary whole-try selectio
 
   expect(samples).toHaveLength(2);
   expect(samples[1]).toMatchObject({ target: 'correction', from: 5, to: 10 });
+});
+
+it('selects closely spaced handoffs without repeating operator targets in overlapping frame ranges', async () => {
+  const { recording, model } = await fixture();
+
+  recording.actionOwner = Uint8Array.from({ length: recording.teaching!.boundaries }, (_, i) =>
+    Number((i >= 51 && i < 64) || (i >= 67 && i < 84)),
+  );
+
+  const windows = correctionFrames(recording);
+  const actions = windows.flatMap((window) => correctionEpisode(recording, model, window).actions);
+  const complete = correctionEpisode(recording, model, { from: 0, to: recording.frames });
+
+  expect(windows).toEqual([{ from: 5, to: 9 }]);
+  expect(complete.actions).toHaveLength(2);
+  expect(actions).toEqual(complete.actions);
+});
+
+it('keeps a single-frame correction with recorded operator boundaries available for fitting', async () => {
+  const f = await fixture();
+  const dataset = { ...f.dataset, samples: [{ tryId: 'correction', target: 'correction' as const, from: 5, to: 6 }] };
+  const snapshot = await resolveSnapshot({ ...f, dataset });
+  const episode = correctionEpisode(f.recording, f.model, snapshot.samples[0]);
+
+  expect(snapshot.samples[0].excluded).toEqual([]);
+  expect(episode.actions).toHaveLength(1);
+  expect(snapshot.samples[0].stored.outcome.verdict).toBe('failed');
 });

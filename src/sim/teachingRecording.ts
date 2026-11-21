@@ -46,13 +46,22 @@ export function ownershipIntervals(recording: Recording): OwnershipInterval[] {
   return intervals;
 }
 
-export const correctionFrames = (recording: Recording) =>
-  ownershipIntervals(recording)
-    .filter((window) => window.owner === 'operator')
-    .map((window) => ({
-      from: Math.max(0, Math.floor((window.at + 1e-7) / recording.dt)),
-      to: Math.min(recording.frames, Math.ceil((window.until - 1e-7) / recording.dt)),
-    }));
+export function correctionFrames(recording: Recording) {
+  const windows: Array<{ from: number; to: number }> = [];
+
+  for (const interval of ownershipIntervals(recording)) {
+    if (interval.owner !== 'operator') continue;
+
+    const from = Math.max(0, Math.floor((interval.at + 1e-7) / recording.dt));
+    const to = Math.min(recording.frames, Math.ceil((interval.until - 1e-7) / recording.dt));
+    const previous = windows.at(-1);
+
+    if (previous && previous.to > from) previous.to = Math.max(previous.to, to);
+    else windows.push({ from, to });
+  }
+
+  return windows;
+}
 
 export function teachingLengths(recording: Pick<Recording, 'nq' | 'nv' | 'nu' | 'teaching'>) {
   const boundaries = recording.teaching?.boundaries ?? 0;

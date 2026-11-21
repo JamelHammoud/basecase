@@ -129,7 +129,7 @@ function selectionExclusions(input: {
 
   return [
     ...excluded,
-    ...(!content.exportable || to - from <= 1 ? ['recording:incompatible'] : []),
+    ...(!content.exportable || (!correction && to - from <= 1) ? ['recording:incompatible'] : []),
     ...(content.teaching && !correction ? ['correction:select'] : []),
   ];
 }

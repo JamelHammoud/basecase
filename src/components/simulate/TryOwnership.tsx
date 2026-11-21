@@ -12,9 +12,9 @@ export function TryOwnership({ recording }: { recording: Recording | null }) {
   return (
     <div className="flex flex-col gap-1 text-[13px]" data-testid="try-ownership" data-policy={teaching.policy}>
       <code className="text-white/60 break-all">{teaching.policy}</code>
-      <dl className="flex flex-col gap-y-1">
+      <dl className="flex max-h-[20vh] flex-col gap-y-1 overflow-y-auto" tabIndex={0} data-timeline-scroll>
         {teaching.ownership.map((interval, index) => (
-          <div key={index} className="flex flex-wrap gap-x-2" data-owner={interval.owner}>
+          <div key={index} className="flex shrink-0 flex-wrap gap-x-2" data-owner={interval.owner}>
             <dt className="flex-1">{OWNER_LABEL[interval.owner]}</dt>
             <dd className="grow shrink-0 whitespace-nowrap tabular text-white/60">
               {runClock(interval.at)}–{runClock(interval.until)}

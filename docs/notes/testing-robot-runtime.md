@@ -303,7 +303,7 @@ A further review found that the ordinary observation-window reader discarded ear
 
 ### Selected-motion browser setup correction
 
-The #2025 changed-browser check passed historical-evidence reopening, then failed both selected-motion suites before their test bodies ran. Their shared `beforeAll` called `expect.poll`, which Vitest rejects outside a test. Setup now waits for the same visible `data-mode="set_up"` through Playwright before clicking Test. The Run, recording, Library reopening, Stop and second-unit assertions remain intact, with unchanged deadlines and retries. Browser execution remains with CI. The aggregate Check also failed on the independent electrical container-installation boundary recorded in [Build evidence](testing-build.md#electrical-container-installation). The Vite shutdown warning does not establish another cause for either failure.
+The #2025 changed-browser check passed historical-evidence reopening, then failed both selected-motion suites before their test bodies ran. Their shared `beforeAll` called `expect.poll`, which Vitest rejects outside a test. Setup now waits for the same visible `data-mode="set_up"` through Playwright before clicking Test. The Run, recording, Library reopening, Stop and second-unit assertions remain intact, with unchanged deadlines and retries. Browser execution remains with CI. The aggregate Check also failed on the independent electrical container-installation boundary recorded in [Build evidence](testing-electrical.md#electrical-container-installation). The Vite shutdown warning does not establish another cause for either failure.
 
 ### Selected-motion initial command handoff
 

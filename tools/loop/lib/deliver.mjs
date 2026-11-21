@@ -35,7 +35,7 @@ function send(entry, existing, services) {
 
   if (head !== entry.sha) throw new Error('Pending delivery changed since verification');
 
-  services.execute('git', ['push', '-q', '-u', 'origin', entry.branch], { cwd: entry.dir });
+  services.execute('git', ['push', '-q', 'origin', `HEAD:refs/heads/${entry.branch}`], { cwd: entry.dir });
 
   if (!entry.number) return services.create(entry);
 

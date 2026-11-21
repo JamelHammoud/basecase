@@ -1,3 +1,4 @@
+import { importTryFiles } from './tryFileActions';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { pickFiles } from '../utils/pickFiles';
 import type { LocalFile } from '../utils/robotImport';
@@ -40,6 +41,8 @@ export function useFileImport(core: WorkspaceCore, { creation, pose, data }: Fil
   const openSvg = async (file: File) => tool.openCreator('svg', { name: file.name, text: await file.text() });
 
   const importFiles = ({ files, at, folders = [] }: FileImport) => {
+    if (importTryFiles(core, files)) return;
+
     const paths = [
       ...files.map((file) => file.name),
       ...folders.flatMap((folder) => folder.files.map((file) => file.path)),

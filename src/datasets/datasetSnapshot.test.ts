@@ -75,6 +75,36 @@ async function fixture() {
 }
 
 describe('frozen dataset samples', () => {
+  it('keeps an ordinary branch with its parent split and recovers after restoring a missing parent', async () => {
+    const { dataset, stored, ports } = await fixture();
+    const parent: StoredTry = { ...stored, id: 'parent', input: 'script', split: 'test' };
+
+    stored.sourceTry = parent.id;
+    stored.branch = { version: 1, checkpoint: 'c'.repeat(64), frame: 6, time: 0.12 };
+
+    const manifests = new Map([stored, parent].map((record) => [record.id, record]));
+    const resolve = () =>
+      resolveSnapshot({
+        dataset: { ...dataset, members: [stored.id, parent.id] },
+        model,
+        ports: {
+          ...ports,
+          manifests: async (ids) => ids.flatMap((id) => (manifests.get(id) ? [manifests.get(id)!] : [])),
+        },
+      });
+    const snapshot = await resolve();
+
+    expect(snapshot.samples[0].source).toBe(snapshot.samples[1].source);
+    expect(snapshot.samples.every((sample) => sample.split === 'test')).toBe(true);
+    stored.split = 'train';
+    await expect(resolve()).rejects.toThrow(/conflicting.*splits/i);
+    delete stored.split;
+    manifests.delete(parent.id);
+    await expect(resolve()).rejects.toThrow(/missing.*source/i);
+    manifests.set(parent.id, parent);
+    expect((await resolve()).samples.every((sample) => sample.split === 'test')).toBe(true);
+  });
+
   it('versions instructions, boundaries and flags while preserving the original labels and recording bytes', async () => {
     const { dataset, stored, ports, content } = await fixture();
     const one = await resolveSnapshot({ dataset, model, ports });

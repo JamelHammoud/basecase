@@ -1,10 +1,10 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { castOf, stageCase, stagedEffectors, type StagedCase } from '../cases/caseCast';
+import { castOf, stageCase, type StagedCase } from '../cases/caseCast';
 import { driveFor, slotIndexOf, toCommand } from '../cases/caseDrives';
 import type { Case } from '../cases/schema';
 import { caseWorldItems } from '../cases/importedWorldItems';
 import type { SlotRobot } from '../cases/slots';
-import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
+import { type TryRecord } from '../cases/tries';
 import type { RobotDrive } from '../sim/drive';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
@@ -16,6 +16,8 @@ import type { Rig } from '../utils/kinematics';
 import { caseLogicPlan } from './caseLogicPlan';
 import type { RoutineSkills } from './routineCheck';
 import { useCaseVision } from './useCaseVision';
+import { caseTryRecord } from './caseTryRecord';
+import { useCaseBranch, type BranchTryInput, type BranchTryContext } from './useCaseBranch';
 import { useStartupLease } from './useStartupLease';
 
 export type TryPhase = 'idle' | 'starting' | 'running' | 'scoring';
@@ -31,6 +33,8 @@ interface TryOptions {
   onTry: (record: TryRecord, recording: Recording, input: string | null) => Promise<void>;
   onRefuse: (message: string) => void;
   skills?: RoutineSkills;
+  branchScope?: unknown;
+  onBranchTry?: (record: TryRecord, recording: Recording, current: () => boolean) => Promise<void>;
 }
 
 export interface CaseTry {
@@ -39,13 +43,14 @@ export interface CaseTry {
   start: () => Promise<void>;
   reference: () => Promise<void>;
   end: () => void;
+  branching: boolean;
+  cancelBranch: () => void;
+  branch: (input: BranchTryInput) => Promise<boolean>;
 }
 
 const MIN_FRAMES = 2;
 
 const TOO_SHORT = 'Play the simulation to record a try.';
-
-const newTryId = () => `try-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
 function teamFor(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[] }, all: boolean): DriveTeam {
   const { rig, parts, slots } = castOf(staged, scene);
@@ -72,6 +77,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
   const { sim, rig, parts, joints, active, partners, onTry, onRefuse } = options;
   const [phase, setPhase] = useState<TryPhase>('idle');
   const [startedAt, setStartedAt] = useState(0);
+  const branch = useCaseBranch({ sim, scope: options.branchScope ?? options.scope, setPhase, setStartedAt, onRefuse });
   const finishing = useRef(false);
   const scripted = useRef(false);
   const lease = useStartupLease(options.scope, sim.subscribeStop, () =>
@@ -81,34 +87,30 @@ export function useCaseTry(options: TryOptions): CaseTry {
   const time = sim.stats?.time ?? 0;
   const elapsed = phase === 'running' ? Math.max(0, time - startedAt) : 0;
 
-  const keep = async (kase: Case, model: SimModel, recording: Recording) => {
-    const staged = stageCase(kase, { rig, parts }, partners());
-    const verdict = await scoreTry({
-      kase: staged.kase,
+  const keep = async (input: { kase: Case; model: SimModel; recording: Recording; held: BranchTryContext | null }) => {
+    const { recording, held, kase, model } = input;
+    const record = await caseTryRecord({
+      kase,
       model,
       recording,
-      ...stagedEffectors(staged, { rig, parts }),
+      scene: { rig, parts, partners: partners() },
+      branch: held,
     });
 
-    await onTry(
-      {
-        id: newTryId(),
-        caseId: kase.id,
-        robot: rig.robots[0]?.name ?? 'Robot',
-        at: new Date().toISOString(),
-        passed: verdict.passed,
-        margin: verdict.margin,
-        seconds: recording.frames * recording.dt,
-        manifest: await tryManifest(staged.kase, model, recording),
-      },
-      recording,
-      scripted.current ? 'script' : null,
-    );
+    if (held && !branch.valid(held)) return;
+
+    if (held && options.onBranchTry) return options.onBranchTry(record, recording, () => branch.valid(held));
+
+    await onTry(record, recording, scripted.current ? 'script' : null);
   };
 
   const score = async () => {
-    const kase = active;
-    const model = sim.model;
+    const held = branch.context();
+    const kase = held?.scoring.kase ?? active;
+    const model = held?.scoring.model ?? sim.model;
+
+    if (held) sim.pause();
+
     const recording = await sim.stopRecording();
 
     vision.release();
@@ -119,7 +121,9 @@ export function useCaseTry(options: TryOptions): CaseTry {
 
     if (recording.frames < MIN_FRAMES) return onRefuse(TOO_SHORT);
 
-    await keep(kase, model, recording);
+    if (held && !branch.valid(held)) return;
+
+    await keep({ kase, model, recording, held });
   };
 
   const finish = async () => {
@@ -134,6 +138,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
     } catch (e) {
       onRefuse(errorMessage(e));
     } finally {
+      branch.clear();
       sim.drive.stop();
       setPhase('idle');
       finishing.current = false;
@@ -145,7 +150,8 @@ export function useCaseTry(options: TryOptions): CaseTry {
   });
 
   const running = phase === 'running';
-  const outOfTime = running && !!active && elapsed >= active.task.seconds;
+  const seconds = branch.seconds ?? active?.task.seconds;
+  const outOfTime = running && seconds !== undefined && elapsed >= seconds;
   const leftDrive = running && !sim.drive.active;
 
   useEffect(() => {
@@ -204,5 +210,14 @@ export function useCaseTry(options: TryOptions): CaseTry {
     setPhase('running');
   };
 
-  return { phase, elapsed, start: () => begin(false), reference: () => begin(true), end: () => void finish() };
+  return {
+    phase,
+    elapsed,
+    branching: branch.running,
+    cancelBranch: branch.cancel,
+    branch: branch.start,
+    start: () => begin(false),
+    reference: () => begin(true),
+    end: () => void finish(),
+  };
 }

@@ -43,6 +43,7 @@ Every file type Basecase opens and saves, with the units it assumes and its size
 | STEP, STP, IGES, IGS | Import a mesh, in the desktop app only | The file's own units |
 | SVG | [Draw a part from a sketch or SVG](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part) | The width you type |
 | URDF, MJCF, zip | [Import a robot](/help/import-a-robot), with its joints | The file's own units |
+| `.tries.zip` | [Restore simulation tries with their parents](/help/branch-a-simulated-try) | Recorded units |
 | `.basecase` | [Open a shared scene](/help/open-a-shared-scene) |, |
 | PNG, JPEG and other images | Dropped on the canvas, as a flat reference image |, |
 | BVH | **File** ▸ **Import**, as motion for a robot with joints |, |
@@ -63,13 +64,14 @@ Ordinary mesh imports have no captured-world byte or triangle limit. Texture map
 - Each downloaded robot description or companion file can be up to 200 MB.
 - A `.basecase` scene can be up to 128 MB after decompression.
 - A BVH downloaded by the agent can be up to 8 MB.
+- A `.tries.zip` file can be up to 600 MB, with at most 128 tries including parents.
 - A captured world drop can total up to 64 MB across 256 files, with 200,000 collider triangles and 1,000,000 splat points.
 
 SimReady parts in scene files must link to a supported catalog dataset. Their texture packages stay outside the file and [download on request](/help/add-objects-to-the-scene#restore-saved-simready-textures).
 
 ## Export
 
-Every export is in the **Export** menu at the top right of the window.
+Scene exports are in the **Export** menu at the top right of the window.
 
 | Menu item | File | What's in it |
 |---|---|---|
@@ -86,6 +88,8 @@ Every export is in the **Export** menu at the top right of the window.
 | **Copy as Markdown** | The clipboard | The scene as a Markdown spec: its goal and every part with its size |
 | **AirDrop** on a Mac, **USDZ Model** on Windows | `<scene>.usdz` | The solid parts as a USDZ model, which an iPhone or iPad opens in 3D |
 
-File names use the scene's name in lowercase, with dashes for spaces.
+Scene file names use the scene's name in lowercase, with dashes for spaces.
+
+A supported saved simulation try has **Export Try** in its timeline and [[⌘K]]. It saves `<try-id>.tries.zip`, including available parents. See [Branch a simulated try](/help/branch-a-simulated-try).
 
 An image keeps the view from when you choose **Image**. You can keep working while Basecase prepares the PNG.

@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { readTryBranch } from './tryBranch.mjs';
 import path from 'node:path';
 import { checkedFileId, isSafeFileId } from '../backend/constants.mjs';
 import { writeAtomic } from './atomicFile.mjs';
@@ -56,6 +57,7 @@ function tagsOf(labels) {
 export function summarizeTry(manifest, { recording, strip, stamp }) {
   const robot = isPlain(manifest.robot) ? manifest.robot : {};
   const kase = isPlain(manifest.case) ? manifest.case : null;
+  const branch = readTryBranch(manifest.branch);
 
   return {
     id: manifest.id,
@@ -72,6 +74,7 @@ export function summarizeTry(manifest, { recording, strip, stamp }) {
     outcome: outcomeOf(manifest.outcome),
     seed: number(manifest.seed),
     sourceTry: idOrNull(manifest.sourceTry),
+    ...(branch ? { branch } : {}),
     origin: originOf(manifest.origin),
     task: typeof manifest.task === 'string' ? text(manifest.task) : null,
     tags: tagsOf(manifest.labels),

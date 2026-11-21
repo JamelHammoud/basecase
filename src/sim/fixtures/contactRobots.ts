@@ -2,6 +2,7 @@ import { DEFAULT_PROJECT, type ScenePart } from '../../types/robotics';
 import { buildRig } from '../../utils/kinematics';
 import { box, joint } from './parts';
 import { buildMjcf, type SimModel } from '../mjcf';
+import type { WorldItem } from '../mjcfTypes';
 
 function robot(index: number) {
   const prefix = `r${index}`;
@@ -52,7 +53,7 @@ export function contactScene(count: number, selfContact: number[] = [], reverse 
   });
 }
 
-export function contactSliders(count = 2): SimModel {
+export function contactSliders(count = 2, world: WorldItem[] = []): SimModel {
   const robots = Array.from({ length: count }, (_, i) => {
     const x = i * 39.8;
     const parts = [
@@ -83,5 +84,6 @@ export function contactSliders(count = 2): SimModel {
     project: DEFAULT_PROJECT,
     measures: {},
     partTriangles: () => null,
+    world,
   });
 }

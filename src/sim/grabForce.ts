@@ -26,6 +26,10 @@ export class GrabForce {
     this.dt = dt;
   }
 
+  get active(): boolean {
+    return this.held !== null;
+  }
+
   start(id: number, point: [number, number, number]) {
     this.end();
 

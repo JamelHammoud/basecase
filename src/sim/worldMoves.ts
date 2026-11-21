@@ -19,6 +19,11 @@ interface Mover {
   rest: THREE.Quaternion;
 }
 
+export interface WorldMoveState {
+  changes: WorldChange[];
+  hidden: Array<[string, Float64Array]>;
+}
+
 const turnOf = (rotation: V3) =>
   new THREE.Quaternion().setFromEuler(new THREE.Euler(...(rotation.map(THREE.MathUtils.degToRad) as V3), 'XYZ'));
 
@@ -100,6 +105,22 @@ export class WorldMoves {
 
       return pose || look ? [{ id, ...(pose ? { pose } : {}), ...look }] : [];
     });
+  }
+
+  snapshot(): WorldMoveState {
+    return structuredClone({ changes: this.state(), hidden: [...this.hiddenAt] });
+  }
+
+  restore(state: WorldMoveState) {
+    const copy = structuredClone(state);
+
+    this.reset();
+
+    for (const change of copy.changes) this.apply(change, { teleport: false });
+
+    this.hiddenAt.clear();
+
+    for (const [id, pose] of copy.hidden) this.hiddenAt.set(id, pose);
   }
 
   reset() {

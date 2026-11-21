@@ -6,6 +6,7 @@ import type { WorldChange, WorldEvent } from '../cases/worldSet';
 import type { WorldMoves } from './worldMoves';
 import type { FactValue } from '../cases/caseFacts';
 import type { IdealTendon } from '../types/tendon';
+import { ContinuationCapture, type ContinuationCaptureOptions } from './continuationCapture';
 
 export const RECORD_HZ = 50;
 
@@ -28,6 +29,7 @@ export interface Recording {
     observations: Array<{ joint: string; qpos: number; dof: number }>;
     fingerprints: Record<string, string>;
   };
+  timeOffset?: number;
   dt: number;
   frames: number;
   nq: number;
@@ -53,6 +55,7 @@ export interface Recording {
   topics?: Uint8Array;
   contacts?: Int32Array;
   contactOffsets?: Int32Array;
+  continuation?: Uint8Array;
 }
 
 class Growing<T extends Float32Array | Float64Array | Int32Array> {
@@ -98,6 +101,7 @@ export class Recorder {
   private frames = 0;
 
   private readonly started: number;
+  private readonly clock: number;
 
   private readonly t = new Growing(f32, 512);
 
@@ -126,12 +130,20 @@ export class Recorder {
   private readonly contacts = new Growing(i32, 512);
   private readonly contactOffsets = new Growing(i32, 512);
   private contactCount = 0;
+  private readonly continuation: ContinuationCapture | null;
+  private sampledAt = -1;
 
-  constructor(engine: SimEngine, controller: Controller | null = null, world: WorldMoves | null = null) {
+  constructor(
+    engine: SimEngine,
+    controller: Controller | null = null,
+    world: WorldMoves | null = null,
+    options?: ContinuationCaptureOptions | { clock: number },
+  ) {
     const { model } = engine;
 
     this.engine = engine;
     this.started = engine.data.time;
+    this.clock = options && 'clock' in options ? options.clock : this.started;
     this.next = this.started;
     this.ctrl = new Growing(f32, 512 * model.nu);
     this.qpos = new Growing(f64, 512 * model.nq);
@@ -142,6 +154,7 @@ export class Recorder {
     this.root = engine.rootAddresses();
     this.scan = engine.scanner ? new Growing(f32, 512 * engine.scanner.values.length) : null;
     this.controller = controller;
+    this.continuation = options && 'caseHash' in options ? new ContinuationCapture(engine, options) : null;
 
     for (const c of engine.givenCommands()) this.commands.push({ at: 0, command: structuredClone(c) });
 
@@ -150,6 +163,22 @@ export class Recorder {
     for (const change of world?.state() ?? []) this.world.push({ ...structuredClone(change), at: 0 });
 
     this.sample();
+    this.continuationHook();
+  }
+
+  readonly continuationHook = () => {
+    if (this.sampledAt !== this.engine.data.time) return;
+
+    this.continuation?.capture(this.frames - 1, {
+      commands: this.commands.length,
+      faults: this.faults.length,
+      world: this.world.length,
+      inputs: this.inputs.length,
+    });
+  };
+
+  invalidateContinuation() {
+    this.continuation?.invalidate();
   }
 
   fault(joint: string, kind: FaultKind | null) {
@@ -187,8 +216,9 @@ export class Recorder {
     const { data } = this.engine;
 
     this.engine.refreshKinematics();
+    this.sampledAt = data.time;
 
-    this.t.push([data.time - this.started]);
+    this.t.push([data.time - this.clock]);
     this.ctrl.push(data.ctrl);
     this.qpos.push(data.qpos);
     this.qvel.push(data.qvel);
@@ -229,6 +259,7 @@ export class Recorder {
 
     return {
       ...(transmission ? { transmission } : {}),
+      ...(this.started !== this.clock ? { timeOffset: this.started - this.clock } : {}),
       dt: this.dt,
       frames: this.frames,
       nq: model.nq,
@@ -246,6 +277,7 @@ export class Recorder {
       root: this.root,
       contacts: this.contacts.done(),
       contactOffsets: Int32Array.from([...this.contactOffsets.done(), this.contactCount]),
+      ...(this.continuation ? { continuation: this.continuation.finish() } : {}),
       ...(this.scan && this.engine.scanner
         ? { scan: this.scan.done(), scanWidth: this.engine.scanner.values.length }
         : {}),
@@ -271,6 +303,7 @@ export const recordingTransfer = (r: Recording): Transferable[] =>
     r.topics,
     r.contacts,
     r.contactOffsets,
+    r.continuation,
   ].flatMap((a) => (a ? [a.buffer] : []));
 
 export function framePoses(r: Recording, frame: number): Float64Array {

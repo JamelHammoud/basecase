@@ -60,6 +60,7 @@ export function useTryTimeline(options: TimelineOptions) {
   const [opened, setOpened] = useState<Opened | null>(null);
   const saved = useSavedTimeline();
   const opening = useRef(0);
+  const movement = useRef(0);
   const pending = useRef<{ origin: TimelineOrigin; current: () => boolean } | null>(null);
   const frames = opened?.recording.frames ?? 0;
   const playback = useTimelinePlayback({ frames, dt: opened?.recording.dt ?? 1, seek: sim.seek });
@@ -166,9 +167,35 @@ export function useTryTimeline(options: TimelineOptions) {
     speed: controls.speed,
     loop: controls.loop,
     show,
+    branchSource: () => {
+      if (!opened?.scene) return null;
+
+      const ticket = opening.current;
+      const at = movement.current;
+
+      return {
+        source: opened.record,
+        scoring: opened.scene.scoring,
+        frame: controls.frame,
+        current: () => ticket === opening.current && at === movement.current && !!pending.current?.current(),
+        started: () => {
+          opening.current++;
+          pending.current = null;
+          playback.stop();
+          closeRecordedCameras();
+          setOpened(null);
+        },
+      };
+    },
     close: controls.close,
-    seek: controls.jump,
-    step: controls.step,
+    seek: (frame: number) => {
+      movement.current++;
+      controls.jump(frame);
+    },
+    step: (direction: number) => {
+      movement.current++;
+      controls.step(direction);
+    },
     toggle: controls.toggle,
     faster: controls.faster,
     setLoop: controls.setLoop,

@@ -1,3 +1,5 @@
+import { keepTyped, restoreTyped } from './recordingValues';
+import { CONTINUATION_MAX_BYTES } from '../sim/continuationLimits';
 import type { RecordedInput, Recording } from '../sim/recorder';
 
 const MAGIC = 0x52544342;
@@ -23,6 +25,7 @@ const ARRAYS = {
   topics: 'u8',
   contacts: 'i32',
   contactOffsets: 'i32',
+  continuation: 'u8',
 } as const satisfies Record<string, ArrayKind>;
 
 type ArrayKey = keyof typeof ARRAYS;
@@ -37,41 +40,6 @@ const MAKERS: Record<ArrayKind, (buffer: ArrayBuffer) => Typed> = {
 };
 
 const SIZE: Record<ArrayKind, number> = { f32: 4, f64: 8, i32: 4, u8: 1 };
-
-const TYPED_TAG = '$typed';
-
-const MADE: Partial<Record<string, (values: unknown[]) => unknown>> = {
-  Float32Array: (v) => Float32Array.from(v as number[]),
-  Float64Array: (v) => Float64Array.from(v as number[]),
-  Int32Array: (v) => Int32Array.from(v as number[]),
-  Uint8Array: (v) => Uint8Array.from(v as number[]),
-  Map: (v) => new Map(v.filter((entry) => Array.isArray(entry) && entry.length === 2) as Array<[unknown, unknown]>),
-  Set: (v) => new Set(v),
-};
-
-function valuesOf(value: unknown): unknown[] | null {
-  if (value instanceof Map || value instanceof Set) return [...value];
-
-  if (ArrayBuffer.isView(value) && !(value instanceof DataView))
-    return Array.from(value as unknown as ArrayLike<number>);
-
-  return null;
-}
-
-function keepTyped(_key: string, value: unknown) {
-  const values = valuesOf(value);
-
-  return values ? { [TYPED_TAG]: (value as object).constructor.name, values } : value;
-}
-
-function restoreTyped(_key: string, value: unknown) {
-  if (typeof value !== 'object' || value === null || !(TYPED_TAG in value)) return value;
-
-  const { [TYPED_TAG]: name, values } = value as { [TYPED_TAG]: string; values: unknown };
-  const make = MADE[name];
-
-  return make && Array.isArray(values) ? make(values) : null;
-}
 
 const align8 = (n: number) => Math.ceil(n / 8) * 8;
 
@@ -165,7 +133,7 @@ const arraysFit = (h: Header) =>
     (entry) =>
       Array.isArray(entry) &&
       entry[0] in ARRAYS &&
-      isCount(entry[1]) &&
+      isCount(entry[1], entry[0] === 'continuation' ? CONTINUATION_MAX_BYTES : Number.MAX_SAFE_INTEGER) &&
       (expectedLength(entry[0], h) ?? entry[1]) === entry[1],
   ) &&
   REQUIRED.every((key) => h.arrays.some(([k]) => k === key)) &&

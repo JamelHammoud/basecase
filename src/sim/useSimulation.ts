@@ -1,3 +1,4 @@
+import { simulationRecording } from './simulationRecording';
 import { useSimRuns } from './useSimRuns';
 import { useSimController } from './useSimController';
 import { useCallback, useRef, useState } from 'react';
@@ -12,6 +13,8 @@ import type { SimPhysics } from './livePhysics';
 import type { SimModel, WorldItem } from './mjcf';
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { RecordedEfforts } from './recordedFrames';
+import type { Case } from '../cases/schema';
+import type { ContinuationPoint, ContinuationTakeover } from './continuationSession';
 import type { Recording } from './recorder';
 import type { Scan } from './scanner';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
@@ -86,6 +89,9 @@ export interface Simulation {
   scrub: (r: Recording | null, efforts?: RecordedEfforts) => Promise<RecordedEfforts | null>;
   seek: (frame: number) => void;
   sought: () => Sought | null;
+  checkpoints: ContinuationPoint[];
+  branch: (frame: number, kase: Case, bytes?: Uint8Array) => Promise<ContinuationTakeover | null>;
+  cancelBranch: () => void;
   worldParts: WorldItem[];
   worldNow: () => { items: WorldItem[]; guests: SimGuests };
   guestParts: ScenePart[];
@@ -147,8 +153,8 @@ export function useSimulation(props: SimInputs): Simulation {
   const { inputsRef, buildModel, worldParts, guestParts, setWorldItems, worldNow, cancelPreparation } =
     useSceneModel(props);
   const sw = useSimWorker(viewportRef, modelRef);
-  const { status, setStatus, playing, setPlaying, stats, setStats, error, send, frameHookRef } = sw;
-  const [controller, setController] = useSimController(send);
+  const { status, setStatus, playing, setPlaying, stats, setStats, error, send, frameHookRef, cancelRecording } = sw;
+  const [controller, setController, adoptController] = useSimController(send);
   const touch = useSimTouches(modelRef, send);
   const watching = useWatch(send, sw.watched);
 
@@ -164,6 +170,7 @@ export function useSimulation(props: SimInputs): Simulation {
   const stop = useCallback(() => {
     cancelPreparation();
     cancelStart();
+    cancelRecording();
     send({ type: 'dispose' });
     modelRef.current = null;
     setModel(null);
@@ -171,7 +178,18 @@ export function useSimulation(props: SimInputs): Simulation {
     setPlaying(false);
     setStats(null);
     viewportRef.current?.setPose(inputsRef.current.restDeltas);
-  }, [viewportRef, send, setModel, setStatus, setPlaying, setStats, inputsRef, cancelStart, cancelPreparation]);
+  }, [
+    viewportRef,
+    send,
+    setModel,
+    setStatus,
+    setPlaying,
+    setStats,
+    inputsRef,
+    cancelStart,
+    cancelPreparation,
+    cancelRecording,
+  ]);
 
   const noteContactEdit = useStopOnEdit({
     parts,
@@ -219,18 +237,8 @@ export function useSimulation(props: SimInputs): Simulation {
     speed,
     controller,
     start,
-    play: () => {
-      send({ type: 'play' });
-      setPlaying(true);
-    },
-    pause: () => send({ type: 'pause' }),
-    reset: () => send({ type: 'reset' }),
     stop,
     subscribeStop,
-    setSpeed: (s) => {
-      setSpeedState(s);
-      send({ type: 'speed', value: s });
-    },
     setController,
     buildModel,
     ...touch,
@@ -238,15 +246,7 @@ export function useSimulation(props: SimInputs): Simulation {
     setPhysics: (physics) => send({ type: 'physics', physics }),
     resetTo: (initial) => send({ type: 'reset', initial }),
     drive: stoppedDrive(drive, cancelStart),
-    record: () => send({ type: 'record', on: true }),
-    stopRecording: sw.stopRecording,
-    scrub: (r, efforts) => {
-      setPlaying(false);
-
-      return sw.scrub(r, efforts);
-    },
-    seek: sw.seek,
-    sought: sw.sought,
+    ...simulationRecording({ worker: sw, send, setPlaying, adopt: adoptController, setSpeed: setSpeedState }),
     worldParts: withLooks(worldParts, sw.worldLooks),
     worldNow,
     guestParts,

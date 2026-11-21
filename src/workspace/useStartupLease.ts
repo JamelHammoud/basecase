@@ -5,6 +5,7 @@ export function useStartupLease(
   scope: unknown,
   subscribeStop: (listener: () => void) => () => void,
   onCancel?: () => void,
+  keepOnStop?: () => boolean,
 ) {
   const [lease] = useState(() => new StartupLease());
   const cancel = useEffectEvent(() => {
@@ -12,8 +13,12 @@ export function useStartupLease(
     onCancel?.();
   });
 
+  const stopped = useEffectEvent(() => {
+    if (!keepOnStop?.()) cancel();
+  });
+
   useEffect(() => {
-    const stop = subscribeStop(cancel);
+    const stop = subscribeStop(stopped);
 
     return () => {
       stop();

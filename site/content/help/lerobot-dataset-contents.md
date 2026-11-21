@@ -42,7 +42,7 @@ Each included recording range in the [dataset](/help/make-a-dataset-from-tries) 
 | `meta/tasks.parquet` | Every task: a try's instruction, else the dataset's task |
 | `meta/stats.json` | The minimum, maximum, mean, standard deviation and count of every column across all episodes |
 | `meta/info.json` | The dataset's version (`v3.0`), frame rate, file size limits, columns, cameras and episode ranges for each split |
-| `meta/basecase.json` | The Case, model hash and each episode's try, margin, `seed` and `source`. Frozen episodes also include `recording_hash`, `source_run`, `from_frame`, `to_frame` and `split`. Frame bounds refer to the source recording, with the end excluded |
+| `meta/basecase.json` | The Case, model hash and each episode's try, margin, `seed` and `source`. Branched episodes include `branch` with their checkpoint, frame, time and method version. Frozen episodes also include `recording_hash`, `source_run`, `from_frame`, `to_frame` and `split`. Frame bounds refer to the source recording, with the end excluded |
 
 The joined videos aren't encoded again. Basecase copies each episode's frames into the camera's file as they are. An episode encoded with other settings starts a new file.
 

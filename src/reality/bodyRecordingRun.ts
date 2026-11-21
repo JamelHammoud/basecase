@@ -1,5 +1,6 @@
-import { readRecordedRun } from '../../electron/robot/recordedRun.mjs';
-import { readOperateLog } from '../robot/operateLog';
+import { readOperateLog, type OperateLog } from '../robot/operateLog';
+import type { RobotRun } from '../robot/runBuffer';
+import { BODY_ANALYSIS_LIMITS as LIMITS } from './bodyAnalysisTypes';
 
 export interface BodyRecordingRequest {
   session: string;
@@ -7,24 +8,43 @@ export interface BodyRecordingRequest {
   joints: string[];
 }
 
-export function readBodyRecording({ session, id, joints }: BodyRecordingRequest) {
-  if (session.length > 1_048_576 || joints.length > 16 || !checkedSession(session, joints.length)) return null;
+export function readBodyRecording({ session, joints }: BodyRecordingRequest): RobotRun | null {
+  if (session.length > 1_048_576 || joints.length > LIMITS.joints) return null;
 
-  return readRecordedRun({ read: () => session }, { id, joints });
+  const log = checkedSession(session, joints.length);
+
+  if (!log?.statuses.length) return null;
+
+  const end = log.statuses.at(-1)!.t;
+  const statuses = log.statuses.filter((sample) => sample.t >= end - LIMITS.durationMs / 1000);
+  const first = statuses[0].t;
+  const previous = log.intents.findLast((sample) => sample.t < first);
+  const intents = log.intents.filter((sample) => sample.t >= first);
+
+  if (previous) intents.unshift(previous);
+
+  return {
+    joints: [...joints],
+    statuses: statuses.map((sample) => ({ at: sample.t * 1000, positions: sample.q })),
+    intents: intents.map((sample) => ({ at: sample.t * 1000, joints: sample.q })),
+    faultJoint: null,
+    faultAt: 0,
+    message: '',
+  };
 }
 
-function checkedSession(text: string, joints: number): boolean {
+function checkedSession(text: string, joints: number): OperateLog | null {
   try {
     return checkedSessionLines(text, joints);
   } catch {
-    return false;
+    return null;
   }
 }
 
-function checkedSessionLines(text: string, joints: number): boolean {
+function checkedSessionLines(text: string, joints: number): OperateLog | null {
   const raw = text.split('\n').filter(Boolean);
 
-  if (raw.length > 8192) return false;
+  if (raw.length > 8192) return null;
 
   const lines: unknown[] = raw.map((line) => JSON.parse(line));
 
@@ -34,18 +54,21 @@ function checkedSessionLines(text: string, joints: number): boolean {
     ...log.intents.map((sample) => ({ at: sample.t, values: sample.q })),
   ];
 
-  return (
+  const valid =
+    log.statuses.length <= LIMITS.inputSamples &&
+    log.intents.length <= LIMITS.intents &&
     samples.every((sample) => Number.isFinite(sample.at) && sample.at >= 0 && sample.values.length === joints) &&
     log.statuses.every((sample, index) => index === 0 || sample.t > log.statuses[index - 1].t) &&
     log.intents.every((sample, index) => index === 0 || sample.t >= log.intents[index - 1].t) &&
-    lines.every((line) => validSessionLine(line, joints))
-  );
+    lines.every((line) => validSessionLine(line, joints));
+
+  return valid ? log : null;
 }
 
 function validSessionLine(line: unknown, joints: number): boolean {
   if (typeof line !== 'object' || line === null || !('k' in line) || !('t' in line)) return false;
 
-  if (!Number.isFinite(line.t)) return false;
+  if (typeof line.t !== 'number' || !Number.isFinite(line.t * 1000) || line.t < 0) return false;
 
   if (line.k !== 'status' && line.k !== 'intent') return true;
 

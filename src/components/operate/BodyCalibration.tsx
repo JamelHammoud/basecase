@@ -1,5 +1,5 @@
 import React, { useSyncExternalStore } from 'react';
-import { Button, confirmAction, Spinner } from '../../design-system';
+import { Button, confirmAction, ErrorBoundary, Spinner } from '../../design-system';
 import type { BodyAnalysisView } from '../../workspace/useBodyAnalysis';
 import { BodyAnalysis } from './BodyAnalysis';
 import type { BodyHistory } from '../../reality/bodyTypes';
@@ -28,10 +28,6 @@ export const BodyCalibration: React.FC<BodyCalibrationProps> = ({ robot, history
       <Button variant="secondary" fullWidth disabled={pending} icon={pending ? <Spinner /> : undefined} onClick={onFit}>
         {pending ? 'Fitting body…' : 'Fit Body'}
       </Button>
-      <Button variant="secondary" fullWidth onClick={analysis.show}>
-        Analyze Try
-      </Button>
-      <BodyAnalysis analysis={analysis} />
       {latest && <p className="px-1 text-[12px] text-white/50">{bodyEvidenceText(latest)}</p>}
       {history?.active != null && (
         <div className="flex items-center justify-between gap-2 px-1" data-body-version={history.active}>
@@ -40,6 +36,14 @@ export const BodyCalibration: React.FC<BodyCalibrationProps> = ({ robot, history
             Roll Back
           </Button>
         </div>
+      )}
+      <Button variant="secondary" fullWidth onClick={analysis.show}>
+        Analyze Try
+      </Button>
+      {analysis.open && (
+        <ErrorBoundary region="Analyze Try" onClose={analysis.close}>
+          <BodyAnalysis analysis={analysis} />
+        </ErrorBoundary>
       )}
     </div>
   );

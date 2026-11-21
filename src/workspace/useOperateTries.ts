@@ -167,9 +167,9 @@ export function useOperateTries({
         () => null,
       ));
 
-    if (evidence) updateProject((current) => withBodyEvidence(current, evidence));
-
     await replayed(sim, stored, video);
+
+    if (evidence) updateProject((current) => withBodyEvidence(current, evidence));
   });
 
   const refuse = useEffectEvent((e: unknown) => showToast(errorMessage(e), { tone: 'error' }));

@@ -14,7 +14,7 @@ export function BodyAnalysisResult({
   checking: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-3 text-[13px] text-white/60">
+    <div className="flex min-w-0 flex-col gap-3 break-words text-[13px] text-white/60 [overflow-wrap:anywhere]">
       <p className="text-white/90">
         {checking && <Spinner />}
         {!checking && (applicable ? 'Current source' : 'Out of date')}
@@ -47,7 +47,9 @@ export function BodyAnalysisResult({
         ))}
       </dl>
       <details>
-        <summary className="min-h-[32px] cursor-default text-white/90">Method</summary>
+        <summary role="button" className="min-h-[32px] cursor-default text-white/90">
+          Method
+        </summary>
         <p>
           {result.method.version} {result.source.modelHash} {result.source.calibrationFingerprint}
         </p>

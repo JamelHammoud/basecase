@@ -4,12 +4,14 @@ import { selectedUnit } from '../robot/robotStore';
 import { bodyRecordingUnchanged } from '../reality/bodyRecordingIdentity';
 import type { BodyEvidenceRef } from '../reality/bodyEvidence';
 import { useTries } from '../cases/tryStore';
+import type { TrySummary } from '../cases/tryFile';
 import { useFleet } from '../robot/useRobot';
 import { bodyClient } from '../reality/bodyClient';
 import { bodySourceKey, evidenceApplicable, readBodyEvidence, withBodyEvidence } from '../reality/bodyEvidence';
 import type { BodyAnalysisOutcome } from '../reality/bodyAnalysisTypes';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { errorMessage } from '../utils/errorMessage';
+import { dayLabel } from '../utils/timeAgo';
 
 let opening: { scene: string | null; version: number } = { scene: null, version: 0 };
 const listeners = new Set<() => void>();
@@ -51,6 +53,7 @@ function useBodySource(
     key: string;
     reference: string | undefined;
     version: number;
+    problem: string;
   } | null>(null);
 
   useEffect(() => {
@@ -70,10 +73,19 @@ function useBodySource(
             key: unchanged ? key : '',
             reference: ref?.content,
             version: opening.version,
+            problem: '',
           });
       })
-      .catch(() => {
-        if (current) setFreshness(null);
+      .catch((error: unknown) => {
+        if (current)
+          setFreshness({
+            parts: core.parts,
+            project: core.project,
+            key: '',
+            reference: ref?.content,
+            version: opening.version,
+            problem: errorMessage(error),
+          });
       });
 
     return () => {
@@ -81,15 +93,33 @@ function useBodySource(
     };
   }, [core.parts, core.project, ref, opening, open]);
 
+  const current =
+    open &&
+    value?.parts === core.parts &&
+    value.project === core.project &&
+    value.reference === ref?.content &&
+    value.version === opening.version;
+
   return {
-    ready:
-      open &&
-      value?.parts === core.parts &&
-      value.project === core.project &&
-      value.reference === ref?.content &&
-      value.version === opening.version,
+    ready: current && !value.problem,
+    problem: current ? value.problem : '',
     key: value?.key ?? '',
   };
+}
+
+function bodyTryChoices(tries: TrySummary[], references: BodyEvidenceRef[] | undefined, scene: string) {
+  const recent = tries.filter((run) => run.sceneId === scene && run.source === 'operate').slice(-32);
+  const recentIds = new Set(recent.map((run) => run.id));
+  const historical = (references ?? []).filter((ref) => ref.scene === scene && !recentIds.has(ref.recording));
+
+  return [
+    ...historical.map((ref) => ({ value: ref.recording, label: `${ref.unit} ${ref.recording}` })),
+    ...recent.map((run) => ({ value: run.id, label: `${dayLabel(run.startedAt)} ${run.id}` })),
+  ];
+}
+
+function selectedBodyTry(choices: Array<{ value: string }>, picked: string): string {
+  return choices.find((run) => run.value === picked)?.value ?? choices.at(-1)?.value ?? '';
 }
 
 export function useBodyAnalysis(core: WorkspaceCore) {
@@ -97,10 +127,10 @@ export function useBodyAnalysis(core: WorkspaceCore) {
   const tries = useTries() ?? [];
   const scene = core.scene.sceneId;
   const { request, open } = useBodyOpening(core);
-  const choices = tries.filter((run) => run.sceneId === scene && run.source === 'operate').slice(-32);
+  const choices = bodyTryChoices(tries, core.project.bodyEvidence, scene);
   const [picked, setPicked] = useState('');
-  const selected = picked || choices.at(-1)?.id || '';
-  const ref = core.project.bodyEvidence?.find((entry) => entry.recording === selected && entry.unit === unit);
+  const selected = selectedBodyTry(choices, picked);
+  const ref = core.project.bodyEvidence?.find((entry) => entry.recording === selected);
   const [reported, setReported] = useState<{
     selected: string;
     unit: string;
@@ -206,8 +236,8 @@ export function useBodyAnalysis(core: WorkspaceCore) {
     selected,
     applicable,
     result,
-    problem,
-    choices: choices.map((run) => ({ value: run.id, label: `${run.startedAt} ${run.id}` })),
+    problem: problem || freshness.problem,
+    choices,
     show: () => openBodyAnalysis(scene),
     close: () => {
       cancel();

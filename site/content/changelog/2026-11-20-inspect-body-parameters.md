@@ -6,7 +6,7 @@ image: /changelog/inspect-body-parameters/cover.png
 
 You can inspect which body parameters a saved robot try can distinguish, which remain coupled and whether its model explains the observations. You can use this in the desktop app with tries that retain matching model evidence.
 
-Open Operate and choose **Analyze Try**. Select the recording in the existing try picker, then click **Analyze** to compare bounded parameter changes through MuJoCo replay.
+In **Operate**, **Analyze Try** compares bounded parameter changes through MuJoCo replay.
 
 A wrist's mass and payload can produce similar motion. You might improve the fit by changing either, with little evidence in the recording to choose between them. You can see that ambiguity in the analysis without attributing it to a physical cause.
 

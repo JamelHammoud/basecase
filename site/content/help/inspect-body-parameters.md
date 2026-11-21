@@ -19,24 +19,20 @@ Use body analysis to check which masses, payloads and floor friction you can dis
 
 You can use body analysis in the desktop app if the try includes saved model evidence. You can read earlier tries without that evidence, but you can't analyze them.
 
-1. In the Play view, open **Operate**.
-2. Click the unit's named row, if more than one is listed.
-3. Click **Analyze Try**.
-4. In **Try**, choose the retained try.
-5. Click **Analyze**.
+1. In **Play**, open **Operate**.
+2. In **Operate**, click the unit's named row, if more than one is listed.
+3. In the body controls, click **Analyze Try**.
+4. In the **Try** picker, choose the retained try.
+5. Below the picker, click **Analyze**.
 
 ![A retained arm try with a distinguishable mass and coupled wrist parameters](/help/inspect-body-parameters/analysis.png)
 
 You can choose **Analyze Try** from [[⌘K]]. To reopen a saved analysis, choose another try in the same picker.
 
-**Distinguishable** means a parameter produces a separate local response above the method's threshold. **Coupled** means different parameter changes can explain similar motion. **Poor excitation** means the response is too small under the assumed noise.
-
-A residual mismatch remains unresolved. You can use these results to assess the supplied model and observations, but you can't identify a unique physical cause or assign probabilities from them.
-
-If you edit the source, you'll see **Out of date** on saved results. You can still read the original model, calibration, observations and method in the evidence.
+If you edit the source, you'll see **Out of date** on saved results. You can still read the saved parameters and method.
 
 ![Historical body evidence remains readable after a source edit](/help/inspect-body-parameters/historical.png)
 
-Open **Method** for units, probes, bounds, scaling, assumed noise and numerical thresholds. You can analyze up to 256 status samples from the recorded interval. You can't use velocity-driven wheel commands with this replay path.
+Beside each parameter, read its units, probes, bounds and scaling. Open **Method** for the saved interval, assumed noise and numerical thresholds.
 
-You won't change calibration, policy, scene geometry or the Checks verdict by running analysis. Use the separate **Fit Body** action described in [Fit a robot's body from a recorded run](/help/fit-a-robots-body-from-a-recorded-run) to fit the body.
+See [Recorded body parameters](/help/simulation-in-basecase#recorded-body-parameters) for the result labels and limits. To change the body fit, follow [Fit a robot's body from a recorded run](/help/fit-a-robots-body-from-a-recorded-run).

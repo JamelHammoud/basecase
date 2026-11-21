@@ -120,7 +120,7 @@ The frozen package contains ordinary scene files, exact prepared geometry, local
 components, world assets, controller schemas, active calibration inputs, randomization settings, source hashes and
 engine provenance. Scene calibration follows the ordinary calibrated model path. No scripts, external URLs, traversal
 or symbolic links are accepted as package assets. Run verifies all declared hashes before execution. It does not use
-a result cache. Geometry preparation occurs twice at freeze and not during seeded execution. One fitted runner per
+a result cache. Geometry preparation occurs twice at freeze and not during seeded execution. Run metrics count preparations within that execution, excluding earlier freezes in the same process. One fitted runner per
 Case and revision reuses those immutable inputs. The runner hash covers implementation sources and the dependency lock.
 
 `--conditions fixed` disables world jitter but retains seeded physics. `randomized` also varies dynamic world objects,
@@ -168,8 +168,13 @@ HTML without loading MuJoCo. The report stays readable as a static file. Tests, 
 
 `evaluation.test.mjs` exercises inspect and mismatched-Case freeze through real CLI children. Valid freeze
 preparation, duplicate-seed rejection and evaluation execution use production functions with repository modules loaded
-by Vitest, avoiding three redundant CLI startups. `evaluationVariants.test.mjs` retains actual successful freeze and
-run dispatch coverage. `evaluationInterruption.test.mjs` retains actual run cancellation coverage.
+by Vitest through the shared `evaluationContext.fixtures.mjs` loader. Variant preparation and execution use the same
+production functions. The bounded-retention variant retains successful CLI freeze dispatch, and the runtime-seed
+refusal still invokes the CLI. `evaluationInterruption.test.mjs` retains actual run dispatch and cancellation coverage.
+`evaluationResources.test.mjs` checks exactly two freeze preparations, zero additional run preparations, both ordered
+seeds, nominal parity with ordinary scene checks, positive process RSS and the output byte bound. It no longer runs
+four additional CLI children to collect wall-clock comparisons. These checks retain the existing five-second deadlines.
+[Repair evidence](../notes/testing-cases.md#nightly-evaluation-and-camera-repair-on-21-november) records the failure and remaining platform limits.
 The ten-workflow matrix keeps independent reruns, exact pose comparisons and portable recording round trips. Its
 hexapod traversal uses a two-second, 100 mm authored Case with an explicit pass assertion, bounding physics and effort
 reconstruction without changing the production timestep, controller, contract evaluator or test deadlines.
@@ -1227,4 +1232,4 @@ The timeline playback slider uses its stacked layout so the labels and full-widt
 
 The entered-workbench rehearsal declaration is quarantined only on Windows through the same date under [#2021](https://github.com/JamelHammoud/basecase/issues/2021). Its persistence browser story and fast ten-task placement, source-identity, transport and WASM rehearsal coverage remain active. The late/on-time purchasing Study declaration is quarantined only on Windows through that date under [#2015](https://github.com/JamelHammoud/basecase/issues/2015). The historical purchasing story and fast Study and purchasing pipelines remain active.
 
-The student-attempt download/reload declaration joins the Windows download quarantine through that date under [#1508](https://github.com/JamelHammoud/basecase/issues/1508). This leaves the fast assignment, submission and scene persistence tests active, with a gap in the combined student browser export and reload path. `personCamera.test.ts` is quarantined as a whole file only on Windows through that date under shared OffscreenCanvas setup owner [#1400](https://github.com/JamelHammoud/basecase/issues/1400). Other platforms retain all ten rendered occlusion assertions, while Windows retains person physics, sensing, persistence and geometry coverage. These tests do not replace the excluded browser or pixel paths. [Evidence and restoration conditions](../notes/testing-cases.md#nightly-platform-exclusions-on-21-november).
+The student-attempt download/reload declaration joins the Windows download quarantine through that date under [#1508](https://github.com/JamelHammoud/basecase/issues/1508). This leaves the fast assignment, submission and scene persistence tests active, with a gap in the combined student browser export and reload path. `personCamera.test.ts` is quarantined as a whole file on Linux and Windows through that date under shared OffscreenCanvas setup owner [#1400](https://github.com/JamelHammoud/basecase/issues/1400). macOS retains all ten rendered occlusion assertions. Linux and Windows retain person physics, sensing, persistence and geometry coverage. The later Linux setup timeout and its separate restoration conditions are recorded in [the current repair evidence](../notes/testing-cases.md#nightly-evaluation-and-camera-repair-on-21-november). These tests do not replace the excluded browser or pixel paths. [Evidence and restoration conditions](../notes/testing-cases.md#nightly-platform-exclusions-on-21-november).

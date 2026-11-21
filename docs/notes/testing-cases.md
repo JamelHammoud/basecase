@@ -924,3 +924,64 @@ This fixes the panel handoff without changing console entry actions. The existin
 Preflight also flags three articles through the panel files. [Build a Case app with the agent](../../site/content/help/build-a-case-app-with-the-agent.md) retains the Agent tab during a Case, its console controls, Undo and Done. The right panel's existing Agent visibility condition is unchanged. [Save a model to the Library](../../site/content/help/save-a-model-to-the-library.md) retains the Library rail entry, New Model menu, save and insertion actions, search and confirmation behavior. [The Basecase window](../../site/content/help/the-basecase-window.md) retains all tabs, toggles, resize handles and ordinary panel animations. None describes the Case-entry collapse duration, so their steps and pictured states require no replacement. Together with the earlier five dispositions, all eight preflight reminders have been checked against their source articles.
 
 The seven-file changed check passed on Node 26.13.0, including formatting, lint, docs, 383 site-copy pages, types and 13 related tests across seven files. Its log is `scratch/revise-check.log`. Local browser execution was not run. CI must establish the handoff and continuation story result on the candidate.
+
+
+## Nightly evaluation and camera repair on 21 November
+
+[Check 44885120824](https://github.com/JamelHammoud/basecase/actions/runs/44885120824) tested
+`49bc213c8ddd9462ea323dacd07a1378b94783f5`. Last full green was
+[44792356422](https://github.com/JamelHammoud/basecase/actions/runs/44792356422) at
+`943616a63a697fd81f0f162e454ccb594dfbf877`. This repair starts at `85af70d91`, which already includes #2023.
+The log names six failed declarations or suites across its two jobs, including the Linux camera hook omitted from
+the short job summary.
+
+| Failure | Classification and disposition |
+| --- | --- |
+| Windows browser inventory audit | Existing parser regression, already fixed by #2023. A regular expression's `.test()` helper in `worldImport.e2e.test.ts` had entered the test inventory. The identifier-root guard and its regression test remain unchanged. The exact committed-inventory audit is checked on current main. |
+| Windows short-cylinder-v gripper pipeline | Unresolved platform-specific simulation result with margin -0.5 and no named failed labels. #2023 already quarantines this exact declaration on Windows and Linux through 28 November under #2014. The other 19 matrix rows remain active. This repair neither changes geometry nor restores that path. |
+| Windows retained-controller variant | Workload regression introduced by #2012. Its declaration started fresh CLI processes for both freeze and run within a five-second budget. Production freeze and run now execute in process with the same fixtures, controller, Case, engine, seed and pass-loss assertions. |
+| Windows changed-geometry variant | The same #2012 two-process workload pattern, with independent common-world and geometric-regression assertions preserved. Other variant preparations and executions use the same shared production loader. |
+| Linux evaluation resources | Workload regression introduced by #2012. Freeze and run plus four sequential ordinary CLI checks launched six fresh Node processes within five seconds. The replacement directly exercises production freeze, run and ordinary scene checks. It preserves both seeds, baseline and candidate margins, preparation reuse and resource bounds without a CI wall-clock benchmark. |
+| Linux person camera setup | Unresolved setup deadline in the #2004 rendered-person fixture. `beforeAll` exceeded 15000 ms before any of its ten pixel assertions ran. The log does not distinguish MuJoCo loading, bundling, server startup, browser launch, worker readiness or shader initialization. This is not evidence of a physics or pixel assertion regression. |
+
+There is no single clean feature revert covering these different commits and the fixes already landed in #2023.
+The evaluation repair fixes forward without removing the comparison feature. The first local implementation removed
+freeze startup but retained one CLI run per affected declaration. That selection still exceeded 5000 ms in the
+resource declaration and the retained-controller variant. The other 138 assertions passed across the 19 selected
+files. The complete log is `scratch/repair-initial-check.log`. This is one diagnostic observation, not a flake-rate
+measurement. Removing only freeze startup was insufficient on this shared host.
+
+The final resource declaration compares each ordinary nominal scene result with both frozen seeds. It checks exactly
+two geometry preparations during freeze and no further preparations during run. Run now snapshots the preparation
+counter at entry, so a same-process freeze cannot be misreported as execution preparation. The existing retained
+archive, report integrity, ordered seed, changed-controller, geometry and interruption coverage remains active.
+The sixteen-pair bounded-retention variant retains one actual successful CLI freeze. Inspect, CLI Case mismatch,
+runtime-seed refusal and actual run interruption retain subprocess boundaries. This does not establish a CLI startup
+speedup, equal-process RSS comparison or CI wall-clock speed ratio. The former resource test's scratch timing output
+is no longer produced by the unit suite.
+
+The camera file joins its existing open priority owner [#1400](https://github.com/JamelHammoud/basecase/issues/1400)
+on Linux only, through 28 November 2026. That issue already has `loop:fix`, `loop:next` and `loop:priority`.
+The separate Windows entry stays intact. Whole-file quarantine is necessary because the hook precedes declaration
+filtering. macOS retains all ten rendered RGB, instance and depth occlusion assertions. Linux and Windows retain
+person physics, sensing, persistence and camera-geometry checks, which do not replace the excluded pixel path.
+Restore Linux only after stage tracing, a demonstrated correction and ten baseline and ten candidate observations
+at equal Linux load with retries disabled and existing assertions and deadlines intact. This repair does not measure
+that rate or infer a shared Linux and Windows cause. No assertion, timeout, retry or browser harness contract changes.
+
+
+Final code validation on the shared macOS host with Node 26.13.0 passed `npm run check:changed` for all six code
+and quarantine paths. It passed 142 tests across 20 related files in 12.32 seconds. The independent current-inventory
+check passed its one audit in 722 ms. Logs are `scratch/repair-code-check.log` and
+`scratch/repair-inventory-check.log`. Documentation validation is recorded in `scratch/repair-doc-check.log`.
+These focused local results do not establish a new Linux or Windows full-suite verdict. CI owns that verification.
+The pinned project version is Node 26.13.1, so these local observations also do not replace execution on the pinned
+runtime. No browser test or visual change is part of this repair.
+
+
+Preflight names only the unchanged [Compare robot revisions](../../site/content/help/compare-robot-revisions.md)
+article because it covers `evaluationRun.mjs`. Its export, freeze, run, report, Import, Library and timeline steps,
+flags, exit meanings, limits, cancellation and copied-folder instructions remain accurate. The preparation-counter
+correction changes a JSON metric for repeated in-process use, not the article's commands or pictured report and
+timeline states. No help text or capture needs replacement. The retained structural reminder is in
+`scratch/repair-preflight.json`.

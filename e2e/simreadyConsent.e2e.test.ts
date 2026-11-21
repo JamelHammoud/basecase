@@ -76,6 +76,7 @@ it('opens a shared SimReady part without downloading and offers textures in the 
 
     await download.waitFor();
     expect(fetches()).toHaveLength(0);
+    expect(app.errors).toEqual([]);
     await download.click();
     await expect.poll(() => fetches().length).toBe(1);
     await expect.poll(() => download.isDisabled()).toBe(true);
@@ -83,7 +84,12 @@ it('opens a shared SimReady part without downloading and offers textures in the 
     await app.page.getByText('Couldn’t download textures.', { exact: true }).waitFor();
     await expect.poll(() => download.isEnabled()).toBe(true);
     expect(fetches()).toHaveLength(1);
-    expect(app.errors).toEqual([]);
+
+    const downloadUrl = new URL('/api/bridge/simready-fetch', app.page.url()).href;
+
+    expect(app.errors).toEqual([
+      `Failed to load resource: the server responded with a status of 503 (Service Unavailable) (${downloadUrl})`,
+    ]);
   } finally {
     finishDownload();
     await app.close();

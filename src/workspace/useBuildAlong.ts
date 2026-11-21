@@ -1,4 +1,5 @@
 import { navigateFrozenHistory } from './frozenBuildSession';
+import { canRecordRepair } from '../kit/buildRepairState';
 import { useFrozenBuildAlong } from './useFrozenBuildAlong';
 import { stepView, type Session } from './buildAlongSession';
 import { localBuilds } from '../kit/buildRecords';
@@ -114,9 +115,11 @@ export function useBuildAlong({ guide, showToast, partsRef, projectRef, viewport
     showToast,
   });
   const go = (delta: number) => {
+    if (!session?.steps.length) return;
+
     const repair = session?.frozen?.repair;
 
-    if (repair?.state === 'complete' || (!repair && !!session?.frozen?.record.repairs?.length)) {
+    if (session?.frozen?.record.repairs?.length && !canRecordRepair(session.frozen.record, repair)) {
       setSession((current) => current && navigateFrozenHistory(current, delta));
 
       return;

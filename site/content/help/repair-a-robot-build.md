@@ -53,7 +53,7 @@ On a printed replacement step, click **Export 3MF** to download the target Kit's
 
 ![The retained replacement step offers Export 3MF for the target service plate](/help/repair-a-robot-build/replacement.png)
 
-After you restart, open the same build under **Builds**. Click **Resume Repair** to continue the saved plan, even if you changed the editable design.
+After you restart, open the same build under **Builds** to continue the saved plan, even if you changed the editable design. If you canceled the repair or finishing was interrupted, click **Resume Repair** first.
 
 Click **Finish Repair** to advance this build's effective revision. You can read its original assembly and earlier repairs in **Build history**.
 

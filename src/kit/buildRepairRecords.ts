@@ -53,7 +53,7 @@ export function createBuildRepairOperations(storage: BuildStorage, limits: { max
       const repair = selectedRepair(record, repairId);
       const key = String(stepOf(repair, step));
 
-      if (repair.state === 'cancelled') throw new Error('Resume the repair first.');
+      if (repair.state !== 'active') throw new Error('Resume the repair first.');
 
       if (
         complete &&
@@ -91,6 +91,8 @@ export function createBuildRepairOperations(storage: BuildStorage, limits: { max
   const stageRepair = (id: string, repairId: string) =>
     update(id, (record) => {
       const repair = selectedRepair(record, repairId);
+
+      if (repair.state === 'cancelled') throw new Error('Resume the repair first.');
 
       if (Object.keys(repair.completed).length !== repair.count) throw new Error('Record every repair step first.');
 

@@ -7,7 +7,9 @@ import { openApp } from './harness';
 import { openKitScene } from './kitScene';
 import { retainSelfContactSceneFiles } from './selfContactScene';
 import { create, purchasing, motor } from './buildAllocationScene';
-import { repairScene, selectedBuild, acceptRepairChecks } from './buildRepairScene';
+import { repairScene, selectedBuild, acceptRepairChecks, resumeCanceledRepair } from './buildRepairScene';
+import { allocationCopyBounds, narrowBuildPanel } from './buildAllocationLayout';
+import { repairControlBounds } from './buildRepairLayout';
 
 it(
   'repairs only the selected build through removal, reload, replacement and explicit physical return',
@@ -21,6 +23,7 @@ it(
       await purchasing(app.page, directory);
       await retainSelfContactSceneFiles(app.page);
       await openKitScene(app.page, repairScene());
+      await narrowBuildPanel(app.page);
       await create(app.page, 'Arm', 2);
       await app.page.getByRole('button', { name: 'Arm 1', exact: true }).click();
       await app.page.getByRole('button', { name: 'Complete Step', exact: true }).click();
@@ -82,9 +85,10 @@ it(
       const target = await app.page.locator('[data-repair-preview-target]').getAttribute('data-repair-preview-target');
 
       await app.page.getByRole('button', { name: 'Start Repair', exact: true }).click();
-      await expect.poll(async () => (await selectedBuild(app.page)).repairs?.length).toBe(1);
+      await repairControlBounds(app.page);
       await app.page.getByRole('button', { name: 'Complete Step', exact: true }).click();
       await app.page.getByRole('button', { name: 'Mark Incomplete', exact: true }).waitFor();
+      await resumeCanceledRepair(app.page);
       await app.page.reload();
       await app.page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio));
       await app.page.getByRole('tab', { name: /Build$/ }).click();
@@ -97,6 +101,7 @@ it(
       expect(repair.source).toBe(source.kit);
       expect(repair.target).toBe(target);
       expect(repair.completed['0']).toBeTruthy();
+      await allocationCopyBounds(app.page.locator('[data-repair-allocations]').getByRole('combobox'));
       await app.page
         .locator('[data-repair-allocations] [data-allocation-part="service-plate"]')
         .getByRole('button', { name: 'Assign Copy', exact: true })

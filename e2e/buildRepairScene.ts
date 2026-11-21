@@ -45,3 +45,27 @@ export async function acceptRepairChecks(page: Page) {
 
   expect(await page.getByText('Ready to build', { exact: true }).count()).toBe(1);
 }
+
+export async function resumeCanceledRepair(page: Page) {
+  const before = await selectedBuild(page);
+  const repair = before.repairs!.at(-1)!;
+
+  await page.getByRole('button', { name: 'Cancel Repair', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel Repair', exact: true }).click();
+  await expect.poll(async () => (await selectedBuild(page)).repairs!.at(-1)!.state).toBe('incomplete');
+  expect(await page.getByRole('button', { name: 'Finish Repair', exact: true }).count()).toBe(0);
+  expect(await page.getByRole('button', { name: 'Mark Incomplete', exact: true }).isDisabled()).toBe(true);
+  await page.getByRole('button', { name: 'Next step', exact: true }).click();
+  await expect
+    .poll(() => page.getByRole('toolbar', { name: 'Build Along', exact: true }).getAttribute('data-step'))
+    .toBe('2');
+  expect((await selectedBuild(page)).repairs!.at(-1)!.index).toBe(repair.index);
+  expect(await page.getByRole('button', { name: 'Complete Step', exact: true }).isDisabled()).toBe(true);
+  await page.getByRole('combobox', { name: 'Build history', exact: true }).selectOption('original');
+  await expect.poll(() => page.getByRole('button', { name: 'Resume Repair', exact: true }).count()).toBe(0);
+  await page.getByRole('combobox', { name: 'Build history', exact: true }).selectOption(repair.id);
+  await page.getByRole('button', { name: 'Resume Repair', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect.poll(async () => (await selectedBuild(page)).repairs!.at(-1)!.state).toBe('active');
+  expect((await selectedBuild(page)).repairs!.at(-1)!.completed).toEqual(repair.completed);
+}

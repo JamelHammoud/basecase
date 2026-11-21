@@ -107,7 +107,7 @@ export function BuildRecordsSection({ core }: { core: WorkspaceCore }) {
       </div>
       {buildAlong.frozen && <BuildRepairSection key={buildAlong.frozen.record.id} core={core} records={records} onChanged={() => void localBuilds.list().then(setRecords).catch(fail)} />}
       {buildAlong.frozen && <FrozenBuildFindings kit={buildAlong.frozen.kit} />}
-      {buildAlong.frozen && <BuildAllocations frozen={buildAlong.frozen} onError={fail} />}
+      {buildAlong.frozen && <BuildAllocations key={buildAlong.frozen.record.id} frozen={buildAlong.frozen} onError={fail} />}
       {buildAlong.frozen?.record.repairs?.at(-1) && <Section title="Fleet" collapsible defaultOpen={false} className="!px-0 !border-b-0"><BuildRepairFleet repair={buildAlong.frozen.record.repairs.at(-1)!} onChanged={() => void buildAlong.openFrozen(buildAlong.frozen!.record.id)} onError={fail} /></Section>}
       <RetainedAllocations builds={records} onError={fail} />
       <Modal

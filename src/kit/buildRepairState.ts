@@ -7,6 +7,10 @@ export function currentBuildRepair(record: BuildRecord) {
   return repair?.state !== 'complete' ? repair : undefined;
 }
 
+export function canRecordRepair(record: BuildRecord, repair: BuildRepairRecord | undefined) {
+  return !!repair && repair.id === currentBuildRepair(record)?.id && repair.state === 'active';
+}
+
 export function selectedRepair(record: BuildRecord, id: string) {
   const repair = currentBuildRepair(record);
 

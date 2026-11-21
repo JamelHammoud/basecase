@@ -23,6 +23,8 @@ export function buildRepairFinisher(
     const evidence = repairAllocationEvidence(before, repair, kit, purchases);
 
     return update(id, (record) => {
+      if (record.repairs?.find((item) => item.id === repairId)?.state === 'complete') return record;
+
       const current = selectedRepair(record, repairId);
 
       if (current.state !== 'incomplete' || Object.keys(current.completed).length !== current.count)

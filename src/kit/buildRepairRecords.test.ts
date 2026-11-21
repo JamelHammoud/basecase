@@ -66,6 +66,10 @@ it('retains both revisions and independent build progress across interruption, c
   expect((await builds.open(one.id)).record.repairs!.at(-1)!.completed).toEqual(beforeReplay);
   await builds.cancelRepair(one.id, request);
   await expect(builds.remove(one.id)).rejects.toThrow();
+  await expect(builds.repairAction({ id: one.id, repair: request, step: 1, complete: true })).rejects.toThrow(
+    'Resume the repair first.',
+  );
+  expect((await builds.open(one.id)).record.repairs!.at(-1)!.completed).toEqual(beforeReplay);
 
   const reopened = createBuildStore(storage);
   const resumed = await reopened.resumeRepair(one.id, request);
@@ -75,6 +79,34 @@ it('retains both revisions and independent build progress across interruption, c
   expect((await reopened.openRevision(one.id, source.hash)).manifest.design.name).toBe('differential rover');
   await expect(reopened.finishRepair({ id: one.id, repair: request, purchases: {} })).rejects.toThrow();
   expect((await reopened.open(one.id)).record.configuration).toBeUndefined();
+});
+
+it('requires resumption before completing a canceled zero-action repair', async () => {
+  const builds = createBuildStore(memoryBuildStorage());
+  const source = await revision();
+  const build = await builds.create('One', source);
+  const started = await builds.startRepair({
+    id: build.id,
+    target: source,
+    request: crypto.randomUUID(),
+    signal: new AbortController().signal,
+  });
+  const repair = started.repairs![0];
+
+  expect(repair.count).toBe(0);
+  await builds.cancelRepair(build.id, repair.id);
+  await expect(builds.stageRepair(build.id, repair.id)).rejects.toThrow('Resume the repair first.');
+  expect((await builds.open(build.id)).record.configuration).toBeUndefined();
+  await builds.resumeRepair(build.id, repair.id);
+  await builds.stageRepair(build.id, repair.id);
+
+  const completed = await Promise.all([
+    builds.finishRepair({ id: build.id, repair: repair.id, purchases: {} }),
+    builds.finishRepair({ id: build.id, repair: repair.id, purchases: {} }),
+  ]);
+
+  expect(completed[0]).toEqual(completed[1]);
+  expect(completed[0].repairs![0].state).toBe('complete');
 });
 
 it('rejects a stale target publication, aborted preparation and deleted source without writing repair state', async () => {

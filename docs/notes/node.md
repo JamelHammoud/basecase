@@ -831,6 +831,16 @@ The merge reverted cleanly with `git revert --no-commit`, then its complete patc
 
 The named changed-file check passed formatting, lint, types, documentation links, all 342 site pages and 101 active quarantine declarations. It ran the four committed-content test files and quarantine-related coverage, totaling 162 tests across 19 files in a 6.19-second test phase. Output is retained in `scratch/repair-check.log`. No local full suite, browser walkthrough or repeated flake-rate measurement ran. The focused platform diagnostics are recorded in the Fleet and simulation notes.
 
+## Person-crossing help type regression
+
+[Check 44878070469](https://github.com/JamelHammoud/basecase/actions/runs/44878070469) at `145ab720d6a280ec818fd859357398765b8f9740` failed `src/landing/help/helpPages.test.ts` during suite initialization. The production help reader rejected `site/content/help/test-a-person-crossing.md` because it had no `type` field. The two Gatekeeper assertion failures in the same job have a separate [source-pin cause](testing-skills.md#arena-source-lock-after-checkpoint-state).
+
+Classification is a deterministic regression in person-encounter merge `0161f2a77` (#2004), after last full green [44792356422](https://github.com/JamelHammoud/basecase/actions/runs/44792356422). The new article has ten numbered actions for authoring and replaying a crossing, making `type: task` its existing schema classification. The site-copy scan passed all 381 pages in the local baseline while committed help rendering reproduced the schema error. Copy validation does not replace the production reader's schema validation.
+
+A reverse-patch check of the feature fails against the subsequently edited Case testing note. The repair fixes forward by adding only the required metadata. Article prose, screenshots, publication date and application behavior remain unchanged. Existing committed-content tests cover article types, collections, rendering, hubs and search through the real reader. No schema-mirroring test, fallback type or relaxed assertion is added. [Coverage](../guide/loop.md#the-help-center) remains in the owning guide. Baseline evidence is in `scratch/repair-before.log` and reverse-patch evidence is in `scratch/person-revert-check.log`. No browser execution or flake measurement is needed for this metadata correction.
+
+The corrected changed-file check passed 55 tests across six files, including the source-lock tests, delay and continuation tests, help-center and help-page tests, and site-rendering tests. The separately named help-hub file passed all five tests. Both checks passed formatting, lint, types and all 381 site-copy pages, and the change's documentation check passed. Candidate logs are `scratch/repair-after.log` and `scratch/repair-hubs.log`. Preflight returned no findings in `scratch/repair-preflight.json`. These local observations do not claim a hosted full-suite result.
+
 ## Documentation claim consistency
 
 The learn evidence since 12 November 2026 shows two forms of the same documentation failure across distinct pull requests:

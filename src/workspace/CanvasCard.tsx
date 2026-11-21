@@ -9,6 +9,7 @@ import { CaseRunOverlays } from './CaseRunProvider';
 import { MarkBar } from './MarkBar';
 import { PlateCanvas } from './PlateCanvas';
 import { SceneViewport } from './SceneViewport';
+import { RenderCompositionPanel } from './RenderCompositionPanel';
 import type { AgentSession } from './useAgentSession';
 import type { CanvasMenu } from './useCanvasMenu';
 import type { useCanvasDrop } from './useCanvasDrop';
@@ -62,6 +63,7 @@ function CanvasToolbar({ core, actions, ui }: Pick<CanvasCardProps, 'core' | 'ac
       onAddShape={creation.addCatalogItem}
       onSketch={core.sketching.open}
       onImportSvg={() => openCreator('svg')}
+      onRenderImage={actions.exports.composition.show}
     />
   );
 }
@@ -137,6 +139,7 @@ export function CanvasCard(props: CanvasCardProps) {
       </ErrorBoundary>
       <div className="canvas-vignette absolute inset-0 pointer-events-none" />
       <CaseRunOverlays />
+      {actions.exports.composition.open && <RenderCompositionPanel composition={actions.exports.composition} />}
       {core.triesView.open && (
         <TriesMode
           active={active}

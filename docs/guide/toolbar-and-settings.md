@@ -69,3 +69,9 @@ Measure figure placement borrows source indices before triangle expansion, retai
 ### Exported dimensions
 
 Measure remains a temporary viewport overlay. Export ▸ Drawings exports snapshot geometry as PDF and editable SVG sheets, with its own frame and scale controls. Kit uses the same drawing preparation and controls. Drawing dimensions and their numerical allowances are documented in [Build](build.md#mechanical-drawing-export).
+
+### Render Image
+
+The bottom toolbar's Photo icon opens Render Image. The same command appears in ⌘K. The nonmodal panel keeps the CAD view available beside its preview. Use Current View copies its framing, and Frame Scene fits the posed robot without changing the CAD camera. Lighting, Exposure, Environment rotation, Background, Transparent, Width and Height control the saved composition. Preview prepares an image, Export PNG downloads it, Cancel stops pending work, and Done or Esc closes the panel before the ordinary deselection command runs. Output and rendering limits are owned by [Canvas](canvas.md#rendered-robot-composition).
+
+The finished-arm browser declaration in `e2e/renderComposition.e2e.test.ts` covers toolbar entry and actual image delivery. A separate short declaration opens saved composition settings through ⌘K. These controls use the existing Photo icon, ModeHeader, buttons, fields, color picker and switch. No new icon or camera registry is introduced.

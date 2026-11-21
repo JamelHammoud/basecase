@@ -26,6 +26,7 @@ export interface LeaderLink {
 }
 
 export interface ProjectRecords {
+  rendering?: import('../three/composition/settings').CompositionSettings;
   workbenchPlacements?: RetainedPlacement[];
   assignment?: AssignmentContext;
   buildGuide?: BuildGuideRecord;

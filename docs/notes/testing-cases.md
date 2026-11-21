@@ -4,9 +4,11 @@
 
 ### Ownership layout recurrence in pull request #2009
 
-The supplied Linux changed-browser log from 21 November failed the Library ownership readability assertion. It reported seven text-bound violations across two Correction labels and five timestamps. The continuous-try test took 18.917 seconds. Frozen correction selection and compatible warm-start dispatch passed in 24.279 seconds. The aggregate Check failed because this browser job failed, with no separate aggregate defect in the supplied log. Vite also reported a shutdown timeout after the assertions.
+The supplied Linux changed-browser log from 21 November failed the Library ownership readability assertion again after the natural-width row change. It reported seven text-bound violations across two Correction labels and five timestamps. The continuous-try test took 29.472 seconds. Frozen correction selection and compatible warm-start dispatch passed in 18.666 seconds. The aggregate Check failed because this browser job failed, with no separate aggregate defect in the supplied log. Vite also reported a shutdown timeout after the assertions.
 
-The earlier interval wrapping retained auto-sized flex rows and shrinkable labels. Rows now request their natural content width, capped at the available timeline width. Labels and time ranges both refuse shrinking, so wrapping moves the complete range below its label when needed. The existing full text-bound assertion, ownership counts, source hash, zero retries and deadlines remain unchanged. No browser run was performed locally. CI owns confirmation of this correction on Linux and Windows.
+Natural-width packing did not establish readable ownership rows. Each interval now occupies a full-width row instead of sharing a line with neighboring intervals. Both label and time range grow into spare row width instead of retaining tightly fitted text boxes. The complete range can wrap below its label and remains on one line. The existing full text-bound assertion, ownership counts, source hash, zero retries and deadlines remain unchanged. No browser run was performed locally. CI owns confirmation on Linux and Windows.
+
+The three-file revision check passed formatting, lint, documentation, all 383 site pages, TypeScript and 13 related tests across seven files. Vitest reported 1.06 seconds. The log is `scratch/revise-2009-check.log`. Preflight retained only the 21 unchanged-help reminders covered by the article audit below, with no copy findings. The protected-path scan against `origin/main` returned no paths.
 
 Work on #1988 starts from `d9cd830214a8c1aa246407492d8fadba82f1e107`. The first three assertions in `src/sim/teaching.test.ts` failed because the engine had no teaching API. The initial evidence is retained in `scratch/teaching-red.log`. The subsequent focused changed-file check passed those three tests against real WASM MuJoCo in 726 ms. Its log is `scratch/teaching-focused-check.log`.
 
@@ -794,6 +796,33 @@ The four-file revision check passed formatting, ESLint, documentation, all 383 s
 The revision reread all 21 unchanged articles named by preflight against the current diff from `origin/main`. Their 13 changed covered source files retain the documented commands, ordinary Drive respawn, team recording, playback, Case construction, comparison, Study, vision training and emulated-robot paths. Teaching commands are additive. Optional teaching provenance does not replace Arena or independent Case judgment, and the ownership display is absent from the ordinary recordings used by the timeline articles. The steps and labels remain valid, so these articles stay unchanged.
 
 All 65 unique images referenced by those 21 articles match current `origin/main` byte for byte. Their captions describe the retained ordinary workflows. This verifies image identity, not rendered appearance. No browser, screenshot capture or visual judgment was performed. The existing correction article covers the new states. `scratch/revise-2009-help-audit.json` records each article’s current hash, changed covered source hashes, disposition and image hashes against the recorded base commit. The earlier 69-image audit above included four additional articles and remains historical evidence. Preflight still emits the 21 structural reminders because unchanged, valid articles remain unchanged.
+
+The follow-up audit checked each reminder against the current covered-source diff. All 21 articles remain unchanged for the reasons below. The 65 referenced images again match `origin/main` byte for byte. The hash manifest is `scratch/revise-2009-help-audit.json`. This establishes asset identity and source compatibility, without a new browser capture or visual judgment.
+
+| Article under `site/content/help/` | Why the existing steps, labels and images still hold |
+| --- | --- |
+| `arena.md` | `SkillOrigin` gains optional teaching provenance. Arena variants, Case judgment and independent acceptance do not change. |
+| `arrange-a-case-console.md` | New teaching commands join the command list. Add Panel, rename, delete, console layout and their shortcuts retain their implementations. |
+| `branch-a-simulated-try.md` | The timeline adds ownership only for teaching recordings. The article starts with Try Reference, whose checkpoints, branch controls and export remain unchanged. |
+| `compare-saved-tries.md` | Dataset training counts now include selected corrections. Compare Tries, alignment and saved signal comparison retain their paths. |
+| `compare-two-robots-on-a-case.md` | Case commands gain teaching entries. Compare With and the two-scene comparison path retain their behavior. |
+| `drive-a-robot-in-the-simulation.md` | Only teaching passes the new in-place option. Ordinary Drive still selects its controller and respawns, with the same keys and fall checks. |
+| `get-a-robot-ready-to-build.md` | CaseSections adds optional teaching controls. Build verdicts, Case Checks navigation and seeded results are unchanged. |
+| `make-a-case.md` | Case creation, rename, delete and comparison commands are unchanged. Teaching entries do not replace them. |
+| `play-a-try-through-its-console.md` | TryOwnership returns nothing for the ordinary Try It recordings shown. Console playback, timeline keys, speed and loop controls remain unchanged. |
+| `put-two-robots-in-one-case.md` | Normal Try It retains team staging and records both arms. The new teaching startup is a separate explicit path. |
+| `retrain-an-edited-robot.md` | The runtime change wraps Case-try learning. Local Stand source mapping, Train, Recheck and Arena retention are unchanged. |
+| `run-a-case.md` | Teaching commands also stay in Run Case. The listed commands still do, and console entry, Try It, Stop Try and Done retain their paths. |
+| `run-a-trained-skill-on-the-emulated-robot.md` | Worker changes add teaching replies and preserve recordings during disposal. Existing skill Try, policy selection and intent mirroring remain unchanged. |
+| `scrub-a-try-on-the-timeline.md` | The added ownership display is absent from the article's ordinary Try It recordings. Joint plots, keys, loop and playback actions remain unchanged. |
+| `share-a-robot-as-a-link.md` | Teaching commands are additive. Share Robot, account handling, submission and browser publication are unchanged. |
+| `study-design-options.md` | Teaching commands do not alter Study, its choices, measured results or Apply. |
+| `train-a-vision-model.md` | The image-dataset branch still uses vision availability and busy state. Correction sample counts affect policy training, not the illustrated vision controls. |
+| `troubleshoot-app-simulation-stops.md` | Simulation stop and worker error handling remain available. Policy-state extraction retains the missing-joint refusal, and tendon controller checks remain in force. |
+| `troubleshoot-drive.md` | The in-place option defaults to false. Drive availability, fall checks, keyboard focus, camera and microphone recovery are unchanged. |
+| `try-a-case-on-your-real-robot.md` | Teaching controls are added beside the existing controls. Mat export, Try on Real Robot, tracking and Real results retain their paths. |
+| `try-a-case.md` | Normal Try It still records manual drive and finishes through ordinary scoring. Teaching is explicitly requested, and its optional button does not replace the documented controls. |
+
 
 
 ### Teaching finalization before passive cleanup

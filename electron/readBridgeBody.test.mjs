@@ -83,7 +83,7 @@ describe('bounded bridge body reader', () => {
           );
 
           req.on('error', reject);
-          req.write('123456789');
+          req.write(declared ? '1' : '123456789');
         });
 
         expect(response).toEqual({ status: 413, type: 'application/json', body: '{"error":"Send a smaller request"}' });

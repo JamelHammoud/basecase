@@ -53,9 +53,11 @@ A Case's logic and console can read camera detections, including object counts, 
 
 ## One Case, many robots
 
-You write a Case once, then run it on any robot that fits its slot. Arm Cases with generated targets scale their world to the arm’s reach from its shoulder. Write Touch the Dots on one arm, and the next arm can reach the same dots.
+You write a Case once, then run it on any robot that fits its slot. In ordinary tries, arm Cases with generated targets scale their world to the arm’s reach from its shoulder. Write Touch the Dots on one arm, and the next arm can reach the same dots.
 
 Imported rooms, captured worlds, selected-object pickups and Cases with people keep their true size for every robot.
+
+To keep authored coordinates across frozen revisions, see [Compare robot revisions](/help/compare-robot-revisions).
 
 ## Tries
 

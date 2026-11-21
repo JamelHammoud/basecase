@@ -50,6 +50,7 @@ it('imports a photograph beside frozen CAD and reopens only its original build a
     await create(app.page, 'Photo arm one');
     await create(app.page, 'Photo arm two');
     await app.page.getByRole('button', { name: 'Photo arm one', exact: true }).click();
+    await app.page.locator('[data-frozen-build]').waitFor({ state: 'visible' });
     expect(await app.page.getByRole('button', { name: 'Move', exact: true }).count()).toBe(0);
     await importPhoto(app.page);
     await app.page.getByRole('button', { name: 'bracket.png', exact: true }).focus();

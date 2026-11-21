@@ -11,6 +11,9 @@ export async function photoLayout(page: Page) {
     const bar = root.querySelector('[data-build-along-bar]')!;
     const toolbar = bar.querySelector('[role="toolbar"]')!;
     const photos = root.querySelector('[data-build-photos]');
+    const canvas = root.querySelector('canvas')!;
+    const viewport = canvas.parentElement!;
+    const clipping = getComputedStyle(viewport);
     const walker = document.createTreeWalker(bar, NodeFilter.SHOW_TEXT);
     const labels = [];
     let node = walker.nextNode();
@@ -31,7 +34,9 @@ export async function photoLayout(page: Page) {
     return {
       root: rect(root),
       bar: rect(bar),
-      canvas: rect(root.querySelector('canvas')!),
+      canvas: rect(canvas),
+      viewport: rect(viewport),
+      clipping: { x: clipping.overflowX, y: clipping.overflowY },
       photos: photos && rect(photos),
       photoControls: [...root.querySelectorAll('[data-build-photos] button')].map(rect),
       controls: [...toolbar.querySelectorAll('button')].map(rect),
@@ -61,12 +66,21 @@ export async function photoLayout(page: Page) {
     expect(owner.right).toBeLessThanOrEqual(bounds.root.right);
   }
 
-  expect(bounds.canvas.top).toBeGreaterThanOrEqual(bounds.bar.bottom);
-  expect(bounds.canvas.width).toBeGreaterThan(0);
+  expect(bounds.clipping).toEqual({ x: 'hidden', y: 'hidden' });
+  expect(bounds.viewport.top).toBeGreaterThanOrEqual(bounds.bar.bottom);
+  expect(bounds.viewport.left).toBeGreaterThanOrEqual(bounds.root.left);
+  expect(bounds.viewport.width).toBeGreaterThan(0);
+  expect(bounds.viewport.height).toBeGreaterThan(0);
+  expect(Math.min(bounds.canvas.right, bounds.viewport.right)).toBeGreaterThan(
+    Math.max(bounds.canvas.left, bounds.viewport.left),
+  );
+  expect(Math.min(bounds.canvas.bottom, bounds.viewport.bottom)).toBeGreaterThan(
+    Math.max(bounds.canvas.top, bounds.viewport.top),
+  );
 
   if (bounds.photos) {
     expect(bounds.photos.top).toBeGreaterThanOrEqual(bounds.bar.bottom);
-    expect(bounds.canvas.right).toBeLessThanOrEqual(bounds.photos.left);
+    expect(bounds.viewport.right).toBeLessThanOrEqual(bounds.photos.left);
     expect(bounds.photos.right).toBeLessThanOrEqual(bounds.root.right);
 
     for (const control of bounds.photoControls) {

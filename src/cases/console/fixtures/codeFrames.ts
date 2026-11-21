@@ -146,6 +146,7 @@ function fakeWindow(parent: object, globals: Record<string, unknown> = {}) {
     listeners.get(type)?.forEach((l) => l({ type, preventDefault: () => undefined, ...e }));
 
   win.window = win;
+  win.globalThis = win;
 
   return { win, body, dispatch };
 }

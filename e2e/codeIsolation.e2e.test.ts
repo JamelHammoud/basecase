@@ -1,21 +1,38 @@
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { Browser } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
-import { CODE_PANEL_SANDBOX, codePanelDocument } from '../src/cases/console/codeDocument';
+import { CODE_PANEL_SANDBOX, codeClientScript, codePanelDocument } from '../src/cases/console/codeDocument';
+import { AREA_MIN } from '../src/cases/console/format';
 import { launchChrome } from './harness';
 
 let browser: Browser;
 
 const ORIGIN = 'http://code-isolation.test';
-const PROBES = `<script>
+const SCRIPT_URL = `${ORIGIN}/script?panel=private-signal`;
+const INTEGRITY = `sha256-${createHash('sha256').update(codeClientScript()).digest('base64')}`;
+const PROBES = `<button type="button" onclick="parent.postMessage({probe:'inline',value:'allowed'},'*')">Turn Left</button>
+<script type="application/json" id="settings">{"label":"turn left"}</script>
+<script data-label="left>right">
 const mark = (name, value) => parent.postMessage({ probe: name, value }, '*');
+document.querySelector('button').addEventListener('click', () => mark('control', 'working'));
 const probe = (name, run) => {
   try { run(); mark(name, 'allowed'); } catch { mark(name, 'blocked'); }
 };
 addEventListener('securitypolicyviolation', (event) => {
   if (event.effectiveDirective === 'connect-src' && event.blockedURI === 'ws://code-isolation.test/socket')
     mark('socketPolicy', 'blocked');
+  if (event.effectiveDirective === 'script-src-elem' && event.blockedURI === '${SCRIPT_URL}')
+    mark('externalPolicy', 'blocked');
 });
+mark('settings', JSON.parse(document.getElementById('settings').textContent).label);
+const external = document.createElement('script');
+external.src = '${SCRIPT_URL}';
+external.integrity = '${INTEGRITY}';
+external.crossOrigin = 'anonymous';
+external.onerror = () => mark('external', 'blocked');
+external.onload = () => mark('external', 'allowed');
+document.head.append(external);
 fetch('${ORIGIN}/fetch').then(() => mark('fetch', 'allowed'), () => mark('fetch', 'blocked'));
 try {
   const socket = new WebSocket('ws://code-isolation.test/socket');
@@ -67,7 +84,7 @@ it('enforces code panel network, storage, parent and navigation isolation withou
   try {
     await page.goto(`${ORIGIN}/`);
     await page.evaluate(
-      ({ sandbox, sources }) => {
+      ({ sandbox, sources, width }) => {
         const results: Record<string, string> = {};
 
         addEventListener('message', (event) => {
@@ -84,12 +101,36 @@ it('enforces code panel network, storage, parent and navigation isolation withou
           const frame = document.createElement('iframe');
 
           frame.setAttribute('sandbox', sandbox);
+          frame.style.width = `${width}px`;
           frame.srcdoc = source;
           document.body.append(frame);
         }
       },
-      { sandbox: CODE_PANEL_SANDBOX, sources: [codePanelDocument(PROBES), codePanelDocument(AWAY)] },
+      { sandbox: CODE_PANEL_SANDBOX, sources: [codePanelDocument(PROBES), codePanelDocument(AWAY)], width: AREA_MIN },
     );
+
+    const control = page.frameLocator('iframe').first().getByRole('button', { name: 'Turn Left' });
+
+    await control.focus();
+    await page.keyboard.press('Enter');
+    expect(
+      await control.evaluate((button) => {
+        const range = document.createRange();
+
+        range.selectNodeContents(button);
+
+        const text = range.getBoundingClientRect();
+        const bounds = button.getBoundingClientRect();
+
+        return (
+          text.width > 0 &&
+          text.left >= bounds.left &&
+          text.right <= bounds.right &&
+          bounds.left >= 0 &&
+          bounds.right <= innerWidth
+        );
+      }),
+    ).toBe(true);
     await expect
       .poll(() =>
         page
@@ -101,6 +142,10 @@ it('enforces code panel network, storage, parent and navigation isolation withou
         fetch: 'blocked',
         socket: 'blocked',
         socketPolicy: 'blocked',
+        external: 'blocked',
+        externalPolicy: 'blocked',
+        settings: 'turn left',
+        control: 'working',
         top: 'blocked',
         parent: 'blocked',
         storage: 'blocked',

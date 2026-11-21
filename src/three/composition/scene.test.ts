@@ -3,7 +3,7 @@ import { expect, it } from 'vitest';
 import { box } from '../../sim/fixtures/parts';
 import { framing } from '../viewport/cameraOps';
 import { MAX_DIST } from '../viewport/types';
-import { compositionCamera, frameComposition } from './scene';
+import { compositionCamera, compositionRoot, frameComposition } from './scene';
 import { renderCompositionJob } from './render';
 import { defaultComposition } from './settings';
 
@@ -50,3 +50,14 @@ it('refuses oversized output and damaged poses before creating WebGL resources',
     renderCompositionJob({ snapshot: { ...snapshot, pose: { arm: [NaN] } }, settings, meshes: {} }),
   ).rejects.toThrow('Choose a finite pose');
 });
+
+it.each(['cad_part', 'mesh', 'boolean', 'component'] as const)(
+  'refuses a %s with no prepared geometry instead of exporting an incomplete robot',
+  (kind) => {
+    const part = { ...box('missing', [0, 0, 0], [20, 40, 20], 10), kind };
+
+    expect(() => compositionRoot({ parts: [box('base', [0, 0, 0], [20, 20, 20], 10), part], pose: {} })).toThrow(
+      'Load every scene mesh before rendering.',
+    );
+  },
+);

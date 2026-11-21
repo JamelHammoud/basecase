@@ -26,7 +26,12 @@ function session() {
     docs: { partsRef: { current: parts }, projectRef: { current: project }, updateProjectNow: vi.fn() },
     scene: { sceneId: 'arm', sceneName: 'Finished arm' },
     active: true,
-    viewportRef: { current: { renderPose: () => ({ arm: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 20, 0, 0, 1] }) } },
+    viewportRef: {
+      current: {
+        renderPose: () => ({ arm: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 20, 0, 0, 1] }),
+        onRender: vi.fn(() => vi.fn()),
+      },
+    },
     showToast: vi.fn(),
   } as unknown as WorkspaceCore;
   const result: { current?: RenderComposition } = {};
@@ -82,7 +87,7 @@ it('rechecks the source after reading encoded bytes before starting the download
   expect(downloadBytes).not.toHaveBeenCalled();
 });
 
-it.each(['edit', 'pose', 'joints', 'switch', 'close', 'settings'] as const)(
+it.each(['edit', 'pose', 'live-pose', 'joints', 'switch', 'close', 'settings'] as const)(
   'refuses delivery after a source %s while rendering',
   async (change) => {
     const { core, composition } = session();
@@ -101,6 +106,8 @@ it.each(['edit', 'pose', 'joints', 'switch', 'close', 'settings'] as const)(
 
     if (change === 'pose') core.docs.projectRef.current = { ...core.project, pose: { values: { elbow: 30 } } };
 
+    if (change === 'live-pose') core.viewportRef.current!.renderPose = () => ({});
+
     if (change === 'joints') core.docs.projectRef.current = { ...core.project, joints: [] };
 
     if (change === 'switch') core.scene.sceneId = 'other-scene';
@@ -116,3 +123,38 @@ it.each(['edit', 'pose', 'joints', 'switch', 'close', 'settings'] as const)(
     expect(core.showToast).not.toHaveBeenCalled();
   },
 );
+
+it('cancels a pending render when viewport-only animation changes the captured pose', async () => {
+  const { core, composition } = session();
+  const run = vi.spyOn(compositionJobs, 'run').mockResolvedValue(output());
+  const unsubscribe = vi.fn();
+  let rendered = () => {};
+
+  vi.mocked(core.viewportRef.current!.onRender).mockImplementation((listener) => {
+    rendered = listener;
+
+    return unsubscribe;
+  });
+
+  const pending = composition.run('export');
+
+  core.viewportRef.current!.renderPose = () => ({});
+  rendered();
+  expect(run.mock.calls[0][1].aborted).toBe(true);
+  await pending;
+  expect(downloadBytes).not.toHaveBeenCalled();
+  expect(unsubscribe).toHaveBeenCalledOnce();
+});
+
+it('keeps an export current when selection reveals extra operand pose helpers', async () => {
+  const { core, composition } = session();
+  const pose = core.viewportRef.current!.renderPose();
+
+  vi.spyOn(compositionJobs, 'run').mockImplementation(async () => {
+    core.viewportRef.current!.renderPose = () => ({ ...pose, operand: pose.arm });
+
+    return output();
+  });
+  await composition.run('export');
+  expect(downloadBytes).toHaveBeenCalledOnce();
+});

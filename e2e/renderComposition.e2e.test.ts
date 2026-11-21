@@ -8,6 +8,8 @@ import { encodeSceneFile } from '../src/utils/sceneFile';
 import { openApp, shown } from './harness';
 import { openKitScene } from './kitScene';
 import { startCompositionTrace, stopCompositionTrace } from './renderCompositionTiming';
+import { expectPanelReadable } from './appearanceLayout';
+import { narrowCompositionCanvas } from './renderCompositionLayout';
 
 async function pngSummary(page: import('playwright-core').Page, png: Buffer) {
   return page.evaluate(async (bytes) => {
@@ -72,6 +74,7 @@ it('opens a finished arm, composes and downloads a transparent PNG while preserv
     await panel.getByRole('textbox', { name: 'Width', exact: true }).press('Enter');
     await panel.getByRole('textbox', { name: 'Height', exact: true }).fill('240');
     await panel.getByRole('textbox', { name: 'Height', exact: true }).press('Enter');
+    await expectPanelReadable(panel);
     await panel.getByRole('button', { name: 'Frame Scene', exact: true }).click();
 
     const delivered = app.page.waitForEvent('download');
@@ -102,6 +105,7 @@ it('opens a finished arm, composes and downloads a transparent PNG while preserv
 
     expect(image).toEqual({ width: 320, height: 240, alpha: 0, foreground: expect.any(Number) });
     expect(image.foreground).toBeGreaterThan(100);
+    await expectPanelReadable(panel);
     await panel.getByRole('button', { name: 'Done', exact: true }).click();
 
     const after = await app.page.evaluate(() => {
@@ -116,6 +120,86 @@ it('opens a finished arm, composes and downloads a transparent PNG while preserv
     expect(after.state).toEqual(before.state);
     expect(app.errors).toEqual([]);
   } finally {
+    await app.close();
+  }
+});
+
+it('keeps composition fields readable on a narrow canvas and cancels drafts before closing', async () => {
+  const app = await openApp();
+  let release = () => {};
+
+  try {
+    await openKitScene(app.page, { name: 'Empty composition', parts: [], project: DEFAULT_PROJECT }, inject('webUrl'));
+    await narrowCompositionCanvas(app.page);
+    await app.page.getByRole('button', { name: 'Render Image', exact: true }).click();
+
+    const panel = app.page.getByRole('region', { name: 'Render image', exact: true });
+    const width = panel.getByRole('textbox', { name: 'Width', exact: true });
+
+    await width.fill('4096');
+    await width.press('Enter');
+    await panel.getByRole('textbox', { name: 'Height', exact: true }).fill('2048');
+    await panel.getByRole('textbox', { name: 'Height', exact: true }).press('Enter');
+    await panel.getByRole('textbox', { name: 'Environment rotation', exact: true }).fill('-360');
+    await panel.getByRole('textbox', { name: 'Environment rotation', exact: true }).press('Enter');
+    await width.fill('123');
+    await width.press('Escape');
+    expect(await panel.count()).toBe(1);
+    expect(await width.inputValue()).toBe('4096');
+
+    const background = panel.getByRole('textbox', { name: 'Hex color', exact: true });
+    const original = await background.inputValue();
+
+    await background.fill('ABCDEF');
+    await background.press('Escape');
+    expect(await panel.count()).toBe(1);
+    expect(await background.inputValue()).toBe(original);
+    await expectPanelReadable(panel);
+
+    const containment = await panel.evaluate((element) => {
+      const panel = element.getBoundingClientRect();
+      const canvas = element.closest('[data-canvas-card]')!.getBoundingClientRect();
+
+      return { left: panel.left - canvas.left, right: canvas.right - panel.right };
+    });
+
+    expect(containment.left).toBeGreaterThanOrEqual(12);
+    expect(containment.right).toBeGreaterThanOrEqual(12);
+    await panel.getByRole('button', { name: 'Use Current View', exact: true }).focus();
+    await app.page.keyboard.press('ControlOrMeta+k');
+    await app.page.getByPlaceholder('Search commands').waitFor();
+    await app.page.keyboard.press('Escape');
+    expect(await panel.count()).toBe(1);
+
+    let requested = () => {};
+    const waiting = new Promise<void>((resolve) => {
+      requested = resolve;
+    });
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const workerPath = /\/composition\.worker[.-]/;
+
+    await app.page.context().route(workerPath, async (route) => {
+      requested();
+      await gate;
+      await route.continue();
+    });
+    await panel.getByRole('button', { name: 'Preview', exact: true }).click();
+    await waiting;
+    await expectPanelReadable(panel);
+    await panel.getByRole('button', { name: 'Cancel', exact: true }).click();
+    release();
+    await app.page.context().unroute(workerPath);
+    await panel.getByRole('button', { name: 'Preview', exact: true }).click();
+    await panel.getByRole('alert').waitFor();
+    expect(await panel.getByRole('alert').textContent()).toBe('Show a solid part before rendering.');
+    await expectPanelReadable(panel);
+    await app.page.keyboard.press('Escape');
+    expect(await panel.count()).toBe(0);
+    expect(app.errors).toEqual([]);
+  } finally {
+    release();
     await app.close();
   }
 });

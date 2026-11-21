@@ -79,7 +79,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
   const [draggingShape, setDraggingShape] = useState(false);
 
   return (
-    <FloatingIsland className="p-1.5 gap-1 rounded-[20px]">
+    <FloatingIsland className="p-1.5 gap-1 rounded-[20px] flex-wrap justify-center">
       {toolbarTools(showSculpt).map((t) => (
         <IconButton
           key={t.mode}

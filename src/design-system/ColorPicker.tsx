@@ -22,6 +22,7 @@ export const ColorField: React.FC<ColorFieldProps> = ({
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<HTMLDivElement | null>(null);
+  const cancelled = useRef(false);
 
   const commitHex = (raw: string) => {
     const hex = normalizeHex(raw);
@@ -59,11 +60,16 @@ export const ColorField: React.FC<ColorFieldProps> = ({
           requestAnimationFrame(() => e.target.select());
         }}
         onChange={(e) => setDraft(e.target.value)}
-        onBlur={() => draft !== null && commitHex(draft)}
+        onBlur={() => {
+          if (draft !== null && !cancelled.current) commitHex(draft);
+
+          cancelled.current = false;
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
 
           if (e.key === 'Escape') {
+            cancelled.current = true;
             setDraft(null);
             (e.target as HTMLInputElement).blur();
           }

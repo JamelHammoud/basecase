@@ -11,18 +11,15 @@ import { errorMessage } from '../utils/errorMessage';
 import { fileSafe } from './helpers';
 import { useLatestRef } from '../utils/useLatestRef';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { compositionPose, compositionSource, compositionSourceCurrent, sameRenderPose } from './compositionSource';
+import { useCompositionPreview } from './useCompositionPreview';
 
 export function useRenderComposition(core: WorkspaceCore) {
   'use memo';
 
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [preview, setPreview] = useState<{
-    url: string;
-    parts: WorkspaceCore['parts'];
-    pose: WorkspaceCore['project']['pose'];
-    scene: string;
-  } | null>(null);
+  const preview = useCompositionPreview(core);
   const [error, setError] = useState('');
   const active = useRef<AbortController | null>(null);
   const latest = useLatestRef(core);
@@ -33,16 +30,10 @@ export function useRenderComposition(core: WorkspaceCore) {
     () => () => active.current?.abort(),
     [core.parts, core.project.pose, core.project.joints, core.scene.sceneId, core.active, core.project.rendering],
   );
-  useEffect(
-    () => () => {
-      if (preview) URL.revokeObjectURL(preview.url);
-    },
-    [preview],
-  );
 
   const update = (patch: Partial<CompositionSettings>) => {
     cancel();
-    setPreview(null);
+    preview.clear();
     setError('');
     core.docs.updateProjectNow((project) => ({
       ...project,
@@ -54,10 +45,12 @@ export function useRenderComposition(core: WorkspaceCore) {
     cancel();
 
     const abort = new AbortController();
-    const snapshot = { parts: core.parts, pose: core.viewportRef.current?.renderPose() ?? {} };
-    const sourcePose = core.project.pose;
-    const sourceJoints = core.project.joints;
-    const sourceScene = core.scene.sceneId;
+    const source = compositionSource(core);
+    const snapshot = { parts: source.parts, pose: source.matrices };
+    const viewport = core.viewportRef.current;
+    const stop = viewport?.onRender(() => {
+      if (!sameRenderPose(source.matrices, compositionPose(viewport, source.parts))) abort.abort();
+    });
 
     active.current = abort;
     setBusy(true);
@@ -68,24 +61,13 @@ export function useRenderComposition(core: WorkspaceCore) {
 
       abort.signal.throwIfAborted();
 
-      const sourceCurrent = () =>
-        latest.current.docs.partsRef.current === snapshot.parts &&
-        latest.current.docs.projectRef.current.pose === sourcePose &&
-        latest.current.docs.projectRef.current.joints === sourceJoints &&
-        latest.current.docs.projectRef.current.rendering === core.project.rendering &&
-        latest.current.active &&
-        latest.current.scene.sceneId === sourceScene;
+      const sourceCurrent = () => compositionSourceCurrent(latest.current, source);
 
       if (!sourceCurrent()) return;
 
       if (mode === 'frame') update({ view: result.view });
 
-      setPreview({
-        url: URL.createObjectURL(result.png),
-        parts: snapshot.parts,
-        pose: sourcePose,
-        scene: core.scene.sceneId,
-      });
+      preview.show(result.png, { ...source, rendering: core.docs.projectRef.current.rendering });
       performance.clearMeasures('composition:export');
       performance.measure('composition:export', {
         start: 0,
@@ -109,6 +91,8 @@ export function useRenderComposition(core: WorkspaceCore) {
 
       setError(errorMessage(failure));
     } finally {
+      stop?.();
+
       if (active.current === abort) {
         active.current = null;
         setBusy(false);
@@ -128,7 +112,7 @@ export function useRenderComposition(core: WorkspaceCore) {
     close: () => {
       cancel();
       setOpen(null);
-      setPreview(null);
+      preview.clear();
     },
     cancel,
     settings,
@@ -141,10 +125,7 @@ export function useRenderComposition(core: WorkspaceCore) {
     },
     run,
     busy,
-    preview:
-      preview?.parts === core.parts && preview.pose === core.project.pose && preview.scene === core.scene.sceneId
-        ? preview.url
-        : null,
+    preview: preview.preview,
     error,
   };
 }

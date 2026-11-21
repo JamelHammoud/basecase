@@ -34,7 +34,8 @@ export function compositionRoot(snapshot: CompositionSnapshot): THREE.Group {
         if (object instanceof THREE.Line || object instanceof THREE.Sprite) object.visible = false;
       });
 
-      if (group.userData.placeholder) throw new Error('Load every scene mesh before rendering.');
+      if (group.userData.placeholder || new THREE.Box3().setFromObject(group).isEmpty())
+        throw new Error('Load every scene mesh before rendering.');
     }
 
     root.updateMatrixWorld(true);

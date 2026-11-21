@@ -1,6 +1,7 @@
 import { Button, ColorField, FieldRow, ModeHeader, NumberInput, Spinner, Switch } from '../design-system';
 import type { RenderComposition } from './useRenderComposition';
 import { MAX_RENDER_PIXELS, MAX_RENDER_SIDE } from '../three/composition/settings';
+import { isTextEntry } from './helpers';
 
 export function RenderCompositionPanel({ composition }: { composition: RenderComposition }) {
   const { settings, update, busy } = composition;
@@ -10,15 +11,18 @@ export function RenderCompositionPanel({ composition }: { composition: RenderCom
       role="region"
       aria-label="Render image"
       onPointerDown={(event) => event.stopPropagation()}
+      onContextMenu={(event) => event.stopPropagation()}
       onKeyDown={(event) => {
+        if (event.metaKey || event.ctrlKey) return;
+
         event.stopPropagation();
 
-        if (event.key === 'Escape') composition.close();
+        if (event.key === 'Escape' && !isTextEntry(event.target as Element)) composition.close();
       }}
-      className="absolute right-3 top-3 z-30 w-[340px] max-h-[calc(100%-24px)] overflow-y-auto rounded-xl bg-[#262626] shadow-xl"
+      className="glass absolute right-[12px] top-[12px] z-30 w-[340px] max-w-[calc(100%-24px)] max-h-[calc(100%-24px)] overflow-y-auto rounded-xl"
     >
       <ModeHeader title="Render image" onDone={composition.close} />
-      <div className="flex flex-col gap-3 p-3">
+      <div className="flex flex-col gap-3 p-[12px]">
         {composition.preview && (
           <img
             src={composition.preview}
@@ -26,7 +30,7 @@ export function RenderCompositionPanel({ composition }: { composition: RenderCom
             className="w-full rounded-lg object-contain max-h-[240px]"
           />
         )}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button onClick={composition.currentView}>Use Current View</Button>
           <Button disabled={busy} onClick={() => void composition.run('frame')}>
             Frame Scene
@@ -95,13 +99,12 @@ export function RenderCompositionPanel({ composition }: { composition: RenderCom
             onChange={(height) => update({ height })}
           />
         </FieldRow>
-        <p className="text-[12px] text-white/50">Native PBR. 64–4096 px per side, up to 8,388,608 pixels.</p>
         {composition.error && (
           <p role="alert" className="text-[13px] text-red-400">
             {composition.error}
           </p>
         )}
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           {busy && <Spinner className="w-4 h-4" />}
           <Button disabled={busy || !composition.valid} onClick={() => void composition.run('preview')}>
             Preview

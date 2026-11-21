@@ -100,7 +100,7 @@ function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
       )}
       {tool.marking && !core.printing.mode && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
       {!core.caseRun.open && !core.triesView.open && (
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto max-w-[calc(100%-24px)]">
           <CanvasToolbar core={core} actions={actions} ui={ui} />
         </div>
       )}
@@ -146,7 +146,11 @@ export function CanvasCard(props: CanvasCardProps) {
       </ErrorBoundary>
       <div className="canvas-vignette absolute inset-0 pointer-events-none" />
       <CaseRunOverlays />
-      {actions.exports.composition.open && <RenderCompositionPanel composition={actions.exports.composition} />}
+      {actions.exports.composition.open && (
+        <ErrorBoundary region="Render image" onClose={actions.exports.composition.close}>
+          <RenderCompositionPanel composition={actions.exports.composition} />
+        </ErrorBoundary>
+      )}
       {core.triesView.open && (
         <TriesMode
           active={active}

@@ -23,14 +23,17 @@ Create a PNG of your robot with its finishes, lighting and background while keep
 7. Turn on **Transparent** to remove the background.
 8. Click **Preview** to check the composed image.
 9. Click **Export PNG** to download the image.
-10. Click **Done** to close the panel.
 
 ![The arm preview with Transparent enabled](/help/render-a-robot-image/transparent.png)
 
-You can open **Render Image** through [[⌘K]]. Orbit the CAD view and click **Use Current View** to copy its framing. Set **Environment rotation** to turn the lights and reflections around the robot. Use **Exposure** to change image brightness.
+You can open **Render Image** through [[⌘K]]. Orbit the CAD view and click **Use Current View** to copy its framing. Set **Environment rotation** to turn the lights and reflections around the robot. Use **Exposure** to change image brightness. Click **Done** to close the panel.
 
 You can set each side to 64 to 4096 pixels, with a total limit of 8,388,608 pixels. You render with native physically based raster materials, without path tracing or measurements of physical material accuracy.
 
-You render visible solid robot parts in their current pose. You won’t see editing helpers or transient Case worlds in the image. If you have missing geometry or textures, you can’t export the image. Replace missing images through [Apply finishes and textures](/help/apply-finishes-and-textures).
+You render visible solid robot parts in their current pose. You won’t see editing helpers or transient Case worlds in the image. If geometry or Appearance textures are missing, you can’t export the image. Replace missing images through [Apply finishes and textures](/help/apply-finishes-and-textures).
+
+SimReady parts use their imported colors and geometry, without their downloaded visual textures. Finishes and textures you apply in **Appearance** are included.
 
 You keep your composition settings with the scene when you save and reopen it. To stop a pending render, edit the source, switch scenes, close the panel or click **Cancel**. You keep your editing camera, selection and geometry intact.
+
+While editing a number or color field, [[Esc]] cancels the draft. Press [[Esc]] again to close the panel.

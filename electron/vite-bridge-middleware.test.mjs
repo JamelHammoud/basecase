@@ -8,7 +8,11 @@ vi.mock('./backend-service.mjs', () => ({
     constructor() {
       return new Proxy(this, {
         get: (target, name) => {
-          if (name === 'visionTraining') return { dispose: async () => {} };
+          if (name === 'visionTraining')
+            return {
+              dispose: async () => {},
+              start: async (value) => (calls.push(['visionTrainingStart', value]), { ok: true }),
+            };
 
           if (name === 'requestRenderer')
             return async (...args) => (calls.push([name, ...args]), args[0] === 'none' ? null : { ok: 1 });
@@ -62,7 +66,7 @@ function sendBody(req, body) {
 const APP_HEADERS = { host: 'localhost:5173' };
 
 async function request(handler, { method, url, body, headers = APP_HEADERS }) {
-  const req = Object.assign(new EventEmitter(), { method, url, headers });
+  const req = Object.assign(new EventEmitter(), { method, url, headers, pause: vi.fn() });
   const res = fakeRes();
   const next = vi.fn();
 
@@ -143,7 +147,7 @@ describe('vite bridge middleware', () => {
   it('caps training requests before parsing or dispatch', async () => {
     expect(
       await request(bridge, { method: 'POST', url: '/vision-training-start', body: 'x'.repeat(24 * 1024 * 1024 + 1) }),
-    ).toEqual({ result: { error: 'The training request is too large' }, status: 413, calls: [] });
+    ).toEqual({ result: { error: 'Send a smaller request' }, status: 413, calls: [] });
   });
 
   it('streams events and starts the agent once', () => {
@@ -203,5 +207,36 @@ describe('vite bridge middleware', () => {
       200,
     );
     expect((await request(bridge, { method: 'GET', url: '/chats', headers: { host: '[::1]:5173' } })).status).toBe(200);
+  });
+});
+
+describe('bridge body boundaries', () => {
+  const { '/api/bridge': bridge } = mountPlugin();
+
+  it('refuses an oversized ordinary request without dispatch and accepts the exact byte limit', async () => {
+    const limit = 1024 * 1024;
+    const body = JSON.stringify({ agentCommand: 'x'.repeat(limit - 19) });
+
+    expect(Buffer.byteLength(body)).toBe(limit);
+    expect((await request(bridge, { method: 'POST', url: '/acp-connect', body })).status).toBe(200);
+    expect(await request(bridge, { method: 'POST', url: '/acp-connect', body: body + ' ' })).toEqual({
+      result: { error: 'Send a smaller request' },
+      status: 413,
+      calls: [],
+    });
+  });
+
+  it('counts UTF-8 bytes rather than string length', async () => {
+    expect(await request(bridge, { method: 'POST', url: '/acp-connect', body: '界'.repeat(400000) })).toEqual({
+      result: { error: 'Send a smaller request' },
+      status: 413,
+      calls: [],
+    });
+  });
+  it('dispatches a training request exactly at its retained limit', async () => {
+    const body = JSON.stringify({ arg: 'x'.repeat(24 * 1024 * 1024 - 10) });
+
+    expect(Buffer.byteLength(body)).toBe(24 * 1024 * 1024);
+    expect((await request(bridge, { method: 'POST', url: '/vision-training-start', body })).status).toBe(200);
   });
 });

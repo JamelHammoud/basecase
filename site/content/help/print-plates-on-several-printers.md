@@ -53,3 +53,5 @@ Plates follow the order of the build guide. In the bar under each plate, the num
 ![Plates 1, 2 and 3 in PLA, first needed at steps 1, 2 and 2](/help/print-plates-on-several-printers/plates.png)
 
 Once all of a guide step's printed parts finish, that step shows a check in [Build Along](/help/build-along).
+
+That check doesn’t assign physical copies. [Allocate parts to robot builds](/help/allocate-parts-to-robot-builds) keeps each copy with one robot.

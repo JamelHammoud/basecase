@@ -6,7 +6,6 @@ import type { CableRoutes } from '../workspace/useCableRoutes';
 import React from 'react';
 import { useScrollFade } from '../design-system';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
-import { onHandOf } from '../utils/onHand';
 import type { ShowToast } from '../workspace/types';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import { useMoney } from '../utils/useMoney';
@@ -158,7 +157,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
           project={project}
           onChangeProject={onChangeProject}
           onCheck={setChecking}
-          onHandOf={(key) => onHandOf(purchases[key])}
+          onHandOf={(key) => purchases[key]?.onHand ?? 0}
           onOnHand={saveOnHand}
           onSelectParts={onSelectParts}
           onExportCsv={exportCsv}

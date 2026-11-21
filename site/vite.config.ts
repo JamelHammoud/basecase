@@ -12,7 +12,15 @@ const siteDir = path.dirname(fileURLToPath(import.meta.url));
 const repoDir = path.join(siteDir, '..');
 const publicDir = path.join(repoDir, 'public');
 
-const HEADERS = '/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n';
+const HEADERS = `/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  Content-Security-Policy: default-src 'self'; script-src 'self'; connect-src 'self' https://app.basecase.so; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+`;
 
 const robotPreviews = () => readdirSync(path.join(publicDir, 'robots')).filter((name) => name.endsWith('.webp'));
 

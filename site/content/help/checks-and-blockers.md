@@ -54,6 +54,8 @@ If the agent thinks a check is wrong, it can dispute it. Its reason shows on the
 
 In the editable design, right-click a problem's row and choose **Ignore** to set it aside. To set aside every problem of that kind, including problems on parts you add later, choose **Ignore All ⟨kind⟩**. The menu shows the kind's name in place of ⟨kind⟩.
 
+Saving allocations or assembly progress leaves Checks unchanged.
+
 The retained findings in a [saved build](/help/resume-a-robot-build) are read-only. Return to the editable design before changing an ignore decision.
 
 Because the decision was yours, an ignored problem stays ignored when the parts change. The agent sees what you've ignored and leaves those problems alone. Everything you've set aside is listed under **Ignored**, below the list, and you can put any of it back from there.

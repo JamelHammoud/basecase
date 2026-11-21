@@ -1,3 +1,4 @@
+import { SimReadySection } from './SimReadySection';
 import React from 'react';
 import type { SceneAnnotation, ScenePart } from '../../types/robotics';
 import { COMPONENT_BY_ID } from '../../data/components';
@@ -97,6 +98,8 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
           baselineParts={props.appearanceBaselineParts}
         />
       )}
+
+      <SimReadySection key={part.id} part={part} />
 
       {hw && <HardwareHoles hw={hw} onAddClearanceHole={props.onAddClearanceHole} />}
 

@@ -1,5 +1,6 @@
 import { sceneAppearanceParts } from '../appearance/sceneParts';
 import { textureHashes } from '../appearance/model';
+import { validSimReadyFields } from '../simready/validation';
 import { validateFixtureImports } from '../cases/fixtureImports';
 import { withValidStudy } from '../study/record';
 import type { Skill } from '../skills/artifacts';
@@ -56,7 +57,8 @@ const isPart = (value: unknown): value is ScenePart =>
   typeof value.kind === 'string' &&
   isVec3(value.position) &&
   validSheetFields(value) &&
-  validAppearance(value.appearance);
+  validAppearance(value.appearance) &&
+  validSimReadyFields(value);
 
 function validParts(value: unknown): value is ScenePart[] {
   return Array.isArray(value) && value.every(isPart) && validPartAppearances(value);

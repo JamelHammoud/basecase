@@ -253,7 +253,7 @@
     "axe-core": "4.14.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "concurrently": "^10.0.6",
-    "electron": "^45.2.3",
+    "electron": "^45.4.1",
     "electron-builder": "^26.17.0",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
@@ -308,7 +308,7 @@
     "electron-winstaller": false
   },
   "engines": {
-    "node": ">=26.13.0"
+    "node": ">=26.13.1"
   },
   "overrides": {
     "minimatch": "^11.0.3",

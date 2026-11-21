@@ -1,3 +1,4 @@
+import { validSimReadyFields } from '../simready/validation';
 import * as THREE from 'three';
 import { useSyncExternalStore } from 'react';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -10,7 +11,13 @@ export interface VisualPiece {
   material: THREE.MeshStandardMaterial;
 }
 
-type Entry = { status: 'loading' } | { status: 'ready'; nodes: Map<string, VisualPiece[]> } | { status: 'error' };
+type Entry =
+  | { status: 'loading' }
+  | { status: 'ready'; nodes: Map<string, VisualPiece[]> }
+  | { status: 'missing' }
+  | { status: 'error' };
+
+export type SimReadyVisualStatus = Entry['status'] | undefined;
 
 const entries = new Map<string, Entry>();
 const listeners = new Set<() => void>();
@@ -28,18 +35,10 @@ const toBuffer = (file: string | Uint8Array): ArrayBuffer => {
   return base64ToBytes(file).buffer;
 };
 
-async function visualBytes(key: string, url: string): Promise<ArrayBuffer | null> {
-  const first = await platformBridge.simreadyFile({ key, file: 'visual.glb' });
+async function visualBytes(key: string): Promise<ArrayBuffer | null> {
+  const file = await platformBridge.simreadyFile({ key, file: 'visual.glb' });
 
-  if (first) return toBuffer(first);
-
-  if (!url) return null;
-
-  await platformBridge.simreadyFetch({ url, requestId: `visual-${key}` });
-
-  const again = await platformBridge.simreadyFile({ key, file: 'visual.glb' });
-
-  return again ? toBuffer(again) : null;
+  return file ? toBuffer(file) : null;
 }
 
 function topNode(object: THREE.Object3D, root: THREE.Object3D): THREE.Object3D {
@@ -75,13 +74,15 @@ async function parseVisual(bytes: ArrayBuffer): Promise<Map<string, VisualPiece[
   return nodes;
 }
 
-async function load(key: string, url: string) {
+async function load(key: string, url?: string) {
   entries.set(key, { status: 'loading' });
 
   try {
-    const bytes = await visualBytes(key, url);
+    if (url) await platformBridge.simreadyFetch({ url, requestId: `visual-${key}` });
 
-    entries.set(key, bytes ? { status: 'ready', nodes: await parseVisual(bytes) } : { status: 'error' });
+    const bytes = await visualBytes(key);
+
+    entries.set(key, bytes ? { status: 'ready', nodes: await parseVisual(bytes) } : { status: 'missing' });
   } catch {
     entries.set(key, { status: 'error' });
   }
@@ -96,20 +97,46 @@ export function simreadyVisual(part: ScenePart): VisualPiece[] | null {
 
   const entry = entries.get(visual.key);
 
-  if (!entry) void load(visual.key, part.simready?.url ?? '');
+  if (!entry) void load(visual.key);
 
   if (entry?.status !== 'ready') return null;
 
   return entry.nodes.get(visual.node) ?? null;
 }
 
-export function useSimReadyVisualVersion(): number {
-  return useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb);
+export function refreshSimReadyVisual(key: string): void {
+  void load(key);
+}
 
-      return () => listeners.delete(cb);
-    },
-    () => version,
-  );
+export function simreadyVisualStatus(part: ScenePart | undefined): SimReadyVisualStatus {
+  const key = part?.mesh?.visual?.key;
+
+  if (key && !entries.has(key)) void load(key);
+
+  return key ? entries.get(key)?.status : undefined;
+}
+
+export async function downloadSimReadyVisual(part: ScenePart): Promise<void> {
+  const key = part.mesh?.visual?.key;
+
+  if (!key || !part.simready || !validSimReadyFields(part) || entries.get(key)?.status === 'loading') return;
+
+  const pending = load(key, part.simready.url);
+
+  notify();
+  await pending;
+}
+
+const subscribe = (cb: () => void) => {
+  listeners.add(cb);
+
+  return () => listeners.delete(cb);
+};
+
+export function useSimReadyVisualStatus(part: ScenePart | undefined): SimReadyVisualStatus {
+  return useSyncExternalStore(subscribe, () => simreadyVisualStatus(part));
+}
+
+export function useSimReadyVisualVersion(): number {
+  return useSyncExternalStore(subscribe, () => version);
 }

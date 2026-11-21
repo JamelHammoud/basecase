@@ -341,3 +341,7 @@ Texture import state is bound to the selected immutable records, current scene p
 Import cancellation compares selected immutable records, scene records and baseline records. Recreating an array around the same records keeps the import active. Changing a record or choosing Cancel discards the late result. The browser walkthrough gates the real texture worker at startup, cancels through the Inspector and then loads the same image successfully.
 
 Captured Case object geometry, captured Study Cases and assigned Cases retain appearance asset references alongside scene parts. They count toward the same import budget before registration and commit. A removed scene source therefore cannot make a captured object lose its portable texture.
+
+### Saved SimReady textures
+
+A selected SimReady mesh whose visual is absent from the local cache offers Download Textures after Appearance in the Inspector, keeping sizing and placement controls first. The collision mesh remains visible while the action runs. The button uses Spinner and stays disabled during the request, then disappears when the visual is ready. Failure uses the shared error tone and keeps the download action available. [SimReady](simready.md#catalog-download-consent-coverage) owns the request and test contract.

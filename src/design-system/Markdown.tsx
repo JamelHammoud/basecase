@@ -18,6 +18,7 @@ interface InternalLinks {
 }
 
 const InternalLinkContext = createContext<InternalLinks>({});
+const InsideLinkContext = createContext(false);
 
 const MarkdownLink: React.FC<{ href?: string; children?: React.ReactNode }> = ({ href, children }) => {
   const { onClick, preview } = useContext(InternalLinkContext);
@@ -32,7 +33,7 @@ const MarkdownLink: React.FC<{ href?: string; children?: React.ReactNode }> = ({
           onClick(href);
         }}
       >
-        {children}
+        <InsideLinkContext value>{children}</InsideLinkContext>
       </a>
     );
     const card = preview?.(href);
@@ -48,9 +49,19 @@ const MarkdownLink: React.FC<{ href?: string; children?: React.ReactNode }> = ({
 
   return (
     <a href={href} target="_blank" rel="noreferrer" className={LINK_CLASS}>
-      {children}
+      <InsideLinkContext value>{children}</InsideLinkContext>
     </a>
   );
+};
+
+const MarkdownImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
+  const insideLink = useContext(InsideLinkContext);
+
+  if (src?.startsWith('data:image/')) return <img src={src} alt={alt ?? ''} />;
+
+  if (insideLink || !src) return <>{alt || src}</>;
+
+  return <MarkdownLink href={src}>{alt || src}</MarkdownLink>;
 };
 
 const components: Components = {
@@ -64,12 +75,7 @@ const components: Components = {
   ol: ({ children }) => <ol className="my-2 pl-5 list-decimal space-y-1 marker:text-white/40">{children}</ol>,
   li: ({ children }) => <li className="pl-0.5">{children}</li>,
   a: ({ href, children }) => <MarkdownLink href={href}>{children}</MarkdownLink>,
-  img: ({ src, alt }) =>
-    src?.startsWith('data:image/') ? (
-      <img src={src} alt={alt ?? ''} />
-    ) : (
-      <MarkdownLink href={src}>{alt || src}</MarkdownLink>
-    ),
+  img: ({ src, alt }) => <MarkdownImage src={src} alt={alt} />,
   blockquote: ({ children }) => (
     <blockquote className="my-2 pl-3 border-l-2 border-white/15 text-white/60">{children}</blockquote>
   ),

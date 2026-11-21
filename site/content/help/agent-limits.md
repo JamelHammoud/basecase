@@ -46,6 +46,8 @@ The agent can read public web pages up to 8 MB and images up to 20 MB. It blocks
 
 Remote images in replies appear as links. Click a link to open it in your browser. Embedded images appear in the reply without a network request.
 
+![A remote arm reference shown as a link above an embedded arm image](/help/agent-limits/reply-images.png)
+
 ## It has time and size limits
 
 - A part's code has 90 seconds to build, and the agent can raise this to 300 seconds. If the build takes longer, the agent is asked to simplify the part.

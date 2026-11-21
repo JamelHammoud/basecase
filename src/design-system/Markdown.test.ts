@@ -23,6 +23,20 @@ describe('Markdown image requests', () => {
     expect(render('![](https://example.com/log)')).toContain('>https://example.com/log</a>');
   });
 
+  it.each(['![Thumbnail](https://example.com/image)', '![Thumbnail][image]\n\n[image]: https://example.com/image'])(
+    'preserves the enclosing destination without nested links for %s',
+    (image) => {
+      const [label, definition = ''] = image.split('\n\n');
+      const html = render(`[${label}](https://example.com/page)\n\n${definition}`);
+
+      expect(html.match(/<a /g)).toHaveLength(1);
+      expect(html).toContain('href="https://example.com/page"');
+      expect(html).toContain('>Thumbnail</a>');
+      expect(html).not.toContain('<img');
+      expect(html).not.toContain('https://example.com/image');
+    },
+  );
+
   it('keeps embedded PNG images', () => {
     const src = 'data:image/png;base64,iVBORw0KGgo=';
     const html = render(`![Inline evidence](${src})`);
@@ -37,6 +51,7 @@ describe('Markdown image requests', () => {
 
       expect(html).not.toContain('<img');
       expect(html).not.toContain(url);
+      expect(html).not.toContain('<a ');
     },
   );
 

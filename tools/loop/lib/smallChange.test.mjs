@@ -9,13 +9,25 @@ const pull = (paths, additions, deletions, labels = []) => ({
 });
 
 describe('pull requests too small for an agent review', () => {
-  it('takes a package bump and a few changed lines of copy', () => {
+  it('takes a package bump and a few changed lines of help', () => {
     expect(isSmall(pull(['package.json', 'package-lock.json'], 400, 400, ['loop:update']))).toBe(true);
-    expect(isSmall(pull(['src/components/ExportMenu.tsx', 'site/content/help/export.md'], 6, 6))).toBe(true);
+    expect(isSmall(pull(['site/content/help/export.md'], 6, 6))).toBe(true);
+    expect(isSmall(pull(['site/content/help/export.md'], 15, 15))).toBe(true);
+  });
+
+  it.each([
+    'src/components/BuildPanel.tsx',
+    'src/design-system/NumberInput.tsx',
+    'src/index.css',
+    'src/workspace/viewCommands.ts',
+  ])('reviews even one changed line in %s', (file) => {
+    expect(isSmall(pull([file], 1, 0))).toBe(false);
+    expect(isSmall(pull([file], 1, 0, ['loop:update']))).toBe(false);
   });
 
   it('reviews anything larger, wider, or touching the loop, CI, IPC or dependencies', () => {
     expect(isSmall(pull(['src/a.ts'], 40, 2))).toBe(false);
+    expect(isSmall(pull(['site/content/help/export.md'], 15, 16))).toBe(false);
     expect(isSmall(pull(['a', 'b', 'c', 'd', 'e', 'f'], 6, 0))).toBe(false);
     expect(isSmall(pull(['electron/main.mjs'], 2, 2))).toBe(false);
     expect(isSmall(pull(['tools/loop/lanes/merge.mjs'], 2, 2))).toBe(false);

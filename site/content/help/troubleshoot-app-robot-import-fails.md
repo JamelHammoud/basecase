@@ -63,6 +63,10 @@ If the joint should have motor control:
 1. In **Pose**, right-click the joint's row.
 2. In **Actuation**, choose **Powered**.
 
+## Ideal tendon import is refused
+
+MJCF tendons and unsupported tendon extensions in URDF can’t become direct-drive joints on import. In [[⌘K]], choose **Open Scene File** to open the original Basecase scene instead.
+
 ## Other messages
 
 | Message | What to do |

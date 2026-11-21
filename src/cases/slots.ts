@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { remappedTendon } from '../joints/tendonReferences';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { buildRig, partMatrix, type V3 } from '../utils/kinematics';
 import type { EndEffector, RobotFacts } from './robotFit';
@@ -71,6 +72,7 @@ function placedJoint(j: RobotJoint, place: Placement): RobotJoint {
     ...(j.parentJoint ? { parentJoint: place.id(j.parentJoint) } : {}),
     ...(j.actuators ? { actuators: j.actuators.map(place.id) } : {}),
     ...(j.loop ? { loop: { ...j.loop, driver: place.id(j.loop.driver) } } : {}),
+    ...remappedTendon(j.tendon, place.id),
     ...(j.frame
       ? { frame: { part: place.id(j.frame.part), origin: place.at(j.frame.origin), axis: place.turn(j.frame.axis) } }
       : {}),

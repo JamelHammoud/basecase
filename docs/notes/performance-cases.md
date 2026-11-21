@@ -2,6 +2,18 @@
 
 Implementation: [Case facts and world geometry](../guide/cases.md#performance-case-facts-and-world-geometry). Shared requirements: [Performance](../guide/performance.md).
 
+## Measured workbench placement
+
+Issue #1927 keeps source hashing, frame preparation, IK, physical rollout, contact inspection and tool travel sampling inside Case workers. Identity-only verification avoids MuJoCo initialization in the browser worker. Completed studio jobs return plain outcome and identity data, with no recording, model or frame buffers. The native cancellation test reuses the existing pipeline adapter and disposal instrumentation.
+
+A local macOS arm64 observation on Node v26.13.0 ran the ten generated tasks through production WASM MuJoCo. Preparation includes exact geometry hashing, rigid transforms and complete-reference IK checks. Its minimum, median and maximum were 0.949, 1.458 and 7.730 ms. Post-run analysis measured 3.962, 4.919 and 15.681 ms. Analysis includes contact and tool-travel inspection plus a second native model for fixed-base geometry-distance queries. Those queries cover welded-body contacts suppressed by the physics contact filter, with a 0.001 mm penetration tolerance.
+
+The placed rollout interval includes model construction, recording, stepping and contract evaluation. It measured 102.981 to 797.345 ms, with a 152.452 ms median. Ordinary recorded references on the equivalent unrelocated geometry measured 98.813 to 291.638 ms, with a 150.963 ms median. The placed run came first for each pair. An earlier sample without the fixed-base query measured 0.517 ms median analysis. These observations include cold evaluator and shared-host effects. They do not isolate physics-step cost or establish a speed ratio. No timestep, command boundary, contract threshold, timeout or retry changed.
+
+A warmed native Case worker completed a passing drawer reference, received a 600-second reference and was terminated before returning that result. Awaiting its native exit took 4.554 ms from cancellation. Its active-worker count returned to zero, and the previous placement remained intact. This measures cancellation acknowledgment after posting, not a worst-case physics-step interrupt latency. The small summary transport test bounds its JSON serialization below 1500 characters and verifies an empty transfer list.
+
+The documentation capture used the ordinary studio entry and its dev server, rather than a production performance bundle. It is functional evidence only. Its subsequent startup failure is recorded in [Case testing evidence](testing-cases.md#measured-workbench-placement). Browser stepping overhead, maximum-size meshes, GPU memory, physical registration accuracy and transfer performance are not measured by this sample.
+
 ## Reusable fixture preparation
 
 Selection capture sends geometry validation, copying and Library assembly serialization to `fixtureCapture.worker.ts`. New Case uses the same worker for fixture previews and commits the prepared result. Metadata controls read dimensions, frames and declared physical values without walking source triangle arrays. Stale worker replies are ignored after a fixture, robot or value change. Repeated unchanged number commits keep the current draft. Nonprimitive collision preparation uses the existing geometry worker and returns bounded hull buffers with transfer ownership.

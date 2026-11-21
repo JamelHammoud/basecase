@@ -349,3 +349,8 @@ The obstacle-aware reach and sampled workspace additions are rolled back togethe
 The original solver, prompt, move, runtime-retention and Arena tests remain active under their existing assertions and deadlines. The withdrawn feature's integrated matrix has no quarantine entries. [Rollback evidence](../notes/testing-skills.md#hosted-arm-planning-rollback) records the failing workloads, dependency boundary and verification limits.
 
 Taught drafts and races retain their revision and cancellation guards independently of arm planning. Edits invalidate pending drafts, refuse approved drafts from an earlier revision and stop active taught races. Save, snapshot retention and report delivery each check the original revision and abort signal, including local runs without a remote recovery journal. `runtimeRace.test.ts` covers those boundaries and exercises draft and race invalidation through `SkillsRuntime`. Pose and Case-world changes remain inputs to invalidation and scene-model refresh.
+
+
+### Ideal tendon admission
+
+`trainingJob` and `kitJob` refuse authored tendon models before preparing jobs. These models keep powered motor spool actions and passive physical observations, and the existing policy format is not extended to train them. Existing ready evidence becomes stale through changed robot physics fingerprints. Hold, animation and motor pose driving remain available in Simulate. `sim/tendonAdmission.test.ts` checks these refusals and the separate motor pose control path. [Simulation evidence](../notes/testing-simulate.md#ideal-tendon-transmissions) records execution scope.

@@ -9,8 +9,6 @@ import { SettingsGroup as Group, SettingsRow as Row } from '../SettingsRows';
 export interface BuildPrefs {
   autoGuide: boolean;
   setAutoGuide: (v: boolean) => void;
-  autoFixBlockers: boolean;
-  setAutoFixBlockers: (v: boolean) => void;
 }
 
 const CURRENCIES = CURRENCY_CODES.map((code) => {
@@ -47,15 +45,6 @@ const PricesGroup: React.FC = () => {
 
 export const BuildPane: React.FC<{ prefs: BuildPrefs }> = ({ prefs }) => (
   <>
-    <Group title="Checks">
-      <Row label="Have the agent fix new blockers" hint="Up to 2 follow-ups per message">
-        <Switch
-          aria-label="Have the agent fix new blockers"
-          checked={prefs.autoFixBlockers}
-          onChange={prefs.setAutoFixBlockers}
-        />
-      </Row>
-    </Group>
     <PricesGroup />
     <Group title="Build guide">
       <Row label="Update automatically" hint="15 s after the scene changes, once the agent is done">

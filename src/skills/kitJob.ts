@@ -9,6 +9,7 @@ import { KIT_ACTION_SCALE, kitRobot, kitTopSpeed, rootHeight } from './kitModel'
 import { kitReward } from './kitRewards';
 import { NEAR_DELAYS, type DelaySteps } from './kitSchedule';
 import { servoGains } from './servoDraws';
+import { requireNoTendons } from '../joints/tendonAdmission';
 
 const D2R = Math.PI / 180;
 const LOG_STD_MIN = -2.5;
@@ -93,6 +94,8 @@ function rootOffset(model: SimModel, start: KitStart | null) {
 }
 
 export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOptions) {
+  requireNoTendons(model.joints);
+
   const robot = kitRobot(model);
 
   requireActions(robot.joints);

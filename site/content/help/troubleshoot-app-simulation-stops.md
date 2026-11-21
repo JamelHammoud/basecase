@@ -59,6 +59,13 @@ Steps are in [Reuse an assembly in Cases](/help/reuse-an-assembly-in-cases).
 
 You changed the robot's joints after you trained this policy. A policy drives only the joints it learned on, so train it again on the robot as it is now.
 
+## “Use Simulate for ideal tendons.”
+
+Ideal tendons support motor-joint commands in simulation. Training, IK, policies and Operate refuse these declarations.
+
+In **Simulate**, under **Control**, choose **Hold pose**, an animation, or **Limp**.
+Steps are in [Drive joints with an ideal tendon](/help/drive-joints-with-an-ideal-tendon).
+
 ## The time shows a figure like 0.6× real time
 
 The figure compares the simulation's speed with the clock.

@@ -74,7 +74,7 @@ function policyOf(hash: string): Promise<PolicySpec | null> {
   return loading;
 }
 
-function wireRobot(input: CaseRobotInput): WireRobot {
+export function wireRobot(input: CaseRobotInput): WireRobot {
   const triangles: Record<string, Float32Array> = {};
 
   for (const p of input.parts) {

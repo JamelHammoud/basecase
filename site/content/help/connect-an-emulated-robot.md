@@ -33,7 +33,7 @@ covers:
 
 You can run the robot in your scene against emulated servos. It goes through the same control program and safety checks that a real robot will use.
 
-Every servo is emulated, and no released build of Basecase can drive real motors. Operate's live robot controls are available only in the desktop app.
+Every servo is emulated, and no released build of Basecase can drive real motors. Authored ideal tendon robots run only in simulation. Operate's live robot controls are available only in the desktop app.
 
 1. Open a scene with a robot that has joints.
 2. Click **Play** in the view rail.

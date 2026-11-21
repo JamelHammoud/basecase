@@ -23,7 +23,7 @@ interface PreparationOptions {
   current?: () => boolean;
 }
 
-function assertCurrent(options: PreparationOptions) {
+export function assertCurrent(options: PreparationOptions) {
   options.signal?.throwIfAborted();
 
   if (options.current && !options.current()) throw new DOMException('Simulation preparation changed.', 'AbortError');

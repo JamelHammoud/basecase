@@ -5,6 +5,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { completeHelpHistory, helpCommitDates } from '../tools/site/gitDates.mjs';
+import { siteImageProblems } from '../tools/site/imageHealth.mjs';
 import { defineConfig, runnerImport, type Plugin } from 'vite';
 
 const siteDir = path.dirname(fileURLToPath(import.meta.url));
@@ -18,7 +19,11 @@ const robotPreviews = () => readdirSync(path.join(publicDir, 'robots')).filter((
 const siteAssetsPlugin = (): Plugin => ({
   name: 'basecase-site-assets',
   apply: 'build',
-  generateBundle() {
+  async generateBundle() {
+    const problems = await siteImageProblems(path.join(siteDir, 'public'));
+
+    if (problems.length > 0) throw new Error(`Site images failed validation:\n${problems.join('\n')}`);
+
     const files = ['favicon.svg', ...robotPreviews().map((name) => `robots/${name}`)];
 
     for (const fileName of files) {

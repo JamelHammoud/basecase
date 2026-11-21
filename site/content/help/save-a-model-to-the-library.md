@@ -41,6 +41,8 @@ When you save one part, the model gets that part's name and its **Notes**. When 
 
 Saving a complete passive assembly also keeps its joints, limits and springs for reuse as a Case fixture. See [Reuse an assembly in Cases](/help/reuse-an-assembly-in-cases).
 
+For an [ideal tendon](/help/drive-joints-with-an-ideal-tendon), select the complete motor and output assembly. Saving only a spool, motor or output part is refused so the coupling stays intact.
+
 Saving several parts also keeps an image of the view when you save. You can keep working while Basecase prepares that image.
 
 You can also choose **Save to Library** from a part's right-click menu, or from [[⌘K]].

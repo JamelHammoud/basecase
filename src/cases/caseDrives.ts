@@ -7,6 +7,7 @@ import type { Rig } from '../utils/kinematics';
 import type { CastSlot, NamedSlot } from './caseCast';
 import type { RobotFacts } from './robotFit';
 import { caseSlots, type Case, type ReferenceCommand } from './schema';
+import { poseSetup } from '../sim/drivePose';
 
 interface DriveFor {
   slot: NamedSlot;
@@ -32,6 +33,9 @@ function groundDrive(rig: Rig, parts: MjcfInput['parts'], facts: RobotFacts, key
 export function driveFor({ slot, cast, rig, parts }: DriveFor): RobotDrive | null {
   const { facts, effector } = cast;
   const key = cast.key ?? '';
+
+  if (rig.joints.some((joint) => joint.tendon && rig.robotOf.get(joint.id) === key))
+    return poseSetup(rig, { robot: key });
 
   if (slot.needs.includes('arm') && effector && facts.armJoints.length) {
     const { armJoints: joints, anchor, reachMm, gripper } = facts;

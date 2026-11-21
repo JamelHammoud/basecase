@@ -31,6 +31,7 @@ import { projectFromSeed } from './helpers';
 import type { CommitParts, DocState, Snapshot, WorkspaceSeed } from './types';
 import { mountedBoardParts } from '../wiring/boardMounts';
 import { permittedParameterEdit } from './parameterEditGuard';
+import type { PlacementUpdate } from '../cases/workbench/retention';
 
 const POSE_FOLD_MS = 700;
 
@@ -60,6 +61,8 @@ function useProjectCommits(commitProject: CommitProject, projectRef: RefObject<P
   'use memo';
 
   return {
+    commitWorkbenchPlacements: (update: PlacementUpdate) =>
+      commitProject({}, (p) => ({ ...p, workbenchPlacements: update(p.workbenchPlacements) })),
     commitWiring: (wiring: ProjectSettings['wiring']) => commitProject({}, (p) => ({ ...p, wiring })),
     commitSelfContact: (selfContact: ProjectSettings['selfContact']) =>
       commitProject({}, (p) => ({ ...p, selfContact })),

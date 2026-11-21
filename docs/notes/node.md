@@ -2,6 +2,14 @@
 
 Knowledge preserved from code comments. Complements AGENTS.md; nothing here repeats it.
 
+## Article image validation
+
+Pull request #1949 replaces six article captures that showed startup instead of their captions' states. The shared capture helper waits for the requested locator, boot removal, cleared startup classes and loaded fonts. It validates the screenshot buffer before writing, so readiness and image validation failures preserve an existing destination.
+
+Review reproduced a gap in blank detection with 500 × 300 solid PNGs. Neutral `#121212` and white returned `is blank`, but solid red and `#0d99ff` passed. Comparing the overall darkest and brightest channel confused a uniform color with spatial detail. Blank detection now compares each RGB channel's range across pixels. The original observations are retained in `scratch/image-health-before.json`. A single macOS scan of the committed article assets found no problems and took 13,014 ms. This is one local observation, not a hosted-platform timing estimate.
+
+The detector decodes PNG, JPEG, WebP and AVIF assets in all three article directories, reduces each to at most 360 × 360 pixels and flattens transparency against `#121212`. It rejects an image when every channel's range is at most 4. Its startup heuristic rejects more than 98% of pixels within 3 of RGB 18. Sparse valid content can match that heuristic, and other loading screens can pass. Neither pixel validation nor the synthetic browser fixture proves that a caption matches its screenshot. Caption-specific locators and the real app fixture remain necessary. The owning [copy guide](../guide/copy.md) lists the regression coverage. Browser execution remains with CI during review.
+
 ## Vitest cache ownership
 
 Step #1759 follows the individual `ENOTEMPTY` observation recorded under the earlier unit-shard repair. That named check stopped before tests while clearing a cache reached through linked `node_modules`. A scratch preload assigning `fsModuleCachePath` per workspace let the same named check pass. Those observations do not establish an abort rate or explain product startup failures.
@@ -785,3 +793,11 @@ The learn evidence since 12 November 2026 shows two forms of the same documentat
 - [#82](https://github.com/JamelHammoud/basecase/pull/82#issuecomment-6846251279) claimed every Import SVG control was a Button despite the drop zone and TextArea. [#196](https://github.com/JamelHammoud/basecase/pull/196#issuecomment-6847177604) claimed the agent read both kinds of Notes even though scene notes stopped at the saved reference file.
 
 The root guide already requires accurate area documentation. The Loop guide's Review section strengthens that rule with a cross-area search and consumer tracing in the existing implementation and review passes. Documentation link validation cannot establish that a control uses a particular component or that a saved field reaches an agent. A keyword ban would also reject accurate statements. This lesson therefore adds guidance rather than a semantic lint, a model call or another gate. Existing documentation checks validate links and section references, not behavioral truth. No product code, test coverage or quarantine changes.
+
+## UI audit runner boundaries
+
+Review of #1963 reproduced a producer-registration defect in the new daily `ux` lane. The real `dispatch` entry started a controlled audit callback with 12 pull requests waiting and again with 20 CI runs queued, the existing global thresholds. Both probes used zero active sessions and zero load. The lane was absent from `PRODUCERS`, so dispatch never consulted its flow counts. Adding `ux` to that existing set restores the shared limits without adding a threshold, wait loop or check stage. The before and after probe outputs are retained in `scratch/ux-backpressure-before.json` and `scratch/ux-backpressure-after.json` in the review worktree.
+
+`lanes/ux.test.mjs` uses the real dispatcher and controlled agent and publication boundaries to check both saturated queues and an admitted audit while three refinement pull requests wait. Existing audit cases cover all eight required area reports, missing and blank reports, no-change coverage logs, failed sessions, duplicate open audits and cleanup after publication throws. `lib/smallChange.test.mjs` retains source and update-label review checks and tests the help-only 30-line boundary independently of the source-path rule.
+
+Review also removed duplicated documentation guidance, aligned the audit and review briefs with CI-owned browser execution and kept each audit fix pull request focused on one shared cause. Coverage requires a nonempty report per area. It does not mechanically establish that the source or browser evidence is accurate. No live audit, browser assertion run, visual judgment, hosted scheduling observation or throughput measurement was performed in this review. The daily audit and broader review selection have no measured throughput improvement yet.

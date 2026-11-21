@@ -17,7 +17,7 @@ covers:
 
 Fit editable fingers to a rigid object, then record its approach, grasp, lift, placement and release in a Case.
 
-Use the desktop app and an arm with two powered sliding carriages from the `gripper_finger_mount_m3` recipe. You cannot use other mounting interfaces.
+Use the desktop app and an arm with two powered sliding carriages from the `gripper_finger_mount_m3` recipe. You can’t use other mounting interfaces.
 Use an unedited box or circular cylinder resting on the floor, and supply its weight and friction.
 A passed try is evidence of a simulated grasp. It makes no claim about physical performance.
 
@@ -43,7 +43,7 @@ Choose **Make Flat Fingers** for flat gripping faces. With either profile, you k
 The pair includes four M3 × 16 screws, four washers and four captive nuts.
 Use Undo to remove the complete pair and its references together.
 
-The Case keeps the selected object's dimensions, weight and friction. Basecase does not shrink the object to make a grasp pass.
+The Case keeps the selected object's dimensions, weight and friction. Basecase doesn’t shrink the object to make a grasp pass.
 Both jaws must hold the raised object until placement, then release it near the spot.
 The try fails if the palm contacts the object, the jaws push it or you drop it before placement.
 After changing finger dimensions, you must treat affected results as stale.

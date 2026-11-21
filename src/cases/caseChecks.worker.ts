@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import type { MainModule } from '@mujoco/mujoco';
-import { CaseCheckSession, replyTransfer, type CaseCheckJob } from './caseCheckJob';
+import { CaseCheckSession, replyTransfer, workbenchIdentityReply, type CaseCheckJob } from './caseCheckJob';
 import { loadMujoco } from '../sim/loadMujoco';
 import { errorMessage } from '../utils/errorMessage';
 
@@ -9,11 +9,19 @@ let mj: Promise<MainModule> | null = null;
 const session = new CaseCheckSession();
 let queue: Promise<unknown> = Promise.resolve();
 
+async function jobReply(job: CaseCheckJob) {
+  const identity = workbenchIdentityReply(job);
+
+  if (identity) return identity;
+
+  mj ??= loadMujoco();
+
+  return session.run(await mj, job);
+}
+
 async function answer(id: number, job: CaseCheckJob) {
   try {
-    mj ??= loadMujoco();
-
-    const reply = await session.run(await mj, job);
+    const reply = await jobReply(job);
 
     ctx.postMessage({ id, reply }, replyTransfer(reply));
   } catch (e) {

@@ -9,7 +9,7 @@ export const LIMITS = {
   idlePullMinutes: 30,
 };
 
-export const PRODUCERS = new Set(['build', 'refine', 'market', 'learn', 'update', 'lead', 'ideas']);
+export const PRODUCERS = new Set(['build', 'refine', 'ux', 'market', 'learn', 'update', 'lead', 'ideas']);
 
 export const LANE_SHARE = { refine: 3 };
 

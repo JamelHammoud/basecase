@@ -1,5 +1,6 @@
 import React from 'react';
 import { ReferenceTryButton } from './ReferenceTryButton';
+import { CaseTeachingControls } from './CaseTeachingControls';
 import {
   Button,
   CameraIcon,
@@ -153,6 +154,7 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
           </Button>
         )}
         <ReferenceTryButton cases={cases} />
+        <CaseTeachingControls cases={cases} busy={busy} running={running} />
         {cases.mat.available && !running && (
           <Button
             variant="secondary"

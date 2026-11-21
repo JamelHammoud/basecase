@@ -33,6 +33,7 @@ export class LiveCase {
   private t = 0;
   private owed = 0;
   private readonly startedAt: number;
+  private deadline = Infinity;
 
   private constructor(engine: SimEngine, kase: Case, logic: CaseLogicRun | null, startedAt = engine.data.time) {
     this.engine = engine;
@@ -100,6 +101,14 @@ export class LiveCase {
     return this.startedAt + this.kase.task.seconds;
   }
 
+  get teachingAllowed(): boolean {
+    return this.logic === null;
+  }
+
+  limit(seconds: number) {
+    this.deadline = seconds;
+  }
+
   acceptVision(result: VisionResult, ageMs = 0) {
     this.logic?.acceptVision(result, ageMs);
   }
@@ -111,7 +120,9 @@ export class LiveCase {
   advance(seconds: number, beforeStep?: () => void) {
     this.owed += seconds;
 
-    while (this.owed >= STEP_S - 1e-9) {
+    while (this.t < this.deadline - 1e-9 && this.owed >= Math.min(STEP_S, this.deadline - this.t) - 1e-9) {
+      const step = Math.min(STEP_S, this.deadline - this.t);
+
       beforeStep?.();
 
       const read = this.reader.read(this.engine.poses(), this.t, torqueShare(this.engine));
@@ -119,9 +130,9 @@ export class LiveCase {
       sampleSignals({ ...read, ...this.logic?.cameraFacts() }, this.names, this.signals);
       this.logic?.advance(this.t * 1000, read);
       this.latest = { ...this.latest, ...read };
-      this.engine.step(STEP_S);
-      this.t += STEP_S;
-      this.owed -= STEP_S;
+      this.engine.step(step);
+      this.t += step;
+      this.owed -= step;
     }
 
     this.judge();

@@ -3,7 +3,7 @@ import { requestVisionInspection } from '../components/tries/visionInspectionCom
 import type { Command } from '../components/CommandPalette';
 import { CompareIcon, DownloadIcon, ShareIcon, SpreadsheetIcon, StopIcon, TrainIcon } from '../design-system';
 import { TRIES_TO_TRAIN } from '../skills/triesTraining';
-import { imageCount } from '../datasets/datasetView';
+import { imageCount, trainingSampleCount } from '../datasets/datasetView';
 import { showNewCase } from './caseCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { datasetVisionView } from './visionTrainingView';
@@ -72,7 +72,7 @@ function openDatasetCommands(core: WorkspaceCore): Command[] {
       run: () => datasets.publishDataset(dataset),
     });
 
-  const passed = exporter.records.of(dataset).filter((t) => t.passed).length;
+  const passed = trainingSampleCount(dataset, exporter.records.of(dataset));
   const images = imageCount(dataset) > 0;
   const canTrain = images
     ? datasets.vision.canTrain && !datasets.vision.busy

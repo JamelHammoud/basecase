@@ -18,7 +18,13 @@ import type { Recording } from './recorder';
 import type { Scan } from './scanner';
 import type { RunRequest, RunResult } from './simRun';
 
+import type { ActionOwner } from './teaching';
+import type { TeachingStart } from './teachingLink';
+
 export type SimRequest =
+  | ({ type: 'teaching'; id: number } & (
+      ({ phase: 'start' } & TeachingStart) | { phase: 'handoff'; owner: ActionOwner }
+    ))
   | { type: 'load'; model: SimModel; controller?: Controller; loadId?: number }
   | { type: 'play' }
   | { type: 'pause' }
@@ -30,7 +36,7 @@ export type SimRequest =
   | { type: 'script'; commands: Array<{ at: number; command: DriveCommand }> }
   | { type: 'respawn'; robot?: string }
   | { type: 'fault'; joint: string; kind: FaultKind | null }
-  | { type: 'record'; on: boolean }
+  | { type: 'record'; on: boolean; recordId?: number }
   | { type: 'scrub'; recording: Recording | null; efforts?: RecordedEfforts }
   | { type: 'seek'; frame: number }
   | { type: 'branch'; id?: number; selection: number; frame: number; kase: Case; bytes?: Uint8Array }
@@ -51,10 +57,12 @@ export type SimRequest =
   | { type: 'dispose' };
 
 export type SimResponse =
+  | { type: 'disposed' }
+  | { type: 'teaching'; id: number; owner: ActionOwner | null; startedAt: number; problem: string | null }
   | ({ type: 'routine' } & LiveUpdate)
   | { type: 'ready'; nq: number; nu: number; nbody: number; loadId?: number }
   | { type: 'error'; message: string; id?: number; loadId?: number }
-  | { type: 'recorded'; recording: Recording | null }
+  | { type: 'recorded'; recording: Recording | null; recordId?: number }
   | { type: 'scrubbed'; efforts: RecordedEfforts | null; selection?: number; checkpoints?: ContinuationPoint[] }
   | { type: 'branched'; id?: number; result: ContinuationTakeover | null }
   | { type: 'sought'; frame: number; qpos: Float64Array }

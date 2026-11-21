@@ -36,6 +36,7 @@ export async function frozenDatasetEpisodes(snapshot: DatasetSnapshot): Promise<
   const restored = await restoreSamples(snapshot);
 
   return restored
+    .filter(({ sample }) => sample.target !== 'correction')
     .map(({ sample, recording, segments }) => ({
       recording,
       task: taskOf(sample, segments, snapshot.task),

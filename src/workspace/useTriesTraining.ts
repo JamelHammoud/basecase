@@ -1,14 +1,15 @@
-import { useEffect, useEffectEvent, useState } from 'react';
+import { useEffect, useEffectEvent, useState, useRef, useLayoutEffect } from 'react';
 import { filmImage } from '../cases/filmImage';
 import type { Case } from '../cases/schema';
 import type { Dataset } from '../datasets/datasetFile';
-import { canTrain } from '../datasets/demos';
-import { restoreSamples } from '../datasets/datasetSnapshot';
+import { frozenTrainingContent } from '../datasets/datasetSnapshot';
 import { sha256 } from '../cases/tries';
 import type { Simulation } from '../sim/useSimulation';
 import type { SkillsRuntime } from '../skills/skillsRuntime';
 import type { TriesOutcome } from '../skills/triesRun';
-import { TRIES_JOINT_NOISE_DEG, TRIES_RUNS, TRIES_TO_TRAIN, triesJob } from '../skills/triesTraining';
+import { TRIES_JOINT_NOISE_DEG, TRIES_RUNS, TRIES_TO_TRAIN } from '../skills/triesTraining';
+import { snapshotWorker } from '../datasets/snapshotWorker';
+import { hashOf } from '../skills/hash';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { errorMessage } from '../utils/errorMessage';
 import { caseVerdict, type CaseRobotInput, type CaseVerdict } from './caseChecks';
@@ -56,6 +57,11 @@ export function useTriesTraining(options: TriesTrainingOptions): TriesTraining {
   const { runtime, busy } = options.skills;
   const [training, setTraining] = useState<string | null>(null);
   const [result, setResult] = useState<TriesResult | null>(null);
+  const latest = useRef(options);
+
+  useLayoutEffect(() => {
+    latest.current = options;
+  });
 
   const finish = async (dataset: Dataset, outcome: TriesOutcome, verdict: CaseVerdict | null) => {
     const { runs, kept, problem } = outcome;
@@ -115,12 +121,9 @@ export function useTriesTraining(options: TriesTrainingOptions): TriesTraining {
       guests: sim.guestParts,
     });
     const snapshot = version.snapshot!;
-    const usable = await restoreSamples(snapshot);
+    const usable = snapshot.samples.filter((sample) => !sample.excluded.length);
 
-    if (
-      snapshot.modelHash !== (await sha256(model.xml)) ||
-      usable.some(({ recording }) => !canTrain(recording, model))
-    ) {
+    if (snapshot.modelHash !== (await sha256(model.xml))) {
       throw new Error('These saved samples don’t fit this robot.');
     }
 
@@ -132,19 +135,29 @@ export function useTriesTraining(options: TriesTrainingOptions): TriesTraining {
     }
 
     const order = { train: 0, validation: 1, test: 2 };
-    const ordered = usable.sort((a, b) => order[a.sample.split] - order[b.sample.split]);
+    const ordered = usable.sort((a, b) => order[a.split] - order[b.split]);
+    const contents = await frozenTrainingContent(snapshot);
+    const prepared = await snapshotWorker.call('train', {
+      model,
+      kase,
+      snapshot,
+      revision: version.hash,
+      contents,
+      samples: ordered,
+    });
+    const currentModel = await latest.current.sim.buildModel();
+    const currentCase = latest.current.cases.find((saved) => saved.id === kase.id);
+
+    if (hashOf(currentCase) !== hashOf(kase) || (await sha256(currentModel.xml)) !== snapshot.modelHash)
+      throw new Error('These saved samples don’t fit this robot.');
+
     let verdict: CaseVerdict | null = null;
     const control = { jointNoiseDeg: TRIES_JOINT_NOISE_DEG };
     const refused = runtime.learnFromTries({
       model,
       kase,
       datasetId: dataset.id,
-      job: triesJob(
-        model,
-        kase,
-        ordered.map((entry) => entry.recording),
-        ordered.map((entry) => entry.sample.split),
-      ),
+      job: prepared.job,
       judge: async (policy) => {
         verdict = await caseVerdict(robot, kase, TRIES_RUNS, { ...control, policy });
 

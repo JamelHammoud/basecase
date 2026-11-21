@@ -2,6 +2,7 @@ import { decodeRecording } from '../cases/recordingFile';
 import type { Recording } from '../sim/recorder';
 import { labelSegments } from './segmentRows';
 import type { FrozenTrySample } from './snapshotTypes';
+import { sliceTeaching } from '../sim/teachingRecording';
 
 export function readSnapshotRecording(bytes: Uint8Array): Recording {
   const recording = decodeRecording(bytes);
@@ -28,6 +29,7 @@ export function sampleRecording(recording: Recording, sample: Pick<FrozenTrySamp
 
   return {
     ...recording,
+    ...sliceTeaching(recording, start, end),
     frames: to - from,
     t: recording.t.slice(from, to).map((t) => t - start),
     ctrl: recording.ctrl.slice(from * recording.nu, to * recording.nu),

@@ -1,6 +1,7 @@
 import { keepTyped, restoreTyped } from './recordingValues';
 import { CONTINUATION_MAX_BYTES } from '../sim/continuationLimits';
 import type { RecordedInput, Recording } from '../sim/recorder';
+import { isTeachingRecording, teachingArraysFit, teachingLengths } from '../sim/teachingRecording';
 
 const MAGIC = 0x52544342;
 const VERSION = 1;
@@ -26,6 +27,12 @@ const ARRAYS = {
   contacts: 'i32',
   contactOffsets: 'i32',
   continuation: 'u8',
+  actionTime: 'f64',
+  actionOwner: 'u8',
+  actionCtrl: 'f64',
+  actionQpos: 'f64',
+  actionQvel: 'f64',
+  actionPrevious: 'f32',
 } as const satisfies Record<string, ArrayKind>;
 
 type ArrayKey = keyof typeof ARRAYS;
@@ -109,6 +116,8 @@ function sizesFit(header: Header) {
 
   if (!(typeof header.dt === 'number' && header.dt > 0 && Number.isFinite(header.dt))) return false;
 
+  if (header.teaching !== undefined && !isTeachingRecording(header.teaching)) return false;
+
   return header.scanWidth === undefined || isCount(header.scanWidth, 100_000);
 }
 
@@ -122,6 +131,7 @@ function expectedLength(key: ArrayKey, h: Header): number | null {
     torque: h.frames,
     scan: h.frames * (h.scanWidth ?? 0),
     contactOffsets: h.frames + 1,
+    ...teachingLengths(h),
   };
 
   return lengths[key] ?? null;
@@ -209,12 +219,14 @@ export function decodeRecording(bytes: Uint8Array): Recording | null {
   const rest: Record<string, unknown> = { ...header };
 
   delete rest.arrays;
-  delete rest.contacts;
-  delete rest.contactOffsets;
+
+  for (const key of Object.keys(ARRAYS)) delete rest[key];
 
   const inputs = readInputs(rest.inputs);
 
   delete rest.inputs;
 
-  return { ...rest, ...arrays, ...(inputs ? { inputs } : {}) } as Recording;
+  const recording = { ...rest, ...arrays, ...(inputs ? { inputs } : {}) } as Recording;
+
+  return teachingArraysFit(recording) ? recording : null;
 }

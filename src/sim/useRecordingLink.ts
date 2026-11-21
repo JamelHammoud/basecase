@@ -13,7 +13,9 @@ export interface Sought {
 }
 
 export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
-  const recordWaiter = useRef<((r: Recording | null) => void) | null>(null);
+  const recordWaiters = useRef(new Map<number | undefined, (recording: Recording | null) => void>());
+  const recordPending = useRef(new Map<number | undefined, Promise<Recording | null>>());
+  const completed = useRef(new Map<number | undefined, Recording | null>());
   const waiter = useRef<((efforts: RecordedEfforts | null) => void) | null>(null);
   const sought = useRef<Sought | null>(null);
   const [points, setPoints] = useState<ContinuationPoint[]>([]);
@@ -32,8 +34,15 @@ export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
     }
 
     if (msg.type === 'recorded') {
-      recordWaiter.current?.(msg.recording);
-      recordWaiter.current = null;
+      const resolve =
+        recordWaiters.current.get(msg.recordId) ??
+        ((recording: Recording | null) =>
+          msg.recordId === undefined ? undefined : completed.current.set(msg.recordId, recording));
+
+      resolve(msg.recording);
+
+      recordWaiters.current.delete(msg.recordId);
+      recordPending.current.delete(msg.recordId);
 
       return;
     }
@@ -81,17 +90,34 @@ export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
   );
 
   const stopRecording = useCallback(
-    () =>
-      new Promise<Recording | null>((resolve) => {
-        if (!workerRef.current) {
-          resolve(null);
+    (recordId?: number): Promise<Recording | null> => {
+      if (completed.current.has(recordId)) {
+        const recording = completed.current.get(recordId) ?? null;
 
-          return;
-        }
+        completed.current.delete(recordId);
 
-        recordWaiter.current = resolve;
-        workerRef.current.postMessage({ type: 'record', on: false } satisfies SimRequest);
-      }),
+        return Promise.resolve(recording);
+      }
+
+      const pending = recordPending.current.get(recordId);
+
+      if (pending) return pending;
+
+      const worker = workerRef.current;
+
+      if (!worker) return Promise.resolve(null);
+
+      const result = new Promise<Recording | null>((resolve) => recordWaiters.current.set(recordId, resolve));
+
+      recordPending.current.set(recordId, result);
+      worker.postMessage({
+        type: 'record',
+        on: false,
+        ...(recordId === undefined ? {} : { recordId }),
+      } satisfies SimRequest);
+
+      return result;
+    },
     [workerRef],
   );
 
@@ -117,8 +143,9 @@ export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
     branchId.current++;
     branchWaiter.current?.(null);
     branchWaiter.current = null;
-    recordWaiter.current?.(null);
-    recordWaiter.current = null;
+    recordWaiters.current.forEach((resolve) => resolve(null));
+    recordWaiters.current.clear();
+    recordPending.current.clear();
     waiter.current?.(null);
     waiter.current = null;
     selection.current = 0;

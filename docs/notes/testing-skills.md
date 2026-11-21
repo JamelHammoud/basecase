@@ -1,5 +1,44 @@
 # Skills test evidence
 
+## Simulated correction extraction
+
+The teaching fixture in `src/sim/teaching.test.ts` extracts only operator-owned targets within an explicit frame window. Observations read the boundary's measured state and saved previous action. The same examples survive a portable round trip and a selected-frame slice. Empty operator selections, a changed model and implicit ordinary-demonstration conversion are negative controls. This does not establish learning improvement.
+
+The continuation adds `correctionSnapshot.test.ts` for failed-try selection, frozen reopening, complete history, branch isolation, empty windows and ordinary-demonstration exclusions. `triesTeaching.test.ts` checks a real-WASM correction record reaching a compatible warm request, original-row mixture, model and action-scale refusals, unavailable native warm starts and stale-candidate refusal. The focused pipeline check passed ten tests across those two files and `teaching.test.ts`, with Vitest reporting 1.25 seconds. Evidence is `scratch/teaching-pipeline-check.log`.
+
+Three focused native tests in `bc/warm_tests.rs` passed again after main integration in 0.23 seconds. They exercise the real CPU learner, source immutability, preserved normalization and constant previous-action inputs, cancellation, incompatible actor shape and job-relative artifact loading. The relative-path test writes a continuation artifact under the job folder, trains a candidate and checks that the source bytes remain unchanged. Evidence is `scratch/recovery-main/native.log`. Forge WASM and its source manifest were rebuilt with the installed stable toolchain in 10.58 seconds.
+
+The Case entry, Library ownership view, dataset correction action and worker job wiring are implemented. A dedicated documentation capture passed both handoffs, R completion, Library reopening, correction selection and the frozen compatible request in 41.79 seconds. It used a controlled browser actor, not a learned success fixture. Its log is `scratch/recovery-main/capture-selected.log`. The two browser declarations remain for Linux and Windows CI, with zero retries. Vite reported a close timeout after the passing capture.
+
+A correction selection now prefers training for an otherwise unassigned related source group. Explicit train, validation or test assignments remain authoritative for the whole group. Independent original groups still supply automatic validation. Four seeded split checks cover content-related branches, determinism and explicit-test preservation. The named-file check passed 23 tests across three runtime files and static checks for both browser declarations. Evidence is `scratch/recovery-main/dataset-check.log`.
+
+### Native recovery observation
+
+A small native CPU experiment used the generated arm-3dof Touch a Point Case. Four successful reference-controller recordings supplied 400 original observation/action rows. Three sources supplied 300 fitting rows and the fourth supplied 100 validation rows. A cold source actor trained for 40 epochs with seed 17, 0.05 state noise and a six-second time cap. The exported actor and normalizer then initialized both comparison runs.
+
+The original-only continuation used 40 epochs of 300 fitting rows, giving 200 optimizer updates with batch size 64. The correction candidate used 25 epochs of 476 fitting rows, also giving 200 optimizer updates. Both used fresh Adam state, the same seed, learning rate and six-second cap. Their actual fitting row counts were 12,000 and 11,900. The candidate mixed every selected row once per epoch. It added 176 operator targets from two continuous teaching tries, each with two correction windows, and kept autonomous actions as context. Original validation remained independent of those correction sources.
+
+Eight held-out target placements shifted the target's horizontal coordinate by -12, -9, -6, -3, 3, 6, 9 and 12 mm, with alternating depth shifts of -8 and 8 mm. Their initial joint draws used seeds 1001 through 1008 and 5-degree joint noise. None supplied fitting or validation data. The source passed 3 of 8, the original-only continuation passed 2 of 8 and the correction candidate passed 0 of 8. The correction candidate was worse. This single small experiment establishes neither a learning benefit nor a comparative product advantage.
+
+After integration with main `6042d2712`, the same experiment again scored 3/8, 2/8 and 0/8. The source, original-only continuation and correction candidate took 0.732, 0.738 and 0.701 seconds in the retained equal-update observation. Best validation loss was 0.000394707 for the source, 0.000319169 for the continuation and 0.000343955 for the candidate. Loss selection did not predict Case recovery. The source policy content hash `4a63bd0306f914216374a2ba43fad37cd5ccc7125adc0a882f343d94a7b8602a` stayed unchanged after collection, preparation, fitting and evaluation. A final read of the original policy artifact confirmed the same hash. The real trained candidate then went through `runTries`, with independent fresh evaluation through the existing `runCaseTimes` path. It passed 0 of the standard 32 randomized Case runs. The existing acceptance rule refused retention, with zero skill-file writes and zero record writes. No source passing evidence was inherited.
+
+The retained held-out outcomes are below. XYZ is the authored target in millimeters, before reach adaptation. Seed controls the independent initial joint draw.
+
+| Seed | Target XYZ, mm | Source | Original-only continuation | Correction candidate |
+| --- | --- | --- | --- | --- |
+| 1001 | -12, 50, 171 | Pass | Pass | Miss |
+| 1002 | -9, 50, 187 | Miss | Miss | Miss |
+| 1003 | -6, 50, 171 | Pass | Pass | Miss |
+| 1004 | -3, 50, 187 | Miss | Miss | Miss |
+| 1005 | 3, 50, 171 | Pass | Miss | Miss |
+| 1006 | 6, 50, 187 | Miss | Miss | Miss |
+| 1007 | 9, 50, 171 | Miss | Miss | Miss |
+| 1008 | 12, 50, 187 | Miss | Miss | Miss |
+
+Reproduction uses `fixtureRobot('arm-3dof')`, `buildCase({ goal: 'touch', world: 'floor' })` and reference seeds 1 through 4. Original split assignments are train, train, train and validation. Each correction starts from the saved source actor at its default state. The two operator windows are [0.2, 1.2) and [1.28, 3.8) seconds. At each 20 ms source frame, the operator applies the reference recording’s next control target through the existing joint-drive path. The snapshot worker freezes all six recordings, selects those four windows, reconstructs the source observation schema and prepares the warm job. Native training uses batch size 64, seed 17, state noise 0.05 and the epoch budgets above. Candidate evaluation then calls the production `runTries` and `runCaseTimes` paths, without inherited source evidence. The driver and report are retained outside routine browser execution.
+
+Raw jobs, policies, progress events and placement outcomes remain under `scratch/teaching-experiment/`, with the experiment driver in `scratch/teaching-native-experiment.ts`. Performance observations are in [simulation performance](performance-simulation.md#teaching-control-boundary-storage). This experiment used simulated generated geometry and makes no physical transfer claim.
+
 Current coverage: [owning guide](../guide/skills.md#testing-coverage). Shared policy and harness contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
 
 ## Published skill refusal

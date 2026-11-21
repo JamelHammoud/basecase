@@ -3,6 +3,17 @@ import type { TryRecord } from '../cases/tries';
 import type { Dataset } from './datasetFile';
 
 export const totalSeconds = (members: TrySummary[]) => members.reduce((sum, t) => sum + t.seconds, 0);
+export function trainingSampleCount(dataset: Dataset, records: TryRecord[]) {
+  const frozen = dataset.versions.find((version) => version.n === dataset.selectedVersion)?.snapshot;
+
+  if (frozen) return frozen.samples.filter((sample) => !sample.excluded.length).length;
+
+  const corrections = new Set(
+    dataset.samples?.filter((sample) => sample.target === 'correction').map((sample) => sample.tryId),
+  );
+
+  return records.filter((record) => record.passed || corrections.has(record.id)).length;
+}
 export const imageCount = (dataset: Pick<Dataset, 'imageMembers'>) =>
   (dataset.imageMembers ?? []).reduce((count, member) => count + member.frameIds.length, 0);
 export const classCount = (dataset: Pick<Dataset, 'imageMembers'>) =>

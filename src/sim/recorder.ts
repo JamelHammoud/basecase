@@ -7,6 +7,8 @@ import type { WorldMoves } from './worldMoves';
 import type { FactValue } from '../cases/caseFacts';
 import type { IdealTendon } from '../types/tendon';
 import { ContinuationCapture, type ContinuationCaptureOptions } from './continuationCapture';
+import type { TeachingRecording } from './teachingRecording';
+import type { AppliedOwner } from './teaching';
 
 export const RECORD_HZ = 50;
 
@@ -24,6 +26,13 @@ export interface RecordedInput {
 }
 
 export interface Recording {
+  teaching?: TeachingRecording;
+  actionTime?: Float64Array;
+  actionOwner?: Uint8Array;
+  actionCtrl?: Float64Array;
+  actionQpos?: Float64Array;
+  actionQvel?: Float64Array;
+  actionPrevious?: Float32Array;
   transmission?: {
     motors: Array<{ joint: string; actuator: number; tendon: IdealTendon }>;
     observations: Array<{ joint: string; qpos: number; dof: number }>;
@@ -58,7 +67,7 @@ export interface Recording {
   continuation?: Uint8Array;
 }
 
-class Growing<T extends Float32Array | Float64Array | Int32Array> {
+class Growing<T extends Float32Array | Float64Array | Int32Array | Uint8Array> {
   private data: T;
 
   private used = 0;
@@ -90,6 +99,7 @@ class Growing<T extends Float32Array | Float64Array | Int32Array> {
 const f32 = (n: number) => new Float32Array(n);
 const f64 = (n: number) => new Float64Array(n);
 const i32 = (n: number) => new Int32Array(n);
+const OWNER_CODE: Record<AppliedOwner, number> = { policy: 0, operator: 1, context: 2 };
 
 export class Recorder {
   private readonly engine: SimEngine;
@@ -132,6 +142,13 @@ export class Recorder {
   private contactCount = 0;
   private readonly continuation: ContinuationCapture | null;
   private sampledAt = -1;
+  private teaching: TeachingRecording | null = null;
+  private readonly actionTime = new Growing(f64, 1);
+  private readonly actionOwner = new Growing((n) => new Uint8Array(n), 1);
+  private readonly actionCtrl = new Growing(f64, 1);
+  private readonly actionQpos = new Growing(f64, 1);
+  private readonly actionQvel = new Growing(f64, 1);
+  private readonly actionPrevious = new Growing(f32, 1);
 
   constructor(
     engine: SimEngine,
@@ -202,6 +219,33 @@ export class Recorder {
     this.inputs.push({ at: this.engine.data.time - this.started, name, value });
   };
 
+  readonly control = (owner?: AppliedOwner) => {
+    const session = this.engine.teachingSource();
+    const { data } = this.engine;
+    const at = data.time - this.started;
+
+    if (!session || at >= MAX_SECONDS) return;
+
+    owner ??= session.owner;
+    this.teaching ??= { ...structuredClone(session.source), boundaries: 0, ownership: [] };
+
+    if (this.teaching.policy !== session.source.policy) throw new Error('Keep one source policy in a teaching try.');
+
+    this.teaching.boundaries++;
+
+    const last = this.teaching.ownership!.at(-1);
+
+    if (last?.owner === owner) last.until = at + this.engine.dt;
+    else this.teaching.ownership!.push({ owner, at, until: at + this.engine.dt });
+
+    this.actionTime.push([at]);
+    this.actionOwner.push([OWNER_CODE[owner]]);
+    this.actionCtrl.push(data.ctrl);
+    this.actionQpos.push(data.qpos);
+    this.actionQvel.push(data.qvel);
+    this.actionPrevious.push(session.previous);
+  };
+
   get length() {
     return this.frames;
   }
@@ -258,6 +302,17 @@ export class Recorder {
       : undefined;
 
     return {
+      ...(this.teaching
+        ? {
+            teaching: structuredClone(this.teaching),
+            actionTime: this.actionTime.done(),
+            actionOwner: this.actionOwner.done(),
+            actionCtrl: this.actionCtrl.done(),
+            actionQpos: this.actionQpos.done(),
+            actionQvel: this.actionQvel.done(),
+            actionPrevious: this.actionPrevious.done(),
+          }
+        : {}),
       ...(transmission ? { transmission } : {}),
       ...(this.started !== this.clock ? { timeOffset: this.started - this.clock } : {}),
       dt: this.dt,
@@ -304,6 +359,12 @@ export const recordingTransfer = (r: Recording): Transferable[] =>
     r.contacts,
     r.contactOffsets,
     r.continuation,
+    r.actionTime,
+    r.actionOwner,
+    r.actionCtrl,
+    r.actionQpos,
+    r.actionQvel,
+    r.actionPrevious,
   ].flatMap((a) => (a ? [a.buffer] : []));
 
 export function framePoses(r: Recording, frame: number): Float64Array {

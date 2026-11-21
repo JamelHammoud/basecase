@@ -9,6 +9,7 @@ import type { Simulation } from '../sim/useSimulation';
 import type { ProjectSettings } from '../types/robotics';
 import { errorMessage } from '../utils/errorMessage';
 import type { Setter, ShowToast } from './types';
+import { useLatestRef } from '../utils/useLatestRef';
 
 interface StoredTriesOptions {
   project: ProjectSettings;
@@ -28,6 +29,7 @@ export interface MadeTry {
 const SAFE_ID = /^[\w-]{1,128}$/;
 
 export function useStoredTries({ project, setProject, sceneId, cases, sim, showToast }: StoredTriesOptions) {
+  const currentScene = useLatestRef(sceneId);
   const catalog = useTries();
   const stored = catalog && new Set(catalog.map((t) => t.id));
   const moving = useRef<string | null>(null);
@@ -51,12 +53,15 @@ export function useStoredTries({ project, setProject, sceneId, cases, sim, showT
       made.map((m) => ({ stored: storedTryOf(m.record, contextFor(m.record, m.input)), recording: m.recording })),
     );
 
-  const add = (made: TryRecord[]) =>
+  const add = (made: TryRecord[]) => {
+    if (currentScene.current !== sceneId) return;
+
     setProject((p) => ({
       ...p,
       triesStored: p.triesStored || !p.tries?.length,
       tries: [...(p.tries ?? []), ...made],
     }));
+  };
 
   const move = useEffectEvent(async () => {
     try {

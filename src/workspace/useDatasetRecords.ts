@@ -81,7 +81,10 @@ export function useDatasetRecords(sceneTries: TryRecord[]): DatasetRecords {
       if (selected)
         return selected.samples
           .filter((sample) => !sample.excluded.length)
-          .map((sample) => ({ ...tryRecordOf(sample.stored), passed: true }));
+          .map((sample) => ({
+            ...tryRecordOf(sample.stored),
+            passed: sample.target === 'correction' ? sample.stored.outcome.verdict === 'passed' : true,
+          }));
 
       const scene = new Map(sceneTries.map((t) => [t.id, t]));
       const stored = new Map(summaries.map((t) => [t.id, t]));

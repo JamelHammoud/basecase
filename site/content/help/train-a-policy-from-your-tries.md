@@ -50,7 +50,7 @@ Scroll within the dataset’s upper pane if the count or failure results extend 
 
 While it trains, the Case's row under **Train** shows the progress. On the arm-3dof test robot, ten 4-second tries trained in under 3 seconds, and the 32 runs that judge the policy took about 6 seconds more.
 
-**Note:** With a dataset open, **Train from Tries** is also in [[⌘K]] once five of its tries have passed. Basecase judges the policy with the dataset's Case. If another Case is open, Basecase opens the dataset's Case first. If the dataset's Case isn't in this scene, or the dataset has no Case and none is open, you see **New Case** instead.
+**Note:** With a dataset open, **Train from Tries** is also in [[⌘K]] once five fitting samples are selected. Basecase judges the policy with the dataset's Case. If another Case is open, Basecase opens the dataset's Case first. If the dataset's Case isn't in this scene, or the dataset has no Case and none is open, you see **New Case** instead.
 
 ## When the policy is kept
 
@@ -70,15 +70,19 @@ If fewer than 29 runs pass, Basecase saves nothing. The count turns red, and the
 
 ## Which tries it learns from
 
-Train from Tries uses the dataset's passed and unjudged tries that fit the current robot model. These are the same samples that [Export a LeRobot dataset](/help/export-a-lerobot-dataset) uses. Failed tries, real-robot tries and any try with a quality flag are left out.
+Ordinary demonstrations use the dataset's passed and unjudged tries that fit the current robot model. Failed ordinary tries, real-robot tries and any try with a quality flag are left out. These ordinary samples also feed [Export a LeRobot dataset](/help/export-a-lerobot-dataset).
 
-Topic-only recordings are left out because they contain no robot joint positions or targets. A segment selection contributes only its selected frames. If fewer than five samples count, a toast says "Export and training take only passed tries of this Case as it is now. Try It to record more."
+For a recorded policy takeover, right-click its tile in the working dataset and choose **Use Corrections**. This selects its operator-controlled windows, including windows from a failed try. The try keeps its actual result. Autonomous actions remain context and supply no correction targets.
+
+Correction training also needs original demonstrations and a compatible saved Forge policy. See [Correct a simulated policy](/help/correct-a-simulated-policy). Each selected training row contributes once per epoch. Original and correction validation rows stay out of fitting. The frozen version preserves those selections and their source groups. Source policy identity, the version hash and row counts stay with the training job. Correction selections are excluded from LeRobot export.
+
+Topic-only recordings are left out because they contain no robot joint positions or targets. A segment selection contributes only its selected frames. If fewer than five samples count, a toast says "Choose passed tries that fit this robot."
 
 Training freezes the working dataset's samples, labels, exclusions and split assignments as a version. Forge uses that version's training and validation groups, with the same assignments as export. Test samples stay out of fitting and validation. Segments, variations and identical recording content stay with their source. Imported split assignments remain explicit, and conflicting assignments stop the job with an error.
 
 Training needs at least one training sample and one validation sample from those frozen assignments. Multiplying one source doesn't create an independent validation source.
 
-Each selected range needs at least two frames after sampling at 25 frames per second. Shorter ranges stop training with an error.
+Each ordinary range needs at least two frames after sampling at 25 frames per second. Correction training uses the source policy's control period for both original and correction rows. Empty correction windows stop training with an error.
 
 To train an earlier saved version, choose it in **Dataset version**, then click **Train from Tries**. Its saved robot model must match the current robot. Missing recordings stop training with an error. Versions without saved samples can't restore historical labels, so choose **Working Dataset** to freeze the current samples instead.
 

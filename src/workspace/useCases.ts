@@ -107,7 +107,6 @@ export function useCases(options: CasesOptions) {
   const { shown, onTry, onTries } = useStoredTries({ project, setProject, sceneId, cases, sim, showToast });
   const tries = worstFirst(shown((project.tries ?? []).filter((t) => t.caseId === activeId)));
   const fromSim = simTries(tries);
-  const hasRobot = rig.robots.length > 0;
 
   const stage = (kase: Case | null) => {
     const staged = kase && stageCase(kase, { rig, parts }, partners());
@@ -221,8 +220,9 @@ export function useCases(options: CasesOptions) {
     images,
     fromTries,
     tries,
-    hasRobot,
-    fixedBase: hasRobot && robotFacts(rig, parts).morphology === 'fixed',
+    hasRobot: rig.robots.length > 0,
+    fixedBase: rig.robots.length > 0 && robotFacts(rig, parts).morphology === 'fixed',
+    canTeach: (project.skills ?? []).some((record) => record.case?.id === activeId && record.evidence?.passed),
     open,
     openCheck: trails.openCheck,
     add,

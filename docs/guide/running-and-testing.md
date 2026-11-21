@@ -35,6 +35,12 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 Shared running instructions, test selection, fixture ownership and browser harness contracts stay here. Current coverage facts belong in the owning area guide. Failure histories, measurements, coverage gaps and quarantine conditions belong in its linked subsystem note. Reuse that location for later repairs, without adding a shared-guide entry.
 
+**Attribute failures before broadening a repair.** Record the exact revision, platform, declaration, failed assertion or hook and last successful stage. A shared deadline or owner does not establish a shared cause. Trace setup, delivery, behavior, persistence and cleanup separately when the log cannot distinguish them. Keep separate platform and fixture investigations in the existing owning issue and subsystem note.
+
+- A shared app's error array includes earlier tests. Locate the first appearance of each error and distinguish a later behavior failure from an assertion contaminated by that history. Keep the full error assertion and log. Do not clear the array or filter the error to make the later test pass, or quarantine an otherwise passing declaration solely because it inherited that error.
+- A focused pass at the failed revision establishes intermittent execution only. Record its worker count, retries, quarantine setting, load and cleanup evidence. It establishes neither a repaired stage nor a failure rate. When the owning issue requires ten baseline and ten candidate observations at equal load, complete those separately for each affected platform before restoration, with retries disabled and the existing assertions and deadlines intact.
+- Broaden quarantine only to declarations and platforms with their own failure evidence. Name the resulting coverage gap and remaining active coverage in the owning guide. Leave an unobserved cause unresolved instead of attributing it to cold startup, load or a neighboring failure.
+
 - [Cases](cases.md#testing-coverage): Case startup and code panels, gallery, datasets, captured worlds, vision, input and playback.
 - [Scene tabs](scene-tabs.md#testing-coverage): first-launch restoration.
 - [Cameras](cameras.md#testing-coverage): first-launch refusal, live feeds and target overlays.

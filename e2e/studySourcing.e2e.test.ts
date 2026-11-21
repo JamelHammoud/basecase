@@ -3,6 +3,8 @@ import { listPurchases, savePurchase } from '../electron/backend/purchases.mjs';
 import { encodeSceneFile, sharedScene } from '../src/utils/sceneFile';
 import { openApp, shown, type App } from './harness';
 import { supportSceneStorage } from './sketchSupport.helpers';
+import { expectPanelReadable } from './appearanceLayout';
+import { sourcingConfigurationLayout, compareSourcingOffers } from './studySourcingLayout';
 import {
   routeSourcingPurchases,
   openSourcingStudy,
@@ -29,6 +31,7 @@ it('compares late and on-time actuator offers beside Checks from the Study comma
 
   await routeSourcingPurchases(page, fixture);
   await openSourcingStudy(page, fixture);
+  await sourcingConfigurationLayout(page);
   await page.getByRole('button', { name: 'Run Study', exact: true }).click();
   await expect
     .poll(() =>
@@ -54,8 +57,10 @@ it('compares late and on-time actuator offers beside Checks from the Study comma
     ),
   ).toBe(true);
   await late.click();
+  await expectPanelReadable(late.getByTestId('study-purchasing'));
   expect(await late.getByTestId('study-purchasing').textContent()).toContain('https://example.com/offers/');
   await onTime.click();
+  await expectPanelReadable(onTime.getByTestId('study-purchasing'));
   expect(await onTime.getByTestId('study-purchasing').textContent()).toContain('Purchasing arrival estimate');
   await onTime.getByRole('button', { name: 'Supplier Offers', exact: true }).click();
 
@@ -75,6 +80,8 @@ it('compares late and on-time actuator offers beside Checks from the Study comma
       .getByText('5 pack 50 USD', { exact: true })
       .count(),
   ).toBe(1);
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await compareSourcingOffers(page);
   expect(app.errors).toEqual([]);
 });
 

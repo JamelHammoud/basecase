@@ -52,6 +52,6 @@ For each comparison, you save its requirements, evaluation time, purchasing evid
 
 With Quantity, you multiply demand before subtracting available owned stock. You can’t use stock allocated to another build. Pack quantities and price breaks apply to the remaining demand. You see separate totals for each currency.
 
-Purchasing evidence complete means you have complete evidence for component purchasing. You still need to confirm mounting compatibility, successful manufacture and Ready to build. A design can have complete purchasing evidence and still fail Checks or its Case. The quoted component arrival date excludes printing, assembly and completed-robot delivery.
+You still need to confirm mounting compatibility, successful manufacture and **Ready to build**. A design can show **Purchasing evidence complete** and still fail **Checks** or its Case. The quoted component arrival date excludes printing, assembly and completed-robot delivery.
 
 To apply a complete design with Undo and Redo, see [Study design options](/help/study-design-options).

@@ -18,7 +18,6 @@ export function StudySection({ study }: { study: Study }) {
       {study.open && (
         <div className="flex flex-col gap-3 mb-3" data-testid="study-configure">
           <StudyVisibilityField study={study} />
-          <StudySourcingField study={study} />
           {study.knobs.map((knob) => (
             <StudyKnobField
               key={knob.id}
@@ -32,6 +31,7 @@ export function StudySection({ study }: { study: Study }) {
               }
             />
           ))}
+          <StudySourcingField study={study} />
           <Button
             fullWidth
             variant="primary"

@@ -52,8 +52,12 @@ export function StudyResultRow({
       onMouseLeave={() => onPreview(null)}
       onFocus={() => onPreview(row)}
       onBlur={() => onPreview(null)}
-      onClick={(e) => onPick(e.shiftKey)}
-      onKeyDown={(e) => e.key === 'Enter' && onPick(e.shiftKey)}
+      onClick={(e) => {
+        if ((e.target as Element).closest('button, [role="dialog"]')) return;
+
+        onPick(e.shiftKey);
+      }}
+      onKeyDown={(e) => e.target === e.currentTarget && e.key === 'Enter' && onPick(e.shiftKey)}
     >
       <Tooltip label={row.label} className="min-w-0">
         <span className={`block truncate ${current ? 'text-[#0d99ff]' : 'text-white/90'}`}>{row.label}</span>

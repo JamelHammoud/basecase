@@ -5,7 +5,7 @@ export function StudySourcingField({ study }: { study: Study }) {
   const { sourcing, running, setSourcing } = study;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" data-testid="study-sourcing">
       <Switch
         label="Purchasing"
         checked={!!sourcing}
@@ -14,8 +14,9 @@ export function StudySourcingField({ study }: { study: Study }) {
       />
       {sourcing && (
         <>
-          <FieldRow label="Destination">
+          <FieldRow label="Destination" group>
             <TextInput
+              aria-label="Destination"
               disabled={running}
               value={sourcing.destination}
               onChange={(event) => setSourcing({ ...sourcing, destination: event.target.value })}
@@ -37,6 +38,7 @@ export function StudySourcingField({ study }: { study: Study }) {
               min={1}
               max={100000}
               precision={0}
+              unit=""
               value={sourcing.quantity}
               onChange={(quantity) => setSourcing({ ...sourcing, quantity })}
             />

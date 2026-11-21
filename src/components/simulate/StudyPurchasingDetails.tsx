@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '../../design-system';
+import { Button, ErrorBoundary } from '../../design-system';
 import { sourcingBom, type StudyPurchasingResult } from '../../study/sourcing';
 import { purchasingStatus } from '../../utils/supplierOffers';
 import { SupplierOfferSheet } from '../build/SupplierOfferSheet';
@@ -10,7 +10,10 @@ export function StudyPurchasingDetails({ result, scene }: { result: StudyPurchas
   const [purchases, save] = usePurchases();
 
   return (
-    <div className="col-span-4 flex flex-col gap-2 py-2 text-[12px] text-white/60" data-testid="study-purchasing">
+    <div
+      className="col-span-4 min-w-0 break-words flex flex-col gap-2 py-2 text-[12px] text-white/60"
+      data-testid="study-purchasing"
+    >
       <p>{result.generatedAt}</p>
       <p>{`${result.plan.destination} / ${result.plan.requiredBy}`}</p>
       {result.lines.map((item) => (
@@ -35,14 +38,16 @@ export function StudyPurchasingDetails({ result, scene }: { result: StudyPurchas
         Supplier Offers
       </Button>
       {editing && (
-        <SupplierOfferSheet
-          bom={sourcingBom(result)}
-          initialPlan={result.plan}
-          purchases={purchases}
-          scene={scene}
-          save={save}
-          onClose={() => setEditing(false)}
-        />
+        <ErrorBoundary region="Supplier offers" onClose={() => setEditing(false)}>
+          <SupplierOfferSheet
+            bom={sourcingBom(result)}
+            initialPlan={result.plan}
+            purchases={purchases}
+            scene={scene}
+            save={save}
+            onClose={() => setEditing(false)}
+          />
+        </ErrorBoundary>
       )}
     </div>
   );

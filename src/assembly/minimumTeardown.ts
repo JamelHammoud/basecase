@@ -91,6 +91,7 @@ export function minimumTeardown(g: AssemblyGeometry, plan: RemovalPlan, target: 
   if (step.kind === 'unit' || (!g.moves[target] && !g.drivers[target])) return null;
 
   const tracked = new Set([
+    ...(g.fixed ?? []),
     ...Object.keys(g.moves),
     ...g.chains.screws.map((c) => c.id),
     ...g.chains.sleeves.map((sleeve) => sleeve.id),

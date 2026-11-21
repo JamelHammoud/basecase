@@ -8,3 +8,8 @@ export function preserveAllocations(
   update?: 'price' | 'stock',
 ): StoredPurchase | null;
 export function allocatePurchases(purchases: Purchases, request: AllocationRequest, now?: string): Purchases;
+
+export function sameBuildOwner(
+  a: import('../../src/kit/allocationTypes').BuildOwner,
+  b: import('../../src/kit/allocationTypes').BuildOwner,
+): boolean;

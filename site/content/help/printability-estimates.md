@@ -43,7 +43,9 @@ Thin walls block Ready to build when they cover at least 100 mm² or 10% of the 
 
 ## From estimate to slice
 
-For a full build, plates are packed per material, around the bed's clear areas. Parts the build guide needs first go on the first plates, and parts no step uses go last. A [repair plate](/help/repair-a-part) holds only one copy of the replacement part. Until a plate is sliced, its time and weight show with ≈. Once Bambu Studio or OrcaSlicer slices it, the plate shows the slicer's own time, grams, supports and warnings.
+For a full build, plates are packed per material, around the bed's clear areas. Parts the build guide needs first go on the first plates, and parts no step uses go last. An editable design's [repair plate](/help/repair-a-part) holds only one copy of the replacement part. Until a plate is sliced, its time and weight show with ≈. Once Bambu Studio or OrcaSlicer slices it, the plate shows the slicer's own time, grams, supports and warnings.
+
+[Repair a robot build](/help/repair-a-robot-build) exports retained target Kit plates. Those files can include other parts and extra copies.
 
 Supported printer obstacles reserve conservative space for clips and docks, including supplied toolhead and brim clearance. Automatic brims reserve 18 mm plus the brim-object gap, even when the configured width is smaller. Low clips reserve the same space as tall obstacles. A saved position that crosses this space fails fit and stays off exported plates. Basecase doesn't validate every slicer travel move.
 

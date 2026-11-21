@@ -1,9 +1,13 @@
+import type { frozenPartOutput } from './frozenPartOutput';
 import type { KitJob } from './types';
 import { workerClient } from '../utils/workerRpc';
 import { type freezeBuildKit, type PreparedFrozenKit, type FrozenKit } from './frozenKit';
 import type { copySourcesFromMeshes } from './frozenCopySources';
 
 type FrozenHandlers = {
+  partOutput: (
+    input: Parameters<typeof frozenPartOutput>[0],
+  ) => Promise<{ result: ReturnType<typeof frozenPartOutput> }>;
   copySources: (input: Parameters<typeof copySourcesFromMeshes>[0]) => Promise<{ result: Record<string, string> }>;
   source: (input: Pick<KitJob, 'parts' | 'project'>) => Promise<{ result: string }>;
   prepare: (input: Parameters<typeof freezeBuildKit>[0]) => Promise<{ result: PreparedFrozenKit }>;
@@ -19,8 +23,10 @@ export function frozenClient() {
       const { freezeBuildKit, readFrozenKit } = await import('./frozenKit');
       const { jsonHash } = await import('../utils/geometryHash');
       const { copySourcesFromMeshes } = await import('./frozenCopySources');
+      const { frozenPartOutput } = await import('./frozenPartOutput');
 
       return {
+        partOutput: async (input) => ({ result: frozenPartOutput(input) }),
         copySources: async (input) => ({ result: copySourcesFromMeshes(input) }),
         source: async (input) => ({ result: jsonHash(input) }),
         prepare: async (input) => ({ result: await freezeBuildKit(input) }),

@@ -120,6 +120,21 @@ function supplierOfferCommands({ core }: CommandInputs): Command[] {
 export const buildCommands = (inputs: CommandInputs): Command[] => [
   ...powerReplayCommands(inputs),
   ...supplierOfferCommands(inputs),
+  ...(inputs.core.buildAlong?.frozen
+    ? [
+        {
+          id: 'repair-build',
+          group: 'Scene' as const,
+          label: 'Repair Build',
+          icon: <PackageIcon />,
+          keywords: 'repair revision replace retained build',
+          run: () => {
+            inputs.core.tool.openRightTab('build');
+            inputs.core.buildAlong.requestRepair();
+          },
+        },
+      ]
+    : []),
 
   ...(inputs.core.cradle?.available
     ? [

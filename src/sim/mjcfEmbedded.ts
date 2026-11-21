@@ -1,3 +1,5 @@
+import { withoutWorldSources } from '../cases/sourceParts';
+import type { MjcfInput } from './mjcfTypes';
 import * as THREE from 'three';
 import type { ScenePart } from '../types/robotics';
 import { partMatrix, type Rig } from '../utils/kinematics';
@@ -114,4 +116,8 @@ export function adoptEmbeddedParts(
   }
 
   return { ...rig, ownerOf, robots, bodyParts: new Set(robots.flatMap((r) => [...r.parts])) };
+}
+
+export function adoptModelParts(input: MjcfInput): Rig {
+  return adoptEmbeddedParts(input.rig, withoutWorldSources(input.parts, input.world ?? []), input.partTriangles);
 }

@@ -329,6 +329,9 @@ The existing `simulate` tool accepts `self_contact: { robot, enabled, exclusions
 
 The ordinary cable editor stores stock and ordered owner-local anchors in `project.wiring`. Existing `get_bom`, budget and verification consumers use the measured netlist from that declaration. Read Cable reach as the existing conservative routing contract, not flexible-cable physics, bend-radius certification or whole-robot readiness. A route edit keeps the netlist's exact named connectors, bus order and servo IDs. Adding an extra cable purchase does not select that stock for a route. [Build](build.md#editable-cable-routes) owns route editing and its coverage.
 
+## Declared replacement-finger interface
+
+`find_recipes` includes `gripper_finger_mount_m3`. This is an explicitly declared two-M3 outboard carriage, with local +X toward the opening and local +Z along the fingers. It uses 3.4 mm through holes and captive hex-nut recesses. Native `mount_0` and `mount_1` bore ports identify the outboard fastener faces. The shared numeric source in `electron/cad-kernel/fingerCad.mjs` is used by both the recipe and studio generation. Source recognition requires the canonical body and numeric declarations, with no independent scaling or deformation. The generic `parallel_gripper` module alone does not declare this mounting interface. The studio adds actual catalog M3 × 16 screws, washers and nuts rather than modeled hardware stand-ins.
 
 ## Authored ideal tendon transmissions
 

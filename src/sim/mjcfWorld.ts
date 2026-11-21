@@ -105,7 +105,15 @@ function worldGeom(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffse
   if (hull) return `<geom name="${esc(name)}" ${hull} ${geomAttrs(item)}/>`;
 
   const shape = primitiveShape(item) ?? `type="box" size="${boxSize(item)}"`;
-  const turn = quatToMj(new THREE.Quaternion().setFromRotationMatrix(partMatrix(item)));
+  const rotation = new THREE.Quaternion().setFromRotationMatrix(partMatrix(item));
+  const orientation =
+    item.sourcePartId && item.kind === 'cylinder'
+      ? new THREE.Quaternion().setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0),
+          new THREE.Vector3(0, 1, 0).applyQuaternion(rotation),
+        )
+      : rotation;
+  const turn = quatToMj(orientation);
 
   return `<geom name="${esc(name)}" ${shape} quat="${vec(turn)}" ${geomAttrs(item)}/>`;
 }

@@ -1,6 +1,7 @@
 import { cameraViews, stripParts } from '../cameras/views';
 import { stageCase } from '../cases/caseCast';
-import { worldItem, type Case } from '../cases/schema';
+import { type Case } from '../cases/schema';
+import { caseWorldItems } from '../cases/importedWorldItems';
 import type { SlotRobot } from '../cases/slots';
 import { sha256 } from '../cases/tries';
 import type { StoredTry } from '../cases/tryFile';
@@ -62,7 +63,7 @@ export async function loadFrameLabelScene(stored: StoredTry, current: FrameLabel
   if (!scene) throw new Error('The try’s source scene could not be opened.');
 
   const partners = current.partners();
-  const world = scene.project?.cases?.flatMap((kase) => kase.world.objects.map(worldItem)) ?? [];
+  const world = scene.project?.cases?.flatMap((kase) => caseWorldItems(kase)) ?? [];
   const meshes = await sourcedMeshFiles([...scene.parts, ...world, ...partners.flatMap((robot) => robot.parts)]);
   const rebuilt = await buildTryScene({ scene, stored, partners, meshes, assets: sceneWorldAssets(scene.project) });
 

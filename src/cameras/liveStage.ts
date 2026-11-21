@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { withoutWorldSources } from '../cases/sourceParts';
 import { CapturedWorld } from './capturedWorld';
 import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import { placeCamera } from '../datasets/cameras';
@@ -154,7 +155,7 @@ export class LiveStage {
     return this.enqueue(async () => {
       if (ticket !== this.sceneTicket) return false;
 
-      return this.syncScene(parts, world, meshes, imported);
+      return this.syncScene(withoutWorldSources(parts, world), world, meshes, imported);
     });
   }
 

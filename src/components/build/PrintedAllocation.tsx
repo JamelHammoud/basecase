@@ -6,6 +6,7 @@ import { availablePrintCopies } from '../../../electron/backend/printAllocations
 import { allocatePurchase } from './usePurchases';
 import { LegacyPrintQuantity } from './LegacyPrintQuantity';
 import type { FrozenKit } from '../../kit/frozenKit';
+import { clockTime, dayLabel } from '../../utils/timeAgo';
 
 export function PrintedAllocation({
   demand,
@@ -24,10 +25,14 @@ export function PrintedAllocation({
 }) {
   const [selected, setSelected] = useState('');
   const available = availablePrintCopies(purchases, demand);
-  const choices = available.map((entry) => ({
-    value: entry.copy.id,
-    label: `Plate ${entry.record.plate}, copy ${entry.copy.index + 1}, ${entry.record.sentAt}`,
-  }));
+  const choices = available.map((entry) => {
+    const when = `${dayLabel(entry.record.sentAt)}, ${clockTime(new Date(entry.record.sentAt))}`;
+
+    return {
+      value: entry.copy.id,
+      label: `Plate ${entry.record.plate}, copy ${entry.copy.index + 1}, ${when}`,
+    };
+  });
   const held = Object.entries(purchases).flatMap(([key, entry]) =>
     Object.entries(entry.printOutput?.assignments ?? {}).flatMap(([copy, history]) =>
       history

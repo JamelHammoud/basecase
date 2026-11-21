@@ -8,7 +8,7 @@ import { openKitScene } from './kitScene';
 import { retainSelfContactSceneFiles } from './selfContactScene';
 import type { Purchases } from '../src/types/robotics';
 import { motor, purchasing, create, rover } from './buildAllocationScene';
-import { allocationQuantityBounds, narrowBuildPanel } from './buildAllocationLayout';
+import { allocationCopyBounds, allocationQuantityBounds, narrowBuildPanel } from './buildAllocationLayout';
 
 it('allocates a rover motor and two printed copies to independent builds through reload', { retry: 0 }, async () => {
   const app = await openApp();
@@ -62,6 +62,18 @@ it('allocates a rover motor and two printed copies to independent builds through
       const selector = app.page.locator(`[data-allocation-part="${two.id}"]`).getByRole('combobox');
 
       await expect.poll(() => selector.inputValue()).toBe(outputs[index].id);
+      await allocationCopyBounds(selector);
+      expect(await selector.locator('option').allTextContents()).toEqual(
+        outputs
+          .slice(index)
+          .map((_, copy) =>
+            expect.stringMatching(
+              new RegExp(
+                `^Plate ${output.record.plate}, copy ${index + copy + 1}, [A-Z][a-z]{2} \\d{1,2}(, \\d{4})?, \\d{1,2}:\\d{2} [AP]M$`,
+              ),
+            ),
+          ),
+      );
 
       if (index === 0) await selector.selectOption(outputs[index].id);
 

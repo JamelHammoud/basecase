@@ -709,6 +709,8 @@ Entered print status uses the existing design scene ID and explicit reprint mark
 
 Allocation sections use the containing Builds section's insets. Component quantity fields shrink within their action row, and retained owner names and copy IDs wrap. Historical quantity reconciliation shows each frozen part's name above its input. `e2e/buildAllocations.e2e.test.ts` checks component value and action text bounds at the 290px minimum panel width and the selection after switching builds. `e2e/buildAllocationReturns.e2e.test.ts` declares keyboard reservation, measured reconciliation labels and fields, and canceled and confirmed material returns after build deletion. Reconciliation geometry is measured after the dialog's opening animation finishes, preserving exact control-height and label-bound assertions. Browser execution remains with CI.
 
+Printed-copy choices show the plate and copy number with the shared `dayLabel` and `clockTime` date and time formatting. The allocation walkthrough checks those labels and measures the selected text against the field's padded content width at the 290px panel minimum, alongside copy selection and independent ownership.
+
 ## Dated supplier offers
 
 Build's existing spreadsheet menu and the Supplier Offers palette command open `SupplierOfferSheet` for editable scenes. Frozen builds omit this command because their Build panel contains saved assembly records. A plan stores destination and required arrival date under the existing scene id in purchase storage. Offers stay attached to existing BOM keys across scenes. No supplier API, account, checkout, inventory reservation, manufacturing record or readiness contract is introduced.

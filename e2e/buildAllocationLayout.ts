@@ -92,3 +92,32 @@ export async function allocationTextBounds(text: Locator) {
     expect(line.right).toBeLessThanOrEqual(bounds.right);
   }
 }
+
+export async function allocationCopyBounds(selector: Locator) {
+  await selector.scrollIntoViewIfNeeded();
+
+  const bounds = await selector.evaluate((element) => {
+    const select = element as HTMLSelectElement;
+    const field = select.getBoundingClientRect();
+    const owner = select.closest('[data-allocation-part]')!.getBoundingClientRect();
+    const style = getComputedStyle(select);
+    const context = document.createElement('canvas').getContext('2d')!;
+
+    context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+
+    return {
+      left: field.left,
+      right: field.right,
+      ownerLeft: owner.left,
+      ownerRight: owner.right,
+      height: field.height,
+      textWidth: context.measureText(select.selectedOptions[0].text).width,
+      contentWidth: field.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+    };
+  });
+
+  expect(bounds.height).toBe(32);
+  expect(bounds.left).toBeGreaterThanOrEqual(bounds.ownerLeft);
+  expect(bounds.right).toBeLessThanOrEqual(bounds.ownerRight);
+  expect(bounds.textWidth).toBeLessThanOrEqual(bounds.contentWidth);
+}

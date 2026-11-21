@@ -20,7 +20,7 @@ export function SimReadySection({ part }: { part: ScenePart }) {
       >
         Download Textures
       </Button>
-      {status === 'error' && <p className="text-[13px] text-white/60">Couldn’t download textures.</p>}
+      {status === 'error' && <p className="text-[13px] text-red-400">Couldn’t download textures.</p>}
     </Section>
   );
 }

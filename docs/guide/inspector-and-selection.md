@@ -324,4 +324,4 @@ Finger commands also require the existing Case builder to offer the pick goal. G
 
 ### Saved SimReady textures
 
-A selected SimReady mesh whose visual is absent from the local cache offers Download Textures in the Inspector. The collision mesh remains visible while the action runs. The button uses Spinner and stays disabled during the request, then disappears when the visual is ready. Failure keeps the download action available. [SimReady](simready.md#catalog-download-consent-coverage) owns the request and test contract.
+A selected SimReady mesh whose visual is absent from the local cache offers Download Textures after Appearance in the Inspector, keeping sizing and placement controls first. The collision mesh remains visible while the action runs. The button uses Spinner and stays disabled during the request, then disappears when the visual is ready. Failure uses the shared error tone and keeps the download action available. [SimReady](simready.md#catalog-download-consent-coverage) owns the request and test contract.

@@ -1,6 +1,11 @@
 import { routedSceneBackend } from './boardRoutedScene.mjs';
 import { expect, it } from 'vitest';
 import { openApp } from './harness';
+import {
+  assertTextureActionLayout,
+  assertTextureEditingFields,
+  narrowTextureInspector,
+} from './simreadyConsent.helpers';
 
 it('opens a shared SimReady part without downloading and offers textures in the Inspector', async () => {
   const app = await openApp();
@@ -75,11 +80,15 @@ it('opens a shared SimReady part without downloading and offers textures in the 
     const download = app.page.getByRole('button', { name: 'Download Textures', exact: true });
 
     await download.waitFor();
+    await narrowTextureInspector(app.page);
+    await assertTextureEditingFields(app.page);
+    await assertTextureActionLayout(download);
     expect(fetches()).toHaveLength(0);
     expect(app.errors).toEqual([]);
     await download.click();
     await expect.poll(() => fetches().length).toBe(1);
     await expect.poll(() => download.isDisabled()).toBe(true);
+    await assertTextureActionLayout(download);
     finishDownload();
     await app.page.getByText('Couldn’t download textures.', { exact: true }).waitFor();
     await expect.poll(() => download.isEnabled()).toBe(true);
@@ -90,6 +99,18 @@ it('opens a shared SimReady part without downloading and offers textures in the 
     expect(app.errors).toEqual([
       `Failed to load resource: the server responded with a status of 503 (Service Unavailable) (${downloadUrl})`,
     ]);
+
+    await app.page.keyboard.press('Meta+k');
+
+    const search = app.page.getByRole('textbox', { name: 'Search commands', exact: true });
+
+    await search.fill('Download Textures');
+    await app.page.locator('button[data-idx="0"]').filter({ hasText: 'Download Textures' }).waitFor();
+    await search.press('Enter');
+    await expect.poll(() => fetches().length).toBe(2);
+    await app.page.getByText('Couldn’t download textures.', { exact: true }).waitFor();
+    await expect.poll(() => download.isEnabled()).toBe(true);
+    expect(app.errors).toEqual(Array(2).fill(app.errors[0]));
   } finally {
     finishDownload();
     await app.close();

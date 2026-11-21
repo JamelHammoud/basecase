@@ -54,8 +54,6 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
     <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
       <PartHeader {...props} />
 
-      <SimReadySection key={part.id} part={part} />
-
       {isImage && <ImageSection part={part} onUpdate={onUpdate} />}
 
       {hw && <HardwareConfigurator spec={hw} onChange={props.onChangeHardware} />}
@@ -92,6 +90,8 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
       )}
 
       {styled && <AppearanceSection part={part} onUpdate={onUpdate} parts={props.parts} isSheet={!!sheetOf(part)} />}
+
+      <SimReadySection key={part.id} part={part} />
 
       {hw && <HardwareHoles hw={hw} onAddClearanceHole={props.onAddClearanceHole} />}
 

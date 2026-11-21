@@ -77,4 +77,4 @@ Compare Tries appears in the View command group when exactly two recorded Librar
 
 ### SimReady textures
 
-Download Textures appears in the Selection group for one selected SimReady mesh without cached textures. It uses the same explicit download action as the Inspector and has no dedicated shortcut. [SimReady](simready.md#catalog-download-consent-coverage) owns its request and test coverage.
+Download Textures appears in the Selection group for one selected SimReady mesh without cached textures. It uses the same explicit download action as the Inspector and has no dedicated shortcut. The consent browser walkthrough searches for the command and runs it with Enter after a failed Inspector request. [SimReady](simready.md#catalog-download-consent-coverage) owns its request and test coverage.

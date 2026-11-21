@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { analyzeBodyEvidence, bodyAnalysisCurrent } from './bodyAnalysisAction';
-import { selectedUnit } from '../robot/robotStore';
 import { bodyRecordingUnchanged } from '../reality/bodyRecordingIdentity';
 import type { BodyEvidenceRef } from '../reality/bodyEvidence';
 import { useTries } from '../cases/tryStore';
 import type { TrySummary } from '../cases/tryFile';
 import { useFleet } from '../robot/useRobot';
-import { bodyClient } from '../reality/bodyClient';
-import { bodySourceKey, evidenceApplicable, readBodyEvidence, withBodyEvidence } from '../reality/bodyEvidence';
-import type { BodyAnalysisOutcome } from '../reality/bodyAnalysisTypes';
+import { bodySourceKey, evidenceApplicable, readBodyEvidence } from '../reality/bodyEvidence';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { useBodyAnalysisJob, type BodyInvestigationOutcome } from './useBodyAnalysisJob';
 import { errorMessage } from '../utils/errorMessage';
+import type { BodyMotionOutcome } from '../reality/bodyMotionTypes';
 import { dayLabel } from '../utils/timeAgo';
 
 let opening: { scene: string | null; version: number } = { scene: null, version: 0 };
@@ -122,6 +120,25 @@ function selectedBodyTry(choices: Array<{ value: string }>, picked: string): str
   return choices.find((run) => run.value === picked)?.value ?? choices.at(-1)?.value ?? '';
 }
 
+interface BodyReported {
+  selected: string;
+  unit: string;
+  outcome: BodyInvestigationOutcome;
+}
+
+function currentBodyResult(reported: BodyReported | null, selected: string, unit: string) {
+  return reported?.selected === selected && reported.unit === unit ? reported.outcome : null;
+}
+
+interface BodySelection {
+  key: string;
+  indices: number[];
+}
+
+function selectedParameters(selection: BodySelection | null, key: string, motion?: BodyMotionOutcome) {
+  return selection?.key === key ? selection.indices : (motion?.selected ?? []);
+}
+
 export function useBodyAnalysis(core: WorkspaceCore) {
   const { selected: unit } = useFleet();
   const tries = useTries() ?? [];
@@ -131,41 +148,23 @@ export function useBodyAnalysis(core: WorkspaceCore) {
   const [picked, setPicked] = useState('');
   const selected = selectedBodyTry(choices, picked);
   const ref = core.project.bodyEvidence?.find((entry) => entry.recording === selected);
-  const [reported, setReported] = useState<{
-    selected: string;
-    unit: string;
-    outcome: BodyAnalysisOutcome | null;
-  } | null>(null);
-  const result = reported?.selected === selected && reported.unit === unit ? reported.outcome : null;
+  const [reported, setReported] = useState<BodyReported | null>(null);
+  const shown = currentBodyResult(reported, selected, unit);
+  const result = shown?.analysis ?? null;
   const [problem, setProblem] = useState('');
-  const [busy, setBusy] = useState<{
-    parts: WorkspaceCore['parts'];
-    project: WorkspaceCore['project'];
-    unit: string;
-    selected: string;
-  } | null>(null);
-  const pending =
-    !!busy &&
-    busy.parts === core.parts &&
-    busy.project === core.project &&
-    busy.unit === unit &&
-    busy.selected === selected;
   const freshness = useBodySource(core, ref, request, open);
-  const worker = useRef<ReturnType<typeof bodyClient> | null>(null);
-  const generation = useRef(0);
-  const cancel = () => {
-    generation.current++;
-    worker.current?.dispose();
-    worker.current = null;
-    setBusy(null);
-  };
+  const applicable = !!ref && freshness.ready && evidenceApplicable(ref, { unit, scene, sourceKey: freshness.key });
+  const [selection, setSelection] = useState<BodySelection | null>(null);
+  const key = ref ? `${ref.unit}\0${ref.scene}\0${ref.recording}\0${ref.modelHash}\0${ref.sourceKey}\0${unit}` : '';
+  const parameters = selectedParameters(selection, key, shown?.motion);
 
   useEffect(() => {
     let current = true;
 
     void (ref && open ? readBodyEvidence(ref) : Promise.resolve(null))
       .then((saved) => {
-        if (current) setReported({ selected, unit, outcome: saved?.result ?? null });
+        if (current)
+          setReported({ selected, unit, outcome: { analysis: saved?.result ?? null, motion: saved?.motion } });
       })
       .catch(() => {
         if (current) setProblem('The saved body evidence could not be read.');
@@ -176,80 +175,46 @@ export function useBodyAnalysis(core: WorkspaceCore) {
     };
   }, [ref, open, selected, unit]);
 
-  useEffect(
-    () => () => {
-      generation.current++;
-      worker.current?.dispose();
-      worker.current = null;
-    },
-    [unit, selected, core.parts, core.project, open],
-  );
-
-  const applicable = !!ref && freshness.ready && evidenceApplicable(ref, { unit, scene, sourceKey: freshness.key });
-  const analyze = async () => {
-    cancel();
-    setProblem('');
-
-    if (!ref) return setProblem('This try has no matching model evidence.');
-
-    if (!applicable) return setProblem('The source changed.');
-
-    const ticket = generation.current;
-    const client = bodyClient();
-
-    worker.current = client;
-    setBusy({ parts: core.parts, project: core.project, unit, selected });
-
-    try {
-      const outcome = await analyzeBodyEvidence({
-        reference: ref,
-        analyze: client.analyze,
-        current: () =>
-          bodyAnalysisCurrent(
-            { generation: ticket, unit, parts: core.parts, project: core.project },
-            {
-              generation: generation.current,
-              unit: selectedUnit(),
-              parts: core.docs.partsRef.current,
-              project: core.docs.projectRef.current,
-            },
-          ),
-        retain: (next) => core.docs.updateProjectNow((project) => withBodyEvidence(project, next)),
-      });
-
-      if (!outcome && generation.current === ticket) openBodyAnalysis(scene);
-
-      if (outcome && generation.current === ticket && selectedUnit() === unit) setReported({ selected, unit, outcome });
-    } catch (error) {
-      if (generation.current === ticket) setProblem(errorMessage(error));
-    } finally {
-      client.dispose();
-
-      if (generation.current === ticket) setBusy(null);
-    }
-  };
+  const job = useBodyAnalysisJob({
+    core,
+    unit,
+    selected,
+    reference: ref,
+    open,
+    applicable,
+    report: (outcome) => setReported({ selected, unit, outcome: { ...shown, ...outcome } }),
+  });
 
   return {
     ready: freshness.ready,
     open,
-    pending,
+    pending: job.pending,
     selected,
     applicable,
     result,
-    problem: problem || freshness.problem,
+    problem: problem || job.problem || freshness.problem,
     choices,
+    motion: shown?.motion,
+    parameters,
+    toggle: (index: number) =>
+      setSelection({
+        key,
+        indices: parameters.includes(index) ? parameters.filter((entry) => entry !== index) : [...parameters, index],
+      }),
+    recommend: () => job.run('recommend', parameters),
     show: () => openBodyAnalysis(scene),
     close: () => {
-      cancel();
+      job.cancel();
       openBodyAnalysis(null);
     },
     pick: (id: string) => {
-      cancel();
+      job.cancel();
       setPicked(id);
       setProblem('');
+      job.clear();
     },
-    cancel,
-    analyze: () => void analyze(),
+    cancel: job.cancel,
+    analyze: () => job.run('analyze'),
   };
 }
 

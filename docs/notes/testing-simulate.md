@@ -510,6 +510,26 @@ An isolated checkout of the exact base revision, `94a1bb558107b826888e88fe710c5c
 
 The final import correction passed `check:changed`, including 421 tests across 57 files, formatting, lint, types, documentation and all 350 site pages. The final prose-only check also passed all 350 pages. Browser execution remains with CI.
 
+## Authored person encounters
+
+`src/sim/personEncounter.test.ts` checks generated mocap geometry through real WASM MuJoCo. Three body sizes retain identical recorded poses, qpos, contacts, contact offsets and timestamps across different engine batches. Binary playback restores saved mocap poses after the model's route data changes. Reset repeats the initial state. Scripted changes cannot override route ownership, and the existing continuation capability check refuses person models.
+
+`src/cases/personEncounters.integration.test.ts` supplies ten full Case workflows, recorded physical replay and live stepping from identical realized commands. Exact byte comparisons cover complete pose, contact and timestamp buffers. They replace generic deep equality and redundant per-person slicing without reducing comparison coverage. Their initial focused run after the merge passed alongside five other files, totaling 48 tests in 8.28 seconds.
+
+`src/cases/personCamera.test.ts` renders all ten encounters through the production `LiveStage`, `LensRenderer` and training passes in an OffscreenCanvas worker. A known red target is visible before and after the crossing and completely occluded during it. RGB center pixels, instance membership and radial depth retain independent assertions. A continuous-observation contract fails on that measured occlusion. The camera sits inside the doorway opening, rather than behind one of its solid walls.
+
+`src/sim/personSensing.test.ts` checks each encounter's generated head, arm and leg surfaces against real WASM depth-eye and LiDAR distances. A ray above the person reaches the known background. The visible mesh intersects at the same distances, and reset restores the initial returns. The combined camera, sensing, source-invalidation and simulation check passed 28 tests in 8.00 seconds before adding the continuous-observation contract assertion.
+
+`personLifecycle.test.ts` drives the real worker handler through cancelled loading, play, pause, reset, scene replacement and disposal. The replacement frame must contain exactly the replacement model's body count. `useTryEvidence.test.ts` prevents normal-try results from being saved after source edits, including another robot slot changing without a local part edit.
+
+A temporary resource probe measures the 16-person, 32-waypoint limit and a 30000-frame recording. It remains outside CI after an early generic deep comparison exceeded the unchanged callback deadline. [Resource evidence](performance-simulation.md#authored-person-encounters) records paired physics timings, actual ray work, recording bytes, complete process-memory snapshots during decoding and seeks, and their limits.
+
+Browser declarations retain current deadlines and disable retries. Full browser checks belong to Linux and Windows CI. Local article captures drive the ordinary authoring, recording and Library-playback controls. No physical-device accuracy or human-behavior validation is claimed.
+
+The final encounter selection passed all 101 tests across nine files in 13.81 seconds. It includes all ten camera and LiDAR fixtures, both live rendering batches for every encounter, lifecycle checks and source invalidation. Renderer setup initializes one frame to compile its shaders before the unchanged five-second assertions. The separate final-source resource probe passed in 2.55 seconds. [Case validation limits](testing-cases.md#person-encounter-validation-limits) records the broader deadline failures and the limited base comparison.
+
+Final strengthened replay assertions compare contact-frame offsets as well as flattened contacts. Their 42-test proof selection also included the previously timed-out condition-resource case and passed. The complete changed-source selection reported 4936 passing tests, one skip and that single unchanged deadline failure. This is recorded as a failed broad run rather than a passing rate. The final authoring correction passed its 78 related tests without changing simulation deadlines or behavior.
+
 ## Portable CLI evaluation
 
 `evaluationMatrix.test.ts` runs ten generated workflow classes through production WASM `caseRunner`. Each admitted
@@ -575,3 +595,9 @@ The final delivery selection passed all 17 tests across three files in 6.74 seco
 recording round trips for every admitted generated workflow, actual CLI weak-rover regression, retained controller
 and geometry changes, randomized reproduction, integrity refusal and bounded retention. Formatting, lint, types,
 documentation and 377 site pages passed. The committed browser declaration and Linux/Windows execution remain in CI.
+
+### Merge with authored person encounters
+
+The merge with main `fc9d421df` retains the engine-owned world controller for person encounters inside the evaluation runner's disposal boundary. Both features' existing evidence sections remain intact. The four-path changed-file check passed formatting, lint, docs, 383 site pages and types. Its related selection reported 1,558 passing tests, one skip and five five-second deadline failures across 175 selected files in 60.22 seconds. The failures were the CLI paired-rover regression and four variant cases covering retained controllers, geometry, randomized reproduction and retention bounds. There were no assertion mismatches.
+
+The isolated changed-file check for `tools/cli/evaluation.test.mjs` and `tools/cli/evaluationVariants.test.mjs` then passed all seven tests across both files in 5.18 seconds, with formatting and lint passing. Logs are `scratch/rebase-2012-check.log` and `scratch/rebase-2012-focused-check.log`. This does not establish a passing broad run, a failure rate or a timing cause. No deadlines, retries, assertions or quarantine entries changed.

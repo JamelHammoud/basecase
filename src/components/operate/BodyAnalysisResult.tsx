@@ -1,17 +1,22 @@
-import { Spinner } from '../../design-system';
+import { Button, Spinner } from '../../design-system';
 import type { BodyAnalysisResult as AnalysisResult } from '../../reality/bodyAnalysisTypes';
+import type { BodyAnalysisView } from '../../workspace/useBodyAnalysis';
+import { BodyMotionPreview } from './BodyMotionPreview';
 
-const status = { distinguishable: 'Distinguishable', coupled: 'Coupled', 'poor-excitation': 'Poor excitation' };
-const kind = { massScales: 'Mass scale', payloadKg: 'Payload', floorFrictionScale: 'Floor friction scale' };
+import { BodyAnalysisMethod } from './BodyAnalysisMethod';
+import { BodyAnalysisParameters } from './BodyAnalysisParameters';
+import { BodyAnalysisRefusal } from './BodyAnalysisRefusal';
 
 export function BodyAnalysisResult({
   result,
   applicable,
   checking,
+  analysis,
 }: {
   result: AnalysisResult;
   applicable: boolean;
   checking: boolean;
+  analysis: BodyAnalysisView;
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-3 break-words text-[13px] text-white/60 [overflow-wrap:anywhere]">
@@ -22,51 +27,23 @@ export function BodyAnalysisResult({
       <p>
         {result.source.unit} {result.source.recording}
       </p>
-      <p>
-        {result.residual.modelExplainsObservations
-          ? 'The model explains the observations under the assumed noise.'
-          : 'Residual mismatch remains unresolved.'}
-      </p>
-      <p>Local distinguishability under this model. Coupled parameters can explain similar motion.</p>
-      <dl className="flex flex-col gap-2">
-        {result.parameters.map((parameter) => (
-          <div
-            key={`${parameter.kind}:${parameter.body}`}
-            data-body-parameter={parameter.kind}
-            data-distinguishability={parameter.distinguishability}
-          >
-            <dt className="text-white/90">
-              {parameter.label} {kind[parameter.kind]}
-            </dt>
-            <dd>{status[parameter.distinguishability]}</dd>
-            <dd>
-              {parameter.probe[0]}–{parameter.probe[1]} {parameter.unit}, bounds {parameter.bounds[0]}–
-              {parameter.bounds[1]}, scale {parameter.scale}
-            </dd>
-          </div>
-        ))}
-      </dl>
-      <details>
-        <summary role="button" className="min-h-[32px] cursor-default text-white/90">
-          Method
-        </summary>
-        <p>
-          {result.method.version} {result.source.modelHash} {result.source.calibrationFingerprint}
-        </p>
-        <p>
-          {result.interval[0]}–{result.interval[1]} ms
-        </p>
-        <p>
-          Assumed noise: {result.method.noiseRad} rad, {result.method.noiseM} m. Direction threshold:{' '}
-          {result.method.absoluteResponse}, relative threshold: {result.method.relativeResponse}, tolerance:{' '}
-          {result.method.orthogonalityTolerance}.
-        </p>
-        {result.directions.map((direction, index) => (
-          <p key={index}>
-            {direction.weights.map((weight) => weight.toPrecision(3)).join(', ')}: {direction.response.toPrecision(3)}
-          </p>
-        ))}
-      </details>
+      {!result.residual.modelExplainsObservations && <p>Residual mismatch remains unresolved.</p>}
+      <BodyAnalysisParameters result={result} analysis={analysis} />
+      {result.parameters.some((parameter) => parameter.distinguishability !== 'distinguishable') && (
+        <Button
+          variant="secondary"
+          disabled={analysis.pending || !applicable || !analysis.parameters.length}
+          onClick={analysis.recommend}
+        >
+          Preview Motion
+        </Button>
+      )}
+      {analysis.motion?.kind === 'recommended' && (
+        <BodyMotionPreview key={analysis.motion.plan.id} motion={analysis.motion} />
+      )}
+      {analysis.motion?.kind === 'no-improvement' && <BodyAnalysisRefusal />}
+      {analysis.motion?.kind === 'refused' && <BodyAnalysisRefusal reason={analysis.motion.reason} />}
+      <BodyAnalysisMethod result={result} analysis={analysis} />
     </div>
   );
 }

@@ -62,7 +62,7 @@ If 29 or more runs pass, Basecase keeps the policy as the Case's skill. The coun
 
 ![The Touch a Point skill under Train, with 32 of 32 tries, at least 91%](/help/train-a-policy-from-your-tries/train.png)
 
-From then on, the Case's row in **Checks** runs the skill instead of the Case's scripted motion.
+The Case's row in **Checks** runs the kept skill while it matches the current robot and sensor settings.
 
 If fewer than 29 runs pass, Basecase saves nothing. The count turns red, and the start, middle and end of the worst run appear beside it. Drive more tries that finish the task the same way, then click **Train from Tries** again.
 

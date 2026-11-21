@@ -15,19 +15,20 @@ interface OfferDraft {
 
 export interface OfferSheetInputs {
   bom: Bom;
+  initialPlan?: PurchasePlan;
   purchases: Purchases;
   scene: string;
   save: (key: string, record: StoredPurchase | null) => Promise<void>;
 }
 
-export function useSupplierOffers({ bom, purchases, scene, save }: OfferSheetInputs) {
+export function useSupplierOffers({ bom, purchases, scene, save, initialPlan }: OfferSheetInputs) {
   const importing = useRef<AbortController | null>(null);
   const writing = useRef(false);
 
   useEffect(() => () => importing.current?.abort(), []);
 
   const planKey = `purchase-plan:${scene}`;
-  const [draftPlan, setPlan] = useState<PurchasePlan | null>(null);
+  const [draftPlan, setPlan] = useState<PurchasePlan | null>(initialPlan ?? null);
   const plan = draftPlan ?? purchases[planKey]?.purchasePlan ?? { destination: '', requiredBy: '' };
   const [drafts, setDrafts] = useState<OfferDraft[]>([]);
   const [saving, setSaving] = useState(false);

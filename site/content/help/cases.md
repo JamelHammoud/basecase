@@ -36,7 +36,7 @@ Watching a robot stand in the simulation won't tell you whether it can reach a s
 ## What a Case holds
 
 - **Slots.** The kinds of robots the Case needs: an arm, wheels or legs. Arm control and driven-wheel matching use powered joints. Hand Off to a Spot needs two arms with grippers, opened in separate scene tabs.
-- **A world.** The objects around the robot. Objects can be solid or pushable, and markers show a spot without getting in the robot's way. During a run, the Case's code can move, light or hide any object tagged movable.
+- **A world.** The objects around the robot. Objects can be solid or pushable, and markers show a spot without getting in the robot's way. During a run, the Case's code can move, light or hide movable objects, except people following authored routes.
   The world can include the ground. As you make the Case, you can add [rough ground, a step or a slope](/help/test-a-robot-on-rough-ground-steps-or-a-slope), sized to the robot's legs or wheels.
   You can [reuse articulated assemblies](/help/reuse-an-assembly-in-cases) through physical contact, with editable travel, weight, resistance and springs. A composed chest task requires opening, placing a block and closing.
   You can also [import a captured world](/help/import-a-world) from a collider mesh, with an optional splat for its appearance.
@@ -55,7 +55,7 @@ A Case's logic and console can read camera detections, including object counts, 
 
 You write a Case once, then run it on any robot that fits its slot. In ordinary tries, arm Cases with generated targets scale their world to the arm’s reach from its shoulder. Write Touch the Dots on one arm, and the next arm can reach the same dots.
 
-Imported rooms, captured worlds and selected-object pickups keep their true size for every robot.
+Imported rooms, captured worlds, selected-object pickups and Cases with people keep their true size for every robot.
 
 To keep authored coordinates across frozen revisions, see [Compare robot revisions](/help/compare-robot-revisions).
 

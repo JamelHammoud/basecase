@@ -229,6 +229,36 @@ After merging main `94a1bb558107b826888e88fe710c5c84652b44bd`, the required rela
 
 The full related selection with four local workers repeated all ten preparation, stepping and recording measurements. Preparation ranged from 0.318 to 18.498 ms. One simulated second with recording ranged from 1.722 to 37.104 ms. Encoded recordings remained 6952 to 11624 bytes. Already-aborted and stale-source refusal together took 13.110 ms. All 13 native comparisons retained maximum drift below 1.86e-12 and identical contact identities. The complete command took 242.76 seconds, compared with 242.41 seconds for the earlier default-concurrency candidate command. Host load and caches were uncontrolled, so these totals establish no throughput improvement or regression. No persistent check or worker setting changes.
 
+## Authored person encounters
+
+The local limit probe uses 16 generated people, each with 32 waypoints. It calls production world preparation, MJCF generation, WASM physics, sensor casting, recording serialization and recorded-frame restoration. The host was an arm64 Apple M5 Pro running Node 26.13.0. These are local observations, not CI thresholds or physical-robot measurements.
+
+After a short warmup, nine paired observations alternate whether the baseline or person engine runs first. Each engine resets and simulates two seconds, 1000 physics steps at 2 ms. Both use the same generated rover. The person paths are active during the measured interval. No recording or sensing runs inside the physics comparison.
+
+| Measurement | Observation |
+| --- | --- |
+| Prepare 16 people with 32 waypoints | 1.13 ms |
+| Baseline physics, median wall time for 1000 steps | 21.13 ms |
+| Person physics, median wall time for 1000 steps | 31.68 ms |
+| Baseline process CPU time, median per step | 24.199 μs |
+| Person process CPU time, median per step | 32.363 μs |
+| Paired CPU difference, median per step | 7.156 μs |
+| Four 768-ray eyes, 20 casts | 13.35 ms |
+| Encode and decode the 30000-frame recording, including sampling | 920.30 ms |
+| Decode and seek 120 recorded frames | 13.55 ms |
+| Encoded recording | 22320320 bytes |
+| Decoded typed buffers | 22320036 bytes |
+
+The sensor probe casts 61440 actual rays through the capped world. It uses the existing depth-eye caster without changing scan scheduling. Preparation includes route and generated mesh declarations plus existing world collision preparation. It does not include MuJoCo compilation or renderer startup.
+
+The recording probe samples an unchanged state at 50 Hz through the 600-second storage cap. This measures full-length serialization and storage, not 600 seconds of physical stability. Playback decodes that recording and restores 120 frames through `setRecordedFrame` in the loaded 16-person engine.
+
+Complete Node process memory was sampled immediately before decoding and after the seeks. RSS increased from 326189056 to 347439104 bytes. Retained ArrayBuffer memory increased from 69979001 to 91562551 bytes. Heap used changed from 56222624 to 47094096 bytes as collection occurred. These snapshots include the original recording, encoded bytes, generated geometry and WASM engine. They do not isolate playback allocations or include a browser renderer's GPU resources.
+
+Process CPU time includes work by the process's threads. The shared host, collection and JIT activity add noise, so the paired median is an observed cost rather than a guaranteed overhead. The earlier unpaired probe produced ordering-dependent numbers and could not establish an overhead estimate. It is superseded by this alternating paired method. No timing assertion, deadline increase, retry or new benchmark gate was added.
+
+The final-source probe passed in 2.55 seconds overall. The first two CPU pairs include large JIT or scheduling outliers. The remaining seven pairs all report positive CPU differences. Their individual samples are retained with the local handoff.
+
 ## Portable CLI evaluation
 
 Freeze prepares each revision's immutable joint, measure and triangle data once. Run restores that data once per

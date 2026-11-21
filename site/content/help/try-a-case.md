@@ -82,7 +82,7 @@ If the robot lacks what the Case needs, hold your pointer over the row's note an
 
 ## Results
 
-After a run, **Results** shows whether the robot stayed up and which joints worked hardest. Below that, the tries are listed worst first, so misses appear at the top. A replay includes anything the Case's code moved, lit or hid during the try, along with loose objects' recorded motion.
+After a run, **Results** shows whether the robot stayed up and which joints worked hardest. Below that, the tries are listed worst first, so misses appear at the top. A replay includes anything the Case's code moved, lit or hid during the try. It also keeps the recorded motion of loose objects and people.
 
 A [Hand Off try](/help/put-two-robots-in-one-case) also keeps the recorded contacts that prove the transfer. Scrubbing reads those contacts and the block's pose from the recording, so the verdict uses the same evidence as the run.
 
@@ -100,3 +100,5 @@ If you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their
 - The Library lists tries from every scene. See [Open a try from any scene](/help/open-a-try-from-any-scene).
 - Once a try passes, **Make Dataset** appears under the tries. It gathers the passed tries into a dataset. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
 - You can [export the dataset](/help/export-a-lerobot-dataset), and once five tries have passed, you can [train a policy](/help/train-a-policy-from-your-tries).
+
+Editing the Case or robot during a simulated try discards that try. Record another try against the edited design.

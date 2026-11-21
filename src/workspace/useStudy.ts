@@ -1,3 +1,5 @@
+import { studyApplication } from './studySourcingApply';
+import type { StudySourcingRequirements } from '../study/sourcing';
 import { flushSync } from 'react-dom';
 import { useEffect, useRef, useState } from 'react';
 import type { Case } from '../cases/schema';
@@ -8,7 +10,6 @@ import type { StudyKnob, StudyRecord, StudyRow } from '../study/types';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { errorMessage } from '../utils/errorMessage';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
-import { loadStudyVisibility } from './studyVisibility';
 import { useStudyVisibility } from './useStudyVisibility';
 import { executeStudy, type StudyRequest } from './studyRun';
 import type { ShowToast } from './types';
@@ -19,6 +20,7 @@ import { useStudyPreview } from './useStudyPreview';
 export type StudyResult = StudyRecord;
 
 interface StudyOptions {
+  inFront: boolean;
   kase: Case | null;
   parts: ScenePart[];
   project: ProjectSettings;
@@ -50,6 +52,14 @@ function studyModeKnobs(knobs: StudyKnob[], visibility: boolean) {
   return visibility ? knobs.filter((knob) => knob.kind === 'camera_pose' || knob.kind === 'camera_lens') : knobs;
 }
 
+function sourcingChoice(configured: StudySourcingRequirements | null | undefined, shown: StudyRecord | null) {
+  return configured === undefined ? shown?.sourcing?.requirements : configured;
+}
+
+export function sourcingRequest(request: StudyRequest, sourcing: StudySourcingRequirements | null | undefined) {
+  return Object.hasOwn(request, 'sourcing') ? request.sourcing : (sourcing ?? undefined);
+}
+
 function studyIsStale(shown: StudyRecord | null, liveKey: string) {
   return !!shown && shown.baseKey !== liveKey && !shown.rows.some((row) => row.sceneKey === liveKey);
 }
@@ -58,33 +68,19 @@ function studyStaleness(shown: StudyRecord | null, liveKey: string, sourceStale:
   return sourceStale || studyIsStale(shown, liveKey);
 }
 
-async function validateStudySource(shown: StudyRecord, sceneId?: string): Promise<boolean> {
-  if (!shown.visibility) return true;
-
-  const session = await loadStudyVisibility({
-    request: shown.visibility,
-    base: { ...shown.base, measures: {}, triangles: {} },
-    candidates: shown.total,
-    sceneId,
-    caseId: shown.caseId,
-  });
-
-  try {
-    if (session.key !== shown.current.visibility?.key) throw new Error('Run Study again to apply a design.');
-
-    return true;
-  } finally {
-    session.dispose();
-  }
-}
-
-export function useStudy({ kase, parts, project, source, sim, showToast, onShow }: StudyOptions) {
+export function useStudy({ inFront, kase, parts, project, source, sim, showToast, onShow }: StudyOptions) {
   const [open, setOpen] = useState(false);
   const [configured, setConfigured] = useState<StudyKnob[] | null>(null);
+  const [configuredSourcing, setSourcing] = useState<StudySourcingRequirements | null | undefined>(undefined);
   const [disabled, setDisabled] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
   const runId = useRef(0);
+  const foreground = useRef(inFront);
   const abortRun = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    foreground.current = inFront;
+  }, [inFront]);
 
   useEffect(
     () => () => {
@@ -99,6 +95,7 @@ export function useStudy({ kase, parts, project, source, sim, showToast, onShow 
   const knobs = studyModeKnobs(availableKnobs, !!visibility.request);
   const enabled = knobs.filter((knob) => !disabled.includes(knob.id)).map((knob) => knob.id);
   const shown = project.study ?? null;
+  const sourcing = sourcingChoice(configuredSourcing, shown);
   const savedCase = shown?.base.project.cases?.find((item) => item.id === shown.caseId);
   const liveKey = studyFingerprint(parts, project);
   const stale = studyStaleness(shown, liveKey, visibility.stale);
@@ -125,6 +122,7 @@ export function useStudy({ kase, parts, project, source, sim, showToast, onShow 
           knobs: request.knobs ?? knobs.filter((k) => enabled.includes(k.id)),
           ...studyDefaults(request, kase),
           visibility: request.visibility ?? visibility.request,
+          sourcing: sourcingRequest(request, sourcing),
         },
         source,
         sim,
@@ -139,7 +137,11 @@ export function useStudy({ kase, parts, project, source, sim, showToast, onShow 
 
   return {
     open,
+    inFront,
     visibility,
+    sourcing,
+    setSourcing,
+    sceneName: source.sceneName,
     knobs,
     enabled,
     running,
@@ -181,29 +183,14 @@ export function useStudy({ kase, parts, project, source, sim, showToast, onShow 
       previewing.reset();
       setRunning(false);
       setConfigured(null);
+      setSourcing(undefined);
       visibility.reset();
       setDisabled([]);
       setOpen(false);
     },
     preview: previewing.preview,
-    apply: async (row: StudyRow) => {
-      if (!shown || stale || row.error) return;
-
-      const expected = studyFingerprint(source.docs.partsRef.current, source.docs.projectRef.current);
-
-      const sourceValid = await validateStudySource(shown, source.sceneId).catch(reportError);
-
-      if (!sourceValid) return;
-
-      const next = await previewing.replay(shown, row.selection).catch(reportError);
-
-      if (!next) return;
-
-      if (expected !== studyFingerprint(source.docs.partsRef.current, source.docs.projectRef.current)) return;
-
-      previewing.reset();
-      source.docs.commitStudy(next.parts, next.project);
-    },
+    apply: (row: StudyRow) =>
+      studyApplication({ shown, stale, source, runId, foreground, previewing, showToast, reportError })(row),
     isCurrent: (row: StudyRow) => row.sceneKey === liveKey,
   };
 }

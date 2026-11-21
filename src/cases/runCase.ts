@@ -41,7 +41,7 @@ import { reseededGround } from './terrain';
 import { caseSlots, type Case, type ReferenceCommand } from './schema';
 import { caseWorldItems } from './importedWorldItems';
 import { slotRefusals } from './slots';
-import { WorldMoves } from '../sim/worldMoves';
+import type { WorldMoves } from '../sim/worldMoves';
 import type { WorldEvent } from './worldSet';
 import { TimelineCursor } from '../utils/timelineCursor';
 
@@ -395,7 +395,7 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
   try {
     const recorder = options.record ? new Recorder(engine, controller) : null;
     const changes = {
-      world: new WorldMoves(mj, engine),
+      world: engine.world,
       events: options.world ?? [],
       record: (e: WorldEvent) => recorder?.worldChange(e),
     };

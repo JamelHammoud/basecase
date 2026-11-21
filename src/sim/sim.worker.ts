@@ -10,7 +10,7 @@ import { LiveCase } from '../cases/liveCase';
 import { LiveWatch } from '../skills/liveWatch';
 import { errorMessage } from '../utils/errorMessage';
 import { PoseGate } from './poseGate';
-import { WorldMoves } from './worldMoves';
+import type { WorldMoves } from './worldMoves';
 import type { WorldChange } from '../cases/worldSet';
 import { runFalls } from './fallRuns';
 import { LivePhysics } from './livePhysics';
@@ -210,7 +210,7 @@ async function load(msg: Msg<'load'>) {
   playing = false;
   engine = new SimEngine(livePhysics.module(mj), msg.model);
   livePhysics.attach(engine);
-  world = new WorldMoves(mj, engine);
+  world = engine.world;
   looksShown = -1;
   post({ type: 'world', looks: {} });
   scanShown = -1;
@@ -281,10 +281,13 @@ function seek(msg: Msg<'seek'>) {
 
   halt();
 
-  const frameAt = setRecordedFrame(mj, engine, scrubbed, msg.frame);
-  const qpos = Float64Array.from(engine.data.qpos);
+  const frameAt = Math.max(0, Math.min(scrubbed.frames - 1, Math.round(msg.frame)));
 
   world?.replay(scrubbed.world ?? [], frameAt * scrubbed.dt);
+  setRecordedFrame(mj, engine, scrubbed, frameAt);
+
+  const qpos = Float64Array.from(engine.data.qpos);
+
   postLooks();
   frame(false, frameContacts(scrubbed, frameAt).slice());
   post({ type: 'sought', frame: frameAt, qpos }, [qpos.buffer]);

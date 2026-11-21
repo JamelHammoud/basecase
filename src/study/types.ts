@@ -1,3 +1,4 @@
+import type { StudyPurchasingResult, StudySourcingSnapshot } from './sourcing';
 import type { StudyVisibilityRequest } from './visibilityPlan';
 import type { StudyVisibilityResult } from './visibility';
 import type { Lens } from '../cameras/lens';
@@ -27,6 +28,7 @@ export type StudyKnob = KnobLabel &
 export type StudySelection = number[];
 
 export interface StudyScene {
+  sourcing?: StudySourcingSnapshot;
   parts: ScenePart[];
   project: ProjectSettings;
   measures: Record<string, MeshMeasure | undefined>;
@@ -37,6 +39,7 @@ export interface StudyScene {
 }
 
 export interface StudyRow {
+  purchasing?: StudyPurchasingResult;
   visibility?: StudyVisibilityResult;
   key: string;
   sceneKey: string;
@@ -53,6 +56,7 @@ export interface StudyRow {
 }
 
 export interface StudyRecord {
+  sourcing?: StudySourcingSnapshot;
   visibility?: StudyVisibilityRequest;
   knobs: StudyKnob[];
   rows: StudyRow[];

@@ -53,10 +53,10 @@ export function caseBranchActions({ timeline, attempt, sim, cases, rig, parts, p
 export const caseTryCallbacks = (
   scope: unknown,
   keep: (made: MadeTry[], current: () => boolean) => Promise<void>,
-  onTry: (record: TryRecord, recording: Recording, input: string | null) => Promise<void>,
   onRefuse: (message: string) => void,
 ) => ({
-  onTry,
+  onTry: (record: TryRecord, recording: Recording, input: string | null, current: () => boolean) =>
+    keep([{ record, recording, input }], current),
   onRefuse,
   branchScope: scope,
   onBranchTry: (record: TryRecord, recording: Recording, current: () => boolean) =>

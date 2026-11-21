@@ -24,6 +24,7 @@ covers:
   - src/reality/measuredJoints.ts
   - src/reality/bodyAnalysis.ts
   - src/reality/bodySensitivity.ts
+  - src/reality/bodyMotion.ts
 ---
 
 Run the robot in your scene under MuJoCo physics to find out whether it stands, walks and holds its weight before you print a part.
@@ -43,6 +44,8 @@ You don't write a model file. Each time you start a simulation, Basecase writes 
 An [imported world](/help/import-a-world) collides as up to 64 separate convex pieces, keeping gaps such as doorways and the space under a table. Its collider supplies the floor too, so holes stay open. The world's visible mesh or splat is separate from those hidden colliders.
 
 Saved [fixture assemblies](/help/reuse-an-assembly-in-cases) retain their passive joints and springs. Their nonprimitive shapes use separate convex pieces.
+
+[Authored people](/help/test-a-person-crossing) use six separate rigid boxes for appearance and collision. Their routes advance at physics boundaries, and a route through static obstacle bounds is refused before running.
 
 Separate robots collide with each other, the floor, scenery and loose objects. In [Hand Off to a Spot](/help/put-two-robots-in-one-case), the grippers hold and pass the block through physical contact.
 
@@ -78,6 +81,8 @@ The newest active body version supplies the scene's floor friction, shared by ev
 You can [inspect body parameters in a saved try](/help/inspect-body-parameters) without changing calibration, policy, scene geometry or the Checks verdict. The analysis compares local changes in mass, payload and floor friction under the try's retained model.
 
 **Distinguishable** means a parameter produces a separate local response above the method's threshold. **Coupled** means different parameter changes can explain similar motion. **Poor excitation** means the response is too small under the assumed noise.
+
+For unresolved parameters, [preview a motion](/help/preview-a-motion-for-unresolved-body-parameters) to check a short simulated candidate against the original observations. Saved predictions reopen without moving the robot or rerunning the search.
 
 A wrist's mass and payload can produce similar motion, leaving little evidence to choose between them. A residual mismatch remains unresolved. These results don't identify a unique physical cause or assign probabilities.
 

@@ -1,4 +1,5 @@
 import { safeId } from '../sim/mjcfText';
+import { readPersonEncounter, validatePersonObject } from './personEncounter';
 import type { WorldItem } from '../sim/mjcfTypes';
 import type { PassiveJoint } from '../sim/passiveJoint';
 import type { V3 } from '../utils/kinematics';
@@ -119,9 +120,11 @@ export function validateWorldFixtures(items: WorldItem[]) {
     movable: item.movable,
     parent: item.parent === undefined ? undefined : asId(item.parent, `${item.id}.parent`),
     joint: item.joint ? readPassiveJoint(item.joint, item.id) : undefined,
+    ...(item.person ? { person: readPersonEncounter(item.person, item.id) } : {}),
   }));
 
   if (new Set(objects.map((object) => object.id)).size !== objects.length) refuse('world', 'repeats an id');
 
   validateFixtures(objects);
+  objects.forEach(validatePersonObject);
 }

@@ -2,6 +2,7 @@ import { surfaceOperands } from '../../booleans/operands';
 import type { ScenePart } from '../../types/robotics';
 import type { ParameterPartPlan } from './plan';
 import type { ParameterGeometryJob } from './transaction';
+import { fingerObstacles } from '../../gripperFingers/validation';
 
 export function changedParameterPlan(plan: ParameterPartPlan): boolean {
   if (plan.kind === 'cad') return false;
@@ -28,6 +29,8 @@ function connections(parts: ScenePart[]) {
 
   for (const part of parts) {
     const targets = [
+      part.gripperFinger?.mount,
+      part.gripperFinger?.target,
       part.sketch?.support?.partId,
       ...(part.mates ?? []).map((mate) => mate.target),
       ...(part.boolean?.operands ?? []).map((operand) => operand.id),
@@ -69,5 +72,12 @@ export function parameterGeometryScope(job: ParameterGeometryJob): ParameterGeom
   ]);
   const parts = job.parts.filter((part) => surfaceOperands([part]).some((item) => wanted.has(item.id)));
 
-  return { parts, plans: changed, cad: job.cad, verify: job.verify, force: job.force };
+  return {
+    parts,
+    plans: changed,
+    cad: job.cad,
+    verify: job.verify,
+    force: job.force,
+    ...(parts.some((part) => part.gripperFinger) ? { fingerContext: fingerObstacles(job.parts) } : {}),
+  };
 }

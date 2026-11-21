@@ -1,5 +1,5 @@
 import { REACH_PER_SECOND } from '../sim/drive';
-import { CONTROL_DT } from '../sim/driveTiming';
+import { lowerCommands } from './referenceMotion';
 import type { V3 } from '../utils/kinematics';
 import type { BuilderRobot } from './caseGoals';
 import type { HandoffLayout } from './handoffLayout';
@@ -11,18 +11,6 @@ const SETTLE_S = 0.4;
 const GRIP_S = 0.6;
 const SLACK = 1.4;
 const LOWER_SPEED_SHARE = 0.2;
-
-function lowerCommands(command: ReferenceCommand, from: V3, duration: number): ReferenceCommand[] {
-  const count = Math.ceil(duration / CONTROL_DT);
-
-  return Array.from({ length: count + 1 }, (_, i) => {
-    const fraction = i / count;
-    const smooth = fraction * fraction * (3 - 2 * fraction);
-    const target = from.map((x, axis) => x + (command.target![axis] - x) * smooth) as V3;
-
-    return { ...command, at: Math.round((command.at + fraction * duration) * 100) / 100, target };
-  });
-}
 
 export function handoffReference(robot: BuilderRobot, layout: HandoffLayout): ReferenceCommand[] {
   const { donor, recipient, block, spot, gripY, hoverY, gap, size } = layout;

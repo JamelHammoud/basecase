@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { isMovable, type Rig, type V3 } from '../utils/kinematics';
+import { jawContactPart } from '../gripperFingers/contactPart';
 
 export interface GripperJaw {
   joint: string;
@@ -93,8 +94,10 @@ function jawsOf(rig: Rig, palm: string | null, byId: Map<string, ScenePart>, joi
   );
 
   return leaves.flatMap((joint) => {
-    const owned = [...rig.ownerOf].find(([id, owner]) => owner === joint.id && byId.has(id));
-    const part = owned ? byId.get(owned[0])! : null;
+    const owned = [...rig.ownerOf].flatMap(([id, owner]) =>
+      owner === joint.id && byId.has(id) ? [byId.get(id)!] : [],
+    );
+    const part = jawContactPart(owned);
 
     return part ? [{ joint, part, at: vec(part.position) }] : [];
   });

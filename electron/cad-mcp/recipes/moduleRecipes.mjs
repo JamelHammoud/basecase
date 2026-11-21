@@ -1,9 +1,24 @@
+import { DEFAULT_MOUNT, mountCode } from '../../cad-kernel/fingerCad.mjs';
+
 const INC = 'include <robotics.scad>\n';
 const MECH = 'include <robotics.scad>\ninclude <mechanisms.scad>\n';
 const SWEEP = (angle) =>
   `${INC}intersection() { zrot(${angle}) servo_u_link($ports = false); servo_cradle(part = "both", $ports = false); }`;
 
 export const MODULE_RECIPES = [
+  {
+    name: 'gripper_finger_mount_m3',
+    use: 'Declared outboard replacement-finger interface for opposing prismatic jaws. Render one carriage per jaw with its local +X facing inward and local +Z pointing toward the fingertips.',
+    tags: 'gripper replacement fingers M3 captive nut carriage mounting jaw',
+    params:
+      'mount_height=26, mount_depth=20, mount_spacing=12, all mm. Carrier thickness is 10 mm. Preserve the generated canonical source.',
+    ports:
+      'Two through bores Ø3.4 with captive M3 hex nut seats, along X, spaced along Z. The inner face is x=0 and the fingertip end is z=0.',
+    notes:
+      'Replacement fingers add two ISO 4762 M3 × 16 screws, two ISO 7089 M3 washers and two ISO 4032 M3 nuts per jaw. The declared closing gap must leave at least 5 mm between carriage inner faces. The source parallel_gripper rendering alone does not declare this interface. Select the carriage and a rigid target, then use Make Flat Fingers or Make V Fingers.',
+    code: mountCode(DEFAULT_MOUNT),
+    expect: { ports: ['mount_0', 'mount_1'] },
+  },
   {
     name: 'servo_cradle',
     use: 'Parent-side STS3215 / STS3250 holder: a frame around the case with a far-end bridge, horn-end tabs, a cable slot and a strap held by 2 × M3 into inserts. Fuse your link to its far end.',

@@ -1195,6 +1195,12 @@ The helper now waits for the Sketch plane to be hidden and checks the retained s
 
 The revision's first targeted check passed formatting, lint and docs, then found the recovery fixture still imported `meshPartFromFile`. Merged main exposes `meshPartsFromFile` instead. The fixture now uses that real importer with its deterministic id factory and takes the generated STL's single part. Its ten-design geometry, placement and persistence assertions remain unchanged.
 
+## Replacement-finger outputs
+
+The ten-target attachment matrix uses native OpenSCAD carriers and replacement fingers. It runs the ordinary part soup, measurements, Print plan, actual 3MF writer, drawing preparation, reconciled Kit manifest and ZIP producer. Every case retains two separate finger part ids with quantity one and purchases four M3 × 16 screws, four washers and four nuts. Both flat and V-shaped profiles occur in the matrix. All ten manufacturing rows passed locally in `scratch/finger-matrix-3.log`. This is generated-file evidence, not evidence from a printer or an assembled physical gripper.
+
+The final manufacturing matrix uses the same rotated grippers, alternate supplied mounting dimensions and 21/22 mm travel as the physical matrix. Each finger appears exactly once in packing identities, with matching row quantities and one native manufacturing output. All ten rows passed in `scratch/finger-matrix-final.log`, alongside the 20 physical rows and both runtime-alias boundary tests. The ordinary recipe catalog also requires both native bore ports.
+
 ## Resistive motor-current replay
 
 The fast matrix uses the production `TorqueRecorder`, `jointAmpModel`, retained trace producer, electrical projection and paired-tree solver. Generated robot scenes cover single-servo and daisy-chained arms, pan-tilt, gripper, star quadruped wiring, a shared-trunk hexapod, unequal rover branches, two STS buses on one source, repeated leg modules and an asymmetric payload arm. Current windows include simultaneous and staggered prescribed force peaks. These are generated model inputs, not measured motor currents or a physical electrical validation. The two-bus case mixes arm and other joint roles on supported C001 interfaces, without claiming mixed-protocol controller support.

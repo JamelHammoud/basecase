@@ -21,6 +21,7 @@ import { payloadRows } from './engineeringPayload';
 import { STRENGTH_CHECK, strengthRows } from './engineeringStrength';
 import type { CheckContext, CheckRow, EngineeringInputs, EngineeringReport } from './engineeringTypes';
 import { bodyMasses } from '../reality/bodyMasses';
+import { fingerRows } from '../gripperFingers/findings';
 
 export { STRENGTH_CHECK };
 export { rotateEuler } from './engineeringMath';
@@ -48,6 +49,7 @@ export const ENGINEERING_CHECKS = [
   'Joint support',
   'Range of motion',
   'Range changes',
+  'Finger mounts',
   'Servo voltage',
   'Current and runtime',
   'Standing stability',
@@ -149,6 +151,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     ...servoMountRows(ctx),
     ...rangeOfMotionRows(ctx),
     ...rangeChangeRows(ctx),
+    ...fingerRows(ctx),
     ...powerRows(ctx),
     ...wiringRows(wiring, joints),
     ...stabilityRows(stability),

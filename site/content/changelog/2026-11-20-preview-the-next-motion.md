@@ -6,7 +6,7 @@ image: /changelog/preview-the-next-motion/cover.png
 
 You can preview a simulated motion to see whether it could separate body parameters left unresolved by a saved try. Basecase sends no robot commands.
 
-In **Operate**'s **Analyze Try** result, select unresolved parameters and choose **Preview Motion**. You see saved collision geometry, a joint response plot and a time control.
+In **Operate**'s **Analyze Try** result, **Preview Motion** shows saved collision geometry, a joint response plot and a time control for selected unresolved parameters.
 
 If you leave an arm motionless, you may leave its link weights unresolved. Moving it may expose a difference. But you may be unable to distinguish a co-located weight and payload through any supported motion.
 

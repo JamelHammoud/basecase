@@ -80,7 +80,7 @@ describe('motion snapshots in the existing evidence store', () => {
     expect(await readBodyEvidence({ ...ref, unit: 'another-unit' }, ports)).toBeNull();
   });
 
-  it.each(['json', 'method', 'selection', 'plan', 'preview', 'score', 'poses', 'geometry'])(
+  it.each(['json', 'method', 'selection', 'plan', 'preview', 'score', 'poses', 'geometry', 'units'])(
     'refuses corrupt %s without replacing historical evidence',
     async (field) => {
       const { ports, entries } = storage();
@@ -105,6 +105,9 @@ describe('motion snapshots in the existing evidence store', () => {
         },
         geometry: () => {
           malformed.preview.parts[0].mesh!.positions[0] = Infinity;
+        },
+        units: () => {
+          malformed.preview.units[0] = 'm';
         },
       };
 

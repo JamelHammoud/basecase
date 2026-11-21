@@ -5,8 +5,11 @@ import type { BodyMotionPreview } from '../../reality/bodyMotionTypes';
 
 export function useBodyMotionCanvas(preview: BodyMotionPreview, frame: number) {
   const currentFrame = useEffectEvent(() => frame);
-  const [problem, setProblem] = useState('');
-  const [rendered, setRendered] = useState<number | null>(null);
+  const [status, setStatus] = useState<{
+    preview: BodyMotionPreview;
+    problem: string;
+    rendered: number | null;
+  } | null>(null);
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const renderer = useRef<ReturnType<typeof bodyMotionRenderer> | null>(null);
 
@@ -36,9 +39,9 @@ export function useBodyMotionCanvas(preview: BodyMotionPreview, frame: number) {
         }
 
         context.transferFromImageBitmap(bitmap);
-        setRendered(index);
+        setStatus({ preview, rendered: index, problem: '' });
       },
-      failed: (error) => setProblem(errorMessage(error)),
+      failed: (error) => setStatus({ preview, rendered: null, problem: errorMessage(error) }),
     });
 
     renderer.current = session;
@@ -54,5 +57,9 @@ export function useBodyMotionCanvas(preview: BodyMotionPreview, frame: number) {
     renderer.current?.seek(frame);
   }, [frame]);
 
-  return { canvas, problem, rendered };
+  return {
+    canvas,
+    problem: status?.preview === preview ? status.problem : '',
+    rendered: status?.preview === preview ? status.rendered : null,
+  };
 }

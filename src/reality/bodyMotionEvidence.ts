@@ -65,6 +65,8 @@ function safeRecommendation(
     canonicalJson(motion.candidates.find((candidate) => candidate.plan.id === motion.plan.id)) ===
       canonicalJson({ plan: motion.plan, score: motion.score }) &&
     safeMotionPreview(motion.preview) &&
+    motion.preview.units.length === request.units.length &&
+    motion.preview.units.every((unit, index) => unit === request.units[index]) &&
     Array.isArray(motion.preview.times) &&
     motion.preview.times.length === motion.plan.run.statuses.length &&
     motion.preview.times.every((time, index) => time === motion.plan.run.statuses[index].at / 1000) &&

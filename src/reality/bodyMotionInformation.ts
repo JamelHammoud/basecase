@@ -81,10 +81,14 @@ export function bodyMotionInformation(input: MotionInformationInput): BodyMotion
       !direction.distinguishable &&
       selected.some((index) => Math.abs(direction.weights[index]) >= NOISE.directionLoading),
   );
-  const before = Math.min(...targets.map((direction) => profiledResponse(direction.weights, original)), 1e100);
-  const after = Math.min(...targets.map((direction) => profiledResponse(direction.weights, directions)), 1e100);
+  const responses = targets.map((direction) => ({
+    before: profiledResponse(direction.weights, original),
+    after: profiledResponse(direction.weights, directions),
+  }));
+  const before = Math.min(...responses.map((response) => response.before), 1e100);
+  const after = Math.min(...responses.map((response) => response.after), 1e100);
   const threshold = Math.max(NOISE.absoluteResponse, directions[0].response * NOISE.relativeResponse);
-  const gain = after - before;
+  const gain = Math.min(...responses.map((response) => response.after - response.before), 1e100);
 
   return {
     before: targets.length ? before : 0,

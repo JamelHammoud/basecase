@@ -110,4 +110,24 @@ describe('information added in original unresolved directions', () => {
     expect(() => bodyMotionInformation({ original, candidate: columns([[NaN, 0]]), selected: [0] })).toThrow();
     expect(() => bodyMotionInformation({ original, candidate: columns([[1, 0]]), selected: [2] })).toThrow();
   });
+
+  it('requires the minimum gain in every targeted direction even when the weakest direction changes', () => {
+    const original = bodySensitivity(
+      columns([
+        [2.95 * Math.sqrt(2), 0],
+        [0, 0],
+      ]),
+    ).directions;
+    const candidate = columns([
+      [Math.sqrt(2 * (3.02 ** 2 - 2.95 ** 2)), 0],
+      [0, 3.01 * Math.sqrt(2)],
+    ]);
+    const score = bodyMotionInformation({ original, candidate, selected: [0, 1] });
+
+    expect(score.before).toBe(0);
+    expect(score.after).toBeCloseTo(3.01, 10);
+    expect(score.gain).toBeCloseTo(0.07, 10);
+    expect(score.resolved).toBe(false);
+    expect(bodyMotionInformation({ original, candidate, selected: [1] }).resolved).toBe(true);
+  });
 });

@@ -29,6 +29,6 @@ To reopen a saved preview, choose its recording in **Try**. After a physical edi
 
 ![The saved arm preview remains visible after its source becomes out of date](/help/preview-a-motion-for-unresolved-body-parameters/historical.png)
 
-If you see a **Can’t tell** result, you can't distinguish the parameters using the supported motions under the saved model and assumed noise.
+If you see **Can’t tell**, the preview couldn't establish separation under the saved model and assumed noise.
 
 See [Simulation in Basecase](/help/simulation-in-basecase#recorded-body-parameters) for the analysis limits.

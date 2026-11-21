@@ -25,7 +25,8 @@ export function BodyAnalysisParameters({
               bodyParameterLabel(parameter)
             ) : (
               <Switch
-                label={bodyParameterLabel(parameter)}
+                className="!h-auto min-h-[32px]"
+                label={<span className="block whitespace-normal text-white/90">{bodyParameterLabel(parameter)}</span>}
                 aria-label={bodyParameterLabel(parameter)}
                 checked={analysis.parameters.includes(index)}
                 disabled={analysis.pending || !analysis.applicable}

@@ -2,22 +2,21 @@ import { analysisArmScene } from '../src/reality/bodyAnalysisMatrix.fixtures';
 import { parkedBodyRun } from '../src/reality/bodyMotion.fixtures';
 import type { SimModel } from '../src/sim/mjcfTypes';
 import type { RobotRun } from '../src/robot/runBuffer';
-import { openApp, openPlayTab } from './harness';
+import { openApp, openPlayTab, type App } from './harness';
 
 export interface BodyMotionStudio {
   load: (record: unknown) => void;
   attachRobot: (link: unknown) => void;
   bodyModel: () => Promise<SimModel>;
-  seedBodyEvidence: (input: { run: RobotRun; model: SimModel; id: string }) => Promise<void>;
+  seedBodyEvidence: (input: { run: RobotRun; model: SimModel; id: string; recommended?: boolean }) => Promise<void>;
   bodyCalibrations: () => unknown;
   bodyChecks: () => Promise<unknown>;
   sceneRecord: () => { parts: unknown[]; project: Record<string, unknown> };
   bodyAnalysisMetrics: () => { motion: unknown; runtime: unknown };
+  editBodyEvidenceSource: () => void;
 }
 
-export async function openBodyMotionApp() {
-  const app = await openApp();
-
+export async function attachBodyMotionRobot(app: App) {
   await app.page.evaluate(() => {
     const target = window as unknown as { __studio: BodyMotionStudio; __bodyMotionCommands: number };
 
@@ -32,8 +31,17 @@ export async function openBodyMotionApp() {
       },
     });
   });
+}
+
+export async function openBodyMotionApp(recommended = false) {
+  const app = await openApp();
+  const scene = analysisArmScene();
+  const joints = scene.joints.map((joint) => ({ ...joint, name: `${joint.name} ${'retained-link-'.repeat(10)}` }));
+
+  await attachBodyMotionRobot(app);
   await app.page.evaluate((scene) => (window as unknown as { __studio: BodyMotionStudio }).__studio.load(scene), {
-    ...analysisArmScene(),
+    ...scene,
+    project: { ...scene.project, joints },
     id: 'body-motion-scene',
   });
   await openPlayTab(app.page, 'Operate');
@@ -44,12 +52,12 @@ export async function openBodyMotionApp() {
   const run = parkedBodyRun(model);
 
   await app.page.evaluate(
-    async ({ model, run }) => {
+    async ({ model, run, recommended }) => {
       const studio = (window as unknown as { __studio: BodyMotionStudio }).__studio;
 
-      await studio.seedBodyEvidence({ model, run, id: 'body-motion-arm' });
+      await studio.seedBodyEvidence({ model, run, id: 'body-motion-arm', recommended });
     },
-    { model, run },
+    { model, run, recommended },
   );
 
   return { app };

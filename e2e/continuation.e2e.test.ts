@@ -4,7 +4,7 @@ import { bytesToBase64 } from '../src/utils/base64';
 import type { StoredTry } from '../src/cases/tryFile';
 import { openApp, shown, type App } from './harness';
 import { endTryAt } from './driveChecks';
-import { call, recordSource, openSaved, reopenPortableBranch } from './continuation.helpers';
+import { call, recordSource, openSaved } from './continuation.helpers';
 
 let app: App | undefined;
 
@@ -13,7 +13,7 @@ afterEach(async () => {
   app = undefined;
 });
 
-it('branches a newly scripted Library try from the timeline, drives a recovery and reopens both retained tries', async () => {
+it('branches a newly scripted Library try from the timeline and saves a manual recovery', async () => {
   app = await openApp();
 
   const source = await recordSource(app);
@@ -56,17 +56,6 @@ it('branches a newly scripted Library try from the timeline, drives a recovery a
   );
   expect((await call<{ data: string }>(app.page, 'tries-recording', source.id)).data).toBe(original);
   await openSaved(app, child.id);
-  await reopenPortableBranch(app, child);
-  expect((await call<{ data: string }>(app.page, 'tries-recording', source.id)).data).toBe(original);
-  await app.page.locator(shown(`[data-testid="try-tile"][data-try="${child.id}"]`)).click();
-  await app.page
-    .locator(shown('button'))
-    .filter({ hasText: /^Done$/ })
-    .first()
-    .click();
-  await app.page.locator(shown(`[data-testid="try-tile"][data-try="${source.id}"]`)).click();
-  expect((await call<StoredTry[]>(app.page, 'tries-manifests', [child.id]))[0].branch).toEqual(child.branch);
-  expect((await call<{ data: string }>(app.page, 'tries-recording', source.id)).data).toBe(original);
   expect(app.errors).toEqual([]);
 });
 

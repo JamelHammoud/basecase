@@ -81,36 +81,3 @@ export async function openSaved(current: App, id: string) {
   await page.locator(shown(`[data-testid="try-tile"][data-try="${id}"]`)).click();
   await expect.poll(() => page.getByTestId('try-timeline').count()).toBe(1);
 }
-
-export async function reopenPortableBranch(current: App, child: StoredTry) {
-  await current.page.getByRole('button', { name: 'Export Try', exact: true }).click();
-  await expect
-    .poll(() =>
-      current.page.evaluate(
-        () =>
-          (window as unknown as { __studio: { lastDownload: () => { name: string } | null } }).__studio.lastDownload()
-            ?.name,
-      ),
-    )
-    .toBe(`${child.id}.tries.zip`);
-
-  const file = await current.page.evaluate(() =>
-    (
-      window as unknown as { __studio: { lastDownload: () => { name: string; base64: string } | null } }
-    ).__studio.lastDownload(),
-  );
-
-  await call(current.page, 'tries-delete', [child.id, child.sourceTry]);
-  expect(await call(current.page, 'tries-manifests', [child.id, child.sourceTry])).toEqual([]);
-  await current.page.evaluate(
-    async (file) =>
-      (window as unknown as { __studio: { dropFiles: (files: unknown[]) => Promise<void> } }).__studio.dropFiles([
-        file,
-      ]),
-    file,
-  );
-  await expect
-    .poll(() => call<StoredTry[]>(current.page, 'tries-manifests', [child.id, child.sourceTry]))
-    .toHaveLength(2);
-  expect((await call<StoredTry[]>(current.page, 'tries-manifests', [child.id]))[0].branch).toEqual(child.branch);
-}

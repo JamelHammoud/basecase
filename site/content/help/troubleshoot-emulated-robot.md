@@ -114,6 +114,12 @@ For a local emulator:
 
 For a network robot, restore the local network connection and reconnect from the robot list. Leave the pairing code blank to use the saved key. The connection starts at **Look** after the robot finishes stopping. See [Connect a robot computer](/help/connect-a-robot-computer).
 
+## A recommended motion won’t run
+
+[Run a recommended body motion](/help/run-a-recommended-body-motion) supports matching local emulated Feetech and Dynamixel units in **Test** with current joint readings.
+
+**Run** refuses a different measured starting pose without moving into place. A changed model, calibration or joint order also makes the saved recommendation inapplicable.
+
 ## Learn more
 
 - [Servo readings and daemon messages](/help/servo-readings-and-daemon-messages) lists every message the daemon sends.

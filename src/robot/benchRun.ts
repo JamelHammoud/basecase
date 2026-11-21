@@ -1,19 +1,19 @@
 import type { BenchRecording, BenchSample } from '../reality/benchLogs';
 import { BENCH_SECONDS, benchOffset } from '../reality/benchSequence';
+import { servoFamily, statusRadians, type RobotMount, type RobotState, type RobotStatus } from './robotState';
+import { robotSnapshot, selectedUnit } from './robotStore';
+import { executeBench } from './benchExecution';
 import {
-  servoFamily,
-  statusRadians,
-  type RobotEvent,
-  type RobotMount,
-  type RobotState,
-  type RobotStatus,
-} from './robotState';
-import { robotSnapshot, selectedUnit, sendUnitCommand, setBenchDriving } from './robotStore';
-import { subscribeUnitRobot } from './unitSubscription';
+  claimTrajectory,
+  trajectoryObservation,
+  trajectoryReady,
+  trajectoryTarget,
+  trajectoryTelemetry,
+  type BenchTrajectoryInput,
+  type BenchTrajectoryOutcome,
+} from './benchTrajectory';
 
-export const BENCH_INTENT_MS = 25;
-
-const BENCH_END_GRACE_S = 1;
+export { BENCH_INTENT_MS } from './benchExecution';
 
 export const canRunBench = (state: RobotState) =>
   state.link === 'connected' &&
@@ -97,10 +97,6 @@ export function playBench(
   const holds = measuredStarts(begun);
   const starts = subset.map((k) => holds[k]);
   const heard: HeardStatus[] = [];
-  const startedAt = performance.now();
-  const elapsed = () => (performance.now() - startedAt) / 1000;
-  const intent = (offset: number) =>
-    void sendUnitCommand(unit, { cmd: 'intent', joints: holds.map((s, k) => (subset.includes(k) ? s + offset : s)) });
   const recording = (): BenchRecording => {
     const seconds = benchSeconds(heard);
 
@@ -111,53 +107,71 @@ export function playBench(
       ),
     };
   };
-  let last = begun.status;
   let lead = Number.POSITIVE_INFINITY;
+  const execution = executeBench({
+    unit,
+    begun,
+    seconds: plan.seconds,
+    target: (seconds) => holds.map((start, index) => start + (subset.includes(index) ? plan.offset(seconds) : 0)),
+    running: canRunBench,
+    returnToStart: holds,
+    hear: (status, heardS) => {
+      const next = { status, heardS };
 
-  return new Promise((resolve) => {
-    let done = false;
+      heard.push(next);
+      lead = Math.min(lead, leadOf(next));
+      hear?.(status);
 
-    const finish = (finished: boolean) => {
-      if (done) return;
-
-      done = true;
-      clearInterval(timer);
-      unsubscribe();
-      intent(0);
-      setBenchDriving(false, unit);
-
-      resolve(finished ? recording() : null);
-    };
-    const tick = () => {
-      const seconds = elapsed();
-
-      if (seconds >= plan.seconds + BENCH_END_GRACE_S) finish(true);
-      else intent(plan.offset(seconds));
-    };
-    const onState = (event: RobotEvent) => {
-      const state = robotSnapshot(unit);
-
-      if (event.event === 'fault' || !canRunBench(state)) {
-        finish(false);
-
-        return;
-      }
-
-      if (!state.status || state.status === last) return;
-
-      const status: HeardStatus = { status: state.status, heardS: elapsed() };
-
-      last = state.status;
-      heard.push(status);
-      lead = Math.min(lead, leadOf(status));
-      hear?.(state.status);
-
-      if (secondsOf(status, lead) >= plan.seconds) finish(true);
-    };
-
-    setBenchDriving(true, unit);
-
-    const unsubscribe = subscribeUnitRobot(unit, onState);
-    const timer = setInterval(tick, BENCH_INTENT_MS);
+      return secondsOf(next, lead) >= plan.seconds;
+    },
   });
+
+  return execution?.then((kind) => (kind === 'completed' ? recording() : null)) ?? Promise.resolve(null);
+}
+
+export async function playBenchTrajectory(input: BenchTrajectoryInput): Promise<BenchTrajectoryOutcome> {
+  const begun = robotSnapshot(input.unit);
+  const run = {
+    joints: [...input.joints],
+    statuses: [] as BenchTrajectoryOutcome['run']['statuses'],
+    intents: [] as BenchTrajectoryOutcome['run']['intents'],
+    faultJoint: null,
+    faultAt: 0,
+    message: '',
+  };
+
+  if (input.unit !== selectedUnit() || !trajectoryReady(input, begun) || !canRunBench(begun))
+    return { kind: 'refused', run };
+
+  const points = input.points.map((point) => ({ at: point.at, joints: [...point.joints] }));
+  const seconds = points.at(-1)!.at / 1000;
+  const control = input.recording
+    ? await claimTrajectory({ ...input, joints: [...input.joints], points }, begun, seconds)
+    : undefined;
+
+  if (control === null) return { kind: 'refused', run };
+
+  run.statuses.push(trajectoryObservation(begun, 0));
+
+  const execution = executeBench({
+    ...input,
+    current: () => input.unit === selectedUnit() && (input.current?.() ?? true),
+    begun,
+    seconds,
+    strict: true,
+    control,
+    target: (at) => trajectoryTarget(points, at),
+    running: canRunBench,
+    accepted: (intent) => run.intents.push(intent),
+    validStatus: (status) => trajectoryTelemetry({ ...begun, status }) && run.statuses.length < 4096,
+    hear: (status, heardS) => {
+      const sample = trajectoryObservation({ ...begun, status }, heardS * 1000);
+
+      if (sample.at > run.statuses.at(-1)!.at) run.statuses.push(sample);
+
+      return heardS >= seconds;
+    },
+  });
+
+  return { kind: (await execution) ?? 'refused', run };
 }

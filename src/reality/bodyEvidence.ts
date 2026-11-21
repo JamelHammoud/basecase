@@ -3,7 +3,9 @@ import { loadDatasetContent, saveDatasetContent } from '../datasets/datasetStore
 import { encodeJson, decodeJson } from '../datasets/snapshotWorker';
 import { datasetContentHash } from '../datasets/contentHash';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
-import type { BodyAnalysisRequest, BodyAnalysisResult } from './bodyAnalysisTypes';
+import type { BodyAnalysisRefusal, BodyAnalysisRequest, BodyAnalysisResult } from './bodyAnalysisTypes';
+import type { BodyExperimentEvidence } from './bodyExperimentTypes';
+import { checkedMotionRecording } from '../../electron/robot/bodyMotionRecording.mjs';
 import type { BodyMotionOutcome } from './bodyMotionTypes';
 import { safeBodyMotion } from './bodyMotionEvidence';
 
@@ -11,6 +13,8 @@ export const BODY_EVIDENCE_BYTES = 8_388_608;
 export const BODY_EVIDENCE_COUNT = 32;
 
 export interface BodyEvidenceSnapshot {
+  experiment?: BodyExperimentEvidence;
+  refusal?: BodyAnalysisRefusal;
   request: BodyAnalysisRequest;
   sourceKey: string;
   calibration: unknown;
@@ -60,6 +64,11 @@ export async function rememberBodyEvidence(input: BodyEvidenceSnapshot, ports = 
   if (bytes.byteLength > BODY_EVIDENCE_BYTES) throw new Error('Body analysis evidence exceeds its storage limit.');
 
   const content = await ports.save(bytes);
+
+  return bodyReference(input, content);
+}
+
+function bodyReference(input: BodyEvidenceSnapshot, content: string): BodyEvidenceRef {
   const { source } = input.request;
 
   return {
@@ -73,6 +82,23 @@ export async function rememberBodyEvidence(input: BodyEvidenceSnapshot, ports = 
     sourceKey: input.sourceKey,
     analyzed: !!input.result,
   };
+}
+
+export async function readBodyEvidenceContent(content: string, ports = defaults) {
+  if (!/^[0-9a-f]{64}$/.test(content)) return null;
+
+  try {
+    const bytes = await ports.load(content);
+
+    if (!bytes || bytes.byteLength > BODY_EVIDENCE_BYTES) return null;
+
+    const snapshot = (await ports.decode(bytes)) as BodyEvidenceSnapshot;
+    const reference = bodyReference(snapshot, content);
+
+    return matchesBodyReference(snapshot, reference) ? { snapshot, reference } : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function readBodyEvidence(ref: BodyEvidenceRef, ports = defaults): Promise<BodyEvidenceSnapshot | null> {
@@ -104,8 +130,29 @@ function matchesBodyReference(value: BodyEvidenceSnapshot | null, ref: BodyEvide
     Array.isArray(ref.joints) &&
     run.joints.join('\0') === ref.joints.join('\0') &&
     value.sourceKey === ref.sourceKey &&
-    safeBodyResult(value.result, source) &&
-    safeBodyMotion(value)
+    safeBodyEvidenceResults(value)
+  );
+}
+
+function safeBodyEvidenceResults(value: BodyEvidenceSnapshot): boolean {
+  return safeBodyResult(value.result, value.request.source) && safeExperiment(value) && safeBodyMotion(value);
+}
+
+function safeExperiment(value: BodyEvidenceSnapshot): boolean {
+  if (value.experiment === undefined) return value.refusal === undefined;
+
+  const { recommendation, recording } = value.experiment;
+
+  return (
+    !!checkedMotionRecording(recording) &&
+    recording.recommendation === recommendation?.content &&
+    recording.sourceKey === recommendation.sourceKey &&
+    recommendation.unit === value.request.source.unit &&
+    recommendation.scene === value.request.source.scene &&
+    recommendation.modelHash === value.request.source.modelHash &&
+    recommendation.joints.join('\0') === value.request.run.joints.join('\0') &&
+    value.request.observations === recording.backend &&
+    (value.refusal === undefined || value.refusal === 'backend')
   );
 }
 

@@ -72,6 +72,8 @@ Next, all the powered joints move together through a slow bench sequence for abo
 
 Each named robot keeps its own fits, zeros, directions and replay history. Selecting another row changes which history Operate shows.
 
+Changing zeros, directions or servo fits makes earlier [motion recommendations](/help/run-a-recommended-body-motion) out of date. Their saved predictions remain readable.
+
 For the first robot, named robot, the **Pose** tab marks the same joints **Measured**.
 
 ![Shoulder 1 and Elbow 2 marked Measured at v1 in Operate, and Shoulder and Elbow marked Measured in the Pose tab](/help/calibrate-an-emulated-robot/verdicts.png)

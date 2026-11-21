@@ -39,6 +39,8 @@ Operate connects up to 32 robots at once in the desktop app. Roll Out sends save
 
 View shared organization inventory through [Open Basecase Fleet](/help/open-basecase-fleet). The registry keeps identities after disconnect and has its own capacity limits.
 
+Selecting another unit stops a [recommended body motion](/help/run-a-recommended-body-motion) in progress. Its interrupted recording stays with the unit that ran it.
+
 ## Connect and calibrate the units
 
 1. In the view rail, click **Play**.

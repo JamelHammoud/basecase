@@ -1,10 +1,12 @@
 import { rungOf } from './ladder.mjs';
 import { readRecordedRun } from './recordedRun.mjs';
+import { motionRecordingDeclaration } from './bodyMotionRecording.mjs';
 
 export const MIN_SECONDS = 2;
 export const MOVED_RAD = 0.01;
 export const MAX_INPUT_VALUES = 512;
 export const POLICY_RUNG = 'rehearse';
+export const RECORDING_STORAGE_FAILURE = 'Couldn’t save the recording.';
 
 const FLUSH_MS = 250;
 const FLUSH_LINES = 200;
@@ -92,9 +94,23 @@ export class OperateRecorder {
 
     if (context) this.context = context;
 
-    if (context && this.session && !this.session.joints) this.session.joints = [...context.joints];
+    if (context && this.session && !this.session.context) {
+      this.session.context = context;
+      this.session.joints = [...context.joints];
+    }
 
     return !!context;
+  }
+
+  motionContextChanged() {
+    const original = this.session?.bodyMotion && this.session.context;
+
+    return (
+      !!original &&
+      (original.sceneId !== this.context.sceneId ||
+        original.modelHash !== this.context.modelHash ||
+        original.joints.join('\0') !== this.context.joints.join('\0'))
+    );
   }
 
   incidentContext() {
@@ -135,6 +151,7 @@ export class OperateRecorder {
 
     this.session = {
       id: this.newId(),
+      context: this.context,
       joints: this.context ? [...this.context.joints] : null,
       t0: now,
       startedAt: new Date(now).toISOString(),
@@ -153,8 +170,57 @@ export class OperateRecorder {
     return this.session;
   }
 
-  write(session, line) {
-    const now = this.clock();
+  beginMotion(value, connection, revision) {
+    const declaration = motionRecordingDeclaration(value);
+
+    if (!declaration || !this.context) return false;
+
+    try {
+      this.close('rung');
+      this.held = false;
+
+      const session = this.open();
+
+      session.bodyMotion = {
+        version: 1,
+        revision,
+        ...declaration,
+        connection,
+        completion: 'cancelled',
+        backend: 'servo-independent-1',
+      };
+      this.write(session, { k: 'motion', ...session.bodyMotion });
+      this.flush(session);
+
+      return true;
+    } catch {
+      this.session = null;
+      this.held = true;
+
+      return false;
+    }
+  }
+
+  endMotion(completion) {
+    const session = this.session;
+
+    if (!session?.bodyMotion) return;
+
+    session.bodyMotion.completion = completion;
+    this.write(session, { k: 'motion-end', completion });
+    this.close('motion');
+    this.held = true;
+  }
+
+  failMotion() {
+    if (!this.session?.bodyMotion) return;
+
+    this.session = null;
+    this.held = true;
+  }
+
+  write(session, line, at = this.clock()) {
+    const now = at;
 
     session.last = (now - session.t0) / 1000;
     session.lines.push(JSON.stringify({ t: rounded(session.last, MS), ...line }));
@@ -165,7 +231,10 @@ export class OperateRecorder {
   flush(session) {
     if (!session.lines.length) return;
 
-    this.sink.append(session.id, `${session.lines.join('\n')}\n`);
+    const appended = this.sink.append(session.id, `${session.lines.join('\n')}\n`);
+
+    if (session.bodyMotion && appended === false) throw new Error(RECORDING_STORAGE_FAILURE);
+
     session.lines = [];
     session.flushedAt = this.clock();
   }
@@ -175,7 +244,7 @@ export class OperateRecorder {
 
     if (rung < 0) return;
 
-    if (rung < this.rung && this.session) this.close('rung');
+    if (rung < this.rung && this.session && !this.session.bodyMotion) this.close('rung');
 
     this.rung = rung;
 
@@ -230,13 +299,14 @@ export class OperateRecorder {
     const id = typeof event.id === 'number' ? event.id : null;
 
     this.write(session, { k: 'fault', code: String(event.code ?? ''), id, message: String(event.message ?? '') });
-    this.close('fault');
+
+    if (!session.bodyMotion) this.close('fault');
   }
 
-  intent(joints) {
+  intent(joints, at) {
     const session = this.session;
 
-    if (!session || this.held) return;
+    if (!session || (this.held && !session.bodyMotion)) return;
 
     const q = fixedAll(joints);
     const key = q.join();
@@ -244,7 +314,7 @@ export class OperateRecorder {
     if (key === session.lastIntent) return;
 
     session.lastIntent = key;
-    this.write(session, { k: 'intent', q });
+    this.write(session, { k: 'intent', q }, at);
   }
 
   sample(ask) {
@@ -267,7 +337,7 @@ export class OperateRecorder {
   }
 
   manifest(session, reason) {
-    const { context } = this;
+    const context = session.context;
     const seconds = rounded(session.last, MS) ?? 0;
 
     return {
@@ -289,6 +359,7 @@ export class OperateRecorder {
       family: this.spec.family,
       ended: reason,
       ...(session.policy ? { policy: session.policy } : {}),
+      ...(session.bodyMotion ? { bodyMotion: session.bodyMotion } : {}),
     };
   }
 
@@ -301,12 +372,21 @@ export class OperateRecorder {
     this.session = null;
     this.flush(session);
 
-    const kept = !!this.context && session.last > MIN_SECONDS && moved(session);
+    if (session.bodyMotion && reason !== 'motion')
+      session.bodyMotion.completion = reason === 'rung' ? 'cancelled' : reason;
+
+    const kept = !!session.context && (!!session.bodyMotion || (session.last > MIN_SECONDS && moved(session)));
     const manifest = kept ? this.manifest(session, reason) : null;
 
-    if (manifest) this.sink.keep(manifest);
+    if (manifest) this.keepManifest(session, manifest);
     else this.sink.drop(session.id);
 
     this.onClosed({ id: session.id, reason, manifest, joints: session.joints });
+  }
+
+  keepManifest(session, manifest) {
+    const kept = this.sink.keep(manifest);
+
+    if (kept === false && session.bodyMotion) throw new Error(RECORDING_STORAGE_FAILURE);
   }
 }

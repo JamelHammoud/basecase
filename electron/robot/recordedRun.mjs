@@ -54,6 +54,14 @@ export function readRecordedRun(sink, recording) {
   const intents = selected.map(({ at, values }) => ({ at, joints: values }));
 
   return statuses.length
-    ? { joints: [...recording.joints], statuses, intents, faultJoint: null, faultAt: 0, message: '' }
+    ? {
+        joints: [...recording.joints],
+        statuses,
+        intents,
+        faultJoint: null,
+        faultAt: 0,
+        message: '',
+        ...(recording.bodyMotion ? { observations: recording.bodyMotion.backend } : {}),
+      }
     : null;
 }

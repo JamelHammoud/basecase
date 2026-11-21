@@ -29,7 +29,7 @@ covers:
 hub_sort: order
 ---
 
-You can open any try you've recorded from any scene, then step through it on the timeline.
+You can open a try’s recorded observations from any scene, then step through them on the timeline.
 
 1. Click **Library** in the view rail on the left.
 2. Under **Tries**, click a robot.

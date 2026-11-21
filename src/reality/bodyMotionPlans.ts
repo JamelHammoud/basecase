@@ -4,7 +4,8 @@ import type { SimJoint } from '../sim/mjcfTypes';
 
 const shapes = ['hold', 'ramp', 'oscillation'] as const;
 const unitScale = (joint: SimJoint) => (joint.type === 'revolute' ? Math.PI / 180 : 0.001);
-const speedLimit = (joint: SimJoint) => (joint.type === 'revolute' ? LIMITS.speedRadS : LIMITS.speedMS);
+const speedLimit = (joint: SimJoint, speed: number = LIMITS.speedRadS) =>
+  joint.type === 'revolute' ? speed : LIMITS.speedMS;
 
 function validJoint(joint: SimJoint | undefined, start: number | null): joint is SimJoint {
   return (
@@ -33,7 +34,13 @@ function offset(shape: BodyMotionPlan['shape'], phase: number): number {
   return Math.sin(2 * Math.PI * phase);
 }
 
-function makePlan(request: BodyAnalysisRequest, index: number, shape: BodyMotionPlan['shape']): BodyMotionPlan {
+function makePlan(input: {
+  request: BodyAnalysisRequest;
+  index: number;
+  shape: BodyMotionPlan['shape'];
+  speed: number;
+}): BodyMotionPlan {
+  const { request, index, shape, speed } = input;
   const joint = request.model.joints.find((entry) => entry.id === request.run.joints[index])!;
   const start = request.run.statuses[0].positions as number[];
   const range = joint.range!.map((value) => value * unitScale(joint));
@@ -41,7 +48,7 @@ function makePlan(request: BodyAnalysisRequest, index: number, shape: BodyMotion
   const negative = start[index] - range[0];
   const headroom = shape === 'oscillation' ? Math.min(positive, negative) : Math.max(positive, negative);
   const slope = shape === 'oscillation' ? 2 * Math.PI : 4;
-  const magnitude = Math.min(headroom, (speedLimit(joint) * LIMITS.seconds) / slope);
+  const magnitude = Math.min(headroom, (speedLimit(joint, speed) * LIMITS.seconds) / slope);
   const amplitude = magnitude * (positive >= negative || shape === 'oscillation' ? 1 : -1);
   const intents = Array.from({ length: LIMITS.frames }, (_, frame) => ({
     at: (frame * LIMITS.seconds * 1000) / (LIMITS.frames - 1),
@@ -70,7 +77,9 @@ function makePlan(request: BodyAnalysisRequest, index: number, shape: BodyMotion
   };
 }
 
-export function bodyMotionPlans(request: BodyAnalysisRequest): BodyMotionPlan[] {
+export function bodyMotionPlans(request: BodyAnalysisRequest, speed: number = LIMITS.speedRadS): BodyMotionPlan[] {
+  if (!Number.isFinite(speed) || speed <= 0 || speed > LIMITS.speedRadS) return [];
+
   const starts = request.run.statuses[0]?.positions;
   const joints = request.run.joints.map((id) => request.model.joints.find((entry) => entry.id === id));
   const valid =
@@ -86,13 +95,21 @@ export function bodyMotionPlans(request: BodyAnalysisRequest): BodyMotionPlan[] 
   if (!valid) return [];
 
   return shapes
-    .flatMap((_, pass) => joints.map((_, index) => makePlan(request, index, shapes[(pass + index) % shapes.length])))
+    .flatMap((_, pass) =>
+      joints.map((_, index) => makePlan({ request, index, shape: shapes[(pass + index) % shapes.length], speed })),
+    )
     .filter((plan) => !bodyMotionPlanProblem(request, plan))
     .slice(0, LIMITS.candidates);
 }
 
-function jointWork(input: { joint: SimJoint; start: number; plan: BodyMotionPlan; index: number }): number {
-  const { joint, start, plan, index } = input;
+function jointWork(input: {
+  joint: SimJoint;
+  start: number;
+  plan: BodyMotionPlan;
+  index: number;
+  speed: number;
+}): number {
+  const { joint, start, plan, index, speed } = input;
   let previous = start;
   let work = 0;
 
@@ -103,7 +120,7 @@ function jointWork(input: { joint: SimJoint; start: number; plan: BodyMotionPlan
     const distance = Math.abs(value - previous);
     const inside = value >= joint.range![0] * unitScale(joint) && value <= joint.range![1] * unitScale(joint);
 
-    if (!Number.isFinite(value) || !inside || dt <= 0 || distance / dt > speedLimit(joint) + 1e-10) return NaN;
+    if (!Number.isFinite(value) || !inside || dt <= 0 || distance / dt > speedLimit(joint, speed) + 1e-10) return NaN;
 
     if (frame === 0 && value !== start) return NaN;
 
@@ -114,7 +131,7 @@ function jointWork(input: { joint: SimJoint; start: number; plan: BodyMotionPlan
   return work;
 }
 
-function commandProblem(request: BodyAnalysisRequest, plan: BodyMotionPlan): boolean {
+function commandProblem(request: BodyAnalysisRequest, plan: BodyMotionPlan, speed: number): boolean {
   let work = 0;
 
   for (let index = 0; index < plan.run.joints.length; index++) {
@@ -123,7 +140,7 @@ function commandProblem(request: BodyAnalysisRequest, plan: BodyMotionPlan): boo
 
     if (!validJoint(joint, start ?? null)) return true;
 
-    work += jointWork({ joint, start: start!, plan, index });
+    work += jointWork({ joint, start: start!, plan, index, speed });
   }
 
   return !Number.isFinite(work) || work > LIMITS.workJ || Math.abs(work - plan.workBoundJ) > 1e-8;
@@ -138,7 +155,11 @@ function validPlanIdentity(plan: BodyMotionPlan): boolean {
   );
 }
 
-export function bodyMotionPlanProblem(request: BodyAnalysisRequest, plan: BodyMotionPlan): 'unsupported' | null {
+export function bodyMotionPlanProblem(
+  request: BodyAnalysisRequest,
+  plan: BodyMotionPlan,
+  speed: number = LIMITS.speedRadS,
+): 'unsupported' | null {
   const { run } = plan;
   const valid =
     validPlanIdentity(plan) &&
@@ -158,5 +179,5 @@ export function bodyMotionPlanProblem(request: BodyAnalysisRequest, plan: BodyMo
         status.positions.every((value, joint) => value === request.run.statuses[0].positions[joint]),
     );
 
-  return valid && !commandProblem(request, plan) ? null : 'unsupported';
+  return valid && !commandProblem(request, plan, speed) ? null : 'unsupported';
 }

@@ -5,10 +5,14 @@ import { IntentPacer } from './intentPacer.mjs';
 
 const spawnDaemon = (binary, args) => spawn(binary, args, { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
 
-export function threadPipe({ binary, args, on, spawnFn = spawnDaemon }) {
+export function threadPipe({ binary, args, on, spawnFn = spawnDaemon, clock = () => Date.now() }) {
   const child = spawnFn(binary, args);
-  const write = (command) => {
-    if (child.stdin.writable) child.stdin.write(`${JSON.stringify(command)}\n`);
+  const write = (command, tag) => {
+    if (!child.stdin.writable) return;
+
+    child.stdin.write(`${JSON.stringify(command)}\n`);
+
+    if (command.cmd === 'intent' && tag?.connection) on.intent?.(command.joints, { ...tag, at: clock() });
   };
   const pacer = new IntentPacer({ write });
   const exit = (error) => {
@@ -23,10 +27,15 @@ export function threadPipe({ binary, args, on, spawnFn = spawnDaemon }) {
   child.on('exit', () => exit(null));
 
   return {
+    ordered: true,
     write,
     drive: (joints) => pacer.drive(joints),
-    hold: (joints) => pacer.hold(joints),
-    idle: () => pacer.idle(),
+    hold: (value) => (Array.isArray(value) ? pacer.hold(value) : pacer.hold(value.joints, value.tag)),
+    idle: (acknowledge) => {
+      pacer.idle();
+
+      if (acknowledge) on.idle?.();
+    },
     alive: () => pacer.alive(),
     end: () => {
       pacer.stop();
@@ -55,16 +64,21 @@ export function workerPipe({ binary, args, on }) {
     if (typeof message.line === 'string') on.line(message.line);
     else if (typeof message.stderr === 'string') on.stderr(message.stderr);
     else if (message.exit) exit(message.error ?? null);
+    else if (message.intent) on.intent?.(message.intent, message.tag);
+    else if (message.idle) on.idle?.();
   });
   worker.on('error', (err) => exit(err.message));
   worker.on('exit', () => exit(null));
 
-  return Object.fromEntries(
-    PIPE_CALLS.map((call) => [
-      call,
-      (value) => {
-        if (!exited) worker.postMessage({ call, value });
-      },
-    ]),
-  );
+  return {
+    ordered: true,
+    ...Object.fromEntries(
+      PIPE_CALLS.map((call) => [
+        call,
+        (value) => {
+          if (!exited) worker.postMessage({ call, value });
+        },
+      ]),
+    ),
+  };
 }

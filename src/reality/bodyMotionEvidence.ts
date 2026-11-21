@@ -36,6 +36,7 @@ function safeDeclaration(snapshot: BodyEvidenceSnapshot): boolean {
 
   return (
     canonicalJson(motion!.method) === canonicalJson(BODY_MOTION_METHOD) &&
+    safeMotionSpeed(motion!.speedRadS) &&
     Number.isInteger(motion!.physicsSteps) &&
     motion!.physicsSteps >= 0 &&
     motion!.physicsSteps <= LIMITS.physicsSteps &&
@@ -47,9 +48,15 @@ function safeDeclaration(snapshot: BodyEvidenceSnapshot): boolean {
     motion!.candidates.length <= LIMITS.candidates &&
     motion!.candidates.every(
       (candidate) =>
-        !!candidate?.plan && !bodyMotionPlanProblem(request, candidate.plan) && safeScore(candidate.score, parameters),
+        !!candidate?.plan &&
+        !bodyMotionPlanProblem(request, candidate.plan, motion!.speedRadS) &&
+        safeScore(candidate.score, parameters),
     )
   );
+}
+
+function safeMotionSpeed(speed: number | undefined): boolean {
+  return speed === undefined || (Number.isFinite(speed) && speed > 0 && speed <= LIMITS.speedRadS);
 }
 
 function safeRecommendation(

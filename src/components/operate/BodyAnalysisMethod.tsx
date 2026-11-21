@@ -1,6 +1,7 @@
 import type { BodyAnalysisResult as AnalysisResult } from '../../reality/bodyAnalysisTypes';
 import type { BodyAnalysisView } from '../../workspace/useBodyAnalysis';
 import { bodyParameterLabel } from '../../reality/bodyParameterLabel';
+import { bodyMotionBounds } from '../../reality/bodyMotionLabel';
 
 export function BodyAnalysisMethod({ result, analysis }: { result: AnalysisResult; analysis: BodyAnalysisView }) {
   return (
@@ -11,6 +12,8 @@ export function BodyAnalysisMethod({ result, analysis }: { result: AnalysisResul
       <p>
         {result.method.version} {result.source.modelHash} {result.source.calibrationFingerprint}
       </p>
+      {analysis.observationLimit && <p>{analysis.observationLimit}</p>}
+      {analysis.motion?.kind === 'recommended' && <p>{bodyMotionBounds(analysis.motion)}</p>}
       {result.parameters.map((parameter) => (
         <p key={`${parameter.kind}:${parameter.body}`}>
           {bodyParameterLabel(parameter)}: {parameter.probe[0]}–{parameter.probe[1]} {parameter.unit}, bounds{' '}

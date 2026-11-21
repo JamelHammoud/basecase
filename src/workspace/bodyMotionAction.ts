@@ -3,6 +3,7 @@ import { bodyRecordingUnchanged } from '../reality/bodyRecordingIdentity';
 import type { BodyMotionOutcome, BodyMotionRequest } from '../reality/bodyMotionTypes';
 
 interface MotionAction {
+  speedRadS?: number;
   reference: BodyEvidenceRef;
   selected: number[];
   recommend: (input: BodyMotionRequest) => Promise<BodyMotionOutcome>;
@@ -20,7 +21,12 @@ export async function recommendBodyEvidence(
 
   if (!(await ports.unchanged(action.reference)) || !action.current()) return null;
 
-  const motion = await action.recommend({ request: saved.request, result: saved.result, selected: action.selected });
+  const motion = await action.recommend({
+    request: saved.request,
+    result: saved.result,
+    selected: action.selected,
+    ...(action.speedRadS ? { speedRadS: action.speedRadS } : {}),
+  });
 
   if (!action.current()) return null;
 

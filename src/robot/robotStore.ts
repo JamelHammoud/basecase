@@ -1,4 +1,5 @@
 import { collectFleetIncident } from './fleetIncidentStore';
+import { noteUnitCommand } from './unitCommandEvents';
 import { DEFAULT_UNIT, nextUnitName } from '../../electron/robot/units.mjs';
 import { loadSession } from '../cases/tryStore';
 import type { ElectronApi } from '../utils/platform/types';
@@ -370,8 +371,15 @@ export const rollBackUnit = async (unit: string) => (await api?.robotRollBack?.(
 
 export const disconnectRobot = async () => (await api?.robotDisconnect?.(selected)) ?? unavailable;
 
-export const sendUnitCommand = async (unit: string, command: Record<string, unknown>): Promise<ConnectReply> =>
-  (await api?.robotCommand?.(command, unit)) ?? unavailable;
+export async function sendUnitCommand(
+  unit: string,
+  command: Record<string, unknown>,
+  owner?: symbol,
+): Promise<ConnectReply> {
+  noteUnitCommand({ unit, command, owner });
+
+  return (await api?.robotCommand?.(command, unit)) ?? unavailable;
+}
 
 export const sendRobotCommand = (command: Record<string, unknown>) => sendUnitCommand(selected, command);
 
@@ -395,7 +403,7 @@ export function recordRobotSample(sample: RobotSample) {
       void api?.robotRecord?.(sample, entry.unit);
 }
 
-export const robotLinkState = async () => (await api?.robotState?.(selected)) ?? null;
+export const robotLinkState = async (unit: string = selected) => (await api?.robotState?.(unit)) ?? null;
 
 export const setUnitMounts = async (unit: string, joints: RobotMount[]) =>
   (await api?.robotCalibrate?.(joints, unit)) ?? unavailable;

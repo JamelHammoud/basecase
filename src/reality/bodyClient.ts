@@ -9,6 +9,7 @@ import type { BodyMotionRequest } from './bodyMotionTypes';
 import type { measuredBodyMotion } from './bodyMotionMetrics';
 
 export interface BodyFitRequest {
+  validation?: RobotRun;
   model: SimModel;
   run: RobotRun;
   robot: string;

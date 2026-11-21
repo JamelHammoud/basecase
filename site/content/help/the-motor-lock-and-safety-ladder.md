@@ -74,6 +74,8 @@ These limits hold on every rung:
 
 Torque starts at 5% and ramps up over 1 second. A joint outside its calibrated range won't start.
 
+A [recommended body motion](/help/run-a-recommended-body-motion) runs in **Test** for at most two seconds. Completing it doesn’t advance the ladder. Its simulation bounds don’t replace the limits above.
+
 ## How it stops
 
 While motors run, the app must send a command at least every 100 ms. After 100 ms without commands or a heartbeat, the daemon starts its stop plan. An arm holds, and a legged robot moves toward its standing pose. The standing motion can take longer than the watchdog delay.

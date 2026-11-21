@@ -21,6 +21,7 @@ export class IntentPacer {
     this.write = write;
     this.silentHostMs = silentHostMs;
     this.values = null;
+    this.tag = undefined;
     this.driving = false;
     this.heardAt = performance.now();
     this.timer = setInterval(() => this.tick(), everyMs);
@@ -31,15 +32,20 @@ export class IntentPacer {
 
     this.driving = true;
     this.values = joints;
+    this.tag = undefined;
   }
 
   idle() {
     this.driving = false;
     this.values = null;
+    this.tag = undefined;
   }
 
-  hold(joints) {
-    if (this.driving) this.values = joints;
+  hold(joints, tag) {
+    if (!this.driving) return;
+
+    this.values = joints;
+    this.tag = tag;
   }
 
   alive() {
@@ -49,8 +55,15 @@ export class IntentPacer {
   tick() {
     if (performance.now() - this.heardAt > this.silentHostMs) return;
 
-    if (this.driving && this.values) this.write({ cmd: 'intent', joints: this.values });
+    if (this.driving && this.values) this.writeIntent();
     else this.write({ cmd: 'heartbeat' });
+  }
+
+  writeIntent() {
+    const command = { cmd: 'intent', joints: this.values };
+
+    if (this.tag) this.write(command, this.tag);
+    else this.write(command);
   }
 
   stop() {

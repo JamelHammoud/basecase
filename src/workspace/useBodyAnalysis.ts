@@ -10,6 +10,10 @@ import { useBodyAnalysisJob, type BodyInvestigationOutcome } from './useBodyAnal
 import { errorMessage } from '../utils/errorMessage';
 import type { BodyMotionOutcome } from '../reality/bodyMotionTypes';
 import { dayLabel } from '../utils/timeAgo';
+import { useBodyExecution } from './useBodyExecution';
+import { fitBodyEvidence } from './bodyActions';
+import { BODY_EMULATOR_LIMIT } from '../reality/bodyExperimentTypes';
+import { servoFamily } from '../robot/robotState';
 
 let opening: { scene: string | null; version: number } = { scene: null, version: 0 };
 const listeners = new Set<() => void>();
@@ -139,8 +143,42 @@ function selectedParameters(selection: BodySelection | null, key: string, motion
   return selection?.key === key ? selection.indices : (motion?.selected ?? []);
 }
 
+async function readBodyInvestigation(
+  reference: BodyEvidenceRef | undefined,
+  open: boolean,
+): Promise<BodyInvestigationOutcome> {
+  const saved = reference && open ? await readBodyEvidence(reference) : null;
+  const original = saved?.experiment && (await readBodyEvidence(saved.experiment.recommendation));
+
+  return {
+    analysis: saved?.result ?? (saved?.refusal ? { kind: 'refused', reason: saved.refusal, replays: 0 } : null),
+    motion: saved?.motion,
+    experiment: saved?.experiment,
+    prediction: original?.motion,
+    commands: saved?.request.run.intents.length,
+    samples: saved?.request.run.statuses.length,
+  };
+}
+
+function investigationDetails(shown: BodyInvestigationOutcome | null) {
+  return {
+    motion: shown?.motion,
+    experiment: shown?.experiment,
+    prediction: shown?.prediction,
+    commands: shown?.commands,
+    samples: shown?.samples,
+  };
+}
+
+function observationLimit(fleet: ReturnType<typeof useFleet>) {
+  const state = fleet.units?.find((entry) => entry.unit === fleet.selected)?.state;
+
+  return state?.emulated && servoFamily(state.spec) ? BODY_EMULATOR_LIMIT : '';
+}
+
 export function useBodyAnalysis(core: WorkspaceCore) {
-  const { selected: unit } = useFleet();
+  const fleet = useFleet();
+  const unit = fleet.selected;
   const tries = useTries() ?? [];
   const scene = core.scene.sceneId;
   const { request, open } = useBodyOpening(core);
@@ -161,13 +199,12 @@ export function useBodyAnalysis(core: WorkspaceCore) {
   useEffect(() => {
     let current = true;
 
-    void (ref && open ? readBodyEvidence(ref) : Promise.resolve(null))
-      .then((saved) => {
-        if (current)
-          setReported({ selected, unit, outcome: { analysis: saved?.result ?? null, motion: saved?.motion } });
+    void readBodyInvestigation(ref, open)
+      .then((outcome) => {
+        if (current) setReported({ selected, unit, outcome });
       })
       .catch(() => {
-        if (current) setProblem('The saved body evidence could not be read.');
+        if (current) setProblem('Couldn’t read the saved body evidence.');
       });
 
     return () => {
@@ -184,17 +221,27 @@ export function useBodyAnalysis(core: WorkspaceCore) {
     applicable,
     report: (outcome) => setReported({ selected, unit, outcome: { ...shown, ...outcome } }),
   });
+  const execution = useBodyExecution({ core, unit, reference: ref, open, recorded: setPicked });
 
   return {
     ready: freshness.ready,
+    observationLimit: observationLimit(fleet),
     open,
-    pending: job.pending,
+    pending: job.pending || execution.pending,
+    executing: execution.pending,
     selected,
     applicable,
     result,
-    problem: problem || job.problem || freshness.problem,
+    problem: problem || job.problem || execution.problem || freshness.problem,
     choices,
-    motion: shown?.motion,
+    ...investigationDetails(shown),
+    execute: execution.run,
+    fit: () => {
+      if (ref)
+        void fitBodyEvidence(core, ref)
+          .then((text) => setProblem(text === BODY_EMULATOR_LIMIT ? '' : text))
+          .catch((error: unknown) => setProblem(errorMessage(error)));
+    },
     parameters,
     toggle: (index: number) =>
       setSelection({
@@ -204,16 +251,21 @@ export function useBodyAnalysis(core: WorkspaceCore) {
     recommend: () => job.run('recommend', parameters),
     show: () => openBodyAnalysis(scene),
     close: () => {
+      execution.cancel();
       job.cancel();
       openBodyAnalysis(null);
     },
     pick: (id: string) => {
+      execution.cancel();
       job.cancel();
       setPicked(id);
       setProblem('');
       job.clear();
     },
-    cancel: job.cancel,
+    cancel: () => {
+      job.cancel();
+      execution.cancel();
+    },
     analyze: () => job.run('analyze'),
   };
 }

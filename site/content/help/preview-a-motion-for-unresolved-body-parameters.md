@@ -32,3 +32,5 @@ To reopen a saved preview, choose its recording in **Try**. After a physical edi
 If you see **Can’t tell**, the preview couldn't establish separation under the saved model and assumed noise.
 
 See [Simulation in Basecase](/help/simulation-in-basecase#recorded-body-parameters) for the analysis limits.
+
+You can [run a recommended body motion](/help/run-a-recommended-body-motion) on a matching emulated unit and inspect its actual observations.

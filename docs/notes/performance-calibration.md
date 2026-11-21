@@ -100,3 +100,32 @@ The selected motion ties the compatible fixed shoulder hold in all three planted
 Zero means the planted explanation was chosen from the two declared alternatives and replayed exactly. It does not establish zero error for an estimated model or noisy physical measurements. The selector improves this witness only in the first case. The other two cases are unchanged.
 
 The selector spends simulation work to evaluate the library. It has not demonstrated less physical motion or better accuracy than this fixed baseline. The 18-second servo bench targets servo calibration and is incompatible with this two-second body-information comparison, so no bench speedup is claimed. No real robot, sensor noise distribution or physical transfer result is measured here.
+
+
+## Selected motion execution
+
+The trajectory path retains at most 65 declared target rows for at most 16 joints and at most two seconds. At most one command is in flight per renderer executor. Received rows stop execution at the 4,096-row bound. The existing 25 ms intent interval, unit subscription and command subscription are released at termination. Controlled-clock cancellation at 0, 25, 100 and 175 ms leaves zero timers and sends no later renderer command. These assertions measure deterministic cancellation behavior, without claiming a process-memory peak or native wall-clock rate.
+
+Backend ownership retains one connection UUID, scalar revision, held/paused flags, deadline and timer per session, with no owner history or retired-token set. Expiry is the declared duration and telemetry freshness is 300 ms. The existing pacer records delivered intent rows with their write timestamps and connection/revision tags only for selected runs. Ordinary sessions incur no extra paced-write messages. Ordered idle acknowledgement drains those messages before completion. Session buffering retains the existing 250 ms or 200-line flush bound. These simulation and resource declarations are not hardware safety claims.
+
+`bodyExperimentCost.test.ts` compares a selected motion with an equal two-second prefix of the existing fixed bench offsets on the same generated two-link body workload. It plants a 1.25 mass scale and declares a separate 3.6-second validation trajectory before selection or fitting. Numerical evidence comes from WASM body dynamics. Recording overhead uses a separate controlled zero-observation recorder sink. It does not represent daemon delivery, disk latency or physical parameter recovery. Raw output is `scratch/body-experiment-cost-shipping.json`.
+
+A macOS arm64 Node 26.13.0 changed-file observation recorded the following values. These are single observations under concurrent host load, not latency distributions.
+
+| Measure | Fixed bench prefix | Selected motion |
+| --- | ---: | ---: |
+| Declared executed duration | 2 s | 2 s |
+| Information gain per executed second | 0.810494 | 113.090086 |
+| Independent validation RMS | 0 rad | 0 rad |
+| Independent validation gain | 1 | 1 |
+| Observation analysis and fit wall time | 659.639 ms | 972.905 ms |
+| Motion selection wall time | 0 ms | 772.251 ms |
+| Controlled recording wall time | 1.313 ms | 0.402 ms |
+| Recorded bytes | 6,592 | 5,234 |
+| Controlled observation rows | 65 | 65 |
+
+Both fits exactly replay this noiseless generated validation case, so accuracy is unchanged. Zero does not establish zero physical error. The selected motion has a larger information score but costs more computation. Its measured preparation, selection and recording sum is about 1,745.6 ms versus 661.0 ms for the fixed prefix, in addition to the same declared motion and validation durations. The shorter recorder timing is not a disk or throughput speedup claim. Recording byte differences include repeated-command suppression.
+
+WASM capacity was 17,629,184 bytes. JavaScript heap was sampled at 67,677,528 bytes before the two comparisons and 66,455,784 bytes afterward. Those endpoints include allocation and garbage collection. They are not peak memory or a per-motion allocation measurement. Resource bounds come from retained-row, scalar ownership and timer assertions separately.
+
+The native CI fixture compares selected and fixed bench-prefix delivery over equal two-second declarations. It checks exact distinct paced-write/recording equality and unit isolation with real daemon processes. It observes completion and Stop through production event boundaries, with no retry, longer deadline or added merge gate. The fixture writes platform-specific delivery counts, recording bytes, stop-boundary latency and post-Stop write counts to `scratch/body-motion-native-<platform>.json` in CI. Native command-delivery rate, disk overhead, wall-clock cancellation and cross-platform runtime cost remain unmeasured locally. They must not be inferred from WASM information or the controlled recorder sink. Ordinary servo recordings explicitly refuse a body-identification claim, so observed body-information gain and independent body-validation error are unavailable for that backend.

@@ -56,4 +56,6 @@ To inspect an older fault, see [Inspect fleet problems](/help/inspect-fleet-prob
 
 **Note:** After a fault, the simulation stops sending commands to the robot until you climb the **Ladder** again. A replay never moves the robot.
 
-The 20 seconds come from the session's try, which ends at the fault. See [Keep a robot session as a try](/help/keep-a-robot-session-as-a-try). A session that lasts 2 seconds or less, or in which no joint moves, isn't kept, so its fault has no **Replay in Sim**.
+The 20 seconds come from the session's try, which ends at the fault. See [Keep a robot session as a try](/help/keep-a-robot-session-as-a-try). An ordinary session lasting 2 seconds or less, or with no joint movement, isn’t kept, so its fault has no **Replay in Sim**.
+
+[Recommended motion recordings](/help/run-a-recommended-body-motion) retain short interrupted runs. Replay still needs recorded observations and commands.

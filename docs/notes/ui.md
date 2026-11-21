@@ -10,6 +10,12 @@ The Build panel renders Checks before the bill of materials, guide, saved builds
 
 Pull request #1965 reports five passing browser cases across the board, build-time and composer files on macOS using the development harness. It also reports that restoring the earlier label CSS reproduced about 1.9px of overlap. Those are author-reported observations. Review did not rerun browser tests, and production-bundle browser execution on Linux and Windows remains for CI.
 
+## Error toast recovery text
+
+The portable-scene size error includes the filename and the existing import-error prefix. `Toast` previously constrained every tone to one truncated line within `max-w-md`, cutting off the instruction to remove large meshes or images and export again. Error messages now wrap with a 40px minimum height. The canvas wrapper caps the toast at the canvas width minus 24px. A shrink-resistant action keeps its label beside the message.
+
+`e2e/sceneFileLimits.e2e.test.ts` uses the real scene picker and production decoded-byte cap, checks that refusal saves nothing, measures text line rectangles and scroll bounds, and requires the toast to stay within the canvas at 1240 × 720. A normal scene then opens through the same command. The declaration is authored for CI and was not run locally. No timeout, retry or quarantine changed.
+
 ## Repeated control copy audit
 
 The studio audit for #1660 traced Button, IconButton, Tooltip, NumberInput, SegmentedControl, ChoiceGrid, StripButton, LinkButton and menu composition before removing copy. Shared primitives need no change. The ordinary copy report counts two removed strings and no additions. The Board title references a local variable, which the existing extractor does not count. Counting rules are unchanged.

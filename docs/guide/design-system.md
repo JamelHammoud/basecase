@@ -51,6 +51,10 @@ Use these primitives. Never hand-roll a styled `<button>` or input when one fits
 - `ImageViewer`: full-window image viewer. Pinch or ⌘-scroll zooms at the pointer, two-finger scroll and drag pan, double-click toggles fit / 100%+, − + 0 keys, ← → and a filmstrip for several images, Esc or a backdrop click closes. Controls float in glass islands: Zoom out, the zoom readout, which zooms to fit (0), Zoom in and Close. A control never sits beside another that does its job, so there's no separate fit button.
 - Tokens in `theme.ts` (`THEME_COLORS`, `LAYOUT`, `DRAG_REGION`, `NO_DRAG_REGION`) mirror the `@theme` block in `index.css`.
 
+## Error toast recovery text
+
+Error `Toast` messages wrap at the existing text-width limit and grow above their 40px minimum height so recovery instructions remain visible. Canvas toast wrappers leave 12px on each side, and message words may break to fit long filenames. Action buttons retain their width. Other toast tones keep their single-line pill. `e2e/sceneFileLimits.e2e.test.ts` measures the full error text and canvas containment at the minimum desktop window size while testing refused and successful scene imports. Browser execution belongs to CI. [Coverage evidence](../notes/ui.md#error-toast-recovery-text).
+
 ## Context submenu activation
 
 `ContextMenu` submenu triggers open their submenu on hover, click or ordinary button keyboard activation. Activating an open trigger keeps it open, so a pointer entering just before a click cannot close the submenu it opened. Other-entry hover, action selection, Esc and outside dismissal retain their existing behavior.

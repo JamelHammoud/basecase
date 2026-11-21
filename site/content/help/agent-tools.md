@@ -103,7 +103,7 @@ For `add_sourced_item`, `supplierIdentity` keeps the supplier name, exact suppli
 | `get_rig` | Lists joints, authored tendon coefficients, poses and animations |
 | `pose` | Poses the robot without changing parts |
 | `animate` | Makes keyframes or a walking gait |
-| `retarget_motion` | Turns BVH motion capture into an animation, with public URL downloads up to 8 MB |
+| `retarget_motion` | Turns BVH motion capture into an animation. Public URL downloads can be up to 8 MB. |
 | `import_robot` | Inserts a published URDF or MJCF robot |
 | `make_leader` | Makes a leader arm you move by hand, in a new scene tab |
 | `wrap_robot` | Wraps a robot in an imported mesh, cut into printed shells |

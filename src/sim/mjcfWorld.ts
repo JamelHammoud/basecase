@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { validateWorldFixtures } from '../cases/fixtureValidation';
+import { validatePeople } from '../cases/personEncounter';
+import { personShapes } from '../cases/personGeometry';
 import { partMatrix } from '../utils/kinematics';
 import { partEdges } from '../utils/partEdges';
 import { quatToMj, toMj } from './mjcfFrames';
@@ -91,6 +93,14 @@ function hullShape(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffse
 function worldGeom(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffset: number): string {
   const name = `wg_${safeId(item.id)}`;
 
+  if (item.person)
+    return personShapes([item.dimensions.width, item.dimensions.height, item.dimensions.depth])
+      .map(
+        (shape) =>
+          `<geom name="${esc(name)}_${shape.name}" type="box" pos="${vec(toMj(shape.center))}" size="${vec([shape.size[0] / 2000, shape.size[2] / 2000, shape.size[1] / 2000])}" ${geomAttrs(item)}/>`,
+      )
+      .join('\n');
+
   if (item.collisionHulls)
     return item.collisionHulls
       .map((vertices, i) => {
@@ -140,6 +150,7 @@ export function emitWorld(input: MjcfInput, assetOffset: number): WorldEmit {
   const items = input.world ?? [];
 
   validateWorldFixtures(items);
+  validatePeople(items);
 
   const names = new Map(items.map((item, i) => [item.id, `w${i}_${safeId(item.id)}`]));
   const children = new Map<string | undefined, WorldItem[]>();
@@ -155,7 +166,15 @@ export function emitWorld(input: MjcfInput, assetOffset: number): WorldEmit {
     const name = names.get(item.id)!;
     const geom = worldGeom(item, input, out, assetOffset);
     const mocap = item.movable && item.behavior !== 'dynamic';
-    const moves = item.movable ? { moves: { kind: mocap ? 'mocap' : 'free', rotation: item.rotation } as const } : {};
+    const moves = item.movable
+      ? {
+          moves: {
+            kind: mocap ? 'mocap' : 'free',
+            rotation: item.rotation,
+            ...(item.person ? { person: structuredClone(item.person) } : {}),
+          } as const,
+        }
+      : {};
     const position = item.position.map((n, i) => n - (parent?.position[i] ?? 0)) as [number, number, number];
     const joint = jointXml(item);
 

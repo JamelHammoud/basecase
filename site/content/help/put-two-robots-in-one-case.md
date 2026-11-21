@@ -32,7 +32,7 @@ This handoff needs arms without ideal tendon transmissions. Its reference moves 
 
 ![Both gripper arms with a block on the floor and a destination spot](/help/put-two-robots-in-one-case/case.png)
 
-The second arm faces the first. The block has room for each gripper to hold a separate end, and its width fits both jaw openings. Each arm keeps the size and weight of the robot in its tab. If you edit the second arm there, the next try uses the change.
+The second arm faces the first. The block has room for each gripper to hold a separate end, and its width fits both jaw openings. Each arm keeps the size and weight of the robot in its tab. Changes to either arm take effect on the next try. Finish recording before editing either arm, because changes prevent the running try from being saved.
 
 6. In the **Simulate** tab, click **Try It**.
 

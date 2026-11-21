@@ -3,6 +3,8 @@ import { geometryWorker } from '../three/geometryWorker';
 import { partEdges } from '../utils/partEdges';
 
 function needsHull(part: WorldItem): boolean {
+  if (part.person) return false;
+
   if (part.convexVertices || part.collisionHulls) return false;
 
   return !!(

@@ -46,6 +46,18 @@ export function setRecordedFrame(mj: MainModule, engine: SimEngine, r: Recording
   data.qpos.set(r.qpos.subarray(n * r.nq, (n + 1) * r.nq));
   data.qvel.set(r.qvel.subarray(n * r.nv, (n + 1) * r.nv));
   data.ctrl.set(r.ctrl.subarray(n * r.nu, (n + 1) * r.nu));
+
+  engine.sim.bodies.forEach((body, index) => {
+    if (body.moves?.kind !== 'mocap') return;
+
+    const id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY.value, body.name);
+    const mocap = model.body_mocapid[id];
+    const offset = (n * r.nbody + index) * 7;
+
+    data.mocap_pos.set(r.poses.subarray(offset, offset + 3), mocap * 3);
+    data.mocap_quat.set(r.poses.subarray(offset + 3, offset + 7), mocap * 4);
+  });
+
   primeRecordedHistory(mj, engine, r);
   mj.mj_forward(model, data);
 

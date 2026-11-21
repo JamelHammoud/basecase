@@ -1179,3 +1179,9 @@ Review traced conversion through the shared part menu, command palette, progress
 The existing browser walkthroughs now exercise both palette and right-click entry points. The depth walkthrough resizes the Inspector to its supported 290 px minimum and measures the Thickness label, entered value and unit for overlap. It checks the shared 32 px input height and Escape restoring the prior value. Browser execution remains with CI. The changelog names the entry points without walking through the controls. No deadline, retry, quarantine or existing assertion was weakened.
 
 The review's ten-file changed check passed formatting, lint, documentation, all 356 site pages, types and 47 related tests across seven files. The log is `scratch/review-1969-final-check.log`. No browser test was executed locally.
+
+### Recovery Thickness measurement correction
+
+The pull request's Linux changed-browser run failed the Thickness label separation assertion with labelRight 1182 and valueLeft 1182. The helper selected the first span whose text was T, which was the outer Tooltip span. Its range enclosed the padded scrub handle rather than only the label text. The input begins at that wrapper's right edge, so the measurement counted the handle's intentional trailing padding as label ink. The helper now selects the text-bearing leaf span before measuring its contents. The four-pixel label and unit separation assertions, 32 px height, minimum Inspector width and Escape assertion remain unchanged.
+
+That run passed scene-file reopening and scene-switch cancellation. Its aggregate check failed because changed-browser execution failed, with the required jobs and copy job successful. The browser log also reported preview-server teardown timing out after assertion failure. This correction does not claim to diagnose that separate cleanup observation. Local browser execution remains deferred to CI under the lane contract.

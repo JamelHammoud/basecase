@@ -21,7 +21,7 @@ export async function assertRecoveryThicknessLayout(page: Page) {
   const bounds = await input.evaluate((element) => {
     const field = element as HTMLInputElement;
     const spans = [...field.parentElement!.querySelectorAll('span')];
-    const label = spans.find((span) => span.textContent === 'T')!;
+    const label = spans.find((span) => span.textContent === 'T' && span.childElementCount === 0)!;
     const unit = spans.find((span) => span.textContent === 'mm')!;
     const range = document.createRange();
 

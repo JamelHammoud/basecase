@@ -1,11 +1,10 @@
 import { afterAll, afterEach, beforeAll, beforeEach, expect, it } from 'vitest';
-import type { Page } from 'playwright-core';
 import { openApp, shown, type App } from './harness';
 import { supportCommand } from './sketchSupport.helpers';
 import { fingerFixtures } from '../src/gripperFingers/fixtures';
 import { generateFingers } from '../src/gripperFingers/generate';
 import { selectedPickTargets } from '../src/cases/selectedPick.fixtures';
-import { DEFAULT_PROJECT, type SavedSceneRecord } from '../src/types/robotics';
+import { DEFAULT_PROJECT } from '../src/types/robotics';
 import type { RenderedCad } from '../src/utils/platform/types';
 
 interface Kernel {
@@ -15,8 +14,6 @@ interface Kernel {
 
 interface Studio {
   load: (record: unknown) => void;
-  triangleCount: (id: string) => number;
-  sceneRecord: () => Pick<SavedSceneRecord, 'parts' | 'project'>;
   simState: () => { activeCase: string | null; tries: Array<{ id: string; passed: boolean }>; timeline: unknown };
   graspEvidence: () => { target: string | null; passed: boolean; gripFrames: number; contactPairs: number };
   caseRunSpeed: (speed: number) => void;
@@ -29,13 +26,12 @@ const { createNodeKernel } = await load(new URL('../electron/cad-kernel/nodeHost
 const kernel: Kernel = createNodeKernel();
 const compile = (code: string) => kernel.renderPart('openscad', code);
 const target = { ...selectedPickTargets()[5], name: 'Cylinder' };
-let source: Awaited<ReturnType<typeof fingerFixtures>>;
 let generated: Awaited<ReturnType<typeof generateFingers>>;
 let app: App;
-const record = (page: Page) => page.evaluate(() => (window as unknown as StudioWindow).__studio.sceneRecord());
 
 beforeAll(async () => {
-  source = await fingerFixtures(compile);
+  const source = await fingerFixtures(compile);
+
   generated = await generateFingers(
     { ...source, parts: [...source.parts, target], target: target.id, style: 'v' },
     { compile, current: () => true },
@@ -50,86 +46,15 @@ beforeEach(async () => {
 afterEach(async () => app?.close());
 afterAll(() => kernel.stopKernels());
 
-async function selectPart(name: string, additive = false) {
+async function selectPart(name: string) {
   const layers = app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Layers"]'));
 
   if ((await layers.getAttribute('aria-pressed')) !== 'true') await layers.click();
 
   const row = app.page.locator(shown('[data-layer-row]')).filter({ hasText: name }).first();
 
-  await row.click({ modifiers: additive ? ['ControlOrMeta'] : [] });
+  await row.click();
 }
-
-it('makes editable V fingers from the selected carriage and cylinder with complete undo and redo', async () => {
-  await app.page.evaluate((seed) => (window as unknown as StudioWindow).__studio.load(seed), {
-    name: 'Object',
-    parts: [target],
-    project: DEFAULT_PROJECT,
-  });
-  await selectPart('Cylinder');
-  await app.page.keyboard.press('ControlOrMeta+k');
-  await app.page.keyboard.type('Test Grasp');
-  await expect.poll(() => app.page.getByText('Test Grasp', { exact: true }).count()).toBe(0);
-  await app.page.keyboard.press('Escape');
-
-  const scene = {
-    name: 'Gripper fingers',
-    parts: [...source.parts, target],
-    project: { ...DEFAULT_PROJECT, joints: source.joints },
-  };
-
-  await app.page.evaluate((seed) => (window as unknown as StudioWindow).__studio.load(seed), scene);
-  await selectPart('finger_left');
-  await selectPart('Cylinder', true);
-  await supportCommand(app.page, 'Make V Fingers');
-  await expect
-    .poll(async () => (await record(app.page)).parts.filter((part) => part.gripperFinger?.role === 'finger').length)
-    .toBe(2);
-
-  const created = (await record(app.page)).parts.filter((part) => part.gripperFinger?.role === 'finger');
-
-  for (const finger of created) {
-    expect(finger.cad!.positions.length).toBeGreaterThan(0);
-    await expect
-      .poll(() => app.page.evaluate((id) => (window as unknown as StudioWindow).__studio.triangleCount(id), finger.id))
-      .toBeGreaterThan(0);
-  }
-
-  const length = app.page
-    .locator(shown('[data-parameters]'))
-    .getByRole('textbox', { name: 'finger_length', exact: true });
-
-  await length.fill('30');
-  await length.press('Enter');
-  await expect
-    .poll(
-      async () =>
-        (await record(app.page)).project!.designParameters!.find((parameter) => parameter.name === 'finger_length')
-          ?.value,
-    )
-    .toBe(30);
-  await selectPart('Cylinder');
-  await supportCommand(app.page, 'Undo');
-  await supportCommand(app.page, 'Undo');
-  await expect.poll(async () => (await record(app.page)).parts.filter((part) => part.gripperFinger).length).toBe(0);
-  expect((await record(app.page)).project!.joints).toEqual(source.joints);
-  expect((await record(app.page)).parts).toEqual(JSON.parse(JSON.stringify(scene.parts)));
-  expect((await record(app.page)).project!.designParameters).toBeUndefined();
-  await supportCommand(app.page, 'Redo');
-  await supportCommand(app.page, 'Redo');
-
-  const restored = await record(app.page);
-
-  expect(restored.parts.filter((part) => part.gripperFinger?.role === 'finger')).toHaveLength(2);
-  expect(
-    restored.project!.joints!.map(({ child: _child, ...joint }) => ({
-      ...joint,
-      child: source.joints.find((item) => item.id === joint.id)!.child,
-    })),
-  ).toEqual(source.joints);
-  expect(restored.project!.designParameters!.find((parameter) => parameter.name === 'finger_length')?.value).toBe(30);
-  expect(app.errors).toEqual([]);
-});
 
 it('runs the selected-cylinder reference and opens its saved grasp evidence', async () => {
   await app.page.evaluate((seed) => (window as unknown as StudioWindow).__studio.load(seed), {

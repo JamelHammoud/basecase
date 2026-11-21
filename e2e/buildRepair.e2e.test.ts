@@ -141,6 +141,7 @@ it(
         .toBe(1);
       await app.page.getByRole('button', { name: 'Done', exact: true }).click();
       await app.page.getByRole('button', { name: 'Arm 2', exact: true }).click();
+      await app.page.locator(`[data-frozen-build="${second.id}"]`).waitFor();
       expect(await selectedBuild(app.page)).toEqual(second);
       expect(app.errors).toEqual([]);
     } finally {

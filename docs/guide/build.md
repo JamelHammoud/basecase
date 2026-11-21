@@ -715,6 +715,8 @@ Printed-copy choices show the plate and copy number with the shared `dayLabel` a
 
 ### Repair one retained build
 
+The repair browser walkthrough waits for the exact destination build's `data-frozen-build` view before reading its history after switching units. A row click starts asynchronous retained-Kit loading and does not establish an open session.
+
 Builds opens Repair Build for the selected build UUID. Target revision selects the current design or a retained effective Kit. Current design preparation uses the existing Kit worker and guard, including captured geometry and current Checks. Compare freezes that selection. Start Repair repeats worker planning and validates the scene, selected build, target hash and build state before publication. Names never establish part identity.
 
 `kit/buildRepairComparison.ts` compares stable part ids, exact mesh coordinates and indices, component variants, placement, manufacturing declarations, relationships, wiring and joints. Added, removed and duplicate identities remain unresolved. Names, root or nested visual finishes, and notes alone need no physical replacement. Changed finishes are reported as appearance differences and remain visible in the target revision. Print quantities and plate layout leave individual demand unchanged. Geometry, catalog identity, material and guide letters require exact target compatibility. Changes to infill, process or explicit resting faces are refused because current copy evidence cannot establish those requirements.

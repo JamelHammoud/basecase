@@ -76,7 +76,8 @@ function contactProbe(probe: CaseProbe, world: ProbeWorld) {
   const hand = typeof probe.from === 'object' && 'effector' in probe.from ? probe.from.effector : null;
   const object = objectEnd(probe.to);
   const effector = hand ? world.effectors?.[hand] : world.effector;
-  const carrier = world.model.bodies.find((body) => body.parts.includes(effector?.part ?? ''));
+  const part = probe.from === 'base' ? world.basePart : effector?.part;
+  const carrier = world.model.bodies.find((body) => body.parts.includes(part ?? ''));
   const jaws = hand ? (world.grippers?.[hand] ?? []) : (Object.values(world.grippers ?? {})[0] ?? []);
   const own = world.model.bodies.flatMap((body, index) => {
     const belongs = probe.kind === 'grip' ? jaws.includes(body.joint ?? '') : body.robot === carrier?.robot;

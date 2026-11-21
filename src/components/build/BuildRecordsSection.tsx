@@ -12,10 +12,11 @@ import {
   FieldRow,
 } from '../../design-system';
 import { localBuilds, type BuildSummary } from '../../kit/buildRecords';
-import { frozenClient } from '../../kit/frozenClient';
+import { BuildRepairFleet } from './BuildRepairFleet';
+import { BuildRepairSection } from './BuildRepairSection';
+import { prepareFrozenBuild } from '../../workspace/prepareFrozenBuild';
 import { errorMessage } from '../../utils/errorMessage';
 import { useLatestRef } from '../../utils/useLatestRef';
-import { kitGuard, prepareKit } from '../../workspace/kitExport';
 import type { WorkspaceCore } from '../../workspace/useWorkspaceCore';
 import { FrozenBuildFindings } from './FrozenBuildFindings';
 import { BuildAllocations } from './BuildAllocations';
@@ -46,25 +47,12 @@ export function BuildRecordsSection({ core }: { core: WorkspaceCore }) {
     if (abort.current) return;
 
     const controller = new AbortController();
-    const run = { signal: controller.signal, current: () => current.current, assemblyOnly: true };
-    const guard = kitGuard(core, run);
-    const client = frozenClient();
 
     abort.current = controller;
     setBusy(true);
-    controller.signal.addEventListener('abort', client.dispose, { once: true });
 
     try {
-      const job = await prepareKit(core, run);
-      const meshes = await core.viewportRef.current!.printMeshes(
-        job.parts.filter((part) => part.role === 'solid').map((part) => part.id),
-      );
-
-      guard();
-
-      const content = await client.call('prepare', { job, meshes });
-
-      guard();
+      const { content } = await prepareFrozenBuild(core, controller.signal, () => current.current);
 
       const names = Array.from({ length: quantity }, (_, index) =>
         quantity === 1 ? name : `${name.slice(0, 110)} ${index + 1}`,
@@ -76,8 +64,6 @@ export function BuildRecordsSection({ core }: { core: WorkspaceCore }) {
     } catch (error) {
       if (!controller.signal.aborted) fail(error);
     } finally {
-      controller.signal.removeEventListener('abort', client.dispose);
-      client.dispose();
       abort.current = null;
       setBusy(false);
     }
@@ -119,8 +105,10 @@ export function BuildRecordsSection({ core }: { core: WorkspaceCore }) {
           </div>
         ))}
       </div>
+      {buildAlong.frozen && <BuildRepairSection key={buildAlong.frozen.record.id} core={core} records={records} onChanged={() => void localBuilds.list().then(setRecords).catch(fail)} />}
       {buildAlong.frozen && <FrozenBuildFindings kit={buildAlong.frozen.kit} />}
-      {buildAlong.frozen && <BuildAllocations frozen={buildAlong.frozen} onError={fail} />}
+      {buildAlong.frozen && <BuildAllocations key={buildAlong.frozen.record.id} frozen={buildAlong.frozen} onError={fail} />}
+      {buildAlong.frozen?.record.repairs?.at(-1) && <Section title="Fleet" collapsible defaultOpen={false} className="!px-0 !border-b-0"><BuildRepairFleet repair={buildAlong.frozen.record.repairs.at(-1)!} onChanged={() => void buildAlong.openFrozen(buildAlong.frozen!.record.id)} onError={fail} /></Section>}
       <RetainedAllocations builds={records} onError={fail} />
       <Modal
         isOpen={buildAlong.creating}

@@ -56,19 +56,24 @@ export function focusOn(stage: Stage, object: THREE.Object3D | undefined): void 
 
 const HOME_DIRECTION = new THREE.Vector3(165, 135, 175).normalize();
 
-function fitDistance(camera: THREE.PerspectiveCamera, radius: number): number {
+function fitDistance(camera: THREE.PerspectiveCamera, radius: number, maxDistance: number): number {
   const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
   const halfH = camera.aspect > 0 ? Math.atan(Math.tan(halfV) * camera.aspect) : halfV;
   const distance = (radius / Math.sin(Math.min(halfV, halfH))) * 1.15;
 
-  return Math.min(Math.max(distance, 60), MAX_DIST);
+  return Math.min(Math.max(distance, 60), maxDistance);
 }
 
-function framing(camera: THREE.PerspectiveCamera, box: THREE.Box3, direction: THREE.Vector3) {
+export function framing(
+  camera: THREE.PerspectiveCamera,
+  box: THREE.Box3,
+  direction: THREE.Vector3,
+  maxDistance = MAX_DIST,
+) {
   const target = box.getCenter(new THREE.Vector3());
   const radius = Math.max(box.getSize(new THREE.Vector3()).length() / 2, 30);
 
-  return { target, position: target.clone().addScaledVector(direction, fitDistance(camera, radius)) };
+  return { target, position: target.clone().addScaledVector(direction, fitDistance(camera, radius, maxDistance)) };
 }
 
 function partsBox(parts: ScenePart[]): THREE.Box3 | null {

@@ -35,7 +35,7 @@ You can step through a Case try one frame at a time. For each joint, you can see
    - The bottom plot shows its effort in N·m (or N for a sliding joint). The dashed line is the servo's limit.
 
    Red lines mark where the Case's failure checks tripped. When opened from **Results**, the timeline starts at the first one, with its failure name beside the playback controls. Above the joints, a lane splits the try into labeled segments such as reach and idle.
-4. Move the playhead with your keyboard. The robot on the canvas follows it.
+4. Move the playhead with your keyboard. The robot and recorded world objects on the canvas follow it.
    - To move one frame (1/50 s), press [[→]] or [[←]].
    - To move one second, hold [[⇧]] and press [[→]] or [[←]].
    - To go to the start or end, press [[Home]] or [[End]].

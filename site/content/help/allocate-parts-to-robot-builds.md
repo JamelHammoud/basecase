@@ -100,3 +100,5 @@ If you delete a build, you keep its materials assigned. Under **Retained allocat
 ![Rover 1’s motor ownership retained after deleting its saved build](/help/allocate-parts-to-robot-builds/retained.png)
 
 Completing assembly doesn’t release materials or change a Checks verdict. See [Resume a robot build](/help/resume-a-robot-build) to track progress for each build.
+
+During [repair](/help/repair-a-robot-build), **Replacement parts** reserves target components and copies separately. Replaced materials stay held until an explicit return.

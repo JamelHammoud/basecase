@@ -22,6 +22,7 @@ import {
   RulerIcon,
   ScaleIcon,
   ShapesIcon,
+  PhotoIcon,
 } from '../design-system';
 import { keyFor } from '../app/shortcuts';
 
@@ -42,6 +43,20 @@ interface ViewportToolbarProps {
   onAddShape: (item: CatalogItem) => void;
   onSketch: () => void;
   onImportSvg: () => void;
+  onRenderImage: () => void;
+}
+
+function toolbarTools(showSculpt: boolean) {
+  const tools: Array<{ mode: TransformMode; icon: React.ReactNode; label: string; key: string }> = [
+    { mode: 'translate', icon: <MoveIcon className={ICON} />, label: 'Move', key: keyFor('move') },
+    { mode: 'rotate', icon: <RotateIcon className={ICON} />, label: 'Rotate', key: keyFor('rotate') },
+    { mode: 'scale', icon: <ScaleIcon className={ICON} />, label: 'Scale', key: keyFor('scale') },
+    ...(showSculpt
+      ? [{ mode: 'sculpt' as const, icon: <BrushIcon className={ICON} />, label: 'Sculpt', key: keyFor('sculpt') }]
+      : []),
+  ];
+
+  return tools;
 }
 
 export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
@@ -58,22 +73,14 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
   onAddShape,
   onSketch,
   onImportSvg,
+  onRenderImage,
 }) => {
   const shapesRef = useRef<HTMLDivElement | null>(null);
   const [draggingShape, setDraggingShape] = useState(false);
 
-  const tools: Array<{ mode: TransformMode; icon: React.ReactNode; label: string; key: string }> = [
-    { mode: 'translate', icon: <MoveIcon className={ICON} />, label: 'Move', key: keyFor('move') },
-    { mode: 'rotate', icon: <RotateIcon className={ICON} />, label: 'Rotate', key: keyFor('rotate') },
-    { mode: 'scale', icon: <ScaleIcon className={ICON} />, label: 'Scale', key: keyFor('scale') },
-    ...(showSculpt
-      ? [{ mode: 'sculpt' as const, icon: <BrushIcon className={ICON} />, label: 'Sculpt', key: keyFor('sculpt') }]
-      : []),
-  ];
-
   return (
-    <FloatingIsland className="p-1.5 gap-1 rounded-[20px]">
-      {tools.map((t) => (
+    <FloatingIsland className="p-1.5 gap-1 rounded-[20px] flex-wrap justify-center">
+      {toolbarTools(showSculpt).map((t) => (
         <IconButton
           key={t.mode}
           icon={t.icon}
@@ -160,6 +167,13 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           />
         </PopoverMenu>
       </div>
+      <IconButton
+        icon={<PhotoIcon className={ICON} />}
+        title="Render Image"
+        tooltipSide="top"
+        size="lg"
+        onClick={onRenderImage}
+      />
     </FloatingIsland>
   );
 };

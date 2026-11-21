@@ -75,6 +75,8 @@ The frontier marks designs that no other eligible design beats across cost, weig
 
 The Study saves with the scene, and its workers can continue while you edit. Closing the scene or app ends the run. Its results describe the robot when the Study started. Edits to the measured design mark results out of date and disable **Apply**. Visual finish edits keep engineering results current. Camera visibility comparisons also track appearance. Run the Study again to measure those changes.
 
+To compare a required component arrival date, destination and robot quantity, see [Compare purchasing in Study](/help/compare-purchasing-in-study).
+
 For camera poses and lenses over a saved try, see [Compare camera placements](/help/compare-camera-placements). Those comparisons measure visibility without adding Case passes.
 
 **Apply** commits the complete design in one step. Press [[⌘Z]] to undo it. To compare robots with different layouts, see [Compare two robots on a Case](/help/compare-two-robots-on-a-case).

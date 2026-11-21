@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import type { SimEngine } from '../sim/engine';
 import { quatToMj, toMj, worldDeltas } from '../sim/mjcfFrames';
 import { framePoses, Recorder, type RecordedCommand, type Recording } from '../sim/recorder';
-import { WorldMoves } from '../sim/worldMoves';
+import type { WorldMoves } from '../sim/worldMoves';
 import type { WorldEvent } from './worldSet';
 import type { V3 } from '../utils/kinematics';
 import { jitteredWorld, worldRandom } from './caseRandom';
@@ -213,7 +213,7 @@ export async function replayTry(mj: MainModule, source: TryScoring, seed: number
     placeStart(mj, engine, { recording, offsets });
 
     const recorder = new Recorder(engine, controller);
-    const world = new WorldMoves(mj, engine);
+    const world = engine.world;
 
     engine.stepHook = recorder.hook;
     engine.commandHook = recorder.command;

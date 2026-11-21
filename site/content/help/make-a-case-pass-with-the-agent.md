@@ -48,6 +48,6 @@ The agent runs the Case the same way Checks does: 20 runs, each with different f
 
 The agent reads the common failures, each failing seed's number and first failure frame, and the worst run's start, middle and end. It then changes the design, for example a servo, a link length, a wheel or foot size, or the gripper, and runs the Case again.
 
-If neither the robot nor the Case has changed since Checks ran it, the agent gets that result right away. The agent never edits the Case to make it pass. If it can't make the Case pass, it tells you why.
+If neither the robot nor the Case has changed since Checks ran it, the agent gets that result right away. Changes to camera lenses or sensor components also discard that cached result. The agent never edits the Case to make it pass. If it can't make the Case pass, it tells you why.
 
 Instead of using [[⌘K]], you can type `/pass` and the Case's name in the composer yourself. With the Case open, **Make It Pass** appears in [[⌘K]] only while the Case's row is red or amber.

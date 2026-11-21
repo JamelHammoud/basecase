@@ -109,6 +109,7 @@ function designReply(result: StudyResult, row: StudyRow) {
     cost_usd: round(row.costUsd, 2),
     mass_g: Math.round(row.massG),
     metrics: row.metrics,
+    ...(row.purchasing ? { purchasing: row.purchasing } : {}),
     ...(row.visibility ? { visibility: row.visibility } : {}),
     runtime_minutes: row.runtimeMinutes,
     ...(row.runs?.refusal ? { refusal: row.runs.refusal } : {}),
@@ -160,6 +161,15 @@ export function studyReply(record: StudyResult, kase: Case | null) {
     rows: result.rows.map(compactStudyRow),
     knobs: result.knobs,
     seed: result.seed,
+    ...(record.sourcing
+      ? {
+          sourcing: {
+            id: record.sourcing.id,
+            requirements: record.sourcing.requirements,
+            evaluatedAt: record.sourcing.evaluatedAt,
+          },
+        }
+      : {}),
     ...(record.visibility ? { visibility: record.visibility } : {}),
   };
 }

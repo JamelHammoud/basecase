@@ -198,6 +198,7 @@ export interface ViewShot {
 export interface Viewport3DHandle {
   captureScreenshot: (maxSide?: number) => Promise<string>;
   currentView: () => ViewShot;
+  renderPose: () => Record<string, number[]>;
   lookThrough: (shot: Pick<ViewShot, 'position' | 'target'>) => void;
   setCameraPreset: (preset: CameraPreset) => void;
   focusSelected: () => void;

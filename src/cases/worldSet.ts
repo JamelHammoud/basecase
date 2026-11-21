@@ -1,4 +1,5 @@
 import type { V3 } from '../utils/kinematics';
+import type { PersonEncounter } from './personEncounter';
 
 export const WORLD_CALLS_PER_SECOND = 60;
 export const WORLD_REACH_MM = 50_000;
@@ -76,6 +77,7 @@ export function readWorldChange(value: unknown): WorldChange | undefined {
 export interface MovableObject {
   id: string;
   movable?: boolean;
+  person?: PersonEncounter;
 }
 
 export interface CaseWorld {
@@ -87,6 +89,8 @@ export function worldRefusal(objects: readonly MovableObject[], id: string): str
   const object = objects.find((o) => o.id === id);
 
   if (!object) return `${id} isn’t in the Case’s world`;
+
+  if (object.person) return `${id} follows its authored route`;
 
   return object.movable ? null : `${id} isn’t movable`;
 }

@@ -1,3 +1,4 @@
+import { validSourcingRecord } from './sourcingRecord';
 import { validVisibilityResult, validVisibilityRecord } from './visibilityRecord';
 import { validCameraLens } from './cameraChoices';
 import { restoreSavedRuns, validSavedRuns } from './recordRuns';
@@ -144,6 +145,7 @@ function validRecord(value: unknown): value is StudyRecord {
     optionalString(value.caseKey) &&
     validRows(value, value.knobs) &&
     validVisibilityRecord(value) &&
+    validSourcingRecord(value) &&
     finiteTree(value)
   );
 }

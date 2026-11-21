@@ -3,7 +3,7 @@ import { Button, NumberInput, confirmAction } from '../../design-system';
 import type { BuildOwner, ComponentDemand } from '../../kit/allocationTypes';
 import type { Purchases } from '../../types/robotics';
 import { onHandOf } from '../../utils/onHand';
-import { allocatedCount } from '../../../electron/backend/buildAllocations.mjs';
+import { allocatedCount, sameBuildOwner } from '../../../electron/backend/buildAllocations.mjs';
 import { allocatePurchase } from './usePurchases';
 
 export function ComponentAllocation({
@@ -23,7 +23,7 @@ export function ComponentAllocation({
 }) {
   const [quantity, setQuantity] = useState(1);
   const stored = purchases[demand.key];
-  const assigned = stored?.reservations?.find((entry) => entry.build.id === build.id)?.quantity ?? 0;
+  const assigned = stored?.reservations?.find((entry) => sameBuildOwner(entry.build, build))?.quantity ?? 0;
   const available = onHandOf(stored);
   const shortage = Math.max(0, allocatedCount(stored) - (stored?.onHand ?? 0));
   const change = (kind: 'reserve' | 'return') =>

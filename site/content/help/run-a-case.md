@@ -67,4 +67,6 @@ You can run a Case in the whole window, with the layout the Case asks for. The r
 
 You can also go back by picking a view in the rail, or by running any [[⌘K]] command except driving, trying, **Try Reference**, **Add Panel**, **Add Frames**, **Multiply** and the dataset commands.
 
+If a code panel's buttons stop responding, ask the agent to repair its event listeners. See [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).
+
 {{help-hub}}

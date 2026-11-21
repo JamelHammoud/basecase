@@ -17,7 +17,7 @@ export function codeBridgeReference(): string {
 
   return [
     '## Code panel reference',
-    `A code panel is one HTML document, script and style inline, at most ${fileSize(CODE_SOURCE_MAX_BYTES)}, at most ${MAX_CODE_PANELS} per Case. It runs in a sandboxed frame with no network, storage, parent page or navigation; window.basecase is its only way out.`,
+    `A code panel is one HTML document, script and style inline, at most ${fileSize(CODE_SOURCE_MAX_BYTES)}, at most ${MAX_CODE_PANELS} per Case. It runs in a sandboxed frame with no network, storage, parent page or navigation. window.basecase is its only way out. Use addEventListener in source scripts for controls. Inline event attributes, JavaScript URLs, unapproved dynamic scripts and WebRTC are blocked.`,
     `- basecase.signals(names, (values, time) => …) → unsubscribe. names: one name or up to ${MAX_NAMES}, * for one segment. Calls back with { name: number | string[] } at most ${perSecond} times a second, at most ${MAX_SUBSCRIPTIONS} subscriptions.`,
     `  Signals: time; joint.<id>.${or(JOINT_FIELDS)} (degrees or mm, effort in N·m); robot.${or(ROBOT_FIELDS)}; probe.<name>; input.<source>.${or(INPUT_AXES)}; goal.${or(GOAL_FIELDS)} (failed is a list); the console’s own signals.`,
     '- basecase.drive({ v: [forward, left, turn], aux?: [lift, grip], target?: [x, y, z] }) drives the robot: v and aux each −1 to 1; target is a point for an arm’s hand in scene mm, y up. drive(null) lets go. Needs code in the console’s input.',

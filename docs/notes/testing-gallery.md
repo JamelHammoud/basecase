@@ -22,6 +22,22 @@ The overlapping hexapod browser test was removed after taking 39 s in run 436429
 
 The duplicate Run Case sequence was removed after the combined test took 33 s in run 43715791435 ([#1085](https://github.com/JamelHammoud/basecase/issues/1085)).
 
+## Gallery project identity during startup
+
+Pull request #1981's changed-browser job failed all three startup-dependent gallery tests. The rover and shared joystick tests received simulation status `off` instead of `ready`. The shared isolation test found zero probes instead of five because `GalleryConsole` mounts code frames only after simulation becomes ready. The focused isolation and WebRTC files passed all four tests. The aggregate `check` job failed solely because `e2e-changed` failed.
+
+`GalleryStage` constructed a new project on each render. `useSceneModel` aborts pending preparation when its project identity changes. Calling `sim.start()` sets loading state, causing another render with a different project. Its layout effect aborts the pending preparation, and `useSimStart` handles that abort by setting status to `off`. The initial `setWorld` update also rerenders the stage. Neither transition represents a scene edit.
+
+A local Babel transform using the installed React Compiler reported `CompileSuccess` for `GalleryStage`, but its output retained the unconditional project allocation. The compiler therefore did not supply the identity guarantee this startup path requires. Explicit `useMemo` keyed by joints retains the project through simulation state updates while rebuilding it when joints change. The transformed candidate also retains the project by joints identity. Inspection outputs are local scratch artifacts, rather than runtime or timing measurements.
+
+The existing rover and shared joystick walkthroughs cover readiness and real movement. The shared isolation walkthrough requires all five probes through the production web code frame. Their assertions, deadlines, retries and quarantine remain unchanged. Fast named-file checks run locally, with browser execution left to CI. No local browser success or flake-rate measurement is claimed.
+
+### Unsupported panel directive
+
+The subsequent #1981 Check reached the shared joystick walkthrough's movement and HUD assertions. Its final empty-console assertion failed on both attempts with three unsupported `webrtc` CSP directive messages. The other four gallery tests and all four focused isolation probes passed. The aggregate `check` job failed only because `e2e-changed` failed.
+
+The production panel policy now omits the unsupported directive. WebRTC remains blocked by immutable constructor locks and inherited script hash restrictions. The gallery's exact empty-console, movement, speed and no-Hub-request assertions remain unchanged. The focused TURN test retains direct and nested boundaries without the now-duplicate directive variant. [Case code evidence](testing-case-code.md#unsupported-webrtc-directive-removal) records the security coverage and CI execution limits.
+
 ## Leagues
 
 Review found that browser replay passed no mesh files into `headlessParts`, which awaited only supplied file keys. Catalog components could therefore be measured as placeholder boxes while their downloads ran. Replay now loads all referenced catalog meshes before building or measuring and refuses a failed download. The real replay test compares browser-fetched geometry with adjudication-supplied geometry and exercises a failed model download.

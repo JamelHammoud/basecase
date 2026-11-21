@@ -70,3 +70,5 @@ The agent can't read a try while the Case is running, because reading it would r
 If you moved, resized or added panels yourself, the agent keeps your layout when it changes the app. See [Arrange a Case's console](/help/arrange-a-case-console).
 
 To learn about the panels a Case can show and how a code panel reaches the robot, see [Run a Case](/help/run-a-case).
+
+Code panels block WebRTC and unapproved scripts, including scripts inside nested frames. If a button uses an inline click attribute, ask the agent to replace it with an event listener in a source script.

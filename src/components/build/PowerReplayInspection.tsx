@@ -1,4 +1,5 @@
-import { confirmAction, DeleteIcon, ErrorBoundary, IconButton, Modal, TracePlot } from '../../design-system';
+import { useEffect } from 'react';
+import { confirmAction, DeleteIcon, ErrorBoundary, IconButton, Modal, Spinner, TracePlot } from '../../design-system';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { PowerReplayFields } from './PowerReplayFields';
 import { PowerReplayResult } from './PowerReplayResult';
@@ -6,20 +7,44 @@ import { setPowerReplayOpen, usePowerReplayOpen } from './powerReplayDialog';
 import { usePowerReplay } from './usePowerReplay';
 
 interface Props {
+  active: boolean;
+  sceneId: string;
   parts: ScenePart[];
   project: ProjectSettings;
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
   onSelectParts: (ids: string[]) => void;
 }
 
+const isBusy = (replay: ReturnType<typeof usePowerReplay>) => replay.running || !(replay.loaded || replay.error);
+
+function deleteReplayAction(props: Props, running: boolean) {
+  if (!props.project.powerReplay) return null;
+
+  return (
+    <IconButton
+      title="Delete"
+      variant="danger"
+      icon={<DeleteIcon />}
+      disabled={running}
+      onClick={() =>
+        confirmAction({
+          title: 'Delete current replay?',
+          onConfirm: () => props.onChangeProject({ powerReplay: undefined }),
+        })
+      }
+    />
+  );
+}
+
 function ReplayBody(props: Props) {
   const replay = usePowerReplay(props);
   const { loaded, error, running } = replay;
+  const busy = isBusy(replay);
   const retained = props.project.powerReplay;
   const trace = loaded?.inspection.trace;
   const close = () => {
     replay.cancel();
-    setPowerReplayOpen(false);
+    setPowerReplayOpen(null);
   };
 
   return (
@@ -28,31 +53,17 @@ function ReplayBody(props: Props) {
       onClose={close}
       title="Current replay"
       maxWidth="max-w-[640px]"
-      footerStart={
-        retained && (
-          <IconButton
-            title="Delete"
-            variant="danger"
-            icon={<DeleteIcon />}
-            disabled={running}
-            onClick={() =>
-              confirmAction({
-                title: 'Delete current replay?',
-                onConfirm: () => props.onChangeProject({ powerReplay: undefined }),
-              })
-            }
-          />
-        )
-      }
+      headerActions={busy && <Spinner />}
+      footerStart={deleteReplayAction(props, running)}
       action={{
         label: retained ? 'Compare' : 'Replay',
         disabled: running || !loaded?.applicable,
         onClick: () => void replay.run(),
       }}
     >
-      <div className="space-y-4">
+      <div className="space-y-4" aria-busy={busy}>
         {error && (
-          <p role="alert" className="text-[13px] text-white/60">
+          <p role="alert" className="text-[13px] text-red-400">
             {error}
           </p>
         )}
@@ -99,10 +110,14 @@ function ReplayBody(props: Props) {
 }
 
 export function PowerReplayInspection(props: Props) {
-  const open = usePowerReplayOpen();
+  const open = usePowerReplayOpen(props.sceneId);
 
-  return open ? (
-    <ErrorBoundary region="Current replay" onClose={() => setPowerReplayOpen(false)}>
+  useEffect(() => {
+    if (open && !props.active) setPowerReplayOpen(null);
+  }, [open, props.active]);
+
+  return open && props.active ? (
+    <ErrorBoundary region="Current replay" onClose={() => setPowerReplayOpen(null)}>
       <ReplayBody {...props} />
     </ErrorBoundary>
   ) : null;

@@ -2,6 +2,7 @@ import { expect, it } from 'vitest';
 import { importReplayScene, inspectCurrent, openBuildReplay, enterReplayResistance } from './powerReplayFlow';
 import { openApp } from './harness';
 import { assertReplayBuildLayout, assertReplayFields, assertReplayResults } from './powerReplayLayout';
+import { mountOtherBuildTab, assertReplayTabDismissal } from './powerReplayTabs';
 
 it(
   'replays modeled current from Build, selects its limiting endpoint and compares an edited resistance',
@@ -14,8 +15,10 @@ it(
 
       await assertReplayBuildLayout(app.page);
 
+      const tabs = await mountOtherBuildTab(app.page);
       const dialog = await openBuildReplay(app.page);
 
+      expect(await dialog.count()).toBe(1);
       await enterReplayResistance(dialog, fixture);
       await assertReplayFields(dialog);
       await dialog.getByRole('button', { name: 'Replay', exact: true }).click();
@@ -41,6 +44,15 @@ it(
       expect(Number(await dialog.locator('[data-replay-comparison]').getAttribute('data-volts'))).toBeLessThan(
         Number(await dialog.locator('[data-replay-result]').getAttribute('data-volts')),
       );
+      await dialog.getByLabel('Source resistance (Ω)').fill('100');
+      await dialog.getByRole('button', { name: 'Compare', exact: true }).click();
+      await expect
+        .poll(async () => Number(await dialog.locator('[data-replay-comparison]').getAttribute('data-volts')))
+        .toBeLessThan(0);
+      expect(await dialog.locator('[data-replay-comparison]').innerText()).toMatch(/^−[\d.]+ V$/);
+      expect(await dialog.getByText(/^−[\d.]+ V at /).count()).toBe(1);
+      expect(await dialog.getByRole('alert').innerText()).toMatch(/^Model limit at /);
+      await assertReplayTabDismissal(app.page, tabs);
       expect(app.posts.filter((p) => p.route.startsWith('robot-'))).toEqual([]);
       expect(await app.page.locator('[data-check="Electrical connections"]:visible').getAttribute('data-status')).toBe(
         'fail',

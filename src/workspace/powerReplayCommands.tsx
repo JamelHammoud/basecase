@@ -14,7 +14,7 @@ export function powerReplayCommands({ core }: CommandInputs) {
       keywords: 'electrical voltage resistance replay motor load current',
       run: () => {
         core.tool.openRightTab('build');
-        setPowerReplayOpen(true);
+        setPowerReplayOpen(core.scene.sceneId);
       },
     },
   ];

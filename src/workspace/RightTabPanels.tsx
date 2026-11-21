@@ -80,6 +80,7 @@ function BuildTab({ core, agent, actions }: RightTabPanelsProps) {
 
   return (
     <BuildPanel
+      active={core.active}
       builds={<BuildRecordsSection core={core} />}
       onDefineBoard={() => void actions.board.define()}
       cableRoutes={core.cableRoutes}

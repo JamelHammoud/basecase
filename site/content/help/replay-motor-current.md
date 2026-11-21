@@ -39,9 +39,7 @@ You can replay one DC source and paired cable trees. You can't use replay with r
 
 ![The resistance comparison selects the pan-tilt motor and overlays its endpoint voltage](/help/replay-motor-current/compare.png)
 
-Or press [[⌘K]] and choose **Inspect Current**.
-
-Reopen the inspection to reproduce its retained inputs.
+Reopen the inspection to reproduce its retained inputs. Switching scenes closes the inspection and keeps the saved runs.
 If you edit the wiring or source, you keep the old result as historical evidence and can no longer compare results.
 
 ![Historical current replay preserves the original result after a wiring edit](/help/replay-motor-current/historical.png)
@@ -49,7 +47,10 @@ If you edit the wiring or source, you keep the old result as historical evidence
 To start again after electrical edits:
 
 9. In the inspection footer, click **Delete**.
-10. In the confirmation, click **Delete** to clear the retained runs and enter declarations for a new replay.
+10. In the confirmation, click **Delete** to clear the retained runs.
+
+Repeat steps 2–6 to replay current inputs.
+Or press [[⌘K]] and choose **Inspect Current** to open the inspection.
 
 You can't establish resistance from cable length. If you enter zero, document evidence for that model assumption.
 You keep the recorded window interval, but can't determine sub-window brownouts or switching transients from the replay.

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { negative } from '../../../electron/minus.mjs';
 import { Button, FieldRow, Select, Slider, TracePlot } from '../../design-system';
 import type { PowerReplayRecord } from '../../wiring/powerReplayTypes';
 import type { ScenePart } from '../../types/robotics';
@@ -12,6 +13,7 @@ interface Props {
 }
 
 const replayTime = (sample: number, windowS: number) => `${Number((sample * windowS).toPrecision(8))} s`;
+const replayVolts = (value: number) => negative(value, (magnitude) => magnitude.toFixed(3));
 
 export function PowerReplayResult({ baseline, comparison, parts, onSelectParts }: Props) {
   const latest = comparison ?? baseline;
@@ -45,7 +47,7 @@ export function PowerReplayResult({ baseline, comparison, parts, onSelectParts }
           data-trace={trace}
           className="tabular-nums"
         >
-          {baseline.result.limiting.volts.toFixed(3)} V
+          {replayVolts(baseline.result.limiting.volts)} V
         </p>
       </FieldRow>
       {comparison && (
@@ -56,12 +58,12 @@ export function PowerReplayResult({ baseline, comparison, parts, onSelectParts }
             data-trace={comparison.traceFingerprint}
             className="tabular-nums text-figma-blue"
           >
-            {limit.volts.toFixed(3)} V
+            {replayVolts(limit.volts)} V
           </p>
         </FieldRow>
       )}
       {latest.result.limit && (
-        <p role="alert" className="text-white/60">
+        <p role="alert" className="text-red-400">
           Model limit at {replayTime(latest.result.limit.sample, latest.trace.windowS)}: {latest.result.limit.reason}
         </p>
       )}
@@ -86,7 +88,7 @@ export function PowerReplayResult({ baseline, comparison, parts, onSelectParts }
         min={0}
         max={Math.max(1, endpoint.volts.length - 1)}
         onChange={(index) => setSample(Math.min(index, endpoint.volts.length - 1))}
-        format={(index) => `${endpoint.volts[index]?.toFixed(3)} V at ${replayTime(index, latest.trace.windowS)}`}
+        format={(index) => `${replayVolts(endpoint.volts[index])} V at ${replayTime(index, latest.trace.windowS)}`}
       />
       {channel && (
         <TracePlot

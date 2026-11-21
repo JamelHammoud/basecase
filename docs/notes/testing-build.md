@@ -1373,3 +1373,11 @@ Reopening now verifies that a comparison shares the baseline's source and trace 
 The two existing replay browser declarations now cover minimum-width action order, measured label and input bounds, wrapped cable text, keyboard selection of the 26 ms window, cancelled deletion preserving evidence, confirmed deletion and replay after a routing edit. Assertions use the real Import and Build controls. Browser execution remains with CI. Existing article images still illustrate their named baseline, comparison and historical states.
 
 The review's final 17-file changed check passed formatting, lint, types, documentation, all 360 site pages and 84 related tests across 17 files. The test phase took 3.41 seconds locally. No browser walkthrough ran in this review.
+
+### Replay scene ownership and voltage labels
+
+The next review traced `Studio.TabWorkspace`: inactive scene workspaces remain mounted, and the replay Modal portals to `document.body`. The global boolean replay flag therefore opened sheets in every mounted Build panel, beyond the inactive workspace's inert DOM subtree. The flag now identifies its owning scene. Inactive scenes cannot render replay, and switching away clears the owning scene's open request and disposes its worker.
+
+The existing first replay browser declaration now mounts a second Build workspace before opening inspection and asserts exactly one replay sheet. It then switches away and back while inspection is open and requires the sheet to remain dismissed. A further resistance comparison crosses the voltage model boundary and checks its alert and that both the comparison and selected-sample labels use the true minus sign. The production shared formatter also removes a negative sign when the displayed value rounds to zero. Loading and replay use a spinner with an accessible busy state. Errors and model-limit alerts use the specified error tone. These assertions are declared for CI, without local browser execution, new retries or changed deadlines.
+
+The final eleven-file changed check passed formatting, lint, documentation, TypeScript, all 364 site pages and 21 related tests across nine files. The related test phase took 968 ms. Its log is `scratch/review-1973-verified.log`. No browser walkthrough ran locally.

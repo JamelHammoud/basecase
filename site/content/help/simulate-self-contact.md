@@ -37,6 +37,8 @@ Existing scenes start with self-contact off. If you enable it, you change the ph
 
 You can enable self-contact for a robot with up to 128 links and 1,024 collision pieces. Complex meshes use up to 64 convex pieces each. Surfaces thinner than 1 mm get a 1 mm collider, and small holes can close.
 
+[Replacement gripper fingers](/help/design-gripper-fingers) use three collision pieces per flat finger and seven per V finger, preserving the gripping recess. Their mounting bores are filled in the collision model. The exported manufacturing meshes keep the bores. These finger pieces also handle object contact with self-contact off.
+
 If links overlap by more than 0.5 mm at the start, preparation stops and names the links. Preparation stops if collision geometry is missing. Ask the agent for a specific link-pair exclusion if a supported assembly needs one.
 
 For desktop training, you can fall back to native MuJoCo for this model. You can't use its contact exclusions in browser training.

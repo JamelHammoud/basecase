@@ -1289,3 +1289,8 @@ The seven covered-help reminders were checked again against the final diff from 
 - `troubleshoot-build-slicing-fails.md`: production recording follows the existing slice and send operations in `usePrintFleet.ts`. Slicer discovery, profile selection, send eligibility and the documented recovery messages are unchanged. No step on this page assigns printed copies or reconciles historical quantities.
 
 The diff changes none of the image assets referenced by these seven pages. Their captions describe the retained controls rather than the new allocation dialog. This follow-up is a source and documentation consistency check, without a new browser capture or a claim of browser execution.
+## Replacement-finger outputs
+
+The ten-target attachment matrix uses native OpenSCAD carriers and replacement fingers. It runs the ordinary part soup, measurements, Print plan, actual 3MF writer, drawing preparation, reconciled Kit manifest and ZIP producer. Every case retains two separate finger part ids with quantity one and purchases four M3 × 16 screws, four washers and four nuts. Both flat and V-shaped profiles occur in the matrix. All ten manufacturing rows passed locally in `scratch/finger-matrix-3.log`. This is generated-file evidence, not evidence from a printer or an assembled physical gripper.
+
+The final manufacturing matrix uses the same rotated grippers, alternate supplied mounting dimensions and 21/22 mm travel as the physical matrix. Each finger appears exactly once in packing identities, with matching row quantities and one native manufacturing output. All ten rows passed in `scratch/finger-matrix-final.log`, alongside the 20 physical rows and both runtime-alias boundary tests. The ordinary recipe catalog also requires both native bore ports.

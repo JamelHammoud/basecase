@@ -36,7 +36,7 @@ You don't write a model file. Each time you start a simulation, Basecase writes 
 
 - **Bodies.** Each joint gets one body, which holds the parts that joint moves. A robot that walks or rolls floats free, while an arm stays bolted to the floor.
 - **Mass.** Link weights and terminal payloads include the active body fit, as in the Build tab's Weight check.
-- **Shape.** Each part collides as the convex hull of its mesh, the shape you'd get by stretching plastic wrap around the part.
+- **Shape.** A part's default collider is the convex hull of its mesh, like plastic wrap stretched around it. Generated gripper fingers use separate pieces to keep gripping recesses open.
 - **Transmission.** Authored ideal tendons connect catalog motor spools to passive joints through a length constraint or declared elastic law.
 - **Start.** The robot starts in the pose shown on the canvas, raised until it clears the floor.
 

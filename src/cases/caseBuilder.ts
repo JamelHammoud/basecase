@@ -30,6 +30,7 @@ import { topOf } from './terrain';
 import { CASE_FORMAT_VERSION, parseCase, type Case, type ReferenceCommand, type WorldObject } from './schema';
 import { dotSpots } from './dotSpots';
 import { CaseFileError } from './validate';
+import { selectedPickProblem } from './selectedPick';
 import {
   importedPlacement,
   importedScenery,
@@ -39,6 +40,7 @@ import {
 } from './importedWorld';
 
 export interface CaseSpec {
+  pickTarget?: ScenePart;
   fixture?: CustomModelDefinition;
   goal: GoalKind;
   world: WorldKind;
@@ -231,6 +233,12 @@ const footprintHits = (o: WorldObject, robot: BuilderRobot) =>
   Math.abs(o.position[2] - robot.pivot[2]) < (o.size[2] + robot.footprint.depth) / 2;
 
 function choose(spec: CaseSpec, robot: BuilderRobot): { goal: CaseGoal; world: CaseWorld } | string {
+  const pickProblem = spec.pickTarget && selectedPickProblem(spec.pickTarget, robot);
+
+  if (pickProblem) return pickProblem;
+
+  if (spec.pickTarget && spec.goal !== 'pick') return 'Choose Pick Up a Block for a selected object.';
+
   const goal = goalOf(spec.goal);
   const world = worldOf(spec.world, spec.room, spec.imported);
 
@@ -290,6 +298,7 @@ function caseWorldJson({ spec, world, plan, scenery, robot }: Draft) {
 
   return {
     objects: [...plan.objects, ...scenery, ...(spec.objects ?? [])],
+    ...(spec.pickTarget ? { pickTarget: spec.pickTarget.id } : {}),
     ...(imported ? { imported: { hash: imported.hash, position: importedPlacement(imported, robot) } } : {}),
   };
 }
@@ -324,7 +333,7 @@ function caseJson(draft: Draft): unknown {
 }
 
 export function specValues(spec: CaseSpec, sourceRobot: BuilderRobot): GoalValues | null {
-  const robot = { ...sourceRobot, fixture: spec.fixture, fixtureEdits: spec.values };
+  const robot = { ...sourceRobot, fixture: spec.fixture, fixtureEdits: spec.values, pickTarget: spec.pickTarget };
   const chosen = choose(spec, robot);
   const spots = typeof chosen === 'string' ? [] : spotsOf(spec, chosen, robot);
 
@@ -339,7 +348,7 @@ export function specValues(spec: CaseSpec, sourceRobot: BuilderRobot): GoalValue
 }
 
 export function buildCase(spec: CaseSpec, sourceRobot: BuilderRobot): BuiltCase {
-  const robot = { ...sourceRobot, fixture: spec.fixture, fixtureEdits: spec.values };
+  const robot = { ...sourceRobot, fixture: spec.fixture, fixtureEdits: spec.values, pickTarget: spec.pickTarget };
   const chosen = choose(spec, robot);
   const spots = typeof chosen === 'string' ? chosen : spotsOf(spec, chosen, robot);
 

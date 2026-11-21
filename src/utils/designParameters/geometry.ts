@@ -10,6 +10,8 @@ import type { ParameterGeometryJob } from './transaction';
 import { changedParameterPlan } from './scope';
 import { regenerateParameterBooleans } from './booleanGeometry';
 import { provideMeshFiles } from '../../three/componentMeshes';
+import { refreshFingerHardware } from '../../gripperFingers/assembly';
+import { validateFingerAssembly } from '../../gripperFingers/validation';
 
 function sketchPart(part: ScenePart, values: Record<string, number>): ScenePart {
   const record = part.sketch!;
@@ -98,8 +100,17 @@ export async function regenerateParameterGeometry(job: ParameterGeometryJob): Pr
 
     parts = next;
 
-    if (settled) return parts.filter((part, index) => part !== original[index]);
+    if (settled) return completedGeometry(job, parts, original);
   }
 
   throw new Error('Dimension and support dependencies did not settle.');
+}
+
+function completedGeometry(job: ParameterGeometryJob, parts: ScenePart[], original: ScenePart[]) {
+  const refreshed = refreshFingerHardware(parts);
+  const updated = new Map(refreshed.map((part) => [part.id, part]));
+
+  if (job.fingerContext) validateFingerAssembly(job.fingerContext.map((part) => updated.get(part.id) ?? part));
+
+  return refreshed.filter((part, index) => part !== original[index]);
 }

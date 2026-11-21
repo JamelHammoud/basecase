@@ -12,7 +12,7 @@ import { lengthLabel } from '../utils/size';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
 import { plural } from '../../electron/plural.mjs';
 import { fixtureHinge, type HouseholdKind } from './householdKinds';
-import type { CustomModelDefinition } from '../types/robotics';
+import type { CustomModelDefinition, ScenePart } from '../types/robotics';
 
 export type GoalKind =
   'reach' | 'touch' | 'push' | 'path' | 'walk' | 'pick' | 'handoff' | 'lid' | 'drawer' | 'chest' | HouseholdKind;
@@ -51,6 +51,7 @@ const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
 };
 
 export interface BuilderRobot {
+  pickTarget?: ScenePart;
   fixtureEdits?: Partial<GoalValues>;
   fixture?: CustomModelDefinition;
   rig?: Rig;

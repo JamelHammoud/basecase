@@ -73,6 +73,7 @@ For an Onshape robot, **Assembly** also lists **Fixed Mates** as notes. A cylind
 | Torque estimates | Powered joints with no servo or published torque | A note: the simulation guesses their torque from weight |
 | Servo models | Whether each servo runs on a measured calibration | A note naming the servos that aren't calibrated |
 | Payload | What an arm with powered joints lifts at full reach and close in | Never. It reports the numbers |
+| Finger mounts | Declared replacement fingers, mounting dimensions, stock fasteners and full jaw travel | Unsupported or mismatched interfaces, thin walls, blocked driver access, insufficient opening clearance or motion interference |
 | Joint parts | The parts and actuation each joint declares | A missing part or a passive joint with a motor assigned |
 | Servo alignment | Each servo's output against its joint axis | A servo that doesn't line up with its joint |
 | Joint support | What holds each joint on both sides | A note when a joint is held on one side only |

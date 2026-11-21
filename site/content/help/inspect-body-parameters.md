@@ -33,6 +33,8 @@ Edits to the physical source mark saved results **Out of date**. Visual finishes
 
 ![Historical body evidence remains readable after a source edit](/help/inspect-body-parameters/historical.png)
 
-Beside each parameter, read its units, probes, bounds and scaling. Open **Method** for the saved interval, assumed noise and numerical thresholds.
+Open **Method** for parameter units, probes, bounds and scaling, the saved interval, assumed noise and numerical thresholds.
 
 See [Recorded body parameters](/help/simulation-in-basecase#recorded-body-parameters) for the result labels and limits. To change the body fit, follow [Fit a robot's body from a recorded run](/help/fit-a-robots-body-from-a-recorded-run).
+
+You can also [preview a motion for unresolved body parameters](/help/preview-a-motion-for-unresolved-body-parameters).

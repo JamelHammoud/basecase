@@ -6,6 +6,7 @@ import { endTryAt } from './driveChecks';
 import { personEncounterFixture } from '../src/cases/personEncounters.fixtures';
 import { encodeSceneFile, sharedScene } from '../src/utils/sceneFile';
 import { bytesToBase64 } from '../src/utils/base64';
+import { supportSceneStorage } from './sketchSupport.helpers';
 
 let app: App;
 
@@ -91,6 +92,8 @@ describe('crossing person encounters', () => {
   );
 
   it('reopens a saved Case with its person dimensions, route and delayed start', { retry: 0 }, async () => {
+    await supportSceneStorage(app.page);
+
     const fixture = personEncounterFixture(0);
     const saved = await encodeSceneFile(
       sharedScene({

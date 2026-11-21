@@ -1,3 +1,4 @@
+import { powerReplayCommands } from './powerReplayCommands';
 import { setSupplierOffersOpen } from '../components/build/offerDialog';
 import { cableCommands } from './cableCommands';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
@@ -117,6 +118,7 @@ function supplierOfferCommands({ core }: CommandInputs): Command[] {
 }
 
 export const buildCommands = (inputs: CommandInputs): Command[] => [
+  ...powerReplayCommands(inputs),
   ...supplierOfferCommands(inputs),
 
   ...(inputs.core.cradle?.available

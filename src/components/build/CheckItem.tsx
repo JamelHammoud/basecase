@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { showStress } from '../../strength/fields';
-import { DisclosureRow } from '../../design-system';
+import { Button, DisclosureRow } from '../../design-system';
 import { shownDetail } from '../../readiness/shownDetail';
 import type { CheckSummary, ReadinessFinding } from '../../readiness/types';
 import { CheckIcon } from './CheckIcon';
@@ -12,6 +12,16 @@ import { BoardBuildAction } from './BoardBuildAction';
 
 const boardFor = (check: CheckSummary, context: FindingContext) =>
   check.name === 'Electrical connections' && !context.readOnly ? context.board : undefined;
+
+function currentInspection(name: string, inspect?: () => void) {
+  if (name !== 'Electrical connections' || !inspect) return null;
+
+  return (
+    <Button variant="secondary" onClick={inspect}>
+      Inspect Current
+    </Button>
+  );
+}
 
 export const CheckItem: React.FC<{
   check: CheckSummary;
@@ -28,7 +38,8 @@ export const CheckItem: React.FC<{
   const detail = shownDetail(check, [...blockers, ...notes]);
   const fields = tetherFieldsFor(check.name, context.tether?.tether);
   const board = boardFor(check, context);
-  const hasBody = [board, count, fields.length, detail, check.envelopes?.length].some(Boolean);
+  const inspection = currentInspection(check.name, context.onInspectCurrent);
+  const hasBody = [board, inspection, count, fields.length, detail, check.envelopes?.length].some(Boolean);
   const showDots = context.showDots;
 
   useEffect(() => {
@@ -53,6 +64,7 @@ export const CheckItem: React.FC<{
       {open && hasBody && (
         <div className="pb-1">
           {detail && <p className="pl-[31px] pr-[7px] pb-0.5 text-[12.5px] leading-[17px] text-white/50">{detail}</p>}
+          {inspection}
           {context.tether && fields.length > 0 && <TetherFields fields={fields} control={context.tether} />}
           {board && <BoardBuildAction {...board} />}
           <ul>

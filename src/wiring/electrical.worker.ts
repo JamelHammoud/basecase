@@ -1,3 +1,5 @@
+import { retainPowerReplay, reopenPowerReplay } from './powerReplayRecord';
+import type { PowerReplayRequest, PowerReplayRecord } from './powerReplayTypes';
 import { KIT_MAX_BYTES } from '../kit/limits';
 import { electricalKitFiles } from '../kit/electrical';
 import { acceptBoardRoute } from './boardRouteAcceptance';
@@ -5,7 +7,7 @@ import { prepareBoardRoute } from './boardRoutePreparation';
 import { importRoutedSource, importRoutedText } from './boardRoutedSource';
 import { prepareBoardExport, finishBoardExport } from './boardExportPreparation';
 import { reply, serve } from '../utils/workerRpc';
-import { inspectElectricalInput } from './electricalInspection';
+import { inspectElectricalInput, inspectReplayInput } from './electricalInspection';
 import { timedBoardPlacement } from './boardPlacement';
 import { defineBoard } from './boardDefinition';
 import { boardPreview } from './boardPreview';
@@ -13,6 +15,10 @@ import { electricalPackage } from './electricalPackage';
 import type { ElectricalInput } from './electricalTypes';
 
 serve({
+  inspectReplay: (input: ElectricalInput) => reply(inspectReplayInput(input)),
+  replay: async (input: PowerReplayRequest) => reply(await retainPowerReplay(input)),
+  reopenReplay: async (input: { record: PowerReplayRecord; current: ElectricalInput }) =>
+    reply(await reopenPowerReplay(input.record, input.current)),
   kit: async (input: Parameters<typeof electricalKitFiles>[0]) => {
     const result = await electricalKitFiles(input);
 

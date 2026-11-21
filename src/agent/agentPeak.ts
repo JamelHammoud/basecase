@@ -1,3 +1,4 @@
+import { retainMotorTrace } from '../utils/motorCurrentTrace';
 import { walkPolicy } from '../sim/walkPolicy';
 import type { SimModel } from '../sim/mjcf';
 import type { Simulation } from '../sim/useSimulation';
@@ -76,17 +77,29 @@ export async function walkSim(deps: PeakDeps, { joints: loads, massG, parts }: W
   if (!policy) return `${record.name} has no saved weights. Train it again.`;
 
   try {
+    const currents = walkAmpModels(loads, parts);
     const run = await deps.sim.run({
       seconds: PEAK_SECONDS,
       controller: { kind: 'policy', policy, robot: record.robot },
       pushes: peakShoves((massG / 1000) * 9.81).map((p) => ({ ...p, robot: record.robot })),
       forceLimits: (model) => peakLimits(loads, model),
       trace: true,
-      currents: walkAmpModels(loads, parts),
+      currents,
     });
     const robot = run.stats.robots.find((r) => r.key === record.robot) ?? run.stats.robots[0];
 
     return {
+      motorTrace: run.trace
+        ? retainMotorTrace(run.trace, {
+            joints: run.model.joints.map((joint) => ({
+              id: joint.id,
+              actuators: loads.find((load) => load.joint.id === joint.id)?.joint.actuators,
+            })),
+            parts,
+            models: currents,
+            identity: record.id,
+          })
+        : undefined,
       policy: record.name,
       seconds: PEAK_SECONDS,
       fellAt: robot?.fellAt ?? null,

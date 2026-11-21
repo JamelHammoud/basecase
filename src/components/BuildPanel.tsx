@@ -1,3 +1,5 @@
+import { PowerReplayInspection } from './build/PowerReplayInspection';
+import { setPowerReplayOpen } from './build/powerReplayDialog';
 import { usePurchaseSheet } from './build/usePurchaseSheet';
 import { SupplierOffers } from './build/SupplierOffers';
 import { supportByMaterial } from './build/supportByMaterial';
@@ -108,6 +110,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
           readiness={readiness.current}
           checking={readiness.checking}
           context={{
+            onInspectCurrent: () => setPowerReplayOpen(true),
             focusedCheck: project.assignment?.inspection?.check,
             board: { exists: !!project.electronicsBoard, onClick: onDefineBoard },
             parts,
@@ -168,6 +171,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
         {rest.builds}
         <PlatesSection printing={printing} />
       </div>
+      <PowerReplayInspection {...{ parts, project, onChangeProject, onSelectParts }} key={sceneId} />
       <SupplierOffers bom={bom} purchases={purchases} scene={sceneId} save={savePurchase} />
       {checking && (
         <CheckSheet

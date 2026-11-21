@@ -15,7 +15,12 @@ function commandsFor(parts: ScenePart[], frozen = false, state = { busy: false, 
       printing: { measures: {} },
       readiness: { current: null, fingerprint: '' },
       guide: { record: null, progress: null, generate },
-      buildAlong: { open, frozen, opening: state.opening, photos: { busy: state.busy, importPhotos } },
+      buildAlong: {
+        open,
+        frozen,
+        opening: state.opening,
+        photos: { key: frozen ? 'robot:kit:0' : '', busy: state.busy, importPhotos },
+      },
     },
   } as unknown as CommandInputs;
 

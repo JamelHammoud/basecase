@@ -20,6 +20,8 @@ Compare your robot's assembly photos with its saved CAD step.
 
 Two robots made from the same Kit can have different bracket installations. You keep each robot's photos separate on this device in the current app or browser profile.
 
+After a [build repair](/help/repair-a-robot-build), open **Original assembly** to see or import photos for its original steps. Repair steps have no photo attachments.
+
 You can import PNG or JPEG files up to 20 MB and 16 megapixels each, with at most 8,192 pixels on either edge.
 
 1. In the right panel, click **Build**.

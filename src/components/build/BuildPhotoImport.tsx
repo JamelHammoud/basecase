@@ -2,7 +2,7 @@ import { Button, Spinner } from '../../design-system';
 import type { BuildAlong } from '../../workspace/useBuildAlong';
 
 export function BuildPhotoImport({ buildAlong }: { buildAlong: BuildAlong }) {
-  if (!buildAlong.frozen) return null;
+  if (!buildAlong.frozen || !buildAlong.photos.key) return null;
 
   const { photos } = buildAlong;
 

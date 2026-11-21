@@ -3,6 +3,7 @@ import { robotPosition } from './robotPosition';
 import type { RegistryItem } from './client';
 
 export function FleetRobot({ robot, now, onOpen }: { robot: RegistryItem; now: number; onOpen: () => void }) {
+  const repair = robotBuildRepair(robot);
   const location = robotPosition(robot);
   const stale = Boolean(robot.pose?.observedAt && now - Date.parse(robot.pose.observedAt) > 60000);
   const state = positionState(Boolean(location), stale, robot.pose?.quality);
@@ -11,6 +12,12 @@ export function FleetRobot({ robot, now, onOpen }: { robot: RegistryItem; now: n
     <section className="space-y-2 rounded-xl bg-[#262626] p-3" data-testid="fleet-selected-robot">
       <h2 className="text-[16px] font-semibold">{robot.name}</h2>
       <dl className="grid grid-cols-2 gap-2">
+        {repair && (
+          <>
+            <dt>Build repair</dt>
+            <dd className="break-all">{repair}</dd>
+          </>
+        )}
         <dt>Status</dt>
         <dd>{statusState(robot, now)}</dd>
         <dt>Position</dt>
@@ -61,4 +68,8 @@ function positionState(located: boolean, stale: boolean, quality: string | undef
 
 function statusState(robot: RegistryItem, now: number) {
   return !robot.observedAt || now - Date.parse(robot.observedAt) > 60000 ? 'Stale' : robot.status;
+}
+
+function robotBuildRepair(robot: RegistryItem) {
+  return robot.attributes?.buildRepairId;
 }

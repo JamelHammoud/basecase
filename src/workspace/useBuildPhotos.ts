@@ -8,7 +8,7 @@ import { errorMessage } from '../utils/errorMessage';
 import type { ShowToast } from './types';
 
 export function useBuildPhotos(session: Session | null, showToast: ShowToast) {
-  const record = session?.frozen?.record;
+  const record = session?.repairSession ? undefined : session?.frozen?.record;
   const step = session?.index ?? 0;
   const build = record?.id;
   const kit = record?.kit;

@@ -35,6 +35,8 @@ For SSO, enter the organization ID and click **Sign In with SSO**, then choose y
 
 You can view only the sites and robots your account can access. A robot marked **Stale** has no observation from the last 60 seconds. Disconnecting a robot leaves its identity in the inventory.
 
+Robot details show an attached **Build repair** reference when one exists. [Link a build repair to Fleet](/help/link-a-build-repair-to-fleet) attaches that reference using inventory read and manage access.
+
 You can press [[⌘K]] and choose **Open Fleet**. To ground a floorplan or twin, use [Register a Fleet facility](/help/register-a-fleet-facility). To open another page, use **Next Sites** or **Next Robots** when a page is available.
 
 If access changes or the connection closes, the list clears. Click **Reload Fleet** to check access again. Click **Sign Out** to revoke the browser session.

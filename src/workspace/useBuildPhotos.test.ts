@@ -97,3 +97,16 @@ it('cancels a pending chooser without preparing or attaching its eventual file',
   expect(attach).not.toHaveBeenCalled();
   expect(showToast).not.toHaveBeenCalled();
 });
+
+it('keeps repair playback separate from original assembly photo destinations', async () => {
+  const session = { frozen: { record: { id: 'robot', kit: 'a'.repeat(64) } }, repairSession: {}, index: 0 } as Session;
+  const choose = vi.spyOn(picker, 'pickFiles');
+  const attach = vi.spyOn(localBuildPhotos, 'attach');
+  const controls = mountedPhotos(session, vi.fn());
+
+  expect(controls.key).toBe('');
+  expect(controls.records).toEqual([]);
+  await controls.importPhotos();
+  expect(choose).not.toHaveBeenCalled();
+  expect(attach).not.toHaveBeenCalled();
+});

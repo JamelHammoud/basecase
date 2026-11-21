@@ -175,6 +175,8 @@ reconstruction without changing the production timestep, controller, contract ev
 
 The static report wraps long input identities and keeps its paired table inside a focusable horizontal scroll region
 on narrow windows. Its ordinary recording links and the studio timeline retain keyboard access.
+The browser declaration renders the static report in a separate explicit browser context and closes that context
+after its assertions. The app harness's single-page context remains reserved for the studio import and timeline.
 
 ### Making a Case
 

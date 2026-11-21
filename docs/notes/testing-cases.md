@@ -736,14 +736,14 @@ The new feature article supplies its own summary to the Library hub. Existing sc
 
 | Article | Disposition after checking its steps, labels and captures |
 | --- | --- |
-| `check-your-robot-in-ci.md` | Legacy check/export arguments, default reference execution, line/JSON output and exit codes remain unchanged. |
-| `compare-saved-tries.md` | Two-source comparison stays on its existing saved-evidence path, with unchanged alignment, signals, clocks and source panels. |
-| `connect-a-robot-computer.md` | The robot install namespace, SSH inputs, pairing, emulation and connection controls are unchanged. |
-| `export-a-robot-package.md` | Export placement, availability, file layout, policy selection and MJCF/URDF behavior remain unchanged. |
+| `check-your-robot-in-ci.md` | The new `evaluation` dispatch leaves `check` and `export` handlers intact. The documented `--case`, `--json`, output fields and 0/1/2 exits remain accurate. No depicted control changes. |
+| `compare-saved-tries.md` | `useTryTimeline` still delegates two-recording comparison to `useSavedTimeline`. Alignment, signals, source clocks and camera panels keep their existing controls and screenshot states. Evaluation source restoration applies to single-recording opening. |
+| `connect-a-robot-computer.md` | `robot install` still dispatches before offline fetch replacement. SSH, package/scene, family, key and pairing arguments remain accepted. Installation, ladder and connection controls depicted in its screenshots are untouched. |
+| `export-a-robot-package.md` | Export placement, availability, file layout, policy selection and MJCF/URDF behavior remain unchanged. `policyObservation` only adds the actual optional clock input to policy metadata, without changing either export screenshot state. |
 | `open-a-try-from-any-scene.md` | Scope the missing-Case fallback to ordinary tries. Frozen evaluation playback uses its retained Case and source scene. Library controls and ordinary-try screenshots remain accurate. |
-| `replay-a-failing-seed.md` | Existing callers keep the same seed randomization, temporary replay, trip selection and simulation restoration. |
-| `robot-package-contents.md` | The extracted policy schema still lists actual inputs and dimensions. Clock inputs now follow their actual runtime layout, within the existing documented spec fields. |
-| `try-a-case.md` | Driving, reference recording, Results, deletion, dataset collection and Checks authority are unchanged. |
+| `replay-a-failing-seed.md` | `seedReplay` retains its boolean default and existing callers retain seeded physics. The added options object is used by evaluations. Trail sampling, first-trip selection, keyboard controls, temporary recording and restored simulation remain accurate in both screenshots. |
+| `robot-package-contents.md` | The `spec.json` row promises actual input names and sizes, not a fixed input list. The optional clock has two values and now appears in that list. File layout, joint map and policy exclusions remain accurate. This reference has no screenshots. |
+| `try-a-case.md` | Desktop decoding moves to the archive worker, while evaluation-only encoding preserves ordinary save behavior. `useCases` forwards source restoration options without changing drive, reference, Results, deletion, dataset or Checks controls. All four pictured states remain accurate. |
 
 The structural preflight reminders remain for unchanged covering articles. No unrelated article or screenshot was
 edited solely to silence them.
@@ -837,3 +837,21 @@ inputs and sizes without restricting their list. Neither robot-package article e
 The evaluation CLI namespace leaves check, export and robot install behavior intact. Saved comparison stays on
 `useSavedTimeline`, seed replay retains the boolean default randomization path, and ordinary Case recording retains
 its existing persistence contract. No step, label or pictured control in those seven articles changed.
+
+### Static report browser context correction
+
+The pull request's Linux changed-browser job reached `evaluationReportLayout` after studio startup and actual CLI
+failure generation. It failed at `page.context().newPage()` with `Please use browser.newContext()`. The declaration
+failed after 25,398 ms. The aggregate Check failed solely because that browser job failed. This is a deterministic
+Playwright ownership error: `openApp` uses `browser.newPage()`, whose automatically owned context permits one page.
+It does not establish a rollout, import or timeline failure.
+
+The report helper now creates an explicit context on the same browser, opens its report page there and closes the
+context in `finally`, including when page creation or an assertion fails. It retains the 390 by 844 viewport,
+readability, document containment, keyboard scrolling and recording-link assertions. The studio import, frozen
+identity, timeline and cross-scene reopening assertions remain unchanged. No deadline, retry or quarantine changed.
+Browser execution remains assigned to CI.
+
+The context correction's three-file changed check passed formatting, lint, documentation and types. It selected no
+unit tests. Preflight retained only the seven unchanged covering-article reminders already assessed above. A fresh
+read confirms that the context correction changes none of their commands, steps, labels or recorded states.

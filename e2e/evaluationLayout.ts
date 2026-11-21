@@ -4,10 +4,14 @@ import { expectPanelReadable } from './appearanceLayout';
 import { shown } from './harness';
 
 export async function evaluationReportLayout(page: Page, html: string) {
-  const report = await page.context().newPage();
+  const context = await page
+    .context()
+    .browser()!
+    .newContext({ viewport: { width: 390, height: 844 } });
 
   try {
-    await report.setViewportSize({ width: 390, height: 844 });
+    const report = await context.newPage();
+
     await report.setContent(html);
     await report.evaluate(() => document.fonts.ready.then(() => undefined));
     await expectPanelReadable(report.getByRole('table'));
@@ -25,7 +29,7 @@ export async function evaluationReportLayout(page: Page, html: string) {
       /^[a-f0-9]{64}\.tries\.zip$/,
     );
   } finally {
-    await report.close();
+    await context.close();
   }
 }
 

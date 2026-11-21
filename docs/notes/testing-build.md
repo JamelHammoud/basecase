@@ -1419,3 +1419,11 @@ The #2002 Linux changed-browser run failed both declarations. The first checked 
 The second reached photo attachment, then compared the raw canvas right edge at 953.875 with the photo pane left edge at 811.765625. `CanvasSizer` retains an oversized centered WebGL canvas until its existing 180 ms resize settle, while the viewport clips overflow. Raw canvas bounds therefore do not describe the displayed CAD pane. The geometry helper now requires clipping on both axes, a positive viewport and visible canvas intersection, and separation of that viewport from the toolbar and photo pane. Existing text, control, thumbnail, navigation, persistence and deletion assertions remain. Neither declaration is removed. Production rendering, resize timing, test deadlines and retries are unchanged.
 
 The aggregate Check failed because `e2e-changed` failed. Its required jobs and copy job passed. The Vite teardown warning followed the assertion failures and does not identify their cause. Browser execution of this revision remains with Linux and Windows CI.
+
+### Photograph keyboard dismissal
+
+Review of the revised #2002 found that Close removed the focused control without returning focus to its thumbnail. Escape from the photo pane also propagated to the Build Along listener and closed the whole frozen session. The photo pane now restores thumbnail focus on Close and handles Escape locally while an enlarged selection is open. The existing browser flow asserts focus after both dismissal paths and retains its geometry, persistence and deletion assertions. Browser execution remains with Linux and Windows CI, with no deadline or retry changes.
+
+The first focused check caught unformatted assertions and an unsupported ref on the shared Button primitive. Focus restoration now queries the selected button through the photo pane's own element ref. The initial log is `scratch/review-2002-keyboard-check.log`.
+
+The corrected five-file selection passed formatting, lint, documentation, TypeScript, all 372 site pages and thirteen related tests across seven files. Its log is `scratch/review-2002-keyboard-verified.log`. These fast checks do not execute the browser keyboard assertions.

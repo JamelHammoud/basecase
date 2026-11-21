@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button, IconButton, DeleteIcon, CloseIcon, confirmAction } from '../../design-system';
 import type { BuildPhotos } from '../../workspace/useBuildPhotos';
 import { BuildPhotoImage } from './BuildPhotoImage';
@@ -6,13 +6,26 @@ import { BuildPhotoImage } from './BuildPhotoImage';
 export function BuildPhotosPanel({ photos, onError }: { photos: BuildPhotos; onError: (error: unknown) => void }) {
   const [selected, setSelected] = useState<string | null>(null);
   const photo = photos.records.find((item) => item.id === selected);
+  const panel = useRef<HTMLElement | null>(null);
+  const close = () => {
+    panel.current?.querySelector<HTMLButtonElement>('button[aria-pressed="true"]')?.focus();
+    setSelected(null);
+  };
 
   if (!photos.records.length) return null;
 
   return (
     <aside
+      ref={panel}
       className="w-[38%] min-w-0 max-w-[520px] shrink-0 flex flex-col gap-[12px] p-[12px] bg-[#242424]"
       data-build-photos
+      onKeyDown={(event) => {
+        if (event.key !== 'Escape' || !photo) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        close();
+      }}
     >
       <div className="flex flex-wrap gap-[8px] overflow-y-auto max-h-[180px] shrink-0">
         {photos.records.map((item) => (
@@ -46,7 +59,7 @@ export function BuildPhotosPanel({ photos, onError }: { photos: BuildPhotos; onE
                 })
               }
             />
-            <IconButton title="Close" icon={<CloseIcon />} onClick={() => setSelected(null)} />
+            <IconButton title="Close" icon={<CloseIcon />} onClick={close} />
           </div>
         </div>
       )}

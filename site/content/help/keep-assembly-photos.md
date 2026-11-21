@@ -34,6 +34,8 @@ You can import PNG or JPEG files up to 20 MB and 16 megapixels each, with at mos
 
 ![The generated bracket fixture enlarged beside Arm one's frozen CAD assembly](/help/keep-assembly-photos/comparison.png)
 
+Under the enlarged photo, click **Close** to return to its thumbnail. With focus in the photo strip, you can press [[Esc]] to close the enlarged photo while keeping Build Along open.
+
 You can open **Import Photos** from [[⌘K]] while you have a saved build open. In the toolbar, click **Cancel** to stop an import in progress.
 
 Reopen the same build and step to see its photos. You keep them when you complete a step or click **Mark Incomplete**. If you edit the source design, you keep the photos with the original Kit.

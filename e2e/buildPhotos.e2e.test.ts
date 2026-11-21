@@ -60,6 +60,21 @@ it('imports a photograph beside frozen CAD and reopens only its original build a
     await app.page.locator('[data-build-photo-enlarged]').getByRole('button', { name: 'Close', exact: true }).focus();
     await app.page.keyboard.press('Enter');
     expect(await app.page.locator('[data-build-photo-enlarged]').count()).toBe(0);
+    expect(
+      await app.page
+        .getByRole('button', { name: 'bracket.png', exact: true })
+        .evaluate((button) => button === document.activeElement),
+    ).toBe(true);
+    await app.page.keyboard.press('Enter');
+    await expect.poll(() => app.page.locator('[data-build-photo-enlarged] img').count()).toBe(1);
+    await app.page.keyboard.press('Escape');
+    expect(await app.page.locator('[data-build-photo-enlarged]').count()).toBe(0);
+    expect(await app.page.locator('[data-frozen-build]').count()).toBe(1);
+    expect(
+      await app.page
+        .getByRole('button', { name: 'bracket.png', exact: true })
+        .evaluate((button) => button === document.activeElement),
+    ).toBe(true);
     expect(await app.page.getByRole('button', { name: 'bracket.png', exact: true }).count()).toBe(1);
     expect(await app.page.locator('[data-frozen-build] canvas').count()).toBeGreaterThan(0);
     await app.page.getByRole('button', { name: 'Next step', exact: true }).click();

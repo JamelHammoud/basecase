@@ -47,6 +47,7 @@ export class WorldMoves {
   private shown: WorldLooks = {};
   private version = 0;
   private readonly people: Array<{ mover: Mover; person: PreparedPerson; position: V3 }> = [];
+  private peopleStartedAt = 0;
 
   constructor(mj: MainModule, engine: SimEngine) {
     this.mj = mj;
@@ -165,14 +166,23 @@ export class WorldMoves {
     if (Object.keys(this.shown).length) this.version++;
 
     this.shown = {};
+    this.peopleStartedAt = 0;
     this.advance(0);
 
     if (options.forward !== false) this.mj.mj_forward(model, data);
   }
 
+  startPeople() {
+    if (!this.hasPeople) return;
+
+    this.peopleStartedAt = this.engine.data.time;
+    this.advance(this.peopleStartedAt);
+    this.mj.mj_forward(this.engine.model, this.engine.data);
+  }
+
   advance(time: number) {
     for (const entry of this.people) {
-      const position = personAt(entry.person, time, entry.position);
+      const position = personAt(entry.person, time - this.peopleStartedAt, entry.position);
       const offset = entry.mover.mocap * 3;
       const into = this.engine.data.mocap_pos;
 

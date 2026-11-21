@@ -12,6 +12,8 @@ import { replacePerson } from './personAuthoring';
 import { LiveCase } from './liveCase';
 import { commandTimeline, stepScriptedCase } from '../sim/simRun';
 import { replayTry } from './tryReplay';
+import { personAt, preparePerson } from './personEncounter';
+import { toMj } from '../sim/mjcfFrames';
 
 let mj: Awaited<ReturnType<typeof loadMujoco>>;
 
@@ -46,6 +48,43 @@ function reference(index: number) {
 
   return saved;
 }
+
+it('restarts delayed person routes for successive live tries on an already running simulation', async () => {
+  const { source, robot } = await reference(0);
+  const engine = new SimEngine(mj, source.model);
+  const person = source.kase.world.objects.find((object) => object.person)!;
+  const body = source.model.bodies.find((item) => item.moves?.person)!;
+  const id = mj.mj_name2id(engine.model, mj.mjtObj.mjOBJ_BODY.value, body.name);
+  const mocap = engine.model.body_mocapid[id];
+  const at = () => Array.from(engine.data.mocap_pos.subarray(mocap * 3, mocap * 3 + 3));
+  const expected = (seconds: number) => toMj(personAt(preparePerson(person.person!), seconds));
+  const samePosition = (seconds: number) =>
+    at().forEach((value, axis) => expect(value).toBeCloseTo(expected(seconds)[axis], 8));
+
+  try {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      engine.step(8);
+
+      const live = await LiveCase.start(
+        engine,
+        { kase: source.kase, plan: null, joints: robot.joints, kit: null },
+        () => ({ kind: 'limp' }),
+      );
+
+      samePosition(0);
+      live.advance(0.1);
+      samePosition(0.1);
+      live.advance(0.9);
+      samePosition(1);
+    }
+
+    engine.reset();
+    engine.step(1);
+    samePosition(1);
+  } finally {
+    engine.dispose();
+  }
+});
 
 for (const [index, name] of PERSON_ENCOUNTERS.entries()) {
   describe(name, () => {

@@ -200,7 +200,7 @@ export function useCases(options: CasesOptions) {
     joints: project.joints ?? [],
     active,
     scope: project.cases?.find((kase) => kase.id === activeId) ?? null,
-    ...caseTryCallbacks(project.cases, onTries, onTry, showToast),
+    ...caseTryCallbacks(project.cases, onTries, showToast),
   });
 
   const addAndTry = useAddAndTry({ add, active, attempt });

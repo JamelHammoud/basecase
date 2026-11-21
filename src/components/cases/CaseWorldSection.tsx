@@ -14,11 +14,6 @@ export function CaseWorldSection({ cases }: { cases: Cases }) {
         <Button size="sm" variant="secondary" fullWidth disabled={!people.canAdd} onClick={people.add}>
           Add Person
         </Button>
-        {people.objects.length > 0 && (
-          <p className="text-[12px] leading-snug text-white/60">
-            Rigid body proxies on authored routes. Simulated encounters don’t establish physical safety.
-          </p>
-        )}
       </div>
     </Section>
   );

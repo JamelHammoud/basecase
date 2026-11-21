@@ -25,26 +25,24 @@ Test your robot against a person following a timed route through a Case world.
 
 1. In **Cases**, open the Case you want to test.
 2. In **Simulate**, under **World**, choose **Add Person**.
-3. In **Width**, enter the body width in millimeters.
-4. In **Height**, enter the body height in millimeters.
-5. In **Depth**, enter the body depth in millimeters.
-6. In **Speed**, enter the route speed in millimeters per second.
-7. In **Start**, enter the delay in seconds.
-8. For each waypoint, enter its **X** and **Z** coordinates in world millimeters.
-9. In **Pause**, enter the wait time at that waypoint in seconds.
-10. Choose **Try It**.
-11. After the person crosses, choose **Stop Try**.
-12. In **Library**, open the robot's tries.
-13. Open the saved try.
-14. On the timeline, drag the playhead to the crossing.
+3. For each waypoint, enter its **X** and **Z** coordinates in world millimeters.
+4. In **Speed**, enter the route speed in millimeters per second.
+5. In **Start**, enter the delay in seconds.
 
 ![A crossing person's route and delayed start in the World section](/help/test-a-person-crossing/route.png)
 
+6. In **Simulate**, click **Try It**.
+7. After the person crosses, click **Stop Try**.
+
 ![The person moving through the robot's Case during a live try](/help/test-a-person-crossing/running.png)
+
+8. In **Library**, open the robot's tries.
+9. In the tries list, open the saved try.
+10. On the timeline, drag the playhead to the crossing.
 
 ![The saved encounter open from Library on the try timeline](/help/test-a-person-crossing/playback.png)
 
-Choose **Add Waypoint** to extend the route. You can choose **Add Person** from the command palette.
+In **World**, you can change **Width**, **Height** and **Depth** in millimeters, or **Pause** at each waypoint in seconds. Click **Add Waypoint** to extend the route. You can choose **Add Person** from the command palette.
 
 You keep the original Case goal for task success when you add a person. You add a named contact failure and keep the required observations in the existing contract.
 
@@ -54,8 +52,8 @@ You can add 2 to 32 waypoints on one level and set a pause of up to 10 seconds a
 
 Basecase rejects routes through static obstacle bounds before simulation. Because Basecase uses conservative bounds, it can reject a route that would clear the detailed mesh geometry.
 
-You see recorded body poses during saved playback. If you edit a route after recording a try, you don't change the crossing in that recording.
-
 You can use these encounters as simulation evidence. You can't use them to establish human biomechanics or physical safety.
 
 You can't use continuation checkpoints or Branch Try with person encounters. You can use recorded playback and command replay.
+
+You see recorded body poses during saved playback. If you edit a route after recording a try, you don't change the crossing in that recording. See [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline) for keyboard controls.

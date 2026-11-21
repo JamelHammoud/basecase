@@ -39,17 +39,18 @@ export function PersonRouteEditor({ object, people }: RouteProps) {
             <span className="text-[13px] text-white/60">Waypoint {index + 1}</span>
             <Button
               size="sm"
-              variant="ghost"
+              variant="danger"
               disabled={people.disabled || route.length <= 2}
               onClick={() => remove(index)}
             >
               Delete
             </Button>
           </div>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {[0, 2].map((axis) => (
               <NumberInput
                 key={axis}
+                className="min-w-0"
                 label={axis === 0 ? 'X' : 'Z'}
                 aria-label={`Waypoint ${index + 1} ${axis === 0 ? 'X' : 'Z'}`}
                 value={point.position[axis]}

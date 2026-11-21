@@ -31,13 +31,14 @@ export function PersonEditor({ object, people }: PersonEditorProps) {
     <div className="flex flex-col gap-2" data-testid="person-editor">
       <div className="flex min-h-[32px] items-center justify-between gap-2">
         <span className="text-[13px] text-white/90 truncate">{object.name}</span>
-        <Button size="sm" variant="ghost" disabled={people.disabled} onClick={() => people.remove(object)}>
+        <Button size="sm" variant="danger" disabled={people.disabled} onClick={() => people.remove(object)}>
           Delete
         </Button>
       </div>
       {DIMENSIONS.map((dimension, axis) => (
         <FieldRow key={dimension.label} label={dimension.label}>
           <NumberInput
+            className="min-w-0"
             aria-label={dimension.label}
             value={object.size[axis]}
             unit="mm"
@@ -50,6 +51,7 @@ export function PersonEditor({ object, people }: PersonEditorProps) {
       ))}
       <FieldRow label="Speed">
         <NumberInput
+          className="min-w-0"
           aria-label="Speed"
           value={person.speedMmS}
           unit="mm/s"
@@ -61,6 +63,7 @@ export function PersonEditor({ object, people }: PersonEditorProps) {
       </FieldRow>
       <FieldRow label="Start">
         <NumberInput
+          className="min-w-0"
           aria-label="Start"
           value={person.startSeconds}
           unit="s"

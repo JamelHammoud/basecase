@@ -101,4 +101,4 @@ If you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their
 - Once a try passes, **Make Dataset** appears under the tries. It gathers the passed tries into a dataset. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
 - You can [export the dataset](/help/export-a-lerobot-dataset), and once five tries have passed, you can [train a policy](/help/train-a-policy-from-your-tries).
 
-Editing the Case or robot during a try discards that try. Record another try against the edited design.
+Editing the Case or robot during a simulated try discards that try. Record another try against the edited design.

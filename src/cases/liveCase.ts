@@ -39,6 +39,7 @@ export class LiveCase {
     this.startedAt = startedAt;
     this.kase = kase;
     this.logic = logic;
+    engine.world.startPeople();
     this.reader = caseFactReader(kase, engine.sim);
     this.names = caseSignalNames(kase);
   }

@@ -31,7 +31,7 @@ interface TryOptions {
   active: Case | null;
   scope: Case | null;
   partners: () => SlotRobot[];
-  onTry: (record: TryRecord, recording: Recording, input: string | null) => Promise<void>;
+  onTry: (record: TryRecord, recording: Recording, input: string | null, current: () => boolean) => Promise<void>;
   onRefuse: (message: string) => void;
   skills?: RoutineSkills;
   branchScope?: unknown;
@@ -106,7 +106,9 @@ export function useCaseTry(options: TryOptions): CaseTry {
 
     if (held && options.onBranchTry) return options.onBranchTry(record, recording, () => branch.valid(held));
 
-    await onTry(record, recording, scripted.current ? 'script' : null);
+    await onTry(record, recording, scripted.current ? 'script' : null, evidence.current);
+
+    if (!held && !evidence.current()) onRefuse(SOURCE_EDITED);
   };
 
   const score = async () => {

@@ -59,7 +59,7 @@ You can run a Case in the whole window, with the layout the Case asks for. The r
 
 ![A try running, with the clock and Stop Try](/help/run-a-case/trying.png)
 
-Finish recording before editing the Case or a robot. Those edits prevent the running try from being saved.
+Finish a simulated try before editing the Case or a robot. Those edits prevent the running try from being saved.
 
 6. Click **Stop Try**, or let the clock run out. The try appears in Results. To play it back through the cards, click its row. See [Play a try through its console](/help/play-a-try-through-its-console). After a try passes, you can choose **Make Dataset** in Results, then export, publish and train from the dataset. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
 

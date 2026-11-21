@@ -39,6 +39,7 @@ import { readPlacements, type PlacementUpdate } from '../cases/workbench/retenti
 import { casePeople } from './casePeople';
 
 interface CasesOptions {
+  ensureEvaluationScene?: import('./tryTimelineOpening').TimelineOptions['ensureEvaluationScene'];
   commitWorkbenchPlacements: (update: PlacementUpdate) => void;
   fixtures?: CustomModelDefinition[];
   parts: ScenePart[];
@@ -177,7 +178,7 @@ export function useCases(options: CasesOptions) {
     });
   };
 
-  const timeline = useTryTimeline({ sim, rig, parts, cases, partners });
+  const timeline = useTryTimeline({ ...options, cases });
   const trails = useCaseTrails({ ...options, active, timeline, open });
 
   const builder = useCaseBuilder({ rig, parts, add, partners, fixtures: options.fixtures });

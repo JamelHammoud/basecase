@@ -2,7 +2,8 @@ import type { Recording } from '../../sim/recorder';
 import { base64ToBytes, bytesToBase64 } from '../../utils/base64';
 import { channelCall } from '../../utils/platform/channelCall';
 import { electron } from '../../utils/platform/transport';
-import { decodeRecording, encodeRecording } from '../recordingFile';
+import { tryArchiveWorker } from '../tryArchiveClient';
+import { encodeRecording } from '../recordingFile';
 import { readStoredTry, type StoredTry, type TrySummary } from '../tryFile';
 import { saveTryCameraVideo, saveTryVideos } from './videoUploadClient';
 import type { TryBackend } from './types';
@@ -39,13 +40,15 @@ export const desktopTries: TryBackend = {
     return Array.isArray(listed) ? listed : [];
   },
   save: async (stored: StoredTry, recording: Recording | null) => {
-    await call('tries:save', { manifest: stored, recording: recording ? encodeRecording(recording) : null });
+    const bytes = recording?.evaluation ? await tryArchiveWorker.call('encodeRecording', recording) : null;
+
+    await call('tries:save', { manifest: stored, recording: bytes ?? (recording ? encodeRecording(recording) : null) });
   },
   update: async (stored) => (await call<{ ok?: boolean }>('tries:update', { manifest: stored }))?.ok === true,
   recording: async (id) => {
     const bytes = await recordingBytes(id);
 
-    return bytes && decodeRecording(bytes);
+    return bytes && tryArchiveWorker.call('recording', bytes, [bytes.buffer]);
   },
   recordingBytes,
   strip: async (id) => {

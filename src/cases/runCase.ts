@@ -9,7 +9,7 @@ import type { MjcfInput, SimModel, WorldItem } from '../sim/mjcfTypes';
 import type { PolicySpec } from '../sim/policy';
 import { Recorder, type Recording } from '../sim/recorder';
 import { torqueShare } from '../sim/torqueShare';
-import { DEFAULT_PROJECT } from '../types/robotics';
+import { DEFAULT_PROJECT, type ProjectSettings } from '../types/robotics';
 import { buildRig, type Rig, type V3 } from '../utils/kinematics';
 import { ArenaWorld } from '../skills/arenaWorld';
 import { evaluateContract, type Trace } from '../skills/contract';
@@ -75,6 +75,10 @@ interface ProbeBase {
 }
 
 export interface RunOptions extends LogicOptions {
+  project?: ProjectSettings;
+  fixedCase?: boolean;
+  worldRandomization?: boolean;
+  checkpoint?: () => Promise<void>;
   worldFloorMm?: number;
   controller: 'limp' | 'reference' | 'policy';
   seed?: number;
@@ -139,6 +143,7 @@ function walkFor(setup: RobotDrive | null, facts: RobotFacts, options: RunOption
 }
 
 interface Rollout {
+  checkpoint?: () => Promise<void>;
   engine: SimEngine;
   kase: Case;
   steer: GroundSteer | null;
@@ -178,6 +183,8 @@ async function roll(rollout: Rollout): Promise<CaseFrame[]> {
   const ticks = Math.round(kase.task.seconds / RECORD_DT);
 
   for (let tick = 0; tick < ticks; tick++) {
+    if (rollout.checkpoint && tick % 50 === 0) await rollout.checkpoint();
+
     const t = tick * RECORD_DT;
 
     timeline.advance(t);
@@ -238,24 +245,35 @@ export function startEngine(mj: MainModule, model: SimModel, options: EngineStar
   if (!random) {
     const engine = new SimEngine(mj, model);
 
-    engine.setController(controller);
-
-    return { engine, dispose: () => engine.dispose() };
+    return configuredEngine({ engine, dispose: () => engine.dispose() }, () => engine.setController(controller));
   }
 
   const arena = new ArenaWorld(mj, model);
-  const instance = caseInstance(random, {
-    randomization: options.randomization ?? CASE_RANDOMIZATION,
-    bodies: arena.engine.model.nbody - 1,
-    joints: arena.engine.sim.joints.length,
-    jointNoiseDeg: options.jointNoiseDeg,
+
+  return configuredEngine({ engine: arena.engine, dispose: () => arena.dispose() }, () => {
+    const instance = caseInstance(random, {
+      randomization: options.randomization ?? CASE_RANDOMIZATION,
+      bodies: arena.engine.model.nbody - 1,
+      joints: arena.engine.sim.joints.length,
+      jointNoiseDeg: options.jointNoiseDeg,
+    });
+
+    arena.prepare({ instance, controller: { kind: 'hold' }, start: model.initial, robot: model.robots[0]?.key ?? '' });
+    varyFixtureResistance(mj, arena.engine, options.seed!);
+    arena.engine.setController(controller);
   });
+}
 
-  arena.prepare({ instance, controller: { kind: 'hold' }, start: model.initial, robot: model.robots[0]?.key ?? '' });
-  varyFixtureResistance(mj, arena.engine, options.seed!);
-  arena.engine.setController(controller);
+function configuredEngine(started: Started, configure: () => void): Started {
+  try {
+    configure();
 
-  return { engine: arena.engine, dispose: () => arena.dispose() };
+    return started;
+  } catch (error) {
+    started.dispose();
+
+    throw error;
+  }
 }
 
 function refused(authored: Case, refusal: string, model: SimModel): CaseResult {
@@ -288,13 +306,15 @@ interface Fitted {
   wheelAxes: V3[];
 }
 
-function ownInput(robot: CaseRobot): MjcfInput {
+function ownInput(robot: CaseRobot, project?: ProjectSettings): MjcfInput {
   const rig = buildRig(robot.joints, robot.parts);
 
   return {
     parts: robot.parts,
     rig,
-    project: { ...DEFAULT_PROJECT, selfContact: robot.selfContact },
+    project: project
+      ? { ...DEFAULT_PROJECT, ...project, joints: robot.joints, selfContact: robot.selfContact }
+      : { ...DEFAULT_PROJECT, selfContact: robot.selfContact },
     measures: robot.measures,
     partTriangles: robot.partTriangles,
     servoVolts: robot.servoVolts,
@@ -306,15 +326,15 @@ function fitted(authored: Case, robot: CaseRobot, options: RunOptions): Fitted |
   const lead = ownFacts(robot)!;
   const refusal = slotRefusals(caseSlots(authored), [lead, ...partners.map(ownFacts)]).find(Boolean);
 
-  if (refusal) return { refusal, input: ownInput(robot) };
+  if (refusal) return { refusal, input: ownInput(robot, options.project) };
 
-  const scaled = scaledToReach(authored, lead.reachMm, lead.anchor);
+  const scaled = options.fixedCase ? authored : scaledToReach(authored, lead.reachMm, lead.anchor);
   const slots = caseSlots(scaled);
   const guests = guestsOf(slots, partners).map((g, i) => ({ ...g, robot: partners[i] }));
   const team = castRobot(robot, guests);
   const rig = buildRig(team.joints, team.parts);
   const cast = castSlots(slots, { rig, parts: team.parts, guests });
-  const input: MjcfInput = { ...ownInput(team), rig };
+  const input: MjcfInput = { ...ownInput(team, options.project), rig };
   const { facts, effector } = cast[0];
   const setups =
     options.controller === 'reference'
@@ -336,12 +356,12 @@ function fitted(authored: Case, robot: CaseRobot, options: RunOptions): Fitted |
 }
 
 async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Promise<CaseResult> {
-  const jitter = options.seed === undefined ? null : worldRandom(options.seed);
+  const jitter = options.seed === undefined || options.worldRandomization === false ? null : worldRandom(options.seed);
   const kase = jitter ? reseededGround(jitteredWorld(fit.scaled, jitter), jitter) : fit.scaled;
   const world = await preparedWorldItems(caseWorldItems(kase, options.worldColliders));
   const model = await preparedCalibratedModel(
     { ...fit.input, world, fixedBase: fixedBaseFor(fit.cast), worldFloorMm: options.worldFloorMm },
-    undefined,
+    options.project?.servoCalibrations,
   );
   const { plan, refusal: logicRefusal } = logicPlan(kase, options);
 
@@ -371,26 +391,37 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
     randomization: options.randomization,
     jointNoiseDeg: options.jointNoiseDeg,
   });
-  const recorder = options.record ? new Recorder(engine, controller) : null;
-  const changes = {
-    world: engine.world,
-    events: options.world ?? [],
-    record: (e: WorldEvent) => recorder?.worldChange(e),
-  };
-  const send = (c: DriveCommand) => engine.command(walk ? policyCommand(c, walk.topSpeed) : c);
-  const limp = new Set(fit.cast.flatMap((c) => (c.key && options.limp?.includes(c.id) ? [c.key] : [])));
-
-  limpen(engine, model, limp);
-  hookRecorder(engine, recorder);
-
-  const handBack = () => engine.setController(controller);
 
   try {
+    const recorder = options.record ? new Recorder(engine, controller) : null;
+    const changes = {
+      world: engine.world,
+      events: options.world ?? [],
+      record: (e: WorldEvent) => recorder?.worldChange(e),
+    };
+    const send = (c: DriveCommand) => engine.command(walk ? policyCommand(c, walk.topSpeed) : c);
+    const limp = new Set(fit.cast.flatMap((c) => (c.key && options.limp?.includes(c.id) ? [c.key] : [])));
+
+    limpen(engine, model, limp);
+    hookRecorder(engine, recorder);
+
+    const handBack = () => engine.setController(controller);
+
     const logic = await startLogic({ plan, kase, engine, body, handBack, inputs: options.inputs });
     const sample = factSampler(kase, caseFactReader(kase, model), reader, signals);
     const judge = () => judgeSoFar(kase.task.contract, { dt: RECORD_DT, signals });
     const driven = controller.kind === 'policy' ? withoutReference(kase) : kase;
-    const frames = await roll({ engine, kase: driven, steer, send, sample, logic, judge, changes });
+    const frames = await roll({
+      engine,
+      kase: driven,
+      steer,
+      send,
+      sample,
+      logic,
+      judge,
+      changes,
+      checkpoint: options.checkpoint,
+    });
     const trace = { dt: RECORD_DT, signals };
     const verdict = await evaluateContract(kase.task.contract, trace);
 

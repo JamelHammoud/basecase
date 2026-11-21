@@ -24,6 +24,7 @@ export interface RecordedInput {
 }
 
 export interface Recording {
+  evaluation?: import('../cases/evaluationReplayValidation').EvaluationReplay;
   transmission?: {
     motors: Array<{ joint: string; actuator: number; tendon: IdealTendon }>;
     observations: Array<{ joint: string; qpos: number; dof: number }>;

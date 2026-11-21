@@ -1,3 +1,5 @@
+import { encodeEvaluationPayload, decodeEvaluationPayload, MAX_EVALUATION_PAYLOAD } from './evaluationPayload';
+import { readEvaluationReplay } from './evaluationReplayValidation';
 import { keepTyped, restoreTyped } from './recordingValues';
 import { CONTINUATION_MAX_BYTES } from '../sim/continuationLimits';
 import type { RecordedInput, Recording } from '../sim/recorder';
@@ -26,6 +28,7 @@ const ARRAYS = {
   contacts: 'i32',
   contactOffsets: 'i32',
   continuation: 'u8',
+  evaluationData: 'u8',
 } as const satisfies Record<string, ArrayKind>;
 
 type ArrayKey = keyof typeof ARRAYS;
@@ -50,9 +53,15 @@ function splitRecording(recording: Recording) {
   const rest: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(recording)) {
+    if (key === 'evaluation' && recording.evaluation) {
+      continue;
+    }
+
     if (key in ARRAYS && value) arrays.push([key as ArrayKey, value as Typed]);
     else rest[key] = value;
   }
+
+  if (recording.evaluation) arrays.push(['evaluationData', encodeEvaluationPayload(recording.evaluation)]);
 
   return { arrays, rest };
 }
@@ -133,11 +142,17 @@ const arraysFit = (h: Header) =>
     (entry) =>
       Array.isArray(entry) &&
       entry[0] in ARRAYS &&
-      isCount(entry[1], entry[0] === 'continuation' ? CONTINUATION_MAX_BYTES : Number.MAX_SAFE_INTEGER) &&
+      isCount(entry[1], arrayLimit(entry[0])) &&
       (expectedLength(entry[0], h) ?? entry[1]) === entry[1],
   ) &&
   REQUIRED.every((key) => h.arrays.some(([k]) => k === key)) &&
   new Set(h.arrays.map(([k]) => k)).size === h.arrays.length;
+
+function arrayLimit(key: ArrayKey): number {
+  if (key === 'continuation') return CONTINUATION_MAX_BYTES;
+
+  return key === 'evaluationData' ? MAX_EVALUATION_PAYLOAD : Number.MAX_SAFE_INTEGER;
+}
 
 function sliceArrays(bytes: Uint8Array, header: Header): Partial<Record<ArrayKey, Typed>> | null {
   const out: Partial<Record<ArrayKey, Typed>> = {};
@@ -208,9 +223,20 @@ export function decodeRecording(bytes: Uint8Array): Recording | null {
 
   const rest: Record<string, unknown> = { ...header };
 
+  if (arrays.evaluationData) {
+    try {
+      rest.evaluation = decodeEvaluationPayload(arrays.evaluationData as Uint8Array);
+      delete arrays.evaluationData;
+    } catch {
+      return null;
+    }
+  }
+
   delete rest.arrays;
   delete rest.contacts;
   delete rest.contactOffsets;
+
+  if (rest.evaluation !== undefined && !readEvaluationReplay(rest.evaluation)) return null;
 
   const inputs = readInputs(rest.inputs);
 

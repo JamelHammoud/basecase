@@ -3,7 +3,7 @@ import type { Recording } from '../sim/recorder';
 import { recordedEfforts, type RecordedEfforts } from '../sim/recordedFrames';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Trace } from '../skills/contract';
-import { startEngine, type CaseResult } from './runCase';
+import { startEngine, type CaseResult, type RunOptions } from './runCase';
 import type { Case } from './schema';
 import { MISSED } from './caseRuns';
 import { tripFrames, type Trip } from './tripFrames';
@@ -24,7 +24,7 @@ export async function seedReplay(
   mj: MainModule,
   result: CaseResult,
   seed: number,
-  randomized = true,
+  randomized: boolean | Pick<RunOptions, 'randomization' | 'jointNoiseDeg'> = true,
 ): Promise<SeedReplay> {
   if (!result.recording) throw new Error(result.refusal);
 
@@ -37,6 +37,7 @@ export async function seedReplay(
   const { engine, dispose } = startEngine(mj, result.model, {
     controller: { kind: 'hold' },
     seed: randomized ? seed : undefined,
+    ...(typeof randomized === 'object' ? randomized : {}),
   });
   let efforts: RecordedEfforts;
 

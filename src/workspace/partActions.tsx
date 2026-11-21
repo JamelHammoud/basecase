@@ -1,4 +1,5 @@
 import type React from 'react';
+import { canRecoverImport } from '../utils/sketch/recoverySource';
 import type { Command } from '../components/CommandPalette';
 import {
   BookmarkAddIcon,
@@ -182,6 +183,15 @@ export function onePartActions({ core, actions }: Omit<PartActionInputs, 'ui'>, 
   const setFlag = (patch: Partial<ScenePart>) => actions.edits.patchPart(part.id, patch);
 
   return {
+    convertSketch: canRecoverImport(part)
+      ? {
+          id: 'convert-import-to-sketch',
+          label: 'Convert to Sketch',
+          icon: EditIcon,
+          keywords: 'import mesh flat extrusion profile holes thickness',
+          run: () => void core.sketching.convert(part.id),
+        }
+      : null,
     lighten: canLighten(part)
       ? {
           id: 'lighten',

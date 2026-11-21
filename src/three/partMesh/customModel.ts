@@ -59,7 +59,7 @@ const contourNode = (node: CustomModelSubNode, style: NodeStyle) => {
     if (hole.length >= 3) shape.holes.push(loopShape(hole, w, d, new THREE.Path()));
   }
 
-  const extrudeDepth = Math.max(1, h);
+  const extrudeDepth = Math.max(0.01, h);
   const geometry = new THREE.ExtrudeGeometry(shape, {
     depth: extrudeDepth,
     steps: 8,

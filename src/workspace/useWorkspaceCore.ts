@@ -157,7 +157,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const studyOptions = { active, workspaceId, viewportRef, readiness, simTraining, tool, showToast };
   const { caseCompare, study } = useWorkspaceStudies({ ...documentContext, ...studyOptions });
 
-  const sketching = useSketchSession({ docs, viewportRef, selectedIds, setSelectedIds, tool, showToast });
+  const sketching = useSketchSession({ docs, viewportRef, selectedIds, setSelectedIds, tool, toasts, versions });
   const cableRouteOptions = { docs, sceneId: scene.sceneId, posing, showToast };
 
   return {

@@ -64,6 +64,8 @@ Import brings files from other apps into your scene. One command opens every kin
 
 Meshes and CAD files become parts. Basecase reads STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE files, and the desktop app also reads STEP, STP, IGES and IGS files. New parts appear where you right-clicked and are selected, so you can move them.
 
+For a closed flat custom part, [Convert an imported flat part](/help/convert-an-imported-flat-part) recovers an editable Sketch extrusion.
+
 If you pick an SVG, the Import SVG panel opens with your drawing loaded. Set the width and thickness, then click **Add** to extrude the drawing into a part.
 
 ![The Import SVG panel with a drawing loaded](/help/import-a-file/svg.png)

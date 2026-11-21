@@ -14,6 +14,6 @@ You get a reach check for every supported target. MuJoCo runs the complete Carte
 
 You save completed placements with the scene and can undo them. If you change the Case, robot geometry, tool binding or placement, you invalidate the previous verdict. If you cancel, you keep the prior placement.
 
-You enter placements as evidence. You cannot use them to establish physical registration accuracy or transfer performance. You cannot use this workflow for pitch, roll, joint-space references or physical execution.
+You enter placements as evidence. You can’t use them to establish physical registration accuracy or transfer performance. You can’t use this workflow for pitch, roll, joint-space references or physical execution.
 
 Follow the steps in [Rehearse an arm at a workbench](/help/rehearse-an-arm-at-a-workbench).

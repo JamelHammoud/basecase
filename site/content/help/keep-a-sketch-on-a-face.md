@@ -83,3 +83,5 @@ If a support disappears or can’t resolve, the last solid stays visible and **C
 ![The feature follows its explicitly chosen replacement deck](/help/keep-a-sketch-on-a-face/resolved.png)
 
 Press [[Esc]] to cancel face selection. Duplicating a support and its feature keeps their relationship within the copy. Copying the feature alone or using **Mirror** makes an independent sketch at its copied position.
+
+Converting an imported mesh with a retained face support is refused before replacement. [Convert an imported flat part](/help/convert-an-imported-flat-part) covers the supported import shapes.

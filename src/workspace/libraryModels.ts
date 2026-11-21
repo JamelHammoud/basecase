@@ -1,30 +1,12 @@
 import type { CustomModelDefinition, CustomModelSubNode, RobotJoint, ScenePart } from '../types/robotics';
 import { capturedJoints } from '../utils/libraryJoints';
 import { modelId, stamp } from './helpers';
-import { halfExtents } from '../utils/selection';
+import { selectionBounds } from '../utils/selection';
 import { PRINTED_TAG } from './partFactories';
 
 const MIN_MODEL_SIDE = 4;
 
-interface Box {
-  min: [number, number, number];
-  max: [number, number, number];
-}
-
-export function partsBox(parts: ScenePart[]): Box {
-  const box: Box = { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
-
-  for (const p of parts) {
-    const half = halfExtents(p);
-
-    for (let i = 0; i < 3; i++) {
-      box.min[i] = Math.min(box.min[i], p.position[i] - half[i]);
-      box.max[i] = Math.max(box.max[i], p.position[i] + half[i]);
-    }
-  }
-
-  return box;
-}
+export const partsBox = selectionBounds;
 
 const nodePart = ({ id: _id, position: _position, group: _group, ...part }: ScenePart) => part;
 

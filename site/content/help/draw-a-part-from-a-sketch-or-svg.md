@@ -88,6 +88,8 @@ A sketch made on a supported rectangular face follows later edits to that part. 
 
 ## Change a sketched part
 
+An imported flat custom part can also become an editable extrusion. [Convert an imported flat part](/help/convert-an-imported-flat-part) keeps its polygonal outline and through-holes.
+
 Double-click a sketched part to reopen its sketch. Click a dimension, type the new value and press [[↩]], and the part re-extrudes in place. Press [[⌘Z]] to put it back.
 
 ![The reopened sketch with the width changed to 50, and the part grown on the box](/help/draw-a-part-from-a-sketch-or-svg/edited.png)

@@ -1,4 +1,3 @@
-import { expect } from 'vitest';
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
 import { openApp, openPlayTab, shown } from './harness';
 import { bodyExecutionScene, parkedBodyRun } from '../src/reality/bodyMotion.fixtures';
@@ -50,9 +49,7 @@ export async function openBodyExperimentApp(options: { second?: boolean; recomme
 
   async function climb() {
     await page.locator(shown('[data-robot-rung="set_up"]')).first().click();
-    await expect
-      .poll(() => page.locator(shown('[data-testid="robot-mode"]')).first().getAttribute('data-mode'))
-      .toBe('set_up');
+    await page.locator(shown('[data-testid="robot-mode"][data-mode="set_up"]')).first().waitFor({ timeout: 10_000 });
     await page.locator(shown('[data-robot-rung="test"]')).first().click();
     await page.getByText('Motors running', { exact: true }).filter({ visible: true }).waitFor();
   }

@@ -1,16 +1,8 @@
-import { compareTraining } from './retention';
 import { expect, it } from 'vitest';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { setFlagsFromString } from 'node:v8';
-import { runInNewContext } from 'node:vm';
 import { metricResult, metricSet, metricTask, metricSnapshot } from './metricsFixtures';
 import { evaluateTraining, evaluatedRows } from './metrics';
 import { requirementMeasurements } from './requirementEvaluation';
 import type { TrainingEvaluationInput } from './types';
-
-setFlagsFromString('--expose_gc');
-
-const collect = runInNewContext('gc') as () => void;
 
 it.each([4, 1000])(
   'measures %s images with shared rows, bounded retained indices and no content reads',
@@ -49,72 +41,16 @@ it.each([4, 1000])(
       modelBytes: 100,
     };
     const baseline = await evaluateTraining({ ...input, task: metricTask() });
-    const times = [];
-    let measured = baseline;
-
-    await evaluateTraining(input);
-    collect();
-
-    const heapBefore = process.memoryUsage().heapUsed;
-    let peakRssBytes = process.memoryUsage().rss;
-
-    for (let at = 0; at < 5; at++) {
-      const start = performance.now();
-
-      await evaluateTraining({ ...input, task: metricTask() });
-
-      const plainMs = performance.now() - start;
-      const withStart = performance.now();
-
-      measured = await evaluateTraining(input);
-      times.push({ plainMs, requiredMs: performance.now() - withStart });
-      peakRssBytes = Math.max(peakRssBytes, process.memoryUsage().rss);
-    }
-
-    collect();
-
-    const heapBytes = process.memoryUsage().heapUsed - heapBefore;
+    const measured = await evaluateTraining(input);
     const retainedBytes = Buffer.byteLength(JSON.stringify(measured)) - Buffer.byteLength(JSON.stringify(baseline));
-
-    const storedBytes = (report: typeof baseline) =>
-      Buffer.byteLength(
-        JSON.stringify({
-          report,
-          incumbentReport: report,
-          comparison: compareTraining({
-            id: 'resources',
-            at: '2026-11-17T12:00:00Z',
-            candidate: report,
-            incumbent: report,
-            history: [],
-          }).attempt,
-        }),
-      );
-    const comparisonAddedBytes = storedBytes(measured) - storedBytes(baseline);
 
     expect(measured.metrics).toEqual(baseline.metrics);
     expect(measured.evidence?.requirements?.every((row) => row.support === count && row.score === 1)).toBe(true);
     expect(retainedBytes).toBeLessThan(24 * 1024);
-    mkdirSync('scratch', { recursive: true });
-    writeFileSync(
-      `scratch/vision-requirement-resources-${count}.json`,
-      JSON.stringify(
-        {
-          count,
-          times,
-          heapBytes,
-          peakRssBytes,
-          retainedBytes,
-          comparisonAddedBytes,
-          addedInference: 0,
-          addedContentReads: 0,
-          addedDecodedImagePixels: 0,
-          scoredImagePixels: count * 4 * 2,
-        },
-        null,
-        2,
-      ),
-    );
+    expect(measured.evidence?.requirements?.map((row) => row.indices)).toEqual([
+      Array.from({ length: count }, (_, index) => index),
+      Array.from({ length: count }, (_, index) => index),
+    ]);
 
     const rows = await evaluatedRows(input, baseline.realTest);
 

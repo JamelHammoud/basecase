@@ -41,8 +41,7 @@ async function importPlate() {
   await app.page.keyboard.type('Import');
   await app.page
     .locator(shown('button[data-idx]'))
-    .filter({ hasText: 'Import' })
-    .filter({ hasNotText: 'Robot' })
+    .and(app.page.getByRole('button', { name: 'Import', exact: true }))
     .click();
   await expect.poll(async () => (await supportParts(app.page)).length).toBe(1);
 

@@ -23,7 +23,7 @@ import {
   type SimModel,
   type SimRobot,
 } from './mjcfTypes';
-import { adoptEmbeddedParts, isSolidPart } from './mjcfEmbedded';
+import { adoptModelParts, isSolidPart } from './mjcfEmbedded';
 import { emitWorld, worldFloor } from './mjcfWorld';
 import { robotScans } from './lidar';
 import { classifyRobot, isWheelJoint } from './morphology';
@@ -34,7 +34,7 @@ import { jointSpringAttrs } from './passiveJoint';
 import { loopEquality, loopHinge, physicalLoops } from './mjcfLoops';
 import { activeBodyCalibration } from '../reality/history';
 import { contactFingerprint, contactTopology } from './mjcfContactTopology';
-import { contactGeometry } from './mjcfContactGeometry';
+import { contactGeometry, fingerCollisionPieces } from './mjcfContactGeometry';
 
 export { fromMj, quatFromMj, quatToMj, simDelta, simDeltas, toMj, worldDelta, worldDeltas } from './mjcfFrames';
 export { SIM_MODEL_VERSION } from './mjcfTypes';
@@ -109,14 +109,15 @@ function geomAttrs(st: BuildState, p: ScenePart, role: GeomRole): string {
 }
 
 function geomFor(st: BuildState, p: ScenePart, origin: V3, role: GeomRole): string | null {
+  const attrs = geomAttrs(st, p, role);
+  const name = `g_${p.id.replace(/[^\w-]/g, '_')}`;
+  const hulls = st.input.robotHulls?.[p.id] ?? fingerCollisionPieces(p);
+
+  if (hulls?.length && role === 'robot') return contactGeometry({ part: p, origin, hulls, attrs, assets: st.assets });
+
   const tris = st.input.partTriangles(p.id);
   const place = partMatrix(p);
   const verts = tris && tris.length >= 9 ? cachedHull(p, tris, origin) : null;
-  const attrs = geomAttrs(st, p, role);
-  const name = `g_${p.id.replace(/[^\w-]/g, '_')}`;
-  const hulls = st.input.robotHulls?.[p.id];
-
-  if (hulls?.length && role === 'robot') return contactGeometry({ part: p, origin, hulls, attrs, assets: st.assets });
 
   if (verts) {
     const mesh = `m${st.assets.length}_${safeId(p.id)}`;
@@ -390,7 +391,7 @@ export function buildMjcf(given: MjcfInput): SimModel {
 
   const loops = physicalLoops(given.rig);
 
-  const input = { ...given, rig: adoptEmbeddedParts(given.rig, given.parts, given.partTriangles) };
+  const input = { ...given, rig: adoptModelParts(given) };
   const { parts, rig, project } = input;
   const st: BuildState = {
     input,
@@ -416,7 +417,8 @@ export function buildMjcf(given: MjcfInput): SimModel {
   for (const robot of rig.robots) emitRobot(st, robot);
 
   const inRobot = new Set(rig.robots.flatMap((r) => [...r.parts]));
-  const loose = parts.filter((p) => !inRobot.has(p.id) && isSolidPart(p));
+  const inWorld = new Set(input.world?.flatMap((part) => (part.sourcePartId ? [part.sourcePartId] : [])));
+  const loose = parts.filter((p) => !inRobot.has(p.id) && !inWorld.has(p.id) && isSolidPart(p));
 
   for (const p of loose.filter((q) => !q.physics?.dynamic)) {
     const g = geomFor(st, p, [0, 0, 0], 'scenery');

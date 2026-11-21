@@ -31,3 +31,5 @@ You can make a Case where an arm lifts a block off the floor and sets it down on
 ![Results with a passed try](/help/pick-up-a-block-with-a-gripper/results.png)
 
 To share passed tries, click **Make Dataset** under **Results**, then export or publish the dataset. The dataset uses the Case's brief as its task. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
+
+To fit fingers around your own box or cylinder and preserve its supplied dimensions, see [Design gripper fingers](/help/design-gripper-fingers).

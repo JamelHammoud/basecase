@@ -3,6 +3,7 @@ import type { PassiveJoint } from '../sim/passiveJoint';
 import { fixtureSignals } from './fixtureTravel';
 import { readPassiveJoint, validateFixtures } from './fixtureValidation';
 import { readFixtureGeometry } from './fixtureGeometry';
+import { readPickTarget } from './selectedPickValidation';
 import type { WorldBehavior, WorldItem } from '../sim/mjcfTypes';
 import type { V3 } from '../utils/kinematics';
 import { consoleReader, type CaseConsole } from './console/format';
@@ -144,7 +145,7 @@ export interface Case {
   brief: string;
   slot?: RobotSlot;
   slots?: RobotSlot[];
-  world: { objects: WorldObject[]; imported?: ImportedWorldRef };
+  world: { objects: WorldObject[]; imported?: ImportedWorldRef; pickTarget?: string };
   controls: CaseControl[];
   reference: { timeline: ReferenceCommand[] };
   task: CaseTask;
@@ -379,6 +380,7 @@ export function parseCase(input: unknown): Case {
   const world = asRecord(v.world, 'world');
   const reference = asRecord(v.reference, 'reference');
   const objects = readWorldObjects(world.objects);
+  const pickTarget = readPickTarget(world.pickTarget, objects);
   const task = readTask(v.task, 'task');
 
   checkScore(task, objects);
@@ -398,6 +400,7 @@ export function parseCase(input: unknown): Case {
     ...readCast(v),
     world: {
       objects,
+      ...(pickTarget ? { pickTarget } : {}),
       ...(world.imported === undefined ? {} : { imported: readWorldReference(world.imported, 'world.imported') }),
     },
     controls: listOf(readControl, 16)(v.controls, 'controls'),
@@ -442,8 +445,12 @@ export function readCases(raw: unknown[] | undefined): Case[] {
 }
 
 export function worldItem(o: WorldObject): WorldItem {
+  const geometry = { ...o.geometry } as Partial<WorldItem>;
+
+  delete geometry.sourcePartId;
+
   const part: ScenePart = {
-    ...o.geometry,
+    ...geometry,
     id: o.id,
     name: o.name,
     kind: o.geometry?.kind ?? (o.kind as PartKind),

@@ -28,6 +28,7 @@ import { fitVariantCoupons, type FitVariantCut } from '../print/fitVariantGeomet
 import type { ParameterGeometryJob } from '../utils/designParameters/transaction';
 import { prepareCradleJob, type CradleJob } from '../print/cradleJob';
 import { writeCradlePlate } from '../print/cradlePlate';
+import { assembleFingers, type FingerAssemblyJob } from '../gripperFingers/assembly';
 
 type Vec3 = [number, number, number];
 
@@ -209,6 +210,7 @@ export const geometryHandlers = {
       Object.values(result.files).map((file) => file.buffer),
     );
   },
+  fingerAssembly: (job: FingerAssemblyJob) => reply(assembleFingers(job)),
   fitComparisonParts: (comparison: FitComparison) => reply(fitComparisonParts(comparison)),
   fitSourceHash: async (design: ParameterDesign) => reply(await fitSourceHash(design)),
   fitPlateWrite: async (job: FitPlateWrite) => {

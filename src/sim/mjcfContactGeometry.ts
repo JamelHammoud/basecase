@@ -4,6 +4,8 @@ import { partMatrix, type V3 } from '../utils/kinematics';
 import { toMj } from './mjcfFrames';
 import { esc, safeId, vec } from './mjcfText';
 
+export { fingerCollisionPieces } from '../gripperFingers/collision';
+
 export function contactGeometry(options: {
   part: ScenePart;
   origin: V3;

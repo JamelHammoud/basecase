@@ -677,7 +677,7 @@ The ten-file review check passed formatting, ESLint, documentation, site validat
 
 ## Nightly platform exclusions on 21 November
 
-Check 44878070469 reached different stages on Linux and Windows in the newly added continuation story. Linux recorded its source and opened the timeline, then measured a control ending at x=788 beyond the root's right edge at 766.5. The slider's inline grid had fixed label columns and a native track but could shrink to 200px. Its stacked presentation now separates labels from the full-width track. The existing containment, text, track-width and overlap assertions remain unchanged. Browser verification of the candidate remains with CI.
+Check 44878070469 reached different stages on Linux and Windows in the newly added continuation story. Linux recorded its source and opened the timeline, then measured a control ending at x=788 beyond the root's right edge at 766.5. The slider's inline grid had fixed label columns and a native track but could shrink to 200px. Its stacked presentation separates labels from the full-width track, but the pull request Check subsequently reproduced the same x=788 control edge against the x=766.5 root edge. Stacking alone did not resolve containment. The existing containment, text, track-width and overlap assertions remain unchanged. Browser verification of the candidate remains with CI.
 
 Review extends the same browser declaration with keyboard scrubbing to the first and last frames at 1240 × 720. Geometry checks now require both track edges to align with the slider container and measure pairwise text separation. Tooltip wrappers retain their original text-containment checks, while only their text-bearing children participate in pairwise overlap checks. Earlier Classroom coverage paragraphs now reflect the separate Windows student-reload exclusion instead of claiming that path remains active. Browser execution remains with CI.
 
@@ -690,3 +690,25 @@ The student-attempt story edited the robot and invoked Submit, then its 30000 ms
 `personCamera.test.ts` exhausted its 15000 ms beforeAll deadline on Windows before any of ten pixel assertions ran. MuJoCo loading, bundle, server, browser, worker readiness and shader initialization lack separate stage traces. Existing OffscreenCanvas owner [#1400](https://github.com/JamelHammoud/basecase/issues/1400) owns this path. Whole-file Windows quarantine through 28 November is required because setup precedes filtering. Linux and macOS retain rendered RGB, instance and depth assertions. Windows retains real person physics, sensing, persistence and geometry checks.
 
 Each excluded path requires its own demonstrated correction and ten baseline and ten candidate equal-load observations on Windows with retries disabled and existing assertions and deadlines intact before restoration. No same-cause or flake-rate claim is made.
+
+### Continuation containment revision
+
+The pull request Check failed at the first minimum-window containment assertion in both attempts. The aggregate job failed solely because `E2E_CHANGED` was `failure`. Its other required jobs succeeded or were correctly skipped. No separate aggregate-check repair is needed.
+
+Playback placed tooltip anchors directly in a wrapping flex row beside a growing slider. Those anchors were allowed to shrink even though the enclosed controls had fixed or minimum widths. Play now has a nonshrinking wrapper, and speed and Close share a nonshrinking flex group. The row can wrap these groups without relying on each tooltip anchor’s intrinsic minimum. The slider retains its 200px minimum and stacked track. This addresses the remaining flex-sizing boundary without clipping controls or weakening assertions. The failed log does not name the overflowing control, so the containment assertions now include each control’s accessible name or text.
+
+The existing browser story retains control and text containment, pairwise overlap checks, track alignment, checkpoint selection, keyboard scrubbing to both ends and saved branch recovery. No test, assertion, deadline, retry or quarantine scope changes. Browser execution remains assigned to CI. This is a candidate sizing correction, not a locally observed browser pass.
+
+The revision’s five-file changed check passed formatting, lint, documentation, site copy across 381 pages, TypeScript and thirteen related tests across seven files on Node 26.13.1. The final log is `scratch/revise-check-final.log`. Preflight retains five unchanged-help reminders, reread against the timeline, gizmo attachment and tendon coverage changes. No workflow step, label or pictured state in those articles changed.
+
+The five article reminders have these dispositions:
+
+| Article | Why its existing instructions and images still apply |
+| --- | --- |
+| [Branch a simulated try](../../site/content/help/branch-a-simulated-try.md) | Checkpoint selection, Branch Try, manual driving, Stop Try and portable export retain their controls and behavior. Playback sizing does not change the retained checkpoint or saved-try states. |
+| [Play a try through its console](../../site/content/help/play-a-try-through-its-console.md) | Console entry, plotted seeking, Space, speed, looping and Done retain their handlers. Playback controls wrap within the same timeline and the console states remain the same. |
+| [Scrub a try on the timeline](../../site/content/help/scrub-a-try-on-the-timeline.md) | Joint lanes, failure markers, frame and second stepping, Home, End and loop gestures are unchanged. The stacked slider and nonshrinking control groups preserve those actions. |
+| [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) | The covered guide adds a platform-specific tendon browser coverage exclusion. Joint fields, posing, IK, imports and the linked tendon behavior do not change. |
+| [Snap parts together by their mounting holes](../../site/content/help/snap-parts-together-by-their-mounting-holes.md) | The gizmo change watches attachment removal and detaches controls from removed objects. Port compatibility, snap distance, dragging, mate following, modifier handling and Undo are unchanged. |
+
+These reminders ask for source comparison rather than mandatory article edits. The existing captions describe retained feature states rather than exact slider label placement. No article or capture is replaced solely to clear a structural reminder.

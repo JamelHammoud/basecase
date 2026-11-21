@@ -37,7 +37,10 @@ export async function assertContinuationLayout(page: Page) {
 
     return {
       root: box(root),
-      controls: controls.map(box),
+      controls: controls.map((element) => ({
+        ...box(element),
+        name: element.getAttribute('aria-label') ?? element.textContent ?? element.tagName,
+      })),
       text,
       selectText: context.measureText(select.selectedOptions[0].text).width,
       selectContent: box(select).width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
@@ -54,8 +57,8 @@ export async function assertContinuationLayout(page: Page) {
   expect(measured.selectText).toBeLessThanOrEqual(measured.selectContent);
 
   for (const control of measured.controls) {
-    expect(control.left).toBeGreaterThanOrEqual(measured.root.left);
-    expect(control.right).toBeLessThanOrEqual(measured.root.right);
+    expect(control.left, control.name).toBeGreaterThanOrEqual(measured.root.left);
+    expect(control.right, control.name).toBeLessThanOrEqual(measured.root.right);
   }
 
   for (const { field, text } of measured.text) {

@@ -2,6 +2,7 @@ import { afterEach, expect, it } from 'vitest';
 import { listPurchases, savePurchase } from '../electron/backend/purchases.mjs';
 import { encodeSceneFile, sharedScene } from '../src/utils/sceneFile';
 import { openApp, shown, type App } from './harness';
+import { supportSceneStorage } from './sketchSupport.helpers';
 import {
   routeSourcingPurchases,
   openSourcingStudy,
@@ -87,6 +88,7 @@ it(
     const { page } = app;
 
     await routeSourcingPurchases(page, fixture);
+    await supportSceneStorage(page);
 
     const study = await savedSourcingStudy(fixture);
     const bytes = await encodeSceneFile(

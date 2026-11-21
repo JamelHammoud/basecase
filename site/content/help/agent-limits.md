@@ -41,7 +41,7 @@ Offline works without AI. It traces one outline from an image, or works from you
 
 ## It reaches only the public web
 
-The agent can read public web pages up to 8 MB and images up to 20 MB. It blocks local and private addresses, including private IPv4 addresses carried inside IPv6.
+The agent can read public web pages up to 8 MB and images up to 20 MB. It blocks local and private addresses.
 
 ## It has time and size limits
 

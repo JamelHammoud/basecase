@@ -1365,5 +1365,29 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44887426902 never reached the source try clock at 1.5 seconds in one attempt and found no saved source try in another, before branch creation or scene switching. Existing reference-recording owner #1026 retains startup, clock, recording and persistence boundaries separately. Linux and macOS retain the browser declaration, while Windows retains fast checkpoint, cancellation, source-identity and persistence coverage. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on this platform with retries disabled. No flake rate is claimed. Exact-revision diagnostic 44889813364 passed in 24648.1903 ms, confirming intermittency without a rate."
+  },
+  {
+    "file": "e2e/buildAllocations.e2e.test.ts",
+    "test": "allocates a rover motor and two printed copies to independent builds through reload",
+    "issue": 2013,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44889841702 completed motor reservation, the expected stock refusal and assignment of two distinct printed copies, then found zero Mark Incomplete controls after reload and reopening Rover 1 at line 97. Earlier Windows creation failures and the Linux records story are separate paths. Existing priority owner #2013 owns completion dispatch, strict transaction commit, subsequent build navigation, reload identity and control delivery. Linux retains independent-context reservation and fast frozen-Kit, atomic storage, concurrency, allocation and photo coverage. macOS retains the complete browser story. These do not replace combined ordinary allocation and completion reopening. Preserve existing assertions and deadlines. Restore only after a demonstrated cause and fix and ten baseline and ten candidate equal-load Linux observations with retries disabled. No flake rate is claimed. Exact-revision Linux diagnostic 44891444914 reproduced the same line-97 assertion in 96460.9 ms with one worker, quarantine off and retries disabled. It establishes the failed path, not a cause or intermittent rate."
+  },
+  {
+    "file": "tools/site/imageHealth.test.mjs",
+    "test": "article image health > accepts a dark page with visible content",
+    "issue": 2033,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44889841702 exceeded the unchanged 5000 ms callback deadline on Windows. The log does not distinguish construction of the text-bearing SVG, image encoding and pixel inspection. The earlier filename-handle EBUSY fix is already present and does not explain callback expiry. No causative merge or changed environment component is established. Priority owner #2033 owns stage tracing, a demonstrated cause and fix and ten baseline and ten candidate equal-load Windows observations with retries disabled before restoration. Linux and macOS retain this declaration. Windows retains startup, dim-logo, uniform-color, unreadable-image and site-build rejection checks, and production article validation remains active. Those checks do not replace valid dark-content acceptance and nested actionable-path coverage. Preserve existing assertions and deadlines. No flake rate is claimed. Exact-revision Windows diagnostic 44891431401 passed in 3742.8 ms with one worker, quarantine off and retries disabled, confirming intermittent execution without a rate."
+  },
+  {
+    "file": "tools/site/imageHealth.test.mjs",
+    "test": "article image health > checks nested help, blog and changelog assets with actionable paths",
+    "issue": 2033,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44889841702 exceeded the unchanged 5000 ms callback deadline on Windows. The log does not distinguish SVG encoding, nested file creation, traversal, image decoding, pixel inspection and cleanup. The earlier filename-handle EBUSY fix is already present and does not explain callback expiry. No causative merge or changed environment component is established. Priority owner #2033 owns stage tracing, a demonstrated cause and fix and ten baseline and ten candidate equal-load Windows observations with retries disabled before restoration. Linux and macOS retain this declaration. Windows retains startup, dim-logo, uniform-color, unreadable-image and site-build rejection checks, and production article validation remains active. Those checks do not replace valid dark-content acceptance and nested actionable-path coverage. Preserve existing assertions and deadlines. No flake rate is claimed. Exact-revision Windows diagnostic 44891687243 passed in 4523.2 ms with one worker, quarantine off and retries disabled, confirming intermittent execution without a rate."
   }
 ]

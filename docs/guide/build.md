@@ -838,3 +838,5 @@ The image tests also check EXIF-oriented JPEG thumbnails and unchanged originals
 Closing an enlarged photo returns focus to its thumbnail. Escape within the photo pane closes its enlarged selection before the Build Along session. The photo browser declaration checks both dismissal paths, retained focus and the still-open frozen build.
 
 The damaged-photo browser path waits for the frozen view to mount after reopening before checking its retained attachment. This separates asynchronous Kit verification from photo loading and deletion assertions.
+
+Step callouts wrap within the available header width, including component names without spaces. Their height grows with the text so the frozen CAD and photo panes remain below the whole header. The photo browser flow uses long component names and measures their bounds before and after step navigation at the minimum window and Build-panel widths.

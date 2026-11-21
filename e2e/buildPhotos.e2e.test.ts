@@ -43,7 +43,12 @@ it('imports a photograph beside frozen CAD and reopens only its original build a
 
   try {
     await retainSelfContactSceneFiles(app.page);
-    await openKitScene(app.page, kitArmScene());
+
+    const scene = kitArmScene();
+    const longName = `Assembly bracket ${'mount'.repeat(22)}`;
+
+    scene.parts = scene.parts.map((part) => ({ ...part, name: `${part.name}: ${longName}` }));
+    await openKitScene(app.page, scene);
     await app.page.setViewportSize({ width: 1240, height: 720 });
     await app.page.getByRole('tab', { name: 'Build', exact: true }).click();
     await narrowBuildPanel(app.page);
@@ -52,6 +57,12 @@ it('imports a photograph beside frozen CAD and reopens only its original build a
     await app.page.getByRole('button', { name: 'Photo arm one', exact: true }).click();
     await app.page.locator('[data-frozen-build]').waitFor({ state: 'visible' });
     expect(await app.page.getByRole('button', { name: 'Move', exact: true }).count()).toBe(0);
+    await app.page.getByRole('button', { name: 'Next step', exact: true }).click();
+    await app.page
+      .locator('[data-build-along-bar] li')
+      .filter({ hasText: longName })
+      .first()
+      .waitFor({ state: 'visible' });
     await importPhoto(app.page);
     await app.page.getByRole('button', { name: 'bracket.png', exact: true }).focus();
     await app.page.keyboard.press('Enter');
@@ -77,8 +88,9 @@ it('imports a photograph beside frozen CAD and reopens only its original build a
     ).toBe(true);
     expect(await app.page.getByRole('button', { name: 'bracket.png', exact: true }).count()).toBe(1);
     expect(await app.page.locator('[data-frozen-build] canvas').count()).toBeGreaterThan(0);
-    await app.page.getByRole('button', { name: 'Next step', exact: true }).click();
+    await app.page.getByRole('button', { name: 'Previous step', exact: true }).click();
     await expect.poll(() => app.page.getByRole('button', { name: 'bracket.png', exact: true }).count()).toBe(0);
+    await photoLayout(app.page);
     await app.page.getByRole('button', { name: 'Done', exact: true }).click();
     await expect.poll(() => app.page.getByRole('button', { name: 'Move', exact: true }).count()).toBe(1);
     await app.page.reload();
@@ -88,7 +100,7 @@ it('imports a photograph beside frozen CAD and reopens only its original build a
     expect(await app.page.getByRole('button', { name: 'bracket.png', exact: true }).count()).toBe(0);
     await app.page.getByRole('button', { name: 'Done', exact: true }).click();
     await app.page.getByRole('button', { name: 'Photo arm one', exact: true }).click();
-    await app.page.getByRole('button', { name: 'Previous step', exact: true }).click();
+    await app.page.getByRole('button', { name: 'Next step', exact: true }).click();
     await expect.poll(() => app.page.getByRole('button', { name: 'bracket.png', exact: true }).count()).toBe(1);
     await app.page.getByRole('button', { name: 'bracket.png', exact: true }).click();
     await expect.poll(() => app.page.locator('[data-build-photo-enlarged] img').count()).toBe(1);

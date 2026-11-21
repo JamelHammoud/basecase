@@ -1475,3 +1475,11 @@ Reopening verifies the retained Kit in a worker before mounting the frozen view.
 ### Photo and repair merge integration
 
 The frozen viewer combines the photo toolbar row and split panes with retained repair revision selection and 3MF export. Original assembly photos remain available through Original assembly history. Repair playback has a different step sequence and does not load or import original assembly photos by its numeric index. `useBuildPhotos.test.ts` checks that repair playback opens no chooser and writes no attachment. Browser execution remains CI-owned.
+
+### Long frozen-step callouts
+
+The next review found that the wrapping header still gave each callout a fixed 28px height and prohibited text wrapping. A long component name could extend past the canvas card at the minimum window width. Callouts now grow vertically and wrap even names without spaces within the bounded header. The existing photo import and reopen browser declaration names both fixture parts with long component labels, requires the printed-part callout to be visible after navigation and measures callout text containment and pane separation before and after navigation. No browser execution, deadline or retry change accompanies this correction.
+
+Before this correction, the eight-file focused review selection passed formatting, lint, TypeScript, all 375 site pages and 142 related tests across 22 files. Its log is `scratch/review-2002-current-check.log`. These checks do not exercise browser layout or establish cancellation behavior across mounted destination changes. The existing server-rendered import-handler tests exercise captured destinations and explicit cancellation without running effects.
+
+The final four-file correction selection passed formatting, lint, documentation, TypeScript, all 375 site pages and 15 related tests across eight files. Its log is `scratch/review-2002-callouts-final.log`. Browser layout execution remains with CI.

@@ -32,6 +32,12 @@ A local Babel transform using the installed React Compiler reported `CompileSucc
 
 The existing rover and shared joystick walkthroughs cover readiness and real movement. The shared isolation walkthrough requires all five probes through the production web code frame. Their assertions, deadlines, retries and quarantine remain unchanged. Fast named-file checks run locally, with browser execution left to CI. No local browser success or flake-rate measurement is claimed.
 
+### Unsupported panel directive
+
+The subsequent #1981 Check reached the shared joystick walkthrough's movement and HUD assertions. Its final empty-console assertion failed on both attempts with three unsupported `webrtc` CSP directive messages. The other four gallery tests and all four focused isolation probes passed. The aggregate `check` job failed only because `e2e-changed` failed.
+
+The production panel policy now omits the unsupported directive. WebRTC remains blocked by immutable constructor locks and inherited script hash restrictions. The gallery's exact empty-console, movement, speed and no-Hub-request assertions remain unchanged. The focused TURN test retains direct and nested boundaries without the now-duplicate directive variant. [Case code evidence](testing-case-code.md#unsupported-webrtc-directive-removal) records the security coverage and CI execution limits.
+
 ## Leagues
 
 Review found that browser replay passed no mesh files into `headlessParts`, which awaited only supplied file keys. Catalog components could therefore be measured as placeholder boxes while their downloads ran. Replay now loads all referenced catalog meshes before building or measuring and refuses a failed download. The real replay test compares browser-fetched geometry with adjudication-supplied geometry and exercises a failed model download.

@@ -4,7 +4,6 @@ import { forwardConsole, installCodeClient } from './codeClient';
 
 export const CODE_PANEL_CSP = [
   "default-src 'none'",
-  "webrtc 'block'",
   "script-src 'none'",
   "style-src 'unsafe-inline'",
   'img-src data: blob:',

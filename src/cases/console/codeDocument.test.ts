@@ -19,7 +19,6 @@ describe('a code panel’s document', () => {
     expect(doc).toContain('basecase.event("go")</script>');
     expect(CODE_PANEL_CSP.split('; ')).toEqual([
       "default-src 'none'",
-      "webrtc 'block'",
       "script-src 'none'",
       "style-src 'unsafe-inline'",
       'img-src data: blob:',

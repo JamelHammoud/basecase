@@ -53,7 +53,7 @@ Use these primitives. Never hand-roll a styled `<button>` or input when one fits
 
 ## Error toast recovery text
 
-Error `Toast` messages wrap at the existing text-width limit and grow above their 40px minimum height so recovery instructions remain visible. Canvas toast wrappers leave 12px on each side, and message words may break to fit long filenames. Action buttons retain their width. Other toast tones keep their single-line pill. `e2e/sceneFileLimits.e2e.test.ts` measures the full error text and canvas containment at the minimum desktop window size while testing refused and successful scene imports. Browser execution belongs to CI. [Coverage evidence](../notes/ui.md#error-toast-recovery-text).
+Error `Toast` messages wrap at the existing text-width limit and grow above their 40px minimum height so recovery instructions remain visible. Canvas toast wrappers leave 12px on each side, and message words may break to fit long filenames. Action buttons retain their width. Other toast tones keep their single-line pill. Rendered recovery-text bounds and canvas containment lack dedicated browser coverage after removal of the scene-limit test, which failed before import. [Coverage evidence](../notes/ui.md#error-toast-recovery-text).
 
 ## Context submenu activation
 

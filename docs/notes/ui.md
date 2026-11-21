@@ -14,7 +14,7 @@ Pull request #1965 reports five passing browser cases across the board, build-ti
 
 The portable-scene size error includes the filename and the existing import-error prefix. `Toast` previously constrained every tone to one truncated line within `max-w-md`, cutting off the instruction to remove large meshes or images and export again. Error messages now wrap with a 40px minimum height. The canvas wrapper caps the toast at the canvas width minus 24px. A shrink-resistant action keeps its label beside the message.
 
-`e2e/sceneFileLimits.e2e.test.ts` uses the real scene picker and production decoded-byte cap, checks that refusal saves nothing, measures text line rectangles and scroll bounds, and requires the toast to stay within the canvas at 1240 × 720. A normal scene then opens through the same command. The declaration is authored for CI and was not run locally. No timeout, retry or quarantine changed.
+The dedicated scene-limit browser declaration was removed after CI timed out waiting for its file chooser before importing either fixture. Its text-line, scroll-bound and canvas-containment assertions never ran in that Check. These rendered bounds and successful picker recovery remain browser coverage gaps. Fast decoder and stream tests retain size refusal, early cancellation and normal scene round trips, but do not establish rendered toast geometry. No timeout, retry or quarantine was added. [Failure evidence](performance-workspace.md#portable-scene-read-budget).
 
 ## Repeated control copy audit
 

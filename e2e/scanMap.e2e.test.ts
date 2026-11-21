@@ -47,7 +47,10 @@ async function importCorridor() {
   });
   await app.page.keyboard.press('ControlOrMeta+k');
   await app.page.keyboard.type('Import');
-  await app.page.getByRole('button', { name: 'Import', exact: true }).click();
+  await app.page
+    .locator(shown('button[data-idx]'))
+    .and(app.page.getByRole('button', { name: 'Import', exact: true }))
+    .click();
   await expect.poll(() => app.page.getByText('Imported 1 try', { exact: true }).count()).toBeGreaterThan(0);
   await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
   await app.page.locator(shown('[data-testid="library-tries"] button')).first().click();

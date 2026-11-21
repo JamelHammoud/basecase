@@ -40,7 +40,10 @@ async function importFromPalette(name: string, bytes: Uint8Array) {
   );
   await app.page.keyboard.press('ControlOrMeta+k');
   await app.page.keyboard.type('Import');
-  await app.page.getByRole('button', { name: 'Import', exact: true }).click();
+  await app.page
+    .locator(shown('button[data-idx]'))
+    .and(app.page.getByRole('button', { name: 'Import', exact: true }))
+    .click();
 }
 
 const armDataset = (lengths: number[], shift: number) =>
@@ -236,7 +239,10 @@ it('imports FlatBuffers through Import and reads its nested message, plot and st
   );
   await app.page.keyboard.press('ControlOrMeta+k');
   await app.page.keyboard.type('Import');
-  await app.page.getByRole('button', { name: 'Import', exact: true }).click();
+  await app.page
+    .locator(shown('button[data-idx]'))
+    .and(app.page.getByRole('button', { name: 'Import', exact: true }))
+    .click();
   await expect.poll(() => app.page.getByText('Imported 1 try', { exact: true }).count()).toBeGreaterThan(0);
   await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
   await app.page.locator(shown('[data-testid="library-tries"] button')).first().click();
@@ -265,7 +271,10 @@ it('imports FlatBuffers through Import and reads its nested message, plot and st
   );
   await app.page.keyboard.press('ControlOrMeta+k');
   await app.page.keyboard.type('Import');
-  await app.page.getByRole('button', { name: 'Import', exact: true }).click();
+  await app.page
+    .locator(shown('button[data-idx]'))
+    .and(app.page.getByRole('button', { name: 'Import', exact: true }))
+    .click();
   await expect.poll(() => app.page.getByText('Imported 0 tries', { exact: true }).count()).toBeGreaterThan(0);
   expect(await app.page.locator(shown('[data-testid="try-tile"]')).count()).toBe(1);
   expect(app.requests.filter((url) => url.includes('/api/bridge/hub-model-file'))).toEqual([]);

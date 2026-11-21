@@ -14,6 +14,7 @@ import { designOf } from '../src/skills/skillsRuntime';
 import { buildRig } from '../src/utils/kinematics';
 import { loadFixtureRobot } from './driveChecks';
 import { shown, type App } from './harness';
+import { expectTeachingLayout } from './teachingLayout';
 
 interface State {
   activeCase: string | null;
@@ -50,6 +51,9 @@ export async function prepareTeaching(app: App) {
 
   await app.page.evaluate((value) => (window as unknown as { __studio: TeachingStudio }).__studio.addCase(value), kase);
   await expect.poll(async () => (await teachingState(app)).activeCase).toBe(kase.id);
+  await app.page.getByRole('tab', { name: 'Simulate', exact: true }).click();
+  expect(await teachingButton(app, 'Try Policy').count()).toBe(0);
+  expect(await teachingButton(app, 'Try It').isEnabled()).toBe(true);
 
   const model = await app.page.evaluate(() =>
     (window as unknown as { __studio: TeachingStudio }).__studio.fleetModel(),
@@ -97,11 +101,15 @@ export async function prepareTeaching(app: App) {
 }
 
 export async function correctTwice(app: App, ending: 'stop' | 'reset' = 'stop') {
-  await teachingButton(app, 'Try Policy').click();
+  await expectTeachingLayout(app.page);
+  await teachingButton(app, 'Try Policy').press('Enter');
+  await expect.poll(() => teachingButton(app, 'Take Control').isVisible()).toBe(true);
+  await expectTeachingLayout(app.page, 'policy');
 
   for (let i = 0; i < 2; i++) {
-    await teachingButton(app, 'Take Control').click();
+    await teachingButton(app, 'Take Control').press('Enter');
     await expect.poll(() => teachingButton(app, 'Resume Policy').isVisible()).toBe(true);
+    await expectTeachingLayout(app.page, 'operator');
     await focusTeachingCanvas(app);
 
     const before = (await teachingState(app)).joints;
@@ -120,7 +128,7 @@ export async function correctTwice(app: App, ending: 'stop' | 'reset' = 'stop') 
       await app.page.keyboard.up('w');
     }
 
-    await teachingButton(app, 'Resume Policy').click();
+    await teachingButton(app, 'Resume Policy').press('Enter');
     await expect.poll(() => teachingButton(app, 'Take Control').isVisible()).toBe(true);
   }
 
@@ -130,6 +138,7 @@ export async function correctTwice(app: App, ending: 'stop' | 'reset' = 'stop') 
   } else await teachingButton(app, 'Stop Try').click();
 
   await expect.poll(async () => (await teachingState(app)).tries.length).toBe(1);
+  await expect.poll(() => teachingButton(app, 'Try It').isEnabled()).toBe(true);
 
   return (await teachingState(app)).tries[0].id;
 }

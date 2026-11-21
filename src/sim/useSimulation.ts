@@ -172,7 +172,7 @@ export function useSimulation(props: SimInputs): Simulation {
   const stop = useCallback(() => {
     cancelPreparation();
     cancelStart();
-    cancelRecording();
+    cancelRecording(true);
     send({ type: 'dispose' });
     modelRef.current = null;
     setModel(null);

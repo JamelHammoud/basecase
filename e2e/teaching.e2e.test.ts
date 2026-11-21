@@ -8,6 +8,9 @@ import {
   type TeachingStudio,
 } from './teachingFixture';
 import { hashOf } from '../src/skills/hash';
+import { narrowBuildPanel } from './buildAllocationLayout';
+import { narrowBodyMotionPanel } from './bodyMotionLayout';
+import { expectPanelReadable } from './appearanceLayout';
 
 let app: App;
 
@@ -27,6 +30,10 @@ it(
   { retry: 0 },
   async () => {
     const { policy } = await prepareTeaching(app);
+
+    await narrowBuildPanel(app.page);
+    await narrowBodyMotionPanel(app.page);
+
     const id = await correctTwice(app);
 
     await teachingLibrary(app);
@@ -38,6 +45,7 @@ it(
     expect(await ownership.locator('[data-owner="operator"]').count()).toBe(2);
     expect(await ownership.locator('[data-owner="policy"]').count()).toBe(3);
     expect(await ownership.getAttribute('data-policy')).toBe(hashOf(policy));
+    await expectPanelReadable(ownership);
     expect(app.errors).toEqual([]);
   },
 );
@@ -47,6 +55,10 @@ it(
   { retry: 0 },
   async () => {
     const { policy } = await prepareTeaching(app);
+
+    await narrowBuildPanel(app.page);
+    await narrowBodyMotionPanel(app.page);
+
     const id = await correctTwice(app, 'reset');
 
     await app.page.evaluate(async () => {
@@ -61,7 +73,11 @@ it(
         app.page.getByTestId('dataset-pane').getByRole('button', { name: 'Train from Tries', exact: true }).isVisible(),
       )
       .toBe(true);
-    await app.page.getByTestId('dataset-pane').getByRole('button', { name: 'Train from Tries', exact: true }).click();
+    await expectPanelReadable(app.page.getByTestId('dataset-pane'));
+    await app.page
+      .getByTestId('dataset-pane')
+      .getByRole('button', { name: 'Train from Tries', exact: true })
+      .press('Enter');
     await expect.poll(() => app.posts.filter((post) => post.route === 'train-start').length).toBe(1);
 
     const request = app.posts.find((post) => post.route === 'train-start')!.body as {

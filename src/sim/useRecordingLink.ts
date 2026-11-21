@@ -139,13 +139,20 @@ export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
       } satisfies SimRequest);
     });
 
-  const cancel = () => {
+  const cancel = (retainTeaching = false) => {
     branchId.current++;
     branchWaiter.current?.(null);
     branchWaiter.current = null;
-    recordWaiters.current.forEach((resolve) => resolve(null));
-    recordWaiters.current.clear();
-    recordPending.current.clear();
+    recordWaiters.current.forEach((resolve, id) => {
+      if (retainTeaching && id !== undefined) return;
+
+      resolve(null);
+      recordWaiters.current.delete(id);
+      recordPending.current.delete(id);
+    });
+
+    if (!retainTeaching) completed.current.clear();
+
     waiter.current?.(null);
     waiter.current = null;
     selection.current = 0;

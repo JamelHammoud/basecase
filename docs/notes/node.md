@@ -1074,7 +1074,7 @@ The aggregate check job has no independent failure. Its required unit result, Li
 
 ## Nightly build exclusions on 21 November
 
-Owned paths: [frozen records and allocation](performance-assembly.md#frozen-individual-builds), [retained repair](performance-assembly.md#retained-build-repair), [photographs](performance-assembly.md#photographs-in-frozen-build-along), [Current replay](performance-wiring.md#resistive-motor-current-replay), [electrical fixture bundles](testing-electrical.md#electrical-node-fixture-bundles), and [repair printing](performance-printing.md#replacement-finger-outputs). #2019 owns repair-printing restoration. Add new investigation and restoration evidence to those owning paths.
+Owned paths: [frozen records and allocation](performance-assembly.md#frozen-individual-builds), [retained repair](performance-assembly.md#retained-build-repair), [photographs](performance-assembly.md#photographs-in-frozen-build-along), [Current replay](performance-wiring.md#resistive-motor-current-replay), [electrical fixture bundles](testing-electrical.md#electrical-node-fixture-bundles), and [repair printing](performance-printing.md#replacement-printing). #2019 owns repair-printing restoration. Add new investigation and restoration evidence to those owning paths.
 
 Check 44878070469 at `145ab720d6a280ec818fd859357398765b8f9740` failed six distinct Windows frozen-build declarations. Priority [#2013](https://github.com/JamelHammoud/basecase/issues/2013) owns their traces, with separate boundaries:
 
@@ -1099,7 +1099,7 @@ Every exclusion requires a demonstrated fix and at least ten baseline and ten ca
 
 ## Additional build and replay boundaries in Check 44885120824
 
-Owned paths: [frozen records and photographs](performance-assembly.md#photographs-in-frozen-build-along), [Current replay](performance-wiring.md#resistive-motor-current-replay), [flat-part recovery](performance-sketch.md#imported-flat-part-recovery), and [repair printing](performance-printing.md#replacement-finger-outputs). The image-health and evaluation-resource observations retain their existing [Node-side](#nightly-repair-on-21-november) ownership. Add new investigation and restoration evidence to those owning paths.
+Owned paths: [frozen records and photographs](performance-assembly.md#photographs-in-frozen-build-along), [Current replay](performance-wiring.md#resistive-motor-current-replay), [flat-part recovery](performance-sketch.md#imported-flat-part-recovery), and [repair printing](performance-printing.md#replacement-printing). The image-health and evaluation-resource observations retain their existing [Node-side](#nightly-repair-on-21-november) ownership. Add new investigation and restoration evidence to those owning paths.
 
 The failed workload was `49bc213c8ddd9462ea323dacd07a1378b94783f5`. Current main already contains #2023's Windows allocation, returns and reservation exclusions. This run again missed the new build button in the first two paths. The independent-context story timed out inside `openApp` waiting for the studio hook at harness line 207, before reservation synchronization. Startup and build creation are separate unresolved boundaries.
 

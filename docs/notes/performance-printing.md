@@ -505,6 +505,12 @@ The repair collected three more verified, single-process observations at the exa
 
 The failed print shard used image `20261103.298.1`. The isolated label and Prusa observations omit the preceding tests and their retained state. The fleet diagnostic passed the expected three-plate layout, clicked Start Next and Start Print, then timed out at line 397 with zero observed sends instead of one. That does not reproduce the original missing-base assertion. Original base eligibility and later send delivery remain distinct paths under #1853. No observation establishes an environment component to pin, a demonstrated product fix or a flake rate. Restore each path only after its existing assertion chain has ten baseline and ten candidate observations at equal Windows load with retries disabled. All future measurements target published revisions through the existing runner. The correction can retain quarantine when first published, then remove it in the same pull request after its published candidate is measured. No unpublished Windows execution is required.
 
+## Replacement printing
+
+`print/repairPlate.test.ts` covers one-copy repair scope, temporary print settings, unchanged source settings and actual 3MF output. `print/tracker.test.ts` covers replacement history and persistence. `e2e/repair.e2e.test.ts` declares part-menu repair through the swap step and replacement marking, plus a separate command-entry path.
+
+The part-menu declaration remains quarantined on Linux and Windows through 28 November 2026 under [#2019](https://github.com/JamelHammoud/basecase/issues/2019). The command-entry declaration remains active. Historical failure boundaries and restoration conditions are retained in [the initial exclusions](node.md#nightly-build-exclusions-on-21-november) and [the later observations](node.md#additional-build-and-replay-boundaries-in-check-44885120824). Add replacement-printing investigation and restoration evidence here.
+
 ## Replacement-finger outputs
 
 The ten-target attachment matrix uses native OpenSCAD carriers and replacement fingers. It runs the ordinary part soup, measurements, Print plan, actual 3MF writer, drawing preparation, reconciled Kit manifest and ZIP producer. Every case retains two separate finger part ids with quantity one and purchases four M3 × 16 screws, four washers and four nuts. Both flat and V-shaped profiles occur in the matrix. All ten manufacturing rows passed locally in `scratch/finger-matrix-3.log`. This is generated-file evidence, not evidence from a printer or an assembled physical gripper.

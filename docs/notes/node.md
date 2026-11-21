@@ -2,6 +2,14 @@
 
 Knowledge preserved from code comments. Complements AGENTS.md; nothing here repeats it.
 
+## Public hosting security headers
+
+Issue #1958 identified cache-only headers on basecase.so and isolation-only headers on app.basecase.so. Both static sites lacked CSP framing, object and base restrictions, nosniff, an explicit referrer policy and HSTS. The site build emits its headers from `site/vite.config.ts`. The demo copies `public/_headers` and retains COOP, COEP, CORP and immutable asset caching.
+
+The initial local site build failed on the existing `make-an-assembly-cradle.md` article because its required `type` field was missing. Adding `type: task` restored the build. An HTML resource inventory then covered 373 built pages: landing, help index, 243 help pages, changelog index, 120 changelog entries, blog index and six blog posts. Every script, image and stylesheet reference was root-relative. The landing also has an app-origin preconnect, allowed explicitly by `connect-src`, and inert JSON-LD. Inline styles remain allowed for the landing background and help step numbering. The inventory is retained in `scratch/site-resource-inventory.json` and build output in `scratch/site-build.log`.
+
+`tools/site/headers.test.mjs` checks actual plugin emission and the demo source. Mutation cases remove each required header, weaken each required CSP directive and move the rules from the global path to assets only. `check:site -- --built-dir site/dist` validates the emitted site file. Existing browser navigation and search stories now serve that built policy. The additional browser case probes inline script execution, object embedding, base replacement and framing. Browser execution is delegated to CI, so the local resource inventory does not establish a browser violation-free verdict or live Cloudflare delivery. The demo intentionally has no default or script restriction. Its complete CSP remains part of the existing desktop and demo audit work.
+
 ## Hub test token source scanning
 
 On November 20, 2026, `npm run security -- --only=secrets` exited 1 with four critical Hugging Face token findings, one each in `electron/hub/hub.test.mjs`, `datasetRepo.test.mjs`, `skillRepo.test.mjs` and `imageDatasetPublish.test.mjs`. Each held the same placeholder as a contiguous source literal. The shared `testToken.mjs` now joins its prefix and body at runtime and preserves the original value used by authentication, redaction and disk-persistence assertions.

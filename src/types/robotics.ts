@@ -1,3 +1,4 @@
+import type { ModelMeshData } from './model';
 import type { PurchaseIdentity, PurchasingEvidence } from './purchasing';
 import type { SheetFields } from './sheet';
 import type { Case } from '../cases/schema';
@@ -158,14 +159,7 @@ export interface ScenePart extends PartRelations, BooleanFields, SheetFields {
     baseSize: [number, number, number];
     volume?: number;
   } & CadExtras;
-  mesh?: {
-    positions: number[];
-    indices: number[];
-    baseSize: [number, number, number];
-    source?: string;
-    file?: string;
-    visual?: { key: string; node: string; matrix: number[] };
-  };
+  mesh?: ModelMeshData;
   hardware?: HardwareSpec;
   componentId?: string;
   componentVariant?: string;

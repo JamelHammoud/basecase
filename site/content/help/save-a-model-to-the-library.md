@@ -39,6 +39,8 @@ Unbind [shared dimensions](/help/link-dimensions-with-shared-parameters) before 
 
 When you save one part, the model gets that part's name and its **Notes**. When you save several parts, the model gets the scene's name. To save every visible part in the scene instead, choose **Save Whole Scene**.
 
+A [converted imported plate](/help/convert-an-imported-flat-part) keeps its editable Sketch and retained source mesh when saved. The saved model's center follows its geometry, including thickness edits.
+
 Saving a complete passive assembly also keeps its joints, limits and springs for reuse as a Case fixture. See [Reuse an assembly in Cases](/help/reuse-an-assembly-in-cases).
 
 For an [ideal tendon](/help/drive-joints-with-an-ideal-tendon), select the complete motor and output assembly. Saving only a spool, motor or output part is refused so the coupling stays intact.

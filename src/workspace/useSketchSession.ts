@@ -1,3 +1,4 @@
+import { useImportRecovery } from './useImportRecovery';
 import { SKETCH_SUPPORT_CAUSES } from '../readiness/sketchSupports';
 import { useRef, useState, type RefObject } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
@@ -34,8 +35,12 @@ export interface SketchTarget {
 }
 
 interface SessionOptions {
+  active: boolean;
   docs: {
+    parts: ScenePart[];
+    project: ProjectSettings;
     partsRef: RefObject<ScenePart[]>;
+    projectRef: RefObject<ProjectSettings>;
     commitParts: CommitParts;
     updateProjectNow: (patch: (p: ProjectSettings) => ProjectSettings) => void;
   };
@@ -43,7 +48,8 @@ interface SessionOptions {
   selectedIds: string[];
   setSelectedIds: Setter<string[]>;
   tool: ToolMode;
-  showToast: ShowToast;
+  toasts: { showToast: ShowToast; dismissToast: () => void };
+  versions: { capture: (label: string) => Promise<unknown> };
 }
 
 interface Pick {
@@ -67,7 +73,7 @@ export function rebuiltPart(part: ScenePart, patch: Partial<SketchShape>): Scene
   const support = record.support && { ...record.support, issue: undefined, attempt: undefined };
 
   return solid
-    ? { ...partFromSolid(part, solid), sketch: { ...solid.record, support } }
+    ? { ...partFromSolid(part, solid), sketch: { ...solid.record, support, recovery: record.recovery } }
     : {
         ...part,
         sketch: {
@@ -95,8 +101,28 @@ function validPickedSource(part: ScenePart, pick: Pick, showToast: ShowToast) {
   return false;
 }
 
-export function useSketchSession({ docs, viewportRef, selectedIds, setSelectedIds, tool, showToast }: SessionOptions) {
+export function useSketchSession({
+  active,
+  docs,
+  viewportRef,
+  selectedIds,
+  setSelectedIds,
+  tool,
+  toasts,
+  versions,
+}: SessionOptions) {
+  const { showToast } = toasts;
   const { partsRef, commitParts } = docs;
+  const recovery = useImportRecovery({
+    activeWorkspace: active,
+    parts: docs.parts,
+    project: docs.project,
+    partsRef,
+    projectRef: docs.projectRef,
+    commitParts,
+    ...toasts,
+    captureVersion: versions.capture,
+  });
   const lastPick = useRef<Pick | null>(null);
   const [target, setTarget] = useState<SketchTarget | null>(null);
   const [path, setPath] = useState<Vec2[]>([]);
@@ -172,6 +198,7 @@ export function useSketchSession({ docs, viewportRef, selectedIds, setSelectedId
 
   return {
     target,
+    convert: recovery.convert,
     open,
     edit,
     path,

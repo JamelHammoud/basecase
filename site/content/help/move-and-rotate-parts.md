@@ -57,7 +57,7 @@ Moving or rotating a sheet part keeps its sheet material and stock thickness. Re
 2. In the Inspector, click the **X**, **Y** or **Z** field under **Position** or **Rotation**.
 3. Type the value and press [[↩]].
 
-Position is the part's center, in millimeters. Y points up.
+Position is the part's origin, in millimeters. A recovered Sketch keeps the imported part's origin when you change its thickness. Y points up.
 
 A field accepts math, such as `40/2` or `12+3.5`. To step the value up or down, press [[↑]] or [[↓]]. Hold [[⇧]] to step 10 times as far, or hold [[⌥]] to step a tenth as far. Or drag the field's label left or right to scrub the value. To go back to the value you started with, press [[Esc]].
 

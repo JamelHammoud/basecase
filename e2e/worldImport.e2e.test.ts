@@ -18,6 +18,7 @@ interface Studio {
   dropFiles: (files: Array<{ name: string; base64: string }>) => void;
   simState: () => SimState;
   worldState: () => WorldState | null;
+  pickFiles: (files: Array<{ name: string; base64: string }>) => void;
 }
 
 let app: App;
@@ -35,7 +36,15 @@ async function dropFixtures(files: WorldImportFile[]) {
 }
 
 async function makeKitchen(files = [kitchenCollider(), kitchenSplat()]) {
-  await dropFixtures(files);
+  if (files.some((file) => /\.(spz|ply)$/i.test(file.name))) await dropFixtures(files);
+  else {
+    const picked = files.map(({ name, bytes }) => ({ name, base64: Buffer.from(bytes).toString('base64') }));
+
+    await app.page.evaluate((list) => (window as unknown as { __studio: Studio }).__studio.pickFiles(list), picked);
+    await app.page.keyboard.press('Meta+k');
+    await app.page.keyboard.type('Import World');
+    await app.page.locator(shown('button[data-idx]')).filter({ hasText: 'Import World' }).click();
+  }
 
   const card = app.page.locator(shown('[data-testid="new-case"]'));
 

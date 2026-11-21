@@ -49,3 +49,5 @@ The right-click menu has the same strip under **Align**. With parts selected, yo
 | Z | Back, Center, Front | Puts that side or the center on the origin |
 
 The bounds include each part's rotation, so rotated parts line up the way they look on the canvas.
+
+For a [converted imported plate](/help/convert-an-imported-flat-part), alignment follows the recovered geometry's bounds, including after thickness edits.

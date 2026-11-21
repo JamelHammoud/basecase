@@ -1,7 +1,7 @@
 import { BufferAttribute, BufferGeometry, ExtrudeGeometry, Path, Shape, Vector2, Vector3 } from 'three';
 import type { ScenePart } from '../../types/robotics';
 import { cadParts } from '../../workspace/cadImport';
-import { meshPartFromFile } from '../../workspace/meshImport';
+import { meshPartsFromFile } from '../../workspace/meshImport';
 import { binaryStl } from '../stlBytes';
 import type { Vec2 } from './types';
 
@@ -169,7 +169,9 @@ export async function recoveryImportedPart(index: number) {
   const part =
     index % 2
       ? stepDerivedPart(soup, id)
-      : await meshPartFromFile({ file: new File([Uint8Array.from(binaryStl(soup))], 'plate.stl'), id });
+      : (
+          await meshPartsFromFile({ file: new File([Uint8Array.from(binaryStl(soup))], 'plate.stl'), newId: () => id })
+        )[0];
 
   return {
     ...part,

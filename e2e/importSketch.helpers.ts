@@ -2,6 +2,7 @@ import { expect } from 'vitest';
 import type { Page } from 'playwright-core';
 import { LAYOUT } from '../src/design-system/theme';
 import { shown } from './harness';
+import { supportParts, supportPlane } from './sketchSupport.helpers';
 
 export async function assertRecoveryThicknessLayout(page: Page) {
   const divider = page.locator(shown(`[role="separator"][aria-valuemin="${LAYOUT.rightPanelMin}"]`));
@@ -46,7 +47,8 @@ export async function assertRecoveryThicknessLayout(page: Page) {
   expect(bounds.valueRight).toBeLessThanOrEqual(bounds.unitLeft - 4);
   expect(bounds.height).toBe(32);
   await input.press('Escape');
-  expect(await input.inputValue()).toBe('6');
+  await supportPlane(page).waitFor({ state: 'hidden' });
+  expect((await supportParts(page))[0].sketch?.depth).toBe(6);
 }
 
 interface RecoveryWorkerWindow {

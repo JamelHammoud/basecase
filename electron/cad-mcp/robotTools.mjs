@@ -1,3 +1,4 @@
+import { motionSkeletonSource } from './motionSkeletonSource.mjs';
 import fs from 'node:fs';
 import { z } from 'zod';
 import { IK_GOAL, PREVIEW, ROBOT, ROOT, vec3 } from './schemas.mjs';
@@ -268,9 +269,9 @@ export const retargetMotion = {
 
       if (!evidence.found) return text(`${file}: not found. Call list_evidence for the exact paths.`);
 
-      const textBody = evidence.body;
+      const textBody = evidence.body || (rest.url ? await motionSkeletonSource({ url: rest.url }) : undefined);
 
-      if (!textBody && !rest.url) return text('Give file (an attached .bvh) or url.');
+      if (!textBody) return text('Give file (an attached .bvh) or url.');
 
       return withImages(await bridge('retarget', { ...rest, file, text: textBody }, 300000));
     } catch (err) {

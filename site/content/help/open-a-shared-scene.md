@@ -21,7 +21,7 @@ covers:
 
 You can open a `.basecase` file someone sent you as a scene of your own. The scene keeps its current parts, joints and comments.
 
-Saved versions and branch links stay with the sender.
+Saved versions and branch links stay with the sender. Scene files must fit within 128 MB after decompression.
 
 1. Press [[⌘K]].
 2. Choose **Open Scene File**.

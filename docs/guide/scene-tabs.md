@@ -111,3 +111,9 @@ The history transport is capped at 64 MiB, 1,000 versions, 100,000 content block
 ### Editable board persistence
 
 Ordinary scene settings retain the board’s host identity, local constraints, placements and mounting-hardware references. Document history tracks the board with its parts, including the screws and standoffs created with it. The existing whole-project version commit remains available beside the board commit after the scene-history integration. Portable decoding refuses malformed board records before Inspector controls read them. `wiring/boardPackage.test.ts`, `workspace/boardHistory.test.ts` and `wiring/boardValidation.test.ts` cover deterministic round trips, undo and redo, and damaged imports. [Board coverage](build.md#board-placement-records) and [evidence](../notes/testing-build.md#board-placement-records).
+
+### Portable scene size limits
+
+Portable scene JSON is capped at 128 MiB of decoded UTF-8, for gzip and plain files alike. `utils/readCapped.ts` counts streamed bytes before retaining each chunk, cancels at the first excess chunk and releases its reader. Gzip output reaches that reader before JSON parsing, so compressed file size cannot bypass the budget. Malformed gzip keeps the ordinary scene-format error. Oversized input reports the size limit and asks the sender to reduce meshes or images before exporting again.
+
+`sceneFileLimits.test.ts` covers oversized gzip and plain input with a scaled reader budget and asserts the production limit. `sceneFile.test.ts` covers normal compressed and plain scene round trips. `readCapped.test.ts` checks early cancellation during real gzip expansion, incorrect Content-Length, declared oversize, exact limits and empty bodies. `e2e/sceneFileLimits.e2e.test.ts` declares refusal and subsequent normal opening through Open Scene File. CI owns browser execution. [Limit selection and evidence](../notes/performance-workspace.md#portable-scene-read-budget).

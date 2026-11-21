@@ -1,4 +1,8 @@
+import { MB } from '../../../electron/fileSize.mjs';
+import { readCapped } from '../readCapped';
 import type { ConvertedFiles, ConvertedModel } from './simready';
+
+export { TooLargeError } from '../readCapped';
 
 export const RAW = 'https://raw.githubusercontent.com';
 
@@ -23,45 +27,14 @@ export function rawUrl(url: string): string {
   return m ? `${RAW}/${m[1]}/${m[2]}/${m[3]}` : url.trim();
 }
 
-export class TooLargeError extends Error {}
+export const MAX_ROBOT_FILE_BYTES = 200 * MB;
+export const MAX_ROBOT_LIST_BYTES = 8 * MB;
 
 export const unopenedRepo = (url: string) => new Error(`Couldn’t open ${url}. Link to a public repo or folder.`);
 
 export const couldntRead = (path: string) => new Error(`Couldn’t read ${path}`);
 
 export const noRobotAt = (url: string) => new Error(`Couldn’t find a .urdf or MJCF .xml file in ${url}.`);
-
-async function readCapped(res: Response, maxBytes: number): Promise<ArrayBuffer> {
-  if (Number(res.headers.get('content-length')) > maxBytes) throw new TooLargeError();
-
-  if (!res.body || maxBytes === Infinity) return res.arrayBuffer();
-
-  const reader = res.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-
-  for (let next = await reader.read(); !next.done; next = await reader.read()) {
-    total += next.value.byteLength;
-
-    if (total > maxBytes) {
-      await reader.cancel();
-
-      throw new TooLargeError();
-    }
-
-    chunks.push(next.value);
-  }
-
-  const out = new Uint8Array(total);
-  let at = 0;
-
-  for (const chunk of chunks) {
-    out.set(chunk, at);
-    at += chunk.byteLength;
-  }
-
-  return out.buffer;
-}
 
 async function lfsBytes(url: string, buf: ArrayBuffer, maxBytes: number): Promise<ArrayBuffer> {
   const head = new TextDecoder().decode(buf);
@@ -82,7 +55,7 @@ function assertWebUrl(url: string): string {
   return url;
 }
 
-export async function fetchBytes(url: string, maxBytes = Infinity): Promise<ArrayBuffer> {
+export async function fetchBytes(url: string, maxBytes: number): Promise<ArrayBuffer> {
   const res = await fetch(assertWebUrl(url));
 
   if (!res.ok) throw new Error(`${res.status}`);
@@ -157,7 +130,7 @@ function rawRoot(entryPath: string): string {
 export async function urlResolver(url: string): Promise<Resolver> {
   const entryUrl = rawUrl(url);
   const text = new TextDecoder().decode(
-    await fetchBytes(entryUrl).catch(() => {
+    await fetchBytes(entryUrl, MAX_ROBOT_FILE_BYTES).catch(() => {
       throw new Error('Couldn’t download that file. Link to a .urdf or .xml file on GitHub or another public site.');
     }),
   );
@@ -190,7 +163,7 @@ export async function urlResolver(url: string): Promise<Resolver> {
         const path = list[i];
 
         try {
-          const data = await fetchBytes(/^https?:/.test(path) ? path : origin + encodeURI(path));
+          const data = await fetchBytes(/^https?:/.test(path) ? path : origin + encodeURI(path), MAX_ROBOT_FILE_BYTES);
 
           winning = i;
 

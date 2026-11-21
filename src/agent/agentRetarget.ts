@@ -1,3 +1,4 @@
+import { readCapped, TooLargeError } from '../utils/readCapped';
 import { autoMapBones, KEYPOINT_LABELS, parseBvh, retarget, type Keypoint } from '../utils/mocap';
 import {
   notesText,
@@ -46,7 +47,18 @@ async function bvhText(p: RetargetPayload): Promise<{ text: string } | { error: 
 
   if (!res.ok) return { error: `Couldn’t download the BVH (${res.status}).` };
 
-  const text = await res.text();
+  let text: string;
+
+  try {
+    text = new TextDecoder().decode(await readCapped(res, 8 * 1024 * 1024));
+  } catch (error) {
+    return {
+      error:
+        error instanceof TooLargeError
+          ? 'Use a BVH file under 8 MB.'
+          : `Couldn’t download the BVH: ${errorMessage(error)}`,
+    };
+  }
 
   return text ? { text } : { error: 'Give the BVH as an evidence path or a URL.' };
 }

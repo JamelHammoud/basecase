@@ -33,7 +33,7 @@ Basecase can't read the link you pasted. It accepts a GitHub repo or folder, a H
 
 ## “Couldn’t open … Link to a public repo or folder.”
 
-You'll see this when the repo is private, when the link points to a branch or folder that doesn't exist, or when GitHub refused the request. If you aren't signed in, GitHub limits how often your computer can list repos.
+You'll see this when the repo is private, when the link points to a branch or folder that doesn't exist, or when GitHub refused the request. If you aren't signed in, GitHub limits how often your computer can list repos. GitHub file listings over 8 MB are also refused. You can link directly to the robot description instead.
 
 1. Open the link in a browser and check that it shows the files.
 2. Wait a few minutes, then press [[↩]] in **Import Robot** again.
@@ -47,7 +47,7 @@ If you chose a folder on your computer, the message reads “Choose a folder wit
 
 ## “Couldn’t load its … meshes. Choose the folder with the robot’s mesh files.”
 
-The description names mesh files that aren't next to it. Many repos keep their meshes in a separate folder.
+The description names mesh files that aren't next to it. Many repos keep their meshes in a separate folder. Downloaded files over 200 MB are also refused.
 
 1. Download the whole repo.
 2. Click **Choose Folder** and select the repo's top folder, which holds the meshes too.

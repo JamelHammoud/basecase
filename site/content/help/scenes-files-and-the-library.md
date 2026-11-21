@@ -78,6 +78,8 @@ A `.basecase` file is a copy of one scene that you can send to someone. It holds
 
 Your chat, named versions and branch links stay on your computer and aren’t included in the file. See [Save and merge robot versions](/help/save-and-merge-robot-versions).
 
+Scene files can be up to 128 MB after decompression. If a file exceeds that limit, follow [Scene file doesn't open](/help/troubleshoot-scene-files).
+
 When you open a scene file, Basecase creates a new scene from it. The two scenes are separate, so editing one doesn't change the other.
 
 To move your work into other apps, Basecase exports STL, 3MF, USDZ, robot packages and DXF cut files for sheet parts. For the full list, see [Import and export formats](/help/import-and-export-formats).

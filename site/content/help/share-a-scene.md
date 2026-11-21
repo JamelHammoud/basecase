@@ -22,6 +22,8 @@ covers:
 
 You can send a whole design to someone as a single .basecase file. They can open it in the desktop app or in the web studio.
 
+The scene must fit within 128 MB after decompression. A small compressed file can still exceed this limit.
+
 1. Open the scene you want to send.
 2. Click **Export** at the top right of the window.
 3. Choose **Scene**.

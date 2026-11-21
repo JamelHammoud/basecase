@@ -31,6 +31,12 @@ The file isn't a scene that Basecase saved, or it changed after Basecase saved i
 
 Renaming a file so it ends in `.basecase` doesn't turn it into a scene. If you have an STL, OBJ or other mesh, [import it](/help/import-a-file) instead.
 
+## “That scene exceeds 128 MB”
+
+The scene exceeds 128 MB after decompression. A small `.basecase` download can still exceed this limit when opened.
+
+Ask the sender to remove large meshes or images from the original scene, then export it again with **Export** ▸ **Scene**.
+
 ## “Made with a newer Basecase”
 
 The sender's Basecase is newer than yours, and it saved something your version can't read.

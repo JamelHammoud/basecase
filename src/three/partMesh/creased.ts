@@ -7,6 +7,7 @@ export interface MeshSource {
   positions: number[];
   indices: number[];
   baseSize: [number, number, number];
+  colors?: number[];
 }
 
 export const MESH_CREASE_DEG = 30;
@@ -20,7 +21,7 @@ export const creaseKey = (src: MeshSource, creaseDeg: number, scale: number[]) =
   `${objectKey(src)}|crease${creaseDeg}|${scale.join(',')}`;
 
 export function creasedGeometry(
-  src: { positions: ArrayLike<number>; indices: ArrayLike<number> },
+  src: { positions: ArrayLike<number>; indices: ArrayLike<number>; colors?: ArrayLike<number> },
   creaseDeg: number,
   scale: number[],
 ): THREE.BufferGeometry {
@@ -30,6 +31,9 @@ export function creasedGeometry(
   geometry.setIndex(
     Array.isArray(src.indices) ? src.indices : new THREE.BufferAttribute(src.indices as Uint32Array, 1),
   );
+
+  if (src.colors) geometry.setAttribute('color', new THREE.Float32BufferAttribute(src.colors as number[], 3));
+
   geometry = toCreasedNormals(geometry, THREE.MathUtils.degToRad(creaseDeg));
   geometry.scale(scale[0], scale[1], scale[2]);
 

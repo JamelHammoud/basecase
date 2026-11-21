@@ -37,7 +37,7 @@ export function halfExtents(p: ScenePart): [number, number, number] {
 }
 
 export function partBounds(p: ScenePart): { min: [number, number, number]; max: [number, number, number] } {
-  if (p.sheetTransform) return affineBounds(p);
+  if (p.sheetTransform || p.sketch?.recovery) return affineBounds(p);
 
   const half = halfExtents(p);
 

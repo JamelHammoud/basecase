@@ -6,8 +6,7 @@ import { filesAtTag, startFakeHub } from '../../e2e/fakeHub.ts';
 import { HubClient, TOKEN_REFUSED } from './hubClient.mjs';
 import { HUB_CALLS } from './routes.mjs';
 import { HubAccount, hubEndpoint } from './index.mjs';
-
-const TOKEN = 'hf_testTokenThatMustNeverLeak0123456789';
+import { TOKEN } from './testToken.mjs';
 
 const sealing = {
   available: () => true,

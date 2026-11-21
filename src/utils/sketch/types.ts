@@ -59,6 +59,15 @@ export interface PartSketch {
   depth: number;
   anchor: Vec2;
   support?: SketchSupport;
+  recovery?: {
+    deviationMm: number;
+    volumeDeviationMm3: number;
+    holes: number;
+    position: [number, number, number];
+    rotation: [number, number, number];
+    dimensions: import('../../types/robotics').PartDimensions;
+    sheetTransform?: number[];
+  };
 }
 
 export interface SketchSupport {

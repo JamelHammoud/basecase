@@ -70,6 +70,7 @@ function onePartCommands(inputs: CommandInputs): Command[] {
   return [
     ...(isRotated(part) ? [one.resetRotation] : []),
     ...(one.quote ? [one.quote] : []),
+    ...(one.convertSketch ? [one.convertSketch] : []),
     ...(one.lighten ? [one.lighten] : []),
     ...(one.repair ? [one.repair] : []),
     one.lock,

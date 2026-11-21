@@ -60,7 +60,7 @@ Basecase opens the Case in the **Simulate** tab and shows its world on the canva
 
 **Tip:** You can also find **New Case** in [[⌘K]]. The card opens with the focus on **Make Case**, so you can press [[↩]] to make the Case as long as you haven't clicked a field.
 
-To use a captured or generated place, drop its collider mesh onto the canvas. New Case opens with that world picked. See [Import a captured world](/help/import-a-world) for the files to include.
+To use a captured or generated place, press [[⌘K]] and choose **Import World**. Select its collider mesh and companion files. New Case opens with that world picked. See [Import a captured world](/help/import-a-world) for the files to include.
 
 To use an imported ROS recording's scan map, choose **Make World** from the **Map** row's menu in **Layers**. New Case opens with **Map** picked under **World**. For a planar scan, it identifies the estimated floor and 1 m obstacle height. See [Map a robot run](/help/map-a-robot-run) for the steps and limits.
 

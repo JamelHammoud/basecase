@@ -26,9 +26,10 @@ export function StudyRows({ study }: { study: Study }) {
     <StudyResultRow
       key={row.key}
       names={names}
+      scene={study.sceneName}
       row={row}
       current={study.isCurrent(row)}
-      selected={compared.includes(row.key)}
+      selected={study.inFront && compared.includes(row.key)}
       stale={study.stale}
       onApply={() => void study.apply(row)}
       onPreview={study.preview}

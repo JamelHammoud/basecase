@@ -1,3 +1,5 @@
+import { validSourcingRequirements } from '../../study/sourcing';
+import { StudySourcingField } from './StudySourcingField';
 import { validVisibilityRequest } from '../../study/visibilityPlan';
 import { StudyVisibilityField } from './StudyVisibilityField';
 import { useState } from 'react';
@@ -16,6 +18,7 @@ export function StudySection({ study }: { study: Study }) {
       {study.open && (
         <div className="flex flex-col gap-3 mb-3" data-testid="study-configure">
           <StudyVisibilityField study={study} />
+          <StudySourcingField study={study} />
           {study.knobs.map((knob) => (
             <StudyKnobField
               key={knob.id}
@@ -36,6 +39,7 @@ export function StudySection({ study }: { study: Study }) {
             disabled={
               !study.running &&
               (!study.enabled.length ||
+                (!!study.sourcing && !validSourcingRequirements(study.sourcing)) ||
                 problems.some((id) => study.enabled.includes(id)) ||
                 (!!study.visibility.request && !validVisibilityRequest(study.visibility.request)))
             }

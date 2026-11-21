@@ -55,7 +55,7 @@ Matching the silhouette in a photo matters less than any of these.
 
 After each edit, the agent sees the same Checks as the **Build** tab. It never passes a check by narrowing a joint's range, hiding a part, deleting a part or editing a Case. If a check seems wrong, it tells you.
 
-Study measurements stay separate from the Build verdict. Only **Checks** in the **Build** tab say a design is ready.
+Study measurements and purchasing evidence stay separate from the Build verdict. Only **Checks** in the **Build** tab say a design is ready.
 
 To ask for repairs, send `/fix` in the chat or click **Fix** on a problem in **Checks**.
 

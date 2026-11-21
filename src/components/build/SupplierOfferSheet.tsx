@@ -1,7 +1,5 @@
-import { useSupplierOffers } from './useSupplierOffers';
+import { useSupplierOffers, type OfferSheetInputs } from './useSupplierOffers';
 import { Button, Modal, TextInput } from '../../design-system';
-import type { Bom } from '../../utils/bomTypes';
-import type { Purchases, StoredPurchase } from '../../types/robotics';
 import { purchasingCsv } from '../../utils/supplierOffers';
 import { OFFER_COLUMNS } from '../../utils/supplierOfferCsv';
 import { csvCell } from '../../utils/csvCell';
@@ -16,11 +14,8 @@ export function SupplierOfferSheet({
   scene,
   save,
   onClose,
-}: {
-  bom: Bom;
-  purchases: Purchases;
-  scene: string;
-  save: (key: string, record: StoredPurchase | null) => Promise<void>;
+  initialPlan,
+}: OfferSheetInputs & {
   onClose: () => void;
 }) {
   const {
@@ -38,7 +33,7 @@ export function SupplierOfferSheet({
     savePlan,
     imported,
     confirm,
-  } = useSupplierOffers({ bom, purchases, scene, save });
+  } = useSupplierOffers({ bom, purchases, scene, save, initialPlan });
 
   return (
     <Modal

@@ -1,3 +1,4 @@
+import { StudyPurchasing } from './StudyPurchasing';
 import { percent } from '../../../electron/percent.mjs';
 import { StudyVisibilityDetails } from './StudyVisibilityDetails';
 import { Button, RowActions, Tooltip } from '../../design-system';
@@ -7,6 +8,7 @@ import { weight } from '../../utils/weight';
 
 interface StudyResultRowProps {
   names: Record<string, string>;
+  scene: string;
   row: StudyRow;
   current: boolean;
   selected: boolean;
@@ -33,6 +35,7 @@ export function StudyResultRow({
   onPreview,
   onPick,
   names,
+  scene,
 }: StudyResultRowProps) {
   const money = useMoney();
   const status = rowStatus(row);
@@ -71,9 +74,10 @@ export function StudyResultRow({
         {row.error ? '—' : money.format(row.costUsd)}
       </span>
       <span className="text-right text-[12px] text-white/50 tabular">{row.error ? '—' : weight(row.massG)}</span>
+      <StudyPurchasing row={row} selected={selected} scene={scene} />
       {selected && row.visibility && <StudyVisibilityDetails result={row.visibility} names={names} />}
       {!current && (
-        <RowActions fill="#2a2a2a" className="inset-y-0 right-0 pr-1 rounded-r-lg">
+        <RowActions fill="#2a2a2a" className="top-0 h-[32px] right-0 pr-1 rounded-r-lg">
           <Button
             size="xs"
             disabled={stale || !!row.error}

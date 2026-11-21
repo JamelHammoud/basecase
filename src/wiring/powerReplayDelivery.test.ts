@@ -113,6 +113,36 @@ it('bounds retained evidence and refuses channel mismatch, stale trace bindings 
   expect(solvePowerReplay(network)).toMatchObject({ status: 'limit', limit: { reason: 'current', sample: 0 } });
 });
 
+it.each(['ground', 'positive'] as const)('refuses an adapter without documented common %s continuity', (kind) => {
+  const fixture = replayFixture(2);
+  const pinMaps = structuredClone(ELECTRICAL_PIN_MAPS);
+  const adapter = pinMaps.find((map) => map.componentId === 'waveshare-bus-servo-adapter-a')!;
+
+  adapter.common = adapter.common.filter((functionName) => functionName !== kind);
+
+  expect(() => preparePowerReplay({ ...fixture, input: { ...fixture.input, pinMaps } })).toThrow();
+});
+
+it('refuses independently valid comparison evidence from another frozen electrical input or trace', async () => {
+  const fixture = replayFixture(2);
+  const baseline = await retainPowerReplay(fixture);
+
+  fixture.declarations.source.ohms *= 2;
+
+  const comparison = await retainPowerReplay(fixture);
+
+  expect((await reopenPowerReplay(comparison, fixture.input, baseline)).applicable).toBe(true);
+
+  const other = structuredClone(fixture);
+
+  other.trace.channels[0].amps[0] += 0.1;
+
+  const unrelated = await retainPowerReplay(other);
+
+  expect((await reopenPowerReplay(unrelated, other.input)).applicable).toBe(true);
+  await expect(reopenPowerReplay(unrelated, other.input, baseline)).rejects.toThrow('frozen inputs');
+});
+
 it('terminates the owned worker on cancellation and refuses renderer fallback', async () => {
   const terminate = vi.fn();
   const postMessage = vi.fn();

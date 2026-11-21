@@ -1,4 +1,4 @@
-import { Modal, TracePlot } from '../../design-system';
+import { confirmAction, DeleteIcon, ErrorBoundary, IconButton, Modal, TracePlot } from '../../design-system';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { PowerReplayFields } from './PowerReplayFields';
 import { PowerReplayResult } from './PowerReplayResult';
@@ -28,6 +28,22 @@ function ReplayBody(props: Props) {
       onClose={close}
       title="Current replay"
       maxWidth="max-w-[640px]"
+      footerStart={
+        retained && (
+          <IconButton
+            title="Delete"
+            variant="danger"
+            icon={<DeleteIcon />}
+            disabled={running}
+            onClick={() =>
+              confirmAction({
+                title: 'Delete current replay?',
+                onConfirm: () => props.onChangeProject({ powerReplay: undefined }),
+              })
+            }
+          />
+        )
+      }
       action={{
         label: retained ? 'Compare' : 'Replay',
         disabled: running || !loaded?.applicable,
@@ -85,5 +101,9 @@ function ReplayBody(props: Props) {
 export function PowerReplayInspection(props: Props) {
   const open = usePowerReplayOpen();
 
-  return open ? <ReplayBody {...props} /> : null;
+  return open ? (
+    <ErrorBoundary region="Current replay" onClose={() => setPowerReplayOpen(false)}>
+      <ReplayBody {...props} />
+    </ErrorBoundary>
+  ) : null;
 }

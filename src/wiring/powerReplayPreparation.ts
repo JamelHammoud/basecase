@@ -4,7 +4,7 @@ import { endpointIndex, partPinMap } from './electricalEndpoints';
 import { ELECTRICAL_PIN_MAPS } from './electricalPinMaps';
 import { electricalSourceJson } from './electricalSource';
 import type { NetEnd } from './connectors';
-import type { ElectricalProjection } from './electricalTypes';
+import type { ElectricalInput, ElectricalProjection } from './electricalTypes';
 import { POWER_REPLAY_LIMITS, POWER_REPLAY_METHOD } from './powerReplayTypes';
 import type { PowerReplayRequest, ReplayCable, ReplayNetwork, ReplaySource } from './powerReplayTypes';
 import { replayLoads } from './powerReplayLoads';
@@ -68,13 +68,16 @@ function validateDomain(request: PowerReplayRequest, projection: ElectricalProje
 
   if (!input.walk?.motorTrace || electricalSourceJson(input.walk.motorTrace) !== electricalSourceJson(request.trace))
     throw new Error('Use the current source trace without changing its samples or identities.');
+}
 
+function validateCommon(input: ElectricalInput) {
   const maps = input.pinMaps ?? ELECTRICAL_PIN_MAPS;
 
-  for (const part of input.parts.filter((p) => actuatorOf(p.componentId ?? '', p.componentVariant))) {
+  for (const part of input.parts) {
     const map = partPinMap(part, maps);
+    const needsCommon = !!actuatorOf(part.componentId ?? '', part.componentVariant) || (map?.ports.length ?? 0) > 1;
 
-    if (!map?.common.includes('positive') || !map.common.includes('ground'))
+    if (needsCommon && (!map?.common.includes('positive') || !map.common.includes('ground')))
       throw new Error('Use supported common power and return ports.');
   }
 }
@@ -131,7 +134,7 @@ export function preparePowerReplay(request: PowerReplayRequest): ReplayNetwork {
 
   validateSource(request.declarations.source, projection);
   validateDomain(request, projection);
-
+  validateCommon(request.input);
   validateCorrespondence(projection);
 
   const segments = replaySegments(request, replayCables(projection));

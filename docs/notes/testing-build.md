@@ -1243,3 +1243,16 @@ Pull request #1973's supplied Check logs show the Linux and Windows electrical j
 The import path is electrical fixtures, electrical package, board package, board preparation, component meshes, geometry worker, geometry operations, robot mesh importer and Draco. The acceptance bundler previously handled only Manifold's asset import. Both schematic and routing acceptance now share a Node fixture bundler that resolves URL imports to actual file URLs. Manifold keeps its existing empty-URL override for its Node loader. Application Draco loading, native validators, assertions, deadlines and selection remain unchanged.
 
 `fixtureBundle.test.mjs` compiles and imports the production schematic and routing fixture entry points without native tools. It covers the complete current dependency graphs and their URL imports. It does not claim Draco decoding, physical electrical validation or a completed Linux or Windows native acceptance run. CI owns those native runs.
+
+
+### Replay review corrections
+
+A focused negative control removed only the Waveshare adapter's documented common ground from its pin map. Replay still admitted the network, collapsing its power and bus ports into one node without an established return between them. Admission now requires common positive and ground rails for multiport scene parts as well as actuators. `powerReplayDelivery.test.ts` covers removal of either adapter rail. This establishes refusal of unsupported model topology, without validating physical wiring.
+
+The containing Build screen put optional Inspect Current above electrical findings and repair controls. It now follows them. Historical evidence also disabled all replay inputs without a way to start over. The sheet's confirmed Delete clears both retained runs, and its own error boundary isolates render failures. The Time slider supplies keyboard access to every sample and replaces one-decimal rounding that displayed a 26 ms sample as 0.0 s. Cable selection controls wrap long endpoint names before the current and loss figures.
+
+Reopening now verifies that a comparison shares the baseline's source and trace fingerprints. A fast negative control builds two independently valid records from different traces and checks that they cannot be presented as one comparison.
+
+The two existing replay browser declarations now cover minimum-width action order, measured label and input bounds, wrapped cable text, keyboard selection of the 26 ms window, cancelled deletion preserving evidence, confirmed deletion and replay after a routing edit. Assertions use the real Import and Build controls. Browser execution remains with CI. Existing article images still illustrate their named baseline, comparison and historical states.
+
+The review's final 17-file changed check passed formatting, lint, types, documentation, all 360 site pages and 84 related tests across 17 files. The test phase took 3.41 seconds locally. No browser walkthrough ran in this review.

@@ -16,6 +16,8 @@ export function ReplayResultControls({
         <Button
           key={segment.id}
           variant="ghost"
+          fullWidth
+          className="!h-auto min-h-[32px] justify-start text-left [&>span]:whitespace-normal [&>span]:break-words"
           disabled={!segment.partIds.length}
           onClick={() => onSelectParts(segment.partIds)}
         >

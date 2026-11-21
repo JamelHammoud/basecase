@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { importReplayScene, inspectCurrent, openBuildReplay, enterReplayResistance } from './powerReplayFlow';
 import { openApp } from './harness';
+import { assertReplayBuildLayout, assertReplayFields, assertReplayResults } from './powerReplayLayout';
 
 it(
   'replays modeled current from Build, selects its limiting endpoint and compares an edited resistance',
@@ -11,11 +12,15 @@ it(
     try {
       const fixture = await importReplayScene(app.page);
 
+      await assertReplayBuildLayout(app.page);
+
       const dialog = await openBuildReplay(app.page);
 
       await enterReplayResistance(dialog, fixture);
+      await assertReplayFields(dialog);
       await dialog.getByRole('button', { name: 'Replay', exact: true }).click();
       await dialog.locator('[data-replay-result]').waitFor();
+      await assertReplayResults(dialog);
       await dialog.getByRole('button', { name: 'Select Lowest Voltage', exact: true }).click();
       expect(await dialog.locator('[data-replay-result]').getAttribute('data-part')).toBe('motor2');
       expect(await dialog.locator('[data-replay-selection]').getAttribute('data-replay-selection')).toBe('motor2');
@@ -51,7 +56,8 @@ it('reopens retained replay evidence and preserves it as historical after a wiri
   const app = await openApp();
 
   try {
-    await importReplayScene(app.page, true);
+    const fixture = await importReplayScene(app.page, true);
+
     await inspectCurrent(app.page);
 
     const dialog = app.page.getByRole('dialog', { name: 'Current replay', exact: true });
@@ -68,6 +74,20 @@ it('reopens retained replay evidence and preserves it as historical after a wiri
     await expect.poll(() => dialog.getByRole('status').innerText()).toContain('Historical evidence');
     expect(await dialog.getByRole('button', { name: 'Compare', exact: true }).isEnabled()).toBe(false);
     expect(await dialog.locator('[data-replay-result]').getAttribute('data-trace')).toBe(fingerprint);
+    await dialog.getByRole('button', { name: 'Delete', exact: true }).click();
+
+    const confirmation = app.page.getByRole('dialog', { name: 'Delete current replay?', exact: true });
+
+    await confirmation.getByRole('button', { name: 'Cancel', exact: true }).click();
+    expect(await dialog.locator('[data-replay-result]').getAttribute('data-trace')).toBe(fingerprint);
+    await dialog.getByRole('button', { name: 'Delete', exact: true }).click();
+    await confirmation.getByRole('button', { name: 'Delete', exact: true }).click();
+    await expect.poll(() => dialog.locator('[data-replay-result]').count()).toBe(0);
+    await enterReplayResistance(dialog, fixture);
+    await dialog.getByRole('button', { name: 'Replay', exact: true }).click();
+    await dialog.locator('[data-replay-result]').waitFor();
+    expect(await dialog.getByRole('button', { name: 'Compare', exact: true }).isEnabled()).toBe(true);
+    expect(await dialog.getByRole('status').count()).toBe(0);
     expect(app.posts.filter((p) => p.route.startsWith('robot-'))).toEqual([]);
     expect(app.errors).toEqual([]);
   } finally {

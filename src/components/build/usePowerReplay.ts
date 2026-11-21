@@ -70,7 +70,8 @@ export function usePowerReplay({ parts, project, onChangeProject }: Props) {
         ? await client.call('reopenReplay', { record: retained.baseline, current: input })
         : null;
 
-      if (retained?.comparison) await client.call('reopenReplay', { record: retained.comparison, current: input });
+      if (retained?.comparison)
+        await client.call('reopenReplay', { record: retained.comparison, current: input, baseline: retained.baseline });
 
       if (active.cancelled) return;
 

@@ -17,8 +17,8 @@ import type { ElectricalInput } from './electricalTypes';
 serve({
   inspectReplay: (input: ElectricalInput) => reply(inspectReplayInput(input)),
   replay: async (input: PowerReplayRequest) => reply(await retainPowerReplay(input)),
-  reopenReplay: async (input: { record: PowerReplayRecord; current: ElectricalInput }) =>
-    reply(await reopenPowerReplay(input.record, input.current)),
+  reopenReplay: async (input: { record: PowerReplayRecord; current: ElectricalInput; baseline?: PowerReplayRecord }) =>
+    reply(await reopenPowerReplay(input.record, input.current, input.baseline)),
   kit: async (input: Parameters<typeof electricalKitFiles>[0]) => {
     const result = await electricalKitFiles(input);
 

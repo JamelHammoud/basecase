@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Button, FieldRow, Select, TracePlot } from '../../design-system';
+import { Button, FieldRow, Select, Slider, TracePlot } from '../../design-system';
 import type { PowerReplayRecord } from '../../wiring/powerReplayTypes';
 import type { ScenePart } from '../../types/robotics';
 import { ReplayResultControls } from './ReplayResultControls';
-import { runClock } from '../../utils/duration';
 
 interface Props {
   baseline: PowerReplayRecord;
@@ -11,6 +10,8 @@ interface Props {
   parts: ScenePart[];
   onSelectParts: (ids: string[]) => void;
 }
+
+const replayTime = (sample: number, windowS: number) => `${Number((sample * windowS).toPrecision(8))} s`;
 
 export function PowerReplayResult({ baseline, comparison, parts, onSelectParts }: Props) {
   const latest = comparison ?? baseline;
@@ -61,7 +62,7 @@ export function PowerReplayResult({ baseline, comparison, parts, onSelectParts }
       )}
       {latest.result.limit && (
         <p role="alert" className="text-white/60">
-          Model limit at {runClock(latest.result.limit.sample * latest.trace.windowS)}: {latest.result.limit.reason}
+          Model limit at {replayTime(latest.result.limit.sample, latest.trace.windowS)}: {latest.result.limit.reason}
         </p>
       )}
       <Button variant="secondary" onClick={() => select(limit.partId, limit.sample)}>
@@ -78,9 +79,15 @@ export function PowerReplayResult({ baseline, comparison, parts, onSelectParts }
           onChange={(e) => select(e.target.value, sample)}
         />
       </FieldRow>
-      <p className="tabular-nums">
-        {endpoint.volts[sample]?.toFixed(3)} V at {runClock(sample * latest.trace.windowS)}
-      </p>
+      <Slider
+        stacked
+        label="Time"
+        value={sample}
+        min={0}
+        max={Math.max(1, endpoint.volts.length - 1)}
+        onChange={(index) => setSample(Math.min(index, endpoint.volts.length - 1))}
+        format={(index) => `${endpoint.volts[index]?.toFixed(3)} V at ${replayTime(index, latest.trace.windowS)}`}
+      />
       {channel && (
         <TracePlot
           traces={[{ id: channel.jointId, values: channel.amps, x, tone: 'primary' }]}

@@ -21,6 +21,7 @@ type Handlers = {
   reopenReplay: (input: {
     record: PowerReplayRecord;
     current: ElectricalInput;
+    baseline?: PowerReplayRecord;
   }) => Promise<{ result: { applicable: boolean; result: PowerReplayRecord['result'] } }>;
   kit: (
     input: Parameters<typeof import('../kit/electrical').electricalKitFiles>[0],
@@ -75,7 +76,7 @@ async function localHandlers(): Promise<Handlers> {
   return {
     inspectReplay: async (input) => ({ result: inspectReplayInput(input) }),
     replay: async (input) => ({ result: await retainPowerReplay(input) }),
-    reopenReplay: async (input) => ({ result: await reopenPowerReplay(input.record, input.current) }),
+    reopenReplay: async (input) => ({ result: await reopenPowerReplay(input.record, input.current, input.baseline) }),
     kit: async (input) => ({ result: await electricalKitFiles(input) }),
     acceptRoute: async (input) => ({ result: await acceptBoardRoute(input) }),
     importText: async (input) => ({ result: await importRoutedText(input) }),

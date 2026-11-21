@@ -64,7 +64,6 @@ export const CheckItem: React.FC<{
       {open && hasBody && (
         <div className="pb-1">
           {detail && <p className="pl-[31px] pr-[7px] pb-0.5 text-[12.5px] leading-[17px] text-white/50">{detail}</p>}
-          {inspection}
           {context.tether && fields.length > 0 && <TetherFields fields={fields} control={context.tether} />}
           {board && <BoardBuildAction {...board} />}
           <ul>
@@ -79,6 +78,7 @@ export const CheckItem: React.FC<{
               </NoteRow>
             ))}
           </ul>
+          {inspection && <div className="pl-[31px] pr-[7px] py-1">{inspection}</div>}
           {check.envelopes && <EnvelopeRows envelopes={unlisted(check.envelopes, [...blockers, ...notes])} />}
         </div>
       )}

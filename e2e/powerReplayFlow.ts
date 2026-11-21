@@ -15,6 +15,9 @@ export async function importReplayScene(page: Page, retained = false) {
 
   const fixture = replayFixture(2);
 
+  fixture.input.parts.find((part) => part.id === 'motor2')!.name =
+    'Pan-tilt tilt-axis actuator with a long cable inspection label';
+
   const walk = { ...fixture.input.walk, ...storedWalk(fixture.input.walk, fixture.input.parts, fixture.input.project) };
 
   Object.assign(fixture.input.walk, walk);

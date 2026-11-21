@@ -60,7 +60,11 @@ export async function retainPowerReplay(request: PowerReplayRequest): Promise<Po
   return record;
 }
 
-export async function reopenPowerReplay(record: PowerReplayRecord, input: ElectricalInput) {
+export async function reopenPowerReplay(
+  record: PowerReplayRecord,
+  input: ElectricalInput,
+  baseline?: PowerReplayRecord,
+) {
   bounded(record);
 
   if (record.schema !== 1 || record.method !== POWER_REPLAY_METHOD)
@@ -69,6 +73,9 @@ export async function reopenPowerReplay(record: PowerReplayRecord, input: Electr
   const reproduced = await retainPowerReplay(record);
 
   if (
+    (baseline &&
+      (baseline.sourceFingerprint !== reproduced.sourceFingerprint ||
+        baseline.traceFingerprint !== reproduced.traceFingerprint)) ||
     record.sourceFingerprint !== reproduced.sourceFingerprint ||
     record.traceFingerprint !== reproduced.traceFingerprint ||
     record.declarationFingerprint !== reproduced.declarationFingerprint ||

@@ -101,6 +101,8 @@ it('restores a source-bound checkpoint, keeps fault timing, splices a changed su
     expect(result!.branch.time).toBeCloseTo(1, 8);
     expect(result!.deadline).toBe(kase.task.seconds);
     expect(engine.stats().joints[0].fault).toBe('laggy');
+    world.apply({ id: 'block', color: '#0000ff' });
+    session.recorderNow()!.worldChange({ id: 'block', color: '#0000ff' });
     engine.command({ v: [0, 0, 0], joints: { slider0: -3 } });
     engine.step(0.1);
     expect(engine.stats().joints[0].fault).toBe('laggy');
@@ -114,6 +116,7 @@ it('restores a source-bound checkpoint, keeps fault timing, splices a changed su
     expect(recording.qpos.subarray(0, 51 * source.nq)).toEqual(source.qpos.subarray(0, 51 * source.nq));
     expect(recording.qpos.subarray(51 * source.nq)).not.toEqual(source.qpos.subarray(51 * source.nq, 66 * source.nq));
     expect(recording.faults).toEqual(source.faults);
+    expect(recording.world).toEqual([{ id: 'block', color: '#0000ff', at: result!.branch.time }, ...source.world!]);
     expect(encodeRecording(source)).toEqual(unchanged);
     expect(engine.beforeStepHook).toBeNull();
     expect(engine.stepHook).toBeNull();

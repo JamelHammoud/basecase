@@ -110,7 +110,7 @@ export class ContinuationSession {
     engine.continuation.restore(point.engine);
     physics.restore(point.physics);
 
-    const recorder = new Recorder(engine, source.controller ?? null, world, { clock: retained.started });
+    const recorder = new Recorder(engine, source.controller ?? null, null, { clock: retained.started });
     let cursor = 0;
 
     engine.stepHook = recorder.hook;

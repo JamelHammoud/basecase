@@ -96,14 +96,8 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({
           />
         ))}
       </div>
-      <div className="flex items-center gap-2">
-        <BranchTryControls cases={cases} onBranch={onBranch} />
-        {canExportTry(timeline) && (
-          <Button variant="ghost" size="xs" onClick={onExport}>
-            Export Try
-          </Button>
-        )}
-        {timeline.trips[0] && <span className="text-[13px] text-red-400">{failureText(timeline.trips[0].label)}</span>}
+      {timeline.trips[0] && <span className="text-[13px] text-red-400">{failureText(timeline.trips[0].label)}</span>}
+      <div data-testid="timeline-playback" className="flex flex-wrap items-center gap-2">
         <IconButton
           icon={timeline.playing ? <PauseIcon className={ic} /> : <RunIcon className={ic} />}
           title={timeline.playing ? 'Pause' : 'Play'}
@@ -112,7 +106,7 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({
           onClick={timeline.toggle}
         />
         <Slider
-          className="flex-1 min-w-0"
+          className="flex-1 min-w-[200px]"
           label={negative(timeline.origin + frame * timeline.dt, (seconds) => runClock(seconds))}
           value={frame}
           min={0}
@@ -140,12 +134,20 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({
             onClick={timeline.close}
           />
         )}
-        {!timeline.comparison.active && (
+      </div>
+      {!timeline.comparison.active && (
+        <div data-testid="timeline-actions" className="flex flex-wrap items-center gap-2">
+          <BranchTryControls cases={cases} onBranch={onBranch} />
+          {canExportTry(timeline) && (
+            <Button variant="ghost" size="xs" onClick={onExport}>
+              Export Try
+            </Button>
+          )}
           <Button variant="ghost" size="xs" onClick={onAddFrames}>
             Add Frames
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

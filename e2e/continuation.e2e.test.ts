@@ -1,10 +1,12 @@
 import { afterEach, expect, it } from 'vitest';
+import { readFile } from 'node:fs/promises';
 import { decodeRecording } from '../src/cases/recordingFile';
 import { bytesToBase64 } from '../src/utils/base64';
 import type { StoredTry } from '../src/cases/tryFile';
 import { openApp, shown, type App } from './harness';
 import { endTryAt } from './driveChecks';
 import { call, recordSource, openSaved } from './continuation.helpers';
+import { assertContinuationLayout } from './continuationLayout';
 
 let app: App | undefined;
 
@@ -20,12 +22,23 @@ it('branches a newly scripted Library try from the timeline and saves a manual r
   const original = (await call<{ data: string }>(app.page, 'tries-recording', source.id)).data;
 
   await openSaved(app, source.id);
+  await app.page.setViewportSize({ width: 1240, height: 720 });
+  await assertContinuationLayout(app.page);
   await app.page.getByLabel('Checkpoint', { exact: true }).selectOption('50');
   await app.page.getByTestId('try-timeline').press('ArrowRight');
   await expect.poll(() => app!.page.getByTestId('try-timeline').getAttribute('data-frame')).toBe('51');
   expect(await app.page.getByLabel('Checkpoint', { exact: true }).inputValue()).toBe('');
+  await assertContinuationLayout(app.page);
   await app.page.getByLabel('Checkpoint', { exact: true }).selectOption('50');
-  await app.page.getByRole('button', { name: 'Branch Try', exact: true }).click();
+  await app.page.getByLabel('Checkpoint', { exact: true }).press('ArrowRight');
+  expect(await app.page.getByTestId('try-timeline').getAttribute('data-frame')).toBe('50');
+  await app.page.getByLabel('Checkpoint', { exact: true }).press('Tab');
+  expect(
+    await app.page
+      .getByRole('button', { name: 'Branch Try', exact: true })
+      .evaluate((el) => el === document.activeElement),
+  ).toBe(true);
+  await app.page.keyboard.press('Enter');
   await expect.poll(() => app!.page.getByTestId('try-clock').count()).toBeGreaterThan(0);
   await app.page.keyboard.down('a');
 
@@ -56,6 +69,22 @@ it('branches a newly scripted Library try from the timeline and saves a manual r
   );
   expect((await call<{ data: string }>(app.page, 'tries-recording', source.id)).data).toBe(original);
   await openSaved(app, child.id);
+
+  const delivered = app.page.waitForEvent('download');
+
+  await app.page.getByRole('button', { name: 'Export Try', exact: true }).click();
+
+  const file = await delivered;
+  const archive = await readFile((await file.path())!);
+
+  expect(file.suggestedFilename()).toBe(`${child.id}.tries.zip`);
+  await app.page.evaluate(
+    (data) => (window as unknown as { __studio: { dropFiles: (files: unknown[]) => void } }).__studio.dropFiles([data]),
+    { name: file.suggestedFilename(), base64: archive.toString('base64') },
+  );
+  await expect.poll(() => app!.page.locator(shown('[data-testid="try-tile"]')).count()).toBe(2);
+  expect((await call<{ data: string }>(app.page, 'tries-recording', child.id)).data).toBe(bytes);
+  expect((await call<{ data: string }>(app.page, 'tries-recording', source.id)).data).toBe(original);
   expect(app.errors).toEqual([]);
 });
 

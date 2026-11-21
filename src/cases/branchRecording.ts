@@ -130,11 +130,7 @@ export function branchRecording(input: BranchInput): Recording | null {
     faults: faults(source.faults, suffix.faults, time),
     commands: events(source.commands, suffix.commands, time),
     controller: structuredClone(source.controller),
-    world: events(
-      source.world,
-      suffix.world?.filter((event) => event.at > 1e-9),
-      time,
-    ),
+    world: events(source.world, suffix.world, time),
     ...(inputs.length ? { inputs } : {}),
   };
 }

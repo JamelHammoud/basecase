@@ -4,7 +4,7 @@ date: 2026-11-20
 image: /changelog/branch-a-simulated-try/cover.png
 ---
 
-You can take control from a saved scripted simulation checkpoint and keep an alternative try beside the original. Open a single-robot recording through Library and choose Branch Try in the timeline.
+You can take control from a saved simulation checkpoint and keep an alternative try beside the original. Branch Try is in the saved try's timeline, opened through Library.
 
 Your robot may open a drawer as intended, then lose its grip. Keep that beginning and drive another ending from a retained checkpoint.
 

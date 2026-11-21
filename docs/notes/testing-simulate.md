@@ -46,6 +46,14 @@ The redundant portable round-trip and repeated reopening tail, plus its single-u
 
 The revision’s `check:changed` passed formatting, ESLint, docs, all 366 site pages and TypeScript using pinned Node 26.13.1. The explicitly selected archive and native persistence tests passed all four declarations in two files in 178 ms. Browser tests were not run locally.
 
+### Pull request 1989 review corrections
+
+Review found that branch splicing removed every suffix world event at time zero, including an actual manual change made immediately after takeover. The suffix Recorder now omits the restored world baseline, and splicing retains all actual suffix events. The existing source-bound session test applies a color change before any further step and requires its checkpoint timestamp, the later scheduled source change and unchanged source bytes. The existing matrix still checks exact event equality without duplicate baselines.
+
+The timeline previously placed checkpoint, branch and export controls before playback in one row, leaving the fixed clock columns and scrubber without room in the minimum window. Playback now has its own row, with a 200px minimum slider group, and actions wrap below it. Native selects are excluded from timeline shortcut interception. The browser declaration adds measured text and control bounds at 1240 × 720, checkpoint placeholder bounds, keyboard takeover and a short Export Try download followed by dropping that same archive onto the existing Library. It checks both saved recordings remain byte-identical, without the prior repeated imported-tile reopening tail. Browser execution remains CI coverage.
+
+The review correction check passed formatting, lint, documentation, all 366 site pages, TypeScript and 39 related tests across 15 files in 6.12 seconds using Node 26.13.1 and the existing two-worker setting. No timeout, retry, quarantine or numerical tolerance changed. Browser assertions were not executed locally. The review handoff references the exact command and log.
+
 ## Windows gripper, camera and payload replay deadlines
 
 [Check 44532657394](https://github.com/JamelHammoud/basecase/actions/runs/44532657394), workload `a7426f512bb936297657647e212196d45e80b449`, failed Windows unit shard 1/2 on three exact native C/WASM replay declarations in `src/sim/selfContactDesigns.test.ts`. Each exhausted the unchanged 5,000 ms callback deadline. No contact-identity or state-drift assertion failure was reported. All ten WASM contact and independent negative-control cases passed.

@@ -8,6 +8,8 @@ import {
   TextInput,
   DeleteIcon,
   confirmAction,
+  NumberInput,
+  FieldRow,
 } from '../../design-system';
 import { localBuilds, type BuildSummary } from '../../kit/buildRecords';
 import { frozenClient } from '../../kit/frozenClient';
@@ -16,10 +18,13 @@ import { useLatestRef } from '../../utils/useLatestRef';
 import { kitGuard, prepareKit } from '../../workspace/kitExport';
 import type { WorkspaceCore } from '../../workspace/useWorkspaceCore';
 import { FrozenBuildFindings } from './FrozenBuildFindings';
+import { BuildAllocations } from './BuildAllocations';
+import { RetainedAllocations } from './RetainedAllocations';
 
 export function BuildRecordsSection({ core }: { core: WorkspaceCore }) {
   const [records, setRecords] = useState<BuildSummary[]>([]);
   const [name, setName] = useState(core.scene.sceneName);
+  const [quantity, setQuantity] = useState(1);
   const [busy, setBusy] = useState(false);
   const abort = useRef<AbortController | null>(null);
   const current = useLatestRef(core);
@@ -60,7 +65,12 @@ export function BuildRecordsSection({ core }: { core: WorkspaceCore }) {
       const content = await client.call('prepare', { job, meshes });
 
       guard();
-      await localBuilds.create(name, content, controller.signal);
+
+      const names = Array.from({ length: quantity }, (_, index) =>
+        quantity === 1 ? name : `${name.slice(0, 110)} ${index + 1}`,
+      );
+
+      await localBuilds.createMany(names, content, controller.signal);
       setRecords(await localBuilds.list());
       buildAlong.cancelCreate();
     } catch (error) {
@@ -110,18 +120,34 @@ export function BuildRecordsSection({ core }: { core: WorkspaceCore }) {
         ))}
       </div>
       {buildAlong.frozen && <FrozenBuildFindings kit={buildAlong.frozen.kit} />}
+      {buildAlong.frozen && <BuildAllocations frozen={buildAlong.frozen} onError={fail} />}
+      <RetainedAllocations builds={records} onError={fail} />
       <Modal
         isOpen={buildAlong.creating}
         onClose={cancel}
         title="Make Build"
         action={{ label: 'Make', disabled: busy || !name.trim(), onClick: () => void create() }}
       >
-        <TextInput
-          aria-label="Build name"
-          value={name}
-          disabled={busy}
-          onChange={(event) => setName(event.target.value)}
-        />
+        <div className="space-y-3">
+          <TextInput
+            aria-label="Build name"
+            value={name}
+            disabled={busy}
+            onChange={(event) => setName(event.target.value)}
+          />
+          <FieldRow label="Quantity">
+            <NumberInput
+              aria-label="Quantity"
+              value={quantity}
+              min={1}
+              max={20}
+              precision={0}
+              unit=""
+              disabled={busy}
+              onChange={setQuantity}
+            />
+          </FieldRow>
+        </div>
       </Modal>
     </Section>
   );

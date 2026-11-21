@@ -1,25 +1,8 @@
+import { catalogFilter, parseAssetUrl, SIMREADY_DATASETS } from '../../electron/simready/catalog.mjs';
+
 export const SIMREADY_HOST = 'https://nvidia-simready-central.hf.space';
 
 export type SimReadyShelf = 'objects' | 'robots' | 'all';
-
-const ROBOT_MAKERS = [
-  'onrobot',
-  'Robotiq-Official',
-  'frankarobotics',
-  'TeradyneRobotics',
-  'FANUC-CORPORATION',
-  'Comau',
-  'standardbots',
-  'agibot-assets',
-  'AGIBOT-Yuanzheng',
-  'Menlo',
-];
-const OBJECT_MAKERS = ['nvidia', 'ForgeCAD', 'PalatialSim', 'LGElectronics', 'Vertiv'];
-const SHELF_FILTER: Record<SimReadyShelf, string> = {
-  objects: `.*/datasets/(${OBJECT_MAKERS.join('|')})/.*`,
-  robots: `.*/datasets/(${ROBOT_MAKERS.join('|')})/.*`,
-  all: `.*/datasets/(${[...OBJECT_MAKERS, ...ROBOT_MAKERS].join('|')})/.*`,
-};
 
 export interface SimReadyAsset {
   url: string;
@@ -44,7 +27,7 @@ interface SearchHit {
   vision_generated_metadata?: Record<string, Array<{ name: string; value_text?: string[] }>>;
 }
 
-export const isRobotUrl = (url: string) => ROBOT_MAKERS.some((m) => url.includes(`/datasets/${m}/`));
+export const isRobotUrl = (url: string) => SIMREADY_DATASETS.robots.some((repo) => url.includes(`/datasets/${repo}/`));
 
 export const thumbnailUrl = (assetUrl: string) => `${SIMREADY_HOST}/images?asset_url=${encodeURIComponent(assetUrl)}`;
 
@@ -128,7 +111,7 @@ export function searchBody({ query, shelf, limit = 40, offset = 0 }: SimReadyQue
           vector_queries: [{ field_name: 'siglip2-embedding.embedding', query_type: 'text', query: q }],
         }
       : {}),
-    filter_url_regexp: SHELF_FILTER[shelf],
+    filter_url_regexp: catalogFilter(shelf),
     file_extension_include: 'usd*',
     return_default_prims: true,
     return_vision_generated_metadata: true,
@@ -165,9 +148,19 @@ export async function searchSimReady(q: SimReadyQuery): Promise<SimReadyAsset[]>
 
   const hits = (await res.json()) as SearchHit[];
 
-  const assets = Array.isArray(hits) ? hits.map(toAsset) : [];
+  const assets = Array.isArray(hits) ? hits.filter(isCatalogHit).map(toAsset) : [];
 
   for (const a of assets) known.set(a.url, a);
 
   return assets;
+}
+
+function isCatalogHit(hit: SearchHit): boolean {
+  try {
+    parseAssetUrl(hit.url);
+
+    return true;
+  } catch {
+    return false;
+  }
 }

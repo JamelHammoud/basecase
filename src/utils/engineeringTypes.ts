@@ -115,6 +115,7 @@ export interface WalkPower extends WalkAmps {
 }
 
 export interface WalkSim {
+  motorTrace?: import('./motorCurrentTrace').MotorCurrentTrace;
   policy: string;
   seconds: number;
   fellAt: number | null;

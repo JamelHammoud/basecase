@@ -73,7 +73,7 @@ function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
   return (
     <div className="absolute bottom-5 inset-x-0 z-20 flex flex-col items-center gap-[8px] pointer-events-none">
       {toasts.toast && (
-        <div className="pointer-events-auto" key={toasts.toast.id}>
+        <div className="pointer-events-auto max-w-[calc(100%-24px)]" key={toasts.toast.id}>
           <Toast toast={toasts.toast} onDismiss={toasts.dismissToast} />
         </div>
       )}

@@ -74,9 +74,12 @@ A `.basecase` file is a copy of one scene that you can send to someone. It holds
 - Case tries
 - Rendered training images and their datasets
 - Taught skills
+- SimReady texture packages, which you can [download for selected parts](/help/add-objects-to-the-scene#restore-saved-simready-textures)
 - The build guide
 
 Your chat, named versions and branch links stay on your computer and aren’t included in the file. See [Save and merge robot versions](/help/save-and-merge-robot-versions).
+
+Scene files can be up to 128 MB after decompression. If a file exceeds that limit, follow [Scene file doesn't open](/help/troubleshoot-scene-files).
 
 When you open a scene file, Basecase creates a new scene from it. The two scenes are separate, so editing one doesn't change the other.
 

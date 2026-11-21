@@ -42,4 +42,6 @@ With one unlocked imported custom solid selected, **Convert to Sketch** can [rec
 
 With an imported ROS recording's **Map** layer available, **Make World** opens **New Case** with the reconstructed world selected. See [Map a robot run](/help/map-a-robot-run) for the steps and limits.
 
+With one SimReady part selected, **Download Textures** appears when its textures are missing. See [Add everyday objects to the scene](/help/add-objects-to-the-scene#restore-saved-simready-textures).
+
 To close the command menu, press [[Esc]]. You can also open it from **View** ▸ **Command Menu**. For a list of the keys themselves, see [Keyboard shortcuts](/help/keyboard-shortcuts).

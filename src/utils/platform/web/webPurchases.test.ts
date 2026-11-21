@@ -1,10 +1,16 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { Purchases, StoredPurchase } from '../../../types/robotics';
 import { webRequest } from './webBackend';
-import { idbGet, idbWrite } from './idb';
+import { idbGet, idbSettingsUpdate } from './idb';
 import { listPurchases, savePurchase } from './webPurchases';
 
-vi.mock('./idb', () => ({ idbGet: vi.fn(), idbWrite: vi.fn(), idbAll: vi.fn(), idbDelete: vi.fn(), idbPut: vi.fn() }));
+vi.mock('./idb', () => ({
+  idbGet: vi.fn(),
+  idbSettingsUpdate: vi.fn(),
+  idbAll: vi.fn(),
+  idbDelete: vi.fn(),
+  idbPut: vi.fn(),
+}));
 
 let disk: Purchases;
 const key = 'component:raspberry-pi-pico-2';
@@ -42,8 +48,24 @@ const record: StoredPurchase = {
 beforeEach(() => {
   disk = {};
   vi.mocked(idbGet).mockImplementation(async () => structuredClone(disk));
-  vi.mocked(idbWrite).mockImplementation(async (changes) => {
-    disk = structuredClone((changes[0] as { value: Purchases }).value);
+
+  let queue = Promise.resolve();
+
+  vi.mocked(idbSettingsUpdate).mockImplementation((keys, change) => {
+    const saved = queue.then(() => {
+      const changed = change(keys.map(() => structuredClone(disk)));
+
+      disk = structuredClone(changed.puts.purchases as Purchases);
+
+      return changed.result;
+    });
+
+    queue = saved.then(
+      () => undefined,
+      () => undefined,
+    );
+
+    return saved;
   });
 });
 
@@ -52,14 +74,12 @@ it('stores evidence through the browser route and hydrates the same saved select
 
   expect(response.status).toBe(200);
   expect((await listPurchases())[key]).toEqual(record);
-  expect(idbWrite).toHaveBeenLastCalledWith([
-    { store: 'settings', key: 'purchases', kind: 'put', value: { [key]: record } },
-  ]);
+  expect(idbSettingsUpdate).toHaveBeenLastCalledWith(['purchases'], expect.any(Function));
 });
 
 it('retains the committed record after an aborted IndexedDB write and admits a subsequent save', async () => {
   await savePurchase({ key, record });
-  vi.mocked(idbWrite).mockRejectedValueOnce(new Error('transaction aborted'));
+  vi.mocked(idbSettingsUpdate).mockRejectedValueOnce(new Error('transaction aborted'));
   await expect(savePurchase({ key, record: { onHand: 9 } })).rejects.toThrow('transaction aborted');
   expect((await listPurchases())[key]).toEqual(record);
   await savePurchase({ key: 'plan:arm', record: { purchasePlan: { destination: 'DE', requiredBy: '2026-12-01' } } });

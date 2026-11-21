@@ -38,7 +38,9 @@ Someone who opens the link sees the robot in its Case's world, with the Case's n
 
 ![A shared rover open in the browser, with Drive and Open Scene](/help/share-a-robot-as-a-link/browser.png)
 
-If the Case has its own console, the page shows it the way **Run Case** does in the studio, as set up in [Run a Case](/help/run-a-case). The panels sit around the robot, the code panels work, and the Case card is at the top of the last column. Camera panels, the servos table and the tries list stay in the studio, and no one can start a try from the page. Code panels can move the Case's movable objects on the page, but they don't get camera frames there, so a gesture never presses a button on the page. Open Scene opens the same Case, so **Run Case** in the studio shows the same app.
+If the Case has its own console, the page shows it the way **Run Case** does in the studio, as set up in [Run a Case](/help/run-a-case). The panels sit around the robot, and the Case card is at the top of the last column. Camera panels, the servos table and the tries list stay in the studio, and no one can start a try from the page. Code panels can move the Case's movable objects on the page, but they don't get camera frames there, so a gesture never presses a button on the page. Open Scene opens the same Case, so **Run Case** in the studio shows the same app.
+
+Code panels block WebRTC and inline click attributes. Ask the agent to replace inline click attributes with event listeners in source scripts.
 
 ![A shared rover Case in the browser: speed and tilt over the robot, and Stop Driving, Open Scene and a joystick on the right](/help/share-a-robot-as-a-link/app.png)
 

@@ -1,4 +1,5 @@
 import { migrateSceneSummaries } from './sceneSummary';
+import { keyValueAtomic } from '../../keyValueAtomic';
 
 export type WebStore = 'scenes' | 'sceneSummaries' | 'models' | 'guides' | 'settings' | 'skills' | 'trained';
 
@@ -49,6 +50,8 @@ function openDb(): Promise<IDBDatabase> {
 async function storeOf(name: WebStore, mode: IDBTransactionMode) {
   return (await openDb()).transaction(name, mode).objectStore(name);
 }
+
+export const idbSettingsUpdate = keyValueAtomic<unknown>(openDb, 'settings', { close: false });
 
 export async function idbGet<T>(name: WebStore, key: string): Promise<T | undefined> {
   return done<T | undefined>((await storeOf(name, 'readonly')).get(key));

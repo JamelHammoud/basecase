@@ -21,7 +21,7 @@ covers:
 
 You can open a `.basecase` file someone sent you as a scene of your own. The scene keeps its current parts, joints and comments.
 
-Saved versions and branch links stay with the sender.
+Saved versions and branch links stay with the sender. Scene files must fit within 128 MB after decompression.
 
 1. Press [[⌘K]].
 2. Choose **Open Scene File**.
@@ -34,6 +34,8 @@ A saved [electronics board](/help/fit-an-electronics-board) keeps its mounting c
 [Shared parameters and dimension bindings](/help/link-dimensions-with-shared-parameters) stay editable in the opened scene. Basecase validates reopened bindings before their geometry counts as current in Checks.
 
 Imported worlds come with the scene, including their colliders, textures and optional splats. You don't need the original capture files.
+
+SimReady parts use locally cached textures. To download missing textures in the desktop app, follow [Add everyday objects to the scene](/help/add-objects-to-the-scene#restore-saved-simready-textures).
 
 You can also choose **File** ▸ **Open Scene File**, or drop the file on the canvas. Double-clicking a `.basecase` file in Finder or File Explorer doesn't open it in Basecase.
 

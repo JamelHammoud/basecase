@@ -1,3 +1,4 @@
+import type { PowerReplayRequest, PowerReplayRecord } from './powerReplayTypes';
 import { KIT_MAX_BYTES } from '../kit/limits';
 import type { ElectronicsBoard } from './boardTypes';
 import { workerClient } from '../utils/workerRpc';
@@ -13,6 +14,15 @@ export interface SchematicResult {
 }
 
 type Handlers = {
+  inspectReplay: (
+    input: ElectricalInput,
+  ) => Promise<{ result: ReturnType<typeof import('./electricalInspection').inspectReplayInput> }>;
+  replay: (input: PowerReplayRequest) => Promise<{ result: PowerReplayRecord }>;
+  reopenReplay: (input: {
+    record: PowerReplayRecord;
+    current: ElectricalInput;
+    baseline?: PowerReplayRecord;
+  }) => Promise<{ result: { applicable: boolean; result: PowerReplayRecord['result'] } }>;
   kit: (
     input: Parameters<typeof import('../kit/electrical').electricalKitFiles>[0],
   ) => Promise<{ result: import('../kit/electrical').KitElectrical }>;
@@ -51,11 +61,12 @@ type Handlers = {
 async function localHandlers(): Promise<Handlers> {
   if (typeof document !== 'undefined') throw new Error('Schematic export needs a worker.');
 
+  const { retainPowerReplay, reopenPowerReplay } = await import('./powerReplayRecord');
   const { acceptBoardRoute } = await import('./boardRouteAcceptance');
   const { importRoutedSource, importRoutedText } = await import('./boardRoutedSource');
   const { prepareBoardRoute } = await import('./boardRoutePreparation');
   const { prepareBoardExport, finishBoardExport } = await import('./boardExportPreparation');
-  const { inspectElectricalInput } = await import('./electricalInspection');
+  const { inspectElectricalInput, inspectReplayInput } = await import('./electricalInspection');
   const { timedBoardPlacement } = await import('./boardPlacement');
   const { defineBoard } = await import('./boardDefinition');
   const { boardPreview } = await import('./boardPreview');
@@ -63,6 +74,9 @@ async function localHandlers(): Promise<Handlers> {
   const { electricalPackage } = await import('./electricalPackage');
 
   return {
+    inspectReplay: async (input) => ({ result: inspectReplayInput(input) }),
+    replay: async (input) => ({ result: await retainPowerReplay(input) }),
+    reopenReplay: async (input) => ({ result: await reopenPowerReplay(input.record, input.current, input.baseline) }),
     kit: async (input) => ({ result: await electricalKitFiles(input) }),
     acceptRoute: async (input) => ({ result: await acceptBoardRoute(input) }),
     importText: async (input) => ({ result: await importRoutedText(input) }),

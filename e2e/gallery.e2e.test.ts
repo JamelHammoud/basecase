@@ -30,6 +30,20 @@ const settle = (name, run) => {
 };
 settle('indexedDB', () => indexedDB.databases().then((dbs) => dbs.length > 0));
 settle('cookie', () => document.cookie.includes('hub'));
+for (const name of ['RTCPeerConnection', 'webkitRTCPeerConnection']) {
+  try {
+    const peer = new window[name]({
+      iceServers: [{ urls: 'turn:127.0.0.1:3478', username: 'probe', credential: 'probe' }]
+    });
+    peer.close();
+    mark(name, 'allowed');
+  } catch (error) {
+    const descriptor = Object.getOwnPropertyDescriptor(window, name);
+    const locked = descriptor?.value === undefined && descriptor?.writable === false &&
+      descriptor?.configurable === false;
+    mark(name, error.name === 'TypeError' && locked ? 'blocked' : error.name);
+  }
+}
 settle('hub', () => fetch('https://huggingface.co/api/repos/create', { method: 'POST', body: '{}' }).then(() => true));
 </script>`;
 
@@ -227,10 +241,16 @@ describe('shared Case apps', () => {
 
     const probes = page.frameLocator('[data-panel="probes"] iframe').locator('[data-probe]');
 
-    await expect.poll(() => probes.count(), { timeout: 60000 }).toBe(3);
+    await expect.poll(() => probes.count(), { timeout: 60000 }).toBe(5);
     expect(
       Object.fromEntries(await probes.evaluateAll((els) => els.map((e) => [e.dataset.probe, e.textContent]))),
-    ).toEqual({ indexedDB: 'blocked', cookie: 'blocked', hub: 'blocked' });
+    ).toEqual({
+      indexedDB: 'blocked',
+      cookie: 'blocked',
+      hub: 'blocked',
+      RTCPeerConnection: 'blocked',
+      webkitRTCPeerConnection: 'blocked',
+    });
     expect(hub).toEqual([]);
     await page.close();
   }, 120000);

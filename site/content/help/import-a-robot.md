@@ -77,7 +77,7 @@ Robots exported from Fusion 360 with fusion2urdf import the same way. So do ROS 
 
 If a xacro package also has a plain `.urdf`, Basecase uses that file. Otherwise, it reads the top-level `.xacro` or `.urdf.xacro` file, follows its includes inside the package, and fills in the properties, macros and `xacro:arg` defaults. When the xacro needs something Basecase can't fill in, such as a YAML file or an environment variable, the import stops and Basecase tells you which file it needs.
 
-Links must use https. A zip link can download up to 200 MB, and a zip can unpack up to 600 MB and 20,000 files. A link with no robot description gets a single toast that names the link.
+Links must use https. Each downloaded file can be up to 200 MB, including descriptions, meshes and zips. A zip can unpack up to 600 MB and 20,000 files. A link with no robot description gets a single toast that names the link.
 
 A Hugging Face LeRobot dataset link, or a folder or zip that holds a LeRobot dataset or a ROS 2 recording, adds tries to the robot in the scene instead. See [Import robot data as tries](/help/import-robot-data-as-tries).
 

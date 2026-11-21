@@ -67,4 +67,6 @@ You can run a Case in the whole window, with the layout the Case asks for. The r
 
 You can also go back by picking a view in the rail. Driving, trying and dataset commands keep the Case open. So do **Try Reference**, **Branch Try**, **Export Try**, **Add Panel**, **Add Frames** and **Multiply**.
 
+If a code panel's buttons stop responding, ask the agent to repair its event listeners. See [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).
+
 {{help-hub}}

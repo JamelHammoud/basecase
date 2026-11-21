@@ -1,5 +1,5 @@
 ## Code panel reference
-A code panel is one HTML document, script and style inline, at most 256 KB, at most 4 per Case. It runs in a sandboxed frame with no network, storage, parent page or navigation; window.basecase is its only way out.
+A code panel is one HTML document, script and style inline, at most 256 KB, at most 4 per Case. It runs in a sandboxed frame with no network, storage, parent page or navigation. window.basecase is its only way out. Use addEventListener in source scripts for controls. Inline event attributes, JavaScript URLs, unapproved dynamic scripts and WebRTC are blocked.
 - basecase.signals(names, (values, time) => …) → unsubscribe. names: one name or up to 32, * for one segment. Calls back with { name: number | string[] } at most 20 times a second, at most 16 subscriptions.
   Signals: time; joint.<id>.target | position | effort (degrees or mm, effort in N·m); robot.height | tilt | speed | travelled | x | z; probe.<name>; input.<source>.forward | left | turn | lift | grip; goal.passed | margin | failed (failed is a list); the console’s own signals.
 - basecase.drive({ v: [forward, left, turn], aux?: [lift, grip], target?: [x, y, z] }) drives the robot: v and aux each −1 to 1; target is a point for an arm’s hand in scene mm, y up. drive(null) lets go. Needs code in the console’s input.

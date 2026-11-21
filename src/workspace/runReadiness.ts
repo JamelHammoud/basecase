@@ -35,6 +35,8 @@ import { caseCheckRows, nextCaseTurn } from './caseChecks';
 import { runEngineeringNow } from './engineeringNow';
 import { bodyPhysicsKey, freshFalls, freshWalk } from './storedWalk';
 import { inspectElectrical } from '../wiring/electricalChecks';
+import { purchaseSnapshot } from '../utils/purchaseSnapshot';
+import type { Purchases } from '../types/robotics';
 
 const BUDGET_MS = 30000;
 
@@ -97,7 +99,7 @@ export const projectFingerprint = (
     bodyCalibrations: bodyPhysicsKey(project),
     goneMates: goneMateIds(project.joints),
     printer: [printer.model.id, printer.nozzle, bedOf(printer.model, project.printProcess)],
-    purchases: jsonHash(world.purchases ?? {}),
+    purchases: jsonHash(purchaseSnapshot((world.purchases as Purchases | null) ?? {}, 'owned')),
     money: [world.money.code, world.money.ratesDate],
   });
 
@@ -167,7 +169,14 @@ export async function runReadiness({
   rememberClamps(parts, clampsOf(geometry.chains));
 
   const fits = designedFits(await viewport.interference(), parts, geometry.chains);
-  const bom = buildBom({ parts, project, purchases, measures, supportG: supportOf(print), wiring: engineering.wiring });
+  const bom = buildBom({
+    parts,
+    project,
+    purchases: purchaseSnapshot(purchases, 'owned'),
+    measures,
+    supportG: supportOf(print),
+    wiring: engineering.wiring,
+  });
 
   return readinessOf(
     [

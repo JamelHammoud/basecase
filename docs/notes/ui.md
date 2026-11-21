@@ -10,6 +10,12 @@ The Build panel renders Checks before the bill of materials, guide, saved builds
 
 Pull request #1965 reports five passing browser cases across the board, build-time and composer files on macOS using the development harness. It also reports that restoring the earlier label CSS reproduced about 1.9px of overlap. Those are author-reported observations. Review did not rerun browser tests, and production-bundle browser execution on Linux and Windows remains for CI.
 
+## Error toast recovery text
+
+The portable-scene size error includes the filename and the existing import-error prefix. `Toast` previously constrained every tone to one truncated line within `max-w-md`, cutting off the instruction to remove large meshes or images and export again. Error messages now wrap with a 40px minimum height. The canvas wrapper caps the toast at the canvas width minus 24px. A shrink-resistant action keeps its label beside the message.
+
+The dedicated scene-limit browser declaration was removed after CI timed out waiting for its file chooser before importing either fixture. Its text-line, scroll-bound and canvas-containment assertions never ran in that Check. These rendered bounds and successful picker recovery remain browser coverage gaps. Fast decoder and stream tests retain size refusal, early cancellation and normal scene round trips, but do not establish rendered toast geometry. No timeout, retry or quarantine was added. [Failure evidence](performance-workspace.md#portable-scene-read-budget).
+
 ## Repeated control copy audit
 
 The studio audit for #1660 traced Button, IconButton, Tooltip, NumberInput, SegmentedControl, ChoiceGrid, StripButton, LinkButton and menu composition before removing copy. Shared primitives need no change. The ordinary copy report counts two removed strings and no additions. The Board title references a local variable, which the existing extractor does not count. Counting rules are unchanged.

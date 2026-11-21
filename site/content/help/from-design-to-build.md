@@ -66,9 +66,11 @@ The list also includes things the build needs that the model doesn't show:
 - Bus servos add one cable for each measured hop, grouped by the selected product and length.
 - Each battery plug or barrel jack on the power path adds a pigtail.
 
-Prices you check in a store are exact. The others are list prices, and Basecase marks them with ≈. Parts you own cost nothing.
+Prices you check in a store are exact. The others are list prices, and Basecase marks them with ≈. Unallocated parts you own cost nothing in purchasing.
 
 **Electrical connections** checks documented pins and declared supplies. Missing pin maps, unknown loads and unresolved power interfaces remain blockers. To continue the documented connections in KiCad, [export a robot schematic](/help/export-a-robot-schematic).
+
+[Replay motor current](/help/replay-motor-current) locates modeled voltage drop through declared source and cable resistance. It compares resistance edits against a frozen current trace. Replay doesn't clear electrical blockers or prove voltage stayed above a device's brownout threshold between samples.
 
 **Board fit** checks a defined board’s outline, mounting hardware and connector clearance against scene geometry. Passing it doesn’t clear electrical blockers or route copper. See [Fit an electronics board](/help/fit-an-electronics-board).
 

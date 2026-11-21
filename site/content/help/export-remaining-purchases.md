@@ -45,10 +45,12 @@ Basecase names the download `<scene>-bom.csv` and includes every BOM line, inclu
 
 To send the file to DigiKey, keep DigiKey rows with a positive Supplier Order Qty. In [DigiKey MyLists](https://www.digikey.com/en/mylists), upload the file and map Supplier Part Number, Supplier Order Qty and Customer Reference. Review the matched parts and packaging before ordering. For other suppliers, filter by Supplier before uploading. Their lines use the same fields.
 
-Read Remaining Units in the units from the Unit column: pieces or grams after subtracting stock. Read Supplier Order Qty as the number of ordering units you entered. For three Pico 2 boards with one on hand, a cut-tape listing sold by the piece exports 2 remaining units and an order quantity of 2. Use Packs to Buy for the pack count used in the saved listing’s price and Amazon cart.
+Read Remaining Units in the units from the Unit column: pieces or grams after subtracting unallocated stock. Read Supplier Order Qty as the number of ordering units you entered. For three Pico 2 boards with one on hand, a cut-tape listing sold by the piece exports 2 remaining units and an order quantity of 2. Use Packs to Buy for the pack count used in the saved listing’s price and Amazon cart.
 
 In Customer Reference, Basecase keeps the BOM key. In Component References, it keeps every scene part id on that line, even when names repeat. Basecase adds an apostrophe before formula-like text so spreadsheet applications read it as text.
 
 If Supplier Order Qty is blank, check for a missing identity, order unit or conversion. Keep the listing link and correct the fields before ordering. For descriptive catalog numbers, Basecase leaves Manufacturer Part Number blank until you supply an exact number. If you change the listing link, Basecase clears its identity fields. Enter the new listing’s details before saving.
 
 For dated quotes, availability and destination-specific arrival estimates, see [Compare supplier offers](/help/compare-supplier-offers).
+
+Stock reserved for another [individual build](/help/allocate-parts-to-robot-builds) stays out of the exported available quantity. **On hand** in the editor still records your total owned stock.

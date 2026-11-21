@@ -22,6 +22,8 @@ covers:
 
 You can send a whole design to someone as a single .basecase file. They can open it in the desktop app or in the web studio.
 
+The scene must fit within 128 MB after decompression. A small compressed file can still exceed this limit.
+
 1. Open the scene you want to send.
 2. Click **Export** at the top right of the window.
 3. Choose **Scene**.
@@ -30,6 +32,8 @@ You can send a whole design to someone as a single .basecase file. They can open
 ![Scene in the rover's Export menu](/help/share-a-scene/menu.png)
 
 The file includes the parts, joints, poses, comments, Cases, Routines, [Study](/help/study-design-options) settings and results, and the scene's goal. Imported worlds come with their collider meshes, textures and optional splats, so the recipient doesn't need the original capture files. Print history, the print service and its quotes, trained policies, Case tries, taught skills, the build guide and your chat with the agent stay on your computer and aren't in the file. To learn why, see [Scenes, files and the Library](/help/scenes-files-and-the-library).
+
+SimReady texture packages stay outside the file. The recipient can [download missing textures](/help/add-objects-to-the-scene#restore-saved-simready-textures) for a selected part in the desktop app.
 
 An [electronics board](/help/fit-an-electronics-board) travels with the scene, including its mounting constraints, placement identities and locks. The recipient can edit those placements.
 

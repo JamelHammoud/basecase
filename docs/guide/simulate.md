@@ -248,3 +248,11 @@ Tendon recordings retain optional `transmission` metadata with motor-to-actuator
 Preparation checks cancellation and current-source predicates before returning ordinary calibrated models as well as contact models. No new asynchronous preparation stage, retry or wait is added. Current coverage and platform execution limits are in [simulation evidence](../notes/testing-simulate.md#ideal-tendon-transmissions). Measurements belong to [simulation performance evidence](../notes/performance-simulation.md#ideal-tendon-transmissions).
 
 URDF admission checks every root Basecase extension, so an unrelated extension before the tendon marker cannot hide the unsupported transmission. `tendonAdmission.test.ts` covers this ordering alongside ordinary package import refusal.
+
+## Retained modeled current for Build
+
+`agentPeak.walkSim` keeps `TorqueRecorder` current windows before computing aggregate walking power. `WalkSim.motorTrace` binds every modeled channel to its exact joint and actuator ids, catalog identity and variant, current-model coefficients, policy identity and `servo-amps-1` method. Passive joints have no channel. Multi-actuator joint traces remain aggregate estimates and cannot establish per-actuator electrical loads.
+
+The retained sampling interval is `perWindow * dt`, not the recorder's requested target window. A 2 ms timestep therefore produces 26 ms windows for its 25 ms target. Samples describe averages over windows, with times at their starts. They are model estimates rather than electrical telemetry and cannot establish sub-window events. Stored-walk freshness still controls applicability.
+
+Build's [resistive current replay](build.md#resistive-motor-current-replay) consumes these prescribed currents in the electrical worker. It does not couple supply voltage into servo dynamics, change calibration or policies, or run the daemon. Existing mechanical simulation behavior and unknown-transient requirements remain unchanged. The fast `wiring/powerReplay.test.ts` matrix uses the production recorder and current model, while browser entry is declared in `e2e/powerReplay.e2e.test.ts`. Generated-circuit agreement establishes software model behavior only.

@@ -72,6 +72,8 @@ Joints come with a robot, a hand, or a design from the agent. You can also add t
 - [Design a linkage from a path](/help/design-a-linkage-from-a-path) adds a four-bar linkage with a crank joint driven by a servo.
 - [Join two parts with a hinge or slider](/help/join-two-parts-with-a-hinge) adds a joint between two parts you select.
 
+Downloaded robot descriptions and mesh files can be up to 200 MB each. See [Import and export formats](/help/import-and-export-formats) for the other import limits.
+
 As soon as the scene has a joint, the **Simulate** tab appears in the right panel.
 
 A skeleton holds the planned joint layout before parts are connected. Design From Motion opens it in Edit Skeleton, with torque margins beside its joints. It doesn't create the connected joints needed for simulation or animation playback.

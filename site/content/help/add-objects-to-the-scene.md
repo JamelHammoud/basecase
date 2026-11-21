@@ -20,6 +20,9 @@ related:
   - import-a-robot
   - organize-parts-in-layers
 covers:
+  - src/components/inspector/SimReadySection.tsx
+  - src/three/simreadyVisuals.ts
+  - src/workspace/simreadyCommands.tsx
   - src/workspace/useRobotInsert.ts
   - src/components/objects/
   - src/components/parts/ObjectsView.tsx
@@ -52,3 +55,22 @@ An object moves freely in Simulate if its maker gave it a mass. Objects without 
 Each object shows its maker and license. Most are CC-BY 4.0. To see an object's page on Hugging Face, click **Open on Hugging Face** in its hover card.
 
 For a local facility export, use [Register a Fleet facility](/help/register-a-fleet-facility).
+
+## Restore saved SimReady textures
+
+Opening a shared scene uses locally cached textures. Missing textures leave the part's collision mesh visible without downloading a package. Downloading SimReady textures requires the desktop app.
+
+1. On the canvas, click the SimReady part.
+2. In the Inspector's **SimReady** section, click **Download Textures**.
+
+![A shared mug selected with Download Textures in the Inspector](/help/add-objects-to-the-scene/textures.png)
+
+The button stays disabled while the package downloads and converts.
+
+![Download Textures disabled with a spinner while the package downloads](/help/add-objects-to-the-scene/textures-downloading.png)
+
+If the download fails, click **Download Textures** again.
+
+![The download failure message with Download Textures available again](/help/add-objects-to-the-scene/textures-failed.png)
+
+You can also select the part and choose **Download Textures** from [[⌘K]]. Parts added from SimReady search download when you insert them.

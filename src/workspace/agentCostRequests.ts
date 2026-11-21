@@ -109,7 +109,7 @@ export async function recordOnHandRequest(payload: Payload) {
   const counts = asked.map(({ key, count }) => ({ key: lineKey(key), count }));
   let purchases = await platformBridge.listPurchases();
 
-  for (const { key, count } of counts) purchases = await storePurchase(key, withOnHand(purchases[key], count));
+  for (const { key, count } of counts) purchases = await storePurchase(key, withOnHand(purchases[key], count), 'stock');
 
   return { text: `On hand: ${counts.map(({ key, count }) => `${count}× ${key}`).join(', ')}.` };
 }

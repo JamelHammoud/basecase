@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { createHash } from 'node:crypto';
+import { runInNewContext } from 'node:vm';
+import { describe, expect, it, vi } from 'vitest';
 import { CODE_PANEL_TOKENS } from '../../design-system/codeTokens';
 import { CODE_PANEL_CSP, CODE_PANEL_SANDBOX, codePanelDocument, codeSourceFirstLine } from './codeDocument';
 
@@ -8,14 +10,16 @@ describe('a code panel’s document', () => {
   const doc = codePanelDocument(source);
 
   it('writes the policy ahead of the client and the code, and the code last', () => {
-    const policy = doc.indexOf(`content="${CODE_PANEL_CSP}"`);
+    const policy = doc.indexOf('http-equiv="Content-Security-Policy"');
 
     expect(policy).toBeGreaterThan(0);
     expect(policy).toBeLessThan(doc.indexOf('<script>'));
-    expect(doc.endsWith(source)).toBe(true);
+    expect(doc.indexOf('content="script-src \'unsafe-inline\'"')).toBeLessThan(doc.indexOf('<script>'));
+    expect(doc).toContain('content="script-src \'unsafe-inline\'"');
+    expect(doc).toContain('basecase.event("go")</script>');
     expect(CODE_PANEL_CSP.split('; ')).toEqual([
       "default-src 'none'",
-      "script-src 'unsafe-inline'",
+      "script-src 'none'",
       "style-src 'unsafe-inline'",
       'img-src data: blob:',
       'media-src data: blob:',
@@ -40,3 +44,141 @@ describe('a code panel’s document', () => {
     expect(lines[codeSourceFirstLine()]).toBe('<p>two</p>');
   });
 });
+
+it.each(['"left>right"', "'left>right'"])(
+  'keeps quoted script attributes intact and hashes the actual script body: %s',
+  (attribute) => {
+    const open = `<script data-label=${attribute}>`;
+    const doc = codePanelDocument(`${open}window.ran = true;\r\n</script>`);
+    const script = doc.slice(doc.indexOf(open) + open.length, doc.lastIndexOf('</script>'));
+    const window = {};
+
+    expect(doc).toContain(open);
+    expect(script).toContain('window.ran = true;\n');
+    expect(doc).toContain(`'sha256-${createHash('sha256').update(script).digest('base64')}'`);
+    runInNewContext(script, { window });
+    expect(window).toHaveProperty('ran', true);
+    expect(Object.getOwnPropertyDescriptor(window, 'RTCPeerConnection')?.writable).toBe(false);
+  },
+);
+
+it.each(['application/json', 'application/ld+json', 'importmap'])(
+  'preserves nonexecutable %s data scripts without authorizing them as code',
+  (type) => {
+    const data = '{"label":"turn left"}';
+    const source = `<script type="${type}">${data}</script>`;
+    const doc = codePanelDocument(source);
+
+    expect(doc.endsWith(source)).toBe(true);
+    expect(doc).not.toContain(createHash('sha256').update(data).digest('base64'));
+  },
+);
+
+it('blocks both peer connection constructors before panel code and prevents restoring them without CSP support', () => {
+  const connect = vi.fn();
+  const context = {
+    window: {
+      RTCPeerConnection: connect,
+      webkitRTCPeerConnection: connect,
+      parent: { postMessage: vi.fn() },
+      addEventListener: vi.fn(),
+    },
+  };
+  const scripts = codePanelDocument(`<script>
+    for (const name of ['RTCPeerConnection', 'webkitRTCPeerConnection']) {
+      try { new window[name]({ iceServers: [{ urls: 'turn:127.0.0.1:3478' }] }); } catch {}
+      if (typeof window[name] !== 'undefined') throw new Error(name + ' is available');
+      if (Reflect.deleteProperty(window, name)) throw new Error(name + ' can be deleted');
+      if (Reflect.set(window, name, Function)) throw new Error(name + ' can be replaced');
+      try { Object.defineProperty(window, name, { value: Function }); } catch {}
+      if (typeof window[name] !== 'undefined') throw new Error(name + ' was restored');
+    }
+  </script>`).matchAll(/<script>([\s\S]*?)<\/script>/g);
+
+  for (const [, script] of scripts) runInNewContext(script, context);
+
+  expect(connect).not.toHaveBeenCalled();
+});
+
+it('authorizes only scripts that lock WebRTC first, including reused scripts in descendants', () => {
+  const doc = codePanelDocument('<script>window.ran = true;</script>');
+  const policy = doc.match(/content="([^"]+)"/)![1];
+  const scripts = [...doc.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
+
+  expect(policy.match(/script-src ([^;]+)/)![1]).not.toContain('unsafe-inline');
+  expect(policy).not.toContain('unsafe-eval');
+
+  for (const script of scripts) {
+    const hash = createHash('sha256').update(script).digest('base64');
+    const window = { parent: { postMessage: vi.fn() }, addEventListener: vi.fn() };
+
+    expect(policy).toContain(`'sha256-${hash}'`);
+    runInNewContext(script, { window });
+    expect(Object.getOwnPropertyDescriptor(window, 'RTCPeerConnection')).toMatchObject({
+      value: undefined,
+      writable: false,
+      configurable: false,
+    });
+  }
+
+  expect(policy).not.toContain(createHash('sha256').update('window.ran = true;').digest('base64'));
+});
+
+it.each(['window', 'Object'])('locks the realm before an approved script with a hoisted %s binding', (name) => {
+  const connect = vi.fn();
+  const window = { RTCPeerConnection: connect, webkitRTCPeerConnection: connect, ran: false };
+  const doc = codePanelDocument(`<script type="module">
+    function ${name}() {}
+    globalThis.window.ran = true;
+    try { new globalThis.window.RTCPeerConnection(); } catch {}
+  </script>`);
+  const script = doc.match(/<script type="module">([\s\S]*?)<\/script>/)![1];
+
+  runInNewContext(`(function(){'use strict';${script}})()`, { window });
+  expect(window.ran).toBe(true);
+  expect(connect).not.toHaveBeenCalled();
+  expect(Object.getOwnPropertyDescriptor(window, 'RTCPeerConnection')).toMatchObject({
+    value: undefined,
+    writable: false,
+    configurable: false,
+  });
+});
+
+it('fails before hostile code when an approved script shadows globalThis', () => {
+  const window = { ran: false };
+  const doc = codePanelDocument('<script>function globalThis() {} window.ran = true;</script>');
+  const script = [...doc.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)![1];
+
+  expect(() => runInNewContext(`(function(){'use strict';${script}})()`, { window })).toThrow();
+  expect(window.ran).toBe(false);
+});
+
+it.each([
+  '"use strict";',
+  "'use strict'\n",
+  "'other';\n/* a directive */ 'use strict' // a directive\n",
+  "'use strict'/*\n*/",
+  "'use strict'\n++window.count;\n",
+  "'use strict'\n--window.count;\n",
+])('preserves strict source semantics after the constructor locks: %s', (directive) => {
+  const doc = codePanelDocument(
+    `<script>${directive}window.strict = (function(){return this})() === undefined;</script>`,
+  );
+  const script = [...doc.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)![1];
+  const window = {};
+
+  runInNewContext(script, { window });
+  expect(window).toHaveProperty('strict', true);
+});
+
+it.each(['', '"use strict"\n+', '"use strict"\n&&', '"use strict"\n!=', '"use strict"\n-'])(
+  'preserves sloppy source semantics for expressions outside the directive prologue: %s',
+  (expression) => {
+    const doc = codePanelDocument(`<script>${expression}(function(){window.strict = this === undefined})()</script>`);
+    const script = [...doc.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)![1];
+    const window = {};
+
+    runInNewContext(script, { window });
+    expect(window).toHaveProperty('strict', false);
+  },
+);

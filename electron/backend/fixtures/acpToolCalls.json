@@ -1,0 +1,251 @@
+{
+  "claude": [
+    {
+      "update": {
+        "_meta": {
+          "claudeCode": {
+            "toolName": "WebFetch"
+          }
+        },
+        "toolCallId": "claude-0",
+        "sessionUpdate": "tool_call",
+        "name": "WebFetch",
+        "rawInput": {
+          "url": "https://example.com",
+          "prompt": "Read specifications"
+        },
+        "status": "pending",
+        "title": "Fetch https://example.com",
+        "kind": "fetch",
+        "content": [
+          {
+            "type": "content",
+            "content": {
+              "type": "text",
+              "text": "Read specifications"
+            }
+          }
+        ]
+      },
+      "request": {
+        "toolCallId": "claude-0",
+        "name": "WebFetch",
+        "status": "pending",
+        "rawInput": {
+          "url": "https://example.com",
+          "prompt": "Read specifications"
+        },
+        "title": "Fetch https://example.com",
+        "kind": "fetch",
+        "content": [
+          {
+            "type": "content",
+            "content": {
+              "type": "text",
+              "text": "Read specifications"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "update": {
+        "_meta": {
+          "claudeCode": {
+            "toolName": "WebSearch"
+          }
+        },
+        "toolCallId": "claude-1",
+        "sessionUpdate": "tool_call",
+        "name": "WebSearch",
+        "rawInput": {
+          "query": "servo specifications"
+        },
+        "status": "pending",
+        "title": "Search \"servo specifications\"",
+        "kind": "fetch",
+        "content": []
+      },
+      "request": {
+        "toolCallId": "claude-1",
+        "name": "WebSearch",
+        "status": "pending",
+        "rawInput": {
+          "query": "servo specifications"
+        },
+        "title": "Search \"servo specifications\"",
+        "kind": "fetch",
+        "content": []
+      }
+    },
+    {
+      "update": {
+        "_meta": {
+          "claudeCode": {
+            "toolName": "TodoWrite"
+          }
+        },
+        "toolCallId": "claude-2",
+        "sessionUpdate": "tool_call",
+        "name": "TodoWrite",
+        "rawInput": {
+          "todos": []
+        },
+        "status": "pending",
+        "title": "Update TODOs: ",
+        "kind": "think",
+        "content": []
+      },
+      "request": {
+        "toolCallId": "claude-2",
+        "name": "TodoWrite",
+        "status": "pending",
+        "rawInput": {
+          "todos": []
+        },
+        "title": "Update TODOs: ",
+        "kind": "think",
+        "content": []
+      }
+    },
+    {
+      "update": {
+        "_meta": {
+          "claudeCode": {
+            "toolName": "mcp__robotics_cad__get_scene"
+          }
+        },
+        "toolCallId": "claude-3",
+        "sessionUpdate": "tool_call",
+        "name": "mcp__robotics_cad__get_scene",
+        "rawInput": {
+          "query": "servo specifications"
+        },
+        "status": "pending",
+        "title": "mcp__robotics_cad__get_scene",
+        "kind": "other",
+        "content": []
+      },
+      "request": {
+        "toolCallId": "claude-3",
+        "name": "mcp__robotics_cad__get_scene",
+        "status": "pending",
+        "rawInput": {
+          "query": "servo specifications"
+        },
+        "title": "mcp__robotics_cad__get_scene",
+        "kind": "other",
+        "content": []
+      }
+    }
+  ],
+  "codex": [
+    {
+      "sessionUpdate": "tool_call",
+      "toolCallId": "codex-web",
+      "kind": "search",
+      "title": "Web search: servo specifications",
+      "status": "in_progress",
+      "rawInput": {
+        "type": "webSearch",
+        "id": "codex-web",
+        "query": "servo specifications",
+        "action": null
+      }
+    }
+  ],
+  "gemini": [
+    {
+      "tool": "web_fetch",
+      "updates": [
+        {
+          "sessionUpdate": "tool_call",
+          "toolCallId": "gemini-web_fetch",
+          "status": "in_progress",
+          "title": "Fetching content from: https://example.com",
+          "content": [],
+          "locations": [],
+          "kind": "fetch"
+        }
+      ],
+      "request": {
+        "toolCallId": "gemini-web_fetch",
+        "status": "pending",
+        "title": "Fetching content from: https://example.com",
+        "content": [],
+        "locations": [],
+        "kind": "fetch"
+      }
+    },
+    {
+      "tool": "google_web_search",
+      "updates": [
+        {
+          "sessionUpdate": "tool_call",
+          "toolCallId": "gemini-google_web_search",
+          "status": "in_progress",
+          "title": "Searching the web for: \"servo specifications\"",
+          "content": [],
+          "locations": [],
+          "kind": "search"
+        }
+      ],
+      "request": {
+        "toolCallId": "gemini-google_web_search",
+        "status": "pending",
+        "title": "Searching the web for: \"servo specifications\"",
+        "content": [],
+        "locations": [],
+        "kind": "search"
+      }
+    },
+    {
+      "tool": "write_todos",
+      "updates": [
+        {
+          "sessionUpdate": "tool_call",
+          "toolCallId": "gemini-write_todos",
+          "status": "in_progress",
+          "title": "Cleared todo list",
+          "content": [],
+          "locations": [],
+          "kind": "other"
+        }
+      ],
+      "request": {
+        "toolCallId": "gemini-write_todos",
+        "status": "pending",
+        "title": "Cleared todo list",
+        "content": [],
+        "locations": [],
+        "kind": "other"
+      }
+    }
+  ],
+  "offline": [
+    {
+      "toolCallId": "tc-analyze-1795225047634",
+      "title": "Synthesizing 3D parametric geometry",
+      "kind": "think",
+      "status": "in_progress",
+      "sessionUpdate": "tool_call"
+    },
+    {
+      "toolCallId": "tc-analyze-1795225047634",
+      "status": "completed",
+      "sessionUpdate": "tool_call_update"
+    },
+    {
+      "toolCallId": "tc-write-1795225047855",
+      "title": "Saving Servo bracket",
+      "kind": "edit",
+      "status": "in_progress",
+      "sessionUpdate": "tool_call"
+    },
+    {
+      "toolCallId": "tc-write-1795225047855",
+      "status": "completed",
+      "sessionUpdate": "tool_call_update"
+    }
+  ]
+}

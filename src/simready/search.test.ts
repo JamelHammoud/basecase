@@ -59,3 +59,11 @@ describe('SimReady search', () => {
     expect(both.test(GRIPPER) && both.test(MUG)).toBe(true);
   });
 });
+
+it('restricts search to the same catalog datasets as the downloader', () => {
+  const filter = new RegExp(searchBody({ query: '', shelf: 'all' }).filter_url_regexp);
+
+  expect(filter.test(MUG)).toBe(true);
+  expect(filter.test(MUG.replace('nvidia', 'attacker'))).toBe(false);
+  expect(filter.test(MUG.replace('simready-assets', 'private-data'))).toBe(false);
+});

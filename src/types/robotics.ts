@@ -218,6 +218,10 @@ export interface ProjectSettings extends ProjectRecords, PrintService, ProjectBu
   poses?: RobotPose[];
   animations?: RobotAnimation[];
   policies?: PolicyRecord[];
+  powerReplay?: {
+    baseline: import('../wiring/powerReplayTypes').PowerReplayRecord;
+    comparison?: import('../wiring/powerReplayTypes').PowerReplayRecord;
+  };
   walk?: StoredWalk;
   falls?: StoredFalls;
   marks?: SceneMark[];
@@ -314,7 +318,9 @@ export interface PurchaseRecord {
   onHand?: number;
 }
 
-export type StoredPurchase = (PurchaseRecord | { onHand?: number }) & PurchasingEvidence;
+export type StoredPurchase = (PurchaseRecord | { onHand?: number }) &
+  PurchasingEvidence &
+  import('../kit/allocationTypes').ProductionPurchase;
 
 export type Purchases = Record<string, StoredPurchase>;
 

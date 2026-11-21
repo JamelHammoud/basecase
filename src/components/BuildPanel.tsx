@@ -1,3 +1,5 @@
+import { PowerReplayInspection } from './build/PowerReplayInspection';
+import { setPowerReplayOpen } from './build/powerReplayDialog';
 import { usePurchaseSheet } from './build/usePurchaseSheet';
 import { SupplierOffers } from './build/SupplierOffers';
 import { supportByMaterial } from './build/supportByMaterial';
@@ -6,7 +8,6 @@ import type { CableRoutes } from '../workspace/useCableRoutes';
 import React from 'react';
 import { useScrollFade } from '../design-system';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
-import { onHandOf } from '../utils/onHand';
 import type { ShowToast } from '../workspace/types';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import { useMoney } from '../utils/useMoney';
@@ -31,6 +32,7 @@ import type { Viewport3DHandle } from './Viewport3D';
 import { useBomWiring } from './build/useBomWiring';
 
 interface BuildPanelProps {
+  active: boolean;
   builds?: React.ReactNode;
   cableRoutes: CableRoutes;
   onDefineBoard: () => void;
@@ -108,6 +110,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
           readiness={readiness.current}
           checking={readiness.checking}
           context={{
+            onInspectCurrent: () => setPowerReplayOpen(sceneId),
             focusedCheck: project.assignment?.inspection?.check,
             board: { exists: !!project.electronicsBoard, onClick: onDefineBoard },
             parts,
@@ -158,7 +161,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
           project={project}
           onChangeProject={onChangeProject}
           onCheck={setChecking}
-          onHandOf={(key) => onHandOf(purchases[key])}
+          onHandOf={(key) => purchases[key]?.onHand ?? 0}
           onOnHand={saveOnHand}
           onSelectParts={onSelectParts}
           onExportCsv={exportCsv}
@@ -168,6 +171,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
         {rest.builds}
         <PlatesSection printing={printing} />
       </div>
+      <PowerReplayInspection {...rest} {...{ sceneId, parts, project, onChangeProject, onSelectParts }} key={sceneId} />
       <SupplierOffers bom={bom} purchases={purchases} scene={sceneId} save={savePurchase} />
       {checking && (
         <CheckSheet

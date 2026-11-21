@@ -61,9 +61,6 @@ export function forwardConsole(win: ClientWindow, send: (message: unknown) => vo
 }
 
 export function installCodeClient(win: ClientWindow, forwardLogs: ConsoleForwarder) {
-  for (const name of ['RTCPeerConnection', 'webkitRTCPeerConnection'])
-    Object.defineProperty(win, name, { value: undefined, writable: false, configurable: false });
-
   const pending: unknown[] = [];
   const subs = new Map<number, (values: Values, time: number) => void>();
   const replies = new Map<number, (m: PortMessage) => void>();

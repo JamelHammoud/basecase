@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { runInNewContext } from 'node:vm';
 import { describe, expect, it, vi } from 'vitest';
 import { CODE_PANEL_TOKENS } from '../../design-system/codeTokens';
@@ -9,15 +10,15 @@ describe('a code panel’s document', () => {
   const doc = codePanelDocument(source);
 
   it('writes the policy ahead of the client and the code, and the code last', () => {
-    const policy = doc.indexOf(`content="${CODE_PANEL_CSP}"`);
+    const policy = doc.indexOf('http-equiv="Content-Security-Policy"');
 
     expect(policy).toBeGreaterThan(0);
     expect(policy).toBeLessThan(doc.indexOf('<script>'));
-    expect(doc.endsWith(source)).toBe(true);
+    expect(doc).toContain('basecase.event("go")</script>');
     expect(CODE_PANEL_CSP.split('; ')).toEqual([
       "default-src 'none'",
       "webrtc 'block'",
-      "script-src 'unsafe-inline'",
+      "script-src 'none'",
       "style-src 'unsafe-inline'",
       'img-src data: blob:',
       'media-src data: blob:',
@@ -67,4 +68,28 @@ it('blocks both peer connection constructors before panel code and prevents rest
   for (const [, script] of scripts) runInNewContext(script, context);
 
   expect(connect).not.toHaveBeenCalled();
+});
+
+it('authorizes only scripts that lock WebRTC first, including reused scripts in descendants', () => {
+  const doc = codePanelDocument('<script>window.ran = true;</script>');
+  const policy = doc.match(/content="([^"]+)"/)![1];
+  const scripts = [...doc.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
+
+  expect(policy.match(/script-src ([^;]+)/)![1]).not.toContain('unsafe-inline');
+  expect(policy).not.toContain('unsafe-eval');
+
+  for (const script of scripts) {
+    const hash = createHash('sha256').update(script).digest('base64');
+    const window = { parent: { postMessage: vi.fn() }, addEventListener: vi.fn() };
+
+    expect(policy).toContain(`'sha256-${hash}'`);
+    runInNewContext(script, { window });
+    expect(Object.getOwnPropertyDescriptor(window, 'RTCPeerConnection')).toMatchObject({
+      value: undefined,
+      writable: false,
+      configurable: false,
+    });
+  }
+
+  expect(policy).not.toContain(createHash('sha256').update('window.ran = true;').digest('base64'));
 });

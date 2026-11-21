@@ -66,6 +66,7 @@ it.each([
 
       const controlConnections = connections;
       const probe = `<script>
+      window.probeExecuted = true;
       const results = {};
       for (const name of ['RTCPeerConnection', 'webkitRTCPeerConnection']) {
         try {
@@ -100,6 +101,26 @@ it.each([
         },
         { sandbox: CODE_PANEL_SANDBOX, document: csp ? source : source.replace("webrtc 'block'; ", '') },
       );
+
+      if (nested) {
+        await expect.poll(() => page.frames().length).toBe(3);
+
+        const nestedFrame = page.frames().find((frame) => frame.parentFrame()?.parentFrame() === page.mainFrame())!;
+
+        await expect
+          .poll(() =>
+            nestedFrame.evaluate(() => ({
+              executed: Reflect.get(window, 'probeExecuted') === true,
+              scripts: document.scripts.length,
+              ready: document.readyState,
+            })),
+          )
+          .toEqual({ executed: false, scripts: 1, ready: 'complete' });
+        expect(connections).toBe(controlConnections);
+
+        return;
+      }
+
       await expect
         .poll(() =>
           page

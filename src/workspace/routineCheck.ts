@@ -22,7 +22,7 @@ export interface OwnSkill {
 }
 
 export interface RoutineSkills {
-  own: () => Promise<OwnSkill[]>;
+  own: (caseId?: string) => Promise<OwnSkill[]>;
   handoffs: () => HandoffProofs | undefined;
   kit?: readonly SkillContract[];
 }

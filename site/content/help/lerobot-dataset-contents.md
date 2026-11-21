@@ -32,6 +32,8 @@ Every file in a dataset from Export Dataset or Publish to Hugging Face, and what
 
 Each included recording range in the [dataset](/help/make-a-dataset-from-tries) is one episode. Whole-try selections include the whole recording, while segment selections include only their selected frames. The dataset comes in two layouts: LeRobot v3.0 at the top, and LeRobot v2.1 with GR00T's `meta/modality.json` in a `v2.1` folder. On the Hub, v3.0 is the main branch and v2.1 is the `v2.1` tag.
 
+Policy correction windows are excluded from both layouts. Their training path is described in [Correct a simulated policy](/help/correct-a-simulated-policy).
+
 ## Files in v3.0
 
 | File | What it holds |

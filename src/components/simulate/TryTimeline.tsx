@@ -11,6 +11,7 @@ import { SavedTimelinePanel } from './SavedTimelinePanel';
 import { canExportTry } from '../../workspace/tryFileActions';
 import { BranchTryControls } from './BranchTryControls';
 import type { Cases } from '../../workspace/useCases';
+import { TryOwnership } from './TryOwnership';
 import { TimelinePlayback } from './TimelinePlayback';
 
 interface TryTimelineProps {
@@ -76,6 +77,7 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({
           onEdited={focus}
         />
       )}
+      <TryOwnership recording={timeline.recording} />
       <div className="max-h-[40vh] overflow-y-auto flex flex-col gap-2">
         {lanes.map((lane) => (
           <TimelineLane

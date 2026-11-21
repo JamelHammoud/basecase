@@ -65,6 +65,8 @@ If you publish the same dataset again, Basecase updates the folders included in 
 
 The working dataset leaves out real-robot tries, failed tries, tries with quality flags and tries on another robot model. Topic-only recordings are also left out because they have no robot joint recording. The toast shows how many samples were left out. A saved version uses its original samples, robot and scene.
 
+Publishing leaves out policy correction windows. Use them to train a candidate as described in [Correct a simulated policy](/help/correct-a-simulated-policy).
+
 Each publish tags its commit with the dataset's version, such as `dataset-v2`. Publishing freezes the selected frames, labels, recording and image content, exclusions and split assignments. Editing an instruction or segment boundary creates a new version on the next publish. Publishing unchanged samples keeps the same version.
 
 To publish an earlier saved version, choose it in **Dataset version**, then click **Publish to Hugging Face**. Its saved export supplies the files. A version without saved samples can't restore historical labels. Missing saved content stops publishing with an error.

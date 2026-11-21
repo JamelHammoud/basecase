@@ -3,6 +3,7 @@ import type { RobotAnimation, RobotPoseState } from '../types/robotics';
 import { loopInitial } from './loopInitial';
 import { controlValues, assertTendonController } from './controlValues';
 import { primeCtrlHistory } from './ctrlHistory';
+import { stepControlled } from './controlStep';
 import { createDrive, type DriveCommand, type DriveLoop, type DriveSetup } from './drive';
 import { PoseDrive, type PoseSetup } from './drivePose';
 import { GrabForce } from './grabForce';
@@ -11,14 +12,16 @@ import type { SimModel } from './mjcf';
 import type { SimStats } from './engineStats';
 import { eyeCaster, type EyeCaster } from './eyes';
 import { ActuatorFaults, type FaultKind } from './faults';
-import { policyObsSize, type PolicySpec } from './policy';
-import { stepPolicy, type PolicyState } from './policyStep';
+import type { PolicySpec } from './policy';
+import { createPolicyState, stepPolicy, type PolicyState } from './policyStep';
 import { routePolicy, RouteRunner, type RouteController } from './route';
-import { readHoldValues, readJointAngles, readJointStates } from './jointReadout';
+import { readBodyPoses, readHoldValues, readJointAngles, readJointStates } from './jointReadout';
 import { Scanner } from './scanner';
 import { BodyContacts } from './contacts';
 import { effectorAt, readEngineStats, type EngineRobot } from './engineReadout';
 import { EngineContinuation } from './engineContinuation';
+import { TeachingControl, type ActionOwner, type AppliedOwner } from './teaching';
+import type { ArmSetup } from './drive';
 import { WorldMoves } from './worldMoves';
 
 export type Controller =
@@ -51,6 +54,8 @@ export class SimEngine {
   stepHook: (() => void) | null = null;
   continuationHook: (() => void) | null = null;
   commandHook: ((c: DriveCommand) => void) | null = null;
+  controlHook: ((owner?: AppliedOwner) => void) | null = null;
+  private teaching: TeachingControl | null = null;
   private given = new Map<number, DriveCommand>();
   private peaks: Float64Array;
   private saturated: Float64Array;
@@ -215,6 +220,7 @@ export class SimEngine {
   setController(c: Controller) {
     assertTendonController(c, this.sim.joints);
 
+    this.teaching = null;
     this.controller = c;
     this.given.clear();
     this.policyState?.eyes?.dispose();
@@ -229,29 +235,14 @@ export class SimEngine {
     if (!pc) return;
 
     const r = this.robots.find((x) => x.key === pc.robot) ?? this.robots.find((x) => x.floating);
-    const idx = pc.policy.joints.map((id) => this.sim.joints.findIndex((j) => j.id === id));
 
-    if (!r || idx.some((i) => i < 0))
-      throw new Error('This policy was trained on joints this robot no longer has. Train it again.');
-
-    this.policyState = {
-      action: new Float32Array(idx.length),
-      obs: new Float32Array(policyObsSize(pc.policy)),
-      nextAt: this.data.time,
-      startedAt: this.data.time,
-      src: {
-        qpos: this.data.qpos,
-        qvel: this.data.qvel,
-        rootQpos: r.rootQpos,
-        rootDof: r.rootDof,
-        jointQpos: idx.map((i) => this.jointQpos[i]),
-        jointDof: idx.map((i) => this.jointDof[i]),
-      },
-      targets: new Float64Array(idx.length),
-      actuators: idx.map((i) => this.sim.joints[i].actuator),
-      command: [...pc.policy.command],
-      eyes: this.eyesFor(pc.policy),
-    };
+    this.policyState = createPolicyState(pc.policy, {
+      data: this.data,
+      joints: this.sim.joints,
+      root: r,
+      addresses: { qpos: this.jointQpos, dof: this.jointDof },
+      eyes: () => this.eyesFor(pc.policy),
+    });
   }
 
   private routeRunner(c: RouteController): RouteRunner {
@@ -263,6 +254,9 @@ export class SimEngine {
   command(c: DriveCommand) {
     this.given.set(c.slot ?? 0, c);
     this.commandHook?.(c);
+
+    if (this.teaching) return this.teaching.command(c, this.holdValues());
+
     this.drive?.command(c, this.drive.hand ? this.holdValues() : undefined);
     this.arms?.command(c);
 
@@ -318,6 +312,8 @@ export class SimEngine {
     const { data } = this;
     const c = this.controller;
 
+    if (this.teaching) return this.teaching.apply(data);
+
     if (c.kind === 'limp') return;
 
     if (this.drive) {
@@ -372,7 +368,7 @@ export class SimEngine {
   }
 
   step(seconds: number, afterStep?: () => void) {
-    const { mj, model, data } = this;
+    const { mj, data } = this;
     const steps = Math.max(1, Math.round(seconds / this.dt));
     const { joints } = this.sim;
 
@@ -383,7 +379,7 @@ export class SimEngine {
       this.faults.apply(data.ctrl);
       this.pushes.apply();
       this.grab.apply();
-      mj.mj_step(model, data);
+      stepControlled(mj, this);
       afterStep?.();
       this.scanner?.tick();
       this.stepHook?.();
@@ -403,6 +399,20 @@ export class SimEngine {
       this.continuationHook?.();
     }
   }
+
+  startTeaching(setup: ArmSetup) {
+    if (this.teaching) return;
+
+    this.teaching = new TeachingControl(
+      { controller: this.controller, state: this.policyState, setup, sim: this.sim },
+      this.dt,
+    );
+    this.teaching.initialize(this.data, this.model);
+  }
+
+  readonly handoff = (owner: ActionOwner) => this.teaching?.handoff(owner, this.data);
+
+  readonly teachingSource = () => this.teaching;
 
   private tiltOf(r: (typeof this.robots)[number]): number {
     const m = this.data.xmat;
@@ -472,14 +482,7 @@ export class SimEngine {
   }
 
   poses(out = new Float64Array(this.bodyIds.length * 7)): Float64Array {
-    const { xpos, xquat } = this.data;
-
-    this.bodyIds.forEach((b, i) => {
-      out.set(xpos.subarray(b * 3, b * 3 + 3), i * 7);
-      out.set(xquat.subarray(b * 4, b * 4 + 4), i * 7 + 3);
-    });
-
-    return out;
+    return readBodyPoses(this.data, this.bodyIds, out);
   }
 
   jointStates(out = new Float64Array(this.sim.joints.length * 3)): Float64Array {

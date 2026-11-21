@@ -26,6 +26,7 @@ import { showLeftTab } from './showView';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { workbenchCommands } from './workbenchCommands';
+import { teachingCommands, correctionCommands } from './teachingCommands';
 import { personCommands } from './personCommands';
 
 const showCases = (core: WorkspaceCore) => showLeftTab(core, 'cases');
@@ -44,6 +45,9 @@ export const STAYS_IN_RUN = new Set([
   'case-try-reference',
   'case-branch-try',
   'case-export-try',
+  'case-teach',
+  'case-handoff',
+  'dataset-corrections',
   'case-multiply',
   'case-add-panel',
   'case-export-dataset',
@@ -395,6 +399,8 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...tryIt,
     ...referenceCommands(core),
     ...timelineCommands(core),
+    ...teachingCommands(core),
+    ...correctionCommands(core),
     ...caseRun,
     ...addPanelCommands(core),
     ...renameCommands(core),

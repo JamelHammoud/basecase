@@ -2,7 +2,7 @@ import { createElement, useEffect } from 'react';
 import { renderToString } from 'react-dom/server';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { fixtureRobots } from '../sim/fixtures/robots';
-import { useTryEvidence } from './useTryEvidence';
+import { tryEvidenceAtFinish, useTryEvidence } from './useTryEvidence';
 
 vi.mock('react', async (original) => ({ ...(await original<typeof import('react')>()), useEffect: vi.fn() }));
 
@@ -59,4 +59,16 @@ it('invalidates evidence when another robot slot changes without a local part ed
   };
 
   expect(evidence!.current()).toBe(false);
+});
+
+it.each([undefined, 7])('keeps the finalization validity contract for recording %s', async (recordId) => {
+  let valid = true;
+  const current = () => valid;
+  const finish = tryEvidenceAtFinish(recordId, current);
+
+  expect(finish()).toBe(true);
+  await Promise.resolve();
+  valid = false;
+  expect(finish()).toBe(recordId !== undefined);
+  expect(tryEvidenceAtFinish(recordId, current)()).toBe(false);
 });

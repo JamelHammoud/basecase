@@ -37,8 +37,7 @@ export interface DatasetExport {
 
 export const EARLIER_TRIES = 'These tries are from an earlier design. Try It again to record new ones.';
 export const OTHER_TRIES = 'These tries are from another Case or scene.';
-export const FITTING_TRIES =
-  'Export and training take only passed tries of this Case as it is now. Try It to record more.';
+export const FITTING_TRIES = 'Choose passed tries that fit this robot.';
 
 interface Delivery {
   busy: string;

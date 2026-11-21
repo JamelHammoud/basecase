@@ -1,0 +1,27 @@
+import type { Recording } from '../../sim/recorder';
+import { runClock } from '../../utils/duration';
+import type { AppliedOwner } from '../../sim/teaching';
+
+const OWNER_LABEL: Record<AppliedOwner, string> = { policy: 'Policy', operator: 'Correction', context: 'Context' };
+
+export function TryOwnership({ recording }: { recording: Recording | null }) {
+  const teaching = recording?.teaching;
+
+  if (!teaching?.ownership?.length) return null;
+
+  return (
+    <div className="flex flex-col gap-1 text-[13px]" data-testid="try-ownership" data-policy={teaching.policy}>
+      <code className="text-white/60 break-all">{teaching.policy}</code>
+      <dl className="flex max-h-[20vh] flex-col gap-y-1 overflow-y-auto" tabIndex={0} data-timeline-scroll>
+        {teaching.ownership.map((interval, index) => (
+          <div key={index} className="shrink-0 px-1" data-owner={interval.owner}>
+            <dt>{OWNER_LABEL[interval.owner]}</dt>
+            <dd className="whitespace-nowrap tabular text-white/60">
+              {`${runClock(interval.at)}–${runClock(interval.until)}`}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}

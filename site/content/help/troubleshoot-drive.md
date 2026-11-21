@@ -56,6 +56,8 @@ Basecase hides **Drive with Camera** while a Case is open too, but you can still
 
 When a text field or a dialog has the keyboard, the canvas reads "Click the canvas to drive."
 
+During a [teaching try](/help/correct-a-simulated-policy), click **Take Control** in **Try** before using the drive keys.
+
 1. Click the canvas.
 2. Press [[W]] again.
 

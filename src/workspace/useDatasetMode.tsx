@@ -11,7 +11,8 @@ import {
   type ContextMenuEntry,
 } from '../design-system';
 import type { Dataset } from '../datasets/datasetFile';
-import { imageCount } from '../datasets/datasetView';
+import { imageCount, trainingSampleCount } from '../datasets/datasetView';
+import { chooseCorrections } from './teachingCommands';
 import { datasetVisionView } from './visionTrainingView';
 import { datasetVersionGroups, datasetVersionMembers } from './datasetVersionView';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -19,7 +20,8 @@ import type { DatasetActions } from '../components/tries/DatasetPane';
 import { showNewCase } from './caseCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
-const enoughToTrain = (records: TryRecord[]) => records.filter((t) => t.passed).length >= TRIES_TO_TRAIN;
+const enoughToTrain = (dataset: Dataset, records: TryRecord[]) =>
+  trainingSampleCount(dataset, records) >= TRIES_TO_TRAIN;
 
 interface ModelKey {
   id: string | null;
@@ -83,6 +85,16 @@ function tileMenu(core: WorkspaceCore, id: string): ContextMenuEntry[] {
 
   return [
     ...like,
+    ...(view.dataset && !view.dataset.selectedVersion
+      ? [
+          {
+            label: 'Use Corrections',
+            onSelect: () => {
+              chooseCorrections(core, ids);
+            },
+          },
+        ]
+      : []),
     { label: 'Add Frames', icon: <PlusIcon />, onSelect: () => core.frameLabels.start(ids) },
     { label: 'Make Dataset', icon: <SpreadsheetIcon />, onSelect: () => datasets.makeFromView(ids) },
     ...addTo,
@@ -115,7 +127,7 @@ function datasetActions(core: WorkspaceCore, dataset: Dataset): DatasetActions {
     canPublish: cases.dataset.canPublish,
     canTrain: hasImages
       ? datasets.vision.canTrain
-      : fromTries.canTrain && enoughToTrain(cases.dataset.records.of(dataset)),
+      : fromTries.canTrain && enoughToTrain(dataset, cases.dataset.records.of(dataset)),
     trainBusy: hasImages ? datasets.vision.busy : fromTries.busy,
     training: hasImages ? vision!.running : fromTries.training === dataset.id,
     result: hasImages ? null : fromTries.resultFor(dataset),

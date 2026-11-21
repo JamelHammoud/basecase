@@ -54,6 +54,7 @@ export interface SkillOrigin {
   method: Method | 'motor-kit';
   cost: { wallS: number; steps: number };
   training?: SeedSelection;
+  teaching?: import('./triesTeaching').TeachingProvenance;
 }
 
 export interface Skill {

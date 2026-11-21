@@ -10,6 +10,7 @@ import { sampleSegments } from './snapshotRecording';
 import { snapshotWorker } from './snapshotWorker';
 import { assignSources, sourceRun, type SourceAssignment } from './snapshotSplits';
 import type { DatasetSample, DatasetSnapshot, FrozenTrySample } from './snapshotTypes';
+import type { FrozenContent } from './snapshotTraining';
 
 export interface SnapshotPorts {
   manifests: typeof loadManifests;
@@ -110,13 +111,36 @@ async function freezeRecording(stored: StoredTry, model: SimModel | undefined, p
   return { hash: await ports.save(bytes), ...recording };
 }
 
+function selectionExclusions(input: {
+  stored: StoredTry;
+  modelHash: string;
+  selected: DatasetSample;
+  content: Awaited<ReturnType<typeof freezeRecording>>;
+  from: number;
+  to: number;
+}) {
+  const { stored, modelHash, selected, content, from, to } = input;
+  const correction = selected.target === 'correction';
+
+  if (correction && !content.corrections.some((window) => window.from < to && window.to > from))
+    throw new Error('Select a window with operator actions.');
+
+  const excluded = sampleExclusions(stored, modelHash).filter((reason) => !correction || reason !== 'verdict:failed');
+
+  return [
+    ...excluded,
+    ...(!content.exportable || (!correction && to - from <= 1) ? ['recording:incompatible'] : []),
+    ...(content.teaching && !correction ? ['correction:select'] : []),
+  ];
+}
+
 async function resolveTries(input: ResolveInput, ports: SnapshotPorts, modelHash: string) {
   const selections = selectionsOf(input.dataset);
   const manifests = await manifestsFor(
     selections.map((sample) => sample.tryId),
     ports.manifests,
   );
-  const loaded = new Map<string, { hash: string; frames: number; exportable: boolean }>();
+  const loaded = new Map<string, Awaited<ReturnType<typeof freezeRecording>>>();
   const samples: FrozenTrySample[] = [];
   const assignments: SourceAssignment[] = [];
 
@@ -135,18 +159,19 @@ async function resolveTries(input: ResolveInput, ports: SnapshotPorts, modelHash
       throw new Error('The selected dataset frames are missing.');
 
     const { source, explicit } = sourceOf(stored, manifests);
-    const exportable = content.exportable && to - from > 1;
+    const correction = selected.target === 'correction';
 
-    assignments.push({ source, content: content.hash, explicit });
+    assignments.push({ source, content: content.hash, explicit, ...(correction ? { preferTrain: true } : {}) });
     samples.push({
       tryId: stored.id,
+      ...(correction ? { target: 'correction' as const } : {}),
       from,
       to,
       recording: content.hash,
       source,
       split: 'train',
       stored: structuredClone(stored),
-      excluded: [...sampleExclusions(stored, modelHash), ...(!exportable ? ['recording:incompatible'] : [])],
+      excluded: selectionExclusions({ stored, modelHash, selected, content, from, to }),
     });
   }
 
@@ -187,6 +212,20 @@ interface RestoredSample {
   sample: FrozenTrySample;
   recording: Recording;
   segments: ReturnType<typeof sampleSegments>;
+}
+
+export async function frozenTrainingContent(snapshot: DatasetSnapshot, load = loadDatasetContent) {
+  const contents: FrozenContent[] = [];
+
+  for (const hash of recordingGroups(snapshot.samples).keys()) {
+    const bytes = await load(hash);
+
+    if (!bytes) throw new Error('The dataset is missing frozen recording content.');
+
+    contents.push({ hash, bytes });
+  }
+
+  return contents;
 }
 
 function recordingGroups(samples: FrozenTrySample[]) {

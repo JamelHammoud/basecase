@@ -23,6 +23,7 @@ import {
 import { environmentHash, policyObservation, type Environment } from './environment';
 import type { ForgeJob } from './forgeRunner';
 import { hashOf } from './hash';
+import { teachingJob, type TriesOptions } from './triesTeaching';
 
 export const TRIES_TO_TRAIN = 5;
 export const TRIES_RUNS = ARENA.trials;
@@ -47,7 +48,14 @@ function trainingRecordings(recordings: Recording[], splits?: TriesSplit[]): Rec
   return recordings.filter((_, index) => splits[index] === 'train');
 }
 
-export function triesJob(model: SimModel, kase: Case, recordings: Recording[], splits?: TriesSplit[]): ForgeJob {
+export function triesJob(
+  model: SimModel,
+  kase: Case,
+  recordings: Recording[],
+  selection?: TriesSplit[] | TriesOptions,
+): ForgeJob {
+  const options = Array.isArray(selection) ? { splits: selection } : selection;
+  const splits = options?.splits;
   const train = trainingRecordings(recordings, splits);
   const command = caseCommand(kase);
   const base = trainingJob(
@@ -56,6 +64,14 @@ export function triesJob(model: SimModel, kase: Case, recordings: Recording[], s
     { task: 'stand', minutes: TRIES_MINUTES, command },
     kase.name,
   );
+
+  if (options?.samples?.some((sample) => sample.target === 'correction'))
+    return {
+      name: kase.name,
+      xml: model.xml,
+      job: { ...teachingJob({ model, recordings, options, base }), stateNoise: TRIES_STATE_NOISE },
+    };
+
   const actionScale = demoActionScale(train, model, base.defaultPose);
   const spec = { defaultPose: base.defaultPose, actionScale, command };
   const episodes = recordings.map((r, index) => ({
@@ -151,5 +167,12 @@ export function triesSkill(input: TriesSkillInput): TriesSkill | null {
   const controller = { kind: 'policy' as const, policy, robot: environment.robot };
   const draft = skillFromTraining({ name: kase.name, start: null, current, environment, controller });
 
-  return { skill: { ...withEvidence(draft, evidence, environment), origin: input.origin }, environment };
+  return {
+    skill: {
+      ...withEvidence(draft, evidence, environment),
+      warmStartFrom: input.origin.teaching?.sourceSkill ?? draft.warmStartFrom,
+      origin: input.origin,
+    },
+    environment,
+  };
 }

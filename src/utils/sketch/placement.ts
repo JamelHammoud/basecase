@@ -142,7 +142,9 @@ export function sketchSolid(
   };
 }
 
-export function partPlane(part: Pick<ScenePart, 'position' | 'rotation' | 'dimensions' | 'sketch'>): SketchPlane {
+export function partPlane(
+  part: Pick<ScenePart, 'position' | 'rotation' | 'dimensions' | 'sketch' | 'customNodes'>,
+): SketchPlane {
   const record = part.sketch!;
   const q = new THREE.Quaternion().setFromEuler(
     new THREE.Euler(...(part.rotation.map((d) => THREE.MathUtils.degToRad(d)) as Vec3), 'XYZ'),
@@ -152,7 +154,9 @@ export function partPlane(part: Pick<ScenePart, 'position' | 'rotation' | 'dimen
   const v = new THREE.Vector3(0, 0, -1).applyQuaternion(q);
   const half = part.dimensions.height / 2;
   const lift = record.mode === 'extrude' && record.depth < 0 ? -half : half;
+  const offset = record.recovery ? (part.customNodes?.[0]?.position ?? [0, 0, 0]) : [0, 0, 0];
   const origin = v3(part.position)
+    .add(v3(offset as Vec3).applyQuaternion(q))
     .addScaledVector(n, -lift)
     .addScaledVector(u, -record.anchor[0])
     .addScaledVector(v, -record.anchor[1]);
@@ -161,13 +165,23 @@ export function partPlane(part: Pick<ScenePart, 'position' | 'rotation' | 'dimen
 }
 
 export function partFromSolid<T extends ScenePart>(part: T, solid: SketchSolid): T {
+  const recovery = part.sketch?.recovery;
+  const rotation = new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(...(solid.rotation.map(THREE.MathUtils.degToRad) as Vec3), 'XYZ'),
+  );
+  const offset = recovery
+    ? tidyVec(v3(solid.position).sub(v3(part.position)).applyQuaternion(rotation.invert()))
+    : solid.node.position;
+
   return {
     ...part,
-    position: solid.position,
+    position: recovery ? part.position : solid.position,
     rotation: solid.rotation,
     dimensions: { ...part.dimensions, ...solid.dimensions },
     role: solid.role,
-    customNodes: [{ ...solid.node, id: part.customNodes?.[0]?.id ?? solid.node.id, color: part.color }],
-    sketch: solid.record,
+    customNodes: [
+      { ...solid.node, position: offset, id: part.customNodes?.[0]?.id ?? solid.node.id, color: part.color },
+    ],
+    sketch: { ...solid.record, recovery },
   };
 }

@@ -40,13 +40,17 @@ export function plateStatusLookup(records: PrintRecord[] = []): PlateStatusLooku
   const ordered = latest(records);
   const printed = keysFrom(ordered);
   const hashes = new Map<string, { record: PrintRecord; rank: number }>();
+  const legacyHashes = new Map<string, { record: PrintRecord; rank: number }>();
   const replacements = new Map<string, { record: PrintRecord; rank: number }>();
 
   ordered.forEach((record, rank) => {
     const entry = { record, rank };
     const { hash } = record;
 
-    if (!hashes.has(hash)) hashes.set(hash, entry);
+    const target = record.copies ? hashes : legacyHashes;
+    const key = record.copies ? JSON.stringify([hash, record.plate]) : hash;
+
+    if (!target.has(key)) target.set(key, entry);
 
     if (record.state !== 'reprint') return;
 
@@ -56,7 +60,7 @@ export function plateStatusLookup(records: PrintRecord[] = []): PlateStatusLooku
   });
 
   return (plate) => {
-    let found = hashes.get(plate.hash);
+    let found = hashes.get(JSON.stringify([plate.hash, plate.number])) ?? legacyHashes.get(plate.hash);
 
     for (const item of plate.items) {
       const replacement = replacements.get(item.id);
@@ -107,17 +111,44 @@ export function readySteps(steps: string[][], { parts, records, keyOf }: Printed
 
 export function printRecordFor(
   plate: Plate,
-  ctx: { parts: ScenePart[]; keyOf: (p: ScenePart) => string; printer: string; now: Date },
+  ctx: {
+    parts: ScenePart[];
+    keyOf: (p: ScenePart) => string;
+    printer: string;
+    now: Date;
+    sourceKeys?: Record<string, string>;
+    labels?: string;
+    sceneId?: string;
+    origin?: PrintRecord['origin'];
+  },
 ): PrintRecord {
   const byId = new Map(ctx.parts.map((p) => [p.id, p]));
   const ids = [...new Set(plate.items.map((it) => it.id))];
 
   return {
-    id: `print-${ctx.now.getTime().toString(36)}-${plate.number}`,
+    id: `print-${crypto.randomUUID()}`,
     plate: plate.number,
     material: plate.material,
     hash: plate.hash,
+    sourceKeys: ctx.sourceKeys,
+    sceneId: ctx.sceneId,
+    origin: ctx.origin,
+    revision: JSON.stringify([plate.hash, ctx.labels ?? '']),
     parts: ids.flatMap((id) => (byId.has(id) ? [{ id, key: ctx.keyOf(byId.get(id)!) }] : [])),
+    copies: plate.items.flatMap((item) => {
+      const part = byId.get(item.id);
+
+      return part
+        ? [
+            {
+              id: crypto.randomUUID(),
+              partId: item.id,
+              index: item.copy,
+              key: ctx.sourceKeys?.[part.id] ?? ctx.keyOf(part),
+            },
+          ]
+        : [];
+    }),
     printer: ctx.printer,
     sentAt: ctx.now.toISOString(),
     state: 'sent',
@@ -145,6 +176,8 @@ export function markForReprint(records: PrintRecord[], id: string, now = new Dat
     parts: original.parts.filter((p) => p.id === id),
     sentAt: now.toISOString(),
     state: 'reprint',
+    copies: undefined,
+    completion: undefined,
   });
 }
 

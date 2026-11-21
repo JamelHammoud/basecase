@@ -1,6 +1,6 @@
 import { listPurchases, savePurchase } from './webPurchases';
 import { boardImportMessage } from '../../../wiring/boardRoutingFindings';
-import type { AcpStatusInfo, CustomModelDefinition, StoredPurchase } from '../../../types/robotics';
+import type { AcpStatusInfo, CustomModelDefinition } from '../../../types/robotics';
 import type { TrainerStatus } from '../types';
 import { idbAll, idbDelete, idbGet, idbPut } from './idb';
 import { trainedPolicy, trainedSkill } from './webTrained';
@@ -95,7 +95,7 @@ const ROUTES: Record<string, Route> = {
   'save-model': (b) => saveModel(b as unknown as CustomModelDefinition),
   'delete-model': (b) => deleteModel(String(b.modelId)),
   purchases: listPurchases,
-  'purchase-save': (b) => savePurchase(b as { key: string; record: StoredPurchase | null }),
+  'purchase-save': (b) => savePurchase(b as unknown as import('../../../kit/allocationTypes').PurchaseSave),
   scenes: listScenes,
   scene: (_, params) => getScene(params.get('id') ?? ''),
   'save-scene': (b) => saveScene(b),

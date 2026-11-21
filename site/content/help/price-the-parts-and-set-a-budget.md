@@ -58,11 +58,13 @@ The bar under the total shows how much of your budget is left, or how far over b
 
 - A price you saved shows in white. It counts in every scene that uses the part.
 - A price marked ≈ is the maker's or a distributor's list price. While any line uses a list price, the total shows ≈ too.
-- A line's price and the total leave out parts you [already own](/help/count-the-parts-you-already-own). Filament estimates include every copy set in Print mode.
+- A line's price and the purchasing total leave out unallocated parts you [already own](/help/count-the-parts-you-already-own). Filament estimates include every copy set in Print mode.
 - A price saved more than 60 days ago turns amber. Hover over it to see the date, then save the price you see now.
 - The budget doesn't count **Equipment**, such as tools.
 - A generated carrier has no priced PCB fabrication line. Its fabrication cost is excluded from the total.
 - **Printed parts** quoted by Slant 3D count at the quoted price, and their lines have no **Add Price**. For the steps, see [Price printed parts from a print service](/help/price-printed-parts-from-a-print-service).
+
+Budget uses total owned stock, so [reserving parts for a build](/help/allocate-parts-to-robot-builds) doesn’t change its Checks verdict.
 
 To keep the store page with a price, open **Listing** in the same sheet and paste the link into **Listing link**. Changing this link clears the previous identity fields. Enter the new listing’s manufacturer and supplier facts before saving if you need them in the spreadsheet. [Export remaining purchases](/help/export-remaining-purchases) shows the fields and their ordering units.
 

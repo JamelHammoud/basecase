@@ -132,19 +132,24 @@ export function createBuildStore(storage: BuildStorage, limits = { maxBytes: KIT
 
     return { record, kit };
   };
-  const create = async (name: string, content: PreparedFrozenKit, signal?: AbortSignal) => {
+  const createMany = async (names: string[], content: PreparedFrozenKit, signal?: AbortSignal) => {
+    const requested = [...names];
+
     signal?.throwIfAborted();
 
+    if (requested.length < 1 || requested.length > 20) throw new Error('Choose 1 to 20 builds.');
+
     const kit = await readContent(content);
-    const record: BuildRecord = {
+    const createdAt = new Date().toISOString();
+    const records: BuildRecord[] = requested.map((name) => ({
       id: crypto.randomUUID(),
       name: name.trim().slice(0, 120) || kit.manifest.design.name,
       kit: content.hash,
-      createdAt: new Date().toISOString(),
+      createdAt,
       count: kit.manifest.guide.steps.length,
       index: 0,
       completed: {},
-    };
+    }));
 
     signal?.throwIfAborted();
 
@@ -161,16 +166,16 @@ export function createBuildStore(storage: BuildStorage, limits = { maxBytes: KIT
         const assets = { ...index.assets, ...Object.fromEntries(hashes.map((hash) => [hash, incoming[hash].bytes])) };
         const bytes = Object.values(assets).reduce((sum, size) => sum + size, 0);
 
-        if (index.records.length >= limits.maxBuilds || bytes > limits.maxBytes)
+        if (index.records.length + records.length > limits.maxBuilds || bytes > limits.maxBytes)
           throw new Error('Build storage is full. Delete a build to make room.');
 
         const puts: Record<string, unknown> = {
           index: {
-            records: [...index.records, summaryOf(record)],
+            records: [...index.records, ...records.map(summaryOf)],
             assets,
             kits: { ...index.kits, [root.hash]: Object.keys(content.assets) },
           },
-          [recordKey(record.id)]: record,
+          ...Object.fromEntries(records.map((record) => [recordKey(record.id), record])),
         };
 
         hashes.forEach((hash, i) => {
@@ -181,11 +186,13 @@ export function createBuildStore(storage: BuildStorage, limits = { maxBytes: KIT
           if (!saved) puts[assetKey(hash)] = incoming[hash];
         });
 
-        return { puts, result: record };
+        return { puts, result: records };
       },
       signal,
     );
   };
+  const create = async (name: string, content: PreparedFrozenKit, signal?: AbortSignal) =>
+    (await createMany([name], content, signal))[0];
 
   const update = (id: string, change: (record: BuildRecord) => BuildRecord) =>
     storage.update([recordKey(id)], ([saved]) => {
@@ -227,7 +234,7 @@ export function createBuildStore(storage: BuildStorage, limits = { maxBytes: KIT
       };
     });
 
-  return { list, open, create, navigate, complete, remove };
+  return { list, open, create, createMany, navigate, complete, remove };
 }
 
 function checkedStep(record: BuildRecord, step: number) {

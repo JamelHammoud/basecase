@@ -22,6 +22,7 @@ covers:
   - electron/cad-agent-prompt.mjs
   - electron/cad-mcp-server.mjs
   - electron/backend/sessionParams.mjs
+  - electron/backend/acpClientHandler.mjs
   - src/workspace/applyAgentOps.ts
 hub_sort: order
 ---

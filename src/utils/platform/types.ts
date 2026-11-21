@@ -20,7 +20,6 @@ import {
   AgentConversationSummary,
   CustomModelDefinition,
   Purchases,
-  StoredPurchase,
   ReferenceImageRecord,
   SavedSceneRecord,
   SavedSceneSummary,
@@ -222,7 +221,7 @@ declare global {
       exportStep: (job: StepJob) => Promise<ExportedStep>;
       tuneCadPart: (payload: CadTuneRequest) => Promise<CadTuneAnswer>;
       renderCad: (payload: { language: CadLanguage; code: string; expect?: CadExpect }) => Promise<Uint8Array>;
-      savePurchase: (payload: { key: string; record: StoredPurchase | null }) => Promise<Purchases>;
+      savePurchase: (payload: import('../../kit/allocationTypes').PurchaseSave) => Promise<Purchases>;
       getChat: (id: string) => Promise<AgentConversation | null>;
       saveChat: (conv: AgentConversation) => Promise<AgentConversationSummary[]>;
       deleteChat: (id: string) => Promise<AgentConversationSummary[]>;

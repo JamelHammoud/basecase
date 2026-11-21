@@ -1,4 +1,6 @@
-use super::{auth_mac, equal_secret, hmac, private_address, random_hex, session_mac, socket_line, Pairing};
+use super::{
+    auth_mac, equal_secret, hmac, private_address, random_hex, session_mac, socket_line, Pairing, PairingAttempts,
+};
 use crate::intent::IntentWriter;
 use crate::ladder::Mode;
 use crate::protocol::{event_line, parse_line, Routed};
@@ -13,7 +15,9 @@ use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
+
+const PAIRING_CODE_MESSAGE: &str = "Check the six-digit code shown on the robot computer.";
 
 pub struct NetworkOptions {
     pub address: SocketAddr,
@@ -79,7 +83,7 @@ pub fn serve<C: Controller + Send + 'static>(
         "{}",
         json!({"event":"listening","address":address.to_string(),"name":options.name,"family":options.spec["family"]})
     );
-    let mut attempts = Vec::new();
+    let mut attempts = PairingAttempts::default();
 
     for connection in listener.incoming() {
         let Ok(stream) = connection else { continue };
@@ -169,7 +173,7 @@ struct Session<'a> {
     sink: &'a Sink,
     options: &'a NetworkOptions,
     hello: &'a str,
-    attempts: &'a mut Vec<Instant>,
+    attempts: &'a mut PairingAttempts,
     clock: &'a dyn Clock,
 }
 
@@ -190,6 +194,8 @@ impl Session<'_> {
         self.stream
             .set_write_timeout(Some(Duration::from_millis(100)))
             .map_err(io_error)?;
+        self.pairing.refresh(&self.options.artefacts, SystemTime::now())?;
+
         let nonce = random_hex()?;
         let key = self.pairing.key_bytes()?;
         let exchange = self.pairing.code.as_deref().map(super::enrollment::Exchange::server);
@@ -271,28 +277,23 @@ impl Session<'_> {
     }
 
     fn pair(&mut self, auth: &Value, nonce: &str, exchange: super::enrollment::Exchange) -> Result<(), String> {
-        self.attempts
-            .retain(|attempt| attempt.elapsed() < Duration::from_secs(60));
+        let peer = self.stream.peer_addr().map_err(io_error)?.ip();
 
-        if self.attempts.len() >= 5 {
+        if !self.attempts.allow(peer, Instant::now()) {
             return Err("Wait one minute before trying another pairing code.".into());
         }
 
-        self.attempts.push(Instant::now());
-
-        let client_message = auth["message"]
-            .as_str()
-            .ok_or("The pairing request needs an exchange message.")?;
-        let transcript = super::enrollment::transcript(nonce, &exchange.message, client_message);
-        let key = exchange.finish(client_message, nonce)?;
-        let proof = auth["proof"].as_str().ok_or("The pairing request needs a proof.")?;
-
-        if !equal_secret(proof, &hmac(&key, &transcript)) {
-            return Err("Check the six-digit code shown on the robot computer.".into());
+        if self.pairing.refresh(&self.options.artefacts, SystemTime::now())? {
+            return Err(PAIRING_CODE_MESSAGE.into());
         }
 
-        let encrypted = super::enrollment::encrypt(&key, &transcript, &self.pairing.key_bytes()?)?;
-        write_line(&mut self.stream, &encrypted.to_string())
+        let result = pairing_response(auth, nonce, exchange, self.pairing);
+
+        if result.is_err() {
+            self.pairing.failed(&self.options.artefacts)?;
+        }
+
+        write_line(&mut self.stream, &result?.to_string())
     }
 
     fn commands(&mut self, reader: &mut BufReader<TcpStream>, key: &[u8; 32], nonce: &str) -> Result<(), String> {
@@ -429,4 +430,24 @@ fn advertise(
     daemon.register(service).map_err(|error| error.to_string())?;
 
     Ok(daemon)
+}
+
+fn pairing_response(
+    auth: &Value,
+    nonce: &str,
+    exchange: super::enrollment::Exchange,
+    pairing: &Pairing,
+) -> Result<Value, String> {
+    let client_message = auth["message"]
+        .as_str()
+        .ok_or("The pairing request needs an exchange message.")?;
+    let transcript = super::enrollment::transcript(nonce, &exchange.message, client_message);
+    let key = exchange.finish(client_message, nonce)?;
+    let proof = auth["proof"].as_str().ok_or("The pairing request needs a proof.")?;
+
+    if !equal_secret(proof, &hmac(&key, &transcript)) {
+        return Err(PAIRING_CODE_MESSAGE.into());
+    }
+
+    super::enrollment::encrypt(&key, &transcript, &pairing.key_bytes()?)
 }

@@ -44,7 +44,7 @@ To open **Supplier Offers**, you can press [[⌘K]] and choose **Supplier Offers
 
 You can import up to 500 rows and 1 MiB. Manufacturer and supplier part numbers keep their text format, including leading zeros. Start by matching the exact manufacturer and manufacturer part number in the saved listing. If you can't identify an item, leave its identity unresolved.
 
-In **Quantity breaks**, enter order quantities and prices, such as `1:12|10:10`. In **Available orders**, enter the number of ordering units rather than individual pieces. For three boards sold in packs of two, you buy two packs. Subtract owned stock from the demand before rounding.
+In **Quantity breaks**, enter order quantities and prices, such as `1:12|10:10`. In **Available orders**, enter the number of ordering units rather than individual pieces. For three boards sold in packs of two, you buy two packs. Subtract unallocated owned stock from the demand before rounding.
 
 Use an ISO timestamp with a timezone for **Observed at** and **Expires at**, such as `2026-11-20T12:00:00Z`. Use `YYYY-MM-DD` for arrival dates. Leave missing dates and availability blank. In **Destination**, enter an exact match for your plan's destination. You can enter a quote number or URL in **Source reference**.
 

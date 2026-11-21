@@ -51,8 +51,8 @@ To put the old count back, click **Undo** in the toast. To clear a count, type 0
 - Each cable product and length has its own count. Owning a 300 mm cable doesn’t reduce the number of 900 mm cables to buy.
 - Filament is counted in grams, including every copy set in Print mode.
 - Printed parts from a print service have no **On hand**. Their quoted price covers every copy.
-- A count belongs to the part, so every scene that uses the part takes your count off what's left to buy.
-- Completing steps in a [named build](/help/resume-a-robot-build) leaves your on-hand count unchanged. Update the count yourself after a build.
+- A count belongs to the part. Every scene subtracts the quantity available after build reservations from what's left to buy.
+- Completing steps in a [named build](/help/resume-a-robot-build) leaves your on-hand count and allocations unchanged. Explicitly return materials before making them available to another build.
 - The Budget check and **Buy All** leave out the parts you own.
 
 Connectors added by a [board placement](/help/fit-an-electronics-board) use the same catalog product’s on-hand count as connectors placed separately. A [robot kit](/help/export-a-robot-kit) still packs every connector the assembly needs, including the ones you own.
@@ -66,3 +66,5 @@ You can also paste an order confirmation or a parts list into the agent's compos
 Saved [supplier offers](/help/compare-supplier-offers) use the same remaining quantities. Changing an on-hand count recalculates their pack counts without consuming stock.
 
 Next, [buy the parts for a robot](/help/buy-the-parts-for-a-robot).
+
+[Allocate parts to robot builds](/help/allocate-parts-to-robot-builds) explains reservations and shortages after stock corrections. **On hand** still records the total owned quantity, including reserved components.

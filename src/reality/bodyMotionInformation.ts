@@ -98,3 +98,25 @@ export function bodyMotionInformation(input: MotionInformationInput): BodyMotion
     directions,
   };
 }
+
+export function bodyInformationContributions(input: MotionInformationInput, score = bodyMotionInformation(input)) {
+  const { original, selected } = input;
+  const targets = original.filter(
+    (direction) =>
+      !direction.distinguishable &&
+      selected.some((index) => Math.abs(direction.weights[index]) >= NOISE.directionLoading),
+  );
+
+  const usefulResponse = (basis: BodyAnalysisDirection[]) =>
+    basis.reduce((sum, direction) => {
+      const loading = targets.reduce((total, target) => {
+        const overlap = target.weights.reduce((dot, weight, index) => dot + weight * direction.weights[index], 0);
+
+        return total + overlap * overlap;
+      }, 0);
+
+      return sum + Math.min(direction.response, NOISE.absoluteResponse) * loading;
+    }, 0);
+
+  return { score, contribution: Math.max(0, usefulResponse(score.directions) - usefulResponse(original)) };
+}

@@ -35,6 +35,7 @@ export interface BodyReplayInput {
   budget?: BodyReplayBudget;
   engine?: SimEngine;
   onFrame?: () => void;
+  onStart?: (engine: SimEngine) => void;
 }
 
 export function replayBody(input: BodyReplayInput, fit: BodyFit): number[][] {
@@ -65,6 +66,7 @@ function replayRun(engine: SimEngine, input: BodyReplayInput): number[][] {
     if (joint && position !== null) initial.values[id] = position * (joint.type === 'revolute' ? 180 / Math.PI : 1000);
   });
   engine.reset(initial);
+  input.onStart?.(engine);
 
   return replayFrames(engine, { ...input, indices });
 }

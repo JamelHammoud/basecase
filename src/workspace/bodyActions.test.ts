@@ -67,6 +67,9 @@ describe('body fitting actions', () => {
     } as unknown as WorkspaceCore;
 
     vi.mocked(bodyClient).mockReturnValue({
+      prepareSequence: vi.fn(),
+      advanceSequence: vi.fn(),
+      validateSequence: vi.fn(),
       readRecording: vi.fn(),
       analyze: vi.fn(),
       recommend: vi.fn(),
@@ -134,6 +137,9 @@ describe('body fitting actions', () => {
     } as unknown as WorkspaceCore;
 
     vi.mocked(bodyClient).mockReturnValue({
+      prepareSequence: vi.fn(),
+      advanceSequence: vi.fn(),
+      validateSequence: vi.fn(),
       readRecording: vi.fn(),
       analyze: vi.fn(),
       recommend: vi.fn(),

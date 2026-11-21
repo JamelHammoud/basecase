@@ -12,7 +12,12 @@ const worker = vi.hoisted(() => ({ fit: vi.fn(), dispose: vi.fn() }));
 
 vi.mock('../robot/robotStore', () => ({ selectedUnit: () => 'robot', robotSceneJoints: () => ['shoulder'] }));
 vi.mock('../reality/bodyClient', () => ({ bodyClient: () => worker }));
-vi.mock('../reality/bodyEvidence', () => ({ readBodyEvidence: vi.fn(), bodySourceKey: async () => 'source' }));
+vi.mock('../reality/bodyEvidence', () => ({
+  readBodyEvidence: vi.fn(),
+  bodySourceKey: async () => 'source',
+  rememberBodyEvidence: vi.fn(),
+  withBodyEvidence: vi.fn(),
+}));
 vi.mock('../reality/bodyRecordingIdentity', () => ({ bodyRecordingUnchanged: vi.fn() }));
 vi.mock('../utils/platformBridge', () => ({ platformBridge: { robotReadRun: vi.fn() } }));
 

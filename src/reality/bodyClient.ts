@@ -7,9 +7,11 @@ import type { measuredBodyAnalysis, BodyAnalysisMetrics } from './bodyAnalysisMe
 import type { BodyAnalysisRequest } from './bodyAnalysisTypes';
 import type { BodyMotionRequest } from './bodyMotionTypes';
 import type { measuredBodyMotion } from './bodyMotionMetrics';
+import type { BodySequenceRequest, BodySequence } from './bodySequenceTypes';
 
 export interface BodyFitRequest {
   validation?: RobotRun;
+  training?: RobotRun[];
   model: SimModel;
   run: RobotRun;
   robot: string;
@@ -20,6 +22,15 @@ type BodyHandlers = {
   analyze: (request: BodyAnalysisRequest) => Promise<{ result: Awaited<ReturnType<typeof measuredBodyAnalysis>> }>;
   fit: (request: BodyFitRequest) => Promise<{ result: BodyCalibration }>;
   recommend: (request: BodyMotionRequest) => Promise<{ result: Awaited<ReturnType<typeof measuredBodyMotion>> }>;
+  prepareSequence: (request: BodySequenceRequest) => Promise<{ result: BodySequence }>;
+  advanceSequence: (request: {
+    request: BodyAnalysisRequest;
+    sequence: BodySequence;
+  }) => Promise<{ result: BodySequence }>;
+  validateSequence: (request: {
+    request: BodyAnalysisRequest;
+    sequence: BodySequence;
+  }) => Promise<{ result: BodySequence }>;
 };
 
 let latest: BodyAnalysisMetrics | null = null;
@@ -57,6 +68,21 @@ export function bodyClient() {
 
           return { result: await measuredBodyMotion(request) };
         },
+        prepareSequence: async (request) => {
+          const { prepareBodySequence } = await import('./bodySequence');
+
+          return { result: await prepareBodySequence(request) };
+        },
+        advanceSequence: async ({ request, sequence }) => {
+          const { advanceBodySequence } = await import('./bodySequence');
+
+          return { result: await advanceBodySequence(request, sequence) };
+        },
+        validateSequence: async (request) => {
+          const { validateBodySequence } = await import('./bodySequenceValidation');
+
+          return { result: await validateBodySequence(request) };
+        },
       };
     },
   );
@@ -71,6 +97,11 @@ export function bodyClient() {
   };
 
   return {
+    prepareSequence: (request: BodySequenceRequest) => client.call('prepareSequence', request),
+    advanceSequence: (request: { request: BodyAnalysisRequest; sequence: BodySequence }) =>
+      client.call('advanceSequence', request),
+    validateSequence: (request: { request: BodyAnalysisRequest; sequence: BodySequence }) =>
+      client.call('validateSequence', request),
     readRecording: (request: BodyRecordingRequest) => client.call('readRecording', request),
     analyze: async (request: BodyAnalysisRequest) => {
       const started = performance.now();

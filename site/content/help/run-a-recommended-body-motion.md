@@ -62,3 +62,5 @@ To reopen its analysis, choose that recording in **Analyze Try**. You can read i
 **Fit Body** uses that selected recording. It stays unavailable for unsupported dynamics, even if the predicted motion had a higher information score.
 
 The motion bounds are simulation declarations. They aren’t hardware safety limits, and you can’t drive real devices with this workflow.
+
+For MuJoCo body dynamics, [run a simulated body sequence](/help/run-a-simulated-body-sequence) from retained body evidence. It keeps its observations separate from servo-emulator recordings.

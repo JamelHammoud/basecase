@@ -1,28 +1,16 @@
 import loadMujoco from '@mujoco/mujoco';
 import { expect, it } from 'vitest';
-import { bodyAnalysisScenario } from './bodyAnalysisMatrix.fixtures';
-import { parkedBodyRun } from './bodyMotion.fixtures';
+import { parkedBodyRun, colocatedBodyScenario } from './bodyMotion.fixtures';
 import { analyzeBody } from './bodyAnalysis';
 import { recommendBodyMotion } from './bodyMotion';
 import { bodyMotionPlans } from './bodyMotionPlans';
 import { replayBody } from './bodyReplay';
-import { sha256 } from '../cases/tries';
 
 it('refuses every library motion for exactly co-located mass and payload explanations', async () => {
   const mj = await loadMujoco();
-  const { request } = await bodyAnalysisScenario(mj, 'coupled wrist');
-  const terminal = request.model.bodies.find((body) => body.joint === 'wrist')!;
-  const at = request.model.bodyPayloads![terminal.name];
-  const bodyStart = request.model.xml.indexOf(`<body name="${terminal.name}"`);
-  const geomStart = request.model.xml.indexOf('<geom ', bodyStart);
-  const geomEnd = request.model.xml.indexOf('/>', geomStart) + 2;
+  const { request, terminal, bodyStart } = await colocatedBodyScenario(mj);
 
   expect(bodyStart).toBeGreaterThan(0);
-  request.model.xml =
-    request.model.xml.slice(0, geomStart) +
-    `<geom name="colocated" type="sphere" size="0.001" pos="${at.join(' ')}" mass="0.2" contype="0" conaffinity="0"/>` +
-    request.model.xml.slice(geomEnd);
-  request.source.modelHash = await sha256(request.model.xml);
   request.run = parkedBodyRun(request.model);
 
   const result = await analyzeBody(request, { mj });

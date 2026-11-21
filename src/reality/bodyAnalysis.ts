@@ -10,12 +10,17 @@ import {
 } from './bodyAnalysisTypes';
 import { emptyBodyFit } from './bodyParameters';
 import { physicalParameters, changedFit } from './bodyAnalysisParameters';
-import { replayBody, BodyReplayStopped } from './bodyReplay';
+import { replayBody, BodyReplayStopped, type BodyReplayBudget } from './bodyReplay';
 import { bodySensitivity, normalizedBodyResponse } from './bodySensitivity';
 
 interface AnalysisOptions {
   mj?: MainModule;
   cancelled?: () => boolean;
+  budget?: BodyReplayBudget;
+}
+
+function analysisBudget(options: AnalysisOptions): BodyReplayBudget {
+  return options.budget ?? { remainingSteps: BODY_ANALYSIS_LIMITS.stepBudget, cancelled: options.cancelled };
 }
 
 function residual(request: BodyAnalysisRequest, predicted: number[][]): Float64Array {
@@ -34,7 +39,7 @@ export async function analyzeBody(
 ): Promise<BodyAnalysisOutcome> {
   let request = original;
   let replays = 0;
-  const budget = { remainingSteps: BODY_ANALYSIS_LIMITS.stepBudget, cancelled: options.cancelled };
+  const budget = analysisBudget(options);
   const refused = (reason: Extract<BodyAnalysisOutcome, { kind: 'refused' }>['reason']): BodyAnalysisOutcome => ({
     kind: 'refused',
     reason,
@@ -43,7 +48,7 @@ export async function analyzeBody(
 
   if (options.cancelled?.()) return refused('cancelled');
 
-  if (!supportedObservations(request)) return refused('backend');
+  if (!bodyObservationsSupported(request)) return refused('backend');
 
   const problem = await bodyAnalysisProblem(request).catch(() => 'unsupported' as const);
 
@@ -127,6 +132,6 @@ export async function analyzeBody(
   }
 }
 
-function supportedObservations(request: BodyAnalysisRequest): boolean {
+export function bodyObservationsSupported(request: BodyAnalysisRequest): boolean {
   return request.observations !== 'servo-independent-1' && request.run.observations !== 'servo-independent-1';
 }

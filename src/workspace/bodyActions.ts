@@ -8,6 +8,7 @@ import type { ProjectSettings } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import { errorMessage } from '../utils/errorMessage';
 import { bodySourceKey, readBodyEvidence, type BodyEvidenceRef } from '../reality/bodyEvidence';
+import { boundBodyFit, rememberSequenceFit, sequenceSourceCurrent } from './bodySequenceFitAction';
 import { bodyRecordingUnchanged } from '../reality/bodyRecordingIdentity';
 import { BODY_EMULATOR_LIMIT } from '../reality/bodyExperimentTypes';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -128,6 +129,8 @@ async function fitBodyAttempt(core: WorkspaceCore, wanted?: string, reference?: 
     if (saved?.request.observations === 'servo-independent-1' || run.observations === 'servo-independent-1')
       return { text: BODY_EMULATOR_LIMIT, recorded: false };
 
+    if (!(await sequenceSourceCurrent(saved))) return { text: 'The source changed.', recorded: false };
+
     const snapshot = () =>
       JSON.stringify({
         parts: core.docs.partsRef.current,
@@ -136,6 +139,7 @@ async function fitBodyAttempt(core: WorkspaceCore, wanted?: string, reference?: 
         body: core.docs.projectRef.current.bodyCalibrations?.[robot],
       });
     const before = snapshot();
+    const parts = core.docs.partsRef.current;
     const buildModel = () =>
       core.simTraining.sim.buildModel({
         withoutBody: true,
@@ -144,11 +148,28 @@ async function fitBodyAttempt(core: WorkspaceCore, wanted?: string, reference?: 
     const model = await buildModel();
     const fingerprint = model.robots.find((r) => r.key === robot)?.fingerprint;
     const fit = async (request: BodyFitRequest) => {
-      const result = await worker.fit(request);
+      const { result, sequence } = await boundBodyFit({ saved, worker, request });
       const current = await buildModel();
 
-      if (snapshot() !== before || current.robots.find((r) => r.key === robot)?.fingerprint !== fingerprint)
+      if (
+        snapshot() !== before ||
+        core.docs.partsRef.current !== parts ||
+        selectedUnit() !== unit ||
+        current.robots.find((r) => r.key === robot)?.fingerprint !== fingerprint
+      )
         throw new Error('The robot changed during fitting. Fit its body again.');
+
+      await rememberSequenceFit({
+        saved,
+        sequence,
+        current: async () =>
+          snapshot() === before &&
+          core.docs.partsRef.current === parts &&
+          (await bodyFitReferenceCurrent(core, reference, unit)),
+        update: core.docs.updateProjectNow,
+      });
+
+      if (!result) throw new Error('Can’t tell.');
 
       return result;
     };
@@ -167,6 +188,7 @@ async function bodyFitReferenceCurrent(core: WorkspaceCore, reference: BodyEvide
 
   return (
     reference.unit === unit &&
+    selectedUnit() === unit &&
     (await bodyRecordingUnchanged(reference)) &&
     reference.sourceKey === (await bodySourceKey(core.docs.partsRef.current, core.docs.projectRef.current))
   );

@@ -1,6 +1,8 @@
 import type { RobotRun } from '../robot/runBuffer';
 import type { SimModel } from '../sim/mjcfTypes';
-import { analysisArmScene } from './bodyAnalysisMatrix.fixtures';
+import type { MainModule } from '@mujoco/mujoco';
+import { sha256 } from '../cases/tries';
+import { bodyAnalysisScenario, analysisArmScene } from './bodyAnalysisMatrix.fixtures';
 
 export function bodyExecutionScene() {
   const scene = analysisArmScene();
@@ -24,4 +26,21 @@ export function parkedBodyRun(model: SimModel): RobotRun {
     faultAt: 0,
     message: '',
   };
+}
+
+export async function colocatedBodyScenario(mj: MainModule) {
+  const { request } = await bodyAnalysisScenario(mj, 'coupled wrist');
+  const terminal = request.model.bodies.find((body) => body.joint === 'wrist')!;
+  const at = request.model.bodyPayloads![terminal.name];
+  const bodyStart = request.model.xml.indexOf(`<body name="${terminal.name}"`);
+  const geomStart = request.model.xml.indexOf('<geom ', bodyStart);
+  const geomEnd = request.model.xml.indexOf('/>', geomStart) + 2;
+
+  request.model.xml =
+    request.model.xml.slice(0, geomStart) +
+    `<geom name="colocated" type="sphere" size="0.001" pos="${at.join(' ')}" mass="0.2" contype="0" conaffinity="0"/>` +
+    request.model.xml.slice(geomEnd);
+  request.source.modelHash = await sha256(request.model.xml);
+
+  return { request, terminal, bodyStart };
 }

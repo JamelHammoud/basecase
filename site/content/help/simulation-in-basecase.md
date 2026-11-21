@@ -84,6 +84,8 @@ You can [inspect body parameters in a saved try](/help/inspect-body-parameters) 
 
 For unresolved parameters, [preview a motion](/help/preview-a-motion-for-unresolved-body-parameters) to check a short simulated candidate against the original observations. Saved predictions reopen without moving the robot or rerunning the search.
 
+A [simulated body sequence](/help/run-a-simulated-body-sequence) combines accepted observations before choosing another motion. It keeps independent validation separate from selection and fitting, and it stops at the declared budgets.
+
 You can [run a recommended body motion](/help/run-a-recommended-body-motion) on a matching emulated unit. Ordinary servo dynamics can’t identify authored body mass, payload or floor contact.
 
 A wrist's mass and payload can produce similar motion, leaving little evidence to choose between them. A residual mismatch remains unresolved. These results don't identify a unique physical cause or assign probabilities.

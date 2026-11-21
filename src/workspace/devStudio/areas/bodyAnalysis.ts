@@ -6,6 +6,7 @@ import type { SimModel } from '../../../sim/mjcfTypes';
 import { bodyRecordingContext, retainBodyRecording } from '../../../reality/bodyRecordingEvidence';
 import { withBodyEvidence } from '../../../reality/bodyEvidence';
 import { selectedUnit, robotSnapshot, robotSceneJoints, robotBenchDriving } from '../../../robot/robotStore';
+import { bodySequenceSession } from '../../../reality/bodySequenceRecording';
 import { keepSession } from '../../../cases/tryStore';
 import type { StoredTry } from '../../../cases/tryFile';
 import type { Studio } from '../types';
@@ -30,12 +31,14 @@ export default function bodyAnalysisStudio(studio: Studio) {
       id,
       analyzed = false,
       recommended = false,
+      generated = false,
     }: {
       run: RobotRun;
       model: SimModel;
       id: string;
       analyzed?: boolean;
       recommended?: boolean;
+      generated?: boolean;
     }) => {
       const { core } = studio();
       const project = core.docs.projectRef.current;
@@ -57,7 +60,7 @@ export default function bodyAnalysisStudio(studio: Studio) {
         sceneId: core.scene.sceneId,
         robot: { name: model.robots[0].name, modelHash: context.modelHash, joints: run.joints },
         case: null,
-        source: 'operate',
+        source: generated ? 'generated' : 'operate',
         input: null,
         startedAt: new Date().toISOString(),
         seconds: run.statuses.at(-1)!.at / 1000,
@@ -68,41 +71,32 @@ export default function bodyAnalysisStudio(studio: Studio) {
         sourceTry: null,
         faults: [],
       };
-      const session =
-        [
-          ...run.statuses.map((sample) => ({ t: sample.at / 1000, k: 'status', q: sample.positions })),
-          ...run.intents.map((sample) => ({ t: sample.at / 1000, k: 'intent', q: sample.joints })),
-        ]
-          .sort((a, b) => a.t - b.t)
-          .map((sample) => JSON.stringify(sample))
-          .join('\n') + '\n';
+      const session = bodySequenceSession(run);
 
       await keepSession(stored, session);
 
-      const ref = await retainBodyRecording({ context, stored, session, project });
+      const ref = await retainBodyRecording({ context, stored: { ...stored, source: 'operate' }, session, project });
 
       if (!ref) throw new Error('Body evidence missing');
 
+      const snapshot: BodyEvidenceSnapshot = {
+        ...context.snapshot,
+        generated: generated ? true : undefined,
+        sessionHash: ref.sessionHash,
+        request: { ...context.snapshot.request, run, source: { ...context.snapshot.request.source, recording: id } },
+      };
+
       if (analyzed || recommended) {
-        const saved = await analyzeRetained(
-          {
-            ...context.snapshot,
-            sessionHash: ref.sessionHash,
-            request: {
-              ...context.snapshot.request,
-              run,
-              source: { ...context.snapshot.request.source, recording: id },
-            },
-          },
-          recommended,
-        );
+        const saved = await analyzeRetained(snapshot, recommended);
 
         core.docs.updateProjectNow((current) => withBodyEvidence(current, saved));
 
         return;
       }
 
-      core.docs.updateProjectNow((current) => withBodyEvidence(current, ref));
+      const saved = generated ? await rememberBodyEvidence(snapshot) : ref;
+
+      core.docs.updateProjectNow((current) => withBodyEvidence(current, saved));
     },
     editBodyEvidenceSource: () =>
       studio().core.docs.commitParts((parts) =>

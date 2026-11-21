@@ -2,6 +2,27 @@ import type { RobotRun } from '../robot/runBuffer';
 import type { SimModel } from '../sim/mjcfTypes';
 import { ENCODER_RAD } from './verdict';
 import type { BodyErrorUnits } from './bodyTypes';
+import { canonicalJson } from '../skills/hash';
+
+export function bodyTrajectoryKey(run: RobotRun): string {
+  const start = run.statuses[0]?.at ?? 0;
+  const end = run.statuses.at(-1)?.at ?? start;
+  const round = (value: number) => Number(value.toPrecision(12));
+  const points: Array<{ at: number; joints: number[] }> = [];
+
+  for (const [index, intent] of run.intents.entries()) {
+    if (intent.at >= end || (intent.at < start && (run.intents[index + 1]?.at ?? Infinity) <= start)) continue;
+
+    const joints = intent.joints.map(round);
+    const previous = points.at(-1);
+
+    if (previous && joints.every((value, joint) => value === previous.joints[joint])) continue;
+
+    points.push({ at: round(Math.max(0, intent.at - start)), joints });
+  }
+
+  return canonicalJson({ joints: run.joints, duration: round(end - start), points });
+}
 
 export function bodyErrorUnits(model: SimModel, run: RobotRun, joints: number[]): BodyErrorUnits {
   const types = new Set(joints.map((index) => model.joints.find((joint) => joint.id === run.joints[index])?.type));

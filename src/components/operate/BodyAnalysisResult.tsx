@@ -6,6 +6,7 @@ import { BodyRecommendedMotion } from './BodyRecommendedMotion';
 import { BodyAnalysisMethod } from './BodyAnalysisMethod';
 import { BodyAnalysisParameters } from './BodyAnalysisParameters';
 import { BodyAnalysisRefusal } from './BodyAnalysisRefusal';
+import { BodySimulatedSequence } from './BodySimulatedSequence';
 
 export function BodyAnalysisResult({
   result,
@@ -23,10 +24,11 @@ export function BodyAnalysisResult({
       </p>
       {!result.residual.modelExplainsObservations && <p>Residual mismatch remains unresolved.</p>}
       <BodyAnalysisParameters result={result} analysis={analysis} />
+      <BodySimulatedSequence analysis={analysis} />
       {result.parameters.some((parameter) => parameter.distinguishability !== 'distinguishable') && (
         <Button
           variant="secondary"
-          disabled={analysis.pending || !applicable || !analysis.parameters.length}
+          disabled={analysis.pending || !applicable || !analysis.parameters.length || !!analysis.sequence}
           onClick={analysis.recommend}
         >
           Preview Motion

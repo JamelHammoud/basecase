@@ -110,7 +110,7 @@ Backend ownership retains one connection UUID, scalar revision, held/paused flag
 
 `bodyExperimentCost.test.ts` compares a selected motion with an equal two-second prefix of the existing fixed bench offsets on the same generated two-link body workload. It plants a 1.25 mass scale and declares a separate 3.6-second validation trajectory before selection or fitting. Numerical evidence comes from WASM body dynamics. Recording overhead uses a separate controlled zero-observation recorder sink. It does not represent daemon delivery, disk latency or physical parameter recovery. Raw output is `scratch/body-experiment-cost-shipping.json`.
 
-A macOS arm64 Node 26.13.0 changed-file observation recorded the following values. These are single observations under concurrent host load, not latency distributions.
+A macOS arm64 Node 26.13.0 changed-file observation recorded the following values. These are single observations under ordinary host load, not latency distributions.
 
 | Measure | Fixed bench prefix | Selected motion |
 | --- | ---: | ---: |
@@ -129,3 +129,63 @@ Both fits exactly replay this noiseless generated validation case, so accuracy i
 WASM capacity was 17,629,184 bytes. JavaScript heap was sampled at 67,677,528 bytes before the two comparisons and 66,455,784 bytes afterward. Those endpoints include allocation and garbage collection. They are not peak memory or a per-motion allocation measurement. Resource bounds come from retained-row, scalar ownership and timer assertions separately.
 
 The native CI fixture compares selected and fixed bench-prefix delivery over equal two-second declarations. It checks exact distinct paced-write/recording equality and unit isolation with real daemon processes. It observes completion and Stop through production event boundaries, with no retry, longer deadline or added merge gate. The fixture writes platform-specific delivery counts, recording bytes, stop-boundary latency and post-Stop write counts to `scratch/body-motion-native-<platform>.json` in CI. Native command-delivery rate, disk overhead, wall-clock cancellation and cross-platform runtime cost remain unmeasured locally. They must not be inferred from WASM information or the controlled recorder sink. Ordinary servo recordings explicitly refuse a body-identification claim, so observed body-information gain and independent body-validation error are unavailable for that backend.
+
+
+## Simulated body sequences
+
+`node tools/perf/bodySequence.mjs` measures accumulated selection, an equal-budget fixed library sequence, and repeated current single-motion selection on all ten generated workflows. It uses real MuJoCo replay, the production sequence retention action, TryStore and DatasetStore on temporary files, and the existing independent fitter. This is a Node measurement on macOS arm64 with Node 26.13.0. It excludes browser transport, rendering, worker startup and MuJoCo initialization. It is not a production interaction latency distribution or a Linux or Windows observation.
+
+Each strategy receives the same generated source, planted dynamics, parameter selection and maximum declaration: four rounds, eight completed trajectory seconds, one million experiment physics steps and 128 MiB of new retention. The eight seconds includes a frozen two-second validation trajectory. Fixed motions follow supported library order. Repeated single selection recomputes the existing recommendation against its latest observation. Accumulated selection uses all accepted information and retains the immutable candidate bases for later reset rounds. Selection overhead and preview computation in the single-motion baseline are charged. Fixed selection is not given the accumulated algorithm's ability to stop early on newly resolved directions.
+
+The planted models use a 1.25 link mass scale, a second 0.8 mass scale for two-link and asymmetric loading, a 0.1 kg terminal payload, or a 0.8 floor-friction scale for the rovers. The unchanged control uses the preset. These are noiseless generated observations. The fitted model remains separate from the model that generates those observations. The validation trajectory is declared before selection and excluded from selection and training. An additional independent full-trajectory RMS evaluation is charged to the experiment counter. In cases already locally distinguishable from the source, all strategies take no experiment round and retain no new fit. The benchmark still generates the same independent validation observation and evaluates the incumbent for comparison. This shared evaluation is more work than the product's immediate resolved stop.
+
+Preparation includes source analysis and initial temporary evidence storage. Total time includes preparation, selection, actual simulation, observation analysis, all recording and content writes, validation fitting where applicable, RMS evaluation and final validation retention. Fixture generation, bundling, module loading and temporary-directory cleanup are outside the measurement. Physics steps in the table include preparation plus experiment and validation work. The one-million-step declaration applies to the new experiment counter, with preparation charged separately in the raw output. Retained bytes are actual new file bytes after the initial source is stored, including raw sessions, manifests and immutable content checkpoints. Node storage calls do not include Electron IPC or HTTP round trips.
+
+Information gain per motion second is the capped weak-subspace response divided by completed experiment duration. It is not observed identification accuracy. RMS units are radians except the quadruped's meters. Memory is the larger JavaScript heap plus external-memory sample taken before and after an operation in one shared process. It includes preceding allocations and garbage collection, so it is neither a continuous peak, process RSS nor a per-strategy allocation measurement. WASM capacity was 17,629,184 bytes throughout this observation.
+
+| Workload and strategy | Rounds | Gain/s | Held-out RMS | Physics steps | Preparation ms | Complete ms | Retained bytes | Sampled MiB |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| single-link arm, accumulated | 0 | 0 | 0.00363126 | 6,500 | 20.665 | 32.524 | 18,451 | 46.09 |
+| single-link arm, fixed | 0 | 0 | 0.00363126 | 6,500 | 13.154 | 20.242 | 18,451 | 46.14 |
+| single-link arm, single | 0 | 0 | 0.00363126 | 6,500 | 11.868 | 18.798 | 18,451 | 45.17 |
+| two-link masses, accumulated | 0 | 0 | 0.00424119 | 8,300 | 24.720 | 33.707 | 24,301 | 46.38 |
+| two-link masses, fixed | 0 | 0 | 0.00424119 | 8,300 | 22.892 | 31.129 | 24,301 | 46.41 |
+| two-link masses, single | 0 | 0 | 0.00424119 | 8,300 | 21.929 | 29.611 | 24,301 | 44.67 |
+| terminal payload, accumulated | 0 | 0 | 0.0186681 | 8,300 | 22.463 | 31.495 | 24,279 | 46.18 |
+| terminal payload, fixed | 0 | 0 | 0.0186681 | 8,300 | 22.148 | 29.883 | 24,279 | 44.16 |
+| terminal payload, single | 0 | 0 | 0.0186681 | 8,300 | 22.611 | 30.391 | 24,279 | 44.31 |
+| coupled wrist, accumulated | 0 | 0 | 0.00154622 | 44,300 | 18.359 | 112.204 | 132,639 | 55.17 |
+| coupled wrist, fixed | 3 | 0.00782384 | 0 | 244,900 | 19.489 | 675.017 | 331,279 | 59.61 |
+| coupled wrist, single | 0 | 0 | 0.00154622 | 44,300 | 18.597 | 104.444 | 69,996 | 59.68 |
+| horizontal arm, accumulated | 1 | 0.13198 | 6.54862e-10 | 60,700 | 9.706 | 132.116 | 268,250 | 53.93 |
+| horizontal arm, fixed | 3 | 0.0640307 | 7.61487e-11 | 96,700 | 9.483 | 204.393 | 266,853 | 53.97 |
+| horizontal arm, single | 0 | 0 | 0.000116421 | 18,500 | 9.518 | 35.415 | 54,019 | 54.56 |
+| informative rover, accumulated | 0 | 0 | 0.00122102 | 17,300 | 116.797 | 137.849 | 40,518 | 49.45 |
+| informative rover, fixed | 0 | 0 | 0.00122102 | 17,300 | 112.501 | 132.844 | 40,518 | 49.47 |
+| informative rover, single | 0 | 0 | 0.00122102 | 17,300 | 115.154 | 136.852 | 40,518 | 49.57 |
+| stationary rover, accumulated | 3 | 1.36078 | 0 | 227,800 | 133.698 | 1899.445 | 1,138,907 | 69.05 |
+| stationary rover, fixed | 3 | 1.31004 | 0 | 131,800 | 127.281 | 1126.572 | 502,240 | 69.11 |
+| stationary rover, single | 0 | 0 | 0.00122102 | 113,300 | 129.097 | 859.739 | 106,327 | 57.49 |
+| asymmetric quadruped, accumulated | 0 | 0 | 8.76008e-05 | 20,900 | 136.531 | 156.796 | 45,230 | 60.83 |
+| asymmetric quadruped, fixed | 0 | 0 | 8.76008e-05 | 20,900 | 136.393 | 156.146 | 45,230 | 66.06 |
+| asymmetric quadruped, single | 0 | 0 | 8.76008e-05 | 20,900 | 135.449 | 155.174 | 45,230 | 66.08 |
+| unexcited pan-tilt, accumulated | 1 | 0.0538853 | 9.08615e-18 | 53,300 | 17.183 | 141.616 | 443,254 | 65.21 |
+| unexcited pan-tilt, fixed | 3 | 0.0182638 | 9.08615e-18 | 33,300 | 16.930 | 95.501 | 305,234 | 61.20 |
+| unexcited pan-tilt, single | 0 | 0 | 9.08615e-18 | 44,300 | 16.728 | 99.700 | 60,300 | 69.28 |
+| unchanged control, accumulated | 0 | 0 | 0 | 8,300 | 20.661 | 28.287 | 24,183 | 71.00 |
+| unchanged control, fixed | 0 | 0 | 0 | 8,300 | 20.067 | 27.132 | 24,183 | 67.21 |
+| unchanged control, single | 0 | 0 | 0 | 8,300 | 19.770 | 26.668 | 24,183 | 80.15 |
+
+The single-link, two-link, terminal-payload, informative-rover, quadruped and unchanged sources already distinguish their queried local directions. Their identical held-out errors are incumbent predictions rather than new fitted identification results. The unchanged control has zero generated prediction error. No new fit is activated by these comparisons.
+
+The horizontal-axis sequence takes one experiment rather than the fixed sequence's three. Both fits predict the generated independent trajectory with sub-nanoradian RMS error. The smaller fixed error is numerical, and neither establishes physical accuracy. Repeated single selection refuses to recommend a motion, retaining the incumbent's larger prediction error.
+
+The stationary rover uses three experiments in both accumulated and fixed sequences. Both fitted models have zero generated held-out error, while accumulated selection costs more time, more physics and more retained bytes. Its larger information score is not a prediction-accuracy win. Six directions remain unresolved in both fitted results. The single-motion baseline stops with no new observation and eight unresolved directions.
+
+For the coupled wrist, accumulated and repeated single selection stop without another observation. Both retain one unresolved structural direction and the incumbent's nonzero prediction error. Fixed motions improve held-out prediction to zero and pass the existing fitter, while the structural null direction still remains. Prediction improvement does not identify a unique mass and payload decomposition. This is a retained negative comparison for the question-driven selector, not a discarded failure.
+
+Pan-tilt takes one accumulated observation or three fixed observations. Both remain inconclusive, with one unresolved direction and effectively unchanged prediction error. Accumulated selection costs more computation and storage than fixed motions. Its greater information per motion second does not establish recovered parameters.
+
+Raw records, including planted fits, selected plans, unresolved directions, limits, verdicts, byte counts, phase timing, memory samples and refusals, are in scratch/body-sequence-comparison.json. An earlier observation is retained in scratch/body-sequence-comparison-initial.json. These are individual observations under ordinary host load, not controlled rate comparisons. The earlier single-motion result of approximately 1,745.6 ms versus 661.0 ms with unchanged accuracy remains the relevant prior negative evidence. This launch makes no general compute, storage, prediction or physical-transfer advantage claim.
+
+The native worker and article-capture observations remain separate from this complete numerical and filesystem comparison. The worker fixture measures submitted work and termination acknowledgement without locating the exact stopped instruction. The article captures use the development-server fallback and make no renderer-performance claim. No wait, retry, deadline increase or merge gate was added to obtain these measurements.

@@ -4,7 +4,8 @@ import { encodeJson, decodeJson } from '../datasets/snapshotWorker';
 import { datasetContentHash } from '../datasets/contentHash';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { BodyAnalysisRefusal, BodyAnalysisRequest, BodyAnalysisResult } from './bodyAnalysisTypes';
-import type { BodyExperimentEvidence } from './bodyExperimentTypes';
+import type { BodyExperimentEvidence, BodySequenceEvidence } from './bodyExperimentTypes';
+import { safeBodySequence } from './bodySequenceEvidence';
 import { checkedMotionRecording } from '../../electron/robot/bodyMotionRecording.mjs';
 import type { BodyMotionOutcome } from './bodyMotionTypes';
 import { safeBodyMotion } from './bodyMotionEvidence';
@@ -13,6 +14,8 @@ export const BODY_EVIDENCE_BYTES = 8_388_608;
 export const BODY_EVIDENCE_COUNT = 32;
 
 export interface BodyEvidenceSnapshot {
+  sequence?: BodySequenceEvidence;
+  generated?: true;
   experiment?: BodyExperimentEvidence;
   refusal?: BodyAnalysisRefusal;
   request: BodyAnalysisRequest;
@@ -24,6 +27,7 @@ export interface BodyEvidenceSnapshot {
 }
 
 export interface BodyEvidenceRef {
+  generated?: true;
   content: string;
   joints: string[];
   sessionHash?: string;
@@ -72,6 +76,7 @@ function bodyReference(input: BodyEvidenceSnapshot, content: string): BodyEviden
   const { source } = input.request;
 
   return {
+    ...(input.generated ? { generated: true as const } : {}),
     content,
     joints: [...input.request.run.joints],
     sessionHash: input.sessionHash,
@@ -95,6 +100,8 @@ export async function readBodyEvidenceContent(content: string, ports = defaults)
     const snapshot = (await ports.decode(bytes)) as BodyEvidenceSnapshot;
     const reference = bodyReference(snapshot, content);
 
+    if (!(await sequenceIntegrity(snapshot, bytes, content))) return null;
+
     return matchesBodyReference(snapshot, reference) ? { snapshot, reference } : null;
   } catch {
     return null;
@@ -109,10 +116,16 @@ export async function readBodyEvidence(ref: BodyEvidenceRef, ports = defaults): 
   try {
     const value = (await ports.decode(bytes)) as BodyEvidenceSnapshot | null;
 
+    if (!(await sequenceIntegrity(value, bytes, ref.content))) return null;
+
     return matchesBodyReference(value, ref) ? value : null;
   } catch {
     return null;
   }
+}
+
+async function sequenceIntegrity(snapshot: BodyEvidenceSnapshot | null, bytes: Uint8Array, content: string) {
+  return !(snapshot?.sequence || snapshot?.generated) || (await datasetContentHash(bytes)) === content;
 }
 
 function matchesBodyReference(value: BodyEvidenceSnapshot | null, ref: BodyEvidenceRef): boolean {
@@ -130,12 +143,18 @@ function matchesBodyReference(value: BodyEvidenceSnapshot | null, ref: BodyEvide
     Array.isArray(ref.joints) &&
     run.joints.join('\0') === ref.joints.join('\0') &&
     value.sourceKey === ref.sourceKey &&
+    value.generated === ref.generated &&
     safeBodyEvidenceResults(value)
   );
 }
 
 function safeBodyEvidenceResults(value: BodyEvidenceSnapshot): boolean {
-  return safeBodyResult(value.result, value.request.source) && safeExperiment(value) && safeBodyMotion(value);
+  return (
+    safeBodyResult(value.result, value.request.source) &&
+    safeExperiment(value) &&
+    safeBodyMotion(value) &&
+    safeBodySequence(value)
+  );
 }
 
 function safeExperiment(value: BodyEvidenceSnapshot): boolean {

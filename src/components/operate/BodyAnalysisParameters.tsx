@@ -29,7 +29,7 @@ export function BodyAnalysisParameters({
                 label={<span className="block whitespace-normal text-white/90">{bodyParameterLabel(parameter)}</span>}
                 aria-label={bodyParameterLabel(parameter)}
                 checked={analysis.parameters.includes(index)}
-                disabled={analysis.pending || !analysis.applicable}
+                disabled={analysis.pending || !analysis.applicable || !!analysis.sequence}
                 onChange={() => analysis.toggle(index)}
               />
             )}

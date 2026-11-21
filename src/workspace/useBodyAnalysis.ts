@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { bodyRecordingUnchanged } from '../reality/bodyRecordingIdentity';
-import type { BodyEvidenceRef } from '../reality/bodyEvidence';
+import type { BodyEvidenceRef, BodyEvidenceSnapshot } from '../reality/bodyEvidence';
 import { useTries } from '../cases/tryStore';
 import type { TrySummary } from '../cases/tryFile';
 import { useFleet } from '../robot/useRobot';
@@ -8,12 +8,13 @@ import { bodySourceKey, evidenceApplicable, readBodyEvidence } from '../reality/
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { useBodyAnalysisJob, type BodyInvestigationOutcome } from './useBodyAnalysisJob';
 import { errorMessage } from '../utils/errorMessage';
-import type { BodyMotionOutcome } from '../reality/bodyMotionTypes';
 import { dayLabel } from '../utils/timeAgo';
 import { useBodyExecution } from './useBodyExecution';
 import { fitBodyEvidence } from './bodyActions';
 import { BODY_EMULATOR_LIMIT } from '../reality/bodyExperimentTypes';
 import { servoFamily } from '../robot/robotState';
+import { useBodySequence } from './useBodySequence';
+import { accumulatedBodyAnalysis } from '../reality/bodySequenceInformation';
 
 let opening: { scene: string | null; version: number } = { scene: null, version: 0 };
 const listeners = new Set<() => void>();
@@ -134,13 +135,39 @@ function currentBodyResult(reported: BodyReported | null, selected: string, unit
   return reported?.selected === selected && reported.unit === unit ? reported.outcome : null;
 }
 
+function shownBodyAnalysis(shown: BodyInvestigationOutcome | null) {
+  const analysis = shown?.analysis ?? null;
+
+  if (analysis?.kind !== 'analyzed' || !shown?.sequence) return analysis;
+
+  return accumulatedBodyAnalysis(analysis, shown.sequence.state.directions);
+}
+
 interface BodySelection {
   key: string;
   indices: number[];
 }
 
-function selectedParameters(selection: BodySelection | null, key: string, motion?: BodyMotionOutcome) {
-  return selection?.key === key ? selection.indices : (motion?.selected ?? []);
+function selectedParameters(selection: BodySelection | null, key: string, shown: BodyInvestigationOutcome | null) {
+  return selection?.key === key
+    ? selection.indices
+    : (shown?.sequence?.state.selected ?? shown?.motion?.selected ?? []);
+}
+
+function retainedBodyDetails(saved: BodyEvidenceSnapshot | null) {
+  return {
+    sequence: saved?.sequence,
+    observedRun: saved?.generated ? saved.request.run : undefined,
+    observationUnits: saved?.request.units,
+    motion: saved?.motion,
+    experiment: saved?.experiment,
+    commands: saved?.request.run.intents.length,
+    samples: saved?.request.run.statuses.length,
+  };
+}
+
+function retainedBodyAnalysis(saved: BodyEvidenceSnapshot | null) {
+  return saved?.result ?? (saved?.refusal ? { kind: 'refused' as const, reason: saved.refusal, replays: 0 } : null);
 }
 
 async function readBodyInvestigation(
@@ -151,17 +178,17 @@ async function readBodyInvestigation(
   const original = saved?.experiment && (await readBodyEvidence(saved.experiment.recommendation));
 
   return {
-    analysis: saved?.result ?? (saved?.refusal ? { kind: 'refused', reason: saved.refusal, replays: 0 } : null),
-    motion: saved?.motion,
-    experiment: saved?.experiment,
+    ...retainedBodyDetails(saved),
+    analysis: retainedBodyAnalysis(saved),
     prediction: original?.motion,
-    commands: saved?.request.run.intents.length,
-    samples: saved?.request.run.statuses.length,
   };
 }
 
 function investigationDetails(shown: BodyInvestigationOutcome | null) {
   return {
+    sequence: shown?.sequence,
+    observedRun: shown?.observedRun,
+    observationUnits: shown?.observationUnits,
     motion: shown?.motion,
     experiment: shown?.experiment,
     prediction: shown?.prediction,
@@ -170,10 +197,34 @@ function investigationDetails(shown: BodyInvestigationOutcome | null) {
   };
 }
 
-function observationLimit(fleet: ReturnType<typeof useFleet>) {
+function observationLimit(fleet: ReturnType<typeof useFleet>, shown: BodyInvestigationOutcome | null) {
+  if (shown?.sequence?.state.reason === 'backend') return BODY_EMULATOR_LIMIT;
+
+  if (shown?.observedRun || shown?.sequence) return '';
+
   const state = fleet.units?.find((entry) => entry.unit === fleet.selected)?.state;
 
   return state?.emulated && servoFamily(state.spec) ? BODY_EMULATOR_LIMIT : '';
+}
+
+function useBodyTrySelection(tries: TrySummary[], references: BodyEvidenceRef[] | undefined, scene: string) {
+  const [inspected, setInspected] = useState<BodyEvidenceRef | null>(null);
+  const available = inspected?.scene === scene ? [...(references ?? []), inspected] : references;
+  const choices = bodyTryChoices(tries, available, scene);
+  const [picked, setPicked] = useState('');
+  const selected = selectedBodyTry(choices, picked);
+  const reference = available?.find((entry) => entry.recording === selected);
+
+  return {
+    choices,
+    selected,
+    reference,
+    setPicked,
+    inspect: (next: BodyEvidenceRef) => {
+      setInspected(next);
+      setPicked(next.recording);
+    },
+  };
 }
 
 export function useBodyAnalysis(core: WorkspaceCore) {
@@ -182,19 +233,22 @@ export function useBodyAnalysis(core: WorkspaceCore) {
   const tries = useTries() ?? [];
   const scene = core.scene.sceneId;
   const { request, open } = useBodyOpening(core);
-  const choices = bodyTryChoices(tries, core.project.bodyEvidence, scene);
-  const [picked, setPicked] = useState('');
-  const selected = selectedBodyTry(choices, picked);
-  const ref = core.project.bodyEvidence?.find((entry) => entry.recording === selected);
+  const {
+    choices,
+    selected,
+    reference: ref,
+    setPicked,
+    inspect,
+  } = useBodyTrySelection(tries, core.project.bodyEvidence, scene);
   const [reported, setReported] = useState<BodyReported | null>(null);
   const shown = currentBodyResult(reported, selected, unit);
-  const result = shown?.analysis ?? null;
+  const result = shownBodyAnalysis(shown);
   const [problem, setProblem] = useState('');
   const freshness = useBodySource(core, ref, request, open);
   const applicable = !!ref && freshness.ready && evidenceApplicable(ref, { unit, scene, sourceKey: freshness.key });
   const [selection, setSelection] = useState<BodySelection | null>(null);
   const key = ref ? `${ref.unit}\0${ref.scene}\0${ref.recording}\0${ref.modelHash}\0${ref.sourceKey}\0${unit}` : '';
-  const parameters = selectedParameters(selection, key, shown?.motion);
+  const parameters = selectedParameters(selection, key, shown);
 
   useEffect(() => {
     let current = true;
@@ -222,24 +276,38 @@ export function useBodyAnalysis(core: WorkspaceCore) {
     report: (outcome) => setReported({ selected, unit, outcome: { ...shown, ...outcome } }),
   });
   const execution = useBodyExecution({ core, unit, reference: ref, open, recorded: setPicked });
+  const sequenceJob = useBodySequence({
+    core,
+    unit,
+    reference: ref,
+    open,
+    report: (sequence) => setReported({ selected, unit, outcome: { ...shown, sequence } }),
+  });
 
   return {
     ready: freshness.ready,
-    observationLimit: observationLimit(fleet),
+    observationLimit: observationLimit(fleet, shown),
     open,
-    pending: job.pending || execution.pending,
+    pending: job.pending || execution.pending || sequenceJob.pending,
+    sequencing: sequenceJob.pending,
+    runSequence: () => sequenceJob.run(parameters),
+    inspectRecording: (reference: BodyEvidenceRef) => {
+      sequenceJob.cancel();
+      job.cancel();
+      inspect(reference);
+    },
     executing: execution.pending,
     selected,
     applicable,
     result,
-    problem: problem || job.problem || execution.problem || freshness.problem,
+    problem: problem || job.problem || execution.problem || sequenceJob.problem || freshness.problem,
     choices,
     ...investigationDetails(shown),
     execute: execution.run,
     fit: () => {
       if (ref)
         void fitBodyEvidence(core, ref)
-          .then((text) => setProblem(text === BODY_EMULATOR_LIMIT ? '' : text))
+          .then((text) => setProblem(shown?.sequence || text === BODY_EMULATOR_LIMIT ? '' : text))
           .catch((error: unknown) => setProblem(errorMessage(error)));
     },
     parameters,
@@ -251,11 +319,13 @@ export function useBodyAnalysis(core: WorkspaceCore) {
     recommend: () => job.run('recommend', parameters),
     show: () => openBodyAnalysis(scene),
     close: () => {
+      sequenceJob.cancel();
       execution.cancel();
       job.cancel();
       openBodyAnalysis(null);
     },
     pick: (id: string) => {
+      sequenceJob.cancel();
       execution.cancel();
       job.cancel();
       setPicked(id);
@@ -263,6 +333,7 @@ export function useBodyAnalysis(core: WorkspaceCore) {
       job.clear();
     },
     cancel: () => {
+      sequenceJob.cancel();
       job.cancel();
       execution.cancel();
     },

@@ -14,7 +14,7 @@ export async function bodyRecordingUnchanged(
     !!session &&
     session.length <= 1_048_576 &&
     stored.id === ref.recording &&
-    stored.source === 'operate' &&
+    stored.source === (ref.generated ? 'generated' : 'operate') &&
     stored.sceneId === ref.scene &&
     Array.isArray(ref.joints) &&
     stored.robot.joints.join('\0') === ref.joints.join('\0') &&

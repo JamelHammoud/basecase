@@ -34,3 +34,5 @@ If you see **Can’t tell**, the preview couldn't establish separation under the
 See [Simulation in Basecase](/help/simulation-in-basecase#recorded-body-parameters) for the analysis limits.
 
 You can [run a recommended body motion](/help/run-a-recommended-body-motion) on a matching emulated unit and inspect its actual observations.
+
+You can also [run a simulated body sequence](/help/run-a-simulated-body-sequence) that chooses later motions from accumulated observations.

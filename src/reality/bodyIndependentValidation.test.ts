@@ -44,6 +44,14 @@ it('fits planted parameters with a separately declared validation trajectory and
   expect(Math.abs(fitted.fit.massScales[forearm] / 1.3 - 1)).toBeLessThan(0.15);
   expect({ run, validation }).toEqual(before);
   expect((await fitBody({ mj, model, robot, run, validation: run })).verdict).toBe('cant-tell');
+
+  const shifted = {
+    ...run,
+    intents: run.intents.map((intent) => ({ ...intent, at: intent.at + 10000 })),
+    statuses: run.statuses.map((status) => ({ ...status, at: status.at + 10000 })),
+  };
+
+  expect((await fitBody({ mj, model, robot, run, validation: shifted })).verdict).toBe('cant-tell');
   expect(
     (await fitBody({ mj, model, robot, run: { ...run, observations: 'servo-independent-1' }, validation })).verdict,
   ).toBe('cant-tell');

@@ -118,7 +118,7 @@ export async function recommendBodyMotion(
   if (options.cancelled?.()) return refused('cancelled');
 
   try {
-    const problem = await motionProblem(input);
+    const problem = await bodyMotionProblem(input);
 
     if (problem) return refused(problem);
 
@@ -174,21 +174,15 @@ function searchPlans(context: {
   budget: BodyReplayBudget;
   candidates: BodyMotionCandidate[];
 }) {
-  const { input, plans, mj, budget, candidates } = context;
+  const { candidates } = context;
   let best: Omit<
     Extract<BodyMotionOutcome, { kind: 'recommended' }>,
     'method' | 'selected' | 'candidates' | 'physicsSteps' | 'preview'
   > | null = null;
 
-  const responses = libraryResponses({ input, plans, mj, budget });
+  const ranked = rankBodyMotionCandidates(context);
 
-  for (const [index, plan] of plans.entries()) {
-    const score = bodyMotionInformation({
-      original: input.result.directions,
-      candidate: responses.columns[index],
-      selected: input.selected,
-    });
-
+  for (const { plan, score } of ranked) {
     candidates.push({ plan, score });
 
     if (!score.resolved || (best && score.after <= best.score.after)) continue;
@@ -203,7 +197,27 @@ function searchPlans(context: {
   return best;
 }
 
-async function motionProblem(input: BodyMotionRequest) {
+export function rankBodyMotionCandidates(context: {
+  input: BodyMotionRequest;
+  plans: BodyMotionPlan[];
+  mj: MainModule;
+  budget: BodyReplayBudget;
+}) {
+  const { input, plans } = context;
+  const responses = libraryResponses(context);
+
+  return plans.map((plan, index) => ({
+    plan,
+    columns: responses.columns[index],
+    score: bodyMotionInformation({
+      original: input.result.directions,
+      candidate: responses.columns[index],
+      selected: input.selected,
+    }),
+  }));
+}
+
+export async function bodyMotionProblem(input: BodyMotionRequest) {
   if (!validMotionSpeed(input.speedRadS)) return 'unsupported' as const;
 
   const problem = await bodyAnalysisProblem(input.request);

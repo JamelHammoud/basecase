@@ -4,6 +4,7 @@ import { BodyAnalysisResult } from './BodyAnalysisResult';
 import { BodyAnalysisRefusal } from './BodyAnalysisRefusal';
 import { BodyExperimentMethod } from './BodyExperimentMethod';
 import { BodyAnalysisSourceStatus } from './BodyAnalysisSourceStatus';
+import { BodyRunObservations } from './BodyRunObservations';
 
 function canFitExperiment(analysis: BodyAnalysisView): boolean {
   return (
@@ -41,6 +42,7 @@ export function BodyAnalysis({ analysis }: { analysis: BodyAnalysisView }) {
           onChange={(event) => analysis.pick(event.target.value)}
         />
         <BodyAnalysisSourceStatus analysis={analysis} />
+        {analysis.observedRun && <BodyRunObservations run={analysis.observedRun} units={analysis.observationUnits} />}
         {analysis.problem && <p className="text-[13px] text-amber-400">{analysis.problem}</p>}
         {analysis.result?.kind === 'refused' && <BodyAnalysisRefusal reason={analysis.result.reason} />}
         {analysis.experiment && <BodyExperimentMethod analysis={analysis} />}

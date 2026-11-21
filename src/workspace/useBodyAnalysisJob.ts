@@ -9,8 +9,13 @@ import { recommendBodyEvidence } from './bodyMotionAction';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { errorMessage } from '../utils/errorMessage';
 import type { BodyExperimentEvidence } from '../reality/bodyExperimentTypes';
+import type { BodySequenceEvidence } from '../reality/bodyExperimentTypes';
+import type { RobotRun } from '../robot/runBuffer';
 
 export interface BodyInvestigationOutcome {
+  sequence?: BodySequenceEvidence;
+  observedRun?: RobotRun;
+  observationUnits?: Array<'rad' | 'm'>;
   experiment?: BodyExperimentEvidence;
   prediction?: BodyMotionOutcome;
   commands?: number;

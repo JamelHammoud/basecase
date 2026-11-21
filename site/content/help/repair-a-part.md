@@ -12,9 +12,11 @@ covers:
   - src/workspace/usePrintMode.ts
 ---
 
-Reach a broken part, replace it, and put the robot back together with a repair walkthrough from your design.
+Reach a broken part, replace it, and put the robot back together with a walkthrough from the editable design.
 
-Repair needs a measured teardown and proven reassembly order. If it can’t find them, it names the part and directs you to Checks in Build.
+For a saved physical unit, use [Repair a robot build](/help/repair-a-robot-build) to retain revision hashes, repair actions and replacement allocations.
+
+Editable-scene repair needs a measured teardown and proven reassembly order. If it can’t find them, it names the part and directs you to Checks in Build.
 
 1. On the broken part, right-click.
 2. In its menu, choose **Repair**.

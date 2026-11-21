@@ -50,8 +50,18 @@ function retainStock(fields, previous) {
 }
 
 export function checkedBuild(build) {
-  if (!token(build?.id) || !token(build.name) || !/^[a-f0-9]{64}$/.test(build.kit))
+  if (
+    !token(build?.id) ||
+    !token(build.name) ||
+    !/^[a-f0-9]{64}$/.test(build.kit) ||
+    (build.repair === undefined) !== (build.revision === undefined) ||
+    (build.repair !== undefined && (!token(build.repair) || !/^[a-f0-9]{64}$/.test(build.revision)))
+  )
     throw new Error('Choose a saved build.');
+}
+
+export function sameBuildOwner(a, b) {
+  return a.id === b.id && a.kit === b.kit && a.repair === b.repair && a.revision === b.revision;
 }
 
 function checkedReference(purchases, build) {
@@ -64,7 +74,13 @@ function checkedReference(purchases, build) {
       .map((entry) => entry.build),
   ]);
 
-  if (owners.some((owner) => owner.id === build.id && owner.kit !== build.kit))
+  if (
+    owners.some(
+      (owner) =>
+        owner.id === build.id &&
+        (owner.kit !== build.kit || (owner.repair === build.repair && owner.revision !== build.revision)),
+    )
+  )
     throw new Error('The frozen component demand has changed.');
 }
 
@@ -155,7 +171,7 @@ function changeComponent(purchases, request, now) {
 
   const stored = purchases[request.demand.key];
   const reservations = stored?.reservations ?? [];
-  const owner = reservations.find((entry) => entry.build.id === request.build.id);
+  const owner = reservations.find((entry) => sameBuildOwner(entry.build, request.build));
 
   checkedOwner(owner, request);
 

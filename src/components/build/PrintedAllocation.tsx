@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button, Select, confirmAction } from '../../design-system';
 import type { BuildOwner, PrintedDemand } from '../../kit/allocationTypes';
 import type { Purchases } from '../../types/robotics';
+import { sameBuildOwner } from '../../../electron/backend/buildAllocations.mjs';
 import { availablePrintCopies } from '../../../electron/backend/printAllocations.mjs';
 import { allocatePurchase } from './usePurchases';
 import { LegacyPrintQuantity } from './LegacyPrintQuantity';
@@ -15,12 +16,14 @@ export function PrintedAllocation({
   busy,
   run,
   kit,
+  returnOnly = false,
 }: {
   demand: PrintedDemand & { name: string; refusal?: string };
   build: BuildOwner;
   purchases: Purchases;
   busy: boolean;
   kit: FrozenKit;
+  returnOnly?: boolean;
   run: (action: () => Promise<unknown>) => Promise<void>;
 }) {
   const [selected, setSelected] = useState('');
@@ -38,11 +41,12 @@ export function PrintedAllocation({
       history
         .filter(
           (assignment) =>
-            !assignment.returnedAt && assignment.build.id === build.id && assignment.demand.partId === demand.partId,
+            !assignment.returnedAt && sameBuildOwner(assignment.build, build) && assignment.demand.partId === demand.partId,
         )
-        .map(() => ({
+        .map((assignment) => ({
           key,
           copy,
+          demand: assignment.demand,
           label: entry.printOutput?.record.copies?.find((item) => item.id === copy)?.index ?? 0,
         })),
     ),
@@ -63,14 +67,14 @@ export function PrintedAllocation({
       }),
     );
   };
-  const giveBack = (key: string, copy: string) =>
+  const giveBack = (key: string, copy: string, retainedDemand: PrintedDemand) =>
     confirmAction({
       title: `Return ${demand.name}?`,
       body: 'Confirm the printed copy has been returned.',
       confirmLabel: 'Return',
       onConfirm: () => {
         void run(() =>
-          allocatePurchase({ kind: 'return-copy', request: crypto.randomUUID(), key, copy, build, demand }),
+          allocatePurchase({ kind: 'return-copy', request: crypto.randomUUID(), key, copy, build, demand: retainedDemand }),
         );
       },
     });
@@ -80,7 +84,7 @@ export function PrintedAllocation({
       <div className="text-[13px] break-words">{demand.name}</div>
       <div className="text-[12px] text-white/60">{`Assigned ${held.length}/${demand.qty}, available ${available.length}`}</div>
       {demand.refusal && <div className="text-[12px] text-white/60">{demand.refusal}</div>}
-      {available.length > 0 && (
+      {!returnOnly && available.length > 0 && (
         <Select
           aria-label="Printed copy"
           options={choices}
@@ -89,19 +93,19 @@ export function PrintedAllocation({
           disabled={busy}
         />
       )}
-      <Button disabled={busy || !!demand.refusal || !available.length || held.length >= demand.qty} onClick={assign}>
+      {!returnOnly && <Button disabled={busy || !!demand.refusal || !available.length || held.length >= demand.qty} onClick={assign}>
         Assign Copy
-      </Button>
-      {held.map(({ key, copy, label }) => (
-        <Button key={copy} disabled={busy} onClick={() => giveBack(key, copy)}>{`Return Copy ${label + 1}`}</Button>
+      </Button>}
+      {held.map(({ key, copy, label, demand: retainedDemand }) => (
+        <Button key={copy} disabled={busy} onClick={() => giveBack(key, copy, retainedDemand)}>{`Return Copy ${label + 1}`}</Button>
       ))}
-      <LegacyPrintQuantity
+      {!returnOnly && <LegacyPrintQuantity
         kit={kit}
         purchases={purchases}
         demand={demand}
         run={run}
         disabled={busy || !!demand.refusal}
-      />
+      />}
     </div>
   );
 }

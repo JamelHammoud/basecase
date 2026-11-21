@@ -22,11 +22,12 @@ interface BuildAlongBarProps {
   active: boolean;
   ready: boolean[];
   onPrint: (id: string) => void;
+  printLabel?: string;
 }
 
-export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active, ready, onPrint, cradle }) => {
+export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active, ready, onPrint, cradle, printLabel = 'Print' }) => {
   const { step, index, count, opening, progress } = buildAlong;
-  const partsReady = !!step && step.repairPhase !== 'remove' && ready[index];
+  const partsReady = readyStep(step, ready[index]);
 
   useBuildAlongKeys(buildAlong, active && buildAlong.active);
 
@@ -46,7 +47,7 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
             <Spinner className="w-4 h-4" />
             {progress && `${progress.label}…`}
           </div>
-        ) : (
+        ) : count > 0 && (
           <>
             <IconButton
               size="sm"
@@ -74,7 +75,7 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
         )}
         {step?.printPartId && (
           <Button size="sm" variant="ghost" onClick={() => onPrint(step.printPartId!)}>
-            Print
+            {printLabel}
           </Button>
         )}
         <BuildCompletion buildAlong={buildAlong} />
@@ -89,3 +90,7 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
     </div>
   );
 };
+
+function readyStep(step: BuildAlong['step'], ready: boolean) {
+  return !!step && step.repairPhase !== 'remove' && ready;
+}

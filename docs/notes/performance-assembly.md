@@ -2,6 +2,33 @@
 
 Implementation: [Assembly and repair planning](../guide/build.md#performance-assembly-and-repair-planning). Shared requirements: [Performance](../guide/performance.md).
 
+## Retained build repair
+
+The disposable worker reads retained coordinate and index arrays directly, without serialized mesh equality. It expands each solid into owned triangle buffers using twelve bytes per mesh index before BVHs and planner state. Both revisions release their BVHs after planning. Cancellation terminates the worker and rejects late replies. The document refuses a geometry fallback.
+
+The initial whole-robot movement search exceeded existing test deadlines on hexapod and repeated-module fixtures, reaching 13.6 and 12.7 seconds in a focused run. Repair now prepares movement candidates for affected identities, their groups and a 160 mm neighborhood. All remaining solids stay fixed obstacles, and exit bounds include the entire assembly. This reduces search without dropping distant obstructions. The focused matrix then passed 32 tests in 2.79 seconds. These test durations are not a controlled performance comparison. No deadline, retry, wait or merge gate was added.
+
+On November 20, 2026, `scratch/repair-production-perf.mjs` measured the ten production Kit fixtures after integrating main revision `3699e8e13` in an isolated macOS arm64 Node worker. Each design had twenty retained builds. Three samples measured exact comparison and source/target planning, then a real build-store repair retained its target assets and plan. Generated fixture Checks are synthetic Ready declarations. Values below are maximum milliseconds across the three samples and exact retained byte counts.
+
+| Generated design | Compare ms | Plan ms | Source bytes | With repair bytes | Build record bytes |
+| --- | --- | --- | --- | --- | --- |
+| differential rover | 2.26 | 20.71 | 34,473 | 64,115 | 7,008 |
+| SO-101-style arm | 2.48 | 12.90 | 44,426 | 81,786 | 7,286 |
+| quadruped | 0.97 | 14.23 | 74,456 | 136,391 | 11,887 |
+| hexapod | 2.13 | 12.12 | 101,917 | 186,329 | 15,097 |
+| biped | 3.00 | 8.28 | 55,508 | 101,861 | 9,191 |
+| pan-tilt camera | 0.38 | 2.93 | 32,576 | 60,569 | 6,523 |
+| gripper | 0.45 | 8.80 | 30,030 | 56,062 | 6,270 |
+| conveyor mechanism | 1.86 | 2.88 | 27,667 | 51,745 | 6,007 |
+| mixed-servo arm | 0.67 | 8.95 | 59,663 | 109,863 | 9,660 |
+| repeated limb modules | 1.37 | 11.16 | 112,591 | 207,316 | 15,125 |
+
+The shared source byte count serves twenty builds. With-repair bytes include shared source and target assets, excluding the build record listed separately. Exact hashes, every timing sample and per-design memory snapshots are in `scratch/repair-production-perf.json`. The worker used v26.13.0. Worker used-heap snapshots changed from 104,182,120 to 75,281,992 bytes. Sampled process RSS peaked at 274,513,920 bytes. Heap includes the Vite loader and both retained fixtures, and RSS includes both Node isolates. Neither measures browser peak memory. Garbage collection can lower a later heap snapshot.
+
+Terminating the Node worker during another synchronous planning run took 5.30 ms. Browser worker tests separately establish abort and disposal semantics through controlled workers. Browser cancellation delivery and peak browser memory remain unmeasured. These observations establish neither a production memory bound nor an interactive latency guarantee. The run is not a controlled before-and-after comparison.
+
+The earlier captured seven-part bracket probe remains in `scratch/repair-perf.json`. Its synthetic manifest did not reconcile manufacturing outputs, so it is not the production matrix baseline. Frozen playback shares unchanged view parts and switches cached source/target parts. Export 3MF reads retained output bytes, without geometry preparation on the interaction thread.
+
 ## Screw-head contact thresholds stop at three
 
 `ringContacts.test.ts` compares every eight-point contact pattern with the previous full-count verdict. It checks that queries visit the original points in order and stop at the third contact, or visit the whole ring when fewer than three match. Later edits, independent calls, short rings and source preservation are covered. The remaining sleeve-host ranking needs exact counts and retains its full traversal.

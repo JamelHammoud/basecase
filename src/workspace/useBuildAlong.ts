@@ -1,3 +1,5 @@
+import { navigateFrozenHistory } from './frozenBuildSession';
+import { canRecordRepair } from '../kit/buildRepairState';
 import { useFrozenBuildAlong } from './useFrozenBuildAlong';
 import { stepView, type Session } from './buildAlongSession';
 import { localBuilds } from '../kit/buildRecords';
@@ -47,6 +49,7 @@ export function useBuildAlong({ guide, showToast, partsRef, projectRef, viewport
   const [session, setSession] = useState<Session | null>(null);
   const [opening, setOpening] = useState(false);
   const openingRef = useRef(0);
+  const [repairing, setRepairing] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const openPlan = async (source: () => Promise<GuidePlan | null>) => {
@@ -112,6 +115,24 @@ export function useBuildAlong({ guide, showToast, partsRef, projectRef, viewport
     showToast,
   });
   const go = (delta: number) => {
+    if (!session?.steps.length) return;
+
+    const repair = session?.frozen?.repair;
+
+    if (session?.frozen?.record.repairs?.length && !canRecordRepair(session.frozen.record, repair)) {
+      setSession((current) => current && navigateFrozenHistory(current, delta));
+
+      return;
+    }
+
+    if (repair) {
+      void saveProgress((record) =>
+        localBuilds.navigateRepair(record.id, repair.id, Math.min(repair.count - 1, Math.max(0, repair.index + delta))),
+      );
+
+      return;
+    }
+
     if (session?.frozen) {
       void saveProgress((record) =>
         localBuilds.navigate(record.id, Math.min(record.count - 1, Math.max(0, record.index + delta))),
@@ -123,15 +144,29 @@ export function useBuildAlong({ guide, showToast, partsRef, projectRef, viewport
     setSession((s) => s && { ...s, index: Math.min(s.steps.length - 1, Math.max(0, s.index + delta)) });
   };
   const complete = () =>
-    saveProgress((record) =>
-      localBuilds.complete(record.id, session?.index ?? 0, !record.completed[String(session?.index ?? 0)]),
-    );
+    saveProgress((record) => {
+      const repair = session?.frozen?.repair;
+      const step = session?.index ?? 0;
+
+      if (repair)
+        return localBuilds.repairAction({
+          id: record.id,
+          repair: repair.id,
+          step,
+          complete: !repair.completed[String(step)],
+        });
+
+      return localBuilds.complete(record.id, step, !record.completed[String(step)]);
+    });
 
   return {
     frozen: session?.frozen ?? null,
     saving,
     complete,
     creating,
+    repairing,
+    requestRepair: () => setRepairing(true),
+    closeRepair: () => setRepairing(false),
     requestCreate: () => setCreating(true),
     cancelCreate: () => setCreating(false),
     openFrozen,

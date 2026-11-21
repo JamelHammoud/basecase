@@ -5,6 +5,8 @@ export interface BuildOwner {
   id: string;
   name: string;
   kit: string;
+  repair?: string;
+  revision?: string;
 }
 
 export interface ComponentDemand {

@@ -63,7 +63,7 @@ To open Settings, click the gear at the bottom ([[⌘,]]). When an update has do
 
 The canvas shows your scene in 3D. To see the commands that apply to a part or an empty spot, right-click it.
 
-The toolbar at the bottom holds **Move** (V), **Rotate** (E), **Scale** (R) and **Comment** (M). Click **Shapes** (A) to open basic shapes, **Sketch**, **Measure**, **Annotate** and **Import SVG**.
+The toolbar at the bottom holds **Move** (V), **Rotate** (E), **Scale** (R) and **Comment** (M). Click **Shapes** (A) to open basic shapes, **Sketch**, **Measure**, **Annotate** and **Import SVG**. Use **Render Image** to [compose a PNG](/help/render-a-robot-image) while keeping your editing view.
 
 ## The right panel
 

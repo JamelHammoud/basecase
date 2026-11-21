@@ -124,7 +124,7 @@ const imageFormat = (request: Pick<CaptureRequest, 'silhouette' | 'maxSide'>) =>
     ? ({ type: 'image/png' } as const)
     : ({ type: 'image/jpeg', quality: VIEW_QUALITY, background: CANVAS_BACKGROUND } as const);
 
-export function snapshot(canvas: HTMLCanvasElement, maxSide?: number): ImageBitmap {
+export function snapshot(canvas: HTMLCanvasElement | OffscreenCanvas, maxSide?: number): ImageBitmap {
   const { width, height } = fittedSize(canvas.width, canvas.height, maxSide);
   const copy = new OffscreenCanvas(width, height);
   const ctx = copy.getContext('2d')!;
@@ -223,4 +223,14 @@ export async function captureViews(
   ctx.loop.renderNow();
 
   return Promise.all(shots.map((shot) => encodeShot(request, shot)));
+}
+
+export function renderPose(ctx: ViewportContext): Record<string, number[]> {
+  return Object.fromEntries(
+    ctx.props().parts.flatMap((part) => {
+      const delta = ctx.layer.pose.get(ctx.layer.poseOwners.get(part.id) ?? part.id);
+
+      return delta ? [[part.id, delta.toArray()]] : [];
+    }),
+  );
 }

@@ -210,6 +210,9 @@ The separate two-second enabled and disabled folding-arm comparisons in `fixture
 
 [Simulation test evidence](../notes/testing-simulate.md#self-contact) and [preparation, memory and throughput measurements](../notes/performance-simulation.md#self-contact) retain execution limits. Help: [Simulate self-contact](../../site/content/help/simulate-self-contact.md).
 
+### Workbench floor placement
+
+`MjcfInput.worldFloorMm` optionally places the implicit horizontal plane at a scene-Y height in millimeters. The MJCF writer converts that value to MuJoCo Z meters. An absent or zero value retains the previous floor XML exactly. Nonfinite heights are refused, and imported static convex worlds keep their existing implicit-floor suppression. Entered [workbench placement](cases.md#measured-workbench-placement) supplies this height through the existing Case rollout, so a vertical base offset moves the workbench plane with its fixtures and targets. It changes no robot, fixture or actuator dimensions. `cases/workbench/floor.test.ts` checks the emitted plane and actual object rest height in WASM MuJoCo. [Case coverage and limits](../notes/testing-cases.md#measured-workbench-placement).
 
 ## Ideal tendon simulation
 

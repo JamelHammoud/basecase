@@ -79,6 +79,7 @@ export interface ServoSpread {
 }
 
 export interface MjcfInput {
+  worldFloorMm?: number;
   robotHulls?: Record<string, Float32Array[]>;
   parts: ScenePart[];
   rig: Rig;

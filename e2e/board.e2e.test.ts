@@ -49,7 +49,14 @@ it('locks a generated board placement with keyboard undo and redo', async () => 
 it('reports an outline shrink as a mechanical board blocker', async () => {
   await app.page.locator(shown('[role=tab]'), { hasText: 'Build' }).first().click();
 
-  const edit = app.page.getByRole('button', { name: 'Edit Board', exact: true });
+  const electrical = app.page.locator(shown('[data-check="Electrical connections"]'));
+  const edit = electrical.getByRole('button', { name: 'Edit Board', exact: true });
+
+  await electrical.waitFor();
+
+  const toggle = electrical.getByRole('button', { name: /^Electrical connections/ });
+
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
 
   expect(await edit.textContent()).toBe('Edit Board');
   await edit.click();

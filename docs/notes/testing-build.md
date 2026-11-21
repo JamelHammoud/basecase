@@ -1,5 +1,11 @@
 # Build test evidence
 
+## Requested blocker repairs
+
+`src/workspace/agentTurnCompletion.test.ts` runs the production send loop with controlled readiness results and bridge replies. Its readiness fixture starts clean and offers a new blocker on any later check. The legacy enabled preference remains in the fixture so the former completion gate would send synthetic repairs and fail the single-send assertion. The tests also retain queued-request delivery, explicit `/fix` delivery and lane cleanup assertions.
+
+`src/readiness/readiness.test.ts` covers manual Fix quotes, their technical context and readiness deltas. The existing `e2e/buildCheck.e2e.test.ts` walkthrough clicks Fix from Checks. Its Windows startup quarantine and remaining platform coverage are recorded in [Build](../guide/build.md#testing-coverage). No browser walkthrough asserts the absence of automatic repair messages. Review verification uses fast changed-file checks and does not run browser tests locally.
+
 ## Shared dimension preparation
 
 Shared dimensions run through `useDesignParameters`, the Inspector's Parameters section, Edit Parameters in the command palette, and the existing agent `update_parts` tool. They share the existing geometry worker, CAD kernel pool and scene history. Native file and stored-scene loading validate declarations and target values, then regenerate bound geometry before Checks treats it as current. Clipboard copies preserve same-scene sharing and refuse external or changed declarations. Library insertion refuses embedded bindings.

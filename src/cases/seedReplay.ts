@@ -20,7 +20,12 @@ export interface SeedReplay {
   seed: number;
 }
 
-export async function seedReplay(mj: MainModule, result: CaseResult, seed: number): Promise<SeedReplay> {
+export async function seedReplay(
+  mj: MainModule,
+  result: CaseResult,
+  seed: number,
+  randomized = true,
+): Promise<SeedReplay> {
   if (!result.recording) throw new Error(result.refusal);
 
   const trips = await tripFrames(result.case.task.contract, result.trace);
@@ -29,7 +34,10 @@ export async function seedReplay(mj: MainModule, result: CaseResult, seed: numbe
 
   trips.sort((a, b) => a.frame - b.frame);
 
-  const { engine, dispose } = startEngine(mj, result.model, { controller: { kind: 'hold' }, seed });
+  const { engine, dispose } = startEngine(mj, result.model, {
+    controller: { kind: 'hold' },
+    seed: randomized ? seed : undefined,
+  });
   let efforts: RecordedEfforts;
 
   try {

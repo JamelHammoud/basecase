@@ -379,7 +379,16 @@ Case conditions use the existing contract evaluator in a worker. [Cases](cases.m
 
 The retained-incident browser declaration is quarantined only on Windows through 28 November 2026 under [#1749](https://github.com/JamelHammoud/basecase/issues/1749). Linux and macOS retain the complete walkthrough. Windows retains the fast collector, storage and native recorder integration matrices, with a temporary gap in ordinary incident-dialog playback across two scene tabs. [Failure stages and restoration conditions](../notes/testing-robot-runtime.md#windows-retained-incident-playback-on-18-november) keep second-tab scene loading separate from timeline opening.
 
-
 ### Ideal tendon admission
 
 `sceneRobotChoices` refuses authored tendon rigs before connecting an emulator or robot. Robot Computer joint-map export refuses the same declarations. Robot Package export instead retains simulation XML and an explicitly unsupported URDF extension, with `transmissions.json` preserving the authored motor and passive-joint references. No tendon hardware deployment or daemon transmission model is added. `sim/tendonAdmission.test.ts` checks runtime choice refusal. [Joints and motion](joints-and-motion.md#ideal-fixed-tendons) owns the declaration.
+
+### Workbench rehearsal
+
+An arm Case's [measured workbench placement](cases.md#measured-workbench-placement) binds entered coordinates to the same lowercase unit identity used by named connections. A unit can be named while disconnected. Reading the fleet only supplies name suggestions. Choosing a placement never selects, connects or advances a daemon unit.
+
+The Case worker performs nominal rehearsal independently of the live simulator. It never calls the intent mirror, robot command bridge, operate recorder, connection API or calibration API. Physical motor locks, existing connection protocols and retained operate sessions remain unchanged. Entered placement is project data, separate from servo and body calibration history. A completed update replaces only its unit and Case key against the current project, preserving other units' placements. Undo, redo and ordinary scene persistence retain those records.
+
+Saved outcomes bind exact geometry, the Case revision and end-effector binding, the entered pose and unit. Reopening verifies current geometry in a worker before displaying the saved verdict. Source edits hide prior verdicts, and source replacement or cancellation disposes pending workers without replacing the prior placement. Simulation establishes no measured registration accuracy, motor execution or transfer performance.
+
+`src/cases/workbench/transport.test.ts` exercises production Case job delivery with a small summary and asserts no connect or command calls. `workerLifecycle.test.ts` uses the existing native pipeline adapter, warms the real Case worker with a passing drawer reference, posts a long reference, terminates it and checks prior evidence and zero remaining workers. Placement and persistence tests cover unit isolation, exact mesh-byte edits, Case and tool edits, corrupt records and scene history. The two declarations in `e2e/workbenchPlacement.e2e.test.ts` cover ordinary entry, source identity inspection, unreachable refusal and independent save/reopen with undo. Linux and Windows execution belongs to CI. [Evidence and limits](../notes/testing-robot-runtime.md#workbench-rehearsal).

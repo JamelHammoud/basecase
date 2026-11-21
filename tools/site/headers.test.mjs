@@ -60,6 +60,9 @@ describe('public hosting headers', () => {
       expect(
         headerProblems(source.replace(new RegExp(`${directive} [^;\\n]+`), `${directive} *`), { full: true }).length,
       ).toBeGreaterThan(0);
+      expect(
+        headerProblems(source.replace(`${directive} `, `${directive} *; ${directive} `), { full: true }).length,
+      ).toBeGreaterThan(0);
     }
 
     expect(headerProblems(source.replace('/*\n', '/assets/*\n'), { full: true }).length).toBeGreaterThan(0);

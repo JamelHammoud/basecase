@@ -100,15 +100,13 @@ afterAll(async () => {
 
 it('enforces the built CSP against injected scripts, objects, base URLs and framing', async () => {
   const { page } = await open('/');
-  const violations = await page.evaluate(async () => {
+  const violations = await page.evaluateHandle(() => {
     const blocked: string[] = [];
-    const received = new Promise<string[]>((resolve) => {
-      document.addEventListener('securitypolicyviolation', (event) => {
-        blocked.push(event.effectiveDirective);
 
-        if (blocked.length === 3) resolve(blocked);
-      });
+    document.addEventListener('securitypolicyviolation', (event) => {
+      blocked.push(event.effectiveDirective);
     });
+
     const script = document.createElement('script');
     const baseElement = document.createElement('base');
     const object = document.createElement('object');
@@ -119,10 +117,13 @@ it('enforces the built CSP against injected scripts, objects, base URLs and fram
     document.head.append(script, baseElement);
     document.body.append(object);
 
-    return received;
+    return blocked;
   });
 
-  expect(violations.sort()).toEqual(['base-uri', 'object-src', 'script-src-elem']);
+  await expect
+    .poll(async () => (await violations.jsonValue()).sort())
+    .toEqual(['base-uri', 'object-src', 'script-src-elem']);
+  await violations.dispose();
   expect(await page.locator('html').getAttribute('data-injected')).toBeNull();
   expect(await page.evaluate(() => document.baseURI)).toBe(`${base}/`);
 

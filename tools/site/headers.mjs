@@ -25,11 +25,14 @@ export function headerProblems(source, { full = false } = {}) {
     'strict-transport-security': 'max-age=31536000',
   };
   const directives = new Map(
-    (headers['content-security-policy'] ?? '').split(';').map((part) => {
-      const [name, ...values] = part.trim().split(/\s+/);
+    (headers['content-security-policy'] ?? '')
+      .split(';')
+      .reverse()
+      .map((part) => {
+        const [name, ...values] = part.trim().split(/\s+/);
 
-      return [name, values.join(' ')];
-    }),
+        return [name.toLowerCase(), values.join(' ')];
+      }),
   );
   const requiredDirectives = { 'frame-ancestors': "'none'", 'object-src': "'none'", 'base-uri': "'none'" };
 

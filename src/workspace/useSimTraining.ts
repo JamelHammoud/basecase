@@ -1,3 +1,4 @@
+import { ensureEvaluationScene } from './evaluationScene';
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { confirmAction } from '../design-system/confirmStore';
@@ -26,7 +27,7 @@ interface SimTrainingOptions {
   posing: Posing;
   viewportRef: RefObject<Viewport3DHandle | null>;
   showToast: ShowToast;
-  studio: Pick<StudioShared, 'openSettings' | 'robotsBeside' | 'customModels'>;
+  studio: Pick<StudioShared, 'openSettings' | 'robotsBeside' | 'customModels' | 'newScene'>;
 }
 
 function withPolicy(policies: PolicyRecord[], record: PolicyRecord, replaces: string | null): PolicyRecord[] {
@@ -92,6 +93,7 @@ export function useSimTraining(options: SimTrainingOptions) {
   };
 
   const cases = useCases({
+    ensureEvaluationScene: (input) => ensureEvaluationScene(studio, { parts, project }, input),
     commitWorkbenchPlacements: docs.commitWorkbenchPlacements,
     fixtures: studio.customModels,
     parts,

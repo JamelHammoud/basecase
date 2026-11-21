@@ -1,3 +1,5 @@
+import { decodeSceneFile } from '../utils/sceneFile';
+import type { ScenePart } from '../types/robotics';
 import { zipSync, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { KB } from '../../electron/fileSize.mjs';
 import { fileSize } from '../../electron/fileSize.mjs';
@@ -6,7 +8,9 @@ import { MAX_ENTRIES, MAX_UNPACKED_BYTES, safeEntryPath, unzipEntries } from '..
 import { reply } from '../utils/workerRpc';
 import { sha256Hex, hashOf } from '../skills/hash';
 import { recordingTransfer, type Recording } from '../sim/recorder';
-import { decodeRecording } from './recordingFile';
+import { readEvaluationReplay, evaluationScenePhysics } from './evaluationReplayValidation';
+import { evaluationComponents } from './evaluationAssets';
+import { decodeRecording, encodeRecording } from './recordingFile';
 import { readStoredTry, type StoredTry } from './tryFile';
 
 export const TRY_FILE_ERROR = 'This try’s files can’t be read.';
@@ -49,6 +53,26 @@ function recordingFits(recording: Recording | null, stored: StoredTry): recordin
   return (
     finite.every((row) => !row || row.every(Number.isFinite)) &&
     recording.t.every((time, i) => time >= 0 && (!i || time > recording.t[i - 1]))
+  );
+}
+
+function evaluationFits(recording: Recording | null, stored: StoredTry): boolean {
+  const source = recording?.evaluation;
+
+  if (!source) return true;
+
+  return (
+    source.seed === stored.seed &&
+    source.revision === stored.robot.name &&
+    source.evaluation === stored.sceneId &&
+    sha256Hex(source.model.xml) === stored.robot.modelHash &&
+    hashOf(source.kase) === stored.case?.hash &&
+    source.model.bodies.length === recording.nbody &&
+    source.passed === (stored.outcome.verdict === 'passed') &&
+    source.margin === stored.outcome.margin &&
+    source.efforts.peaks.length === source.model.joints.length &&
+    source.efforts.forces.length === source.model.joints.length &&
+    source.trips.every((trip) => trip.frame < recording.frames)
   );
 }
 
@@ -119,7 +143,7 @@ export function decodeTryArchive(bytes: Uint8Array): RestoredTry[] {
 
     const recording = decodeRecording(data);
 
-    if (!recordingFits(recording, stored)) throw new Error(TRY_FILE_ERROR);
+    if (!recordingFits(recording, stored) || !evaluationFits(recording, stored)) throw new Error(TRY_FILE_ERROR);
 
     return { stored, recording, hash: sha256Hex(data) };
   });
@@ -135,14 +159,61 @@ function decodeChecked(bytes: Uint8Array) {
   }
 }
 
+async function checkEvaluationScene(recording: Pick<Recording, 'evaluation'>) {
+  const source = recording.evaluation;
+
+  if (!source) return;
+
+  const scene = await decodeSceneFile(source.scene);
+
+  if (evaluationComponents(scene).some((id) => !Object.hasOwn(source.meshes, id))) throw new Error(TRY_FILE_ERROR);
+}
+
 export const tryArchiveJobs = {
+  evaluationScene: async (input: {
+    scene: Uint8Array;
+    parts: ScenePart[];
+    physics: ReturnType<typeof evaluationScenePhysics>;
+  }) => {
+    const scene = await decodeSceneFile(input.scene);
+
+    return reply(
+      hashOf(scene.parts) === hashOf(input.parts) &&
+        hashOf(evaluationScenePhysics(scene.project)) === hashOf(input.physics),
+    );
+  },
+  encodeRecording: (recording: Recording) => {
+    const bytes = encodeRecording(recording);
+
+    return reply(bytes, [bytes.buffer]);
+  },
+  recording: (bytes: Uint8Array) => {
+    const recording = decodeRecording(bytes);
+
+    return reply(recording, recording ? recordingTransfer(recording) : []);
+  },
+  evaluation: async (input: { source: unknown; stored: StoredTry; nbody: number; frames: number }) => {
+    const source = readEvaluationReplay(input.source);
+
+    if (
+      !source ||
+      !evaluationFits({ evaluation: source, nbody: input.nbody, frames: input.frames } as Recording, input.stored)
+    )
+      throw new Error(TRY_FILE_ERROR);
+
+    await checkEvaluationScene({ evaluation: source });
+
+    return reply(true);
+  },
   encode: (entries: PortableTry[]) => {
     const bytes = encodeTryArchive(entries);
 
     return reply(bytes, [bytes.buffer]);
   },
-  decode: (bytes: Uint8Array) => {
+  decode: async (bytes: Uint8Array) => {
     const restored = decodeChecked(bytes);
+
+    for (const entry of restored) await checkEvaluationScene(entry.recording);
 
     return reply(
       restored,

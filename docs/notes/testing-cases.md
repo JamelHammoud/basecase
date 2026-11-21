@@ -674,3 +674,201 @@ SupplierOfferSheet uses a React portal, so its clicks still reached StudyResultR
 `studySourcingLayout.ts` extends the existing late/on-time browser declaration with measured configuration and evidence text bounds at the 290 px minimum panel width, the maximum quantity, incomplete requirements, ordinary mode with purchasing disabled, and keyboard toggling. It opens the offer editor with Enter from a multiple-row comparison, edits Destination, enters a quote and cancels while asserting that both compared designs remain selected. It reuses the existing panel and text-bound helpers without changing deadlines, retries or acceptance assertions. Browser execution remains assigned to CI. The help article removes a repeated definition, and the changelog describes editor behavior without setup instructions.
 
 The ten-file review check passed formatting, ESLint, documentation, site validation across 377 pages, TypeScript and all thirteen related tests across seven files. Its log is `scratch/review-2005-check.log`. This verifies the edited sources and browser declarations statically. It does not establish browser interaction or layout results.
+
+## Portable CLI evaluation
+
+`tools/cli/evaluation.test.mjs` creates ordinary baseline and 30%-motor rover scenes. It uses production freeze and run functions in process and invokes the actual
+inspect command with ordered seeds 7 and 3. Both passing baseline trials become candidate failures, with
+exit 1 and matching JSON/HTML identities. Ordinary archive decoding checks the saved seed, source revision and model.
+Independent production `runCase` execution reproduces the weak-rover outcome, margin and failure.
+
+`evaluationVariants.test.mjs` covers unchanged controls, altered chassis geometry, a changed retained policy,
+randomized conditions, missing geometry, corrupt bytes, mismatched engines, rejected run-time seed overrides and
+eight-recording retention across sixteen paired trials. `evaluationFiles.test.mjs` covers changed Case contracts,
+duplicate and out-of-range seeds, rounded physics budgets, declaration identity, unsafe paths, symbolic links,
+missing/corrupt files, HTML escaping and forged completion without complete ordered pair coverage.
+
+`evaluationInterruption.test.mjs` observes the initial incomplete report from an actual running CLI child. One
+case creates its stop file. Another terminates the process before completion. Both require incomplete output rather
+than a complete passing report. Production checkpoint coverage separately verifies engine disposal after cancellation.
+
+`evaluationReplay.test.ts` retains exact source scene, model, realized Case, trace, efforts and failure frames through
+ordinary binary bytes. Re-encoding must reproduce those bytes exactly. Changed identity and executable XML are refused.
+`evaluationAssets.test.ts` refuses external, relative, file and executable data resources in GLBs before loading them.
+It also checks the decompression bound before allocation. `workspace/evaluationScene.test.ts` verifies source restoration
+from an altered working scene while preserving that working scene. Matching source inputs avoid another source tab.
+
+`e2e/evaluation.e2e.test.ts` declares actual CLI generation followed by ordinary Import, Library and timeline controls.
+It checks the stored revision, seed, evaluation identity and failed outcome. It then opens a new scene and reopens
+the saved failure, requiring its source tab and timeline again. The declaration has no retries and uses existing
+browser deadlines. Browser execution on Linux and Windows belongs to CI. A separate throwaway article capture drove
+those same import and reopening states on macOS and captured the timeline and static report.
+
+The first retained implementation lacked source restoration, policy/calibration support, common-world pinning,
+interruption coverage and launch documentation. Those gaps now have implementation and focused coverage. Initial
+continuation checks exposed React ref access during render, a missing declaration for the shared CLI fixture and
+function/complexity limits. Event-only timeline helpers, a declaration file and extracted validation resolved them.
+The first retention fixture ran only 0.2 simulated seconds, below its ordinary contract's 0.3-second hold requirement.
+It now runs one second and retains all original outcome, completion, count and byte-bound assertions.
+
+Copy accounting remains the existing accounting. The scanner reports no added or removed strings on its counted UI
+surfaces. CLI help, report labels and new errors are separately inventoried in the answer. Shared `CompareRows` was
+inspected, with no demonstrated repeated visible copy to remove. Existing accessible names and recovery text remain.
+These results do not replace Checks or skill retention and establish no physical-transfer or statistical-confidence claim.
+No quarantine, restoration condition, timeout, retry or repository gate changed.
+
+The final 59-path `check:changed` selection passed formatting, lint, documentation, 377 site pages and types.
+It passed 3,673 tests across 521 files, with one existing skipped file, in 188.63 seconds of test execution.
+A subsequent correction strengthened cancellation to the second checkpoint, after physics had advanced, and validates
+retained snapshots before archive publication. Its three-path selection passed all five tests across two files in
+4.30 seconds, including fresh equal-workload resource measurements. Other production inputs from the broad selection remain unchanged.
+
+The final delivery selection passed all 17 tests across three files in 6.74 seconds. It includes ordinary binary
+recording round trips for every admitted generated workflow, actual CLI weak-rover regression, retained controller
+and geometry changes, randomized reproduction, integrity refusal and bounded retention. Formatting, lint, types,
+documentation and 377 site pages passed. The committed browser declaration and Linux/Windows execution remain in CI.
+
+### Covering help articles
+
+Preflight also names existing articles covering shared entry points. Their contents were checked against the final
+implementation. The Cases concept and timeline article now distinguish ordinary tries from frozen evaluation inputs.
+The new feature article supplies its own summary to the Library hub. Existing screenshots still show unchanged controls.
+
+| Article | Disposition after checking its steps, labels and captures |
+| --- | --- |
+| `check-your-robot-in-ci.md` | The new `evaluation` dispatch leaves `check` and `export` handlers intact. The documented `--case`, `--json`, output fields and 0/1/2 exits remain accurate. No depicted control changes. |
+| `compare-saved-tries.md` | `useTryTimeline` still delegates two-recording comparison to `useSavedTimeline`. Alignment, signals, source clocks and camera panels keep their existing controls and screenshot states. Evaluation source restoration applies to single-recording opening. |
+| `connect-a-robot-computer.md` | `robot install` still dispatches before offline fetch replacement. SSH, package/scene, family, key and pairing arguments remain accepted. Installation, ladder and connection controls depicted in its screenshots are untouched. |
+| `export-a-robot-package.md` | Export placement, availability, file layout, policy selection and MJCF/URDF behavior remain unchanged. `policyObservation` only adds the actual optional clock input to policy metadata, without changing either export screenshot state. |
+| `open-a-try-from-any-scene.md` | Scope the missing-Case fallback to ordinary tries. Frozen evaluation playback uses its retained Case and source scene. Library controls and ordinary-try screenshots remain accurate. |
+| `replay-a-failing-seed.md` | `seedReplay` retains its boolean default and existing callers retain seeded physics. The added options object is used by evaluations. Trail sampling, first-trip selection, keyboard controls, temporary recording and restored simulation remain accurate in both screenshots. |
+| `robot-package-contents.md` | The `spec.json` row promises actual input names and sizes, not a fixed input list. The optional clock has two values and now appears in that list. File layout, joint map and policy exclusions remain accurate. This reference has no screenshots. |
+| `try-a-case.md` | Desktop decoding moves to the archive worker, while evaluation-only encoding preserves ordinary save behavior. `useCases` forwards source restoration options without changing drive, reference, Results, deletion, dataset or Checks controls. All four pictured states remain accurate. |
+
+The structural preflight reminders remain for unchanged covering articles. No unrelated article or screenshot was
+edited solely to silence them.
+
+The preflight follow-up reread all nine remaining articles against their covered diffs. The branch article's generic
+imported-try requirement now says imported branch. Evaluation imports carry a source scene, while branch imports
+still require the matching robot scene. Its branch steps, labels and four captures remain accurate. The eight other
+articles retain the behaviors documented in the table above. No new screenshots or product strings are needed for
+this wording correction.
+
+### Review of portable evaluation delivery
+
+Review found that evaluation timeline opening explicitly discarded its retained Case and trace. This hid authored
+console panels, recorded probe signals and agent-readable contract evidence even though the archive kept them.
+Opening now builds the inspection scene from the retained Case, model and trace without reach scaling. Both branch
+availability and branch-source access refuse evaluation recordings independently of that inspection scene.
+
+The source-scene test requires those retained objects to reach timeline preparation even when the active Case list
+is empty. It also forges a correctly hashed snapshot with an absent component mesh and requires import to fail before
+the persistence callback. Source scene decoding and component-reference checks now run in the archive worker during
+import and persisted-source validation. Missing archive meshes cannot fall back to the current catalog.
+
+The static report previously let its table overflow a narrow document. Its table now scrolls inside a focusable
+region while input hashes wrap. `evaluationLayout.ts` extends the actual CLI import browser declaration with measured
+report text bounds at 390 px, document containment and keyboard scrolling. It checks timeline canvas containment,
+joint names, values, units and action text at a 1100 px studio width, plus keyboard frame stepping and the absence of
+Branch Try. Browser execution remains assigned to CI, with no timeout, retry or assertion relaxation.
+
+The 14-path review check passed formatting, lint, docs, 383 site pages and types on macOS arm64 with Node 26.13.0.
+Its related selection passed 620 tests across 125 files and failed three declarations across two files in 39.17 seconds.
+Both declarations in `tools/cli/evaluation.test.mjs` exceeded their unchanged five-second deadlines, at 5,049 and
+5,005 ms. The hexapod row in `src/cases/evaluationMatrix.test.ts` exceeded the same deadline at 7,408 ms. The log
+reports deadline errors without value assertion mismatches. Other worktrees were running checks concurrently,
+but that observation does not establish the cause of these failures.
+
+The isolated three-path check passed all 13 tests across the source-scene test, CLI workflow file and workflow matrix
+in 3.70 seconds. It retained default worker selection, retries and quarantine configuration. Its assertions include
+the new timeline Case/trace preservation and pre-persistence missing-mesh refusal. Logs are
+`scratch/review-2012-check.log` and `scratch/review-2012-focused-check.log`. This focused pass establishes intermittent
+execution, not repaired deadlines or a passing broader selection. The two test files remain review blockers until
+their workload is made steady without weaker coverage, retries or increased deadlines.
+
+### Revision of evaluation test costs
+
+The CLI file now starts two children across its two declarations, down from five. Valid freeze preparation and
+duplicate-seed refusal call the same production `freezeEvaluation` with Vitest-loaded repository modules. Execution
+uses production `runEvaluation` with that loader. Inspect and mismatched-Case freeze remain actual CLI children.
+The variant suite retains successful CLI freeze and run dispatch coverage. The interruption suite retains actual
+run cancellation coverage. No outcome, seed ordering, archive, independent reproduction or report assertion was removed.
+
+The hexapod matrix Case now asks for 100 mm of traversal in two seconds. Its prior generated default asked for
+500 mm in fourteen seconds. Each of its three rollouts and the recorded-effort reconstruction now handles 100
+frames instead of 700 at the unchanged 20 ms recording interval. All ten workflows retain their reproduction
+and portable round-trip assertions. An explicit hexapod pass assertion keeps the smaller task meaningful. This
+reduces fixture work, without changing the production timestep, contract evaluator, deadlines or retry policy.
+
+The initial focused revision check passed 22 tests across six files in 5.22 seconds, before the final short-distance
+hexapod pass assertion was added. That run established reproduction for the two-second fixture but it missed its
+original 500 mm target. The final fixture uses the builder's supported 100 mm minimum and requires a pass.
+The unchanged-head baseline attempt ended with exit 1 after starting related tests and provided no test summary.
+Its incomplete output is `scratch/revise-baseline.log`, so it supplies no additional baseline timing claim.
+
+The first broader revision selection passed 626 tests and failed the CLI workflow at its existing five-second
+deadline in 26.41 seconds across 128 files. The hexapod passed its 100 mm task with margin
+0.028123836188717773 and 100 recorded frames. Moving only freeze preparation in process had not removed enough
+startup work. The final revision also runs production `runEvaluation` in process, while the other CLI integration
+files retain direct run-command coverage. The first broader log is `scratch/revise-broad.log`.
+
+The final 17-path changed-file selection passed formatting, lint, documentation, all 383 site pages and types.
+It passed all 627 related tests across 128 files in 24.95 seconds, including both CLI declarations and all ten
+workflow rows. The default five-second deadlines and retry configuration remain unchanged. The final log is
+`scratch/revise-final-broad.log`. These local results establish the repaired related selection, not Linux or Windows
+browser execution. No product code, controls or captures changed in this revision.
+
+Preflight reports only the eight unchanged covering-article reminders listed above. The CLI check, export and robot
+install paths, saved comparison, Library, ordinary seed replay and live Case actions retain their documented behavior.
+This revision changes test execution boundaries and fixture size only, so those articles and captures remain valid.
+Copy preflight reports no new finding.
+
+### Covering-article preflight follow-up
+
+A fresh read of all eight named articles against their covered source diffs found one overbroad statement in
+`open-a-try-from-any-scene.md`. Its missing-Case fallback now explicitly applies to ordinary tries and imports.
+`prepareOpening` constructs frozen evaluation inspection from the retained Case and trace, while `showTimeline`
+restores its source scene before opening. The existing feature article supplies the evaluation-specific Library
+hub summary. Its source-scene and timeline captures already show this behavior, so no new image is needed.
+
+The other seven articles remain unchanged for the reasons in the disposition table. In particular, the extracted
+`policyObservation` adds the optional two-value clock to `spec.json`, whose reference already describes observation
+inputs and sizes without restricting their list. Neither robot-package article enumerates an obsolete fixed schema.
+The evaluation CLI namespace leaves check, export and robot install behavior intact. Saved comparison stays on
+`useSavedTimeline`, seed replay retains the boolean default randomization path, and ordinary Case recording retains
+its existing persistence contract. No step, label or pictured control in those seven articles changed.
+
+### Static report browser context correction
+
+The pull request's Linux changed-browser job reached `evaluationReportLayout` after studio startup and actual CLI
+failure generation. It failed at `page.context().newPage()` with `Please use browser.newContext()`. The declaration
+failed after 25,398 ms. The aggregate Check failed solely because that browser job failed. This is a deterministic
+Playwright ownership error: `openApp` uses `browser.newPage()`, whose automatically owned context permits one page.
+It does not establish a rollout, import or timeline failure.
+
+The report helper now creates an explicit context on the same browser, opens its report page there and closes the
+context in `finally`, including when page creation or an assertion fails. It retains the 390 by 844 viewport,
+readability, document containment, keyboard scrolling and recording-link assertions. The studio import, frozen
+identity, timeline and cross-scene reopening assertions remain unchanged. No deadline, retry or quarantine changed.
+Browser execution remains assigned to CI.
+
+The context correction's three-file changed check passed formatting, lint, documentation and types. It selected no
+unit tests. Preflight retained only the seven unchanged covering-article reminders already assessed above. A fresh
+read confirms that the context correction changes none of their commands, steps, labels or recorded states.
+
+### Oversized failure reconstruction bound
+
+Review found that the eight-failure reconstruction bound counted only successfully saved archives. Failures rejected
+by the source snapshot or archive byte limits left that count unchanged, allowing subsequent failures to reconstruct
+efforts beyond the documented 120,000-step bound. Retention now consumes one of eight attempts before reconstruction,
+including when its snapshot or archive exceeds its byte limit. Paired trial execution and scoring continue normally.
+
+`evaluationRetention.test.mjs` drives production retention with ten failed trials for each of those two limits. Before
+the fix, both declarations reported ten replay calls against an expectation of eight. They use controlled oversized
+payloads at the encoding boundary, without additional physics or CLI startup. Existing CLI workflow and matrix tests
+retain production physics, successful archive retention and portable recording coverage. Failure evidence is in
+`scratch/review-2012-retention-before.log`. Browser report and timeline assertions remain assigned to CI.
+
+The four-file review selection passed formatting, lint, docs and all four related tests across two files.
+The final check log is `scratch/review-2012-check.log`. No product strings, timeouts, retries or browser assertions
+changed.

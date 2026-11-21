@@ -8,6 +8,8 @@ Several scenes stay open at once, each with its own parts, undo history, selecti
 
 - **Studies** (§8b) save their captured baseline, knob values, seed, Checks and graded rows in `project.study`. Background scene tabs stay mounted, so their Study workers keep running when another tab is in front. The saved baseline is serialized once across incremental result saves, using the same immutable part cache as the scene. Portable scene files carry the Study too. Export and import remove machine-local print, quote, policy, try, skill and build-guide records from its captured baseline as well as the live project.
 
+- **Portable evaluation failures** (§8h) open their frozen source scene through ordinary import. Library reopening from a different or edited scene creates a source tab and opens its retained timeline, preserving the working document. The transient `WorkspaceSeed.openTry` is consumed by `useOpeningTry` and is not a saved scene format field.
+
 - **Architecture:** `App.tsx` is the tab host; each tab is a `SceneWorkspace` (`src/SceneWorkspace.tsx`).
   - Every tab stays mounted (background tabs mount shortly after launch, §0f), so a background agent keeps building and can render its review shots. Background tabs are `invisible` + `inert`, and their `Viewport3D` is `paused` (no render loop; captures still render on demand). Closing a tab frees its WebGL context (`forceContextLoss`).
   - Up to 8 tabs (browsers cap WebGL contexts near 16). A ninth says “Close a scene to open another. Up to 8 stay open.”

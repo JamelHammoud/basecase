@@ -58,6 +58,6 @@ Basecase saves the layout with the Case in your `.basecase` file, and a robot yo
 
 A card can be 200 to 720 pixels wide. A console holds up to six cards, including the canvas, and up to 24 panels. If a change would break the layout, Basecase keeps the layout as it was and shows you why.
 
-You can arrange the console while a try runs, and the try keeps running. You can't change the console while a try plays back, or in a robot shared in the browser.
+Finish recording before rearranging the console. Layout edits during a try keep it running, but its result won't be saved. You can't change the console while a try plays back, or in a robot shared in the browser.
 
 The agent reads your layout along with the scene. It also builds the code panels, such as a joystick or a piano. See [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).

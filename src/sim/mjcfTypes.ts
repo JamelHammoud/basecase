@@ -1,4 +1,5 @@
 import type { LoopClosure } from '../types/loopClosure';
+import type { PersonEncounter } from '../cases/personEncounter';
 import type { ServoFit } from '../data/components';
 import type { BodyFit } from '../reality/bodyTypes';
 import type { MeshMeasure } from '../three/meshMeasure';
@@ -20,12 +21,13 @@ export interface SimBody {
   robot?: string;
   parent?: string;
   joint?: string;
-  moves?: { kind: 'mocap' | 'free'; rotation: V3 };
+  moves?: { kind: 'mocap' | 'free'; rotation: V3; person?: PersonEncounter };
 }
 
 export type WorldBehavior = 'static' | 'dynamic' | 'marker';
 
 export interface WorldItem extends ScenePart {
+  person?: PersonEncounter;
   sourcePartId?: string;
   parent?: string;
   joint?: PassiveJoint;

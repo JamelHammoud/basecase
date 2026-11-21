@@ -19,6 +19,7 @@ import { useCaseVision } from './useCaseVision';
 import { caseTryRecord } from './caseTryRecord';
 import { useCaseBranch, type BranchTryInput, type BranchTryContext } from './useCaseBranch';
 import { useStartupLease } from './useStartupLease';
+import { useTryEvidence } from './useTryEvidence';
 
 export type TryPhase = 'idle' | 'starting' | 'running' | 'scoring';
 
@@ -51,6 +52,7 @@ export interface CaseTry {
 const MIN_FRAMES = 2;
 
 const TOO_SHORT = 'Play the simulation to record a try.';
+const SOURCE_EDITED = 'Record a new try after editing the Case or robot.';
 
 function teamFor(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[] }, all: boolean): DriveTeam {
   const { rig, parts, slots } = castOf(staged, scene);
@@ -80,6 +82,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
   const branch = useCaseBranch({ sim, scope: options.branchScope ?? options.scope, setPhase, setStartedAt, onRefuse });
   const finishing = useRef(false);
   const scripted = useRef(false);
+  const evidence = useTryEvidence(options);
   const lease = useStartupLease(options.scope, sim.subscribeStop, () =>
     setPhase((value) => (value === 'starting' ? 'idle' : value)),
   );
@@ -98,6 +101,8 @@ export function useCaseTry(options: TryOptions): CaseTry {
     });
 
     if (held && !branch.valid(held)) return;
+
+    if (!held && !evidence.current()) return onRefuse(SOURCE_EDITED);
 
     if (held && options.onBranchTry) return options.onBranchTry(record, recording, () => branch.valid(held));
 
@@ -123,6 +128,8 @@ export function useCaseTry(options: TryOptions): CaseTry {
 
     if (held && !branch.valid(held)) return;
 
+    if (!held && !evidence.current()) return onRefuse(SOURCE_EDITED);
+
     await keep({ kase, model, recording, held });
   };
 
@@ -139,6 +146,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
       onRefuse(errorMessage(e));
     } finally {
       branch.clear();
+      evidence.clear();
       sim.drive.stop();
       setPhase('idle');
       finishing.current = false;
@@ -164,6 +172,8 @@ export function useCaseTry(options: TryOptions): CaseTry {
 
   const begin = async (all: boolean) => {
     if (!active || phase !== 'idle') return;
+
+    evidence.begin();
 
     const staged = stageCase(active, { rig, parts }, partners());
     const kase = staged.kase;

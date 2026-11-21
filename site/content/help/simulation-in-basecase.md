@@ -44,6 +44,8 @@ An [imported world](/help/import-a-world) collides as up to 64 separate convex p
 
 Saved [fixture assemblies](/help/reuse-an-assembly-in-cases) retain their passive joints and springs. Their nonprimitive shapes use separate convex pieces.
 
+[Authored people](/help/test-a-person-crossing) use six separate rigid boxes for appearance and collision. Their routes advance at physics boundaries, and a route through static obstacle bounds is refused before running.
+
 Separate robots collide with each other, the floor, scenery and loose objects. In [Hand Off to a Spot](/help/put-two-robots-in-one-case), the grippers hold and pass the block through physical contact.
 
 If the robot misbehaves in the simulation, fix the design. Basecase writes your changes into the model on your next run.

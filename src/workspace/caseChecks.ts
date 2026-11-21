@@ -3,6 +3,7 @@ import type { FilmShot } from '../cases/filmstrip';
 import { caseCheckPool } from '../cases/caseChecksClient';
 import { CASE_RUNS, seedBatches, summarizeRuns, type CaseRuns } from '../cases/caseRuns';
 import { readCases, type Case } from '../cases/schema';
+import { caseSensorKey } from '../cases/sensorIdentity';
 import { readinessFingerprint } from '../readiness/readiness';
 import { caseRow, replacedRow, stoppedRow } from '../readiness/caseChecks';
 import type { VelocityDrive } from '../sim/driveAccess';
@@ -110,6 +111,7 @@ async function readModel(input: CaseRobotInput, robot: () => WireRobot, turn: nu
   const geometry = readinessFingerprint(input.parts, {
     joints: input.project.joints,
     selfContact: input.project.selfContact,
+    sensors: caseSensorKey(input.parts),
   });
   const walks = hashOf(records);
   const key = `${geometry}|${walks}`;

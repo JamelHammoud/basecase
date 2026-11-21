@@ -10,6 +10,7 @@ import { CaseRunOverlays } from './CaseRunProvider';
 import { MarkBar } from './MarkBar';
 import { PlateCanvas } from './PlateCanvas';
 import { SceneViewport } from './SceneViewport';
+import { RenderCompositionPanel } from './RenderCompositionPanel';
 import type { AgentSession } from './useAgentSession';
 import type { CanvasMenu } from './useCanvasMenu';
 import type { useCanvasDrop } from './useCanvasDrop';
@@ -63,6 +64,7 @@ function CanvasToolbar({ core, actions, ui }: Pick<CanvasCardProps, 'core' | 'ac
       onAddShape={creation.addCatalogItem}
       onSketch={core.sketching.open}
       onImportSvg={() => openCreator('svg')}
+      onRenderImage={actions.exports.composition.show}
     />
   );
 }
@@ -98,7 +100,7 @@ function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
       )}
       {tool.marking && !core.printing.mode && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
       {!core.caseRun.open && !core.triesView.open && (
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto max-w-[calc(100%-24px)]">
           <CanvasToolbar core={core} actions={actions} ui={ui} />
         </div>
       )}
@@ -144,6 +146,11 @@ export function CanvasCard(props: CanvasCardProps) {
       </ErrorBoundary>
       <div className="canvas-vignette absolute inset-0 pointer-events-none" />
       <CaseRunOverlays />
+      {actions.exports.composition.open && (
+        <ErrorBoundary region="Render image" onClose={actions.exports.composition.close}>
+          <RenderCompositionPanel composition={actions.exports.composition} />
+        </ErrorBoundary>
+      )}
       {core.triesView.open && (
         <TriesMode
           active={active}

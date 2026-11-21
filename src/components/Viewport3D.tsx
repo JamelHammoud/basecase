@@ -9,6 +9,7 @@ export type { Viewport3DHandle } from '../three/viewport/types';
 
 const DETACHED: Viewport3DHandle = {
   captureScreenshot: async () => '',
+  renderPose: () => ({}),
   currentView: () => ({ position: [0, 0, 0], target: [0, 0, -1], hfovDeg: 60 }),
   lookThrough: () => {},
   setCameraPreset: () => {},

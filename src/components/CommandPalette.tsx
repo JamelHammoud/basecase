@@ -100,6 +100,7 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
                 run(results[active]);
               } else if (e.key === 'Escape') {
                 e.preventDefault();
+                e.stopPropagation();
                 onClose();
               }
             }}

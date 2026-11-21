@@ -42,3 +42,5 @@ SimReady parts use locally cached textures. To download missing textures in the 
 You can also choose **File** ▸ **Open Scene File**, or drop the file on the canvas. Double-clicking a `.basecase` file in Finder or File Explorer doesn't open it in Basecase.
 
 If the file won't open, see [Scene file doesn't open](/help/troubleshoot-scene-files).
+
+Saved [image composition settings](/help/render-a-robot-image) keep their framing, lighting, background and output dimensions when you reopen the scene.

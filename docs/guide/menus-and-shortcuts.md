@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 11. Menus, Palette & Shortcuts
 
+Escape in the command palette closes only the palette and stops before workspace shortcuts. The composition walkthrough in `e2e/renderComposition.e2e.test.ts` covers dismissing the palette while keeping Render image open.
+
 Import World in ⌘K opens a captured GLB, glTF or OBJ world and any selected companions. Import and ordinary model drops add editable parts instead. A dropped SPZ or Gaussian PLY with a collider still opens New Case.
 
 - **Moving or removing a control preserves access to its action.** Trace its handler's callers before deleting it, including keyboard, palette and agent entry points. For an action that remains supported, identify the surviving pointer and keyboard paths in each affected mode. A background job started outside its panel still exposes progress, failure and Stop. Removing a focusable menu button must preserve keyboard access to that menu's actions. Extend the affected command or component test to exercise the surviving path, using a supplied running job or focused item rather than waiting for a real job. In [#66](https://github.com/JamelHammoud/basecase/pull/66), moving printing controls removed the only Stop Slice caller and hid errors from slices started outside Print mode. In [#68](https://github.com/JamelHammoud/basecase/pull/68), removing Library's More button left its menu reachable only by pointer. These are behavior changes even when the handler remains in the code.

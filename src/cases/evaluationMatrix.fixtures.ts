@@ -3,7 +3,7 @@ import { closedLinkage } from '../sim/fixtures/closedLinkages';
 import { continuationScenario } from '../sim/fixtures/continuationScenarios';
 import { buildRig } from '../utils/kinematics';
 import { buildCase, builderRobot } from './caseBuilder';
-import type { GoalKind } from './caseGoals';
+import type { GoalKind, GoalValues } from './caseGoals';
 import type { Case } from './schema';
 import { caseRobot } from './testing';
 import { workbenchTask } from './workbench/tasks.fixtures';
@@ -21,9 +21,12 @@ export const EVALUATION_WORKFLOWS = [
   'closed-linkage motion',
 ] as const;
 
-function built(id: string, goal: GoalKind) {
+function built(id: string, goal: GoalKind, values?: Partial<GoalValues>) {
   const robot = fixtureRobots().find((value) => value.id === id)!;
-  const made = buildCase({ goal, world: 'floor' }, builderRobot(buildRig(robot.joints, robot.parts), robot.parts));
+  const made = buildCase(
+    { goal, world: 'floor', values },
+    builderRobot(buildRig(robot.joints, robot.parts), robot.parts),
+  );
 
   if (!made.ok) throw new Error(made.problem);
 
@@ -61,7 +64,7 @@ export function evaluationWorkflow(name: (typeof EVALUATION_WORKFLOWS)[number]) 
 
   if (name === 'quadruped standing') return standing('quad-servo');
 
-  if (name === 'hexapod traversal') return built('hexapod', 'walk');
+  if (name === 'hexapod traversal') return built('hexapod', 'walk', { seconds: 2, distanceMm: 100 });
 
   if (name === 'biped balance') return standing('biped-servo');
 

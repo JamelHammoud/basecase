@@ -70,6 +70,8 @@ it.each(EVALUATION_WORKFLOWS)(
     const unchanged = await runner.run(7);
     const reproduced = await independent().run(7);
 
+    if (name === 'hexapod traversal') expect(baseline.passed).toBe(true);
+
     console.info(
       'evaluation-workflow',
       JSON.stringify({

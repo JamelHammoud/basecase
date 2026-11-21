@@ -677,8 +677,8 @@ The ten-file review check passed formatting, ESLint, documentation, site validat
 
 ## Portable CLI evaluation
 
-`tools/cli/evaluation.test.mjs` creates ordinary baseline and 30%-motor rover scenes. It invokes the actual freeze,
-run and inspect commands with ordered seeds 7 and 3. Both passing baseline trials become candidate failures, with
+`tools/cli/evaluation.test.mjs` creates ordinary baseline and 30%-motor rover scenes. It uses production freeze and run functions in process and invokes the actual
+inspect command with ordered seeds 7 and 3. Both passing baseline trials become candidate failures, with
 exit 1 and matching JSON/HTML identities. Ordinary archive decoding checks the saved seed, source revision and model.
 Independent production `runCase` execution reproduces the weak-rover outcome, margin and failure.
 
@@ -734,13 +734,13 @@ Preflight also names existing articles covering shared entry points. Their conte
 implementation. The Cases concept and timeline article now distinguish ordinary tries from frozen evaluation inputs.
 The new feature article supplies its own summary to the Library hub. Existing screenshots still show unchanged controls.
 
-| Unchanged article | Why its steps, labels and captures remain true |
+| Article | Disposition after checking its steps, labels and captures |
 | --- | --- |
 | `check-your-robot-in-ci.md` | Legacy check/export arguments, default reference execution, line/JSON output and exit codes remain unchanged. |
 | `compare-saved-tries.md` | Two-source comparison stays on its existing saved-evidence path, with unchanged alignment, signals, clocks and source panels. |
 | `connect-a-robot-computer.md` | The robot install namespace, SSH inputs, pairing, emulation and connection controls are unchanged. |
 | `export-a-robot-package.md` | Export placement, availability, file layout, policy selection and MJCF/URDF behavior remain unchanged. |
-| `open-a-try-from-any-scene.md` | Library selection, playback, deletion and ordinary compatibility behavior remain unchanged. Evaluation source restoration is described by the feature's hub summary. |
+| `open-a-try-from-any-scene.md` | Scope the missing-Case fallback to ordinary tries. Frozen evaluation playback uses its retained Case and source scene. Library controls and ordinary-try screenshots remain accurate. |
 | `replay-a-failing-seed.md` | Existing callers keep the same seed randomization, temporary replay, trip selection and simulation restoration. |
 | `robot-package-contents.md` | The extracted policy schema still lists actual inputs and dimensions. Clock inputs now follow their actual runtime layout, within the existing documented spec fields. |
 | `try-a-case.md` | Driving, reference recording, Results, deletion, dataset collection and Checks authority are unchanged. |
@@ -785,3 +785,55 @@ the new timeline Case/trace preservation and pre-persistence missing-mesh refusa
 `scratch/review-2012-check.log` and `scratch/review-2012-focused-check.log`. This focused pass establishes intermittent
 execution, not repaired deadlines or a passing broader selection. The two test files remain review blockers until
 their workload is made steady without weaker coverage, retries or increased deadlines.
+
+### Revision of evaluation test costs
+
+The CLI file now starts two children across its two declarations, down from five. Valid freeze preparation and
+duplicate-seed refusal call the same production `freezeEvaluation` with Vitest-loaded repository modules. Execution
+uses production `runEvaluation` with that loader. Inspect and mismatched-Case freeze remain actual CLI children.
+The variant suite retains successful CLI freeze and run dispatch coverage. The interruption suite retains actual
+run cancellation coverage. No outcome, seed ordering, archive, independent reproduction or report assertion was removed.
+
+The hexapod matrix Case now asks for 100 mm of traversal in two seconds. Its prior generated default asked for
+500 mm in fourteen seconds. Each of its three rollouts and the recorded-effort reconstruction now handles 100
+frames instead of 700 at the unchanged 20 ms recording interval. All ten workflows retain their reproduction
+and portable round-trip assertions. An explicit hexapod pass assertion keeps the smaller task meaningful. This
+reduces fixture work, without changing the production timestep, contract evaluator, deadlines or retry policy.
+
+The initial focused revision check passed 22 tests across six files in 5.22 seconds, before the final short-distance
+hexapod pass assertion was added. That run established reproduction for the two-second fixture but it missed its
+original 500 mm target. The final fixture uses the builder's supported 100 mm minimum and requires a pass.
+The unchanged-head baseline attempt ended with exit 1 after starting related tests and provided no test summary.
+Its incomplete output is `scratch/revise-baseline.log`, so it supplies no additional baseline timing claim.
+
+The first broader revision selection passed 626 tests and failed the CLI workflow at its existing five-second
+deadline in 26.41 seconds across 128 files. The hexapod passed its 100 mm task with margin
+0.028123836188717773 and 100 recorded frames. Moving only freeze preparation in process had not removed enough
+startup work. The final revision also runs production `runEvaluation` in process, while the other CLI integration
+files retain direct run-command coverage. The first broader log is `scratch/revise-broad.log`.
+
+The final 17-path changed-file selection passed formatting, lint, documentation, all 383 site pages and types.
+It passed all 627 related tests across 128 files in 24.95 seconds, including both CLI declarations and all ten
+workflow rows. The default five-second deadlines and retry configuration remain unchanged. The final log is
+`scratch/revise-final-broad.log`. These local results establish the repaired related selection, not Linux or Windows
+browser execution. No product code, controls or captures changed in this revision.
+
+Preflight reports only the eight unchanged covering-article reminders listed above. The CLI check, export and robot
+install paths, saved comparison, Library, ordinary seed replay and live Case actions retain their documented behavior.
+This revision changes test execution boundaries and fixture size only, so those articles and captures remain valid.
+Copy preflight reports no new finding.
+
+### Covering-article preflight follow-up
+
+A fresh read of all eight named articles against their covered source diffs found one overbroad statement in
+`open-a-try-from-any-scene.md`. Its missing-Case fallback now explicitly applies to ordinary tries and imports.
+`prepareOpening` constructs frozen evaluation inspection from the retained Case and trace, while `showTimeline`
+restores its source scene before opening. The existing feature article supplies the evaluation-specific Library
+hub summary. Its source-scene and timeline captures already show this behavior, so no new image is needed.
+
+The other seven articles remain unchanged for the reasons in the disposition table. In particular, the extracted
+`policyObservation` adds the optional two-value clock to `spec.json`, whose reference already describes observation
+inputs and sizes without restricting their list. Neither robot-package article enumerates an obsolete fixed schema.
+The evaluation CLI namespace leaves check, export and robot install behavior intact. Saved comparison stays on
+`useSavedTimeline`, seed replay retains the boolean default randomization path, and ordinary Case recording retains
+its existing persistence contract. No step, label or pictured control in those seven articles changed.

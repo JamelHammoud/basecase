@@ -5,41 +5,57 @@ import { afterEach, expect, it } from 'vitest';
 import { evaluationFixture, invokeEvaluation } from './evaluationFixture.mjs';
 import { decodeTryArchive } from '../../src/cases/tryArchiveJobs';
 import { runCase } from '../../src/cases/runCase';
-import { sceneRobot } from '../../src/cases/sceneCheck';
 import loadMujoco from '@mujoco/mujoco';
-import { encodeSceneFile } from '../../src/utils/sceneFile';
+import * as sceneFile from '../../src/utils/sceneFile';
+import * as evaluation from '../../src/cases/evaluation';
+import * as sceneCheck from '../../src/cases/sceneCheck';
+import * as controller from '../../src/cases/evaluationController';
+import * as random from '../../src/cases/caseRandom';
+import { freezeEvaluation } from './evaluationFreeze.mjs';
+import { runEvaluation } from './evaluationRun.mjs';
+import * as componentMeshes from '../../src/three/componentMeshes';
+import * as assets from '../../src/cases/evaluationAssets';
+import * as replay from '../../src/cases/evaluationReplay';
+import * as recordingValues from '../../src/cases/recordingValues';
+import * as execution from '../../src/cases/evaluationExecution';
 
 const dirs = [];
+const modules = {
+  'src/utils/sceneFile.ts': sceneFile,
+  'src/cases/evaluation.ts': evaluation,
+  'src/cases/sceneCheck.ts': sceneCheck,
+  'src/cases/evaluationController.ts': controller,
+  'src/cases/caseRandom.ts': random,
+  'src/three/componentMeshes.ts': componentMeshes,
+  'src/cases/evaluationAssets.ts': assets,
+  'src/cases/evaluationReplay.ts': replay,
+  'src/cases/recordingValues.ts': recordingValues,
+  'src/cases/evaluationExecution.ts': execution,
+};
+const context = { root: process.cwd(), load: async (file) => modules[file] };
 
 afterEach(() => {
   for (const dir of dirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
 });
 
-it('freezes and runs paired rover revisions through the CLI and independently reproduces the failure', async () => {
+it('compares paired rover revisions, independently reproduces the failure and inspects it through the CLI', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'evaluation-'));
 
   dirs.push(dir);
 
   const fixture = await evaluationFixture(dir);
-  const frozen = await invokeEvaluation(
-    'freeze',
+  const frozen = await freezeEvaluation(
     fixture.baseline,
-    '--candidate',
-    fixture.candidate,
-    '--package',
-    fixture.package,
-    '--seeds',
-    '7,3',
-    '--conditions',
-    'fixed',
+    { candidate: fixture.candidate, package: fixture.package, seeds: '7,3', conditions: 'fixed' },
+    context,
   );
 
-  expect(frozen.code).toBe(0);
+  expect(frozen).toBe(0);
 
-  const ran = await invokeEvaluation('run', fixture.package, '--output', fixture.output);
+  const ran = await runEvaluation(fixture.package, { output: fixture.output }, context);
   const report = JSON.parse(fs.readFileSync(path.join(fixture.output, 'comparison.json'), 'utf8'));
 
-  expect(ran.code).toBe(1);
+  expect(ran).toBe(1);
   expect(report.status).toBe('complete');
   expect(report.pairs.map((pair) => pair.seed)).toEqual([7, 3]);
   expect(report.pairs.every((pair) => pair.baseline.passed && !pair.candidate.passed)).toBe(true);
@@ -55,7 +71,7 @@ it('freezes and runs paired rover revisions through the CLI and independently re
   expect(archive[0].stored.outcome.verdict).toBe('failed');
 
   const mj = await loadMujoco();
-  const result = await runCase(mj, fixture.kase, await sceneRobot(fixture.weakScene, {}), {
+  const result = await runCase(mj, fixture.kase, await sceneCheck.sceneRobot(fixture.weakScene, {}), {
     controller: 'reference',
     fixedCase: true,
     worldRandomization: false,
@@ -68,34 +84,30 @@ it('freezes and runs paired rover revisions through the CLI and independently re
   expect((await invokeEvaluation('inspect', fixture.output)).code).toBe(1);
 });
 
-it('refuses duplicate seeds and changed Case contracts before freezing', async () => {
+it('refuses duplicate seeds during preparation and changed Case contracts through the CLI', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'evaluation-'));
 
   dirs.push(dir);
 
   const fixture = await evaluationFixture(dir);
 
-  expect(
-    (
-      await invokeEvaluation(
-        'freeze',
-        fixture.baseline,
-        '--candidate',
-        fixture.candidate,
-        '--package',
-        fixture.package,
-        '--seeds',
-        '1,1',
-      )
-    ).code,
-  ).toBe(2);
+  await expect(
+    freezeEvaluation(
+      fixture.baseline,
+      { candidate: fixture.candidate, package: fixture.package, seeds: '1,1' },
+      context,
+    ),
+  ).rejects.toThrow('Choose 1 to 32 distinct unsigned seeds.');
   expect(fs.existsSync(fixture.package)).toBe(false);
 
   const changed = { ...fixture.kase, task: { ...fixture.kase.task, seconds: fixture.kase.task.seconds + 1 } };
 
   fs.writeFileSync(
     fixture.candidate,
-    await encodeSceneFile({ ...fixture.weakScene, project: { ...fixture.weakScene.project, cases: [changed] } }),
+    await sceneFile.encodeSceneFile({
+      ...fixture.weakScene,
+      project: { ...fixture.weakScene.project, cases: [changed] },
+    }),
   );
 
   const refused = await invokeEvaluation(

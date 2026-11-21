@@ -165,6 +165,14 @@ HTML without loading MuJoCo. The report stays readable as a static file. Tests, 
 [portable evaluation evidence](../notes/testing-cases.md#portable-cli-evaluation). Help is
 [Compare robot revisions](../../site/content/help/compare-robot-revisions.md).
 
+`evaluation.test.mjs` exercises inspect and mismatched-Case freeze through real CLI children. Valid freeze
+preparation, duplicate-seed rejection and evaluation execution use production functions with repository modules loaded
+by Vitest, avoiding three redundant CLI startups. `evaluationVariants.test.mjs` retains actual successful freeze and
+run dispatch coverage. `evaluationInterruption.test.mjs` retains actual run cancellation coverage.
+The ten-workflow matrix keeps independent reruns, exact pose comparisons and portable recording round trips. Its
+hexapod traversal uses a two-second, 100 mm authored Case with an explicit pass assertion, bounding physics and effort
+reconstruction without changing the production timestep, controller, contract evaluator or test deadlines.
+
 The static report wraps long input identities and keeps its paired table inside a focusable horizontal scroll region
 on narrow windows. Its ordinary recording links and the studio timeline retain keyboard access.
 

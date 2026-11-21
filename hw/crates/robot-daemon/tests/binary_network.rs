@@ -278,7 +278,7 @@ fn spent_and_expired_pairing_codes_require_the_fresh_robot_code_over_tcp() {
         .as_secs()
         + 600;
 
-    for (failures, expires_at) in [(9, future), (0, 1)] {
+    for (failures, expires_at, refused_code) in [(9, future, "654321"), (0, 1, "123456")] {
         let robot = Robot::start_with_pairing(
             "feetech",
             2,
@@ -287,7 +287,7 @@ fn spent_and_expired_pairing_codes_require_the_fresh_robot_code_over_tcp() {
                 "key": "ab".repeat(32), "code": "123456", "failures": failures, "expires_at": expires_at
             }),
         );
-        assert!(pair_client::pair(robot.address, "654321").is_err());
+        assert!(pair_client::pair(robot.address, refused_code).is_err());
         let persisted: Value =
             serde_json::from_slice(&std::fs::read(robot.directory.join("pairing.json")).unwrap()).unwrap();
         let fresh = persisted["code"].as_str().unwrap();

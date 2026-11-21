@@ -258,10 +258,11 @@ fn can_enroll(pairing: &robot_daemon::network::Pairing, code: &str) -> bool {
     use robot_daemon::network::enrollment::{decrypt, encrypt, transcript, Exchange};
     let server = Exchange::server(pairing.code.as_deref().unwrap());
     let client = Exchange::client(code);
-    let context = transcript("nonce", &server.message, &client.message);
+    let nonce = "a1".repeat(32);
+    let context = transcript(&nonce, &server.message, &client.message);
     let server_message = server.message.clone();
-    let server_key = server.finish(&client.message, "nonce").unwrap();
-    let client_key = client.finish(&server_message, "nonce").unwrap();
+    let server_key = server.finish(&client.message, &nonce).unwrap();
+    let client_key = client.finish(&server_message, &nonce).unwrap();
 
     let encrypted = encrypt(&server_key, &context, &pairing.key_bytes().unwrap()).unwrap();
 

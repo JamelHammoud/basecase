@@ -2,6 +2,7 @@
 title: Test a person crossing
 date: 2026-11-20
 collection: simulate-and-train
+type: task
 keywords:
   - person
   - crossing

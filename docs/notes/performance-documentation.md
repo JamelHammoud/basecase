@@ -70,7 +70,7 @@ The table maps each recorded pull request's testing-guide edits to the resulting
 | [#894](https://github.com/JamelHammoud/basecase/pull/894) | 1 | Camera inference and scene-isolation coverage belongs in [Cameras](../guide/cameras.md#testing-coverage). This pull request closed without merging. Its proposed coverage is not added by this migration. |
 | [#941](https://github.com/JamelHammoud/basecase/pull/941) | 1 | [Servo and mixed-servo calibration](testing-robot-runtime.md#servo-calibration) move to Robot runtime. The `__studio.calibrate` harness contract remains shared. Merged commit `0332b274d`. |
 | [#943](https://github.com/JamelHammoud/basecase/pull/943) | 4 | [Calibration](testing-robot-runtime.md#servo-calibration) and [zero and direction](testing-robot-runtime.md#servo-zero-and-direction) move to Robot runtime. Merged commit `6468bdf46`. |
-| [#945](https://github.com/JamelHammoud/basecase/pull/945) | 2 | [Build Along](testing-build.md#build-along) moves to Build. Merged commit `e07827607`. |
+| [#945](https://github.com/JamelHammoud/basecase/pull/945) | 2 | [Build Along](performance-assembly.md#build-along) moves to Build. Merged commit `e07827607`. |
 | [#946](https://github.com/JamelHammoud/basecase/pull/946) | 1 | [Skill coaching](testing-skills.md#skill-coaching) moves to Skills. Merged commit `48de8f120`. |
 | [#949](https://github.com/JamelHammoud/basecase/pull/949) | 4 | [Gallery training](testing-gallery.md#gallery-training) moves to Cases. Merged commit `e5e928523`. |
 | [#953](https://github.com/JamelHammoud/basecase/pull/953) | 1 | [Mark labels](testing-toolbar-and-settings.md#mark-labels) move to Toolbar and Settings. Merged commit `06295262d`. |
@@ -79,7 +79,7 @@ The table maps each recorded pull request's testing-guide edits to the resulting
 | [#1007](https://github.com/JamelHammoud/basecase/pull/1007) | 1 | Captured-world coverage moves to [Cases](../guide/cases.md#testing-coverage), retaining the existing [world-render measurements](world-render-setup.md). Merged commit `84aa2146d`. |
 | [#1076](https://github.com/JamelHammoud/basecase/pull/1076) | 1 | Recorded-video coverage moves to [Cases](../guide/cases.md#testing-coverage), retaining the existing [setup measurements](recorded-video-worker-setup.md). The shared offscreen-worker harness contract stays central. Merged commit `52138ae11`. |
 | [#1107](https://github.com/JamelHammoud/basecase/pull/1107) | 1 | [Rendered vision](testing-vision.md#rendered-vision) moves to Cases. Merged commit `72d0d08b3`. |
-| [#1108](https://github.com/JamelHammoud/basecase/pull/1108) | 1 | [Build Along and Cable reach](testing-build.md#build-along) move to Build. Merged commit `b29229fbb`. |
+| [#1108](https://github.com/JamelHammoud/basecase/pull/1108) | 1 | [Build Along and Cable reach](performance-assembly.md#build-along) move to Build. Merged commit `b29229fbb`. |
 | [#1157](https://github.com/JamelHammoud/basecase/pull/1157) | 2 | [Pose animation training](testing-skills.md#pose-animation-training) moves to Skills. Merged commit `08d4ffe8b`. |
 | [#1162](https://github.com/JamelHammoud/basecase/pull/1162) | 1 | [Dataset versions](testing-datasets.md#dataset-versions) move to Cases. Live-route and common browser-harness cleanup remain shared. Merged commit `aa054400e`. |
 | [#1164](https://github.com/JamelHammoud/basecase/pull/1164) | 1 | [Live cameras](testing-cameras.md#live-cameras), [Case startup and console coverage](testing-cases.md#default-console-coverage) and [captured worlds](testing-worlds.md#captured-worlds) move to their Cameras and Cases owners. Merged commit `a42873277`. |
@@ -95,3 +95,86 @@ This is an ownership replay of all 26 recorded events, not a reconstruction of h
 Collisions can remain within an owner. The actual inspected diffs for #941 and #943 both change the Servo calibration record. Those for #945 and #1108 both change the Build Along record. Moving them preserves that overlap in the Robot runtime and Build files. Skills, Cameras and Cases also receive multiple sampled edits, sometimes to different records. Shared-contract edits still share the testing guide. Whether any such overlap produces a textual conflict depends on the original base, edit timing and surrounding changes.
 
 The recorded paths cannot identify which hunk caused each event. Final merged diffs can include revisions made after an earlier conflict, and closed pull requests never became shipped behavior. Therefore the 21 relocated event-bearing edits are not 21 proven avoided conflicts. No pairwise merge count, production rebase reduction, CI saving or observed merge-time improvement is claimed. Runtime paths, tests, assertions and quarantine entries are unchanged by this placement work.
+
+## Build evidence ownership replay
+
+Issue [#2031](https://github.com/JamelHammoud/basecase/issues/2031), in arc [#224](https://github.com/JamelHammoud/basecase/issues/224), reports 18 conflicts in `docs/notes/testing-build.md`. The migration source at `87e19e0156d82e69484d1588a8d19e4aca66b5ad` has 1,538 lines, rather than the issue snapshot's 1,534. It contains 54 second-level evidence sections and 122 second-level and nested heading targets.
+
+### Placement and preservation
+
+[Build evidence navigation](testing-build.md) replaces the combined incident log. Three new stable notes own [electrical boards and native routing](testing-electrical.md), [manufacturing export and guide rendering](testing-manufacturing.md), and [purchasing](testing-purchasing.md). Existing [Assembly](performance-assembly.md), [Sketch](performance-sketch.md), [Wiring](performance-wiring.md), [Printing](performance-printing.md), [Engineering](performance-engineering.md) and [Joints](testing-joints-and-motion.md) notes receive their subsystem evidence. Existing same-name sections absorb the moved body without adding a duplicate heading. Feature records and their single-owner repair history stay together.
+
+Historical summaries spanning owners move intact to [Node-side evidence](node.md#windows-board-and-sketch-file-flows). Each has explicit routes to the separate implementation owners, with reciprocal links from their notes. New investigation and restoration observations belong beside their feature, rather than extending a mixed summary. Implementation, incident diagnosis, coverage judgments, test selection and quarantine restoration remain with their existing owners. This includes #391, #1420, #1579, #1328 and the existing Build, electrical, Sketch, printing and persistence repairs. Diagnostic prerequisites remain with #1768, incremental agent reads with #1286 and studio responsiveness with #1959.
+
+Before moving content, the local acceptance probe maps all 54 source sections to exactly one destination and all 122 heading targets to their owner. It initially fails because the electrical destination is absent. After migration it requires every complete original section body, including nested headings, in its destination. Comparison permits only whitespace normalization and link relocation. All 54 pass. Issue numbers, revisions, diagnostic tickets, source links, measurements, coverage gaps, test selection and restoration conditions remain in those preserved bodies. Repository links to moved anchors now name their destination directly. Existing documentation checking validates the complete contributor-doc local file graph, and the focused fragment probe verifies migrated heading targets and incoming links.
+
+### Conflict sample and actual edits
+
+At inspection, the available loop conflict records contain 19 events across 14 pull requests. To bound the replay at the supplied count, take the earliest 18 events. They span 13 pull requests from 16 November at 23:28 UTC through 21 November at 09:25 UTC. Repeated resolutions count separately. The newest event, #2030 at 09:42 UTC on 21 November, is excluded from this sample. Its code and repair remain outside this migration.
+
+For each sampled pull request, inspect its actual shipped `testing-build.md` diff against the first parent of the squash commit below. Assign every nonblank added or removed line to its containing evidence section and the ownership above. Blank separators alone do not give the preceding section an owner claim. This includes #1973's electrical fixture-bundle review correction as well as its Current replay evidence.
+
+| Pull request | Events | Shipped commit | Evidence destinations |
+| --- | ---: | --- | --- |
+| [#1564](https://github.com/JamelHammoud/basecase/pull/1564) | 1 | `c1a5905c3` | [testing-electrical](testing-electrical.md) |
+| [#1610](https://github.com/JamelHammoud/basecase/pull/1610) | 3 | `08e3b77a6` | [performance-sketch](performance-sketch.md) |
+| [#1612](https://github.com/JamelHammoud/basecase/pull/1612) | 1 | `802e81e96` | [testing-manufacturing](testing-manufacturing.md) |
+| [#1617](https://github.com/JamelHammoud/basecase/pull/1617) | 1 | `0a0c79aff` | [testing-electrical](testing-electrical.md) |
+| [#1627](https://github.com/JamelHammoud/basecase/pull/1627) | 1 | `6153d2335` | [testing-manufacturing](testing-manufacturing.md) |
+| [#1665](https://github.com/JamelHammoud/basecase/pull/1665) | 1 | `fc5cb5f43` | [testing-electrical](testing-electrical.md) |
+| [#1807](https://github.com/JamelHammoud/basecase/pull/1807) | 1 | `e758c7f4c` | [performance-wiring](performance-wiring.md) |
+| [#1929](https://github.com/JamelHammoud/basecase/pull/1929) | 1 | `94a1bb558` | [testing-purchasing](testing-purchasing.md) |
+| [#1968](https://github.com/JamelHammoud/basecase/pull/1968) | 1 | `a465c5ec7` | [performance-printing](performance-printing.md) |
+| [#1972](https://github.com/JamelHammoud/basecase/pull/1972) | 2 | `af8437c13` | [performance-assembly](performance-assembly.md) |
+| [#1973](https://github.com/JamelHammoud/basecase/pull/1973) | 3 | `986fa9c23` | [performance-wiring](performance-wiring.md), [testing-electrical](testing-electrical.md) |
+| [#2005](https://github.com/JamelHammoud/basecase/pull/2005) | 1 | `371ecdd3b` | [testing-purchasing](testing-purchasing.md) |
+| [#2025](https://github.com/JamelHammoud/basecase/pull/2025) | 1 | `87e19e015` | [testing-electrical](testing-electrical.md) |
+
+All 13 changes previously touched the same evidence file. Under this ownership, 13 of their 78 unordered pairs still share a destination:
+
+- Electrical: every pair among #1564, #1617, #1665, #1973 and #2025, ten pairs.
+- Manufacturing: #1612 and #1627.
+- Purchasing: #1929 and #2005.
+- Wiring: #1807 and #1973.
+
+The other 65 pairs have disjoint evidence destinations. No sampled subsystem addition requires editing the navigation page. This is file ownership overlap, not a count of textual conflicts. Actual feature changes can still share area guides, code and tests, which this migration does not partition.
+
+### Historical textual merge comparison
+
+Conflict records retain timestamps and paths, not input hashes or conflicted hunks. Original branch history is locally available for every sampled pull request. For each recorded event, take the earliest subsequent first-parent merge commit on that pull request's final branch history, excluding commits reachable from its shipped main parent. This yields 17 distinct input triples for 18 events. Two #1973 events select the same merge. This deterministic association is evidence of nearby retained inputs, not proof of a one-to-one match to every recorded resolution.
+
+Each selected merge supplies the original left and right parents. Use their `git merge-base` as the base. Run `git merge-file -p <left> <base> <right>` on the original file. Then project those same three documents by section into the shipped ownership and merge each destination changed on both sides. Files changed on only one side need no textual merge. Do not synthesize concurrent insertion locations or change evidence prose.
+
+Two projections expose sensitivity to section separators. The raw projection preserves each complete section's original whitespace. The normalized projection strips only leading and trailing blank space at section boundaries and uses one blank line between sections, matching the migrated documents' formatting. Both preserve section body text and historical order. Existing unrelated contents of destination notes are outside the projection, so their concurrent edits are not modeled.
+
+| Pull request | Selected merge | Events | Original conflict hunks | Raw partition conflict hunks | Formatted partition conflict hunks |
+| --- | --- | ---: | ---: | ---: | ---: |
+| #1564 | `b933211cd` | 1 | 1 | 0 | 0 |
+| #1610 | `6eb07edee` | 1 | 1 | 0 | 0 |
+| #1610 | `84dbbd407` | 1 | 1 | 0 | 0 |
+| #1610 | `f786c8dfd` | 1 | 1 | 1 | 0 |
+| #1612 | `158c62744` | 1 | 1 | 1 | 0 |
+| #1617 | `22260b1d7` | 1 | 1 | 1 | 0 |
+| #1627 | `d137f3035` | 1 | 1 | 0 | 0 |
+| #1665 | `a47aed069` | 1 | 1 | 0 | 0 |
+| #1807 | `6d4d543cd` | 1 | 1 | 0 | 0 |
+| #1929 | `194746ffc` | 1 | 1 | 0 | 0 |
+| #1968 | `e0137228f` | 1 | 1 | 1 | 0 |
+| #1972 | `46fa5c4d9` | 1 | 1 | 0 | 0 |
+| #1972 | `7f0ed2ddf` | 1 | 1 | 1 | 0 |
+| #1973 | `3acbd75a3` | 2 | 1 | 0 | 0 |
+| #1973 | `fac2ce273` | 1 | 1 | 0 | 0 |
+| #2005 | `59d1e09e9` | 1 | 1 | 0 | 0 |
+| #2025 | `cbb76056f` | 1 | 1 | 1 | 0 |
+
+All 17 original triples conflict. Six raw partitioned triples retain a conflict, in electrical for #1610, #1612 and #1617, printing for #1968, purchasing for #1972 and a mixed Node-side summary for #2025. Their separator-sensitive conflicts disappear in the formatted projection, which has zero conflicts across these 17 triples. These results cover evidence-file inputs only. They do not establish that all paths in any pull request would merge cleanly.
+
+As a separate control, compare each final branch head with the main parent immediately before its squash merge, using their merge base. All 13 final inputs merge cleanly before and after projection. None has both sides changing the same projected evidence file after boundary formatting. Those inputs already contain resolutions, so that control cannot reconstruct earlier conflicts or measure avoided work.
+
+### Retained evidence and limits
+
+The 24-file `npm run check:changed -- <changed files>` passes formatting and the existing complete contributor-documentation check. The focused probe also passes all 122 migrated heading targets, 799 local fragment links in changed documents and 151 incoming moved-target links. No repository Markdown link still targets a removed `testing-build.md` fragment. The complete-body preservation probe passes again after formatting. No browser, runtime or CI test is needed for this placement-only change.
+
+Local reproduction inputs and outputs are in `scratch/build-evidence/`: `manifest.json`, `source.md` and `preservation.json` record source ownership and preservation. `conflicts.json` retains the timestamped sample. `pull-<number>.json` and `<number>.diff` retain pull metadata and actual documentation diffs. `replay.py` and `replay.json` record final-input checks and pair overlap. `historical-merges.py`, `historical-merges.json`, `historical-merges-raw.json` and `merges/` retain selected parent hashes, bases, commands and textual outputs. The committed revision and merge identifiers above make the comparisons reconstructible without private scratch files.
+
+This is a bounded documentation ownership and textual merge replay. It is not an observed reduction in production conflicts, rebases, CI runs, queue time or allowance per completed task. The 18 reported events remain the measured target, not 18 proven avoided conflicts. Timestamp association, resolved branch history, boundary whitespace and unmodeled edits in reused destination notes limit the comparison. Same-owner additions and shared guide changes can still conflict. No runtime behavior, acceptance requirement, workflow, gate, wait, retry, test or quarantine entry changes. UI copy is unchanged. The reported net +401 UI strings remains outside this placement task and with the existing copy response.

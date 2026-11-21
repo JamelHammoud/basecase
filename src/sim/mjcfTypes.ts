@@ -35,6 +35,7 @@ export interface WorldItem extends ScenePart {
 }
 
 export interface SimJoint {
+  tendon?: import('../types/tendon').IdealTendon;
   loop?: LoopClosure;
   id: string;
   name: string;
@@ -78,6 +79,7 @@ export interface ServoSpread {
 }
 
 export interface MjcfInput {
+  worldFloorMm?: number;
   robotHulls?: Record<string, Float32Array[]>;
   parts: ScenePart[];
   rig: Rig;

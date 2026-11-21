@@ -52,3 +52,45 @@ it('holds the rover to an hours budget and updates after deleting a printed part
   await expect.poll(() => row.getAttribute('data-status')).toBe('pass');
   expect(app.errors).toEqual([]);
 });
+
+it('keeps the time label clear of its value and unit', async () => {
+  await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+  const budget = app.page.getByRole('textbox', { name: 'Time budget' });
+
+  await budget.fill('1000');
+  await budget.press('Enter');
+
+  const layout = await budget.evaluate((element) => {
+    const input = element as HTMLInputElement;
+    const field = input.parentElement!;
+    const label = [...field.querySelectorAll('span')].find(
+      (span) => span.textContent === 'Time' && span.childElementCount === 0,
+    )!;
+    const unit = [...field.querySelectorAll('span')].find((span) => span.textContent === 'h')!;
+    const range = document.createRange();
+
+    range.selectNodeContents(label);
+
+    const text = range.getBoundingClientRect();
+    const value = input.getBoundingClientRect();
+    const suffix = unit.getBoundingClientRect();
+    const style = getComputedStyle(input);
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d')!;
+
+    context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+
+    return {
+      labelRight: text.right,
+      valueLeft: value.left + parseFloat(style.paddingLeft),
+      valueRight: value.left + parseFloat(style.paddingLeft) + context.measureText(input.value).width,
+      unitLeft: suffix.left,
+      height: value.height,
+    };
+  });
+
+  expect(layout.labelRight).toBeLessThanOrEqual(layout.valueLeft - 4);
+  expect(layout.valueRight).toBeLessThanOrEqual(layout.unitLeft - 4);
+  expect(layout.height).toBe(32);
+});

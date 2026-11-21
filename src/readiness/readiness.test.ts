@@ -14,7 +14,6 @@ import {
   withDecisions,
   findingSignature,
   fixRequest,
-  followUpRequest,
   findingQuote,
   newBlockers,
   readinessDelta,
@@ -179,12 +178,6 @@ describe('what changed in a turn', () => {
 
     expect(newBlockers(before, after).map((f) => f.key)).toEqual(['new']);
     expect(readinessDelta(before, after)).toContain('blockers 1 → 2');
-
-    const followUp = followUpRequest(newBlockers(before, after), []);
-
-    expect(followUp.text).toBe('Fix what the last change added: 1 problem.');
-    expect(withQuotes(followUp.text, followUp.quotes)).toContain('dispute_finding');
-    expect(withQuotes(followUp.text, followUp.quotes)).toContain('Check: new');
   });
 
   it('says nothing when a clean design stays clean', () => {

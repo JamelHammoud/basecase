@@ -92,6 +92,7 @@ export function useSimTraining(options: SimTrainingOptions) {
   };
 
   const cases = useCases({
+    commitWorkbenchPlacements: docs.commitWorkbenchPlacements,
     fixtures: studio.customModels,
     parts,
     project,

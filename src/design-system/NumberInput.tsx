@@ -28,7 +28,7 @@ const ScrubLabel: React.FC<{ label: React.ReactNode; title?: string; handlers: S
   const handle = (
     <span
       {...handlers}
-      className="w-7 h-full shrink-0 flex items-center justify-center text-[12px] font-medium text-white/50 group-hover:text-white/60 cursor-ew-resize select-none touch-none"
+      className="min-w-[28px] px-[8px] h-full shrink-0 whitespace-nowrap flex items-center justify-center text-[12px] font-medium text-white/50 group-hover:text-white/60 cursor-ew-resize select-none touch-none"
     >
       {label}
     </span>

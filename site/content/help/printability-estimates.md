@@ -29,7 +29,7 @@ Before you slice, Basecase works out which way each printed part sits, the suppo
 
 ## How a part is turned
 
-Each printed part tries the 6 ways its axes can point up, plus up to 6 large flat faces it could rest on. Basecase picks the one that prints best on your printer's bed, around any areas the bed keeps clear. A long part can go across the diagonal. If you chose a face with **Lay on Face**, that one wins.
+Each printed scene part tries the 6 ways its axes can point up. It also tries up to 6 large flat resting faces. Basecase picks the one that prints best on your printer's bed, around any areas the bed keeps clear. A long part can go across the diagonal. If you chose a face with **Lay on Face**, that one wins.
 
 ## What it measures
 

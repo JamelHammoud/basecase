@@ -46,7 +46,7 @@ A check that stops on an error or runs out of time counts as a blocker. While an
 
 If the agent tells you a servo is strong enough, the Servo torque check still measures the load at a 30° crouch.
 
-The agent sees the problems you see, and Basecase tells it about new blockers after each change. To have it try to fix them, turn on **Have the agent fix new blockers** in **Settings** ▸ **Build**. It makes up to 2 follow-ups per message. Each one reads like "Fix what the last change added: 2 problems." and quotes the problems from **Checks**.
+The agent sees the problems you see, and Basecase tells it about new blockers after each change. To ask for repairs, send `/fix` in the chat or click **Fix** on a problem in **Checks**.
 
 If the agent thinks a check is wrong, it can dispute it. Its reason shows on the row, and the blocker still counts.
 

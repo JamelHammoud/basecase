@@ -44,6 +44,8 @@ While you drive, the controller under **Control** reads **Drive**. You can also 
 
 A humanoid or an arm can follow your own arms. Click **Drive with Camera** under **Control**, then follow the steps in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
+Robots with [ideal tendons](/help/drive-joints-with-an-ideal-tendon) use motor pose inputs. Hand-position keys don’t target their passive outputs.
+
 ## Keys
 
 | Robot | Keys | What they do |

@@ -70,11 +70,4 @@ The problem moves to **Ignored**, below the list. To bring it back, click **Rest
 
 **Note:** Only you can ignore a blocker. The agent can tell you it disagrees, but it can't clear a blocker by itself.
 
-## The agent keeps fixing new blockers on its own
-
-After each message, Basecase sends any new blockers to the agent, up to 2 times. Each time it does, you'll see "Fix what the last change added: 2 problems." above the problems in the chat. To turn this off:
-
-1. Press [[⌘,]] and choose **Build**.
-2. Turn off **Have the agent fix new blockers**.
-
 For every check and what it measures, see [Checks in the Build tab](/help/build-checks).

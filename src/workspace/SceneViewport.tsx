@@ -5,7 +5,7 @@ import { importedPlacement } from '../cases/importedWorld';
 import { caseWorldView } from '../cases/worldView';
 import { AgentCursor } from '../components/AgentCursor';
 import { AnnotationLayer } from '../components/Annotations';
-import { BuildAlongBar } from '../components/build/BuildAlongBar';
+import { AssemblyBar } from './AssemblyBar';
 import { CameraStrip } from '../components/cameras/CameraStrip';
 import { DriveOverlay } from '../components/simulate/DriveOverlay';
 import { Viewport3D } from '../components/Viewport3D';
@@ -155,7 +155,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
           }
         }
         onAxisPick={actions.joints.onAxisPick}
-        buildStep={core.buildAlong.frozen ? null : core.buildAlong.view}
+        buildStep={core.buildAlong.frozen ? null : (core.cradle.view ?? core.buildAlong.view)}
         cableRoute={cableRouteView(core)}
         skeleton={core.skeleton.view}
         onSkeletonDrag={core.skeleton.onViewportDrag}
@@ -163,12 +163,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
       />
       <SkeletonServoMenu skeleton={core.skeleton} />
       <DriveOverlay sim={sim} />
-      <BuildAlongBar
-        buildAlong={core.buildAlong}
-        active={active && !core.printing.mode && !core.buildAlong.frozen}
-        ready={core.printing.readySteps(core.buildAlong.stepParts)}
-        onPrint={core.printing.openRepairPlate}
-      />
+      <AssemblyBar core={core} active={active} />
       {canvasOverlay(core, actions, active)}
       <AnnotationLayer
         annotations={annotations.annotations}

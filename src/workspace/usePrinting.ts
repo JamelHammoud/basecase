@@ -22,16 +22,16 @@ import { useMerges } from './useMerges';
 import { useServiceQuotes } from './useServiceQuotes';
 import type { SettingsPane } from '../app/settingsPanes';
 import { usePrintFleet } from './usePrintFleet';
-import { usePrintJob } from './usePrintJob';
+import { useScopedPrintJobs } from './useScopedPrintJobs';
 import { usePlateWriter } from './usePlateWriter';
 import type { GuidePlan } from '../guide/guideTypes';
 import { useDesignParameters, type DesignParameters } from './useDesignParameters';
 import type { SceneDocument } from './useSceneDocument';
-import { usePrintMode } from './usePrintMode';
+import { useTemporaryPrinting } from './useTemporaryPrinting';
 
 export type { PrintMode } from './usePrintMode';
 
-interface PrintingOptions {
+export interface PrintingOptions {
   active: boolean;
   projectRef: RefObject<ProjectSettings>;
   parameters: DesignParameters;
@@ -81,7 +81,9 @@ const plateMarker =
 export function usePrinting(options: PrintingOptions) {
   const { parts, printer, project, setProject, commitParts, showToast, viewport } = options;
   const fit = useFitTest({ ...options, parts, project, printer, viewport });
-  const printingMode = usePrintMode({ jobId: options.jobId, parts, fit });
+  const temporary = useTemporaryPrinting(options, fit);
+  const temporaryPrint = temporary.active;
+  const printingMode = temporary.mode;
   const { mode, repairId } = printingMode;
   const [skipPrinted, setSkipPrinted] = useState(true);
   const split = splitPrinted(parts, project.prints, shapeKey);
@@ -117,25 +119,19 @@ export function usePrinting(options: PrintingOptions) {
     showToast,
     undo: options.undo,
   });
-  const shown = fit.active ? fit.report : report;
+  const shown = temporaryPrint ? temporary.report : report;
   const plates = usePlateWriter(
     repairId ? { ...options, parts: printParts, partsRef: { current: printParts } } : options,
   );
-  const write = fit.active ? fit.threeMf : plates.write;
-  const job = usePrintJob({
-    ...options,
-    report: shown,
-    jobId: fit.active ? `${options.jobId}-fit-test` : options.jobId,
-    write,
-    labels: fit.active ? '' : plates.key,
-  });
+  const write = temporary.write ?? plates.write;
+  const { job, designSlices } = useScopedPrintJobs({ options, temporary, report, shown, plates, write });
   const records = project.prints ?? [];
   const plateStatus = plateStatusLookup(records);
   const setRecords = (update: (prev: PrintRecord[]) => PrintRecord[]) =>
     setProject((p) => ({ ...p, prints: update(p.prints ?? []) }));
 
   const setPartPrint = (ids: string[], patch: Partial<PartPrint>) => {
-    if (fit.active || printingMode.editRepairPrint(ids, patch)) return;
+    if (temporaryPrint || printingMode.editRepairPrint(ids, patch)) return;
 
     commitParts((prev) =>
       prev.map((p) => (ids.includes(p.id) ? { ...p, print: cleanPrint({ ...p.print, ...patch }) } : p)),
@@ -158,7 +154,7 @@ export function usePrinting(options: PrintingOptions) {
     plateStatus,
     setRecords,
     job,
-    recording: !fit.active,
+    recording: !temporaryPrint,
     active: !!mode,
     showToast,
   });
@@ -167,8 +163,11 @@ export function usePrinting(options: PrintingOptions) {
 
   return {
     ...printingMode,
+    temporaryPrint,
+    temporaryParts: temporary.parts,
     report: shown,
     measures,
+    designSlices,
     printedCount: split.printed.length,
     skipPrinted,
     setSkipPrinted,
@@ -176,20 +175,22 @@ export function usePrinting(options: PrintingOptions) {
     job,
     status: fleet.status,
     statusOf: fleet.statusOf,
-    fleet: fit.active ? [] : fleet.fleet,
+    fleet: temporaryPrint ? [] : fleet.fleet,
     nextFor: fleet.nextFor,
     records,
     plateStatus,
     markForReprint: (id: string) => setRecords((prev) => markForReprint(prev, id)),
     fitTest: fit.parts && { parts: fit.parts, variants: fit.variants, downs: fit.downs },
-    canFitTest: fit.available,
+    canFitTest: fit.available && !temporary.tooling,
     fitCutting: fit.cutting,
     merges,
     service,
     plates: { ...plates, write },
     sending: fleet.sending,
     sendPlate: fleet.sendPlate,
-    markPlate,
+    markPlate: (plate: Plate, state: PrintRecord['state']) => {
+      if (!temporaryPrint) markPlate(plate, state);
+    },
     setPartPrint,
     turnPart,
     freshSlice: job.freshSlice,

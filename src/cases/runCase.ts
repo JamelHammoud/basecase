@@ -75,6 +75,7 @@ interface ProbeBase {
 }
 
 export interface RunOptions extends LogicOptions {
+  worldFloorMm?: number;
   controller: 'limp' | 'reference' | 'policy';
   seed?: number;
   randomization?: Randomization;
@@ -338,7 +339,10 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
   const jitter = options.seed === undefined ? null : worldRandom(options.seed);
   const kase = jitter ? reseededGround(jitteredWorld(fit.scaled, jitter), jitter) : fit.scaled;
   const world = await preparedWorldItems(caseWorldItems(kase, options.worldColliders));
-  const model = await preparedCalibratedModel({ ...fit.input, world, fixedBase: fixedBaseFor(fit.cast) }, undefined);
+  const model = await preparedCalibratedModel(
+    { ...fit.input, world, fixedBase: fixedBaseFor(fit.cast), worldFloorMm: options.worldFloorMm },
+    undefined,
+  );
   const { plan, refusal: logicRefusal } = logicPlan(kase, options);
 
   if (logicRefusal) return refused(fit.scaled, logicRefusal, model);

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import { z } from 'zod';
 import { IK_GOAL, PREVIEW, ROBOT, ROOT, vec3 } from './schemas.mjs';
 import { VIEW, bridge, evidencePath, fail, text, withImages } from './shared.mjs';
+import { tendonSchema } from './tendonSchema.mjs';
 
 export const defineJoints = {
   name: 'define_joints',
@@ -17,6 +18,9 @@ export const defineJoints = {
       joints: z
         .array(
           z.object({
+            tendon: tendonSchema.describe(
+              'Ideal fixed tendon on this catalog motor spool. Signed terms name passive joints on the same robot. Units are mm/rad for hinges and mm/mm for sliders. Declare a fixed length or an elastic law. Null deletes the transmission. No routing or hardware accuracy is implied.',
+            ),
             id: z.string().regex(/^[a-z0-9_-]+$/),
             name: z.string().max(60).optional().describe('e.g. "Left Knee Pitch"'),
             type: z

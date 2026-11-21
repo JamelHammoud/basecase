@@ -248,6 +248,10 @@ function applyActuators(ctx: MjContext, mj: Element) {
 
 export function parseMjcf(doc: Document): Model {
   const mj = doc.documentElement;
+
+  if (elems(mj, 'tendon').some((group) => group.children.length > 0))
+    throw new Error('Open the Basecase scene to retain its ideal tendon transmissions.');
+
   const defaults = readDefaults(mj);
   const ctx: MjContext = {
     ...mjAngles(mj),

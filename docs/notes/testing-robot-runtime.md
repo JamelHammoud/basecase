@@ -2,6 +2,14 @@
 
 Current coverage: [owning guide](../guide/robot-runtime.md#testing-coverage). Shared policy and harness contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
 
+## Workbench rehearsal
+
+The entered-placement path under #1927 does not start the studio's live simulator. It runs a reference in a private Case worker and returns a small provenance-bound summary. Selecting or entering a unit name supplies an identity only. It does not call connection, ladder, daemon command, operate recording or calibration APIs. The existing physical motor lock is unchanged.
+
+`workbench/transport.test.ts` runs the production Case session with the existing serializer and checks a passing physical drawer contract, matching source identity, absent replay buffers and zero connect or command calls. `workbench/workerLifecycle.test.ts` uses the existing native pipeline adapter. It completes a real reference to warm the worker, posts a 600-second reference, cancels it before any result and awaits native termination. The retained placement remains the same object, and active workers return to zero. The observed cancellation acknowledgment was 4.554 ms on macOS arm64 with Node v26.13.0. This single observation is not a bound on interrupting a particular MuJoCo step.
+
+Source and persistence tests check separate unit keys, Case revision and tool binding changes, geometry changes including one triangle-coordinate bit, corrupt stored transforms and fingerprints, undo/redo and compressed scene reopening. Reopened evidence receives exact mesh verification in a worker before its old verdict can be shown. The two committed browser declarations cover entry, identity inspection, unreachable refusal and separate persistence. Linux and Windows browser execution belongs to CI. [Case evidence](testing-cases.md#measured-workbench-placement) records the documentation capture and later dev-startup failure. Existing runtime diagnostics, quarantine deadlines and restoration owners are unchanged.
+
 ## Servo calibration
 
 `e2e/operateCalibration.e2e.test.ts` leaves fitting and replay accuracy to the pipeline tests in the guide, avoiding the 86 s live calibration story from run 43642970706 (#855).

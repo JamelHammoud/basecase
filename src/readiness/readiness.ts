@@ -326,10 +326,3 @@ export const findingQuote = (f: Finding, parts: ScenePart[]): MessageQuote => qu
 export function fixRequest(f: Finding, parts: ScenePart[]): FindingRequest {
   return { text: 'Fix this.', quotes: [quoteOf(f, parts, FIX_NOTE)] };
 }
-
-export function followUpRequest(added: Finding[], parts: ScenePart[]): FindingRequest {
-  return {
-    text: `Fix what the last change added: ${plural(added.length, 'problem')}.`,
-    quotes: added.slice(0, 10).map((f) => quoteOf(f, parts, FIX_NOTE)),
-  };
-}

@@ -2,6 +2,62 @@
 
 Coverage: [cases](../guide/cases.md#testing-coverage). Shared contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
 
+## Measured workbench placement
+
+Issue #1927 adds nominal entered-placement rehearsal through the existing Case pipeline. The workbench suite uses real WASM MuJoCo and the ordinary contract evaluator. Its generated tasks are:
+
+| Task | Physical evidence |
+| --- | --- |
+| Block sorting | Lift and place the selected block at its authored spot |
+| Tray packing | The same lift-and-place contract inside four fixed tray walls |
+| Drawer opening | Passive slider travel and handle contact |
+| Hinged-lid opening | Passive hinge travel and handle contact |
+| Lever operation | Rotated lever geometry, hinge travel and contact |
+| Button pressing | Spring-loaded button travel and contact |
+| Cylinder transfer | A physical cylinder with the existing lift-and-place contract |
+| Shelf placement | Lift and placement on a fixed 35 mm shelf |
+| Conveyor pickup | Pickup from a stopped conveyor surface |
+| Fixed receptacle insertion | Placement inside fixed receptacle walls |
+
+The two arm geometries differ by five percent. Alternate tasks use a 1 mm end-effector binding offset. Generated bench translations and yaw rotations cancel through independently composed base coordinates, preserving physical task outcomes against ordinary unrelocated rollouts. Tests retain original contracts and physical parameters, check actual tool and object travel, and refuse distant base placements. One unchanged drawer workbench passes with its clear base placement and becomes obstructed when the base moves into a fixed obstacle. A separate 5 mm and 3-degree relative base change passes physically. A vertical-placement test checks the transformed implicit floor in the emitted model. Separate real-engine controls penetrate the welded base into a fixture and the floor. Their task contracts still pass, but native geometry-distance validation refuses both placements. MuJoCo suppresses welded-body contacts, so recorded contacts alone cannot detect these overlaps.
+
+Transform tests independently compute trigonometric composition, inverse point transforms and orientation changes. They check joint axes and origins, point probes, unmodified dimensions and resistance, and identity under automatic reach adaptation. Other cases cover malformed poses, unsupported joint or velocity semantics, unit isolation, Case and binding changes, a one-bit mesh-coordinate change, corrupt retained fingerprints, cancellation before posting and after posting, source retention, undo/redo and compressed scene-file reopening. The native lifecycle test terminates a warmed production Case worker and awaits its exit while preserving prior evidence.
+
+The initial focused check selected eleven related files and passed 47 tests. A later physics, transport and source selection passed 30 tests in 5.11 seconds. The native worker lifecycle test passed in a 1.51-second invocation. These are local macOS observations, not CI rates. Later owning-file checks supersede them for the final revision.
+
+The documentation capture opened the existing generated drawer Case through Scenes and Cases, entered a 5 mm and 3-degree placement for `bench-arm`, ran rehearsal and captured its passed and unreachable states. It asserted no robot connect or command calls. That dev-server capture took 31.69 seconds including startup and screenshots. A subsequent attempt to capture the identity tooltip failed in `openApp` at the unchanged 30000 ms `page.goto` deadline before reaching its body. The Vite servers then reported a close timeout. This is retained as a local startup gap, without a demonstrated cause or a flake-rate claim. No deadline, retry, shared harness or quarantine changed.
+
+The committed browser declarations separate entry and unreachable refusal from undo and real scene-library reopening. They have not been run locally as e2e declarations. Linux and Windows delivery remain CI-owned. The conveyor fixture is stopped, and the sorting and packing contracts operate on one selected object. The matrix establishes no moving-belt tracking, physical registration accuracy, camera registration, motor execution or learned-policy relocation. Existing recording and platform quarantine owners remain unchanged.
+
+Pull request #1940's Linux Check failed at the entry walkthrough's tooltip assertion on 20 November 2026. The entry test took 62.91 seconds across two attempts, while persistence passed in 20.57 seconds. The test called programmatic focus after clicking Rehearse. `Tooltip` opens for pointer entry or focus matching `:focus-visible`, so that call did not establish the keyboard focus condition. The revised walkthrough hovers the result before asserting both hash labels. All assertions remain, with no timeout, retry or harness changes. Browser verification of this correction remains CI-owned. The aggregate Check failed because the changed-browser job failed, with no separate aggregate defect in the supplied log.
+
+### Workbench help overlap audit
+
+The follow-up for #1940 read all 18 preflight articles against the diff from `origin/main`. `caseCommands.tsx` appends `workbenchCommands(core)` without changing the existing command definitions. `caseChecks.ts` exports the existing `wireRobot` function without changing its body. `SimulatePanel.tsx` inserts Workbench placement between Study and Control, while its existing controls retain their props and order. The section renders only for an open single-slot arm Case. `useCases.ts` adds placement retention and Case-deletion cleanup, and preserves the existing try removal and fixed-base calculations. `docHistory.ts` tracks placements alongside existing fields without changing the history limit or code-only guard. The regular record job still calls `seedReplay` with three arguments, retaining its default randomized effort reconstruction. Only workbench rehearsal supplies `false` for the new fourth argument.
+
+| Article | Instructions and image states checked |
+| --- | --- |
+| [Arrange a Case's console](../../site/content/help/arrange-a-case-console.md) | Add Panel, moving, resizing, rename, confirmed deletion and console undo use unchanged command entries and console code. The pictured console is separate from the new Simulate section. |
+| [Compare two robots on a Case](../../site/content/help/compare-two-robots-on-a-case.md) | Compare With, palette comparison, Results rows, twenty randomized runs and retained-skill selection are unchanged. Exporting the serializer changes no comparison inputs or results. |
+| [Drive a robot in the simulation](../../site/content/help/drive-a-robot-in-the-simulation.md) | Drive, keyboard and gamepad controls, reset, stop and camera commands are unchanged. Its steps require no open Case, so Workbench placement is absent. |
+| [Get a robot ready to build](../../site/content/help/get-a-robot-ready-to-build.md) | Build Checks, twenty-run Case rows, seeded trails and readiness remain unchanged. The new nominal placement result does not enter Checks or its screenshots. |
+| [Make a Case pass with the agent](../../site/content/help/make-a-case-pass-with-the-agent.md) | Make It Pass, the composer and the twenty-run Checks pipeline are unchanged. The serializer export changes no agent verdict or cache behavior. |
+| [Multiply a try into demonstrations](../../site/content/help/multiply-a-try-into-demonstrations.md) | Multiply still selects the newest passed try from the palette. Results actions, progress, retained variations, deletion and dataset behavior are unchanged. |
+| [Pose and simulate your first robot](../../site/content/help/pose-and-simulate-your-first-robot.md) | Robot insertion, posing, Simulate, Limp, Reset and Stop simulation are unchanged. These steps open no Case, so the new section is absent. |
+| [Publish a skill to Hugging Face](../../site/content/help/publish-a-skill-to-hugging-face.md) | Train and ready-skill menu props, publishing commands, Accounts recovery and publication toast are unchanged. Existing images show those same skill menu and toast states. |
+| [Replay a failing seed](../../site/content/help/replay-a-failing-seed.md) | The record job keeps randomized reconstruction through the default argument. Trails, first-trip seeking, timeline controls and temporary replay restoration are unchanged. |
+| [Retrain an out-of-date policy](../../site/content/help/retrain-an-out-of-date-policy.md) | Train, policy freshness, Retrain, progress and stop behavior are unchanged. The existing policy menu and training image states remain applicable. |
+| [Run a Case](../../site/content/help/run-a-case.md) | Run Case, the expanded console, daemon card, Try It, Results and Done are unchanged. Edit Workbench Placement follows the ordinary command behavior that exits the console, consistent with the listed exceptions. |
+| [Run a simulation](../../site/content/help/run-a-simulation.md) | SimControls, Control, Push, Results and Peak torque retain their existing inputs. The pictured Build torque-estimate check is unchanged. |
+| [Share a robot as a link](../../site/content/help/share-a-robot-as-a-link.md) | Share Robot, Accounts recovery, League submission and gallery rendering are unchanged. The new placement command changes none of the pictured sharing or browser states. |
+| [Study design options](../../site/content/help/study-design-options.md) | Study command, choice fields, plot, comparison, Apply and its undo behavior are unchanged. The new section follows Study and changes no Study result or image state. |
+| [Teach a robot a skill](../../site/content/help/teach-a-robot-a-skill.md) | Train, Teach it to, Teach, contract interaction and skill rows retain their props. Control, Train and Results keep their documented relative order. |
+| [Train a policy from your tries](../../site/content/help/train-a-policy-from-your-tries.md) | The serializer body, retained policy selection and Checks callers are unchanged. Dataset training, thresholds and pictured outcomes are outside the placement path. |
+| [Try a Case](../../site/content/help/try-a-case.md) | CaseSection and TrySection remain before the new section, and Control, Train and Results retain their order and behavior. Recording, replay, confirmed try deletion, Multiply and datasets use the same paths. |
+| [Undo what the agent changed](../../site/content/help/undo-agent-changes.md) | History still holds fifty steps, and code-only undo still stops at a non-console step. Adding placement snapshots changes neither agent undo nor Revert Changes. |
+
+No step, label or depicted action in these articles became false. Their text and existing captures remain unchanged. This is a source audit, not a new browser run or visual judgment. The already corrected [Make a Case](../../site/content/help/make-a-case.md) article covers the changed deletion behavior, including retained placements. Preflight has no acknowledgment input and continues reporting the 18 unchanged-article overlaps after this audit.
+
 ## Fixture spring coverage
 
 `src/cases/fixtureSprings.test.ts` checks hinge and slide spring declarations through Case parsing, compressed scene files, reach scaling and generated MJCF. Both force fixtures disable gravity, have no actuators and compare passive force against the declared SI stiffness and rest coordinate. Rejection cases include negative stiffness, infinite stiffness, a nonfinite rest coordinate and a rest coordinate outside the stops. Legacy Cases keep absent spring fields absent.

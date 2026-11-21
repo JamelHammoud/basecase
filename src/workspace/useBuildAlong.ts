@@ -30,6 +30,19 @@ async function planWiring(viewport: Viewport3DHandle | null, plan: GuidePlan | n
   return viewport.wiring(scene).catch(() => null);
 }
 
+function buildAlongSource(session: Session | null) {
+  if (!session?.cradleSource)
+    return { sessionId: 0, plan: null, sourceStep: null, sourceParts: null, sourceProject: null };
+
+  return {
+    sessionId: session.cradleSource.id,
+    plan: session.cradleSource.plan,
+    sourceStep: session.cradleSource.plan.steps[session.index],
+    sourceParts: session.cradleSource.parts,
+    sourceProject: session.cradleSource.project,
+  };
+}
+
 export function useBuildAlong({ guide, showToast, partsRef, projectRef, viewportRef }: BuildAlongOptions) {
   const [session, setSession] = useState<Session | null>(null);
   const [opening, setOpening] = useState(false);
@@ -67,6 +80,7 @@ export function useBuildAlong({ guide, showToast, partsRef, projectRef, viewport
     const steps = buildAlongSteps(plan, project.joints ?? [], nets);
 
     setSession({
+      cradleSource: { id: run, plan, parts, project: projectRef.current },
       steps,
       stepParts: plan.steps.map((s) => s.partIds),
       views: steps.map(stepView),
@@ -121,6 +135,7 @@ export function useBuildAlong({ guide, showToast, partsRef, projectRef, viewport
     requestCreate: () => setCreating(true),
     cancelCreate: () => setCreating(false),
     openFrozen,
+    ...buildAlongSource(session),
     active: !!session || opening,
     opening,
     progress: opening ? guide.progress : null,

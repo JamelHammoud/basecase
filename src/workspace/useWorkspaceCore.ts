@@ -1,4 +1,5 @@
 import { useCableRoutes } from './useCableRoutes';
+import { useAssemblyCradle } from './useAssemblyCradle';
 import { useWorkspaceVersioning } from './useWorkspaceVersioning';
 import { useVisionScope } from '../cameras/visionScope';
 import { useScenePrinting } from './usePrinting';
@@ -144,8 +145,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     showToast,
   });
 
-  const { restorePose } = posing;
-  const historyOptions = { seed, annotations, restorePose, codeOnly: caseRun.open };
+  const historyOptions = { seed, annotations, restorePose: posing.restorePose, codeOnly: caseRun.open };
   const { versions, undo, redo } = useWorkspaceVersioning({ ...documentContext, ...historyOptions });
   const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
@@ -159,7 +159,6 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   const sketching = useSketchSession({ docs, viewportRef, selectedIds, setSelectedIds, tool, showToast });
   const cableRouteOptions = { docs, sceneId: scene.sceneId, posing, showToast };
-  const cableRouteUi = { tool, select: setSelectedIds, buildAlong, sketching };
 
   return {
     active,
@@ -170,7 +169,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     studio,
     printer,
     readiness,
-    cableRoutes: useCableRoutes({ ...cableRouteOptions, ui: cableRouteUi }),
+    cableRoutes: useCableRoutes({ ...cableRouteOptions, ui: { tool, select: setSelectedIds, buildAlong, sketching } }),
     caseCompare,
     study,
     printing,
@@ -203,6 +202,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     consoleEditing: useConsoleEditing({ caseRun, docs, showToast }),
     guide,
     buildAlong,
+    cradle: useAssemblyCradle({ scene, docs, buildAlong, printing, viewportRef, active, guide, parameters }),
     repair,
     undo,
     redo,

@@ -6,6 +6,8 @@ import type { Studio } from './types';
 const EXPECTED_NAMES = [
   'addCase',
   'agentRequest',
+  'assemblyCradleState',
+  'assemblyRobotWeight',
   'attachRobot',
   'bodyAnalysisMetrics',
   'bodyCalibrations',
@@ -142,6 +144,7 @@ const EXPECTED_NAMES = [
   'stubTabEngine',
   'stubTrainer',
   'studyState',
+  'tendonRecording',
   'trainingImageFiles',
   'trainingImages',
   'trainingLabelBenchmark',

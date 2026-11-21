@@ -37,7 +37,7 @@ export function poseJoints(rig: Rig, robot?: string): PoseJoint[] {
 
   return rig.joints
     .filter((j) => isMovable(j) && j.actuation !== 'passive' && (!robot || rig.robotOf.get(j.id) === robot))
-    .filter((j) => j.limb !== 'leg' && !isLeg(j.id))
+    .filter((j) => j.tendon || (j.limb !== 'leg' && !isLeg(j.id)))
     .map((j) => ({ id: j.id, range: j.range ?? null }));
 }
 

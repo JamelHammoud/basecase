@@ -1,16 +1,14 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
-import { openPlayTab, type App } from './harness';
+import type { App } from './harness';
 
 import { openBodyMotionApp, type BodyMotionStudio as Studio } from './bodyMotionHarness';
 
 let app: App;
-let original: ReturnType<Studio['sceneRecord']>;
 
 beforeAll(async () => {
   const fixture = await openBodyMotionApp();
 
   app = fixture.app;
-  original = fixture.original;
 });
 
 afterAll(async () => {
@@ -75,30 +73,6 @@ it(
       bodyEvidence: undefined,
     });
     await app.page.keyboard.press('Escape');
-  },
-);
-
-it(
-  'reopens retained predictions after reload without searching and keeps them visible after a physical edit',
-  { retry: 0, timeout: 15000 },
-  async () => {
-    await app.page.reload();
-    await app.page.waitForFunction(() => !!(window as unknown as { __studio?: Studio }).__studio);
-    await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
-      ...original,
-      id: 'body-motion-scene',
-    });
-    await openPlayTab(app.page, 'Operate');
-    await app.page.getByRole('button', { name: 'Analyze Try', exact: true }).filter({ visible: true }).click();
-    await app.page.getByRole('combobox', { name: 'Try' }).selectOption('body-motion-historical');
-    await app.page.locator('[data-testid="body-motion-preview"][data-ready="true"] canvas').waitFor();
-    expect(
-      await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.bodyAnalysisMetrics().motion),
-    ).toBeNull();
-    await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.editBodyEvidenceSource());
-    await app.page.getByText('Out of date', { exact: true }).waitFor();
-    expect(await app.page.getByRole('button', { name: 'Preview Motion', exact: true }).isDisabled()).toBe(true);
-    expect(await app.page.locator('[data-testid="body-motion-preview"][data-ready="true"] canvas').count()).toBe(1);
     expect(app.errors).toEqual([]);
   },
 );

@@ -65,4 +65,4 @@ Each scene change the agent makes is one undo step. To take scene changes back, 
 
 While the agent works, you can steer it, queue your next request, or stop it. Your edits come first, and the agent never blocks you from changing a part.
 
-The agent can't run commands, open files you haven't attached, or reach your hardware. Basecase checks the requested tool, so a command described as a web lookup is still blocked. For the rest of its limits, see [Agent limits](/help/agent-limits).
+The agent can't run commands, open files you haven't attached, or reach your hardware. For the rest of its limits, see [Agent limits](/help/agent-limits).

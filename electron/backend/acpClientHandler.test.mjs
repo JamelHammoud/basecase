@@ -37,6 +37,8 @@ describe('ACP permission identity boundary', () => {
     { name: 'webfetch' },
     { name: 'mcp__robotics_cad_evil__get_scene' },
     { name: 'other_mcp__robotics_cad__get_scene' },
+    claudeTool('WebFetch', { name: 'Bash' }),
+    claudeTool('Bash', { name: 'WebFetch' }),
   ])('rejects forged descriptions and near matches: %j', async (call) => {
     const { client, events } = handler();
 
@@ -71,7 +73,68 @@ describe('ACP permission identity boundary', () => {
 
     expect(events.every((event) => event.type === 'acp-session-update')).toBe(true);
   });
+});
 
+describe('ACP remembered permission identities', () => {
+  it('confines remembered identities to their ACP session', async () => {
+    const { client } = handler();
+    const update = recorded.claude[0].update;
+
+    await client.sessionUpdate({ sessionId: 'session', update });
+
+    expect(
+      await client.requestPermission({ ...permission({ toolCallId: update.toolCallId }), sessionId: 'other' }),
+    ).toEqual({ outcome: { outcome: 'selected', optionId: 'no' } });
+    expect(await client.requestPermission(permission({ toolCallId: update.toolCallId }))).toEqual({
+      outcome: { outcome: 'selected', optionId: 'once' },
+    });
+  });
+
+  it.each(['request', 'tool_call_update', 'tool_call'])(
+    'replaces remembered identity when %s explicitly names another tool',
+    async (source) => {
+      const { client } = handler();
+      const update = recorded.claude[0].update;
+      const changed = { toolCallId: update.toolCallId, name: 'Bash' };
+
+      await client.sessionUpdate({ sessionId: 'session', update });
+
+      if (source !== 'request') {
+        await client.sessionUpdate({ sessionId: 'session', update: { ...changed, sessionUpdate: source } });
+      }
+
+      const request = source === 'request' ? changed : { toolCallId: update.toolCallId };
+
+      expect(await client.requestPermission(permission(request))).toEqual({
+        outcome: { outcome: 'selected', optionId: 'no' },
+      });
+      expect(await client.requestPermission(permission({ toolCallId: update.toolCallId }))).toEqual({
+        outcome: { outcome: 'selected', optionId: 'no' },
+      });
+    },
+  );
+
+  it('does not reuse identity when a new call reuses a completed call id', async () => {
+    const { client } = handler();
+    const update = recorded.claude[0].update;
+
+    await client.sessionUpdate({ sessionId: 'session', update });
+    await client.sessionUpdate({
+      sessionId: 'session',
+      update: { sessionUpdate: 'tool_call_update', toolCallId: update.toolCallId, status: 'completed' },
+    });
+    await client.sessionUpdate({
+      sessionId: 'session',
+      update: { sessionUpdate: 'tool_call', toolCallId: update.toolCallId, title: 'Bash' },
+    });
+
+    expect(await client.requestPermission(permission({ toolCallId: update.toolCallId }))).toEqual({
+      outcome: { outcome: 'selected', optionId: 'no' },
+    });
+  });
+});
+
+describe('ACP recorded adapter notifications', () => {
   it('forwards recorded Codex web reports and refuses permissions without identity', async () => {
     const { client, events } = handler();
     const update = recorded.codex[0];

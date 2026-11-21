@@ -3,24 +3,44 @@ import path from 'node:path';
 import { CAD_SERVER, SAFE_TOOLS } from './constants.mjs';
 
 export function isSafeToolCall(call) {
-  const name = call._meta?.claudeCode?.toolName ?? call.name;
+  const toolName = call._meta?.claudeCode?.toolName;
+  const name = toolName ?? call.name;
+
+  if (toolName != null && call.name != null && toolName !== call.name) return false;
 
   return typeof name === 'string' && (SAFE_TOOLS.has(name) || name.startsWith(`mcp__${CAD_SERVER}__`));
 }
 
 const definedEntries = (value) => Object.fromEntries(Object.entries(value ?? {}).filter(([, v]) => v != null));
 
+function mergeToolCall(previous, current) {
+  const fields = definedEntries(current);
+  const hasIdentity = fields.name != null || fields._meta?.claudeCode?.toolName != null;
+  const clearedIdentity = hasIdentity ? { name: undefined, _meta: undefined } : {};
+
+  return { ...previous, ...clearedIdentity, ...fields };
+}
+
 export function rememberToolCalls() {
   const calls = new Map();
+  const keyOf = (call, sessionId) => JSON.stringify([sessionId, call?.toolCallId]);
 
   return {
-    note(update) {
+    note(update, sessionId) {
       if (!update?.toolCallId || !String(update.sessionUpdate).startsWith('tool_call')) return;
 
-      calls.set(update.toolCallId, { ...calls.get(update.toolCallId), ...definedEntries(update) });
+      const key = keyOf(update, sessionId);
+      const previous = update.sessionUpdate === 'tool_call' ? undefined : calls.get(key);
+
+      calls.set(key, mergeToolCall(previous, update));
     },
-    complete(toolCall) {
-      return { ...calls.get(toolCall?.toolCallId), ...definedEntries(toolCall) };
+    complete(toolCall, sessionId) {
+      const key = keyOf(toolCall, sessionId);
+      const completed = mergeToolCall(calls.get(key), toolCall);
+
+      if (toolCall?.toolCallId) calls.set(key, completed);
+
+      return completed;
     },
   };
 }
@@ -43,14 +63,17 @@ export function createClientHandler({ libraryDir, emit, workspaceOf, libraryStat
 
   return {
     requestPermission: async (params) => {
-      const { safe, title, outcome } = permissionOutcome({ ...params, toolCall: toolCalls.complete(params.toolCall) });
+      const { safe, title, outcome } = permissionOutcome({
+        ...params,
+        toolCall: toolCalls.complete(params.toolCall, params.sessionId),
+      });
 
       if (!safe) emit({ type: 'agent-blocked', workspaceId: workspaceOf(params.sessionId), title });
 
       return { outcome };
     },
     sessionUpdate: async (params) => {
-      toolCalls.note(params.update);
+      toolCalls.note(params.update, params.sessionId);
       emit({
         type: 'acp-session-update',
         sessionId: params.sessionId,

@@ -1,6 +1,7 @@
 import { codePanelTokenCss } from '../../design-system/codeTokens';
 import { sha256Hex } from '../../skills/hash';
 import { forwardConsole, installCodeClient } from './codeClient';
+import { usesStrictDirective } from './codeScript';
 
 export const CODE_PANEL_CSP = [
   "default-src 'none'",
@@ -23,7 +24,7 @@ export const codeClientScript = () =>
   `${lockWebrtc}(${installCodeClient.toString()})(window, ${forwardConsole.toString()});`;
 
 const lockWebrtc =
-  "for(const name of ['RTCPeerConnection','webkitRTCPeerConnection'])Object.defineProperty(window,name,{value:undefined,writable:false,configurable:false});";
+  "for(const name of ['RTCPeerConnection','webkitRTCPeerConnection'])({}).constructor.defineProperty(globalThis.window,name,{value:undefined,writable:false,configurable:false});";
 
 const scriptHash = (script: string) => {
   const bytes = sha256Hex(script)
@@ -65,7 +66,8 @@ export function codePanelDocument(source: string) {
       (_match, open: string, script: string, close: string) => {
         if (!isExecutableScript(open)) return open + script + close;
 
-        const protectedScript = lockWebrtc + script;
+        const strict = usesStrictDirective(script) ? '"use strict";' : '';
+        const protectedScript = strict + lockWebrtc + script;
 
         hashes.add(scriptHash(protectedScript));
 

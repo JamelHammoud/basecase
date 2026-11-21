@@ -123,3 +123,62 @@ it('authorizes only scripts that lock WebRTC first, including reused scripts in 
 
   expect(policy).not.toContain(createHash('sha256').update('window.ran = true;').digest('base64'));
 });
+
+it.each(['window', 'Object'])('locks the realm before an approved script with a hoisted %s binding', (name) => {
+  const connect = vi.fn();
+  const window = { RTCPeerConnection: connect, webkitRTCPeerConnection: connect, ran: false };
+  const doc = codePanelDocument(`<script type="module">
+    function ${name}() {}
+    globalThis.window.ran = true;
+    try { new globalThis.window.RTCPeerConnection(); } catch {}
+  </script>`);
+  const script = doc.match(/<script type="module">([\s\S]*?)<\/script>/)![1];
+
+  runInNewContext(`(function(){'use strict';${script}})()`, { window });
+  expect(window.ran).toBe(true);
+  expect(connect).not.toHaveBeenCalled();
+  expect(Object.getOwnPropertyDescriptor(window, 'RTCPeerConnection')).toMatchObject({
+    value: undefined,
+    writable: false,
+    configurable: false,
+  });
+});
+
+it('fails before hostile code when an approved script shadows globalThis', () => {
+  const window = { ran: false };
+  const doc = codePanelDocument('<script>function globalThis() {} window.ran = true;</script>');
+  const script = [...doc.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)![1];
+
+  expect(() => runInNewContext(`(function(){'use strict';${script}})()`, { window })).toThrow();
+  expect(window.ran).toBe(false);
+});
+
+it.each([
+  '"use strict";',
+  "'use strict'\n",
+  "'other';\n/* a directive */ 'use strict' // a directive\n",
+  "'use strict'/*\n*/",
+  "'use strict'\n++window.count;\n",
+  "'use strict'\n--window.count;\n",
+])('preserves strict source semantics after the constructor locks: %s', (directive) => {
+  const doc = codePanelDocument(
+    `<script>${directive}window.strict = (function(){return this})() === undefined;</script>`,
+  );
+  const script = [...doc.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)![1];
+  const window = {};
+
+  runInNewContext(script, { window });
+  expect(window).toHaveProperty('strict', true);
+});
+
+it.each(['', '"use strict"\n+', '"use strict"\n&&', '"use strict"\n!=', '"use strict"\n-'])(
+  'preserves sloppy source semantics for expressions outside the directive prologue: %s',
+  (expression) => {
+    const doc = codePanelDocument(`<script>${expression}(function(){window.strict = this === undefined})()</script>`);
+    const script = [...doc.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)![1];
+    const window = {};
+
+    runInNewContext(script, { window });
+    expect(window).toHaveProperty('strict', false);
+  },
+);

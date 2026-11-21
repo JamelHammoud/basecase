@@ -3,7 +3,7 @@ import { openApp, openPlayTab, shown } from './harness';
 import { bodyExecutionScene, parkedBodyRun } from '../src/reality/bodyMotion.fixtures';
 import type { BodyMotionStudio } from './bodyMotionHarness';
 
-export async function openBodyExperimentApp(options: { second?: boolean; recommended?: boolean } = {}) {
+export async function openBodyExperimentApp(options: { recommended?: boolean } = {}) {
   const app = await openApp();
   const { page } = app;
 
@@ -20,15 +20,6 @@ export async function openBodyExperimentApp(options: { second?: boolean; recomme
   await openPlayTab(page, 'Operate');
   await page.getByRole('button', { name: 'Connect Emulated Robot', exact: true }).filter({ visible: true }).click();
   await climb();
-
-  if (options.second) {
-    await page.keyboard.press('ControlOrMeta+k');
-    await page.getByPlaceholder('Search commands').fill('Connect Emulated Robot');
-    await page.getByPlaceholder('Search commands').press('Enter');
-    await page.locator('[data-fleet-unit="robot-2"]').filter({ visible: true }).click();
-    await climb();
-    await page.locator('[data-fleet-unit="robot"]').filter({ visible: true }).click();
-  }
 
   const model = await page.evaluate(() => (window as unknown as { __studio: BodyMotionStudio }).__studio.bodyModel());
   const run = parkedBodyRun(model);

@@ -42,7 +42,12 @@ it(
     await page.getByRole('button', { name: 'Method', exact: true }).press('Enter');
     expect(await page.getByText('Observations:', { exact: false }).textContent()).toMatch(/\d/);
     await expectBodyMotionLayout(page);
-    expect(await page.getByRole('button', { name: 'Fit Body', exact: true }).isDisabled()).toBe(true);
+    expect(
+      await page
+        .getByRole('dialog', { name: 'Analyze Try' })
+        .getByRole('button', { name: 'Fit Body', exact: true })
+        .isDisabled(),
+    ).toBe(true);
     expect(
       await page.evaluate(() => (window as unknown as { __studio: BodyMotionStudio }).__studio.bodyCalibrations()),
     ).toEqual(before);
@@ -57,7 +62,12 @@ it(
     await page.getByText('This emulator doesn’t model body mass, payload or floor contact.', { exact: true }).waitFor();
     await page.evaluate(() => (window as unknown as { __studio: BodyMotionStudio }).__studio.editBodyEvidenceSource());
     await page.getByText('Out of date', { exact: true }).waitFor();
-    expect(await page.getByRole('button', { name: 'Fit Body', exact: true }).isDisabled()).toBe(true);
+    expect(
+      await page
+        .getByRole('dialog', { name: 'Analyze Try' })
+        .getByRole('button', { name: 'Fit Body', exact: true })
+        .isDisabled(),
+    ).toBe(true);
     await page.getByRole('button', { name: 'Method', exact: true }).press('Enter');
     await expectBodyMotionLayout(page);
     expect(app.errors).toEqual([]);

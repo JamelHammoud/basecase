@@ -31,8 +31,6 @@ type Studio = {
 
 const base64 = (bytes: Uint8Array) => Buffer.from(bytes).toString('base64');
 
-const paletteRow = (label: string) => app.page.locator(shown('button[data-idx]')).filter({ hasText: label });
-
 async function importFromPalette(name: string, bytes: Uint8Array) {
   await app.page.evaluate(
     (picked) => {
@@ -42,7 +40,7 @@ async function importFromPalette(name: string, bytes: Uint8Array) {
   );
   await app.page.keyboard.press('ControlOrMeta+k');
   await app.page.keyboard.type('Import');
-  await paletteRow('Import').filter({ hasNotText: 'Robot' }).click();
+  await app.page.getByRole('button', { name: 'Import', exact: true }).click();
 }
 
 const armDataset = (lengths: number[], shift: number) =>

@@ -45,7 +45,7 @@ Use Undo to remove the complete pair and its references together.
 
 The Case keeps the selected object's dimensions, weight and friction. Basecase doesn’t shrink the object to make a grasp pass.
 Both jaws must hold the raised object until placement, then release it near the spot.
-The try fails if the palm contacts the object, the jaws push it or you drop it before placement.
+Palm contact alone and pushing without lifting don’t count as a grasp. Dropping the object before placement fails.
 After changing finger dimensions, you must treat affected results as stale.
 
 You can use generated fingers with the ordinary [Print and Kit outputs](/help/export-a-robot-kit).

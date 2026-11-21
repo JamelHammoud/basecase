@@ -1,5 +1,5 @@
 import type { Command } from '../components/CommandPalette';
-import { RulerIcon, RunIcon, StopIcon } from '../design-system';
+import { RulerIcon, RunIcon, CloseIcon } from '../design-system';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CommandInputs } from './sceneCommands';
 
@@ -14,7 +14,7 @@ export function gripperFingerCommands({ actions }: CommandInputs): Command[] {
         id: 'cancel-fingers',
         group: 'Scene',
         label: 'Cancel',
-        icon: <StopIcon />,
+        icon: <CloseIcon />,
         keywords: 'finger generation',
         run: fingers.cancel,
       },

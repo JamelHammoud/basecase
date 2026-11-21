@@ -101,6 +101,31 @@ it('generates both referenced fingers and stock fasteners without changing any j
   expect(result.parts.find((part) => part.id === target.id)).toBe(target);
   expect(result.parts.find((part) => part.id === 'base')).toBe(source.parts.find((part) => part.id === 'base'));
   expect(JSON.stringify(source)).toBe(before);
+  expect(() => validateFingerAssembly(result.parts, result.joints)).not.toThrow();
+
+  const screw = result.parts.find((part) => part.gripperFinger?.role === 'screw')!;
+  const finger = fingers[0];
+  const changed = (replacement: typeof screw) =>
+    result.parts.map((part) => (part.id === replacement.id ? replacement : part));
+  const invalidAssemblies = [
+    result.parts.filter((part) => part.id !== screw.id),
+    result.parts.filter((part) => part.gripperFinger?.role !== 'finger'),
+    changed({ ...screw, hardware: { ...screw.hardware!, length: 12 } }),
+    changed({ ...screw, position: [1000, 1000, 1000] }),
+    changed({ ...screw, role: 'reference' }),
+    changed({ ...finger, position: [finger.position[0], finger.position[1], finger.position[2] + 10] }),
+    changed({ ...finger, rotation: [0, 10, 0] }),
+    changed({ ...finger, boolean: { op: 'subtract' as const, operands: [finger, target] } }),
+  ];
+
+  for (const parts of invalidAssemblies) expect(() => validateFingerAssembly(parts, result.joints)).toThrow();
+
+  expect(() =>
+    validateFingerAssembly(
+      result.parts,
+      result.joints.map((joint) => ({ ...joint, child: joint.child.filter((id) => id !== screw.id) })),
+    ),
+  ).toThrow();
 });
 
 it('refuses unsupported mounts, stale completion, cancellation, oversized targets and obstructed drivers without modifying the source', async () => {

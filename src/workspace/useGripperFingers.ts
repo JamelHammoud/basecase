@@ -18,7 +18,11 @@ export function useGripperFingers(core: WorkspaceCore) {
   );
   const reference = selected.find((part) => part.gripperFinger)?.gripperFinger;
   const target = selectedTarget ?? core.parts.find((part) => part.id === reference?.target);
-  const canGenerate = canPick && !!selectedTarget && selected.some((part) => !!readMount(part));
+  const jaws = new Set(core.simTraining.cases.builder.robot.facts.gripper?.jaws.map((jaw) => jaw.joint));
+  const canGenerate =
+    canPick &&
+    !!selectedTarget &&
+    selected.some((part) => !!readMount(part) && jaws.has(core.posing.rig.ownerOf.get(part.id) ?? ''));
   const cancel = () => {
     pending.current?.abort();
     setBusy(false);

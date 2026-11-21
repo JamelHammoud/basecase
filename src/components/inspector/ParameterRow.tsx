@@ -14,25 +14,27 @@ export function ParameterRow({ parameter, controls }: { parameter: DesignParamet
   const text = parameter.expression ?? String(parameter.value);
 
   return (
-    <div className="grid grid-cols-[1fr_1fr_64px_28px] gap-1.5 items-center">
-      <TextInput
-        aria-label={`Rename ${parameter.name}`}
-        defaultValue={parameter.name}
-        disabled={controls.busy}
-        onBlur={async (event) => {
-          const input = event.currentTarget;
-          const to = input.value.trim();
+    <div className="grid grid-cols-[minmax(0,1fr)_64px_28px] gap-1.5 items-center">
+      <div className="col-span-full">
+        <TextInput
+          aria-label={`Rename ${parameter.name}`}
+          defaultValue={parameter.name}
+          disabled={controls.busy}
+          onBlur={async (event) => {
+            const input = event.currentTarget;
+            const to = input.value.trim();
 
-          if (to === parameter.name) return;
+            if (to === parameter.name) return;
 
-          const ok = await controls.apply({ op: 'rename', name: parameter.name, to });
+            const ok = await controls.apply({ op: 'rename', name: parameter.name, to });
 
-          if (!ok) input.value = parameter.name;
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') event.currentTarget.blur();
-        }}
-      />
+            if (!ok) input.value = parameter.name;
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') event.currentTarget.blur();
+          }}
+        />
+      </div>
       <TextInput
         aria-label={parameter.name}
         defaultValue={text}

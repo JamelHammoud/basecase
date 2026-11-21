@@ -10,9 +10,18 @@ function valuesOf(part: ScenePart, body: string): Record<string, number> | null 
     return null;
 
   if (
-    part.deformers ||
-    part.edges ||
-    part.sheetTransform ||
+    [
+      part.deformers,
+      part.mesh,
+      part.sculptMesh,
+      part.boolean,
+      part.csg,
+      part.sketch,
+      part.customNodes,
+      part.edges,
+      part.sheetTransform,
+      part.role !== 'solid',
+    ].some(Boolean) ||
     [part.dimensions.width, part.dimensions.height, part.dimensions.depth].some(
       (value, axis) => Math.abs(value - cad.baseSize[axis]) > 0.011,
     )

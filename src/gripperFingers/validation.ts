@@ -7,6 +7,7 @@ import { assertFingerDimensions, readFinger, readMount } from './dimensions';
 import { fingerFrame } from './frames';
 import type { FingerDimensions, FingerPart, FingerReference } from './types';
 import { assertFingerSweep, assertMatchingFingers, fingerOpening } from './motion';
+import { assertFingerAttachments } from './attachments';
 
 export function driverObstacles(parts: ScenePart[], finger: FingerPart): string[] {
   const mount = parts.find((part) => part.id === finger.gripperFinger.mount);
@@ -41,7 +42,9 @@ export function driverObstacles(parts: ScenePart[], finger: FingerPart): string[
 export function validateFingerAssembly(parts: ScenePart[], joints?: RobotJoint[]) {
   const fingers = parts.filter((part): part is FingerPart => part.gripperFinger?.role === 'finger');
 
-  if (!fingers.length) return;
+  if (!parts.some((part) => part.gripperFinger)) return;
+
+  if (fingers.length !== 2) throw new Error('Keep both replacement fingers and their references together.');
 
   for (const finger of fingers) validateFinger(parts, finger, joints);
 
@@ -75,6 +78,7 @@ function validateFinger(parts: ScenePart[], finger: FingerPart, joints?: RobotJo
     throw new Error('Keep both fingers and their mounting dimensions linked.');
 
   assertJoint(joints, reference);
+  assertFingerAttachments(parts, finger, joints);
 
   if (driverObstacles(parts, finger).length) throw new Error('Clear the M3 screw driver paths before fitting fingers.');
 }

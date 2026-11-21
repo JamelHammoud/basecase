@@ -25,10 +25,10 @@ export const differenced = (recording: Recording, model: SimModel) =>
 const fixedBase = (recording: Recording, model: SimModel) =>
   !model.robots[0]?.floating && (!recording.root || recording.root[0] < 0);
 
-export const canTrain = (recording: Recording, model: SimModel): boolean =>
+export const canTrain = (recording: Recording, model: SimModel, controlDt = DEMO_CONTROL_DT): boolean =>
   !recording.teaching &&
   canExport(recording, model) &&
-  recording.frames > datasetStride(recording.dt) &&
+  recording.frames > datasetStride(recording.dt, 1 / controlDt) &&
   (differenced(recording, model) ? fixedBase(recording, model) : !!recording.root);
 
 function obsSource(recording: Recording, model: SimModel): ObsSource {

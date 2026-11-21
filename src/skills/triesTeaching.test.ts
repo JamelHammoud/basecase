@@ -18,7 +18,7 @@ import { snapshotTraining } from '../datasets/snapshotTraining';
 import type { DatasetSnapshot } from '../datasets/snapshotTypes';
 import { sha256Hex } from './hash';
 
-async function fixture() {
+async function fixture(controlDt = 0.04, originalSeconds = 0.12) {
   const robot = fixtureRobot('arm-3dof');
   const rig = buildRig(robot.joints, robot.parts);
   const made = buildCase({ goal: 'touch', world: 'floor' }, builderRobot(rig, robot.parts));
@@ -27,7 +27,7 @@ async function fixture() {
 
   const kase = made.kase;
   const model = fixtureModel(robot.id);
-  const policy = teachingPolicy(model, caseCommand(kase));
+  const policy = { ...teachingPolicy(model, caseCommand(kase)), controlDt };
   const engine = new SimEngine(await loadMujoco(), model);
   const access = driveAccess({ rig, parts: robot.parts, model });
 
@@ -41,7 +41,7 @@ async function fixture() {
     const original = new Recorder(engine);
 
     engine.stepHook = original.hook;
-    engine.step(0.12);
+    engine.step(originalSeconds);
 
     const demo = original.finish();
 
@@ -146,31 +146,48 @@ it('preserves the incumbent when native warm starts are unavailable or the candi
   expect(ports.onRecord).not.toHaveBeenCalled();
 });
 
-it('prepares correction targets directly from verified frozen bytes and rejects substituted content or selections', async () => {
-  const f = await fixture();
-  const contents = f.recordings.map((recording) => {
-    const bytes = encodeRecording(recording);
+it.each([
+  [0.02, 0.02],
+  [0.04, 0.04],
+  [0.08, 0.08],
+  [0.08, 0.04],
+])(
+  'prepares frozen correction targets at source period %s with original duration %s and rejects substitutions',
+  async (controlDt, originalSeconds) => {
+    const f = await fixture(controlDt, originalSeconds);
+    const contents = f.recordings.map((recording) => {
+      const bytes = encodeRecording(recording);
 
-    return { hash: sha256Hex(bytes), bytes };
-  });
-  const samples = await Promise.all(
-    f.options.samples.map(async (sample, i) => ({
-      ...sample,
-      recording: contents[i].hash,
-      source: `try:${sample.tryId}`,
-      stored: await importedStored(f.model, f.recordings[i], sample.tryId),
-      excluded: [],
-    })),
-  );
-  const snapshot: DatasetSnapshot = { task: f.kase.brief, modelHash: sha256Hex(f.model.xml), samples, images: [] };
-  const input = { model: f.model, kase: f.kase, snapshot, revision: hashOf(snapshot), contents, samples };
-  const job = snapshotTraining(input);
+      return { hash: sha256Hex(bytes), bytes };
+    });
+    const samples = await Promise.all(
+      f.options.samples.map(async (sample, i) => ({
+        ...sample,
+        recording: contents[i].hash,
+        source: `try:${sample.tryId}`,
+        stored: await importedStored(f.model, f.recordings[i], sample.tryId),
+        excluded: [],
+      })),
+    );
+    const snapshot: DatasetSnapshot = { task: f.kase.brief, modelHash: sha256Hex(f.model.xml), samples, images: [] };
+    const input = { model: f.model, kase: f.kase, snapshot, revision: hashOf(snapshot), contents, samples };
 
-  expect(job.job.warmPolicy).toEqual(f.policy);
-  expect(job.job.teaching).toMatchObject({ revision: input.revision, selections: f.options.samples });
-  expect(() => snapshotTraining({ ...input, samples: [{ ...samples[2], from: 0 }] })).toThrow('frozen');
-  expect(() => snapshotTraining({ ...input, contents: contents.slice(0, 2) })).toThrow('missing');
-  expect(() =>
-    snapshotTraining({ ...input, contents: contents.map((content) => ({ ...content, bytes: new Uint8Array(2) })) }),
-  ).toThrow('content changed');
-});
+    if (originalSeconds < controlDt) {
+      expect(() => snapshotTraining(input)).toThrow('These saved samples don’t fit this robot.');
+
+      return;
+    }
+
+    const job = snapshotTraining(input);
+    const demos = job.job.demos as { episodes: Array<{ actions: number[][] }> };
+
+    expect(demos.episodes.slice(0, 2).map((episode) => episode.actions.length)).toEqual([1, 1]);
+    expect(job.job.warmPolicy).toEqual(f.policy);
+    expect(job.job.teaching).toMatchObject({ revision: input.revision, selections: f.options.samples });
+    expect(() => snapshotTraining({ ...input, samples: [{ ...samples[2], from: 0 }] })).toThrow('frozen');
+    expect(() => snapshotTraining({ ...input, contents: contents.slice(0, 2) })).toThrow('missing');
+    expect(() =>
+      snapshotTraining({ ...input, contents: contents.map((content) => ({ ...content, bytes: new Uint8Array(2) })) }),
+    ).toThrow('content changed');
+  },
+);

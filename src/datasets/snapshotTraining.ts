@@ -34,16 +34,22 @@ export function snapshotTraining(input: {
       return [hash, readSnapshotRecording(bytes)];
     }),
   );
-  const selected = input.samples.map((sample) => {
+  const sources = input.samples.map((sample) => {
     const source = recordings.get(sample.recording);
 
     if (!source) throw new Error('The dataset is missing frozen recording content.');
+
+    return source;
+  });
+  const controlDt = sources.find((_, index) => input.samples[index].target === 'correction')?.teaching?.controlDt;
+  const selected = sources.map((source, index) => {
+    const sample = input.samples[index];
 
     if (sample.target === 'correction') return source;
 
     const recording = sampleRecording(source, sample);
 
-    if (!canTrain(recording, input.model)) throw new Error('These saved samples don’t fit this robot.');
+    if (!canTrain(recording, input.model, controlDt)) throw new Error('These saved samples don’t fit this robot.');
 
     return recording;
   });

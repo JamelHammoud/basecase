@@ -12,6 +12,16 @@ The Case entry, Library ownership view, dataset correction action and worker job
 
 A correction selection now prefers training for an otherwise unassigned related source group. Explicit train, validation or test assignments remain authoritative for the whole group. Independent original groups still supply automatic validation. Four seeded split checks cover content-related branches, determinism and explicit-test preservation. The named-file check passed 23 tests across three runtime files and static checks for both browser declarations. Evidence is `scratch/recovery-main/dataset-check.log`.
 
+### Frozen preparation cadence review
+
+Review of pull request #2026 found that frozen preparation checked ordinary samples at the cold 25 Hz cadence before correction training selected the source cadence. A two-frame recording at 50 Hz was refused even when the source policy also ran at 50 Hz. A shorter-than-period original at an 80 ms source period reached the later mixture refusal instead of the sample-length check.
+
+The extended real-WASM fixture in `triesTeaching.test.ts` reproduced both paths. The baseline related phase passed four declarations and failed these two, in 1.62 seconds. Its changed-file run also reported initial formatting and lint findings in the new fixture, which were corrected. Evidence is `scratch/review-2026-cadence-red.log`.
+
+Frozen preparation now resolves verified sources before checking each ordinary range with the correction source's control period. Cold training retains 25 Hz eligibility. The same pipeline declarations cover 20, 40 and 80 ms source periods, each with exactly one original observation/action pair, plus refusal of an original shorter than its source period. Frozen content and selection substitution assertions remain intact. No product strings, browser assertions, timeouts or retries changed. Browser execution remains with CI.
+
+The six-file changed check passed formatting, ESLint, documentation, all 385 site pages and TypeScript. Its related phase passed 382 tests across 74 files, with one existing file/test skipped, in 7.17 seconds. All six correction-training declarations passed. Evidence is `scratch/review-2026-check.log`. These results establish local pipeline coverage, not browser execution or improved native learning.
+
 ### Native recovery observation
 
 A small native CPU experiment used the generated arm-3dof Touch a Point Case. Four successful reference-controller recordings supplied 400 original observation/action rows. Three sources supplied 300 fitting rows and the fourth supplied 100 validation rows. A cold source actor trained for 40 epochs with seed 17, 0.05 state noise and a six-second time cap. The exported actor and normalizer then initialized both comparison runs.

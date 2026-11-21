@@ -3,9 +3,10 @@ import { decomposeWorld } from '../cases/worldDecomposition';
 import type { ScenePart } from '../types/robotics';
 import { SimEngine } from './engine';
 import { buildMjcf } from './mjcf';
-import { adoptEmbeddedParts, isSolidPart } from './mjcfEmbedded';
+import { adoptModelParts, isSolidPart } from './mjcfEmbedded';
 import { partEdges } from '../utils/partEdges';
 import type { MjcfInput, SimModel } from './mjcfTypes';
+import { fingerCollisionPieces } from '../gripperFingers/collision';
 
 export interface ContactHullEntry {
   hash: string;
@@ -40,10 +41,10 @@ export function needsContactGeometry(part: ScenePart): boolean {
   );
 }
 
-async function geometryHash(triangles: Float32Array): Promise<string> {
+async function geometryHash(triangles: Float32Array, exact: boolean): Promise<string> {
   const bytes = new Uint8Array(triangles.byteLength + 1);
 
-  bytes[0] = 1;
+  bytes[0] = exact ? 2 : 1;
   bytes.set(new Uint8Array(triangles.buffer, triangles.byteOffset, triangles.byteLength), 1);
 
   const hash = await crypto.subtle.digest('SHA-256', bytes);
@@ -59,11 +60,27 @@ function enabledParts(input: ContactPreparationJob['input']): Set<string> {
   );
 }
 
+async function preparedHulls(part: ScenePart, triangles: Float32Array, hit?: ContactHullEntry) {
+  if (hit) return hit.hulls;
+
+  const exact = fingerCollisionPieces(part);
+
+  if (exact) return exact;
+
+  return (
+    await decomposeWorld({
+      positions: triangles,
+      indices: Uint32Array.from({ length: triangles.length / 3 }, (_, i) => i),
+    })
+  ).map((hull) => hull.positions);
+}
+
 export async function prepareContactJob(job: ContactPreparationJob): Promise<ContactPreparationResult> {
   const started = performance.now();
+  const triangles = (id: string) => job.triangles[id] ?? null;
   const input = {
     ...job.input,
-    rig: adoptEmbeddedParts(job.input.rig, job.input.parts, (id) => job.triangles[id] ?? null),
+    rig: adoptModelParts({ ...job.input, partTriangles: triangles }),
   };
   const enabled = enabledParts(input);
   const cache = new Map(job.cache.map((entry) => [entry.hash, entry]));
@@ -74,7 +91,12 @@ export async function prepareContactJob(job: ContactPreparationJob): Promise<Con
   let sourceBytes = 0;
 
   for (const part of job.input.parts) {
-    if (!enabled.has(part.id) || !isSolidPart(part) || !needsContactGeometry(part)) continue;
+    if (
+      (!enabled.has(part.id) && part.gripperFinger?.role !== 'finger') ||
+      !isSolidPart(part) ||
+      !needsContactGeometry(part)
+    )
+      continue;
 
     const triangles = job.triangles[part.id];
 
@@ -85,16 +107,9 @@ export async function prepareContactJob(job: ContactPreparationJob): Promise<Con
 
     if (sourceBytes > 36_000_000) throw new Error('Self-contact collision geometry exceeds 1,000,000 triangles.');
 
-    const hash = await geometryHash(triangles);
+    const hash = await geometryHash(triangles, part.gripperFinger?.role === 'finger');
     const hit = cache.get(hash);
-    const hulls =
-      hit?.hulls ??
-      (
-        await decomposeWorld({
-          positions: triangles,
-          indices: Uint32Array.from({ length: triangles.length / 3 }, (_, i) => i),
-        })
-      ).map((hull) => hull.positions);
+    const hulls = await preparedHulls(part, triangles, hit);
 
     if (hit) reused++;
     else prepared++;
@@ -108,7 +123,6 @@ export async function prepareContactJob(job: ContactPreparationJob): Promise<Con
 
   assertCollisionPieces(input, robotHulls);
 
-  const triangles = (id: string) => job.triangles[id] ?? null;
   const model = buildMjcf({ ...input, robotHulls, partTriangles: triangles, worldTriangles: triangles });
 
   await assertContactStart(

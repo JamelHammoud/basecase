@@ -13,6 +13,7 @@ import { parameterGeometryScope } from './scope';
 import type { MeshFiles } from '../../three/componentMeshes';
 
 export interface ParameterGeometryJob {
+  fingerContext?: ScenePart[];
   meshFiles?: MeshFiles;
   force?: string[];
   verify?: boolean;

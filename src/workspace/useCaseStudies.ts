@@ -23,7 +23,7 @@ export function useCaseStudies({
   onShow,
 }: CaseStudiesOptions) {
   const caseCompare = useCaseCompare({ inFront, kase, fingerprint, studio, source, showToast });
-  const study = useStudy({ kase, parts, project, source, sim, showToast, onShow });
+  const study = useStudy({ inFront, kase, parts, project, source, sim, showToast, onShow });
 
   return { caseCompare, study };
 }

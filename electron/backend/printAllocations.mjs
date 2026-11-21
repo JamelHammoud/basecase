@@ -1,4 +1,4 @@
-import { checkedBuild } from './buildAllocations.mjs';
+import { checkedBuild, sameBuildOwner } from './buildAllocations.mjs';
 
 const MAX_PRINTS = 200;
 const text = (value) => typeof value === 'string' && value.length > 0 && value.length <= 100000;
@@ -205,7 +205,8 @@ function assignedQuantity(purchases, build, partId) {
     .flatMap((entry) => Object.values(entry.printOutput?.assignments ?? {}))
     .flat()
     .filter(
-      (assignment) => !assignment.returnedAt && assignment.build.id === build.id && assignment.demand.partId === partId,
+      (assignment) =>
+        !assignment.returnedAt && sameBuildOwner(assignment.build, build) && assignment.demand.partId === partId,
     ).length;
 }
 
@@ -234,8 +235,7 @@ function replayCopy(purchases, request, previous) {
 }
 
 function returnCopy({ purchases, request, now, output, copy, history, owner }) {
-  if (!owner || owner.build.id !== request.build.id || owner.build.kit !== request.build.kit)
-    throw new Error('Choose a copy assigned to this build.');
+  if (!owner || !sameBuildOwner(owner.build, request.build)) throw new Error('Choose a copy assigned to this build.');
 
   const assignments = history.map((assignment) =>
     assignment === owner ? { ...assignment, returnedAt: now, returnRequest: request.request } : assignment,

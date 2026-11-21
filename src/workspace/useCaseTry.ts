@@ -23,6 +23,7 @@ import { startCaseTeaching } from './caseTeaching';
 import type { ActionOwner } from '../sim/teaching';
 import { useCaseHandoff } from './useCaseHandoff';
 import { useFinishTry } from './useTryCompletion';
+import { tryEvidenceAtFinish, useTryEvidence } from './useTryEvidence';
 
 export type TryPhase = 'idle' | 'starting' | 'running' | 'scoring';
 
@@ -34,7 +35,7 @@ interface TryOptions {
   active: Case | null;
   scope: Case | null;
   partners: () => SlotRobot[];
-  onTry: (record: TryRecord, recording: Recording, input: string | null) => Promise<void>;
+  onTry: (record: TryRecord, recording: Recording, input: string | null, current: () => boolean) => Promise<void>;
   onRefuse: (message: string) => void;
   skills?: RoutineSkills;
   branchScope?: unknown;
@@ -58,6 +59,7 @@ export interface CaseTry {
 const MIN_FRAMES = 2;
 
 const TOO_SHORT = 'Play the simulation to record a try.';
+const SOURCE_EDITED = 'Record a new try after editing the Case or robot.';
 
 function teamFor(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[] }, all: boolean): DriveTeam {
   const { rig, parts, slots } = castOf(staged, scene);
@@ -105,11 +107,24 @@ interface ScoringAttempt {
   branch: ReturnType<typeof useCaseBranch>;
   scripted: boolean;
   release: () => void;
+  current: () => boolean;
+}
+
+function scoringScene(input: ScoringAttempt) {
+  const context = input.context;
+
+  return context
+    ? { ...context.scene, partners: context.partners }
+    : { rig: input.options.rig, parts: input.options.parts, partners: input.options.partners() };
+}
+
+function scoringSource(input: ScoringAttempt, held: BranchTryContext | null) {
+  return held?.scoring ?? input.context ?? { kase: input.options.active, model: input.options.sim.model };
 }
 
 async function keepCaseAttempt(input: ScoringAttempt, recording: Recording, held: BranchTryContext | null) {
   const { options, context, branch } = input;
-  const source = held?.scoring ?? context ?? { kase: options.active, model: options.sim.model };
+  const source = scoringSource(input, held);
 
   if (!source.kase || !source.model) return;
 
@@ -117,17 +132,19 @@ async function keepCaseAttempt(input: ScoringAttempt, recording: Recording, held
     kase: source.kase,
     model: source.model,
     recording,
-    scene: context
-      ? { ...context.scene, partners: context.partners }
-      : { rig: options.rig, parts: options.parts, partners: options.partners() },
+    scene: scoringScene(input),
     branch: held,
   });
 
   if (held && !branch.valid(held)) return;
 
+  if (!held && !input.current()) return options.onRefuse(SOURCE_EDITED);
+
   if (held && options.onBranchTry) return options.onBranchTry(record, recording, () => branch.valid(held));
 
-  await (context?.onTry ?? options.onTry)(record, recording, input.scripted ? 'script' : null);
+  await (context?.onTry ?? options.onTry)(record, recording, input.scripted ? 'script' : null, input.current);
+
+  if (!held && !input.current()) options.onRefuse(SOURCE_EDITED);
 }
 
 async function scoreCaseAttempt(input: ScoringAttempt) {
@@ -147,6 +164,8 @@ async function scoreCaseAttempt(input: ScoringAttempt) {
 
   if (held && !input.branch.valid(held)) return;
 
+  if (!held && !input.current()) return onRefuse(SOURCE_EDITED);
+
   await keepCaseAttempt(input, recording, held);
 }
 
@@ -159,23 +178,12 @@ export function useCaseTry(options: TryOptions): CaseTry {
   const scripted = useRef(false);
   const { owner, setOwner, handoff, fail } = useCaseHandoff({ sim, phase, finishing, onRefuse, setPhase });
   const saved = useRef<TryContext | null>(null);
+  const evidence = useTryEvidence(options);
   const lease = useStartupLease(options.scope, sim.subscribeStop, () =>
     setPhase((value) => (value === 'starting' ? 'idle' : value)),
   );
   const vision = useCaseVision(lease);
   const elapsed = phase === 'running' ? Math.max(0, (sim.stats?.time ?? 0) - startedAt) : 0;
-
-  const score = () =>
-    scoreCaseAttempt({
-      options,
-      context: saved.current,
-      branch,
-      scripted: scripted.current,
-      release: () => {
-        vision.release();
-        setPhase('scoring');
-      },
-    });
 
   const finish = async () => {
     lease.cancel();
@@ -185,11 +193,22 @@ export function useCaseTry(options: TryOptions): CaseTry {
     finishing.current = true;
 
     try {
-      await score();
+      await scoreCaseAttempt({
+        options,
+        context: saved.current,
+        branch,
+        scripted: scripted.current,
+        current: tryEvidenceAtFinish(saved.current?.recordId, evidence.current),
+        release: () => {
+          vision.release();
+          setPhase('scoring');
+        },
+      });
     } catch (e) {
       onRefuse(errorMessage(e));
     } finally {
       branch.clear();
+      evidence.clear();
       sim.drive.stop();
       saved.current = null;
       setOwner(null);
@@ -208,18 +227,17 @@ export function useCaseTry(options: TryOptions): CaseTry {
   });
 
   const beginTeaching = async (input: TeachingAttempt) => {
-    const { kase, model, logic, ticket } = input;
     const reply = await startCaseTeaching({
-      scene: { model, kase, rig, parts, skills: options.skills },
+      scene: { model: input.model, kase: input.kase, rig, parts, skills: options.skills },
       sim,
-      current: () => lease.current(ticket),
-      logic,
+      current: () => lease.current(input.ticket),
+      logic: input.logic,
       joints,
     });
 
     if (reply && saved.current) saved.current.recordId = reply.id;
 
-    if (!lease.current(ticket) || !reply?.owner) return finish();
+    if (!lease.current(input.ticket) || !reply?.owner) return finish();
 
     setStartedAt(reply.startedAt);
     setOwner(reply.owner);
@@ -228,6 +246,8 @@ export function useCaseTry(options: TryOptions): CaseTry {
 
   const begin = async (all: boolean, teaching = false) => {
     if (!active || phase !== 'idle') return;
+
+    evidence.begin();
 
     const staged = stageCase(active, { rig, parts }, partners());
     const kase = staged.kase;
@@ -285,8 +305,6 @@ export function useCaseTry(options: TryOptions): CaseTry {
     setPhase('running');
   };
 
-  const teach = () => begin(false, true).catch(fail);
-
   return {
     phase,
     elapsed,
@@ -296,7 +314,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
     start: () => begin(false),
     reference: () => begin(true),
     end: () => void finish(),
-    teach,
+    teach: () => begin(false, true).catch(fail),
     owner,
     handoff,
   };

@@ -124,7 +124,7 @@ For `add_sourced_item`, `supplierIdentity` keeps the supplier name, exact suppli
 | `run_case` | Runs a Case 20 times and reports how often it passed, why it failed, and each failing seed's number and first failure frame |
 | `read_try` | Reads one try from its recording: its signals over a time window, when each failure first tripped, a picture of the canvas at one moment, and its whole-run scan map's bounds and point count |
 | `compare_case` | Runs a Case on this robot and another open tab's, and says which passes more often |
-| `study_design` | Compares mechanism settings or camera poses and lenses. Camera comparisons measure target visibility over a saved try without rerunning the Case |
+| `study_design` | Compares mechanism settings or camera poses and lenses. Optional sourcing compares component arrival, destination and robot quantity against saved offers. Camera comparisons measure target visibility over a saved try without rerunning the Case |
 | `search_tries` | Searches the tries from every scene with the same words and facts as the Library's search, or by motion |
 | `label_tries` | Reads tries' filmstrips, segments and quality flags, and writes an instruction for each try and segment, and tags |
 | `make_dataset` | Gathers tries from any scene into a dataset, by search or by id, and opens it |

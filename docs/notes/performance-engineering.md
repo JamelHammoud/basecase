@@ -483,3 +483,29 @@ On 20 November 2026, a macOS arm64 process running Node v26.13.0 imported 500 ge
 This measurement exceeded one interaction frame, so browser imports run in a disposable worker. File text and the bounded source filename cross once, followed by validated offers or an error. The worker terminates after success, refusal, error or cancellation. Manual quotes validate one field record on the interaction thread. The original parser is retained in the worker, so this change claims isolation of its CPU and temporary allocation, not faster parsing. Browser worker startup, transport, renderer reconciliation and Linux or Windows timing are not measured by this Node probe. The probe and raw observation remain in `scratch/measure-offers.mjs` and `scratch/offer-import-measurement.json` for the task handoff.
 
 A second cold process on the final parser inputs imported the same 500 rows and 1,048,238 bytes in 43.69 ms. Heap-used delta was 35,347,904 bytes and RSS delta was 57,524,224 bytes. No parser optimization occurred between these observations, so their difference is not evidence of an improvement. Both exceeded 16 ms and support the worker boundary. The retained JSON contains this final observation.
+
+## Study purchasing preparation
+
+Measured November 20 on macOS arm64, Apple M5 Pro and Node 26.13.0. A scratch Rolldown entry bundled the production Study handlers, BOM builder, candidate composer, purchasing comparator and wire codec for a native Node worker. A browser-style Worker adapter exercised `createStudySession` and its ordinary disposal. Raw observations are in `scratch/study-sourcing-performance.json`, with the measurement entry points in `scratch/study-perf-worker.ts` and `scratch/study-perf-parent.ts`.
+
+Each sourcing morphology ran 64 candidates, Study's existing combination cap, at purchasing quantity twenty. Each run combined two exact actuator versions with 32 voltage choices. Fixtures ranged from three conveyor parts to 37 hexapod parts. Ordinary Study has no separate part-count cap. Camera visibility's part and triangle limits do not define ordinary sourcing limits. An additional hexapod run filled every BOM line's book to the existing 500-offer limit.
+
+| Measurement across the ten ordinary fixtures | Observed range |
+| --- | --- |
+| Added purchasing preparation, per-candidate median | 0.0158 to 0.0301 ms |
+| Added purchasing preparation, per-candidate 95th percentile | 0.0269 to 0.0644 ms |
+| Largest individual purchasing sample | 21.056 ms |
+| Existing composition and BOM preparation, median | 0.0586 to 0.1857 ms |
+| One immutable evidence snapshot | 9,345 to 11,894 bytes |
+| One retained purchasing result | 12,445 to 16,468 bytes |
+| Serialized purchasing results for 64 candidates | 796,481 to 1,086,817 bytes |
+| Sampled worker heap before each 64-candidate loop | 20,917,376 to 45,098,800 bytes |
+| Sampled worker heap after each loop | 22,450,648 to 44,569,280 bytes |
+
+The 500-offer run retained a 3,020,928-byte snapshot once and 1,034,113 bytes for all 64 results. Its worker heap samples were 53,114,120 bytes before and 71,258,616 bytes after the loop. Added preparation had a 0.0167 ms median, 0.0619 ms 95th percentile and 0.4974 ms maximum. Candidate BOM price records retain price fields only, so unused offer books do not multiply into every row.
+
+The added preparation timer surrounds `studyPurchasing` after the actual candidate BOM exists. The existing preparation timer includes composition and `buildBom`. These measurements exclude catalog downloads, named-dimension compilation, geometry grading, Case execution, UI rendering and persistence validation. Heap samples have no forced garbage collection and include wire-codec and transient allocations. They establish neither a retained-memory delta nor a leak bound. The samples share one warmed worker, so later fixtures inherit its module and allocator state. The largest observed sample includes worker scheduling or collection effects, which were not separately instrumented.
+
+Every later candidate packet transferred zero binary geometry bytes, including the 500-offer fixture. Snapshot and mesh identity remain registered once per worker session. Sourcing grades omit the redundant per-call purchases payload and read the immutable evidence through the scene handle. Evidence and result bytes above are UTF-8 JSON sizes, not transport heap estimates.
+
+Disposing the production session immediately after dispatching another grade rejected the caller in 0.226 ms. Native worker termination completed in 71.324 ms. This is one queued-or-running cancellation observation, not an upper bound. The browser fallback guard remained active in the caller, and no fallback grading ran on its main thread. Linux and Windows measurements were not collected locally.

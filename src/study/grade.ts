@@ -1,3 +1,4 @@
+import { studyPurchasing } from './sourcing';
 import { assemblyReport } from '../assembly/assemblyReport';
 import { jointsWithChains } from '../assembly/rigJoints';
 import { resolvePrinter } from '../data/printers';
@@ -37,7 +38,11 @@ export function createStudyGrader() {
 
       registerSourced(scene.project.sourced ?? []);
 
-      return gradeWithCache(scene, options, cache);
+      return gradeWithCache(
+        scene,
+        scene.sourcing ? { ...options, purchases: scene.sourcing.purchases } : options,
+        cache,
+      );
     },
     dispose: () => cache.dispose(),
   };
@@ -163,5 +168,6 @@ function gradeWithCache(scene: StudyScene, options: StudyGradeOptions, cache: St
     ...row,
     checks: [...checks, ...row.checks.filter((check) => !!check.caseId)],
     costUsd: bom.totals.estimatedUsd,
+    ...(scene.sourcing ? { purchasing: studyPurchasing(bom, scene.sourcing) } : {}),
   };
 }

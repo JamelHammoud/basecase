@@ -1,3 +1,4 @@
+import { finishAppearance } from '../appearance/model';
 import { expect, it } from 'vitest';
 import { box } from '../sim/fixtures/parts';
 import { copySourceKeys } from './copySource';
@@ -48,5 +49,21 @@ it('binds the captured manufacturing mesh and treats worker buffers and retained
   expect(copySourceKeys([part], retained)).toEqual(copySourceKeys([part], worker));
   expect(copySourceKeys([part], { printed: { positions, indices: [0, 2, 1] } })).not.toEqual(
     copySourceKeys([part], retained),
+  );
+});
+
+it('preserves physical copy identity across root and nested visual finishes', () => {
+  const part = box('printed', [0, 0, 0], [10, 10, 10], 1);
+  const child = { ...part, id: 'child' };
+  const before = { ...part, boolean: { op: 'union' as const, operands: [child] } };
+  const after = {
+    ...before,
+    appearance: finishAppearance('metal', '#123456'),
+    boolean: { ...before.boolean, operands: [{ ...child, appearance: finishAppearance('paint', '#abcdef') }] },
+  };
+
+  expect(copySourceKeys([before])).toEqual(copySourceKeys([after]));
+  expect(copySourceKeys([{ ...after, dimensions: { ...part.dimensions, width: 11 } }])).not.toEqual(
+    copySourceKeys([before]),
   );
 });

@@ -18,6 +18,7 @@ import type { FilmShot } from './filmstrip';
 import { checkFit } from './fitCheck';
 import { caseRunner, type CaseRobot, type RunOptions } from './runCase';
 import type { Case } from './schema';
+import { caseSensorKey } from './sensorIdentity';
 import type { TryScoring } from './tries';
 import { multiplyTry, type Multiplied } from './tryReplay';
 import { recordingTransfer } from '../sim/recorder';
@@ -151,10 +152,10 @@ const controlOf = (job: Controlled): RunOptions =>
     ? { controller: 'policy', policy: job.policy, jointNoiseDeg: job.jointNoiseDeg, worldColliders: job.worldColliders }
     : { controller: 'reference', walk: job.walk, jointNoiseDeg: job.jointNoiseDeg, worldColliders: job.worldColliders };
 
-function modelHashOf(model: SimModel) {
+function modelHashOf(model: SimModel, parts: ScenePart[]) {
   const { physics, actuators } = modelHashes(model);
 
-  return `${physics}|${actuators}`;
+  return `${physics}|${actuators}|${caseSensorKey(parts)}`;
 }
 
 export class CaseCheckSession {
@@ -208,7 +209,9 @@ export class CaseCheckSession {
     const walks = (built: SimModel) => walkPick(records, built) !== null;
     const { model, stop } = checkFit(mj, { rig, parts: robot.parts, build, walks });
     const walk = walkPick(records, model);
-    const modelHash = model ? modelHashOf(model) : `unbuilt|${hashOf({ parts: robot.parts, joints: robot.joints })}`;
+    const modelHash = model
+      ? modelHashOf(model, robot.parts)
+      : `unbuilt|${hashOf({ parts: robot.parts, joints: robot.joints })}`;
 
     this.held = { hash: modelHash, robot };
 

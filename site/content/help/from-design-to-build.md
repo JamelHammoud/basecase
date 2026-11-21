@@ -84,7 +84,7 @@ For flat structural parts, [Cut parts from sheet](/help/cut-parts-from-sheet) ex
 
 The editable design's build guide is a PDF of assembly steps. Basecase checks that the parts can go together in that order. The guide names each printed part with a letter, and Print mode cuts that letter into a hidden face of the part.
 
-To assemble several copies without duplicating the editable design, [resume a robot build](/help/resume-a-robot-build). Each named build keeps its original geometry, instructions and separate progress after a restart.
+To assemble several copies without duplicating the editable design, [resume a robot build](/help/resume-a-robot-build). Each named build keeps its captured geometry, instructions and separate progress after a restart. [Repair a robot build](/help/repair-a-robot-build) advances one build to a checked revision while preserving its original history.
 
 For a broken part, [Repair a part](/help/repair-a-part) plays the measured teardown, replacement and reassembly in Build Along. A printed replacement gets a one-part plate, even if its shape hasn't changed. Repair needs a measured removal path and proven reassembly order.
 

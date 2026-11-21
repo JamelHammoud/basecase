@@ -1,10 +1,17 @@
-import type { PartKind, ScenePart } from '../types/robotics';
+import type { ScenePart } from '../types/robotics';
 import type { PassiveJoint } from '../sim/passiveJoint';
 import { fixtureSignals } from './fixtureTravel';
 import { readPassiveJoint, validateFixtures } from './fixtureValidation';
 import { readFixtureGeometry } from './fixtureGeometry';
 import { readPickTarget } from './selectedPickValidation';
-import type { WorldBehavior, WorldItem } from '../sim/mjcfTypes';
+import type { WorldBehavior } from '../sim/mjcfTypes';
+import {
+  readPersonEncounter,
+  validatePersonObject,
+  validateEncounterTime,
+  MAX_PEOPLE,
+  type PersonEncounter,
+} from './personEncounter';
 import type { V3 } from '../utils/kinematics';
 import { consoleReader, type CaseConsole } from './console/format';
 import { validateRoutine, type Routine } from '../routines/schema';
@@ -75,6 +82,7 @@ export interface RobotSlot {
 }
 
 export interface WorldObject {
+  person?: PersonEncounter;
   geometry?: ScenePart;
   massSource?: 'supplied' | 'estimated';
   parent?: string;
@@ -229,6 +237,7 @@ const readObject: Reader<WorldObject> = (value, where) => {
 
   return {
     ...(v.geometry === undefined ? {} : { geometry: readFixtureGeometry(v.geometry, `${where}.geometry`) }),
+    ...(v.person === undefined ? {} : { person: readPersonEncounter(v.person, `${where}.person`) }),
     ...(v.massSource === undefined
       ? {}
       : { massSource: oneOf(['supplied', 'estimated'] as const)(v.massSource, `${where}.massSource`) }),
@@ -258,6 +267,11 @@ export const readWorldObjects = (value: unknown): WorldObject[] => {
   if (new Set(objects.map((o) => o.id)).size !== objects.length) refuse('world.objects', 'repeats an id');
 
   validateFixtures(objects);
+
+  if (objects.filter((object) => object.person).length > MAX_PEOPLE)
+    refuse('world.objects', `holds more than ${MAX_PEOPLE} people`);
+
+  objects.forEach(validatePersonObject);
 
   return objects;
 };
@@ -310,9 +324,10 @@ const readProbe: Reader<CaseProbe> = (value, where) => {
   const from = readProbeEnd(v.from, `${where}.from`);
   const to = readProbeEnd(v.to, `${where}.to`);
   const hand = from === 'end-effector' || (typeof from === 'object' && 'effector' in from);
+  const source = hand || (kind === 'contact' && from === 'base');
   const object = typeof to === 'object' && 'object' in to;
 
-  if (kind && (!hand || !object)) refuse(where, 'must probe from an end effector to an object');
+  if (kind && (!source || !object)) refuse(where, 'must probe from a robot to an object');
 
   return { signal: asId(v.signal, `${where}.signal`), from, to, ...(kind ? { kind } : {}) };
 };
@@ -384,6 +399,7 @@ export function parseCase(input: unknown): Case {
   const task = readTask(v.task, 'task');
 
   checkScore(task, objects);
+  validateEncounterTime(objects, task.seconds);
 
   const gestures = optional(readGestures, v.gestures, 'gestures');
   const signals = {
@@ -444,35 +460,4 @@ export function readCases(raw: unknown[] | undefined): Case[] {
   });
 }
 
-export function worldItem(o: WorldObject): WorldItem {
-  const geometry = { ...o.geometry } as Partial<WorldItem>;
-
-  delete geometry.sourcePartId;
-
-  const part: ScenePart = {
-    ...geometry,
-    id: o.id,
-    name: o.name,
-    kind: o.geometry?.kind ?? (o.kind as PartKind),
-    category: 'structure',
-    role: 'solid',
-    position: o.position,
-    rotation: o.rotation,
-    dimensions: { ...o.geometry?.dimensions, width: o.size[0], height: o.size[1], depth: o.size[2] },
-    color: o.color,
-    note: '',
-    visible: true,
-    locked: true,
-    ...(o.opacity !== undefined ? { opacity: o.opacity } : {}),
-    ...(o.massG !== undefined ? { massG: o.massG } : {}),
-    ...(o.friction !== undefined ? { physics: { dynamic: o.behavior === 'dynamic', friction: o.friction } } : {}),
-  };
-
-  return {
-    ...part,
-    behavior: o.behavior,
-    ...(o.parent ? { parent: o.parent } : {}),
-    ...(o.joint ? { joint: o.joint } : {}),
-    ...(o.movable ? { movable: true } : {}),
-  };
-}
+export { worldItem } from './worldItem';

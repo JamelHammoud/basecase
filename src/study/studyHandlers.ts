@@ -1,3 +1,5 @@
+import { sourcingSnapshot, sourcingUnchanged, type StudySourcingRequirements } from './sourcing';
+import type { Purchases } from '../types/robotics';
 import { supplyVolts } from '../cases/exploreDesigns';
 import { preparedCalibratedModel } from '../sim/calibratedModel';
 import { runEngineering } from '../utils/engineering';
@@ -13,6 +15,16 @@ export function createStudyHandlers() {
   const grader = createStudyGrader();
 
   return {
+    captureSourcing: ({
+      requirements,
+      purchases,
+      evaluatedAt,
+    }: {
+      requirements: StudySourcingRequirements;
+      purchases: Purchases;
+      evaluatedAt: string;
+    }) => reply(sourcingSnapshot(requirements, purchases, evaluatedAt)),
+    validatePurchasing: (input: Parameters<typeof sourcingUnchanged>[0]) => reply(sourcingUnchanged(input)),
     hold: async ({ packet, options }: { packet: StudyPacket; options?: StudyHoldOptions }) => {
       if (typeof document !== 'undefined') throw new Error('Study simulation measurements need a worker.');
 

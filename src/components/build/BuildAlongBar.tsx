@@ -1,3 +1,4 @@
+import { BuildPhotoImport } from './BuildPhotoImport';
 import { BuildCompletion } from './BuildCompletion';
 import React from 'react';
 import {
@@ -22,31 +23,38 @@ interface BuildAlongBarProps {
   active: boolean;
   ready: boolean[];
   onPrint: (id: string) => void;
+  printLabel?: string;
 }
 
-export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active, ready, onPrint, cradle }) => {
+const barPlacement = (buildAlong: BuildAlong) =>
+  buildAlong.frozen ? 'relative shrink-0 py-[12px]' : 'absolute inset-x-0 top-3';
+
+export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active, ready, onPrint, cradle, printLabel = 'Print' }) => {
   const { step, index, count, opening, progress } = buildAlong;
-  const partsReady = !!step && step.repairPhase !== 'remove' && ready[index];
+  const partsReady = readyStep(step, ready[index]);
 
   useBuildAlongKeys(buildAlong, active && buildAlong.active);
 
   if (!buildAlong.active || !active) return null;
 
   return (
-    <div className="absolute inset-x-0 top-3 z-20 flex flex-col items-center gap-2 px-6 pointer-events-none">
+    <div
+      className={`${barPlacement(buildAlong)} z-20 flex flex-col items-center gap-2 px-[12px] pointer-events-none`}
+      data-build-along-bar
+    >
       <FloatingIsland
         role="toolbar"
         aria-label="Build Along"
         data-step={step ? index + 1 : undefined}
         data-ready={partsReady || undefined}
-        className="pointer-events-auto h-[40px]"
+        className="pointer-events-auto min-h-[40px] max-w-full flex-wrap justify-center [&>button]:shrink-0"
       >
         {opening ? (
           <div className="flex items-center gap-2 px-[8px] text-[12.5px] text-white/60 whitespace-nowrap">
             <Spinner className="w-4 h-4" />
             {progress && `${progress.label}…`}
           </div>
-        ) : (
+        ) : count > 0 && (
           <>
             <IconButton
               size="sm"
@@ -74,10 +82,11 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
         )}
         {step?.printPartId && (
           <Button size="sm" variant="ghost" onClick={() => onPrint(step.printPartId!)}>
-            Print
+            {printLabel}
           </Button>
         )}
         <BuildCompletion buildAlong={buildAlong} />
+        <BuildPhotoImport buildAlong={buildAlong} />
 
         <CradleBarActions cradle={cradle} />
         <IslandDivider />
@@ -89,3 +98,7 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
     </div>
   );
 };
+
+function readyStep(step: BuildAlong['step'], ready: boolean) {
+  return !!step && step.repairPhase !== 'remove' && ready;
+}

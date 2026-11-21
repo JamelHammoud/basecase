@@ -62,7 +62,7 @@ Native software validation establishes neither electrical performance nor physic
 
 ## Checks and limits
 
-Individual build names and completion records stay in the local app or browser profile. They aren’t included in this archive. Local allocation ownership stays outside the archive too. [Resume a robot build](/help/resume-a-robot-build) covers those records.
+Individual build names, assembly completion, repair histories and assembly photos stay in the local app or browser profile. They aren’t included in this archive. Local allocation ownership and optional Fleet robot references stay outside the archive too. [Resume a robot build](/help/resume-a-robot-build) covers assembly records. [Repair a robot build](/help/repair-a-robot-build) covers retained revisions and repair actions.
 
 Checks retain their original measurement time and are recorded as current, stale or not run. Exporting neither changes readiness nor proves physical fit. Unproven steps remain marked, and the manifest records an assembly search that reached its time limit.
 

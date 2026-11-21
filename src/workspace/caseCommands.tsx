@@ -27,6 +27,7 @@ import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { workbenchCommands } from './workbenchCommands';
 import { teachingCommands, correctionCommands } from './teachingCommands';
+import { personCommands } from './personCommands';
 
 const showCases = (core: WorkspaceCore) => showLeftTab(core, 'cases');
 
@@ -389,6 +390,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
       run: () => showCases(core),
     },
     ...newCase,
+    ...personCommands(core),
     importWorldCommand(core),
     ...workbenchCommands(core),
     ...images,

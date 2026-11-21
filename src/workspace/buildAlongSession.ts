@@ -6,13 +6,26 @@ import type { BuildAlongStep } from '../guide/buildAlong';
 import type { BuildStepView, ViewShot } from '../three/viewport/types';
 
 export interface Session {
+  repairSession?: {
+    record: import('../kit/buildRepairTypes').BuildRepairRecord;
+    source: FrozenKit;
+    target: FrozenKit;
+    sourceParts: ScenePart[];
+    targetParts: ScenePart[];
+    revisions: Array<'source' | 'target'>;
+  };
   cradleSource?: { id: number; plan: GuidePlan; parts: ScenePart[]; project: ProjectSettings };
   steps: BuildAlongStep[];
   stepParts: string[][];
   views: BuildStepView[];
   index: number;
   camera: ViewShot;
-  frozen?: { record: BuildRecord; kit: FrozenKit; parts: ScenePart[] };
+  frozen?: {
+    record: BuildRecord;
+    kit: FrozenKit;
+    parts: ScenePart[];
+    repair?: import('../kit/buildRepairTypes').BuildRepairRecord;
+  };
 }
 
 export const stepView = (step: BuildAlongStep): BuildStepView => ({

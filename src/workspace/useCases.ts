@@ -36,6 +36,7 @@ import type { SkillsRuntime } from '../skills/skillsRuntime';
 import type { CaseRobotInput } from './caseChecks';
 import { useCaseWorkbench } from './useCaseWorkbench';
 import { readPlacements, type PlacementUpdate } from '../cases/workbench/retention';
+import { casePeople } from './casePeople';
 
 interface CasesOptions {
   commitWorkbenchPlacements: (update: PlacementUpdate) => void;
@@ -199,10 +200,9 @@ export function useCases(options: CasesOptions) {
     joints: project.joints ?? [],
     active,
     scope: project.cases?.find((kase) => kase.id === activeId) ?? null,
-    ...caseTryCallbacks(project.cases, onTries, onTry, showToast),
+    ...caseTryCallbacks(project.cases, onTries, showToast),
   });
 
-  const addAndTry = useAddAndTry({ add, active, attempt });
   const real = useRealRobotTries({
     ...{ sim, rig, parts, active, tries, partners, attempt, timeline, onTry },
     viewportRef: options.viewportRef,
@@ -210,6 +210,9 @@ export function useCases(options: CasesOptions) {
 
   return {
     branch: caseBranchActions({ timeline, attempt, sim, cases, rig, parts, partners, activate: setActiveId }),
+
+    people: casePeople({ ...options, active, stage, attempt, realTry: real.realTry, timeline }),
+
     workbench,
     cases,
     active,
@@ -226,7 +229,7 @@ export function useCases(options: CasesOptions) {
     open,
     openCheck: trails.openCheck,
     add,
-    addAndTry,
+    addAndTry: useAddAndTry({ add, active, attempt }),
     remove,
     naming,
     removeTry: (record: TryRecord) => confirmRemoveTry(record, { tries, multiply, timeline, setProject, showToast }),

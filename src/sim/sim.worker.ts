@@ -10,10 +10,11 @@ import { LiveCase } from '../cases/liveCase';
 import { LiveWatch } from '../skills/liveWatch';
 import { errorMessage } from '../utils/errorMessage';
 import { PoseGate } from './poseGate';
-import { WorldMoves } from './worldMoves';
+import type { WorldMoves } from './worldMoves';
 import type { WorldChange } from '../cases/worldSet';
 import { runFalls } from './fallRuns';
 import { LivePhysics } from './livePhysics';
+import { liveGrab } from './liveGrab';
 import { liveRecorder, sendRecording } from './liveRecorder';
 import { ContinuationSession } from './continuationSession';
 import { LiveTeaching, handleTeaching } from './liveTeaching';
@@ -243,7 +244,7 @@ async function load(msg: Msg<'load'>) {
   playing = false;
   engine = new SimEngine(livePhysics.module(mj), msg.model);
   livePhysics.attach(engine);
-  world = new WorldMoves(mj, engine);
+  world = engine.world;
   looksShown = -1;
   post({ type: 'world', looks: {} });
   scanShown = -1;
@@ -325,10 +326,13 @@ function seek(msg: Msg<'seek'>) {
 
   halt();
 
-  const frameAt = setRecordedFrame(mj, engine, scrubbed, msg.frame);
-  const qpos = Float64Array.from(engine.data.qpos);
+  const frameAt = Math.max(0, Math.min(scrubbed.frames - 1, Math.round(msg.frame)));
 
   world?.replay(scrubbed.world ?? [], frameAt * scrubbed.dt);
+  setRecordedFrame(mj, engine, scrubbed, frameAt);
+
+  const qpos = Float64Array.from(engine.data.qpos);
+
   postLooks();
   frame(false, frameContacts(scrubbed, frameAt).slice());
   post({ type: 'sought', frame: frameAt, qpos }, [qpos.buffer]);
@@ -340,12 +344,6 @@ function play() {
   playing = true;
   last = performance.now();
   loop();
-}
-
-function grab(msg: Msg<'grab'>) {
-  if (msg.phase === 'start') engine?.grabStart(msg.body, msg.point);
-  else if (msg.phase === 'move') engine?.grabMove(msg.point, msg.turn);
-  else engine?.grabEnd();
 }
 
 function run(msg: Msg<'run'>) {
@@ -380,7 +378,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     script = null;
     setController(msg.controller);
   },
-  grab,
+  grab: (msg) => liveGrab(engine, msg),
   push: (msg) => {
     engine?.pushRobot(msg.robot, msg.force, { seconds: msg.seconds, releaseDeg: msg.releaseDeg });
   },

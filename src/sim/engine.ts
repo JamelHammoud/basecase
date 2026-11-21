@@ -4,13 +4,11 @@ import { loopInitial } from './loopInitial';
 import { controlValues, assertTendonController } from './controlValues';
 import { primeCtrlHistory } from './ctrlHistory';
 import { stepControlled } from './controlStep';
-import * as THREE from 'three';
-import { createDrive, type DriveCommand, type DriveHand, type DriveLoop, type DriveSetup } from './drive';
+import { createDrive, type DriveCommand, type DriveLoop, type DriveSetup } from './drive';
 import { PoseDrive, type PoseSetup } from './drivePose';
 import { GrabForce } from './grabForce';
 import { PushForce, type PushTiming } from './pushForce';
 import type { SimModel } from './mjcf';
-import { simDelta } from './mjcfFrames';
 import type { SimStats } from './engineStats';
 import { eyeCaster, type EyeCaster } from './eyes';
 import { ActuatorFaults, type FaultKind } from './faults';
@@ -20,10 +18,11 @@ import { routePolicy, RouteRunner, type RouteController } from './route';
 import { readBodyPoses, readHoldValues, readJointAngles, readJointStates } from './jointReadout';
 import { Scanner } from './scanner';
 import { BodyContacts } from './contacts';
-import { readEngineStats, type EngineRobot } from './engineReadout';
+import { effectorAt, readEngineStats, type EngineRobot } from './engineReadout';
 import { EngineContinuation } from './engineContinuation';
 import { TeachingControl, type ActionOwner, type AppliedOwner } from './teaching';
 import type { ArmSetup } from './drive';
+import { WorldMoves } from './worldMoves';
 
 export type Controller =
   | { kind: 'hold'; values?: Record<string, number> }
@@ -70,6 +69,7 @@ export class SimEngine {
   private mj: MainModule;
   readonly sim: SimModel;
   readonly continuation: EngineContinuation;
+  readonly world: WorldMoves;
 
   constructor(mj: MainModule, sim: SimModel) {
     this.mj = mj;
@@ -108,12 +108,13 @@ export class SimEngine {
     });
     this.peaks = new Float64Array(sim.joints.length);
     this.saturated = new Float64Array(sim.joints.length);
+    this.world = new WorldMoves(mj, this);
     this.continuation = new EngineContinuation({
       mj,
       sim,
       model: this.model,
       data: this.data,
-      busy: () => !!this.scanner || this.pushes.active || this.grab.active,
+      busy: () => !!this.scanner || this.pushes.active || this.grab.active || this.world.hasPeople,
       runtime: () => ({
         controller: this.controller,
         drive: this.drive,
@@ -141,6 +142,8 @@ export class SimEngine {
     });
 
     for (const r of this.robots) this.placeRoot(r, initial);
+
+    this.world.reset({ forward: false });
 
     mj.mj_forward(model, data);
     this.holdDelayedControls(this.sim.joints.map((_, i) => i));
@@ -371,6 +374,7 @@ export class SimEngine {
 
     for (let s = 0; s < steps; s++) {
       this.beforeStepHook?.();
+      this.world.advance(data.time + this.dt);
       this.applyControl();
       this.faults.apply(data.ctrl);
       this.pushes.apply();
@@ -439,7 +443,7 @@ export class SimEngine {
         faults: this.faults,
         drive: this.drive,
         tiltOf: (r) => this.tiltOf(r),
-        handAt: (h) => this.handAt(h),
+        handAt: (h) => effectorAt(this.sim, this.poses(), h),
       },
       rtf,
     );
@@ -447,13 +451,6 @@ export class SimEngine {
 
   private holdValues(): Record<string, number> {
     return readHoldValues(this.sim, this.model, this.data, { qpos: this.jointQpos, dof: this.jointDof });
-  }
-
-  private handAt({ part, point }: DriveHand): [number, number, number] {
-    const delta = simDelta(this.sim, this.poses(), part);
-    const at = new THREE.Vector3(...point).applyMatrix4(delta ?? new THREE.Matrix4());
-
-    return [at.x, at.y, at.z];
   }
 
   jointAddresses(): Int32Array {

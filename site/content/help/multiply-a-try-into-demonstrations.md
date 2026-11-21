@@ -60,7 +60,7 @@ Tries recorded before Multiply don't carry any commands, so their menu doesn't s
 
 For a policy takeover, Multiply replays the saved policy and commands, without its ownership handoffs. To train from recorded operator windows, see [Correct a simulated policy](/help/correct-a-simulated-policy).
 
-An object the Case marks movable never shifts. It stays where the Case's code put it, and any arm target nearest to it stays where it was. Hinged lids, sliding drawers and their attached parts also keep their starting positions.
+An object the Case marks movable never shifts between variations. People keep their authored routes. Other movable objects stay where the Case's code put them, and nearby arm targets keep their positions. Hinged lids, sliding drawers and their attached parts also keep their starting positions.
 
 Only targets move with the objects. If you drove a try with the keys alone, each variation replays the same key presses, and it passes only if the moved spot still lies where the hand went.
 

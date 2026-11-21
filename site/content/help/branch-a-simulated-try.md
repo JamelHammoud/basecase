@@ -57,3 +57,5 @@ You need the matching robot scene to replay an imported try.
 You can play back a branch with a missing parent. Restore the parent before using that branch in a dataset to keep its shared beginning in one split.
 
 To use the keyboard, choose **Branch Try** or **Export Try** in [[⌘K]]. For the original recording workflow, see [Try a Case](/help/try-a-case).
+
+Cases with [authored people](/help/test-a-person-crossing) offer recorded playback, without continuation checkpoints or Branch Try.

@@ -1,16 +1,19 @@
 import React, { useSyncExternalStore } from 'react';
-import { Button, confirmAction, Spinner } from '../../design-system';
+import { Button, confirmAction, ErrorBoundary, Spinner } from '../../design-system';
+import type { BodyAnalysisView } from '../../workspace/useBodyAnalysis';
+import { BodyAnalysis } from './BodyAnalysis';
 import type { BodyHistory } from '../../reality/bodyTypes';
 import { bodyEvidenceText, bodyFitPending, subscribeBodyFit } from '../../workspace/bodyActions';
 
 export interface BodyCalibrationProps {
+  analysis: BodyAnalysisView;
   robot: string;
   history: BodyHistory | undefined;
   onFit: () => void;
   onRollBack: () => void;
 }
 
-export const BodyCalibration: React.FC<BodyCalibrationProps> = ({ robot, history, onFit, onRollBack }) => {
+export const BodyCalibration: React.FC<BodyCalibrationProps> = ({ robot, history, onFit, onRollBack, analysis }) => {
   const pending = useSyncExternalStore(subscribeBodyFit, () => bodyFitPending(robot));
   const latest = history?.versions.at(-1);
   const rollback = () =>
@@ -33,6 +36,14 @@ export const BodyCalibration: React.FC<BodyCalibrationProps> = ({ robot, history
             Roll Back
           </Button>
         </div>
+      )}
+      <Button variant="secondary" fullWidth onClick={analysis.show}>
+        Analyze Try
+      </Button>
+      {analysis.open && (
+        <ErrorBoundary region="Analyze Try" onClose={analysis.close}>
+          <BodyAnalysis analysis={analysis} />
+        </ErrorBoundary>
       )}
     </div>
   );

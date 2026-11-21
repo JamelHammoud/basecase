@@ -2,6 +2,12 @@
 
 Knowledge preserved from code comments. Complements AGENTS.md; nothing here repeats it.
 
+## Hub test token source scanning
+
+On November 20, 2026, `npm run security -- --only=secrets` exited 1 with four critical Hugging Face token findings, one each in `electron/hub/hub.test.mjs`, `datasetRepo.test.mjs`, `skillRepo.test.mjs` and `imageDatasetPublish.test.mjs`. Each held the same placeholder as a contiguous source literal. The shared `testToken.mjs` now joins its prefix and body at runtime and preserves the original value used by authentication, redaction and disk-persistence assertions.
+
+`tools/security/secrets.test.mjs` initializes a temporary Git repository and stages a module containing a generated, real-shaped token literal. It uses the actual Git file selection and file scanning, asserts a critical finding without revealing the token in the report, then rewrites the module with runtime joining and asserts no critical or high findings. Only the repository root and history-tool availability are controlled. No detection pattern or exclusion changes. History scanning is outside this test, and local `gitleaks` was unavailable.
+
 ## Revision checkout of an occupied branch
 
 On November 21, 2026, revise slots repeatedly failed before agent execution for pull request #1964. At 00:17:30.830, 00:17:45.419, 00:17:53.281 and 00:18:32.617 UTC, `revise.log` reported `git worktree add -q -B failed (exit 128)` because `loop/fix/model-imports` was already used by the `model-imports` worktree. The stack points to `checkout` in `lanes/revise.mjs:97`. The lane cleared only its own `revise-1964` path, then tried to reset and check out a branch owned elsewhere. Rebase already used detached checkouts, but delivery pushed a local branch name, so changing checkout alone would have delivered the owner's old commit instead of the detached revision.
@@ -811,3 +817,13 @@ Review of #1963 reproduced a producer-registration defect in the new daily `ux` 
 `lanes/ux.test.mjs` uses the real dispatcher and controlled agent and publication boundaries to check both saturated queues and an admitted audit while three refinement pull requests wait. Existing audit cases cover all eight required area reports, missing and blank reports, no-change coverage logs, failed sessions, duplicate open audits and cleanup after publication throws. `lib/smallChange.test.mjs` retains source and update-label review checks and tests the help-only 30-line boundary independently of the source-path rule.
 
 Review also removed duplicated documentation guidance, aligned the audit and review briefs with CI-owned browser execution and kept each audit fix pull request focused on one shared cause. Coverage requires a nonempty report per area. It does not mechanically establish that the source or browser evidence is accurate. No live audit, browser assertion run, visual judgment, hosted scheduling observation or throughput measurement was performed in this review. The daily audit and broader review selection have no measured throughput improvement yet.
+
+## IPv6 embedded IPv4 fetch filter
+
+Issue #1945 reports that `isPublicAddress` at `787b1efd9` accepted IPv4-compatible loopback, 6to4 loopback, local-use NAT64 loopback, Teredo, site-local and IPv4-translated loopback addresses. The affected inputs are retained in `electron/publicFetch.test.mjs`, alongside dotted and hexadecimal mapped forms, site-local upper-bound coverage, documentation and discard-only addresses. Each rejected URL must fail before the stubbed fetch receives a request. Public native IPv6, mapped IPv4, 6to4 and Teredo client addresses remain accepted.
+
+The reported Teredo address decodes to 192.0.2.45, an IPv4 documentation address. The IPv4 denylist now includes all three documentation subnets so the same rule covers direct, mapped and tunnel addresses. The standard NAT64 range remains refused outright. Local-use NAT64, obsolete compatible and translated forms are also refused outright. 6to4 checks its gateway IPv4 address and Teredo checks its inverted client IPv4 address. Scoped literals fail the address predicate and URL parsing refuses scoped URL hosts.
+
+These deterministic tests establish filtering and URL normalization behavior, not private-host reachability. No tunnel or NAT64 route was configured and no request to a private host was attempted. Actual SSRF impact depends on host routing. DNS resolution followed by a separate fetch resolution retains the existing rebinding window.
+
+Review reproduced four further omissions at `a8e336e5c`: `100:0:0:1::1`, `2001:2::1`, `3fff::1` and `5f00::1` each returned true from `isPublicAddress`, and a request to `http://[5f00::1]/` reached a stubbed fetch once. The [IANA IPv6 special-purpose registry](https://www.iana.org/assignments/iana-ipv6-special-registry/) marks their dummy, benchmarking, documentation and SRv6 allocations as not globally reachable. Those four prefixes are now refused, with lower and upper range probes in `electron/publicFetch.test.mjs`. The same file checks rejection of a mixed public/private DNS answer list, refusal of a nonpublic IPv6 redirect before a second fetch, and scoped literals. These probes use stubs, not live network routes.

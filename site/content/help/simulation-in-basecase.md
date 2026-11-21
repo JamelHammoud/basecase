@@ -22,6 +22,8 @@ covers:
   - src/sim/worldMoves.ts
   - src/utils/engineeringSimModel.ts
   - src/reality/measuredJoints.ts
+  - src/reality/bodyAnalysis.ts
+  - src/reality/bodySensitivity.ts
 ---
 
 Run the robot in your scene under MuJoCo physics to find out whether it stands, walks and holds its weight before you print a part.
@@ -70,6 +72,16 @@ Basecase fits the first half of the run and keeps the result only when median er
 A kept body version changes simulation, Checks and training together. Policies trained on the previous model show **Out of date**. **Weight** and **Servo torque** refresh in Checks. **Peak torque** and **Falls** need new simulation measurements before their results count on the changed body.
 
 The newest active body version supplies the scene's floor friction, shared by every robot. Rolling back restores the previous body model and its fingerprint, so a policy trained on that model is current again.
+
+## Recorded body parameters
+
+You can [inspect body parameters in a saved try](/help/inspect-body-parameters) without changing calibration, policy, scene geometry or the Checks verdict. The analysis compares local changes in mass, payload and floor friction under the try's retained model.
+
+**Distinguishable** means a parameter produces a separate local response above the method's threshold. **Coupled** means different parameter changes can explain similar motion. **Poor excitation** means the response is too small under the assumed noise.
+
+A wrist's mass and payload can produce similar motion, leaving little evidence to choose between them. A residual mismatch remains unresolved. These results don't identify a unique physical cause or assign probabilities.
+
+The analysis uses up to 256 status samples from a recorded interval of at most 20 seconds. It can't replay velocity-driven wheel commands. Generated recordings test the software's behavior without establishing physical diagnostic accuracy.
 
 ## What a run tells you
 

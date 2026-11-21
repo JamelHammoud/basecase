@@ -6,8 +6,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { commitSha, startFakeHub } from '../../e2e/fakeHub.ts';
 import { DATASET_FILE_BYTES } from './datasetRepo.mjs';
 import { HubAccount } from './index.mjs';
+import { TOKEN } from './testToken.mjs';
 
-const TOKEN = 'hf_testTokenThatMustNeverLeak0123456789';
 const SHA = 'a'.repeat(40);
 
 const sealing = {

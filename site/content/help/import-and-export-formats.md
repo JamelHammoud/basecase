@@ -58,6 +58,9 @@ Ordinary mesh imports have no captured-world byte or triangle limit. Texture map
 
 - A STEP or IGES file can be up to 200 MB and 1,000 bodies.
 - A robot zip can be up to 200 MB to download, and 600 MB once unzipped.
+- Each downloaded robot description or companion file can be up to 200 MB.
+- A `.basecase` scene can be up to 128 MB after decompression.
+- A BVH downloaded by the agent can be up to 8 MB.
 - A captured world drop can total up to 64 MB across 256 files, with 200,000 collider triangles and 1,000,000 splat points.
 
 SimReady parts in scene files must link to a supported catalog dataset. Their texture packages stay outside the file and [download on request](/help/add-objects-to-the-scene#restore-saved-simready-textures).

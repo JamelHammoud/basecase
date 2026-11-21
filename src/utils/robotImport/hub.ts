@@ -1,5 +1,5 @@
 import { safeEntryPath } from './archive';
-import { fetchBytes, noRobotAt, unopenedRepo } from './sources';
+import { MAX_ROBOT_FILE_BYTES, fetchBytes, noRobotAt, unopenedRepo } from './sources';
 import type { Tree } from './tree';
 
 export const HUB = 'https://huggingface.co';
@@ -152,7 +152,7 @@ export async function hubTree(link: HubLink, url: string): Promise<{ tree: Tree;
     tree: {
       paths,
       urlOf,
-      read: async (path) => (listed.has(path) ? fetchBytes(urlOf(path)).catch(() => null) : null),
+      read: async (path) => (listed.has(path) ? fetchBytes(urlOf(path), MAX_ROBOT_FILE_BYTES).catch(() => null) : null),
     },
   };
 }

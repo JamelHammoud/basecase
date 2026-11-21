@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { humanoid, walkBvh } from '../utils/mocap.fixtures';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_PROJECT, type RobotAnimation, type RobotJoint, type ScenePart } from '../types/robotics';
 import { animateRequest, getRig, retargetRequest, setPoseRequest, type PoseContext } from './agentPose';
 
@@ -127,6 +128,47 @@ describe('animateRequest', () => {
 });
 
 describe('retargetRequest', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('refuses oversized downloads before parsing and cancels the response', async () => {
+    let cancelled = false;
+    let chunks = 0;
+    const body = new ReadableStream<Uint8Array>(
+      {
+        pull(controller) {
+          chunks++;
+          controller.enqueue(new Uint8Array(1024 * 1024));
+        },
+        cancel() {
+          cancelled = true;
+        },
+      },
+      { highWaterMark: 0 },
+    );
+    const log: unknown[] = [];
+
+    vi.stubGlobal('fetch', async () => new Response(body));
+
+    expect((await retargetRequest(context(log), { url: 'https://example.com/huge.bvh' })).text).toContain('8 MB');
+    expect(cancelled).toBe(true);
+    expect(chunks).toBe(9);
+    expect(log).toEqual([]);
+  });
+
+  it('downloads a normal BVH through the real parser and retargeter', async () => {
+    vi.stubGlobal('fetch', async () => new Response(walkBvh()));
+
+    const robot = humanoid();
+    const ctx = context([]);
+    const reply = await retargetRequest(
+      { ...ctx, parts: robot.parts, project: { ...ctx.project, joints: robot.joints } },
+      { url: 'https://example.com/walk.bvh', play: false },
+    );
+
+    expect(reply.text).not.toContain('Couldn’t');
+    expect(reply.text).toContain('Matched:');
+  });
+
   it('needs BVH text and reports parse errors', async () => {
     expect((await retargetRequest(context([]), {})).text).toBe('Give the BVH as an evidence path or a URL.');
     expect((await retargetRequest(context([]), { text: 'not a bvh' })).text).toMatch(/^Couldn’t read the BVH/);

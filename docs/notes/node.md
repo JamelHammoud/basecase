@@ -2,6 +2,16 @@
 
 Knowledge preserved from code comments. Complements AGENTS.md; nothing here repeats it.
 
+## Revision checkout of an occupied branch
+
+On November 21, 2026, revise slots repeatedly failed before agent execution for pull request #1964. At 00:17:30.830, 00:17:45.419, 00:17:53.281 and 00:18:32.617 UTC, `revise.log` reported `git worktree add -q -B failed (exit 128)` because `loop/fix/model-imports` was already used by the `model-imports` worktree. The stack points to `checkout` in `lanes/revise.mjs:97`. The lane cleared only its own `revise-1964` path, then tried to reset and check out a branch owned elsewhere. Rebase already used detached checkouts, but delivery pushed a local branch name, so changing checkout alone would have delivered the owner's old commit instead of the detached revision.
+
+Inspection found the owner clean at `7ccae36ef97751070ab9f51609b2543cf36596e0`, while GitHub reported the open pull head at `4acaf3fc0a847966ecb3907d95524d989d7bfef9`. Process arguments and open working directories showed no process using the owner. The doctor ran `git switch --detach` in that worktree to release the branch immediately, preserving its commit and files. No branch was deleted, no remote ref was changed and no Check was rerun. The session journal then recorded a revision starting at 00:19:53.588 UTC and completing successfully in 89,141 ms, followed by its preflight continuation at 00:21:23.264 UTC. This establishes recovery past checkout, not a passing pull request or merge. Bounded evidence is retained in `scratch/operational-recovery.json`.
+
+Revision now checks out the fetched remote branch detached. Delivery uses `HEAD:refs/heads/<saved branch>` after its existing commit verification, without force. The temporary-repository regression invokes the real revision lane, fetch claim, worktree operations, outbox, delivery and cleanup with controlled agent and publication services. It reproduces the old exit-128 checkout with an occupied branch, uses a newer remote head, preserves dirty owner files, retains a detached worktree after a simulated push failure, delivers that same revision and removes only the revision worktree. Existing delivery tests retain changed-commit refusal, metadata-only handling and publication recovery coverage. Local tests do not establish hosted-platform timings or a production revision verdict. No wait, retry policy, gate or timeout changes.
+
+The five-file changed check passed formatting, lint, documentation and 165 related tests across 14 files. Its Vitest phase took 2.94 seconds on the local Mac. The usage CLI error printed by the existing reversed-date test is expected failure-path output. The full check log is `scratch/revise-check-final.log`.
+
 ## Article image validation
 
 Pull request #1949 replaces six article captures that showed startup instead of their captions' states. The shared capture helper waits for the requested locator, boot removal, cleared startup classes and loaded fonts. It validates the screenshot buffer before writing, so readiness and image validation failures preserve an existing destination.

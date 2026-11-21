@@ -2,9 +2,9 @@ import { expect } from 'vitest';
 import type { Locator, Page } from 'playwright-core';
 import { expectPanelReadable } from './appearanceLayout';
 import type { App } from './harness';
-import { Buffer } from 'node:buffer';
 import { decodeRecording, encodeRecording } from '../src/cases/recordingFile';
 import { ownershipIntervals } from '../src/sim/teachingRecording';
+import { base64ToBytes, bytesToBase64 } from '../src/utils/base64';
 
 export async function expectOwnershipReadable(ownership: Locator) {
   try {
@@ -106,14 +106,14 @@ async function manyTeachingIntervals(app: App, id: string) {
     .filter((post) => post.route === 'tries-save')
     .map((post) => post.body as { arg: { manifest: { id: string }; recording: string } })
     .find((post) => post.arg.manifest.id === id)!;
-  const recording = decodeRecording(Buffer.from(saved.arg.recording, 'base64'))!;
+  const recording = decodeRecording(base64ToBytes(saved.arg.recording))!;
   const count = recording.teaching!.boundaries;
 
   expect(count).toBeGreaterThan(40);
   recording.actionOwner = Uint8Array.from({ length: count }, (_, i) => Math.floor((i * 40) / count) % 2);
   recording.teaching!.ownership = ownershipIntervals(recording);
 
-  const data = Buffer.from(encodeRecording(recording)).toString('base64');
+  const data = bytesToBase64(encodeRecording(recording));
 
   await app.page.route('**/api/bridge/tries-recording', (route) =>
     route.request().postDataJSON().arg === id ? route.fulfill({ json: { data } }) : route.fallback(),

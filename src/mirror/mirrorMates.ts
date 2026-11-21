@@ -38,13 +38,13 @@ export function matchingPort({ source, name, onto, plane }: PortMatch): string |
 }
 
 export interface MateScene {
-  parts: ScenePart[];
+  partsById: ReadonlyMap<string, ScenePart>;
   copies: Map<string, ScenePart>;
   plane: MirrorPlane;
 }
 
 function mirrorMate(mate: PartMate, source: ScenePart, copy: ScenePart, scene: MateScene): PartMate | null {
-  const targetSource = scene.parts.find((p) => p.id === mate.target);
+  const targetSource = scene.partsById.get(mate.target);
 
   if (!targetSource) return null;
 

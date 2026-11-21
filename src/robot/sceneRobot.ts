@@ -2,6 +2,7 @@ import type { RobotJoint } from '../types/robotics';
 import type { ConnectSpec, RobotSpec } from './robotState';
 import { ros2Ask } from './ros2';
 import { g1WritableSceneJoints, isUnitreeG1, UNITREE_G1_ASK } from './unitreeG1';
+import { TENDON_SIM_ONLY } from '../joints/tendonAdmission';
 
 export const MAX_SERVOS = 32;
 
@@ -14,7 +15,7 @@ export interface ServoLayout {
 }
 
 export function servoLayout(joints: readonly RobotJoint[]): ServoLayout {
-  const movable = joints.filter((j) => j.type !== 'fixed');
+  const movable = joints.filter((j) => j.type !== 'fixed' && j.actuation !== 'passive');
 
   return {
     movable,
@@ -37,6 +38,8 @@ function ownChoice({ movable, ids, class: robotClass }: ServoLayout): ConnectCho
 }
 
 export function sceneRobotChoices(joints: readonly RobotJoint[]): SceneRobotChoices {
+  if (joints.some((joint) => joint.tendon)) return { ok: false, reason: TENDON_SIM_ONLY };
+
   const layout = servoLayout(joints);
   const { movable } = layout;
 

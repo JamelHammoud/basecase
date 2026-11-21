@@ -23,16 +23,20 @@ export function cholesky(matrix: Matrix, jitter = 1e-12): Matrix | null {
 
 export function mahalanobis(lower: Matrix, offset: readonly number[]): number {
   const solved: number[] = [];
+  let distance = 0;
 
   for (let i = 0; i < offset.length; i++) {
     let sum = offset[i];
 
     for (let k = 0; k < i; k++) sum -= lower[i][k] * solved[k];
 
-    solved.push(sum / lower[i][i]);
+    const value = sum / lower[i][i];
+
+    solved.push(value);
+    distance += value * value;
   }
 
-  return solved.reduce((s, v) => s + v * v, 0);
+  return distance;
 }
 
 export function standardNormal(random: Random): number {
@@ -59,5 +63,8 @@ export function chiSquareQuantile(dof: number, level: number): number {
   return dof * (1 - k + z * Math.sqrt(k)) ** 3;
 }
 
-export const transformed = (a: Matrix, covariance: Matrix): Matrix =>
-  a.map((ai) => a.map((aj) => ai.reduce((s, x, p) => s + x * aj.reduce((t, y, q) => t + covariance[p][q] * y, 0), 0)));
+export function transformed(a: Matrix, covariance: Matrix): Matrix {
+  const products = a.map((aj) => covariance.map((row) => aj.reduce((sum, y, q) => sum + row[q] * y, 0)));
+
+  return a.map((ai) => products.map((product) => ai.reduce((sum, x, p) => sum + x * product[p], 0)));
+}

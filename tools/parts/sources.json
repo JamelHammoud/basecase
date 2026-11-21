@@ -1098,6 +1098,12 @@
     },
     "note": "Touch panel cover glass is CAD grey 868686 (shared only with SOT-23 packages); mapped to black like the real panel."
   },
+  "jst-b3b-eh-a": {
+    "url": "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/master/Connector_JST.3dshapes/JST_EH_B3B-EH-A_1x03_P2.50mm_Vertical.step",
+    "file": "cad/jst-b3b-eh-a/header.step",
+    "license": "CC-BY-SA-4.0 with KiCad library exception, Rene Poeschl 2019",
+    "note": "Manufacturer CAD download returns HTTP 403. Checked against JST eEH.pdf page 4 Type A: 10 mm width, 3.8 mm depth, 6 mm body height, 3.2 mm tails, post tips 5.1 mm above the PCB, 2.5 mm pin pitch, 0.64 mm square posts and row 1.6 mm from the body face. STEP coordinates retain pin 1 at the origin before centering."
+  },
   "radxa-zero-3w": {
     "url": "https://dl.radxa.com/zero3/docs/hw/3w/radxa_zero_3w_3d_stp.zip",
     "file": "cad/radxa-zero-3w/radxa_zero_3w_3d.stp",

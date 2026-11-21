@@ -19,6 +19,7 @@ interface SimStartInputs {
 export function useSimStart({ sw, buildModel, modelRef, setModel, controller, speed }: SimStartInputs) {
   const { setError, setStatus, worker, load, cancelLoad, setPlaying } = sw;
   const pinned = useRef<string | null>(null);
+  const preparing = useRef<AbortController | null>(null);
   const [gate] = useState(createStartupGate);
   const cancel = useCallback(() => {
     gate.cancel();
@@ -31,11 +32,18 @@ export function useSimStart({ sw, buildModel, modelRef, setModel, controller, sp
       const token = gate.begin();
       const active = () => gate.current(token) && current();
 
+      preparing.current?.abort();
+
+      const abort = new AbortController();
+      const detach = gate.subscribeStop(() => abort.abort());
+
+      preparing.current = abort;
+
       setError(null);
       setStatus('loading');
 
       try {
-        const model = given ?? (await buildModel({ pin: pinned.current }));
+        const model = given ?? (await buildModel({ pin: pinned.current, signal: abort.signal }));
 
         if (!active()) return false;
 
@@ -62,12 +70,20 @@ export function useSimStart({ sw, buildModel, modelRef, setModel, controller, sp
       } catch (error) {
         if (!active()) return false;
 
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          setStatus('off');
+
+          return false;
+        }
+
         modelRef.current = null;
         setModel(null);
         setError(errorMessage(error));
         setStatus('error');
 
         return false;
+      } finally {
+        detach();
       }
     },
     [buildModel, worker, load, controller, speed, setError, setStatus, setPlaying, modelRef, setModel, gate],

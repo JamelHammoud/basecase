@@ -34,6 +34,20 @@ describe('the skill store', () => {
     expect(() => saveSkill(library(), { hash: HASH, text: '{"format":"other"}' })).toThrow(/skill/);
     expect(() => saveSkill(library(), { hash: HASH, text: 'not json' })).toThrow();
   });
+
+  it('does not read an oversized source artifact and treats corrupt JSON as unavailable', () => {
+    const dir = library();
+
+    saveSkill(dir, { hash: HASH, text: skill });
+
+    const file = path.join(dir, 'skills', HASH, 'skill.json');
+
+    fs.truncateSync(file, 32 * 1024 * 1024 + 1);
+    expect(getSkill(dir, HASH)).toBeNull();
+    fs.writeFileSync(file, '{');
+    expect(getSkill(dir, HASH)).toBeNull();
+    expect(fs.readFileSync(file, 'utf8')).toBe('{');
+  });
 });
 
 describe('snapshots kept with a skill', () => {

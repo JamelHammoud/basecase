@@ -1,4 +1,5 @@
 import type { ModelMeshData } from './model';
+import type { PurchaseIdentity, PurchasingEvidence } from './purchasing';
 import type { SheetFields } from './sheet';
 import type { Case } from '../cases/schema';
 import type { Routine, TransitionProof } from '../routines/schema';
@@ -13,7 +14,6 @@ import type { ProjectRecords } from './projectRecords';
 import type { StoredFalls, StoredWalk } from '../utils/engineeringTypes';
 import type { BooleanFields } from './booleans';
 import type { SculptMeshData } from './sculpt';
-import type { LoopClosure } from './loopClosure';
 import type { PartDeformers, PartEdges } from './partShape';
 
 export type { BooleanData, BooleanFrame, BooleanOp } from './booleans';
@@ -123,6 +123,8 @@ export interface CustomModelDefinition {
   defaultColor: string;
   mechanicalTag: string;
   nodes: CustomModelSubNode[];
+  joints?: RobotJoint[];
+  caseFixture?: true;
 }
 
 export interface ScenePart extends PartRelations, BooleanFields, SheetFields {
@@ -173,42 +175,31 @@ export interface ScenePart extends PartRelations, BooleanFields, SheetFields {
   jointId?: string;
   cameraLens?: Lens;
   sketch?: PartSketch;
+  dimensionBindings?: import('../utils/designParameters/types').DimensionBinding[];
 }
 
 export type { PartPrint, PrintQuote, PrintRecord } from './print';
 
 import type { FixedCamera } from '../cameras/fixed';
 import type { Lens } from '../cameras/lens';
-import type { OnshapeMate, PartGroup, RobotLinkRef } from './robotLink';
+import type { PartGroup, RobotLinkRef } from './robotLink';
 import type { PartSketch } from '../utils/sketch/types';
 
 import type { PartPrint, PrintRecord, PrintService } from './print';
 
 export type PrintMaterial = 'PLA' | 'PETG' | 'ABS' | 'ASA' | 'TPU';
 
-export interface RobotJoint {
-  id: string;
-  name: string;
-  type: 'revolute' | 'prismatic' | 'fixed';
-  parent: string[];
-  child: string[];
-  parentJoint?: string;
-  origin: [number, number, number];
-  axis: [number, number, number];
-  frame?: { part: string; origin: [number, number, number]; axis: [number, number, number] };
-  range?: [number, number];
-  actuators?: string[];
-  effortNm?: number;
-  velocity?: number;
-  published?: string;
-  limb?: 'leg' | 'arm' | 'neck' | 'torso' | 'other';
-  onshape?: OnshapeMate;
-  loop?: LoopClosure;
-}
+import type { RobotJoint } from './joint';
+
+export type { RobotJoint } from './joint';
 
 export type { BuildGuideRecord, ProjectRecords } from './projectRecords';
 
 export interface ProjectSettings extends ProjectRecords, PrintService, ProjectBudgets {
+  selfContact?: import('../sim/selfContact').SelfContactSettings;
+  designParameters?: import('../utils/designParameters/types').DesignParameter[];
+  dimensionalRequirements?: import('../utils/designParameters/types').DimensionalRequirement[];
+  electronicsBoard?: import('../wiring/boardTypes').ElectronicsBoard;
   printer: string;
   material: PrintMaterial;
   infillPct: number;
@@ -310,6 +301,7 @@ export interface EnteredPrice {
 }
 
 export interface PurchaseRecord {
+  identity?: PurchaseIdentity;
   url?: string;
   asin?: string;
   title?: string;
@@ -321,7 +313,7 @@ export interface PurchaseRecord {
   onHand?: number;
 }
 
-export type StoredPurchase = PurchaseRecord | { onHand: number };
+export type StoredPurchase = (PurchaseRecord | { onHand?: number }) & PurchasingEvidence;
 
 export type Purchases = Record<string, StoredPurchase>;
 

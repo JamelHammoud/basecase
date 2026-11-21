@@ -6,17 +6,11 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import type { VisionManifest } from '../src/vision/manifest';
 import { inputSensitiveDetectionOnnx } from '../src/vision/onnxFixture';
-import type { VisionResult } from '../src/vision/types';
 import { FAKE_CAMERA, exposeTestHooks, launchChrome, openApp, partCount, shown, type App } from './harness';
 import { simulatedCameraFixture, visionManifest as manifest } from './visionFixtures';
+import { operatorOverlayState, type VisionState } from './visionOverlay';
 
 let app: App;
-
-interface VisionState {
-  signals: Record<string, number>;
-  results: Record<string, VisionResult | null>;
-  models: Record<string, VisionResult | null>;
-}
 
 interface Studio {
   load: (record: unknown) => void;
@@ -63,18 +57,19 @@ it('runs Find Faces on real fake-camera pixels while the body estimator uses its
       live.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.operatorCamera().live),
     )
     .toBe(true);
-  await expect.poll(async () => (await state(live.page)).signals['vision.operator.face']).toBe(1);
 
-  const result = (await state(live.page)).models['operator:yunet']!;
+  const overlay = await live.page.waitForFunction(operatorOverlayState, true, { timeout: 10000 });
+  const observed = await overlay.jsonValue();
 
-  expect(result.modelId).toBe('yunet');
-  expect(result.width).toBe(640);
-  expect(result.height).toBe(480);
-  await expect
-    .poll(() =>
-      live.page.locator(shown('[data-camera="operator"] [data-testid="vision-box"][data-label="face"]')).count(),
-    )
-    .toBe(1);
+  await overlay.dispose();
+  expect(observed).toMatchObject({
+    vision: {
+      signals: { 'vision.operator.face': 1 },
+      models: { 'operator:yunet': { modelId: 'yunet', width: 640, height: 480 } },
+    },
+    visibleTiles: 1,
+    visibleFaces: 1,
+  });
   expect(live.errors).toEqual([]);
 });
 

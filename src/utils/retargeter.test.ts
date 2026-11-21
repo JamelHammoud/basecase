@@ -29,6 +29,33 @@ const LEGS = /hip|knee|ankle/;
 const ARM = (side: string) => new RegExp(`^${side}_(shoulder|elbow|wrist)`);
 
 describe('createRetargeter', () => {
+  it('reports ankle minima through tracking loss, nonfinite heights and recovery', () => {
+    const { rig, pointOf } = humanoid();
+    const m = mocap();
+    const rt = createRetargeter({ rig, pointOf, rest: keypointFrame(m, m.rest), upperBody: true });
+    const heights = [undefined, -12, 25, 0, -0, Infinity, -Infinity, NaN];
+    let t = 0;
+
+    for (const left of heights) {
+      for (const right of heights) {
+        const frame: Record<string, V3> = {};
+        const present = [left, right].filter((v): v is number => v !== undefined);
+        const expected = present.length ? Math.min(...present) : 0;
+
+        if (left !== undefined) frame.leftAnkle = [0, left, 0];
+
+        if (right !== undefined) frame.rightAnkle = [0, right, 0];
+
+        const before = structuredClone(frame);
+        const step = rt.step(frame, t++)!;
+
+        expect(Object.is(step.lowestAnkle, expected)).toBe(true);
+        expect(frame).toEqual(before);
+        expect(step.root).toEqual({ position: [0, 0, 0], rotation: [0, 0, 0] });
+      }
+    }
+  });
+
   it('steps a clip frame by frame to the batch keyframes', () => {
     const { rig, pointOf } = humanoid();
     const m = mocap();
@@ -106,7 +133,7 @@ describe('createRetargeter', () => {
     expect(moving.values.left_elbow_joint).not.toBe(waiting[4]!.values.left_elbow_joint);
   });
 
-  it('turns the body by the hips when a live source has no root rotation', () => {
+  it.each([0, 20, -60])('turns the body relative to a rest heading of %s degrees', (restHeading) => {
     const { rig, pointOf } = humanoid();
     const m = mocap();
     const stand = keypointFrame(m, m.rest);
@@ -117,11 +144,14 @@ describe('createRetargeter', () => {
         Object.entries(stand).map(([k, p]) => [k, [c * p[0] + s * p[2], p[1], c * p[2] - s * p[0]] as V3]),
       );
     };
-    const rt = createRetargeter({ rig, pointOf, rest: stand });
+    const rt = createRetargeter({ rig, pointOf, rest: turn(restHeading) });
+    const inverse = rt.body()!.basisInv!.toArray();
     const yaw = (f: HumanFrame, t: number) => rt.step(f, t)!.root.rotation.map((v) => v + 0);
 
-    expect(yaw(turn(0), 0)).toEqual([0, 0, 0]);
-    expect(yaw(turn(30), 0.03)).toEqual([0, 30, 0]);
-    expect(yaw(without(turn(45), 'hips'), 0.06)).toEqual([0, 30, 0]);
+    expect(yaw(turn(restHeading), 0)).toEqual([0, 0, 0]);
+    expect(yaw(turn(restHeading + 30), 0.03)).toEqual([0, 30, 0]);
+    expect(yaw(without(turn(restHeading + 45), 'hips'), 0.06)).toEqual([0, 30, 0]);
+    expect(yaw(turn(restHeading - 15), 0.09)).toEqual([0, -15, 0]);
+    expect(rt.body()!.basisInv!.toArray()).toEqual(inverse);
   });
 });

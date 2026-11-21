@@ -58,7 +58,7 @@ The Case's contract judges every variation, and Multiply keeps only the ones tha
 
 Tries recorded before Multiply don't carry any commands, so their menu doesn't show **Multiply**. Record a new try instead. Tries from your real robot don't show **Multiply** either.
 
-An object the Case marks movable never shifts. It stays where the Case's code put it, and any arm target nearest to it stays where it was.
+An object the Case marks movable never shifts. It stays where the Case's code put it, and any arm target nearest to it stays where it was. Hinged lids, sliding drawers and their attached parts also keep their starting positions.
 
 Only targets move with the objects. If you drove a try with the keys alone, each variation replays the same key presses, and it passes only if the moved spot still lies where the hand went.
 

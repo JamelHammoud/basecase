@@ -1,3 +1,4 @@
+import { collectFleetIncident } from './fleetIncidentStore';
 import { DEFAULT_UNIT, nextUnitName } from '../../electron/robot/units.mjs';
 import { loadSession } from '../cases/tryStore';
 import type { ElectronApi } from '../utils/platform/types';
@@ -239,6 +240,8 @@ function receiveOther(unit: string, before: UnitEntry, after: UnitEntry) {
 }
 
 export function receiveRobotEvent(event: RobotEvent) {
+  collectFleetIncident(event);
+
   const unit = unitOfEvent(event);
   const before = units.get(unit) ?? unitEntry(unit);
   const after = withEvent(before, event);

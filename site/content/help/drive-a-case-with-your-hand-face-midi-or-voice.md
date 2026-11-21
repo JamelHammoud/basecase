@@ -41,7 +41,7 @@ You can control a running Case with your hand, your face, a MIDI keyboard or you
 ![The Puppet the Arm Case open, with You on the left, the arm in the middle and Try It on the right](/help/drive-a-case-with-your-hand-face-midi-or-voice/console.png)
 
 2. Click **Try It**.
-3. On your first try, allow Basecase to use the camera or the microphone.
+3. If prompted, allow Basecase to use the camera, microphone or MIDI devices.
 4. Use the input the Case names (see the table below).
 
 ![A try 6.8 seconds in, with the computer's camera under You and the arm bent to the right](/help/drive-a-case-with-your-hand-face-midi-or-voice/hand.png)

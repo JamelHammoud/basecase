@@ -200,11 +200,12 @@ interface Binding {
   local: Scope;
   given: Map<string, string>;
   blocks: XmlElement[];
+  nextBlock: number;
   ctx: Ctx;
 }
 
 function bindBlock(spec: string, b: Binding) {
-  const el = b.blocks.shift();
+  const el = b.blocks[b.nextBlock++];
 
   if (!el) throw new XacroError(`Missing block ${spec}`);
 
@@ -257,7 +258,7 @@ async function callMacro(name: string, el: XmlElement, scope: Scope, ctx: Ctx): 
   const local = new Scope(scope);
   const given = new Map(el.attrs.filter(([k]) => !k.startsWith('xmlns')));
 
-  bind(m, { caller: scope, local, given, blocks: elementsOf(el.children), ctx });
+  bind(m, { caller: scope, local, given, blocks: elementsOf(el.children), nextBlock: 0, ctx });
 
   return expandNodes(m.body, local, { ...ctx, macroDepth: ctx.macroDepth + 1 });
 }

@@ -4,6 +4,11 @@ import type { Studio } from '../types';
 
 export default function skillsStudio(studio: Studio) {
   return {
+    pauseKitBackground: () => {
+      const runtime = studio().core.simTraining.skills.runtime;
+
+      runtime.planBackground = () => {};
+    },
     stubTrainer: (policy: unknown, snapshots?: unknown[]) => {
       const { core, releaseTrainerRef } = studio();
       const stub = trainerStub(policy, snapshots);

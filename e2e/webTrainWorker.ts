@@ -1,6 +1,15 @@
 import type { Page } from 'playwright-core';
 import { isPolicySpec } from '../src/sim/policy';
-import { skillFiles, skillHash } from '../src/skills/artifacts';
+import {
+  currentDesign,
+  skillFiles,
+  skillFromTraining,
+  skillHash,
+  withEvidence,
+  type Skill,
+} from '../src/skills/artifacts';
+import { environmentHash } from '../src/skills/environment';
+import { kitSkillName } from '../src/skills/motorKit';
 import type { ForgeJob, ForgeOutcome } from '../src/skills/forgeRunner';
 import { readyStand } from '../src/skills/hubSkillFixtures';
 import { kitEnvironment } from '../src/skills/kitEnvironment';
@@ -8,7 +17,30 @@ import { kitJob } from '../src/skills/kitJob';
 import type { SkillsJob, SkillsReply } from '../src/skills/skillsJob';
 import type { SkillsMessage, SkillsRequest } from '../src/skills/skills.worker';
 
-type KitJob = Extract<SkillsJob, { type: 'kit' }>;
+export type KitJob = Extract<SkillsJob, { type: 'kit' }>;
+
+export function readyKit(job: Pick<KitJob, 'model' | 'design' | 'entry' | 'warm'>): Skill {
+  const stand = readyStand(job.model, job.design);
+  const environment = kitEnvironment(job.model, job.entry);
+  const current = currentDesign({ design: job.design, model: job.model, environment });
+  const skill = skillFromTraining({
+    name: kitSkillName(job.entry),
+    start: null,
+    current,
+    environment,
+    controller: stand.controller,
+  });
+  const evidence = {
+    ...stand.evidence!,
+    binding: { ...current.hashes, contract: current.contract, environment: environmentHash(environment) },
+  };
+
+  return {
+    ...withEvidence(skill, evidence, environment),
+    origin: stand.origin,
+    warmStartFrom: job.warm?.from ?? null,
+  };
+}
 
 function workerFixture() {
   const scope = self as unknown as DedicatedWorkerGlobalScope;
@@ -52,7 +84,7 @@ function workerFixture() {
   };
 }
 
-export async function stubWebTrainWorker(page: Page) {
+export async function stubWebTrainWorker(page: Page, jobs: KitJob[] = []) {
   const trained: string[] = [];
 
   await page.context().route(/\/skills\.worker[.-].*(?:\?|$)/, (route) =>
@@ -65,19 +97,22 @@ export async function stubWebTrainWorker(page: Page) {
   await page.context().route('**/__web-train', async (route) => {
     const { job, outcome } = route.request().postDataJSON() as { job: KitJob; outcome?: ForgeOutcome };
 
-    if (!outcome)
+    if (!outcome) {
+      jobs.push(job);
+
       return route.fulfill({
         json: {
-          name: 'Motor Kit: stand',
+          name: `Motor Kit: ${job.entry}`,
           xml: job.model.xml,
-          job: kitJob(job.model, job.entry, { minutes: 1, seed: 1 }),
+          job: { ...kitJob(job.model, job.entry, { minutes: 1, seed: 1 }), warmPolicy: job.warm?.policy },
         },
       });
+    }
 
     if (!outcome.ok || !isPolicySpec(outcome.policy))
       return route.fulfill({ status: 500, body: 'The tab engine returned no policy.' });
 
-    const skill = readyStand(job.model, job.design);
+    const skill = readyKit(job);
 
     skill.controller = { kind: 'policy', policy: outcome.policy, robot: job.design };
 

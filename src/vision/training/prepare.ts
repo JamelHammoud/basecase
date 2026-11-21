@@ -1,8 +1,10 @@
+import { checkEvidenceFrameCount } from './evidence';
 import { freezeVersion, type Dataset } from '../../datasets/datasetFile';
 import { resolveSnapshot, snapshotHash } from '../../datasets/datasetSnapshot';
 import { restoreImages } from '../../datasets/snapshotImages';
 import { saveDataset } from '../../datasets/datasetStore';
 import { loadManifests } from '../../cases/tryStore';
+import { captureInspectionSource, captureInspectionSources } from './inspectionSources';
 import { preparationSources } from './prepareSources';
 import { preparationWorker } from './prepareWorker';
 import { preparationTransfer, type VisionTrainingKind } from './prepareData';
@@ -13,6 +15,7 @@ export interface PreparationPorts {
   hash: typeof snapshotHash;
   save: typeof saveDataset;
   manifests: typeof loadManifests;
+  inspectionSource?: typeof captureInspectionSource;
 }
 
 const defaults: PreparationPorts = {
@@ -21,6 +24,7 @@ const defaults: PreparationPorts = {
   hash: snapshotHash,
   save: saveDataset,
   manifests: loadManifests,
+  inspectionSource: captureInspectionSource,
 };
 
 export interface PreparationOptions {
@@ -54,6 +58,17 @@ export async function prepareVisionTraining(
     { snapshot, sets, provenance, kind, seed: dataset.seed, frozen: !!selected },
     preparationTransfer(sets),
   );
+
+  checkEvidenceFrameCount(
+    prepared.samples.filter((sample) => sample.split === 'test' && prepared.realSourceIds.includes(sample.source))
+      .length,
+  );
+  prepared.provenance = await captureInspectionSources({
+    sources: prepared.provenance,
+    samples: prepared.samples,
+    realSourceIds: prepared.realSourceIds,
+    capture: ports.inspectionSource,
+  });
 
   if (selected) return { ...prepared, dataset, version: selected };
 

@@ -181,6 +181,25 @@ describe('printed-label candidate search', () => {
     expect(fitLabel(face, 'A')).toEqual({ at: face.centroid, turned: false, height: 10, stroke: 1.4 });
   });
 
+  it('fits a dense face through the fallback grid without a spread argument limit', () => {
+    const face = tiledFace(120, 120, 2);
+    const expected = exhaustiveFit(face, 'MW');
+    const source = face.tris;
+    const tris = new Float32Array(source.length * 1000 + 4);
+    const view = tris.subarray(2, -2);
+
+    for (let i = 0; i < view.length; i += source.length) view.set(source, i);
+
+    face.tris = view;
+
+    expect(insideFace(face, face.centroid)).toBe(false);
+    expect(view.length / 2).toBeGreaterThan(125000);
+    expect(fitLabel(face, 'MW')).toEqual(expected);
+    expect(view.subarray(0, source.length)).toEqual(source);
+    expect(tris[0]).toBe(0);
+    expect(tris.at(-1)).toBe(0);
+  });
+
   it('searches beyond a centroid in a hole and rejects an empty face', () => {
     const face = tiledFace(120, 120, 2);
     const spot = fitLabel(face, 'MW')!;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { ReferenceTryButton } from './ReferenceTryButton';
 import {
   Button,
   CameraIcon,
@@ -151,6 +152,7 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
             Try It
           </Button>
         )}
+        <ReferenceTryButton cases={cases} />
         {cases.mat.available && !running && (
           <Button
             variant="secondary"

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { whenIdle } from '../../utils/whenIdle';
 import { softwareGl } from '../softwareGl';
 import type { Stage } from './stage';
+import { SelectionScreenRect } from './selectionScreenRect';
 
 const OUTLINE_LAYER = 7;
 const OUTLINE_PX = 2.5;
@@ -81,38 +82,6 @@ function createQuad(
   return quad;
 }
 
-const corners = (box: THREE.Box3) =>
-  [0, 1, 2, 3, 4, 5, 6, 7].map(
-    (i) =>
-      new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z),
-  );
-
-function screenRect(groups: THREE.Object3D[], camera: THREE.PerspectiveCamera, pad: THREE.Vector2) {
-  const box = new THREE.Box3();
-
-  groups.forEach((group) => box.expandByObject(group));
-
-  if (box.isEmpty()) {
-    return null;
-  }
-
-  const points = corners(box).map((corner) => corner.applyMatrix4(camera.matrixWorldInverse));
-
-  if (points.some((point) => point.z > -camera.near)) {
-    return FULL_SCREEN;
-  }
-
-  const ndc = points.map((point) => point.applyMatrix4(camera.projectionMatrix));
-  const rect = new THREE.Vector4(
-    Math.max(-1, Math.min(...ndc.map((p) => p.x)) - pad.x),
-    Math.max(-1, Math.min(...ndc.map((p) => p.y)) - pad.y),
-    Math.min(1, Math.max(...ndc.map((p) => p.x)) + pad.x),
-    Math.min(1, Math.max(...ndc.map((p) => p.y)) + pad.y),
-  );
-
-  return rect.x < rect.z && rect.y < rect.w ? rect : null;
-}
-
 export class SelectionOutline {
   private readonly stage: Stage;
 
@@ -134,6 +103,10 @@ export class SelectionOutline {
   private tagged = new Set<THREE.Object3D>();
 
   private readonly size = new THREE.Vector2();
+
+  private readonly pad = new THREE.Vector2();
+
+  private readonly screenRect = new SelectionScreenRect();
 
   private readonly cancelWarm: () => void;
 
@@ -164,8 +137,9 @@ export class SelectionOutline {
       this.quad.material.needsUpdate = true;
     }
 
-    const pad = new THREE.Vector2(((radius + 1) * 2) / this.size.x, ((radius + 1) * 2) / this.size.y);
-    const rect = screenRect(groups, camera, pad);
+    this.pad.set(((radius + 1) * 2) / this.size.x, ((radius + 1) * 2) / this.size.y);
+
+    const rect = this.screenRect.update(groups, camera, this.pad);
 
     this.quad.visible = Boolean(rect);
     uniforms.radius.value = radius;

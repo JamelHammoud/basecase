@@ -30,14 +30,17 @@ MuJoCo is the physics engine behind much of robotics research. Basecase runs Goo
 
 ## The scene is the model
 
-You don't write a model file. Each time you start a simulation, Basecase writes a MuJoCo model (MJCF, MuJoCo's XML format) from your scene as it is at that moment. The model is built from four things:
+You don't write a model file. Each time you start a simulation, Basecase writes a MuJoCo model (MJCF, MuJoCo's XML format) from your scene as it is at that moment. The model includes:
 
 - **Bodies.** Each joint gets one body, which holds the parts that joint moves. A robot that walks or rolls floats free, while an arm stays bolted to the floor.
 - **Mass.** Link weights and terminal payloads include the active body fit, as in the Build tab's Weight check.
 - **Shape.** Each part collides as the convex hull of its mesh, the shape you'd get by stretching plastic wrap around the part.
+- **Transmission.** Authored ideal tendons connect catalog motor spools to passive joints through a length constraint or declared elastic law.
 - **Start.** The robot starts in the pose shown on the canvas, raised until it clears the floor.
 
 An [imported world](/help/import-a-world) collides as up to 64 separate convex pieces, keeping gaps such as doorways and the space under a table. Its collider supplies the floor too, so holes stay open. The world's visible mesh or splat is separate from those hidden colliders.
+
+Saved [fixture assemblies](/help/reuse-an-assembly-in-cases) retain their passive joints and springs. Their nonprimitive shapes use separate convex pieces.
 
 Separate robots collide with each other, the floor, scenery and loose objects. In [Hand Off to a Spot](/help/put-two-robots-in-one-case), the grippers hold and pass the block through physical contact.
 
@@ -47,7 +50,9 @@ If the robot misbehaves in the simulation, fix the design. Basecase writes your 
 
 If a catalog servo with a published model drives a joint, the joint moves the way a bench test of that servo model says it does. Basecase models the STS3215 at 7.4 V and the XL330 at 5 V. [Study](/help/study-design-options) models each servo at the supply voltage it's trying. Each model covers the servo's gain and delay, back-EMF damping, and friction that grows with load.
 
-Every other joint gets an estimated servo. If the joint has a servo, Basecase sets its torque from that servo's stall torque. If it has none, Basecase sets the torque from the weight the joint holds.
+Other powered joints get an estimated servo, except a four-bar crank with an unspecified catalog variant. Ask the agent to replace that servo with the exact catalog variant you use, or insert the path again. If the joint has a servo, Basecase sets its torque from that servo's stall torque. If it has none, Basecase sets the torque from the weight the joint holds.
+
+Passive joints keep their physical motion and limits without a motor holding them. Sketch four-bars use two passive hinges joined at their closing pin. See [Simulate a four-bar](/help/simulate-a-four-bar). [Make a joint passive](/help/make-a-joint-passive) from its row in **Pose**.
 
 To see which joints use estimates, open **Build** ▸ **Checks**:
 
@@ -78,7 +83,7 @@ A run doesn't change your parts. The canvas shows the simulated pose until you e
 
 - **Drive** lets you steer the robot live with the keyboard, a gamepad, a phone, or your arms in front of the camera. If you drive a humanoid with the camera, Basecase holds its base in place unless the humanoid has a ready Walk skill.
 - **Cases** record tries and mark each one as a pass or a miss. A running Case's code can move, recolor or hide the Case's movable objects, and the try records each change. To see each value as it was at any moment, play back a try from the Case's cards.
-- **Training** teaches skills on Forge, Basecase's own trainer, which is built on the same MuJoCo formulation. While training runs, the canvas shows the newest snapshot. A trained skill counts only after Arena replays it on MuJoCo itself.
+- **Training** can plan a reach with inverse kinematics or train a policy on Forge, Basecase's trainer built on the same MuJoCo formulation. While a policy trains, the canvas shows its newest snapshot. A skill counts only after Arena replays it on MuJoCo itself.
 - **Routines** run step by step on the live simulation.
 - **Falls**, in the Build tab, tips a legged robot over from 12 directions to find the servos a fall would strip.
 - **The emulated robot** follows the simulation once it reaches Test.
@@ -87,4 +92,6 @@ Cases and Routines can react to detections from this scene's simulated or live c
 
 ## Limits
 
-Parts of the same robot don't collide with each other in the simulation, so one leg can pass through another. The model also leaves out the STS3215's speed limit, current limits, supply sag and backlash.
+By default, parts of the same robot don't collide, so one leg can pass through another. In **Simulate**, enable **Self-contact** to let non-adjacent links collide. These contacts use convex hulls and don’t establish physical fit.
+
+The model also leaves out the STS3215's speed limit, current limits, supply sag and backlash. Ideal tendon models refuse training, IK and robot deployment.

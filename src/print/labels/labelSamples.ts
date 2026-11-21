@@ -26,9 +26,13 @@ export function randomPoints(t: Float32Array): Array<[number, number]> {
   return Array.from({ length: RANDOM_SAMPLES }, () => {
     const target = random() * sum;
     const i = surfaceSampleIndex(areas, target) * 6;
-    let [u, v] = [random(), random()];
+    let u = random();
+    let v = random();
 
-    if (u + v > 1) [u, v] = [1 - u, 1 - v];
+    if (u + v > 1) {
+      u = 1 - u;
+      v = 1 - v;
+    }
 
     return [
       t[i] + (t[i + 2] - t[i]) * u + (t[i + 4] - t[i]) * v,

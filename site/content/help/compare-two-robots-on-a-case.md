@@ -50,12 +50,12 @@ Each row shows the scene's name and how many of the 20 runs passed. The higher c
 
 Under the name, the row shows the estimated cost of the parts and the robot's weight. The cost is the **Bill of materials** estimate, not counting support filament, and parts you own count as $0 (see [Count the parts you already own](/help/count-the-parts-you-already-own)). The weight comes from the **Weight** check.
 
-Both robots go through the same 20 runs. Each run changes friction, weight, servo strength and servo delay by a small amount, and moves anything pushable by up to 15 mm. Basecase scales the Case to each robot's reach, except imported rooms and captured worlds, which keep their true size. If a robot has a skill that **Train from Tries** kept for the Case, it runs that skill, as its row in **Checks** does.
+Both robots go through the same 20 runs. Each run changes friction, weight, servo strength and servo delay by a small amount, and moves loose objects by up to 15 mm. Anchored fixtures stay in place. Basecase scales the Case to each robot's reach, except imported rooms and captured worlds, which keep their true size. If a robot has a skill that **Train from Tries** kept for the Case, it runs that skill, as its row in **Checks** does.
 
 To open the copy's tab with the Case, click the copy's row. If the copy doesn't have the Case, Basecase adds it there.
 
 You can also press [[⌘K]] and choose **Compare with ⟨scene⟩**, where ⟨scene⟩ is the other scene's name. Or ask the agent which version is better, and it runs the same comparison.
 
-Basecase doesn't save comparisons. If you change either robot, the rows update the next time the first scene is in front.
+Comparisons between two scene tabs aren't saved. Changing either robot discards the old rows. The comparison runs again when the first scene is in front.
 
 The same 20 runs also appear as a row in **Checks**. See [Get a robot ready to build](/help/get-a-robot-ready-to-build).

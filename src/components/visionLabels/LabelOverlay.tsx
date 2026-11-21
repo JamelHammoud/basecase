@@ -47,7 +47,14 @@ export default function LabelOverlay({ label, selected, name, tool, scale }: Pro
         .filter((point) => point.visible)
         .map((point) => (
           <g key={point.name} pointerEvents="none">
-            <circle cx={point.x} cy={point.y} r={3 * scale} fill="#0d99ff" stroke="#fff" strokeWidth={scale} />
+            <circle
+              cx={point.x}
+              cy={point.y}
+              r={3 * scale}
+              fill={selected ? '#0d99ff' : '#fff'}
+              stroke="#fff"
+              strokeWidth={scale}
+            />
             <text
               x={point.x + 5 * scale}
               y={point.y}

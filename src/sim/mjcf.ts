@@ -1,8 +1,13 @@
+import { actuatorXml, estimatedJointAttrs } from './mjcfActuator';
 import * as THREE from 'three';
+import { assertJointActuation } from '../joints/actuation';
+import { assertTendons } from '../joints/tendons';
+import { tendonMetadata, tendonXml } from './mjcfTendons';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { RobotJoint, RobotPoseState, ScenePart } from '../types/robotics';
 import { partMasses } from '../utils/engineering';
 import { clampJoint, isMovable, partMatrix, robotPose, type Rig, type V3 } from '../utils/kinematics';
+import { ownedPartsByJoint } from '../utils/kinematicsMembers';
 import { effortOf } from './mjcfEffort';
 import { robotFingerprint } from './mjcfFingerprint';
 import { robotContactExclusions, robotContactMasks } from './mjcfContacts';
@@ -24,7 +29,12 @@ import { robotScans } from './lidar';
 import { classifyRobot, isWheelJoint } from './morphology';
 import { applyBodyFits } from '../reality/bodyModel';
 import { bodyFitForCalibration, bodyPayloads } from '../reality/bodyLayout';
+import { passiveJointXml } from './mjcfPassive';
+import { jointSpringAttrs } from './passiveJoint';
+import { loopEquality, loopHinge, physicalLoops } from './mjcfLoops';
 import { activeBodyCalibration } from '../reality/history';
+import { contactFingerprint, contactTopology } from './mjcfContactTopology';
+import { contactGeometry } from './mjcfContactGeometry';
 
 export { fromMj, quatFromMj, quatToMj, simDelta, simDeltas, toMj, worldDelta, worldDeltas } from './mjcfFrames';
 export { SIM_MODEL_VERSION } from './mjcfTypes';
@@ -37,6 +47,7 @@ interface BuildState {
   byId: Map<string, ScenePart>;
   masses: Map<string, PartMass>;
   contactMasks: Map<string, string>;
+  partsByJoint: Map<string, string[]>;
   assets: string[];
   bodies: SimBody[];
   simJoints: SimJoint[];
@@ -47,6 +58,9 @@ interface BuildState {
   worldXml: string[];
   actuatorXml: string[];
   lift: number;
+  equalityXml: string[];
+  loops: ReturnType<typeof physicalLoops>;
+  tendonXml: string[];
 }
 
 interface RobotBuild {
@@ -75,16 +89,8 @@ function robotGrams(m: PartMass | undefined, measure: MeshMeasure | undefined): 
   return 10;
 }
 
-interface ActuatorSpecXml {
-  name: string;
-  effort: number;
-  revolute: boolean;
-  range: [number, number] | null;
-  wheel: boolean;
-}
-
-const WHEEL_FULL_TORQUE_SPEED = 2;
 const DEFAULT_TIMESTEP = 0.002;
+const CLOSED_LOOP_TOLERANCE = 1e-12;
 
 type GeomRole = 'robot' | 'object' | 'scenery';
 
@@ -108,6 +114,9 @@ function geomFor(st: BuildState, p: ScenePart, origin: V3, role: GeomRole): stri
   const verts = tris && tris.length >= 9 ? cachedHull(p, tris, origin) : null;
   const attrs = geomAttrs(st, p, role);
   const name = `g_${p.id.replace(/[^\w-]/g, '_')}`;
+  const hulls = st.input.robotHulls?.[p.id];
+
+  if (hulls?.length && role === 'robot') return contactGeometry({ part: p, origin, hulls, attrs, assets: st.assets });
 
   if (verts) {
     const mesh = `m${st.assets.length}_${safeId(p.id)}`;
@@ -161,27 +170,7 @@ function bodyXml(rb: RobotBuild, b: BodySpec): string[] {
   return lines;
 }
 
-function actuatorXml(spec: ActuatorSpecXml): string {
-  const { name, effort, revolute, range, wheel } = spec;
-  const toUnit = (v: number) => (revolute ? THREE.MathUtils.degToRad(v) : v / 1000);
-  const force = `forcerange="${f(-effort)} ${f(effort)}"`;
-
-  if (wheel)
-    return `    <velocity name="${name}" joint="${name}" kv="${f(effort / WHEEL_FULL_TORQUE_SPEED)}" ${force}/>`;
-
-  const kp = effort / (revolute ? 0.17 : 0.005);
-  const ctrl = range ? ` ctrlrange="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : '';
-
-  return `    <position name="${name}" joint="${name}" kp="${f(kp)}" dampratio="1" ${force}${ctrl}/>`;
-}
-
-function estimatedJointAttrs(effort: number, revolute: boolean): string {
-  const armature = revolute ? Math.max(0.002, effort * 0.004) : 0.05;
-
-  return `damping="${f(effort * 0.02)}" armature="${f(armature)}" frictionloss="${f(effort * 0.01)}"`;
-}
-
-function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
+function poweredJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
   const { st } = rb;
   const axis = toMj(j.axis).map((v) => v * 1000);
   const revolute = j.type === 'revolute';
@@ -193,7 +182,7 @@ function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
   const servo = wheel ? null : fittedServo({ j, ...scene, calibrated });
   const { effort, source } = servo ? { effort: servo.forceNm, source: 'servo' as const } : effortOf(j, scene);
   const rangeAttr = range ? ` range="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : '';
-  const jointLine = `<joint name="${name}" type="${revolute ? 'hinge' : 'slide'}" axis="${vec(axis)}"${rangeAttr} ${servo ? fittedJointAttrs(servo) : estimatedJointAttrs(effort, revolute)}/>`;
+  const jointLine = `<joint name="${name}" type="${revolute ? 'hinge' : 'slide'}" axis="${vec(axis)}"${rangeAttr} ${servo ? fittedJointAttrs(servo) : estimatedJointAttrs(effort, revolute)}${jointSpringAttrs(j)}/>`;
   const ctrlrange = range ? ` ctrlrange="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : '';
 
   st.actuatorXml.push(
@@ -214,6 +203,7 @@ function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
     range: j.range,
     effort,
     effortSource: source,
+    ...tendonMetadata(j),
     dynamics: servo ? 'measured' : 'estimated',
     robot: rb.robot.key,
     drive: wheel ? 'velocity' : 'position',
@@ -227,16 +217,21 @@ function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
   return jointLine;
 }
 
+function movableJointXml(rb: RobotBuild, joint: RobotJoint, name: string): string {
+  return joint.actuation === 'passive' ? passiveJointXml(rb, joint, name) : poweredJointXml(rb, joint, name);
+}
+
 function jointParts(st: BuildState, jointId: string): string[] {
-  return [...st.input.rig.ownerOf]
-    .filter(([pid, owner]) => owner === jointId && solidPart(st, pid))
-    .map(([pid]) => pid);
+  return (st.partsByJoint.get(jointId) ?? []).filter((id) => solidPart(st, id));
 }
 
 function emitJoint(rb: RobotBuild, j: RobotJoint, parent: BodySpec['parent'], indent: string): string[] {
   const { st } = rb;
   const name = `j${st.simJoints.length}_${safeId(j.id)}`;
-  const inner = isMovable(j) ? [movableJointXml(rb, j, name)] : [];
+  const physical = j.loop ? loopHinge(j, rb.local, st.input.rig) : null;
+  const joint = physical?.joint ?? j;
+  const local = physical ? { ...rb.local, values: { ...rb.local.values, [j.id]: physical.initial } } : rb.local;
+  const inner = isMovable(joint) ? [movableJointXml({ ...rb, local }, joint, name)] : [];
   const body = { name: `b_${name}`, origin: j.origin };
   const lines = bodyXml(rb, { ...body, parent, joint: j.id, ids: jointParts(st, j.id), inner, indent });
 
@@ -253,7 +248,10 @@ function childrenByParent(rig: Rig, joints: RobotJoint[]): Map<string, RobotJoin
   for (const j of joints) {
     const parent = rig.parentOf.get(j.id) ?? '';
 
-    children.set(parent, [...(children.get(parent) ?? []), j]);
+    const members = children.get(parent) ?? [];
+
+    members.push(j);
+    children.set(parent, members);
   }
 
   return children;
@@ -302,6 +300,15 @@ function emitRobot(st: BuildState, robot: Rig['robots'][number]) {
   for (const c of rb.children.get('') ?? []) rootLines.push(...emitJoint(rb, c, rootBody, '      '));
 
   rootLines.push('    </body>');
+
+  const equality = loopEquality(
+    st.loops.filter((loop) => rig.robotOf.get(loop.driver.id) === robot.key),
+    st.bodies,
+  );
+  const tendon = tendonXml(joints, st.simJoints);
+
+  st.tendonXml.push(...tendon.tendons);
+  st.equalityXml.push(...equality, ...tendon.equalities);
   st.worldXml.push(...rootLines);
   st.robots.push({
     key: robot.key,
@@ -312,9 +319,12 @@ function emitRobot(st: BuildState, robot: Rig['robots'][number]) {
     joints: st.simJoints.filter((j) => j.robot === robot.key).map((j) => j.id),
     fingerprint: robotFingerprint({
       timestep: st.input.timestep ?? DEFAULT_TIMESTEP,
+      tolerance: st.loops.length ? CLOSED_LOOP_TOLERANCE : undefined,
       assets: st.assets.slice(assetsFrom),
-      body: rootLines,
+      body: [...rootLines, ...equality, ...tendon.tendons, ...tendon.equalities],
       actuators: st.actuatorXml.slice(actuatorsFrom),
+      contacts: contactFingerprint(robot, st),
+      transmissions: joints.flatMap((joint) => (joint.tendon ? [{ motor: joint.id, tendon: joint.tendon }] : [])),
     }),
   });
   st.massKg[robot.key] = rb.grams / 1000;
@@ -355,7 +365,7 @@ function emitObject(st: BuildState, ids: string[], index: number) {
 function mujocoXml(st: BuildState, timestep: number): string {
   return `<mujoco model="basecase">
   <compiler angle="radian" inertiafromgeom="true" boundmass="0.0005" boundinertia="1e-8"/>
-  <option timestep="${f(timestep)}" integrator="implicitfast"/>
+  <option timestep="${f(timestep)}" integrator="implicitfast"${st.loops.length ? ` tolerance="${CLOSED_LOOP_TOLERANCE}"` : ''}/>
   <default>
     <geom friction="0.9 0.02 0.002" solref="0.004 1" condim="3"/>
   </default>
@@ -367,7 +377,7 @@ ${st.assets.join('\n')}
 ${worldFloor(st.input)}
 ${st.worldXml.join('\n')}
   </worldbody>
-${robotContactExclusions(st.input.rig.robots, st.bodies)}  <actuator>
+${st.tendonXml.length ? `  <tendon>\n${st.tendonXml.join('\n')}\n  </tendon>\n` : ''}${st.equalityXml.length ? `  <equality>\n${st.equalityXml.join('\n')}\n  </equality>\n` : ''}${robotContactExclusions(st.input.rig.robots, st.bodies, contactTopology(st))}  <actuator>
 ${st.actuatorXml.join('\n')}
   </actuator>
 </mujoco>
@@ -375,6 +385,11 @@ ${st.actuatorXml.join('\n')}
 }
 
 export function buildMjcf(given: MjcfInput): SimModel {
+  assertJointActuation(given.rig.joints);
+  assertTendons(given.rig, given.parts);
+
+  const loops = physicalLoops(given.rig);
+
   const input = { ...given, rig: adoptEmbeddedParts(given.rig, given.parts, given.partTriangles) };
   const { parts, rig, project } = input;
   const st: BuildState = {
@@ -382,7 +397,8 @@ export function buildMjcf(given: MjcfInput): SimModel {
     byId: new Map(parts.map((p) => [p.id, p])),
     masses: new Map(partMasses(parts, project, input.measures).map((m) => [m.id, m])),
     assets: [],
-    contactMasks: robotContactMasks(rig.robots),
+    contactMasks: robotContactMasks(rig.robots, project.selfContact),
+    partsByJoint: ownedPartsByJoint(rig.ownerOf),
     bodies: [],
     simJoints: [],
     robots: [],
@@ -391,6 +407,9 @@ export function buildMjcf(given: MjcfInput): SimModel {
     roots: {},
     worldXml: [],
     actuatorXml: [],
+    equalityXml: [],
+    tendonXml: [],
+    loops,
     lift: input.posedFloor != null ? Math.max(0, -input.posedFloor) + 2 : 0,
   };
 

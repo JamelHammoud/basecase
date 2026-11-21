@@ -1,6 +1,6 @@
 import type { Formula, State } from '../skills/contract';
 import type { BuilderRobot, CaseGoal, GoalPlan, GoalValues } from './caseGoals';
-import { marker, near, REACH } from './caseGoals';
+import { marker, near, GRIP } from './caseGoals';
 import { handoffLayout, handoffProblem, type HandoffLayout } from './handoffLayout';
 import { handoffReference } from './handoffReference';
 import { FLOOR_PROBE_DEPTH_MM } from './probes';
@@ -117,7 +117,7 @@ function handoffPlan(robot: BuilderRobot, v: GoalValues): GoalPlan {
     probes: transferProbes(layout),
     success: transferContract(layout, v.radiusMm),
     timeline: handoffReference(robot, layout),
-    controls: [...REACH, { id: 'grip', label: 'Grip', input: 'grip' }],
+    controls: GRIP,
     route: { from: layout.block, to: layout.spot, halfWidth: v.radiusMm },
   };
 }

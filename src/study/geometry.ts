@@ -69,7 +69,11 @@ function servoOutput(part: ScenePart, triangles: Float32Array, matrix: THREE.Mat
   };
 }
 
-export async function refreshStudyGeometry(scene: StudyScene, changedIds: string[]): Promise<StudyScene> {
+export async function refreshStudyGeometry(
+  scene: StudyScene,
+  changedIds: string[],
+  triangleLimit = Infinity,
+): Promise<StudyScene> {
   if (typeof document !== 'undefined') throw new Error('Study geometry needs a worker.');
 
   const changed = new Set(changedIds);
@@ -95,11 +99,16 @@ export async function refreshStudyGeometry(scene: StudyScene, changedIds: string
   const triangles = { ...scene.triangles };
   const measures = { ...scene.measures };
   const servoOutputs = { ...scene.servoOutputs };
+  let triangleCount = 0;
 
   for (const part of parts) {
     if (part.kind === 'image_plane') continue;
 
     const geometry = geometryOf(part);
+
+    triangleCount += geometry.triangles.length / 9;
+
+    if (triangleCount > triangleLimit) throw new Error('Robot mesh is too large.');
 
     triangles[part.id] = geometry.triangles;
     measures[part.id] = geometry.measure;

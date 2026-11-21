@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { floodMaskOf } from './silhouette';
 
 type Color = [number, number, number];
@@ -9,6 +9,29 @@ function photo(width: number, height: number, color: (pixel: number) => Color): 
   for (let pixel = 0; pixel < width * height; pixel++) data.set([...color(pixel), 255], pixel * 4);
 
   return { data, width, height, colorSpace: 'srgb' };
+}
+
+function fullBorderSpread({ data, width, height }: ImageData): number {
+  const border: number[] = [];
+
+  for (let x = 0; x < width; x++) border.push(x, (height - 1) * width + x);
+
+  for (let y = 0; y < height; y++) border.push(y * width, y * width + width - 1);
+
+  const median = [0, 1, 2].map((channel) => {
+    const values = border.map((pixel) => data[pixel * 4 + channel]).sort((a, b) => a - b);
+
+    return values[values.length >> 1];
+  });
+
+  return (
+    border.reduce(
+      (total, pixel) =>
+        total +
+        Math.hypot(data[pixel * 4] - median[0], data[pixel * 4 + 1] - median[1], data[pixel * 4 + 2] - median[2]),
+      0,
+    ) / border.length
+  );
 }
 
 describe('photo background colors', () => {
@@ -66,6 +89,34 @@ describe('photo background colors', () => {
 
     expect(floodMaskOf(atLimit).mask?.data).toEqual(new Uint8Array([1, 1, 0, 0]));
     expect(floodMaskOf(overLimit)).toEqual({ reason: 'the background isn’t plain (busy scene or gradient)' });
+  });
+
+  it('matches full border decisions across narrow, varied and threshold-adjacent photos', () => {
+    for (const width of [1, 2, 7, 32]) {
+      for (const height of [1, 2, 9]) {
+        for (const variation of [0, 12, 28, 29, 255]) {
+          const image = photo(width, height, (pixel) => [pixel % 2 ? variation : 0, 100, 100]);
+
+          expect(Boolean(floodMaskOf(image).reason)).toBe(fullBorderSpread(image) > 14);
+        }
+      }
+    }
+  });
+
+  it('stops busy border distances at the decisive sample and scans plain borders completely', () => {
+    const busy = photo(100, 100, (pixel) => [pixel < 5000 ? 0 : 255, 100, 100]);
+    const plain = photo(100, 100, () => [0, 100, 100]);
+    const hypot = vi.spyOn(Math, 'hypot');
+
+    try {
+      expect(floodMaskOf(busy).reason).toBeDefined();
+      expect(hypot).toHaveBeenCalledTimes(43);
+      hypot.mockClear();
+      expect(floodMaskOf(plain).reason).toBeUndefined();
+      expect(hypot).toHaveBeenCalledTimes(400);
+    } finally {
+      hypot.mockRestore();
+    }
   });
 
   it.each([

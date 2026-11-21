@@ -86,12 +86,9 @@ describe('isScanned', () => {
     expect(isScanned(file)).toBe(true);
   });
 
-  it.each(['src/data/parts.ts', 'src/utils/math.test.ts', 'src/types.d.ts', 'electron/main.mjs', 'docs/a.md'])(
-    'skips %s',
-    (file) => {
-      expect(isScanned(file)).toBe(false);
-    },
-  );
+  it.each(['src/data/parts.ts', 'src/utils/math.test.ts', 'src/types.d.ts', 'docs/a.md'])('skips %s', (file) => {
+    expect(isScanned(file)).toBe(false);
+  });
 });
 
 describe('diffStrings', () => {
@@ -123,6 +120,11 @@ describe('parseJustifications', () => {
       ['Deleted {…}', 'confirms the delete and offers Undo'],
     ]);
   });
+  it('retains multiple reasons for the same text in occurrence evidence', () => {
+    expect(parseJustifications('copy: "Close" - closes the pane\n- copy: "Close" - closes the tab').get('Close')).toBe(
+      'closes the pane / closes the tab',
+    );
+  });
 });
 
 describe('judge', () => {
@@ -148,10 +150,10 @@ describe('judge', () => {
     expect(judge({ added, removed, body: '', banned: BANNED_COPY }).ok).toBe(true);
   });
 
-  it('passes repeats of strings the file already had', () => {
+  it('requires reasons for repeats of strings the file already had', () => {
     const repeat = [{ text: 'Delete', line: 4, file: 'src/A.tsx', repeat: true }];
 
-    expect(judge({ added: repeat, removed: [], body: '', banned: BANNED_COPY }).ok).toBe(true);
+    expect(judge({ added: repeat, removed: [], body: '', banned: BANNED_COPY }).ok).toBe(false);
   });
 
   it('fails banned words even when the net is negative', () => {

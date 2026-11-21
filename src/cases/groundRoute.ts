@@ -23,14 +23,27 @@ function around(a: V3, b: V3, r: GroundRect): V3[] {
 
 const below = (o: WorldObject, headroomMm: number) => o.position[1] - o.size[1] / 2 < headroomMm;
 
-function leg(a: V3, b: V3, scene: ReturnType<typeof groundObstacles>, depth: number): V3[] {
+interface RouteLeg {
+  scene: ReturnType<typeof groundObstacles>;
+  point: RoutePoint;
+  route: RoutePoint[];
+}
+
+function appendLeg(a: V3, b: V3, depth: number, context: RouteLeg): void {
+  const { scene, point, route } = context;
   const hit = depth < MAX_DETOURS ? scene.blocker(a, b) : undefined;
 
-  if (!hit) return [b];
+  if (!hit) {
+    route.push({ ...point, at: b });
+
+    return;
+  }
 
   const [c1, c2] = around(a, b, hit);
 
-  return [...leg(a, c1, scene, depth + 1), ...leg(c1, c2, scene, depth + 1), ...leg(c2, b, scene, depth + 1)];
+  appendLeg(a, c1, depth + 1, context);
+  appendLeg(c1, c2, depth + 1, context);
+  appendLeg(c2, b, depth + 1, context);
 }
 
 export interface RouteRobot {
@@ -55,7 +68,9 @@ export function groundRoute(waypoints: RoutePoint[], objects: WorldObject[], rob
   let from = robot.start;
 
   for (const point of waypoints) {
-    route.push(...(point.push ? [point] : leg(from, point.at, scene, 0).map((p) => ({ ...point, at: p }))));
+    if (point.push) route.push(point);
+    else appendLeg(from, point.at, 0, { scene, point, route });
+
     from = point.at;
   }
 

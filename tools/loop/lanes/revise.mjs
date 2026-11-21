@@ -1,11 +1,9 @@
 import path from 'node:path';
-import { creditProblems } from '../credit.mjs';
 import { conflictsWithMain, fetchAll } from '../lib/branches.mjs';
 import { CHANGE_SCHEMA } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import {
   checkRunFor,
-  editPull,
   editPullLabels,
   failedLog,
   isLoopComment,
@@ -16,15 +14,15 @@ import {
 } from '../lib/github.mjs';
 import { HOME_CHECKOUT, OWNER_LOGIN, WORKTREES } from '../lib/paths.mjs';
 import { checkedRun } from '../lib/preflight.mjs';
-import { protectedIn, protectedList } from '../lib/protected.mjs';
-import { landedIn } from '../lib/landed.mjs';
-import { kindOf, pullTitle, REVISED_FIELDS, revisedBody } from '../lib/pull.mjs';
+import { kindOf, REVISED_FIELDS } from '../lib/pull.mjs';
 import { entryFor, markLooked, recordAttempt } from '../lib/pullState.mjs';
 import { run } from '../lib/sh.mjs';
-import { voiceNewPages, voiced } from '../lib/voiceHook.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
+import { hasPendingDelivery } from '../lib/deliveryState.mjs';
+import { publishRevision } from '../lib/revision.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
-import { keepStepLinks } from '../lib/stepLinks.mjs';
+
+import { fetchGit } from '../lib/gitFetch.mjs';
 
 export const schedule = {
   agent: true,
@@ -62,7 +60,7 @@ const jamelComments = (comments) =>
   comments.filter((comment) => comment.author === OWNER_LOGIN && !isLoopComment(comment));
 
 function needFor(pull) {
-  if (!pull.headRefName.startsWith('loop/')) return null;
+  if (!pull.headRefName.startsWith('loop/') || hasPendingDelivery(pull.headRefName)) return null;
 
   const entry = entryFor(pull.number);
   const failing = pullReview(pull) === 'failure' || pullCheck(pull) === 'failure';
@@ -91,7 +89,7 @@ function evidence(pull, reason, comments) {
 }
 
 function checkout(pull) {
-  git(['fetch', '-q', 'origin', 'main', pull.headRefName], HOME_CHECKOUT);
+  fetchGit(['-q', 'origin', 'main', pull.headRefName]);
 
   const dir = path.join(WORKTREES, `revise-${pull.number}`);
 
@@ -100,31 +98,6 @@ function checkout(pull) {
   linkModules(dir);
 
   return { dir };
-}
-
-function publishRevision(pull, { dir, output }) {
-  const problems = creditProblems(output.commitMessage);
-
-  if (problems.length > 0) throw new Error(`Commit message credits a model or tool: ${problems.join('; ')}`);
-
-  voiceNewPages(dir);
-  git(['add', '-A'], dir);
-  git(['commit', '-q', '-F', '-'], dir, { input: output.commitMessage });
-  run('node', [path.join(HOME_CHECKOUT, 'tools', 'check-credit.mjs'), 'origin/main..HEAD'], { cwd: dir });
-  git(['push', '-q', 'origin', `HEAD:${pull.headRefName}`], dir);
-
-  const kind = kindOf(pull.title);
-  const landed = landedIn('origin/main...HEAD', dir);
-  const restated = kind ? revisedBody(pull.body, { ...output, kind }, { branch: pull.headRefName, landed }) : pull.body;
-  const heading = restated.includes('\n## Revisions\n') ? '' : '\n\n## Revisions\n';
-  const touched = protectedIn('HEAD~1..HEAD', dir);
-  const line =
-    touched.length === 0 ? output.revision : `${output.revision} Protected paths: ${protectedList(touched)}.`;
-
-  editPull(pull.number, {
-    title: kind ? pullTitle({ kind, title: output.title }) : pull.title,
-    body: voiced(keepStepLinks(`${restated}${heading}\n- ${line}`, pull), 'pull'),
-  });
 }
 
 function revisePull(pull, { reason, comments, jamelAt }, log) {

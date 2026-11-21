@@ -18,7 +18,7 @@ import {
 import type { Contract } from './contract';
 import { environmentHash, policyObservation, type Environment } from './environment';
 import { editParts, fixtureRobot, modelOf } from './fixtureModels';
-import { sha256Hex } from './hash';
+import { hashOf, sha256Hex } from './hash';
 
 const quad = fixtureRobot('quad-servo');
 const base = modelOf(quad);
@@ -71,6 +71,31 @@ const designOf = (robot = quad, design = 'scene-1/quad') =>
   currentDesign({ design, model: modelOf(robot), environment });
 
 describe('model hashes', () => {
+  it('keeps topology attribute boundaries, missing values and repeated reads stable', () => {
+    const model = {
+      ...base,
+      robots: [],
+      xml: `<body xname="ignored" name="root">
+        <freejoint name="floating"/>
+        <body name="tip"/>
+        <joint axis="0 1 0" type="hinge" name="bend"/>
+        <joint xname="ignored" xtype="ignored" xaxis="ignored"/>
+      </body>`,
+    };
+    const expected = hashOf({
+      version: model.version,
+      structure: ['body root', 'freejoint floating', 'body tip /', 'joint bend hinge 0 1 0', 'joint   ', '/body'],
+      actuators: [],
+      robots: [],
+    });
+
+    expect(modelHashes(model).topology).toBe(expected);
+    expect(modelHashes({ ...model, xml: model.xml.replace('name="bend"', 'name="edited"') }).topology).not.toBe(
+      expected,
+    );
+    expect(modelHashes(model).topology).toBe(expected);
+  });
+
   it('ignore a colour change, a rename and a light', () => {
     const recoloured = modelOf(editParts(quad, (p) => ({ ...p, color: '#ff0000', name: `${p.name} renamed` })));
     const lit = { ...base, xml: base.xml.replace('<light ', '<light castshadow="false" ') };

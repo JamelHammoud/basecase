@@ -77,3 +77,5 @@ electron/native/*/build/
 xcuserdata/
 /ios/build/
 DerivedData/
+
+forge/dist-linux-x64/

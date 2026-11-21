@@ -41,17 +41,19 @@ function ownerExitDistance(endpoint: RouteEndpoint, start: PortVec, owner: Route
 
   if (AXES.some((axis) => localStart[axis] < owner.min[axis] || localStart[axis] > owner.max[axis])) return EXIT_MM;
 
-  const distances = AXES.flatMap((axis) => {
+  let nearest = Infinity;
+
+  for (const axis of AXES) {
     const direction = (localStart[axis] - origin[axis]) / EXIT_MM;
 
-    if (Math.abs(direction) < EPSILON) return [];
+    if (Math.abs(direction) < EPSILON) continue;
 
     const edge = direction > 0 ? owner.max[axis] : owner.min[axis];
 
-    return [(edge - origin[axis]) / direction];
-  });
+    nearest = Math.min(nearest, (edge - origin[axis]) / direction);
+  }
 
-  return Math.max(EXIT_MM, Math.min(...distances));
+  return Math.max(EXIT_MM, nearest);
 }
 
 function exit(endpoint: RouteEndpoint, boxes: RouteObstacle[]): PortVec | null {
@@ -220,6 +222,17 @@ export function routePolyline(input: RouteInput): PortVec[] | null {
   return routePath(input)?.map((point) => [...point.position]) ?? null;
 }
 
+function sameCorner(point: PortVec, corner: PortVec): boolean {
+  if (
+    Math.abs(point[0] - corner[0]) >= EPSILON ||
+    Math.abs(point[1] - corner[1]) >= EPSILON ||
+    Math.abs(point[2] - corner[2]) >= EPSILON
+  )
+    return false;
+
+  return distance(point, corner) < EPSILON;
+}
+
 export function routeTopology(points: PortVec[], obstacles: RouteObstacle[]): string[] {
   if (points.length <= 4) return [];
 
@@ -227,11 +240,18 @@ export function routeTopology(points: PortVec[], obstacles: RouteObstacle[]): st
     corners(expanded(box)).map((position, bits) => ({ position, label: `${box.id}:${bits}` })),
   );
 
-  return points.slice(2, -2).flatMap((point) => {
-    const labels = vertices
-      .filter((vertex) => distance(point, vertex.position) < EPSILON)
-      .map((vertex) => vertex.label);
+  const topology: string[] = [];
+  const labels: string[] = [];
 
-    return labels.length ? [labels.sort().join('|')] : [];
-  });
+  for (let index = 2; index < points.length - 2; index++) {
+    labels.length = 0;
+
+    for (const vertex of vertices) {
+      if (sameCorner(points[index], vertex.position)) labels.push(vertex.label);
+    }
+
+    if (labels.length) topology.push(labels.sort().join('|'));
+  }
+
+  return topology;
 }

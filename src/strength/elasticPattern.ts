@@ -38,7 +38,18 @@ function pattern(nodes: Int32Array, count: number): { rowStart: Int32Array; cols
 }
 
 export function blockAt(m: Pick<BlockMatrix, 'rowStart' | 'cols'>, i: number, j: number): number {
-  for (let k = m.rowStart[i]; k < m.rowStart[i + 1]; k++) if (m.cols[k] === j) return k;
+  let low = m.rowStart[i];
+  let high = m.rowStart[i + 1] - 1;
+
+  while (low <= high) {
+    const middle = (low + high) >>> 1;
+    const col = m.cols[middle];
+
+    if (col === j) return middle;
+
+    if (col < j) low = middle + 1;
+    else high = middle - 1;
+  }
 
   return -1;
 }

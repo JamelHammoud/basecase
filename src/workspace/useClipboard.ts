@@ -4,6 +4,8 @@ import { isTextEntry, withFlag } from './helpers';
 import { PARTS_CLIPBOARD_TYPE, copyToClipboard, takePaste } from './partsClipboard';
 import type { SelectionOps } from './useSelectionOps';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { hasParameterBindings } from '../utils/designParameters/transfers';
+import { errorMessage } from '../utils/errorMessage';
 
 interface ClipboardOptions {
   core: WorkspaceCore;
@@ -31,7 +33,12 @@ export function useClipboard({ core, ops, active, blocked, addImagePlane }: Clip
   const copySelected = (cut = false) => {
     if (selection.selectedParts.length === 0) return false;
 
-    copyToClipboard(selection.selectedParts, workspaceId, cut);
+    copyToClipboard(
+      selection.selectedParts,
+      `${workspaceId}:${core.scene.sceneId}`,
+      cut,
+      docs.projectRef.current.designParameters,
+    );
 
     if (cut) ops.cutSelected();
 
@@ -44,9 +51,27 @@ export function useClipboard({ core, ops, active, blocked, addImagePlane }: Clip
     });
 
   const pasteParts = () => {
-    const copies = takePaste(workspaceId);
+    let copies;
+
+    try {
+      copies = takePaste(`${workspaceId}:${core.scene.sceneId}`, docs.projectRef.current.designParameters);
+    } catch (error) {
+      core.showToast(errorMessage(error), { tone: 'error' });
+
+      return;
+    }
 
     if (!copies) return;
+
+    if (hasParameterBindings(copies)) {
+      const inserted = copies;
+
+      void core.parameters.apply({ op: 'insert', parts: inserted }).then((ok) => {
+        if (ok) setSelectedIds(inserted.map((part) => part.id));
+      });
+
+      return;
+    }
 
     docs.commitParts((prev) => [...prev, ...copies]);
     setSelectedIds(copies.map((c) => c.id));

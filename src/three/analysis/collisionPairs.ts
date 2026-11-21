@@ -1,4 +1,4 @@
-import type { Box3 } from 'three';
+import { Box3 } from 'three';
 
 interface Boxed {
   id: string;
@@ -35,10 +35,14 @@ function partnerIndices(solids: Boxed[], options: PairOptions) {
   return { kinds, partners };
 }
 
-export function collisionPairs<T extends Boxed>(solids: T[], options: PairOptions, skip?: SkipPair): Array<[T, T]> {
+export function* collisionPairs<T extends Boxed>(
+  solids: T[],
+  options: PairOptions,
+  skip?: SkipPair,
+): Generator<[T, T]> {
   const { kinds, partners } = partnerIndices(solids, options);
   const cursors = [0, 0, 0, 0];
-  const pairs: Array<[T, T]> = [];
+  const grown = new Box3();
 
   for (let i = 0; i < solids.length; i++) {
     const kind = kinds[i];
@@ -49,14 +53,13 @@ export function collisionPairs<T extends Boxed>(solids: T[], options: PairOption
     if (cursors[kind] === indices.length) continue;
 
     const a = solids[i];
-    const grown = a.box.clone().expandByScalar(0.1);
+
+    grown.copy(a.box).expandByScalar(0.1);
 
     for (let at = cursors[kind]; at < indices.length; at++) {
       const b = solids[indices[at]];
 
-      if (!skip?.(a.id, b.id) && grown.intersectsBox(b.box)) pairs.push([a, b]);
+      if (!skip?.(a.id, b.id) && grown.intersectsBox(b.box)) yield [a, b];
     }
   }
-
-  return pairs;
 }

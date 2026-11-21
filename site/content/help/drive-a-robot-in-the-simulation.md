@@ -28,6 +28,7 @@ covers:
   - src/sim/driveAccess.ts
   - src/sim/useDrive.ts
   - src/sim/drive.ts
+  - src/sim/wheelSpeeds.ts
 ---
 
 Before you build a robot, you can drive it in MuJoCo to see how it moves. Steer an arm, a rover or a walking robot live with your keyboard or a gamepad.
@@ -42,6 +43,8 @@ Before you build a robot, you can drive it in MuJoCo to see how it moves. Steer 
 While you drive, the controller under **Control** reads **Drive**. You can also stop by clicking **Stop Driving** or by choosing another controller, such as **Hold pose**. **Drive** is in [[⌘K]] as well. If a Case is open, **Try It** starts driving instead. See [Try a Case](/help/try-a-case).
 
 A humanoid or an arm can follow your own arms. Click **Drive with Camera** under **Control**, then follow the steps in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
+
+Robots with [ideal tendons](/help/drive-joints-with-an-ideal-tendon) use motor pose inputs. Hand-position keys don’t target their passive outputs.
 
 ## Keys
 

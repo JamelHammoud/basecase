@@ -25,9 +25,17 @@ related:
   - servo-torque-and-sizing
 covers:
   - src/types/robotics.ts
+  - src/joints/axisFinder.ts
+  - src/joints/cylinderFit.ts
   - src/utils/kinematics.ts
+  - src/utils/kinematicsMotion.ts
+  - src/utils/kinematicsIk.ts
+  - src/utils/kinematicsRig.ts
+  - src/utils/jointNames.ts
   - src/utils/kinematicsPrune.ts
   - src/utils/kinematicsLoop.ts
+  - src/utils/motionSkeleton.ts
+  - src/utils/motionSkeletonSource.ts
   - src/assembly/followers.ts
   - src/data/articulatedParts.ts
   - src/utils/robotImport/
@@ -47,13 +55,16 @@ Each joint has these fields:
 | Pivot and axis | The point the joint turns around, and the line it turns along. If the joint has a servo, both come from the servo's real output. |
 | Range | How far the joint can turn or slide in each direction. |
 | Limb | Head, torso, left arm, and so on. The Pose tab groups joints by limb. |
-| Servo | The actuator that drives the joint. Checks sizes it against the load. |
+| Servo | The actuator that drives a powered joint. Checks sizes it against the load. |
+| Actuation | Powered joints have motor control. Passive joints move through gravity, contact or another link. |
+
+You can [compare supplier offers](/help/compare-supplier-offers) for a joint’s current servo. Selecting an offer keeps the servo, pivot, range and actuation unchanged.
 
 ## Where joints come from
 
 Joints come with a robot, a hand, or a design from the agent. You can also add them yourself:
 
-- [Import a robot](/help/import-a-robot) brings in every joint from its URDF or MJCF file, including the axis, limits, and torque limit.
+- [Import a robot](/help/import-a-robot) brings in every joint from its URDF or MJCF file, including the axis, limits, torque limit and declared passive springs. Complete passive assemblies can become [reusable Case fixtures](/help/reuse-an-assembly-in-cases).
 - [Import an Onshape assembly as a robot](/help/import-an-onshape-assembly) brings in revolute and cylindrical mates as hinges, and slider mates as slides. Joints keep the mate's limits, including those inside repeated or nested subassemblies. A cylindrical mate's slide stays fixed.
 - **Parts** ▸ **Hands** lists posable hands whose makers publish their joints, such as LEAP, ORCA, and Allegro.
 - The agent declares joints when it designs a robot. It also adds or changes joints when you ask it to.
@@ -69,11 +80,13 @@ A skeleton holds the planned joint layout before parts are connected. Design Fro
 
 Joints form a tree that starts at the robot's base and branches outward. Each part moves with the deepest joint that lists it as moving. For example, a hand moves with the wrist, and so it also moves with the elbow and the shoulder.
 
-If no joint lists a part, the part still moves when its whole group moves with a joint. Screws, nuts, and inserts follow the parts they clamp, so you don't need to list them in any joint.
+If no joint lists a part, the part still moves when its whole group moves with a joint.
+
+Screws follow either the moving link or its fixed mount. Nuts follow their screw, and inserts follow their host. You don't need to list them in any joint.
 
 Each joint is anchored to the part it's mounted on. If you move the whole robot or undo a change, the joints stay in place.
 
-A four-bar linkage forms a closed loop. You pose only its crank, and the coupler and rocker turn along with it so the loop stays closed. Simulate doesn't simulate closed loops. Instead, the coupler moves with the crank as a single rigid arm.
+A four-bar linkage forms a closed loop. You pose only its crank, and the coupler and rocker turn along with it so the loop stays closed. In simulation, those two bars turn on passive hinges joined at their closing pin. See [Simulate a four-bar](/help/simulate-a-four-bar).
 
 If you delete all of a joint's moving parts, Basecase deletes the joint too. Empty joints stay while another joint depends on them, and Basecase deletes them when their last dependent is gone. Undo restores the parts and joints.
 
@@ -86,6 +99,8 @@ Measurements, clash checks, and range sweeps always use the modeled pose. If you
 ## Inverse kinematics
 
 Walk cycles and poses from the agent set targets for hands and feet instead of angles. Inverse kinematics finds joint angles that reach each target while staying within every joint's range. Torso joints are stiffer, so the limbs move first to reach a target.
+
+Authored [ideal tendons](/help/drive-joints-with-an-ideal-tendon) refuse IK. Command motor spool angles and let simulation resolve the passive outputs.
 
 ## Several robots in one scene
 

@@ -3,7 +3,7 @@ import { makeMapWorld } from '../dataLayers/mapClient';
 import type { MapWorldRequest } from '../dataLayers/mapWorld';
 
 export function mapWorldAction(
-  request: MapWorldRequest,
+  request: MapWorldRequest | (() => Promise<PreparedWorld>),
   handlers: { ready: (prepared: PreparedWorld) => void; failed: (error: unknown) => void },
 ): () => void {
   let running = false;
@@ -12,10 +12,11 @@ export function mapWorldAction(
     if (running) return;
 
     running = true;
-    void makeMapWorld(request)
-      .then(handlers.ready, handlers.failed)
-      .finally(() => {
-        running = false;
-      });
+
+    const pending = typeof request === 'function' ? request() : makeMapWorld(request);
+
+    void pending.then(handlers.ready, handlers.failed).finally(() => {
+      running = false;
+    });
   };
 }

@@ -1,14 +1,13 @@
 import * as THREE from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 
-type Faces = { centers: Float32Array; normals: Float32Array; areas: Float32Array };
+type Faces = { centers: Float32Array; normals: Float32Array; areas: Float32Array; surfaceArea: number };
 
 export class ShapeSolid {
   readonly box: THREE.Box3;
   readonly samples = new Map<number, Float32Array>();
   private tree: MeshBVH | null = null;
   private faceData: Faces | null = null;
-  private sampledArea: number | null = null;
 
   readonly positions: Float32Array;
 
@@ -36,9 +35,7 @@ export class ShapeSolid {
   }
 
   get surfaceArea(): number {
-    this.sampledArea ??= this.faces.areas.reduce((s, x) => s + x, 0);
-
-    return this.sampledArea;
+    return this.faces.surfaceArea;
   }
 
   dispose(): void {
@@ -48,27 +45,40 @@ export class ShapeSolid {
 
 const FACE_TARGET = 1500;
 const MIN_FACE_AREA = 0.5;
+const MIN_FACE_LENGTH_SQ = (MIN_FACE_AREA * 2) ** 2;
 const FACE_PIECE_MM2 = 25;
 const MAX_FACE_SPLITS = 12;
 
-function pieceCenters({ a, b, c }: THREE.Triangle, n: number, out: number[], center: THREE.Vector3): void {
-  const at = (u: number, v: number, w: number) => {
-    center
-      .set(0, 0, 0)
-      .addScaledVector(a, u / n)
-      .addScaledVector(b, v / n)
-      .addScaledVector(c, w / n);
-    out.push(center.x, center.y, center.z);
-  };
+function pieceWeights(n: number, cache: Map<number, number[]>): number[] {
+  const cached = cache.get(n);
+
+  if (cached) return cached;
+
+  const weights: number[] = [];
 
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < n - i; j++) {
       const k = n - 1 - i - j;
 
-      at(i + 1 / 3, j + 1 / 3, k + 1 / 3);
+      weights.push((i + 1 / 3) / n, (j + 1 / 3) / n, (k + 1 / 3) / n);
 
-      if (k > 0) at(i + 2 / 3, j + 2 / 3, k - 1 / 3);
+      if (k > 0) weights.push((i + 2 / 3) / n, (j + 2 / 3) / n, (k - 1 / 3) / n);
     }
+  }
+
+  cache.set(n, weights);
+
+  return weights;
+}
+
+function pieceCenters({ a, b, c }: THREE.Triangle, weights: number[], out: number[], center: THREE.Vector3): void {
+  for (let i = 0; i < weights.length; i += 3) {
+    center
+      .set(0, 0, 0)
+      .addScaledVector(a, weights[i])
+      .addScaledVector(b, weights[i + 1])
+      .addScaledVector(c, weights[i + 2]);
+    out.push(center.x, center.y, center.z);
   }
 }
 
@@ -78,10 +88,13 @@ function faceData(positions: Float32Array): Faces {
   const centers: number[] = [];
   const normals: number[] = [];
   const areas: number[] = [];
+  const weights = new Map<number, number[]>();
+  let surfaceArea = 0;
   const a = new THREE.Vector3(),
     b = new THREE.Vector3(),
     c = new THREE.Vector3(),
     n = new THREE.Vector3(),
+    edge = new THREE.Vector3(),
     center = new THREE.Vector3();
   const tri = new THREE.Triangle(a, b, c);
 
@@ -90,28 +103,46 @@ function faceData(positions: Float32Array): Faces {
     b.fromArray(positions, t * 3 + 3);
     c.fromArray(positions, t * 3 + 6);
 
-    const area = tri.getArea();
+    n.subVectors(c, b).cross(edge.subVectors(a, b));
 
-    if (area < MIN_FACE_AREA) continue;
+    const lengthSq = n.lengthSq();
 
-    tri.getNormal(n);
+    if (lengthSq < MIN_FACE_LENGTH_SQ) continue;
+
+    const length = Math.sqrt(lengthSq);
+    const area = length * 0.5;
+
+    if (lengthSq > 0) n.multiplyScalar(1 / length);
+    else n.set(0, 0, 0);
 
     const splits = Math.min(MAX_FACE_SPLITS, Math.ceil(Math.sqrt(area / FACE_PIECE_MM2)));
     const start = centers.length;
-    const weight = (area * step) / (splits * splits);
+    const weight = Math.fround((area * step) / (splits * splits));
 
-    pieceCenters(tri, splits, centers, center);
+    pieceCenters(tri, pieceWeights(splits, weights), centers, center);
 
     for (let i = start; i < centers.length; i += 3) {
       normals.push(n.x, n.y, n.z);
       areas.push(weight);
+      surfaceArea += weight;
     }
   }
 
-  return { centers: new Float32Array(centers), normals: new Float32Array(normals), areas: new Float32Array(areas) };
+  return {
+    centers: new Float32Array(centers),
+    normals: new Float32Array(normals),
+    areas: new Float32Array(areas),
+    surfaceArea,
+  };
 }
 
 export const solidFromPositions = (positions: Float32Array) => new ShapeSolid(positions);
+
+function steppedCount(limit: number, step: number): number {
+  if (limit <= 0) return 0;
+
+  return Math.max(1, Math.ceil(limit / step)) || 1;
+}
 
 export function samplesOf(solid: ShapeSolid, maxSamples: number): Float32Array {
   const cached = solid.samples.get(maxSamples);
@@ -121,15 +152,23 @@ export function samplesOf(solid: ShapeSolid, maxSamples: number): Float32Array {
   const pos = solid.positions;
   const count = pos.length / 3;
   const step = Math.max(1, Math.floor(count / maxSamples));
-  const out: number[] = [];
+  const vertices = steppedCount(count, step);
+  const centroids =
+    vertices < maxSamples * 1.5
+      ? Math.min(steppedCount(count - 2, 3 * step), Math.ceil(maxSamples * 1.5) - vertices)
+      : 0;
+  const samples = new Float32Array((vertices + centroids) * 3);
+  let at = 0;
 
-  for (let i = 0; i < count; i += step) out.push(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]);
-
-  for (let t = 0; t + 2 < count && out.length / 3 < maxSamples * 1.5; t += 3 * step) {
-    for (let k = 0; k < 3; k++) out.push((pos[t * 3 + k] + pos[t * 3 + 3 + k] + pos[t * 3 + 6 + k]) / 3);
+  for (let i = 0; i < count; i += step) {
+    samples[at++] = pos[i * 3];
+    samples[at++] = pos[i * 3 + 1];
+    samples[at++] = pos[i * 3 + 2];
   }
 
-  const samples = new Float32Array(out);
+  for (let t = 0; t + 2 < count && at < samples.length; t += 3 * step) {
+    for (let k = 0; k < 3; k++) samples[at++] = (pos[t * 3 + k] + pos[t * 3 + 3 + k] + pos[t * 3 + 6 + k]) / 3;
+  }
 
   solid.samples.set(maxSamples, samples);
 

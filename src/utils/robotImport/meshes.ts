@@ -8,7 +8,7 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { mergeGeometryParts } from '../../three/mergeGeometryParts';
 import type { Geometry } from './model';
 
 function collect(root: THREE.Object3D): THREE.BufferGeometry | null {
@@ -25,13 +25,13 @@ function collect(root: THREE.Object3D): THREE.BufferGeometry | null {
 
     g.setAttribute('position', m.geometry.getAttribute('position').clone());
 
-    if (m.geometry.index) g.setIndex(m.geometry.index.clone());
+    g.setIndex(m.geometry.index);
 
     g.applyMatrix4(m.matrixWorld);
     geos.push(g.index ? g.toNonIndexed() : g);
   });
 
-  return geos.length ? mergeGeometries(geos, false) : null;
+  return mergeGeometryParts(geos);
 }
 
 function daeScene(text: string, options: MeshSceneOptions): THREE.Object3D | null {

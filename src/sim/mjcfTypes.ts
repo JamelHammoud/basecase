@@ -1,8 +1,10 @@
+import type { LoopClosure } from '../types/loopClosure';
 import type { ServoFit } from '../data/components';
 import type { BodyFit } from '../reality/bodyTypes';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, RobotPoseState, ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
+import type { PassiveJoint } from './passiveJoint';
 import type { Eye } from './eyes';
 import type { RobotMorphology } from './morphology';
 
@@ -24,19 +26,24 @@ export interface SimBody {
 export type WorldBehavior = 'static' | 'dynamic' | 'marker';
 
 export interface WorldItem extends ScenePart {
+  parent?: string;
+  joint?: PassiveJoint;
   behavior: WorldBehavior;
   movable?: boolean;
   convexVertices?: Float32Array;
+  collisionHulls?: Float32Array[];
 }
 
 export interface SimJoint {
+  tendon?: import('../types/tendon').IdealTendon;
+  loop?: LoopClosure;
   id: string;
   name: string;
   type: 'revolute' | 'prismatic';
   range?: [number, number];
   effort: number;
-  effortSource: 'servo' | 'published' | 'estimate';
-  dynamics: 'measured' | 'estimated';
+  effortSource: 'servo' | 'published' | 'estimate' | 'passive';
+  dynamics: 'measured' | 'estimated' | 'passive';
   robot: string;
   drive: SimDrive;
   actuator: number;
@@ -72,6 +79,7 @@ export interface ServoSpread {
 }
 
 export interface MjcfInput {
+  robotHulls?: Record<string, Float32Array[]>;
   parts: ScenePart[];
   rig: Rig;
   project: ProjectSettings;

@@ -37,7 +37,13 @@ export function canonicalLoop(loop: Point[], positive: boolean): Point[] {
     return p[0] < q[0] - 0.0001 || (Math.abs(p[0] - q[0]) < 0.0001 && p[1] < q[1]) ? i : best;
   }, 0);
 
-  return [...points.slice(start), ...points.slice(0, start)];
+  if (start === 0) return points;
+
+  const rotated: Point[] = new Array(points.length);
+
+  for (let i = 0; i < points.length; i++) rotated[i] = points[(start + i) % points.length];
+
+  return rotated;
 }
 
 function walkLoop(start: string, neighbors: Map<string, string[]>, points: Map<string, Point>): Point[] | undefined {
@@ -58,6 +64,22 @@ function walkLoop(start: string, neighbors: Map<string, string[]>, points: Map<s
   return loop;
 }
 
+function addNeighbor(neighbors: Map<string, string[]>, key: string, next: string): boolean {
+  const list = neighbors.get(key);
+
+  if (!list) {
+    neighbors.set(key, [next]);
+
+    return true;
+  }
+
+  if (list.length === 2) return false;
+
+  list.push(next);
+
+  return true;
+}
+
 export function loopsOf(edges: Edge[]): Point[][] | undefined {
   const neighbors = new Map<string, string[]>();
   const points = new Map<string, Point>();
@@ -66,13 +88,15 @@ export function loopsOf(edges: Edge[]): Point[][] | undefined {
     const ka = pointKey(a);
     const kb = pointKey(b);
 
+    if (!addNeighbor(neighbors, ka, kb) || !addNeighbor(neighbors, kb, ka)) return undefined;
+
     points.set(ka, a);
     points.set(kb, b);
-    neighbors.set(ka, [...(neighbors.get(ka) ?? []), kb]);
-    neighbors.set(kb, [...(neighbors.get(kb) ?? []), ka]);
   }
 
-  if ([...neighbors.values()].some((list) => list.length !== 2)) return undefined;
+  for (const list of neighbors.values()) {
+    if (list.length !== 2) return undefined;
+  }
 
   const remaining = new Set(points.keys());
   const loops: Point[][] = [];
@@ -86,7 +110,12 @@ export function loopsOf(edges: Edge[]): Point[][] | undefined {
     loops.push(loop);
   }
 
-  return loops.sort((a, b) => Math.abs(polygonArea(b)) - Math.abs(polygonArea(a)));
+  if (loops.length < 2) return loops;
+
+  return loops
+    .map((points) => ({ points, area: Math.abs(polygonArea(points)) }))
+    .sort((a, b) => b.area - a.area)
+    .map(({ points }) => points);
 }
 
 export function inside(point: Point, polygon: Point[]): boolean {
@@ -96,9 +125,12 @@ export function inside(point: Point, polygon: Point[]): boolean {
     const a = polygon[i];
     const b = polygon[j];
     const crosses = a[1] > point[1] !== b[1] > point[1];
+
+    if (!crosses) continue;
+
     const atX = ((b[0] - a[0]) * (point[1] - a[1])) / (b[1] - a[1]) + a[0];
 
-    if (crosses && point[0] < atX) result = !result;
+    if (point[0] < atX) result = !result;
   }
 
   return result;

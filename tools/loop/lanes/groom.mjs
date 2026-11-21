@@ -10,7 +10,9 @@ import {
   groomedThrough,
   mergedAfter,
   mergedWindowStart,
+  normalizeDiagnosticRequirements,
 } from '../lib/groom.mjs';
+import { windowsDiagnosticsReady } from '../lib/diagnosticReadiness.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { json } from '../lib/sh.mjs';
 import { recoverStepPulls, stepPullIndex, stepStatus } from '../lib/stepPulls.mjs';
@@ -157,6 +159,15 @@ export function groomQueue({ log, dry = false }) {
   const steps = [...new Map([...issues(NEXT), ...issues(BUILDING)].map((step) => [step.number, step])).values()].filter(
     (step) => step.author?.login === OWNER_LOGIN,
   );
+
+  if (windowsDiagnosticsReady()) {
+    normalizeDiagnosticRequirements([...steps, ...issues('loop:blocked')], {
+      verified: true,
+      gh: liveGitHub,
+      dry,
+      log,
+    });
+  }
 
   recoverStepPulls(index, {
     steps,

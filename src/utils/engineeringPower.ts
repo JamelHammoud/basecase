@@ -30,6 +30,8 @@ const actuatorFor = (p: ScenePart) => actuatorOf(p.componentId!, p.componentVari
 
 type PowerScene = Pick<CheckContext, 'parts' | 'project' | 'servos'>;
 
+type PowerDemandContext = Pick<CheckContext, 'parts' | 'project' | 'servos' | 'joints' | 'input'>;
+
 const actuatorsIn = (ctx: PowerScene) => [...new Set(ctx.servos.map(actuatorFor).filter(Boolean) as ActuatorSpec[])];
 
 const isOver = (b: BatterySpec, a: ActuatorSpec) => b.fullV > a.volts[1] + 1e-6;
@@ -192,7 +194,7 @@ interface ServoDraw {
   hungriest?: { joint: RobotJoint; avgA: number; peakA: number };
 }
 
-function servoCurrent(ctx: CheckContext): ServoDraw {
+function servoCurrent(ctx: PowerDemandContext): ServoDraw {
   const legIds = new Set(ctx.joints.filter(isLegJoint).flatMap((j) => j.actuators ?? []));
   let peak = 0,
     avg = 0;
@@ -210,7 +212,7 @@ function servoCurrent(ctx: CheckContext): ServoDraw {
   return { peak, avg };
 }
 
-function walkedCurrent(ctx: CheckContext): ServoDraw | undefined {
+function walkedCurrent(ctx: PowerDemandContext): ServoDraw | undefined {
   const walk = ctx.input.walk;
 
   if (typeof walk !== 'object' || walk.fellAt !== null || !walk.power) return undefined;
@@ -219,10 +221,27 @@ function walkedCurrent(ctx: CheckContext): ServoDraw | undefined {
 
   if (!walked.length) return undefined;
 
-  const driven = new Set(walked.flatMap((j) => j.actuators ?? []));
-  const idle = ctx.servos.filter((p) => !driven.has(p.id)).map((p) => actuatorFor(p)?.idleA ?? IDLE_A);
-  const idleA = idle.reduce((s, a) => s + a, 0);
-  const joint = [...walked].sort((a, b) => walk.power!.joints[b.id].avgA - walk.power!.joints[a.id].avgA)[0];
+  const driven = new Set<string>();
+  let joint = walked[0];
+  let unordered = false;
+
+  for (const j of walked) {
+    const current = walk.power.joints[j.id].avgA;
+
+    unordered ||= Number.isNaN(current);
+
+    if (current > walk.power.joints[joint.id].avgA) joint = j;
+
+    for (const id of j.actuators ?? []) driven.add(id);
+  }
+
+  if (unordered) joint = walked.sort((a, b) => walk.power!.joints[b.id].avgA - walk.power!.joints[a.id].avgA)[0];
+
+  let idleA = 0;
+
+  for (const p of ctx.servos) {
+    if (!driven.has(p.id)) idleA += actuatorFor(p)?.idleA ?? IDLE_A;
+  }
 
   return {
     peak: walk.power.peakA + idleA * 2,
@@ -231,7 +250,7 @@ function walkedCurrent(ctx: CheckContext): ServoDraw | undefined {
   };
 }
 
-function currentDraw(ctx: CheckContext, source: PowerSource) {
+export function currentDraw(ctx: PowerDemandContext, source: PowerSource) {
   const b = source.battery;
   const servo = walkedCurrent(ctx) ?? servoCurrent(ctx);
   const rail = railOf(ctx, source);

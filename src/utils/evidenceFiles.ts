@@ -252,7 +252,14 @@ export async function uploadEvidenceFolder(
   onProgress: (done: number, total: number) => void,
 ): Promise<EvidenceFolder> {
   const id = newFolderId();
-  const usable = folder.files.filter((f) => evidenceKind(f.file)).slice(0, MAX_FOLDER_FILES);
+  const usable: PickedFile[] = [];
+
+  for (const picked of folder.files) {
+    if (evidenceKind(picked.file)) usable.push(picked);
+
+    if (usable.length === MAX_FOLDER_FILES) break;
+  }
+
   let skipped = folder.files.length - usable.length;
   let imageCount = 0;
   let fileCount = 0;

@@ -58,6 +58,15 @@ describe('buildBom', () => {
     expect(line('supply:filament-pla')).toMatchObject({ unit: 'g', packs: 1, partIds: ['bracket'] });
   });
 
+  it('counts filament for every requested printed copy without multiplying assembly hardware', () => {
+    const copies = parts.map((part) => (part.id === 'bracket' ? { ...part, print: { copies: 3 } } : part));
+    const result = buildBom({ parts: copies, project, purchases: {}, measures });
+
+    expect(result.filamentG.PLA).toBeCloseTo(bom.filamentG.PLA! * 3);
+    expect(result.lines.find((line) => line.key === hardwareKey(screw))?.qty).toBe(2);
+    expect(result.printed).toHaveLength(1);
+  });
+
   it("adds what the scene needs by itself: cables for servos, the LiPo's power path, keys for screws", () => {
     expect(line('supply:servo-cable-5264-3pin').qty).toBe(1);
     expect(line('supply:xt60-pigtail').qty).toBe(1);

@@ -6,6 +6,7 @@ import {
   idsAfter,
   idsExcept,
   insertTab,
+  MAX_TABS,
   moveTab,
   nextActiveAfterClose,
   sceneCopyName,
@@ -57,6 +58,28 @@ describe('scene tabs', () => {
     expect(
       nextActiveAfterClose({ list: tabs, ids: ['a', 'b', 'c', 'd'], activeId: 'a', remaining: [{ id: 'new' }] }),
     ).toBe('new');
+  });
+
+  it('keeps the close-selection order for every closing subset at the tab limit', () => {
+    const list = Array.from({ length: MAX_TABS }, (_, i) => ({ id: `tab-${i}` }));
+
+    for (let mask = 0; mask < 2 ** MAX_TABS; mask++) {
+      const ids = list.filter((_, i) => mask & (1 << i)).map((tab) => tab.id);
+      const survivors = list.filter((tab) => !ids.includes(tab.id));
+      const remaining = survivors.length ? survivors : [{ id: 'blank' }];
+
+      for (const [index, tab] of list.entries()) {
+        const right = survivors.find((candidate) => list.indexOf(candidate) > index);
+        const left = survivors.findLast((candidate) => list.indexOf(candidate) < index);
+        const expected = ids.includes(tab.id) ? (right ?? left ?? remaining[0]).id : tab.id;
+
+        expect(nextActiveAfterClose({ list, ids, activeId: tab.id, remaining })).toBe(expected);
+      }
+
+      expect(list.map((tab) => tab.id)).toEqual(Array.from({ length: MAX_TABS }, (_, i) => `tab-${i}`));
+      expect(ids).toEqual(list.filter((_, i) => mask & (1 << i)).map((tab) => tab.id));
+      expect(remaining).toEqual(survivors.length ? survivors : [{ id: 'blank' }]);
+    }
   });
 
   it('inserts, moves and lists tabs', () => {

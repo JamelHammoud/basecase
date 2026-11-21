@@ -17,23 +17,32 @@ const isMap = (id: string) => id === MAP_LAYER;
 
 function useTryMap(store: DataLayerStore, timeline: TryTimeline, { model, parts }: MapScene) {
   const recording = timeline.open ? timeline.recording : null;
+  const saved = timeline.comparison.opened;
+  const consumer = saved?.consumers.length === 1 ? saved.consumers[0] : null;
   const matching = useSyncExternalStore(store.subscribe, store.matching);
 
   useEffect(() => {
-    if (!recording) return;
+    if (!recording && !consumer) return;
 
     let current = true;
 
     store.removeTracks((t) => isMap(t.id));
-    void tryMap(recording, model ? scanSources(model, parts) : [], matching).then((cloud) => {
-      if (current && cloud) store.setTrack(mapTrack(cloud));
-    });
+
+    const pending = consumer
+      ? consumer.call('map', { matching })
+      : tryMap(recording!, model ? scanSources(model, parts) : [], matching);
+
+    void pending
+      .catch(() => null)
+      .then((cloud) => {
+        if (current && cloud) store.setTrack(mapTrack(cloud));
+      });
 
     return () => {
       current = false;
       store.removeTracks((t) => isMap(t.id));
     };
-  }, [store, recording, model, parts, matching]);
+  }, [store, recording, model, parts, matching, consumer]);
 }
 
 function useLiveMap(store: DataLayerStore, sim: Simulation, replaying: boolean) {

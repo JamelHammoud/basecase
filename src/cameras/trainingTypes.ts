@@ -35,6 +35,9 @@ export interface TrainingRandomization {
 }
 
 export interface CameraTrainingRequest {
+  isolate?: string;
+  labelsOnly?: boolean;
+  requireGeometry?: boolean;
   poses: Float64Array | null;
   key: string;
   width: number;

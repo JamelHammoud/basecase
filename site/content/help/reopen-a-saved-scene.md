@@ -39,4 +39,6 @@ You can also open the **Scenes** menu with the button next to the sidebar button
 
 Basecase asks before it deletes a scene, and you can't undo a delete. When you duplicate a scene, Basecase adds “copy” to the name, then “copy 2” for the next duplicate.
 
+The duplicate shares its source history for comparison and selective merge. Each scene keeps its own edits. See [Save and merge robot versions](/help/save-and-merge-robot-versions).
+
 To keep several scenes open at once, see [Open, rename and close scene tabs](/help/open-rename-and-close-tabs).

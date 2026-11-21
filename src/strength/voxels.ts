@@ -143,25 +143,28 @@ const isEdge = (g: VoxelGrid, c: number, neighbours: (cell: number) => number[])
   return near.length < 6 || near.some((m) => !g.solid[m]);
 };
 
-function nextDepth(g: VoxelGrid, depth: Int32Array, frontier: number[], neighbours: (cell: number) => number[]) {
-  const next: number[] = [];
+interface DepthTraversal {
+  grid: VoxelGrid;
+  depth: Int32Array;
+  neighbours: (cell: number) => number[];
+}
 
+function appendDepth({ grid, depth, neighbours }: DepthTraversal, frontier: number[], next: number[]): void {
   for (const c of frontier) {
     for (const m of neighbours(c)) {
-      if (!g.solid[m] || depth[m] >= 0) continue;
+      if (!grid.solid[m] || depth[m] >= 0) continue;
 
       depth[m] = depth[c] + 1;
       next.push(m);
     }
   }
-
-  return next;
 }
 
 export function surfaceDepth(g: VoxelGrid): Int32Array {
   const depth = new Int32Array(g.solid.length).fill(-1);
   const neighbours = voxelNeighbours(g);
   let frontier: number[] = [];
+  let next: number[] = [];
 
   for (let c = 0; c < g.solid.length; c++) {
     if (!g.solid[c] || !isEdge(g, c, neighbours)) continue;
@@ -170,7 +173,18 @@ export function surfaceDepth(g: VoxelGrid): Int32Array {
     frontier.push(c);
   }
 
-  while (frontier.length) frontier = nextDepth(g, depth, frontier, neighbours);
+  const traversal = { grid: g, depth, neighbours };
+
+  while (frontier.length) {
+    next.length = 0;
+
+    appendDepth(traversal, frontier, next);
+
+    const previous = frontier;
+
+    frontier = next;
+    next = previous;
+  }
 
   return depth;
 }

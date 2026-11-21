@@ -46,6 +46,24 @@ const MJCF = `<mujoco model="mini_arm">
   </worldbody>
 </mujoco>`;
 
+function ownershipUrdf(baseVisible: boolean) {
+  const link = (name: string, visible = true) =>
+    `<link name="${name}">${visible ? '<visual><geometry><box size="0.01 0.01 0.01"/></geometry></visual>' : ''}</link>`;
+  const joint = (name: string, type: string, parent: string, child: string) =>
+    `<joint name="${name}" type="${type}"><parent link="${parent}"/><child link="${child}"/></joint>`;
+
+  return `<robot name="ownership">
+    ${link('base', baseVisible)}${link('base_shell', baseVisible)}${link('upper')}${link('upper_shell')}
+    ${link('empty', false)}${link('tip')}${link('side')}
+    ${joint('base_fixed', 'fixed', 'base', 'base_shell')}
+    ${joint('shoulder', 'revolute', 'base_shell', 'upper')}
+    ${joint('upper_fixed', 'fixed', 'upper', 'upper_shell')}
+    ${joint('empty_joint', 'revolute', 'upper_shell', 'empty')}
+    ${joint('tip_joint', 'prismatic', 'empty', 'tip')}
+    ${joint('side_joint', 'revolute', 'upper', 'side')}
+  </robot>`;
+}
+
 beforeEach(() => {
   vi.stubGlobal('DOMParser', TinyDomParser);
 });
@@ -79,6 +97,46 @@ describe('importRobot', () => {
     expect(robot.parts[0].dimensions).toEqual({ width: 100, height: 100, depth: 100 });
     expect(robot.joints).toHaveLength(1);
     expect(robot.joints[0]).toMatchObject({ id: 'hinge', effortNm: 6, range: [-57.3, 57.3] });
+  });
+
+  it('keeps ordered fixed-link ownership, empty-parent fallback and independent joint arrays across imports', async () => {
+    for (const baseVisible of [true, false, true]) {
+      const robot = await importRobot({
+        kind: 'files',
+        files: [localFile('ownership.urdf', ownershipUrdf(baseVisible))],
+      });
+      const linksOf = (ids: string[]) => ids.map((id) => robot.parts.find((p) => p.id === id)!.robotLink!.link);
+      const base = baseVisible ? ['base', 'base_shell'] : [];
+
+      expect(robot.joints.map((j) => [j.id, linksOf(j.parent), linksOf(j.child), j.parentJoint])).toEqual([
+        ['shoulder', base, ['upper', 'upper_shell'], undefined],
+        ['empty_joint', ['upper', 'upper_shell'], [], 'shoulder'],
+        ['tip_joint', ['upper', 'upper_shell'], ['tip'], 'empty_joint'],
+        ['side_joint', ['upper', 'upper_shell'], ['side'], 'shoulder'],
+      ]);
+
+      const arrays = robot.joints.flatMap((j) => [j.parent, j.child]);
+
+      expect(new Set(arrays).size).toBe(arrays.length);
+      robot.joints[0].child.push('edited');
+      expect(linksOf(robot.joints[1].parent)).toEqual(['upper', 'upper_shell']);
+    }
+  });
+
+  it('keeps MJCF joints on one body attached through geometry-free predecessors', async () => {
+    const text = MJCF.replace(
+      '<joint name="hinge"',
+      '<joint name="slide" type="slide" axis="1 0 0"/><joint name="hinge"',
+    );
+    const robot = await importRobot({ kind: 'files', files: [localFile('multi.xml', text)] });
+    const [slide, hinge] = robot.joints;
+
+    expect(slide.child).toEqual([]);
+    expect(hinge.child).toEqual([robot.parts[1].id]);
+    expect(slide.parent).toEqual([robot.parts[0].id]);
+    expect(hinge.parent).toEqual(slide.parent);
+    expect(hinge.parent).not.toBe(slide.parent);
+    expect(hinge.parentJoint).toBe(slide.id);
   });
 
   it('asks for a robot description when the folder has none', async () => {

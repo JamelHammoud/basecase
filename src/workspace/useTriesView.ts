@@ -29,11 +29,31 @@ export interface PickKeys {
 const newestFirst = (a: TrySummary, b: TrySummary) => b.startedAt.localeCompare(a.startedAt);
 
 export function tryGroups(tries: TrySummary[]): TryGroup[] {
-  const groups = new Map<string, TrySummary[]>();
+  const groups = new Map<string, TryGroup & { newestIndex: number }>();
 
-  for (const t of [...tries].sort(newestFirst)) groups.set(t.robot, [...(groups.get(t.robot) ?? []), t]);
+  for (let index = 0; index < tries.length; index++) {
+    const t = tries[index];
+    const group = groups.get(t.robot);
 
-  return [...groups].map(([robot, list]) => ({ robot, tries: list })).sort((a, b) => a.robot.localeCompare(b.robot));
+    if (!group) {
+      groups.set(t.robot, { robot: t.robot, tries: [t], newestIndex: index });
+
+      continue;
+    }
+
+    if (newestFirst(t, tries[group.newestIndex]) < 0) group.newestIndex = index;
+
+    group.tries.push(t);
+  }
+
+  return [...groups.values()]
+    .sort(
+      (a, b) =>
+        a.robot.localeCompare(b.robot) ||
+        newestFirst(tries[a.newestIndex], tries[b.newestIndex]) ||
+        a.newestIndex - b.newestIndex,
+    )
+    .map(({ robot, tries: list }) => ({ robot, tries: list.sort(newestFirst) }));
 }
 
 export function picked(
@@ -90,6 +110,14 @@ interface TriesViewOptions {
 const datasetGroups = (dataset: Dataset, all: TrySummary[]) => tryGroups(datasetVersionMembers(dataset, all));
 
 const groupOrder = (groups: TryGroup[]) => groups.flatMap((g) => g.tries.map((t) => t.id));
+
+function comparableTries(all: TrySummary[], selected: string[], timelineOpen: boolean) {
+  return (
+    !timelineOpen &&
+    selected.length === 2 &&
+    selected.every((id) => all.some((summary) => summary.id === id && summary.recording))
+  );
+}
 
 export function useTriesView({ places, timeline, showToast }: TriesViewOptions) {
   const all = useTries() ?? [];
@@ -155,6 +183,9 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
     query,
     hits,
     selected,
+    canCompare: comparableTries(all, selected, timeline.open || !timeline.canCompare),
+    compare: () =>
+      void timeline.compare(selected).catch((error: unknown) => showToast(errorMessage(error), { tone: 'error' })),
     order,
     all,
     searching,
@@ -190,7 +221,7 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
 
       setPick(next);
 
-      if (next.selected.includes(id)) show(id);
+      if (!keys.shift && !keys.toggle && next.selected.includes(id)) show(id);
     },
     like: (tryId: string) => setQuery(likeQuery(tryId)),
     remove: (id?: string) => remove(id && !selected.includes(id) ? [id] : selected),

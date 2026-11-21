@@ -1,0 +1,45 @@
+name: Electrical export
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  schematic:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Select native routing acceptance
+        id: routing
+        run: node tools/electrical/routingSelection.mjs
+      - name: Install pinned local routing tools
+        if: steps.routing.outputs.needed == 'true'
+        run: node tools/electrical/installRouter.mjs --directory scratch/routing-tools
+      - name: Install pinned KiCad CLI for native Windows fabrication checks
+        if: runner.os == 'Windows'
+        run: node tools/electrical/installCli.mjs
+      - name: Validate KiCad 9.0.6 ERC, PCB pads and DRC fault controls
+        if: runner.os == 'Linux'
+        run: node tools/electrical/check.mjs --docker
+      - name: Validate portable exports and save/reopen determinism
+        if: runner.os == 'Windows'
+        run: node tools/electrical/check.mjs --export-only
+
+      - name: Route supported carrier matrix with KiCad DRC and existing fabrication exports
+        if: steps.routing.outputs.needed == 'true'
+        run: node tools/electrical/routingCheck.mjs ${{ runner.os == 'Linux' && '--docker' || '' }}

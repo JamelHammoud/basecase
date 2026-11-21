@@ -1,6 +1,8 @@
 import type { AnimationKeyframe, JointValues, RobotPoseState, RootOffset } from '../types/robotics';
-import { goalParts, goalTargets, roundTo, type BuiltAnimation, type PointOf } from './animationGoals';
-import { clampJoint, isMovable, preBend, solveIK, type IkTarget, type Rig, type V3 } from './kinematics';
+import { goalParts, roundTo, type BuiltAnimation, type PointOf } from './animationGoals';
+import { gaitBounds } from './gaitBounds';
+import { moveGaitTargets, prepareGaitTargets } from './gaitTargets';
+import { clampJoint, isMovable, preBend, solveIK, type Rig, type V3 } from './kinematics';
 import { lengthLabel } from './size';
 
 export interface GaitSpec {
@@ -29,26 +31,32 @@ export function defaultPhases(n: number): number[] {
 }
 
 export function alternatingPhases(points: V3[]): number[] {
-  const middle = (Math.max(...points.map((p) => p[0])) + Math.min(...points.map((p) => p[0]))) / 2;
-  const phases = new Array<number>(points.length).fill(0);
+  return alternatingAtMiddle(points, gaitBounds(points).middle);
+}
 
-  [0, 1].forEach((side) => {
-    points
-      .map((p, i) => ({ i, z: p[2], onSide: side === 0 ? p[0] < middle : p[0] >= middle }))
-      .filter((p) => p.onSide)
-      .sort((a, b) => a.z - b.z)
-      .forEach((p, rank) => (phases[p.i] = (rank + side) % 2 === 0 ? 0 : 0.5));
+function alternatingAtMiddle(points: V3[], middle: number): number[] {
+  const phases = new Array<number>(points.length).fill(0);
+  const sides: number[][] = [[], []];
+
+  points.forEach((point, index) => {
+    if (point[0] < middle) sides[0].push(index);
+
+    if (point[0] >= middle) sides[1].push(index);
+  });
+  sides.forEach((indices, side) => {
+    indices.sort((a, b) => points[a][2] - points[b][2]);
+    indices.forEach((index, rank) => (phases[index] = (rank + side) % 2 === 0 ? 0 : 0.5));
   });
 
   return phases;
 }
 
-function gaitPhases(spec: GaitSpec, points: V3[]): number[] {
+function gaitPhases(spec: GaitSpec, points: V3[], middle: number): number[] {
   const n = points.length;
 
   if (spec.phases?.length === n) return spec.phases;
 
-  return n >= 6 && n % 2 === 0 ? alternatingPhases(points) : defaultPhases(n);
+  return n >= 6 && n % 2 === 0 ? alternatingAtMiddle(points, middle) : defaultPhases(n);
 }
 
 interface GaitFeet {
@@ -76,6 +84,7 @@ interface GaitPlan extends GaitFeet {
   side0: number;
   footDirs: V3[] | null;
   keepOrientation: boolean;
+  targets: ReturnType<typeof prepareGaitTargets>;
 }
 
 function gaitFeet(rig: Rig, spec: GaitSpec, pointOf: PointOf): GaitFeet | string {
@@ -97,16 +106,19 @@ function gaitFeet(rig: Rig, spec: GaitSpec, pointOf: PointOf): GaitFeet | string
 }
 
 function swingJoints(rig: Rig, feetParts: string[]): string[] {
+  const chains = feetParts.map((part) => rig.chain.get(rig.ownerOf.get(part)!));
   const legJoints = new Set<string>();
-  const chainOf = (p: string) => rig.chain.get(rig.ownerOf.get(p)!);
+  const free: string[] = [];
 
-  feetParts.forEach((p) => chainOf(p)?.forEach((j) => legJoints.add(j)));
+  chains.forEach((chain) => chain?.forEach((joint) => legJoints.add(joint)));
 
-  const shared = [...legJoints].filter((j) => feetParts.every((p) => chainOf(p)?.has(j)));
+  for (const id of legJoints) {
+    if (chains.every((chain) => chain?.has(id))) continue;
 
-  shared.forEach((j) => legJoints.delete(j));
+    if (isMovable(rig.byId.get(id)!)) free.push(id);
+  }
 
-  return [...legJoints].filter((id) => isMovable(rig.byId.get(id)!));
+  return free;
 }
 
 function gaitShape(spec: GaitSpec, n: number, leg: number, spread: number) {
@@ -134,24 +146,27 @@ function gaitPlan(input: GaitInput, found: GaitFeet): GaitPlan {
   const { rig, spec } = input;
   const { feet, points } = found;
   const hip = rig.rootPivot[1];
-  const footY = Math.min(...points.map((p) => p[1]));
+  const { footY, spread, middle } = gaitBounds(points);
   const leg = Math.max(hip - footY, 40);
   const n = feet.length;
-  const xs = points.map((p) => p[0]);
-  const spread = Math.max(...xs) - Math.min(...xs);
   const heading = ((spec.heading ?? 0) * Math.PI) / 180;
 
   return {
     ...found,
     ...input,
-    phases: gaitPhases(spec, points),
+    phases: gaitPhases(spec, points, middle),
     ...gaitShape(spec, n, leg, spread),
     fwd: [Math.sin(heading), 0, Math.cos(heading)],
     samples: Math.max(8, Math.min(spec.samples ?? 24, 60)),
     free: swingJoints(rig, found.feetParts),
-    side0: Math.sign(points[0][0] - (Math.max(...xs) + Math.min(...xs)) / 2) || 1,
+    side0: Math.sign(points[0][0] - middle) || 1,
     footDirs: spec.footDirs?.length === n ? spec.footDirs : null,
     keepOrientation: spec.keepOrientation !== false,
+    targets: prepareGaitTargets(rig, {
+      ...found,
+      pointOf: input.pointOf,
+      keepOrientation: spec.keepOrientation !== false,
+    }),
   };
 }
 
@@ -175,28 +190,16 @@ function gaitRoot(plan: GaitPlan, ph: number): RootOffset {
   };
 }
 
-function gaitTargets(plan: GaitPlan, ph: number): IkTarget[] {
-  const targets: IkTarget[] = [];
-
-  plan.feet.forEach((f, i) => {
+function gaitTargets(plan: GaitPlan, ph: number) {
+  plan.feet.forEach((_, i) => {
     const { along, up } = footOffset(plan, (((ph - plan.phases[i]) % 1) + 1) % 1);
     const pt = plan.points[i];
     const dir = plan.footDirs?.[i] ?? plan.fwd;
-    const t = goalTargets(
-      plan.rig,
-      {
-        part: f,
-        target: [pt[0] + dir[0] * along, pt[1] + up, pt[2] + dir[2] * along],
-        point: pt,
-        keepOrientation: plan.keepOrientation,
-      },
-      plan.pointOf,
-    );
 
-    if (typeof t !== 'string') targets.push(...t);
+    moveGaitTargets(plan.targets.feet[i], [pt[0] + dir[0] * along, pt[1] + up, pt[2] + dir[2] * along]);
   });
 
-  return targets;
+  return plan.targets.all;
 }
 
 function gaitKeyframe(plan: GaitPlan, ph: number, values: JointValues, root: RootOffset): AnimationKeyframe {

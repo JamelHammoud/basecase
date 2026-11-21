@@ -41,10 +41,18 @@ The **Build** tab tells you whether you can build the design. Its **Checks** run
 
 Each problem counts as a blocker or a note:
 
-- A **blocker** stops Ready to build. A screw that no driver can reach is a blocker, and so is a wall too thin to print or a servo too weak for its joint.
+- A **blocker** stops Ready to build. Examples include an unreachable screw, a wall too thin to print, a weak servo or a motor assigned to a passive joint.
 - A **note** turns a check amber but doesn't change the verdict. A part that needs a lot of support material gets a note.
 
 Only you can set a blocker aside, with **Ignore**. The agent can say it disagrees, and the row shows its reason. But the agent can't clear anything, and nothing it writes changes the verdict. [Checks in the Build tab](/help/build-checks) lists every check.
+
+A classroom result doesn't grant **Ready to build**. Open the submitted robot and use its fresh **Build** checks, as described in [Grade a class](/help/grade-a-class).
+
+A sketch with an unresolved supporting face stays blocked even while its previous solid remains visible. [Keep a sketch on a face](/help/keep-a-sketch-on-a-face) covers replacing that reference.
+
+Shared dimensions must match their parameters and pass regeneration validation before their geometry counts as current. See [Link dimensions with shared parameters](/help/link-dimensions-with-shared-parameters). [Check dimensional tolerances](/help/check-dimensional-tolerances) evaluates authored clearance requirements with explicit manufacturing deviations. Missing deviations leave those requirements unresolved, and passing one doesn’t establish physical fit.
+
+You can [compare clearances on a fit test plate](/help/compare-fit-clearances) before changing an authored dimension. Applying a value records a design choice and reruns Checks. It doesn't establish a physical fit.
 
 ## What you buy
 
@@ -60,6 +68,10 @@ The list also includes things the build needs that the model doesn't show:
 
 Prices you check in a store are exact. The others are list prices, and Basecase marks them with ≈. Parts you own cost nothing.
 
+**Electrical connections** checks documented pins and declared supplies. Missing pin maps, unknown loads and unresolved power interfaces remain blockers. To continue the documented connections in KiCad, [export a robot schematic](/help/export-a-robot-schematic).
+
+**Board fit** checks a defined board’s outline, mounting hardware and connector clearance against scene geometry. Passing it doesn’t clear electrical blockers or route copper. See [Fit an electronics board](/help/fit-an-electronics-board).
+
 **Cable reach** checks these same connections through joint motion. A blocked route, missing port geometry or insufficient cable length stops Ready to build. [Servo bus or Cable reach is red](/help/troubleshoot-servo-bus) explains the findings. [Build Along](/help/build-along) shows each connection when both endpoints are installed.
 
 ## How it gets made
@@ -68,11 +80,15 @@ Print mode lays out the printed parts on plates in the order the build guide nee
 
 For flat structural parts, [Cut parts from sheet](/help/cut-parts-from-sheet) exports DXF outlines for aluminum, carbon fiber or acrylic. Checks and simulation start with the sheet's solid volume and material density for weight and torque. An active [body fit](/help/fit-a-robots-body-from-a-recorded-run) adjusts those weights and adds the fitted payload. Shop limits, sheet prices, bends and press-in hardware aren't checked.
 
-The build guide is a PDF of assembly steps. Basecase checks that the parts can go together in that order. The guide names each printed part with a letter, and Print mode cuts that letter into a hidden face of the part.
+The editable design's build guide is a PDF of assembly steps. Basecase checks that the parts can go together in that order. The guide names each printed part with a letter, and Print mode cuts that letter into a hidden face of the part.
+
+To assemble several copies without duplicating the editable design, [resume a robot build](/help/resume-a-robot-build). Each named build keeps its original geometry, instructions and separate progress after a restart.
 
 For a broken part, [Repair a part](/help/repair-a-part) plays the measured teardown, replacement and reassembly in Build Along. A printed replacement gets a one-part plate, even if its shape hasn't changed. Repair needs a measured removal path and proven reassembly order.
 
 To fit a weekend build into the hours available, [set a time budget](/help/set-a-time-budget) beside the money budget. The Time check adds printing, estimated assembly and servo setup. It fails over budget, warns above 90%, and remains a note without a budget.
+
+[Compare supplier offers](/help/compare-supplier-offers) checks dated quotes against remaining purchases. Its arrival estimate excludes printing and assembly and doesn’t change Checks.
 
 ## What the checks can't promise
 
@@ -80,6 +96,10 @@ An imported Onshape robot can be ready to build with motions held fixed. Cylindr
 
 Print times and filament amounts are estimates until Print mode slices the plates. Basecase tests range of motion every 15°, so it can miss a clash narrower than that. Peak torque needs a trained walking policy and stays Not run without one. Falls stays Not run until the agent tips the robot over in the simulation.
 
+Printer obstacles reserve space for the full print height, even for low clips. Unsupported obstacle geometry leaves parts off the plates. [Printability estimates](/help/printability-estimates) explains these placement limits.
+
 Time keeps assembly and servo setup as estimates after slicing. It excludes delivery, failed prints and print service lead times.
 
 Open the Build tab and follow [Get a robot ready to build](/help/get-a-robot-ready-to-build).
+
+Export the handoff as one archive with [Export a robot kit](/help/export-a-robot-kit). It keeps packing demand separate from remaining purchases and preserves the Checks verdict. A generated carrier adds electrical sources and available validation evidence, with fabrication output only after native acceptance.

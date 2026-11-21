@@ -38,8 +38,8 @@ export const handJointMenuItems = (joints: HandJoints): ContextMenuEntry[] =>
       ]
     : [];
 
-export const handJointCommands = (joints: HandJoints): Command[] =>
-  joints.canJoin
+export const handJointCommands = (joints: HandJoints): Command[] => [
+  ...(joints.canJoin
     ? ENTRIES.map((e) => ({
         id: `hand-joint-${e.type}`,
         group: 'Selection',
@@ -48,4 +48,17 @@ export const handJointCommands = (joints: HandJoints): Command[] =>
         keywords: e.keywords,
         run: () => void joints.start(e.type),
       }))
-    : [];
+    : []),
+  ...(joints.canEditTendon
+    ? [
+        {
+          id: 'edit-tendon',
+          group: 'Selection',
+          label: 'Edit Tendon',
+          icon: <RotateIcon />,
+          keywords: 'transmission spool passive coupling',
+          run: () => joints.editTendon(),
+        },
+      ]
+    : []),
+];

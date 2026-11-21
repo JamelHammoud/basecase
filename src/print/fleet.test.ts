@@ -6,7 +6,7 @@ import { nextPlate, offeredTo, plateFootprint, plateOnBed, type FleetPrinter } f
 import { buildPrintPlan } from './plan';
 import { planInput } from './plan.fixtures';
 import type { PrinterStatus } from './printBridge';
-import { printRecordFor, withRecord } from './tracker';
+import { markForReprint, plateStatusLookup, printRecordFor, withRecord, type PlateState } from './tracker';
 
 const mine = (id: string, modelId: string): MyPrinter => ({
   id,
@@ -49,7 +49,9 @@ describe('which printers a plate is offered to', () => {
     expect(plateFootprint(base).w).toBeGreaterThan(bedOf(printerModel('bambu-lab-a1-mini')!).width);
     expect(offeredTo(base, mini, scene)).toBe(false);
     expect(offeredTo(leg, mini, scene)).toBe(true);
-    expect(nextPlate({ plates: plan.plates, records: [], printer: mini, scene })?.number).toBe(leg.number);
+    expect(nextPlate({ plates: plan.plates, plateStatus: plateStatusLookup([]), printer: mini, scene })?.number).toBe(
+      leg.number,
+    );
   });
 
   it('never offers a PLA plate to a printer that reports PETG loaded', () => {
@@ -83,26 +85,118 @@ describe('Start Next', () => {
   const printer = fleet('voron', 'bambu-lab-x1-carbon');
 
   it('picks the lowest plate that isn’t sent, printing or printed', () => {
-    expect(nextPlate({ plates: plan.plates, records: [], printer, scene })).toBe(base);
-    expect(nextPlate({ plates: plan.plates, records: sent([], base, 'printed'), printer, scene })).toBe(leg);
-    expect(nextPlate({ plates: plan.plates, records: sent(sent([], base, 'printing'), leg), printer, scene })).toBe(
-      shell,
-    );
-    expect(nextPlate({ plates: plan.plates, records: sent([], base, 'failed'), printer, scene })).toBe(base);
+    expect(nextPlate({ plates: plan.plates, plateStatus: plateStatusLookup([]), printer, scene })).toBe(base);
+    expect(
+      nextPlate({ plates: plan.plates, plateStatus: plateStatusLookup(sent([], base, 'printed')), printer, scene }),
+    ).toBe(leg);
+    expect(
+      nextPlate({
+        plates: plan.plates,
+        plateStatus: plateStatusLookup(sent(sent([], base, 'printing'), leg)),
+        printer,
+        scene,
+      }),
+    ).toBe(shell);
+    expect(
+      nextPlate({ plates: plan.plates, plateStatus: plateStatusLookup(sent([], base, 'failed')), printer, scene }),
+    ).toBe(base);
   });
 
   it('gives two idle printers pressed in turn different plates', () => {
     const other = fleet('trident', 'bambu-lab-p1s');
-    const first = nextPlate({ plates: plan.plates, records: [], printer, scene })!;
-    const second = nextPlate({ plates: plan.plates, records: sent([], first), printer: other, scene })!;
+    const first = nextPlate({ plates: plan.plates, plateStatus: plateStatusLookup([]), printer, scene })!;
+    const second = nextPlate({
+      plates: plan.plates,
+      plateStatus: plateStatusLookup(sent([], first)),
+      printer: other,
+      scene,
+    })!;
 
     expect(first).toBe(base);
     expect(second).toBe(leg);
   });
 
+  it('matches exhaustive selection for unordered plates, ties, statuses, materials and bed refusals', () => {
+    const states: PlateState[] = ['new', 'sent', 'printing', 'printed', 'failed'];
+    const sources = [base, leg, shell];
+    const mini = fleet('mini', 'bambu-lab-a1-mini');
+    const petg = fleet('petg', 'bambu-lab-a1-mini', {
+      state: 'idle',
+      trays: [{ slot: 0, type: 'PETG', color: '#fff' }],
+    });
+
+    for (let seed = 0; seed < 60; seed++) {
+      const plates = Array.from({ length: seed % 19 }, (_, index) => ({
+        ...sources[(index + seed) % sources.length],
+        number: (index * 7 + seed) % 11,
+        hash: String(index),
+      }));
+      const before = structuredClone(plates);
+      const plateStatus = (plate: (typeof plates)[number]) => ({
+        state: states[(Number(plate.hash) + seed) % states.length],
+      });
+      const target = [printer, mini, petg][seed % 3];
+      const expected = plates
+        .filter((plate) => !['sent', 'printing', 'printed'].includes(plateStatus(plate).state))
+        .filter((plate) => offeredTo(plate, target, scene))
+        .sort((a, b) => a.number - b.number)[0];
+
+      expect(nextPlate({ plates, plateStatus, printer: target, scene })).toBe(expected ?? null);
+      expect(plates).toEqual(before);
+    }
+  });
+
+  it('fits only candidates that can beat the current plate and reads current statuses on the next call', () => {
+    const mini = fleet('mini', 'bambu-lab-a1-mini');
+
+    for (const count of [300, 600]) {
+      let footprintReads = 0;
+      const plates = Array.from({ length: count }, (_, number) => ({
+        ...leg,
+        number,
+        get items() {
+          footprintReads++;
+
+          return leg.items;
+        },
+      }));
+
+      expect(nextPlate({ plates, plateStatus: () => ({ state: 'new' }), printer: mini, scene })).toBe(plates[0]);
+      expect(footprintReads).toBe(1);
+
+      footprintReads = 0;
+
+      expect(
+        nextPlate({
+          plates,
+          plateStatus: (plate) => ({ state: plate.number === 0 ? 'printed' : 'new' }),
+          printer: mini,
+          scene,
+        }),
+      ).toBe(plates[1]);
+      expect(footprintReads).toBe(1);
+    }
+  });
+
   it('has nothing for a printer once every plate it can take is out', () => {
     const records = plan.plates.reduce<PrintRecord[]>((all, p) => sent(all, p, 'printed'), []);
 
-    expect(nextPlate({ plates: plan.plates, records, printer, scene })).toBeNull();
+    expect(nextPlate({ plates: plan.plates, plateStatus: plateStatusLookup(records), printer, scene })).toBeNull();
+  });
+
+  it('shares prepared statuses across printers and rebuilds when a replacement finishes', () => {
+    const parts = base.items.map((item) => ({ id: item.id, key: item.id }));
+    const printed = { ...sent([], base, 'printed')[0], parts };
+    const records = markForReprint([printed], parts[0].id, new Date('2026-11-15T12:00:00.000Z'));
+    const plateStatus = plateStatusLookup(records);
+    const other = fleet('trident', 'bambu-lab-p1s');
+
+    expect(nextPlate({ plates: plan.plates, plateStatus, printer, scene })).toBe(base);
+    expect(nextPlate({ plates: plan.plates, plateStatus, printer: other, scene })).toBe(base);
+
+    const replacement = { ...printed, id: 'replacement', sentAt: '2026-11-15T13:00:00.000Z' };
+    const updated = plateStatusLookup(withRecord(records, replacement));
+
+    expect(nextPlate({ plates: plan.plates, plateStatus: updated, printer, scene })).toBe(leg);
   });
 });

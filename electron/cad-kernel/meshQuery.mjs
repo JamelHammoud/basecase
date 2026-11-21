@@ -144,7 +144,7 @@ export function sampleSurface(mesh, tris, count, seed = 7) {
     }
 
     out.push({
-      point: pointOn(mesh, lo, [random(), random()]),
+      point: pointOn(mesh, lo, random(), random()),
       tri: lo,
       normal: new THREE.Vector3().fromArray(tris.normals, lo * 3),
     });
@@ -153,8 +153,12 @@ export function sampleSurface(mesh, tris, count, seed = 7) {
   return out;
 }
 
-function pointOn(mesh, t, [u0, v0]) {
-  const [u, v] = u0 + v0 > 1 ? [1 - u0, 1 - v0] : [u0, v0];
+function pointOn(mesh, t, u, v) {
+  if (u + v > 1) {
+    u = 1 - u;
+    v = 1 - v;
+  }
+
   const corner = (k) => new THREE.Vector3().fromArray(mesh.positions, mesh.indices[t * 3 + k] * 3);
   const a = corner(0);
 

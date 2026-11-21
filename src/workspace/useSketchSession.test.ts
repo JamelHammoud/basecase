@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ScenePart } from '../types/robotics';
 import { addRectangle, removeItems, setDimension } from '../utils/sketch/edit';
 import { GROUND_PLANE, partFromSolid, sketchSolid } from '../utils/sketch/placement';
+import type { SketchSupport } from '../utils/sketch/types';
 import { rebuiltPart } from './useSketchSession';
 
 const rect = addRectangle(
@@ -33,7 +34,39 @@ const placed = (): ScenePart => {
   return { ...partFromSolid(part, solid), position: [100, 30, -40] };
 };
 
+const support: SketchSupport = {
+  version: 1,
+  kind: 'planar-rectangle',
+  partId: 'deck',
+  normal: [0, 1, 0],
+  frame: GROUND_PLANE,
+  corners: ['r1', 'r2', 'r3', 'r4'],
+  fingerprint: 'source',
+  issue: 'solve',
+  attempt: 'source',
+};
+
 describe('re-extruding a sketched part', () => {
+  it('allows a repaired Sketch to retry its supporting face after a failed solve', () => {
+    const part = placed();
+    const before = { ...part, sketch: { ...part.sketch!, support } };
+    const after = rebuiltPart(before, { depth: 6 });
+
+    expect(after.sketch?.support).toMatchObject({ partId: 'deck', fingerprint: 'source' });
+    expect(after.sketch?.support?.issue).toBeUndefined();
+    expect(after.sketch?.support?.attempt).toBeUndefined();
+    expect(before.sketch.support.issue).toBe('solve');
+  });
+
+  it('keeps an open supported outline unresolved while retaining its previous solid', () => {
+    const part = placed();
+    const before = { ...part, sketch: { ...part.sketch!, support } };
+    const after = rebuiltPart(before, { sketch: removeItems(rect.sketch, [rect.lines[1]]) });
+
+    expect(after.customNodes).toBe(before.customNodes);
+    expect(after.sketch?.support?.issue).toBe('profile');
+  });
+
   it('keeps the left edge and the base where they were when a length grows', () => {
     const before = placed();
     const after = rebuiltPart(before, { sketch: setDimension(rect.sketch, rect.lines[0], 50)! });

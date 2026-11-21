@@ -1,3 +1,5 @@
+import { DrawingExportHost } from './DrawingExportHost';
+import { SceneHistorySheet } from './SceneHistorySheet';
 import { TrainingImagesSheet } from '../components/cases/TrainingImagesSheet';
 import { LightenSheet } from '../components/LightenSheet';
 import { ArmSizingSheet } from '../components/ArmSizingSheet';
@@ -5,6 +7,7 @@ import { MotionDesignSheet } from '../components/MotionDesignSheet';
 import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
 import { InstallSkillSheet } from '../components/InstallSkillSheet';
+import { ShareRobotHost } from './ShareRobotHost';
 import { MatchJointsSheet } from '../components/MatchJointsSheet';
 import { PlaceOnMapSheet } from '../components/PlaceOnMapSheet';
 import { platformBridge } from '../utils/platformBridge';
@@ -18,6 +21,9 @@ import type { TrainingImages } from './useTrainingImages';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { PoseActions } from './usePoseActions';
 import { FrameLabelsHost } from './FrameLabelsHost';
+import { FleetIncidents } from '../components/operate/FleetIncidents';
+import { inspectUnitProblems, useFleetIncidents, useInspectedUnit } from '../robot/fleetIncidentStore';
+import { openIncidentTry } from './robotReplay';
 
 interface WorkspaceSheetsProps {
   active: boolean;
@@ -85,16 +91,41 @@ function LightenHost({ active, actions }: Pick<WorkspaceSheetsProps, 'active' | 
   );
 }
 
+function FleetIncidentsHost({ active, core }: Pick<WorkspaceSheetsProps, 'active' | 'core'>) {
+  const unit = useInspectedUnit();
+  const incidents = useFleetIncidents().filter((incident) => incident.unit === unit);
+
+  if (!active || !incidents.length) return null;
+
+  return (
+    <ErrorBoundary key={unit} region={incidents[0].name} onClose={() => inspectUnitProblems(null)}>
+      <FleetIncidents incidents={incidents} onOpenTry={(id) => openIncidentTry(core, id)} />
+    </ErrorBoundary>
+  );
+}
+
+function SceneHistoryHost({ active, core }: Pick<WorkspaceSheetsProps, 'active' | 'core'>) {
+  if (!active || !core.versions.open) return null;
+
+  return (
+    <ErrorBoundary region="Scene history" onClose={core.versions.close}>
+      <SceneHistorySheet core={core} />
+    </ErrorBoundary>
+  );
+}
+
 export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps) {
   const { posing, guide } = core;
   const desktop = platformBridge.isElectron();
   const { robots, pose, arm, data } = actions;
   const { motionInputRef } = pose;
-  const { skillHub } = core.simTraining;
+  const { skillHub, share } = core.simTraining;
   const installing = active && skillHub.installOpen;
 
   return (
     <>
+      <DrawingExportHost active={active} core={core} exports={actions.exports} />
+      <SceneHistoryHost active={active} core={core} />
       {active && guide.viewing && (
         <ErrorBoundary key={guide.viewing.key} region="Build guide" onClose={guide.closeViewer}>
           <GuideViewer
@@ -118,6 +149,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
         />
       </ErrorBoundary>
       <MatchJointsHost active={active} data={data} />
+      <ShareRobotHost active={active} share={share} />
       <ErrorBoundary region="Install Skill" resetKey={installing} onClose={skillHub.closeInstall}>
         <InstallSkillSheet
           open={installing}
@@ -154,6 +186,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
       <MotionDesignHost active={active} pose={pose} />
       <TrainingImagesHost active={active} images={core.simTraining.cases.images} />
       <FrameLabelsHost active={active} labels={core.frameLabels} />
+      <FleetIncidentsHost active={active} core={core} />
       <TeachGestureHost active={active} cases={core.simTraining.cases} project={core.project} />
       <input
         ref={motionInputRef}

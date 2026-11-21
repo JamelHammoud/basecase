@@ -19,13 +19,19 @@ covers:
   - src/workspace/exchangeCommands.tsx
 ---
 
-You can open a `.basecase` file someone sent you as a scene of your own. The scene keeps its parts, joints and comments.
+You can open a `.basecase` file someone sent you as a scene of your own. The scene keeps its current parts, joints and comments.
+
+Saved versions and branch links stay with the sender.
 
 1. Press [[⌘K]].
 2. Choose **Open Scene File**.
 3. Select the `.basecase` file.
 
 The scene opens in a new tab. If the front tab is a blank scene you haven't touched, the scene opens there instead. Basecase saves it to your **Scenes** menu as a new scene, so opening the same file twice gives you two copies.
+
+A saved [electronics board](/help/fit-an-electronics-board) keeps its mounting constraints, placements and locks when you open the file.
+
+[Shared parameters and dimension bindings](/help/link-dimensions-with-shared-parameters) stay editable in the opened scene. Basecase validates reopened bindings before their geometry counts as current in Checks.
 
 Imported worlds come with the scene, including their colliders, textures and optional splats. You don't need the original capture files.
 

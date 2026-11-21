@@ -27,9 +27,20 @@ covers:
   - src/components/inspector/types.ts
 ---
 
-The Printing check flags parts your printer can't make as drawn. It measures each part against the printer you chose in Print mode.
+The Printing check flags parts your printer can't make as drawn. It measures printed parts against the printer you chose in Print mode.
 
 With **Made by a Service** chosen, parts are still measured against the printer you chose before it.
+
+Generated carriers stay off print plates. For routed-board clearance, track-width or drill findings, see [Export board fabrication files](/help/export-board-fabrication-files).
+
+## The part crosses a printer obstacle
+
+A part or its brim crosses the plate edge or the reserved space around a clip or tool dock.
+
+1. Press [[⌘P]] to open Print mode.
+2. Click **Auto Arrange** to clear saved positions and pack the parts again.
+
+If no position fits, choose a printer with more clear space or change the part. Unsupported obstacle geometry leaves parts off the plates and names that limit in **Parts**. Arrange those parts in the slicer instead.
 
 ## “This part is too big for your printer’s plate.”
 

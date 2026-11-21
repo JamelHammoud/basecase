@@ -1,12 +1,13 @@
 import crypto from 'node:crypto';
 import { hasLabel } from './github.mjs';
+import { unavailableCapabilities } from './capabilities.mjs';
 
 export const BUILDING = 'loop:building';
 export const PRIORITY = 'loop:priority';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const LOOKBACK_MS = 30 * DAY_MS;
-const METADATA = /^(Request|Idea|Arc|Kind):/;
+const METADATA = /^(Request|Idea|Arc|Kind|Requires|Inputs):/;
 const REQUEST = /^Request: #(\d+)/m;
 
 export const ACTIONS = ['keep', 'rewrite', 'close', 'fold'];
@@ -193,4 +194,39 @@ export function applyGroom(decisions, context, deps) {
 
     return { number: decision.number, action: decision.action, outcome };
   });
+}
+
+const DIAGNOSTIC_OWNERS = new Set([
+  1139, 1137, 1129, 1128, 1127, 1049, 1035, 1033, 1026, 1025, 1024, 995, 988, 987, 981, 795,
+]);
+
+export function normalizeDiagnosticRequirements(steps, { verified, gh, dry = false, log }) {
+  if (!verified) return [];
+
+  return steps
+    .filter((step) => DIAGNOSTIC_OWNERS.has(step.number))
+    .map((step) => {
+      const body = step.body.replace(/^Requires:([^\n]*)$/m, (line) =>
+        line.replace(/\bwindows-diagnostics\b/g, 'windows-ci'),
+      );
+
+      if (body === step.body || unavailableCapabilities({ ...step, body }).includes('windows-host')) return 'kept';
+
+      if (dry) {
+        log(`would normalize #${step.number} to verified Windows CI`);
+
+        return 'dry';
+      }
+
+      return withStep(step, { gh }, () => {
+        const result = gh.setIssueBody(step.number, body);
+
+        if (result?.ok === false) return 'failed';
+
+        step.body = body;
+        log(`normalized #${step.number} to verified Windows CI`);
+
+        return 'normalized';
+      });
+    });
 }

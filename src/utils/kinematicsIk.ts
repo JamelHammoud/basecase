@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { requireNoTendons } from '../joints/tendonAdmission';
 import type { JointValues, RobotJoint, RootOffset } from '../types/robotics';
 import { prepareIkJacobian } from './kinematicsJacobian';
 import { clampJoint, forwardKinematics, type PosedRig } from './kinematicsMotion';
@@ -52,6 +53,11 @@ interface IkState {
 }
 
 type StepResult = 'improved' | 'converged' | 'worse';
+
+interface IkStep {
+  delta: number[];
+  maxStep: number;
+}
 
 const MAX_STEP = 15;
 const TORSO = /waist|torso|spine|trunk|chest/i;
@@ -115,8 +121,7 @@ function normalEquations(pb: IkProblem, state: IkState, cols: THREE.Vector3[][])
   return { JtJ, g };
 }
 
-function trialValues(pb: IkProblem, state: IkState, delta: number[]): JointValues {
-  const maxStep = Math.max(...delta.map(Math.abs));
+function trialValues(pb: IkProblem, state: IkState, { delta, maxStep }: IkStep): JointValues {
   const scale = maxStep > MAX_STEP ? MAX_STEP / maxStep : 1;
   const trial: JointValues = { ...state.values };
 
@@ -134,15 +139,15 @@ function tryStep(pb: IkProblem, state: IkState, JtJ: Float64Array[], g: Float64A
 
     return r;
   });
-  const delta = solveLinear(augmented);
+  const step = solveLinear(augmented);
 
-  if (!delta) {
+  if (!step) {
     state.lambda *= 4;
 
     return 'worse';
   }
 
-  const trial = trialValues(pb, state, delta);
+  const trial = trialValues(pb, state, step);
   const tPosed = forwardKinematics(pb.rig, { values: trial, root: pb.opts.root });
   const tErr = residuals(pb, tPosed);
   const tCost = costOf(pb, tErr, trial);
@@ -167,7 +172,11 @@ function tryStep(pb: IkProblem, state: IkState, JtJ: Float64Array[], g: Float64A
 }
 
 function iterate(pb: IkProblem, state: IkState, tol: number): boolean {
-  if (Math.max(...state.cur.map((e) => e.r.length())) < tol) return false;
+  let maxError = -Infinity;
+
+  for (const e of state.cur) maxError = Math.max(maxError, e.r.length());
+
+  if (maxError < tol) return false;
 
   pb.jacobian ??= prepareIkJacobian(pb.rig, pb.vars, pb.owners);
 
@@ -183,6 +192,10 @@ function iterate(pb: IkProblem, state: IkState, tol: number): boolean {
 }
 
 export function solveIK(rig: Rig, start: JointValues, targets: IkTarget[], opts: IkOptions = {}): IkResult {
+  const robots = new Set(targets.map((target) => rig.robotOf.get(target.partId)));
+
+  requireNoTendons(rig.joints.filter((joint) => !targets.length || robots.has(rig.robotOf.get(joint.id))));
+
   const pb = ikProblem(rig, targets, opts);
   const values: JointValues = { ...start };
   const posed = forwardKinematics(rig, { values, root: opts.root });
@@ -193,9 +206,16 @@ export function solveIK(rig: Rig, start: JointValues, targets: IkTarget[], opts:
 
   for (let it = 0; it < iterations && pb.vars.length; it++) if (!iterate(pb, state, tol)) break;
 
-  const errors = residuals(pb, state.posed).map((e) => e.r.length());
+  let maxError = 0;
+  const errors = state.cur.map((e) => {
+    const error = e.r.length();
 
-  return { values, errors, maxError: errors.length ? Math.max(...errors) : 0 };
+    maxError = Math.max(maxError, error);
+
+    return error;
+  });
+
+  return { values, errors, maxError };
 }
 
 export function preBend(rig: Rig, values: JointValues, ids: Iterable<string>, deg = 20): JointValues {
@@ -233,7 +253,7 @@ function eliminateBelow(M: number[][], c: number, n: number) {
   }
 }
 
-function solveLinear(M: number[][]): number[] | null {
+function solveLinear(M: number[][]): IkStep | null {
   const n = M.length;
 
   for (let c = 0; c < n; c++) {
@@ -246,6 +266,7 @@ function solveLinear(M: number[][]): number[] | null {
   }
 
   const x = new Array(n).fill(0);
+  let maxStep = -Infinity;
 
   for (let r = n - 1; r >= 0; r--) {
     let s = M[r][n];
@@ -253,7 +274,8 @@ function solveLinear(M: number[][]): number[] | null {
     for (let k = r + 1; k < n; k++) s -= M[r][k] * x[k];
 
     x[r] = s / M[r][r];
+    maxStep = Math.max(maxStep, Math.abs(x[r]));
   }
 
-  return x;
+  return { delta: x, maxStep };
 }

@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { checkedFileId, isSafeFileId } from '../backend/constants.mjs';
+import { SceneHistoryStore } from './sceneHistoryStore.mjs';
+import { checkedSceneHistory } from './sceneHistory.mjs';
+import { writeAtomic } from './atomicFile.mjs';
 
 const SUMMARY_FIELDS = ['id', 'name', 'globalGoal', 'updatedAt', 'previewDataUrl', 'sizeMm'];
 
@@ -42,6 +45,7 @@ function sceneRecord(id, payload, previous) {
     annotations: payload.annotations || [],
     project: payload.project,
     worldAssets: payload.worldAssets,
+    history: checkedSceneHistory(payload.history),
   };
 }
 
@@ -53,6 +57,8 @@ export class SceneLibrary {
     this.cacheFile = cacheFile;
     this.cache = this.readCache();
     this.deleted = new Set();
+    this.histories = new SceneHistoryStore(scenesDir);
+    this.historyRefs = new Map();
   }
 
   readCache() {
@@ -127,6 +133,20 @@ export class SceneLibrary {
 
   get(id) {
     try {
+      const record = this.raw(id);
+
+      if (!record) return null;
+
+      this.historyRefs.set(id, record.historyRef);
+
+      return record.historyRef ? { ...record, history: this.histories.load(record.historyRef) } : record;
+    } catch {
+      return null;
+    }
+  }
+
+  raw(id) {
+    try {
       return JSON.parse(fs.readFileSync(this.filePath(id), 'utf-8'));
     } catch {
       return null;
@@ -148,7 +168,7 @@ export class SceneLibrary {
   }
 
   savePreview({ id, previewDataUrl, sizeMm }) {
-    const record = this.get(id);
+    const record = this.raw(id);
 
     if (!record) {
       return null;
@@ -169,6 +189,7 @@ export class SceneLibrary {
     const file = this.filePath(id);
 
     this.deleted.add(id);
+    this.historyRefs.delete(id);
 
     if (fs.existsSync(file)) fs.unlinkSync(file);
 
@@ -179,7 +200,12 @@ export class SceneLibrary {
     const file = `${checkedFileId(record.id)}.json`;
     const full = path.join(this.scenesDir, file);
 
-    fs.writeFileSync(full, JSON.stringify(record), 'utf-8');
+    const { history, ...fields } = record;
+    const previous = this.historyRefs.has(record.id) ? this.historyRefs.get(record.id) : this.raw(record.id)?.historyRef;
+    const historyRef = history === undefined ? previous : this.histories.save(history);
+
+    writeAtomic(full, JSON.stringify({ ...fields, ...(historyRef ? { historyRef } : {}) }));
+    this.historyRefs.set(record.id, historyRef);
 
     const stat = fs.statSync(full);
 

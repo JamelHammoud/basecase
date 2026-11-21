@@ -19,6 +19,47 @@ function photo(): Mask {
 }
 
 describe('outline tracing', () => {
+  it('keeps contour winding, caps, scale and offset for a single occupied row', () => {
+    const mask = { width: 3, height: 3, data: new Uint8Array([0, 0, 0, 0, 255, 0, 0, 0, 0]) };
+
+    expect(traceOutline(mask, { mmPerPx: 2, n: 8, z0: -3 })).toEqual({
+      points: [
+        [1, -2],
+        [1, -3],
+        [0, -3],
+        [-1, -3],
+        [-1, -2],
+        [-1, -1],
+        [0, -1],
+        [1, -1],
+      ],
+      widthMm: 2,
+      heightMm: 2,
+      bandsMm: [0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+    });
+  });
+
+  it('groups occupied rows into width bands across gaps without changing the source', () => {
+    const data = new Uint8Array(12 * 30);
+
+    for (let row = 0; row < 11; row++) data.fill(2, row * 24 + 1, row * 24 + row + 2);
+
+    const before = data.slice();
+    const mask = { width: 12, height: 30, data };
+    const traced = traceOutline(mask, { mmPerPx: 0.5, n: 32 })!;
+
+    expect(traced.bandsMm).toEqual([0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5.5]);
+    expect(traced.widthMm).toBe(5.5);
+    expect(traced.heightMm).toBe(10.5);
+    expect(traced.points).toHaveLength(32);
+    expect(data).toEqual(before);
+
+    data.fill(0);
+
+    expect(traceOutline(mask, { mmPerPx: 0.5 })).toBeNull();
+    expect(traced.bandsMm).toEqual([0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5.5]);
+  });
+
   it('traces a round head from a region of the photo, in mm', () => {
     const head = cropMask(photo(), { x0: 0, y0: 0, x1: 1, y1: 0.35 });
     const traced = traceOutline(head, { mmPerPx: 0.5, n: 24, z0: 300 })!;

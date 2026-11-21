@@ -149,4 +149,53 @@ describe('mirrorAssembly', () => {
 
     expect(mirrorAssembly(scene, { ids: ['torso'], plane, newId: ids() }).joints).toEqual([]);
   });
+
+  it('keeps scene order and copied or stationary mate targets across edits', () => {
+    const plane: MirrorPlane = { axis: 0, offset: 0 };
+    const parts = [thigh, torso];
+    const before = structuredClone(parts);
+    const mirror = (selected: string[]) => mirrorAssembly({ parts }, { ids: selected, plane, newId: ids() });
+    const copied = mirror(['missing', 'torso', 'thigh', 'thigh']).copies;
+
+    expect(copied.map((p) => p.mirrorOf?.id)).toEqual(['thigh', 'torso']);
+    expect(copied[0].mates).toEqual([{ port: 'top', target: copied[1].id, targetPort: 'left_mount', type: 'face' }]);
+    expect(mirror(['thigh']).copies[0].mates?.[0].targetPort).toBe('right_mount');
+    expect(parts).toEqual(before);
+
+    parts[1] = { ...torso, position: [1000, 100, 0] };
+    expect(mirror(['thigh']).copies[0].mates).toBeUndefined();
+    parts.pop();
+    expect(mirror(['thigh']).copies[0].mates).toBeUndefined();
+    expect(mirror([]).copies).toEqual([]);
+  });
+
+  it('resolves duplicate mate targets to their first scene occurrence', () => {
+    const plane: MirrorPlane = { axis: 0, offset: 0 };
+    const duplicate = { ...torso, position: [1000, 100, 0] as V3 };
+    const mirror = (parts: ScenePart[]) => mirrorAssembly({ parts }, { ids: ['thigh'], plane, newId: ids() }).copies[0];
+
+    expect(mirror([thigh, torso, duplicate]).mates?.[0].targetPort).toBe('right_mount');
+    expect(mirror([thigh, duplicate, torso]).mates).toBeUndefined();
+  });
+
+  it.each([80, 160])('bounds unrelated part reads while mirroring %i mated parts', (count) => {
+    let reads = 0;
+    const unrelated = Array.from({ length: count }, (_, i) => ({
+      ...shin,
+      get id() {
+        reads++;
+
+        return `unrelated-${i}`;
+      },
+    }));
+    const selected = Array.from({ length: count }, (_, i) => ({ ...thigh, id: `source-${i}` }));
+    const { copies } = mirrorAssembly(
+      { parts: [...unrelated, ...selected, torso] },
+      { ids: selected.map((p) => p.id), plane: { axis: 0, offset: 0 }, newId: ids() },
+    );
+
+    expect(copies).toHaveLength(count);
+    expect(copies.every((p) => p.mates?.[0].targetPort === 'right_mount')).toBe(true);
+    expect(reads).toBeLessThanOrEqual(4 * count);
+  });
 });

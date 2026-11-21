@@ -28,11 +28,11 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 
 | Tool | What it does |
 |---|---|
-| `get_scene` | Lists the scene's parts, including sheet material and thickness, your marks, and each Case's console as you arranged it |
+| `get_scene` | Lists scene parts, sheet settings, marks, arranged Case consoles, shared parameters and dimension bindings |
 | `find_in_scene` | Finds parts by words, group, kind, region or nearness |
 | `get_part_code` | Reads a modeled part's code |
 | `add_parts` | Adds block-out shapes and real catalog parts |
-| `update_parts` | Moves, resizes, recolors, renames, regroups or re-notes parts, rounds or bevels their edges, and assigns flat parts a sheet material and stock thickness |
+| `update_parts` | Moves, resizes, recolors, renames, regroups or re-notes parts, rounds edges, assigns sheet stock, and edits shared dimensions |
 | `delete_parts` | Removes parts |
 | `mirror_parts` | Makes mirrored copies for left and right sides |
 | `find_parts` | Searches the catalog of real parts, with sizes, prices and how many you own |
@@ -84,8 +84,10 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `view_image` | Downloads up to 4 images to look at (web) |
 | `find_objects` | Searches NVIDIA SimReady objects (web) |
 | `insert_object` | Inserts a SimReady object (web) |
-| `add_sourced_item` | Adds a part from outside the catalog to the bill of materials (web) |
+| `add_sourced_item` | Adds a part from outside the catalog to the bill of materials, with optional supplier identity and ordering units (web) |
 | `import_maker_cad` | Imports a maker's STEP or IGES file (web) |
+
+For `add_sourced_item`, `supplierIdentity` keeps the supplier name, exact supplier part number, ordering unit, units per order and source URL. Manufacturer identity stays in `maker` and `mpn`. These facts feed [Export remaining purchases](/help/export-remaining-purchases).
 
 ## Joints and motion
 
@@ -95,10 +97,10 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `skeleton_from_motion` | Fits a skeleton to an attached BVH clip or public URL at a chosen height and path tolerance, places one catalog servo per joint and opens Edit Skeleton |
 | `set_interfaces` | Sets what each part designer must connect to |
 | `check_interfaces` | Checks a subassembly against those connections |
-| `define_joints` | Declares the robot's joints |
+| `define_joints` | Declares powered or passive robot joints and authored ideal tendon transmissions |
 | `synthesize_linkage` | Fits a four-bar linkage to a path, and can add it with a servo on its crank |
 | `find_joint_axes` | Finds the hinges in imported parts: each shaft or pin in a bore |
-| `get_rig` | Lists joints, poses and animations |
+| `get_rig` | Lists joints, authored tendon coefficients, poses and animations |
 | `pose` | Poses the robot without changing parts |
 | `animate` | Makes keyframes or a walking gait |
 | `retarget_motion` | Turns BVH motion capture into an animation |
@@ -110,7 +112,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 
 | Tool | What it does |
 |---|---|
-| `simulate` | Runs the scene in MuJoCo |
+| `simulate` | Runs the scene in MuJoCo and can save per-robot self-contact settings |
 | `fit_body` | Fits link masses, terminal payloads and floor friction from the latest Operate run, using the active servo fits. Keeps a body version only when held-out error falls by at least 25%, otherwise reports Can’t tell |
 | `set_world` | Places objects that exist only in the simulation |
 | `start_drive` | Drives the robot in the simulation |
@@ -122,7 +124,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `run_case` | Runs a Case 20 times and reports how often it passed, why it failed, and each failing seed's number and first failure frame |
 | `read_try` | Reads one try from its recording: its signals over a time window, when each failure first tripped, a picture of the canvas at one moment, and its whole-run scan map's bounds and point count |
 | `compare_case` | Runs a Case on this robot and another open tab's, and says which passes more often |
-| `study_design` | Compares combinations of servos, voltage, batteries, foot sizes and model dimensions, with Case runs when a Case is open |
+| `study_design` | Compares mechanism settings or camera poses and lenses. Camera comparisons measure target visibility over a saved try without rerunning the Case |
 | `search_tries` | Searches the tries from every scene with the same words and facts as the Library's search, or by motion |
 | `label_tries` | Reads tries' filmstrips, segments and quality flags, and writes an instruction for each try and segment, and tags |
 | `make_dataset` | Gathers tries from any scene into a dataset, by search or by id, and opens it |

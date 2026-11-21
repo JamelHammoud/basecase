@@ -4,11 +4,7 @@ import type { WiringScene } from '../../wiring/netlist';
 import type { ShowToast } from '../../workspace/types';
 import { bomWiring, sameWiringScene, wiringForScene } from './bomWiring';
 
-export function useBomWiring(
-  scene: WiringScene,
-  viewportRef: RefObject<Viewport3DHandle | null>,
-  onToast: ShowToast,
-) {
+export function useBomWiring(scene: WiringScene, viewportRef: RefObject<Viewport3DHandle | null>, onToast: ShowToast) {
   const [source] = useState(bomWiring);
   const result = useSyncExternalStore(source.subscribe, source.snapshot);
   const { parts, project } = scene;
@@ -18,15 +14,16 @@ export function useBomWiring(
 
   useEffect(
     () =>
-      source.load({ parts, project }, async (input) => {
+      source.load({ parts, project }, async (input, signal) => {
         const viewport = viewportRef.current;
 
         if (!viewport) throw new Error('Open the scene to measure cable routes.');
 
-        return viewport.wiring(input);
+        return viewport.wiring(input, signal);
       }),
     [source, parts, project, viewportRef],
   );
+  useEffect(() => () => source.dispose(), [source]);
   useEffect(() => {
     reportError();
   }, [result]);

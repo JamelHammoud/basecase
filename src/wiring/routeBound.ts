@@ -1,8 +1,9 @@
-import { MathUtils, Vector3 } from 'three';
+import { MathUtils } from 'three';
 import type { PortVec } from '../types/ports';
 import type { RobotJoint } from '../types/robotics';
 import type { RelativeBound } from './routeCollision';
 import type { RouteMotion } from './routeMotion';
+import { distance } from './routeMeasure';
 
 interface BoundJoint {
   origin: PortVec;
@@ -22,7 +23,6 @@ interface BoundPair {
   obstacle: BoundLink[];
 }
 
-const distance = (a: PortVec, b: PortVec) => new Vector3(...a).distanceTo(new Vector3(...b));
 const sine = (half: number) => Math.sin(Math.min(Math.PI, MathUtils.degToRad(half)) / 2);
 
 function boundJoint(joint: RobotJoint, motion: RouteMotion): BoundJoint {

@@ -23,14 +23,22 @@ export function overlap(a: Bounds | null, b: Bounds | null): Bounds | null {
 }
 
 export function merged(boxes: Array<Bounds | null>): Bounds | null {
-  const present = boxes.filter((b): b is Bounds => b !== null);
+  const min: V3 = [Infinity, Infinity, Infinity];
+  const max: V3 = [-Infinity, -Infinity, -Infinity];
+  let present = false;
 
-  if (!present.length) return null;
+  for (const box of boxes) {
+    if (!box) continue;
 
-  return {
-    min: [0, 1, 2].map((k) => Math.min(...present.map((b) => b.min[k]))) as V3,
-    max: [0, 1, 2].map((k) => Math.max(...present.map((b) => b.max[k]))) as V3,
-  };
+    present = true;
+
+    for (let k = 0; k < 3; k++) {
+      min[k] = Math.min(min[k], box.min[k]);
+      max[k] = Math.max(max[k], box.max[k]);
+    }
+  }
+
+  return present ? { min, max } : null;
 }
 
 export function fieldSolid(api: ManifoldApi, test: PointTest, bounds: Bounds | null, edge: number): Solid | null {

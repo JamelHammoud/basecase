@@ -5,7 +5,9 @@ const canonical = (id) =>
     .replace(/\./g, '-')
     .trim();
 
-const isConcreteId = (arg) => /^claude-/i.test(arg);
+const isConcreteId = (arg) => /^(claude-|gpt-|o\d)/i.test(arg);
+
+export const sameServedModel = (a, b) => canonical(a) === canonical(b);
 
 function familyMatch(arg, available) {
   const words = canonical(arg).split(/[^a-z0-9]+/);
@@ -58,7 +60,11 @@ export function runModelProblem(run, resolved) {
   if (!run.servedBy)
     return `No answering model was reported for ${resolved.arg}. The provider may have refused the prompt.`;
 
-  return servedMismatch(resolved, run.servedBy);
+  return (
+    servedMismatch(resolved, run.servedBy) ||
+    run.served?.map((row) => servedMismatch(resolved, row.model)).find(Boolean) ||
+    null
+  );
 }
 
 export function sharedEffort(models, wanted) {

@@ -1,3 +1,4 @@
+import type { AssignmentContext } from '../classroom/envelope';
 import type { EarthOrigin } from '../earth/earthOrigin';
 import type { CalibrationHistory } from '../reality/history';
 import type { BodyHistory } from '../reality/bodyTypes';
@@ -23,6 +24,7 @@ export interface LeaderLink {
 }
 
 export interface ProjectRecords {
+  assignment?: AssignmentContext;
   buildGuide?: BuildGuideRecord;
   leads?: LeaderLink;
   skeleton?: RobotSkeleton;

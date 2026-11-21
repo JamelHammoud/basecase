@@ -1,4 +1,5 @@
 import React from 'react';
+import { FleetLauncher } from '../../fleet/FleetLauncher';
 import { canRunBench } from '../../robot/benchRun';
 import { connectedFrom, useCalibrationPhase } from '../../robot/calibrationSession';
 import { jointRows } from '../../robot/jointRows';
@@ -61,6 +62,7 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-[8px] pb-3" data-testid="operate-panel">
+      <FleetLauncher />
       <FleetRows />
       {onAddRobotComputer && (
         <Button variant="ghost" fullWidth onClick={onAddRobotComputer}>

@@ -11,6 +11,7 @@ import {
   findOpenIssue,
   hasLabel,
   openIssues,
+  openPulls,
   ownerComments,
   setIssueBody,
 } from '../lib/github.mjs';
@@ -22,6 +23,9 @@ import { run } from '../lib/sh.mjs';
 import { worstSection } from '../lib/stats.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 import { applyPlan } from '../lib/leadPlan.mjs';
+import { availableCapabilities, eligibleTask, REQUIREMENTS } from '../lib/capabilities.mjs';
+import { inputsReady } from '../lib/taskReadiness.mjs';
+import { waitsOn } from '../lib/dependsOn.mjs';
 
 export const schedule = {
   agent: true,
@@ -45,8 +49,19 @@ const step = {
     body: { type: 'string', description: 'What to build and why, what exists already, and acceptance checks' },
     request: { type: ['integer', 'null'], description: "The number of Jamel's request it serves, or null" },
     promotes: { type: ['integer', 'null'], description: 'The number of the loop:idea issue it promotes, or null' },
+    requires: {
+      type: 'array',
+      items: { type: 'string', enum: REQUIREMENTS },
+      description: 'Only capabilities required to implement and verify this step, not platforms the product supports',
+    },
+    inputs: {
+      type: 'array',
+      items: { type: 'string' },
+      description:
+        'Repository files or area folders whose changes could make this step buildable, written as relative paths',
+    },
   },
-  required: ['title', 'arc', 'kind', 'body', 'request', 'promotes'],
+  required: ['title', 'arc', 'kind', 'body', 'request', 'promotes', 'requires', 'inputs'],
 };
 
 const SCHEMA = {
@@ -134,18 +149,29 @@ const writeState = (state) => {
 function gather() {
   const mine = openIssues().filter((issue) => issue.author?.login === OWNER_LOGIN);
   const direction = mine.find((issue) => hasLabel(issue, 'loop:direction'));
+  const steps = mine.filter(
+    (issue) => hasLabel(issue, 'loop:next') || hasLabel(issue, 'loop:building') || hasLabel(issue, 'loop:blocked'),
+  );
+  const openNumbers = new Set(openPulls().map((pull) => pull.number));
+  const now = Date.now();
 
   return {
     requests: mine.filter((issue) => !isLoopLabeled(issue)),
     tracked: mine.filter((issue) => hasLabel(issue, 'loop:request')),
     arcs: mine.filter((issue) => hasLabel(issue, 'loop:arc')),
     ideas: mine.filter((issue) => hasLabel(issue, 'loop:idea')),
-    steps: mine.filter((issue) => hasLabel(issue, 'loop:next') || hasLabel(issue, 'loop:building')),
-    waiting: mine.filter((issue) => hasLabel(issue, 'loop:next')).length,
+    steps,
+    waiting: steps.filter(
+      (issue) =>
+        hasLabel(issue, 'loop:next') &&
+        eligibleTask(issue) &&
+        !waitsOn(issue, steps) &&
+        inputsReady(issue, { now, openNumbers }),
+    ).length,
     stepSet: mine
       .filter((issue) => hasLabel(issue, 'loop:next') || hasLabel(issue, 'loop:building'))
-      .map((issue) => issue.number)
-      .sort((a, b) => a - b)
+      .map((issue) => `${issue.number}:${issue.updatedAt}`)
+      .sort()
       .join(','),
     direction,
     comments: direction ? ownerComments(direction.number, OWNER_LOGIN) : [],
@@ -227,6 +253,7 @@ export function leadPrompt(world, { merged, copyLine, worst, conflicts = [] }) {
   const direction = [world.direction?.body, ...world.comments.map((c) => c.body)].filter(Boolean).join('\n\n---\n\n');
 
   return [
+    `## Available execution capabilities\n${availableCapabilities().join(', ')}\nEvery step declares requires. Windows CI can verify published pull request changes. It has no prepublication diagnostic inputs for controlled baseline and candidate runs or Windows process traces. Such work requires windows-diagnostics, which is unavailable unless listed. There is no interactive Windows host, physical robot, printer, iOS device, or CUDA GPU unless listed. Propose only work that can be fully implemented and verified using available capabilities. Keep unsupported work out of the executable queue.`,
     `## Direction from Jamel (newest last)\n\n${direction || 'None yet.'}`,
     listing("New requests from Jamel: plan these first, every one, citing the request's number", world.requests),
     listing("Jamel's requests already in progress", world.tracked),

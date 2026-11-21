@@ -5,7 +5,6 @@ import { sameMachine } from '../../print/fleet';
 import type { Plate } from '../../print/plan';
 import type { PrintToolsStatus, SavedPrinter } from '../../print/printBridge';
 import { labelsOn } from '../../print/labels/partLetters';
-import { plateStatus } from '../../print/tracker';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 import type { Printing } from '../../workspace/usePrinting';
@@ -13,6 +12,7 @@ import { plural } from '../../../electron/plural.mjs';
 import { duration } from '../../utils/duration';
 import { weight } from '../../utils/weight';
 import { plateNumbers, plateStateText } from './plateFacts';
+import { FitVariants } from './FitVariants';
 import { MergeSection } from './MergeSection';
 import { PrintedSection } from './PrintedSection';
 import { PrinterFleet, type PlateSend } from './PrinterFleet';
@@ -117,7 +117,7 @@ const SliceNotes: React.FC<{ printing: Printing; warnings: string[] }> = ({ prin
 );
 
 const PlateMarks: React.FC<{ printing: Printing; plate: Plate }> = ({ printing, plate }) => {
-  const state = plateStatus(plate, printing.records).state;
+  const state = printing.plateStatus(plate).state;
   const active = state === 'printing' || state === 'sent';
 
   return (
@@ -166,7 +166,7 @@ const PlateDetail: React.FC<PlateHandlers & { printing: Printing; plate: Plate; 
 }) => {
   const sliced = printing.freshSlice(plate);
   const { hours, grams, exact } = plateNumbers(plate, sliced);
-  const status = plateStatus(plate, printing.records);
+  const status = printing.plateStatus(plate);
 
   return (
     <Section title={`Plate ${plate.number}`}>
@@ -191,7 +191,7 @@ const PlateDetail: React.FC<PlateHandlers & { printing: Printing; plate: Plate; 
         onSend={onSend}
         onAddPrinter={onAddPrinter}
       />
-      {!printing.fitTest && <PlateMarks printing={printing} plate={plate} />}
+      {!printing.temporaryPrint && <PlateMarks printing={printing} plate={plate} />}
     </Section>
   );
 };
@@ -291,7 +291,7 @@ const PrintHeader: React.FC<{ printing: Printing; onDone: () => void }> = ({ pri
     title={printing.fitTest ? 'Print Fit Test' : 'Print'}
     onDone={onDone}
     actions={
-      !printing.fitTest &&
+      !printing.temporaryPrint &&
       printing.canFitTest && (
         <Button
           variant="secondary"
@@ -306,12 +306,18 @@ const PrintHeader: React.FC<{ printing: Printing; onDone: () => void }> = ({ pri
   />
 );
 
+function selectedPrintPart(printing: Printing, parts: ScenePart[]) {
+  return printing.temporaryPrint
+    ? undefined
+    : (printing.repairPart ?? parts.find((p) => p.id === printing.mode?.selected));
+}
+
 export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
   const { printing, parts, onDone } = props;
   const { ref, style } = useScrollFade();
   const plates = printing.report?.plan.plates ?? [];
   const plate = plates.find((p) => p.number === printing.mode?.plate) ?? plates[0];
-  const selected = printing.repairPart ?? parts.find((p) => p.id === printing.mode?.selected);
+  const selected = selectedPrintPart(printing, parts);
   const sending = usePlateSend(printing);
 
   return (
@@ -327,14 +333,14 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
             onAddPrinter={props.onAddPrinter}
             onChooseService={() => void printing.service.choose()}
           />
-          {!printing.fitTest && (
+          {!printing.temporaryPrint && (
             <SwitchRow
               label="Label parts"
               checked={labelsOn(props.project)}
               onChange={(labelParts) => props.onChangeProject({ labelParts })}
             />
           )}
-          {printing.printedCount > 0 && !printing.fitTest && !printing.repairId && (
+          {printing.printedCount > 0 && !printing.temporaryPrint && !printing.repairId && (
             <SwitchRow
               label={`Skip ${plural(printing.printedCount, 'printed part')}`}
               checked={printing.skipPrinted}
@@ -344,12 +350,13 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
           <PrinterLive printing={printing} />
           <PrinterFleet printing={printing} onStartNext={sending.setConfirming} />
         </Section>
+        {printing.fitTest && <FitVariants printing={printing} parts={parts} project={props.project} />}
         {selected && (
           <PartControls
             printing={printing}
             part={selected}
             plates={plates}
-            labels={!printing.fitTest && labelsOn(props.project)}
+            labels={!printing.temporaryPrint && labelsOn(props.project)}
           />
         )}
         {plate && (
@@ -365,7 +372,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
         <PrintedSection
           report={printing.report}
           project={props.project}
-          notes={printing.fitTest ? {} : printing.plates.notes}
+          notes={printing.temporaryPrint ? {} : printing.plates.notes}
           onSelectParts={([id]) => id && showPart(printing, id)}
         />
       </div>

@@ -28,6 +28,8 @@ covers:
 
 You can save a part or a group of parts to the Library, then add it to any scene later.
 
+Unbind [shared dimensions](/help/link-dimensions-with-shared-parameters) before saving. Library models can’t keep references to declarations in another scene.
+
 1. Select the parts you want to keep.
 2. Click **Library** in the view rail on the left.
 3. Click **+** at the top right of the Library.
@@ -36,6 +38,10 @@ You can save a part or a group of parts to the Library, then add it to any scene
 ![The New Model menu open at the top right of the Library](/help/save-a-model-to-the-library/new-model-menu.png)
 
 When you save one part, the model gets that part's name and its **Notes**. When you save several parts, the model gets the scene's name. To save every visible part in the scene instead, choose **Save Whole Scene**.
+
+Saving a complete passive assembly also keeps its joints, limits and springs for reuse as a Case fixture. See [Reuse an assembly in Cases](/help/reuse-an-assembly-in-cases).
+
+For an [ideal tendon](/help/drive-joints-with-an-ideal-tendon), select the complete motor and output assembly. Saving only a spool, motor or output part is refused so the coupling stays intact.
 
 Saving several parts also keeps an image of the view when you save. You can keep working while Basecase prepares that image.
 

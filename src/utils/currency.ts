@@ -42,7 +42,7 @@ export function createMoney(code: string = DEFAULT_CURRENCY, rates: ExchangeRate
   const known = isCurrency(code) && rates.perUsd[code] ? code : DEFAULT_CURRENCY;
   const rate = rates.perUsd[known] ?? 1;
   const exact = new Intl.NumberFormat('en-US', { style: 'currency', currency: known });
-  const rounded = new Intl.NumberFormat('en-US', { style: 'currency', currency: known, maximumFractionDigits: 0 });
+  let rounded: Intl.NumberFormat | undefined;
   const digits = exact.resolvedOptions().maximumFractionDigits ?? 2;
   const fromUsd = (usd: number) => usd * rate;
   const amountOf = (usd: number, entered?: EnteredPrice) =>
@@ -59,7 +59,11 @@ export function createMoney(code: string = DEFAULT_CURRENCY, rates: ExchangeRate
     toUsd: (amount) => amount / rate,
     amountOf,
     format: (usd, entered) => exact.format(amountOf(usd, entered)),
-    whole: (usd, entered) => rounded.format(amountOf(usd, entered)),
+    whole: (usd, entered) => {
+      rounded ??= new Intl.NumberFormat('en-US', { style: 'currency', currency: known, maximumFractionDigits: 0 });
+
+      return rounded.format(amountOf(usd, entered));
+    },
     formatAmount: (amount) => exact.format(amount),
     plain: (usd, entered) => amountOf(usd, entered).toFixed(digits),
     enter: (amount) =>

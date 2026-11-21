@@ -65,8 +65,8 @@ GR00T works out its own `stats.json` from these.
 
 | Column | What it holds |
 |---|---|
-| `observation.state` | Each joint's position, in radians, or meters for a sliding joint |
-| `action` | Each joint's command at the same frame: the position target, or the speed for a wheel |
+| `observation.state` | Each powered joint's position, in radians, or meters for a sliding joint |
+| `action` | Each powered joint's command at the same frame: the position target, or the speed for a wheel |
 | `timestamp` | Seconds since the episode began |
 | `frame_index`, `episode_index`, `index` | The frame within its episode, the episode, and the frame across the whole dataset |
 | `next.reward` | 1 on the last frame, 0 before it |
@@ -78,7 +78,7 @@ GR00T works out its own `stats.json` from these.
 
 The two segment columns are there only when a try has segments. See [Label a try](/help/label-a-try).
 
-Frames are 25 a second: every second frame of the try's 50 Hz recording. Joints are in the same order and carry the same names as in the robot package's `urdf/robot.urdf` and `joint_map.json`.
+Frames are 25 a second: every second frame of the try's 50 Hz recording. Powered joints are in the same order and carry the same names as in the robot package's `urdf/robot.urdf` and `joint_map.json`.
 
 ## Cameras
 

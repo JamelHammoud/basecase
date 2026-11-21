@@ -184,7 +184,9 @@ interface FaceBucket {
 function faceBuckets(tris: Float32Array) {
   const buckets = new Map<string, FaceBucket>();
   const [a, b, c, n, ab] = [0, 0, 0, 0, 0].map(() => new THREE.Vector3());
+  const areas = new Float32Array(tris.length / 9);
   let total = 0;
+  let wallTotal = 0;
 
   for (let i = 0; i < tris.length; i += 9) {
     a.fromArray(tris, i);
@@ -194,43 +196,54 @@ function faceBuckets(tris: Float32Array) {
 
     const area2 = n.length();
 
+    areas[i / 9] = area2 / 2;
+    wallTotal += areas[i / 9];
+
     if (area2 < 1e-9) continue;
 
     n.divideScalar(area2);
     total += area2 / 2;
 
     const key = `${Math.round(n.x * 40)},${Math.round(n.y * 40)},${Math.round(n.z * 40)}`;
-    const bucket = buckets.get(key) ?? { normal: new THREE.Vector3(), area: 0, offset: 0 };
+    let bucket = buckets.get(key);
+
+    if (!bucket) {
+      bucket = { normal: new THREE.Vector3(), area: 0, offset: 0 };
+      buckets.set(key, bucket);
+    }
 
     bucket.normal.addScaledVector(n, area2 / 2);
     bucket.offset += a.dot(n) * (area2 / 2);
     bucket.area += area2 / 2;
-    buckets.set(key, bucket);
   }
 
-  return { buckets: [...buckets.values()], total };
+  return { buckets: [...buckets.values()], total, walls: { areas, total: wallTotal } };
 }
 
-function restsOn(tris: Float32Array, bucket: FaceBucket): boolean {
-  const n = bucket.normal.clone().normalize();
-  let extreme = -Infinity;
+function restsOn(tris: Float32Array, bucket: FaceBucket, n: THREE.Vector3): boolean {
+  const plane = bucket.offset / bucket.area;
 
-  for (let i = 0; i < tris.length; i += 3)
-    extreme = Math.max(extreme, tris[i] * n.x + tris[i + 1] * n.y + tris[i + 2] * n.z);
+  for (let i = 0; i < tris.length; i += 3) {
+    const projection = tris[i] * n.x + tris[i + 1] * n.y + tris[i + 2] * n.z;
+    const gap = projection - plane;
 
-  return extreme - bucket.offset / bucket.area < 0.3;
+    if (gap >= 0.3 || Number.isNaN(gap)) return false;
+  }
+
+  return true;
 }
 
-function faceDowns(tris: Float32Array): Vec3[] {
-  const { buckets, total } = faceBuckets(tris);
+function faceDowns(tris: Float32Array, { buckets, total }: ReturnType<typeof faceBuckets>): Vec3[] {
   const out: THREE.Vector3[] = Object.values(AXES).map((v) => new THREE.Vector3(...v));
   const big = buckets.filter((b) => b.area >= total * FACE_SHARE).sort((x, y) => y.area - x.area);
   const found: Vec3[] = [];
 
   for (const bucket of big) {
+    if (found.length >= MAX_FACES) break;
+
     const n = bucket.normal.clone().normalize();
 
-    if (found.length >= MAX_FACES || out.some((o) => o.dot(n) > SAME_DIR) || !restsOn(tris, bucket)) continue;
+    if (out.some((o) => o.dot(n) > SAME_DIR) || !restsOn(tris, bucket, n)) continue;
 
     out.push(n);
     found.push(n.toArray().map((x) => Math.round(x * 1e6) / 1e6) as Vec3);
@@ -242,45 +255,41 @@ function faceDowns(tris: Float32Array): Vec3[] {
 const R2_U = 0.7548776662;
 const R2_V = 0.569840291;
 
-function triangleSample(i: number): [number, number] {
+interface WallTriangle {
+  a: THREE.Vector3;
+  n: THREE.Vector3;
+  edgeB: THREE.Vector3;
+  edgeC: THREE.Vector3;
+}
+
+function wallSample(origin: THREE.Vector3, triangle: WallTriangle, i: number) {
   const u = (1 / 3 + i * R2_U) % 1;
   const v = (1 / 3 + i * R2_V) % 1;
+  const reflected = u + v > 1;
 
-  return u + v > 1 ? [1 - u, 1 - v] : [u, v];
+  origin
+    .copy(triangle.a)
+    .addScaledVector(triangle.edgeB, reflected ? 1 - u : u)
+    .addScaledVector(triangle.edgeC, reflected ? 1 - v : v)
+    .addScaledVector(triangle.n, -1e-3);
 }
 
 const MIN_WALL_RAYS = 4000;
 const MAX_WALL_RAYS = 20000;
 const WALL_RAY_MM2 = 4;
 
-function triangleAreas(tris: Float32Array) {
-  const areas = new Float32Array(tris.length / 9);
-  const [a, b, c, n, ab] = [0, 0, 0, 0, 0].map(() => new THREE.Vector3());
-  let total = 0;
-
-  for (let t = 0; t < areas.length; t++) {
-    a.fromArray(tris, t * 9);
-    b.fromArray(tris, t * 9 + 3);
-    c.fromArray(tris, t * 9 + 6);
-    areas[t] = n.subVectors(b, a).cross(ab.subVectors(c, a)).length() / 2;
-    total += areas[t];
-  }
-
-  return { areas, total };
-}
-
-function wallThickness(tris: Float32Array, bvh: MeshBVH) {
+function wallThickness(tris: Float32Array, bvh: MeshBVH, { areas, total }: ReturnType<typeof faceBuckets>['walls']) {
   const count = tris.length / 9;
 
   if (!count) return { min: Infinity, thinShare: 0, thinAreaMm2: 0 };
 
-  const { areas, total } = triangleAreas(tris);
   const [a, n] = [new THREE.Vector3(), new THREE.Vector3()];
 
   const step = total / Math.min(MAX_WALL_RAYS, Math.max(MIN_WALL_RAYS, total / WALL_RAY_MM2));
   const ray = new THREE.Ray();
   const edgeB = new THREE.Vector3();
   const edgeC = new THREE.Vector3();
+  const triangle = { a, n, edgeB, edgeC };
   let min = Infinity;
   let thinArea = 0;
   let acc = step / 2;
@@ -306,9 +315,7 @@ function wallThickness(tris: Float32Array, bvh: MeshBVH) {
     const rays = Math.round(weight / step);
 
     for (let i = 0; i < rays; i++) {
-      const [u, v] = triangleSample(i);
-
-      ray.origin.copy(a).addScaledVector(edgeB, u).addScaledVector(edgeC, v).addScaledVector(n, -1e-3);
+      wallSample(ray.origin, triangle, i);
 
       const hit = bvh.raycastFirst(ray, THREE.DoubleSide);
 
@@ -333,16 +340,17 @@ export function bvhOf(tris: Float32Array): MeshBVH {
 export function checkPrintability(tris: Float32Array, bvh: MeshBVH = bvhOf(tris)): PrintShape | null {
   if (tris.length < 9) return null;
 
+  const faces = faceBuckets(tris);
   const candidates: { down: Vec3; axis?: BuildAxis }[] = [
     ...(Object.keys(AXES) as BuildAxis[]).map((axis) => ({ down: AXES[axis], axis })),
-    ...faceDowns(tris).map((down) => ({ down })),
+    ...faceDowns(tris, faces).map((down) => ({ down })),
   ];
   const costs = orientationCosts(
     tris,
     bvh,
     candidates.map(({ down }) => down),
   );
-  const walls = wallThickness(tris, bvh);
+  const walls = wallThickness(tris, bvh, faces.walls);
 
   return {
     poses: candidates.map(({ down, axis }, index) => poseFor(tris, down, costs[index], axis)),

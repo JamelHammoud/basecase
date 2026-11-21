@@ -36,6 +36,7 @@ export async function planGuide(job: PlanGuideJob) {
     return buildGuidePlan(
       {
         title: job.title,
+        boardPartId: job.project.electronicsBoard?.partId,
         parts: job.parts,
         joints: job.project.joints ?? [],
         ...measured,

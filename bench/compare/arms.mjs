@@ -1,3 +1,4 @@
+import { providerOf } from './provider.mjs';
 import { cachedRuns } from './cache.mjs';
 import { harnessPair } from './against.mjs';
 
@@ -5,7 +6,7 @@ export const TREE_LABEL = 'working tree';
 
 export const DEFAULT_MODEL = 'claude-opus-5-5';
 
-export const servedFor = (arg) => (/^claude-/i.test(arg) ? arg : null);
+export const servedFor = (arg) => (/^(claude-|gpt-|o\d)/i.test(arg) ? arg : null);
 
 export const modelArms = ({ labels, harness, source, git }) =>
   labels.map((label) => ({ label, model: label, harness, source, git, cache: true }));
@@ -22,7 +23,12 @@ export function againstArms({ model, tree, ref, gitOf }) {
 export function armCache(index, arm, { effort, useCache }) {
   if (!useCache || !arm.cache) return new Map();
 
-  return cachedRuns(index, { harness: arm.harness, effort, served: servedFor(arm.model) });
+  return cachedRuns(index, {
+    harness: arm.harness,
+    effort,
+    served: servedFor(arm.model),
+    provider: arm.provider ?? providerOf(arm.model),
+  });
 }
 
 export const dirOf = (label) => label.replace(/[^\w.-]+/g, '-');

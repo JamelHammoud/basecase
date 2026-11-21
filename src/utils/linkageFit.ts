@@ -35,6 +35,10 @@ export function decode(x: Float64Array, n: number, direction: 1 | -1): FitLinkag
 
   for (let i = 1; i < n; i++) thetas.push(thetas[i - 1] + direction * (MIN_STEP + Math.exp(x[9 + i])));
 
+  return { ...decodeShape(x), thetas };
+}
+
+function decodeShape(x: Float64Array): Omit<FitLinkage, 'thetas'> {
   return {
     origin: [x[0], x[1]],
     angle: x[2],
@@ -43,7 +47,6 @@ export function decode(x: Float64Array, n: number, direction: 1 | -1): FitLinkag
     coupler: Math.exp(x[5]),
     rocker: Math.exp(x[6]),
     point: [x[7], x[8]],
-    thetas,
   };
 }
 
@@ -78,51 +81,64 @@ function clampedClosure(l: FourBar, theta: number): { p: Vec2; miss: number } {
   return { p: couplerOffset(b, c, l.point, l.coupler), miss };
 }
 
-function boundResiduals(l: FitLinkage, { minLink, maxLink }: FitBounds): number[] {
-  const others = [l.ground, l.coupler, l.rocker];
-  const longest = Math.max(...others);
-  const rest = others.reduce((s, v) => s + v, 0) - longest;
-  const links = [l.ground, l.crank, l.coupler, l.rocker];
+const linkResidual = (v: number, { minLink, maxLink }: FitBounds) => PENALTY * (over(minLink - v) + over(v - maxLink));
 
-  return [
-    PENALTY * over(l.crank * (1 + GRASHOF_MARGIN) - Math.min(...others)),
-    PENALTY * over(l.crank + longest - rest + GRASHOF_MARGIN * l.crank),
-    ...links.map((v) => PENALTY * (over(minLink - v) + over(v - maxLink))),
-    PENALTY * over(Math.hypot(l.point[0], l.point[1]) - maxLink),
-  ];
+function boundResiduals(out: number[], l: FourBar, bounds: FitBounds): void {
+  const longest = Math.max(l.ground, l.coupler, l.rocker);
+  const rest = l.ground + l.coupler + l.rocker - longest;
+  const at = out.length - 7;
+
+  out[at] = PENALTY * over(l.crank * (1 + GRASHOF_MARGIN) - Math.min(l.ground, l.coupler, l.rocker));
+  out[at + 1] = PENALTY * over(l.crank + longest - rest + GRASHOF_MARGIN * l.crank);
+  out[at + 2] = linkResidual(l.ground, bounds);
+  out[at + 3] = linkResidual(l.crank, bounds);
+  out[at + 4] = linkResidual(l.coupler, bounds);
+  out[at + 5] = linkResidual(l.rocker, bounds);
+  out[at + 6] = PENALTY * over(Math.hypot(l.point[0], l.point[1]) - bounds.maxLink);
 }
 
-export function residuals(x: Float64Array, problem: FitProblem): number[] {
+export function residuals(x: Float64Array, problem: FitProblem, out: number[] = []): number[] {
   const { targets, direction, bounds } = problem;
-  const l = decode(x, targets.length, direction);
+  const l = decodeShape(x);
   const cos = Math.cos(l.angle);
   const sin = Math.sin(l.angle);
-  const out: number[] = [];
   let miss = 0;
+  let theta = x[9];
 
-  targets.forEach((t, i) => {
-    const { p, miss: m } = clampedClosure(l, l.thetas[i]);
+  out.length = targets.length * 2 + 9;
 
-    out.push(l.origin[0] + p[0] * cos - p[1] * sin - t[0], l.origin[1] + p[0] * sin + p[1] * cos - t[1]);
+  for (let i = 0; i < targets.length; i++) {
+    if (i > 0) theta += direction * (MIN_STEP + Math.exp(x[9 + i]));
+
+    const t = targets[i];
+    const { p, miss: m } = clampedClosure(l, theta);
+
+    out[i * 2] = l.origin[0] + p[0] * cos - p[1] * sin - t[0];
+    out[i * 2 + 1] = l.origin[1] + p[0] * sin + p[1] * cos - t[1];
     miss += m;
-  });
+  }
 
-  const sweep = Math.abs(l.thetas[l.thetas.length - 1] - l.thetas[0]);
+  const sweep = Math.abs(theta - x[9]);
 
-  return [...out, PENALTY * miss, PENALTY * over(sweep - MAX_SWEEP), ...boundResiduals(l, bounds)];
+  out[targets.length * 2] = PENALTY * miss;
+  out[targets.length * 2 + 1] = PENALTY * over(sweep - MAX_SWEEP);
+  boundResiduals(out, l, bounds);
+
+  return out;
 }
 
 const sumSquares = (r: number[]) => r.reduce((s, v) => s + v * v, 0);
 
 function jacobian(x: Float64Array, r0: number[], problem: FitProblem): Float64Array[] {
   const columns: Float64Array[] = [];
+  const workspace: number[] = [];
 
   for (let k = 0; k < x.length; k++) {
     const saved = x[k];
 
     x[k] = saved + STEP_H;
 
-    const r = residuals(x, problem);
+    const r = residuals(x, problem, workspace);
 
     x[k] = saved;
     columns.push(Float64Array.from(r, (v, i) => (v - r0[i]) / STEP_H));
@@ -165,14 +181,13 @@ export function levenbergMarquardt(
 ): { x: Float64Array; cost: number } {
   const first = residuals(start, problem);
   let state: Trial = { x: Float64Array.from(start), r: first, cost: sumSquares(first) };
-  let columns = jacobian(state.x, state.r, problem);
   let normal: ReturnType<typeof prepareNormalStep> | null = null;
   let lambda = 1e-3;
 
   for (let iteration = 0; iteration < MAX_ITERATIONS && state.cost > TOLERANCE && lambda < 1e10; iteration++) {
     if (budget && iteration === budget.checkAt && state.cost > budget.worstCost) break;
 
-    normal ??= prepareNormalStep(columns, state.r);
+    normal ??= prepareNormalStep(jacobian(state.x, state.r, problem), state.r);
 
     const trial = trialStep(state, lambda, problem, normal);
 
@@ -185,7 +200,6 @@ export function levenbergMarquardt(
     const gain = (state.cost - trial.cost) / state.cost;
 
     state = trial;
-    columns = jacobian(state.x, state.r, problem);
     normal = null;
     lambda = Math.max(lambda / 3, 1e-9);
 

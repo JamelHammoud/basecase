@@ -10,7 +10,7 @@ export interface PrelabelFrameInput {
   result: VisionResult;
 }
 
-function detectionPixels(detection: VisionDetection, width: number, height: number): Uint8Array {
+export function detectionPixels(detection: VisionDetection, width: number, height: number): Uint8Array {
   if (!detection.mask) {
     const [x, y, w, h] = detection.box;
 

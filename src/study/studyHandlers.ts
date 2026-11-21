@@ -1,5 +1,5 @@
 import { supplyVolts } from '../cases/exploreDesigns';
-import { buildMjcf } from '../sim/mjcf';
+import { preparedCalibratedModel } from '../sim/calibratedModel';
 import { runEngineering } from '../utils/engineering';
 import { buildRig } from '../utils/kinematicsRig';
 import { reply } from '../utils/workerRpc';
@@ -13,25 +13,36 @@ export function createStudyHandlers() {
   const grader = createStudyGrader();
 
   return {
-    hold: ({ packet, options }: { packet: StudyPacket; options?: StudyHoldOptions }) => {
+    hold: async ({ packet, options }: { packet: StudyPacket; options?: StudyHoldOptions }) => {
       if (typeof document !== 'undefined') throw new Error('Study simulation measurements need a worker.');
 
       const scene = reader.read(packet);
       const { joints, massG } = runEngineering({ ...scene, servoOutputs: scene.servoOutputs ?? {} });
-      const model = buildMjcf({
-        parts: scene.parts,
-        rig: buildRig(scene.project.joints ?? [], scene.parts),
-        project: scene.project,
-        ...options,
-        measures: scene.measures,
-        servoVolts: supplyVolts(scene.parts, scene.project),
-        partTriangles: (id) => scene.triangles[id] ?? null,
-      });
+      const model = await preparedCalibratedModel(
+        {
+          parts: scene.parts,
+          rig: buildRig(scene.project.joints ?? [], scene.parts),
+          project: scene.project,
+          ...options,
+          measures: scene.measures,
+          servoVolts: supplyVolts(scene.parts, scene.project),
+          partTriangles: (id) => scene.triangles[id] ?? null,
+        },
+        undefined,
+      );
 
       return reply({ report: { joints, massG }, model });
     },
-    refresh: async ({ packet, changed }: { packet: StudyPacket; changed: string[] }) => {
-      const scene = await refreshStudyGeometry(reader.read(packet), changed);
+    refresh: async ({
+      packet,
+      changed,
+      triangleLimit,
+    }: {
+      packet: StudyPacket;
+      changed: string[];
+      triangleLimit?: number;
+    }) => {
+      const scene = await refreshStudyGeometry(reader.read(packet), changed, triangleLimit);
 
       return reply(reader.refreshed(scene, changed));
     },

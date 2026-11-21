@@ -62,7 +62,7 @@ describe('run metrics', () => {
       failedTools: 1,
       subagentToolCalls: 1,
       toolsByName: { get_scene: 1, model_part: 2 },
-      tokens: { input: 10, output: 20, cacheRead: 5, cacheWrite: 0, total: 35 },
+      tokens: { input: 10, output: 20, cacheRead: 5, cacheWrite: null, total: 35 },
     });
   });
 

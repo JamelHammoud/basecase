@@ -22,6 +22,7 @@ interface LatestFrame {
   facts: CaseFacts | null;
   scan: Scan | null;
   physics: SimPhysics | null;
+  contacts?: Int32Array;
 }
 
 function noteFrame(latest: LatestFrame, msg: Extract<SimResponse, { type: 'frame' }>) {
@@ -29,6 +30,7 @@ function noteFrame(latest: LatestFrame, msg: Extract<SimResponse, { type: 'frame
   latest.facts = msg.facts ?? null;
   latest.scan = msg.scan ?? latest.scan;
   latest.physics = msg.physics ?? null;
+  latest.contacts = msg.contacts;
 }
 
 const NO_LOOKS: WorldLooks = {};
@@ -167,6 +169,7 @@ export function useSimWorker(
     latestFacts: () => (status === 'off' ? null : ui.current.facts),
     latestScan: () => (status === 'off' ? null : ui.current.scan),
     latestPhysics: () => (status === 'off' ? null : ui.current.physics),
+    latestContacts: () => (status === 'off' ? null : (ui.current.contacts ?? null)),
     worldLooks: status === 'off' ? NO_LOOKS : worldLooks,
     setStats,
     error,

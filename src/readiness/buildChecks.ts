@@ -140,8 +140,8 @@ function holesOf(part: ScenePart): Port[] {
   return portsOf(part).filter((p) => !!p.thread || p.kind === 'screw' || p.kind === 'hole_circle');
 }
 
-function offHole(port: Port, target: ScenePart, c: FastenerChain): number {
-  const off = distanceToAxis(worldPort(target, port).position, c);
+function offHole(port: Port, position: number[], c: FastenerChain): number {
+  const off = distanceToAxis(position, c);
 
   return port.kind === 'hole_circle' && port.pitchDiameterMm ? Math.abs(off - port.pitchDiameterMm / 2) : off;
 }
@@ -151,7 +151,12 @@ function threadFinding(c: FastenerChain, target: ScenePart): Finding | null {
 
   if (!holes.length) return null;
 
-  const ranked = holes.map((port) => ({ port, off: offHole(port, target, c) }));
+  const ranked = holes.map((port) => {
+    const position = worldPort(target, port).position;
+    const off = offHole(port, position, c);
+
+    return { port, off, reach: off <= HOLE_REACH_MM ? pastPort(c, position) : 0 };
+  });
   const onAxis = ranked.filter((h) => h.off <= HOLE_REACH_MM);
 
   if (!onAxis.length) {
@@ -164,10 +169,9 @@ function threadFinding(c: FastenerChain, target: ScenePart): Finding | null {
     });
   }
 
-  const reachOf = (port: Port) => pastPort(c, worldPort(target, port).position);
-  const near = onAxis.sort((x, y) => reachOf(x.port) - reachOf(y.port))[0];
+  const near = onAxis.sort((x, y) => x.reach - y.reach)[0];
   const depth = near.port.depthMm;
-  const reach = reachOf(near.port);
+  const reach = near.reach;
 
   if (depth === undefined || reach <= depth + DEPTH_MARGIN_MM) return null;
 

@@ -1,3 +1,4 @@
+import { sceneVersionFingerprint } from '../workspace/sceneVersions';
 import loadMujoco from '@mujoco/mujoco';
 import { describe, expect, it } from 'vitest';
 import { fixtureMeasures, fixtureTriangles, type FixtureRobot } from '../sim/fixtures/parts';
@@ -96,6 +97,7 @@ describe('comparing two robots on one Case', () => {
     );
     expect(comparison.robots[0].massG).toBe(runEngineering({ parts, project, measures, servoOutputs: {} }).massG);
     expect(comparison.robots[0].massG).toBeGreaterThan(0);
+    expect(comparison.robots[0].fingerprint).toBe(sceneVersionFingerprint(robot));
   });
 
   it('marks nothing better on a tie, and counts a refusal as no passes', () => {

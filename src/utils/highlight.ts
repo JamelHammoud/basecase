@@ -147,19 +147,18 @@ function pushMerged(tokens: Token[], token: Token): void {
 
 export function highlight(code: string, language?: string): Token[] {
   const family = familyOf(language);
-  const grammar = GRAMMARS[family];
+  const scan: Scan = { code, at: 0, grammar: GRAMMARS[family], family };
   const tokens: Token[] = [];
   let previous: Token | undefined;
-  let at = 0;
 
-  while (at < code.length) {
-    const token = nextToken({ code, at, grammar, family }, previous);
+  while (scan.at < code.length) {
+    const token = nextToken(scan, previous);
 
     pushMerged(tokens, token);
 
     if (token.text.trim()) previous = tokens[tokens.length - 1];
 
-    at += token.text.length;
+    scan.at += token.text.length;
   }
 
   return tokens;

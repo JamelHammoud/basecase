@@ -1,3 +1,4 @@
+import { emptyBounds, includePoint } from '../../utils/sketch/bounds';
 import type { Sketch, Vec2 } from '../../utils/sketch/types';
 
 export interface SketchView {
@@ -21,12 +22,10 @@ const MARGIN = 1.5;
 const SNAP_PX = 9;
 
 export function sketchExtent(sketch: Sketch) {
-  const xs: number[] = [];
-  const ys: number[] = [];
+  const bounds = emptyBounds();
 
   for (const p of sketch.points) {
-    xs.push(p.x);
-    ys.push(p.y);
+    includePoint(bounds, p.x, p.y);
   }
 
   for (const e of sketch.entities) {
@@ -36,13 +35,13 @@ export function sketchExtent(sketch: Sketch) {
 
     if (!c) continue;
 
-    xs.push(c.x - e.r, c.x + e.r);
-    ys.push(c.y - e.r, c.y + e.r);
+    includePoint(bounds, c.x - e.r, c.y - e.r);
+    includePoint(bounds, c.x + e.r, c.y + e.r);
   }
 
-  if (xs.length === 0) return null;
+  if (sketch.points.length === 0) return null;
 
-  return { min: [Math.min(...xs), Math.min(...ys)] as Vec2, max: [Math.max(...xs), Math.max(...ys)] as Vec2 };
+  return bounds;
 }
 
 export function fitView(sketch: Sketch): SketchView {

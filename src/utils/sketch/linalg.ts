@@ -21,8 +21,7 @@ const eliminateBelow = (m: Matrix, row: number, col: number, rhs?: number[]) => 
   }
 };
 
-export function solveSquare(matrix: Matrix, rhs: number[]): number[] | null {
-  const m = matrix.map((row) => [...row]);
+export function solveSquareInPlace(m: Matrix, rhs: number[]): number[] | null {
   const b = [...rhs];
   const n = m.length;
 

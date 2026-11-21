@@ -7,23 +7,15 @@ import { downloadModel } from './modelRepo.mjs';
 import { downloadDataset } from './datasetRepo.mjs';
 import { HUB_ENDPOINT, HubClient } from './hubClient.mjs';
 import { checkedName, checkedTag, publishRepo } from './publishRepo.mjs';
-import { SKILL_DOWNLOADS, SKILL_FILE_BYTES } from './skillRepo.mjs';
+import { checkedRevision, skillFiles } from '../../src/hub/skillDownloads.mjs';
 import { SkillSearch } from './skillSearch.mjs';
+import { SkillOutcomes } from './skillOutcomes.mjs';
 
 const TOKEN = 'huggingface';
 const NAME = 'huggingface-name';
 const TOKEN_MAX = 512;
 
 const LOOPBACK = new Set(['127.0.0.1', 'localhost', '[::1]']);
-const REVISION = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/;
-
-function checkedRevision(rev) {
-  const value = String(rev ?? 'main');
-
-  if (!REVISION.test(value)) throw new Error(`“${value.slice(0, 100)}” isn’t a branch of a Hugging Face repo.`);
-
-  return value;
-}
 
 function policyJson(bytes) {
   try {
@@ -60,6 +52,7 @@ export class HubAccount {
     this.endpoint = endpoint;
     this.outbound = outbound;
     this.skillSearch = new SkillSearch();
+    this.outcomes = new SkillOutcomes(libraryDir);
   }
 
   client(token, again, kind) {
@@ -89,7 +82,7 @@ export class HubAccount {
     return this.account();
   }
 
-  async publish({ name, files, kind = 'dataset', tag } = {}) {
+  async publish({ name, files, kind = 'dataset', tag, includeRevision = false } = {}) {
     const token = this.keys.get(TOKEN);
 
     if (!token) throw new Error('Add a Hugging Face access token in Settings ▸ Accounts.');
@@ -100,25 +93,17 @@ export class HubAccount {
     const namespace = this.keys.get(NAME) ?? (await client.whoami()).name;
     const sent = kind === 'model' ? withPolicyOnnx(files) : files;
 
-    return publishRepo(client, { namespace, name, files: sent, tag: versionTag });
+    return publishRepo(client, {
+      namespace,
+      name,
+      files: sent,
+      tag: versionTag,
+      includeRevision: includeRevision === true,
+    });
   }
 
-  async skillFiles({ owner, repo, rev } = {}) {
-    const id = `${checkedName(owner)}/${checkedName(repo)}`;
-    const branch = encodeURIComponent(checkedRevision(rev));
-    const client = this.client(this.keys.get(TOKEN) ?? undefined, 'Install again', 'model');
-    const files = {};
-
-    for (const path of SKILL_DOWNLOADS) {
-      const bytes = await client.download(`/${id}/resolve/${branch}/${path}`, {
-        maxBytes: SKILL_FILE_BYTES,
-        label: path,
-      });
-
-      files[path] = bytes.toString('utf-8');
-    }
-
-    return { repo: id, files };
+  skillFiles(ref) {
+    return skillFiles(this.client(this.keys.get(TOKEN) ?? undefined, 'Install again', 'model'), ref);
   }
 
   async modelFile(model) {
@@ -135,6 +120,24 @@ export class HubAccount {
 
   findSkills() {
     return this.skillSearch.find(this.client(this.keys.get(TOKEN) ?? undefined, 'Install again', 'model'));
+  }
+
+  outcomeConnection() {
+    const token = this.keys.get(TOKEN);
+    const namespace = this.keys.get(NAME);
+
+    return token && namespace ? { client: this.client(token, undefined, 'model'), namespace } : null;
+  }
+
+  publishSkillOutcome(record) {
+    return this.outcomes.publish(record, this.outcomeConnection());
+  }
+
+  skillOutcomes() {
+    return this.outcomes.find(
+      this.client(this.keys.get(TOKEN) ?? undefined, 'Install again', 'model'),
+      this.outcomeConnection(),
+    );
   }
 
   async datasetFiles({ owner, repo, rev } = {}) {

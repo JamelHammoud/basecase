@@ -89,8 +89,17 @@ export function linkInertial(parts: PlacedPart[], payload?: LinkPayload): LinkIn
 
   if (payload) masses.push({ ...payload, size: [0, 0, 0], isotropic: (2 / 5) * payload.kg * payload.radius ** 2 });
 
-  const kg = masses.reduce((s, p) => s + p.kg, 0);
-  const com = [0, 1, 2].map((a) => (kg > 0 ? masses.reduce((s, p) => s + p.kg * p.com[a], 0) / kg : 0)) as V3;
+  let kg = 0;
+  const weighted: V3 = [0, 0, 0];
+
+  for (const mass of masses) {
+    kg += mass.kg;
+    weighted[0] += mass.kg * mass.com[0];
+    weighted[1] += mass.kg * mass.com[1];
+    weighted[2] += mass.kg * mass.com[2];
+  }
+
+  const com = weighted.map((value) => (kg > 0 ? value / kg : 0)) as V3;
   const I = { ixx: 0, ixy: 0, ixz: 0, iyy: 0, iyz: 0, izz: 0 };
 
   for (const { kg: m, com: c, size, isotropic = 0 } of masses) {

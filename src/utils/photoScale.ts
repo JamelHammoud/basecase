@@ -1,4 +1,4 @@
-import { cropMask, type Region } from './outlineTrace';
+import type { Region } from './outlineTrace';
 import { maskBounds, type Mask } from './silhouetteProfile';
 
 export type ScaleAxis = 'width' | 'height';
@@ -16,7 +16,12 @@ export function scaleFromPart(
   mask: Mask,
   { region, axis, sizeMm }: { region: Region; axis: ScaleAxis; sizeMm: number },
 ) {
-  const inside = maskBounds(cropMask(mask, region));
+  const inside = maskBounds(mask, {
+    x0: Math.floor(region.x0 * mask.width),
+    x1: Math.ceil(region.x1 * mask.width) - 1,
+    y0: Math.floor(region.y0 * mask.height),
+    y1: Math.ceil(region.y1 * mask.height) - 1,
+  });
   const boxPx = axis === 'width' ? (region.x1 - region.x0) * mask.width : (region.y1 - region.y0) * mask.height;
   const maskPx = axis === 'width' ? inside.x1 - inside.x0 + 1 : inside.y1 - inside.y0 + 1;
   const tightened = inside.x1 >= 0 && maskPx < boxPx * 0.97;

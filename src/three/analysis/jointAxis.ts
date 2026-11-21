@@ -18,6 +18,25 @@ interface Placed {
 const KEEP = 8;
 const indexes = new Map<string, MeshIndex>();
 
+function selectedInstances(instances: Placed[], ids: string[]): Map<string, Placed> {
+  const pending = new Set(ids);
+  const selected = new Map<string, Placed>();
+
+  if (!pending.size) return selected;
+
+  for (const instance of instances) {
+    const id = instance.id;
+
+    if (!pending.delete(id)) continue;
+
+    selected.set(id, instance);
+
+    if (!pending.size) break;
+  }
+
+  return selected;
+}
+
 function worldPositions(local: Float32Array, matrix: number[]) {
   const m = new THREE.Matrix4().fromArray(matrix);
   const out = new Float32Array(local.length);
@@ -54,11 +73,8 @@ export function jointAxisOf(
   query: JointAxisQuery & { instances: Placed[] },
   positionsOf: (key: string) => Float32Array,
 ): FoundAxis | null {
-  const find = (id: string) =>
-    indexOf(
-      query.instances.find((i) => i.id === id),
-      positionsOf,
-    );
+  const selected = selectedInstances(query.instances, [query.parent, query.child]);
+  const find = (id: string) => indexOf(selected.get(id), positionsOf);
   const parent = find(query.parent);
   const child = find(query.child);
 
@@ -76,11 +92,9 @@ export function jointAxesOf(
   query: { ids: string[]; instances: Placed[] },
   positionsOf: (key: string) => Float32Array,
 ): JointAxes {
+  const selected = selectedInstances(query.instances, query.ids);
   const bodies = query.ids.flatMap((id) => {
-    const index = indexOf(
-      query.instances.find((i) => i.id === id),
-      positionsOf,
-    );
+    const index = indexOf(selected.get(id), positionsOf);
 
     return index ? [{ id, index }] : [];
   });

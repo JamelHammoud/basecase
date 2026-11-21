@@ -51,58 +51,64 @@ function ancestors(motion: Mocap, leaf: string): string[] {
 
   for (let at: string | null = leaf; at && !seen.has(at); at = motion.parentOf.get(at) ?? null) {
     seen.add(at);
-    chain.unshift(at);
+    chain.push(at);
   }
 
-  return chain;
+  return chain.reverse();
 }
+
+const compactLimb = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 function includeLimb(name: string, limbs?: string[]): boolean {
   if (!limbs?.length) return true;
 
-  const compact = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const value = compact(name);
+  const value = compactLimb(name);
   const limb = limbOf(name);
 
-  return limbs.some(
-    (item) =>
-      value === compact(item) || (compact(item).includes(limb) && value.includes(compact(item).replace(limb, ''))),
-  );
+  return limbs.some((item) => value === item || (item.includes(limb) && value.includes(item.replace(limb, ''))));
 }
 
 export function motionLeaves(motion: Mocap, limbs?: string[]): string[] {
   const parents = new Set(motion.parentOf.values());
+  const selected = limbs?.map(compactLimb);
 
   return motion.bones.filter(
-    (bone) => !parents.has(bone) && includeLimb(motion.endSites?.parentOf.get(bone) ?? bone, limbs),
+    (bone) => !parents.has(bone) && includeLimb(motion.endSites?.parentOf.get(bone) ?? bone, selected),
   );
 }
 
 export function motionScale(motion: Mocap, heightMm: number): number {
-  const points = [...motion.rest.values()];
-  const spans = ['x', 'y', 'z'].map((axis) => {
-    const values = points.map((point) => point[axis as 'x' | 'y' | 'z']);
+  const bounds = new THREE.Box3();
 
-    return Math.max(...values) - Math.min(...values);
-  });
-  const height = spans[1] > 1e-9 ? spans[1] : Math.max(...spans);
+  for (const point of motion.rest.values()) bounds.expandByPoint(point);
+
+  const vertical = bounds.max.y - bounds.min.y;
+  const height =
+    vertical > 1e-9 ? vertical : Math.max(bounds.max.x - bounds.min.x, vertical, bounds.max.z - bounds.min.z);
 
   return heightMm / height;
 }
 
-function continuousAngles(angles: number[]): number[] {
-  let previous = angles[0];
+function continuousChannel(rotations: MotionFrames['rotations'], bone: string, index: number) {
+  const values: number[] = [];
+  let previous = 0;
   let value = 0;
+  let low = Infinity;
+  let high = -Infinity;
 
-  return angles.map((angle) => {
-    const difference = angle - previous;
+  for (const frame of rotations) {
+    const angle = frame.get(bone)?.[index]?.degrees ?? Number.NaN;
+    const difference = angle - (values.length ? previous : angle);
     const delta = THREE.MathUtils.euclideanModulo(difference + 180, 360) - 180;
 
     value += delta === -180 && difference > 0 ? 180 : delta;
     previous = angle;
+    values.push(value);
+    low = Math.min(low, value);
+    high = Math.max(high, value);
+  }
 
-    return value;
-  });
+  return { values, span: high - low };
 }
 
 function channelSamples(rotations: MotionFrames['rotations']) {
@@ -113,11 +119,10 @@ function channelSamples(rotations: MotionFrames['rotations']) {
 
     if (cached) return cached;
 
-    const channels = (rotations[0].get(bone) ?? []).map((channel, index) => {
-      const values = continuousAngles(rotations.map((frame) => frame.get(bone)?.[index]?.degrees ?? Number.NaN));
-
-      return { ...channel, values, span: Math.max(...values) - Math.min(...values) };
-    });
+    const channels = (rotations[0].get(bone) ?? []).map((channel, index) => ({
+      ...channel,
+      ...continuousChannel(rotations, bone, index),
+    }));
 
     byBone.set(bone, channels);
 
@@ -127,18 +132,21 @@ function channelSamples(rotations: MotionFrames['rotations']) {
 
 function axisEntries(options: {
   motion: Mocap;
+  boneIndices: Map<string, number>;
   leaf: string;
   channelsOf: ReturnType<typeof channelSamples>;
   first: Map<string, THREE.Vector3>;
   scale: number;
 }): MotionAxis[] {
-  const { motion, leaf, channelsOf, first, scale } = options;
+  const { motion, boneIndices, leaf, channelsOf, first, scale } = options;
   const result: MotionAxis[] = [];
   const orientation = new THREE.Quaternion();
+  const leafIndex = boneIndices.get(leaf) ?? -1;
 
   for (const bone of ancestors(motion, leaf)) {
     const channels = channelsOf(bone);
     const position = pointOf(first, bone);
+    const boneIndex = boneIndices.get(bone) ?? -1;
 
     channels.forEach((channel) => {
       const axis = AXES[channel.axis].clone().applyQuaternion(orientation);
@@ -151,7 +159,7 @@ function axisEntries(options: {
 
       result.push({
         joint: {
-          id: `motion_${motion.bones.indexOf(leaf)}_${motion.bones.indexOf(bone)}_${channel.axis.toLowerCase()}`,
+          id: `motion_${leafIndex}_${boneIndex}_${channel.axis.toLowerCase()}`,
           name: `${bone} ${channel.axis.toLowerCase()}`,
           origin: tuple(position.clone().multiplyScalar(scale)),
           axis: axisTuple(axis),
@@ -173,10 +181,15 @@ export function motionChains(
 ): MotionChain[] {
   const { positions: frames, rotations } = samples;
   const channelsOf = channelSamples(rotations);
+  const boneIndices = new Map<string, number>();
+
+  motion.bones.forEach((bone, index) => {
+    if (!boneIndices.has(bone)) boneIndices.set(bone, index);
+  });
 
   return motionLeaves(motion, options.limbs).map((leaf) => ({
     name: motion.endSites?.parentOf.get(leaf) ?? leaf,
-    axes: axisEntries({ motion, leaf, channelsOf, first: frames[0], scale: options.scale }),
+    axes: axisEntries({ motion, boneIndices, leaf, channelsOf, first: frames[0], scale: options.scale }),
     tip: tuple(pointOf(frames[0], leaf).clone().multiplyScalar(options.scale)),
     targets: frames.map((frame) => tuple(pointOf(frame, leaf).clone().multiplyScalar(options.scale))),
   }));

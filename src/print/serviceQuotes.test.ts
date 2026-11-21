@@ -167,6 +167,30 @@ describe('quoting printed parts from a print service', () => {
   });
 });
 
+it('shares first-match quote selection across requests and BOM lines after edits', () => {
+  const parts = roverParts();
+  const project = quoted(parts, byService);
+  const first = project.quotes![0];
+  const duplicate = { ...first, key: 'older', usd: 999 };
+  const quotes = [...project.quotes!, duplicate, { ...first, part: 'deleted' }];
+  const saved = structuredClone(quotes);
+  const current = { ...project, quotes };
+
+  expect(quotesWanted(parts, current)).toEqual([]);
+  expect(bomOf(parts, current)).toEqual(bomOf(parts, project));
+  expect(printedLines(parts, current).find((line) => line.partIds.includes(first.part))?.quote).toBe(first);
+
+  const replaced = quotes.map((quote) => (quote === first ? { ...quote, key: 'changed', usd: 17 } : quote));
+  const changed = { ...current, quotes: replaced };
+
+  expect(quotesWanted(parts, changed).map((request) => request.part)).toEqual([first.part]);
+  expect(printedLines(parts, changed).find((line) => line.partIds.includes(first.part))).toMatchObject({
+    lineUsd: 17,
+    status: 'stale',
+  });
+  expect(quotes).toEqual(saved);
+});
+
 describe('a printability blocker', () => {
   it('stays on a part that is still quoted', async () => {
     const huge: ScenePart = {

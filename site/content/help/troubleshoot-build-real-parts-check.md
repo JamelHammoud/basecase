@@ -42,6 +42,8 @@ This part comes from somewhere other than your printer, like a CNC-machined or l
 
 Flat parts with only through features can use [Cut parts from sheet](/help/cut-parts-from-sheet) instead. Older CNC Aluminum and Laser-Cut Acrylic/Carbon parts join **Sheet** automatically when their geometry qualifies. Parts with pockets keep the source blocker.
 
+A generated carrier’s PCB fabrication classification doesn’t clear this blocker. [Exporting a robot kit](/help/export-a-robot-kit) preserves the Checks verdict.
+
 1. Click **Fix** on the problem to have the agent find a maker for it.
 2. Or, if you'll print the part yourself, set its **Material** in the Inspector to **Printed PLA / PETG**.
 
@@ -63,3 +65,5 @@ This message is a note and doesn't block Ready to build. The parts it lists have
 2. Type the price, then click **Save**.
 
 A line under **Printed parts** has no **Add Price**. Its price comes from the [print service's quote](/help/price-printed-parts-from-a-print-service). If the service can't print a part, its line says why in amber.
+
+Selecting a [supplier offer](/help/compare-supplier-offers) doesn’t confirm a sourced part or clear these blockers.

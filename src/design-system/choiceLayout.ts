@@ -49,8 +49,13 @@ const GLYPH_EM = new Map(
 );
 const WIDEST_EM = 1;
 
-export const labelWidth = (text: string, fontPx: number) =>
-  [...text].reduce((width, glyph) => width + (GLYPH_EM.get(glyph) ?? WIDEST_EM) * fontPx, 0);
+export function labelWidth(text: string, fontPx: number) {
+  let width = 0;
+
+  for (const glyph of text) width += (GLYPH_EM.get(glyph) ?? WIDEST_EM) * fontPx;
+
+  return width;
+}
 
 export interface ChoiceTrack {
   columns: number;
@@ -60,11 +65,16 @@ export interface ChoiceTrack {
 }
 
 export function choiceMinCell({ labels, stacked, icons }: Omit<ChoiceTrack, 'columns'>) {
-  const texts = labels.filter((label): label is string => typeof label === 'string');
+  let widest = -Infinity;
 
-  if (!texts.length) return 0;
+  for (const label of labels) {
+    if (typeof label !== 'string') continue;
 
-  const widest = Math.max(...texts.map((text) => labelWidth(text, stacked ? 12 : 13)));
+    widest = Math.max(widest, labelWidth(label, stacked ? 12 : 13));
+  }
+
+  if (widest === -Infinity) return 0;
+
   const beside = icons && !stacked ? ICON_BESIDE_PX : 0;
 
   return Math.ceil(widest + (stacked ? CHOICE_PADDING_PX.stacked : CHOICE_PADDING_PX.row) + beside + FIT_MARGIN_PX);

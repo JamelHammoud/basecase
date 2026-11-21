@@ -66,12 +66,13 @@ export function validateQuarantine(entries, { exists = fileExists } = {}) {
   const seen = new Set();
 
   return entries.flatMap((entry, index) => {
-    const key = `${entry?.file}\u0000${entry?.test}`;
+    const platforms = entry?.platform ? [entry.platform] : PLATFORMS;
+    const keys = platforms.map((platform) => `${entry?.file}\u0000${entry?.test}\u0000${platform}`);
     const problems = entryProblems(entry, exists);
 
-    if (seen.has(key)) problems.push('repeats an earlier entry');
+    if (keys.some((key) => seen.has(key))) problems.push('repeats an earlier entry');
 
-    seen.add(key);
+    keys.forEach((key) => seen.add(key));
 
     return problems.map((problem) => `Entry ${index + 1} ${problem}`);
   });

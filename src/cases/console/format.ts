@@ -1,4 +1,6 @@
 import { hasInputSource, NAMED_INPUTS } from '../../sim/inputRegistry';
+import { probeSignals } from '../fixtureTravel';
+import type { WorldObject } from '../schema';
 import { gestureNames, type CaseGesture } from '../gestures';
 import { asId, asNumber, asRecord, asString, listOf, oneOf, optional, refuse, type Reader } from '../validate';
 import { PANEL_KIND_NAMES, readPanelConfig, type PanelSpec } from './panelKinds';
@@ -226,13 +228,14 @@ function readLayout(value: unknown, where: string, panels: PanelSpec[]) {
 }
 
 interface ScopedCase {
+  world?: { objects: readonly WorldObject[] };
   task: { probes: ReadonlyArray<{ signal: string }> };
   gestures?: readonly CaseGesture[];
 }
 
 export const consoleScope = (caseConsole: CaseConsole, kase: ScopedCase | null): SignalScope => ({
   declared: new Set(caseConsole.signals?.map((s) => s.id)),
-  probes: new Set(kase?.task.probes.map((p) => p.signal)),
+  probes: new Set(probeSignals(kase)),
   inputs: new Set(caseConsole.input),
   gestures: new Set(gestureNames(kase?.gestures)),
 });

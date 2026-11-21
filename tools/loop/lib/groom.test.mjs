@@ -83,6 +83,14 @@ describe('groom: rewrite', () => {
     expect(keepMetadata('Arc: #1\nKind: refine\n\nOld.', 'New.')).toBe('Arc: #1\nKind: refine\n\nNew.');
     expect(keepMetadata('Old.', 'New.')).toBe('New.');
   });
+
+  it('preserves execution requirements and declared source inputs when rewriting', () => {
+    const metadata = 'Requires: windows-host\nInputs: `electron/`\nArc: #1\nKind: feature';
+
+    expect(keepMetadata(`${metadata}\n\nOld.`, 'Requires: repository\nInputs: `src/`\n\nNew.')).toBe(
+      `${metadata}\n\nNew.`,
+    );
+  });
 });
 
 describe('groom: close', () => {

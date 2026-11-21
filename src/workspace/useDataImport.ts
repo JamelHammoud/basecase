@@ -86,14 +86,35 @@ interface ImportWork {
   run: DataImportRun;
   loaded: Loaded;
   summary: SourceSummary;
-  build: (model: SimModel) => Promise<string[] | undefined>;
+  build: (model: SimModel | null) => Promise<string[] | undefined>;
   offerRobot: (name: string, preset: RobotPreset | null) => void;
+}
+
+async function keepImportedMembers(images: Dataset | null, ids: string[] | undefined) {
+  if (images && ids) await saveDataset(addMembers(images, ids));
+}
+
+async function targetOf(core: WorkspaceCore, loaded: Loaded, summary: SourceSummary, model: SimModel | null) {
+  return {
+    sceneId: SAFE_ID.test(core.scene.sceneId) ? core.scene.sceneId : 'scene',
+    modelHash: model ? await sha256(model.xml) : '',
+    origin: loaded.origin ?? { kind: 'file' as const, name: originName(loaded.source.name), hash: summary.hash },
+    startedAt: new Date().toISOString(),
+  };
 }
 
 async function finishImport({ core, run, loaded, summary, build, offerRobot }: ImportWork) {
   const images: Dataset | null = summary.images ? await importImages(core, run) : null;
 
   if (images && summary.episodes === 0) return;
+
+  if (summary.names.length === 0) {
+    const ids = await build(null);
+
+    await keepImportedMembers(images, ids);
+
+    return;
+  }
 
   const sim = core.simTraining.sim;
   const model = sim.modelNow() ?? (await sim.buildModel().catch(() => null));
@@ -102,7 +123,7 @@ async function finishImport({ core, run, loaded, summary, build, offerRobot }: I
 
   const ids = await build(model);
 
-  if (images && ids) await saveDataset(addMembers(images, ids));
+  await keepImportedMembers(images, ids);
 }
 
 function importPickedFiles(importLoaded: ImportLoaded, files: File[]) {
@@ -189,8 +210,10 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
     return built.kept.map((item) => item.stored.id);
   };
 
-  const build = async (run: DataImportRun, loaded: Loaded, summary: SourceSummary, model: SimModel) => {
-    const plan = await planFor(loaded.source.name, summary, model);
+  const build = async (run: DataImportRun, loaded: Loaded, summary: SourceSummary, model: SimModel | null) => {
+    const plan = model
+      ? await planFor(loaded.source.name, summary, model)
+      : { joints: [], unit: 'rad' as const, spans: [] };
 
     if (!plan) return;
 
@@ -199,12 +222,7 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
     const built = await run.build({
       model,
       plan,
-      target: {
-        sceneId: SAFE_ID.test(core.scene.sceneId) ? core.scene.sceneId : 'scene',
-        modelHash: await sha256(model.xml),
-        origin: loaded.origin ?? { kind: 'file', name: originName(loaded.source.name), hash: summary.hash },
-        startedAt: new Date().toISOString(),
-      },
+      target: await targetOf(core, loaded, summary, model),
     });
 
     return keep(built);

@@ -19,6 +19,8 @@ from dataclasses import dataclass
 import numpy as np
 from frames import StageFrame, column_major, to_local
 from glb import GlbBuilder, Group
+from localLimits import limit_local_memory
+from localPackage import checked_local_root
 from looks import LookReader
 from meshes import VisualMesh, dominant_color, is_visual, mesh_volume, read_mesh, triangle_areas
 from physics import Body, Physics, owning_body, read_physics
@@ -239,6 +241,11 @@ def convert(root_usd: str, out_dir: str) -> dict:
         "friction": phys.friction,
         "visual": "visual.glb",
         "notes": phys.notes,
+        "sourceFrame": {
+            "metersPerUnit": frame.meters_per_unit,
+            "up": str(UsdGeom.GetStageUpAxis(stage)),
+            "authoredUnits": UsdGeom.StageHasAuthoredMetersPerUnit(stage),
+        },
     }
 
     with open(os.path.join(out_dir, "model.json"), "w") as f:
@@ -247,14 +254,50 @@ def convert(root_usd: str, out_dir: str) -> dict:
     return model
 
 
+def convert_facility(root_usd: str, out_dir: str) -> dict:
+    stage = Usd.Stage.Open(root_usd)
+
+    if stage.GetCompositionErrors():
+        raise ValueError("Resolve every local USD layer before importing")
+
+    frame = StageFrame.of(stage)
+    meshes = collect_meshes(stage, frame, package_root(root_usd))
+
+    if not meshes:
+        raise ValueError("The facility has no visible meshes")
+
+    visual = GlbBuilder()
+    add_visual(visual, BodyMeshes(base_body(), meshes, [mesh.points for mesh in meshes]))
+    visual.write(os.path.join(out_dir, "visual.glb"))
+    model = {
+        "links": [],
+        "joints": [],
+        "sourceFrame": {
+            "metersPerUnit": frame.meters_per_unit,
+            "up": str(UsdGeom.GetStageUpAxis(stage)),
+            "authoredUnits": UsdGeom.StageHasAuthoredMetersPerUnit(stage),
+        },
+    }
+
+    with open(os.path.join(out_dir, "model.json"), "w") as output:
+        json.dump(model, output)
+
+    return model
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", required=True)
     parser.add_argument("--out", required=True)
+    parser.add_argument("--local-package", action="store_true")
     args = parser.parse_args()
 
     try:
-        model = convert(args.root, args.out)
+        if args.local_package:
+            limit_local_memory()
+
+        root = checked_local_root(args.root, package_root(args.root)) if args.local_package else args.root
+        model = convert_facility(root, args.out) if args.local_package else convert(root, args.out)
     except Exception as e:
         emit(type="error", message=str(e) or e.__class__.__name__)
         sys.exit(1)

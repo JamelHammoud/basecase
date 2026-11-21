@@ -52,13 +52,17 @@ If the agent thinks a check is wrong, it can dispute it. Its reason shows on the
 
 ## Only you can set a blocker aside
 
-To set one problem aside, right-click its row and choose **Ignore**. To set aside every problem of that kind, including problems on parts you add later, choose **Ignore All ⟨kind⟩**. The menu shows the kind's name in place of ⟨kind⟩.
+In the editable design, right-click a problem's row and choose **Ignore** to set it aside. To set aside every problem of that kind, including problems on parts you add later, choose **Ignore All ⟨kind⟩**. The menu shows the kind's name in place of ⟨kind⟩.
+
+The retained findings in a [saved build](/help/resume-a-robot-build) are read-only. Return to the editable design before changing an ignore decision.
 
 Because the decision was yours, an ignored problem stays ignored when the parts change. The agent sees what you've ignored and leaves those problems alone. Everything you've set aside is listed under **Ignored**, below the list, and you can put any of it back from there.
 
 ## What Ready to build doesn't promise
 
 Checks measure the design as you modeled it. A strap or zip tie you'll add by hand isn't in the model, so its row is a note that you check yourself.
+
+Printer fit checks reserve conservative space around supported obstacles, including supplied toolhead and brim clearance. They don't validate every slicer travel move.
 
 Range of motion samples each joint every 15°, so a clash narrower than one step can fall between samples. Peak torque waits for a trained walk policy, and Falls waits until the agent tips the robot over. Prices stay estimates until you add the prices you see or a print service quotes the printed parts.
 

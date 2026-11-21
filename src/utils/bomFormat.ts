@@ -1,4 +1,7 @@
-import { BOM_CATEGORIES, Bom, BomLine, FILAMENT_MARGIN, PriceStatus, STALE_DAYS, localDate } from './bomTypes';
+import { csvCell } from './csvCell';
+import { supplierOrderQty } from './purchaseIdentity';
+import { Bom, BomLine, FILAMENT_MARGIN, PriceStatus, STALE_DAYS, localDate } from './bomTypes';
+import { bomCategories } from './bomCategories';
 import { currencyNote, type Money, scaledEntry } from './currency';
 import { currentMoney } from './currencyStore';
 import { plural } from '../../electron/plural.mjs';
@@ -30,15 +33,18 @@ const csvHead = (code: string) => [
   'Estimate Seen',
   'Note',
   'Used By',
+  'Remaining Units',
+  'Manufacturer',
+  'Manufacturer Part Number',
+  'Supplier',
+  'Supplier Part Number',
+  'Ordering Unit',
+  'Units per Order',
+  'Supplier Order Qty',
+  'Customer Reference',
+  'Component References',
+  'Identity Source',
 ];
-
-const csvCell = (v: unknown) => {
-  const s = v === undefined || v === null ? '' : String(v);
-
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
-const byCategory = (bom: Bom) =>
-  BOM_CATEGORIES.map((cat) => ({ cat, ls: bom.lines.filter((l) => l.category === cat) })).filter((g) => g.ls.length);
 
 const recordCells = (l: BomLine) => [
   l.record?.asin ?? '',
@@ -53,6 +59,20 @@ const estimateCells = (l: BomLine, money: Money) => [
   l.estUsd === undefined ? '' : money.plain(l.estUsd),
   l.estimate ? `${l.estimate.store} ${l.estimate.url}` : '',
   l.estimate?.seen ?? '',
+];
+
+const identityCells = (l: BomLine) => [
+  l.toBuy,
+  l.identity?.manufacturer,
+  l.identity?.mpn,
+  l.identity?.supplier,
+  l.identity?.supplierPartNumber,
+  l.identity?.orderingUnit,
+  l.identity?.unitsPerOrder,
+  supplierOrderQty(l.toBuy, l.identity),
+  l.key,
+  [...new Set(l.partIds)].sort().join('; '),
+  l.identity?.sourceUrl,
 ];
 
 const csvRow = (l: BomLine, partNames: Record<string, string>, money: Money) => [
@@ -72,6 +92,7 @@ const csvRow = (l: BomLine, partNames: Record<string, string>, money: Money) => 
   ...estimateCells(l, money),
   [l.warning, l.record?.note].filter(Boolean).join('; '),
   [...new Set(l.partIds.map((id) => partNames[id] ?? id))].slice(0, 12).join('; '),
+  ...identityCells(l),
 ];
 
 export function bomToCsv(bom: Bom, partNames: Record<string, string>, money: Money = currentMoney()): string {
@@ -142,13 +163,13 @@ export function bomToMarkdown(bom: Bom, sceneName: string, money: Money = curren
     '',
   ];
 
-  for (const { cat, ls } of byCategory(bom))
+  for (const { category, lines } of bomCategories(bom.lines))
     out.push(
-      `## ${cat}`,
+      `## ${category}`,
       '',
       '| Item | Qty | Packs | Price | Checked | Link |',
       '|---|---:|---:|---:|---|---|',
-      ...ls.map((l) => markdownRow(l, money)),
+      ...lines.map((l) => markdownRow(l, money)),
       '',
     );
 
@@ -242,7 +263,8 @@ export function bomText(bom: Bom, names: Record<string, string>, money: Money = 
     ...currencyNote(money),
   ];
 
-  for (const { cat, ls } of byCategory(bom)) out.push('', `${cat}:`, ...ls.map((l) => textLine(l, money)));
+  for (const { category, lines } of bomCategories(bom.lines))
+    out.push('', `${category}:`, ...lines.map((l) => textLine(l, money)));
 
   out.push(...textNotes(bom, names));
 

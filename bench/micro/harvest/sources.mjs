@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { faultsIn, kindOfText } from './kinds.mjs';
+import { toolNameOf } from '../../metrics.mjs';
 
 export const CHECK_TOOLS = /(?:^|__)(?:get_readiness|check_assembly|check_scene)$/;
 export const AGENT_PATHS = [
@@ -28,7 +29,9 @@ const excerpt = (text) => {
 };
 
 const textOfUpdate = (u) => {
-  const parts = u._meta?.claudeCode?.toolResponse ?? u.content ?? [];
+  const parts = u._meta?.claudeCode?.toolResponse ?? u.rawOutput?.content ?? u.rawOutput ?? u.content ?? [];
+
+  if (typeof parts === 'string') return parts.trim();
 
   return (Array.isArray(parts) ? parts : [parts])
     .map((p) => p?.text ?? p?.content?.text ?? '')
@@ -45,7 +48,7 @@ export function lastCheck(lines) {
 
     if (line.type !== 'acp-session-update' || !u?.toolCallId) continue;
 
-    const name = u._meta?.claudeCode?.toolName ?? u.title ?? names.get(u.toolCallId) ?? '';
+    const name = toolNameOf(u) || names.get(u.toolCallId) || '';
 
     names.set(u.toolCallId, name);
 

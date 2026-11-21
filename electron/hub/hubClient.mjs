@@ -222,7 +222,8 @@ export class HubClient {
   }
 
   hop(url) {
-    if (url.origin !== this.origin) return this.reach(url, { signal: AbortSignal.timeout(API_TIMEOUT_MS) });
+    if (url.origin !== this.origin)
+      return this.reach(url, { redirect: 'manual', signal: AbortSignal.timeout(API_TIMEOUT_MS) });
 
     return fetch(url, {
       redirect: 'manual',

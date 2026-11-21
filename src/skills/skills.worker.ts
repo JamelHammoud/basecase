@@ -1,19 +1,22 @@
 /// <reference lib="webworker" />
 import { type MainModule } from '@mujoco/mujoco';
 import { loadMujoco } from '../sim/loadMujoco';
-import type { ForgeJob, ForgeOutcome } from './forgeRunner';
+import type { ForgeJob, ForgeOutcome, ForgeRunner } from './forgeRunner';
+import type { SeedSelection } from './seedSelection';
 import { runSkillsJob, type SkillsJob, type SkillsReply } from './skillsJob';
 import { errorMessage } from '../utils/errorMessage';
 
 export type SkillsRequest =
-  | SkillsJob
+  | (SkillsJob & { localSalt?: string })
   | { type: 'forge-result'; call: number; outcome: ForgeOutcome }
-  | { type: 'save-result'; call: number; error: string | null };
+  | { type: 'save-result'; call: number; error: string | null }
+  | { type: 'selection-result'; call: number; error: string | null };
 
 export type SkillsMessage =
   | SkillsReply
   | { type: 'forge'; call: number; job: ForgeJob }
   | { type: 'save'; call: number; path: string; text: string }
+  | { type: 'seed-selection'; call: number; selection: SeedSelection }
   | { type: 'progress'; share: number }
   | { type: 'error'; message: string };
 
@@ -29,15 +32,22 @@ function ask(message: Extract<SkillsMessage, { call: number }>): Promise<SkillsR
   });
 }
 
-const forge = async (job: ForgeJob): Promise<ForgeOutcome> => {
+const forge: ForgeRunner = async (job: ForgeJob): Promise<ForgeOutcome> => {
   const reply = await ask({ type: 'forge', call: ++calls, job });
 
   return (reply as Extract<SkillsRequest, { type: 'forge-result' }>).outcome;
 };
 
+forge.selected = async (selection) => {
+  const reply = await ask({ type: 'seed-selection', call: ++calls, selection });
+  const error = (reply as Extract<SkillsRequest, { error: string | null }>).error;
+
+  if (error) throw new Error(error);
+};
+
 const save = async (path: string, text: string) => {
   const reply = await ask({ type: 'save', call: ++calls, path, text });
-  const error = (reply as Extract<SkillsRequest, { type: 'save-result' }>).error;
+  const error = (reply as Extract<SkillsRequest, { error: string | null }>).error;
 
   if (error) throw new Error(error);
 };
@@ -45,7 +55,7 @@ const save = async (path: string, text: string) => {
 ctx.onmessage = async (ev: MessageEvent<SkillsRequest>) => {
   const msg = ev.data;
 
-  if (msg.type === 'forge-result' || msg.type === 'save-result') {
+  if (msg.type === 'forge-result' || msg.type === 'save-result' || msg.type === 'selection-result') {
     waiting.get(msg.call)?.(msg);
     waiting.delete(msg.call);
 
@@ -57,7 +67,9 @@ ctx.onmessage = async (ev: MessageEvent<SkillsRequest>) => {
 
     const progress = (share: number) => ctx.postMessage({ type: 'progress', share } satisfies SkillsMessage);
 
-    ctx.postMessage(await runSkillsJob(msg, { mj, forge, save, progress }));
+    const { localSalt, ...job } = msg;
+
+    ctx.postMessage(await runSkillsJob(job, { mj, forge, save, progress, localSalt }));
   } catch (e) {
     ctx.postMessage({ type: 'error', message: errorMessage(e) } satisfies SkillsMessage);
   }

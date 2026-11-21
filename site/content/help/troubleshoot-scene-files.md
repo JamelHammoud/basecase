@@ -48,6 +48,20 @@ The scene's imported world is missing, damaged or over its size limits. Basecase
 
 Ask the sender to reopen the original scene and export it again with **Export** ▸ **Scene**. The exported file must include the world's mesh, colliders and any textures or splat.
 
+## The message names a fixture
+
+A Case's hinge or slide has a damaged reference, axis, limit or physics value. Basecase refuses that fixture when opening the scene. Ask the sender to reopen the original scene and export it again with **Export** ▸ **Scene**.
+
+## The message names a board definition
+
+The scene’s board has damaged identities, dimensions, mounting constraints or placement records. Ask the sender to reopen the original scene and export it again with **Export** ▸ **Scene**.
+
+## The message names a shared parameter or dimension
+
+The saved declarations or bindings have damaged expressions, missing names, incompatible units or values that disagree with their targets. Ask the sender to correct the named target in the original scene, then export it again.
+
+Valid bindings regenerate after opening. Their retained geometry stays blocked in Checks until that work succeeds. See [Link dimensions with shared parameters](/help/link-dimensions-with-shared-parameters).
+
 ## Double-clicking the file does nothing
 
 Basecase doesn't open `.basecase` files from Finder or File Explorer. To open one, drop the file on the canvas, or use **Open Scene File** in [[⌘K]].

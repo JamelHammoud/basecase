@@ -80,6 +80,7 @@ describe('nightly harness experiments', () => {
     const result = runExperiment(f);
 
     expect(result.verdict).toBe('kept');
+    expect(result.outcome).toBe('quality-win');
     expect(f.deps.compare.mock.calls.map(([options]) => options.split)).toEqual(['tune', 'heldout']);
     expect(f.deps.publish).toHaveBeenCalledWith(
       expect.objectContaining({ kind: 'harness', checked: change.checked }),

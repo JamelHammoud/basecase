@@ -1,11 +1,12 @@
 import { writeFileSync } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { SceneMark } from '../src/types/robotics';
+import { DEFAULT_PROJECT, type ProjectSettings, type SceneMark } from '../src/types/robotics';
 import { openApp, type App } from './harness';
 
 let app: App;
 
 interface Studio {
+  load: (record: { parts: []; project: ProjectSettings }) => void;
   sceneRecord: () => { project: { marks?: SceneMark[] } };
   capture: (views: string[]) => Array<{ view: string; dataUrl: string }>;
 }
@@ -133,15 +134,26 @@ describe('annotate marks', () => {
   });
 
   it('deletes every mark after asking, with Undo', async () => {
-    const { x, y } = await canvasCenter();
+    const before: SceneMark[] = [0, 1].map((index) => ({
+      id: `delete-mark-${index}`,
+      points: [
+        [-20, 10 + index * 20, 0],
+        [20, 10 + index * 20, 0],
+      ],
+      partIds: [],
+      color: '#facc15',
+      label: `Mark ${index + 1}`,
+      createdAt: '2026-01-01T00:00:00.000Z',
+    }));
 
-    await draw([
-      [x - 200, y - 160],
-      [x + 200, y - 160],
-    ]);
-    expect(await marks()).toHaveLength(2);
-    await app.page.keyboard.press('Escape');
-    await expect.poll(() => app.page.getByLabel('Mark label').count()).toBe(0);
+    await app.page.clock.install();
+    await app.page.reload();
+    await app.page.waitForFunction(() => Boolean((window as unknown as { __studio?: Studio }).__studio));
+    await app.page.evaluate(
+      (project) => (window as unknown as { __studio: Studio }).__studio.load({ parts: [], project }),
+      { ...DEFAULT_PROJECT, marks: before },
+    );
+    await expect.poll(marks).toEqual(before);
 
     await app.page.keyboard.press('Meta+k');
     await app.page.keyboard.type('Delete Marks');
@@ -150,12 +162,22 @@ describe('annotate marks', () => {
     const dialog = app.page.getByRole('dialog');
 
     await expect.poll(() => dialog.getByText('Delete 2 marks?').count()).toBe(1);
-    expect(await marks()).toHaveLength(2);
-    await dialog.getByRole('button', { name: 'Delete', exact: true }).click();
-    await expect.poll(async () => (await marks()).length).toBe(0);
+    expect(await marks()).toEqual(before);
+    await app.page.clock.pauseAt(await app.page.evaluate(() => Date.now() + 1000));
 
-    await app.page.getByRole('status').getByRole('button', { name: 'Undo' }).click();
-    await expect.poll(async () => (await marks()).length).toBe(2);
-    expect(app.errors).toEqual([]);
+    try {
+      await dialog.getByRole('button', { name: 'Delete', exact: true }).click();
+      await expect.poll(marks).toEqual([]);
+
+      await app.page
+        .getByRole('status')
+        .filter({ hasText: 'Deleted 2 marks' })
+        .getByRole('button', { name: 'Undo' })
+        .click();
+      await expect.poll(marks).toEqual(before);
+      expect(app.errors).toEqual([]);
+    } finally {
+      await app.page.clock.resume();
+    }
   });
 });

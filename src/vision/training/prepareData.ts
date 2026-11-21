@@ -4,6 +4,7 @@ import { frameHash, type FrameSet, type ImageAnnotation, type ImageClass, type T
 import type { VisionKind } from '../manifest';
 import type { PreparationSource } from './prepareSources';
 import { prepareSplits, type VisionAssignment } from './prepareSplits';
+import { evaluationImageGroups } from '../conditions';
 
 export type VisionTrainingKind = Exclude<VisionKind, 'depth'>;
 
@@ -131,6 +132,7 @@ export async function prepareTrainingData(input: PreparationInput) {
   return {
     snapshot: { ...snapshot, images: samples },
     samples,
+    evaluationSamples: evaluationImageGroups(samples, sets),
     classes,
     sets,
     trainingSets: trainingSets(sets, classes, samples),

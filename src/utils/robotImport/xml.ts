@@ -25,15 +25,21 @@ const decodeEntities = (text: string) =>
     return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
   });
 
-const OPEN_TAG = /^<([A-Za-z_][\w:.-]*)((?:\s+[^\s=/>]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>/;
+const OPEN_TAG = /<([A-Za-z_][\w:.-]*)((?:\s+[^\s=/>]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>/y;
+const CLOSE_TAG = /<\/([A-Za-z_][\w:.-]*)\s*>/y;
 const ATTR = /([^\s=/>]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
 const SKIPPED = [
   ['<!--', '-->'],
   ['<?', '?>'],
 ] as const;
 
-const attrsOf = (text: string): Array<[string, string]> =>
-  [...text.matchAll(ATTR)].map((m) => [m[1], decodeEntities(m[2] ?? m[3])]);
+function attrsOf(text: string): Array<[string, string]> {
+  const attrs: Array<[string, string]> = [];
+
+  for (const m of text.matchAll(ATTR)) attrs.push([m[1], decodeEntities(m[2] ?? m[3])]);
+
+  return attrs;
+}
 
 interface Cursor {
   text: string;
@@ -50,7 +56,9 @@ function endOf(c: Cursor, close: string): number {
 }
 
 function closeTag(c: Cursor) {
-  const m = /^<\/([A-Za-z_][\w:.-]*)\s*>/.exec(c.text.slice(c.at));
+  CLOSE_TAG.lastIndex = c.at;
+
+  const m = CLOSE_TAG.exec(c.text);
   const open = c.stack.pop();
 
   if (!m || !open || open.tag !== m[1] || !c.stack.length) throw new XmlError(`Mismatched </${m?.[1] ?? ''}>`);
@@ -59,7 +67,9 @@ function closeTag(c: Cursor) {
 }
 
 function openTag(c: Cursor) {
-  const m = OPEN_TAG.exec(c.text.slice(c.at));
+  OPEN_TAG.lastIndex = c.at;
+
+  const m = OPEN_TAG.exec(c.text);
 
   if (!m) throw new XmlError(`Malformed tag at ${c.at}`);
 
@@ -72,16 +82,15 @@ function openTag(c: Cursor) {
 }
 
 function markup(c: Cursor) {
-  const rest = c.text.startsWith.bind(c.text);
-  const skipped = SKIPPED.find(([open]) => rest(open, c.at));
+  for (const [open, close] of SKIPPED) {
+    if (!c.text.startsWith(open, c.at)) continue;
 
-  if (skipped) {
-    c.at = endOf(c, skipped[1]);
+    c.at = endOf(c, close);
 
     return;
   }
 
-  if (rest('<![CDATA[', c.at)) {
+  if (c.text.startsWith('<![CDATA[', c.at)) {
     const end = endOf(c, ']]>');
 
     c.stack[c.stack.length - 1].children.push(c.text.slice(c.at + 9, end - 3));
@@ -90,9 +99,9 @@ function markup(c: Cursor) {
     return;
   }
 
-  if (rest('<!', c.at)) throw new XmlError('Document type declarations aren’t read');
+  if (c.text.startsWith('<!', c.at)) throw new XmlError('Document type declarations aren’t read');
 
-  if (rest('</', c.at)) closeTag(c);
+  if (c.text.startsWith('</', c.at)) closeTag(c);
   else openTag(c);
 }
 

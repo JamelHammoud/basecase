@@ -32,7 +32,14 @@ const samePose = (a: ScenePart, b: ScenePart) =>
 function geometryChanged(a: ScenePart | undefined, b: ScenePart): boolean {
   if (!a) return true;
 
-  return a.cad !== b.cad || !samePose(a, b);
+  return (
+    a.cad !== b.cad ||
+    a.dimensions !== b.dimensions ||
+    a.customNodes !== b.customNodes ||
+    a.mesh !== b.mesh ||
+    a.sculptMesh !== b.sculptMesh ||
+    !samePose(a, b)
+  );
 }
 
 const placing = (p: ScenePart): PartMate | undefined => p.mates?.[p.mates.length - 1];

@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useRef } from 'react';
 import { isModalOpen } from '../design-system';
+import { placementFits } from '../print/bed';
 import type { Plate, PlanItem } from '../print/plan';
 import { PlateView } from '../three/plates/plateView';
 import type { ScenePart } from '../types/robotics';
@@ -34,7 +35,7 @@ function useKeys(printing: Printing, plates: Plate[], active: boolean) {
       Escape: () => (mode.face ? printing.setFaceMode(false) : printing.closeMode()),
       ArrowRight: () => index < plates.length - 1 && printing.setModePlate(plates[index + 1].number),
       ArrowLeft: () => index > 0 && printing.setModePlate(plates[index - 1].number),
-      f: () => mode.selected && !printing.fitTest && printing.setFaceMode(!mode.face),
+      f: () => mode.selected && !printing.temporaryPrint && printing.setFaceMode(!mode.face),
       r: () => mode.selected && printing.turnPart(mode.selected),
     };
     const action = actions[e.key.length === 1 ? e.key.toLowerCase() : e.key];
@@ -118,7 +119,7 @@ export function PlateCanvas({ active, printing, parts }: PlateCanvasProps) {
 
     printing.selectPart(hit.id);
 
-    if (!item || !start || item.copy !== 0 || item.yaw % 90 !== 0 || printing.fitTest) return;
+    if (!item || !start || item.copy !== 0 || item.yaw % 90 !== 0 || printing.temporaryPrint) return;
 
     dragRef.current = { item, startX: start.x, startZ: start.z, dx: 0, dz: 0, moved: false };
     view.setOrbit(false);
@@ -145,12 +146,18 @@ export function PlateCanvas({ active, printing, parts }: PlateCanvasProps) {
     dragRef.current = null;
     viewRef.current?.setOrbit(true);
 
-    if (!drag?.moved || !plate) return;
+    if (!drag?.moved || !plate || !plan) return;
 
     const at: [number, number] = [
       Math.round((drag.item.x + drag.dx) * 10) / 10,
       Math.round((drag.item.y - drag.dz) * 10) / 10,
     ];
+
+    if (!placementFits({ ...drag.item, x: at[0], y: at[1] }, plan.bed)) {
+      viewRef.current?.dragOffset(drag.item.id, 0, 0);
+
+      return;
+    }
 
     printing.setPartPrint([drag.item.id], { plate: plate.local, at, turned: drag.item.yaw === 90 });
   };
@@ -158,6 +165,7 @@ export function PlateCanvas({ active, printing, parts }: PlateCanvasProps) {
   return (
     <div
       ref={containerRef}
+      data-plate-canvas
       className={`absolute inset-0 z-[5] w-full h-full rounded-[12px] ${printing.mode?.face ? 'cursor-crosshair' : ''}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

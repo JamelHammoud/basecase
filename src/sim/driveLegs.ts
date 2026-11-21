@@ -135,7 +135,9 @@ function freshCycles(setup: LegsSetup): Cycles {
     strafe: pair(same([1, 0, 0]), 'Strafe'),
     turn: pair(turnDirs(feet), 'Turn'),
     period: forward[0].duration,
-    joints: Object.keys(forward[0].keyframes[0]?.values ?? {}),
+    joints: Object.keys(forward[0].keyframes[0]?.values ?? {}).filter(
+      (id) => rig.byId.get(id)?.actuation !== 'passive',
+    ),
   };
 }
 
@@ -192,7 +194,9 @@ export class LegsDrive implements DriveLoop {
       [cycles.strafe, eased[1]],
       [cycles.turn, eased[2]],
     ];
-    const out: JointValues = { ...stand };
+    const out: JointValues = {};
+
+    for (const id of cycles.joints) out[id] = stand[id];
 
     for (const [pair, command] of parts) {
       const weight = Math.abs(command) / total;

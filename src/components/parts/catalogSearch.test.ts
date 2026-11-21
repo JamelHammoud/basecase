@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseSizeQuery, searchCatalog } from './catalogSearch';
+import { parseSizeQuery, searchCatalog, wordMatcher } from './catalogSearch';
 import { partCategories, searchScope } from './partsViews';
 
 describe('parts search', () => {
@@ -16,6 +16,32 @@ describe('parts search', () => {
     expect(results.length).toBeGreaterThan(0);
     expect(results.every((i) => i.hardware?.size === 'M3')).toBe(true);
     expect(results.every((i) => i.hardware?.length === 12)).toBe(true);
+  });
+
+  it('retains named size boundaries, priority and repeated query results', () => {
+    for (let repeat = 0; repeat < 3; repeat++) {
+      expect(parseSizeQuery('LM8UU rail 245')).toEqual({ size: 'LM8UU', length: 245, words: ['rail'] });
+      expect(parseSizeQuery('xLM8UU LM8UUx')).toEqual({ words: ['xlm8uu', 'lm8uux'] });
+      expect(parseSizeQuery('LM8UU 608')).toEqual({ size: '608', length: undefined, words: ['lm8uu'] });
+      expect(parseSizeQuery('608 608')).toEqual({ size: '608', length: 608, words: [] });
+      expect(parseSizeQuery('M3 608')).toEqual({ size: 'M3', length: 608, words: [] });
+    }
+  });
+
+  it('matches short word prefixes and literal punctuation while retaining longer substrings', () => {
+    const short = wordMatcher('dc');
+    const punctuation = wordMatcher('a+');
+    const long = wordMatcher('servo');
+
+    for (let repeat = 0; repeat < 3; repeat++) {
+      expect(short('motor dc12')).toBe(true);
+      expect(short('adc12')).toBe(false);
+      expect(punctuation('board a+')).toBe(true);
+      expect(punctuation('board aa')).toBe(false);
+      expect(long('microservo')).toBe(true);
+      expect(wordMatcher('a+b')('board a+b')).toBe(true);
+      expect(wordMatcher('a+b')('board aaab')).toBe(false);
+    }
   });
 
   it('makes motion hardware from catalog sizes', () => {

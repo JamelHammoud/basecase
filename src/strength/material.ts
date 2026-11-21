@@ -87,15 +87,17 @@ function invert(m: number[][]): number[][] {
     [a[col], a[pivot]] = [a[pivot], a[col]];
 
     const p = a[col][col];
+    const pivotRow = a[col];
 
-    a[col] = a[col].map((v) => v / p);
+    for (let k = 0; k < pivotRow.length; k++) pivotRow[k] /= p;
 
     for (let r = 0; r < n; r++) {
       if (r === col) continue;
 
       const f = a[r][col];
+      const row = a[r];
 
-      a[r] = a[r].map((v, k) => v - f * a[col][k]);
+      for (let k = 0; k < row.length; k++) row[k] -= f * pivotRow[k];
     }
   }
 

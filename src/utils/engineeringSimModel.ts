@@ -81,7 +81,7 @@ function servoModelRows(ctx: CheckContext, movable: RobotJoint[]): CheckRow[] {
 }
 
 export function simModelRows(ctx: CheckContext): CheckRow[] {
-  const movable = ctx.joints.filter(isMovable);
+  const movable = ctx.joints.filter((j) => isMovable(j) && j.actuation !== 'passive');
 
   if (!movable.length) return [];
 

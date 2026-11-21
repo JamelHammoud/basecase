@@ -54,6 +54,19 @@ The description names mesh files that aren't next to it. Many repos keep their m
 
 If some meshes load and others don't, Basecase still imports the robot, and a toast shows how many files are missing.
 
+## An imported joint falls in simulation
+
+MJCF joints without actuators import as passive joints. They move under gravity or contact without a motor holding them.
+
+If the joint should have motor control:
+
+1. In **Pose**, right-click the joint's row.
+2. In **Actuation**, choose **Powered**.
+
+## Ideal tendon import is refused
+
+MJCF tendons and unsupported tendon extensions in URDF can’t become direct-drive joints on import. In [[⌘K]], choose **Open Scene File** to open the original Basecase scene instead.
+
 ## Other messages
 
 | Message | What to do |
@@ -63,6 +76,7 @@ If some meshes load and others don't, Basecase still imports the robot, and a to
 | “Choose a URDF or MJCF file. That one isn’t valid XML.” | The file is damaged. Download it again. |
 | “Choose a URDF or MJCF file.” | The file is XML, but it has no robot description in it. |
 | “Nothing to show: the description has no meshes or shapes.” | The description has joints, but no geometry to draw. |
+| “Use finite spring values and nonnegative stiffness.” | Set `stiffness` from 0 to 1,000,000 and use a finite `springref`. Import the corrected file. |
 
 Basecase imports a Hugging Face LeRobot dataset link as tries, and does the same with a folder or zip that holds a LeRobot dataset or a ROS 2 recording. If one of those fails, the message names the dataset's file and what's wrong with it. See [Import robot data as tries](/help/import-robot-data-as-tries).
 

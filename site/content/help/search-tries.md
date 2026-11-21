@@ -16,7 +16,9 @@ related:
 covers:
   - src/components/LibraryPanel.tsx
   - src/components/library/TriesSection.tsx
-  - src/components/tries/
+  - src/components/tries/TriesMode.tsx
+  - src/components/tries/TryResults.tsx
+  - src/components/tries/TriesResultRow.tsx
   - src/workspace/useTriesView.ts
   - src/workspace/useTrySearch.ts
   - src/cases/trySearch/
@@ -46,6 +48,8 @@ You can search the tries in all your scenes at once: by words, by details such a
 ![Three Lift tries ranked first and a Wave after them, with no walks](/help/search-tries/like.png)
 
 After you open a try, click **Close** or press [[Esc]] to go back to the results. You can also search from the field at the top of Tries.
+
+Hold [[⌘]] or [[⇧]] while selecting results to keep Tries open. Select two recorded tries to [compare saved tries](/help/compare-saved-tries).
 
 Search keeps the best 200 matches, which can include several segments of one try. Tries shows each matching try once, and the Library shows up to 20 distinct tries.
 

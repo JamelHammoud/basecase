@@ -29,6 +29,8 @@ covers:
 
 Move your arms in front of your computer's camera, and a humanoid or a robot arm in the simulation moves its arms the same way.
 
+Ideal tendon models accept motor pose inputs. Simulation resolves their passive outputs without hand-position IK.
+
 This works on humanoids and fixed arms. A rover, or a robot with legs and no arms, drives the same way it does with **Drive**, and the camera stays off. The camera's picture stays on your computer, and Basecase saves it only as the video of a session on a connected robot. See [Keep a robot session as a try](/help/keep-a-robot-session-as-a-try).
 
 1. Click **Simulate** at the top of the right panel.
@@ -53,8 +55,10 @@ You can also press [[⌘K]] and choose **Drive with Camera**.
 
 | Robot | What moves |
 |---|---|
-| Humanoid | Its arms, waist and head follow yours. Its legs stay still. |
+| Humanoid | Its powered arm, waist and head joints follow yours. Its legs receive no camera commands. |
 | Fixed arm | Its hand follows your right hand as you move it away from your right shoulder, scaled to the arm's reach. To close its gripper, pinch your left thumb and index finger together. |
+
+Passive joints receive no camera commands and keep moving under physics.
 
 If a humanoid has a Walk skill that's ready, it keeps standing on that skill, and [[W]] [[A]] [[S]] [[D]] still walk it. If it doesn't, Basecase holds its base in place while you drive, so it can't fall over. The base stays held after you stop, until you end the simulation.
 

@@ -122,6 +122,7 @@ export function mirrorPart(part: ScenePart, plane: MirrorPlane): ScenePart {
 
   return {
     ...part,
+    ...(part.sketch ? { sketch: { ...part.sketch, support: undefined } } : {}),
     position: reflectPoint(part.position, plane),
     rotation: mirroredRotation(part.rotation, k, f),
     ...(part.sheetTransform ? { sheetTransform: mirrorSheetTransform(part.sheetTransform, f) } : {}),

@@ -9,7 +9,66 @@ function repeatedTriangles(count: number, side = 10): Float32Array {
   return new Float32Array(Array.from({ length: count }, () => [0, 0, 0, side, 0, 0, 0, side, 0]).flat());
 }
 
+function previousPieces(tri: THREE.Triangle, n: number, centers: number[]): void {
+  const center = new THREE.Vector3();
+  const at = (u: number, v: number, w: number) => {
+    center
+      .set(0, 0, 0)
+      .addScaledVector(tri.a, u / n)
+      .addScaledVector(tri.b, v / n)
+      .addScaledVector(tri.c, w / n);
+    centers.push(center.x, center.y, center.z);
+  };
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n - i; j++) {
+      const k = n - 1 - i - j;
+
+      at(i + 1 / 3, j + 1 / 3, k + 1 / 3);
+
+      if (k > 0) at(i + 2 / 3, j + 2 / 3, k - 1 / 3);
+    }
+  }
+}
+
+function previousCenters(positions: Float32Array): Float32Array {
+  const centers: number[] = [];
+  const tri = new THREE.Triangle();
+
+  for (let t = 0; t < positions.length; t += 9) {
+    tri.a.fromArray(positions, t);
+    tri.b.fromArray(positions, t + 3);
+    tri.c.fromArray(positions, t + 6);
+    previousPieces(tri, Math.min(12, Math.ceil(Math.sqrt(tri.getArea() / 25))), centers);
+  }
+
+  return rounded(centers);
+}
+
 describe('face subdivision', () => {
+  it.each([300, 600])('preserves every subdivision grid across %i differently placed faces', (count) => {
+    const values: number[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const side = Math.sqrt(50) * ((i % 12) + 0.75);
+      const x = i * 0.125;
+      const y = -i * 0.25;
+      const z = i * 0.5;
+
+      values.push(x, y, z, x + side, y, z, x, y + side, z);
+    }
+
+    const positions = rounded(values);
+    const before = positions.slice();
+    const solid = new ShapeSolid(positions);
+    const expected = previousCenters(positions);
+
+    expect(solid.faces.centers).toEqual(expected);
+    expect(new ShapeSolid(positions.slice()).faces.centers).toEqual(expected);
+    expect(solid.faces.areas).toHaveLength((count / 12) * 650);
+    expect(positions).toEqual(before);
+  });
+
   it('keeps ordered barycentric centers, winding and area weights', () => {
     const positions = rounded([...triangle, ...triangle.slice(6), ...triangle.slice(3, 6), ...triangle.slice(0, 3)]);
     const before = positions.slice();
@@ -45,8 +104,45 @@ describe('face subdivision', () => {
     expect(strided.surfaceArea).toBe(1500);
   });
 
+  it('matches triangle area and normal calculations across varied orientations and areas', () => {
+    const source = new THREE.SphereGeometry(20, 24, 16);
+    const geometry = source.toNonIndexed();
+    const positions = new Float32Array(geometry.attributes.position.array);
+    const expectedNormals: number[] = [];
+    const expectedAreas: number[] = [];
+    const tri = new THREE.Triangle();
+    const normal = new THREE.Vector3();
+
+    for (let i = 0; i < positions.length; i += 9) {
+      tri.a.fromArray(positions, i);
+      tri.b.fromArray(positions, i + 3);
+      tri.c.fromArray(positions, i + 6);
+
+      const area = tri.getArea();
+
+      if (area < 0.5) continue;
+
+      tri.getNormal(normal);
+
+      const splits = Math.min(12, Math.ceil(Math.sqrt(area / 25)));
+
+      for (let piece = 0; piece < splits * splits; piece++) {
+        expectedNormals.push(normal.x, normal.y, normal.z);
+        expectedAreas.push(area / (splits * splits));
+      }
+    }
+
+    const faces = new ShapeSolid(positions).faces;
+
+    expect(faces.normals).toEqual(rounded(expectedNormals));
+    expect(faces.areas).toEqual(rounded(expectedAreas));
+    geometry.dispose();
+    source.dispose();
+  });
+
   it.each([300, 600])('uses one center workspace for %i faces', (count) => {
     const workspaces = new Set<THREE.Vector3>();
+    const cross = vi.spyOn(THREE.Vector3.prototype, 'cross');
     const addScaledVector = THREE.Vector3.prototype.addScaledVector;
     const add = vi.spyOn(THREE.Vector3.prototype, 'addScaledVector').mockImplementation(function (
       this: THREE.Vector3,
@@ -64,8 +160,10 @@ describe('face subdivision', () => {
       expect(solid.faces.areas).toHaveLength(count * 4);
       expect(add).toHaveBeenCalledTimes(count * 4 * 3);
       expect(workspaces.size).toBe(1);
+      expect(cross).toHaveBeenCalledTimes(count);
     } finally {
       add.mockRestore();
+      cross.mockRestore();
     }
   });
 
@@ -81,5 +179,33 @@ describe('face subdivision', () => {
     expect(original.faces.centers).toEqual(before);
     replacement.faces.centers.fill(0);
     expect(original.faces.centers).toEqual(before);
+  });
+});
+
+describe('face area rejection', () => {
+  it.each([300, 600])('rejects tiny faces before square roots across %i triangles', (count) => {
+    const heights = [0, 1 - 2 ** -24, 1, 1 + 2 ** -23];
+    const positions = rounded(
+      Array.from({ length: count }, (_, i) => [0, 0, 0, 1, 0, 0, 0, heights[i % heights.length], 0]).flat(),
+    );
+    const before = positions.slice();
+    const accepted = rounded(
+      Array.from({ length: count / 4 }, () => [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, heights[3], 0]).flat(),
+    );
+    const expected = new ShapeSolid(accepted).faces;
+    const sqrt = vi.spyOn(Math, 'sqrt');
+    let faces;
+
+    try {
+      faces = new ShapeSolid(positions).faces;
+
+      expect(sqrt).toHaveBeenCalledTimes(count);
+    } finally {
+      sqrt.mockRestore();
+    }
+
+    expect(faces).toEqual(expected);
+    expect(positions).toEqual(before);
+    expect(new ShapeSolid(positions.slice()).faces).toEqual(expected);
   });
 });

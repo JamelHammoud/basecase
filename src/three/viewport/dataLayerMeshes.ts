@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { dataShapeGeometry } from '../../dataLayers/shapeGeometry';
 import type { LayerDraw } from '../../dataLayers/draw';
 import type { GridDraw } from '../../dataLayers/grid';
 import { pointSink, type PointSink } from '../../dataLayers/pointSink';
@@ -9,20 +9,6 @@ export const DATA_ORDER = 1041;
 
 const POINT_PX = 3;
 const START_POINTS = 4096;
-
-function arrowGeometry() {
-  const shaft = new THREE.CylinderGeometry(0.25, 0.25, 0.7, 12).translate(0, 0.35, 0);
-  const head = new THREE.ConeGeometry(0.5, 0.3, 16).translate(0, 0.85, 0);
-
-  return mergeGeometries([shaft, head])!.rotateZ(-Math.PI / 2);
-}
-
-const SHAPE_GEOMETRY: Record<ShapeKind, () => THREE.BufferGeometry> = {
-  cube: () => new THREE.BoxGeometry(1, 1, 1),
-  sphere: () => new THREE.SphereGeometry(0.5, 16, 12),
-  cylinder: () => new THREE.CylinderGeometry(0.5, 0.5, 1, 20).rotateX(Math.PI / 2),
-  arrow: arrowGeometry,
-};
 
 const quiet = <T extends THREE.Object3D>(object: T, order = DATA_ORDER): T => {
   object.renderOrder = order;
@@ -137,7 +123,7 @@ class ShapeMeshes {
     }
 
     if (!mesh && list.length) {
-      mesh = quiet(new THREE.InstancedMesh(SHAPE_GEOMETRY[kind](), this.material, Math.max(16, list.length * 2)));
+      mesh = quiet(new THREE.InstancedMesh(dataShapeGeometry(kind), this.material, Math.max(16, list.length * 2)));
       this.meshes.set(kind, mesh);
       this.group.add(mesh);
     }

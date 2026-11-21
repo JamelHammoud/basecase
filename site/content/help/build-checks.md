@@ -37,19 +37,26 @@ covers:
 
 Every check the Build tab runs, with the problems each one reports in the words the app uses.
 
-Checks list the worst first: red, then amber, then green, then gray for Not run. A red row holds at least one blocker, which stops Ready to build. An amber row holds only notes.
+In the editable design, Checks list the worst first: red, then amber, then green, then gray for Not run. A red row holds at least one blocker, which stops Ready to build. An amber row holds only notes.
+
+A [saved build](/help/resume-a-robot-build) shows its retained measurements and recorded freshness. Its findings are read-only.
 
 ## Build checks
 
 | Check | What it looks at | Problems it can report |
 |---|---|---|
+| Dimensions | Shared parameters and their bound geometry | Missing or incompatible references, mismatched saved values, and pending or failed regeneration |
+| Sketch | Saved sketch supports and current reference geometry | Missing, ambiguous or unsupported faces, unsolved constraints and regeneration limits. Previous geometry stays visible while blocked. |
 | Parts attached | Whether each part is held by something | “These parts aren’t attached to anything, so they’d fall loose.” |
 | Screws | Every screw, insert and the hole it goes into | Screws ending in air, with no hole, too long, too short, off their holes or too deep. Empty inserts. Holes too small for an insert. Thin walls around an insert |
 | Assembly | Whether a build order exists | “A screwdriver can’t reach these screws, in any build order.” and “These parts can’t be put in place, in any build order.” |
+| Board fit | A defined board’s outline, mounting hardware, footprints and plug access | Components or holes outside the outline, collisions, inaccessible plugs and unresolved geometry |
 | Fit | Parts that overlap, and room for battery leads | “These parts overlap by … mm.” and “There isn’t enough room for the battery’s wires and connector.” |
 | Printing | Each printed part against your printer | Parts too big for the plate, walls too thin to print, and parts meant to be clear |
 | Real parts | Where every part comes from | Placeholders, parts with nothing saying where to get them, and parts whose link and numbers aren't checked |
 | Repairs | How much comes apart to replace a part | “Replacing these means taking a lot apart.” as a note |
+
+[Fit an electronics board](/help/fit-an-electronics-board) covers board placement. Electrical requirements and missing or stale routed-copper evidence remain separate blockers. [Import a routed board](/help/import-a-routed-board) covers the KiCad handoff.
 
 For an Onshape robot, **Assembly** also lists **Fixed Mates** as notes. A cylindrical mate keeps its hinge, and the note names only its held slide, such as “Axle slide imports as fixed.” Other unsupported mates stay fixed. These notes don't block Ready to build.
 
@@ -63,10 +70,10 @@ For an Onshape robot, **Assembly** also lists **Fixed Mates** as notes. A cylind
 | Servo torque | Each servo's load against its stall and rated torque | Over 0.60 of stall torque, or running too hot. Amber from 0.40 of stall |
 | Peak torque | Torque and speed while a trained policy walks for 14 seconds | Over stall for more than 50 ms, or a fall. Amber when over 5% of a joint's walk is past its servo's torque–speed line. Not run without a walking policy |
 | Falls | Each leg servo's torque as the robot tips over from 12 directions, against its rated torque | Over 5× rated torque in a fall. Amber over 3×. Not run until the agent checks falls |
-| Torque estimates | Joints with no servo or published torque | A note: the simulation guesses their torque from weight |
+| Torque estimates | Powered joints with no servo or published torque | A note: the simulation guesses their torque from weight |
 | Servo models | Whether each servo runs on a measured calibration | A note naming the servos that aren't calibrated |
-| Payload | What an arm lifts at full reach and close in | Never. It reports the numbers |
-| Joint parts | The parts each joint names | A joint naming a part that doesn't exist |
+| Payload | What an arm with powered joints lifts at full reach and close in | Never. It reports the numbers |
+| Joint parts | The parts and actuation each joint declares | A missing part or a passive joint with a motor assigned |
 | Servo alignment | Each servo's output against its joint axis | A servo that doesn't line up with its joint |
 | Joint support | What holds each joint on both sides | A note when a joint is held on one side only |
 | Range of motion | Each joint swept every 15° through its range | A part hit before the end of the range |
@@ -77,6 +84,7 @@ For an Onshape robot, **Assembly** also lists **Fixed Mates** as notes. A cylind
 | Supply current | The power supply's amps against the servos' draw | Shown in place of Current and runtime when there's no battery |
 | Regulator input | The battery against each regulator's input range | A battery outside the regulator's range |
 | Servo bus | Each servo's connector against the bus adapters in the build | A servo no adapter plugs into. Shown only when it fails |
+| Electrical connections | Source-backed pins, supply rails, returns and unresolved module requirements | Missing sources or grounds, incompatible rails, overloaded declared ratings, unsupported interfaces and unresolved protection |
 | Cable reach | Servo bus routes and power connections with two scene endpoints through the declared joint ranges | A blocked or unresolved route, missing port geometry, or no compatible cable with enough recorded length |
 | Standing stability | The center of mass over the feet | “The robot would tip over standing still.” |
 | Heat near servos | PLA parts within 1 mm of a servo | A note: PLA softens from servo heat |
@@ -88,9 +96,11 @@ An active [body fit](/help/fit-a-robots-body-from-a-recorded-run) adjusts the we
 
 To enter hours and read the breakdown, [Set a time budget](/help/set-a-time-budget).
 
+[Export a robot schematic](/help/export-a-robot-schematic) carries known connections and unresolved electrical requirements into KiCad. Exporting never clears a blocker.
+
 Virtual fuse, switch and supply connections have no physical placement and are excluded from **Cable reach**. They remain on the wiring list.
 
-Open **Cable reach** to read each failing connection's endpoints, required length and available cable length. A limiting joint position appears beside the connection. Click the finding's part names to select its endpoints. [Servo bus or Cable reach is red](/help/troubleshoot-servo-bus) explains the routing limits.
+Open **Cable reach** to read each failing connection's endpoints, required length and available cable length. A limiting joint position appears beside the connection. Click the finding's part names to select its endpoints. [Route a robot cable](/help/route-a-robot-cable) covers **Edit Route**, stock and routing points. [Servo bus or Cable reach is red](/help/troubleshoot-servo-bus) explains the routing limits.
 
 Open **Peak torque** to plot each joint's walk against its servo's torque–speed line. A joint with a warning shows its plot under the warning. Click any other joint to open its plot.
 

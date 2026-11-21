@@ -42,6 +42,8 @@ There is nothing to turn on. A session counts as a try when it lasts over 2 seco
 
 ![An Operate session open on the timeline, with a lane for each joint](/help/keep-a-robot-session-as-a-try/timeline.png)
 
+A session linked to a fault or Case alert also opens through **Open Try** in that unit's [retained problems](/help/inspect-fleet-problems). The incident keeps the link to that session, even after another session ends.
+
 Climbing the **Ladder** keeps the same session going. Dropping to a lower rung ends it and starts a new one.
 
 A session keeps the angles the robot measured and the commands Basecase sent. It also keeps the simulation's angles at the same moments and the raw values of the input that drove it. Those are a gamepad's sticks and buttons, a phone's tilt, or the body points your computer's camera found. A ROS 2 robot or a Unitree G1 adds each joint's speed and effort. A session that ran a trained policy keeps which policy it was.

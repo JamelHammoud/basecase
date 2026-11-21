@@ -38,7 +38,7 @@ covers:
   - electron/library/datasetStore.mjs
 hub_open_a_try_from_any_scene_order: 30
 hub_open_a_try_from_any_scene: |
-  In a dataset, saved versions show their frozen samples. If a saved version is selected, choose **Working Dataset** in **Dataset version** before opening or editing a try. Saved versions don't open the try timeline or its right-click menu.
+  In a dataset, saved versions show their frozen samples. If a saved version is selected, choose **Working Dataset** in **Dataset version** before opening or editing a try from its tile. Saved try tiles don't open the timeline or their right-click menu.
 ---
 
 You can gather tries from any scene into a named dataset, then export it, publish it or train a policy on it.
@@ -67,13 +67,15 @@ The dataset keeps your search and its matching samples. A segment match includes
 
 If the scene has the Case those tries came from, the dataset takes that Case's name. Otherwise, it takes the name of your search.
 
-To gather only selected tries, hold [[⌘]] or [[⇧]] as you select them. Right-click one and choose **Make Dataset**. Within a search, those tries contribute only their matching frame ranges.
+To gather only selected tries, hold [[⌘]] or [[⇧]] as you select them. Selection keeps Tries open. Right-click one and choose **Make Dataset**. Within a search, those tries contribute only their matching frame ranges.
 
 ## The dataset
 
-Above its tries, the dataset shows their total running time. After saving a version, use **Dataset version** to choose **Working Dataset** or a saved version. If it also holds images, it shows their image and class counts and an **Images** section. Datasets saved before class counts were added show only the image count.
+Above its tries, the dataset shows their total running time. The controls and training results occupy a separate scrolling pane above the image and try lists. After saving a version, use **Dataset version** to choose **Working Dataset** or a saved version. If it also holds images, it shows their image and class counts and an **Images** section. Datasets saved before class counts were added show only the image count.
 
-In **Working Dataset**, click **Label Objects** under an image to edit its object labels. See [Label objects in camera frames](/help/label-objects-in-camera-frames). Saved versions keep their image labels and don't open the label editor.
+In **Working Dataset**, click **Label Objects** under an image to edit its object labels. See [Label objects in camera frames](/help/label-objects-in-camera-frames). Saved image tiles keep their frozen labels read-only. A [vision model comparison](/help/inspect-vision-comparisons) can open the matching current image for editing while keeping its historical labels unchanged.
+
+To assign conditions and inspect their support and model scores, follow [Compare vision models by condition](/help/compare-vision-conditions). To make a condition, camera or class part of retention, [set requirements for vision model retention](/help/require-vision-conditions) before training.
 
 ![Touch a Point open as a dataset, with its total time, Export Dataset, Publish to Hugging Face and Train from Tries](/help/make-a-dataset-from-tries/dataset.png)
 
@@ -84,7 +86,7 @@ In **Working Dataset**, click **Label Objects** under an image to edit its objec
 
 **Note:** Publishing and both kinds of training are available in the desktop app.
 
-Failed tries stay in the dataset, while export, publishing and training leave them out. A try without a verdict, such as an [imported try](/help/import-robot-data-as-tries), counts as a demonstration. To exclude one, mark it failed in [Label a try](/help/label-a-try).
+Failed tries stay in the dataset, while export, publishing and training leave them out. A try without a verdict, such as an [imported joint recording](/help/import-robot-data-as-tries), counts as a demonstration when it fits the robot model. Topic-only recordings remain available to [compare saved tries](/help/compare-saved-tries), but export and policy training leave them out. To exclude one, mark it failed in [Label a try](/help/label-a-try).
 
 Any quality flag excludes its selected samples from export, publishing and training. The same actions leave out the tries listed under [Tries that export leaves out](#tries-that-export-leaves-out).
 

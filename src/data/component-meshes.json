@@ -323,6 +323,12 @@
     "triangles": 193975,
     "bytes": 1288684
   },
+  "jst-b3b-eh-a": {
+    "size": [10, 9.2, 3.8],
+    "originOffset": [-2.5, -1.4, -0.3],
+    "triangles": 348,
+    "bytes": 4504
+  },
   "koch-v1-1-gripper": {
     "size": [37.75, 68.868, 35.5],
     "originOffset": [-4.147, -15.542, -221.065],

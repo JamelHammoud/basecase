@@ -22,6 +22,8 @@ covers:
 
 If you change the robot a policy learned on, train the policy again so it runs on the robot you have now.
 
+Authored ideal tendon models refuse policy training. [Drive joints with an ideal tendon](/help/drive-joints-with-an-ideal-tendon) covers their simulation controls.
+
 1. Open the Simulate tab and scroll to Train. A policy shows Out of date after a resized link, a different mass or servo, or a new servo or body calibration.
 2. Right-click the policy, then choose Retrain. Basecase trains it again with the same task, speed, and training time, and the policy keeps its name.
 3. While the policy trains, its row shows the trainer's message, how much of the training time it has used, and a stop button. Meanwhile, the robot on the canvas runs the newest snapshot of the policy.
@@ -33,5 +35,9 @@ If you change the robot a policy learned on, train the policy again so it runs o
 ![Walk 1 training again, with a stop button on its row](/help/retrain-an-out-of-date-policy/retraining.png)
 
 Until Basecase saves the new policy in its place, the old one stays and keeps running. If you stop training, you get back the controller you had before.
+
+Enabling self-contact or changing an excluded link pair makes that robot’s policies out of date. Steps are in [Simulate self-contact](/help/simulate-self-contact).
+
+Adding the first Sketch four-bar to a scene, or removing its last one, changes the physics solver settings and makes the scene's policies out of date.
 
 Moving the robot across the floor, posing it, or adding scenery doesn't make a policy out of date. If you roll a calibration back in Operate to the one a policy trained on, that policy is current again.

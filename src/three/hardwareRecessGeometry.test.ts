@@ -233,6 +233,8 @@ describe('recess geometry copies', () => {
     const clones = vi.spyOn(THREE.Vector3.prototype, 'clone');
     const expansion = vi.spyOn(g, 'toNonIndexed');
     const sets = vi.spyOn(Float32Array.prototype, 'set');
+    const positionReads = vi.spyOn(g.attributes.position, 'getX');
+    const indexReads = vi.spyOn(g.index!, 'getX');
 
     try {
       previousClean(g);
@@ -240,9 +242,13 @@ describe('recess geometry copies', () => {
       expect(expansion).toHaveBeenCalledTimes(1);
       clones.mockClear();
       expansion.mockClear();
+      positionReads.mockClear();
+      indexReads.mockClear();
       cleanRecessGeometry(g);
       expect(clones).not.toHaveBeenCalled();
       expect(expansion).not.toHaveBeenCalled();
+      expect(positionReads).toHaveBeenCalledTimes(triangles * 3);
+      expect(indexReads).toHaveBeenCalledTimes(triangles * 3);
       sets.mockClear();
       previousGroup(g, { start: 0, count: triangles * 3 });
       expect(sets).toHaveBeenCalledTimes(triangles * 6);
@@ -253,6 +259,8 @@ describe('recess geometry copies', () => {
       clones.mockRestore();
       expansion.mockRestore();
       sets.mockRestore();
+      positionReads.mockRestore();
+      indexReads.mockRestore();
       g.dispose();
     }
   });

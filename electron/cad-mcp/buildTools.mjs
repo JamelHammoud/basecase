@@ -13,6 +13,19 @@ export const simulate = {
       'Shove it with pushes (direction in the robot\'s frame, strength as a share of its weight for 0.15 s; 0.5 is a firm shove). Ask for frames to see renders of the simulated robot, and for cameras to see through the robot\'s own camera parts ("Wrist Camera") or the scene\'s camera views ("Scene" when none are placed), as a camera-driven policy would. ' +
       'Use it after define_joints and verify_design on anything with legs, and fix what it finds (servos at 100% for long, falls while holding a pose) before you finish.',
     inputSchema: {
+      self_contact: z
+        .object({
+          robot: z.string().max(200),
+          enabled: z.boolean(),
+          exclusions: z
+            .array(z.tuple([z.string().max(200), z.string().max(200)]))
+            .max(256)
+            .optional(),
+        })
+        .optional()
+        .describe(
+          'Save self-contact for a robot name or key from get_rig. Adjacent links stay excluded. Exclusions name two scene part ids on different links.',
+        ),
       seconds: z.number().min(0.5).max(30).optional().describe('Simulated time, default 5'),
       controller: z.string().optional().describe('"hold" (default), "limp", "animation:<name>" or "policy:<name>"'),
       pushes: z

@@ -70,6 +70,7 @@ export function useAgentSession({ core, seed, active, robots, wrap, lighten, pla
     cursors,
     setChatList: studio.setChatList,
     drain: run.drain,
+    versions: core.versions,
   });
   const persistLane = lanePersister(lanes, studio.setChatList);
   const controls = useLaneControls({ core, lanes, active, alive, persistLane });

@@ -34,13 +34,15 @@ Save a robot with movable joints as one zip for MuJoCo and ROS 2: its model, a U
 1. Click **Export** at the top right.
 2. Choose **Robot Package**.
 
-![The Export menu with Robot Package](/help/export-a-robot-package/menu.png)
+![The rover's Export menu with Robot Package enabled](/help/export-a-robot-package/menu.png)
 
 A toast shows the progress, then names the package when it's saved. Basecase saves `<scene>-robot.zip` to your downloads.
 
 ![The toast after the package is saved](/help/export-a-robot-package/exported.png)
 
 **Export Robot Package** is also in [[⌘K]]. Until the scene has a joint that turns or slides, the menu item is grayed out and the command is hidden.
+
+For [ideal tendons](/help/drive-joints-with-an-ideal-tendon), use `robot.xml` in MuJoCo. The URDF retains an unsupported transmission extension and doesn’t simulate the coupling.
 
 ## Open it in ROS 2
 
@@ -60,4 +62,11 @@ RViz opens with the robot, and the Joint State Publisher window has a slider per
 
 The package isn't a LeRobot dataset, and the policies are in Basecase's own JSON format. To give LeRobot data it can load, [publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face) from a Case. Joint names match across the package and those datasets.
 
+Passive joints remain in the physical model. Declared springs stay in MJCF and use a Basecase extension in URDF. They have no servo ID or ROS command interface.
+Policies that command a now-passive joint stay out of the package. Authored tendon models leave all policies out.
+
+Temporary [fit-test variants](/help/compare-fit-clearances) stay out of the robot package. Apply your chosen dimension before exporting to include it in the robot.
+
 Every file in the zip is listed in [Robot package contents](/help/robot-package-contents).
+
+The [self-contact setting](/help/simulate-self-contact) is included in `robot.xml`. URDF keeps link geometry and joints, so use MJCF for the same self-contact physics.

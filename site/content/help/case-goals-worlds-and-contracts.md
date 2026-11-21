@@ -25,6 +25,8 @@ related:
   - make-a-case
   - arena
 covers:
+  - src/cases/operateConditions.ts
+  - src/workspace/useOperateAlerts.ts
   - src/cases/caseGoals.ts
   - src/cases/goalDefaults.ts
   - src/cases/caseWorlds.ts
@@ -61,6 +63,13 @@ Every goal and world the Case builder offers, the numbers each goal takes, and e
 | **Touch a Point** | An arm | **Dots**, **Distance**, **Height**, **Radius**, **Time** | The end effector stays within **Radius** of the point for 0.2 s |
 | **Pick Up a Block** | An arm with a gripper | **Distance**, **Spacing**, **Radius**, **Time** | The block lifts by half its size, then ends within **Radius** of the spot for 0.3 s |
 | **Hand Off to a Spot** | Two arms with grippers | **Distance**, **Height**, **Radius**, **Time** | The donor grips the raised block alone for 0.2 s, both grip it for 0.2 s, then the recipient grips alone for 0.2 s. The block ends placed and released within **Radius** for the final 0.3 s |
+| **Open a Lid** | An arm with a gripper | **Distance**, **Height**, **Width**, **Depth**, **Travel**, **Weight**, **Joint friction**, **Damping**, **Time** | Signed hinge travel exceeds 80% of **Travel** while the arm touches the handle for 0.2 s |
+| **Pull a Drawer** | An arm with a gripper | The same fixture fields, with **Travel** in millimeters | Signed slide travel exceeds 80% of **Travel** while the arm touches the handle for 0.2 s |
+| **Open a Cupboard**, **Push a Door**, **Operate a Lever**, **Turn a Knob**, **Tip a Hinged Bin** | An arm with a gripper | The same fixture fields, with **Travel** in degrees | Signed hinge travel exceeds 80% of **Travel** during 0.2 s of handle contact |
+| **Press a Spring Button**, **Move a Sliding Gate** | An arm with a gripper | The same fixture fields, with **Travel** in millimeters | Signed slide travel exceeds 80% of **Travel** during 0.2 s of handle contact |
+| **Put Away a Block** | An arm with a gripper | The same fixture fields | Open beyond 80% of **Travel**, lift while gripped, place inside while gripped, then finish released inside with lid travel below 5 degrees |
+
+Fixture fields also include **Lower stop**, **Return spring** and **Rest position**. A saved assembly can replace the default fixture. [Reuse an assembly in Cases](/help/reuse-an-assembly-in-cases) covers capture and the chest task.
 
 On a robot with legs, these goals also fail when the robot falls: its base drops below half its starting height.
 
@@ -72,15 +81,22 @@ The builder starts each number at a default sized to the robot. Its limits:
 |---|---|
 | **Distance** | 0 to 5,000 mm. At least 100 mm for Walk Without Falling |
 | **Dots** | 1 to 3 |
-| **Height** | 0 to 2,000 mm |
+| **Height** | 0 to 2,000 mm. From 20 mm for lids and drawers |
 | **Radius** | 5 to 1,000 mm |
 | **Push** | 100 to 5,000 mm |
 | **Box** | 40 to 600 mm |
 | **Spots** | 2 to 8 |
 | **Spacing** | 200 to 3,000 mm. From 50 mm for Pick Up a Block |
 | **Time** | 2 to 120 s |
+| **Width**, **Depth** | 10 to 500 mm |
+| **Travel** | 1 to 150° for a lid, or 1 to 150 mm for a drawer |
+| **Weight** | 1 to 10,000 g for the plate, plus its separate 5 g handle |
+| **Joint friction** | 0 to 10,000 mN m for a lid, or mN for a drawer |
+| **Damping** | 0 to 10,000 mN m s/rad for a lid, or mN s/m for a drawer |
 | **Height** on Rough Ground or Steps | 2 to 500 mm |
 | **Incline** on Slope | 2 to 40° |
+
+Lids and drawers use Open Floor. The reference grips the handle and moves only the arm. A change to travel, geometry or resistance can make that robot miss. Steps are in [Open lids and pull drawers](/help/open-lids-and-pull-drawers).
 
 ## Worlds
 
@@ -148,3 +164,16 @@ A Case written on one arm runs on another by scaling its world to the new arm's 
 For [training images](/help/make-training-images), named object points, object pose variation, distractors and camera mount tolerance in millimeters scale too. Color classes and angular tolerances stay the same.
 
 Imported rooms and captured worlds keep their true size when you change robots.
+
+
+## Operate alerts
+
+A named failure in a saved Case can also raise a problem on a robot's Operate fleet row. Ask the agent to configure the Case's contract. For example, ask for a failure named Supply low when supplied voltage stays below 7 V for one second.
+
+Use `hold_for` with `within: "whole"` for a continuous condition. `eventually` and `always` with `window: "whole"` raise immediate incidents when their state holds. The live monitor reads the state again on each fresh sample. Windowed formulas, sequences and delta expressions remain try-scoring rules.
+
+The live readings are `joint.<id>.volts`, `joint.<id>.temp_c`, `joint.<id>.velocity` and `joint.<id>.effort`, when telemetry supplies them. `volts` is the minimum joint voltage, available only when every reported joint supplies voltage. These are readings from the robot, never estimated battery percentages.
+
+A reading older than 500 ms, a gap over 500 ms or a missing input breaks a pending duration. Missing data never counts as recovery, even inside a negated condition. Fresh healthy data recovers an active incident. Another occurrence starts a new incident.
+
+[Inspect fleet problems](/help/inspect-fleet-problems) to acknowledge an incident or open its kept try.

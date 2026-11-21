@@ -13,12 +13,10 @@ const revolute = (ctx: CheckContext) => ctx.joints.filter((j) => j.type === 'rev
 
 const isOffAxis = ({ angle, off }: { angle: number; off: number }) => angle > 3 || off > 1.5;
 
-function lineOffset(line: ServoLine, j: RobotJoint) {
-  const a = norm(j.axis);
-
+function lineOffset(line: ServoLine, origin: V3, a: V3) {
   return {
     angle: (Math.acos(Math.min(1, Math.abs(dot(line.axis, a)))) * 180) / Math.PI,
-    off: lineDistance(line.point, j.origin, a),
+    off: lineDistance(line.point, origin, a),
   };
 }
 
@@ -27,9 +25,15 @@ function outputOffset(ctx: CheckContext, j: RobotJoint, id: string) {
 
   if (!o) return null;
 
-  const main = lineOffset(o, j);
+  const a = norm(j.axis);
 
-  return (o.alternates ?? []).map((line) => lineOffset(line, j)).find((x) => !isOffAxis(x)) ?? main;
+  for (const line of o.alternates ?? []) {
+    const offset = lineOffset(line, j.origin, a);
+
+    if (!isOffAxis(offset)) return offset;
+  }
+
+  return lineOffset(o, j.origin, a);
 }
 
 function misalignments(ctx: CheckContext, j: RobotJoint): string[] {
@@ -176,17 +180,42 @@ interface SweepResult {
   clashes: Clash[];
 }
 
+function nearestClash(clashes: Clash[], sign: number): Clash | undefined {
+  let first: Clash | undefined;
+  let nearest = Infinity;
+
+  for (const clash of clashes) {
+    const a = clash.angle;
+    const distance = Math.abs(a);
+
+    if (Math.sign(a) !== sign || (first && distance >= nearest)) continue;
+
+    first = clash;
+    nearest = distance;
+  }
+
+  return first;
+}
+
+function lastClearSample(samples: number[], blocked: number): number {
+  let clear = 0;
+  const sign = Math.sign(blocked);
+  const limit = Math.abs(blocked);
+
+  for (const a of samples) {
+    if (Math.sign(a) === sign && Math.abs(a) < limit && Math.abs(a) > Math.abs(clear)) clear = a;
+  }
+
+  return clear;
+}
+
 function clashItem(ctx: CheckContext, { j, range, samples, clashes }: SweepResult, sign: number): Item | null {
   const end = sign < 0 ? Math.min(...range) : Math.max(...range);
-  const side = clashes.filter((c) => Math.sign(c.angle) === sign).sort((x, y) => Math.abs(x.angle) - Math.abs(y.angle));
+  const first = nearestClash(clashes, sign);
 
-  if (!side.length) return null;
+  if (!first) return null;
 
-  const first = side[0];
-  const clear =
-    samples
-      .filter((a) => Math.sign(a) === sign && Math.abs(a) < Math.abs(first.angle))
-      .sort((x, y) => Math.abs(y) - Math.abs(x))[0] ?? 0;
+  const clear = lastClearSample(samples, first.angle);
   const what = first.b === 'floor' ? 'touches the floor' : `meets ${partLabel(ctx, first.b)}`;
 
   return {

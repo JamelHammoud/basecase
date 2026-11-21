@@ -1,13 +1,19 @@
+import { buildOutcome, buildSchema } from '../lib/buildOutcome.mjs';
 import { CHANGE_SCHEMA } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
-import { closeIssue, commentOnIssue, editIssueLabels, hasLabel, issues, openPulls } from '../lib/github.mjs';
+import { closeIssue, commentOnIssue, editIssueLabels, hasLabel, issues } from '../lib/github.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
-import { buildOrder, STUCK_DECLINES } from '../lib/dependsOn.mjs';
+import { buildOrder } from '../lib/dependsOn.mjs';
 import { checkedRun } from '../lib/preflight.mjs';
 import { publish } from '../lib/pull.mjs';
-import { stepPullIndex, stepStatus } from '../lib/stepPulls.mjs';
-import { recordDecline, stepEntry, stepWaiting } from '../lib/stepState.mjs';
+import { indexByStep, pullHistory, stepPullIndex, stepStatus } from '../lib/stepPulls.mjs';
+import { recordDecline } from '../lib/stepState.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
+import { eligibleTask, taskKey, unavailableCapabilities } from '../lib/capabilities.mjs';
+import { hasPendingWorktree, pendingSteps } from '../lib/deliveryState.mjs';
+import { taskInputSignature } from '../lib/taskInputs.mjs';
+import { clearRecovery, recoveryFor, refreshRecovery, saveRecovery } from '../lib/workRecovery.mjs';
+import { inputsReady, recoverySignature } from '../lib/taskReadiness.mjs';
 
 export const schedule = {
   agent: true,
@@ -21,9 +27,12 @@ const BUILDING = 'loop:building';
 const PRIORITY = 'loop:priority';
 
 const byPriorityThenAge = (a, b) =>
-  Number(hasLabel(b, PRIORITY)) - Number(hasLabel(a, PRIORITY)) || a.createdAt.localeCompare(b.createdAt);
+  Number(hasLabel(b, PRIORITY)) - Number(hasLabel(a, PRIORITY)) ||
+  Number(hasLabel(b, 'loop:feature') || hasLabel(b, 'loop:integration')) -
+    Number(hasLabel(a, 'loop:feature') || hasLabel(a, 'loop:integration')) ||
+  a.createdAt.localeCompare(b.createdAt);
 
-const openPullNumbers = () => new Set(openPulls().map((pull) => pull.number));
+const openPullNumbers = (pulls) => new Set(pulls.filter((pull) => pull.state === 'OPEN').map((pull) => pull.number));
 
 const ORPHAN_AFTER_MS = 30 * 60 * 1000;
 
@@ -38,40 +47,71 @@ function closeIfMerged(step, index) {
 const unbuilt = (steps, index) =>
   steps.filter((step) => !closeIfMerged(step, index) && stepStatus(index, step.number) === 'none');
 
-const waitingSteps = () => {
-  const index = stepPullIndex();
+export const waitingSteps = () => {
+  const pulls = pullHistory();
 
-  if (!index) return [];
+  if (!pulls) return [];
 
+  const index = indexByStep(pulls);
   const now = Date.now();
-  const openNumbers = openPullNumbers();
+  const openNumbers = openPullNumbers(pulls);
   const queued = issues(NEXT).filter((issue) => !hasLabel(issue, BUILDING));
   const stale = issues(BUILDING).filter((issue) => now - Date.parse(issue.updatedAt) > ORPHAN_AFTER_MS);
+  const blocked = issues('loop:blocked');
 
-  const openSteps = [...issues(NEXT), ...issues(BUILDING)];
-  const candidates = unbuilt([...queued, ...stale], index)
+  const openSteps = [...issues(NEXT), ...issues(BUILDING), ...blocked];
+  const delivering = pendingSteps();
+  const candidates = unbuilt([...queued, ...stale, ...blocked], index)
     .filter((issue) => issue.author?.login === OWNER_LOGIN)
-    .filter((issue) => !stepWaiting(stepEntry(issue.number), { now, openNumbers }));
-  const stuck = (number) => stepEntry(number).declines >= STUCK_DECLINES;
+    .filter(eligibleTask)
+    .filter((issue) => !delivering.has(issue.number))
+    .filter((issue) => inputsReady(issue, { now, openNumbers }));
 
-  return buildOrder(candidates, { compare: byPriorityThenAge, openSteps, stuck });
+  return buildOrder(candidates, { compare: byPriorityThenAge, openSteps });
 };
 
-function decline(step, reason) {
-  const openNumbers = openPullNumbers();
-  const waitFor = [...reason.matchAll(/#(\d+)/g)].map((m) => Number(m[1])).filter((n) => openNumbers.has(n));
-  const entry = recordDecline(step.number, { now: Date.now(), waitFor });
-  const until = waitFor.length > 0 ? `until ${waitFor.map((n) => `#${n}`).join(', ')} close` : '';
-  const retry = new Date(entry.until).toISOString().slice(0, 16).replace('T', ' ');
+function reconsideration({ missing, inputSignature, waitFor, until }) {
+  if (missing.length > 0)
+    return `Waiting for ${missing.join(', ')}. A builder reconsiders when those capabilities become available and blocking pull requests close, or the task definition changes.`;
+
+  if (waitFor.length > 0)
+    return `Waiting for ${waitFor.map((number) => `#${number}`).join(', ')} to close or the task definition to change.`;
+
+  if (inputSignature)
+    return 'A builder reconsiders when its declared source inputs, task definition or available capabilities change.';
+
+  const retry = new Date(until).toISOString().slice(0, 16).replace('T', ' ');
+
+  return `A builder picks it up again after ${retry} UTC at the earliest.`;
+}
+
+function decline(step, outcome, inputSignature) {
+  const { reason, dependencies: waitFor, capabilities: missing } = outcome;
+  const entry = recordDecline(step.number, {
+    now: Date.now(),
+    waitFor,
+    inputSignature,
+    taskHead: taskKey(step),
+    missing,
+  });
+
+  if (missing.length > 0 || waitFor.length > 0 || inputSignature)
+    editIssueLabels(step.number, { add: ['loop:blocked'], remove: [NEXT, BUILDING] });
 
   commentOnIssue(
     step.number,
-    `Not built this time: ${reason}\n\nA builder picks it up again ${until ? `${until}, and ` : ''}after ${retry} UTC at the earliest.`,
+    `Not built this time: ${reason}\n\n${reconsideration({ missing, inputSignature, waitFor, until: entry.until })}`,
   );
 }
 
-function claimNextStep() {
-  for (const step of waitingSteps()) {
+export const taskKindOf = (step) =>
+  /^Kind:\s*(\w+)/im.exec(step.body ?? '')?.[1]?.toLowerCase() ??
+  ['feature', 'integration', 'fix', 'refine', 'harness'].find((kind) => hasLabel(step, `loop:${kind}`));
+
+export const productStep = (step) => ['feature', 'integration', 'fix'].includes(taskKindOf(step));
+
+export function claimNextStep({ productOnly = false } = {}) {
+  for (const step of waitingSteps().filter((step) => !productOnly || productStep(step))) {
     const release = claim(`step-${step.number}`);
 
     if (release) return { step, release };
@@ -80,31 +120,138 @@ function claimNextStep() {
   return null;
 }
 
-function buildStep(step, { log, slot }) {
-  editIssueLabels(step.number, { add: [BUILDING], remove: [NEXT] });
+function recoveryContext(step, inputSignature, recovery) {
+  if (!recovery) return '';
 
-  const worktree = openBranch('build', `${step.number}-${slot}-${step.title}`);
+  const failure = recovery.reason ? `The previous attempt stopped: ${recovery.reason}` : '';
+  const refreshed =
+    recovery.inputSignature === recoverySignature(step, inputSignature) ? '' : refreshRecovery(recovery);
+
+  return [
+    failure,
+    recovery.originalTask ? `Original task and acceptance scope:\n${recovery.originalTask}` : '',
+    'Continue the retained work and scratch/task-handoff.json. Complete the full acceptance scope before reporting complete.',
+    refreshed,
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+}
+
+function retainFailedSession(step, inputSignature, worktree, { session, reason, outcome, execution }) {
+  if (!worktree) return;
+
+  saveRecovery(step.number, {
+    worktree,
+    inputSignature: recoverySignature(step, inputSignature),
+    taskHead: taskKey(step),
+    session,
+    reason: String(reason ?? '').slice(-6000),
+    outcome,
+    execution,
+  });
+}
+
+function retainPublicationFailure(step, { inputSignature, worktree, session, error }) {
+  if (worktree && hasPendingWorktree(worktree.dir)) {
+    clearRecovery(step.number);
+
+    return;
+  }
+
+  retainFailedSession(step, inputSignature, worktree, { session: error.session ?? session, reason: error });
+}
+
+const executionIdentity = (step, { slot, worker }) => ({
+  task: `step-${step.number}`,
+  taskKind: taskKindOf(step),
+  worker: worker ?? `build-${slot}`,
+});
+
+const retainedWorktree = (step, slot, recovery) => ({
+  ...(recovery ?? openBranch('build', `${step.number}-${slot}-${step.title}`)),
+  deadlineAt: recovery?.deadlineAt ?? (recovery?.at ?? Date.now()) + 12 * 60 * 60 * 1000,
+  originalTask: recovery?.originalTask ?? `${step.title}\n\n${step.body}`,
+});
+
+const executionOutcome = (result) =>
+  result.ok
+    ? buildOutcome(result.output, openPullNumbers(pullHistory() ?? []))
+    : {
+        status: 'incomplete',
+        reason: String(result.error ?? 'Agent execution interrupted'),
+        evidence: result.journalId ? [result.journalId] : [],
+        dependencies: [],
+        capabilities: [],
+      };
+
+export function buildStep(step, { log, slot, worker }) {
+  let inputSignature;
+  let worktree;
+  let continuation;
   const giveBack = (result) => {
     editIssueLabels(step.number, { add: [NEXT], remove: [BUILDING] });
 
-    if (result?.ok) decline(step, result.output.notes);
+    if (result?.outcome && ['blocked', 'declined'].includes(result.outcome.status))
+      decline(step, result.outcome, inputSignature);
   };
 
   try {
-    const prompt = `Build this step, issue #${step.number}: ${step.title}\n\n${step.body}`;
-    const result = checkedRun({ cwd: worktree.dir, name: 'build', prompt, schema: CHANGE_SCHEMA, hours: 12, log });
+    editIssueLabels(step.number, { add: [BUILDING], remove: [NEXT, 'loop:blocked'] });
+    inputSignature = taskInputSignature(step);
 
-    if (!result.ok || !result.output.changed) {
-      giveBack(result);
-      log(`#${step.number} not built: ${String(result.error ?? result.output.notes).slice(0, 500)}`);
+    const recovery = recoveryFor(step.number);
+
+    worktree = retainedWorktree(step, slot, recovery);
+    continuation = recovery?.session;
+
+    const prompt = [
+      `Build this step, issue #${step.number}: ${step.title}\n\n${step.body}`,
+      recoveryContext(step, inputSignature, recovery),
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+    const result = checkedRun({
+      cwd: worktree.dir,
+      name: 'build',
+      ...executionIdentity(step, { slot, worker }),
+      prompt,
+      schema: buildSchema(CHANGE_SCHEMA),
+      deadlineAt: worktree.deadlineAt,
+      hours: 12,
+      log,
+      continuation,
+    });
+
+    continuation = result.session ?? continuation;
+
+    const outcome = executionOutcome(result);
+
+    if (outcome.status !== 'complete') {
+      retainFailedSession(step, inputSignature, worktree, {
+        session: continuation,
+        reason: outcome.reason,
+        outcome,
+        execution: {
+          journalId: result.journalId,
+          reportedOutcome: result.output?.outcome,
+          checked: result.output?.checked,
+          notes: result.output?.notes,
+        },
+      });
+      giveBack({ outcome });
+      log(`#${step.number} unresolved: ${outcome.reason.slice(0, 500)}`);
 
       return;
     }
 
     const latest = stepPullIndex({ fresh: true });
-    const taken = latest ? stepStatus(latest, step.number) : 'none';
+
+    if (!latest) throw new Error('Could not verify step publication history.');
+
+    const taken = stepStatus(latest, step.number);
 
     if (taken !== 'none') {
+      clearRecovery(step.number);
       log(`#${step.number}: another pull request for this step is ${taken} now; not publishing a second`);
 
       return;
@@ -117,17 +264,33 @@ function buildStep(step, { log, slot }) {
     };
     const url = publish(change, { ...worktree, onDuplicate });
 
+    clearRecovery(step.number);
+
     if (url) log(`#${step.number}: opened ${url}`);
   } catch (error) {
+    retainPublicationFailure(step, { inputSignature, worktree, session: continuation, error });
     giveBack();
 
     throw error;
   } finally {
-    close(worktree);
+    if (worktree) close(worktree);
+  }
+}
+
+export function executeClaim(next, context) {
+  try {
+    buildStep(next.step, context);
+  } finally {
+    next.release();
   }
 }
 
 export default function build({ log, slot }) {
+  for (const step of issues(NEXT).filter((issue) => issue.author?.login === OWNER_LOGIN && !eligibleTask(issue))) {
+    editIssueLabels(step.number, { add: ['loop:blocked'], remove: [NEXT, BUILDING] });
+    log(`#${step.number}: removed from execution queue, unavailable ${unavailableCapabilities(step).join(', ')}`);
+  }
+
   const next = claimNextStep();
 
   if (!next) {
@@ -136,9 +299,5 @@ export default function build({ log, slot }) {
     return;
   }
 
-  try {
-    buildStep(next.step, { log, slot });
-  } finally {
-    next.release();
-  }
+  executeClaim(next, { log, slot });
 }

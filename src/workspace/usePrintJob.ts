@@ -17,6 +17,7 @@ import { plural } from '../../electron/plural.mjs';
 import { currentSlices, sliceLookup } from '../print/slices';
 
 interface PrintJobOptions {
+  enabled?: boolean;
   jobId: string;
   sceneName: string;
   report: PrintReport | null;
@@ -80,6 +81,8 @@ export function usePrintJob(options: PrintJobOptions) {
   const progress = useSliceProgress(jobId, slicing);
 
   useEffect(() => {
+    if (options.enabled === false) return;
+
     let live = true;
 
     printBridge
@@ -90,7 +93,7 @@ export function usePrintJob(options: PrintJobOptions) {
     return () => {
       live = false;
     };
-  }, [jobId]);
+  }, [jobId, options.enabled]);
 
   const sliceReport = async (report: PrintReport | null) => {
     setSlicing(true);
@@ -121,7 +124,7 @@ export function usePrintJob(options: PrintJobOptions) {
 
   const sliceOn = async (plate: Plate, target: PrinterSetup): Promise<string | null> => {
     const { report } = options;
-    const bed = bedOf(target.model);
+    const bed = bedOf(target.model, options.project.printProcess);
     const moved = report && plateOnBed(plate, report.plan.bed, bed);
 
     if (!report || !moved) return null;

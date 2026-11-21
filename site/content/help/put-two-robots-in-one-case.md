@@ -19,12 +19,13 @@ covers:
 Pick up a block with one gripper, pass it to the other arm, and place it on a floor spot while both arms' joints are recorded together.
 
 Both arms must have grippers and be open in separate scene tabs.
+This handoff needs arms without ideal tendon transmissions. Its reference moves the grippers with end-effector targets.
 
 1. Open each arm's scene in its own tab.
 2. In the first arm's tab, open **Play** ▸ **Cases** and click **New Case**.
 3. Choose **Hand Off to a Spot**.
 
-![The New Case card with Hand Off to a Spot chosen](/help/put-two-robots-in-one-case/new-case.png)
+![The Distance, Height, Radius and Time fields for a two-arm handoff Case](/help/put-two-robots-in-one-case/new-case.png)
 
 4. Set **Distance** for the transfer's distance ahead, **Height** for its height, **Radius** for placement tolerance, and **Time** for the try's length.
 5. Click **Make Case**.

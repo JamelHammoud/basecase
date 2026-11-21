@@ -10,6 +10,9 @@ import { byRank } from '../lib/rank.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
 import { run } from '../lib/sh.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
+import { hasPendingDelivery } from '../lib/deliveryState.mjs';
+
+import { fetchGit } from '../lib/gitFetch.mjs';
 
 export const schedule = {
   agent: true,
@@ -97,7 +100,7 @@ function merged(pull, dir, log) {
 }
 
 function mergeMain(pull, log) {
-  git(['fetch', '-q', 'origin', 'main', pull.headRefName], HOME_CHECKOUT);
+  fetchGit(['-q', 'origin', 'main', pull.headRefName]);
 
   const dir = path.join(WORKTREES, `rebase-${pull.number}`);
 
@@ -144,6 +147,7 @@ function staleFailures(pulls) {
 export default function rebase({ log }) {
   const pulls = openPulls()
     .filter((pull) => pull.headRefName.startsWith('loop/'))
+    .filter((pull) => !hasPendingDelivery(pull.headRefName))
     .sort(byRank);
 
   fetchAll();

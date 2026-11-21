@@ -72,6 +72,8 @@ When your saved printer reports loaded AMS slots, matching materials follow slot
 
 Basecase slices each material separately before sending a plate.
 
+Before printing a full housing, you can [compare clearances on a fit test plate](/help/compare-fit-clearances) and apply a chosen dimension.
+
 ## On the plate
 
 - To move a part, drag it. To lay it on a face, press [[F]]. To turn it 90°, press [[R]].
@@ -83,10 +85,14 @@ Basecase slices each material separately before sending a plate.
 - **Parts** lists every part with its size, time and plate. Parts with problems are listed first.
 - **Merge** lists printed parts that are bolted together on one link and could print as one. To combine them, see [Merge printed parts into one print](/help/merge-printed-parts-into-one-print).
 
+When a printer profile includes supported obstacle volumes, the plate reserves space around clips and tool docks, including supplied toolhead and brim clearance. A drag into that space returns the part to its previous position. A saved position or rotation that crosses it leaves the part off the plates. Click **Auto Arrange** to clear saved positions and pack again, including parts left off the plates. When no plates remain, it clears saved positions for all parts.
+
+Obstacle space is reserved for the full print height, even for low clips. Unsupported obstacle profiles leave parts off the plates and show a message in **Parts**. Basecase checks placement envelopes, not every slicer travel move. The current catalog profiles contain no obstacle volumes beyond their existing bed exclusions.
+
 After a print, a switch under **Printer** (such as Skip 3 printed parts) leaves the parts you already printed off the plates. The switch is on by default. For example, if you edit one bracket after a print, the next plate holds only that bracket.
 
 When you [repair a part](/help/repair-a-part), it stops counting as printed even if its shape hasn't changed. At the replacement step, **Print** opens a plate with one copy of that part. This plate has no **Copies**, **Don't print**, skip-printed switch or **Merge** section. The part's placement and **Don't label** choice last only while the repair plate is open.
 
 If you have two or more printers that report their state, each idle printer gets **Start Next**. See [Print plates on several printers](/help/print-plates-on-several-printers).
 
-To close Print mode, press [[Esc]] or click **Done**. A repair plate returns to the same Build Along step. Otherwise, you return to the scene, where you can [make a build guide](/help/make-a-build-guide) for putting the parts together.
+To close Print mode, press [[Esc]] or click **Done**. A repair plate or [assembly cradle](/help/make-an-assembly-cradle) returns to the same Build Along step. From **Print Fit Test**, **Done** first returns to the design's plates. Otherwise, you return to the scene, where you can [make a build guide](/help/make-a-build-guide) for putting the parts together.

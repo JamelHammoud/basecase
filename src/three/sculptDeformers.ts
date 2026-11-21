@@ -12,7 +12,7 @@ interface DeformFrame {
 interface Deform {
   taper: number;
   twistRad: number;
-  bendRad: number;
+  bendRadius?: number;
   roundness: number;
 }
 
@@ -47,8 +47,7 @@ function twistVertex(v: THREE.Vector3, t: number, twistRad: number) {
   v.z = rz;
 }
 
-function bendVertex(v: THREE.Vector3, height: number, bendRad: number) {
-  const radius = height / bendRad;
+function bendVertex(v: THREE.Vector3, radius: number) {
   const theta = v.y / radius;
   const offsetX = radius - v.x;
 
@@ -59,13 +58,13 @@ function bendVertex(v: THREE.Vector3, height: number, bendRad: number) {
 function deformVertex(v: THREE.Vector3, frame: DeformFrame, deform: Deform) {
   const t = (v.y - frame.midY) / frame.height;
 
-  if (deform.roundness > 0.001) roundVertex(v, frame, deform.roundness);
+  if (deform.roundness !== 0) roundVertex(v, frame, deform.roundness);
 
-  if (Math.abs(deform.taper) > 0.001) taperVertex(v, t, deform.taper);
+  if (deform.taper !== 0) taperVertex(v, t, deform.taper);
 
-  if (Math.abs(deform.twistRad) > 0.001) twistVertex(v, t, deform.twistRad);
+  if (deform.twistRad !== 0) twistVertex(v, t, deform.twistRad);
 
-  if (Math.abs(deform.bendRad) > 0.001) bendVertex(v, frame.height, deform.bendRad);
+  if (deform.bendRadius !== undefined) bendVertex(v, deform.bendRadius);
 }
 
 const hasNoEffect = ({ taper = 0, twistDeg = 0, bendDeg = 0, roundness = 0 }: PartDeformers) =>
@@ -80,6 +79,8 @@ export function applyDeformersToBufferGeometry(geo: THREE.BufferGeometry, deform
 
   const box = geo.boundingBox!;
   const height = Math.max(1e-3, box.max.y - box.min.y);
+  const bendRad = THREE.MathUtils.degToRad(bendDeg);
+  const twistRad = THREE.MathUtils.degToRad(twistDeg);
   const frame: DeformFrame = {
     height,
     halfX: Math.max(1e-3, (box.max.x - box.min.x) / 2),
@@ -88,10 +89,10 @@ export function applyDeformersToBufferGeometry(geo: THREE.BufferGeometry, deform
     midY: (box.min.y + box.max.y) / 2,
   };
   const deform: Deform = {
-    taper,
-    twistRad: THREE.MathUtils.degToRad(twistDeg),
-    bendRad: THREE.MathUtils.degToRad(bendDeg),
-    roundness,
+    taper: Math.abs(taper) > 0.001 ? taper : 0,
+    twistRad: Math.abs(twistRad) > 0.001 ? twistRad : 0,
+    bendRadius: Math.abs(bendRad) > 0.001 ? height / bendRad : undefined,
+    roundness: roundness > 0.001 ? roundness : 0,
   };
   const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
   const v = new THREE.Vector3();

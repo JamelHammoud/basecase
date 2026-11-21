@@ -1,7 +1,7 @@
 import type { MainModule } from '@mujoco/mujoco';
 import type { VelocityDrive } from '../sim/driveAccess';
 import type { PolicySpec } from '../sim/policy';
-import { buildMjcf } from '../sim/mjcf';
+import { preparedCalibratedModel } from '../sim/calibratedModel';
 import type { SimModel, WorldItem } from '../sim/mjcfTypes';
 import type { MeshMeasure } from '../three/meshMeasure';
 import { modelHashes } from '../skills/artifacts';
@@ -25,6 +25,7 @@ import { effortsTransfer } from '../sim/recordedFrames';
 import { seedReplay, type SeedReplay } from './seedReplay';
 
 export interface WireRobot {
+  selfContact?: import('../sim/selfContact').SelfContactSettings;
   id: string;
   parts: ScenePart[];
   joints: RobotJoint[];
@@ -94,6 +95,7 @@ export function replyTransfer(reply: CaseCheckReply): Transferable[] {
 }
 
 export const caseRobotOf = (robot: WireRobot): CaseRobot => ({
+  selfContact: robot.selfContact,
   id: robot.id,
   parts: robot.parts,
   joints: robot.joints,
@@ -149,9 +151,18 @@ export class CaseCheckSession {
     return { type: 'runs', result };
   }
 
-  private fit(mj: MainModule, robot: WireRobot, records: SkillRecord[]): CaseCheckReply {
+  private async fit(mj: MainModule, robot: WireRobot, records: SkillRecord[]): Promise<CaseCheckReply> {
     const rig = buildRig(robot.joints, robot.parts);
-    const build = () => buildMjcf({ ...caseRobotOf(robot), rig, project: DEFAULT_PROJECT });
+    const input = { ...caseRobotOf(robot), rig, project: { ...DEFAULT_PROJECT, selfContact: robot.selfContact } };
+    const prepared = await preparedCalibratedModel(input, undefined).then(
+      (model) => ({ model }),
+      (error: unknown) => ({ error }),
+    );
+    const build = () => {
+      if ('error' in prepared) throw prepared.error;
+
+      return prepared.model;
+    };
     const walks = (built: SimModel) => walkPick(records, built) !== null;
     const { model, stop } = checkFit(mj, { rig, parts: robot.parts, build, walks });
     const walk = walkPick(records, model);

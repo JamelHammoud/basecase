@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { compositeMaterial, normalMaterial } from './guideShaders';
+import { compositeMaterial } from './guideShaders';
 
 export const SUPERSAMPLE = 2;
 
@@ -12,52 +12,35 @@ export interface StagePart {
   index: number;
 }
 
-interface Targets {
-  width: number;
-  height: number;
-  normal: THREE.WebGLRenderTarget;
-  id: THREE.WebGLRenderTarget;
-  color: THREE.WebGLRenderTarget;
-}
-
-const target = (width: number, height: number, depthTexture?: THREE.DepthTexture) =>
+const target = (width: number, height: number, depthTexture?: THREE.DepthTexture, count = 1) =>
   new THREE.WebGLRenderTarget(width, height, {
     minFilter: THREE.NearestFilter,
     magFilter: THREE.NearestFilter,
     type: THREE.UnsignedByteType,
     depthBuffer: true,
+    count,
     ...(depthTexture ? { depthTexture } : {}),
   });
 
-function makeTargets(width: number, height: number): Targets {
-  const depth = new THREE.DepthTexture(width, height, THREE.FloatType);
-
-  return {
-    width,
-    height,
-    normal: target(width, height, depth),
-    id: target(width, height),
-    color: target(width, height),
-  };
+function makeTargets(width: number, height: number): THREE.WebGLRenderTarget {
+  return target(width, height, new THREE.DepthTexture(width, height, THREE.FloatType), 3);
 }
 
-function disposeTargets(t: Targets | null) {
-  t?.normal.depthTexture?.dispose();
-  t?.normal.dispose();
-  t?.id.dispose();
-  t?.color.dispose();
+function disposeTargets(targets: THREE.WebGLRenderTarget | null) {
+  targets?.depthTexture?.dispose();
+  targets?.dispose();
 }
 
 export class GuideStage {
   readonly scene = new THREE.Scene();
   private readonly canvas = new OffscreenCanvas(8, 8);
   private readonly renderer: THREE.WebGLRenderer;
-  private readonly normal = normalMaterial();
   private readonly composite = compositeMaterial();
   private readonly quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.composite);
   private readonly quadScene = new THREE.Scene().add(this.quad);
   private readonly quadCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-  private targets: Targets | null = null;
+  private targets: THREE.WebGLRenderTarget | null = null;
+  private visibility: THREE.WebGLRenderTarget | null = null;
   private readonly encoding = new Set<Promise<string>>();
 
   constructor() {
@@ -68,6 +51,9 @@ export class GuideStage {
       premultipliedAlpha: true,
       preserveDrawingBuffer: true,
     });
+    this.renderer.debug.onShaderError = (context, program) => {
+      throw new Error(context.getProgramInfoLog(program) || 'Couldn’t draw the build guide.');
+    };
     this.renderer.setPixelRatio(1);
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
     this.renderer.toneMapping = THREE.NoToneMapping;
@@ -75,13 +61,22 @@ export class GuideStage {
     this.quad.frustumCulled = false;
   }
 
-  private ensureTargets(width: number, height: number): Targets {
+  private ensureTargets(width: number, height: number): THREE.WebGLRenderTarget {
     if (this.targets?.width === width && this.targets.height === height) return this.targets;
 
     disposeTargets(this.targets);
     this.targets = makeTargets(width, height);
 
     return this.targets;
+  }
+
+  private visibilityTarget(width: number, height: number): THREE.WebGLRenderTarget {
+    if (this.visibility?.width === width && this.visibility.height === height) return this.visibility;
+
+    this.visibility?.dispose();
+    this.visibility = target(width, height);
+
+    return this.visibility;
   }
 
   private pass(rt: THREE.WebGLRenderTarget, camera: THREE.Camera) {
@@ -92,18 +87,11 @@ export class GuideStage {
 
   private useMaterials(parts: StagePart[], which: 'id' | 'toon') {
     for (const part of parts) {
-      for (const { mesh, toon } of part.meshes) mesh.material = which === 'id' ? part.idMaterial : toon;
+      for (const { mesh, toon } of part.meshes) {
+        toon.uniforms.idColor.value.copy(part.idMaterial.uniforms.idColor.value);
+        mesh.material = which === 'id' ? part.idMaterial : toon;
+      }
     }
-  }
-
-  private renderPasses(parts: StagePart[], camera: THREE.OrthographicCamera, t: Targets) {
-    this.scene.overrideMaterial = this.normal;
-    this.pass(t.normal, camera);
-    this.scene.overrideMaterial = null;
-    this.useMaterials(parts, 'id');
-    this.pass(t.id, camera);
-    this.useMaterials(parts, 'toon');
-    this.pass(t.color, camera);
   }
 
   async ready() {
@@ -124,11 +112,12 @@ export class GuideStage {
     const mmPerPx = (camera.right - camera.left) / width;
 
     this.renderer.setSize(width, height, false);
-    this.renderPasses(parts, camera, t);
-    u.tColor.value = t.color.texture;
-    u.tNormal.value = t.normal.texture;
-    u.tId.value = t.id.texture;
-    u.tDepth.value = t.normal.depthTexture;
+    this.useMaterials(parts, 'toon');
+    this.pass(t, camera);
+    u.tColor.value = t.textures[2];
+    u.tNormal.value = t.textures[0];
+    u.tId.value = t.textures[1];
+    u.tDepth.value = t.depthTexture;
     u.texel.value.set(1 / width, 1 / height);
     u.near.value = camera.near;
     u.far.value = camera.far;
@@ -146,14 +135,14 @@ export class GuideStage {
   }
 
   countNew(parts: StagePart[], camera: THREE.OrthographicCamera, size: { width: number; height: number }): number {
-    const t = this.ensureTargets(size.width, size.height);
+    const visibility = this.visibilityTarget(size.width, size.height);
     const pixels = new Uint8Array(size.width * size.height * 4);
     let count = 0;
 
     this.renderer.setSize(size.width, size.height, false);
     this.useMaterials(parts, 'id');
-    this.pass(t.id, camera);
-    this.renderer.readRenderTargetPixels(t.id, 0, 0, size.width, size.height, pixels);
+    this.pass(visibility, camera);
+    this.renderer.readRenderTargetPixels(visibility, 0, 0, size.width, size.height, pixels);
     this.renderer.setRenderTarget(null);
 
     for (let i = 0; i < pixels.length; i += 4) if (pixels[i + 3] > 127 && pixels[i + 2] > 191) count++;
@@ -164,7 +153,8 @@ export class GuideStage {
   dispose() {
     disposeTargets(this.targets);
     this.targets = null;
-    this.normal.dispose();
+    this.visibility?.dispose();
+    this.visibility = null;
     this.composite.dispose();
     this.quad.geometry.dispose();
     this.renderer.dispose();

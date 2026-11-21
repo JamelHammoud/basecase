@@ -1,3 +1,4 @@
+import type { ViewportContext } from './viewportContext';
 import * as THREE from 'three';
 import type { CameraPreset, ScenePart } from '../../types/robotics';
 import { selectionBounds } from '../../utils/selection';
@@ -118,4 +119,10 @@ export function frameObjects(stage: Stage, objects: THREE.Object3D[]): FrameAnim
     fromPos: camera.position.clone(),
     toPos: position,
   };
+}
+
+export function frameLayer({ stage, layer, loop }: ViewportContext) {
+  const objects = layer.objects().flatMap(([id, object]) => (layer.part(id)?.kind === 'image_plane' ? [] : [object]));
+
+  loop.frameAnimation = frameObjects(stage, objects) ?? loop.frameAnimation;
 }

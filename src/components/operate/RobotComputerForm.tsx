@@ -13,7 +13,7 @@ const KEY_EXAMPLES = {
 
 const FIELDS = [
   { name: 'host', label: 'Host', placeholder: 'robot.local' },
-  { name: 'user', label: 'User', placeholder: 'robot' },
+  { name: 'user', label: 'User', placeholder: '' },
   { name: 'key', label: 'SSH key', placeholder: KEY_EXAMPLES[OS] },
 ] as const;
 

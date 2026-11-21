@@ -58,13 +58,20 @@ const onSkeletonPlane = ({ axis, offset }: MirrorPlane) => axis !== 1 && Math.ab
 
 export function mirrorAssembly(scene: MirrorScene, request: MirrorRequest): MirrorResult {
   const { plane, newId } = request;
-  const sources = scene.parts.filter((p) => request.ids.includes(p.id));
+  const selected = new Set(request.ids);
+  const sources = scene.parts.filter((p) => selected.has(p.id));
+  const partsById = new Map<string, ScenePart>();
+
+  for (const part of scene.parts) {
+    if (!partsById.has(part.id)) partsById.set(part.id, part);
+  }
+
   const idOf = new Map(sources.map((p) => [p.id, newId()]));
   const groupOf = groupNamer(newId, sideOf(plane));
   const placed = sources.map((src) => placedCopy(src, idOf.get(src.id)!, request, groupOf(src.group)));
   const copies = new Map(sources.map((src, i) => [src.id, placed[i]]));
   const mated = placed.map((copy, i) => {
-    const mates = mirroredMates(sources[i], copy, { parts: scene.parts, copies, plane });
+    const mates = mirroredMates(sources[i], copy, { partsById, copies, plane });
 
     return mates ? { ...copy, mates } : copy;
   });

@@ -60,10 +60,13 @@ export function TitleBarActions({
           onExportImage={exports.exportImage}
           onExportStl={exports.exportStl}
           onExport3mf={() => void exports.export3mf()}
+          onExportDrawings={exports.exportDrawings}
           onExportCutFiles={() => void exports.exportCutFiles()}
           onExportStep={IS_WEB_DEMO ? undefined : () => void exports.exportStep()}
           onExportScene={() => void exports.exportScene()}
           onExportRobot={() => void exports.exportRobotPackage()}
+          onExportKit={() => void exports.exportKit()}
+          onExportSchematic={() => void exports.exportSchematic()}
           onAirDrop={() => void exports.airDrop()}
           onCopyMarkdown={exports.copyBrief}
         />

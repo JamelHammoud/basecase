@@ -45,11 +45,26 @@ The simulation crashed in the background, but your scene is safe.
 1. Click **Stop simulation** beside the speed buttons.
 2. Click **Simulate** to start it again.
 
-Any other red text under **Simulate** comes from MuJoCo and means it can't load the model. Stop the simulation, change the part the message names, and start the simulation again.
+Other red text under **Simulate** explains why the model can't run. Stop the simulation, change the part or joints the message names, and start the simulation again.
+
+For a four-bar with a missing crank servo variant, ask the agent to replace that servo with the exact catalog variant you use. For inconsistent or singular joints, repair the joints. In either case, you can also insert the Sketch Path again. See [Simulate a four-bar](/help/simulate-a-four-bar).
+
+## A saved fixture can’t load
+
+Repair the source assembly’s geometry and joints. In the selection’s menu, choose **Save to Library**. Make a new Case with that saved **Fixture**. Existing Cases keep their own fixture copy.
+
+Steps are in [Reuse an assembly in Cases](/help/reuse-an-assembly-in-cases).
 
 ## “This policy was trained on joints this robot no longer has. Train it again.”
 
 You changed the robot's joints after you trained this policy. A policy drives only the joints it learned on, so train it again on the robot as it is now.
+
+## “Use Simulate for ideal tendons.”
+
+Ideal tendons support motor-joint commands in simulation. Training, IK, policies and Operate refuse these declarations.
+
+In **Simulate**, under **Control**, choose **Hold pose**, an animation, or **Limp**.
+Steps are in [Drive joints with an ideal tendon](/help/drive-joints-with-an-ideal-tendon).
 
 ## The time shows a figure like 0.6× real time
 
@@ -60,6 +75,12 @@ The figure compares the simulation's speed with the clock.
 
 ## Checks says the simulation guesses torque
 
-In the **Build** tab, Checks may say “These joints have no servo, so the simulation guesses their torque from weight.” Assign a servo from **Parts** to each of those joints so the simulation can use the servo's datasheet limits.
+In the **Build** tab, Checks warns when a powered joint has no servo or published torque. Assign a servo from **Parts** so simulation can use its datasheet limits.
+
+For an intentionally unpowered joint, [make it passive](/help/make-a-joint-passive) instead. Passive joints need no estimated motor torque.
 
 If Checks says “These servos aren’t calibrated on this robot.”, those servos have no measured model. You can measure any Feetech or Dynamixel servo with [Calibrate an emulated robot](/help/calibrate-an-emulated-robot). Other servos keep their estimate.
+
+## Links overlap at the start
+
+Move or repose the named links, then start simulation again. Self-contact refuses overlap deeper than 0.5 mm. Missing collision geometry also stops preparation. The limits and an example are in [Simulate self-contact](/help/simulate-self-contact).

@@ -7,12 +7,22 @@ import type { ViewportContext } from './viewportContext';
 
 const toVec3 = (v: THREE.Vector3) => v.toArray() as Vec3;
 
-export function solidObjects(ctx: ViewportContext, options: { visibleOnly: boolean }) {
+export function solidObjects(ctx: ViewportContext, options: { visibleOnly: boolean; includeDerived?: boolean }) {
+  const source = !options.includeDerived && ctx.props().sourceParts;
+  const sourceIds = source ? new Set(source.map((part) => part.id)) : null;
+
   return ctx.stage.partsRoot.children.flatMap((object) => {
     const part = ctx.layer.part(object.userData.partId as string);
     const hidden = options.visibleOnly && !part?.visible;
 
-    if (!part || hidden || part.role !== 'solid' || part.kind === 'image_plane') return [];
+    if (
+      !part ||
+      hidden ||
+      part.role !== 'solid' ||
+      part.kind === 'image_plane' ||
+      (sourceIds && !sourceIds.has(part.id))
+    )
+      return [];
 
     return [{ id: part.id, object }];
   });
@@ -49,7 +59,7 @@ export function boundsOf(ctx: ViewportContext, ids: string[]): { min: Vec3; max:
 export function partTriangles(ctx: ViewportContext, id: string): Float32Array | null {
   const object = ctx.layer.get(id) ?? ctx.world.get(id);
 
-  return object ? localTriangles(object) : null;
+  return object && !object.userData.placeholder ? localTriangles(object) : null;
 }
 
 export function servoOutput(ctx: ViewportContext, id: string): { point: Vec3; axis: Vec3 } | null {

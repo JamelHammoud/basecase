@@ -22,6 +22,14 @@ export function fileCommands({ core }: CommandInputs): Command[] {
 
   return [
     {
+      id: 'scene-history',
+      group: 'Scene',
+      label: 'Scene History',
+      icon: <HistoryIcon />,
+      keywords: 'version restore branch merge compare',
+      run: core.versions.show,
+    },
+    {
       id: 'open-scenes',
       group: 'Scene',
       label: 'Show Scenes',

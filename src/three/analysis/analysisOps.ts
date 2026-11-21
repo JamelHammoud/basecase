@@ -1,3 +1,5 @@
+import { analyzeTolerances } from '../../utils/designParameters/tolerances';
+import type { ParameterDesign } from '../../utils/designParameters/mutations';
 import * as THREE from 'three';
 import { weld } from '../../print/threeMf';
 import { posedStl } from '../../print/posedStl';
@@ -245,6 +247,7 @@ const meshBuffers = (result: unknown) =>
   ]);
 
 export const analysisHandlers = {
+  tolerances: (design: ParameterDesign) => reply(analyzeTolerances(design)),
   analyze: async ({ geometries: newGeometries, shapes, task }: AnalyzePayload) => {
     newGeometries.forEach((g) => geometries.set(g.id, g));
     shapes.forEach((s) => specs.set(s.key, s));
@@ -257,13 +260,17 @@ export const analysisHandlers = {
     const liveKeys = new Set(keys);
     const liveGeometries = new Set(geometryIds);
 
-    for (const key of [...specs.keys()].filter((k) => !liveKeys.has(k))) {
+    for (const key of specs.keys()) {
+      if (liveKeys.has(key)) continue;
+
       specs.delete(key);
       solids.get(key)?.dispose();
       solids.delete(key);
     }
 
-    for (const id of [...geometries.keys()].filter((g) => !liveGeometries.has(g))) geometries.delete(id);
+    for (const id of geometries.keys()) {
+      if (!liveGeometries.has(id)) geometries.delete(id);
+    }
 
     return reply({ shapes: specs.size, geometries: geometries.size });
   },

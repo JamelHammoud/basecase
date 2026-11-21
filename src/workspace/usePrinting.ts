@@ -3,7 +3,8 @@ import { resolvePrinter, type MyPrinter, type PrinterSetup } from '../data/print
 import { turnedPrint, type Plate } from '../print/plan';
 import {
   markForReprint,
-  plateStatus,
+  plateStatusLookup,
+  type PlateStatusLookup,
   printRecordFor,
   readySteps,
   splitPrinted,
@@ -21,14 +22,19 @@ import { useMerges } from './useMerges';
 import { useServiceQuotes } from './useServiceQuotes';
 import type { SettingsPane } from '../app/settingsPanes';
 import { usePrintFleet } from './usePrintFleet';
-import { usePrintJob } from './usePrintJob';
+import { useScopedPrintJobs } from './useScopedPrintJobs';
 import { usePlateWriter } from './usePlateWriter';
 import type { GuidePlan } from '../guide/guideTypes';
-import { usePrintMode } from './usePrintMode';
+import { useDesignParameters, type DesignParameters } from './useDesignParameters';
+import type { SceneDocument } from './useSceneDocument';
+import { useTemporaryPrinting } from './useTemporaryPrinting';
 
 export type { PrintMode } from './usePrintMode';
 
-interface PrintingOptions {
+export interface PrintingOptions {
+  active: boolean;
+  projectRef: RefObject<ProjectSettings>;
+  parameters: DesignParameters;
   jobId: string;
   sceneName: string;
   parts: ScenePart[];
@@ -54,16 +60,16 @@ function cleanPrint(print: PartPrint): PartPrint | undefined {
 }
 
 interface MarkerContext {
-  records: PrintRecord[];
+  plateStatus: PlateStatusLookup;
   setRecords: (update: (prev: PrintRecord[]) => PrintRecord[]) => void;
   parts: ScenePart[];
   printer: PrinterSetup;
 }
 
 const plateMarker =
-  ({ records, setRecords, parts, printer }: MarkerContext) =>
+  ({ plateStatus, setRecords, parts, printer }: MarkerContext) =>
   (plate: Plate, state: PrintRecord['state']) => {
-    const existing = plateStatus(plate, records).record;
+    const existing = plateStatus(plate).record;
 
     if (existing) return setRecords((prev) => updateRecord(prev, existing.id, { state }));
 
@@ -74,8 +80,10 @@ const plateMarker =
 
 export function usePrinting(options: PrintingOptions) {
   const { parts, printer, project, setProject, commitParts, showToast, viewport } = options;
-  const fit = useFitTest({ parts, project, printer, viewport });
-  const printingMode = usePrintMode({ jobId: options.jobId, parts, fit });
+  const fit = useFitTest({ ...options, parts, project, printer, viewport });
+  const temporary = useTemporaryPrinting(options, fit);
+  const temporaryPrint = temporary.active;
+  const printingMode = temporary.mode;
   const { mode, repairId } = printingMode;
   const [skipPrinted, setSkipPrinted] = useState(true);
   const split = splitPrinted(parts, project.prints, shapeKey);
@@ -111,23 +119,19 @@ export function usePrinting(options: PrintingOptions) {
     showToast,
     undo: options.undo,
   });
-  const shown = fit.active ? fit.report : report;
+  const shown = temporaryPrint ? temporary.report : report;
   const plates = usePlateWriter(
     repairId ? { ...options, parts: printParts, partsRef: { current: printParts } } : options,
   );
-  const job = usePrintJob({
-    ...options,
-    report: shown,
-    jobId: fit.active ? `${options.jobId}-fit-test` : options.jobId,
-    write: fit.active ? fit.threeMf : plates.write,
-    labels: fit.active ? '' : plates.key,
-  });
+  const write = temporary.write ?? plates.write;
+  const { job, designSlices } = useScopedPrintJobs({ options, temporary, report, shown, plates, write });
   const records = project.prints ?? [];
+  const plateStatus = plateStatusLookup(records);
   const setRecords = (update: (prev: PrintRecord[]) => PrintRecord[]) =>
     setProject((p) => ({ ...p, prints: update(p.prints ?? []) }));
 
   const setPartPrint = (ids: string[], patch: Partial<PartPrint>) => {
-    if (fit.active || printingMode.editRepairPrint(ids, patch)) return;
+    if (temporaryPrint || printingMode.editRepairPrint(ids, patch)) return;
 
     commitParts((prev) =>
       prev.map((p) => (ids.includes(p.id) ? { ...p, print: cleanPrint({ ...p.print, ...patch }) } : p)),
@@ -141,24 +145,29 @@ export function usePrinting(options: PrintingOptions) {
   };
 
   const fleet = usePrintFleet({
+    process: project.printProcess,
     printer,
     printers: options.printers,
     parts,
     plates: shown?.plan.plates ?? [],
     records,
+    plateStatus,
     setRecords,
     job,
-    recording: !fit.active,
+    recording: !temporaryPrint,
     active: !!mode,
     showToast,
   });
 
-  const markPlate = plateMarker({ records, setRecords, parts, printer });
+  const markPlate = plateMarker({ plateStatus, setRecords, parts, printer });
 
   return {
     ...printingMode,
+    temporaryPrint,
+    temporaryParts: temporary.parts,
     report: shown,
     measures,
+    designSlices,
     printedCount: split.printed.length,
     skipPrinted,
     setSkipPrinted,
@@ -166,19 +175,22 @@ export function usePrinting(options: PrintingOptions) {
     job,
     status: fleet.status,
     statusOf: fleet.statusOf,
-    fleet: fit.active ? [] : fleet.fleet,
+    fleet: temporaryPrint ? [] : fleet.fleet,
     nextFor: fleet.nextFor,
     records,
+    plateStatus,
     markForReprint: (id: string) => setRecords((prev) => markForReprint(prev, id)),
-    fitTest: fit.parts && { parts: fit.parts },
-    canFitTest: fit.available,
+    fitTest: fit.parts && { parts: fit.parts, variants: fit.variants, downs: fit.downs },
+    canFitTest: fit.available && !temporary.tooling,
     fitCutting: fit.cutting,
     merges,
     service,
-    plates,
+    plates: { ...plates, write },
     sending: fleet.sending,
     sendPlate: fleet.sendPlate,
-    markPlate,
+    markPlate: (plate: Plate, state: PrintRecord['state']) => {
+      if (!temporaryPrint) markPlate(plate, state);
+    },
     setPartPrint,
     turnPart,
     freshSlice: job.freshSlice,
@@ -189,14 +201,9 @@ export function usePrinting(options: PrintingOptions) {
 export type Printing = ReturnType<typeof usePrinting>;
 
 interface ScenePrintingOptions {
+  active: boolean;
   scene: { sceneId: string; sceneName: string };
-  docs: {
-    parts: ScenePart[];
-    partsRef: RefObject<ScenePart[]>;
-    project: ProjectSettings;
-    setProject: Setter<ProjectSettings>;
-    commitParts: CommitParts;
-  };
+  docs: SceneDocument;
   studio: { printers: { printers: MyPrinter[] }; isRightOpen: boolean; openSettings: (pane: SettingsPane) => void };
   tool: { rightTab: string };
   viewportRef: { current: Viewport3DHandle | null };
@@ -208,7 +215,11 @@ interface ScenePrintingOptions {
 export function useScenePrinting(options: ScenePrintingOptions) {
   const { scene, docs, studio, tool, viewportRef, showToast, undo, guide } = options;
   const printer = resolvePrinter(docs.project.printer, studio.printers.printers);
+  const parameters = useDesignParameters({ docs, sceneId: scene.sceneId, showToast });
   const printing = usePrinting({
+    active: options.active,
+    parameters,
+    projectRef: docs.projectRef,
     jobId: scene.sceneId,
     sceneName: scene.sceneName,
     parts: docs.parts,
@@ -227,5 +238,5 @@ export function useScenePrinting(options: ScenePrintingOptions) {
     guideFingerprint: guide.fingerprint,
   });
 
-  return { printer, printing };
+  return { printer, printing, parameters };
 }

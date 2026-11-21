@@ -2,6 +2,7 @@ import { bytesToBase64 } from '../utils/base64';
 import type { VisionModelFile } from '../vision/manifest';
 import { channelCall } from '../utils/platform/channelCall';
 import { electron } from '../utils/platform/transport';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 
 export interface HubAccountState {
   signedIn: boolean;
@@ -13,6 +14,7 @@ export interface HubPublish {
   files: Record<string, Uint8Array>;
   kind?: 'dataset' | 'model';
   tag?: string;
+  includeRevision?: boolean;
 }
 
 export interface HubRepoRef {
@@ -23,6 +25,7 @@ export interface HubRepoRef {
 
 export interface HubSkillFiles {
   repo: string;
+  revision: string;
   files: Record<string, string>;
 }
 
@@ -39,6 +42,7 @@ export interface HubDatasetFiles {
 export interface HubPublished {
   repo: string;
   url: string;
+  revision?: string;
 }
 
 const forHttp = (payload: unknown) => {
@@ -68,8 +72,22 @@ export const hubBridge = {
     ),
   signIn: async (token: string) => asAccount(await call('hub:sign-in', token)),
   publish: (payload: HubPublish) => call<HubPublished>('hub:publish', payload),
-  skillFiles: (ref: HubRepoRef) => call<HubSkillFiles>('hub:skill-files', ref),
+  skillFiles: (ref: HubRepoRef) =>
+    IS_WEB_DEMO
+      ? import('../utils/platform/web/webHub').then(({ webHub }) => webHub.call('files', ref))
+      : call<HubSkillFiles>('hub:skill-files', ref),
   modelFile: (ref: VisionModelFile) => call<{ url: string }>('hub:model-file', ref),
-  findSkills: () => call<HubSkillCandidate[]>('hub:find-skills'),
+  findSkills: () =>
+    IS_WEB_DEMO
+      ? import('../utils/platform/web/webHub').then(({ webHub }) => webHub.call('find', undefined))
+      : call<HubSkillCandidate[]>('hub:find-skills'),
+  publishSkillOutcome: (record: unknown) =>
+    IS_WEB_DEMO
+      ? import('../utils/platform/web/webHub').then(({ webHub }) => webHub.call('saveOutcome', record))
+      : call<{ stored: boolean; published: boolean }>('hub:publish-skill-outcome', record),
+  skillOutcomes: () =>
+    IS_WEB_DEMO
+      ? import('../utils/platform/web/webHub').then(({ webHub }) => webHub.call('outcomes', undefined))
+      : call<unknown[]>('hub:skill-outcomes'),
   datasetFiles: (ref: HubRepoRef) => call<HubDatasetFiles>('hub:dataset-files', ref),
 };

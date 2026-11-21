@@ -1,6 +1,7 @@
 import type { RobotAnimation } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
 import {
+  animationJointIds,
   buildGait,
   buildKeyframes,
   sampleAnimation,
@@ -204,7 +205,7 @@ function speedProblems(scope: Scope, anim: RobotAnimation, problems: Map<string,
 }
 
 function animateText(made: RobotAnimation, p: AnimatePayload, built: Built, problems: Map<string, string>): string {
-  const joints = new Set(made.keyframes.flatMap((k) => Object.keys(k.values)));
+  const joints = animationJointIds(made.keyframes);
   const ik = Object.entries(built.ikError).map(([k, v]) => `${k} within ${lengthLabel(v)}`);
 
   return (

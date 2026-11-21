@@ -27,19 +27,29 @@ export function columnSpans(state: Float64Array, width: number): ColumnSpan[] {
 export function mergedSpans(all: ColumnSpan[][]): ColumnSpan[] {
   const width = all[0]?.length ?? 0;
 
-  return Array.from({ length: width }, (_, c) => ({
-    lo: Math.min(...all.map((spans) => spans[c].lo)),
-    hi: Math.max(...all.map((spans) => spans[c].hi)),
-  }));
+  return Array.from({ length: width }, (_, c) => {
+    let lo = Infinity;
+    let hi = -Infinity;
+
+    for (const spans of all) {
+      lo = Math.min(lo, spans[c].lo);
+      hi = Math.max(hi, spans[c].hi);
+    }
+
+    return { lo, hi };
+  });
 }
 
 export function detectUnit(spans: ColumnSpan[]): SourceUnit | null {
-  const known = spans.filter((s) => s.lo <= s.hi);
+  let lo = Infinity;
+  let hi = -Infinity;
 
-  if (!known.length) return 'rad';
-
-  const lo = Math.min(...known.map((s) => s.lo));
-  const hi = Math.max(...known.map((s) => s.hi));
+  for (const span of spans) {
+    if (span.lo <= span.hi) {
+      lo = Math.min(lo, span.lo);
+      hi = Math.max(hi, span.hi);
+    }
+  }
 
   if (Math.max(-lo, hi) <= RADIAN_LIMIT) return 'rad';
 

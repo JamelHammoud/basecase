@@ -23,7 +23,7 @@ covers:
   - electron/main.mjs
 ---
 
-The agent, slicing, printing and training all run in the desktop app. To install it, you need one of these:
+The desktop app runs the agent, slicing and printing, and starts local or remote training. To install it, you need one of these:
 
 - A Mac with Apple silicon. There's no build for Intel Macs.
 - A PC with 64-bit Windows 11.
@@ -42,6 +42,8 @@ The agent, slicing, printing and training all run in the desktop app. To install
 3. If Windows SmartScreen stops the installer, click **More info**, then click **Run anyway**.
 
 You don't need administrator rights to run the installer. It installs Basecase for your Windows account and adds a Basecase shortcut.
+
+To validate routed boards and export fabrication files, install KiCad 9.0.6 separately. See [Export board fabrication files](/help/export-board-fabrication-files).
 
 ## The first launch
 

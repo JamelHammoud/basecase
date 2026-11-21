@@ -26,10 +26,10 @@ function fieldMesh(field: StressField): THREE.InstancedMesh {
   const color = new THREE.Color();
 
   field.cells.forEach((c, i) => {
-    const ijk = [c % nx, Math.floor(c / nx) % ny, Math.floor(c / (nx * ny))];
-
     at.makeTranslation(
-      ...([0, 1, 2].map((k) => field.origin[k] + (ijk[k] + 0.5) * field.h[k]) as [number, number, number]),
+      field.origin[0] + ((c % nx) + 0.5) * field.h[0],
+      field.origin[1] + ((Math.floor(c / nx) % ny) + 0.5) * field.h[1],
+      field.origin[2] + (Math.floor(c / (nx * ny)) + 0.5) * field.h[2],
     );
     mesh.setMatrixAt(i, at);
     mesh.setColorAt(i, stressColor(field.ratio[i], color));

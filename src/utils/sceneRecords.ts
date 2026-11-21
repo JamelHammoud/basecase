@@ -3,6 +3,7 @@ import { platformBridge } from './platformBridge';
 import { upgradeSceneRecord } from './robotUpgrade';
 import { sceneWritten } from './sceneWrites';
 import { restoreWorldAssets, sceneWorldAssets } from '../cases/worldAssets';
+import { validateParameterScene } from './designParameters/verification';
 
 export async function loadSceneRecord(id: string): Promise<SavedSceneRecord | null> {
   await sceneWritten(id);
@@ -14,6 +15,8 @@ export async function loadSceneRecord(id: string): Promise<SavedSceneRecord | nu
   }
 
   const assets = await restoreWorldAssets(record.worldAssets);
+
+  validateParameterScene(record);
 
   sceneWorldAssets(record.project, assets);
 

@@ -78,6 +78,8 @@ export class EarthLayer {
 
   private readonly credits = new Map<string, number>();
 
+  private attributionText: string | null = '';
+
   private readonly hooks: Hooks;
 
   constructor(parent: THREE.Object3D, hooks: Hooks) {
@@ -172,6 +174,7 @@ export class EarthLayer {
     this.stop();
     this.camera = null;
     this.credits.clear();
+    this.attributionText = '';
     this.fetchTile = fetchTile;
 
     const tiles = new TilesRenderer(TILES_ROOT_URL);
@@ -264,6 +267,8 @@ export class EarthLayer {
 
       if (count > 0) this.credits.set(credit, count);
       else this.credits.delete(credit);
+
+      this.attributionText = null;
     }
 
     const after = this.attribution();
@@ -272,10 +277,14 @@ export class EarthLayer {
   }
 
   private attribution(): string {
-    return [...this.credits]
+    if (this.attributionText !== null) return this.attributionText;
+
+    this.attributionText = [...this.credits]
       .sort((a, b) => b[1] - a[1])
       .map(([credit]) => credit)
       .join('; ');
+
+    return this.attributionText;
   }
 
   private tileCenter(tile: unknown): THREE.Vector3 {

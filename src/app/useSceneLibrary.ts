@@ -1,3 +1,5 @@
+import { branchScene } from './sceneBranches';
+import { loadSceneSeed } from './sceneSeeds';
 import type { SavedSceneRecord, SavedSceneSummary } from '../types/robotics';
 import { CASE_STORES } from '../cases/console/codeStore';
 import { pickFiles } from '../utils/pickFiles';
@@ -7,7 +9,7 @@ import { decodeSceneFile, SCENE_FILE_EXTENSION } from '../utils/sceneFile';
 import { newSceneId } from '../utils/sceneIds';
 import { sceneStore } from '../utils/sceneStore';
 import { queueSceneWrite } from '../utils/sceneWrites';
-import { findSceneTab, sceneCopyName } from './tabModel';
+import { findSceneTab } from './tabModel';
 import type { useTabActions } from './useTabActions';
 import type { TabsCore } from './useTabs';
 
@@ -55,22 +57,26 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
     queueSceneWrite(scene.id, () => rewrite(scene.id, { name, keepUpdatedAt: true })).then(keep, reloadScenes);
   };
 
-  const duplicateScene = (scene: SavedSceneSummary) => {
+  const duplicateScene = async (scene: SavedSceneSummary) => {
     const tab = tabFor(scene.id);
-    const id = newSceneId();
-    const name = sceneCopyName(
-      scene.name,
-      latestRef.current.metas,
-      sceneStore.get().map((s) => s.name),
-    );
+    const handle = tab && handles.current.get(tab.id);
 
-    sceneStore.upsert({ ...scene, id, name, updatedAt: new Date().toISOString() });
+    if (handle?.branch) {
+      await handle.branch();
 
-    queueSceneWrite(id, async () => {
-      if (tab) await handles.current.get(tab.id)?.flush();
+      return;
+    }
 
-      return rewrite(scene.id, { id, name, chatId: null });
-    }).then(keep, reloadScenes);
+    const seed = await loadSceneSeed(scene.id);
+
+    if (!seed) return;
+
+    const names = [
+      ...Object.values(latestRef.current.metas).map((meta) => meta.name),
+      ...sceneStore.get().map((entry) => entry.name),
+    ];
+
+    await branchScene(seed, names);
   };
 
   const deleteScene = (scene: SavedSceneSummary) => {
@@ -103,7 +109,14 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
     if (file) await importSceneFile(file);
   };
 
-  return { renameScene, duplicateScene, deleteScene, importSceneFile, openSceneFile };
+  return {
+    renameScene,
+    duplicateScene: (scene: SavedSceneSummary) =>
+      void duplicateScene(scene).catch((error: unknown) => toastInFront(errorMessage(error), { tone: 'error' })),
+    deleteScene,
+    importSceneFile,
+    openSceneFile,
+  };
 }
 
 export type SceneLibrary = ReturnType<typeof useSceneLibrary>;

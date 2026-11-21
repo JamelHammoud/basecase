@@ -52,14 +52,14 @@ const hasPoint = (l: PlacedFourBar) => l.point[0] !== 0 || l.point[1] !== 0;
 
 function barShape(name: BarName, at: Pivots, l: PlacedFourBar): { points: Vec2[]; z: number } {
   const layer = BAR.t + BAR.gap;
-  const shapes: Record<BarName, { points: Vec2[]; z: number }> = {
-    ground: { points: [at.a, at.d], z: 0 },
-    crank: { points: [at.a, at.b], z: layer },
-    rocker: { points: [at.d, at.c], z: layer },
-    coupler: { points: hasPoint(l) ? [at.b, at.c, at.p] : [at.b, at.c], z: 2 * layer },
-  };
 
-  return shapes[name];
+  if (name === 'ground') return { points: [at.a, at.d], z: 0 };
+
+  if (name === 'crank') return { points: [at.a, at.b], z: layer };
+
+  if (name === 'rocker') return { points: [at.d, at.c], z: layer };
+
+  return { points: hasPoint(l) ? [at.b, at.c, at.p] : [at.b, at.c], z: 2 * layer };
 }
 
 function barPorts(name: BarName, at: Pivots, l: PlacedFourBar): CadPort[] {
@@ -71,14 +71,14 @@ function barPorts(name: BarName, at: Pivots, l: PlacedFourBar): CadPort[] {
     kind: 'bore',
     diameterMm: BAR.pin,
   });
-  const byBar: Record<BarName, CadPort[]> = {
-    ground: [port('A', at.a, 0), port('D', at.d, 0)],
-    crank: [port('A', at.a, 0), port('B', at.b, top)],
-    rocker: [port('D', at.d, 0), port('C', at.c, top)],
-    coupler: [port('B', at.b, top), port('C', at.c, top), ...(hasPoint(l) ? [port('P', at.p, top)] : [])],
-  };
 
-  return byBar[name];
+  if (name === 'ground') return [port('A', at.a, 0), port('D', at.d, 0)];
+
+  if (name === 'crank') return [port('A', at.a, 0), port('B', at.b, top)];
+
+  if (name === 'rocker') return [port('D', at.d, 0), port('C', at.c, top)];
+
+  return [port('B', at.b, top), port('C', at.c, top), ...(hasPoint(l) ? [port('P', at.p, top)] : [])];
 }
 
 export function linkageCode(l: PlacedFourBar, theta: number, part: BarName): string {
@@ -109,6 +109,7 @@ function barCad(name: BarName, l: PlacedFourBar, theta: number): AgentCadPayload
 interface Frame {
   origin: THREE.Vector3;
   basis: THREE.Matrix4;
+  rotation: V3;
 }
 
 function frameOn(plane: SketchPlane, l: PlacedFourBar): Frame {
@@ -119,21 +120,22 @@ function frameOn(plane: SketchPlane, l: PlacedFourBar): Frame {
   const x = u.clone().multiplyScalar(Math.cos(a)).addScaledVector(v, Math.sin(a));
   const y = u.clone().multiplyScalar(-Math.sin(a)).addScaledVector(v, Math.cos(a));
   const origin = new THREE.Vector3(...plane.origin).addScaledVector(u, l.origin[0]).addScaledVector(v, l.origin[1]);
+  const basis = new THREE.Matrix4().makeBasis(x, y, n);
 
-  return { origin, basis: new THREE.Matrix4().makeBasis(x, y, n) };
+  return { origin, basis, rotation: sceneRotation(basis) };
 }
 
 const toWorld = (frame: Frame, [x, y]: Vec2): V3 =>
   new THREE.Vector3(x, y, 0).applyMatrix4(frame.basis).add(frame.origin).toArray() as V3;
 
-function sceneRotation(frame: Frame): V3 {
-  const e = new THREE.Euler().setFromRotationMatrix(frame.basis.clone().multiply(CAD_TO_SCENE.clone().invert()), 'XYZ');
+function sceneRotation(basis: THREE.Matrix4): V3 {
+  const e = new THREE.Euler().setFromRotationMatrix(basis.clone().multiply(CAD_TO_SCENE.clone().invert()), 'XYZ');
 
   return [e.x * DEG, e.y * DEG, e.z * DEG];
 }
 
 function barPart(id: string, name: BarName, frame: Frame, cad: AgentCadPayload): ScenePart {
-  const rotation = sceneRotation(frame);
+  const rotation: V3 = [...frame.rotation];
   const center = new THREE.Vector3(...cadMeshToScene(cad).center).applyMatrix4(eulerToMatrix(rotation));
   const part = specToPart({ id, name: TITLES[name], shape: 'cad_part', material: 'printed', cad });
 
@@ -148,7 +150,7 @@ function barPart(id: string, name: BarName, frame: Frame, cad: AgentCadPayload):
 const TITLES: Record<BarName, string> = { ground: 'Ground', crank: 'Crank', coupler: 'Coupler', rocker: 'Rocker' };
 
 function servoOn(parts: ScenePart[], servoId: string, groundId: string): ScenePart {
-  const servo = specToPart({ id: servoId, catalog: `component:${CRANK_SERVO}` });
+  const servo = specToPart({ id: servoId, catalog: `component:${CRANK_SERVO}|c001` });
   const plan = planMate([...parts, servo], {
     part: servoId,
     port: 'output',

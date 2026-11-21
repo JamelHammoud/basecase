@@ -7,10 +7,12 @@ import {
   PerpendicularIcon,
   TangentIcon,
   VerticalIcon,
+  RulerIcon,
 } from '../../design-system';
 import type { GlyphKind } from './sketchMarks';
 
-export const CONSTRAINT_NAMES: Record<GlyphKind, string> = {
+export const CONSTRAINT_NAMES: Record<GlyphKind | 'distance', string> = {
+  distance: 'Distance',
   horizontal: 'Horizontal',
   vertical: 'Vertical',
   parallel: 'Parallel',
@@ -30,7 +32,9 @@ const ICONS: Record<GlyphKind, React.FC<{ className?: string }>> = {
   coincident: CoincidentIcon,
 };
 
-export const ConstraintIcon: React.FC<{ kind: GlyphKind; className?: string }> = ({ kind, className }) => {
+export const ConstraintIcon: React.FC<{ kind: GlyphKind | 'distance'; className?: string }> = ({ kind, className }) => {
+  if (kind === 'distance') return <RulerIcon className={className} />;
+
   const Icon = ICONS[kind];
 
   return <Icon className={className} />;

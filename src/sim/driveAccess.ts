@@ -133,6 +133,15 @@ export function driveAccess(input: DriveInput): DriveAccess {
 
   if (!robot) return { kind: 'none' };
 
+  if (model.joints.some((joint) => joint.robot === robot.key && joint.tendon))
+    return {
+      kind: 'ready',
+      cls: 'pose',
+      setup: poseSetup(rig, { robot: robot.key, start: input.start }),
+      needsFallCheck: false,
+      followPart: null,
+    };
+
   const followPart = robot.floating ? basePart(rig, parts, robot.key) : null;
 
   const posable = hasArms(rig) || robot.morphology === 'fixed';
@@ -163,6 +172,8 @@ export function driveOffer(options: {
   const { rig, parts, robotKey, velocityReady } = options;
 
   if (!rig.robots.length) return 'none';
+
+  if (rig.joints.some((joint) => joint.tendon && (!robotKey || rig.robotOf.get(joint.id) === robotKey))) return 'drive';
 
   const facts = robotFacts(rig, parts, robotKey);
   const walks = facts.morphology === 'legged' || facts.morphology === 'wheel-legged';

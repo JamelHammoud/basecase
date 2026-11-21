@@ -3,6 +3,7 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { fixtureModel } from '../src/skills/fixtureModels';
 import { publishedSkillFiles } from '../src/skills/hubSkill';
 import { readyStand } from '../src/skills/hubSkillFixtures';
+import { produceInstallOutcome } from '../src/skills/installOutcome';
 import { kitEnvironment } from '../src/skills/kitEnvironment';
 import { kitJob } from '../src/skills/kitJob';
 import { robotSchema } from '../src/skills/robotSchema';
@@ -129,6 +130,72 @@ it('keeps the skill link field usable from Train when Hub discovery is offline',
         .getByRole('button', { name: 'Install', exact: true })
         .isEnabled(),
     ).toBe(true);
+    expect(app.errors).toEqual([]);
+  } finally {
+    await app.close();
+    await hub.close();
+  }
+});
+
+it('reorders discovery after reported installs on a second robot', async () => {
+  const hub = await startFakeHub({ token: 'test', port: inject('hubPort') });
+  const sourceModel = fixtureModel('quad-servo');
+  const targetModel = fixtureModel('hexapod');
+  const skill = readyStand(sourceModel, 'source');
+  const targetSkill = readyStand(targetModel, 'installed');
+  const environment = kitEnvironment(targetModel, 'stand');
+  const candidates = ['a-stand', 'z-stand'].map((name) => {
+    const repo = `tester/${name}`;
+
+    hub.seed(
+      repo,
+      publishedSkillFiles({ skill, environment: kitEnvironment(sourceModel, 'stand'), model: sourceModel }),
+      'model',
+    );
+
+    return { repo, revision: commitSha(repo, 1), skill, schema: robotSchema(sourceModel) };
+  });
+  const app = await openApp({}, ['hub-']);
+
+  try {
+    await openQuad(app);
+    await openInstall(app);
+
+    const repos = () =>
+      app.page.getByTestId('published-skill').evaluateAll((rows) => rows.map((row) => row.getAttribute('data-repo')));
+
+    await expect.poll(repos).toEqual(candidates.map((candidate) => candidate.repo));
+    await app.page.keyboard.press('Escape');
+
+    for (const [index, source] of candidates.entries()) {
+      const evidence = structuredClone(targetSkill.evidence!);
+
+      evidence.passed = index === 1;
+      evidence.variants.forEach((variant) => {
+        variant.passes = index === 1 ? 32 : 0;
+      });
+
+      const record = produceInstallOutcome({
+        source,
+        model: targetModel,
+        environment,
+        status: index === 1 ? 'passed' : 'failed',
+        evidence,
+      });
+      const encode = (value: string) => new TextEncoder().encode(value);
+
+      hub.seed(
+        `installer/outcome-${index}`,
+        {
+          'README.md': encode('---\nlibrary_name: basecase\ntags:\n- basecase-skill-outcome\n---\n'),
+          'outcome.json': encode(JSON.stringify(record)),
+        },
+        'model',
+      );
+    }
+
+    await openInstall(app);
+    await expect.poll(repos).toEqual([...candidates].reverse().map((candidate) => candidate.repo));
     expect(app.errors).toEqual([]);
   } finally {
     await app.close();

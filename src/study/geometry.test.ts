@@ -172,3 +172,14 @@ describe('detached Study geometry', () => {
     expect(await refreshStudyGeometry(source, ['absent'])).toBe(source);
   });
 });
+
+it('refuses cumulative classroom geometry above the caller limit without mutating the source', async () => {
+  const source = sceneOf([box('first', [0, 10, 0], [20, 20, 20], 100), box('second', [50, 10, 0], [20, 20, 20], 100)]);
+
+  await expect(refreshStudyGeometry(source, ['first', 'second'], 20)).rejects.toThrow('Robot mesh is too large.');
+  expect(source.triangles).toEqual({});
+  expect(Object.keys((await refreshStudyGeometry(source, ['first', 'second'], 24)).triangles)).toEqual([
+    'first',
+    'second',
+  ]);
+});

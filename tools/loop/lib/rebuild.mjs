@@ -8,6 +8,8 @@ import { run } from './sh.mjs';
 import { stepsOf } from './stepLinks.mjs';
 import { close, openBranch } from './worktree.mjs';
 
+import { fetchGit } from './gitFetch.mjs';
+
 const SCHEMA = {
   ...CHANGE_SCHEMA,
   properties: {
@@ -36,7 +38,7 @@ function retire(pull, { verdict, stuck }, log) {
 }
 
 function prompt(pull, { comments, stuck }) {
-  run('git', ['fetch', '-q', 'origin', 'main', pull.headRefName], { cwd: HOME_CHECKOUT, allowFail: true });
+  fetchGit(['-q', 'origin', 'main', pull.headRefName], { allowFail: true });
 
   const diff = run('git', ['diff', `origin/main...origin/${pull.headRefName}`], {
     cwd: HOME_CHECKOUT,
@@ -54,6 +56,7 @@ export function rebuild(pull, { comments, stuck, log }) {
     const result = checkedRun({
       cwd: worktree.dir,
       name: 'rebuild',
+      taskId: `pull:${pull.number}`,
       prompt: prompt(pull, { comments, stuck }),
       schema: SCHEMA,
       hours: 8,

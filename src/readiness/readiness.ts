@@ -1,11 +1,14 @@
 import { itemKeyOf } from '../guide/guideItems';
 import { hashText, jsonHash, numbersHash } from '../utils/geometryHash';
-import type { MessageQuote, ScenePart } from '../types/robotics';
+import type { MessageQuote, ScenePart, ProjectSettings } from '../types/robotics';
+import { parameterFindings } from './designParameters';
+import { parameterGeometryEvidence } from '../utils/designParameters/verification';
 import type { CheckRow } from '../utils/engineeringTypes';
 import type { CheckStatus, CheckSummary, Finding, Readiness, ReadinessDecisions, ReadinessFinding } from './types';
 import { READINESS_CHECKS, ruleFinding } from './wording';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
+import { sketchSupportFindings, supportedSketchEvidence } from './sketchSupports';
 
 const round = (v: number) => Math.round(v * 10) / 10;
 
@@ -44,14 +47,23 @@ function readingsLine(p: ScenePart): string {
 }
 
 export function readinessFingerprint(parts: ScenePart[], extra: unknown): string {
-  return hashText([...parts.map((p) => `${partLine(p)}|${readingsLine(p)}`).sort(), JSON.stringify(extra)].join('\n'));
+  return hashText(
+    [
+      ...parts.map((p) => `${partLine(p)}|${readingsLine(p)}`).sort(),
+      JSON.stringify(extra),
+      supportedSketchEvidence(parts),
+      parameterGeometryEvidence(parts),
+    ]
+      .filter(Boolean)
+      .join('\n'),
+  );
 }
 
 export const UNSETTLED_FINGERPRINT = '';
 
 export function failedReadiness(
   error: unknown,
-  ctx: { parts: ScenePart[]; decisions?: ReadinessDecisions },
+  ctx: { parts: ScenePart[]; decisions?: ReadinessDecisions; designParameters?: ProjectSettings['designParameters'] },
 ): Readiness {
   const reason = errorMessage(error);
   const failed = ruleFinding('unfinished', 'blocker', {
@@ -170,6 +182,7 @@ export function readinessOf(
   findings: Finding[],
   ctx: {
     parts: ScenePart[];
+    designParameters?: ProjectSettings['designParameters'];
     decisions?: ReadinessDecisions;
     fingerprint: string;
     rows?: CheckRow[];
@@ -177,6 +190,12 @@ export function readinessOf(
     now?: Date;
   },
 ): Readiness {
+  findings = [
+    ...findings.filter((f) => f.rule !== 'sketch-support' && f.rule !== 'design-parameters'),
+    ...sketchSupportFindings(ctx.parts),
+    ...parameterFindings(ctx.parts, ctx.designParameters),
+  ];
+
   const ignored = ctx.decisions?.ignored ?? {};
   const rules = ctx.decisions?.ignoredRules ?? {};
   const disputes = ctx.decisions?.disputes ?? {};
@@ -207,8 +226,24 @@ export function readinessOf(
   };
 }
 
-export const withDecisions = (r: Readiness, parts: ScenePart[], decisions?: ReadinessDecisions): Readiness =>
-  readinessOf(r.findings, { parts, decisions, fingerprint: r.fingerprint, rows: r.rows, wiring: r.wiring });
+export const withDecisions = (
+  r: Readiness,
+  parts: ScenePart[],
+  decisions?: ReadinessDecisions,
+  designParameters?: ProjectSettings['designParameters'],
+): Readiness =>
+  readinessOf(r.findings, {
+    parts,
+    designParameters,
+    decisions,
+    fingerprint: r.fingerprint,
+    rows: r.rows,
+    wiring: r.wiring,
+    now: new Date(r.checkedAt),
+  });
+
+export const currentReadiness = (readiness: Readiness | null, fingerprint: string) =>
+  readiness?.fingerprint === fingerprint ? readiness : null;
 
 function statusOf(s: { built: boolean; blockout: boolean; blocked: boolean }): Readiness['status'] {
   if (!s.built) return 'empty';

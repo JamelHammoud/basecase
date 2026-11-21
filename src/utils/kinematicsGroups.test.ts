@@ -30,6 +30,26 @@ const joint = (id: string, fields: Partial<RobotJoint> = {}): RobotJoint => ({
 });
 
 describe('grouped rig parts', () => {
+  it('keeps shared-child ownership and inferred parents ordered across edits', () => {
+    const roots = [joint('first', { child: ['shared', 'shared'] }), joint('second', { child: ['shared'] })];
+    const tip = joint('tip', { parent: ['shared'], child: ['tool'] });
+    const parts = [part('shared'), part('tool')];
+    const before = structuredClone({ roots, tip, parts });
+    const rig = buildRig([...roots, tip], parts);
+    const reversed = buildRig([...roots].reverse().concat(tip), parts);
+    const deeper = buildRig([roots[0], { ...roots[1], parentJoint: 'first' }, tip], parts);
+
+    expect(rig.ownerOf.get('shared')).toBe('first');
+    expect(rig.parentOf.get('tip')).toBe('first');
+    expect(reversed.ownerOf.get('shared')).toBe('second');
+    expect(reversed.parentOf.get('tip')).toBe('second');
+    expect(deeper.ownerOf.get('shared')).toBe('second');
+    expect(deeper.parentOf.get('tip')).toBe('second');
+    expect(deeper.depth.get('tip')).toBe(2);
+    expect(buildRig([...roots, tip], parts)).toEqual(rig);
+    expect({ roots, tip, parts }).toEqual(before);
+  });
+
   it('moves every unlisted group member with its sole link regardless of scene order', () => {
     const parts = [part('cover', 'hand'), part('palm', 'hand'), part('sensor', 'hand', 'reference')];
     const rig = buildRig([joint('wrist', { child: ['palm'] })], parts);

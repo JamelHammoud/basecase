@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { describe, expect, it, vi } from 'vitest';
 import type { ImageMask } from './frameSet';
 import { decodeMask, encodeMask } from './imageMasks';
@@ -85,24 +86,19 @@ describe('COCO mask decoding', () => {
     ];
 
     for (const mask of masks) {
+      const expected = previousDecode(mask);
       const floor = vi.spyOn(Math, 'floor');
-      let expected: Uint8Array;
       let actual: Uint8Array;
-      let previousCalls: number;
       let currentCalls: number;
 
       try {
-        expected = previousDecode(mask);
-        previousCalls = floor.mock.calls.length;
-        floor.mockClear();
         actual = decodeMask(mask);
         currentCalls = floor.mock.calls.length;
       } finally {
         floor.mockRestore();
       }
 
-      expect(actual).toEqual(expected);
-      expect(previousCalls).toBe(length);
+      expect(Buffer.from(actual).equals(Buffer.from(expected))).toBe(true);
       expect(currentCalls).toBe(Math.floor(mask.counts.length / 2));
     }
   });

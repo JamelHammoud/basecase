@@ -1,3 +1,5 @@
+import type { FitPlateIdentity } from './fitVariantIdentity';
+import type { CradleIdentity } from './cradleTypes';
 import { strToU8, zipSync } from 'three/examples/jsm/libs/fflate.module.js';
 
 export interface MeshData {
@@ -19,6 +21,8 @@ export interface ThreeMfItem {
 }
 
 export interface ThreeMfInput {
+  cradle?: CradleIdentity;
+  fitTest?: FitPlateIdentity;
   objects: ThreeMfObject[];
   items: ThreeMfItem[];
   plates: Array<{ number: number; name: string }>;
@@ -35,34 +39,33 @@ export function weld(tris: Float32Array): MeshData {
   const index = new Map<string, number>();
   const vertices: number[] = [];
   const indices = new Uint32Array(tris.length / 3);
+  let count = 0;
 
-  for (let v = 0; v < tris.length / 3; v++) {
-    const [x, y, z] = [tris[v * 3], tris[v * 3 + 1], tris[v * 3 + 2]];
-    const key = `${Math.round(x * QUANT)},${Math.round(y * QUANT)},${Math.round(z * QUANT)}`;
-    let id = index.get(key);
+  for (let t = 0; t < tris.length; t += 9) {
+    for (let corner = 0; corner < 3; corner++) {
+      const v = t + corner * 3;
+      const [x, y, z] = [tris[v], tris[v + 1], tris[v + 2]];
+      const key = `${Math.round(x * QUANT)},${Math.round(y * QUANT)},${Math.round(z * QUANT)}`;
+      let id = index.get(key);
 
-    if (id === undefined) {
-      id = vertices.length / 3;
-      index.set(key, id);
-      vertices.push(x, y, z);
+      if (id === undefined) {
+        id = vertices.length / 3;
+        index.set(key, id);
+        vertices.push(x, y, z);
+      }
+
+      indices[count + corner] = id;
     }
 
-    indices[v] = id;
+    const [a, b, c] = [indices[count], indices[count + 1], indices[count + 2]];
+
+    if (a !== b && b !== c && a !== c) count += 3;
   }
 
-  return { vertices: new Float32Array(vertices), indices: dropDegenerate(indices) };
-}
-
-function dropDegenerate(indices: Uint32Array): Uint32Array {
-  const out: number[] = [];
-
-  for (let t = 0; t < indices.length; t += 3) {
-    const [a, b, c] = [indices[t], indices[t + 1], indices[t + 2]];
-
-    if (a !== b && b !== c && a !== c) out.push(a, b, c);
-  }
-
-  return new Uint32Array(out);
+  return {
+    vertices: new Float32Array(vertices),
+    indices: count === indices.length ? indices : indices.slice(0, count),
+  };
 }
 
 const escapeXml = (s: string) =>
@@ -95,10 +98,19 @@ export function plateOrigin(plateIndex: number, plateCount: number, [w, d]: [num
   return [col * w * (1 + PLATE_GAP), -row * d * (1 + PLATE_GAP)];
 }
 
-function transformText(m: number[], offset: [number, number]): string {
-  return [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10], m[12] + offset[0], m[13] + offset[1], m[14]]
-    .map(num)
-    .join(' ');
+export function threeMfBuildMatrix(matrix: number[], offset: [number, number]): number[] {
+  const translated = matrix.slice();
+
+  translated[12] += offset[0];
+  translated[13] += offset[1];
+
+  return translated.map((value) => Number(num(value)));
+}
+
+function transformText(matrix: number[], offset: [number, number]): string {
+  const m = threeMfBuildMatrix(matrix, offset);
+
+  return [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10], m[12], m[13], m[14]].join(' ');
 }
 
 function modelXml(input: ThreeMfInput): string {
@@ -144,7 +156,11 @@ const RELS = `<?xml version="1.0" encoding="UTF-8"?>
 
 export function writeThreeMf(input: ThreeMfInput): Uint8Array {
   const files: Record<string, Uint8Array> = {
-    '[Content_Types].xml': strToU8(CONTENT_TYPES),
+    '[Content_Types].xml': strToU8(
+      input.fitTest || input.cradle
+        ? CONTENT_TYPES.replace('</Types>', '<Default Extension="json" ContentType="application/json"/>\n</Types>')
+        : CONTENT_TYPES,
+    ),
     '_rels/.rels': strToU8(RELS),
     '3D/3dmodel.model': strToU8(modelXml(input)),
   };
@@ -154,7 +170,14 @@ export function writeThreeMf(input: ThreeMfInput): Uint8Array {
     files['Metadata/project_settings.config'] = strToU8(projectSettings(input.project));
   }
 
-  return zipSync(files, { level: 6, ...(input.project ? { mtime: new Date(1980, 0, 1) } : {}) });
+  if (input.fitTest) files['Metadata/basecase-fit-test.json'] = strToU8(JSON.stringify(input.fitTest));
+
+  if (input.cradle) files['Metadata/basecase-assembly-cradle.json'] = strToU8(JSON.stringify(input.cradle));
+
+  return zipSync(files, {
+    level: 6,
+    ...(input.project || input.fitTest || input.cradle ? { mtime: new Date(1980, 0, 1) } : {}),
+  });
 }
 
 export interface ThreeMfProject {
@@ -165,25 +188,38 @@ export interface ThreeMfProject {
 const metadata = (key: string, value: string | number) =>
   `<metadata key="${key}" value="${escapeXml(String(value))}"/>`;
 
-function modelSettings(input: ThreeMfInput): string {
-  const objects = input.objects.map(
-    (o) => `<object id="${o.id}">${metadata('name', o.name)}${metadata('extruder', o.filament ?? 1)}</object>`,
-  );
+function plateInstances(input: ThreeMfInput): Map<number, string[]> {
   const instanceCounts = new Map<number, number>();
-  const instances = input.items.map((it) => {
+  const byPlate = new Map<number, string[]>();
+
+  for (const plate of input.plates) {
+    if (!Number.isNaN(plate.number)) byPlate.set(plate.number, []);
+  }
+
+  for (const it of input.items) {
     const index = instanceCounts.get(it.objectId) ?? 0;
 
     instanceCounts.set(it.objectId, index + 1);
 
-    return { ...it, index };
-  });
+    const entries = byPlate.get(it.plate);
+
+    if (!entries) continue;
+
+    entries.push(
+      `<model_instance>${metadata('object_id', it.objectId)}${metadata('instance_id', index)}${metadata('identify_id', it.objectId)}</model_instance>`,
+    );
+  }
+
+  return byPlate;
+}
+
+function modelSettings(input: ThreeMfInput): string {
+  const objects = input.objects.map(
+    (o) => `<object id="${o.id}">${metadata('name', o.name)}${metadata('extruder', o.filament ?? 1)}</object>`,
+  );
+  const instances = plateInstances(input);
   const plates = input.plates.map((p) => {
-    const items = instances
-      .filter((it) => it.plate === p.number)
-      .map(
-        (it) =>
-          `<model_instance>${metadata('object_id', it.objectId)}${metadata('instance_id', it.index)}${metadata('identify_id', it.objectId)}</model_instance>`,
-      );
+    const items = instances.get(p.number) ?? [];
 
     return `<plate>${metadata('plater_id', p.number)}${metadata('plater_name', p.name)}${metadata('locked', 'false')}${items.join('')}</plate>`;
   });

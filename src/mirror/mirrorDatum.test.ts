@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { V3 } from '../agent/agentFrame';
 import { componentPorts } from '../data/componentPorts';
 import { COMPONENTS } from '../data/components';
@@ -93,6 +93,24 @@ function countedPorts(count: number) {
 }
 
 describe('catalog mirror datum matching', () => {
+  it.each([60, 120])('skips axis distances for positionally losing matches across %s ports', (count) => {
+    const ports = Array.from({ length: count }, (_, i) => portAt([i * 10, 0, 0]));
+    const local: V3 = [0.2, -0.8, 0.5];
+    const hypot = vi.spyOn(Math, 'hypot');
+
+    try {
+      const expected = scannedDatum(ports, local);
+      const previousCalls = hypot.mock.calls.length;
+
+      hypot.mockClear();
+      expect(mirrorDatum(ports, local)).toEqual(expected);
+      expect(previousCalls).toBe(6 * count * count);
+      expect(hypot.mock.calls).toHaveLength(3 * count * count + (3 * count * (count + 1)) / 2 + 2 * count - 3);
+    } finally {
+      hypot.mockRestore();
+    }
+  });
+
   it('keeps empty, singleton and tied plane choices', () => {
     expect(mirrorDatum([], [0, 0, 1])).toEqual({ axis: 2, offset: 0 });
     expect(mirrorDatum([], [1, 1, 1])).toEqual({ axis: 0, offset: 0 });

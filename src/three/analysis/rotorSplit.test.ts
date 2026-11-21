@@ -36,6 +36,26 @@ function previousPartition(bodies: Float32Array[]) {
 }
 
 describe('servo rotor classification', () => {
+  it.each([25, 50])('matches complete partitions with %i disconnected stator bodies', (count) => {
+    const bodies = [
+      ...Array.from({ length: count }, (_, i) => box([4, 4, 4], [i * 8 + 20, 0, 0])),
+      box([8, 2, 8], [0, 14, 0]),
+    ];
+    const expected = previousPartition(bodies)!;
+    const split = splitRotor(new ShapeSolid(combined(bodies)))!;
+
+    expect(split.rotor.positions).toEqual(expected.rotor);
+    expect(split.stator.positions).toEqual(expected.stator);
+  });
+
+  it('keeps empty geometry rigid across cached and replacement shapes', () => {
+    const solid = new ShapeSolid(new Float32Array());
+
+    expect(splitRotor(solid)).toBeNull();
+    expect(splitRotor(solid)).toBeNull();
+    expect(splitRotor(new ShapeSolid(new Float32Array()))).toBeNull();
+  });
+
   it('preserves complete partitions near axis and reach limits across mesh translations and scales', () => {
     const offsets = [0, 0.999, 1, 1.001, -1, 12, 19.999, 20, 20.001];
 
@@ -75,3 +95,32 @@ describe('servo rotor classification', () => {
     expect(splitRotor(rigid)).toBeNull();
   });
 });
+
+it.each([1, 25, 50])(
+  'preserves interleaved triangle order and independent output storage with %i repeats',
+  (repeats) => {
+    const stator = box([40, 20, 30], [0, 0, 0]);
+    const rotor = box([8, 2, 8], [0, 14, 0]);
+    const positions = new Float32Array((stator.length + rotor.length) * repeats);
+
+    for (let t = 0; t < 12 * repeats; t++) {
+      const offset = (t % 12) * 9;
+
+      positions.set(stator.subarray(offset, offset + 9), t * 18);
+      positions.set(rotor.subarray(offset, offset + 9), t * 18 + 9);
+    }
+
+    const before = positions.slice();
+    const solid = new ShapeSolid(positions);
+    const split = splitRotor(solid)!;
+
+    expect(split.stator.positions).toEqual(combined(Array.from({ length: repeats }, () => stator)));
+    expect(split.rotor.positions).toEqual(combined(Array.from({ length: repeats }, () => rotor)));
+    expect(split.stator.positions.buffer).not.toBe(positions.buffer);
+    expect(split.rotor.positions.buffer).not.toBe(positions.buffer);
+    expect(split.stator.positions.buffer).not.toBe(split.rotor.positions.buffer);
+    expect(positions).toEqual(before);
+    expect(splitRotor(solid)).toBe(split);
+    expect(splitRotor(new ShapeSolid(positions.slice()))?.rotor.positions).toEqual(split.rotor.positions);
+  },
+);

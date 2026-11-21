@@ -1,0 +1,170 @@
+[
+  {
+    "name": "build",
+    "lane": "build",
+    "id": "1794862430748-8392-15efa315-e089-45b3-92a7-1c4e6ba05a32",
+    "task": "step-1491",
+    "taskId": "step:1491",
+    "workId": "work:355c1085b04b4880597438006e597f9694ac4513bb1cc4ad27f2a6ac9ce074aa",
+    "provider": "codex",
+    "model": "gpt-6.1-sol",
+    "state": "completed",
+    "ok": true,
+    "startedAt": 1794862430748,
+    "durationMs": 85412,
+    "usage": {
+      "input_tokens": 369982,
+      "cached_input_tokens": 308352,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2939,
+      "reasoning_output_tokens": 933
+    },
+    "result": {
+      "changed": false,
+      "kind": "feature",
+      "title": "Leave schematic export unimplemented",
+      "checked": "Inspected Build exports, wiring, connector metadata and power calculations. Confirmed Docker is available. No implementation tests or KiCad validation ran. Preflight reported the absent changelog.",
+      "notes": "Incomplete attempt, with no tooling or dependency blocker established. All implementation and acceptance work remains. Generic power requirements and suggested supplies must remain distinct from confirmed circuitry. Findings are in scratch/task-handoff.json. No help article, changelog or screenshots were added because nothing shipped. The arc has not advanced."
+    }
+  },
+  {
+    "name": "build",
+    "lane": "build",
+    "id": "1794863173264-41120-ad83c105-2790-455f-8e59-e50124a7820a",
+    "task": "step-1491",
+    "taskId": "step:1491",
+    "workId": "work:9b3d7c73031af37b1adbf18416b6e6e09be2df558eb29914b13b81f700fcc908",
+    "provider": "codex",
+    "model": "gpt-6.1-sol",
+    "state": "completed",
+    "ok": true,
+    "startedAt": 1794863173264,
+    "durationMs": 121736,
+    "usage": {
+      "input_tokens": 701023,
+      "cached_input_tokens": 617216,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3770,
+      "reasoning_output_tokens": 1231
+    },
+    "result": {
+      "changed": false,
+      "kind": "feature",
+      "title": "Leave schematic export unchanged",
+      "checked": "Inspected wiring, power calculations, connector metadata and Build exports. Docker responds. No implementation tests or KiCad validation ran. Preflight reports a missing announcement because nothing shipped.",
+      "notes": "Incomplete attempt. No external dependency or unavailable capability was established. All implementation and acceptance work remains. Findings are recorded in scratch/task-handoff.json. No help article, changelog or screenshots were added because no capability shipped. The arc has not advanced."
+    }
+  },
+  {
+    "name": "build",
+    "lane": "build",
+    "id": "1794862589010-16793-763f4248-86c1-4a59-8306-4617c7f435d0",
+    "task": "step-1272",
+    "taskId": "step:1272",
+    "workId": "work:203e2b2b7b166ed0b0cc0953bb16d46d8d10de596262a040a377aa4f910ad713",
+    "provider": "codex",
+    "model": "gpt-6.1-sol",
+    "state": "completed",
+    "ok": true,
+    "startedAt": 1794862589010,
+    "durationMs": 82412,
+    "usage": {
+      "input_tokens": 352131,
+      "cached_input_tokens": 299520,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3001,
+      "reasoning_output_tokens": 656
+    },
+    "result": {
+      "changed": false,
+      "kind": "feature",
+      "title": "Leave robot version exploration unimplemented",
+      "checked": "Inspected persistence, undo, autosave, agent completion and Case comparison. No implementation tests ran. Preflight flagged the missing changelog, which is inappropriate for an unchanged result.",
+      "notes": "Issue #1272 remains entirely outstanding. This is an incomplete attempt, not a dependency block. Findings and acceptance gaps are in scratch/task-handoff.json. No publication content was added because nothing shipped."
+    }
+  },
+  {
+    "name": "build",
+    "lane": "build",
+    "id": "1794862999999-33208-7de4784a-6bc4-4958-8bde-f9ecc111c29e",
+    "task": "step-1272",
+    "taskId": "step:1272",
+    "workId": "work:84ea86f08cbaa7ed616676b430c145d201812307e0f610af610fd9166c03aac8",
+    "provider": "codex",
+    "model": "gpt-6.1-sol",
+    "state": "completed",
+    "ok": true,
+    "startedAt": 1794862999999,
+    "durationMs": 104343,
+    "usage": {
+      "input_tokens": 594203,
+      "cached_input_tokens": 525056,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3440,
+      "reasoning_output_tokens": 814
+    },
+    "result": {
+      "changed": false,
+      "kind": "feature",
+      "title": "Leave robot version exploration unimplemented",
+      "checked": "Inspected scene storage, serialization, undo, agent completion and comparison paths. No tests ran because no implementation changed. Required preflight reports a missing feature announcement for this unchanged answer.",
+      "notes": "The entire #1272 acceptance scope remains outstanding. This is incomplete work, not a confirmed external dependency block. Findings and remaining acceptance work are in scratch/task-handoff.json. No announcement was added because nothing shipped. The preflight CLI omits changed and notes when invoking its checker, so its announcement finding remains."
+    }
+  },
+  {
+    "name": "build",
+    "lane": "build",
+    "id": "1794862589520-17143-f1f2fa58-9ef8-4715-8f85-610352481845",
+    "task": "step-1420",
+    "taskId": "step:1420",
+    "workId": "work:dff175eb5f2684c41e321214caaec068b852acaddcbb49352fef6ae440885c40",
+    "provider": "codex",
+    "model": "gpt-6.1-sol",
+    "state": "completed",
+    "ok": true,
+    "startedAt": 1794862589520,
+    "durationMs": 71623,
+    "usage": {
+      "input_tokens": 286990,
+      "cached_input_tokens": 236160,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2556,
+      "reasoning_output_tokens": 409
+    },
+    "result": {
+      "changed": false,
+      "kind": "feature",
+      "title": "Leave imported-body mechanism fitting unshipped",
+      "checked": "Inspected the issue, arc, open pull requests and relevant implementation paths. No tests ran because no code changed. Required preflight reported a missing changelog despite changed=false.",
+      "notes": "Incomplete implementation, with no external blocker identified. Inference, constrained actuator fitting, structural mounting, service access, fixed-exterior shells, final-mass checks, atomic history and acceptance coverage remain outstanding. Findings are in scratch/task-handoff.json. No announcement or screenshots were added because nothing shipped, which explains the preflight finding. No next arc step is unlocked."
+    }
+  },
+  {
+    "name": "build",
+    "lane": "build",
+    "id": "1794863170022-41000-dd1e5bb4-5566-44fd-8c4c-f4ea92a63eae",
+    "task": "step-1420",
+    "taskId": "step:1420",
+    "workId": "work:418728dc431ffba0d3de3d253bc6131805fb056ac14f44a897136de97cede49b",
+    "provider": "codex",
+    "model": "gpt-6.1-sol",
+    "state": "completed",
+    "ok": true,
+    "startedAt": 1794863170022,
+    "durationMs": 62630,
+    "usage": {
+      "input_tokens": 338519,
+      "cached_input_tokens": 254720,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2173,
+      "reasoning_output_tokens": 188
+    },
+    "result": {
+      "changed": false,
+      "kind": "feature",
+      "title": "Leave mesh mechanism fitting unimplemented",
+      "checked": "Inspected the issues and existing skeleton, sizing, editing and Wrap Robot implementations. No tests ran because no code changed. Preflight reported a missing changelog, addressed in notes. Git status is clean.",
+      "notes": "Incomplete implementation, with no external capability blocker or prerequisite pull request identified. Inference, constrained catalog fitting, structural mounting, assembly access, preserved exterior dimensions, final-mass checks, atomic history and the acceptance matrix remain outstanding. Evidence is in scratch/task-handoff.json. No help article, changelog or screenshots were added because no capability shipped. No next arc step is unlocked."
+    }
+  }
+]

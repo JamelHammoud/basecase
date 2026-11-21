@@ -1,3 +1,4 @@
+import type { CableRouteView } from './cableRouteLayer';
 import type { CaseTrails } from './caseTrails';
 import type { CameraSpec, SilhouetteShot } from './fitCapture';
 import type { ImportedWorldState, ImportedWorldView } from './importedWorld';
@@ -99,6 +100,7 @@ export interface AxisPickHit {
 }
 
 export interface BuildStepView {
+  tooling?: import('./buildTooling').BuildTooling;
   shown: string[];
   moves: Array<{ partId: string; offset: Vec3 }>;
   arrows: Array<{ from: Vec3; to: Vec3 }>;
@@ -110,6 +112,8 @@ export interface BuildStepView {
 export interface ViewportProps {
   sceneKey?: string;
   parts: ScenePart[];
+  sourceParts?: ScenePart[];
+  poseOwners?: ReadonlyMap<string, string>;
   selectedPartIds: string[];
   transformMode: TransformMode;
   sculptSettings: SculptSettings;
@@ -158,6 +162,7 @@ export interface ViewportProps {
   axisPick?: { parts: string[]; ready: boolean } | null;
   onAxisPick?: (hit: AxisPickHit | null, click: boolean) => void;
   buildStep?: BuildStepView | null;
+  cableRoute?: CableRouteView | null;
   skeleton?: SkeletonView | null;
   onSkeletonDrag?: (drag: SkeletonDragEvent) => void;
   onSkeletonPick?: (id: string, at: { x: number; y: number }) => void;
@@ -207,7 +212,7 @@ export interface Viewport3DHandle {
   ) => Promise<Array<{ view: string; dataUrl: string; labels?: number[] }>>;
   interference: (onlyIds?: string[]) => Promise<{ interferences: Interference[]; coplanar: Coplanar[] }>;
   fastenerChains: () => Promise<ChainResult>;
-  wiring: (scene: WiringScene) => Promise<Netlist>;
+  wiring: (scene: WiringScene, signal?: AbortSignal) => Promise<Netlist>;
   assembly: (options: Omit<AssemblyGeometryInput, keyof FastenerInput>) => Promise<AssemblyGeometry>;
   measureParts: (ids?: string[]) => Promise<Record<string, MeshMeasure>>;
   visibleShares: () => Promise<Record<string, number>>;

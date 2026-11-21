@@ -1,3 +1,4 @@
+import { determinant3, solve3 } from '../utils/solve3';
 import { add, cross, dot, scale, sub, unit, type MeshIndex, type V3 } from './meshIndex';
 
 export interface Cylinder {
@@ -14,7 +15,7 @@ const FIT_ROUNDS = 3;
 
 const residualLimit = (radius: number) => Math.max(0.05, radius * 0.02);
 
-function jacobiRotate(m: number[][], v: number[][], [p, q]: [number, number]) {
+function jacobiRotate(m: number[][], v: number[][], p: number, q: number) {
   const theta = (m[q][q] - m[p][p]) / (2 * m[p][q]);
   const t = Math.sign(theta || 1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
   const c = 1 / Math.sqrt(t * t + 1);
@@ -52,18 +53,17 @@ export function symmetricEigen(input: number[][]): Array<{ value: number; vector
     [0, 1, 0],
     [0, 0, 1],
   ];
-  const pairs: Array<[number, number]> = [
-    [0, 1],
-    [0, 2],
-    [1, 2],
-  ];
 
   for (let sweep = 0; sweep < 50; sweep++) {
     const off = Math.abs(m[0][1]) + Math.abs(m[0][2]) + Math.abs(m[1][2]);
 
     if (off < 1e-14) break;
 
-    for (const pair of pairs) if (Math.abs(m[pair[0]][pair[1]]) > 1e-18) jacobiRotate(m, v, pair);
+    if (Math.abs(m[0][1]) > 1e-18) jacobiRotate(m, v, 0, 1);
+
+    if (Math.abs(m[0][2]) > 1e-18) jacobiRotate(m, v, 0, 2);
+
+    if (Math.abs(m[1][2]) > 1e-18) jacobiRotate(m, v, 1, 2);
   }
 
   return [0, 1, 2]
@@ -96,24 +96,18 @@ function planeBasis(axis: V3): [V3, V3] {
 }
 
 function angularSpanDeg(index: MeshIndex, tris: number[], [u, w]: [V3, V3]) {
-  const angles = tris.map((t) => Math.atan2(dot(index.normal(t), w), dot(index.normal(t), u))).sort((a, b) => a - b);
+  const angles = tris
+    .map((t) => {
+      const normal = index.normal(t);
+
+      return Math.atan2(dot(normal, w), dot(normal, u));
+    })
+    .sort((a, b) => a - b);
   let gap = angles[0] + 2 * Math.PI - angles[angles.length - 1];
 
   for (let i = 1; i < angles.length; i++) gap = Math.max(gap, angles[i] - angles[i - 1]);
 
   return ((2 * Math.PI - gap) * 180) / Math.PI;
-}
-
-function solve3(a: number[][], b: number[]): number[] | null {
-  const det = (m: number[][]) =>
-    m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
-    m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
-    m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
-  const d = det(a);
-
-  if (Math.abs(d) < 1e-12) return null;
-
-  return [0, 1, 2].map((k) => det(a.map((row, i) => row.map((x, j) => (j === k ? b[i] : x)))) / d);
 }
 
 export function fitCircle(points: Array<[number, number]>): { cx: number; cy: number; r: number } | null {
@@ -131,21 +125,26 @@ export function fitCircle(points: Array<[number, number]>): { cx: number; cy: nu
   for (const [px, py] of points) {
     const x = px - mx;
     const y = py - my;
-    const row = [x, y, 1];
     const rhs = -(x * x + y * y);
 
-    for (let i = 0; i < 3; i++) {
-      b[i] += row[i] * rhs;
-
-      for (let j = i; j < 3; j++) a[i][j] += row[i] * row[j];
-    }
+    b[0] += x * rhs;
+    b[1] += y * rhs;
+    b[2] += rhs;
+    a[0][0] += x * x;
+    a[0][1] += x * y;
+    a[0][2] += x;
+    a[1][1] += y * y;
+    a[1][2] += y;
+    a[2][2] += 1;
   }
 
   for (let i = 0; i < 3; i++) for (let j = 0; j < i; j++) a[i][j] = a[j][i];
 
-  const s = solve3(a, b);
+  const determinant = determinant3(a);
 
-  if (!s) return null;
+  if (Math.abs(determinant) < 1e-12) return null;
+
+  const s = solve3(a, b, determinant);
 
   const cx = -s[0] / 2;
   const cy = -s[1] / 2;
@@ -154,9 +153,15 @@ export function fitCircle(points: Array<[number, number]>): { cx: number; cy: nu
   return r2 > 0 ? { cx: cx + mx, cy: cy + my, r: Math.sqrt(r2) } : null;
 }
 
-const cornersOf = (index: MeshIndex, tris: number[]) => [
-  ...new Set(tris.flatMap((t) => [0, 1, 2].map((k) => index.corners[t * 3 + k]))),
-];
+function cornersOf(index: MeshIndex, tris: number[]): number[] {
+  const ids = new Set<number>();
+
+  for (const t of tris) {
+    for (let k = 0; k < 3; k++) ids.add(index.corners[t * 3 + k]);
+  }
+
+  return [...ids];
+}
 
 interface Fit {
   cylinder: Cylinder;
@@ -171,16 +176,26 @@ function fitOnce(index: MeshIndex, tris: number[], axis: V3): Fit | null {
 
   if (!circle) return null;
 
-  const along = vertices.map((p) => dot(p, axis));
-  const lo = Math.min(...along);
-  const hi = Math.max(...along);
   const onAxis = add(scale(basis[0], circle.cx), scale(basis[1], circle.cy));
-  const center = add(onAxis, scale(axis, (lo + hi) / 2));
   const radialOf = (p: V3) => {
     const d = sub(p, onAxis);
 
     return sub(d, scale(axis, dot(d, axis)));
   };
+  const residuals = new Map<number, number>();
+  let lo = Infinity;
+  let hi = -Infinity;
+
+  for (let i = 0; i < ids.length; i++) {
+    const p = vertices[i];
+    const along = dot(p, axis);
+
+    lo = Math.min(lo, along);
+    hi = Math.max(hi, along);
+    residuals.set(ids[i], Math.abs(Math.hypot(...radialOf(p)) - circle.r));
+  }
+
+  const center = add(onAxis, scale(axis, (lo + hi) / 2));
   const outward = tris.reduce(
     (s, t) => s + index.areas[t] * dot(index.normal(t), unit(radialOf(centroid(index, t)))),
     0,
@@ -195,7 +210,7 @@ function fitOnce(index: MeshIndex, tris: number[], axis: V3): Fit | null {
       spanDeg: angularSpanDeg(index, tris, basis),
       convex: outward > 0,
     },
-    residuals: new Map(ids.map((v, i) => [v, Math.abs(Math.hypot(...radialOf(vertices[i])) - circle.r)])),
+    residuals,
   };
 }
 
@@ -205,8 +220,15 @@ function centroid(index: MeshIndex, t: number): V3 {
   return scale(add(add(a, b), c), 1 / 3);
 }
 
-const triangleResidual = (index: MeshIndex, fit: Fit, t: number) =>
-  Math.max(...[0, 1, 2].map((k) => fit.residuals.get(index.corners[t * 3 + k])!));
+function triangleFits(index: MeshIndex, fit: Fit, t: number, limit: number) {
+  for (let k = 0; k < 3; k++) {
+    const withinLimit = fit.residuals.get(index.corners[t * 3 + k])! <= limit;
+
+    if (!withinLimit) return false;
+  }
+
+  return true;
+}
 
 function rms(residuals: Map<number, number>) {
   let sum = 0;
@@ -237,7 +259,7 @@ export function fitCylinder(index: MeshIndex, region: number[], minSpanDeg: numb
 
     if (rms(fit.residuals) <= limit) return fit.cylinder.spanDeg >= minSpanDeg ? fit.cylinder : null;
 
-    const kept = tris.filter((t) => triangleResidual(index, fit, t) <= limit);
+    const kept = tris.filter((t) => triangleFits(index, fit, t, limit));
 
     if (kept.length === tris.length) return null;
 

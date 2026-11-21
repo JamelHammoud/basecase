@@ -31,7 +31,7 @@ export function buildGuidePlan(scene: GuideScene, material: string): GuidePlan {
   };
   const modules = buildModules({ ...scene, parts }, parts);
   const raw = buildSteps(ctx, modules);
-  const items = buildItems(parts, firstUseOrder(raw, parts));
+  const items = buildItems(parts, firstUseOrder(raw, parts), scene.boardPartId);
   const tools = buildTools(items, material);
 
   return {

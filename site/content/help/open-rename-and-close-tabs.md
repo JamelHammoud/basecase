@@ -57,4 +57,6 @@ Press [[⌃Tab]] to go to the next tab and [[⌃⇧Tab]] to go to the previous o
 
 Drag a tab to reorder it, or middle-click a tab to close it. Right-click a tab to find **Duplicate**, **Close Other Scenes** and **Close Scenes to the Right**.
 
+**Duplicate** creates a linked alternative with its own working design and history. To bring selected edits back, see [Save and merge robot versions](/help/save-and-merge-robot-versions).
+
 To find a scene you've closed, see [Reopen a saved scene](/help/reopen-a-saved-scene).

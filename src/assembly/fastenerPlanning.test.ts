@@ -51,6 +51,38 @@ describe('indexed fastener planning', () => {
     expect(f.stackReads()).toBeLessThanOrEqual(count * 2);
   });
 
+  it.each([300, 600])('stops clearance at the first live blocker in a %i-entry path', (count) => {
+    const f = fastenerPlanningFixture(1);
+    let reads = 0;
+    const blockers = Array.from({ length: count }, () => f.parts[0]);
+
+    blockers.forEach((_, i) => {
+      Object.defineProperty(blockers, i, {
+        get() {
+          reads++;
+
+          return f.parts[0];
+        },
+      });
+    });
+    f.geometry.drivers[f.screws[0]][0].blockers = blockers;
+
+    const plan = planRemoval(f.geometry, {});
+
+    expect(reads).toBe(count + 1);
+    expect(plan.steps).toEqual([]);
+    expect(plan.stuckParts).toEqual(f.parts);
+    expect(plan.screws[f.screws[0]]).toEqual({ verdict: 'stuck', blockers: Array(count).fill(f.parts[0]) });
+
+    f.geometry.drivers[f.screws[0]][0].blockers = ['unknown'];
+
+    expect(planRemoval(f.geometry, {}).steps).toEqual([
+      { kind: 'screw', ids: f.screws },
+      { kind: 'part', ids: f.parts },
+    ]);
+    expect(plan.stuckParts).toEqual(f.parts);
+  });
+
   it('keeps service dependencies and hosted sleeves in the proven order', () => {
     const f = fastenerPlanningFixture(3);
 

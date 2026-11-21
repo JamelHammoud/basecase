@@ -3,7 +3,7 @@ import type { MocapRotation } from './mocapBones';
 export function bvhRotations(text: string, frameTime: number) {
   const hierarchy = text.split(/MOTION/)[0];
   const tokens = hierarchy.match(/(?:ROOT|JOINT)\s+\S+|CHANNELS\s+\d+[^\n\r]*/g) ?? [];
-  const channels: Array<{ bone: string; axis: MocapRotation['axis']; index: number }> = [];
+  const channels = new Map<string, Array<{ axis: MocapRotation['axis']; index: number }>>();
   let bone = '';
   let count = 0;
 
@@ -17,8 +17,12 @@ export function bvhRotations(text: string, frameTime: number) {
     }
 
     for (const channel of words.slice(2)) {
-      if (/^[XYZ]rotation$/.test(channel))
-        channels.push({ bone, axis: channel[0] as MocapRotation['axis'], index: count });
+      if (/^[XYZ]rotation$/.test(channel)) {
+        const list = channels.get(bone) ?? [];
+
+        list.push({ axis: channel[0] as MocapRotation['axis'], index: count });
+        channels.set(bone, list);
+      }
 
       count++;
     }
@@ -34,11 +38,11 @@ export function bvhRotations(text: string, frameTime: number) {
     const frame = frames[Math.min(frames.length - 1, Math.max(0, Math.round(t / frameTime)))];
     const result = new Map<string, MocapRotation[]>();
 
-    for (const channel of channels) {
-      const list = result.get(channel.bone) ?? [];
-
-      list.push({ axis: channel.axis, degrees: frame?.[channel.index] ?? Number.NaN });
-      result.set(channel.bone, list);
+    for (const [bone, rotations] of channels) {
+      result.set(
+        bone,
+        rotations.map((channel) => ({ axis: channel.axis, degrees: frame?.[channel.index] ?? Number.NaN })),
+      );
     }
 
     return result;

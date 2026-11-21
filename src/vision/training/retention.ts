@@ -1,3 +1,4 @@
+import { requirementOutcomes } from './requirementRetention';
 import { canonicalTest } from './metrics';
 import { validateTrainingEvaluation } from './retentionValidation';
 import type {
@@ -37,6 +38,8 @@ function retentionReason(candidate: TrainingEvaluation, incumbent?: TrainingEval
 
   if (!limitsSatisfied(candidate)) return 'limits';
 
+  if (requirementOutcomes(candidate, incumbent).some((row) => row.reason !== 'passed')) return 'requirements';
+
   if (
     candidate.metrics.primary === null ||
     incumbent.metrics.primary === null ||
@@ -68,6 +71,7 @@ export function compareTraining(input: TrainingComparisonInput) {
     metric: candidate.task.metric,
     candidateScore: candidate.metrics.primary,
     incumbentScore: incumbent?.metrics.primary ?? null,
+    ...(candidate.task.requirements?.length ? { requirements: requirementOutcomes(candidate, incumbent) } : {}),
     previousAttempts: history.filter((previous) => previous.testHash === candidate.testHash).length,
     status,
     reason,

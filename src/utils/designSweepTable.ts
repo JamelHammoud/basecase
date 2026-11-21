@@ -5,6 +5,7 @@ import { runClock } from './duration';
 import { weight } from './weight';
 import { angle } from './angle';
 import { signed } from '../../electron/minus.mjs';
+import { worstJointLoad } from './worstJointLoad';
 
 export interface SweepSim {
   fellAt: number | null;
@@ -32,8 +33,7 @@ export function reportMetrics(
   report: EngineeringReport,
   costs: Pick<SweepMetrics, 'servosUsd' | 'sizedUsd'> = {},
 ): SweepMetrics {
-  const known = report.joints.filter((l) => l.stallShare !== undefined);
-  const worst = [...known].sort((a, b) => b.stallShare! - a.stallShare!)[0];
+  const worst = worstJointLoad(report.joints);
 
   return {
     massG: report.massG,

@@ -1,16 +1,12 @@
+import { TRAINING_METRIC_LABELS, trainingScore } from '../vision/training/presentation';
 import type { VisionAttemptView, VisionTrainingView } from '../components/tries/visionTrainingView';
 import { cameraViews, stripParts } from '../cameras/views';
 import { retainedVisionTargets } from '../vision/training/models';
 import type { TrainingRun } from '../vision/training/serviceTypes';
-import type { TrainingMetric, TrainingRetentionReason } from '../vision/training/types';
+import type { TrainingRetentionReason } from '../vision/training/types';
+import { visionInspectionNavigation } from './visionInspectionNavigation';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
-const METRIC_LABELS: Record<TrainingMetric, string> = {
-  'box-map': 'Box mAP',
-  'mask-map': 'Mask mAP',
-  'keypoint-pck': 'Keypoint accuracy',
-  accuracy: 'Accuracy',
-};
 const REASONS: Record<TrainingRetentionReason, string> = {
   improved: 'Improved on the held-out real images',
   'no-real-test': 'Add held-out real images to compare models',
@@ -18,22 +14,26 @@ const REASONS: Record<TrainingRetentionReason, string> = {
   'different-test': 'The models used different held-out images',
   'different-task': 'The models used different tasks',
   limits: 'The model exceeded the task limits',
+  requirements: '',
   'no-improvement': 'The incumbent scored higher or tied',
 };
-
-const score = (value: number | null) => (value === null ? 'Unmeasured' : `${(value * 100).toFixed(1)}%`);
 
 export function visionAttemptView(run: TrainingRun): VisionAttemptView {
   const { report, comparison } = run;
 
   return {
     id: run.id,
+    requirements: comparison.requirements,
     at: run.at,
+    inspection:
+      run.report.evidence && run.incumbentReport.evidence
+        ? { candidate: run.report, incumbent: run.incumbentReport }
+        : undefined,
     retained: run.status === 'retained',
     reason: REASONS[comparison.reason],
     metrics: [
-      { name: METRIC_LABELS[report.task.metric], value: score(report.metrics.primary) },
-      { name: 'Incumbent', value: score(comparison.incumbentScore ?? null) },
+      { name: TRAINING_METRIC_LABELS[report.task.metric], value: trainingScore(report.metrics.primary) },
+      { name: 'Incumbent', value: trainingScore(comparison.incumbentScore ?? null) },
     ],
     failures: report.metrics.perClass.map((entry) => ({
       className: entry.name,
@@ -58,8 +58,10 @@ export function datasetVisionView(core: WorkspaceCore): VisionTrainingView {
 
   return {
     ...training,
+    inspectionContext: `${core.workspaceId}:${core.scene.sceneId}:${core.active}`,
     attempts: training.runs.map((run) => ({
       ...visionAttemptView(run),
+      navigation: visionInspectionNavigation(core, run),
       active: run.id === retained?.id,
       targets: retainedVisionTargets(core.scene.sceneId, choices, { kind: run.kind, classes: run.manifest.classes }),
     })),

@@ -1,3 +1,4 @@
+import type { LocalJudgment } from './localJudgments';
 import type { MainModule } from '@mujoco/mujoco';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Skill } from './artifacts';
@@ -103,7 +104,15 @@ export async function draftSkill(input: Sim & { design: string; request: DraftIn
 }
 
 export function raceDraft(
-  input: Sim & { draft: SkillDraft; forge: ForgeRunner; save: SkillSave; signal?: AbortSignal; budgetSteps?: number },
+  input: Sim & {
+    draft: SkillDraft;
+    forge: ForgeRunner;
+    save: SkillSave;
+    signal?: AbortSignal;
+    budgetSteps?: number;
+    seed?: number;
+    judgment?: LocalJudgment;
+  },
 ): Promise<RaceOutcome> {
   const { mj, model, draft } = input;
 
@@ -122,6 +131,8 @@ export function raceDraft(
     rewardCandidates: draft.rewards ?? undefined,
     budgetSteps: input.budgetSteps,
     signal: input.signal,
+    seed: input.seed,
+    judgment: input.judgment,
   });
 }
 

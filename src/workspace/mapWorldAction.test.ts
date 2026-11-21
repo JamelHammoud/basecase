@@ -13,6 +13,27 @@ vi.mock('../dataLayers/mapClient', async (original) => ({
 import { makeMapWorld } from '../dataLayers/mapClient';
 
 describe('Make World entry', () => {
+  it('runs one source-owned reconstruction per action and publishes its prepared world', async () => {
+    const prepared = { kind: 'mesh' as const, hash: 'a'.repeat(64), ...meshWorldAsset(), serializedJson: '{}' };
+    let finish!: (value: typeof prepared) => void;
+    const pending = new Promise<typeof prepared>((resolve) => {
+      finish = resolve;
+    });
+    const reconstruct = vi.fn(() => pending);
+    const ready = vi.fn();
+    const failed = vi.fn();
+    const action = mapWorldAction(reconstruct, { ready, failed });
+
+    action();
+    action();
+    expect(reconstruct).toHaveBeenCalledOnce();
+    finish(prepared);
+    await vi.waitFor(() => expect(ready).toHaveBeenCalledWith(prepared));
+    expect(failed).not.toHaveBeenCalled();
+    action();
+    expect(reconstruct).toHaveBeenCalledTimes(2);
+  });
+
   it('freezes the recording, source and matching choice at the click', async () => {
     const store = new DataLayerStore();
     const topics = Uint8Array.of(1, 2);

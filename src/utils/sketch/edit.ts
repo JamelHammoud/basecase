@@ -1,3 +1,4 @@
+import { pointConstraints, selectedDistance } from './distanceConstraint';
 import { solveSketch, type Drag } from './solver';
 import type { PairKind, Sketch, SketchConstraint, SketchEntity, SketchPoint, Vec2 } from './types';
 
@@ -14,11 +15,17 @@ type NewConstraint = SketchConstraint extends infer C ? (C extends SketchConstra
 
 const idNumber = (id: string, prefix: string) => (id.startsWith(prefix) ? Number(id.slice(prefix.length)) || 0 : 0);
 
-export function nextId(sketch: Sketch, prefix: string): string {
-  const ids = [...sketch.points, ...sketch.entities, ...sketch.constraints].map((x) => idNumber(x.id, prefix));
+function nextIdNumber(sketch: Sketch, prefix: string): number {
+  let highest = 0;
 
-  return `${prefix}${Math.max(0, ...ids) + 1}`;
+  for (const items of [sketch.points, sketch.entities, sketch.constraints]) {
+    for (const item of items) highest = Math.max(highest, idNumber(item.id, prefix));
+  }
+
+  return highest + 1;
 }
+
+export const nextId = (sketch: Sketch, prefix: string): string => `${prefix}${nextIdNumber(sketch, prefix)}`;
 
 export const pointOf = (sketch: Sketch, id: string) => sketch.points.find((p) => p.id === id);
 
@@ -43,10 +50,17 @@ export function withEntity(sketch: Sketch, entity: NewEntity, prefix: string) {
 }
 
 export function withConstraints(sketch: Sketch, added: NewConstraint[]): Sketch {
-  return added.reduce<Sketch>(
-    (s, c) => ({ ...s, constraints: [...s.constraints, { ...c, id: nextId(s, 'k') } as SketchConstraint] }),
-    sketch,
-  );
+  if (!added.length) return sketch;
+
+  let next = nextIdNumber(sketch, 'k');
+  const constraints = [...sketch.constraints];
+
+  for (const constraint of added) {
+    constraints.push({ ...constraint, id: `k${next}` } as SketchConstraint);
+    next += 1;
+  }
+
+  return { ...sketch, constraints };
 }
 
 export function solved(sketch: Sketch, drag?: Drag): Sketch | null {
@@ -196,11 +210,13 @@ export function setDimension(sketch: Sketch, entity: string, value: number): Ske
   return solved(withConstraints(sketch, [added]), anchorPoint(sketch, entity));
 }
 
-export type ApplyKind = PairKind | 'horizontal' | 'vertical' | 'coincident';
+export type ApplyKind = PairKind | 'horizontal' | 'vertical' | 'coincident' | 'distance';
 
 const onlyLines = (sketch: Sketch, ids: string[]) => ids.every((id) => entityOf(sketch, id)?.kind === 'line');
 
 export function applicableConstraints(sketch: Sketch, ids: string[]): ApplyKind[] {
+  if (ids.length === 0 || ids.length > 2) return [];
+
   const kinds = ids.map((id) => entityOf(sketch, id)?.kind ?? (pointOf(sketch, id) ? 'point' : null));
   const lines = kinds.filter((k) => k === 'line').length;
   const rounds = kinds.filter((k) => k === 'circle' || k === 'arc').length;
@@ -216,11 +232,13 @@ export function applicableConstraints(sketch: Sketch, ids: string[]): ApplyKind[
 
   if (lines === 1 && rounds === 1) return ['tangent'];
 
-  return points >= 1 ? ['coincident'] : [];
+  return points >= 1 ? pointConstraints(sketch, ids, { points, lines }) : [];
 }
 
 const pairConstraint = (kind: ApplyKind, ids: string[], sketch: Sketch): NewConstraint => {
   if (kind === 'horizontal' || kind === 'vertical') return { kind, line: ids[0] };
+
+  if (kind === 'distance') return { kind, a: ids[0], b: ids[1], value: selectedDistance(sketch, ids) };
 
   if (kind === 'coincident') {
     const [p, q] = pointOf(sketch, ids[0]) ? ids : [ids[1], ids[0]];
@@ -234,7 +252,7 @@ const pairConstraint = (kind: ApplyKind, ids: string[], sketch: Sketch): NewCons
 export function addConstraint(sketch: Sketch, kind: ApplyKind, ids: string[]): Sketch | null {
   if (!applicableConstraints(sketch, ids).includes(kind)) return null;
 
-  if (kind !== 'coincident' && kind !== 'tangent' && kind !== 'equal' && !onlyLines(sketch, ids)) return null;
+  if (!['coincident', 'tangent', 'equal', 'distance'].includes(kind) && !onlyLines(sketch, ids)) return null;
 
   return solved(withConstraints(sketch, [pairConstraint(kind, ids, sketch)]));
 }
@@ -290,21 +308,25 @@ export const dragPoint = (sketch: Sketch, point: string, to: Vec2) =>
   pointOf(sketch, point)?.fixed ? null : solved(sketch, { point, to });
 
 export function polylineSketch(loops: Vec2[][]): Sketch {
-  return loops.reduce<Sketch>(
-    (sketch, loop) => {
-      const start = sketch.points.length;
-      const points = loop.map(([x, y], i) => ({ id: `p${start + i + 1}`, x, y }));
-      const lines = loop.map((_, i) => ({
-        id: `l${sketch.entities.length + i + 1}`,
-        kind: 'line' as const,
-        a: points[i].id,
-        b: points[(i + 1) % loop.length].id,
-      }));
+  const sketch: Sketch = { points: [], entities: [], constraints: [] };
 
-      return { ...sketch, points: [...sketch.points, ...points], entities: [...sketch.entities, ...lines] };
-    },
-    { points: [], entities: [], constraints: [] },
-  );
+  for (const loop of loops) {
+    const start = sketch.points.length;
+
+    for (let i = 0; i < loop.length; i++) {
+      const [x, y] = loop[i];
+
+      sketch.points.push({ id: `p${start + i + 1}`, x, y });
+      sketch.entities.push({
+        id: `l${sketch.entities.length + 1}`,
+        kind: 'line',
+        a: `p${start + i + 1}`,
+        b: `p${start + ((i + 1) % loop.length) + 1}`,
+      });
+    }
+  }
+
+  return sketch;
 }
 
 export function setConstraintValue(sketch: Sketch, constraint: string, value: number): Sketch | null {

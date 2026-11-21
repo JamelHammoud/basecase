@@ -12,15 +12,20 @@ export function StudyRows({ study }: { study: Study }) {
   const [compared, setCompared] = useState<string[]>([]);
   const [sorting, setSorting] = useState<{ key: StudySort; descending: boolean }>({ key: 'passes', descending: true });
   const rows = study.shown?.rows ?? [];
-  const score = (row: StudyRow) => row.runs?.passes ?? -row.checks.filter((c) => c.status === 'fail').length;
+  const score = (row: StudyRow) =>
+    row.visibility?.coverage ?? row.runs?.passes ?? -row.checks.filter((c) => c.status === 'fail').length;
   const value = (row: StudyRow) => ({ passes: score(row), cost: row.costUsd, mass: row.massG })[sorting.key];
   const ordered = [...rows].sort((a, b) => (value(a) - value(b)) * (sorting.descending ? -1 : 1));
+  const source = study.shown?.base;
+  const targets = source?.project.cases?.find((kase) => kase.id === study.shown?.caseId)?.world.objects ?? [];
+  const names = Object.fromEntries([...(source?.parts ?? []), ...targets].map((part) => [part.id, part.name]));
   const selected = rows.filter((r) => compared.includes(r.key));
   const onPick = (row: StudyRow, shift: boolean) =>
     setCompared((s) => (shift ? toggleCompared(s, row.key) : [row.key]));
   const rowFor = (row: StudyRow) => (
     <StudyResultRow
       key={row.key}
+      names={names}
       row={row}
       current={study.isCurrent(row)}
       selected={compared.includes(row.key)}
@@ -34,9 +39,7 @@ export function StudyRows({ study }: { study: Study }) {
   return (
     <div data-testid="study-results">
       {study.caseLabel && <p className="text-[13px] text-white/60 mb-2">{study.caseLabel}</p>}
-      {study.stale && (
-        <p className="text-[13px] text-white/60 mb-2">The scene changed. Run Study again to apply a design.</p>
-      )}
+      {study.stale && <p className="text-[13px] text-white/60 mb-2">Run Study again to apply a design.</p>}
       <StudyPlot
         rows={rows}
         axes={axes}
@@ -52,6 +55,7 @@ export function StudyRows({ study }: { study: Study }) {
         </div>
       )}
       <StudySortHeader
+        visibility={rows.some((row) => !!row.visibility)}
         caseRuns={rows.some((row) => !!row.runs)}
         sorting={sorting.key}
         descending={sorting.descending}

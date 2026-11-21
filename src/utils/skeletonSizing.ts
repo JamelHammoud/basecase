@@ -71,11 +71,19 @@ function inertiaBound(tree: SkeletonTree, joint: SkeletonJoint, masses: PointMas
 }
 
 function distal(masses: PointMass[], ids: Set<string>) {
-  const own = masses.filter((m) => ids.has(m.joint) && m.g > 0);
-  const g = own.reduce((s, m) => s + m.g, 0);
-  const com = [0, 1, 2].map((k) => (g ? own.reduce((s, m) => s + m.at[k] * m.g, 0) / g : 0)) as ZUpVec;
+  let g = 0;
+  const weighted: ZUpVec = [0, 0, 0];
 
-  return { g, com };
+  for (const mass of masses) {
+    if (ids.has(mass.joint) && mass.g > 0) {
+      g += mass.g;
+      weighted[0] += mass.at[0] * mass.g;
+      weighted[1] += mass.at[1] * mass.g;
+      weighted[2] += mass.at[2] * mass.g;
+    }
+  }
+
+  return { g, com: weighted.map((value) => (g ? value / g : 0)) as ZUpVec };
 }
 
 function legChain(tree: SkeletonTree, j: SkeletonJoint): SkeletonJoint[] {
@@ -92,11 +100,11 @@ function legChain(tree: SkeletonTree, j: SkeletonJoint): SkeletonJoint[] {
   let up = j.parent ? byId.get(j.parent) : undefined;
 
   while (up?.limb === 'leg') {
-    above.unshift(up);
+    above.push(up);
     up = up.parent ? byId.get(up.parent) : undefined;
   }
 
-  return [...above, ...below];
+  return [...above.reverse(), ...below];
 }
 
 const footOf = (chain: SkeletonJoint[]): ZUpVec => {

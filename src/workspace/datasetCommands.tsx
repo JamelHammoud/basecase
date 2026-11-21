@@ -1,5 +1,7 @@
+import type { VisionTrainingView } from '../components/tries/visionTrainingView';
+import { requestVisionInspection } from '../components/tries/visionInspectionCommand';
 import type { Command } from '../components/CommandPalette';
-import { DownloadIcon, ShareIcon, SpreadsheetIcon, StopIcon, TrainIcon } from '../design-system';
+import { CompareIcon, DownloadIcon, ShareIcon, SpreadsheetIcon, StopIcon, TrainIcon } from '../design-system';
 import { TRIES_TO_TRAIN } from '../skills/triesTraining';
 import { imageCount } from '../datasets/datasetView';
 import { showNewCase } from './caseCommands';
@@ -20,6 +22,24 @@ function makeCommands({ triesView, datasets, simTraining }: WorkspaceCore): Comm
       icon: <SpreadsheetIcon />,
       keywords: 'dataset tries search selection version lerobot gr00t groot episodes',
       run: () => (fromView ? datasets.makeFromView() : caseDataset.make()),
+    },
+  ];
+}
+
+function inspectionCommands(vision: VisionTrainingView): Command[] {
+  const inspection = vision.attempts.findLast((attempt) => attempt.inspection);
+  const context = vision.inspectionContext;
+
+  if (!inspection || !context) return [];
+
+  return [
+    {
+      id: 'vision-inspect-images',
+      group: 'Simulate',
+      label: 'Inspect Images',
+      icon: <SpreadsheetIcon />,
+      keywords: 'comparison evaluation failures misses false positives candidate incumbent frozen images',
+      run: () => requestVisionInspection({ id: inspection.id, context }),
     },
   ];
 }
@@ -81,6 +101,9 @@ function openDatasetCommands(core: WorkspaceCore): Command[] {
 
   if (images) {
     const vision = datasetVisionView(core);
+
+    commands.push(...inspectionCommands(vision));
+
     const retained = vision.attempts.find((attempt) => attempt.active);
 
     commands.push(
@@ -101,6 +124,18 @@ function openDatasetCommands(core: WorkspaceCore): Command[] {
 }
 
 export const datasetCommands = (core: WorkspaceCore): Command[] => [
+  ...(core.triesView.canCompare
+    ? [
+        {
+          id: 'compare-tries',
+          group: 'View',
+          label: 'Compare Tries',
+          icon: <CompareIcon />,
+          keywords: 'recordings saved runs timeline offsets alignment',
+          run: core.triesView.compare,
+        },
+      ]
+    : []),
   ...makeCommands(core),
   ...openDatasetCommands(core),
 ];

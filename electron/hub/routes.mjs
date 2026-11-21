@@ -14,6 +14,8 @@ export const HUB_CALLS = {
   'hub:skill-files': (hub, payload) => hub.skillFiles(payload),
   'hub:model-file': (hub, payload) => hub.modelFile(payload),
   'hub:find-skills': (hub) => hub.findSkills(),
+  'hub:publish-skill-outcome': (hub, record) => hub.publishSkillOutcome(record),
+  'hub:skill-outcomes': (hub) => hub.skillOutcomes(),
   'hub:dataset-files': (hub, payload) => hub.datasetFiles(payload),
 };
 

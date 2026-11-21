@@ -116,17 +116,29 @@ async function renderWith(renderer: GuideRenderer, job: GuideJob, events: GuideJ
   if (isCancelled()) return null;
 
   const plan = buildGuidePlan(
-    { title, parts, joints: project.joints ?? [], ...geometry, order: job.order },
+    {
+      title,
+      boardPartId: project.electronicsBoard?.partId,
+      parts,
+      joints: project.joints ?? [],
+      ...geometry,
+      order: job.order,
+    },
     project.material,
   );
 
   events.onProgress({ share: MEASURE_SHARE, label: 'Drawing steps' });
 
+  let thumbnail: Promise<string> | undefined;
+
   const drawings = await drawGuide(
     { renderer, plan, cache, boxes: geometry.boxes },
     {
       isCancelled,
-      onCover: (cover) => void coverThumbnail(cover.dataUrl).then(events.onCover, () => undefined),
+      onCover: (cover) => {
+        thumbnail = coverThumbnail(cover.dataUrl);
+        void thumbnail.then(events.onCover, () => undefined);
+      },
       onProgress: ({ done, total }) =>
         events.onProgress({
           share: MEASURE_SHARE + (DRAW_SHARE * done) / total,
@@ -149,7 +161,7 @@ async function renderWith(renderer: GuideRenderer, job: GuideJob, events: GuideJ
   };
   const { html, pages } = guideHtml({ plan, drawings, meta });
 
-  return { html, pages, plan, coverDataUrl: await coverThumbnail(drawings.cover.dataUrl) };
+  return { html, pages, plan, coverDataUrl: await (thumbnail ?? coverThumbnail(drawings.cover.dataUrl)) };
 }
 
 export async function renderGuide(job: GuideJob, events: GuideJobEvents): Promise<RenderedGuide | null> {

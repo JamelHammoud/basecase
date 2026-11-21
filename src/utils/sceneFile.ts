@@ -1,8 +1,11 @@
+import { validateFixtureImports } from '../cases/fixtureImports';
 import { withValidStudy } from '../study/record';
 import type { Skill } from '../skills/artifacts';
 import { readSkillBundle } from '../skills/bundle';
 import type { ProjectSettings, SavedSceneRecord, SceneAnnotation, ScenePart } from '../types/robotics';
 import { validSheetFields } from '../sheet/validation';
+import { validBoardDefinition } from '../wiring/boardValidation';
+import { validateParameterScene } from './designParameters/verification';
 import {
   restoreWorldAssets,
   sceneWorldAssets,
@@ -149,6 +152,11 @@ export async function decodeSceneFile(bytes: Uint8Array): Promise<SharedScene> {
 
   const project = localProject(scene.project as ProjectSettings | undefined);
 
+  if (project?.electronicsBoard !== undefined && !validBoardDefinition(project.electronicsBoard))
+    throw new Error('Repair the board definition before placement.');
+
+  validateFixtureImports(project?.cases);
+  validateParameterScene({ parts: scene.parts, project });
   sceneWorldAssets(project, assets);
 
   return {

@@ -130,8 +130,8 @@ describe('the plan', () => {
 
   it('counts only the seeds the cache lacks as live runs', () => {
     const cached = new Map([
-      ['A1', [{}, {}, {}]],
-      ['A2', [{}]],
+      ['A1', [{ seed: 3 }, { seed: 1 }, { seed: 2 }, { seed: 1 }, { seed: 4 }]],
+      ['A2', [{ seed: 2 }, { seed: 2 }, { seed: 0 }, { seed: 1.5 }, {}]],
     ]);
 
     expect(liveRunsPlanned({ tasks, rounds: 3, caches: [new Map(), cached] })).toEqual([9, 5]);

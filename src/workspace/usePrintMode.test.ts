@@ -43,6 +43,29 @@ function replay(actions: Array<(mode: PrintMode, options: Options) => void>) {
 }
 
 describe('replacement Print mode', () => {
+  it('returns from tooling to the assembly and drops a stale temporary plate', () => {
+    replay([
+      (mode, options) => {
+        options.temporaryAvailable = true;
+        mode.openTemporary();
+      },
+      (mode) => {
+        expect(mode.canMerge).toBe(false);
+        mode.closeMode();
+      },
+      (mode) => {
+        expect(mode.mode).toBeNull();
+        mode.openTemporary();
+      },
+      (mode, options) => {
+        expect(mode.mode).not.toBeNull();
+        options.temporaryAvailable = false;
+        mode.setModePlate(1);
+      },
+      (mode) => expect(mode.repairId).toBeNull(),
+      (mode) => expect(mode.mode).toBeNull(),
+    ]);
+  });
   it('opens on the requested part and removes its scope when Done closes it', () => {
     const fit = replay([
       (mode) => mode.openRepairPlate('leg'),

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { readJointSprings, readJointResistance } from './jointSprings';
 import {
   childrenOf,
   mjAngles,
@@ -115,6 +116,9 @@ function mjJoint(ctx: MjContext, j: Element, link: BodyLink, after: ModelJoint |
 
   return {
     effort: frc > 0 ? frc : undefined,
+    actuation: 'passive',
+    ...readJointResistance(a),
+    ...readJointSprings(a, type === 'slide' ? (value) => value : ctx.toRad),
     name: j.getAttribute('name') ?? `${link.name}_joint`,
     type: type === 'slide' ? 'prismatic' : 'revolute',
     parent: link.parent,
@@ -216,10 +220,25 @@ function actuatorEffort(ctx: MjContext, act: Element): number {
 }
 
 function applyActuators(ctx: MjContext, mj: Element) {
-  for (const act of elems(mj, 'actuator').flatMap((x) => [...x.children])) {
-    const j = ctx.joints.find((k) => k.name === act.getAttribute('joint'));
+  const actuators = elems(mj, 'actuator').flatMap((x) => [...x.children]);
 
-    if (!j || j.effort) continue;
+  if (!actuators.length) return;
+
+  const byName = new Map<string, ModelJoint>();
+
+  for (const joint of ctx.joints) {
+    if (!byName.has(joint.name)) byName.set(joint.name, joint);
+  }
+
+  for (const act of actuators) {
+    const name = act.getAttribute('joint');
+    const j = name === null ? undefined : byName.get(name);
+
+    if (!j) continue;
+
+    j.actuation = 'powered';
+
+    if (j.effort) continue;
 
     const effort = actuatorEffort(ctx, act);
 
@@ -229,6 +248,10 @@ function applyActuators(ctx: MjContext, mj: Element) {
 
 export function parseMjcf(doc: Document): Model {
   const mj = doc.documentElement;
+
+  if (elems(mj, 'tendon').some((group) => group.children.length > 0))
+    throw new Error('Open the Basecase scene to retain its ideal tendon transmissions.');
+
   const defaults = readDefaults(mj);
   const ctx: MjContext = {
     ...mjAngles(mj),

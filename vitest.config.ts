@@ -1,8 +1,13 @@
 import { defineConfig } from 'vitest/config';
+import { vitestCache } from './tools/testing/vitestCache.mjs';
 import { quarantineExclude } from './tools/quarantine.mjs';
 
+const cache = vitestCache(import.meta.url);
+
 export default defineConfig({
+  cacheDir: cache.cacheDir,
   test: {
+    ...cache.test,
     include: [
       'src/**/*.test.ts',
       'electron/**/*.test.mjs',

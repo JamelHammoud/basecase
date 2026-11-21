@@ -26,11 +26,15 @@ covers:
   - electron/library/datasetStore.mjs
 ---
 
-Basecase saves each scene as you work, so there's no Save command. To share a scene, send it as a single .basecase file.
+Basecase saves each scene as you work. To share a scene, send it as a single .basecase file.
 
 ## Scenes save themselves
 
 A scene is one design. It holds your parts, joints, poses, comments and goal, plus its Cases, Routines and [Study](/help/study-design-options) settings and results.
+
+A scene also keeps its [electronics board](/help/fit-an-electronics-board), including mounting constraints, placement identities and locks. Those settings travel in its `.basecase` file.
+
+[Shared parameters and dimension bindings](/help/link-dimensions-with-shared-parameters) also save with the scene and travel in its `.basecase` file. A parameter edit and its regenerated geometry undo together.
 
 Each imported world is stored once per scene, including its mesh, colliders, textures and optional splat. Cases in that scene share the same world data.
 
@@ -72,7 +76,7 @@ A `.basecase` file is a copy of one scene that you can send to someone. It holds
 - Taught skills
 - The build guide
 
-Your chat with the agent also stays on your computer and isn't included in the file.
+Your chat, named versions and branch links stay on your computer and aren’t included in the file. See [Save and merge robot versions](/help/save-and-merge-robot-versions).
 
 When you open a scene file, Basecase creates a new scene from it. The two scenes are separate, so editing one doesn't change the other.
 

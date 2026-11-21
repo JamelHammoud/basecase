@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Button, CloseIcon, IconButton, PauseIcon, RunIcon, Slider } from '../../design-system';
+import { Button, CloseIcon, ErrorBoundary, IconButton, PauseIcon, RunIcon, Slider } from '../../design-system';
 import { allKeysFor, keyFor } from '../../app/shortcuts';
 import { speedText } from '../../workspace/timelinePlayback';
 import { linkParts, prettyJointName, type Rig } from '../../utils/kinematics';
@@ -10,6 +10,8 @@ import { SegmentLane } from './SegmentLane';
 import { TimelineLane } from './TimelineLane';
 import { useSegmentUndo } from './useSegmentUndo';
 import { useTimelineKeys } from './useTimelineKeys';
+import { SavedTimelinePanel } from './SavedTimelinePanel';
+import { negative } from '../../../electron/minus.mjs';
 
 interface TryTimelineProps {
   timeline: Timeline;
@@ -46,14 +48,24 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, closabl
       onKeyDown={onUndoKey}
       className="glass pointer-events-auto w-[min(760px,calc(100%-32px))] rounded-[12px] p-3 flex flex-col gap-2 outline-none"
     >
-      <SegmentLane
-        labels={labels}
-        frame={frame}
-        frames={frames}
-        jointName={jointName}
-        onSeek={timeline.seek}
-        onEdited={focus}
-      />
+      {timeline.comparison.active && (
+        <ErrorBoundary region="Tries">
+          <SavedTimelinePanel
+            key={timeline.comparison.sources.map((source) => source.hash).join(':')}
+            saved={timeline.comparison}
+          />
+        </ErrorBoundary>
+      )}
+      {!timeline.comparison.active && (
+        <SegmentLane
+          labels={labels}
+          frame={frame}
+          frames={frames}
+          jointName={jointName}
+          onSeek={timeline.seek}
+          onEdited={focus}
+        />
+      )}
       <div className="max-h-[40vh] overflow-y-auto flex flex-col gap-2">
         {lanes.map((lane) => (
           <TimelineLane
@@ -80,11 +92,11 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, closabl
         />
         <Slider
           className="flex-1 min-w-0"
-          label={runClock(frame * timeline.dt)}
+          label={negative(timeline.origin + frame * timeline.dt, (seconds) => runClock(seconds))}
           value={frame}
           min={0}
           max={Math.max(frames - 1, 1)}
-          format={() => runClock((frames - 1) * timeline.dt)}
+          format={() => negative(timeline.origin + (frames - 1) * timeline.dt, (seconds) => runClock(seconds))}
           onChange={(v) => timeline.seek(v)}
         />
         <Button
@@ -107,9 +119,11 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, closabl
             onClick={timeline.close}
           />
         )}
-        <Button variant="ghost" size="xs" onClick={onAddFrames}>
-          Add Frames
-        </Button>
+        {!timeline.comparison.active && (
+          <Button variant="ghost" size="xs" onClick={onAddFrames}>
+            Add Frames
+          </Button>
+        )}
       </div>
     </div>
   );

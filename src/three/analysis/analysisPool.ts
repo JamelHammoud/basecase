@@ -1,3 +1,4 @@
+import { tolerancePayload } from '../../utils/designParameters/tolerancePayload';
 import { workerClient, type WorkerClient } from '../../utils/workerRpc';
 import type { Coplanar, Interference } from '../interference';
 import type { MeshMeasure } from '../meshMeasure';
@@ -10,6 +11,7 @@ import {
   MISSING_SHAPE,
   type AnalysisTask,
   type Instance,
+  type ShapeSpec,
   type PlateFilesInput,
   type StlItem,
   type ThreeMfResult,
@@ -60,15 +62,24 @@ function pool(): Client[] {
 }
 
 async function payloadFor(client: Client, scene: SceneShapes, instances: Instance[]) {
-  const shapes = [...new Set(instances.map((i) => i.key))]
-    .filter((key) => !client.shapes.has(key))
-    .map((key) => scene.shapes.get(key)!);
-  const geometryIds = [...new Set(shapes.flatMap((s) => s.meshes.map((m) => m.geometry)))].filter(
-    (id) => !client.geometries.has(id),
-  );
+  const shapes: ShapeSpec[] = [];
+  const geometryIds: string[] = [];
 
-  shapes.forEach((s) => client.shapes.add(s.key));
-  geometryIds.forEach((id) => client.geometries.add(id));
+  for (const { key } of instances) {
+    if (client.shapes.has(key)) continue;
+
+    shapes.push(scene.shapes.get(key)!);
+    client.shapes.add(key);
+  }
+
+  for (const shape of shapes) {
+    for (const { geometry } of shape.meshes) {
+      if (client.geometries.has(geometry)) continue;
+
+      geometryIds.push(geometry);
+      client.geometries.add(geometry);
+    }
+  }
 
   const geometries = await copyGeometries(scene, geometryIds);
 
@@ -135,6 +146,10 @@ export function wiringIn(shapes: SceneShapes, scene: WiringScene): Promise<Netli
   return cachedWiring(shapes.instances, scene, () =>
     analyze(leastBusy(), shapes, { kind: 'wiring', instances: shapes.instances, scene }),
   );
+}
+
+export function rememberWiring(shapes: SceneShapes, scene: WiringScene, result: Netlist): void {
+  void cachedWiring(shapes.instances, scene, () => Promise.resolve(result)).catch(() => {});
 }
 
 export function printReportsIn(
@@ -258,4 +273,18 @@ export function fitCouponsIn(scene: SceneShapes, task: FitCouponTask): Promise<F
   if (!task.fits.length || !task.hosts.length) return Promise.resolve([]);
 
   return analyze(leastBusy(), scene, { kind: 'fitCoupons', instances: scene.instances, ...task });
+}
+
+export async function tolerancesIn(design: import('../../utils/designParameters/mutations').ParameterDesign) {
+  if (!design.requirements?.length) return [];
+
+  const client = leastBusy();
+
+  client.busy++;
+
+  try {
+    return await client.rpc.call('tolerances', tolerancePayload(design));
+  } finally {
+    client.busy--;
+  }
 }

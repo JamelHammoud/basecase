@@ -1,0 +1,35 @@
+# Annotation projection performance
+
+Implementation: [Annotation projection](../guide/annotations.md#performance-annotation-projection). Shared requirements: [Performance](../guide/performance.md).
+
+## Comment attachments resolve in linear work
+
+`annotationAttachments.test.ts` checks positions, names, replies, missing parts and edits through both pipelines, with linear ID-read budgets for 300 and 600 parts and comments. The previous export read 721,200 part IDs on the 600-item fixture. Spatial relationship inference is separate and still compares visible part pairs.
+
+## Stroke attachment probes reuse their workspace
+
+Whole-app search found one world-point stroke attachment loop, `three/viewport/markParts.ts`, reached through `markParts` when moving a mark. It now copies each sampled point into one direction vector and passes one cleared intersection list to Three.js. Both buffers belong to the call. Sampling, normalization, ray origin, nearest-hit selection and first-seen ID order remain unchanged. Other pickers use individual rays or a screen-space marquee grid, rather than this stroke attachment path.
+
+For 48 stroke points, direction vectors and result lists fall from 48 each to one each. For 600 points, the existing stride of 13 visits 47 points, reducing both counts from 47 to one. Three.js still allocates intersection records and performs the same geometry queries. These are structural allocation counts, not timings or an end-to-end latency claim.
+
+`three/viewport/markParts.test.ts` uses overlapping and separate real box meshes to check nearest-hit selection, deduplication, first-seen order, misses after hits, empty input, later placement changes and unchanged stroke points and camera position. Fixtures of 48, 49, 96, 97 and 600 points assert the unchanged sampling count and one direction and intersection buffer per call. No UI state, action, copy, screenshot, browser walkthrough, timeout or quarantine changes.
+
+## Mark picking normalizes only the nearest distance
+
+Whole-app search found one annotation polyline distance helper, `three/viewport/markMath.ts`. `MarkLayer.distances` uses it for `hitTest` and `hits`, covering click selection, drag targeting, hover and erasing. Stroke length, closure and eraser spacing require their individual segment lengths and keep their existing calculations.
+
+The initial squared-distance implementation reduced 399 `Math.hypot` calls to one final `Math.sqrt` for a 400-point mark, and 799 calls to one for 800 points. The combined coordinate-bound implementation retains the winning offsets and uses one final `Math.hypot` to preserve the original exact result. Near ties within eight machine epsilons and squared overflow or underflow fall back to exact comparisons, so those inputs can require additional normalizations. The margin covers rounding in the squared products and their sum. Squared values below `Number.MIN_VALUE / Number.EPSILON` use the fallback to avoid subnormal precision loss. Identical absolute offsets need no comparison. One fixed-size nearest-segment record is retained per query. Segment projection and comparison remain linear, every point is still projected once, and the two endpoint buffers remain shared. Forward and reversed horizontal fixtures of 400 and 800 points assert one normalization, including successively closer candidates. These are operation counts, not timings or a measured interaction latency improvement. Squared calculations operate on projected pixel coordinates.
+
+`markMath.test.ts` checks diagonal projections, vertical segments, both endpoint clamps, reversed traversal and exact hits against analytic distances. Exact parity cases also cover curved and reversed strokes, near ties, extreme scales and nonfinite projections. Existing cases cover loops, empty and single-point inputs, repeated endpoints, edits and 400- and 800-point projection counts. Related `markLayer.test.ts` covers actual projected selection and erasure hit thresholds and label picking. No controls, copy, workflow, screenshots, browser walkthroughs or quarantine conditions change.
+
+Review found that coordinate rejection ran before the underflow fallback. With a pointer at the origin, repeated endpoints at `[1.5e-162, 1.5e-162]` retained a squared distance of zero and incorrectly rejected `[1.6e-162, 0]`, returning `2.1213203435596427e-162` instead of `1.6e-162`. A second regression covers a nonzero subnormal retained square. Coordinate rejection now uses an infinite bound below `Number.MIN_VALUE / Number.EPSILON`.
+
+A finite coordinate also previously rejected a candidate whose other coordinate was NaN. With a pointer at `[0, 10]` and a stroke through `[0, 0]`, `[0, 0]`, `[100, 0]` and `[100, NaN]`, it returned 10 instead of the previous loop's NaN. Taking the maximum of both squared coordinates propagates NaN past the coordinate rejection. The regression checks NaN in either coordinate after a finite candidate. The 400- and 800-point normalization counts remain covered.
+
+## Mark labels reuse projection storage
+
+Whole-app search found `MarkLabel.place` as the annotation label redraw path. Its `topCenterOnScreen` helper also anchors the label editor through `MarkLayer.topOf`. The helper now projects into its supplied output and retains scalar horizontal bounds, highest Y and that point's Z. Label placement retains its renderer-size and final screen-projection vectors per label. Other annotation projections serve stroke picking or part attachment and do not place labels.
+
+The previous redraw allocated three Vector3 objects and one Vector2 per label. After construction, the new redraw allocates none of those vectors. For 300 labels across 60 redraws, that removes 72,000 temporary vector allocations, retaining 600 vectors instead. Editor anchor queries remove two temporary vectors each, while still returning their own output. These are source-derived allocation counts, not timing measurements or a measured interaction latency improvement. Hit rectangles still allocate, and the same point projections and matrix updates still run.
+
+`markLabel.test.ts` compares exact anchors with the previous algorithm through camera changes, clipped points, tied heights, single points and nonfinite coordinates. It invokes real label render callbacks with a stub canvas texture context and renderer size reader, comparing exact hit rectangles through changing points, cameras and viewport sizes. It checks independent size and screen storage across two labels and reuse through three frames. Existing `markLayer.test.ts` covers editor anchoring and missing marks. No UI state, copy, action, screenshot, browser walkthrough, timeout or quarantine changes.

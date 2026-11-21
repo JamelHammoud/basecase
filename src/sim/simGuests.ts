@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { measureTriangles, type MeshMeasure } from '../three/meshMeasure';
-import type { RobotJoint, ScenePart } from '../types/robotics';
+import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { buildRig, partMatrix, type Rig } from '../utils/kinematics';
 
 export interface SimGuests {
+  selfContact?: ProjectSettings['selfContact'];
   parts: ScenePart[];
   joints: RobotJoint[];
 }
@@ -11,6 +12,7 @@ export interface SimGuests {
 export const NO_GUESTS: SimGuests = { parts: [], joints: [] };
 
 interface SceneInput {
+  project: ProjectSettings;
   parts: ScenePart[];
   rig: Rig;
   measures: Record<string, MeshMeasure | undefined>;
@@ -54,5 +56,13 @@ export function withGuests<T extends SceneInput>(input: T, guests: SimGuests): T
 
   for (const p of guests.parts) measures[p.id] = placedMeasure(p, input.partTriangles(p.id));
 
-  return { ...input, parts, measures, rig: buildRig([...input.rig.joints, ...guests.joints], parts) };
+  return {
+    ...input,
+    project: guests.selfContact
+      ? { ...input.project, selfContact: { ...input.project.selfContact, ...guests.selfContact } }
+      : input.project,
+    parts,
+    measures,
+    rig: buildRig([...input.rig.joints, ...guests.joints], parts),
+  };
 }

@@ -35,6 +35,63 @@ describe('robot fit', () => {
     expect(facts.reachMm).toBeCloseTo(200);
   });
 
+  it.each([
+    { tagged: [], expected: 'elbow' },
+    { tagged: ['branch'], expected: 'branch' },
+    { tagged: ['elbow'], expected: 'elbow' },
+    { tagged: ['elbow', 'branch'], expected: 'elbow' },
+    { tagged: ['yaw'], expected: 'elbow' },
+  ])('keeps arm priority for $tagged', ({ tagged, expected }) => {
+    const { parts, joints } = turretArm();
+    const branch = box('branch-part', [100, 250, 0], [20, 100, 20], 50);
+    const branches = [
+      ...joints,
+      joint({
+        id: 'branch',
+        link: ['upper', branch.id],
+        parentJoint: 'shoulder',
+        origin: [0, 200, 0],
+        axis: [1, 0, 0],
+        effortNm: 3,
+      }),
+    ].map((j) => ({ ...j, limb: tagged.includes(j.id) ? ('arm' as const) : undefined }));
+    const allParts = [...parts, branch];
+    const rig = buildRig(branches, allParts);
+    const before = structuredClone({ joints: branches, parts: allParts });
+    const facts = robotFacts(rig, allParts);
+
+    expect(facts.armJoints).toEqual(['yaw', 'shoulder', expected]);
+    expect(facts.endEffector?.part).toBe(expected === 'branch' ? branch.id : 'fore');
+    expect({ joints: branches, parts: allParts }).toEqual(before);
+
+    const edited = branches.map((j) => ({ ...j, limb: j.id === 'branch' ? ('arm' as const) : undefined }));
+
+    expect(robotFacts(buildRig(edited, allParts), allParts).armJoints).toEqual(['yaw', 'shoulder', 'branch']);
+  });
+
+  it('keeps a fixed terminal hand beyond the movable arm chain', () => {
+    const { parts, joints } = turretArm();
+    const hand = box('hand', [0, 330, 0], [20, 60, 20], 30);
+    const terminal = {
+      ...joint({
+        id: 'terminal',
+        link: ['fore', hand.id],
+        parentJoint: 'elbow',
+        origin: [0, 300, 0],
+        axis: [1, 0, 0],
+        effortNm: 0,
+      }),
+      type: 'fixed' as const,
+    };
+    const allParts = [...parts, hand];
+    const facts = robotFacts(buildRig([...joints, terminal], allParts), allParts);
+
+    expect(facts.armJoints).toEqual(['yaw', 'shoulder', 'elbow']);
+    expect(facts.endEffector).toEqual({ part: hand.id, point: [0, 360, 0] });
+    expect(facts.anchor).toEqual([0, 100, 0]);
+    expect(facts.reachMm).toBeCloseTo(260);
+  });
+
   it('binds an authored hand only where that part ends a chain and holds the point', () => {
     const arm = fixtureRobots().find((r) => r.id === 'arm-6dof')!;
     const rig = buildRig(arm.joints, arm.parts);

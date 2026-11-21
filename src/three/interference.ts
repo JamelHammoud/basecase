@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { worldTriangles } from './meshMeasure';
 
 export { pairKey } from '../../electron/cad-kernel/pairKey.mjs';
 
@@ -18,32 +19,9 @@ export interface Coplanar {
 }
 
 export function worldGeometry(object: THREE.Object3D): THREE.BufferGeometry | null {
-  const chunks: Float32Array[] = [];
+  const all = worldTriangles(object);
 
-  object.updateWorldMatrix(true, true);
-  object.traverse((o) => {
-    const mesh = o as THREE.Mesh;
-
-    if (!mesh.isMesh || !mesh.visible || !mesh.geometry?.attributes?.position) return;
-
-    const g = (mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone()) as THREE.BufferGeometry;
-
-    g.applyMatrix4(mesh.matrixWorld);
-    chunks.push(g.attributes.position.array as Float32Array);
-    g.dispose();
-  });
-
-  const total = chunks.reduce((n, c) => n + c.length, 0);
-
-  if (total < 9) return null;
-
-  const all = new Float32Array(total);
-  let off = 0;
-
-  for (const c of chunks) {
-    all.set(c, off);
-    off += c.length;
-  }
+  if (all.length < 9) return null;
 
   const geom = new THREE.BufferGeometry();
 

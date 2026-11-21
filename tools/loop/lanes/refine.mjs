@@ -1,3 +1,4 @@
+import { buildStep, claimNextStep } from './build.mjs';
 import { CHANGE_SCHEMA } from '../lib/agent.mjs';
 import { issues, openPulls } from '../lib/github.mjs';
 import { inFlight, inFlightText } from '../lib/inFlight.mjs';
@@ -8,12 +9,13 @@ import { ideaOf, mergedRefines, pullNumberOf, recentRefinesText, refineIdeas } f
 import { run } from '../lib/sh.mjs';
 import { heldBy, stepAreas, stepAreasText } from '../lib/stepAreas.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
+import { runWithinRefinementBudget } from '../lib/refinementBudget.mjs';
 
 export const schedule = {
   agent: true,
   slots: 2,
   everySeconds: 60,
-  does: 'Lands one refinement everywhere it holds, in one pull request',
+  does: 'Builds ready product steps first, otherwise lands one refinement everywhere it holds',
 };
 
 const STEP_LABELS = ['loop:next', 'loop:building'];
@@ -86,7 +88,7 @@ function publishUnlessHeld(output, { worktree, log, deps }) {
   return url;
 }
 
-export default function refine({ log }, deps = LIVE) {
+function runRefinement({ log }, deps) {
   const worktree = deps.openBranch('refine', 'fit');
 
   try {
@@ -116,4 +118,20 @@ export default function refine({ log }, deps = LIVE) {
   } finally {
     deps.close(worktree);
   }
+}
+
+export default function refine(context, deps = LIVE) {
+  return runWithinRefinementBudget(() => runRefinement(context, deps), context.log);
+}
+
+export function selectWork({ slot }) {
+  const next = claimNextStep({ productOnly: true });
+
+  if (!next) return null;
+
+  return {
+    lane: 'build',
+    release: next.release,
+    run: (context) => buildStep(next.step, { ...context, worker: `refine-${slot}` }),
+  };
 }

@@ -40,11 +40,14 @@ export function partsUnder(ctx: ViewportContext, raycaster: THREE.Raycaster, poi
   const step = Math.max(1, Math.ceil(points.length / MAX_PROBES));
   const meshes = partMeshes(ctx.stage);
   const ids = new Set<string>();
+  const direction = new THREE.Vector3();
+  const hits: THREE.Intersection[] = [];
 
   for (let i = 0; i < points.length; i += step) {
-    raycaster.set(camera.position, points[i].clone().sub(camera.position).normalize());
+    raycaster.set(camera.position, direction.copy(points[i]).sub(camera.position).normalize());
+    hits.length = 0;
 
-    const id = hitPartId(raycaster.intersectObjects(meshes, false)[0] ?? null);
+    const id = hitPartId(raycaster.intersectObjects(meshes, false, hits)[0] ?? null);
 
     if (id) ids.add(id);
   }

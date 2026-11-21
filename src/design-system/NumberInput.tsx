@@ -5,7 +5,7 @@ import { useNumberScrub } from './useNumberScrub';
 
 export interface NumberInputProps {
   label?: React.ReactNode;
-  value: number;
+  value: number | null;
   onChange: (val: number, live?: boolean) => void;
   min?: number;
   max?: number;
@@ -64,9 +64,9 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const handledByKey = useRef(false);
   const clamp = (v: number) => clampNumber(v, { min, max, precision });
-  const format = (v: number) => formatNumber(v, precision);
+  const format = (v: number | null) => (v === null ? '' : formatNumber(v, precision));
   const { scrubbing, handlers } = useNumberScrub({
-    value,
+    value: value ?? 0,
     step,
     disabled,
     clamp,
@@ -100,7 +100,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   const stepBy = (e: React.KeyboardEvent<HTMLInputElement>) => {
     e.preventDefault();
 
-    const base = evaluateMath(draft ?? '') ?? value;
+    const base = evaluateMath(draft ?? '') ?? value ?? 0;
     const next = clamp(base + (e.key === 'ArrowUp' ? 1 : -1) * step * stepMultiplier(e));
 
     setDraft(format(next));

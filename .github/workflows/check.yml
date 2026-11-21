@@ -23,6 +23,7 @@ jobs:
       lerobot: ${{ steps.filter.outputs.lerobot }}
       vision: ${{ steps.filter.outputs.vision }}
       daemon: ${{ steps.filter.outputs.daemon }}
+      electrical: ${{ steps.filter.outputs.electrical }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -34,7 +35,7 @@ jobs:
         env:
           EVENT: ${{ github.event_name }}
         run: |
-          if [ "$EVENT" != pull_request ]; then printf 'app=true\nros=true\nios=true\nlerobot=true\nvision=true\ndaemon=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ "$EVENT" != pull_request ]; then printf 'app=true\nros=true\nios=true\nlerobot=true\nvision=true\ndaemon=true\nelectrical=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
           files=$(git diff --name-only HEAD^1 HEAD)
           pattern='^(electron/|forge/|hw/|build/|tools/forge/|tools/native/|e2e/app/|\.github/workflows/|package\.json$|package-lock\.json$|vitest\.app\.config\.ts$)'
           if grep -qE "$pattern" <<< "$files"; then echo "app=true"; else echo "app=false"; fi >> "$GITHUB_OUTPUT"
@@ -48,6 +49,13 @@ jobs:
           if grep -qE "$vision" <<< "$files"; then echo "vision=true"; else echo "vision=false"; fi >> "$GITHUB_OUTPUT"
           daemon='^(hw/|verify/hw/|\.github/workflows/(check|release)\.yml$)'
           if grep -qE "$daemon" <<< "$files"; then echo "daemon=true"; else echo "daemon=false"; fi >> "$GITHUB_OUTPUT"
+          electrical='^(src/wiring/|src/workspace/([^/]*Schematic|schematic)[^/]*|src/utils/(engineeringPower|powerSources|servoAmps)\.ts$|src/data/(components|connectorPorts|componentPorts|supplies|sourcedItems)\.ts$|tools/electrical/|e2e/(schematic|board|boardRouted|boardRouting)\.e2e\.test\.ts$|electron/electrical/|src/workspace/(useRoutedBoard|useBoard|useBoardPreview|useBoardRouting)\.ts$|\.github/workflows/(electrical|check)\.yml$|package(-lock)?\.json$)'
+          if grep -qE "$electrical" <<< "$files"; then echo "electrical=true"; else echo "electrical=false"; fi >> "$GITHUB_OUTPUT"
+
+  electrical:
+    needs: changes
+    if: needs.changes.outputs.electrical == 'true'
+    uses: ./.github/workflows/electrical.yml
 
   daemon-arm64:
     needs: changes
@@ -77,11 +85,31 @@ jobs:
           cargo test --locked --release --manifest-path hw/Cargo.toml -p robot-daemon
           --test network_security --test binary_network
 
+  static:
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - run: npm ci
+      - name: Check static rules
+        run: >-
+          npm run check:tracked && npm run check:docs && npm run check:site &&
+          npm run check:quarantine && npm run format:check && npm run lint && npm run lint:py
+      - run: npm audit --audit-level=high
+
   unit:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON(github.event_name != 'pull_request' && '["ubuntu-latest","windows-latest"]' || '["ubuntu-latest"]') }}
+        include: ${{ fromJSON(github.event_name != 'pull_request' && '[{"os":"ubuntu-latest","shard":"1/2"},{"os":"ubuntu-latest","shard":"2/2"},{"os":"windows-latest","shard":"1/2"},{"os":"windows-latest","shard":"2/2"}]' || '[{"os":"ubuntu-latest","shard":"1/1"}]') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     defaults:
@@ -112,10 +140,18 @@ jobs:
           if git diff --name-only HEAD^1 HEAD | grep -q '^hw/'; then
             cargo test --locked --manifest-path hw/Cargo.toml -p robot-daemon --bin robot-daemon
           fi
-      - name: Check everything
+      - name: Check types and unit tests
         if: ${{ github.event_name != 'pull_request' }}
-        run: npm run check
-      - if: runner.os == 'Linux'
+        run: npm run typecheck && npm test -- --shard ${{ matrix.shard }}
+      - name: Compare passive joint physics with native MuJoCo
+        if: ${{ matrix.shard == '1/1' || matrix.shard == '1/2' }}
+        run: |
+          if [ "${{ github.event_name }}" != 'pull_request' ]; then
+            node tools/sim/contactParity.mjs
+          elif git diff --name-only HEAD^1 HEAD | grep -qE '^(src/(joints/|sim/(mjcf|actuatorChannels|fixtures/passive)|types/(robotics|joint))|tools/sim/)'; then
+            node tools/sim/contactParity.mjs
+          fi
+      - if: ${{ github.event_name == 'pull_request' }}
         run: npm audit --audit-level=high
 
   e2e:
@@ -135,6 +171,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2
       - run: npm ci
       - run: rustup toolchain install stable --profile minimal
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
@@ -144,12 +181,14 @@ jobs:
         run: npm run build:daemon
       - run: npx vite build
       - run: npx vite build --mode web --outDir dist-web
+      - name: Prepare KiCad for the shard with the routed board walkthrough
+        run: node tools/electrical/installCli.mjs --browser-shard ${{ matrix.shard }}/${{ strategy.job-total }}
       - run: npx vitest run --config vitest.e2e.config.ts --shard ${{ matrix.shard }}/${{ strategy.job-total }}
 
       - name: Run quarantined tests
         if: ${{ !cancelled() }}
         continue-on-error: true
-        timeout-minutes: 5
+        timeout-minutes: 1
         run: npm run test:quarantine -- ${{ matrix.shard }}/${{ strategy.job-total }}
 
   e2e-changed:
@@ -161,38 +200,61 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+      - name: Find changed browser test files before installing dependencies
+        id: browser
+        run: |
+          files=$(git diff --name-only --diff-filter=ACMR HEAD^1...HEAD -- 'e2e/*.e2e.test.ts')
+          if [ -n "$files" ]; then echo "changed=true"; else echo "changed=false"; fi >> "$GITHUB_OUTPUT"
+      - if: ${{ steps.browser.outputs.changed == 'true' }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - if: ${{ steps.browser.outputs.changed == 'true' }}
+        run: npm ci
       - name: Find the e2e tests the pull request added or changed
+        if: ${{ steps.browser.outputs.changed == 'true' }}
         id: files
         run: |
           found=$(node tools/e2e-changed.mjs HEAD^1)
           echo "$found"
           echo "list=$(jq -r '.files | join(" ")' <<< "$found")" >> "$GITHUB_OUTPUT"
+          echo "fallback=$(jq -r '.fallbackFiles | join(" ")' <<< "$found")" >> "$GITHUB_OUTPUT"
           echo "pattern=$(jq -r '.pattern' <<< "$found")" >> "$GITHUB_OUTPUT"
-      - if: ${{ steps.files.outputs.pattern != '' }}
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - if: ${{ steps.files.outputs.pattern != '' }}
-        run: npm ci
-      - if: ${{ steps.files.outputs.pattern != '' && contains(steps.files.outputs.list, 'e2e/operateNetwork.e2e.test.ts') }}
+      - name: Prepare KiCad for the routed board walkthrough
+        if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/boardRouted.e2e.test.ts') || contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/boardRouting.e2e.test.ts') || contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/kitElectrical.e2e.test.ts') }}
+        run: node tools/electrical/installCli.mjs
+      - name: Install native board routing tools for selected walkthrough
+        if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/boardRouting.e2e.test.ts') }}
+        run: node tools/electrical/installRouter.mjs --directory scratch/routing-tools
+      - name: Install uv for local USD facility conversion
+        if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/fleetSites.e2e.test.ts') }}
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2
+      - if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/operateNetwork.e2e.test.ts') }}
         run: rustup toolchain install stable --profile minimal
-      - if: ${{ steps.files.outputs.pattern != '' && contains(steps.files.outputs.list, 'e2e/operateNetwork.e2e.test.ts') }}
+      - if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/operateNetwork.e2e.test.ts') }}
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: hw
       - name: Stage the native robot daemon for network tests
-        if: ${{ steps.files.outputs.pattern != '' && contains(steps.files.outputs.list, 'e2e/operateNetwork.e2e.test.ts') }}
+        if: ${{ contains(format('{0} {1}', steps.files.outputs.list, steps.files.outputs.fallback), 'e2e/operateNetwork.e2e.test.ts') }}
         run: npm run build:daemon
-      - if: ${{ steps.files.outputs.pattern != '' }}
+      - if: ${{ steps.files.outputs.pattern != '' || steps.files.outputs.fallback != '' }}
         run: npx vite build && npx vite build --mode web --outDir dist-web
-      - if: ${{ steps.files.outputs.pattern != '' }}
+      - if: ${{ steps.files.outputs.pattern != '' || steps.files.outputs.fallback != '' }}
         env:
           FILES: ${{ steps.files.outputs.list }}
           PATTERN: ${{ steps.files.outputs.pattern }}
+          FALLBACK: ${{ steps.files.outputs.fallback }}
         run: |
-          read -ra list <<< "$FILES"
-          npx vitest run --config vitest.e2e.config.ts "${list[@]}" -t "$PATTERN"
+          if [ -n "$PATTERN" ]; then
+            read -ra list <<< "$FILES"
+            npx vitest run --config vitest.e2e.config.ts "${list[@]}" -t "$PATTERN"
+          fi
+          if [ -n "$FALLBACK" ]; then
+            read -ra list <<< "$FALLBACK"
+            npx vitest run --config vitest.e2e.config.ts "${list[@]}" -t '.*'
+          fi
 
   e2e-windows:
     if: ${{ github.event_name != 'pull_request' }}
@@ -214,6 +276,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2
       - run: npm ci
       - run: rustup toolchain install stable --profile minimal
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
@@ -223,12 +286,14 @@ jobs:
         run: npm run build:daemon
       - run: npx vite build
       - run: npx vite build --mode web --outDir dist-web
+      - name: Prepare KiCad for the shard with the routed board walkthrough
+        run: node tools/electrical/installCli.mjs --browser-shard ${{ matrix.shard }}/${{ strategy.job-total }}
       - run: npx vitest run --config vitest.e2e.config.ts --shard ${{ matrix.shard }}/${{ strategy.job-total }}
 
       - name: Run quarantined tests
         if: ${{ !cancelled() }}
         continue-on-error: true
-        timeout-minutes: 5
+        timeout-minutes: 1
         run: npm run test:quarantine -- ${{ matrix.shard }}/${{ strategy.job-total }}
 
   app:
@@ -238,7 +303,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest
+          - os: macos-15
             target: --mac --arm64
           - os: windows-latest
             target: --win --x64
@@ -265,6 +330,10 @@ jobs:
             hw
       - name: Build the Forge trainer and the robot daemon
         run: npm run build:forge && npm run build:daemon
+      - name: Test closed Sketch linkage training on native MuJoCo
+        run: |
+          export PATH="$PWD/forge/dist:$PATH"
+          cargo test --locked --release --manifest-path forge/Cargo.toml -p forge-train --test closed_linkages -- --nocapture
       - name: Package the app, unsigned
         run: npx electron-builder ${{ matrix.target }} --dir --publish never -c.mac.forceCodeSigning=false
         env:
@@ -351,7 +420,7 @@ jobs:
   ios:
     needs: changes
     if: needs.changes.outputs.ios == 'true'
-    runs-on: macos-latest
+    runs-on: macos-26-intel
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -396,12 +465,30 @@ jobs:
 
   check:
     if: always()
-    needs: [changes, unit, e2e, e2e-changed, e2e-windows, app, ros, ios, lerobot, vision, daemon-arm64, credit, copy]
+    needs:
+      [
+        changes,
+        static,
+        unit,
+        e2e,
+        e2e-changed,
+        e2e-windows,
+        app,
+        ros,
+        ios,
+        lerobot,
+        vision,
+        daemon-arm64,
+        electrical,
+        credit,
+        copy,
+      ]
     runs-on: ubuntu-latest
     steps:
       - name: Pass only when every job that had to run passed
         env:
           REQUIRED: ${{ needs.changes.result }} ${{ needs.unit.result }} ${{ needs.credit.result }}
+          STATIC: ${{ needs.static.result }}
           E2E: ${{ needs.e2e.result }}
           E2E_CHANGED: ${{ needs.e2e-changed.result }}
           FULL: ${{ github.event_name != 'pull_request' }}
@@ -418,21 +505,27 @@ jobs:
           VISION_NEEDED: ${{ needs.changes.outputs.vision }}
           DAEMON: ${{ needs.daemon-arm64.result }}
           DAEMON_NEEDED: ${{ needs.changes.outputs.daemon }}
+          ELECTRICAL: ${{ needs.electrical.result }}
+          ELECTRICAL_NEEDED: ${{ needs.changes.outputs.electrical }}
           WINDOWS_E2E: ${{ needs.e2e-windows.result }}
           COPY: ${{ needs.copy.result }}
           EVENT: ${{ github.event_name }}
         shell: bash
         run: |
-          echo "Required: $REQUIRED; full: $FULL; e2e: $E2E; changed e2e: $E2E_CHANGED; app: $APP (needed: $APP_NEEDED); ROS: $ROS (needed: $ROS_NEEDED); iOS: $IOS (needed: $IOS_NEEDED); LeRobot: $LEROBOT (needed: $LEROBOT_NEEDED); Windows e2e: $WINDOWS_E2E; copy: $COPY"
+          echo "Required: $REQUIRED; static: $STATIC; full: $FULL; e2e: $E2E; changed e2e: $E2E_CHANGED; app: $APP (needed: $APP_NEEDED); ROS: $ROS (needed: $ROS_NEEDED); iOS: $IOS (needed: $IOS_NEEDED); LeRobot: $LEROBOT (needed: $LEROBOT_NEEDED); Windows e2e: $WINDOWS_E2E; copy: $COPY"
           [ "$(wc -w <<< "$REQUIRED")" -eq 3 ] || exit 1
           for r in $REQUIRED; do [ "$r" = success ] || exit 1; done
           want_full=skipped
           [ "$FULL" = true ] && want_full=success
+          [ "$STATIC" = "$want_full" ] || exit 1
           [ "$E2E" = "$want_full" ] || exit 1
           [ "$WINDOWS_E2E" = "$want_full" ] || exit 1
           want_changed=success
           [ "$FULL" = true ] && want_changed=skipped
           [ "$E2E_CHANGED" = "$want_changed" ] || exit 1
+          want_electrical=skipped
+          [ "$ELECTRICAL_NEEDED" = true ] && want_electrical=success
+          [ "$ELECTRICAL" = "$want_electrical" ] || exit 1
           want_app=skipped
           [ "$FULL" = true ] && [ "$APP_NEEDED" = true ] && want_app=success
           [ "$APP" = "$want_app" ] || exit 1

@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { BUNDLED_RATES } from '../data/exchangeRates';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { bomText, bomToCsv, bomToMarkdown, buildBom } from './bom';
-import { createMoney } from './currency';
+import { CURRENCY_CODES, createMoney } from './currency';
 import { currentMoney, refreshRates, setCurrency } from './currencyStore';
 
 const rates = { date: '2026-10-30', perUsd: { USD: 1, EUR: 0.8, JPY: 150 } };
@@ -25,6 +26,46 @@ const servo: ScenePart = {
 };
 
 describe('currency', () => {
+  it('prepares only exact formatters for currency labels and reuses whole-price formatters when needed', () => {
+    const formats = vi.spyOn(Intl, 'NumberFormat');
+
+    try {
+      const currencies = CURRENCY_CODES.map((code) => createMoney(code));
+
+      expect(formats).toHaveBeenCalledTimes(CURRENCY_CODES.length);
+
+      for (const money of currencies) {
+        expect(money.symbol).not.toBe('');
+        money.format(12.5);
+        money.formatAmount(12.5);
+        money.plain(12.5);
+      }
+
+      expect(formats).toHaveBeenCalledTimes(CURRENCY_CODES.length);
+
+      for (const money of currencies) {
+        for (const usd of [0, -12.5, 0.499, 9999.999, NaN, Infinity]) {
+          const expected = (usd * BUNDLED_RATES.perUsd[money.code]).toLocaleString('en-US', {
+            style: 'currency',
+            currency: money.code,
+            maximumFractionDigits: 0,
+          });
+
+          expect(money.whole(usd)).toBe(expected);
+          expect(money.whole(usd)).toBe(expected);
+        }
+
+        expect(money.whole(100, { currency: money.code, amount: 12.5 })).toBe(
+          (12.5).toLocaleString('en-US', { style: 'currency', currency: money.code, maximumFractionDigits: 0 }),
+        );
+      }
+
+      expect(formats).toHaveBeenCalledTimes(CURRENCY_CODES.length * 2);
+    } finally {
+      formats.mockRestore();
+    }
+  });
+
   it('formats each currency the way it is written', () => {
     expect(createMoney('USD', rates).format(1209.5)).toBe('$1,209.50');
     expect(eur.format(10)).toBe('€8.00');

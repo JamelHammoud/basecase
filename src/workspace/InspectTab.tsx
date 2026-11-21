@@ -1,3 +1,4 @@
+import { findPartDeep } from '../booleans/parts';
 import { Inspector } from '../components/Inspector';
 import { SculptAndDrawStudio } from '../components/SculptAndDrawStudio';
 import type { BoundSketch } from '../components/studio/SketchPanel';
@@ -16,11 +17,17 @@ interface InspectTabProps {
 
 function boundSketch(core: WorkspaceCore): BoundSketch | null {
   const partId = core.sketching.target?.partId;
-  const record = partId ? core.parts.find((p) => p.id === partId)?.sketch : undefined;
+  const record = partId ? findPartDeep(core.parts, partId)?.sketch : undefined;
 
   if (!partId || !record) return null;
 
-  return { record, onChange: (patch) => core.sketching.change(partId, patch), undo: core.undo, redo: core.redo };
+  return {
+    record,
+    onChange: (patch) => core.sketching.change(partId, patch),
+    undo: core.undo,
+    redo: core.redo,
+    onSelectFace: () => core.sketching.selectSupport(partId),
+  };
 }
 
 function ModePanel({ core, actions }: InspectTabProps) {
@@ -35,6 +42,7 @@ function ModePanel({ core, actions }: InspectTabProps) {
 
     if (!solid) return;
 
+    solid.record.support = target?.support;
     await creation.createFromSketch(solidSketchParams(solid));
     tool.setCreator(null);
   };
@@ -87,6 +95,12 @@ function SceneInspector({ core, actions }: InspectTabProps) {
 
   return (
     <Inspector
+      parameters={core.parameters}
+      board={core.project.electronicsBoard}
+      onUpdateBoard={actions.board.update}
+      onArrangeBoard={() => void actions.board.arrange()}
+      onImportBoard={() => void actions.board.importBoard()}
+      onRouteBoard={() => void actions.board.route()}
       key={scene.sceneId}
       part={selection.selectedPart}
       parts={parts}

@@ -25,6 +25,11 @@ export interface ModelJoint {
   world: THREE.Matrix4;
   axis: THREE.Vector3;
   limit?: [number, number];
+  actuation?: 'powered' | 'passive';
+  damping?: number;
+  frictionloss?: number;
+  stiffness?: number;
+  springref?: number;
   effort?: number;
   velocity?: number;
   after?: ModelJoint;

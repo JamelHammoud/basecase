@@ -1,5 +1,6 @@
 """Stage units and axes: everything leaves here in meters, Z up, as column-vector 4x4 matrices."""
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -31,7 +32,11 @@ class StageFrame:
 
     @classmethod
     def of(cls, stage) -> "StageFrame":
-        mpu = UsdGeom.GetStageMetersPerUnit(stage) or 1.0
+        mpu = UsdGeom.GetStageMetersPerUnit(stage)
+
+        if not math.isfinite(mpu) or mpu <= 0:
+            raise ValueError("Declare positive USD metersPerUnit")
+
         up = Y_UP_TO_Z_UP if UsdGeom.GetStageUpAxis(stage) == UsdGeom.Tokens.y else np.eye(3)
         return cls(meters_per_unit=float(mpu), up=up)
 

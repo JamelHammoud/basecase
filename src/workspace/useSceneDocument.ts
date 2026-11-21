@@ -26,8 +26,11 @@ import {
   type HistoryStep,
 } from './docHistory';
 import { useBooleanResults } from './useBooleanResults';
+import { useSketchSupportResults } from './useSketchSupportResults';
 import { projectFromSeed } from './helpers';
 import type { CommitParts, DocState, Snapshot, WorkspaceSeed } from './types';
+import { mountedBoardParts } from '../wiring/boardMounts';
+import { permittedParameterEdit } from './parameterEditGuard';
 
 const POSE_FOLD_MS = 700;
 
@@ -57,6 +60,18 @@ function useProjectCommits(commitProject: CommitProject, projectRef: RefObject<P
   'use memo';
 
   return {
+    commitWiring: (wiring: ProjectSettings['wiring']) => commitProject({}, (p) => ({ ...p, wiring })),
+    commitSelfContact: (selfContact: ProjectSettings['selfContact']) =>
+      commitProject({}, (p) => ({ ...p, selfContact })),
+    commitParameters: (
+      parts: ScenePart[],
+      designParameters: ProjectSettings['designParameters'],
+      dimensionalRequirements = projectRef.current.dimensionalRequirements,
+    ) => commitProject({}, (p) => ({ ...p, designParameters, dimensionalRequirements }), parts),
+    commitVersion: (parts: ScenePart[], project: ProjectSettings, scene: Snapshot['scene']) =>
+      commitProject({ project: projectRef.current, scene }, () => project, parts),
+    commitBoard: (parts: ScenePart[], electronicsBoard: ProjectSettings['electronicsBoard']) =>
+      commitProject({}, (p) => ({ ...p, electronicsBoard }), parts),
     commitDesign: (parts: ScenePart[], tether: Tether | undefined) =>
       commitProject({ tether: projectRef.current.tether }, (p) => ({ ...p, tether }), parts),
     commitStudy: (parts: ScenePart[], project: ProjectSettings) =>
@@ -77,7 +92,7 @@ function useProjectCommits(commitProject: CommitProject, projectRef: RefObject<P
   };
 }
 
-export function useSceneDocument(seed?: WorkspaceSeed) {
+export function useSceneDocument(seed?: WorkspaceSeed, refused?: (reason: string) => void) {
   const projectState = useProjectState(seed);
   const { projectRef, updateProjectNow, setProjectNow } = projectState;
   const [doc, setDoc] = useState<DocState>(() => (seed ? { ...EMPTY_DOC, parts: seed.parts } : EMPTY_DOC));
@@ -97,6 +112,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
   };
 
   useBooleanResults(doc.parts, docRef, writeDoc);
+  useSketchSupportResults(doc.parts, docRef, writeDoc);
 
   const restoreJoints = (joints: RobotJoint[] | undefined) => updateProjectNow((p) => ({ ...p, joints }));
   const tracked = () => trackedOf(projectRef.current);
@@ -118,14 +134,20 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     const now = tracked();
     const { joints } = now;
     const d = docRef.current;
+    const edited = editWithOperands(d.parts, updater);
+
+    if (!permittedParameterEdit(edited, projectRef.current, refused, d.parts)) return;
 
     if (live) {
-      writeDoc(liveEdit(d, editWithOperands(d.parts, updater)));
+      writeDoc(liveEdit(d, edited));
 
       return;
     }
 
-    const parts = editWithOperands(d.parts, updater);
+    const board = projectRef.current.electronicsBoard;
+    const hostChanged =
+      board && edited.find((part) => part.id === board.partId) !== d.parts.find((part) => part.id === board.partId);
+    const parts = hostChanged ? mountedBoardParts(edited, board) : edited;
     const kept = new Set(parts.map((p) => p.id));
     const nextJoints = jointsWithoutParts(joints, new Set(d.parts.filter((p) => !kept.has(p.id)).map((p) => p.id)));
 
@@ -198,6 +220,8 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     setProjectNow(moved.project);
 
     if (moved.to.pose !== moved.here.pose) restorePose(moved.to.pose);
+
+    return moved.to.scene;
   };
 
   const clearDocument = () => {

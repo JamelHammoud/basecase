@@ -1,5 +1,6 @@
+import type { VersionedSceneRecord } from '../types/sceneHistory';
 import type { WorkspaceMeta, WorkspaceSeed } from '../SceneWorkspace';
-import type { RobotJoint, SavedSceneRecord, ScenePart } from '../types/robotics';
+import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { newSceneId } from '../utils/sceneIds';
 import { moveItem } from '../utils/moveItem';
 import { copyName } from '../workspace/helpers';
@@ -17,9 +18,11 @@ export interface TabEntry {
 export interface ClosedTab {
   seed: WorkspaceSeed;
   index: number;
+  ready?: Promise<WorkspaceSeed>;
 }
 
 export interface TabListItem {
+  fingerprint?: string;
   id: string;
   name: string;
   sceneId: string;
@@ -28,6 +31,7 @@ export interface TabListItem {
 export type Metas = Record<string, WorkspaceMeta>;
 
 export interface SceneRobot {
+  selfContact?: ProjectSettings['selfContact'];
   tabId: string;
   name: string;
   parts: ScenePart[];
@@ -69,7 +73,7 @@ export function blankSeed(metas: Metas, closing: string[] = []): WorkspaceSeed {
   };
 }
 
-export function seedFromRecord(record: SavedSceneRecord): WorkspaceSeed {
+export function seedFromRecord(record: VersionedSceneRecord): WorkspaceSeed {
   return {
     sceneId: record.id,
     sceneName: record.name,
@@ -77,6 +81,7 @@ export function seedFromRecord(record: SavedSceneRecord): WorkspaceSeed {
     parts: record.parts || [],
     annotations: record.annotations || [],
     project: record.project,
+    history: record.history,
   };
 }
 
@@ -113,13 +118,16 @@ export function nextActiveAfterClose({ list, ids, activeId, remaining }: NextAct
   if (!ids.includes(activeId)) return activeId;
 
   const from = list.findIndex((t) => t.id === activeId);
-  const after = list.slice(from + 1).find((t) => !ids.includes(t.id));
-  const before = list
-    .slice(0, from)
-    .reverse()
-    .find((t) => !ids.includes(t.id));
 
-  return (after ?? before ?? remaining[0]).id;
+  for (let i = from + 1; i < list.length; i++) {
+    if (!ids.includes(list[i].id)) return list[i].id;
+  }
+
+  for (let i = from - 1; i >= 0; i--) {
+    if (!ids.includes(list[i].id)) return list[i].id;
+  }
+
+  return remaining[0].id;
 }
 
 export function closedMessage(remember: ClosedTab[], stoppedAgent: boolean): string {
@@ -133,6 +141,7 @@ export function tabListOf(tabs: TabEntry[], metas: Metas): TabListItem[] {
     id: t.id,
     name: metas[t.id]?.name ?? t.seed?.sceneName ?? 'Untitled',
     sceneId: metas[t.id]?.sceneId ?? t.seed?.sceneId ?? '',
+    ...(metas[t.id]?.fingerprint ? { fingerprint: metas[t.id].fingerprint } : {}),
   }));
 }
 
@@ -167,6 +176,8 @@ export function sceneRobots(
     const seed = tab.id === except ? undefined : snapshotOf(tab);
     const joints = seed?.project?.joints ?? [];
 
-    return seed && joints.length ? [{ tabId: tab.id, name: seed.sceneName, parts: seed.parts, joints }] : [];
+    return seed && joints.length
+      ? [{ tabId: tab.id, name: seed.sceneName, parts: seed.parts, joints, selfContact: seed.project?.selfContact }]
+      : [];
   });
 }

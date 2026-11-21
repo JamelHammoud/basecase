@@ -6,11 +6,17 @@ import { trainKitEntry } from './motorKit';
 import { validationReport } from './kitValidation';
 import { proveSkill } from './prove';
 import { slowerSpeedEvidence } from './kitAcceptance';
+import { runArena } from './arena';
+import { kitEnvironment, kitSpeedContract } from './kitEnvironment';
+import { readyStand } from './hubSkillFixtures';
+import { environmentHash } from './environment';
+import { contractHash } from './artifacts';
 import { rootHeight } from './kitModel';
 import type { PolicySpec } from '../sim/policy';
 import type { ForgeJob, ForgeOutcome } from './forgeRunner';
 import type { ArenaEvidence } from './artifacts';
 
+vi.mock('./arena', async (original) => ({ ...(await original<typeof import('./arena')>()), runArena: vi.fn() }));
 vi.mock('./kitValidation', () => ({ validationReport: vi.fn() }));
 vi.mock('./prove', () => ({ proveSkill: vi.fn() }));
 vi.mock('./kitAcceptance', () => ({ slowerSpeedEvidence: vi.fn(), arenaPasses: () => 96 }));
@@ -155,4 +161,42 @@ describe('Motor Kit candidate selection and continuation', () => {
     expect(source.controller).toEqual(clockSkill(model, quadWave()).controller);
     expect(outcome.kind === 'refused' && outcome.reason).toContain('settle to walk');
   });
+});
+
+it('retains the actual slower-speed environment with a failed Walk Arena outcome', async () => {
+  const environment = kitEnvironment(model, 'velocity-tracking');
+  const testedEnvironment = { ...environment, contract: kitSpeedContract(model, 0) };
+  const evidence = structuredClone(readyStand(model, 'quad').evidence!);
+
+  evidence.passed = false;
+  evidence.binding.contract = contractHash(testedEnvironment.contract);
+  evidence.binding.environment = environmentHash(testedEnvironment);
+  evidence.variants.forEach((variant) => {
+    variant.passes = 0;
+  });
+  vi.mocked(validationReport).mockImplementation(async ({ policy }) => report(policy, policy.trainedSteps));
+  vi.mocked(runArena).mockResolvedValue(readyStand(model, 'quad').evidence!);
+  vi.mocked(slowerSpeedEvidence).mockImplementation(async ({ onEvidence }) => {
+    onEvidence?.(evidence, testedEnvironment);
+
+    return [evidence];
+  });
+
+  const outcome = await trainKitEntry({
+    mj,
+    model,
+    entry: 'velocity-tracking',
+    design: 'quad',
+    seed: 40,
+    forge: trainer().forge,
+    save: vi.fn(),
+  });
+
+  expect(outcome.kind).toBe('refused');
+
+  if (outcome.kind !== 'refused') throw new Error('The failed candidate was saved.');
+
+  expect(outcome.evidence).toBe(evidence);
+  expect(outcome.environment).toBe(testedEnvironment);
+  expect(environmentHash(outcome.environment!)).toBe(outcome.evidence!.binding.environment);
 });

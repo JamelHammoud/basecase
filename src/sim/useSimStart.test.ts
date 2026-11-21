@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { SimModel } from './mjcfTypes';
 import { useSimStart } from './useSimStart';
 import { useSimWorker } from './useSimWorker';
+import type { SceneModelOptions } from './useSimulation';
 
 const model = {} as SimModel;
 
@@ -17,7 +18,7 @@ function starter() {
     cancelLoad: vi.fn(),
     setPlaying: vi.fn(),
   };
-  const buildModel = vi.fn(async () => model);
+  const buildModel = vi.fn(async (_options?: SceneModelOptions) => model);
   const setModel = vi.fn();
   const result: { current?: ReturnType<typeof useSimStart> } = {};
 
@@ -40,6 +41,17 @@ function starter() {
 }
 
 describe('simulation starts superseded by world changes', () => {
+  it('aborts worker preparation when Stop cancels startup', async () => {
+    const { start, buildModel, sw } = starter();
+    const pending = start.start();
+    const signal = buildModel.mock.calls[0][0]?.signal;
+
+    expect(signal?.aborted).toBe(false);
+    start.cancel();
+    expect(signal?.aborted).toBe(true);
+    await pending;
+    expect(sw.load).not.toHaveBeenCalled();
+  });
   it('notifies Stop subscribers and refuses a guarded startup after cancellation', async () => {
     const { start, sw, postMessage } = starter();
     const stopped = vi.fn();

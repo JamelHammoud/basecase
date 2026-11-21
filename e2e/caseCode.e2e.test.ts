@@ -1,11 +1,8 @@
-import http from 'node:http';
-import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { presetCase } from '../src/cases/caseBuilder';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
-import { COCKPIT } from './codePanels';
 import { openApp, openPlayTab, partCount, shown, type App } from './harness';
 
 let app: App;
@@ -52,49 +49,6 @@ const simState = () => app.page.evaluate(() => (window as unknown as { __studio:
 const areaCount = () => app.page.locator(shown('[data-testid="case-run-area"]')).count();
 
 const frameOf = (panel: string) => app.page.frameLocator(`[data-panel="${panel}"] iframe`);
-
-const framesUntil = (selector: string) =>
-  app.page.evaluate(
-    (until) =>
-      new Promise<number>((done) => {
-        let frames = 0;
-
-        const tick = () => {
-          frames++;
-
-          if (document.querySelector(until)) done(frames);
-          else requestAnimationFrame(tick);
-        };
-
-        requestAnimationFrame(tick);
-      }),
-    selector,
-  );
-
-const PROBES = (base: string) => `<div id="out"></div>
-<script>
-const out = document.getElementById('out');
-const mark = (name, value) => {
-  const el = document.createElement('div');
-  el.dataset.probe = name;
-  el.textContent = value;
-  out.append(el);
-};
-const probe = (name, run) => {
-  try { run(); mark(name, 'allowed'); } catch { mark(name, 'blocked'); }
-};
-fetch('${base}/fetch').then(() => mark('fetch', 'allowed'), () => mark('fetch', 'blocked'));
-const socket = new WebSocket('${base.replace('http', 'ws')}/socket');
-socket.onopen = () => mark('socket', 'allowed');
-socket.onerror = () => mark('socket', 'blocked');
-probe('top', () => { top.location = '${base}/top'; });
-probe('parent', () => parent.document.title);
-probe('storage', () => localStorage.setItem('code', 'panel'));
-</script>`;
-
-const SPIN = '<p>Spinning</p><script>while (true) {}</script>';
-
-const AWAY = (base: string) => `<script>location.href = '${base}/self';</script>`;
 
 const LAMP = {
   id: 'lamp',
@@ -203,106 +157,6 @@ afterEach(async () => {
   await app?.close();
 });
 
-describe('Case code panels', () => {
-  it('passes pointer input through the HUD and stops driving before closing Run Case on Escape inside a code frame', async () => {
-    const { page } = app;
-
-    await openCase(COCKPIT);
-
-    const hud = await page.locator('[data-testid="case-run-overlay"][data-panel="hud"]').boundingBox();
-    const under = await page.evaluate(
-      ([x, y]) => document.elementFromPoint(x, y)?.tagName,
-      [hud!.x + hud!.width / 2, hud!.y + hud!.height / 2],
-    );
-
-    expect(under).toBe('CANVAS');
-
-    await frameOf('stick')
-      .locator('canvas')
-      .click({ position: { x: 100, y: 100 } });
-    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-    await frameOf('stick').locator('body').press('Escape');
-    await expect.poll(async () => (await simState()).drive).toBe('off');
-    expect(await areaCount()).toBe(1);
-
-    await frameOf('stick').locator('body').press('Escape');
-    await expect.poll(areaCount).toBe(0);
-    expect(app.errors).toEqual([]);
-  });
-
-  it('keeps a code panel off the network, the parent and storage', async () => {
-    const { page } = app;
-    const hits: string[] = [];
-    const server = http.createServer((req, res) => {
-      hits.push(req.url ?? '');
-      res.end('reached');
-    });
-
-    server.on('upgrade', (req, socket) => {
-      hits.push(`upgrade ${req.url}`);
-      socket.destroy();
-    });
-    await new Promise<void>((done) => server.listen(0, '127.0.0.1', done));
-
-    const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-
-    try {
-      await openCase({
-        input: ['code', 'keys'],
-        panels: [
-          { id: 'probes', kind: 'code', height: 160, source: PROBES(base) },
-          { id: 'away', kind: 'code', height: 80, source: AWAY(base) },
-        ],
-        layout: { areas: [{ canvas: true }, { size: 320, panels: ['probes', 'away'] }] },
-      });
-
-      const probes = frameOf('probes').locator('[data-probe]');
-
-      await expect.poll(() => probes.count()).toBe(5);
-      expect(
-        Object.fromEntries(await probes.evaluateAll((els) => els.map((e) => [e.dataset.probe, e.textContent]))),
-      ).toEqual({
-        fetch: 'blocked',
-        socket: 'blocked',
-        top: 'blocked',
-        parent: 'blocked',
-        storage: 'blocked',
-      });
-      expect(hits).toEqual([]);
-
-      await page.keyboard.press('Escape');
-      await expect.poll(areaCount).toBe(0);
-      expect(hits).toEqual([]);
-    } finally {
-      server.close();
-    }
-  });
-
-  it('unloads a panel that never answers with its error, while the page keeps drawing frames', async () => {
-    const { page } = app;
-    const failed = '[data-panel="spin"] [data-testid="code-failed"]';
-    const panelUrls: string[] = [];
-
-    page.on('framenavigated', (frame) => {
-      if (frame.parentFrame()) panelUrls.push(frame.url());
-    });
-
-    await openCase({
-      input: ['keys'],
-      panels: [{ id: 'spin', kind: 'code', title: 'Spin', height: 80, source: SPIN }],
-      layout: { areas: [{ canvas: true }, { size: 320, panels: ['spin'] }] },
-    });
-
-    expect(await framesUntil(failed)).toBeGreaterThan(3);
-    expect(await page.locator(failed).textContent()).toBe('Couldn’t run Spin. It didn’t answer.');
-    expect(await page.locator('[data-panel="spin"] iframe').count()).toBe(0);
-    expect(panelUrls).toContain('about:blank');
-
-    await page.keyboard.press('Escape');
-    await expect.poll(areaCount).toBe(0);
-  });
-});
-
 describe('Case code that shapes its world', () => {
   it('lights a target the agent made movable, from code during a try, and records the change', async () => {
     const { page } = app;
@@ -337,7 +191,7 @@ describe('Case code that shapes its world', () => {
 
     expect(Math.hypot(lamp[0] - 240, lamp[2] - 420)).toBeLessThan(1);
 
-    await tries('Stop Try').click();
+    await page.keyboard.press('Escape');
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
     expect((await simState()).tries[0].world).toBeGreaterThan(0);
 

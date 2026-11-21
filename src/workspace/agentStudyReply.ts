@@ -1,3 +1,4 @@
+import { cameraKnobFrame } from '../study/cameraFrame';
 import type { CaseRuns, RunOutcome } from '../cases/caseRuns';
 import type { CheckRow } from '../utils/engineeringTypes';
 import { toCad } from '../agent/agentScene';
@@ -108,6 +109,7 @@ function designReply(result: StudyResult, row: StudyRow) {
     cost_usd: round(row.costUsd, 2),
     mass_g: Math.round(row.massG),
     metrics: row.metrics,
+    ...(row.visibility ? { visibility: row.visibility } : {}),
     runtime_minutes: row.runtimeMinutes,
     ...(row.runs?.refusal ? { refusal: row.runs.refusal } : {}),
   };
@@ -127,14 +129,16 @@ function replyText(result: StudyResult) {
 
 export function studyReply(record: StudyResult, kase: Case | null) {
   const knobs = record.knobs.map((knob) =>
-    knob.kind === 'battery_offset' ? { ...knob, values: knob.values.map(toCad) } : knob,
+    knob.kind === 'battery_offset' ? { ...knob, values: knob.values.map(toCad) } : cameraKnobFrame(knob, 'agent'),
   );
   const result = {
     ...record,
     knobs,
     rows: record.rows.map((row) => ({
       ...row,
-      label: knobs.some((knob) => knob.kind === 'battery_offset') ? studyLabel(knobs, row.selection) : row.label,
+      label: knobs.some((knob) => knob.kind === 'battery_offset' || knob.kind === 'camera_pose')
+        ? studyLabel(knobs, row.selection)
+        : row.label,
     })),
   };
   const rows = [result.current, ...result.rows.filter((row) => row.key !== result.current.key)];
@@ -156,5 +160,6 @@ export function studyReply(record: StudyResult, kase: Case | null) {
     rows: result.rows.map(compactStudyRow),
     knobs: result.knobs,
     seed: result.seed,
+    ...(record.visibility ? { visibility: record.visibility } : {}),
   };
 }

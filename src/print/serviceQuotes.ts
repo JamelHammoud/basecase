@@ -1,7 +1,7 @@
 import type { PrintMaterial, PrintQuote, ProjectSettings, ScenePart } from '../types/robotics';
 import { isMadePart, printMaterialOf } from '../utils/bom';
 import { bedMatrixOf, type Plate } from './plan';
-import { copiesOf, quoteKey, quoteOf } from './quoteKey';
+import { copiesOf, quoteKey, quotesByPart } from './quoteKey';
 
 export const QUOTES_PER_ROUND = 200;
 
@@ -22,11 +22,13 @@ export interface QuoteReply {
 export function quotesWanted(parts: ScenePart[], project: ProjectSettings, skip: Set<string> = new Set()) {
   if (project.madeBy !== 'service') return [];
 
+  const quotes = quotesByPart(project.quotes);
+
   return parts.filter(isMadePart).flatMap((p): QuoteRequest[] => {
     const material = printMaterialOf(p, project);
     const key = quoteKey(p, material);
 
-    if (quoteOf(p.id, project.quotes)?.key === key || skip.has(key)) return [];
+    if (quotes.get(p.id)?.key === key || skip.has(key)) return [];
 
     return [{ part: p.id, key, name: p.name, material, copies: copiesOf(p) }];
   });

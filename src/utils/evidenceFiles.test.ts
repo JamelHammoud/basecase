@@ -5,6 +5,38 @@ import { platformBridge } from './platformBridge';
 afterEach(() => vi.restoreAllMocks());
 
 describe('evidence batch uploads', () => {
+  it.each([0, 7, 800, 10_000])(
+    'selects supported files in order without inspecting the unused tail of %i files',
+    async (count) => {
+      let nameReads = 0;
+      const files = Array.from({ length: count }, (_, i) => {
+        const file = new File([`note ${i}`], `${i}.bin`);
+
+        Object.defineProperty(file, 'name', {
+          get: () => {
+            nameReads++;
+
+            return i % 2 ? `${i}.txt` : `${i}.bin`;
+          },
+        });
+
+        return { file, relPath: `${i}.txt` };
+      });
+      const save = vi.spyOn(platformBridge, 'saveEvidenceFile').mockResolvedValue(undefined);
+      const progress = vi.fn();
+      const result = await uploadEvidenceFolder({ name: 'Mixed', files }, progress);
+      const kept = Math.min(Math.floor(count / 2), MAX_FOLDER_FILES);
+
+      expect(result).toMatchObject({ name: 'Mixed', fileCount: kept, imageCount: 0, skipped: count - kept });
+      expect(save.mock.calls.map(([payload]) => ({ relPath: payload.relPath, text: payload.text }))).toEqual(
+        Array.from({ length: kept }, (_, i) => ({ relPath: `${i * 2 + 1}.txt`, text: `note ${i * 2 + 1}` })),
+      );
+      expect(progress.mock.calls).toEqual(Array.from({ length: kept + 1 }, (_, done) => [done, kept]));
+      expect(nameReads).toBe(Math.min(count, MAX_FOLDER_FILES * 2) + kept);
+      expect(files).toHaveLength(count);
+    },
+  );
+
   it('keeps four saves active and counts failed, unsupported and over-limit files as skipped', async () => {
     const files = Array.from({ length: MAX_FOLDER_FILES + 3 }, (_, i) => ({
       file: new File([`note ${i}`], `${i}.txt`),

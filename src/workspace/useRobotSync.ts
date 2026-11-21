@@ -1,3 +1,4 @@
+import { useOperateAlerts } from './useOperateAlerts';
 import { unitHistories } from '../reality/projectCalibrations';
 import { useRobotMounts } from '../robot/robotMounts';
 import { useRobotPolicy } from '../robot/robotPolicy';
@@ -17,6 +18,8 @@ interface RobotSyncInput {
 
 export function useRobotSync({ active, sceneId, project, training, showToast }: RobotSyncInput) {
   const { selected } = useFleet();
+
+  useOperateAlerts(project.cases, sceneId);
 
   useRobotPolicy({
     active,

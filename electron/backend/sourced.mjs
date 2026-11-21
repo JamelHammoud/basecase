@@ -49,6 +49,25 @@ function cleanPrice(price) {
   };
 }
 
+function cleanSupplier(identity) {
+  if (!identity) return undefined;
+
+  if (identity.sourceUrl) assertHttps(identity.sourceUrl, 'The identity source');
+
+  const per = identity.unitsPerOrder;
+
+  return {
+    supplier: text(identity.supplier, 80),
+    supplierPartNumber: text(identity.supplierPartNumber, 160),
+    orderingUnit: text(identity.orderingUnit, 80),
+    unitsPerOrder: typeof per === 'number' && Number.isFinite(per) && per > 0 ? per : undefined,
+    sourceUrl: identity.sourceUrl,
+  };
+}
+
+const supplierFor = (p, existing) =>
+  cleanSupplier(p.supplierIdentity ?? (p.url === existing?.url ? existing?.supplierIdentity : undefined));
+
 function cleanItem(p, existing) {
   const id = checkedFileId(p.id);
 
@@ -63,6 +82,7 @@ function cleanItem(p, existing) {
     name: text(p.name, 80),
     maker: text(p.maker, 80),
     mpn: text(p.mpn, 80),
+    supplierIdentity: supplierFor(p, existing),
     spec: text(p.spec),
     url: p.url,
     group: p.group,

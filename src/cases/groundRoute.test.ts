@@ -53,4 +53,24 @@ describe('ground routes', () => {
     expect(route.at(-1)!.at).toEqual([0, 0, 600]);
     expect(route.length).toBeGreaterThan(1);
   });
+
+  it('keeps nested detours in travel order with the destination speed and preserves its inputs', () => {
+    const objects = [block([0, 75, 450], [150, 150, 120]), block([-201.25, 75, 180], [60, 150, 60])];
+    const destination = { at: [0, 0, 900] as V3, speed: 0.4 };
+    const push = { at: [0, 0, 1000] as V3, speed: 0.2, push: 'box' };
+    const waypoints = [destination, push];
+    const original = structuredClone({ objects, waypoints, robot });
+    const route = groundRoute(waypoints, objects, robot);
+
+    expect(route).toEqual([
+      { ...destination, at: [-109.25, 0, 88] },
+      { ...destination, at: [-109.25, 0, 272] },
+      { ...destination, at: [-201.25, 0, 266] },
+      { ...destination, at: [-201.25, 0, 634] },
+      destination,
+      push,
+    ]);
+    expect(route.at(-1)).toBe(push);
+    expect({ objects, waypoints, robot }).toEqual(original);
+  });
 });

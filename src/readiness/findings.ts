@@ -25,6 +25,7 @@ export function engineeringFindings(report: EngineeringReport): Finding[] {
         engineeringFinding(row.check, levelOf(item.status ?? row.status), {
           detail: item.text,
           ids: item.ids,
+          subject: item.subject,
           fix: item.fix,
           joint: item.joint,
         }),

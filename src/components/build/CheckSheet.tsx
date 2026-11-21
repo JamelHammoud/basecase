@@ -1,3 +1,4 @@
+import { IdentityFields } from './IdentityFields';
 import React, { useState } from 'react';
 import {
   Button,
@@ -15,7 +16,14 @@ import type { PurchaseRecord } from '../../types/robotics';
 import type { BomLine } from '../../utils/bom';
 import { useMoney } from '../../utils/useMoney';
 import { linkLabel } from './buyLine';
-import { type PurchaseForm, canSave, formatPrice, initialPurchaseForm, linkError, purchaseRecord } from './purchaseForm';
+import {
+  type PurchaseForm,
+  canSave,
+  formatPrice,
+  initialPurchaseForm,
+  linkError,
+  purchaseRecord,
+} from './purchaseForm';
 
 interface CheckSheetProps {
   line: BomLine;
@@ -90,11 +98,12 @@ const ListingFields: React.FC<{
     <Field label="Listing link">
       <TextInput
         value={form.url}
-        onChange={(e) => onChange({ url: e.target.value })}
+        onChange={(e) => onChange({ url: e.target.value, identity: {} })}
         placeholder="e.g. https://www.amazon.com/dp/B0CK2FCG1K"
       />
     </Field>
-    <Field label="Listing title">
+    <IdentityFields form={form} onChange={onChange} />
+    <Field label="Title">
       <TextInput
         value={form.title}
         onChange={(e) => onChange({ title: e.target.value })}

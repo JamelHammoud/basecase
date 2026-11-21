@@ -39,6 +39,26 @@ const UNITREE_ROS = [
 ];
 
 describe('chooseEntry', () => {
+  it('keeps depth and lexical peek limits for XML and xacro in unsorted repositories', async () => {
+    for (const extension of ['xml', 'xacro']) {
+      const paths = Array.from({ length: 80 }, (_, i) => `${'nested/'.repeat(i % 4)}robot_${i}.${extension}`);
+      const original = [...paths];
+      const ordered = [...paths].sort((a, b) => a.split('/').length - b.split('/').length || a.localeCompare(b));
+      const read: string[] = [];
+      const limit = extension === 'xml' ? 24 : 48;
+      const result = await chooseEntry(paths, async (path) => {
+        read.push(path);
+
+        return extension === 'xml' ? SAMPLE.mjcf : xacro('robot');
+      });
+      const choices = ordered.filter((p) => !p.includes('/'));
+
+      expect(read).toEqual(ordered.slice(0, limit));
+      expect(result).toEqual({ choices });
+      expect(paths).toEqual(original);
+    }
+  });
+
   it('prefers the robot MJCF over its scene, its URDF and ROS package files', async () => {
     const robots = ['go2_description/mjcf/go2.xml', 'go2_description/mjcf/scene.xml'];
 
@@ -111,6 +131,41 @@ describe('chooseEntry', () => {
 
   it('skips xacro files that aren’t robots', async () => {
     expect(await chooseEntry(['arm/urdf/arm.xacro'], kinds({}, { 'arm/urdf/arm.xacro': '<launch/>' }))).toBeNull();
+  });
+
+  it('ranks xacro roots before depth and keeps lexical ties after edits', async () => {
+    const texts: Record<string, string> = {
+      'plain.xacro': xacro('other'),
+      'named.xacro': xacro('named'),
+      'urdf/unnamed.xacro': xacro('other'),
+      'pkg/urdf/beta.xacro': xacro('beta'),
+      'pkg/urdf/alpha.xacro': xacro('alpha', ['included.xacro']),
+      'pkg/urdf/included.xacro': xacro('included'),
+      'pkg/deeper/urdf/deep.xacro': xacro('deep'),
+      'urdf/launch.xacro': '<launch/>',
+      'urdf/unreadable.xacro': '',
+    };
+    const paths = Object.keys(texts).reverse();
+    const peek = async (path: string) => texts[path];
+
+    expect(await chooseEntry(paths, peek)).toEqual({ choices: ['pkg/urdf/alpha.xacro', 'pkg/urdf/beta.xacro'] });
+
+    texts['pkg/urdf/beta.xacro'] = xacro('other');
+
+    expect(await chooseEntry(paths, peek)).toEqual({ entry: 'pkg/urdf/alpha.xacro' });
+
+    texts['pkg/urdf/alpha.xacro'] = xacro('other', ['included.xacro', 'deep.xacro']);
+
+    expect(await chooseEntry(paths, peek)).toEqual({ entry: 'urdf/unnamed.xacro' });
+
+    const ordinary = paths.filter((path) => !path.includes('/'));
+
+    expect(await chooseEntry(ordinary, peek)).toEqual({ entry: 'named.xacro' });
+
+    texts['named.xacro'] = xacro('other');
+
+    expect(await chooseEntry(ordinary, peek)).toEqual({ choices: ['named.xacro', 'plain.xacro'] });
+    expect(paths).toEqual(Object.keys(texts).reverse());
   });
 
   it('finds nothing in a folder without a description', async () => {

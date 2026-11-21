@@ -20,7 +20,6 @@ covers:
   - src/components/simulate/TrainSection.tsx
   - src/components/simulate/SkillsList.tsx
   - src/components/SimulatePanel.tsx
-  - src/workspace/RightTabPanels.tsx
   - src/workspace/useSkills.ts
   - src/skills/teach.ts
   - src/skills/teachExamples.ts
@@ -32,12 +31,14 @@ Describe what you want the robot to do in your own words, then approve the agent
 
 Teaching runs in the desktop app, with Claude, Codex or Gemini connected as the agent. With Offline chosen, **Teach** shows a message instead. You can teach the robot any goal it can be judged on in the simulation, so there's no list of tasks to pick from.
 
+You can [train on another computer](/help/train-on-another-computer) over SSH and recover the result after a restart. Arena still runs locally.
+
 1. Click **Simulate** at the top of the right panel.
 2. Under **Train**, type the goal into **Teach it to**. For example, "walk to the box".
 3. Click **Teach**. The **Agent** tab opens with `/train` and your goal.
 4. Read the contract the agent shows. It lists what passes, what fails, and a run where the robot holds still, which must fail.
 5. Reply to approve the contract, or tell the agent what to change.
-6. Watch the skill's row under **Train**, which shows the trainer's progress. The robot on the canvas runs the newest snapshot of the skill.
+6. Watch the skill's row under **Train**, which shows its progress. While a policy trains, the canvas runs its newest snapshot.
 7. When the row shows its Arena line, such as "31 of 32 tries, at least 86%", click **Try**.
 
 The skill runs in the simulation, on the canvas.
@@ -54,7 +55,11 @@ The agent tells you what each method tried. If a design change would make the sk
 
 ## When the design changes
 
-A skill belongs to the design it was trained on. Changing a color or a name keeps the skill ready. Changing mass or size, including a body fit or rollback, shows **Recheck** when the proved physics no longer matches. If you change a joint, the row shows **Train**. Either button sends your words back to the agent.
+A skill belongs to the design it was trained on. Changing a color or a name keeps the skill ready. Changing mass, size or [self-contact](/help/simulate-self-contact) shows **Recheck** when the proved physics no longer matches. A body fit or rollback can also change that physics.
+
+You can [compare supplier offers](/help/compare-supplier-offers) for the robot’s current parts without changing the design used by its skill.
+
+If you change a joint, the row shows **Train**. Either button sends your words back to the agent.
 
 To send a ready network policy to several emulated robots, see [Roll out a skill to a fleet of emulated robots](/help/roll-out-a-skill-to-a-fleet). Each unit must pass Arena on its own twin.
 

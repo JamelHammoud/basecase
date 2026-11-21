@@ -7,6 +7,7 @@ covers:
   - src/workspace/useRepair.ts
   - src/guide/repairPlan.ts
   - src/assembly/minimumTeardown.ts
+  - src/assembly/minimalClosures.ts
   - src/print/repairPlate.ts
   - src/workspace/usePrintMode.ts
 ---

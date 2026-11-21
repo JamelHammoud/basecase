@@ -1,3 +1,4 @@
+import { sceneVersionFingerprint } from '../workspace/sceneVersions';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, Purchases, ScenePart } from '../types/robotics';
 import { buildBom } from '../utils/bom';
@@ -9,6 +10,7 @@ import { caseSlots, type Case } from './schema';
 import type { SlotRobot } from './slots';
 
 export interface CompareRobot {
+  fingerprint?: string;
   tabId: string;
   name: string;
   parts: ScenePart[];
@@ -18,6 +20,7 @@ export interface CompareRobot {
 }
 
 export interface ComparedRobot {
+  fingerprint?: string;
   tabId: string;
   name: string;
   runs: CaseRuns;
@@ -76,6 +79,7 @@ export async function compareCase(kase: Case, robots: CompareRobot[], options: C
       tabId: robot.tabId,
       name: robot.name,
       runs: await options.runs(robot),
+      fingerprint: robot.fingerprint ?? sceneVersionFingerprint(robot),
       ...robotTotals(robot, options.purchases),
     })),
   );

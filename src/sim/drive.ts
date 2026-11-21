@@ -6,6 +6,7 @@ import { LegsDrive, type LegsSetup } from './driveLegs';
 import { PoseDrive, type PoseSetup } from './drivePose';
 import { CONTROL_DT } from './driveTiming';
 import type { DriveCommand, DriveHand, DriveLoop, DriveOutput } from './driveTypes';
+import { wheelSpeeds } from './wheelSpeeds';
 
 export type { DriveCommand, DriveHand, DriveLoop, DriveOutput } from './driveTypes';
 export { CONTROL_DT } from './driveTiming';
@@ -245,11 +246,7 @@ class RoverDrive implements DriveLoop {
     const { speed } = this;
     const turn = clampUnit(this.cmd.v[2]) * maxTurnRadS;
 
-    return {
-      wheels: Object.fromEntries(
-        wheels.map((w) => [w.joint, (w.spin * (speed - turn * w.lateralMm)) / Math.max(w.radiusMm, 1)]),
-      ),
-    };
+    return { wheels: wheelSpeeds(wheels, speed, turn) };
   }
 }
 

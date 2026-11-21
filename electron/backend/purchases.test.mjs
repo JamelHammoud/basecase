@@ -33,6 +33,31 @@ describe('purchases', () => {
     expect(savePurchase(dir, { key: servo, record: { ...old, onHand: 6 } })[servo]).toEqual({ ...old, onHand: 6 });
   });
 
+  it('retains structured supplier facts, stock and changed listings across disk reloads', () => {
+    const identity = {
+      manufacturer: 'Maker',
+      mpn: 'M-1',
+      supplier: 'DigiKey',
+      supplierPartNumber: 'M-1-CT-ND',
+      orderingUnit: 'piece',
+      unitsPerOrder: 1,
+      sourceUrl: 'https://supplier.example/part',
+    };
+    const first = { ...old, identity, onHand: 2 };
+
+    savePurchase(dir, { key: servo, record: first });
+    expect(listPurchases(dir)[servo]).toEqual(first);
+
+    const changed = {
+      ...first,
+      url: 'https://other.example/listing',
+      identity: { ...identity, supplier: 'Mouser', supplierPartNumber: 'M-1-NEW' },
+    };
+
+    savePurchase(dir, { key: servo, record: changed });
+    expect(listPurchases(dir)[servo]).toEqual(changed);
+  });
+
   it('drops a record left with neither a price nor a count', () => {
     savePurchase(dir, { key: servo, record: { onHand: 6 } });
 

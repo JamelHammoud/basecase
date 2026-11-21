@@ -21,6 +21,7 @@ import { LinkageChoices } from './LinkageChoices';
 import { OutputFields } from './OutputFields';
 import { ThicknessField } from './ThicknessField';
 import { SketchCanvas } from './SketchCanvas';
+import { SketchSupportButton } from './SketchSupportButton';
 import type { SketchEditor } from './useSketchDrawing';
 import { useLinkageSolutions } from './useLinkageSolutions';
 import { usePathHistory } from './usePathHistory';
@@ -31,6 +32,7 @@ export interface BoundSketch {
   onChange: (next: Partial<SketchShape>) => void;
   undo: () => void;
   redo: () => void;
+  onSelectFace?: () => void;
 }
 
 export interface SketchLinkage {
@@ -154,6 +156,7 @@ export const SketchPanel: React.FC<{
           options={bound || !linkage ? MODE_OPTIONS : [...MODE_OPTIONS, PATH_OPTION]}
         />
         <SketchTools draft={draft} bound={!!bound} path={!!pathing} onClear={clear} />
+        <SketchSupportButton bound={bound} />
         <SketchCanvas
           editor={editor}
           tool={draft.drawTool}

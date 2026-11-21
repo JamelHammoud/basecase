@@ -16,7 +16,9 @@ covers:
 
 You can move an emulated Unitree G1's waist and arms from the simulation, the same way you'd drive a real G1 over Ethernet. The G1's own controller keeps it standing while you drive it.
 
-1. Press [[⌘K]] and choose Insert Unitree G1. Operate recognizes a G1 by its 29 joint names, so a G1 you imported from Unitree's own URDF works too.
+Scenes with ideal tendons run in Simulate. Operate refuses those scenes, including emulated connections.
+
+1. Press [[⌘K]] and choose Insert Unitree G1. Operate recognizes a G1 by its 29 powered joint names, so a G1 you imported from Unitree's own URDF works too.
 2. Open Operate in the Play view, then click Connect Emulated Robot. Operate lists 17 emulated G1 servos: the waist and both arms. It reads the 12 leg joints but never writes to them.
 3. Click Set Up. Set Up checks that all 29 motors answer and that the G1 is balancing in its locomotion mode.
 4. Click Test. The arms ease over from the G1's own controller in about a second. For the G1, the ladder stops at Test.
@@ -28,5 +30,7 @@ You can move an emulated Unitree G1's waist and arms from the simulation, the sa
 ![The emulated G1's shoulders following a posed simulation](/help/drive-an-emulated-unitree-g1/simulate.png)
 
 6. Click Stop to hand the arms back to the G1's own controller. If the app stops sending commands, the daemon hands the arms back within 100 ms of noticing.
+
+For a fault or disconnect, [inspect the unit's retained problems](/help/inspect-fleet-problems). Acknowledging an incident doesn't hand control back to the app.
 
 In this build, a real G1 stays locked, so only the emulated G1 can connect.

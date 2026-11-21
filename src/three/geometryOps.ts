@@ -13,8 +13,21 @@ import { detectSheet } from '../sheet/detectSheet';
 import { cadMeshToScene } from '../agent/cadMesh';
 import { buildPartGroup, releasePartGroup } from './buildPartMesh';
 import { localTriangles } from './meshMeasure';
+import { worldCollision } from './worldCollision';
+import type { WorldItem } from '../sim/mjcfTypes';
 import type { ScenePart } from '../types/robotics';
 import { loadModelMesh, type ModelMeshJob } from '../utils/modelMesh';
+import { regenerateSketchParts } from './sketchSupportOps';
+import { sketchFace, type SketchFaceJob } from './sketchFaceOps';
+import { regenerateParameterGeometry } from '../utils/designParameters/geometry';
+import { fitSourceHash } from '../print/fitVariantIdentity';
+import type { FitComparison } from '../print/fitVariants';
+import type { ParameterDesign } from '../utils/designParameters/mutations';
+import { fitComparisonParts, writeFitPlate, type FitPlateWrite } from '../print/fitPlateWriter';
+import { fitVariantCoupons, type FitVariantCut } from '../print/fitVariantGeometry';
+import type { ParameterGeometryJob } from '../utils/designParameters/transaction';
+import { prepareCradleJob, type CradleJob } from '../print/cradleJob';
+import { writeCradlePlate } from '../print/cradlePlate';
 
 type Vec3 = [number, number, number];
 
@@ -72,7 +85,7 @@ function weld(soup: Float32Array) {
   const welded = mergeVertices(geometry, 1e-3);
 
   return {
-    positions: (welded.getAttribute('position').array as Float32Array).slice(),
+    positions: welded.getAttribute('position').array as Float32Array,
     indices: new Uint32Array(welded.index!.array as ArrayLike<number>),
     colors: welded.getAttribute('color')?.array as Float32Array | undefined,
   };
@@ -183,6 +196,49 @@ async function parseMesh({ data, path }: ParseMeshJob): Promise<Float32Array | n
 const transferLines = (lines: Float32Array) => reply(lines, [lines.buffer]);
 
 export const geometryHandlers = {
+  cradlePrepare: async (job: CradleJob) => {
+    const result = await prepareCradleJob(job);
+
+    return reply(result, [result.geometry.positions.buffer, result.geometry.normals.buffer]);
+  },
+  cradlePlate: async (job: Parameters<typeof writeCradlePlate>[0]) => {
+    const result = await writeCradlePlate(job);
+
+    return reply(
+      result,
+      Object.values(result.files).map((file) => file.buffer),
+    );
+  },
+  fitComparisonParts: (comparison: FitComparison) => reply(fitComparisonParts(comparison)),
+  fitSourceHash: async (design: ParameterDesign) => reply(await fitSourceHash(design)),
+  fitPlateWrite: async (job: FitPlateWrite) => {
+    const result = await writeFitPlate(job);
+
+    return reply(
+      result,
+      Object.values(result.files).map((file) => file.buffer),
+    );
+  },
+  fitVariantCoupons: async (job: FitVariantCut) => {
+    const coupons = await fitVariantCoupons(job);
+
+    return reply(
+      coupons,
+      coupons.map((coupon) => coupon.positions.buffer),
+    );
+  },
+  parameterGeometry: async (job: ParameterGeometryJob) => reply(await regenerateParameterGeometry(job)),
+  sketchFace: (job: SketchFaceJob) => reply(sketchFace(job)),
+  sketchSupports: ({ parts, force }: { parts: ScenePart[]; force: string[] }) =>
+    reply(regenerateSketchParts(parts, force)),
+  worldCollision: async (part: WorldItem) => {
+    const hulls = await worldCollision(part);
+
+    return reply(
+      hulls,
+      hulls.map((hull) => hull.buffer),
+    );
+  },
   partSheetProfile: (part: ScenePart) => {
     const group = buildPartGroup(part, false);
 
@@ -204,7 +260,9 @@ export const geometryHandlers = {
     for (let i = 0; i < indices.length; i++) {
       const source = indices[i] * 3;
 
-      triangles.set([mesh.positions[source], mesh.positions[source + 1], mesh.positions[source + 2]], i * 3);
+      triangles[i * 3] = mesh.positions[source];
+      triangles[i * 3 + 1] = mesh.positions[source + 1];
+      triangles[i * 3 + 2] = mesh.positions[source + 2];
     }
 
     return reply(detectSheet(triangles));

@@ -2,6 +2,44 @@
 
 Knowledge preserved from code comments before they were removed. AGENTS.md covers the rest.
 
+## Repeated control copy audit
+
+The studio audit for #1660 traced Button, IconButton, Tooltip, NumberInput, SegmentedControl, ChoiceGrid, StripButton, LinkButton and menu composition before removing copy. Shared primitives need no change. The ordinary copy report counts two removed strings and no additions. The Board title references a local variable, which the existing extractor does not count. Counting rules are unchanged.
+
+| Removed occurrence | Enclosing control | Simultaneously visible replacement |
+| --- | --- | --- |
+| `title={label}` in `components/build/BoardBuildAction.tsx`, no board | Build's Define Board button | Define Board remains the button's child and accessible name. Its handler and availability are unchanged. |
+| `title={label}` in `components/build/BoardBuildAction.tsx`, saved board | Build's Edit Board button | Edit Board remains the button's child and accessible name. Its handler and availability are unchanged. |
+| No printers in `components/settings/PrintersPane.tsx` | Saved printers card's action row when the list is empty | The Printers pane title, empty list, Find on Network and Add Printer remain visible. The row already has no label when printers exist. |
+| No printers found in `components/settings/PrintersPane.tsx` | Completed network discovery's empty result row | On this network appears only after discovery produces a result. Its empty list carries the complete result. Find on Network and Add Printer remain in the preceding card. |
+
+Retained occurrences and conditional checks:
+
+- `parts/pages.tsx` and `PartDetails.tsx` pass LinkButton's `label` as an accessible name, not visible text. Those Amazon, datasheet and product links render only an icon, so their tooltips stay.
+- `simulate/TryTimeline.tsx` shows a speed value. Its Speed tooltip names the value and retains the existing shortcut. `operate/RobotLadder.tsx` names each rung visibly but its hints explain distinct emulated-motor behavior. Current and unavailable rungs remain disabled with their hints intact.
+- `agent/ModelMenu.tsx` identifies the selected model by name and its tooltip identifies the setting. Subtract identifies the retained base part. Quarter turns explain the axis action. Alignment icons, abbreviated dimensions, currency, time budget, hardware length and color swatches retain their names, units and explanations.
+- Truncated Study names and comparison refusals retain their full-text tooltips. Board routing, vision and dataset presentation, Study family generation, mechanism creation and paired-phone presentation are unchanged.
+- Error messages, search NoMatches, SVG recovery, printer connection replies, slicing warnings, stale-guide state, estimates, provenance and safety boundaries retain information absent from the controls. Library's No models has no Models header. Play's No robot describes a different object from its Cases icon. Neither is a repeated section caption.
+- Printer discovery keeps `null` before the first search and an empty array after an empty or failed discovery. The On this network heading therefore still distinguishes an untouched pane from a completed empty result. Searching… and its disabled button remain unchanged. No discovery error detail was removed. Loading, populated results, connection-test success and failure and slicer recovery are unchanged.
+- `Button` still names icon-only uses from `title`, wraps shortcut-only uses without a label, and exposes disabled-control tooltips through its wrapper. `IconButton` retains its required title. MenuItem names, details, shortcuts and disabled states are unchanged. Popover tooltips remain suppressed while expanded.
+- The web Settings pane list excludes Printers. The Board action and ordinary scene import are available in both studio variants. No platform condition, Mac key glyph or Windows key-cap conversion changes.
+
+Browser coverage remains in the existing declarations. `boardFixture.ts` imports the ordinary scene file, opens Build and clicks Define Board by its exact accessible name. The shorter outline-shrink declaration in `e2e/board.e2e.test.ts` now returns to Build, finds the visibly named Edit Board button, clicks it and verifies the existing width-edit-to-Board-fit-blocker result. The longer placement, lock, undo, export and reopen walkthrough stays intact. Both declarations have existing Windows-only quarantines, documented in the Build guide. This change does not lift them or change deadlines.
+
+`e2e/measure.e2e.test.ts` retains the Done accessible-name and shortcut-only Esc tooltip assertions. `e2e/scenesMenu.e2e.test.ts` retains menu actions and confirmation behavior. `e2e/print.e2e.test.ts` retains manual printer configuration and populated discovery actions. Empty discovery and connection-test replies have no browser assertions. Source tracing establishes their unchanged conditions, not an observed browser pass. Linux and Windows browser execution belongs to CI.
+
+No help steps or entry points change. Preflight's unchanged-help reminders were checked against the current source and existing images:
+
+| Article | Accuracy check | Disposition |
+| --- | --- | --- |
+| [Add a printer](../../site/content/help/add-a-printer.md) | Add Printer still opens Name, Model and connection fields. Find on Network still lists results with Add. No step names either removed caption. The article has no images. | Leave unchanged. |
+| [Fit an electronics board](../../site/content/help/fit-an-electronics-board.md) | Define Board and Edit Board retain their visible names and handlers. The placement, fit and outline images show the Inspector or Build with no repeated tooltip. Neither the steps nor the images depend on that tooltip. | Leave unchanged. |
+| [Plates won't slice or send](../../site/content/help/troubleshoot-build-slicing-fails.md) | Slicers, Slice Plates, Add Printer and the Print controls retain their names and conditions. Slicer recovery and connection explanations remain intact. The article names neither removed printer caption and has no images. | Leave unchanged. |
+
+The reminder explicitly allows an accurate article to stay unchanged. No article edits, new screenshots or announcement are needed for these removals.
+
+Local verification: the seven-file changed check passed formatting, lint, documentation links, all 323 site copy pages, TypeScript and 13 related tests across seven files. Browser tests were not run locally. Existing Windows Board quarantines and the empty-discovery browser coverage gap remain unchanged.
+
 ## App (tab host)
 
 - `MAX_TABS = 8`: every open scene stays mounted with its own WebGL canvas and agent session, and browsers cap WebGL contexts near 16, so tabs stop well short.
@@ -242,3 +280,33 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 ## main.tsx
 
 - `html.is-electron` lets the sidebar use native window vibrancy. `html.is-fullscreen` is toggled from the `window:fullscreen` events, since full screen has no desktop behind the window and the chrome must turn solid.
+
+## Windows Routine Reload actionability
+
+[Check 44474977845](https://github.com/JamelHammoud/basecase/actions/runs/44474977845) at `1e4b6bf9963a72b2c2f1625465453f1c4659cac9` completed its Windows browser shard 1 after the repair brief. The Routine-specific recovery declaration in `e2e/firstRoutine.e2e.test.ts` failed both existing attempts at the first Reload click, line 57. Playwright found the button visible, enabled and stable, then exhausted its unchanged 30-second action budget while scrolling it into view. The click was not established as delivered. Clearing the injected crash, the second Reload and restored Routine identity were not reached. The file also reported the existing two-server shutdown warning after the test failures.
+
+Last full green [Check 44391437908](https://github.com/JamelHammoud/basecase/actions/runs/44391437908) passed the Windows recovery declaration in 927 ms and Linux in 1,571 ms. Its test source has not changed since `00ece242f`. No causative merge or changed environment component is established. Classification is a Windows browser actionability failure with an unresolved scroll or dispatch stage. The two existing attempts share one app and injected crash state, so they are not independent observations and establish no rate.
+
+The Routine-specific declaration remains active on every platform. It checks the retained Routine identity, the missing flow during a forced crash, Reload while the failure remains active and recovery after clearing the failure. Both Reload actions now use the button's ordinary Enter activation. This avoids Playwright's automatic pointer scrolling, the stage where the Windows log stopped before delivering a click. The unchanged fallback, mounted-flow, identity and unexpected-error assertions still judge the result. No force click, retry, deadline change or Windows quarantine is added. This targets the demonstrated browser actionability stage and does not establish a measured Windows failure-rate improvement. CI owns browser execution.
+
+`errorBoundary.e2e.test.ts` retains Parts and Canvas region isolation and recovery. Those shared tests do not replace the Routine-specific identity and persistent-failure assertions. Both shared declarations passed on Windows at the failing revision in 9,558 ms for the complete file.
+
+Only named-file checks run locally. CI owns browser execution. Complete failure and previous-green logs are retained in `scratch/failed-windows-e2e-1.log` and `scratch/green-run.log` for the task handoff.
+
+## Context submenu hover and click ordering
+
+[Check 44513988396](https://github.com/JamelHammoud/basecase/actions/runs/44513988396), workload `86969f1d2ac7cab1c105dc809d9daa4fa679922a`, failed only the Linux servo-fault browser declaration. Both existing attempts reached a running try, the Peak torque row and Fault activation. Each then exhausted the unchanged 30-second locator deadline waiting for visible Limp. Applying the fault, recording it and asserting persisted evidence were not reached. The declaration took 67,366 ms across both attempts. The two-server shutdown warning followed the assertion failure and also appears in the preceding successful shard.
+
+The same declaration passed in 10,911 ms in the immediately preceding [Check 44509387028](https://github.com/JamelHammoud/basecase/actions/runs/44509387028), workload `340379e8155ab67a8359d542b6647452a4f82dfe`. The intervening commit changes only Build quarantine data and documentation. `ContextMenu.tsx`, `RunResult.tsx` and the browser declaration also match last full green `d3ee63311358cc0494517acd42328e0bc22e06c8`. No causative merge since green or changed environment component is established.
+
+Classification is an intermittent submenu interaction with a source-established event-order cause. The shared context menu's pointer-enter handler sets the open submenu index. Its click handler toggled that same index to null when already open. A pointer entering Fault before its click therefore opened and immediately closed the submenu, leaving Limp absent. Activation now sets the index directly, the same operation as hover. This repairs every shared context submenu without changing fault physics, recording, menu placement, deadlines or retries.
+
+The existing servo-fault declaration now establishes hover expansion before clicking, checks that clicking preserves expansion and repeats the check after ordinary Enter activation. It retains all live-state, badge, recorded identity, kind, timestamp and unexpected-error assertions. This explicit sequence would close the old submenu at the click. No additional browser launch or test declaration is added. Its existing Windows exclusion remains. Browser execution is left to CI, and no local browser reproduction, same-commit pass or failure-rate measurement is claimed. The repair uses the demonstrated handler conflict rather than quarantining the test.
+
+## Routine recovery selection dependency
+
+The pull request Check selected only `reloads the Routines tab back to its Routine once the failure is gone`. Both attempts failed at the fallback count before Reload, with zero visible Routines fallbacks. The test process took 33.18 seconds and then reported the existing ten-second server shutdown warning. The aggregate check failed solely because `e2e-changed` failed. Its other required jobs succeeded or were correctly skipped.
+
+The recovery declaration relied on the preceding declaration to open Play's Routines tab and create a Routine. Exact-name selection skipped that setup, leaving the tab closed when the crash was injected. This is a deterministic selection dependency, separate from the earlier Windows pointer actionability evidence.
+
+Creation and recovery now form one independently selectable declaration in `e2e/firstRoutine.e2e.test.ts`. It retains every assertion from both declarations and the ordinary Enter activation for both Reload actions. The same app and rover startup serve the complete lifecycle, with no extra launch, wait, retry, quarantine or deadline change. Routine identity is checked only after a non-null Routine and mounted flow have been established. Shared region isolation and recovery remain covered by `e2e/errorBoundary.e2e.test.ts`. Browser execution remains for CI, so no passing browser duration or failure rate is claimed locally.

@@ -3,6 +3,8 @@ import type { ThreeMfFileSpec } from '../three/analysis/analysisOps';
 import type { PrintMaterial, ProjectSettings } from '../types/robotics';
 import type { JobGroup, JobPrinter } from './printBridge';
 import type { Plate, PrintPlan } from './plan';
+import { materialGroups } from './materialGroups';
+import { polygonBounds } from './polygonBounds';
 
 export interface JobSpec {
   project?: boolean;
@@ -34,10 +36,9 @@ export function jobPrinter(setup: PrinterSetup, project: ProjectSettings): JobPr
 }
 
 const plateSizeOf = (setup: PrinterSetup): [number, number] => {
-  const xs = setup.model.bed.map((p) => p[0]);
-  const ys = setup.model.bed.map((p) => p[1]);
+  const { w, d } = polygonBounds(setup.model.bed);
 
-  return [Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)];
+  return [w, d];
 };
 
 export const itemName = (name: string, copy: number) => (copy ? `${name} (${copy + 1})` : name);
@@ -53,15 +54,14 @@ function fileFor(material: PrintMaterial, plates: Plate[]): ThreeMfFileSpec {
 }
 
 export function jobSpec(plan: PrintPlan, setup: PrinterSetup, project: ProjectSettings): JobSpec {
-  const materials = [...new Set(plan.plates.map((p) => p.material))];
-  const byMaterial = (m: PrintMaterial) => plan.plates.filter((p) => p.material === m);
+  const groups = [...materialGroups(plan.plates)];
 
   return {
-    files: materials.map((m) => fileFor(m, byMaterial(m))),
+    files: groups.map(([material, plates]) => fileFor(material, plates)),
     plateSize: plateSizeOf(setup),
-    groups: materials.map((material) => ({
+    groups: groups.map(([material, plates]) => ({
       material,
-      plates: byMaterial(material).map((p) => ({ number: p.number, local: p.local, hash: p.hash })),
+      plates: plates.map((p) => ({ number: p.number, local: p.local, hash: p.hash })),
     })),
     printer: jobPrinter(setup, project),
   };

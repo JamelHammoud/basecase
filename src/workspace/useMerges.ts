@@ -32,7 +32,7 @@ const PLAN_BUDGET_MS = 20000;
 const planKey = (parts: ScenePart[], project: ProjectSettings, printer: PrinterSetup) =>
   [
     guideFingerprint('', parts, project),
-    printer.model.id,
+    JSON.stringify(bedOf(printer.model, project.printProcess)),
     ...parts.map((p) => `${p.printMaterial ?? ''}${p.print?.skip ? '!' : ''}`),
   ].join('|');
 
@@ -54,7 +54,7 @@ export function useMerges(options: MergeOptions) {
 
     await handle.meshesReady();
 
-    const input = mergeInput(now, project, bedOf(printer.model));
+    const input = mergeInput(now, project, bedOf(printer.model, project.printProcess));
     const geometry = await handle.assembly({ serviceable: [], budgetMs: PLAN_BUDGET_MS, merges: input });
 
     return geometry.merges?.groups ?? [];

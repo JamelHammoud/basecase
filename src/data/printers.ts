@@ -6,7 +6,7 @@ export type Point2 = [number, number];
 export interface PrinterPresets {
   machine: string;
   process: string | null;
-  processes: Array<{ name: string; layer: number }>;
+  processes: Array<{ name: string; layer: number; brimClearance?: number; obstacleUnsupported?: boolean }>;
   filaments: Partial<Record<PrintMaterial, { name: string; density?: number }>>;
 }
 
@@ -17,6 +17,12 @@ export interface CatalogSource {
   version: string;
 }
 
+export interface PrinterObstacle {
+  polygon: Point2[];
+  zMin: number;
+  zMax: number;
+}
+
 export interface PrinterModel {
   id: string;
   maker: string;
@@ -24,6 +30,10 @@ export interface PrinterModel {
   bed: Point2[];
   height: number;
   keepOut: Point2[][];
+  obstacles?: PrinterObstacle[];
+  obstacleUnsupported?: boolean;
+  brimClearance?: number;
+  toolheadClearance?: { radius: number; height: number };
   nozzles: number[];
   enclosed: boolean;
   bedType: string | null;

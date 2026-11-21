@@ -1,65 +1,10 @@
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { findUv, UV_MISSING } from '../uv.mjs';
 import { assetKey, downloadAsset, parseAssetUrl } from './assets.mjs';
+import { runConverter } from './converter.mjs';
 
-const CONVERTER_DIR = path.dirname(fileURLToPath(import.meta.url));
-const CONVERT_TIMEOUT_MS = 5 * 60 * 1000;
 const CONVERTER_VERSION = 3;
-
-function parseLine(line) {
-  try {
-    return JSON.parse(line);
-  } catch {
-    return {};
-  }
-}
-
-function runConverter({ uv, envDir, root, out, say }) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(
-      uv,
-      ['run', '--project', CONVERTER_DIR, '--frozen', 'python', path.join(CONVERTER_DIR, 'convert.py')].concat([
-        '--root',
-        root,
-        '--out',
-        out,
-      ]),
-      { cwd: out, env: { ...process.env, UV_PROJECT_ENVIRONMENT: envDir }, stdio: ['ignore', 'pipe', 'pipe'] },
-    );
-    const timer = setTimeout(() => child.kill('SIGKILL'), CONVERT_TIMEOUT_MS);
-    let buffer = '';
-    let failure = null;
-    let err = '';
-
-    child.stdout.on('data', (chunk) => {
-      buffer += chunk.toString();
-
-      const lines = buffer.split('\n');
-
-      buffer = lines.pop() ?? '';
-
-      for (const line of lines.filter((l) => l.startsWith('{'))) {
-        const msg = parseLine(line);
-
-        if (msg.type === 'status') say(msg.message);
-
-        if (msg.type === 'error') failure = msg.message;
-      }
-    });
-    child.stderr.on('data', (chunk) => {
-      err = (err + chunk.toString()).slice(-4000);
-    });
-    child.on('close', (code) => {
-      clearTimeout(timer);
-
-      if (code === 0) resolve();
-      else reject(new Error(failure ?? (err.trim().split('\n').pop() || 'The converter stopped.')));
-    });
-  });
-}
 
 function isCurrent(out) {
   try {

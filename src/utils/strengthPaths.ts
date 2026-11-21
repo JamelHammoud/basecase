@@ -68,7 +68,7 @@ export class StrengthPaths {
         if (!outScrews.length) continue;
 
         path.push({ part: this.ctx.byPart.get(id)!, inScrews, outScrews });
-        this.nextHops(outScrews, seen).forEach((screws, to) => next.set(to, [...(next.get(to) ?? []), ...screws]));
+        this.nextHops(outScrews, seen, next);
       }
 
       frontier = next;
@@ -89,14 +89,19 @@ export class StrengthPaths {
     return false;
   }
 
-  private nextHops(screws: FastenerChain[], seen: Set<string>): Map<string, FastenerChain[]> {
-    const out = new Map<string, FastenerChain[]>();
-
+  private nextHops(
+    screws: FastenerChain[],
+    seen: Set<string>,
+    out = new Map<string, FastenerChain[]>(),
+  ): Map<string, FastenerChain[]> {
     for (const c of screws)
       for (const id of this.touches.get(c)!) {
         if (seen.has(id) || !this.bearsLoad(this.ctx.byPart.get(id))) continue;
 
-        out.set(id, [...(out.get(id) ?? []), c]);
+        const incoming = out.get(id);
+
+        if (incoming) incoming.push(c);
+        else out.set(id, [c]);
       }
 
     return out;

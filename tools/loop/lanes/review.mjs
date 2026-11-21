@@ -1,7 +1,8 @@
+import { updateSession } from '../lib/sessionJournal.mjs';
 import { creditProblems } from '../credit.mjs';
 import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
-import { copyReport, copyReviewNote } from '../lib/copy.mjs';
+import { copyReport } from '../lib/copy.mjs';
 import { fetchAll, ownPatchId, resolveSha } from '../lib/branches.mjs';
 import {
   closePull,
@@ -17,8 +18,10 @@ import { duplicateTarget, inFlight, inFlightText } from '../lib/inFlight.mjs';
 import { byRank } from '../lib/rank.mjs';
 import { isSmall } from '../lib/smallChange.mjs';
 import { run } from '../lib/sh.mjs';
+import { reviewPrompt } from '../lib/reviewPrompt.mjs';
 import { voiceNewPages } from '../lib/voiceHook.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
+import { hasPendingDelivery } from '../lib/deliveryState.mjs';
 
 export const schedule = {
   agent: true,
@@ -69,9 +72,9 @@ const reviewComment = ({ verdict, summary, findings, fixed = [] }, { sha, copy }
     fenced(copy.text),
   ].join('\n');
 
-function ontoMain(dir) {
+function ontoMain(dir, body) {
   const diff = run('git', ['diff', 'origin/main...HEAD'], { cwd: dir }).out.slice(0, MAX_DIFF);
-  const copy = copyReport(dir);
+  const copy = copyReport(dir, { body });
   const onMain = run('git', ['merge', '-q', '--no-edit', 'origin/main'], { cwd: dir, allowFail: true }).ok;
 
   if (!onMain) run('git', ['merge', '--abort'], { cwd: dir, allowFail: true });
@@ -112,10 +115,9 @@ function judge({ pull, worktree, diff, copy, onMain, log }) {
   const where = onMain
     ? 'The worktree is the pull request merged onto current main, so judge it as it would land.'
     : 'It conflicts with current main, so the worktree is its own head; the rebase lane will bring it up to date.';
-  const counted = `Its user-facing strings (\`tools/copy-diff.mjs\`):\n\n${fenced(copy.text)}\n\n${copyReviewNote(copy)}`;
   const others = inFlight();
   const duplicates = `Other pull requests, open or merged in the last day:\n\n${inFlightText({ ...others, except: pull.number })}\n\nIf one of them makes this same change (the same strings or the same behaviour, not merely the same area), set duplicateOf to its number.`;
-  const prompt = `Review pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${where}\n\n${counted}\n\n${duplicates}\n\n${FIX_IT}\n\nIts diff against main:\n\n${diff}`;
+  const prompt = reviewPrompt({ pull, where, copy, duplicates, fix: FIX_IT, diff });
   const result = runAgent({ cwd: worktree.dir, name: 'review', prompt, schema: SCHEMA, hours: 2 });
 
   if (!result.ok) {
@@ -127,9 +129,10 @@ function judge({ pull, worktree, diff, copy, onMain, log }) {
 
   const original = duplicateTarget({ duplicateOf: result.output.duplicateOf, pull, ...others });
 
-  if (!original) return result.output;
+  if (!original) return { ...result.output, journalId: result.journalId };
 
   closePull(pull.number, `Closing as a duplicate of #${original}, which makes the same change.`);
+  updateSession(result.journalId, { reviewOutcome: 'duplicate' });
   log(`#${pull.number}: duplicate of #${original}; closed`);
 
   return null;
@@ -141,6 +144,7 @@ function report({ pull, head, judged, copy, fixed, log }) {
   const fixes = fixed ? `, fixed ${judged.fixed.length} in ${head.slice(0, 7)}` : '';
 
   commentOnPull(pull.number, reviewComment({ ...judged, verdict }, { sha: head, copy }));
+  updateSession(judged.journalId, { reviewOutcome: verdict });
   setReview(head, verdict === 'pass' ? 'success' : 'failure', judged.summary);
   log(`#${pull.number}: ${verdict}, ${blockers.length} blockers${fixes}`);
 }
@@ -152,7 +156,7 @@ function reviewPull(pull, log) {
   try {
     setReview(sha, 'pending', 'Reviewing');
 
-    const { diff, copy, onMain } = ontoMain(worktree.dir);
+    const { diff, copy, onMain } = ontoMain(worktree.dir, pull.body);
     const judged = judge({ pull, worktree, diff, copy, onMain, log });
 
     if (!judged) return;
@@ -174,6 +178,8 @@ const lastReviewedSha = (pull) =>
     .at(-1);
 
 function carryOver(pull, log) {
+  if (pullReview(pull) === 'error') return false;
+
   const short = lastReviewedSha(pull);
   const reviewed = short ? resolveSha(short) : null;
 
@@ -197,6 +203,7 @@ export default function review({ log }) {
   fetchAll();
 
   const waiting = openPulls()
+    .filter((pull) => !hasPendingDelivery(pull.headRefName))
     .filter((pull) => {
       const state = pullReview(pull);
 

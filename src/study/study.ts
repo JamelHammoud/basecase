@@ -34,7 +34,7 @@ export function studyFingerprint(parts: ScenePart[], project: ProjectSettings): 
 
   const key = readinessFingerprint(parts, {
     project: settings,
-    transforms: parts.map((part) => [part.id, part.position, part.rotation]),
+    transforms: parts.map((part) => [part.id, part.position, part.rotation, part.cameraLens, part.mates, part.frame]),
   });
 
   byProject.set(project, key);

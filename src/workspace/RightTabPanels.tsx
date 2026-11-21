@@ -1,9 +1,11 @@
+import { BuildRecordsSection } from '../components/build/BuildRecordsSection';
 import { Activity, useState, type ReactNode } from 'react';
 import { AcpStudioPanel } from '../components/AcpStudioPanel';
 import { DesktopDownload } from '../components/agent/DesktopDownload';
 import { ErrorBoundary } from '../design-system';
 import { DesignersProvider } from '../components/agent/DesignersContext';
 import { PartLinksProvider } from '../components/agent/PartLinksProvider';
+import { completedEdits } from './runEdits';
 import { canRevertLane } from './agentLanes';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { BuildPanel } from '../components/BuildPanel';
@@ -65,14 +67,25 @@ function useVisitedTabs(tab: RightTab) {
   return visited;
 }
 
-function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) {
+function BuildTab({ core, agent, actions }: RightTabPanelsProps) {
   const { docs, parts, project, scene, setSelectedIds, showToast, guide, printing, studio, tool, simTraining } = core;
   const { setProject } = docs;
 
+  if (core.buildAlong.frozen)
+    return (
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        <BuildRecordsSection core={core} />
+      </div>
+    );
+
   return (
     <BuildPanel
+      builds={<BuildRecordsSection core={core} />}
+      onDefineBoard={() => void actions.board.define()}
+      cableRoutes={core.cableRoutes}
       parts={parts}
       sceneName={scene.sceneName}
+      sceneId={scene.sceneId}
       project={project}
       onChangeProject={(patch: Partial<ProjectSettings>) => setProject((p) => ({ ...p, ...patch }))}
       printing={printing}
@@ -80,6 +93,14 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
         IS_WEB_DEMO
           ? undefined
           : (finding) => {
+              if (finding.fix?.kind === 'parameters') {
+                setSelectedIds(finding.ids);
+                tool.openRightTab('inspector');
+                core.parameters.setExpanded(true);
+
+                return;
+              }
+
               tool.openRightTab('acp');
               void agent.send({ ...fixRequest(finding, parts), ...studio.agentChoice }, 'queue');
             }
@@ -135,6 +156,7 @@ function AgentConversationTab({ core, agent }: Omit<RightTabPanelsProps, 'action
   const { studio, tool, parts, setSelectedIds } = core;
   const { chat, controls, current } = agent;
   const openGuide = useOpenGuide(core);
+  const owned = completedEdits(core.versions.view?.completedRuns ?? {}, agent.lanes.keyOf(current.id), current.chatId);
 
   return (
     <PartLinksProvider
@@ -155,7 +177,7 @@ function AgentConversationTab({ core, agent }: Omit<RightTabPanelsProps, 'action
           isBusy={current.busy}
           status={current.status}
           context={current.context}
-          canRevert={canRevertLane(current)}
+          canRevert={canRevertLane(current, owned?.parts ?? [])}
           attachRequest={tool.attachRequest}
           sketchRequest={tool.sketchRequest}
           quote={{ request: tool.quoteRequest, onRequest: tool.requestQuote, onDone: tool.clearQuote }}
@@ -259,7 +281,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
         <InspectTab core={core} actions={actions} />
       </TabActivity>
       <TabActivity tab="build" current={current} visited={visited}>
-        <BuildTab core={core} agent={agent} />
+        <BuildTab core={core} agent={agent} actions={actions} />
       </TabActivity>
       <TabActivity tab="acp" current={current} visited={visited}>
         <AgentTab core={core} agent={agent} />

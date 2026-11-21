@@ -51,7 +51,7 @@ export interface JointGroup {
 export function robotJoints(model: SimModel, robotKey = model.robots[0]?.key): SimJoint[] {
   const ids = new Set(model.robots.find((r) => r.key === robotKey)?.joints ?? []);
 
-  return model.joints.filter((j) => ids.has(j.id));
+  return model.joints.filter((j) => ids.has(j.id) && j.actuator >= 0);
 }
 
 export const scanWidth = (model: SimModel) => eyeSize(model.scans);
@@ -63,14 +63,22 @@ export function datasetJoints(model: SimModel, slots?: DatasetSlot[]) {
     return { joints, names: joints.map((j) => j.name), groups: [{ name: 'joints', start: 0, end: joints.length }] };
   }
 
-  const per = slots.map((s) => ({ slot: s.id, joints: robotJoints(model, s.robot) }));
-  const starts = per.map((_, i) => per.slice(0, i).reduce((n, p) => n + p.joints.length, 0));
+  const joints: SimJoint[] = [];
+  const names: string[] = [];
+  const groups: JointGroup[] = [];
 
-  return {
-    joints: per.flatMap((p) => p.joints),
-    names: per.flatMap((p) => p.joints.map((j) => `${p.slot}.${j.name}`)),
-    groups: per.map((p, i): JointGroup => ({ name: p.slot, start: starts[i], end: starts[i] + p.joints.length })),
-  };
+  for (const slot of slots) {
+    const start = joints.length;
+
+    for (const joint of robotJoints(model, slot.robot)) {
+      joints.push(joint);
+      names.push(`${slot.id}.${joint.name}`);
+    }
+
+    groups.push({ name: slot.id, start, end: joints.length });
+  }
+
+  return { joints, names, groups };
 }
 
 export function canExport(recording: Recording, model: SimModel): boolean {

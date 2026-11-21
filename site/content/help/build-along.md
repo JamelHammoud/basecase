@@ -14,13 +14,15 @@ covers:
 
 Build Along plays your robot's build guide on the canvas one step at a time, so you can follow along with the parts on your desk.
 
-1. Open [[⌘K]] and choose Build Along. Or click Build Along in the build guide's toolbar.
+1. In **Build**, click **Build Along**.
 2. Check the parts and tools this step uses. They're listed under the bar, with counts for parts, for example 4 × M3 × 6 Socket Head Screw.
 3. Watch the step's parts and screws fly in along the blue arrows. You can orbit to see the step from any side.
 4. Put each servo into the joint named on its label, for example Shoulder lift, ID 2. First set the servo to that bus ID, so that Operate and the sim drive the right joint.
 5. Follow the cable path shown when both endpoints have been installed. The cable's callout names its endpoints, stock and recorded length, for example Elbow, ID 2 to Wrist, ID 3 and a 180 mm ROBOTIS Robot Cable-X3P.
 6. To go to the next step, press [[→]]. To go back, press [[←]].
 7. To return to your scene, click **Done** or press [[Esc]]. Nothing in your scene changes.
+
+You can also choose **Build Along** from [[⌘K]] or the build guide's toolbar.
 
 ![A step with four screws flying into the base along blue arrows, and 4 × M3 × 6 Socket Head Screw listed under the bar](/help/build-along/step.png)
 
@@ -37,3 +39,5 @@ A green check appears beside the step count when every printed part the step use
 ![Step 1 of 2 with a green check beside the count](/help/build-along/parts-ready.png)
 
 For a broken part, [Repair a part](/help/repair-a-part) opens a walkthrough of removal, replacement and reassembly in Build Along.
+
+To retain separate progress for physical copies of one design, [resume a robot build](/help/resume-a-robot-build).

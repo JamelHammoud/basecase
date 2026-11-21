@@ -1,12 +1,13 @@
 import type { MirrorLink } from '../types/ports';
 
-export const SIDE_WORDS: Record<MirrorLink['axis'], [string, string][]> = {
-  x: [['left', 'right']],
-  y: [
-    ['front', 'rear'],
-    ['front', 'back'],
-  ],
-  z: [['top', 'bottom']],
+function sideWords(a: string, b: string) {
+  return { a, b, pattern: new RegExp(`(?<![A-Za-z])(${a}|${b})(?![a-z])`, 'gi') };
+}
+
+export const SIDE_WORDS = {
+  x: [sideWords('left', 'right')],
+  y: [sideWords('front', 'rear'), sideWords('front', 'back')],
+  z: [sideWords('top', 'bottom')],
 };
 
 function matchCase(m: string, out: string): string {
@@ -15,12 +16,11 @@ function matchCase(m: string, out: string): string {
   return m[0] === m[0].toUpperCase() ? out[0].toUpperCase() + out.slice(1) : out;
 }
 
-export function swapWords(s: string, pairs: [string, string][]) {
-  return pairs.reduce((acc, [a, b]) => {
-    const re = new RegExp(`(?<![A-Za-z])(${a}|${b})(?![a-z])`, 'gi');
-
-    return acc.replace(re, (m) => matchCase(m, m.toLowerCase() === a ? b : a));
-  }, s);
+export function swapWords(s: string, pairs: typeof SIDE_WORDS.x) {
+  return pairs.reduce(
+    (acc, { a, b, pattern }) => acc.replace(pattern, (m) => matchCase(m, m.toLowerCase() === a ? b : a)),
+    s,
+  );
 }
 
 export function mirroredName(name: string, axis: MirrorLink['axis']): string {

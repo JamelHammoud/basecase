@@ -6,7 +6,6 @@ const plan = (change) =>
     run: { status: 'completed' },
     failed: ['unit', 'e2e (2)'],
     taken: [],
-    repairMerged: () => false,
     repairOpen: () => false,
     ...change,
   });
@@ -16,13 +15,12 @@ describe('repairPlan', () => {
     expect(plan({})).toEqual({ jobs: ['unit', 'e2e (2)'] });
   });
 
-  it('waits on a repair that merged or is open for an earlier Check', () => {
-    expect(plan({ repairMerged: () => true }).wait).toMatch(/newer main/);
+  it('waits on an open repair for an earlier Check', () => {
     expect(plan({ repairOpen: () => true }).wait).toMatch(/already open/);
   });
 
   it('repairs the jobs that failed after the first repair started, once the Check finishes', () => {
-    const later = { taken: ['unit'], repairMerged: () => true, repairOpen: () => true };
+    const later = { taken: ['unit'], repairOpen: () => true };
 
     expect(plan({ ...later, run: { status: 'in_progress' } }).wait).toMatch(/never saw/);
     expect(plan(later)).toEqual({ jobs: ['e2e (2)'] });

@@ -1,7 +1,7 @@
 import { buildGuidePlan } from '../../guide/guidePlan';
 import { approximateScene } from '../../guide/guideScene';
 import type { RobotJoint, ScenePart } from '../../types/robotics';
-import { partBounds } from '../../utils/selection';
+import { selectionBounds } from '../../utils/selection';
 
 export interface MergeGuide {
   parts: ScenePart[];
@@ -37,9 +37,7 @@ export function guideSteps(guide: MergeGuide, parts = guide.parts): number {
 }
 
 function unionStandIn(members: ScenePart[], keep: ScenePart): ScenePart {
-  const boxes = members.map(partBounds);
-  const min = [0, 1, 2].map((a) => Math.min(...boxes.map((b) => b.min[a])));
-  const max = [0, 1, 2].map((a) => Math.max(...boxes.map((b) => b.max[a])));
+  const { min, max } = selectionBounds(members);
 
   return {
     ...keep,

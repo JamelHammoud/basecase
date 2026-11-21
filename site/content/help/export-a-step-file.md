@@ -19,7 +19,7 @@ You can export your design as a STEP file to open it in Fusion, Onshape, SolidWo
 2. Choose **STEP**.
 3. Pick where to save the file.
 
-![The Export menu with STEP](/help/export-a-step-file/export-menu.png)
+![The rover's Export menu with STEP enabled](/help/export-a-step-file/export-menu.png)
 
 Or press [[⌘K]] and choose **Export STEP**.
 

@@ -2,10 +2,10 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import { readIndex } from '../../../bench/archive.mjs';
 import { evidenceSources, githubCandidates } from '../../../bench/micro/harvest/github.mjs';
-import { runCandidates } from '../../../bench/micro/harvest/sources.mjs';
 import { ALL_TASKS } from '../../../bench/micro/tasks/index.mjs';
 import { readStubs } from '../../../bench/micro/stubs.mjs';
 import { windowStart } from './history.mjs';
+import { archiveWaste } from './harnessArchiveWaste.mjs';
 import { HOME_CHECKOUT, LOOP_DIR } from './paths.mjs';
 import { run } from './sh.mjs';
 
@@ -19,12 +19,15 @@ const normalized = (value) =>
 export const candidateKey = (candidate) =>
   digest([candidate.source, candidate.ref, candidate.kind, candidate.text].map(normalized).join('\n'));
 
+const heldOutIds = new Set(ALL_TASKS.filter((task) => task.heldOut).map((task) => task.id));
+const tuneEntry = (entry, since) => entry.at >= since && !entry.heldOut && !heldOutIds.has(entry.task);
+
 const runFailure = (entry) =>
   entry.grade === 'fail' || (typeof entry.score === 'number' && entry.score < 60) || entry.critique?.length;
 
 export function indexedCandidates(entries, since) {
   return entries
-    .filter((entry) => entry.at >= since && !entry.heldOut && runFailure(entry))
+    .filter((entry) => tuneEntry(entry, since) && runFailure(entry))
     .filter((entry) => entry.kind !== 'micro' || !!entry.servedBy)
     .map((entry) => ({
       source: entry.kind ?? 'bench',
@@ -32,6 +35,18 @@ export function indexedCandidates(entries, since) {
       text: JSON.stringify({ task: entry.task, grade: entry.grade, score: entry.score, critique: entry.critique }),
     }));
 }
+
+const candidateRank = (candidate) => [
+  candidate.measured?.milliseconds ?? 0,
+  candidate.measured?.frequency ?? 0,
+  candidate.measured?.supportingTokens ?? 0,
+];
+const compareCandidates = (a, b) => {
+  const left = candidateRank(a);
+  const right = candidateRank(b);
+
+  return right[0] - left[0] || right[1] - left[1] || right[2] - left[2] || a.key.localeCompare(b.key);
+};
 
 export function chooseCandidate({ candidates, journal, experiments }) {
   const seen = new Set([
@@ -45,17 +60,19 @@ export function chooseCandidate({ candidates, journal, experiments }) {
     candidates
       .map((candidate) => ({ ...candidate, key: candidateKey(candidate) }))
       .filter((candidate) => !seen.has(candidate.key))
-      .sort((a, b) => a.key.localeCompare(b.key))[0] ?? null
+      .sort(compareCandidates)[0] ?? null
   );
 }
 
 export function archiveCandidates(roots, since) {
-  return roots.flatMap((root) => [
-    ...indexedCandidates(readIndex(root), since),
-    ...runCandidates(root, since).filter(
-      (candidate) => !ALL_TASKS.some((task) => task.heldOut && candidate.ref.split('/').includes(task.id)),
-    ),
-  ]);
+  const sources = [...new Set(roots)].map((root) => ({
+    root,
+    entries: readIndex(root).filter((entry) => tuneEntry(entry, since)),
+  }));
+  const candidates = sources.flatMap(({ entries }) => indexedCandidates(entries, since));
+  const unique = new Map(candidates.map((candidate) => [candidateKey(candidate), candidate]));
+
+  return [...unique.values(), ...archiveWaste(sources)];
 }
 
 export function weekCandidates(now = Date.now()) {

@@ -20,6 +20,7 @@ covers:
   - src/components/simulate/FlagMark.tsx
   - src/components/simulate/useSegmentUndo.ts
   - src/components/tries/TriesMode.tsx
+  - src/components/tries/TagTriesField.tsx
   - src/components/tries/useTagTries.ts
   - src/workspace/useTryLabels.ts
   - src/workspace/tagTries.ts
@@ -34,6 +35,8 @@ hub_open_a_try_from_any_scene: |
 ---
 
 You can split a try into labeled steps, such as reach, grasp and lift, and tag a try and mark it passed or failed. When you make a dataset from your tries, it can teach each step in words.
+
+Topic-only playback and comparison are read-only, without a segment-editing lane.
 
 1. Click a try in **Results**, or in **Library** ▸ **Tries**.
 

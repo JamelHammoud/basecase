@@ -21,6 +21,12 @@ export interface LidarSpec {
 }
 
 const NUMBER = String.raw`(\d[\d,]*(?:\.\d+)?)`;
+const RANGE = new RegExp(String.raw`(?:${NUMBER}\s*[–-]\s*)?${NUMBER}\s*m\b`);
+const SCAN_RATE = new RegExp(String.raw`^\s*${NUMBER}\s*(?:[–-]\s*${NUMBER}\s*)?Hz`);
+const SAMPLE_RATE = new RegExp(String.raw`^\s*${NUMBER}\s*(k?)Hz`);
+const POINT_RATE = new RegExp(String.raw`^\s*${NUMBER}\s*pts`);
+const DEGREES = /^\s*(\d+(?:\.\d+)?)\s*°/;
+const RESOLUTION_FOV = /over\s*(\d+(?:\.\d+)?)\s*°/;
 const num = (s: string) => Number(s.replace(/,/g, ''));
 
 function row(info: ComponentInfo, ...names: string[]): string | null {
@@ -30,15 +36,13 @@ function row(info: ComponentInfo, ...names: string[]): string | null {
 }
 
 function rangeOf(info: ComponentInfo): number | null {
-  const m = new RegExp(String.raw`(?:${NUMBER}\s*[–-]\s*)?${NUMBER}\s*m\b`).exec(row(info, 'range') ?? '');
+  const m = RANGE.exec(row(info, 'range') ?? '');
 
   return m ? num(m[2]) : null;
 }
 
 function rateOf(info: ComponentInfo): number {
-  const m = new RegExp(String.raw`^\s*${NUMBER}\s*(?:[–-]\s*${NUMBER}\s*)?Hz`).exec(
-    row(info, 'scan rate', 'rotation') ?? '',
-  );
+  const m = SCAN_RATE.exec(row(info, 'scan rate', 'rotation') ?? '');
 
   if (!m) return DEFAULT_SCAN_HZ;
 
@@ -46,17 +50,17 @@ function rateOf(info: ComponentInfo): number {
 }
 
 function fovOf(info: ComponentInfo): number {
-  const over = /over\s*(\d+(?:\.\d+)?)\s*°/.exec(row(info, 'resolution') ?? '');
-  const fov = /^\s*(\d+(?:\.\d+)?)\s*°/.exec(row(info, 'fov', 'field of view') ?? '');
+  const over = RESOLUTION_FOV.exec(row(info, 'resolution') ?? '');
+  const fov = DEGREES.exec(row(info, 'fov', 'field of view') ?? '');
   const deg = Number(over?.[1] ?? fov?.[1] ?? FULL_TURN_DEG);
 
   return Math.min(FULL_TURN_DEG, deg);
 }
 
 function samplesOf(info: ComponentInfo, rateHz: number, fovDeg: number): number {
-  const sample = new RegExp(String.raw`^\s*${NUMBER}\s*(k?)Hz`).exec(row(info, 'sample rate') ?? '');
-  const points = new RegExp(String.raw`^\s*${NUMBER}\s*pts`).exec(row(info, 'point rate') ?? '');
-  const step = /^\s*(\d+(?:\.\d+)?)\s*°/.exec(row(info, 'resolution') ?? '');
+  const sample = SAMPLE_RATE.exec(row(info, 'sample rate') ?? '');
+  const points = POINT_RATE.exec(row(info, 'point rate') ?? '');
+  const step = DEGREES.exec(row(info, 'resolution') ?? '');
 
   if (sample) return (num(sample[1]) * (sample[2] ? 1000 : 1)) / rateHz;
 
@@ -68,9 +72,11 @@ function samplesOf(info: ComponentInfo, rateHz: number, fovDeg: number): number 
 }
 
 export function lidarSpec(info: ComponentInfo): LidarSpec | null {
+  if (info.group !== 'LiDAR') return null;
+
   const rangeM = rangeOf(info);
 
-  if (info.group !== 'LiDAR' || !rangeM) return null;
+  if (!rangeM) return null;
 
   const rateHz = rateOf(info);
   const fovDeg = fovOf(info);
@@ -111,9 +117,12 @@ function sensorFrame(part: ScenePart) {
 
 export function buildScan(bodies: SimBody[], part: ScenePart): Eye | null {
   const spec = partLidar(part);
+
+  if (!spec) return null;
+
   const body = bodies.find((b) => b.parts.includes(part.id));
 
-  if (!spec || !body) return null;
+  if (!body) return null;
 
   const { origin, forward, left } = sensorFrame(part);
   const dirs = scanAngles(spec).flatMap((deg) => {

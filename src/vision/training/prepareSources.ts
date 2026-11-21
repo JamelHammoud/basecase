@@ -1,6 +1,7 @@
 import { readStoredTry, type StoredTry, type TrySplit } from '../../cases/tryFile';
 import { loadManifests } from '../../cases/tryStore';
 import { sourceRun } from '../../datasets/snapshotSplits';
+import type { InspectionSourceIdentity } from './inspectionSource';
 import type { FrameSet } from '../frameSet';
 
 export interface PreparationSource {
@@ -9,6 +10,7 @@ export interface PreparationSource {
   real: boolean;
   explicit?: TrySplit;
   manifests: StoredTry[];
+  inspection?: InspectionSourceIdentity;
 }
 
 async function sourceManifests(ids: string[], load: typeof loadManifests) {

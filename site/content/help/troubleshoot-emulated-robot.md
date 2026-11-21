@@ -32,7 +32,9 @@ If Operate won't let you climb a rung, or the emulated robot stops, find the mes
 
 ## Connect Emulated Robot is missing
 
-Operate needs a joint that moves. If the scene has none, Operate shows "No robot." If it has more than 32 moving joints, Operate shows nothing to connect.
+Operate needs a powered joint that moves. If the scene has none, Operate shows "No robot." If it has more than 32 powered moving joints, Operate shows nothing to connect.
+
+Authored ideal tendon robots run only in simulation and can’t connect to an emulator.
 
 **Note:** Operate isn't available in the browser version of Basecase.
 
@@ -70,6 +72,8 @@ To train a policy:
 Click the affected unit's named row in Operate first. Faults and recovery apply only to that unit.
 
 When a fault stops the motors, the daemon shows "A fault is still active. Go back to Look and clear it first." The fault stays until you clear it.
+
+**Acknowledge** in the unit's [retained problems](/help/inspect-fleet-problems) records that you saw the incident. It doesn't replace **Clear Fault** below.
 
 1. Read the fault shown under the servo count, and fix the problem it names.
 2. Click **Look** under **Ladder**.

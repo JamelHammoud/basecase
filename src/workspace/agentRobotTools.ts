@@ -190,13 +190,20 @@ export async function runSimTool(kind: string, payload: Payload, ctx: SimToolCon
 
   if (kind === 'operate') return operateTool(ctx, payload);
 
-  if (kind === 'simulate') {
-    ctx.setAction('Simulating');
-
-    return simulateRequest(ctx, payload as SimulatePayload);
-  }
+  if (kind === 'simulate') return configuredSimulation(ctx, payload as SimulatePayload);
 
   if (kind === 'training_status') return { text: trainingStatusText(ctx) };
 
   throw new Error(`Unknown simulation tool "${kind}"`);
+}
+
+function configuredSimulation(ctx: SimToolContext, payload: SimulatePayload): Promise<PoseReply> {
+  const contacts = payload.self_contact;
+
+  ctx.setAction('Simulating');
+
+  if (contacts)
+    ctx.sim.configureSelfContact(contacts.robot, { enabled: contacts.enabled, exclusions: contacts.exclusions });
+
+  return simulateRequest(ctx, payload);
 }

@@ -53,7 +53,7 @@ export async function headlessParts(
     partTriangles: (id) => {
       const object = byId.get(id);
 
-      return object ? localTriangles(object) : null;
+      return object && !object.userData.placeholder ? localTriangles(object) : null;
     },
   };
 }

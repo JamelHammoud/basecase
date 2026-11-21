@@ -5,7 +5,7 @@ import type { ScenePart } from '../types/robotics';
 import { evaluateBoolean } from './evaluate';
 import { booleanHash } from './hash';
 import { booleanPart, withResult, type BooleanPart } from './parts';
-import { drilledOperands, drillTarget } from './picking';
+import { drilledOperands, drillTarget, operandAt } from './picking';
 
 const part = (id: string, kind: ScenePart['kind'], dimensions: ScenePart['dimensions']): ScenePart => ({
   id,
@@ -43,6 +43,34 @@ function shot(result: BooleanPart, from: THREE.Vector3, toward: THREE.Vector3) {
 }
 
 describe('drilling into a boolean', () => {
+  it('compares every surface, retains first ties and reads edited operands afresh', () => {
+    const result = booleanPart({
+      id: 'result',
+      base: part('box', 'box', { width: 40, height: 20, depth: 30 }),
+      tools: [
+        part('pin', 'cylinder', { width: 10, height: 30, depth: 10 }),
+        { ...part('lower', 'box', { width: 20, height: 20, depth: 20 }), position: [0, -20, 0] },
+      ],
+      op: 'union',
+    });
+    const raycaster = new THREE.Raycaster(new THREE.Vector3(0, 60, 0), new THREE.Vector3(0, -1, 0));
+    const expected = ['pin', 'box', 'box', 'box', 'pin', 'lower', 'lower'];
+    const distances = [35, 40, 60, 62.5, 65, 70, 90];
+
+    expect(distances.map((distance) => operandAt(result, raycaster, distance)?.id)).toEqual(expected);
+
+    const edited = {
+      ...result,
+      boolean: {
+        ...result.boolean,
+        operands: result.boolean.operands.map((o) => ({ ...o, position: [100, 0, 0] as [number, number, number] })),
+      },
+    };
+
+    expect(operandAt(edited, raycaster, 40)).toBeNull();
+    expect(operandAt(result, raycaster, 40)).toBe(result.boolean.operands[0]);
+  });
+
   it('picks the operand whose surface was hit', async () => {
     const result = await plate();
     const wall = shot(result, new THREE.Vector3(0, 60, 0), new THREE.Vector3(5, 12, 0));

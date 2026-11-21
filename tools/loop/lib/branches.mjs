@@ -1,9 +1,11 @@
 import { HOME_CHECKOUT } from './paths.mjs';
 import { run } from './sh.mjs';
 
+import { fetchGit } from './gitFetch.mjs';
+
 const git = (args) => run('git', args, { cwd: HOME_CHECKOUT, allowFail: true });
 
-export const fetchAll = () => git(['fetch', '-q', '--prune', 'origin']);
+export const fetchAll = () => fetchGit(['-q', '--prune', 'origin'], { allowFail: true });
 
 export const conflictsWithMain = (pull) =>
   pull.mergeable === 'CONFLICTING' ||

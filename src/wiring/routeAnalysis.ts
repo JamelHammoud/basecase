@@ -8,10 +8,12 @@ import { wiringNetlist } from './netlist';
 import { routePath, routeTopology, type RouteEndpoint, type RouteObstacle } from './routeGeometry';
 import type { RelativeBound, RoutePoint } from './routeCollision';
 import { relativeMotionBound } from './routeBound';
+import { pathLength } from './routeMeasure';
+import { indexRouteSpecs } from './routeSpecs';
 import { poseTransforms, routeMotion, routePoses, type RouteMotion } from './routeMotion';
 
 interface RouteContext {
-  scene: WiringScene;
+  specOf: ReturnType<typeof indexRouteSpecs>;
   motion: RouteMotion;
   bound: RelativeBound;
   obstacles: RouteObstacle[];
@@ -43,20 +45,6 @@ function endpoint(ctx: RouteContext, end: NetEnd): RouteEndpoint | null {
   };
 }
 
-function specOf(scene: WiringScene, net: Net): WiringRouteSpec | undefined {
-  return scene.project.wiring?.find(
-    (spec) =>
-      spec.from.partId === net.from.id &&
-      spec.from.port === net.from.port?.name &&
-      spec.to.partId === net.to.id &&
-      spec.to.port === net.to.port?.name,
-  );
-}
-
-const pathLength = (points: PortVec[]) =>
-  points
-    .slice(1)
-    .reduce((length, p, i) => length + new THREE.Vector3(...p).distanceTo(new THREE.Vector3(...points[i])), 0);
 const transformed = (point: PortVec, matrix: THREE.Matrix4): PortVec =>
   new THREE.Vector3(...point).applyMatrix4(matrix).toArray() as PortVec;
 
@@ -135,7 +123,7 @@ function stockFor(net: Net, requiredMm: number, spec: WiringRouteSpec | undefine
 function routeOne(ctx: RouteContext, net: Net): CableRoute {
   const from = endpoint(ctx, net.from);
   const to = endpoint(ctx, net.to);
-  const spec = specOf(ctx.scene, net);
+  const spec = ctx.specOf(net);
 
   if (!from || !to) return unresolved('Port geometry missing');
 
@@ -201,7 +189,7 @@ function stockReason(status: ReturnType<typeof selectCableStock>['status']): str
 export function routeNetlist(scene: WiringScene, netlist: Netlist, obstacles: RouteObstacle[]): Netlist {
   const motion = routeMotion(scene);
   const ctx: RouteContext = {
-    scene,
+    specOf: indexRouteSpecs(scene.project.wiring),
     motion,
     bound: relativeMotionBound(motion),
     obstacles,

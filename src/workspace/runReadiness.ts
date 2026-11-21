@@ -1,3 +1,6 @@
+import { tolerancesIn } from '../three/analysis/analysisPool';
+import { toleranceRows } from '../readiness/tolerances';
+import { bedOf } from '../print/bed';
 import { assemblyReport, serviceableIds } from '../assembly/assemblyReport';
 import { rememberClamps } from '../assembly/clampCache';
 import { clampsOf } from '../assembly/followers';
@@ -31,6 +34,7 @@ import { caseFindings } from '../readiness/caseChecks';
 import { caseCheckRows, nextCaseTurn } from './caseChecks';
 import { runEngineeringNow } from './engineeringNow';
 import { bodyPhysicsKey, freshFalls, freshWalk } from './storedWalk';
+import { inspectElectrical } from '../wiring/electricalChecks';
 
 const BUDGET_MS = 30000;
 
@@ -65,8 +69,12 @@ export const projectFingerprint = (
   world: ReadinessWorld,
 ) =>
   readinessFingerprint(parts, {
+    designParameters: project.designParameters,
+    dimensionalRequirements: project.dimensionalRequirements,
     joints: project.joints,
+    selfContact: project.selfContact,
     wiring: project.wiring,
+    electronicsBoard: jsonHash(project.electronicsBoard),
     budget: project.budgetUsd,
     budgetHours: project.budgetHours,
     printerCount: world.printerCount ?? 1,
@@ -88,7 +96,7 @@ export const projectFingerprint = (
     calibrations: activeVersions(project.servoCalibrations),
     bodyCalibrations: bodyPhysicsKey(project),
     goneMates: goneMateIds(project.joints),
-    printer: [printer.model.id, printer.nozzle, printer.model.bed, printer.model.height, printer.model.keepOut],
+    printer: [printer.model.id, printer.nozzle, bedOf(printer.model, project.printProcess)],
     purchases: jsonHash(world.purchases ?? {}),
     money: [world.money.code, world.money.ratesDate],
   });
@@ -117,13 +125,14 @@ export async function runReadiness({
   await viewport.meshesReady();
 
   const printing = printReportOf(parts, { project, printer }, viewport.printShapes);
+  const walk = project.walk ? freshWalk(parts, project) : undefined;
   const engineeringRun = printing.then((report) =>
     runEngineeringNow({
       viewport,
       parts,
       project,
       withSweep: true,
-      walk: freshWalk(parts, project),
+      walk,
       falls: freshFalls(parts, project),
       supportG: supportOf(report),
       print: report,
@@ -136,13 +145,23 @@ export async function runReadiness({
   const casesRun = measuring.then((measures) =>
     caseCheckRows({ parts, project, measures, partTriangles: viewport.partTriangles, turn }),
   );
-  const [engineering, geometry, print, purchases, measures, cases] = await Promise.all([
+  const electricalRun = engineeringRun.then((engineering) =>
+    inspectElectrical({
+      parts,
+      project,
+      wiring: engineering.wiring,
+      walk: typeof walk === 'object' ? walk : undefined,
+    }),
+  );
+  const [engineering, geometry, print, purchases, measures, cases, electrical, tolerances] = await Promise.all([
     engineeringRun,
     viewport.assembly({ serviceable: serviceableIds(parts), budgetMs: BUDGET_MS, batteries: batteriesIn(parts) }),
     printing,
     platformBridge.listPurchases(),
     measuring,
     casesRun,
+    electricalRun,
+    tolerancesIn({ parts, parameters: project.designParameters ?? [], requirements: project.dimensionalRequirements }),
   ]);
 
   rememberClamps(parts, clampsOf(geometry.chains));
@@ -154,6 +173,8 @@ export async function runReadiness({
     [
       ...assemblyFindings(assemblyReport(parts, geometry)),
       ...engineeringFindings(engineering),
+      ...engineeringFindings({ ...engineering, rows: toleranceRows(tolerances) }),
+      ...electrical.findings,
       ...fitFindings(fits.items),
       ...printFindings(print),
       ...bomFindings(bom),
@@ -169,8 +190,9 @@ export async function runReadiness({
     {
       parts,
       decisions: project.readiness,
+      designParameters: project.designParameters,
       fingerprint: geometry.timedOut ? UNSETTLED_FINGERPRINT : fingerprint,
-      rows: [...engineering.rows, ...cases],
+      rows: [...engineering.rows, ...electrical.rows, ...cases, ...toleranceRows(tolerances)],
       wiring: engineering.wiring,
     },
   );

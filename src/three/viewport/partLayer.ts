@@ -4,7 +4,7 @@ import { applyPartTransform, buildPartGroup, releasePartGroup } from '../buildPa
 import { getComponentMesh } from '../componentMeshes';
 import { preparePart } from '../partMesh/prepare';
 import type { PartBatches } from './partBatches';
-import type { Vec3 } from './types';
+import type { Vec3, ViewportProps } from './types';
 
 interface Entry {
   part: ScenePart;
@@ -14,6 +14,8 @@ interface Entry {
 }
 
 const TRANSFORM_KEYS = new Set(['position', 'rotation']);
+
+type PoseProps = Pick<ViewportProps, 'pose' | 'poseOwners' | 'buildStep'>;
 
 export function onlyTransformChanged(a: ScenePart, b: ScenePart): boolean {
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]) as Set<keyof ScenePart>;
@@ -44,10 +46,11 @@ const rememberRest = (group: THREE.Group) => {
 
 export class PartLayer {
   pose = new Map<string, THREE.Matrix4>();
+  poseOwners: ReadonlyMap<string, string> = new Map();
 
   private readonly entries = new Map<string, Entry>();
 
-  private pending: PendingBuild[] = [];
+  private readonly pending = new Set<PendingBuild>();
 
   private readonly waiting = new Map<string, PendingBuild>();
 
@@ -78,11 +81,11 @@ export class PartLayer {
   }
 
   get hasReady(): boolean {
-    return this.pending.length > 0;
+    return this.pending.size > 0;
   }
 
   get hasPending(): boolean {
-    return this.pending.length > 0 || this.waiting.size > 0;
+    return this.pending.size > 0 || this.waiting.size > 0;
   }
 
   sync(parts: ScenePart[], selected: ReadonlySet<string>, meshVersion: number): boolean {
@@ -97,7 +100,7 @@ export class PartLayer {
       changed = true;
     }
 
-    this.pending = [];
+    this.pending.clear();
     this.waiting.clear();
 
     for (const part of visible) {
@@ -113,8 +116,13 @@ export class PartLayer {
     let uploads = 0;
     let built = false;
 
-    while (this.pending.length && performance.now() - start < budgetMs && uploads < uploadBudget) {
-      uploads += this.build(this.pending.shift()!);
+    for (const next of this.pending) {
+      const withinBudget = performance.now() - start < budgetMs && uploads < uploadBudget;
+
+      if (!withinBudget) break;
+
+      this.pending.delete(next);
+      uploads += this.build(next);
       built = true;
     }
 
@@ -127,7 +135,7 @@ export class PartLayer {
     for (const { part, selected, meshVersion, group } of this.entries.values()) {
       const loaded = group.userData.placeholder && part.componentId && getComponentMesh(part.componentId);
 
-      if (loaded && !queued.has(part.id)) this.pending.push({ part, selected, meshVersion });
+      if (loaded && !queued.has(part.id)) this.pending.add({ part, selected, meshVersion });
     }
   }
 
@@ -136,7 +144,8 @@ export class PartLayer {
   }
 
   buildAll(): boolean {
-    this.pending.push(...this.waiting.values());
+    for (const next of this.waiting.values()) this.pending.add(next);
+
     this.waiting.clear();
 
     return this.buildPending();
@@ -148,6 +157,12 @@ export class PartLayer {
     }
   }
 
+  syncPose(previous: PoseProps, props: PoseProps): void {
+    this.poseOwners = props.poseOwners ?? new Map();
+
+    if (props.pose !== previous.pose && !props.buildStep) this.pose = props.pose ?? new Map();
+  }
+
   applyPoseTo(ids: Iterable<string>): void {
     for (const id of ids) {
       const group = this.entries.get(id)?.group;
@@ -157,7 +172,7 @@ export class PartLayer {
   }
 
   toRest(id: string, position: THREE.Vector3, quaternion: THREE.Quaternion) {
-    const delta = this.pose.get(id);
+    const delta = this.poseFor(id);
 
     if (!delta) {
       return { position: position.clone(), quaternion: quaternion.clone() };
@@ -175,7 +190,7 @@ export class PartLayer {
   }
 
   pointAtRest(id: string, point: Vec3): Vec3 {
-    const delta = this.pose.get(id);
+    const delta = this.poseFor(id);
 
     return delta ? (new THREE.Vector3(...point).applyMatrix4(delta.clone().invert()).toArray() as Vec3) : point;
   }
@@ -225,7 +240,7 @@ export class PartLayer {
 
     if (!rest) return;
 
-    const delta = this.pose.get(id);
+    const delta = this.poseFor(id);
 
     if (delta) {
       POSED.compose(rest.position, rest.quaternion, UNIT).premultiply(delta);
@@ -243,6 +258,10 @@ export class PartLayer {
     const quaternion = group.userData.restQuaternion as THREE.Quaternion | undefined;
 
     return position && quaternion ? { position, quaternion } : null;
+  }
+
+  private poseFor(id: string) {
+    return this.pose.get(this.poseOwners.get(id) ?? id);
   }
 
   private upsert(next: PendingBuild): boolean {
@@ -275,7 +294,7 @@ export class PartLayer {
     const prepared = preparePart(next.part);
 
     if (!prepared) {
-      this.pending.push(next);
+      this.pending.add(next);
 
       return;
     }
@@ -287,7 +306,7 @@ export class PartLayer {
       if (this.waiting.get(id) !== next) return;
 
       this.waiting.delete(id);
-      this.pending.push(next);
+      this.pending.add(next);
       this.onReady();
     });
   }

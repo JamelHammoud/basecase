@@ -62,12 +62,9 @@ export function jointGroupLabel(j: RobotJoint): string {
 }
 
 const GROUP_ORDER = ['Head', 'Torso', 'Left arm', 'Right arm', 'Arms', 'Left leg', 'Right leg', 'Legs', 'Other'];
+const GROUP_RANKS = new Map(GROUP_ORDER.map((label, rank) => [label, rank]));
 
-const groupRank = (l: string) => {
-  const i = GROUP_ORDER.findIndex((o) => o.toLowerCase() === l.toLowerCase());
-
-  return i < 0 ? GROUP_ORDER.length : i;
-};
+const groupRank = (label: string) => GROUP_RANKS.get(label) ?? GROUP_ORDER.length;
 
 export function jointGroups(rig: Rig): Array<{ label: string; joints: RobotJoint[] }> {
   const groups = new Map<string, RobotJoint[]>();
@@ -101,22 +98,29 @@ const SIDE_TAGS = ['l', 'r', 'll', 'lr', 'fl', 'fr', 'rl', 'rr'];
 
 const groupNamesSide = (group: string) => /^(left|right)\b/i.test(group);
 
-function shortJointLabel(j: RobotJoint, group: string): string {
-  const sideWords = groupNamesSide(group) ? ['left', 'right', ...(sideOf(j.name) ? SIDE_TAGS : [])] : [];
+function jointLabeler(group: string): (j: RobotJoint) => string {
+  const sided = groupNamesSide(group);
+  const sideWords = sided ? ['left', 'right'] : [];
   const groupWords = group
     .toLowerCase()
     .split(' ')
     .filter((w) => w !== 'leg' && w !== 'arm');
   const skip = new Set(['joint', ...sideWords, ...groupWords]);
-  const s = nameWords(j.name)
-    .filter((w) => !skip.has(w))
-    .join(' ');
+  const skipSideTags = sided ? new Set([...skip, ...SIDE_TAGS]) : skip;
 
-  return s ? s[0].toUpperCase() + s.slice(1) : prettyJointName(j.name);
+  return (j) => {
+    const omitted = sided && sideOf(j.name) ? skipSideTags : skip;
+    const s = nameWords(j.name)
+      .filter((w) => !omitted.has(w))
+      .join(' ');
+
+    return s ? s[0].toUpperCase() + s.slice(1) : prettyJointName(j.name);
+  };
 }
 
 export function jointRowLabels(joints: RobotJoint[], group: string): Map<string, string> {
-  const short = joints.map((j) => [j, shortJointLabel(j, group)] as const);
+  const labelOf = jointLabeler(group);
+  const short = joints.map((j) => [j, labelOf(j)] as const);
   const uses = new Map<string, number>();
 
   for (const [, label] of short) uses.set(label, (uses.get(label) ?? 0) + 1);

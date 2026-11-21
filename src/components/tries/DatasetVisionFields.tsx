@@ -1,7 +1,9 @@
+import type { Dataset } from '../../datasets/datasetFile';
+import { DatasetVisionRequirements } from './DatasetVisionRequirements';
 import { FieldRow, NumberInput, Select } from '../../design-system';
 import { VISION_TASK_OPTIONS, type TrainingTask, type VisionTrainingView } from './visionTrainingView';
 
-export function DatasetVisionFields({ vision }: { vision: VisionTrainingView }) {
+export function DatasetVisionFields({ vision, dataset }: { vision: VisionTrainingView; dataset: Dataset }) {
   return (
     <div className="flex flex-col gap-2">
       <Select
@@ -33,6 +35,7 @@ export function DatasetVisionFields({ vision }: { vision: VisionTrainingView }) 
           onChange={(value) => vision.setMaxModelBytes(Math.round(value * 1048576))}
         />
       </FieldRow>
+      <DatasetVisionRequirements key={dataset.id} dataset={dataset} vision={vision} />
     </div>
   );
 }

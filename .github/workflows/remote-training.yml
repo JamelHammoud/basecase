@@ -1,0 +1,54 @@
+name: Remote training
+
+on:
+  pull_request:
+    paths:
+      - electron/remoteTraining/**
+      - electron/remoteTrainer.mjs
+      - tools/remote-training/**
+      - tools/forge/bundle-linux.mjs
+      - verify/remoteTraining/**
+      - .github/workflows/remote-training.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  transport:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: rustup toolchain install stable --profile minimal
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
+        with:
+          workspaces: forge
+      - run: cargo build --locked --release --manifest-path forge/Cargo.toml -p forge-train
+      - run: node tools/forge/bundle-linux.mjs
+      - run: docker build --tag basecase-training-fixture tools/remote-training
+      - run: npx vitest run --config verify/vitest.config.ts verify/remoteTraining/transport.test.ts
+
+  windows-client:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run electron/remoteTraining/config.test.mjs electron/remoteTraining/transport.test.mjs

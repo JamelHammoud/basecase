@@ -1,4 +1,5 @@
 import type { DriveCommand } from './driveTypes';
+import type { LiveCase } from '../cases/liveCase';
 import type { SimEngine } from './engine';
 import { TorqueRecorder, type TorqueSeries } from '../utils/peakTorque';
 import type { AmpModel } from '../utils/servoAmps';
@@ -29,6 +30,15 @@ export const commandTimeline = (sim: SimEngine, commands: NonNullable<RunRequest
     (c) => c.at,
     (c) => sim.command(c.command),
   );
+
+export interface ScriptTimeline {
+  start: number;
+  commands: ReturnType<typeof commandTimeline>;
+}
+
+export function stepScriptedCase(engine: SimEngine, live: LiveCase, script: ScriptTimeline | null, seconds: number) {
+  live.advance(seconds, () => script?.commands.advance(engine.data.time - script.start));
+}
 
 function tracer(sim: SimEngine, currents: Record<string, AmpModel> = {}) {
   const n = sim.sim.joints.length;

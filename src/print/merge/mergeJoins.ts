@@ -1,5 +1,5 @@
 import type { ChainResult, FastenerChain } from '../../assembly/assemblyTypes';
-import { componentRoot } from '../componentRoot';
+import { componentRoot } from '../../../electron/componentRoot.mjs';
 import type { MergeCandidate } from './mergeTypes';
 
 export type Pair = [string, string];

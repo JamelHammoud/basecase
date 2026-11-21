@@ -1,4 +1,5 @@
 import { reply } from '../utils/workerRpc';
+import { validateConditionMembership } from './conditions';
 import { depthBytes, readDepth } from './imageBytes';
 import {
   validateFrameSet,
@@ -7,6 +8,8 @@ import {
   validateFrameSetHeader,
   validateFrameSplits,
   frameSetHash,
+  frameHash,
+  frameSetManifestHash,
   type FrameSet,
   type ImageClass,
   type TrainingFrame,
@@ -20,6 +23,23 @@ import {
 } from './frameSetStoreTypes';
 
 export const frameStoreJobs = {
+  hashStoredFrame: async ({
+    frame,
+    classes,
+    bytes,
+  }: {
+    frame: FrameSetManifest['frames'][number];
+    classes: ImageClass[];
+    bytes: FrameBytes;
+  }) => {
+    const loaded = { ...frame, jpeg: bytes.jpeg, depth: readDepth(bytes.depth) };
+
+    validateTrainingFrame(loaded, classes);
+
+    return reply(await frameHash(loaded));
+  },
+  hashManifest: async ({ set, hashes }: { set: FrameSetManifest; hashes: string[] }) =>
+    reply(await frameSetManifestHash(set, hashes)),
   hash: async (set: FrameSet) => reply(await frameSetHash(set)),
   manifest: (set: FrameSet) => {
     validateFrameSet(set);
@@ -80,4 +100,5 @@ function checkedFrameManifest(manifest: FrameSetManifest) {
   }
 
   validateFrameSplits(manifest);
+  validateConditionMembership(manifest);
 }

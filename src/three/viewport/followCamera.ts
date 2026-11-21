@@ -10,6 +10,8 @@ export class FollowCamera {
 
   private readonly tracked = new THREE.Vector3();
 
+  private readonly step = new THREE.Vector3();
+
   private partId: string | null = null;
 
   constructor(stage: Stage, objectFor: (id: string) => THREE.Object3D | undefined) {
@@ -34,8 +36,7 @@ export class FollowCamera {
 
     if (!object) return false;
 
-    const now = object.getWorldPosition(new THREE.Vector3());
-    const step = now.clone().sub(this.tracked).multiplyScalar(CATCH_UP);
+    const step = object.getWorldPosition(this.step).sub(this.tracked).multiplyScalar(CATCH_UP);
 
     if (step.lengthSq() < 1e-6) return false;
 

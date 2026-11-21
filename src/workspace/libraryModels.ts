@@ -1,8 +1,9 @@
-import type { CustomModelDefinition, CustomModelSubNode, ScenePart } from '../types/robotics';
+import type { CustomModelDefinition, CustomModelSubNode, RobotJoint, ScenePart } from '../types/robotics';
+import { capturedJoints } from '../utils/libraryJoints';
 import { modelId, stamp } from './helpers';
+import { halfExtents } from '../utils/selection';
 import { PRINTED_TAG } from './partFactories';
 
-const round1 = (v: number) => Math.round(v * 10) / 10;
 const MIN_MODEL_SIDE = 4;
 
 interface Box {
@@ -14,7 +15,7 @@ export function partsBox(parts: ScenePart[]): Box {
   const box: Box = { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
 
   for (const p of parts) {
-    const half = [p.dimensions.width / 2, p.dimensions.height / 2, p.dimensions.depth / 2];
+    const half = halfExtents(p);
 
     for (let i = 0; i < 3; i++) {
       box.min[i] = Math.min(box.min[i], p.position[i] - half[i]);
@@ -32,7 +33,7 @@ function asSaved(part: ScenePart): ScenePart {
 }
 
 function modelNode(source: ScenePart, center: number[]): CustomModelSubNode {
-  const p = asSaved(source);
+  const p = asSaved(structuredClone(source));
 
   return {
     id: `node-${p.id}`,
@@ -40,7 +41,7 @@ function modelNode(source: ScenePart, center: number[]): CustomModelSubNode {
     nodeType: 'primitive',
     primitiveKind: p.kind === 'custom_model' || p.kind === 'sculpt_mesh' ? 'box' : p.kind,
     role: p.role,
-    position: [round1(p.position[0] - center[0]), round1(p.position[1] - center[1]), round1(p.position[2] - center[2])],
+    position: [p.position[0] - center[0], p.position[1] - center[1], p.position[2] - center[2]],
     rotation: [...p.rotation],
     dimensions: { ...p.dimensions },
     color: p.color,
@@ -51,6 +52,7 @@ function modelNode(source: ScenePart, center: number[]): CustomModelSubNode {
 
 export interface SceneModelInput {
   sourceParts: ScenePart[];
+  joints?: RobotJoint[];
   single: ScenePart | null;
   sceneName: string;
   screenshot: () => Promise<string> | undefined;
@@ -58,6 +60,7 @@ export interface SceneModelInput {
 
 export async function sceneModel({
   sourceParts,
+  joints,
   single,
   sceneName,
   screenshot,
@@ -77,5 +80,6 @@ export async function sceneModel({
     defaultColor: sourceParts[0].color,
     mechanicalTag: sourceParts[0].mechanicalTag || PRINTED_TAG,
     nodes: sourceParts.map((p) => modelNode(p, center)),
+    ...(joints ? { joints: capturedJoints(joints, sourceParts, center) } : {}),
   };
 }

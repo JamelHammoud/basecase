@@ -1,8 +1,11 @@
+import { setSupplierOffersOpen } from '../components/build/offerDialog';
+import { cableCommands } from './cableCommands';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { ReactNode } from 'react';
 import { bomCart } from '../components/build/cart';
 import { knownPurchases } from '../components/build/usePurchases';
 import type { Command } from '../components/CommandPalette';
-import { ExternalLinkIcon, PackageIcon, RefreshIcon } from '../design-system';
+import { ExternalLinkIcon, PackageIcon, RefreshIcon, PlusIcon } from '../design-system';
 import { isBuilt } from '../guide/guidePlan';
 import { buildBom } from '../utils/bom';
 import { openLink } from '../utils/openLink';
@@ -41,6 +44,17 @@ function buildAlongCommand({ core }: CommandInputs): Command[] {
   if (!core.parts.some(isBuilt)) return [];
 
   return [
+    {
+      id: 'create-build',
+      group: 'Scene',
+      label: 'Make Build',
+      icon: <PackageIcon />,
+      keywords: 'kit frozen assembly progress',
+      run: () => {
+        core.tool.openRightTab('build');
+        core.buildAlong.requestCreate();
+      },
+    },
     {
       id: 'build-along',
       group: 'Scene',
@@ -84,7 +98,92 @@ function guideCommands({ core }: CommandInputs): Command[] {
   return guide.stale ? [open, make('guide-update', 'Update Build Guide', <RefreshIcon />)] : [open];
 }
 
+function supplierOfferCommands({ core }: CommandInputs): Command[] {
+  if (core.buildAlong?.frozen) return [];
+
+  return [
+    {
+      id: 'supplier-offers',
+      group: 'Scene',
+      label: 'Supplier Offers',
+      icon: <PackageIcon />,
+      keywords: 'quote import purchasing csv supplier arrival',
+      run: () => {
+        core.tool.openRightTab('build');
+        setSupplierOffersOpen(true);
+      },
+    },
+  ];
+}
+
 export const buildCommands = (inputs: CommandInputs): Command[] => [
+  ...supplierOfferCommands(inputs),
+
+  ...(inputs.core.cradle?.available
+    ? [
+        {
+          id: 'make-assembly-cradle',
+          group: 'Scene' as const,
+          label: 'Make Assembly Cradle',
+          icon: <PackageIcon />,
+          keywords: 'assembly fixture cradle tooling print',
+          run: inputs.core.cradle.show,
+        },
+      ]
+    : []),
+  ...(inputs.core.project.electronicsBoard
+    ? [
+        {
+          id: 'edit-board',
+          group: 'Scene',
+          label: 'Edit Board',
+          icon: <PackageIcon />,
+          keywords: 'electronics pcb kicad outline placement',
+          run: () => void inputs.actions.board.define(),
+        },
+        ...(!IS_WEB_DEMO
+          ? [
+              {
+                id: 'route-board',
+                group: 'Scene' as const,
+                label: 'Route Board',
+                icon: <PackageIcon />,
+                keywords: 'electronics pcb kicad local copper',
+                run: () => void inputs.actions.board.route(),
+              },
+            ]
+          : []),
+        {
+          id: 'import-board',
+          group: 'Scene',
+          label: 'Import Board',
+          icon: <PackageIcon />,
+          keywords: 'electronics pcb kicad routed copper',
+          run: () => void inputs.actions.board.importBoard(),
+        },
+        {
+          id: 'arrange-board',
+          group: 'Scene',
+          label: 'Arrange Board',
+          icon: <RefreshIcon />,
+          keywords: 'electronics pcb kicad placement',
+          run: () => void inputs.actions.board.arrange(),
+        },
+      ]
+    : []),
+  ...(!inputs.core.project.electronicsBoard && inputs.core.parts.length
+    ? [
+        {
+          id: 'define-board',
+          group: 'Scene',
+          label: 'Define Board',
+          icon: <PlusIcon />,
+          keywords: 'electronics pcb kicad outline placement',
+          run: () => void inputs.actions.board.define(),
+        },
+      ]
+    : []),
+  ...cableCommands(inputs),
   ...guideCommands(inputs),
   ...buildAlongCommand(inputs),
   ...buyAllCommand(inputs),

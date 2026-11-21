@@ -62,12 +62,26 @@ function centredSpan(low: number, high: number): { start: number; size: number }
 }
 
 export function sketchFrame(strokes: SketchStroke[]): SketchFrame | null {
-  const points = strokes.flat();
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  let count = 0;
 
-  if (!points.length) return null;
+  for (const stroke of strokes) {
+    for (const { x, y } of stroke) {
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+      count++;
+    }
+  }
 
-  const across = centredSpan(Math.min(...points.map((p) => p.x)), Math.max(...points.map((p) => p.x)));
-  const down = centredSpan(Math.min(...points.map((p) => p.y)), Math.max(...points.map((p) => p.y)));
+  if (!count) return null;
+
+  const across = centredSpan(minX, maxX);
+  const down = centredSpan(minY, maxY);
 
   return { x: across.start, y: down.start, width: across.size, height: down.size };
 }

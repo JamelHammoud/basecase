@@ -12,6 +12,7 @@ export const GIZMO_KEYS: Array<keyof ViewportProps> = [
   'markMode',
   'axisPick',
   'buildStep',
+  'cableRoute',
 ];
 
 export const FIGURE_KEYS: Array<keyof ViewportProps> = ['figures', 'humanHeightMm', 'measureKind', 'measureMode'];

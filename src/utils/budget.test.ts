@@ -49,6 +49,7 @@ describe('budget', () => {
     expect(budgetOf(650).status).toBe('warn');
     expect(budgetOf(1000)).toMatchObject({
       status: 'pass',
+      items: [],
       detail: expect.stringContaining('BOM ≈ $604 of $1,000 (actuators $444)'),
     });
   });

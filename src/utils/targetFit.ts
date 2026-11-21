@@ -94,8 +94,8 @@ function bestShift(grid: { width: number; height: number; cellMm: number }, targ
   const { occupied, score } = shiftScorer(source, model);
   let best = { iou: -1, offset: 0 };
 
-  for (let dy = -SHIFT; dy <= SHIFT; dy++)
-    for (let dx = -SHIFT; dx <= SHIFT; dx++) {
+  for (let dy = -SHIFT; dy <= SHIFT && best.iou < 1; dy++)
+    for (let dx = -SHIFT; dx <= SHIFT && best.iou < 1; dx++) {
       const offset = dy * grid.width + dx;
       const iou = score(offset);
 
@@ -122,28 +122,30 @@ export function distanceToEdge(cells: Uint8Array, width: number, height: number)
 
   for (let i = width; i < width * (height - 1); i++) if (isEdge(cells, width, i)) d[i] = 0;
 
-  const step = (i: number, j: number, cost: number) => {
-    if (d[j] + cost < d[i]) d[i] = d[j] + cost;
-  };
-
   for (let y = 1; y < height - 1; y++)
     for (let x = 1; x < width - 1; x++) {
       const i = y * width + x;
+      const nearest = Math.min(
+        d[i - 1] + 1,
+        d[i - width] + 1,
+        d[i - width - 1] + Math.SQRT2,
+        d[i - width + 1] + Math.SQRT2,
+      );
 
-      step(i, i - 1, 1);
-      step(i, i - width, 1);
-      step(i, i - width - 1, Math.SQRT2);
-      step(i, i - width + 1, Math.SQRT2);
+      if (nearest < d[i]) d[i] = nearest;
     }
 
   for (let y = height - 2; y > 0; y--)
     for (let x = width - 2; x > 0; x--) {
       const i = y * width + x;
+      const nearest = Math.min(
+        d[i + 1] + 1,
+        d[i + width] + 1,
+        d[i + width + 1] + Math.SQRT2,
+        d[i + width - 1] + Math.SQRT2,
+      );
 
-      step(i, i + 1, 1);
-      step(i, i + width, 1);
-      step(i, i + width + 1, Math.SQRT2);
-      step(i, i + width - 1, Math.SQRT2);
+      if (nearest < d[i]) d[i] = nearest;
     }
 
   return d;
@@ -160,12 +162,16 @@ function edgeGap(grid: Grid): { mean: number; max: number } {
     const fromTarget = isEdge(grid.target, grid.width, i) ? toModel[i] : -1;
     const fromModel = isEdge(grid.model, grid.width, i) ? toTarget[i] : -1;
 
-    for (const v of [fromTarget, fromModel]) {
-      if (v < 0) continue;
-
-      sum += v;
+    if (fromTarget >= 0) {
+      sum += fromTarget;
       n++;
-      max = Math.max(max, v);
+      max = Math.max(max, fromTarget);
+    }
+
+    if (fromModel >= 0) {
+      sum += fromModel;
+      n++;
+      max = Math.max(max, fromModel);
     }
   }
 
@@ -178,31 +184,33 @@ function emptyFromCorner(
   corner: { x: number; y: number; sx: number; sy: number },
   reach: number,
 ) {
+  if (reach <= 0) return 0;
+
   const seen = new Set<number>();
-  const stack: number[][] = [];
+  const stack: number[] = [];
+  const endX = corner.x + corner.sx * reach;
+  const endY = corner.y + corner.sy * reach;
   let pixels = 0;
-  const offer = (x: number, y: number) => {
-    const inside = Math.abs(x - corner.x) < reach && Math.abs(y - corner.y) < reach;
-
-    if (!inside) return;
-
-    const i = y * width + x;
-
+  const offer = (i: number) => {
     if (seen.has(i)) return;
 
     seen.add(i);
 
-    if (!cells[i]) stack.push([x, y]);
+    if (!cells[i]) stack.push(i);
   };
 
-  offer(corner.x, corner.y);
+  offer(corner.y * width + corner.x);
 
   while (stack.length) {
-    const [x, y] = stack.pop()!;
+    const i = stack.pop()!;
+    const x = i % width;
+    const y = Math.floor(i / width);
 
     pixels++;
-    offer(x + corner.sx, y);
-    offer(x, y + corner.sy);
+
+    if (x + corner.sx !== endX) offer(i + corner.sx);
+
+    if (y + corner.sy !== endY) offer(i + corner.sy * width);
   }
 
   return pixels;

@@ -1,8 +1,10 @@
 import { EventEmitter } from 'node:events';
 import http from 'node:http';
 import { describe, expect, it, vi } from 'vitest';
+import { connectPhone } from '../../e2e/phoneClient.ts';
 import { guardBridge } from '../bridgeGuard.mjs';
 import { phoneBridgeMiddleware } from './phoneBridge.mjs';
+import { PhonePairing } from './phonePairing.mjs';
 
 function fakePhone() {
   const listeners = new Set();
@@ -18,7 +20,7 @@ function fakePhone() {
 
 function call(handler, { method, url, headers = { host: 'localhost:5173' } }) {
   const req = Object.assign(new EventEmitter(), { method, url, headers, resume: vi.fn() });
-  const res = { statusCode: 200, chunks: [], headers: {} };
+  const res = Object.assign(new EventEmitter(), { statusCode: 200, chunks: [], headers: {} });
   const next = vi.fn();
 
   res.setHeader = (key, value) => (res.headers[key] = value);
@@ -72,11 +74,46 @@ describe('phoneBridgeMiddleware', () => {
     expect(call(handler, { method: 'POST', url: '/scenes' }).next).toHaveBeenCalled();
   });
 
-  it('refuses a cross-site page before pairing', async () => {
+  it('recovers a phone connected before the event stream opens, then streams input and unpairing', async () => {
+    const pairing = new PhonePairing({ address: () => '127.0.0.1' });
+
+    try {
+      const reply = await pairing.pair();
+
+      expect(reply.ok).toBe(true);
+
+      const socket = await connectPhone(reply.url, { ca: reply.cert, headers: { 'User-Agent': 'iPhone' } });
+      const connected = { type: 'phone', state: 'connected', name: 'iPhone' };
+      const input = { tilt: [-20, 0], pad: null, buttons: [false, false] };
+      const stream = guardBridge(phoneBridgeMiddleware(pairing));
+      const { res } = call(stream, { method: 'GET', url: '/phone-events' });
+
+      expect(res.chunks).toEqual([`data: ${JSON.stringify(connected)}\n\n`]);
+      socket.send(JSON.stringify(input));
+      await vi.waitFor(() => expect(res.chunks).toHaveLength(2));
+      expect(res.chunks[1]).toBe(`data: ${JSON.stringify({ type: 'phone-input', ...input })}\n\n`);
+      res.emit('close');
+
+      const reconnected = call(stream, { method: 'GET', url: '/phone-events' }).res;
+
+      expect(reconnected.chunks).toEqual([`data: ${JSON.stringify(connected)}\n\n`]);
+      pairing.unpair();
+      await socket.closed;
+      expect(reconnected.chunks[1]).toBe(`data: ${JSON.stringify({ type: 'phone', state: 'closed' })}\n\n`);
+      expect(res.chunks).toHaveLength(2);
+      reconnected.emit('close');
+    } finally {
+      pairing.dispose();
+    }
+  });
+
+  it.each(['POST /phone-pair', 'GET /phone-events'])('refuses a cross-site page at %s', async (route) => {
     const headers = { host: 'localhost:5173', origin: 'https://evil.example', 'sec-fetch-site': 'cross-site' };
-    const { res } = call(handler, { method: 'POST', url: '/phone-pair', headers });
+    const [method, url] = route.split(' ');
+    const { res } = call(handler, { method, url, headers });
 
     await res.done;
     expect(res.statusCode).toBe(403);
+    expect(res.chunks).toEqual([]);
   });
 });

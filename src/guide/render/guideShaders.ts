@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GUIDE_DIRECTIONS, GUIDE_NEIGHBORS, GUIDE_OFFSETS } from './guideNeighbors';
 
 const SURFACE_VERTEX = `
 varying vec3 vNormal;
@@ -6,15 +7,6 @@ varying vec3 vNormal;
 void main() {
   vNormal = normalize(normalMatrix * normal);
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}
-`;
-
-const NORMAL_FRAGMENT = `
-varying vec3 vNormal;
-
-void main() {
-  vec3 n = normalize(vNormal) * (gl_FrontFacing ? 1.0 : -1.0);
-  gl_FragColor = vec4(n * 0.5 + 0.5, 1.0);
 }
 `;
 
@@ -27,6 +19,10 @@ void main() {
 `;
 
 const TOON_FRAGMENT = `
+layout(location = 0) out vec4 guideNormal;
+layout(location = 1) out vec4 guideId;
+layout(location = 2) out vec4 guideColor;
+uniform vec3 idColor;
 uniform vec3 color;
 uniform float ghost;
 varying vec3 vNormal;
@@ -40,7 +36,9 @@ void main() {
   vec3 lit = color * band + rim;
   float grey = dot(lit, vec3(0.299, 0.587, 0.114));
   vec3 faded = mix(vec3(grey), lit, 0.3);
-  gl_FragColor = vec4(mix(lit, mix(faded, vec3(1.0), 0.6), ghost), 1.0);
+  guideNormal = vec4(n * 0.5 + 0.5, 1.0);
+  guideId = vec4(idColor, 1.0);
+  guideColor = vec4(mix(lit, mix(faded, vec3(1.0), 0.6), ghost), 1.0);
 }
 `;
 
@@ -89,6 +87,8 @@ vec3 inkFor(vec4 nearId, vec2 nearUv, bool outline) {
   return (!outline && fill < 0.3) ? DARK_PART_INK : INK;
 }
 
+${GUIDE_DIRECTIONS}
+
 void main() {
   vec4 here = texture2D(tId, vUv);
   bool empty = here.a < 0.5;
@@ -96,13 +96,11 @@ void main() {
   vec3 n = texture2D(tNormal, vUv).xyz * 2.0 - 1.0;
   float z = viewZ(vUv);
   float ink = 0.0;
-  vec3 inkColor = INK;
+  vec4 inkId = here;
+  vec2 inkUv = vUv;
+  bool inkOutline = false;
 
-  for (int r = 1; r <= 2; r++) {
-    for (int k = 0; k < 8; k++) {
-      float a = float(k) * 0.78539816;
-      vec2 uv = vUv + vec2(cos(a), sin(a)) * texel * float(r);
-      vec4 there = texture2D(tId, uv);
+${GUIDE_NEIGHBORS}      vec4 there = texture2D(tId, uv);
       bool none = there.a < 0.5;
 
       if (empty && none) continue;
@@ -126,10 +124,13 @@ void main() {
       bool hereNearer = !empty && (none || z <= viewZ(uv));
 
       ink = strength;
-      inkColor = hereNearer ? inkFor(here, vUv, outline) : inkFor(there, uv, outline);
+      inkId = hereNearer ? here : there;
+      inkUv = hereNearer ? vUv : uv;
+      inkOutline = outline;
     }
   }
 
+  vec3 inkColor = ink > 0.0 ? inkFor(inkId, inkUv, inkOutline) : INK;
   vec3 base = empty ? vec3(1.0) : texture2D(tColor, vUv).rgb;
   float alpha = empty ? ink : 1.0;
   vec3 rgb = empty ? inkColor : mix(base, inkColor, ink);
@@ -137,9 +138,6 @@ void main() {
   gl_FragColor = vec4(rgb * alpha, alpha);
 }
 `;
-
-export const normalMaterial = () =>
-  new THREE.ShaderMaterial({ vertexShader: SURFACE_VERTEX, fragmentShader: NORMAL_FRAGMENT, side: THREE.DoubleSide });
 
 export const idMaterial = () =>
   new THREE.ShaderMaterial({
@@ -153,7 +151,12 @@ export const toonMaterial = () =>
   new THREE.ShaderMaterial({
     vertexShader: SURFACE_VERTEX,
     fragmentShader: TOON_FRAGMENT,
-    uniforms: { color: { value: new THREE.Vector3(1, 1, 1) }, ghost: { value: 0 } },
+    glslVersion: THREE.GLSL3,
+    uniforms: {
+      idColor: { value: new THREE.Vector3() },
+      color: { value: new THREE.Vector3(1, 1, 1) },
+      ghost: { value: 0 },
+    },
     side: THREE.DoubleSide,
   });
 
@@ -170,6 +173,8 @@ export const compositeMaterial = () =>
       near: { value: 1 },
       far: { value: 1000 },
       depthEdge: { value: 2 },
+      neighborCount: { value: GUIDE_OFFSETS.length },
+      neighbors: { value: GUIDE_OFFSETS.map(([x, y]) => new THREE.Vector2(x, y)) },
     },
     depthTest: false,
     depthWrite: false,

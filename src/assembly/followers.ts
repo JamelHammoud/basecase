@@ -76,18 +76,31 @@ function assignFasteners(clamps: Clamps, skip: ReadonlySet<string>, pick: Pick):
 const reachesOf = (joints: RobotJoint[]): Reach[] =>
   joints.map((joint) => ({ joint, down: downstreamOf(joint, joints) }));
 
-export function fastenerCarriers(joints: RobotJoint[], clamps: Clamps): Map<string, string> {
-  const reaches = reachesOf(joints);
+interface Assignment {
+  reaches: Reach[];
+  listed: Set<string>;
+}
 
-  return assignFasteners(clamps, listedIds(joints), (clamped) => carrierOf(clamped, reaches));
+const assignmentOf = (joints: RobotJoint[]): Assignment => ({ reaches: reachesOf(joints), listed: listedIds(joints) });
+
+const carriersOf = (assignment: Assignment, clamps: Clamps) =>
+  assignFasteners(clamps, assignment.listed, (clamped) => carrierOf(clamped, assignment.reaches));
+
+function mountsOf(assignment: Assignment, clamps: Clamps, carried: Map<string, string>): Map<string, string> {
+  const skip = new Set([...assignment.listed, ...carried.keys()]);
+
+  return assignFasteners(clamps, skip, (clamped) => mountOf(clamped, assignment.reaches));
+}
+
+export function fastenerCarriers(joints: RobotJoint[], clamps: Clamps): Map<string, string> {
+  return carriersOf(assignmentOf(joints), clamps);
 }
 
 export function fastenerMounts(joints: RobotJoint[], clamps: Clamps): Map<string, string> {
-  const reaches = reachesOf(joints);
-  const carried = fastenerCarriers(joints, clamps);
-  const skip = new Set([...listedIds(joints), ...carried.keys()]);
+  const assignment = assignmentOf(joints);
+  const carried = carriersOf(assignment, clamps);
 
-  return assignFasteners(clamps, skip, (clamped) => mountOf(clamped, reaches));
+  return mountsOf(assignment, clamps, carried);
 }
 
 function byJoint(assigned: Map<string, string>): Map<string, string[]> {
@@ -101,8 +114,10 @@ function byJoint(assigned: Map<string, string>): Map<string, string[]> {
 export function withFastenerFollowers(joints: RobotJoint[], clamps: Clamps | null | undefined): RobotJoint[] {
   if (!clamps || !joints.length) return joints;
 
-  const moving = byJoint(fastenerCarriers(joints, clamps));
-  const fixed = byJoint(fastenerMounts(joints, clamps));
+  const assignment = assignmentOf(joints);
+  const carried = carriersOf(assignment, clamps);
+  const moving = byJoint(carried);
+  const fixed = byJoint(mountsOf(assignment, clamps, carried));
 
   if (!moving.size && !fixed.size) return joints;
 

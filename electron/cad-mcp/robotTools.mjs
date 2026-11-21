@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import { z } from 'zod';
 import { IK_GOAL, PREVIEW, ROBOT, ROOT, vec3 } from './schemas.mjs';
 import { VIEW, bridge, evidencePath, fail, text, withImages } from './shared.mjs';
+import { tendonSchema } from './tendonSchema.mjs';
 
 export const defineJoints = {
   name: 'define_joints',
@@ -17,6 +18,9 @@ export const defineJoints = {
       joints: z
         .array(
           z.object({
+            tendon: tendonSchema.describe(
+              'Ideal fixed tendon on this catalog motor spool. Signed terms name passive joints on the same robot. Units are mm/rad for hinges and mm/mm for sliders. Declare a fixed length or an elastic law. Null deletes the transmission. No routing or hardware accuracy is implied.',
+            ),
             id: z.string().regex(/^[a-z0-9_-]+$/),
             name: z.string().max(60).optional().describe('e.g. "Left Knee Pitch"'),
             type: z
@@ -33,6 +37,14 @@ export const defineJoints = {
               .describe(
                 'The joint this one is mounted on, when several joints share one link (a 2-DOF wrist: the second joint sits on the first)',
               ),
+            actuation: z
+              .enum(['powered', 'passive'])
+              .optional()
+              .describe(
+                'Passive joints move through gravity or contact and have no actuators. Omitted keeps legacy powered behavior.',
+              ),
+            damping: z.number().finite().nonnegative().optional().describe('Physical joint damping in SI units'),
+            frictionloss: z.number().finite().nonnegative().optional().describe('Physical joint friction in SI units'),
             actuators: z
               .array(z.string())
               .max(2)

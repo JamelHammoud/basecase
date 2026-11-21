@@ -10,6 +10,7 @@ export interface Box {
 
 export interface GuideScene {
   title: string;
+  boardPartId?: string;
   parts: ScenePart[];
   joints: RobotJoint[];
   boxes: Record<string, Box>;
@@ -18,7 +19,7 @@ export interface GuideScene {
   order?: { assembly: string[]; unproven: string[] };
 }
 
-export type GuideItemKind = 'printed' | 'bought' | 'hardware';
+export type GuideItemKind = 'printed' | 'bought' | 'hardware' | 'fabricated';
 
 export interface GuideItem {
   key: string;

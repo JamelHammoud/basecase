@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import type { RobotAnimation } from '../types/robotics';
 import type { PointOf } from './animationGoals';
-import { forwardKinematics, type Rig, type V3 } from './kinematics';
+import { type Rig, type V3 } from './kinematics';
+import { groundFeet } from './mocapGround';
 import { autoMapBones, KEYPOINT_LABELS, KEYPOINTS, type Keypoint, type Mocap } from './mocapBones';
 import { createRetargeter, type HumanFrame, type Retargeter, type RetargetStep } from './retargeter';
 import { soleRefs, type KeyMap, type RobotLandmarks } from './retargetRobot';
@@ -25,21 +26,6 @@ export interface RetargetResult {
 }
 
 const LIMB_KEYPOINT = /Knee|Ankle|Elbow|Wrist/;
-
-function groundFeet(rig: Rig, soles: Array<{ part: string; p: V3 }>, frames: RetargetStep[], near: number) {
-  const ground = Math.min(...frames.map((fr) => fr.lowestAnkle));
-
-  frames.forEach(({ keyframe: k, lowestAnkle: humanLow }) => {
-    const posed = forwardKinematics(rig, k);
-    const low = Math.min(
-      ...soles.map(
-        (s) => new THREE.Vector3(...s.p).applyMatrix4(posed.joint.get(rig.ownerOf.get(s.part)!) ?? posed.root).y,
-      ),
-    );
-
-    if (low < 0 || humanLow - ground < near) k.root!.position![1] = Math.round((k.root!.position![1] - low) * 10) / 10;
-  });
-}
 
 function averageErrors(frames: RetargetStep[], n: number): Partial<Record<Keypoint, number>> {
   const errSum: Partial<Record<Keypoint, number>> = {};

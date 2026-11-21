@@ -115,7 +115,7 @@ describe('shared mask row measurements', () => {
     expect(widths).toEqual([1]);
   });
 
-  it.each([300, 600])('reads each pixel once for every row-measurement consumer at %i rows', (height) => {
+  it.each([300, 600])('reads only row edges for every row-measurement consumer at %i rows', (height) => {
     const consumers = [
       (mask: Mask) => bandWidths(mask),
       (mask: Mask) => maskProfileOf(mask),
@@ -126,7 +126,7 @@ describe('shared mask row measurements', () => {
       const input = countedMask(40, height);
 
       expect(consume(input.mask)).not.toBeNull();
-      expect(input.reads()).toBe(40 * height);
+      expect(input.reads()).toBe(2 * height);
     }
   });
 

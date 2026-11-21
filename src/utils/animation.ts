@@ -19,13 +19,15 @@ const lerp = (a: number, b: number, u: number) => a + (b - a) * u;
 
 type Blend = (p0: number, p1: number, p2: number, p3: number) => number;
 
-const blendAt =
-  (u: number, smooth: boolean): Blend =>
-  (p0, p1, p2, p3) =>
-    smooth
-      ? 0.5 *
-        (2 * p1 + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u)
-      : lerp(p1, p2, u);
+function blendAt(u: number, smooth: boolean): Blend {
+  if (!smooth) return (_p0, p1, p2) => lerp(p1, p2, u);
+
+  const u2 = u * u;
+  const u3 = u2 * u;
+
+  return (p0, p1, p2, p3) =>
+    0.5 * (2 * p1 + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u2 + (-p0 + 3 * p1 - 3 * p2 + p3) * u3);
+}
 
 const D2R = Math.PI / 180;
 const quatOf = (r?: V3) =>
@@ -33,21 +35,33 @@ const quatOf = (r?: V3) =>
     new THREE.Euler((r?.[0] ?? 0) * D2R, (r?.[1] ?? 0) * D2R, (r?.[2] ?? 0) * D2R, 'XYZ'),
   );
 
-function blendRoot(ks: AnimationKeyframe[], blend: Blend, u: number): RootOffset | undefined {
-  if (ks.every((k) => !k.root)) return undefined;
+const rootAxis = (keyframe: AnimationKeyframe, axis: number) => keyframe.root?.position?.[axis] ?? 0;
 
-  const position = [0, 1, 2].map((i) =>
-    blend(
-      ks[0].root?.position?.[i] ?? 0,
-      ks[1].root?.position?.[i] ?? 0,
-      ks[2].root?.position?.[i] ?? 0,
-      ks[3].root?.position?.[i] ?? 0,
-    ),
-  ) as V3;
-  const q = quatOf(ks[1].root?.rotation).slerp(quatOf(ks[2].root?.rotation), u);
+function blendRotation(a: V3 | undefined, b: V3 | undefined, u: number): V3 {
+  if (!a && !b) return [-0, 0, -0];
+
+  const q = quatOf(a).slerp(quatOf(b), u);
   const e = new THREE.Euler().setFromQuaternion(q, 'XYZ');
 
-  return { position, rotation: [e.x / D2R, e.y / D2R, e.z / D2R] };
+  return [e.x / D2R, e.y / D2R, e.z / D2R];
+}
+
+function blendRootAxis(ks: AnimationKeyframe[], axis: number, blend: Blend, smooth: boolean): number {
+  if (!smooth) return blend(0, rootAxis(ks[1], axis), rootAxis(ks[2], axis), 0);
+
+  return blend(rootAxis(ks[0], axis), rootAxis(ks[1], axis), rootAxis(ks[2], axis), rootAxis(ks[3], axis));
+}
+
+function blendRoot(ks: AnimationKeyframe[], blend: Blend, u: number, smooth: boolean): RootOffset | undefined {
+  if (ks.every((k) => !k.root)) return undefined;
+
+  const position: V3 = [
+    blendRootAxis(ks, 0, blend, smooth),
+    blendRootAxis(ks, 1, blend, smooth),
+    blendRootAxis(ks, 2, blend, smooth),
+  ];
+
+  return { position, rotation: blendRotation(ks[1].root?.rotation, ks[2].root?.rotation, u) };
 }
 
 interface Span {
@@ -92,23 +106,33 @@ export function sampleAnimation(anim: RobotAnimation, t: number): RobotPoseState
   const u = span > 0 ? Math.min(Math.max((time - a.t) / span, 0), 1) : 0;
   const n = ks.length;
   const at = (k: number) => (anim.loop ? ks[((k % n) + n) % n] : ks[Math.min(Math.max(k, 0), n - 1)]);
-  const blend = blendAt(u, anim.interpolation === 'smooth');
+  const smooth = anim.interpolation === 'smooth';
+  const blend = blendAt(u, smooth);
   const around = [at(i - 1), a, b, at(wraps ? 1 : i + 2)];
   const values: JointValues = {};
+  const channel = smooth
+    ? (id: string) => blendChannel(around, id, blend)
+    : (id: string) => lerp(a.values[id], b.values[id] ?? a.values[id], u);
 
   for (const id of Object.keys(a.values)) {
-    values[id] = blend(
-      around[0].values[id] ?? a.values[id],
-      a.values[id],
-      b.values[id] ?? a.values[id],
-      around[3].values[id] ?? a.values[id],
-    );
+    values[id] = channel(id);
   }
 
   return {
     values,
-    root: blendRoot(around, blend, u),
+    root: blendRoot(around, blend, u, smooth),
   };
+}
+
+function blendChannel(around: AnimationKeyframe[], id: string, blend: Blend) {
+  const a = around[1];
+
+  return blend(
+    around[0].values[id] ?? a.values[id],
+    a.values[id],
+    around[2].values[id] ?? a.values[id],
+    around[3].values[id] ?? a.values[id],
+  );
 }
 
 export interface KeyframeSpec {
@@ -218,8 +242,20 @@ export function buildKeyframes(
   return { keyframes: out, notes: run.notes, ikError: run.ikError };
 }
 
+export function animationJointIds(keyframes: readonly AnimationKeyframe[]): Set<string> {
+  const ids = new Set<string>();
+
+  for (const keyframe of keyframes) {
+    for (const id in keyframe.values) {
+      if (Object.hasOwn(keyframe.values, id)) ids.add(id);
+    }
+  }
+
+  return ids;
+}
+
 export function animatedJoints(anim: RobotAnimation, joints: RobotJoint[]): RobotJoint[] {
-  const ids = new Set(anim.keyframes.flatMap((k) => Object.keys(k.values)));
+  const ids = animationJointIds(anim.keyframes);
 
   return joints.filter((j) => ids.has(j.id));
 }

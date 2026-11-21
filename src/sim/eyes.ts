@@ -115,12 +115,15 @@ export function compactEye(eye: Eye, body: number): Compact {
   const dirs: number[] = [];
 
   for (let i = 0; i < eyeRays(eye); i++) {
-    const d = eye.dirs.slice(i * 3, i * 3 + 3);
+    const at = i * 3;
+    const x = eye.dirs[at];
+    const y = eye.dirs[at + 1];
+    const z = eye.dirs[at + 2];
 
-    if (d[0] === 0 && d[1] === 0 && d[2] === 0) continue;
+    if (x === 0 && y === 0 && z === 0) continue;
 
     index.push(i);
-    dirs.push(...d);
+    dirs.push(x, y, z);
   }
 
   return {

@@ -48,7 +48,13 @@ const dist = (a: V3, b: V3) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2])
 function mismatch(p: Port, ports: Port[]): number {
   let best = Infinity;
 
-  for (const q of ports) best = Math.min(best, dist(p.position, q.position) + AXIS_WEIGHT * dist(p.axis, q.axis));
+  for (const q of ports) {
+    const positionError = dist(p.position, q.position);
+
+    if (positionError > best) continue;
+
+    best = Math.min(best, positionError + AXIS_WEIGHT * dist(p.axis, q.axis));
+  }
 
   return best;
 }
@@ -60,9 +66,17 @@ function planeOffset(ports: Port[], j: MirrorAxis): number {
 
   if (!ports.length) return 0;
 
-  const values = ports.map((p) => p.position[j]);
+  let min = Infinity;
+  let max = -Infinity;
 
-  return (Math.min(...values) + Math.max(...values)) / 2;
+  for (const port of ports) {
+    const value = port.position[j];
+
+    min = Math.min(min, value);
+    max = Math.max(max, value);
+  }
+
+  return (min + max) / 2;
 }
 
 function symmetryScore(groups: PortGroup[], j: MirrorAxis, c: number): number {

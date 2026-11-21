@@ -1,3 +1,4 @@
+import { useAssignmentOpening } from './useAssignmentOpening';
 import type { SceneWorkspaceProps } from './types';
 import { useAgentSession } from './useAgentSession';
 import { useCanvasDrop } from './useCanvasDrop';
@@ -42,6 +43,7 @@ export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspa
   useMenuCommands({ active, core, actions, ui });
   useDevStudioHook({ active, core, actions, agent, routeFiles: drop.routeFiles });
   useOpeningCase({ seed, core, active });
+  useAssignmentOpening(core, active);
   useRobotGhost({
     rig: core.posing.rig,
     parts: core.parts,

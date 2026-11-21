@@ -15,6 +15,8 @@ export interface FindingActions {
 }
 
 export interface FindingContext {
+  readOnly?: boolean;
+  focusedCheck?: string;
   parts: ScenePart[];
   panScroll: boolean;
   actions: FindingActions;
@@ -23,7 +25,12 @@ export interface FindingContext {
   showDots?: (check: string | null) => void;
 }
 
-const FIX_LABELS: Record<string, string> = { 'new-case': 'New Case', 'replay-fall': 'Replay in Sim' };
+const FIX_LABELS: Record<string, string> = {
+  'new-case': 'New Case',
+  'replay-fall': 'Replay in Sim',
+  parameters: 'Edit Parameters',
+  'cable-route': 'Edit Route',
+};
 
 function useFindingMenu(finding: ReadinessFinding, actions: FindingActions) {
   const [at, setAt] = useState<{ x: number; y: number } | null>(null);
@@ -43,7 +50,7 @@ function useFindingMenu(finding: ReadinessFinding, actions: FindingActions) {
 }
 
 const fixOf = (finding: ReadinessFinding, actions: FindingActions) =>
-  finding.fix ? actions.onApplyFix?.[finding.fix.kind] : actions.onFix;
+  finding.fix && finding.fix.kind !== 'parameters' ? actions.onApplyFix?.[finding.fix.kind] : actions.onFix;
 
 const FixButton: React.FC<{ finding: ReadinessFinding; fix: (finding: ReadinessFinding) => void }> = ({
   finding,
@@ -85,7 +92,7 @@ export const BlockerRow: React.FC<FindingRowProps> = ({ finding, context, childr
     <li
       data-finding={finding.key}
       className="flex items-start gap-2 py-1.5 pl-[31px] pr-[7px]"
-      onContextMenu={onContextMenu}
+      onContextMenu={context.readOnly ? undefined : onContextMenu}
     >
       <FindingText finding={finding} context={context}>
         {children}
@@ -104,7 +111,7 @@ export const NoteRow: React.FC<FindingRowProps> = ({ finding, context, children 
     <li
       data-finding={finding.key}
       className="group relative py-1.5 pl-[31px] pr-[7px] rounded-lg hover:bg-[#333333]"
-      onContextMenu={onContextMenu}
+      onContextMenu={context.readOnly ? undefined : onContextMenu}
     >
       <FindingText finding={finding} context={context} muted>
         {children}

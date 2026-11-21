@@ -15,6 +15,7 @@ import type { InspectorProps } from './types';
 import { ManufacturingSection } from './ManufacturingSection';
 import { useSheetProfile } from './useSheetProfile';
 import { sheetOf } from '../../sheet/materials';
+import { BoardSection } from './BoardSection';
 
 type PartInspectorProps = InspectorProps & { part: ScenePart };
 
@@ -70,6 +71,15 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
       <PositionSection {...props} />
 
       <RotationSection part={part} onUpdate={onUpdate} />
+
+      <BoardSection
+        board={props.board}
+        onChange={props.onUpdateBoard}
+        onArrange={props.onArrangeBoard}
+        onImport={props.onImportBoard}
+        onRoute={props.onRouteBoard}
+        partId={part.id}
+      />
 
       {styled && !hw && (
         <>

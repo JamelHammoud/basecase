@@ -4,21 +4,37 @@ const isDivider = (entry: ContextMenuEntry) => 'divider' in entry;
 
 const isDanger = (entry: ContextMenuEntry) => 'tone' in entry && entry.tone === 'danger';
 
-function tidyDividers(entries: ContextMenuEntry[]): ContextMenuEntry[] {
-  const kept = entries.filter((entry, i) => !isDivider(entry) || (i > 0 && !isDivider(entries[i - 1])));
-
-  while (kept.length && isDivider(kept[0])) kept.shift();
-
-  while (kept.length && isDivider(kept[kept.length - 1])) kept.pop();
-
-  return kept;
-}
-
 export function arrangeMenu(entries: ContextMenuEntry[]): ContextMenuEntry[] {
-  const rest = tidyDividers(entries.filter((entry) => !isDanger(entry)));
-  const danger = entries.filter(isDanger);
+  const rest: ContextMenuEntry[] = [];
+  const danger: ContextMenuEntry[] = [];
+  let pendingDivider: ContextMenuEntry | undefined;
+
+  for (const entry of entries) {
+    if (isDanger(entry)) {
+      danger.push(entry);
+
+      continue;
+    }
+
+    if (isDivider(entry)) {
+      pendingDivider ??= rest.length ? entry : undefined;
+
+      continue;
+    }
+
+    if (pendingDivider) rest.push(pendingDivider);
+
+    pendingDivider = undefined;
+    rest.push(entry);
+  }
 
   if (!danger.length) return rest;
 
-  return rest.length ? [...rest, { divider: true }, ...danger] : danger;
+  if (!rest.length) return danger;
+
+  rest.push({ divider: true });
+
+  for (const entry of danger) rest.push(entry);
+
+  return rest;
 }

@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { diffStrings, isScanned } from './copy/budget.mjs';
+import { formatSourceContext, sourceContext } from './copy/context.mjs';
 import { extractStrings } from './copy/extract.mjs';
 
 export const stringsOf = (file, source) =>
@@ -29,21 +30,36 @@ function pairByKind(removed, added) {
 }
 
 export function diffCopy(files) {
-  const result = { added: [], changed: [], removed: [] };
-
-  for (const { file, before = null, after = null, renamedFrom = file } of files) {
+  const local = files.map(({ file, renamedFrom = file, before = null, after = null }) => {
     const old = stringsOf(renamedFrom, before);
     const now = stringsOf(file, after);
-    const { added, removed } = diffStrings(old, now);
-    const paired = pairByKind(removed, added);
+
+    return { ...diffStrings(old, now), net: now.length - old.length };
+  });
+  const remaining = diffStrings(
+    local.flatMap((diff) => diff.removed),
+    local.flatMap((diff) => diff.added),
+  );
+  const result = { added: [], changed: [], removed: [] };
+
+  for (const { file, renamedFrom = file } of files) {
+    const paired = pairByKind(
+      remaining.removed.filter((item) => item.file === renamedFrom),
+      remaining.added.filter((item) => item.file === file),
+    );
 
     result.added.push(...paired.added);
     result.changed.push(...paired.changed);
     result.removed.push(...paired.removed);
   }
 
-  return { ...result, net: result.added.length - result.removed.length };
+  return { ...result, net: local.reduce((net, diff) => net + diff.net, 0) };
 }
+
+export const copyOccurrences = ({ added, changed, removed }) => ({
+  added: [...added, ...changed.map(({ after }) => after)],
+  removed: [...removed, ...changed.map(({ before }) => before)],
+});
 
 const signed = (n) => (n > 0 ? `+${n}` : String(n));
 
@@ -52,14 +68,19 @@ export const copySummary = ({ added, changed, removed, net }) =>
 
 const at = ({ file, line }) => `${file}:${line}`;
 
-export function formatCopyDiff(diff) {
+export function formatCopyDiff(diff, { reasons, contextBudget } = {}) {
+  const missing = diff.net > 0 ? 'MISSING' : 'not required at this net';
+  const reason = (s) => (reasons ? `  (why: ${reasons.get(s.text) ?? missing})` : '');
   const lines = [
-    ...diff.added.map((s) => `+ "${s.text}"  ${at(s)}`),
-    ...diff.changed.map(({ before, after }) => `~ "${before.text}" → "${after.text}"  ${at(after)}`),
+    ...diff.added.map((s) => `+ "${s.text}"  ${at(s)}${reason(s)}`),
+    ...diff.changed.map(({ before, after }) => `~ "${before.text}" → "${after.text}"  ${at(after)}${reason(after)}`),
     ...diff.removed.map((s) => `- "${s.text}"  ${at(s)}`),
   ];
 
-  return [...lines, ...(lines.length > 0 ? [''] : []), copySummary(diff)].join('\n');
+  return (
+    [...lines, ...(lines.length > 0 ? [''] : []), copySummary(diff)].join('\n') +
+    formatSourceContext(diff.context, contextBudget)
+  );
 }
 
 function git(cwd, args, { allowFail = false } = {}) {
@@ -111,7 +132,22 @@ export function scannedSources({ cwd = process.cwd(), base = 'origin/main', head
     }));
 }
 
-export const copyDiffOfRange = (range = {}) => diffCopy(scannedSources(range));
+export function copyDiffOfRange(range = {}) {
+  const sources = scannedSources(range);
+  const diff = diffCopy(sources);
+
+  let context;
+
+  Object.defineProperty(diff, 'context', {
+    get() {
+      context ??= sourceContext(sources, copyOccurrences(diff).added);
+
+      return context;
+    },
+  });
+
+  return diff;
+}
 
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
 

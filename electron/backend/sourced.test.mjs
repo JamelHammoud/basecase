@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { addSourcedItem } from '../cad-mcp/readinessTools.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -30,6 +32,55 @@ describe('sourced items', () => {
 
     expect(saved.link.status).toBe('confirmed');
     expect(listSourced(dir).map((x) => x.id)).toEqual(['maker-thing']);
+  });
+
+  it('preserves exact supplier identity and its conversion through storage, and clears it on a changed product link', async () => {
+    const supplierIdentity = {
+      supplier: 'DigiKey',
+      supplierPartNumber: 'T-1-CT-ND',
+      orderingUnit: 'piece',
+      unitsPerOrder: 1,
+      sourceUrl: 'https://supplier.example/t-1',
+    };
+
+    await saveSourced(dir, z.object(addSourcedItem.config.inputSchema).parse({ ...item, supplierIdentity }), fetcher);
+    expect(listSourced(dir)[0].supplierIdentity).toEqual(supplierIdentity);
+    await saveSourced(dir, item, fetcher);
+    expect(listSourced(dir)[0].supplierIdentity).toEqual(supplierIdentity);
+    await saveSourced(dir, { ...item, url: 'https://other.example/t-1' }, fetcher);
+    expect(listSourced(dir)[0].supplierIdentity).toBeUndefined();
+  });
+
+  it('refuses a non-HTTPS identity source and retains unknown conversion as unknown', async () => {
+    await expect(
+      saveSourced(dir, { ...item, supplierIdentity: { sourceUrl: 'file:///etc/passwd' } }, fetcher),
+    ).rejects.toThrow('https');
+
+    const saved = await saveSourced(
+      dir,
+      { ...item, supplierIdentity: { supplier: 'DigiKey', unitsPerOrder: -4 } },
+      fetcher,
+    );
+
+    expect(saved.supplierIdentity.unitsPerOrder).toBeUndefined();
+  });
+
+  it('refuses a non-HTTPS identity source and leaves an unknown conversion blank', async () => {
+    await expect(
+      saveSourced(dir, { ...item, supplierIdentity: { sourceUrl: 'file:///etc/passwd' } }, fetcher),
+    ).rejects.toThrow('https');
+
+    const saved = await saveSourced(
+      dir,
+      {
+        ...item,
+        supplierIdentity: { supplier: 'Maker', supplierPartNumber: 'T-1', orderingUnit: 'pack', unitsPerOrder: -1 },
+      },
+      fetcher,
+    );
+
+    expect(saved.supplierIdentity.unitsPerOrder).toBeUndefined();
+    expect(listSourced(dir)[0].supplierIdentity.unitsPerOrder).toBeUndefined();
   });
 
   it('refuses a price date that is not YYYY-MM-DD', async () => {

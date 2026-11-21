@@ -1,3 +1,4 @@
+import type { PurchaseIdentity } from '../types/purchasing';
 import type { ListPrice } from '../data/listPrices';
 import type { EnteredPrice, PrintMaterial, PrintQuote, PurchaseRecord } from '../types/robotics';
 
@@ -29,6 +30,7 @@ export const BOM_CATEGORIES: BomCategory[] = [
 ];
 
 export interface BomLine {
+  identity?: PurchaseIdentity;
   key: string;
   category: BomCategory;
   name: string;

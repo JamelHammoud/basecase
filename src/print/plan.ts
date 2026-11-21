@@ -2,9 +2,10 @@ import * as THREE from 'three';
 import type { PrinterSetup } from '../data/printers';
 import { sameDirection, type PrintPose, type PrintShape, type Vec3 } from '../three/printability';
 import type { PartPrint, PrintMaterial } from '../types/robotics';
-import { bedSizeText, fitOnBed, type Bed } from './bed';
+import { bedSizeText, fitOnBed, heightFits, placementFits, type Bed } from './bed';
 import { sizeLabel } from '../utils/size';
 import { packPlates, type PackItem } from './pack';
+import { materialGroups } from './materialGroups';
 
 export interface PrintCheck {
   pose: PrintPose;
@@ -67,8 +68,8 @@ export interface PrintPlan {
 export const poseScore = (pose: PrintPose, fits: boolean) =>
   (fits ? 0 : 1e12) + pose.supportMm3 - pose.contactMm2 * 0.5 + pose.size[2] * 0.01;
 
-function overridePose(shape: PrintShape, down?: Vec3) {
-  return down ? shape.poses.find((p) => sameDirection(p.down, down)) : undefined;
+function overridePoseIndex(shape: PrintShape, down?: Vec3) {
+  return down ? shape.poses.findIndex((p) => sameDirection(p.down, down)) : -1;
 }
 
 function splitNote(size: Vec3, bed: Bed) {
@@ -78,23 +79,54 @@ function splitNote(size: Vec3, bed: Bed) {
   return `${sizeLabel(sorted)} is larger than the ${bed.name} plate (${bedSizeText(bed)}). Split it into ${pieces} pieces along its longest side, joined with dowels or screws.`;
 }
 
-export function choosePose(shape: PrintShape, bed: Bed, print?: PartPrint): PrintCheck {
-  const forced = overridePose(shape, print?.down);
-  const candidates = forced ? [forced] : shape.poses.filter((p) => !p.requested);
-  const scored = candidates.map((pose) => {
-    const fit = fitOnBed(pose.size[0], pose.size[1], pose.size[2], bed);
+function fitFailure(size: Vec3, bed: Bed, print?: PartPrint): string {
+  if (bed.unsupported)
+    return 'This printer has obstacle geometry Basecase cannot check. Use the slicer to arrange this plate.';
 
-    return { pose, fit, score: poseScore(pose, !!fit) };
-  });
-  const best = scored.reduce((a, b) => (b.score < a.score ? b : a));
-  const { pose, fit } = best;
+  if (bed.obstacleKey || bed.margin || print?.at)
+    return 'Keep the part and its brim inside the plate and clear of printer obstacles.';
+
+  return splitNote(size, bed);
+}
+
+function poseFit(pose: PrintPose, bed: Bed, print?: PartPrint) {
+  if (!print?.at || !print.plate) return fitOnBed(pose.size[0], pose.size[1], pose.size[2], bed);
+
+  const [w, d] = print.turned ? [pose.size[1], pose.size[0]] : pose.size;
+  const rect = { x: print.at[0], y: print.at[1], w, d };
+
+  return heightFits(pose.size[2], bed) && placementFits(rect, bed) ? { yaw: print.turned ? 90 : 0, spot: rect } : null;
+}
+
+export function choosePose(shape: PrintShape, bed: Bed, print?: PartPrint): PrintCheck {
+  const forced = overridePoseIndex(shape, print?.down);
+  const first = forced >= 0 ? forced : shape.poses.findIndex((p) => !p.requested);
+  const end = forced >= 0 ? first + 1 : shape.poses.length;
+  let pose = shape.poses[first];
+  let fit = poseFit(pose, bed, print);
+  let score = poseScore(pose, !!fit);
+
+  for (let i = first + 1; i < end; i++) {
+    const candidate = shape.poses[i];
+
+    if (candidate.requested) continue;
+
+    const candidateFit = poseFit(candidate, bed, print);
+    const candidateScore = poseScore(candidate, !!candidateFit);
+
+    if (candidateScore < score) {
+      pose = candidate;
+      fit = candidateFit;
+      score = candidateScore;
+    }
+  }
 
   return {
     pose,
     size: pose.size,
     fits: !!fit,
     yaw: fit?.yaw,
-    fitNote: fit ? undefined : splitNote(pose.size, bed),
+    fitNote: fit ? undefined : fitFailure(pose.size, bed, print),
     overhangMm2: pose.overhangMm2,
     supportMm3: pose.supportMm3,
     contactMm2: pose.contactMm2,
@@ -107,7 +139,13 @@ export function choosePose(shape: PrintShape, bed: Bed, print?: PartPrint): Prin
 const MAPPING = new THREE.Matrix4().set(1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1);
 
 export function bedMatrixOf(plates: Plate[], id: string): number[] {
-  return plates.flatMap((p) => p.items).find((it) => it.id === id)?.matrix ?? [...MAPPING.elements];
+  for (const plate of plates) {
+    const item = plate.items.find((it) => it.id === id);
+
+    if (item) return item.matrix ?? [...MAPPING.elements];
+  }
+
+  return [...MAPPING.elements];
 }
 
 export function itemMatrix(
@@ -224,13 +262,17 @@ function materialPlates(group: MaterialPlan, bed: Bed, first: number, settings: 
 
 export function buildPrintPlan(inputs: PlanInput[], setup: PrinterSetup, bed: Bed, settings: string): PrintPlan {
   const placeable = inputs.filter((i) => i.check.fits && !i.print?.skip);
-  const materials = [...new Set(placeable.map((i) => i.material))];
   const plates: Plate[] = [];
 
-  for (const material of materials) {
-    const group = { material, inputs: placeable.filter((i) => i.material === material) };
-
-    plates.push(...materialPlates(group, bed, plates.length + 1, `${setup.model.id}|${setup.nozzle}|${settings}`));
+  for (const [material, inputs] of materialGroups(placeable)) {
+    plates.push(
+      ...materialPlates(
+        { material, inputs },
+        bed,
+        plates.length + 1,
+        `${setup.model.id}|${setup.nozzle}|${settings}${bed.obstacleKey ? `|${bed.obstacleKey}` : ''}`,
+      ),
+    );
   }
 
   plates.sort((a, b) => stepRank(a) - stepRank(b) || a.number - b.number);

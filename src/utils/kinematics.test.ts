@@ -74,6 +74,61 @@ describe('forwardKinematics', () => {
   });
 });
 
+describe('solveIK residual reporting', () => {
+  it.each([0, 1, 40])('reports the accepted pose residuals after %i iterations', (iterations) => {
+    const { rig } = arm();
+    const root = { position: [10, 20, 30] as V3, rotation: [20, 30, 40] as V3 };
+    const targets = [
+      { partId: 'fore', point: [200, 0, 0] as V3, target: [120, 90, 30] as V3 },
+      { partId: 'upper', point: [50, 0, 0] as V3, target: [40, 40, 30] as V3, weight: 0.1 },
+      { partId: 'missing', point: [0, 0, 0] as V3, target: [10, 30, 30] as V3 },
+    ];
+    const result = solveIK(rig, { elbow: 20 }, targets, { iterations, root });
+    const posed = forwardKinematics(rig, { values: result.values, root });
+    const errors = targets.map((t) =>
+      new THREE.Vector3(...t.point)
+        .applyMatrix4(partMotion(rig, posed, t.partId) ?? posed.root)
+        .distanceTo(new THREE.Vector3(...t.target)),
+    );
+
+    expect(result.errors).toEqual(errors);
+    expect(result.maxError).toBe(Math.max(...errors));
+  });
+
+  it.each([300, 600])('transforms %i stationary targets once per solve', (size) => {
+    const rig = buildRig([], []);
+    const targets = Array.from({ length: size }, (_, i) => ({
+      partId: 'missing',
+      point: [i, 0, 0] as V3,
+      target: [i, i, 0] as V3,
+    }));
+    const transform = vi.spyOn(THREE.Vector3.prototype, 'applyMatrix4');
+
+    try {
+      const result = solveIK(rig, {}, targets);
+
+      expect(result.errors).toEqual(targets.map((_, i) => i));
+      expect(result.maxError).toBe(size - 1);
+      expect(transform).toHaveBeenCalledTimes(size);
+    } finally {
+      transform.mockRestore();
+    }
+  });
+
+  it('keeps empty and nonfinite residual summaries', () => {
+    const rig = buildRig([], []);
+
+    expect(solveIK(rig, {}, [])).toEqual({ values: {}, errors: [], maxError: 0 });
+
+    for (const value of [Infinity, NaN]) {
+      const result = solveIK(rig, {}, [{ partId: 'missing', point: [0, 0, 0], target: [value, 0, 0] }]);
+
+      expect(result.errors).toEqual([value]);
+      expect(result.maxError).toBe(value);
+    }
+  });
+});
+
 describe('solveIK', () => {
   it('reaches a reachable target', () => {
     const { rig } = arm();
@@ -180,6 +235,33 @@ describe('solveIK', () => {
       arrays.mockRestore();
       typed.mockRestore();
     }
+  });
+});
+
+describe('IK trial step limits', () => {
+  it.each([
+    [3, -6],
+    [15, -15],
+    [30, -60],
+    [-90, 30],
+    [0, 45],
+  ])('scales the whole IK step for requested changes %i and %i', (x, y) => {
+    const parts = [part('base', [0, 0, 0]), part('upper', [0, 0, 0]), part('fore', [0, 0, 0])];
+    const joints = [
+      joint('x', { type: 'prismatic', parent: ['base'], child: ['upper'], axis: [1, 0, 0] }),
+      joint('y', { type: 'prismatic', parent: ['upper'], child: ['fore'], axis: [0, 1, 0] }),
+    ];
+    const rig = buildRig(joints, parts);
+    const target: V3 = [3 * x, 3 * y, 0];
+    const scale = Math.min(1, 15 / Math.max(Math.abs(x), Math.abs(y)));
+    const res = solveIK(rig, {}, [{ partId: 'fore', point: [0, 0, 0], target }], {
+      iterations: 1,
+      preferWeight: 0,
+    });
+
+    expect(res.values.x).toBeCloseTo(x * scale, 12);
+    expect(res.values.y).toBeCloseTo(y * scale, 12);
+    expect(res.maxError).toBeCloseTo(Math.hypot(target[0] - x * scale, target[1] - y * scale), 12);
   });
 });
 

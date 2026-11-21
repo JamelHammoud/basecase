@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { conjugateGradient, multiplyBlocks, type ElasticSystem } from './cg';
 import { assembleElastic, elasticPattern } from './elasticPattern';
 import { hexElement } from './hexElement';
@@ -69,6 +69,34 @@ describe('elastic conjugate gradients', () => {
       }
   });
 
+  it('solves independently pinned axes without temporary block views or inverse arrays', () => {
+    const { system, force } = fixture(LAYERED.PETG!, true, 0);
+    const desired = Float64Array.from(system.fixed, (_, i) => Math.sin(i * 0.7) * 0.01);
+
+    system.fixed.forEach((_, i) => {
+      system.fixed[i] = Number(i % 7 === 0 || i < 9);
+      desired[i] = system.fixed[i] ? 0 : desired[i];
+    });
+    multiplyBlocks(assembleElastic(system.pattern, system.scale, system.stiffness), desired, force);
+
+    const views = vi.spyOn(Float64Array.prototype, 'subarray');
+    const copies = vi.spyOn(Float64Array.prototype, 'set');
+    let result;
+
+    try {
+      result = conjugateGradient(system, force, { tolerance: 1e-10, maxIterations: 600 });
+      expect(views).not.toHaveBeenCalled();
+      expect(copies).not.toHaveBeenCalled();
+    } finally {
+      views.mockRestore();
+      copies.mockRestore();
+    }
+
+    expect(result.residual).toBeLessThan(1e-10);
+    result.u.forEach((value, i) => expect(value).toBeCloseTo(desired[i], 8));
+    expect(residualOf(system, force, result.u)).toBeCloseTo(result.residual, 12);
+  });
+
   it('reports truncated solves and preserves the stopping threshold', () => {
     const { system, force } = fixture(LAYERED.PLA!, false, 0);
 
@@ -85,6 +113,14 @@ describe('elastic conjugate gradients', () => {
       iterations: 0,
       residual: 1,
     });
+
+    const first = conjugateGradient(system, force, { tolerance: 0, maxIterations: 1 });
+
+    expect(conjugateGradient(system, force, { tolerance: first.residual, maxIterations: 600 })).toEqual(first);
+
+    const converged = conjugateGradient(system, force, { tolerance: 1e-10, maxIterations: 600 });
+
+    expect(conjugateGradient(system, force, { tolerance: 0, maxIterations: converged.iterations })).toEqual(converged);
   });
 
   it('solves empty, unloaded and fully fixed systems without non-finite results', () => {

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { remappedTendon } from '../joints/tendonReferences';
 import type { RobotJoint, RobotPoseState, RootOffset, ScenePart } from '../types/robotics';
 import { isZeroRoot, partMatrix, robotRootOffset } from './kinematicsMotion';
 import { buildRig, type Rig, type RobotGroup } from './kinematicsRig';
@@ -138,6 +139,7 @@ export function uniqueJointIds(joints: RobotJoint[], taken: Iterable<string> = [
               ...j,
               id,
               parentJoint: j.parentJoint && rename.has(j.parentJoint) ? rename.get(j.parentJoint) : j.parentJoint,
+              ...remappedTendon(j.tendon, (id) => rename.get(id) ?? id),
               ...(j.loop && rename.has(j.loop.driver)
                 ? { loop: { ...j.loop, driver: rename.get(j.loop.driver)! } }
                 : {}),

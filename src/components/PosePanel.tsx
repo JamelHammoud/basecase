@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ContextMenu, ContextMenuEntry, Section, deleteEntry, useScrollFade } from '../design-system';
+import { ContextMenu, ContextMenuEntry, MenuItem, Section, deleteEntry, useScrollFade } from '../design-system';
 import type { RobotJoint } from '../types/robotics';
 import { jointGroups, jointRowLabels } from '../utils/jointNames';
 import type { Posing } from '../utils/usePosing';
@@ -9,10 +9,18 @@ import { JointRow } from './pose/JointRow';
 import { PosesSection } from './pose/PosesSection';
 import { SkeletonSection } from './pose/SkeletonSection';
 import type { SkeletonEdit } from '../workspace/useSkeletonEdit';
+import type { HandJoints } from '../workspace/useHandJoints';
+import { TendonEditor } from './pose/TendonEditor';
 
 export interface JointEdits {
+  setActuation: (id: string, actuation: NonNullable<RobotJoint['actuation']>) => void;
   remove: (id: string) => void;
   setRange: (id: string, range: [number, number], live?: boolean) => void;
+  tendonMotor: HandJoints['tendonMotor'];
+  editTendon: HandJoints['editTendon'];
+  saveTendon: HandJoints['saveTendon'];
+  deleteTendon: HandJoints['deleteTendon'];
+  closeTendon: HandJoints['closeTendon'];
 }
 
 interface PosePanelProps {
@@ -27,9 +35,30 @@ interface PosePanelProps {
 }
 
 const jointMenu = (j: RobotJoint, edits: JointEdits): ContextMenuEntry[] => [
+  ...(j.type === 'revolute' && j.actuation !== 'passive' && j.actuators?.length
+    ? [{ label: 'Edit Tendon', onSelect: () => edits.editTendon(j.id) }]
+    : []),
   {
     label: 'Range',
     submenu: () => <JointRangeFields joint={j} onChange={(range, live) => edits.setRange(j.id, range, live)} />,
+  },
+  {
+    label: 'Actuation',
+    submenu: (close) => (
+      <>
+        {(['powered', 'passive'] as const).map((actuation) => (
+          <MenuItem
+            key={actuation}
+            checked={(j.actuation ?? 'powered') === actuation}
+            label={actuation === 'passive' ? 'Passive' : 'Powered'}
+            onSelect={() => {
+              edits.setActuation(j.id, actuation);
+              close();
+            }}
+          />
+        ))}
+      </>
+    ),
   },
   deleteEntry(() => edits.remove(j.id)),
 ];
@@ -47,6 +76,7 @@ export const PosePanel: React.FC<PosePanelProps> = ({
   const { activeJointId } = posing;
   const rig = posing.robot?.rig ?? null;
   const pose = posing.robot?.pose;
+  const tendonMotor = posing.rig.byId.get(jointEdits.tendonMotor ?? '');
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const groups = useMemo(
     () => (rig ? jointGroups(rig) : []).map((g) => ({ ...g, rowLabels: jointRowLabels(g.joints, g.label) })),
@@ -150,6 +180,16 @@ export const PosePanel: React.FC<PosePanelProps> = ({
       </div>
 
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
+      {tendonMotor && (
+        <TendonEditor
+          key={tendonMotor.id}
+          motor={tendonMotor}
+          outputs={(rig?.joints ?? []).filter((j) => j.actuation === 'passive' && j.type !== 'fixed' && !j.loop)}
+          onSave={(tendon) => jointEdits.saveTendon(tendonMotor.id, tendon)}
+          onDelete={() => jointEdits.deleteTendon(tendonMotor.id)}
+          onClose={jointEdits.closeTendon}
+        />
+      )}
     </div>
   );
 };

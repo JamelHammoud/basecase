@@ -13,10 +13,14 @@ export function halfExtents(p: ScenePart): [number, number, number] {
     return bounds.min.map((value, axis) => (bounds.max[axis] - value) / 2) as [number, number, number];
   }
 
-  const h = [p.dimensions.width / 2, p.dimensions.height / 2, p.dimensions.depth / 2];
-  const [x, y, z] = p.rotation.map((d) => (d * Math.PI) / 180);
+  const hx = p.dimensions.width / 2;
+  const hy = p.dimensions.height / 2;
+  const hz = p.dimensions.depth / 2;
+  const x = (p.rotation[0] * Math.PI) / 180;
+  const y = (p.rotation[1] * Math.PI) / 180;
+  const z = (p.rotation[2] * Math.PI) / 180;
 
-  if (x === 0 && y === 0 && z === 0) return [h[0], h[1], h[2]];
+  if (x === 0 && y === 0 && z === 0) return [hx, hy, hz];
 
   const a = Math.cos(x),
     b = Math.sin(x),
@@ -24,16 +28,11 @@ export function halfExtents(p: ScenePart): [number, number, number] {
     d = Math.sin(y),
     e = Math.cos(z),
     f = Math.sin(z);
-  const m = [
-    [c * e, -c * f, d],
-    [a * f + b * e * d, a * e - b * f * d, -b * c],
-    [b * f - a * e * d, b * e + a * f * d, a * c],
-  ];
 
-  return m.map((row) => Math.abs(row[0]) * h[0] + Math.abs(row[1]) * h[1] + Math.abs(row[2]) * h[2]) as [
-    number,
-    number,
-    number,
+  return [
+    Math.abs(c * e) * hx + Math.abs(-c * f) * hy + Math.abs(d) * hz,
+    Math.abs(a * f + b * e * d) * hx + Math.abs(a * e - b * f * d) * hy + Math.abs(-b * c) * hz,
+    Math.abs(b * f - a * e * d) * hx + Math.abs(b * e + a * f * d) * hy + Math.abs(a * c) * hz,
   ];
 }
 
@@ -77,14 +76,18 @@ export function expandToGroups(parts: ScenePart[], ids: string[]): string[] {
   return [...ids, ...extra];
 }
 
-function alignTarget(sel: ScenePart[], axis: Axis, mode: AlignMode): number {
-  if (sel.length === 1) return 0;
+function alignTarget(bounds: Map<ScenePart, ReturnType<typeof partBounds>>, axis: Axis, mode: AlignMode): number {
+  let min = Infinity;
+  let max = -Infinity;
 
-  const b = selectionBounds(sel);
+  for (const b of bounds.values()) {
+    min = Math.min(min, b.min[axis]);
+    max = Math.max(max, b.max[axis]);
+  }
 
-  if (mode === 'min') return b.min[axis];
+  if (mode === 'min') return min;
 
-  return mode === 'max' ? b.max[axis] : (b.min[axis] + b.max[axis]) / 2;
+  return mode === 'max' ? max : (min + max) / 2;
 }
 
 const ALIGN_FACTOR: Record<AlignMode, number> = { min: 0, center: 0.5, max: 1 };
@@ -100,15 +103,16 @@ export function alignParts(all: ScenePart[], ids: string[], axis: Axis, mode: Al
 
   if (sel.length === 0) return all;
 
-  const target = alignTarget(sel, axis, mode);
-  const selected = new Set(sel);
+  const bounds = new Map(sel.map((p) => [p, partBounds(p)]));
+  const target = sel.length === 1 ? 0 : alignTarget(bounds, axis, mode);
   const precise = sel.some((p) => p.sheetTransform);
 
   return all.map((p) => {
-    if (!selected.has(p)) return p;
+    const b = bounds.get(p);
 
-    const bounds = partBounds(p);
-    const anchor = bounds.min[axis] + (bounds.max[axis] - bounds.min[axis]) * ALIGN_FACTOR[mode];
+    if (!b) return p;
+
+    const anchor = b.min[axis] + (b.max[axis] - b.min[axis]) * ALIGN_FACTOR[mode];
     const position: [number, number, number] = [...p.position];
 
     const at = p.position[axis] + target - anchor;

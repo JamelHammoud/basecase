@@ -26,6 +26,7 @@ export interface FourBarPose {
 
 const DEG = Math.PI / 180;
 const CHANGE_POINT_TOLERANCE = 1e-9;
+const CLASS_BY_SHORTEST: GrashofClass[] = ['double-crank', 'crank-rocker', 'double-rocker', 'rocker-crank'];
 
 export const toRadians = (deg: number) => deg * DEG;
 export const toDegrees = (rad: number) => rad / DEG;
@@ -87,44 +88,55 @@ export function couplerSampler(l: PlacedFourBar): (thetaDeg: number) => Vec2 | n
   const place = placementFor(l);
 
   return (thetaDeg) => {
-    const pose = fourBarPose(l, thetaDeg);
+    const point = localCouplerPoint(l, thetaDeg);
 
-    return pose && place(pose.p);
+    return point && place(point);
   };
 }
 
-export function couplerPoint(l: PlacedFourBar, thetaDeg: number): Vec2 | null {
-  const pose = fourBarPose(l, thetaDeg);
+function localCouplerPoint(l: FourBar, thetaDeg: number): Vec2 | null {
+  const closed = closure(l, toRadians(thetaDeg));
 
-  return pose && placed(l, pose.p);
+  return closed && couplerOffset(closed.b, closed.c, l.point, l.coupler);
 }
 
-export function linkAngles(l: Links, thetaDeg: number): { coupler: number; rocker: number } | null {
+export function couplerPoint(l: PlacedFourBar, thetaDeg: number): Vec2 | null {
+  const point = localCouplerPoint(l, thetaDeg);
+
+  return point && placed(l, point);
+}
+
+export function linkAngle(l: Links, thetaDeg: number, link: 'coupler' | 'rocker'): number | null {
   const closed = closure(l, toRadians(thetaDeg));
 
   if (!closed) return null;
 
   const { b, c } = closed;
 
-  return {
-    coupler: toDegrees(Math.atan2(c[1] - b[1], c[0] - b[0])),
-    rocker: toDegrees(Math.atan2(c[1], c[0] - l.ground)),
-  };
+  return link === 'rocker'
+    ? toDegrees(Math.atan2(c[1], c[0] - l.ground))
+    : toDegrees(Math.atan2(c[1] - b[1], c[0] - b[0]));
 }
 
 export function grashofClass(l: FourBar): GrashofClass {
-  const links = [l.ground, l.crank, l.coupler, l.rocker];
-  const sorted = [...links].sort((a, b) => a - b);
+  const sorted = [l.ground, l.crank, l.coupler, l.rocker].sort((a, b) => a - b);
   const slack = sorted[1] + sorted[2] - sorted[0] - sorted[3];
 
   if (Math.abs(slack) < CHANGE_POINT_TOLERANCE * sorted[3]) return 'change-point';
 
   if (slack < 0) return 'triple-rocker';
 
-  const shortest = links.indexOf(sorted[0]);
-  const byShortest: GrashofClass[] = ['double-crank', 'crank-rocker', 'double-rocker', 'rocker-crank'];
+  let shortest = -1;
 
-  return byShortest[shortest];
+  if (l.rocker === sorted[0]) shortest = 3;
+
+  if (l.coupler === sorted[0]) shortest = 2;
+
+  if (l.crank === sorted[0]) shortest = 1;
+
+  if (l.ground === sorted[0]) shortest = 0;
+
+  return CLASS_BY_SHORTEST[shortest];
 }
 
 const deviation = (cos: number) => {
@@ -160,10 +172,41 @@ interface CurveSegment {
   lengthSquared: number;
 }
 
-function segmentDistance(p: Vec2, { x, y, dx, dy, lengthSquared }: CurveSegment): number {
+function segmentDistance(p: Vec2, segment: CurveSegment, norm = Math.hypot): number {
+  const { x, y, dx, dy, lengthSquared } = segment;
   const t = lengthSquared ? Math.min(1, Math.max(0, ((p[0] - x) * dx + (p[1] - y) * dy) / lengthSquared)) : 0;
 
-  return Math.hypot(p[0] - x - t * dx, p[1] - y - t * dy);
+  return norm(p[0] - x - t * dx, p[1] - y - t * dy);
+}
+
+const squaredNorm = (x: number, y: number) => x * x + y * y;
+
+function nearestDistance(p: Vec2, segments: CurveSegment[]): number {
+  let best = Infinity;
+  let runnerUp = Infinity;
+  let nearest: CurveSegment | undefined;
+
+  for (const segment of segments) {
+    const squared = segmentDistance(p, segment, squaredNorm);
+
+    if (squared < best) {
+      runnerUp = best;
+      nearest = segment;
+    } else {
+      runnerUp = Math.min(runnerUp, squared);
+    }
+
+    best = Math.min(best, squared);
+  }
+
+  if (nearest && best >= 1e-300 && Number.isFinite(best) && runnerUp - best > 8 * Number.EPSILON * best)
+    return segmentDistance(p, nearest);
+
+  let distance = Infinity;
+
+  for (const segment of segments) distance = Math.min(distance, segmentDistance(p, segment));
+
+  return distance;
 }
 
 export function curveDistance(curve: Vec2[]): (point: Vec2) => number {
@@ -183,11 +226,5 @@ export function curveDistance(curve: Vec2[]): (point: Vec2) => number {
     segments.push({ x, y, dx, dy, lengthSquared: dx * dx + dy * dy });
   }
 
-  return (p) => {
-    let best = Infinity;
-
-    for (const segment of segments) best = Math.min(best, segmentDistance(p, segment));
-
-    return best;
-  };
+  return (p) => nearestDistance(p, segments);
 }

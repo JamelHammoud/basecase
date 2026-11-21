@@ -36,6 +36,8 @@ The command menu includes the commands from every menu, each catalog part and ha
 
 A command appears only when it can run. For example, **Copy** and **Delete** need a selected part. **Hide** and **Lock** need exactly one, **Group** and **Union** need two, and **Spread Along X** needs three. While the simulation is on, **Simulate** changes to **Stop Simulation**.
 
+**Select Face** appears when a sketch with a saved support is selected. Use it to replace the support, as in [Keep a sketch on a face](/help/keep-a-sketch-on-a-face).
+
 With an imported ROS recording's **Map** layer available, **Make World** opens **New Case** with the reconstructed world selected. See [Map a robot run](/help/map-a-robot-run) for the steps and limits.
 
 To close the command menu, press [[Esc]]. You can also open it from **View** ▸ **Command Menu**. For a list of the keys themselves, see [Keyboard shortcuts](/help/keyboard-shortcuts).

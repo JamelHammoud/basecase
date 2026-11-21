@@ -36,7 +36,21 @@ function pairwiseFilter(mesh: HexMesh, radius: number): DensityFilter {
     start.push(near.length);
   }
 
-  return { start: Int32Array.from(start), near: Int32Array.from(near), weight: Float64Array.from(weight) };
+  const totalWeight = Float64Array.from(mesh.cells, (_, e) =>
+    weight.slice(start[e], start[e + 1]).reduce((sum, value) => sum + value, 0),
+  );
+
+  return { start: Int32Array.from(start), near: Int32Array.from(near), weight: Float64Array.from(weight), totalWeight };
+}
+
+function referenceSensitivity(filter: DensityFilter, density: Float64Array, raw: Float64Array): Float64Array {
+  return density.map((value, e) => {
+    const neighbors = Array.from(filter.near.slice(filter.start[e], filter.start[e + 1]));
+    const weights = Array.from(filter.weight.slice(filter.start[e], filter.start[e + 1]));
+    const sum = neighbors.reduce((total, other, i) => total + weights[i] * density[other] * raw[other], 0);
+
+    return sum / (Math.max(0.001, value) * weights.reduce((total, weight) => total + weight, 0));
+  });
 }
 
 afterEach(() => vi.restoreAllMocks());
@@ -62,7 +76,48 @@ describe('Lighten filter neighborhoods', () => {
       start: Int32Array.of(0),
       near: new Int32Array(),
       weight: new Float64Array(),
+      totalWeight: new Float64Array(),
     });
+  });
+
+  it('reuses fixed weight totals across changing density and sensitivity fields', () => {
+    const mesh = meshFor([5, 4, 3], [0.75, 1.25, 2], true);
+
+    mesh.cells.reverse();
+
+    const filter = densityFilter(mesh, 2.5);
+    const before = structuredClone(filter);
+
+    for (let step = 0; step < 14; step++) {
+      const density = Float64Array.from(mesh.cells, (_, e) => ((e + step) % 11) / 10);
+      const raw = Float64Array.from(mesh.cells, (_, e) => ((e * 7 + step) % 19) - 12);
+      const inputs = structuredClone({ density, raw });
+
+      expect(filteredSensitivity(filter, density, raw)).toEqual(referenceSensitivity(filter, density, raw));
+      expect({ density, raw }).toEqual(inputs);
+    }
+
+    expect(filter).toEqual(before);
+  });
+
+  it.each([
+    [1, 1, 1],
+    [1, 5, 4],
+    [5, 1, 4],
+    [5, 4, 1],
+  ] satisfies V3[])('keeps boundary neighbors on a %s × %s × %s grid after edits', (nx, ny, nz) => {
+    const mesh = meshFor([nx, ny, nz], [0.75, 1.25, 2], nx * ny * nz > 1);
+    const first = densityFilter(mesh, 2.5);
+    const saved = structuredClone(first);
+
+    expect(first).toEqual(pairwiseFilter(mesh, 2.5));
+
+    mesh.cells.reverse();
+    mesh.grid.origin = [20.25, -12.5, 6];
+    mesh.grid.h = [1.5, 0.625, 0.5];
+
+    expect(densityFilter(mesh, 2.5)).toEqual(pairwiseFilter(mesh, 2.5));
+    expect(first).toEqual(saved);
   });
 
   it.each([3, 6])('prepares density weights once for a 10 × 10 × %s grid', (depth) => {

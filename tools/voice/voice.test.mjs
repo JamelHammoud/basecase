@@ -1,8 +1,13 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
-import {
+import { afterAll, describe, expect, it, vi } from 'vitest';
+
+const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'voice-test-'));
+
+vi.stubEnv('BASECASE_LOOP_DIR', workspace);
+
+const {
   keepsMarkers,
   kindOf,
   lastMarkdown,
@@ -11,11 +16,16 @@ import {
   restoreMenuPaths,
   rewriteFile,
   voiceText,
-} from './voice.mjs';
+} = await import('./voice.mjs');
+
+afterAll(() => {
+  fs.rmSync(workspace, { recursive: true, force: true });
+  vi.unstubAllEnvs();
+});
 
 const post =
   '---\ntitle: Snap parts\ndate: 2026-11-13\n---\n\nYou can now snap parts. Steps are in [Snap](/help/snap).';
-const reply = (text) => ({ status: 0, stdout: `notes\n\`\`\`markdown\n${text}\n\`\`\`` });
+const reply = (text) => ({ ok: true, output: { text } });
 
 describe('the voice pipeline', () => {
   it('takes the last markdown block from a model reply', () => {
@@ -29,30 +39,33 @@ describe('the voice pipeline', () => {
     expect(kindOf('src/App.tsx')).toBeNull();
   });
 
-  it('drafts, applies stop-slop and then humanizer to a page, each in its own session', () => {
+  it('applies drafting, stop-slop and humanizer guidance in one isolated provider-routed call', () => {
     const systems = [];
-    const run = (_cmd, args) => {
-      systems.push(args[args.indexOf('--system-prompt') + 1]);
+    const generate = (options) => {
+      systems.push(options.system);
+      expect(options.name).toBe('voice');
+      expect(options.sandbox.tools).toEqual([]);
 
       return reply(post.replace('snap parts.', `snap parts (${systems.length}).`));
     };
 
-    expect(voiceText(post, { kind: 'changelog', run })).toContain('(3)');
+    expect(voiceText(post, { kind: 'changelog', generate })).toContain('(1)');
+    expect(systems).toHaveLength(1);
     expect(systems[0]).toContain('Mannered prose substitutes');
     expect(systems[0]).toContain('changelog posts');
-    expect(systems[1]).toContain('# Stop Slop');
-    expect(systems[2]).toContain('# Humanizer');
+    expect(systems[0]).toContain('# Stop Slop');
+    expect(systems[0]).toContain('# Humanizer');
   });
 
   it('runs only humanizer on a pull request or issue', () => {
     const systems = [];
-    const run = (_cmd, args) => {
-      systems.push(args[args.indexOf('--system-prompt') + 1]);
+    const generate = (options) => {
+      systems.push(options.system);
 
       return reply('Closes #226.\n\nDragging a part snaps it.');
     };
 
-    expect(voiceText('Closes #226.\n\nDragging a part now snaps it.', { kind: 'pull', run })).toBe(
+    expect(voiceText('Closes #226.\n\nDragging a part now snaps it.', { kind: 'pull', generate })).toBe(
       'Closes #226.\n\nDragging a part snaps it.',
     );
     expect(systems).toHaveLength(1);
@@ -87,6 +100,6 @@ describe('the voice pipeline', () => {
     fs.mkdirSync(path.join(dir, 'site/content/help'), { recursive: true });
     fs.writeFileSync(path.join(dir, file), '---\ntitle: Keyboard shortcuts\ntype: reference\n---\n\n| Key | Does |');
 
-    expect(rewriteFile(file, { cwd: dir, run: () => ({ status: 1 }) })).toBe(false);
+    expect(rewriteFile(file, { cwd: dir, generate: () => ({ ok: false }) })).toBe(false);
   });
 });

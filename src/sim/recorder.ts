@@ -5,6 +5,7 @@ import { torqueShare } from './torqueShare';
 import type { WorldChange, WorldEvent } from '../cases/worldSet';
 import type { WorldMoves } from './worldMoves';
 import type { FactValue } from '../cases/caseFacts';
+import type { IdealTendon } from '../types/tendon';
 
 export const RECORD_HZ = 50;
 
@@ -22,6 +23,11 @@ export interface RecordedInput {
 }
 
 export interface Recording {
+  transmission?: {
+    motors: Array<{ joint: string; actuator: number; tendon: IdealTendon }>;
+    observations: Array<{ joint: string; qpos: number; dof: number }>;
+    fingerprints: Record<string, string>;
+  };
   dt: number;
   frames: number;
   nq: number;
@@ -206,8 +212,23 @@ export class Recorder {
 
   finish(): Recording {
     const { model } = this.engine;
+    const motors = this.engine.sim.joints.flatMap((joint) =>
+      joint.tendon ? [{ joint: joint.id, actuator: joint.actuator, tendon: structuredClone(joint.tendon) }] : [],
+    );
+    const transmission = motors.length
+      ? {
+          motors,
+          observations: this.engine.sim.joints.map((joint, i) => ({
+            joint: joint.id,
+            qpos: this.jointQpos[i],
+            dof: this.jointDof[i],
+          })),
+          fingerprints: Object.fromEntries(this.engine.sim.robots.map((robot) => [robot.key, robot.fingerprint])),
+        }
+      : undefined;
 
     return {
+      ...(transmission ? { transmission } : {}),
       dt: this.dt,
       frames: this.frames,
       nq: model.nq,

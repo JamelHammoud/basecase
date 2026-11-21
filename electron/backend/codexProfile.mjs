@@ -100,7 +100,7 @@ function syncAuthCopy(home, ownHome) {
   else if (modified(ours) > modified(theirs)) fs.copyFileSync(ours, theirs);
 }
 
-function shareAuth(home, ownHome) {
+export function shareAuth(home, ownHome) {
   const target = path.join(ownHome, 'auth.json');
   const copied = fs.existsSync(target) && !fs.lstatSync(target).isSymbolicLink();
 

@@ -1,6 +1,6 @@
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 
-export type SettingsPane = 'canvas' | 'agent' | 'build' | 'printers' | 'accounts' | 'shortcuts';
+export type SettingsPane = 'canvas' | 'agent' | 'build' | 'printers' | 'accounts' | 'training' | 'shortcuts';
 
 export type SettingsField = 'map-tiles' | 'roboflow';
 
@@ -23,10 +23,11 @@ const PANES: Array<{ id: SettingsPane; label: string; keywords: string }> = [
     label: 'Accounts',
     keywords: 'hugging face onshape roboflow google maps tiles slant 3d print service token key login',
   },
+  { id: 'training', label: 'Training', keywords: 'forge remote ssh linux computer identity host key' },
   { id: 'shortcuts', label: 'Shortcuts', keywords: 'keys keyboard hotkeys' },
 ];
 
-const DESKTOP_PANES: SettingsPane[] = ['agent', 'printers', 'accounts'];
+const DESKTOP_PANES: SettingsPane[] = ['agent', 'printers', 'accounts', 'training'];
 
 export const SETTINGS_PANES = IS_WEB_DEMO ? PANES.filter((p) => !DESKTOP_PANES.includes(p.id)) : PANES;
 

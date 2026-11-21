@@ -4,7 +4,7 @@ import { parseBvh } from './mocap';
 import type { Mocap, MocapRotation } from './mocapBones';
 import { sharedTorsoBvh, wrappedHingeBvh } from './motionSkeleton.fixtures';
 import { motionWithEndSites } from './motionSkeletonEnds';
-import { motionChains } from './motionSkeletonSource';
+import { motionChains, motionLeaves } from './motionSkeletonSource';
 import { sampleMotionFrames, type MotionFrames } from './motionSkeletonValidation';
 
 function sample(motion: Mocap): MotionFrames {
@@ -50,7 +50,113 @@ function branches(count: number) {
   return { motion, samples: { positions: rotations.map(() => positions), rotations } };
 }
 
+describe('motion limb selection', () => {
+  it('preserves limb aliases, endpoint owners and fresh selections across complete chains', () => {
+    const motion = motionWithEndSites(parseBvh(sharedTorsoBvh()));
+    const samples = sample(motion);
+    const all = motionChains(motion, samples, { scale: 1 });
+    const limbs = ['LEFT hand'];
+
+    for (const selection of [undefined, [], limbs, ['Left ARM'], ['right-arm'], ['arm'], ['missing'], ['!!!']]) {
+      const selected = all.filter(({ name }) => {
+        if (!selection?.length) return true;
+
+        const value = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        return selection.some((item) => {
+          const requested = item.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+          return value === requested || (requested.includes('arm') && value.includes(requested.replace('arm', '')));
+        });
+      });
+
+      expect(motionChains(motion, samples, { scale: 1, limbs: selection })).toEqual(selected);
+    }
+
+    expect(limbs).toEqual(['LEFT hand']);
+    limbs[0] = 'right ARM';
+    expect(motionChains(motion, samples, { scale: 1, limbs })).toEqual(all.filter(({ name }) => name === 'RightHand'));
+  });
+
+  it.each([100, 200])('reads each requested limb once across %i endpoints', (count) => {
+    const { motion } = branches(count);
+    const selection = ['missing', 'ARM'];
+    let reads = 0;
+    const limbs = new Proxy(selection, {
+      get(target, key, receiver) {
+        if (typeof key === 'string' && /^\d+$/.test(key)) reads++;
+
+        return Reflect.get(target, key, receiver);
+      },
+    });
+
+    expect(motionLeaves(motion, limbs)).toEqual(motion.bones.slice(1));
+    expect(reads).toBe(selection.length);
+    expect(selection).toEqual(['missing', 'ARM']);
+  });
+});
+
 describe('motion source channels', () => {
+  it.each([1, 16, 64])('keeps root-first axes through %i ancestor links', (count) => {
+    const { motion, samples } = branches(count);
+
+    for (let i = 1; i < count; i++) motion.parentOf.set(`Arm${i}`, `Arm${i - 1}`);
+
+    const before = structuredClone(motion.parentOf);
+    const chains = motionChains(motion, samples, { scale: 1 });
+
+    expect(chains).toHaveLength(1);
+    expect(chains[0].axes.map((axis) => axis.joint.id)).toEqual([
+      `motion_${count}_0_z`,
+      ...Array.from({ length: count }, (_, i) => `motion_${count}_${i + 1}_y`),
+    ]);
+    expect(motion.parentOf).toEqual(before);
+    expect(motionChains(motion, samples, { scale: 1 })).toEqual(chains);
+  });
+
+  it.each([100, 200])('assigns axis identities across %i endpoints with linear bone-list reads', (count) => {
+    const { motion, samples } = branches(count);
+    let reads = 0;
+
+    motion.bones = new Proxy(motion.bones, {
+      get(target, key, receiver) {
+        if (typeof key === 'string' && /^\d+$/.test(key)) reads++;
+
+        return Reflect.get(target, key, receiver);
+      },
+    });
+
+    const chains = motionChains(motion, samples, { scale: 1 });
+
+    expect(chains.map((chain) => chain.axes.map((axis) => axis.joint.id))).toEqual(
+      Array.from({ length: count }, (_, i) => [`motion_${i + 1}_0_z`, `motion_${i + 1}_${i + 1}_y`]),
+    );
+    expect(reads).toBeLessThan((count + 1) * 4);
+  });
+
+  it('keeps first duplicate indices, absent ancestors and refreshed bone ordering', () => {
+    const { motion, samples } = branches(2);
+
+    motion.bones = ['Arm1', 'Arm0', 'Arm1'];
+
+    const first = motionChains(motion, samples, { scale: 1 });
+
+    expect(first.map((chain) => chain.axes.map((axis) => axis.joint.id))).toEqual([
+      ['motion_0_-1_z', 'motion_0_0_y'],
+      ['motion_1_-1_z', 'motion_1_1_y'],
+      ['motion_0_-1_z', 'motion_0_0_y'],
+    ]);
+    motion.bones = ['Root', 'Arm0', 'Arm1'];
+
+    const second = motionChains(motion, samples, { scale: 1 });
+
+    expect(second.map((chain) => chain.axes.map((axis) => axis.joint.id))).toEqual([
+      ['motion_1_0_z', 'motion_1_1_y'],
+      ['motion_2_0_z', 'motion_2_2_y'],
+    ]);
+    expect(first[0].axes[0].joint.id).toBe('motion_0_-1_z');
+  });
+
   it.each([12, 24])('prepares shared channels once across %i endpoints', (count) => {
     const { motion, samples } = branches(count);
     const before = structuredClone(samples);

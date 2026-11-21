@@ -1,8 +1,8 @@
-import * as THREE from 'three';
 import type { SweepRequest } from '../../utils/engineeringTypes';
 import { DEEPER_THAN_REST_MM, pairKey } from '../interference';
 import { collide, place, type Placed } from './collide';
 import { splitRotor } from './rotorSplit';
+import { prepareSweepRotation } from './sweepRotation';
 
 export type SweepSpec = SweepRequest;
 
@@ -49,10 +49,12 @@ function lowestY(p: Placed) {
   return low + e[13];
 }
 
-export function lowestPart(placed: Placed[]): { id: string; y: number } | null {
+export function lowestPart(placed: Placed[], included?: ReadonlySet<string>): { id: string; y: number } | null {
   let low: { id: string; y: number } | null = null;
 
   for (const p of placed) {
+    if (included && !included.has(p.id)) continue;
+
     if (low && p.box.min.y >= low.y) continue;
 
     const y = lowestY(p);
@@ -63,20 +65,10 @@ export function lowestPart(placed: Placed[]): { id: string; y: number } | null {
   return low;
 }
 
-function floorHit(moved: Placed[], angle: number): SweepHit | null {
-  const low = lowestPart(moved);
+function floorHit(placed: Placed[], moving: ReadonlySet<string>, angle: number): SweepHit | null {
+  const low = lowestPart(placed, moving);
 
   return low && low.y < -1 ? { a: low.id, b: 'floor', depthMm: Math.round(-low.y * 10) / 10, angle } : null;
-}
-
-function rotationAbout(spec: SweepSpec, angle: number) {
-  const origin = new THREE.Vector3(...spec.origin);
-  const axis = new THREE.Vector3(...spec.axis).normalize();
-
-  return new THREE.Matrix4()
-    .makeTranslation(origin.x, origin.y, origin.z)
-    .multiply(new THREE.Matrix4().makeRotationAxis(axis, THREE.MathUtils.degToRad(angle)))
-    .multiply(new THREE.Matrix4().makeTranslation(-origin.x, -origin.y, -origin.z));
 }
 
 export function sweepClashes(scene: Placed[], spec: SweepSpec): SweepHit[] {
@@ -85,16 +77,14 @@ export function sweepClashes(scene: Placed[], spec: SweepSpec): SweepHit[] {
   const options = { ...SWEEP_OPTIONS, focus: moving, straddle: moving, coplanar: false };
   const baseline = new Map(collide(placed, options).interferences.map((f) => [pairKey(f.a, f.b), f.depthMm]));
   const out: SweepHit[] = [];
+  const rotationAt = prepareSweepRotation(spec);
 
   for (const angle of spec.anglesDeg) {
-    const rotation = rotationAbout(spec, angle);
+    const rotation = rotationAt(angle);
     const posed = placed.map((p) =>
       movingSet.has(p.id) ? place(p.id, p.solid, rotation.clone().multiply(p.matrix)) : p,
     );
-    const floor = floorHit(
-      posed.filter((p) => movingSet.has(p.id)),
-      angle,
-    );
+    const floor = floorHit(posed, movingSet, angle);
 
     if (floor) out.push({ ...floor, a: ownerOf(floor.a) });
 

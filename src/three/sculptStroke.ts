@@ -14,7 +14,7 @@ interface BrushStep {
   w: number;
   amp: number;
   avgPos: THREE.Vector3;
-  strength: number;
+  blend: number;
 }
 
 export interface SculptStrokeInput {
@@ -39,25 +39,38 @@ const BRUSHES: Record<SculptBrushKind, (step: BrushStep) => void> = {
 
     v.addScaledVector(carveDir, -amp * w);
   },
-  flatten: ({ v, n, stroke, w, strength }) => {
+  flatten: ({ v, n, stroke, w, blend }) => {
     const toVert = n.copy(v).sub(stroke.center);
     const signedDist = toVert.dot(stroke.normal);
 
-    v.addScaledVector(stroke.normal, -signedDist * w * Math.min(1, strength * 0.65));
+    v.addScaledVector(stroke.normal, -signedDist * w * blend);
   },
-  smooth: ({ v, avgPos, w, strength }) => {
-    v.lerp(avgPos, w * Math.min(0.75, strength * 0.45));
+  smooth: ({ v, avgPos, w, blend }) => {
+    v.lerp(avgPos, w * blend);
   },
-  pinch: ({ v, n, stroke, amp, w, strength }) => {
+  pinch: ({ v, n, stroke, amp, w, blend }) => {
     const toCenter = n.copy(stroke.center).sub(v);
 
-    v.addScaledVector(toCenter, w * Math.min(0.5, strength * 0.3));
+    v.addScaledVector(toCenter, w * blend);
     v.addScaledVector(stroke.normal, amp * 0.25 * w);
   },
-  grab: ({ v, stroke, w, strength }) => {
-    v.addScaledVector(stroke.delta, w * Math.min(1, strength * 1.1));
+  grab: ({ v, stroke, w, blend }) => {
+    v.addScaledVector(stroke.delta, w * blend);
   },
 };
+
+const BLEND_LIMITS: Partial<Record<SculptBrushKind, [number, number]>> = {
+  flatten: [1, 0.65],
+  smooth: [0.75, 0.45],
+  pinch: [0.5, 0.3],
+  grab: [1, 1.1],
+};
+
+function strengthBlend(kind: SculptBrushKind, strength: number): number {
+  const limits = BLEND_LIMITS[kind];
+
+  return limits ? Math.min(limits[0], strength * limits[1]) : 0;
+}
 
 const flipX = (v: THREE.Vector3) => new THREE.Vector3(-v.x, v.y, v.z);
 const flipZ = (v: THREE.Vector3) => new THREE.Vector3(v.x, v.y, -v.z);
@@ -88,20 +101,60 @@ function strokesFor({ localHitPoint, localHitNormal, dragDeltaLocal, settings }:
   return strokes;
 }
 
+function applyDirectStroke(
+  geo: THREE.BufferGeometry,
+  step: BrushStep,
+  brush: { kind: SculptBrushKind; radius: number },
+) {
+  const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
+  const normAttr = brush.kind === 'inflate' || brush.kind === 'carve' ? geo.getAttribute('normal') : undefined;
+  const radiusSq = brush.radius * brush.radius;
+  const move = BRUSHES[brush.kind];
+
+  for (let i = 0; i < posAttr.count; i++) {
+    step.v.fromBufferAttribute(posAttr, i);
+
+    const distSq = step.v.distanceToSquared(step.stroke.center);
+
+    if (distSq > radiusSq) continue;
+
+    if (normAttr) step.n.fromBufferAttribute(normAttr, i);
+
+    step.w = 0.5 * (1 + Math.cos((Math.PI * Math.sqrt(distSq)) / brush.radius));
+    move(step);
+    posAttr.setXYZ(i, step.v.x, step.v.y, step.v.z);
+  }
+}
+
 function applyStroke(
   geo: THREE.BufferGeometry,
   stroke: Stroke,
   brush: { kind: SculptBrushKind; radius: number; strength: number },
 ) {
   const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
-  const normAttr = geo.getAttribute('normal') as THREE.BufferAttribute;
   const { radius, strength } = brush;
   const radiusSq = radius * radius;
   const v = new THREE.Vector3();
   const n = new THREE.Vector3();
+  const avgPos = new THREE.Vector3();
+  const step: BrushStep = {
+    v,
+    n,
+    stroke,
+    w: 0,
+    amp: strength * radius * 0.14,
+    avgPos,
+    blend: strengthBlend(brush.kind, strength),
+  };
+
+  if (brush.kind !== 'smooth') {
+    applyDirectStroke(geo, step, brush);
+
+    return;
+  }
+
   const affectedIndices: number[] = [];
   const falloffs: number[] = [];
-  const avgPos = new THREE.Vector3();
 
   for (let i = 0; i < posAttr.count; i++) {
     v.fromBufferAttribute(posAttr, i);
@@ -121,14 +174,12 @@ function applyStroke(
 
   avgPos.divideScalar(affectedIndices.length);
 
-  const step: BrushStep = { v, n, stroke, w: 0, amp: strength * radius * 0.14, avgPos, strength };
   const move = BRUSHES[brush.kind];
 
   for (let k = 0; k < affectedIndices.length; k++) {
     const idx = affectedIndices[k];
 
     v.fromBufferAttribute(posAttr, idx);
-    n.fromBufferAttribute(normAttr, idx);
     step.w = falloffs[k];
     move(step);
     posAttr.setXYZ(idx, v.x, v.y, v.z);
@@ -138,12 +189,12 @@ function applyStroke(
 export function sculptStroke(input: SculptStrokeInput): void {
   const { geo, settings, invertBrush = false } = input;
   const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
+  const kind = invertBrush ? (INVERTED_BRUSH[settings.brush] ?? settings.brush) : settings.brush;
 
-  if (!geo.getAttribute('normal')) {
+  if ((kind === 'inflate' || kind === 'carve') && !geo.getAttribute('normal')) {
     geo.computeVertexNormals();
   }
 
-  const kind = invertBrush ? (INVERTED_BRUSH[settings.brush] ?? settings.brush) : settings.brush;
   const brush = { kind, radius: Math.max(2, settings.radiusMm), strength: settings.strength };
 
   for (const stroke of strokesFor(input)) applyStroke(geo, stroke, brush);

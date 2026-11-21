@@ -19,11 +19,13 @@ export function useMapWorld(store: DataLayerStore, options: MapWorldOptions) {
   const { timeline, matching, builder, showCases, failed } = options;
   const topics = timeline.open ? timeline.recording?.topics : undefined;
   const id = timeline.record?.id;
+  const saved = timeline.comparison.opened;
+  const consumer = saved?.consumers.length === 1 ? saved.consumers[0] : null;
   const name = 'Map';
   const startInWorld = builder.startInWorld;
 
   useEffect(() => {
-    if (!topics || !id) {
+    if ((!topics || !id) && !consumer) {
       store.setWorldMaker(undefined);
 
       return;
@@ -39,13 +41,21 @@ export function useMapWorld(store: DataLayerStore, options: MapWorldOptions) {
       startInWorld(prepared.hash, asset);
     };
 
+    const request = consumer
+      ? () => consumer.call('mapWorld', { name, matching })
+      : { topics: topics!, sourceTry: id!, name, matching };
+
     store.setWorldMaker(
-      mapWorldAction(
-        { topics, sourceTry: id, name, matching },
-        { ready, failed: (error) => failed(errorMessage(error)) },
-      ),
+      mapWorldAction(request, {
+        ready,
+        failed: (error) => {
+          if (error instanceof DOMException && error.name === 'AbortError') return;
+
+          failed(errorMessage(error));
+        },
+      }),
     );
 
     return () => store.setWorldMaker(undefined);
-  }, [store, topics, id, name, matching, showCases, failed, startInWorld]);
+  }, [store, topics, id, name, matching, showCases, failed, startInWorld, consumer]);
 }

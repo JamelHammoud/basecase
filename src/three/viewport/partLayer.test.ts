@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { ScenePart } from '../../types/robotics';
 import { PartLayer, onlyTransformChanged } from './partLayer';
 
@@ -83,6 +83,43 @@ describe('PartLayer', () => {
 
     expect(layer.hasPending).toBe(false);
     expect(layer.objects()).toHaveLength(40);
+  });
+
+  it('drains ready builds in order across budgets and replaces unfinished work on sync', () => {
+    const layer = new PartLayer(new THREE.Group());
+    const clock = vi.spyOn(performance, 'now');
+    let tick = 0;
+
+    clock.mockImplementation(() => tick++ * 4);
+
+    try {
+      layer.sync(
+        ['a', 'b', 'c', 'd'].map((id) => part(id)),
+        new Set(),
+        0,
+      );
+
+      expect(layer.objects().map(([id]) => id)).toEqual(['a']);
+      expect(layer.hasReady).toBe(true);
+      expect(layer.buildPending(0)).toBe(false);
+      expect(layer.buildPending(Number.NaN)).toBe(false);
+      expect(layer.buildPending(6)).toBe(true);
+      expect(layer.objects().map(([id]) => id)).toEqual(['a', 'b']);
+
+      const kept = layer.part('a')!;
+
+      layer.sync([kept, part('e'), part('f')], new Set(), 0);
+      layer.buildAll();
+
+      expect(layer.objects().map(([id]) => id)).toEqual(['a', 'e', 'f']);
+      expect(layer.part('a')).toBe(kept);
+      expect(layer.hasReady).toBe(false);
+      expect(layer.hasPending).toBe(false);
+      expect(layer.buildAll()).toBe(false);
+    } finally {
+      clock.mockRestore();
+      layer.dispose();
+    }
   });
 
   it('maps a point picked on a posed part back to the same spot at rest', () => {

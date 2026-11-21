@@ -1,0 +1,208 @@
+import { allowed } from './authorization.mjs';
+import { organization } from './registry.mjs';
+import { federationHttp } from './federationHttp.mjs';
+import http from 'node:http';
+import https from 'node:https';
+import { authenticate } from './identity.mjs';
+import { authenticatedApi, publicApi } from './api.mjs';
+import { auditedIdentityTransaction, lockIdentity } from './recoveryProtection.mjs';
+import { identifier, insist } from './validation.mjs';
+import { subscriptions } from './subscriptions.mjs';
+import { facilityJobs, facilityRequest } from './facilities.mjs';
+
+const LOOPBACK = new Set(['127.0.0.1', '::1', 'localhost', '[::1]']);
+const sessionCookie = (token, secure) =>
+  `fleet_session=${token}; HttpOnly; SameSite=Strict; Path=/v1; Max-Age=43200${secure ? '; Secure' : ''}`;
+const tokenOf = (request) =>
+  request.headers.authorization?.replace(/^Bearer /, '') ??
+  /(?:^|;\s*)fleet_session=([A-Za-z0-9_-]+)/.exec(request.headers.cookie ?? '')?.[1];
+
+async function readBody(request, raw = false) {
+  let size = 0;
+  const chunks = [];
+
+  for await (const chunk of request) {
+    size += chunk.length;
+    insist(size <= 131072, 413);
+    chunks.push(chunk);
+  }
+
+  if (!size) return {};
+
+  const body = Buffer.concat(chunks).toString('utf8');
+
+  return raw ? body : JSON.parse(body);
+}
+
+function reply(response, data, status = 200) {
+  response.writeHead(status, {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+  });
+  response.end(JSON.stringify(data));
+}
+
+function guard(request, origin) {
+  insist(request.headers.host === origin.host, 403);
+  insist(!request.headers.origin || request.headers.origin === origin.origin, 403);
+  insist(
+    !request.headers['sec-fetch-site'] || ['same-origin', 'none'].includes(request.headers['sec-fetch-site']),
+    403,
+  );
+}
+
+async function dispatch(options) {
+  const { request, response, pool, stream, origin } = options;
+  const url = new URL(request.url, origin);
+  const method = request.method;
+
+  insist(request.headers.host === origin.host, 403);
+  insist(
+    origin.protocol === 'https:' ||
+      ['127.0.0.1', '::1'].includes(request.socket.remoteAddress?.replace(/^::ffff:/, '')),
+    403,
+  );
+
+  if (await federationHttp({ ...options, url, readBody, reply, sessionCookie, guard })) return;
+
+  if (!url.pathname.startsWith('/v1/')) return options.assets(request, response, url);
+
+  guard(request, origin);
+
+  if (/^\/v1\/[^/]+\/site\/[^/]+\/facility(?:\/[^/]+)?$/.test(url.pathname)) {
+    const token = tokenOf(request);
+    const actor = await authenticate(pool, token);
+    const [, , org, ...parts] = url.pathname.split('/');
+
+    insist(identifier(org) === actor.org, 403);
+
+    const result = await facilityRequest({ pool, actor, token, parts, method, request, jobs: options.facilityJobs });
+
+    facilityReply(response, result);
+
+    return;
+  }
+
+  const body = await readBody(request);
+  const publicResult = await publicApi(pool, method, url.pathname, body);
+
+  if (publicResult) {
+    response.setHeader('Set-Cookie', sessionCookie(publicResult.token, origin.protocol === 'https:'));
+    reply(response, publicResult);
+
+    return;
+  }
+
+  const token = tokenOf(request);
+  const actor = await authenticate(pool, token);
+
+  if (url.pathname === '/v1/me' && method === 'GET')
+    return reply(response, {
+      org: actor.org,
+      account: actor.account,
+      credential: actor.credential,
+      canManage: allowed(actor, 'iam.manage', organization(actor.org)),
+    });
+
+  if (url.pathname === '/v1/sessions/current' && method === 'DELETE') {
+    await pool.query('DELETE FROM fleet_credentials WHERE id=$1', [actor.credential]);
+    response.setHeader('Set-Cookie', sessionCookie('', origin.protocol === 'https:'));
+    reply(response, { revoked: true });
+
+    return;
+  }
+
+  const [, , org, ...parts] = url.pathname.split('/');
+
+  insist(identifier(org) === actor.org, 403);
+
+  if (parts[0] === 'subscribe' && method === 'GET')
+    return auditedIdentityTransaction(pool, async (client) => {
+      await lockIdentity(client, actor.org);
+
+      const current = await authenticate(client, token);
+
+      return stream.open({
+        request,
+        response,
+        token,
+        actor: current,
+        client,
+        access: url.searchParams.get('access') === '1',
+      });
+    });
+
+  const result = await auditedIdentityTransaction(pool, async (client) => {
+    if (method === 'GET') return authenticatedApi(client, actor, { method, parts, body, query: url.searchParams });
+
+    await lockIdentity(client, actor.org);
+
+    const currentActor = await authenticate(client, token);
+
+    return authenticatedApi(client, currentActor, { method, parts, body, query: url.searchParams });
+  });
+
+  reply(response, result);
+}
+
+export async function startService(options) {
+  const origin = new URL(options.origin);
+
+  insist(origin.protocol === 'https:' || (origin.protocol === 'http:' && LOOPBACK.has(origin.hostname)));
+  insist(origin.protocol !== 'https:' || options.tls);
+  insist(origin.pathname === '/' && !origin.username && !origin.password);
+  insist(origin.protocol === 'https:' || LOOPBACK.has(options.host ?? origin.hostname));
+
+  const pool = options.pool;
+  const stream = await subscriptions(pool);
+  const jobs = facilityJobs();
+  const handle = (request, response) => {
+    void dispatch({
+      request,
+      response,
+      pool,
+      stream,
+      facilityJobs: jobs,
+      origin,
+      assets: options.assets ?? ((_request, res) => reply(res, {}, 404)),
+    }).catch((error) => {
+      if (response.headersSent) return response.end();
+
+      reply(response, { error: 'Fleet request refused' }, error.status ?? 400);
+    });
+  };
+  const server = options.tls ? https.createServer(options.tls, handle) : http.createServer(handle);
+
+  server.maxConnections = 128;
+  server.requestTimeout = 10000;
+  server.headersTimeout = 10000;
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(
+      options.port ?? Number(origin.port || (origin.protocol === 'https:' ? 443 : 80)),
+      options.host ?? origin.hostname.replace(/^\[|\]$/g, ''),
+      resolve,
+    );
+  });
+
+  return {
+    server,
+    async close() {
+      await stream.close();
+      server.closeAllConnections();
+      await new Promise((resolve) => server.close(resolve));
+    },
+  };
+}
+
+function facilityReply(response, result) {
+  if (!result.raw) return reply(response, result.data);
+
+  response.writeHead(200, {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+  });
+  response.end(result.raw);
+}

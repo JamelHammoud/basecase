@@ -12,7 +12,7 @@ import { deleteTries } from '../cases/tryStore';
 import { confirmAction } from '../design-system/confirmStore';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Simulation } from '../sim/useSimulation';
-import type { ProjectSettings, ScenePart } from '../types/robotics';
+import type { CustomModelDefinition, ProjectSettings, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import { errorMessage } from '../utils/errorMessage';
 import type { Setter, ShowToast } from './types';
@@ -35,6 +35,7 @@ import type { SkillsRuntime } from '../skills/skillsRuntime';
 import type { CaseRobotInput } from './caseChecks';
 
 interface CasesOptions {
+  fixtures?: CustomModelDefinition[];
   parts: ScenePart[];
   project: ProjectSettings;
   setProject: Setter<ProjectSettings>;
@@ -174,7 +175,7 @@ export function useCases(options: CasesOptions) {
   const timeline = useTryTimeline({ sim, rig, parts, cases, partners });
   const trails = useCaseTrails({ ...options, active, timeline, open });
 
-  const builder = useCaseBuilder({ rig, parts, add, partners });
+  const builder = useCaseBuilder({ rig, parts, add, partners, fixtures: options.fixtures });
   const naming = useCaseNames(setProject);
   const dataset = useDatasetExport({
     ...{ sim, rig, parts, cases, active, showToast, openAccounts },

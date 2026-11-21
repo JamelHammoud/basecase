@@ -10,40 +10,67 @@ export type Angles = Array<number | null>;
 
 export class AngleTrace {
   private times: number[] = [];
-  private angles: Angles[] = [];
+  private angles: Array<Angles | null> = [];
+  private head = 0;
+  private length = 0;
 
   record(atMs: number, angles: Angles) {
-    this.times.push(atMs);
-    this.angles.push(angles);
+    const cutoff = atMs - TRACE_MS;
 
-    const stale = this.times.findIndex((t) => t >= atMs - TRACE_MS);
+    while (this.length && this.times[this.head] < cutoff) {
+      this.angles[this.head] = null;
+      this.head = (this.head + 1) % this.times.length;
+      this.length--;
+    }
 
-    if (stale <= 0) return;
+    if (this.length === this.times.length) this.grow();
 
-    this.times = this.times.slice(stale);
-    this.angles = this.angles.slice(stale);
+    const tail = (this.head + this.length) % this.times.length;
+
+    this.times[tail] = atMs;
+    this.angles[tail] = angles;
+    this.length++;
+  }
+
+  private grow() {
+    const capacity = Math.max(32, this.length * 2);
+    const times = new Array<number>(capacity);
+    const angles = new Array<Angles | null>(capacity);
+
+    for (let i = 0; i < this.length; i++) {
+      const index = (this.head + i) % this.times.length;
+
+      times[i] = this.times[index];
+      angles[i] = this.angles[index];
+    }
+
+    this.times = times;
+    this.angles = angles;
+    this.head = 0;
   }
 
   at(ms: number): Angles | null {
     let lo = 0;
-    let hi = this.times.length - 1;
+    let hi = this.length - 1;
     let found = -1;
 
     while (lo <= hi) {
       const mid = (lo + hi) >> 1;
 
-      if (this.times[mid] <= ms) {
+      if (this.times[(this.head + mid) % this.times.length] <= ms) {
         found = mid;
         lo = mid + 1;
       } else hi = mid - 1;
     }
 
-    return found >= 0 ? this.angles[found] : null;
+    return found >= 0 ? this.angles[(this.head + found) % this.times.length] : null;
   }
 
   clear() {
     this.times = [];
     this.angles = [];
+    this.head = 0;
+    this.length = 0;
   }
 }
 

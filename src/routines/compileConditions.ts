@@ -1,3 +1,4 @@
+import type { Symbols } from './symbols';
 import type { CompileContext, FactInfo } from './compileContext';
 import { type Instr, OP_CODES } from './planTypes';
 import type { Condition } from './schema';
@@ -5,22 +6,6 @@ import type { Condition } from './schema';
 export const MAX_COND_STACK = 16;
 
 export type Leaf = Extract<Condition, { fact: string }>;
-
-export class Symbols {
-  readonly list: string[] = [];
-  private readonly index = new Map<string, number>();
-
-  id(text: string): number {
-    const known = this.index.get(text);
-
-    if (known !== undefined) return known;
-
-    this.index.set(text, this.list.length);
-    this.list.push(text);
-
-    return this.list.length - 1;
-  }
-}
 
 export const isLeaf = (cond: Condition): cond is Leaf => 'fact' in cond;
 

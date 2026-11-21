@@ -47,13 +47,13 @@ Once you save your printer, Print mode lays parts out on its real bed and sends 
 
 **Model** lists more than a hundred printers, taken from the profiles that ship with Bambu Studio and OrcaSlicer. On first launch, Basecase adds the printer you last chose in Bambu Studio, if you have it.
 
+Custom printers save only a build volume, without bed clips or tool docks. For the limits of imported obstacle profiles, see [Printability estimates](/help/printability-estimates).
+
 You can also click **Find on Network** in the same pane to list the Bambu Lab, Klipper and OctoPrint printers it can see. Then click **Add** on the one you want.
 
 ## Prusa printers
 
 The Prusa CORE One, MK4, MK4S, MK3.5, MINI IS and XL slice with OrcaSlicer, so install OrcaSlicer before you slice for them. The XL in the list is the single-tool version. The 5-tool XL and printers with an MMU aren't listed.
-
-![Settings ▸ Printers with a Prusa CORE One sending through PrusaLink](/help/add-your-printer/printers.png)
 
 ## Connections
 

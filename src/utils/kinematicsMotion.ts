@@ -11,7 +11,7 @@ export function partMatrix(p: ScenePart): THREE.Matrix4 {
   return new THREE.Matrix4().compose(new THREE.Vector3(...p.position), q, new THREE.Vector3(1, 1, 1));
 }
 
-export function clampJoint(j: RobotJoint, v: number): number {
+export function clampJoint(j: Pick<RobotJoint, 'range'>, v: number): number {
   if (!Number.isFinite(v)) return 0;
 
   if (!j.range) return v;
@@ -19,8 +19,19 @@ export function clampJoint(j: RobotJoint, v: number): number {
   return Math.min(Math.max(v, Math.min(j.range[0], j.range[1])), Math.max(j.range[0], j.range[1]));
 }
 
-export const isZeroRoot = (r?: RootOffset) =>
-  !r || [...(r.position ?? []), ...(r.rotation ?? [])].every((v) => Math.abs(v) < 1e-6);
+function isZeroOffset(values?: V3): boolean {
+  if (!values) return true;
+
+  for (const value of values) {
+    const withinTolerance = Math.abs(value) < 1e-6;
+
+    if (!withinTolerance) return false;
+  }
+
+  return true;
+}
+
+export const isZeroRoot = (r?: RootOffset) => !r || (isZeroOffset(r.position) && isZeroOffset(r.rotation));
 
 export const robotRootOffset = (rig: Rig, pose: RobotPoseState | null | undefined, key: string) =>
   pose?.roots?.[key] ?? (rig.robots.length === 1 ? pose?.root : undefined);
@@ -56,18 +67,24 @@ export function rootMatrix(pivot: V3, root?: RootOffset): THREE.Matrix4 {
   const r = root.rotation ?? [0, 0, 0];
 
   if (r[0] || r[1] || r[2]) {
-    const rot = new THREE.Matrix4().makeRotationFromEuler(
-      new THREE.Euler(...(r.map(THREE.MathUtils.degToRad) as V3), 'XYZ'),
-    );
+    m.makeRotationFromEuler(new THREE.Euler(...(r.map(THREE.MathUtils.degToRad) as V3), 'XYZ'));
 
-    m.makeTranslation(px, py, pz)
-      .multiply(rot)
-      .multiply(new THREE.Matrix4().makeTranslation(-px, -py, -pz));
+    const e = m.elements;
+
+    m.setPosition(
+      e[0] * -px + e[4] * -py + e[8] * -pz + px,
+      e[1] * -px + e[5] * -py + e[9] * -pz + py,
+      e[2] * -px + e[6] * -py + e[10] * -pz + pz,
+    );
   }
 
   const t = root.position ?? [0, 0, 0];
 
-  if (t[0] || t[1] || t[2]) m.premultiply(new THREE.Matrix4().makeTranslation(t[0], t[1], t[2]));
+  if (t[0] || t[1] || t[2]) {
+    const e = m.elements;
+
+    m.setPosition(e[12] + t[0], e[13] + t[1], e[14] + t[2]);
+  }
 
   return m;
 }
@@ -133,11 +150,10 @@ export function isRestPose(pose: RobotPoseState | null | undefined): boolean {
   return Object.values(pose.values).every((v) => Math.abs(v) < 1e-6);
 }
 
-function isIdentity(m: THREE.Matrix4) {
-  const e = m.elements;
-  const id = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
-  return e.every((v, i) => Math.abs(v - id[i]) < 1e-9);
+function isIdentity(m: THREE.Matrix4) {
+  return m.elements.every((v, i) => Math.abs(v - IDENTITY[i]) < 1e-9);
 }
 
 export function poseDeltas(
@@ -150,11 +166,21 @@ export function poseDeltas(
   if (!pose || (isRestPose(pose) && !rig.joints.length)) return out;
 
   const posed = forwardKinematics(rig, pose);
+  const moving = new Map<THREE.Matrix4, boolean>();
 
   for (const id of partIds) {
     const m = partMotion(rig, posed, id);
 
-    if (m && !isIdentity(m)) out.set(id, m);
+    if (!m) continue;
+
+    let changed = moving.get(m);
+
+    if (changed === undefined) {
+      changed = !isIdentity(m);
+      moving.set(m, changed);
+    }
+
+    if (changed) out.set(id, m);
   }
 
   return out;

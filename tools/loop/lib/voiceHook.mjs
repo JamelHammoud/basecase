@@ -26,4 +26,5 @@ export function voiceNewPages(dir, log = () => {}) {
   return pages;
 }
 
-export const voiced = (text, kind) => (off() || !text?.trim() ? text : (voiceText(text, { kind }) ?? text));
+export const voiced = (text, kind, origin) =>
+  off() || !text?.trim() ? text : (voiceText(text, { kind, origin }) ?? text);

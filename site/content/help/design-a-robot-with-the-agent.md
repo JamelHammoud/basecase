@@ -35,7 +35,7 @@ The agent works in the desktop app. Before you start, set it up. See [Choose the
 7. When it's done, read its summary, which ends with two or three suggestions for what to do next.
 8. To change the design, type a follow-up such as “Use M3 screws” or “Thicker brackets”, then press [[↩]].
 
-A bigger robot can take many steps, so you can keep working in another tab while you wait. If the agent finishes in a scene you're not looking at, a toast shows the name of the chat. Click **Show** to go back to it.
+A bigger robot can take many steps, so you can keep working in another tab while you wait. If the agent finishes in a scene you're not looking at, a toast names that scene. Click **Show** to go back to it.
 
 If a run stops partway, click **Continue** under the reply. If it fails, click **Retry**.
 

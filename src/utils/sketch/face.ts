@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { pairKey } from '../../../electron/cad-kernel/pairKey.mjs';
+import { emptyBounds, includePoint } from './bounds';
+import { mergeCollinear, pointKey as keyOf } from './boundaryMerge';
 import type { SketchPlane, Vec3 } from './placement';
 import type { Sketch, Vec2 } from './types';
 
@@ -31,7 +33,7 @@ function trianglesOf(soup: ArrayLike<number>): Tri[] {
     b.fromArray(soup, i + 3);
     c.fromArray(soup, i + 6);
 
-    const cross = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a));
+    const cross = new THREE.Vector3().subVectors(b, a).cross(c.sub(a));
     const area = cross.length() / 2;
 
     if (area < 1e-9) continue;
@@ -64,9 +66,13 @@ function containing(soup: ArrayLike<number>, tris: Tri[], point: THREE.Vector3):
 }
 
 function outermost(tris: Tri[], normal: THREE.Vector3): Tri | null {
-  const facing = tris.filter((t) => t.normal.dot(normal) > SAME_NORMAL);
+  let best: Tri | null = null;
 
-  return facing.reduce<Tri | null>((best, t) => (!best || t.offset > best.offset ? t : best), null);
+  for (const tri of tris) {
+    if (tri.normal.dot(normal) > SAME_NORMAL && (!best || tri.offset > best.offset)) best = tri;
+  }
+
+  return best;
 }
 
 function frameFor(normal: THREE.Vector3) {
@@ -78,72 +84,42 @@ function frameFor(normal: THREE.Vector3) {
   return { n, u, v };
 }
 
-const keyOf = (p: Vec2) => `${Math.round(p[0] / KEY_STEP)},${Math.round(p[1] / KEY_STEP)}`;
+type BoundaryEdges = Map<string, { edge: [Vec2, Vec2]; n: number }>;
 
-function boundary(triangles: Vec2[][]): Array<[Vec2, Vec2]> {
-  const count = new Map<string, { edge: [Vec2, Vec2]; n: number }>();
+function countEdge(count: BoundaryEdges, p: Vec2, q: Vec2) {
+  const key = pairKey(keyOf(p), keyOf(q));
+  const seen = count.get(key);
 
-  for (const tri of triangles) {
-    for (let k = 0; k < 3; k++) {
-      const p = tri[k];
-      const q = tri[(k + 1) % 3];
-      const key = pairKey(keyOf(p), keyOf(q));
-      const seen = count.get(key);
+  if (seen) seen.n += 1;
+  else count.set(key, { edge: [p, q], n: 1 });
+}
 
-      if (seen) seen.n += 1;
-      else count.set(key, { edge: [p, q], n: 1 });
-    }
+function boundary(soup: ArrayLike<number>, tris: Tri[], u: THREE.Vector3, v: THREE.Vector3) {
+  const count: BoundaryEdges = new Map();
+  const bounds = emptyBounds();
+  const corner = new THREE.Vector3();
+  const project = (i: number): Vec2 => {
+    corner.fromArray(soup, i);
+
+    const x = corner.dot(u);
+    const y = corner.dot(v);
+
+    includePoint(bounds, x, y);
+
+    return [x, y];
+  };
+
+  for (const tri of tris) {
+    const a = project(tri.i);
+    const b = project(tri.i + 3);
+    const c = project(tri.i + 6);
+
+    countEdge(count, a, b);
+    countEdge(count, b, c);
+    countEdge(count, c, a);
   }
 
-  return [...count.values()].filter((e) => e.n === 1).map((e) => e.edge);
-}
-
-const direction = ([p, q]: [Vec2, Vec2]) => {
-  const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
-
-  return [(q[0] - p[0]) / len, (q[1] - p[1]) / len];
-};
-
-function joinStep(edges: Array<[Vec2, Vec2]>): boolean {
-  for (let i = 0; i < edges.length; i++) {
-    for (let j = i + 1; j < edges.length; j++) {
-      const joined = joinPair(edges[i], edges[j]);
-
-      if (!joined) continue;
-
-      edges.splice(j, 1);
-      edges[i] = joined;
-
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function joinPair(a: [Vec2, Vec2], b: [Vec2, Vec2]): [Vec2, Vec2] | null {
-  const [ax, ay] = direction(a);
-  const [bx, by] = direction(b);
-
-  if (Math.abs(ax * by - ay * bx) > 1e-6) return null;
-
-  const pairs: Array<[Vec2, Vec2, Vec2, Vec2]> = [
-    [a[0], b[0], a[1], b[1]],
-    [a[0], b[1], a[1], b[0]],
-    [a[1], b[0], a[0], b[1]],
-    [a[1], b[1], a[0], b[0]],
-  ];
-  const shared = pairs.find(([p, q]) => keyOf(p) === keyOf(q));
-
-  return shared ? [shared[2], shared[3]] : null;
-}
-
-function mergeCollinear(edges: Array<[Vec2, Vec2]>) {
-  const out = [...edges];
-
-  while (joinStep(out));
-
-  return out;
+  return { edges: [...count.values()].filter((e) => e.n === 1).map((e) => e.edge), bounds };
 }
 
 export function faceOf(soup: ArrayLike<number>, pick: FacePick): Face | null {
@@ -159,21 +135,11 @@ export function faceOf(soup: ArrayLike<number>, pick: FacePick): Face | null {
     (t) => t.normal.dot(seed.normal) > SAME_NORMAL && Math.abs(t.offset - seed.offset) < KEY_STEP,
   );
   const { n, u, v } = frameFor(seed.normal);
-  const corner = new THREE.Vector3();
-  const planar = flat.map((t) =>
-    [0, 3, 6].map((k): Vec2 => {
-      corner.fromArray(soup, t.i + k);
-
-      return [corner.dot(u), corner.dot(v)];
-    }),
-  );
-  const all = planar.flat();
-  const mid: Vec2 = [
-    (Math.min(...all.map((p) => p[0])) + Math.max(...all.map((p) => p[0]))) / 2,
-    (Math.min(...all.map((p) => p[1])) + Math.max(...all.map((p) => p[1]))) / 2,
-  ];
+  const { edges: outline, bounds } = boundary(soup, flat, u, v);
+  const { min, max } = bounds;
+  const mid: Vec2 = [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2];
   const origin = n.clone().multiplyScalar(seed.offset).addScaledVector(u, mid[0]).addScaledVector(v, mid[1]);
-  const edges = mergeCollinear(boundary(planar)).map(([p, q]): [Vec2, Vec2] => [
+  const edges = mergeCollinear(outline).map(([p, q]): [Vec2, Vec2] => [
     [p[0] - mid[0], p[1] - mid[1]],
     [q[0] - mid[0], q[1] - mid[1]],
   ]);

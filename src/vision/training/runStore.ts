@@ -1,3 +1,4 @@
+import { evaluationWorker } from './evaluationWorker';
 import { indexedDbStore } from '../../utils/keyValueStore';
 import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 import { validateVisionManifest } from '../manifest';
@@ -50,11 +51,17 @@ export async function storedVisionRuns(datasetId: string): Promise<TrainingRun[]
 
   if (!Array.isArray(values)) throw new Error('Check the saved vision training runs.');
 
-  return values.map(checkedTrainingRun).sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id));
+  const runs = values.map(checkedTrainingRun);
+
+  for (const run of runs) await verifyRequiredRun(run);
+
+  return runs.sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id));
 }
 
 export async function saveVisionRun(value: TrainingRun) {
   const run = checkedTrainingRun(value);
+
+  await verifyRequiredRun(run);
 
   if (!IS_WEB_DEMO) {
     await visionTrainingCall('save-run', run);
@@ -72,6 +79,7 @@ export async function saveVisionRun(value: TrainingRun) {
 
 function checkedComparison(run: TrainingRun, compared: ReturnType<typeof compareTraining>) {
   if (
+    JSON.stringify(run.comparison.requirements) !== JSON.stringify(compared.attempt.requirements) ||
     run.kind !== run.manifest.kind ||
     run.report.task.kind !== run.kind ||
     run.manifest.model.sha256 !== run.report.modelHash ||
@@ -85,4 +93,10 @@ function checkedComparison(run: TrainingRun, compared: ReturnType<typeof compare
     !Array.isArray(run.provenance)
   )
     throw new Error('The saved vision comparison changed.');
+}
+
+async function verifyRequiredRun(run: TrainingRun) {
+  if (!run.report.task.requirements?.length) return;
+
+  await evaluationWorker.call('verifyRequirements', { candidate: run.report, incumbent: run.incumbentReport });
 }

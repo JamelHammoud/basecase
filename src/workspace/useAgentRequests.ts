@@ -26,6 +26,7 @@ import { useLatestRef } from '../utils/useLatestRef';
 import type { TryReadSources } from './agentTryRequests';
 import type { TryTimeline } from './useTryTimeline';
 import { fitBodyFor } from './bodyActions';
+import { parameterEditor } from './agentParameterEdits';
 
 type Payload = Record<string, unknown>;
 
@@ -51,6 +52,7 @@ interface Author {
 }
 
 const quiet: SetAction = () => {};
+const ignoreResult = () => undefined;
 
 const KEEP_REQUEST_IDS = 2000;
 const deliveredRequests = new Set<string>();
@@ -107,6 +109,20 @@ function guardPart(author: Author, partId: string, actors: ActorIndex, isBusy: A
   author.claim(partId);
 
   return null;
+}
+
+function sharedParameterEditor(
+  options: Pick<AgentRequestOptions, 'core' | 'actors' | 'lanes' | 'controls'>,
+  author: Author,
+) {
+  const { core, actors, lanes, controls } = options;
+
+  return parameterEditor({
+    core,
+    guard: (id) => guardPart(author, id, actors, lanes.isBusy),
+    touch: (part) => controls.recordEdit(author.laneId, part.id, part),
+    current: () => lanes.isBusy(author.laneId),
+  });
 }
 
 export function useAgentRequests(options: AgentRequestOptions) {
@@ -170,15 +186,13 @@ export function useAgentRequests(options: AgentRequestOptions) {
       }),
     );
 
-    queueRef.current = result.then(
-      () => undefined,
-      () => undefined,
-    );
+    queueRef.current = result.then(ignoreResult, ignoreResult);
 
     return result;
   };
 
   const contextFor = (author: Author): RequestContext => ({
+    editParameters: sharedParameterEditor(options, author),
     parts: () => partsRef.current,
     project: () => projectRef.current,
     printer: () => resolvePrinter(projectRef.current.printer, core.studio.printers.printers),

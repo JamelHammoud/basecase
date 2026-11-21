@@ -1,3 +1,5 @@
+import { loadManifests } from '../cases/tryStore';
+import { summaryOf, summaryRecord } from '../cases/tryFile';
 import { replayCase } from '../cases/replayCase';
 import { scaledToReach } from '../cases/scale';
 import { robotRunFor, robotSnapshot } from '../robot/robotStore';
@@ -32,4 +34,12 @@ export function replayRobotRun(core: WorkspaceCore, messageId: number) {
   core.tool.setRightTab('sim');
 
   if (run.faultJoint) core.setSelectedIds(linkParts(core.posing.rig, run.faultJoint));
+}
+
+export async function openIncidentTry(core: WorkspaceCore, id: string): Promise<boolean> {
+  const stored = (await loadManifests([id]))[0];
+
+  if (!stored) return false;
+
+  return core.simTraining.cases.timeline.show(summaryRecord(summaryOf(stored, { recording: true, strip: false })));
 }

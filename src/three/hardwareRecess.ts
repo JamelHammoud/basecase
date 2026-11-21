@@ -22,27 +22,23 @@ export interface RecessCut {
 const isCross = (recess: ScrewRecess): recess is CrossRecess =>
   recess.kind === 'phillips' || recess.kind === 'pozidriv';
 
-function shapeFromPoints(pts: Array<[number, number]>): THREE.Shape {
-  const shape = new THREE.Shape();
-
-  pts.forEach(([x, z], i) => (i === 0 ? shape.moveTo(x, z) : shape.lineTo(x, z)));
-
-  return shape;
-}
-
 function torxShape(size: string, headDia: number): THREE.Shape {
   const { A, B } = TORX_RECESS[size] ?? { A: headDia * 0.4, B: headDia * 0.3 };
   const n = 72;
-  const pts: Array<[number, number]> = [];
+  const shape = new THREE.Shape();
 
   for (let i = 0; i <= n; i++) {
     const a = (i / n) * Math.PI * 2;
     const r = (A + B) / 4 + ((A - B) / 4) * Math.cos(6 * a);
 
-    pts.push([r * Math.cos(a), r * Math.sin(a)]);
+    const x = r * Math.cos(a);
+    const y = r * Math.sin(a);
+
+    if (i === 0) shape.moveTo(x, y);
+    else shape.lineTo(x, y);
   }
 
-  return shapeFromPoints(pts);
+  return shape;
 }
 
 function crossQuarter(m: number, pozidriv: boolean): Array<[number, number]> {
@@ -70,16 +66,21 @@ function crossQuarter(m: number, pozidriv: boolean): Array<[number, number]> {
 function crossShape(recess: CrossRecess, headDia: number): THREE.Shape {
   const m = CROSS_RECESS[recess.size]?.m ?? headDia * 0.5;
   const quarter = crossQuarter(m, recess.kind === 'pozidriv');
-  const pts: Array<[number, number]> = [];
+  const shape = new THREE.Shape();
 
   for (let i = 0; i < 4; i++) {
     const c = Math.cos((i * Math.PI) / 2);
     const sn = Math.sin((i * Math.PI) / 2);
 
-    for (const [x, z] of quarter) pts.push([x * c - z * sn, x * sn + z * c]);
-  }
+    for (let j = 0; j < quarter.length; j++) {
+      const [x, z] = quarter[j];
+      const px = x * c - z * sn;
+      const py = x * sn + z * c;
 
-  const shape = shapeFromPoints(pts);
+      if (i === 0 && j === 0) shape.moveTo(px, py);
+      else shape.lineTo(px, py);
+    }
+  }
 
   shape.closePath();
 
@@ -89,13 +90,12 @@ function crossShape(recess: CrossRecess, headDia: number): THREE.Shape {
 function slotShape(width: number, headDia: number): THREE.Shape {
   const w = width / 2;
   const l = headDia / 2 + 1;
-  const shape = shapeFromPoints([
-    [-l, -w],
-    [l, -w],
-    [l, w],
-    [-l, w],
-  ]);
+  const shape = new THREE.Shape();
 
+  shape.moveTo(-l, -w);
+  shape.lineTo(l, -w);
+  shape.lineTo(l, w);
+  shape.lineTo(-l, w);
   shape.closePath();
 
   return shape;

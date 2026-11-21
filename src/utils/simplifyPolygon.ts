@@ -1,17 +1,5 @@
 type Point = [number, number];
 
-function pointLineDistance(p: Point, a: Point, b: Point): number {
-  const dx = b[0] - a[0];
-  const dy = b[1] - a[1];
-  const lenSq = dx * dx + dy * dy;
-
-  if (lenSq === 0) return Math.hypot(p[0] - a[0], p[1] - a[1]);
-
-  const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / lenSq));
-
-  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
-}
-
 export function simplifyPolygon(points: Point[], epsilon: number): Point[] {
   if (points.length <= 4) return points;
 
@@ -23,11 +11,19 @@ export function simplifyPolygon(points: Point[], epsilon: number): Point[] {
       return;
     }
 
+    const a = points[start];
+    const b = points[end];
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const lenSq = dx * dx + dy * dy;
     let dmax = 0;
     let index = start;
 
     for (let i = start + 1; i < end; i++) {
-      const dist = pointLineDistance(points[i], points[start], points[end]);
+      const p = points[i];
+      const t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / lenSq));
+      const dist =
+        lenSq === 0 ? Math.hypot(p[0] - a[0], p[1] - a[1]) : Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
 
       if (dist > dmax) {
         index = i;

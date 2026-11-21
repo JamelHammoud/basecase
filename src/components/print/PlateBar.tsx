@@ -13,9 +13,12 @@ const plateCell = (active: boolean) =>
 export const PlateBar: React.FC<{ printing: Printing; plates: Plate[] }> = ({ printing, plates }) => {
   const current = printing.mode?.plate;
   const plate = plates.find((p) => p.number === current) ?? plates[0];
+  const arrangeable = (printing.report?.parts ?? []).filter(
+    (part) => !plate || part.material === plate.material || part.plate === 0,
+  );
   const arrange = () =>
     printing.setPartPrint(
-      [...new Set(plates.filter((p) => p.material === plate?.material).flatMap((p) => p.items.map((it) => it.id)))],
+      arrangeable.map((part) => part.id),
       { at: undefined, plate: undefined, turned: undefined },
     );
 
@@ -42,10 +45,10 @@ export const PlateBar: React.FC<{ printing: Printing; plates: Plate[] }> = ({ pr
           </button>
         ))}
       </div>
-      {!printing.fitTest && (
+      {!printing.temporaryPrint && (
         <>
           <IslandDivider />
-          <Button size="sm" variant="ghost" onClick={arrange} disabled={!plate}>
+          <Button size="sm" variant="ghost" onClick={arrange} disabled={!arrangeable.length}>
             Auto Arrange
           </Button>
         </>

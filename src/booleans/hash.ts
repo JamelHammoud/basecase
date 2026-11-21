@@ -20,6 +20,7 @@ const NOT_GEOMETRY = new Set<string>([
   'supplyId',
   'jointId',
   'physics',
+  'dimensionBindings',
   'boolean',
   'mesh',
   'position',

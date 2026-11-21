@@ -37,6 +37,8 @@ covers:
 
 Clear every problem the Build tab finds before you print the parts, buy them, and put the robot together.
 
+If a saved build is open, click **Done** first to return to the editable design and its current Checks.
+
 1. Click **Build** at the top of the right panel.
 2. Look at the header of **Checks**. It reads **Ready to build** or shows how many problems are left, such as **3 to fix**.
 3. To open a check, click one with a red mark.
@@ -44,18 +46,28 @@ Clear every problem the Build tab finds before you print the parts, buy them, an
 5. Click **Fix** to hand the problem to the agent, or change the part yourself. Some checks work differently:
    - On **Strength**, **Fix** prints the part on its strongest face instead.
    - On **Falls**, **Replay in Sim** plays that joint's worst fall in the simulation.
+   - On **Cable reach**, **Edit Route** opens the [cable stock and routing points](/help/route-a-robot-cable).
+   - On **Dimensional tolerances**, **Edit Parameters** opens the [authored dimensions and requirements](/help/check-dimensional-tolerances).
 6. If the robot runs on a power supply instead of a battery, open **Servo voltage** and type the supply's volts in **V**.
 7. Open **Supply current** and type the power supply's amps in **A**.
 8. Open **Current and runtime** to see how long the battery lasts, such as **about 2 h 08 min**. After the agent runs the trained walk policy in the simulator, the section shows the average and peak amps from that walk, and the joint that draws the most. Until then, and after you change the design, the runtime shows **(estimate)**.
-9. If the robot is an arm fixed in place, click **Payload** to see how much its hand holds at full reach and close in. While **Payload** is open, the canvas shows a dot everywhere the hand reaches. Bluer dots mean the hand lifts more there.
+9. If the robot is an arm fixed in place with a powered joint chain, click **Payload** to see how much its hand holds at full reach and close in. While **Payload** is open, the canvas shows a dot everywhere the hand reaches. Bluer dots mean the hand lifts more there.
 10. If the scene has Cases, click a Case's row in **Checks** to open it in Simulate with its 20 paths on the canvas.
 11. Wait for the header to read **Ready to build**. Basecase runs the checks again after every change.
 
-![The Build tab with every check passed and a $150 budget beside the total](/help/get-a-robot-ready-to-build/build-tab.png)
+If **Electrical connections** is red, open it to read the missing pin maps, source requirements or conflicting supply settings. Changing declared volts and amps doesn't change a selected product's ratings.
+
+![Electrical connections reports a supply setting that disagrees with the selected module](/help/export-a-robot-schematic/supply.png)
+
+If **Board fit** is red, open it to find the affected placement, mounting hole or missing geometry. Use **Edit Board** to change its constraints, as described in [Fit an electronics board](/help/fit-an-electronics-board).
+
+To continue the documented connections and unresolved requirements in KiCad, [export a robot schematic](/help/export-a-robot-schematic).
 
 ![An SO-101 arm inside a cloud of dots, with Payload open in Checks reading 1.26 kg at full reach, 1.88 kg close in](/help/get-a-robot-ready-to-build/payload.png)
 
 You can also find **Show Build** and **Run Checks** in [[⌘K]].
+
+Opening a submitted robot from [Grade a class](/help/grade-a-class) can open **Build** with its failing check expanded and affected parts selected. Checks run again on the opened design.
 
 The settings for this tab are in **Settings** ▸ **Build**. To open them, press [[⌘,]] or choose **Build Settings** in [[⌘K]]. There you can choose:
 
@@ -69,7 +81,7 @@ To set a problem aside, right-click its row and choose **Ignore**. To set aside 
 
 ## Cases in Checks
 
-Each Case runs 20 times. On each run, Basecase changes friction, weight, servo strength, and servo delay a little, and starts a box, or anything else that moves, up to 15 mm from where it was placed. A Case's color shows how many runs it passed:
+Each Case runs 20 times. On each run, Basecase changes friction, weight, servo strength, and servo delay a little. Loose objects start up to 15 mm from where they were placed. Hinged lids, sliding drawers and their attached parts keep their starting positions. A Case's color shows how many runs it passed:
 
 - **Green:** 18 of 20 or more
 - **Amber:** 10 to 17
@@ -92,5 +104,7 @@ Cases never count toward Ready to build. To ignore one, right-click the note und
 Green paths passed, and red paths failed. Click a red path to inspect that seed's first failure on the joint timeline. For the steps, see [Replay a failing seed](/help/replay-a-failing-seed).
 
 In Simulate, the icon beside the Case's name shows the status of its row. To go back to the row, click the icon.
+
+Selecting a [supplier offer](/help/compare-supplier-offers) records purchasing evidence. It doesn’t clear a blocker or grant Ready to build.
 
 To learn why each check exists, see [The path from design to build](/help/from-design-to-build). Next, [price the parts and set a budget](/help/price-the-parts-and-set-a-budget).

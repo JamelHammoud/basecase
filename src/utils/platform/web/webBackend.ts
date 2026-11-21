@@ -1,5 +1,6 @@
-import type { AcpStatusInfo, CustomModelDefinition, Purchases, StoredPurchase } from '../../../types/robotics';
-import { checkedPrice, isOnHandCount } from '../../onHand';
+import { listPurchases, savePurchase } from './webPurchases';
+import { boardImportMessage } from '../../../wiring/boardRoutingFindings';
+import type { AcpStatusInfo, CustomModelDefinition, StoredPurchase } from '../../../types/robotics';
 import type { TrainerStatus } from '../types';
 import { idbAll, idbDelete, idbGet, idbPut } from './idb';
 import { trainedPolicy, trainedSkill } from './webTrained';
@@ -46,31 +47,6 @@ async function deleteModel(id: string) {
   return OK;
 }
 
-const listPurchases = async () => (await idbGet<Purchases>('settings', 'purchases')) ?? {};
-
-function storedRecord(record: StoredPurchase): StoredPurchase | null {
-  if (record.onHand !== undefined && !isOnHandCount(record.onHand)) throw new Error('On hand must be a whole count');
-
-  const price = checkedPrice(record);
-
-  if (price) return { ...price, checkedAt: price.checkedAt || new Date().toLocaleDateString('en-CA') };
-
-  return record.onHand ? { onHand: record.onHand } : null;
-}
-
-async function savePurchase({ key, record }: { key: string; record: StoredPurchase | null }) {
-  const all = await listPurchases();
-
-  const stored = record && storedRecord(record);
-
-  if (stored) all[key] = stored;
-  else delete all[key];
-
-  await idbPut('settings', 'purchases', all);
-
-  return all;
-}
-
 const uploadedImage = (body: Body) => ({
   id: `img-${Date.now().toString(36)}`,
   name: String(body.name ?? 'image'),
@@ -82,6 +58,9 @@ const uploadedImage = (body: Body) => ({
 });
 
 const ROUTES: Record<string, Route> = {
+  'electrical-route': () => {
+    throw new Error(boardImportMessage('board-router'));
+  },
   'datasets-content-save': (body) => webDatasets.saveContent(datasetContentFromBase64(body.arg)),
   'datasets-content-load': async (body) => {
     const bytes = await webDatasets.content(body.arg as string);
@@ -89,6 +68,13 @@ const ROUTES: Record<string, Route> = {
     return bytes && { data: bytesToBase64(bytes) };
   },
   'hub-model-file': () => ({ web: true }),
+  'hub-find-skills': () => import('./webHub').then(({ webHub }) => webHub.call('find', undefined)),
+  'hub-skill-files': (body) =>
+    import('./webHub').then(({ webHub }) =>
+      webHub.call('files', body.arg as import('../../../hub/hubBridge').HubRepoRef),
+    ),
+  'hub-skill-outcomes': () => import('./webHub').then(({ webHub }) => webHub.call('outcomes', undefined)),
+  'hub-publish-skill-outcome': (body) => import('./webHub').then(({ webHub }) => webHub.call('saveOutcome', body.arg)),
   'acp-status': () => WEB_AGENT_STATUS,
   'sourced-parts': () => [],
   'sourced-mesh': () => ({ data: null }),
@@ -116,6 +102,12 @@ const ROUTES: Record<string, Route> = {
   'save-scene-preview': (b) => saveScenePreview(b as { id: string }),
   'delete-scene': (b) => deleteScene(String(b.sceneId)),
   'train-status': () => TRAINER,
+  'remote-training-status': () => ({ selected: false }),
+  'remote-training-configure': () => ({ error: 'Download Basecase to connect a training computer.' }),
+  'remote-training-clear': () => ({ selected: false }),
+  'remote-training-selection': () => ({ error: 'Download Basecase to connect a training computer.' }),
+  'electrical-validate': () => ({ error: 'board-validator' }),
+  'electrical-cancel': () => OK,
   'vision-training-status': () => ({ desktopOnly: true }),
   'vision-training-start': () => ({ error: 'Download Basecase to train vision models.' }),
   'vision-training-stop': () => null,

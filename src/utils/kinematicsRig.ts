@@ -1,4 +1,5 @@
 import type { RobotJoint, ScenePart } from '../types/robotics';
+import { componentRoot } from '../../electron/componentRoot.mjs';
 
 export type V3 = [number, number, number];
 
@@ -80,7 +81,14 @@ function depthOf(tree: JointTree, j: RobotJoint): number {
 function jointTree(joints: RobotJoint[]): JointTree {
   const childOf = new Map<string, RobotJoint[]>();
 
-  for (const j of joints) for (const id of j.child) childOf.set(id, [...(childOf.get(id) ?? []), j]);
+  for (const j of joints) {
+    for (const id of j.child) {
+      const owners = childOf.get(id);
+
+      if (owners) owners.push(j);
+      else childOf.set(id, [j]);
+    }
+  }
 
   const tree: JointTree = {
     byId: new Map(joints.map((j) => [j.id, j])),
@@ -172,15 +180,7 @@ function jointChains(joints: RobotJoint[], parentOf: Map<string, string | null>)
 
 function unionFind() {
   const up = new Map<string, string>();
-  const find = (x: string): string => {
-    let r = x;
-
-    while (up.has(r) && up.get(r) !== r) r = up.get(r)!;
-
-    up.set(x, r);
-
-    return r;
-  };
+  const find = (x: string) => componentRoot(up, x);
   const join = (a: string, b: string) => {
     const ra = find(a),
       rb = find(b);
@@ -282,7 +282,19 @@ function robotGroup(
 ) {
   const base = ids.filter((j) => !parentOf.get(j.id));
   const pivotOf = base.length ? base : ids;
-  const key = [...pivotOf.map((j) => j.id)].sort()[0];
+  let key = pivotOf[0].id;
+  let x = 0;
+  let y = 0;
+  let z = 0;
+
+  for (const joint of pivotOf) {
+    if (joint.id < key) key = joint.id;
+
+    x += joint.origin[0];
+    y += joint.origin[1];
+    z += joint.origin[2];
+  }
+
   const groups = new Set([...m.parts].map((id) => byPart.get(id)?.group?.name).filter(Boolean));
 
   return {
@@ -290,7 +302,7 @@ function robotGroup(
     name: groups.size === 1 ? [...groups][0]! : 'Robot',
     joints: ids.map((j) => j.id),
     parts: m.parts,
-    pivot: [0, 1, 2].map((i) => pivotOf.reduce((s, j) => s + j.origin[i], 0) / pivotOf.length) as V3,
+    pivot: [x / pivotOf.length, y / pivotOf.length, z / pivotOf.length] as V3,
   };
 }
 

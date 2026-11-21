@@ -66,3 +66,18 @@ describe('nightly experiment candidates', () => {
     expect(indexedCandidates(entries, '2026-11-07').map((entry) => entry.ref)).toEqual(['recent/A1']);
   });
 });
+
+it('ranks consumed time before frequency, then supporting tokens and deterministic fingerprints', () => {
+  const measured = (ref, milliseconds, frequency, supportingTokens) => ({
+    source: 'tune-waste',
+    ref,
+    text: 'repeated-read: get_scene',
+    measured: { milliseconds, frequency, supportingTokens },
+  });
+  const candidates = [measured('frequent', 1, 10, 100), measured('costly', 100, 1, 1), measured('tokens', 100, 1, 200)];
+
+  expect(chooseCandidate({ candidates, journal: [], experiments: [] }).ref).toBe('tokens');
+  expect(
+    chooseCandidate({ candidates, journal: [{ candidate: candidateKey(candidates[2]) }], experiments: [] }).ref,
+  ).toBe('costly');
+});

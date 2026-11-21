@@ -13,6 +13,7 @@ import { VisionTrainingStore } from '../electron/visionTraining/store.mjs';
 import { visionTrainingPostRoutes } from '../electron/visionTraining/routes.mjs';
 import { roboflowPostRoutes } from '../electron/roboflow/routes.mjs';
 import { TEST_HOOKS_FLAG } from '../src/utils/platform/testHooksFlag';
+import { BUNDLED_RATES, RATES_SOURCE } from '../src/data/exchangeRates';
 
 const EFFORT_LEVELS = [
   { id: 'low', name: 'Low' },
@@ -160,6 +161,14 @@ async function stubBackend(page: Page, { posts, lists, live, libraryDir, roboflo
 
 export const exposeTestHooks = async (page: Page) => {
   await page.context().route(/^https:\/\/huggingface\.co\/.*\/resolve\/.*\.onnx(?:\?.*)?$/, (route) => route.abort());
+  await page.context().route(
+    (url) => url.href === RATES_SOURCE,
+    (route) =>
+      route.fulfill({
+        headers: { 'access-control-allow-origin': '*' },
+        json: { date: BUNDLED_RATES.date, rates: BUNDLED_RATES.perUsd },
+      }),
+  );
 
   return page.addInitScript((flag) => Object.assign(window, { [flag]: true }), TEST_HOOKS_FLAG);
 };

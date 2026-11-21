@@ -1,3 +1,4 @@
+import { lineIdentity } from './purchaseIdentity';
 import { BLOCKOUT_ONLY } from '../data/catalog';
 import { COMPONENT_BY_ID, componentVariant, type ComponentInfo, type ComponentVariant } from '../data/components';
 import { HardwareSpec, hardwareName, hardwareShopUrl, isStockLength, makeSpec, screwStandard } from '../data/hardware';
@@ -19,6 +20,7 @@ import {
   daysSince,
 } from './bomTypes';
 import { printedLine } from './bomPrinted';
+import { quotesByPart } from '../print/quoteKey';
 
 import { neededSupplyKeys } from './bomNeeds';
 import { wiringNetlist } from '../wiring/netlist';
@@ -27,6 +29,7 @@ import { wiringSupplies } from '../wiring/wiringSupplies';
 import { sceneTether } from './powerSources';
 import { sheetOf } from '../sheet/materials';
 import { describeSheet, sheetKey } from './bomSheet';
+import { boardPurchases } from '../wiring/boardPurchases';
 
 export { FILAMENT_MARGIN, STALE_DAYS, localDate } from './bomTypes';
 export type { Bom, BomCategory, BomLine, PriceStatus, PrintedPart } from './bomTypes';
@@ -210,6 +213,10 @@ function addCount(counts: Counts, key: string, qty: number, partIds: string[] = 
   counts.set(key, e);
 }
 
+function addBoardPurchases(counts: Counts, board: ProjectSettings['electronicsBoard']) {
+  for (const item of boardPurchases(board)) addCount(counts, item.key, item.qty, item.partIds);
+}
+
 export function boughtKey(p: ScenePart): string | null {
   if ((p.kind === 'component' || p.kind === 'mesh') && p.componentId)
     return `component:${p.componentId}${p.componentVariant ? `|${p.componentVariant}` : ''}`;
@@ -244,6 +251,9 @@ type PartTally = Pick<Bom, 'printed' | 'standIns' | 'unmeasured' | 'madeElsewher
 };
 
 function tallyPart(t: PartTally, p: ScenePart, project: ProjectSettings, m: MeshMeasure | undefined) {
+  if (p.id === project.electronicsBoard?.partId)
+    return t.madeElsewhere.push({ id: p.id, name: p.name, process: 'PCB fabrication' });
+
   const key = boughtKey(p);
 
   if (key) return addCount(t.counts, key, 1, [p.id].filter(Boolean));
@@ -267,7 +277,8 @@ function tallyPart(t: PartTally, p: ScenePart, project: ProjectSettings, m: Mesh
   const printed = printedPart(p, m, project);
 
   t.printed.push(printed);
-  t.filamentG[printed.material] = (t.filamentG[printed.material] ?? 0) + printed.grams;
+  t.filamentG[printed.material] =
+    (t.filamentG[printed.material] ?? 0) + printed.grams * Math.max(1, p.print?.copies ?? 1);
 }
 
 function tallyParts(
@@ -352,6 +363,7 @@ function bomLine(key: string, qty: number, partIds: string[], { purchases, now }
     url: record?.url || info.url,
     urlKind: record?.url ? 'product' : info.urlKind,
     record,
+    identity: lineIdentity(key, record),
     status: priceStatus(record, ageDays, split.toBuy),
     ageDays,
     ...linePricing(key, split.toBuy, record, filament),
@@ -413,6 +425,8 @@ export function buildBom({
   const tally = tallyParts(parts, project, measures);
   const byService = project.madeBy === 'service';
 
+  addBoardPurchases(tally.counts, project.electronicsBoard);
+
   if (!byService) addFilament(tally, supportG);
 
   for (const x of project.extras ?? []) if (x.qty > 0) addCount(tally.counts, x.key, x.qty);
@@ -429,9 +443,10 @@ export function buildBom({
   for (const key of neededSupplyKeys(parts, listed, { tether: !!sceneTether({ parts, project }), netlist }))
     addCount(tally.counts, key, 1);
 
+  const quotes = quotesByPart(byService ? project.quotes : undefined);
   const printedLines = byService
     ? tally.made.map((part) =>
-        printedLine({ part, material: printMaterialOf(part, project), quotes: project.quotes, now }),
+        printedLine({ part, material: printMaterialOf(part, project), quote: quotes.get(part.id), now }),
       )
     : [];
   const lines = [...tally.counts]

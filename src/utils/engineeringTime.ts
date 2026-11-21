@@ -20,17 +20,56 @@ export interface TimeInput {
 
 export const TIME_MINUTES = { step: 1, part: 2, fastener: 0.5, insert: 1.5, servo: 5 };
 
+function longestPlate<T extends { hours: number }>(plates: T[]): T | undefined {
+  let longest: T | undefined;
+
+  for (const plate of plates) {
+    if (Number.isNaN(plate.hours)) return [...plates].sort((a, b) => b.hours - a.hours)[0];
+
+    if (!longest || plate.hours > longest.hours) longest = plate;
+  }
+
+  return longest;
+}
+
+function fastenerStep<T extends { fasteners: number; minutes: number }>(steps: T[]): T | undefined {
+  let most: T | undefined;
+
+  for (const step of steps) {
+    const order = most ? step.fasteners - most.fasteners || step.minutes - most.minutes : 1;
+
+    if (order > 0) most = step;
+  }
+
+  return most;
+}
+
 export function assemblyTimes(parts: ScenePart[], project: ProjectSettings, steps = guideStepParts(parts, project)) {
-  const byId = new Map(parts.filter(isBuilt).map((p) => [p.id, p]));
+  const byId = new Map<string, ScenePart>();
+
+  for (const part of parts) {
+    if (isBuilt(part)) byId.set(part.id, part);
+  }
+
   const counted = new Set<string>();
 
   return steps.map((ids, index) => {
-    const fresh = ids.filter((id) => byId.has(id) && !counted.has(id)).map((id) => byId.get(id)!);
+    const fresh: string[] = [];
+    let fasteners = 0;
+    let inserts = 0;
 
-    fresh.forEach((p) => counted.add(p.id));
+    for (const id of ids) {
+      const part = byId.get(id);
 
-    const fasteners = fresh.filter(isFastener).length;
-    const inserts = fresh.filter(isInsert).length;
+      if (!part || counted.has(id)) continue;
+
+      fresh.push(part.id);
+      fasteners += Number(isFastener(part));
+      inserts += Number(isInsert(part));
+    }
+
+    for (const id of fresh) counted.add(id);
+
     const pieces = fresh.length - fasteners - inserts;
     const minutes =
       TIME_MINUTES.step +
@@ -38,7 +77,7 @@ export function assemblyTimes(parts: ScenePart[], project: ProjectSettings, step
       fasteners * TIME_MINUTES.fastener +
       inserts * TIME_MINUTES.insert;
 
-    return { step: index + 1, minutes, fasteners, inserts, ids: fresh.map((p) => p.id) };
+    return { step: index + 1, minutes, fasteners, inserts, ids: fresh };
   });
 }
 
@@ -62,8 +101,8 @@ export function buildTime(input: TimeInput) {
   const assemblyMinutes = steps.reduce((n, s) => n + s.minutes, 0);
   const servos = servoLayout(project.joints ?? []).ids.length;
   const setupMinutes = servos * TIME_MINUTES.servo;
-  const longest = [...plates].sort((a, b) => b.hours - a.hours)[0];
-  const mostFasteners = [...steps].sort((a, b) => b.fasteners - a.fasteners || b.minutes - a.minutes)[0];
+  const longest = longestPlate(plates);
+  const mostFasteners = fastenerStep(steps);
 
   return {
     hours: printHours + (assemblyMinutes + setupMinutes) / 60,

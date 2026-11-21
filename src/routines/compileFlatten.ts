@@ -1,5 +1,6 @@
 import type { CompileContext, FactInfo } from './compileContext';
-import { lowerCondition, Symbols } from './compileConditions';
+import { lowerCondition } from './compileConditions';
+import { Symbols } from './symbols';
 import type { FlowChecker } from './compileFlow';
 import { askNodeFor } from './nodes';
 import {

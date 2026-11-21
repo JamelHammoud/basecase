@@ -1,3 +1,5 @@
+import { validVisibilityResult, validVisibilityRecord } from './visibilityRecord';
+import { validCameraLens } from './cameraChoices';
 import { restoreSavedRuns, validSavedRuns } from './recordRuns';
 import { validSheetFields } from '../sheet/validation';
 import type { ProjectSettings } from '../types/robotics';
@@ -32,7 +34,8 @@ function validPart(value: unknown): boolean {
     typeof value.visible === 'boolean' &&
     typeof value.locked === 'boolean' &&
     ['solid', 'reference', 'cutout'].includes(String(value.role)) &&
-    validSheetFields(value)
+    validSheetFields(value) &&
+    (value.cameraLens === undefined || validCameraLens(value.cameraLens))
   );
 }
 
@@ -97,6 +100,7 @@ function validRow(value: unknown): boolean {
     optionalNumber(value.volts) &&
     optionalString(value.error) &&
     validMetrics(value.metrics) &&
+    validVisibilityResult(value.visibility) &&
     validSavedRuns(value.runs) &&
     Array.isArray(value.checks) &&
     value.checks.length <= 10000 &&
@@ -139,6 +143,7 @@ function validRecord(value: unknown): value is StudyRecord {
     optionalString(value.caseId) &&
     optionalString(value.caseKey) &&
     validRows(value, value.knobs) &&
+    validVisibilityRecord(value) &&
     finiteTree(value)
   );
 }

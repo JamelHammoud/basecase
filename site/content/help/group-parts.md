@@ -41,6 +41,8 @@ A toast shows how many parts you grouped. The group is called “Group 1” unti
 
 To duplicate a group, press [[⌘D]]. A copy of “Leg” is called “Leg copy”, and the parts inside it keep their names.
 
+When a group contains both a sketch and its support, duplicating it attaches the copied sketch to the copied support. Duplicating the sketch alone makes an independent sketch.
+
 In **Layers**, each group appears as one row that you can collapse. Click the row to select every part in the group, or double-click it to rename the group. You can also open the same field by choosing **Rename** from the group's right-click menu or from [[⌘K]].
 
 ## Ungroup

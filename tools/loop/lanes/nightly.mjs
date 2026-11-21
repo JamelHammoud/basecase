@@ -117,8 +117,8 @@ const releaseRuns = () =>
 const jobsOf = (id) =>
   json('gh', ['run', 'view', String(id), '--json', 'jobs'])?.jobs?.map((job) => [job.name, job.conclusion]) ?? [];
 
-const RELEASE_BUILDS = ['mac', 'windows', 'daemon-linux-arm64', 'daemon-linux-x64'];
-const RELEASE_ARTIFACTS = ['mac', 'windows', 'robot-daemon-linux-arm64', 'robot-daemon-linux-x64'];
+const RELEASE_BUILDS = ['mac', 'windows', 'daemon-linux-arm64', 'daemon-linux-x64', 'forge-linux-x64'];
+const RELEASE_ARTIFACTS = ['mac', 'windows', 'robot-daemon-linux-arm64', 'robot-daemon-linux-x64', 'forge-linux-x64'];
 
 function publish(pending, log) {
   const started = releaseRuns().find((r) => r.createdAt >= pending.dispatchedAt);

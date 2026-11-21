@@ -45,6 +45,7 @@ What a part is made from decides whether you can resize it, whether it's printed
 | Agent part | Modeled by the agent in CAD code | Yes |
 | Imported mesh | Import, including STEP and IGES bodies | Yes |
 | Robot link | Import Robot or **Parts** ▸ **Robots** | No |
+| Generated carrier | Board definition in the scene | No, PCB fabrication |
 
 Shapes, agent parts and imported meshes start as printed parts. For a flat part with only through features, choose **Cut from Sheet** under **Manufacturing** to use aluminum, carbon fiber or acrylic. Other material choices stay under **Appearance**. Components keep the maker's exact size, so you can't resize them. To change the size of hardware, use its **Size** and **Length** choices.
 
@@ -74,7 +75,7 @@ For a list of every check, see [Build tab checks](/help/build-checks).
 
 ## Mounting ports
 
-Every component has mounting ports: named holes, bores, bosses, faces and outputs, each with a position and a direction. Each port's position and direction come from the maker's mesh, and tests check them against it.
+Components with documented mechanical attachment points have mounting ports: named holes, bores, bosses, faces and outputs, each with a position and a direction. Each port's position and direction come from the maker's mesh, and tests check them against it. A PCB header’s solder pins use footprint pad geometry instead of screw-hole ports.
 
 For example, the Feetech STS3215 servo has:
 

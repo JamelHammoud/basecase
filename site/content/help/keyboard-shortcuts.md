@@ -85,7 +85,9 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 | Delete | [[⌫]] |
 | Deselect | [[Esc]] |
 
-[[Esc]] also leaves whichever mode is open, once anything smaller in it has cleared. Sketch and Import SVG stay open while they hold a drawing.
+[[Esc]] also leaves whichever mode is open, once anything smaller in it has cleared. Sketch and Import SVG stay open while they hold a drawing. While choosing a replacement Sketch face, [[Esc]] cancels the selection.
+
+While [editing a cable route](/help/route-a-robot-cable), [[Esc]] closes the editor. Committed route edits stay in the scene.
 
 In [Tries](/help/open-a-try-from-any-scene), [[⌫]] deletes the selected tries once you confirm. Keys without [[⌘]] leave the scene alone there.
 

@@ -1,3 +1,5 @@
+import { pathsByDepth } from '../pathsByDepth';
+
 const NOT_ROBOTS = /(^|\/)(package\.xml|[^/]*\.(launch|gazebo|srdf|sdf|world|config)\.xml|[^/]*\.launch)$/i;
 const NOT_ROBOT_DIRS = /(^|\/)(launch|config|rviz|worlds?|test|tests|\.github|docs?)\//i;
 const SCENE = /(^|\/)scene[^/]*\.xml$/i;
@@ -14,10 +16,6 @@ export class RobotChoiceError extends Error {
   }
 }
 
-export const depthOf = (path: string) => path.split('/').length;
-
-const byDepth = (a: string, b: string) => depthOf(a) - depthOf(b) || a.localeCompare(b);
-
 export function inScope(paths: string[], scope: string): string[] {
   const dir = scope.replace(/^\/+|\/+$/g, '');
 
@@ -25,10 +23,10 @@ export function inScope(paths: string[], scope: string): string[] {
 }
 
 function shallowest(paths: string[]): string[] {
-  const sorted = [...paths].sort(byDepth);
-  const top = sorted.length ? depthOf(sorted[0]) : 0;
+  const sorted = pathsByDepth(paths);
+  const top = sorted[0]?.depth;
 
-  return sorted.filter((p) => depthOf(p) === top);
+  return sorted.filter((p) => p.depth === top).map((p) => p.path);
 }
 
 const descriptions = (paths: string[]) => paths.filter((p) => !NOT_ROBOTS.test(p) && !NOT_ROBOT_DIRS.test(p));
@@ -52,7 +50,9 @@ export function descriptionKind(text: string): DescriptionKind | null {
 type Peek = (path: string) => Promise<string>;
 
 async function peekXml(paths: string[], peek: Peek): Promise<Array<[string, DescriptionKind | null]>> {
-  const xml = descriptions(paths).filter(isXml).sort(byDepth).slice(0, MAX_PEEKS);
+  const xml = pathsByDepth(descriptions(paths).filter(isXml))
+    .slice(0, MAX_PEEKS)
+    .map((p) => p.path);
   const kinds = await Promise.all(xml.map((p) => peek(p).then(descriptionKind, () => null)));
 
   return xml.map((p, i) => [p, kinds[i]]);
@@ -73,12 +73,7 @@ const isXacro = (path: string) => /\.xacro$/i.test(path);
 const fileName = (path: string) => path.split('/').pop()!.toLowerCase();
 const stemOf = (path: string) => fileName(path).replace(/(\.urdf)?\.xacro$/, '');
 
-interface XacroFile {
-  path: string;
-  text: string;
-}
-
-function xacroScore({ path, text }: XacroFile): number {
+function xacroScore(path: string, text: string): number {
   const stem = stemOf(path);
   const named =
     stem === ROBOT_NAME.exec(text)?.[1].toLowerCase() || path.toLowerCase().includes(`${stem}_description/`);
@@ -86,19 +81,38 @@ function xacroScore({ path, text }: XacroFile): number {
   return (DESCRIPTION_DIR.test(path) ? 2 : 0) + (named ? 1 : 0);
 }
 
+function rankedXacro(files: string[], texts: string[], included: Set<string>): string[] {
+  const winners: string[] = [];
+  let best = -Infinity;
+
+  for (let i = 0; i < files.length; i++) {
+    const path = files[i];
+
+    if (descriptionKind(texts[i]) !== 'urdf' || included.has(fileName(path))) continue;
+
+    const score = xacroScore(path, texts[i]);
+
+    if (score < best) continue;
+
+    if (score > best) {
+      winners.length = 0;
+      best = score;
+    }
+
+    winners.push(path);
+  }
+
+  return winners;
+}
+
 async function topXacro(paths: string[], peek: Peek): Promise<EntryChoice | null> {
-  const files = descriptions(paths)
-    .filter(isXacro)
-    .sort(byDepth)
-    .slice(0, MAX_PEEKS * 2);
+  const files = pathsByDepth(descriptions(paths).filter(isXacro))
+    .slice(0, MAX_PEEKS * 2)
+    .map((p) => p.path);
   const texts = await Promise.all(files.map((p) => peek(p).catch(() => '')));
   const included = new Set(texts.flatMap((t) => [...t.matchAll(XACRO_INCLUDE)].map((m) => fileName(m[1]))));
-  const top = files
-    .map((path, i) => ({ path, text: texts[i] }))
-    .filter((f) => descriptionKind(f.text) === 'urdf' && !included.has(fileName(f.path)));
-  const best = Math.max(...top.map(xacroScore));
 
-  return decide(top.filter((f) => xacroScore(f) === best).map((f) => f.path));
+  return decide(rankedXacro(files, texts, included));
 }
 
 export async function chooseEntry(paths: string[], peek: Peek): Promise<EntryChoice | null> {

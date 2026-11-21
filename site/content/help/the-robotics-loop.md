@@ -29,12 +29,16 @@ Basecase is a 3D CAD studio for robots, with an agent that designs alongside you
 |---|---|---|
 | Design | Shape parts, place real servos, boards and sensors, or describe the robot to the agent | **Parts** and **Library** in the view rail, and the **Agent** tab |
 | Engineer | Add joints, pose the robot, and check torque, range, stability and printability | The **Pose** and **Build** tabs |
-| Simulate | Run the robot under MuJoCo physics, and try it on Cases | The **Simulate** tab, and **Play** ▸ **Cases** |
+| Simulate | Run robots and closed Sketch linkages under MuJoCo physics, and try robots on Cases | The **Simulate** tab, and **Play** ▸ **Cases** |
 | Train | Teach the robot a skill, such as standing up or walking, train a policy on a dataset of your tries, or install one from Hugging Face | The **Train** section of the **Simulate** tab, a dataset in the **Library**, and **Install Skill** in [[⌘K]] |
-| Build | Clear the Checks, price every part and print the plates | The **Build** tab |
+| Build | Clear the Checks, price every part, print the plates and export the manufacturing files together | The **Build** tab and **Export** ▸ **Kit** |
 | Operate | Connect emulated robots locally or on Linux computers, calibrate each unit, roll skills out to canaries and run Routines | **Play** ▸ **Operate** and **Play** ▸ **Routines** |
 
 MuJoCo is the physics engine that robotics labs use to test robots before they build them. Basecase runs it inside the app, on the same model it exports.
+
+You can also compare shared robots in [Leagues](/help/replay-a-league). Each League runs fixed robot revisions on one pinned Case. Frozen standings come from CI, and browser replays let you inspect a measured seed without changing the standings.
+
+You can also [reuse an assembly in Cases](/help/reuse-an-assembly-in-cases) to test a robot opening a chest, placing a block and closing the lid.
 
 ## How the stages loop
 
@@ -50,7 +54,8 @@ You can also [try a Case](/help/try-a-case-on-your-real-robot) with a real wheel
 
 - Design and Engineer are complete.
 - Simulate and Train are in active development.
-- Build covers the Checks, the bill of materials, the build guide, slicing and print service quotes.
+- The desktop app can [train on another computer](/help/train-on-another-computer) over SSH and recover the result after a restart. Arena judges it locally.
+- Build covers the Checks, the bill of materials, the build guide, slicing, print service quotes and [robot kit export](/help/export-a-robot-kit).
 - Operate connects fleets of emulated robots with separate calibrations and faults, locally or over a private network. [Connect a robot computer](/help/connect-a-robot-computer) installs the daemon as a Linux user service and pairs it with the app. [Roll Out](/help/roll-out-a-skill-to-a-fleet) proves each unit's twin before sending its policy.
 
 **Note:** Basecase doesn't drive real motors, but it can watch a real robot through a camera.

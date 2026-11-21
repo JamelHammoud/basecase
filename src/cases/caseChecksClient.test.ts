@@ -158,3 +158,17 @@ describe('the Case checks pool', () => {
     await second;
   });
 });
+
+it('disposes running and queued class jobs without recreating a worker', async () => {
+  const { pool: p, workers } = pool();
+  const running = p.run(0, runs([1]));
+  const queued = p.run(0, runs([2]));
+  const stopped = Promise.allSettled([running, queued]);
+
+  p.dispose();
+
+  expect((await stopped).map((result) => result.status)).toEqual(['rejected', 'rejected']);
+  expect(workers.every((worker) => worker.terminated)).toBe(true);
+  await expect(p.run(0, runs([3]))).rejects.toThrow('Canceled');
+  expect(workers).toHaveLength(1);
+});

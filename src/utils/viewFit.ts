@@ -114,6 +114,8 @@ export function alignModel(photo: Mask, model: Mask, rolls: number[] = [0]): Ali
       const score = iou(photo.data, placeInto(work, candidate));
 
       if (score > best.iou) best = { ...candidate, iou: score };
+
+      if (best.iou === 1) return best;
     }
 
   return best;

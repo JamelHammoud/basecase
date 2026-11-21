@@ -1,10 +1,15 @@
+import { captureVersion, emptyVersionGraph } from '../../../workspace/sceneVersions';
+import { versionPart, versionScene } from '../../../workspace/sceneVersions.fixtures';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { meshWorldAsset } from '../../../cases/worldAssets.fixtures';
 import { hashWorldAsset, serializeWorldAssets } from '../../../cases/worldAssets';
 import type { SavedSceneRecord } from '../../../types/robotics';
+import { webSceneHistory } from './webSceneHistoryClient';
 import { idbAll, idbGet, idbWrite } from './idb';
 import { summarizeScene } from './sceneSummary';
 import { deleteScene, getScene, listScenes, saveScene, saveScenePreview } from './webScenes';
+
+vi.mock('./webSceneHistoryClient', () => ({ webSceneHistory: { call: vi.fn() } }));
 
 vi.mock('./idb', () => ({ idbAll: vi.fn(), idbGet: vi.fn(), idbWrite: vi.fn() }));
 
@@ -84,6 +89,7 @@ describe('web scene summaries', () => {
     expect(idbWrite).toHaveBeenCalledExactlyOnceWith([
       { kind: 'delete', store: 'scenes', key: 'deleted-arm' },
       { kind: 'delete', store: 'sceneSummaries', key: 'deleted-arm' },
+      { kind: 'delete', store: 'settings', key: 'scene-history/ref/deleted-arm' },
     ]);
     expect(await saveScene({ ...record, id: 'deleted-arm', autosave: true })).toBeNull();
     expect(await saveScenePreview({ id: 'deleted-arm' })).toBeNull();
@@ -123,4 +129,21 @@ describe('web scene world persistence', () => {
     expect(await listScenes()).toEqual([expect.objectContaining({ id: 'world' })]);
     expect((await listScenes())[0]).not.toHaveProperty('worldAssets');
   });
+});
+
+it('keeps version content and head in the same browser scene transaction and out of summaries', async () => {
+  const scene = versionScene([versionPart('bracket')]);
+  const graph = captureVersion(emptyVersionGraph(), scene, { label: 'Bracket', at: '2026-11-16' });
+  const history = JSON.stringify(graph);
+
+  await saveScene({ id: 'versioned', name: 'Arm', ...scene, history });
+
+  expect(webSceneHistory.call).toHaveBeenCalledWith('save', {
+    record: expect.objectContaining({ id: 'versioned', history }),
+    summary: expect.not.objectContaining({ history }),
+  });
+  expect(idbWrite).not.toHaveBeenCalled();
+  vi.mocked(webSceneHistory.call).mockRejectedValueOnce(new Error('Aborted transaction'));
+
+  await expect(saveScene({ id: 'versioned', name: 'Arm', ...scene, history })).rejects.toThrow('Aborted transaction');
 });

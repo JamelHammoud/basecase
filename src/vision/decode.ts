@@ -6,8 +6,7 @@ import { decodeFace } from './decodeFace';
 import { suppress } from './boxes';
 import { tensorShape } from './tensorShape';
 
-interface SourceDetection {
-  detection: VisionDetection;
+interface SourceDetection extends VisionDetection {
   row: number;
 }
 
@@ -33,10 +32,10 @@ function genericDetections(outputs: VisionOutputs, manifest: VisionManifest): Ge
     const label = manifest.classes[row[5]];
 
     if (label && row[4] >= 0.25)
-      detections.push({ row: i, detection: { label, score: row[4], box: row.slice(0, 4) as VisionDetection['box'] } });
+      detections.push({ row: i, label, score: row[4], box: row.slice(0, 4) as VisionDetection['box'] });
   }
 
-  return { detections, count: dims[0] };
+  return { detections: suppress(detections), count: dims[0] };
 }
 
 export function decode(
@@ -56,7 +55,7 @@ export function decode(
 
   const detections = genericDetections(outputs, manifest);
 
-  return { detections: suppress(withExtra(outputs, manifest, detections)) };
+  return { detections: withExtra(outputs, manifest, detections) };
 }
 
 function decodeDepth(outputs: VisionOutputs) {
@@ -83,12 +82,14 @@ function decodeClasses(outputs: VisionOutputs, manifest: VisionManifest) {
   return { detections: [], classes: classes.sort((a, b) => b.score - a.score) };
 }
 
+const baseDetection = ({ label, score, box }: VisionDetection): VisionDetection => ({ label, score, box });
+
 function withExtra(outputs: VisionOutputs, manifest: VisionManifest, rows: GenericRows): VisionDetection[] {
   if (manifest.kind === 'segment') return withMasks(outputs.masks, rows);
 
   if (manifest.kind === 'keypoints') return withKeypoints(outputs.keypoints, rows);
 
-  return rows.detections.map(({ detection }) => detection);
+  return rows.detections.map(baseDetection);
 }
 
 function withMasks(masks: VisionTensor | undefined, rows: GenericRows): VisionDetection[] {
@@ -98,12 +99,12 @@ function withMasks(masks: VisionTensor | undefined, rows: GenericRows): VisionDe
   if (count !== rows.count || height < 1 || height > MAX_MASK_DIMENSION || width < 1 || width > MAX_MASK_DIMENSION)
     throw new Error('The segmenter returned unsupported masks.');
 
-  return rows.detections.map(({ detection, row }) => {
+  return rows.detections.map(({ row, label, score, box }) => {
     const values = new Uint8Array(width * height);
 
     for (let i = 0; i < values.length; i++) values[i] = Number(tensor.data[row * values.length + i]) > 0.5 ? 1 : 0;
 
-    return { ...detection, mask: { width, height, values } };
+    return { label, score, box, mask: { width, height, values } };
   });
 }
 
@@ -114,12 +115,12 @@ function withKeypoints(points: VisionTensor | undefined, rows: GenericRows): Vis
   if (count !== rows.count || landmarks < 1 || landmarks > MAX_KEYPOINTS || coordinates !== 2)
     throw new Error('The keypoint model returned unsupported landmarks.');
 
-  return rows.detections.map(({ detection, row }) => {
+  return rows.detections.map(({ row, label, score, box }) => {
     const keypoints: [number, number][] = Array.from({ length: landmarks }, (_, p) => [
       Number(tensor.data[(row * landmarks + p) * 2]),
       Number(tensor.data[(row * landmarks + p) * 2 + 1]),
     ]);
 
-    return { ...detection, keypoints };
+    return { label, score, box, keypoints };
   });
 }

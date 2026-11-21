@@ -1,4 +1,4 @@
-import { cellCenter, type HexMesh } from './mesh';
+import type { HexMesh } from './mesh';
 import { cellIndex } from './voxels';
 import type { V3 } from './types';
 
@@ -6,66 +6,78 @@ export interface DensityFilter {
   start: Int32Array;
   near: Int32Array;
   weight: Float64Array;
+  totalWeight: Float64Array;
 }
 
 function offsetsFor(h: V3, radius: number): Array<[number, number, number, number]> {
   const steps = h.map((value) => Math.ceil(radius / value));
   const out: Array<[number, number, number, number]> = [];
 
-  for (let dz = -steps[2]; dz <= steps[2]; dz++)
-    for (let dy = -steps[1]; dy <= steps[1]; dy++)
-      for (let dx = -steps[0]; dx <= steps[0]; dx++)
-        out.push([dx, dy, dz, radius - Math.hypot(dx * h[0], dy * h[1], dz * h[2])]);
+  const appendRow = (dy: number, dz: number) => {
+    for (let dx = -steps[0]; dx <= steps[0]; dx++) {
+      const weight = radius - Math.hypot(dx * h[0], dy * h[1], dz * h[2]);
 
-  return out.filter(([, , , weight]) => weight > 0);
+      if (weight > 0) out.push([dx, dy, dz, weight]);
+    }
+  };
+
+  for (let dz = -steps[2]; dz <= steps[2]; dz++) for (let dy = -steps[1]; dy <= steps[1]; dy++) appendRow(dy, dz);
+
+  return out;
 }
 
 export function densityFilter(mesh: HexMesh, radius: number): DensityFilter {
   const { grid } = mesh;
+  const [nx, ny, nz] = grid.n;
   const elementOf = new Int32Array(grid.solid.length).fill(-1);
   const offsets = offsetsFor(grid.h, radius);
   const start = new Int32Array(mesh.cells.length + 1);
+  const totalWeight = new Float64Array(mesh.cells.length);
   const near: number[] = [];
   const weight: number[] = [];
 
   mesh.cells.forEach((cell, e) => (elementOf[cell] = e));
   mesh.cells.forEach((cell, e) => {
-    const p = cellCenter(grid, cell);
-    const own = p.map((v, axis) => Math.round((v - grid.origin[axis]) / grid.h[axis] - 0.5));
+    const x = cell % nx;
+    const y = Math.floor(cell / nx) % ny;
+    const z = Math.floor(cell / (nx * ny));
+    let sumWeight = 0;
 
     for (const [dx, dy, dz, w] of offsets) {
-      const ijk = [own[0] + dx, own[1] + dy, own[2] + dz];
+      const i = x + dx;
+      const j = y + dy;
+      const k = z + dz;
 
-      if (ijk.some((v, axis) => v < 0 || v >= grid.n[axis])) continue;
+      if (i < 0 || i >= nx || j < 0 || j >= ny || k < 0 || k >= nz) continue;
 
-      const other = elementOf[cellIndex(grid, ijk[0], ijk[1], ijk[2])];
+      const other = elementOf[cellIndex(grid, i, j, k)];
 
       if (other < 0) continue;
 
       near.push(other);
       weight.push(w);
+      sumWeight += w;
     }
 
     start[e + 1] = near.length;
+    totalWeight[e] = sumWeight;
   });
 
-  return { start, near: Int32Array.from(near), weight: Float64Array.from(weight) };
+  return { start, near: Int32Array.from(near), weight: Float64Array.from(weight), totalWeight };
 }
 
 export function filteredSensitivity(filter: DensityFilter, density: Float64Array, raw: Float64Array): Float64Array {
   return density.map((value, e) => {
     let sum = 0;
-    let weights = 0;
 
     for (let i = filter.start[e]; i < filter.start[e + 1]; i++) {
       const other = filter.near[i];
       const w = filter.weight[i];
 
       sum += w * density[other] * raw[other];
-      weights += w;
     }
 
-    return sum / (Math.max(0.001, value) * weights);
+    return sum / (Math.max(0.001, value) * filter.totalWeight[e]);
   });
 }
 

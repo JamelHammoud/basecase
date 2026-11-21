@@ -1,3 +1,4 @@
+import type { LocalJudgment } from './localJudgments';
 import type { MainModule } from '@mujoco/mujoco';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { PolicySpec } from '../sim/policy';
@@ -15,6 +16,8 @@ export async function slowerSpeedEvidence(options: {
   entry: TrainedEntry;
   environment: Environment;
   policy: PolicySpec;
+  judgment?: LocalJudgment;
+  onEvidence?: (evidence: ArenaEvidence, environment: Environment) => void;
 }): Promise<ArenaEvidence[]> {
   const { mj, model, entry, environment, policy } = options;
 
@@ -31,7 +34,18 @@ export async function slowerSpeedEvidence(options: {
       robot: kitRobot(model).key,
     };
 
-    evidence.push(await runArena({ mj, model, contract, controller, environment: { ...environment, contract } }));
+    const testedEnvironment = { ...environment, contract };
+    const result = await runArena({
+      mj,
+      model,
+      contract,
+      controller,
+      environment: testedEnvironment,
+      salt: options.judgment?.(),
+    });
+
+    options.onEvidence?.(result, testedEnvironment);
+    evidence.push(result);
   }
 
   return evidence;

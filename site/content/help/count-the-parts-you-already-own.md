@@ -20,6 +20,7 @@ covers:
   - src/components/build/QtyEditor.tsx
   - src/components/build/BuyRow.tsx
   - src/components/build/buyLine.ts
+  - src/utils/bomCategories.ts
   - src/components/BuildPanel.tsx
   - src/utils/onHand.ts
   - src/utils/bom.ts
@@ -48,14 +49,20 @@ To put the old count back, click **Undo** in the toast. To clear a count, type 0
 
 - Count single pieces, even if you bought them in packs. If you have 100 M3 screws on hand and a robot uses 13, none are listed to buy.
 - Each cable product and length has its own count. Owning a 300 mm cable doesn’t reduce the number of 900 mm cables to buy.
-- Filament is counted in grams.
+- Filament is counted in grams, including every copy set in Print mode.
 - Printed parts from a print service have no **On hand**. Their quoted price covers every copy.
 - A count belongs to the part, so every scene that uses the part takes your count off what's left to buy.
-- Basecase doesn't take parts off your count when you build a robot, so update the count yourself after a build.
+- Completing steps in a [named build](/help/resume-a-robot-build) leaves your on-hand count unchanged. Update the count yourself after a build.
 - The Budget check and **Buy All** leave out the parts you own.
+
+Connectors added by a [board placement](/help/fit-an-electronics-board) use the same catalog product’s on-hand count as connectors placed separately. A [robot kit](/help/export-a-robot-kit) still packs every connector the assembly needs, including the ones you own.
+
+Classroom grading uses the full design cost, without subtracting the teacher's on-hand inventory. See [Grade a class](/help/grade-a-class).
 
 ## Tell the agent what you own
 
 You can also paste an order confirmation or a parts list into the agent's composer and ask it to record what you own. The agent saves the counts in the same place as the ones you type in **On hand**. When it picks parts, it lists the ones you own first and uses them before buying others.
+
+Saved [supplier offers](/help/compare-supplier-offers) use the same remaining quantities. Changing an on-hand count recalculates their pack counts without consuming stock.
 
 Next, [buy the parts for a robot](/help/buy-the-parts-for-a-robot).

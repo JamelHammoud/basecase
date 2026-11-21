@@ -1,11 +1,296 @@
 [
   {
+    "file": "tools/fleet/access.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44164732083 exhausted the unchanged 10000 ms beforeAll budget, skipping all six access cases. Same-revision Windows diagnostic 44167889998 passed the generated authorization matrix with one worker and retries disabled in a 6391 ms process. Native cluster initialization, migrations and identity setup are not distinguished. Existing Fleet fixture owner #1401 owns this shared setup incident, stage tracing, cleanup and equal-load baseline and candidate measurements. Other platforms and fast access-scope tests remain active. Whole-file filtering is required because setup precedes individual-test filtering."
+  },
+  {
+    "file": "tools/fleet/federation.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44164732083 exhausted the unchanged 10000 ms beforeAll budget, skipping all eight federation cases. Same-revision Windows diagnostic 44167931061 passed the signed identity-isolation case with one worker and retries disabled in an 8443 ms process. Native cluster initialization, migrations and identity setup are not distinguished. Existing Fleet fixture owner #1401 owns shared setup tracing, cleanup and equal-load baseline and candidate measurements. Other platforms and authorization, recovery and browser coverage remain active. Whole-file filtering is required because setup precedes individual-test filtering."
+  },
+  {
+    "file": "src/guide/render/guideStage.test.ts",
+    "test": "",
+    "issue": 1400,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44164732083 exhausted the unchanged 15000 ms beforeAll budget, skipping all three guide pixel and draw-call cases. Last full green 43948835889 passed this file in 9642 ms. Same-revision Windows diagnostic 44167880896 passed view 0 with one worker and retries disabled in a 10786 ms process. Bundle, server, Chrome launch and worker readiness stages are not distinguished. Existing shared OffscreenCanvas setup owner #1400 owns stage tracing, cancellation, cleanup and equal-load baseline and candidate measurements. Other platforms and fast guide planning, generation and worker-ownership coverage remain active. Whole-file filtering is required because setup precedes individual-test filtering."
+  },
+  {
+    "file": "e2e/boardRouted.e2e.test.ts",
+    "test": "imports a routed KiCad derivative through the Inspector with undo and redo",
+    "issue": 1620,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "The focused Inspector import retains the native validation and source commit path from the combined walkthrough. Run 44038644745 reached native validation but never committed routed.pcb. Removing scene opening and both exports does not establish the cause of that retained-stage failure. The former export and Gerber failures are outside this focused declaration. Issue #1620 retains ownership of native-result and source-guard traces, plus at least ten baseline and ten candidate observations at equal load on Windows with retries disabled and unchanged assertions and deadlines before restoration. Linux and macOS remain active, alongside fast routed-source and native fabrication coverage."
+  },
+  {
+    "file": "e2e/sketchSupport.e2e.test.ts",
+    "test": "creates on a canvas-picked generated deck, follows Inspector edits, undoes, redoes and reopens the actual file",
+    "issue": 1621,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44787608654 completed Inspector edits and undo/redo, then missed the unchanged download poll. Its shared-app retry exported and reopened a tab with the saved support id, then missed the mesh-triangle poll with zero triangles. Last full green 44697629334 passed in 27083 ms with unchanged test, helper, harness, export, support, thumbnail and scene-file sources and lockfile. No responsible merge or changed environment component is established. Export command delivery, preview preparation, encoding, download registration, imported document and viewport identity, worker validation and retained retry state remain distinct unresolved boundaries. Existing priority Sketch browser owner #1621 owns Linux tracing alongside its Windows cases and at least ten baseline and ten candidate observations at equal load with retries disabled before restoration. Linux replacement and both macOS declarations remain active, alongside fast support integration, serialization, history, queue and failure tests. Same-revision Linux diagnostic 44790006919 passed the complete declaration in 19506.501087 ms with one worker, retries disabled and quarantine off, confirming intermittency without establishing a cause or failure rate."
+  },
+  {
+    "file": "e2e/sketchSupport.e2e.test.ts",
+    "test": "creates on a canvas-picked generated deck, follows Inspector edits, undoes, redoes and reopens the actual file",
+    "issue": 1621,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44042519036 missed the unchanged 10000 ms download poll on the first Windows attempt. The retry reused the beforeAll app, exported and reopened the file with the support id retained, then missed the mesh-triangle poll with zero triangles. Linux passed in 14818 ms at the same revision, and the explicit replacement case passed Windows in 6828 ms. Commit 08e3b77a6 introduced the walkthrough after the last green. Thumbnail preparation, file delivery, support validation, active viewport and retained retry state are not distinguished. Issue #1621 owns production-path tracing and equal-load baseline and candidate measurements. Other platforms and fast support integration, serialization, history and failure coverage remain active. The replacement browser case is separately quarantined on Windows under the same owner. Focused Windows diagnostic 44111175052 passed the exact test at the same revision in 15982 ms with one worker and retries disabled, confirming intermittent behavior without establishing its cause."
+  },
+  {
+    "file": "e2e/sketchSupport.e2e.test.ts",
+    "test": "retains geometry after deletion and resolves only after explicit face selection",
+    "issue": 1621,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44380885141 retained geometry after source deletion and committed the replacement support id, then exhausted the unchanged poll for a cleared support issue. Its shared-app retry instead missed the supporting-part finding text. Last full green 44245137178 passed this unchanged declaration in 9549 ms. Same-revision Windows diagnostic 44383913059 passed in 12494.9466 ms with one worker, retries disabled and quarantine off, establishing intermittency without a failure rate. Replacement capture, regeneration, result application and Checks delivery remain separate untraced stages. Existing Sketch browser owner #1621 owns these Windows boundaries alongside file delivery, isolated attempts and ten baseline and ten candidate observations at equal load with retries disabled before restoration. Linux and macOS retain both declarations. Fast generated-design regeneration, face capture, missing-support, geometry, serialization, history and queue tests remain active. No assertion, timeout or retry changes."
+  },
+  {
+    "file": "e2e/kit.e2e.test.ts",
+    "test": "downloads a reconciled kit through Export on desktop with matching packing, guide, servo map and 3MF mesh",
+    "issue": 1611,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44690321738 at a008932d1 failed two separate Windows desktop boundaries. The first attempt delivered the archive but captured two guide jobs instead of one. Its retry exhausted the unchanged 10000 ms download wait despite completed preparation, Packing archive and the Exported Kit arm toast. Last full green 44558099086 already required a retry for this unchanged declaration before the sole intervening agent-adapter update. Same-revision Windows diagnostic 44691753110 passed in 15609.7596 ms with one worker, zero retries and quarantine off, confirming intermittency. The fixture captures every guide render and automatic guide generation can overlap export, but job identity and download delivery timing are untraced, so no common root cause is established. Existing manufacturing export owner #1611 owns both desktop signatures separately, cleanup and at least ten baseline and ten candidate equal-load Windows observations with retries disabled before restoration. Other platforms and fast Kit reconciliation, guide generation, worker ownership, interruption and geometry coverage remain active. No assertion, timeout or retry changes."
+  },
+  {
+    "file": "e2e/kit.e2e.test.ts",
+    "test": "downloads a reconciled kit through Export on web with matching packing, guide, servo map and 3MF mesh",
+    "issue": 1611,
+    "until": "2026-11-30",
+    "platform": "win32",
+    "reason": "Run 44034821423 missed the unchanged 10000 ms download wait on both Windows web attempts, with Exporting kit still visible and completed preparation ending at Checking the build order. The Windows desktop case passed in 13476 ms and Linux web passed at the same revision in 9322 ms. Full green run 43948835889 passed Windows web in 12449 ms without retries, with unchanged kit tests, guide-worker fixture, kit producers, guide generation and worker RPC sources. Focused Windows diagnostic 44036302249 passed the exact web case at the failing revision in 23690 ms with one worker and retries disabled, confirming intermittent behavior. The pending guide input, worker startup, fixture route or reply boundary is not established. Issue #1611 owns tracing from boot through preparation and delivery, plus equal-load baseline and candidate measurements before restoration. Desktop Windows has a separate quarantine under the same owner. Other platforms and all fast kit producer and guide coverage remain active."
+  },
+  {
+    "file": "src/study/visibilityMatrix.test.ts",
+    "test": "",
+    "issue": 1616,
+    "until": "2026-11-28",
+    "reason": "Run 44034821423 exhausted the unchanged 15000 ms beforeAll hook at line 14 on Linux and Windows before rendering assertions. Commit c377889f2 introduced the matrix after full green run 43948835889. Local feature checks do not establish hosted setup reliability. Asset read, bundling, server listen, Chrome launch and worker readiness are not distinguished. Issue #1616 owns both platform stage traces, cancellation and cleanup and equal-load baseline and candidate measurements. Whole-file filtering is required because setup precedes individual-test filtering."
+  },
+  {
+    "file": "e2e/board.e2e.test.ts",
+    "test": "",
+    "issue": 1614,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44518466291 failed shared setup after Define Board when Width (X) never became visible within 30000 ms, before either test body ran. The preceding Windows run 44513988396 passed setup and placement locking with unchanged board sources, harness, dependencies and runner image. Worker completion, stale-source rejection, selection and Inspector publication are not distinguished. Issue #1614 owns this setup path and separate outline-readiness failure, stage and cleanup tracing and equal-load baseline and candidate measurements. Whole-file exclusion is required because declaration filtering runs after beforeAll. Remove this file entry only after setup is deterministic, retaining the individual outline entry until its separate restoration evidence exists. Linux and macOS retain both declarations."
+  },
+  {
+    "file": "e2e/board.e2e.test.ts",
+    "test": "reports an outline shrink as a mechanical board blocker",
+    "issue": 1614,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44034821423 exhausted the Board fit fail-status poll at line 110 on both Windows attempts, taking 133980 ms together. Linux passed in 19250 ms at the same revision. Commit bda7dbaa3 introduced the walkthrough after the last full green run. The width edit, viewport synchronization, inspection and readiness publication stages are not distinguished. Issue #1614 owns tracing and equal-load baseline and candidate measurements. Fast board geometry, constraints, history and package tests remain active."
+  },
+  {
+    "file": "e2e/schematic.e2e.test.ts",
+    "test": "exports the current connector references and fingerprint through Build on desktop and updates electrical findings after a supply edit",
+    "issue": 1615,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44034821423 exhausted the initial Electrical connections fail-status poll on Windows desktop and never added the declared supply voltage differs finding after editing Supply voltage on web. Linux passed desktop in 13086 ms and web in 17960 ms at the same revision. Commit c1a5905c3 introduced these walkthroughs after the last full green run. The project edit, worker inspection and newest readiness publication stages are not distinguished. Issue #1615 owns separate traces for both symptoms and equal-load baseline and candidate measurements. Fast electrical projection, readiness, exports and native acceptance remain active."
+  },
+  {
+    "file": "e2e/schematic.e2e.test.ts",
+    "test": "exports the current connector references and fingerprint through Build on web and updates electrical findings after a supply edit",
+    "issue": 1615,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44034821423 exhausted the initial Electrical connections fail-status poll on Windows desktop and never added the declared supply voltage differs finding after editing Supply voltage on web. Linux passed desktop in 13086 ms and web in 17960 ms at the same revision. Commit c1a5905c3 introduced these walkthroughs after the last full green run. The project edit, worker inspection and newest readiness publication stages are not distinguished. Issue #1615 owns separate traces for both symptoms and equal-load baseline and candidate measurements. Fast electrical projection, readiness, exports and native acceptance remain active."
+  },
+  {
+    "file": "e2e/scanMap.e2e.test.ts",
+    "test": "rebuilds the displayed map when Scan Matching is turned off in Layers",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43938326448 failed both Windows attempts before Scan Matching was clicked, first with zero map points after opening the imported corridor try and then without the Imported 1 try confirmation. Linux passed the exact walkthrough at the same revision in 11330 ms. Its unchanged importCorridor helper is also used by the saved-world walkthrough already tracked in #995 for the same two setup symptoms. The failing import or playback stage is not established. Issue #995 owns startup tracing, isolated attempts and equal-load baseline and candidate measurements before restoration."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for short",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43938326448 exceeded the unchanged 5000 ms budget at 5004 ms on Windows. The same case passed in 1106 ms in full green run 43864963744, with unchanged parity test, capture, variants and native replay helper, and passed on Linux at the failing revision in 1073 ms. The responsible capture, native provisioning, replay or scoring stage is not established. Issue #1390 owns this additional lid variant, stage tracing and equal-load baseline and candidate measurements before restoration."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for weak",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43938326448 exceeded the unchanged 5000 ms budget at 5002 ms on Windows. The same case passed in 1022 ms in full green run 43864963744, with unchanged parity test, capture, variants and native replay helper, and passed on Linux at the failing revision in 861 ms. The responsible capture, native provisioning, replay or scoring stage is not established. Issue #1390 owns this additional lid variant, stage tracing and equal-load baseline and candidate measurements before restoration."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for locked",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43938326448 exceeded the unchanged 5000 ms budget at 5006 ms on Windows. The same case passed in 1170 ms in full green run 43864963744, with unchanged parity test, capture, variants and native replay helper, and passed on Linux at the failing revision in 963 ms. The responsible capture, native provisioning, replay or scoring stage is not established. Issue #1390 owns this additional lid variant, stage tracing and equal-load baseline and candidate measurements before restoration."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for limp",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43938326448 exceeded the unchanged 5000 ms budget at 5020 ms on Windows. The same case passed in 2590 ms in full green run 43864963744, with unchanged parity test, capture, variants and native replay helper, and passed on Linux at the failing revision in 763 ms. The responsible capture, native provisioning, replay or scoring stage is not established. Issue #1390 owns this additional lid variant, stage tracing and equal-load baseline and candidate measurements before restoration."
+  },
+  {
+    "file": "tools/fleet/service.test.mjs",
+    "test": "",
+    "issue": 1507,
+    "until": "2026-11-30",
+    "platform": "linux",
+    "reason": "Run 43919874616 exceeded the 10000 ms beforeAll budget before any of eleven HTTP service tests ran. The suite passed in 8408 ms in full green run 43864963744 with unchanged Fleet fixtures, service, unit configuration and package lock. Docker startup, migrations, bootstrap and enrollment share the hook, and the blocked stage is not established. Issue #1507 owns stage and cleanup tracing and equal-load baseline and candidate measurements. Other platforms retain all eleven cases."
+  },
+  {
+    "file": "e2e/classroom.e2e.test.ts",
+    "test": "edits an independent assignment attempt and exports its robot submission",
+    "issue": 1508,
+    "until": "2026-11-30",
+    "platform": "win32",
+    "reason": "Run 43919874616 exhausted the 30000 ms download wait after Submit on both Windows attempts, after adding and counting a cube. The same test passed on Windows in 17539 ms in run 43906210676 with unchanged classroom, export, autosave, download and browser harness inputs, and on Linux at the failing revision in 5922 ms. Export, inspection and reload with a later Submit passed in the failing file. The missing download's cause is not established. Issue #1508 owns tracing from page load through source guards, worker results, save flush, error toasts and browser delivery, plus equal-load baseline and candidate measurements. Other platforms keep this walkthrough and Windows retains submission through the reload walkthrough."
+  },
+  {
+    "file": "electron/simready/localFacility.test.mjs",
+    "test": "",
+    "issue": 1487,
+    "until": "2026-11-30",
+    "platform": "win32",
+    "reason": "Run 43906210676 exceeded the 10000 ms beforeAll budget while preparing the pinned USD environment, then teardown failed with EPERM unlinking Scripts/python.exe. All 12 cases passed on Windows in 9050 ms in full green run 43864963744 with unchanged converter inputs. The setup stage that stalled and the process holding the interpreter are not established."
+  },
+  {
+    "file": "e2e/closedLinkages.e2e.test.ts",
+    "test": "inserts a Sketch Path four-bar, simulates its joined links and reopens articulated recording",
+    "issue": 1479,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43899757955 left simState().playing false through the unchanged poll at closedLinkageSteps.ts:81 on the first Windows attempt. Its retry reused the beforeAll app and found ten parts instead of five during insertion at line 49. Focused Windows diagnostic 43904412478 passed the exact test at the same revision in 24.833 s with one worker and retries disabled. Linux passed in 18.454 s. Commit 7a006d9c2 introduced the walkthrough after the last green Check. Retained retry state explains the second failure, but the first startup cause is not established. Issue #1479 owns startup and worker tracing, isolated attempts and equal-load baseline and candidate measurements. All fast closed-linkage physics, control, contract, provenance and C/WASM parity tests remain active, alongside browser coverage on other platforms."
+  },
+  {
+    "file": "e2e/gallery.e2e.test.ts",
+    "test": "drive a rover in the browser, at real time, under the web demo",
+    "issue": 1403,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43851640785 reached rover movement but measured RTF 0.8791354659462937 against the unchanged greater-than-0.9 assertion at line 140. Retry exhausted the unchanged 30000 ms navigation deadline at line 106. The preceding run 43847119378 passed this Windows test only on retry in 86.627 s and Linux passed in 4.808 s, with unchanged gallery, camera, browser test, dependencies and e2e configuration. Failed pages remain in the shared browser because they close only after success. Neither the initial throughput cause nor the later navigation stall is established. Issue #1403 owns tracing and equal-load baseline and candidate measurements, coordinated with gallery navigation owner #1139. Other platforms retain rover driving and Windows retains Open Scene."
+  },
+  {
+    "file": "src/vision/tryFrameVideo.test.ts",
+    "test": "",
+    "issue": 1400,
+    "until": "2026-11-28",
+    "reason": "Run 44034821423 also exhausted the unchanged 15000 ms beforeAll hook on Linux before decoded-pixel assertions. Full green run 43948835889 passed Linux in 9088 ms with unchanged test, acceptance fixture and offscreen helper. Windows setup was already quarantined after run 43851640785. The bundle, server, browser or worker readiness stage responsible is unestablished. Issue #1400 owns both platforms, cancellation and cleanup tracing and equal-load baseline and candidate measurements. Whole-file filtering is required because setup precedes individual-test filtering."
+  },
+  {
+    "file": "tools/fleet/registry.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43851640785 exhausted the unchanged 10000 ms beforeAll budget after the PostgreSQL launcher repair. Focused Windows diagnostic 43853345452 passed the exact test at the same revision with one worker and no retries in a 6520 ms process. Linux passed in 2616 ms and the other three PostgreSQL-backed Windows suites passed. The native database or service setup stage responsible is unknown. Issue #1401 owns startup tracing, cleanup and equal-load baseline and candidate measurements. The whole file is filtered because setup precedes individual-test filtering."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for nominal",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43844795005 exceeded the unchanged 5000 ms budget at 5009 ms, while its other 15 variants passed. Focused Windows diagnostic 43847288865 passed the same nominal test at the same revision in 4451.1547 ms with one worker and no retries. The responsible capture, native startup or scoring stage is not established. Issue #1390 owns tracing and equal-load baseline and candidate measurements before restoration."
+  },
+  {
+    "file": "e2e/inputs.e2e.test.ts",
+    "test": "fires a gesture its Case was taught from three examples and ends camera capture on Escape",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43844795005 left operatorCamera().feeding true through its unchanged 10000 ms poll, then reached the final empty-error assertion on retry with an unclosed VideoFrame warning. The existing wave quarantine under #995 has the same two symptoms. Feed completion and the remaining frame owner are not established. Preserve the salute, live camera, Escape shutdown, tile removal, ended track and empty-error assertions during tracing and equal-load measurements."
+  },
+  {
+    "file": "e2e/remoteTraining.e2e.test.ts",
+    "test": "configures a training computer and reattaches Stand after a studio restart without a second dispatch",
+    "issue": 1365,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43844795005 observed zero initial train-start requests at line 26, then stalled locating Connect in configureRemoteComputer at line 111 on retry. The deleted grouped recovery walkthrough had recorded absent dispatch and configuration stalls under #1365. The cause remains unestablished. The single-attempt walkthrough stays active on Linux and macOS while #1365 traces configuration, dispatch, persistence and reattachment and measures baseline and candidate runs at equal load."
+  },
+  {
+    "file": "e2e/fleet.e2e.test.ts",
+    "test": "opens Fleet from Operate, restricts a site viewer and reopens persistent inventory",
+    "issue": 1386,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Run 43844795005 completed the inventory walkthrough but failed its final error assertion with 78 ERR_NETWORK_CHANGED asset failures. Retry then timed out filling Organization ID after the shared browser had signed in and the viewer roles had been removed. The same Fleet test, browser, fixture, harness, lockfile and e2e configuration passed Linux run 43839831222 in 7945 ms. The initial network-change trigger is not established. Issue #1386 owns startup tracing, attempt isolation and equal-load measurements before restoration. Enrollment and macOS coverage remain active."
+  },
+  {
+    "file": "e2e/fleet.e2e.test.ts",
+    "test": "opens Fleet from Operate, restricts a site viewer and reopens persistent inventory",
+    "issue": 1386,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44380885141 completed inventory, cross-site denial, scrolling, service restart and role removal, then could not locate Reload Fleet after rows cleared. The retry reused the signed-in beforeAll browser and revoked viewer, then could not locate Organization ID. Last full green 44245137178 passed the unchanged declaration in 6693 ms. Same-revision Windows diagnostic 44383903662 passed the complete declaration in 10606.9314 ms with one worker, retries disabled and quarantine off, establishing intermittency without a failure rate. No responsible stage or common cause with the Linux network-change failure is established. Existing walkthrough owner #1386 owns Windows reset delivery, session and attempt-isolation traces and ten baseline and ten candidate Windows observations at equal load with retries disabled before restoration. Enrollment, browser access administration, fast subscription guards and macOS inventory coverage remain active. Preserve assertions and deadlines."
+  },
+  {
     "file": "e2e/caseCode.e2e.test.ts",
-    "test": "unloads a panel that never answers with its error, while the page keeps drawing frames",
+    "test": "streams a camera to code at the asked size and rate, cheaply on the main thread, and stops with the Case",
+    "issue": 1410,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43856125616 failed the unchanged mean main-thread handoff budget at line 374 on both Windows attempts, measuring 2.403 and 2.182 ms against less than 2 ms. The preceding Windows run 43851640785 passed in 12.043 s with unchanged test body, camera pipeline, code bridge, harness, dependency lock and e2e configuration. A single zero-retry Windows diagnostic at the exact failing commit passed in run 43858111193, confirming intermittency. Dimensions and rate checks passed before the failure. Scheduling and actual callback work are not distinguished. Issue #1410 owns Windows tracing and equal-load before-and-after measurements. Linux and macOS retain the walkthrough, while cameraStream, streamPace, feedWorker and codeWorld tests retain routing, pacing, ownership and teardown coverage."
+  },
+  {
+    "file": "e2e/caseCodeAgent.e2e.test.ts",
+    "test": "edits and undoes live panels, then sends the running Case context through \u2318I",
+    "issue": 1377,
+    "until": "2026-11-28",
+    "reason": "Run 44034821423 left sentPrompt() undefined at line 126 after composer fill and Enter on both Windows attempts. Full green run 43948835889 passed Windows in 15816 ms with unchanged walkthrough and composer. Linux was already quarantined for missing syntax-error delivery in run 43831610288. These symptoms have no established shared cause. Issue #1377 owns both platform traces, exact error-line, Undo and outgoing Case context assertions and equal-load baseline and candidate measurements."
+  },
+  {
+    "file": "e2e/passiveFixtures.e2e.test.ts",
+    "test": "creates Open a Lid, edits its weight and reopens its recorded reference",
+    "issue": 1364,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43831610288 reached Drive on but retained zero saved tries at line 46 on both Windows attempts. Linux passed both fixture walkthroughs at the same commit in 29.259 s. Commit 37dccba61 introduced them after the last green run. Each attempt owns a fresh app. Recording, automatic finish, scoring and persistence are not distinguished by the log. Issue #1364 already owns Windows tracing and equal-load measurements before restoration. Real MuJoCo contact, recording and negative controls remain in passiveFixtures.test.ts."
+  },
+  {
+    "file": "e2e/passiveFixtures.e2e.test.ts",
+    "test": "creates Pull a Drawer, edits its weight and reopens its recorded reference",
+    "issue": 1364,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43831610288 reached Drive on but retained zero saved tries at line 46 on both Windows attempts. Linux passed both fixture walkthroughs at the same commit in 29.259 s. Commit 37dccba61 introduced them after the last green run. Each attempt owns a fresh app. Recording, automatic finish, scoring and persistence are not distinguished by the log. Issue #1364 already owns Windows tracing and equal-load measurements before restoration. Real MuJoCo contact, recording and negative controls remain in passiveFixtures.test.ts."
+  },
+  {
+    "file": "e2e/codeFrame.e2e.test.ts",
+    "test": "keeps the page drawing and disposes an infinitely looping production CodeFrame without starting the studio",
     "issue": 1137,
     "until": "2026-11-28",
     "platform": "win32",
-    "reason": "Run 43736502131 showed the panel error and removed its iframe, but recorded no about:blank navigation at line 301 on either Windows attempt. Both attempts then timed out in afterEach browser.close() after 120000 ms. Linux passed at the same commit in 15116 ms. The preceding Windows run 43735086890 passed in 17065 ms, with no intervening changes to the test, frame, bridge, harness, dependencies or e2e configuration. Commit 171272612 added srcdoc removal before unloading and closed #747, but the navigation or renderer shutdown cause of this recurrence is not established. Issue #1137 tracks Windows frame-lifecycle and process traces and equal-load measurements before restoring the test."
+    "reason": "Carries the existing spinning-panel quarantine to its focused production CodeFrame replacement. Run 43736502131 showed the panel error and removed its iframe but recorded no about:blank navigation on either Windows attempt, followed by both 120000 ms browser.close() hook timeouts. Linux passed at the same revision in 15116 ms, and the preceding Windows run 43735086890 passed in 17065 ms with unchanged test, frame, bridge, harness, dependencies and configuration. Removing studio and simulation startup does not establish a fix for infinite-loop navigation or renderer shutdown. Issue #1137 retains Windows frame-lifecycle and process tracing and at least ten baseline and ten candidate observations at equal load with retries disabled before restoration. Fast bridge watchdog tests remain active."
+  },
+  {
+    "file": "e2e/codeFrame.e2e.test.ts",
+    "test": "passes HUD clicks to the canvas and handles two iframe Escape presses without starting a simulator",
+    "issue": 1866,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44523077433 passed HUD hit testing and the parent canvas click, then exhausted the unchanged 30000 ms locator deadline waiting for the joystick iframe canvas on both attempts, totaling 61414 ms. Drive and Escape were never reached. Preceding Windows Check 44518466291 passed in 1106 ms with unchanged fixture, cockpit, CodeFrame, bridge, keyboard hooks, harness, dependency and e2e configuration sources. Same-revision Windows diagnostic 44525456674 passed in 2878.722 ms with one worker, zero retries and quarantine off on image 20261103.298.1 rather than the failing 20261116.315.1, retaining the preview-server shutdown warning. This single observation identifies no image component to pin or product repair. Panel navigation, parsing, handshake, watchdog failure, HUD-click rerender and cleanup remain unresolved under priority owner #1866. Restore only after tracing the failing stage, establishing a fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. Linux and macOS retain the complete declaration. Windows retains real-client bridge joystick, release, HUD and Escape tests, overlay pointer styles and separate live-drive Escape and Case exit coverage, which do not replace the combined iframe pointer and two-Escape path. Keep the separate #1137 infinite-loop quarantine. No assertion, deadline or retry changes."
   },
   {
     "file": "e2e/gallery.e2e.test.ts",
@@ -25,7 +310,7 @@
   },
   {
     "file": "e2e/gallery.e2e.test.ts",
-    "test": "keeps a shared code panel away from the page’s IndexedDB, its cookies and the Hub",
+    "test": "keeps a shared code panel away from the page\u2019s IndexedDB, its cookies and the Hub",
     "issue": 1139,
     "until": "2026-11-28",
     "platform": "win32",
@@ -33,7 +318,23 @@
   },
   {
     "file": "e2e/firstLaunch.e2e.test.ts",
-    "test": "says why Try on Real Robot didn’t start, and keeps saying it under the button",
+    "test": "opens on the rover, already driving to its flag, without saving it",
+    "issue": 795,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Windows run 44782838288 reached rover startup and forward motion, then saved the untouched rover with a generated buildGuide. Its retry reused the same app and failed because both simulation clock reads were 20.319999999999617. Linux passed at the same revision in 6406 ms. Windows passed in the last green run 44697629334 in 4378 ms. Startup, autosave, guide generation and this test did not change between those revisions. Automatic guide generation updates the project, but the actual draft transition and the retry clock failure were not traced. Issue #795 already owns unwanted rover saves. Trace these paths separately, isolate attempts and retain ten baseline and ten candidate observations at equal Windows load before restoring this declaration."
+  },
+  {
+    "file": "e2e/firstLaunch.e2e.test.ts",
+    "test": "moves the base forward while W is held",
+    "issue": 1799,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Windows run 44344443437 passed first-launch reference motion and an advancing clock, then both W attempts observed exactly zero forward delta during the unchanged 3000 ms poll for movement greater than 0.2. Linux passed at the same commit in 866 ms. Windows passed in 1745 ms in the last green run 44245137178. The test shares its app with startup and leaves W held after assertion failure, so the retry is not independent. Input delivery, simulation playing state and worker progress during the failed action were not captured. The stalled stage and responsible commit are not established."
+  },
+  {
+    "file": "e2e/firstLaunch.e2e.test.ts",
+    "test": "says why Try on Real Robot didn\u2019t start, and keeps saying it under the button",
     "issue": 1127,
     "until": "2026-11-28",
     "platform": "win32",
@@ -159,11 +460,11 @@
   },
   {
     "file": "e2e/operateCalibration.e2e.test.ts",
-    "test": "replays a measured joint, confirms rollback and offers calibration from Checks",
+    "test": "",
     "issue": 987,
     "until": "2026-11-28",
     "platform": "win32",
-    "reason": "Run 43687018679 exceeded the unchanged 15 s test budget on both Windows attempts without identifying a failing step. The cause is not established."
+    "reason": "Check 44495446798 failed the shared beforeAll while awaiting Test mode at line 92, before the already quarantined declaration ran. Last full green 44391437908 completed Windows setup with unchanged runtime and fixture sources. This expands existing owner #987 to whole-file filtering so setup is excluded too, without changing the 2026-11-28 expiry. The last completed stage was clicking the Test rung after reaching Set Up. Intent delivery, daemon mode, status propagation and observation remain unresolved. Exact-revision Windows diagnostic 44498289199 completed setup, then exhausted the already quarantined body deadline at 15119.6201 ms with one worker, zero retries and quarantine off. This distinguishes intermittent setup from the existing callback failure. Linux and macOS retain replay, confirmed rollback, measured badges, Servo models and direct calibration Fix. Windows retains fast fitting, replay, history, measured-joint, engineering-model and originating-unit action coverage, which does not replace the browser story. Require stage evidence, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations before restoration. No assertion, deadline or retry changes."
   },
   {
     "file": "e2e/caseTrails.e2e.test.ts",
@@ -208,5 +509,573 @@
     "issue": 803,
     "until": "2026-11-28",
     "reason": "The test sends the arm's commands from Node against the simulation's clock, so when the page stalls under load they land after the 9 s Case ends. It passed 4 of 10 runs in CI's Linux setup on main, and 2 of 10 before #767."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for resisted",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exceeded the unchanged 5000 ms deadline for the resisted lid. Previous Check 44170110654 passed resisted in 4372 ms and reversed in 2100 ms with unchanged parity, capture and native replay sources. The responsible capture, uv provisioning, native startup, replay or scoring stage remains unknown. Shared native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. All comparisons on other platforms and all eight drawer comparisons on Windows remain active."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for reversed",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exceeded the unchanged 5000 ms deadline for the reversed lid. Previous Check 44170110654 passed resisted in 4372 ms and reversed in 2100 ms with unchanged parity, capture and native replay sources. The responsible capture, uv provisioning, native startup, replay or scoring stage remains unknown. Shared native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. All comparisons on other platforms and all eight drawer comparisons on Windows remain active."
+  },
+  {
+    "file": "src/sim/fixtures/closedParity.test.ts",
+    "test": "replays pump in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 timed out at 5010 ms against the unchanged 5000 ms deadline. Previous Check 44170110654 passed the same pump replay in about 621 ms with drift 1.5501488981328748e-14 and zero contact differences. The replay test and shared nativeContactReplay helper are unchanged. Provisioning, native startup and execution are not distinguished. Existing native fixture owner #1390 owns this shared helper investigation, tracing and equal-load baseline and candidate measurements. All other nine mechanisms and all other platforms remain active with the same numerical and contact assertions."
+  },
+  {
+    "file": "tools/fleet/access.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Run 44175369818 exhausted the unchanged 10000 ms beforeAll deadline before the access assertions ran. Previous Check 44170110654 passed access in 9986 ms and federation in 10764 ms including their assertions, with unchanged fixtures and service sources. Docker startup, schema migration, HTTP startup and identity setup are not distinguished. Existing shared fixture owner #1401 tracks setup tracing, cleanup and equal-load baseline and candidate measurements across platforms. Whole-file exclusion is required because beforeAll precedes per-test filtering. macOS retains the full matrix and other Fleet coverage stays active."
+  },
+  {
+    "file": "tools/fleet/federation.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Run 44175369818 exhausted the unchanged 10000 ms beforeAll deadline before the federation assertions ran. Previous Check 44170110654 passed access in 9986 ms and federation in 10764 ms including their assertions, with unchanged fixtures and service sources. Docker startup, schema migration, HTTP startup and identity setup are not distinguished. Existing shared fixture owner #1401 tracks setup tracing, cleanup and equal-load baseline and candidate measurements across platforms. Whole-file exclusion is required because beforeAll precedes per-test filtering. macOS retains the full matrix and other Fleet coverage stays active."
+  },
+  {
+    "file": "tools/fleet/service.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exhausted the unchanged 10000 ms beforeAll deadline before any of eleven HTTP service cases ran. Previous Check 44170110654 passed this file in 6293 ms with unchanged fixtures and service sources. Native cluster startup, migrations, HTTP startup and identity preparation are not distinguished. Existing shared fixture owner #1401 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. macOS retains the complete service matrix. Authorization, recovery, facilities, adapters, scale and browser checks remain active on Windows."
+  },
+  {
+    "file": "e2e/boardRouting.e2e.test.ts",
+    "test": "routes a declared rover board through the Inspector and restores the route with undo and redo",
+    "issue": 1620,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exhausted the unchanged 30000 ms electrical-validate response wait in boardRoutingWalkthrough.ts:66 after Route Board. The log does not distinguish router provisioning, export preparation, routing, validation or stale-source refusal. Shared board delivery and native validation owner #1620 tracks production-path tracing, cancellation, cleanup and equal-load baseline and candidate measurements. Linux retains the walkthrough and fast routing, reconciliation, fabrication and source-guard tests stay active. No timeout or assertion changes."
+  },
+  {
+    "file": "e2e/drawings.e2e.test.ts",
+    "test": "imports a rover, exports its plate through Drawings, edits it in the Inspector and reconciles Kit drawing identities",
+    "issue": 1611,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exhausted the unchanged 30000 ms download wait on the first Drawings export at line 59 after import and selection. Preparation, worker replies, source guards, errors and browser delivery are not distinguished. Existing manufacturing export owner #1611 tracks the shared drawing producer used by standalone and Kit exports, production-path tracing and equal-load baseline and candidate measurements. Linux retains the complete walkthrough. Fast drawing geometry, artifact, source-identity, interruption and Kit reconciliation matrices stay active on Windows."
+  },
+  {
+    "file": "e2e/kitElectrical.e2e.test.ts",
+    "test": "downloads the routed carrier through Export Kit",
+    "issue": 1611,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exhausted the unchanged 30000 ms download wait for the routed carrier. Both variants failed while the ordinary Kit walkthroughs passed. Electrical preparation, drawing and guide producers, worker replies, source guards and delivery are not distinguished. Existing manufacturing export owner #1611 tracks these additional real Kit paths, production-path tracing, cleanup and equal-load baseline and candidate measurements. Linux retains both walkthroughs. Fast ten-design electrical Kit, hash, source freshness, fabrication refusal and export cancellation coverage stays active on Windows."
+  },
+  {
+    "file": "e2e/kitElectrical.e2e.test.ts",
+    "test": "downloads the edited carrier through Export Kit",
+    "issue": 1611,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44175369818 exhausted the unchanged 30000 ms download wait for the edited carrier. Both variants failed while the ordinary Kit walkthroughs passed. Electrical preparation, drawing and guide producers, worker replies, source guards and delivery are not distinguished. Existing manufacturing export owner #1611 tracks these additional real Kit paths, production-path tracing, cleanup and equal-load baseline and candidate measurements. Linux retains both walkthroughs. Fast ten-design electrical Kit, hash, source freshness, fabrication refusal and export cancellation coverage stays active on Windows."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for rotated",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44200197616 exceeded the unchanged 5000 ms deadline at 5005 ms on Windows. Focused Windows diagnostic 44201244228 passed the exact test at the failing revision in 4192.2372 ms with one worker and zero retries, establishing intermittency. Full green Check 43948835889 passed rotated lid in 1731 ms. The parity test, capture helper, variants and native replay helper are unchanged between those revisions. Capture, uv provisioning, native startup, replay and scoring are not distinguished by the log. Existing native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. All eight drawer comparisons remain active on Windows and every comparison remains active on other platforms."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for nominal",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44206588211 timed out at 5025 ms against the unchanged 5000 ms deadline. Focused Windows diagnostic 44207822586 passed the exact test at the failing revision in 3481.1829 ms with one worker, zero retries and quarantine off, establishing intermittency. Previous Check 44200197616 passed nominal drawer in 1736 ms with unchanged parity, capture, variant, Case builder and native replay sources. Capture, uv provisioning, native startup, replay and scoring are not distinguished by the log. Existing native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. The other seven drawers remain active on Windows and every comparison remains active on other platforms."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for limp",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44214681066 timed out at 5004 ms against the unchanged 5000 ms deadline. Same-revision Windows diagnostic 44215996839 passed the exact test in 3840.8756 ms with one worker, zero retries and quarantine off, establishing intermittency. Previous Windows Check 44210703841 passed limp drawer in 4493 ms with unchanged parity, capture, variant, Case builder, native replay, dependency-lock and Vitest configuration sources. Capture, uv provisioning, native startup, replay, scoring and cleanup are not distinguished by the log. Existing open priority native fixture owner #1390 owns stage tracing, cleanup and equal-load baseline and candidate measurements before restoration. The other six drawers remain active on Windows and every comparison remains active on other platforms."
+  },
+  {
+    "file": "tools/fleet/recovery.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44200197616 exhausted the unchanged 10000 ms beforeAll budget before any of nine recovery cases ran. Same-revision Windows diagnostic 44203106096 passed recovery with one worker, zero retries and quarantine off in a 5796 ms process. Native cluster initialization, migrations and HTTP startup are not distinguished. Existing shared fixture owner #1401 owns stage and cleanup tracing and equal-load baseline and candidate measurements. Whole-file filtering is required because setup precedes individual-test filtering. Linux and macOS retain the matrix, and Windows retains migration and browser recovery checks."
+  },
+  {
+    "file": "e2e/vision.e2e.test.ts",
+    "test": "runs Find Faces on real fake-camera pixels while the body estimator uses its pose fixture",
+    "issue": 1366,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44200197616 left operatorCamera().live false at the unchanged readiness poll on both Windows attempts, before the inference and overlay assertions. Same-revision Windows diagnostic 44203112400 passed with one worker, zero retries and quarantine off in a 24344 ms process. Previous Check 44195663922 passed in 20393 ms with unchanged camera, fixture, harness, dependencies and test configuration. Linux passed at the failing revision in 14353 ms. Existing owner #1366 tracks command, capture, worker readiness and cleanup tracing and equal-load baseline and candidate measurements. Linux and macOS retain the full real-pixel walkthrough. Windows retains estimator-frame transfer, pixel-sensitive WASM inference, signals and overlay predicate coverage."
+  },
+  {
+    "file": "src/guide/render/guideStage.test.ts",
+    "test": "",
+    "issue": 1400,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44206588211 exhausted the unchanged 15000 ms beforeAll budget before any of three guide pixel and draw-call cases ran. Same-revision Linux diagnostic 44208943189 passed view 0 with one worker, zero retries and quarantine off in a 14623 ms process. Previous Check 44200197616 passed the file in 14580 ms with unchanged guide renderer, fixture, test and offscreen helper. Bundling, HTTP startup, Chrome launch and module-worker readiness remain indistinguishable. Existing shared setup owner #1400 owns stage tracing, cancellation, cleanup and equal-load baseline and candidate measurements before restoration. macOS retains the full matrix. Guide planning, generation and worker-ownership tests remain active on Linux. Whole-file filtering is required because setup precedes individual-test filtering."
+  },
+  {
+    "file": "e2e/fleetIncidents.e2e.test.ts",
+    "test": "restores a fleet problem, acknowledges it and opens its exact kept try",
+    "issue": 1749,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44206588211 failed both Windows attempts. The first reached Open Try after restoring and acknowledging the incident but found no timeline at line 102. The retry stalled in the part-count callback after loading the arm into the second tab at line 79. Same-revision Windows diagnostic 44208960108 passed the complete exact test with one worker, zero retries and quarantine off in a 38591 ms process. Previous Check 44200197616 passed in 16742 ms with unchanged test, fixture, harness, incident, replay and timeline sources. The responsible scene-load and playback stages are unresolved. Issue #1749 owns per-path tracing, cleanup and equal-load baseline and candidate measurements before restoration. Other platforms retain the walkthrough. Fast collector, storage and recorder integration coverage remains active on Windows."
+  },
+  {
+    "file": "e2e/classroom.e2e.test.ts",
+    "test": "grades two revisions and opens the failing Check without losing the grid",
+    "issue": 1754,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44210703841 completed grading, independent failing-Check inspection and the original two-tile grid, then found zero submission tiles after teacher reload at line 159 on both Windows attempts. Same-revision Windows diagnostic 44212666461 passed the exact test in 11640.8835 ms with one worker, zero retries and quarantine off, confirming intermittency. Previous Windows Check 44206588211 passed in 15132 ms with no intervening application, e2e, dependency-lock, Vite or browser configuration changes. Linux passed at the failing revision in 7157 ms. Missing records, queued persistence, load errors and reload rendering are not distinguished. Issue #1754 owns teacher-path tracing and equal-load baseline and candidate Windows measurements before restoration, coordinating shared helpers with student download owner #1508. Other platforms retain this walkthrough. Windows retains assignment export, edited-attempt reload and Submit, real file validation and native-worker grading. No assertion or deadline changes."
+  },
+  {
+    "file": "e2e/operateRos2.e2e.test.ts",
+    "test": "connects the arm as an emulated ROS 2 robot, climbs to Test and follows a posed shoulder",
+    "issue": 1757,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44214681066 passed ROS 2 connection, Test and posed-shoulder following, then exhausted the unchanged 30000 ms tab-click deadline returning to Operate at line 103. The tab was visible, enabled, stable and selected, and scrolling completed, but click delivery did not complete. The retry reused the connected beforeAll fixture and waited for the absent Feetech picker at line 62. Previous Windows Check 44210703841 passed in 9750 ms with unchanged test, harness, fixtures, robot, simulation, connection-control, dependency-lock and browser-configuration sources. Linux passed at the failing revision in 5540 ms. Same-revision Windows diagnostic 44217093535 passed the exact test in 8132.8451 ms with one worker, zero retries and quarantine off, establishing intermittency. Input delivery, renderer responsiveness and cleanup are unresolved. Issue #1757 owns per-stage tracing, isolated attempt state and equal-load baseline and candidate Windows measurements before restoration. Other platforms retain the walkthrough. Fast ROS 2 mapping, ladder, intent ordering and native intent-following coverage remains active. No assertion or deadline changes."
+  },
+  {
+    "file": "tools/leagues/prepare.test.mjs",
+    "test": "prepares a new League with its creation commit and hands that immutable checkout to replay",
+    "issue": 1762,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44218519123 exhausted the unchanged 5000 ms callback deadline on Windows. Same-revision diagnostic 44220727583 passed the exact test in 1242.1862 ms with one worker, zero retries and quarantine off. Previous Check 44214681066 passed in 2327 ms with unchanged creation, CLI, fixture, dependency lock and unit configuration. Temporary setup, Node child, jiti import, MuJoCo startup, output writes and cleanup are not distinguished. Issue #1762 owns stage tracing and equal-load baseline and candidate Windows observations before restoration. Other platforms retain the real CLI path. Fast creation and League validation tests remain active on Windows."
+  },
+  {
+    "file": "tools/site/gitDates.test.mjs",
+    "test": "completes a shallow build checkout before reading dates of unchanged articles",
+    "issue": 1763,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44218519123 exhausted the unchanged 5000 ms callback deadline on Windows. Same-revision diagnostic 44220730841 passed the exact test in 511.6697 ms with one worker, zero retries and quarantine off. Previous Check 44214681066 passed in 1451 ms with unchanged source, fixture, dependency lock and unit configuration. Local clone, date reads, history fetch, shallow-state query, fallback checks and cleanup are not distinguished. Issue #1763 owns stage tracing and equal-load baseline and candidate Windows observations before restoration. Other platforms retain the real shallow-history path. Windows retains tracked and untracked article-date and missing-directory coverage."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for locked",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44218519123 exhausted the unchanged 5000 ms deadline for locked drawer native parity on Windows. Same-revision diagnostic 44220731180 passed in 4724.5451 ms with one worker, zero retries and quarantine off. Previous Check 44214681066 passed in 2336 ms with unchanged parity, capture, variants, native replay, dependencies and unit configuration. WASM capture, uv provisioning, native replay, scoring and cleanup are unresolved stages under existing owner #1390. Restore only after stage tracing, an established fix and equal-load baseline and candidate Windows observations. Windows retains five other drawers, WASM physics and persistence. Other platforms retain every native comparison. Keep state and margin drift below 1e-6, exact contacts, verdict agreement and failure without contacts."
+  },
+  {
+    "file": "e2e/inputs.e2e.test.ts",
+    "test": "moves a fixed arm\u2019s hand right with a recorded hand once a Case naming hand starts a try",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44218519123 reached Drive on and the operator panel, then measured zero hand movement through the unchanged 30000 ms poll. Its retry reached cleanup and failed on one unclosed VideoFrame warning. Same-revision diagnostic 44220733847 passed the exact test in 33488.9382 ms with one worker, zero retries and quarantine off. Previous Check 44214681066 passed in 13994 ms with unchanged input, camera, fixture, harness, dependencies and browser configuration. Feed delivery, follower output, simulation stepping and frame ownership remain unresolved under existing owner #995. The shared error array retained this one warning through otherwise successful pan and MIDI assertions. Only the hand declaration is quarantined. MIDI and all non-Windows hand coverage remain active, alongside fast hand-following, frame-ownership and shutdown tests. The pan walkthrough was later deleted under #1893 after its reduced single-sample version remained slow. Restore after tracing those stages and equal-load baseline and candidate Windows observations without changing deadlines or assertions."
+  },
+  {
+    "file": "e2e/tryStop.e2e.test.ts",
+    "test": "ends the try at once from the canvas\u2019s Stop Driving",
+    "issue": 1026,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44222219427 removed the try clock within the unchanged 3000 ms deadline after Stop Driving but retained zero tries through the 30000 ms saved-count poll. Its retry reused the stopped beforeAll app and then failed the initial Drive-on poll. Same-revision Windows diagnostic 44226427636 passed in 9661.5486 ms with one worker, zero retries and quarantine off, confirming intermittency. Previous Windows Check 44218519123 passed the exact declaration in 11641 ms with unchanged walkthrough and recording sources. Linux at the failing revision passed in 5523 ms. Recording frames, worker stop replies, scoring, refusal feedback and persistence are unresolved. Existing Case recording owner #1026 owns this manual-stop path separately from reference startup, coordinating shared helpers with #1049 and #1364. Restore after stage tracing, an established fix and ten baseline and ten candidate Windows observations at equal load with retries disabled. The paused-simulation sibling remains active on Windows and other platforms retain both paths. No assertion or deadline changes."
+  },
+  {
+    "file": "e2e/caseCode.e2e.test.ts",
+    "test": "lights a target the agent made movable, from code during a try, and records the change",
+    "issue": 1026,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44227652023 reached Drive on, then exhausted either the Stop Try visibility poll or the Light action/color poll. Windows run 44218519123 passed in 23820 ms with unchanged test, Case startup and code-world paths. The finite Case can finish between browser commands, but the log does not establish whether automatic completion or code-frame delivery caused these earlier failures. Existing recording owner #1026 owns stage traces and equal-load baseline/candidate measurements before restoration. Linux and macOS retain the complete walkthrough. codeWorld and useCaseTry retain routing, validation and startup ownership coverage without replacing this combined browser path."
+  },
+  {
+    "file": "e2e/visionConditions.e2e.test.ts",
+    "test": "imports images, assigns conditions and inspects unchanged historical members after current edits",
+    "issue": 1129,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 44227652023 completed import and condition assignment, clicked Train, then retained zero saved runs through the unchanged poll. Windows run 44218519123 passed the same walkthrough in 21484 ms. The intervening condition-result copy edit does not change training or persistence. Preparation, inference and persistence are not distinguished by this log. Existing real-image completion owner #1129 owns production-stage traces and equal-load baseline/candidate measurements before restoration. Other platforms retain the complete walkthrough. conditionWorkflows, conditionEvaluation and conditionRequest retain scoring, frozen evidence, restoration and cancellation coverage."
+  },
+  {
+    "file": "e2e/caseRun.e2e.test.ts",
+    "test": "opens a Case\u2019s own console: its areas, a live timer and score, Try It and Reset as buttons",
+    "issue": 1026,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44241579596 reached the live timer, score and disabled Reset assertions on both Windows attempts. The first Stop Try click found html intercepting pointer events before the button detached. The second saved 6.04 seconds against the unchanged early-stop bound of 5 seconds. Same-revision Windows diagnostic 44243772337 passed in 15345.7226 ms with one worker, zero retries and quarantine off, confirming intermittency. Full green Windows Check 43948835889 passed in 13283 ms with unchanged walkthrough, recording hook and console sources. Linux passed at the failing revision in 13420 ms. Input delivery, renderer scheduling and automatic completion are not distinguished. Existing recording owner #1026 owns this separate custom-console path, stage tracing and ten baseline and ten candidate Windows observations at equal load with retries disabled before restoration. Other platforms retain the complete walkthrough. Fast console rendering, signal bus, recording/scoring and startup-ownership tests remain active without replacing real pointer delivery and early stopping. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM lid travel, stops, contacts and verdict for nominal",
+    "platform": "linux",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "reason": "Check 44344443437 exhausted the unchanged 5000 ms deadline at 5023 ms. Same-revision Linux diagnostic 44346927799 passed in 2395.687391 ms with one worker, zero retries and quarantine off. Last green Check 44245137178 passed in 3428 ms with unchanged parity, capture and native replay sources. WASM capture, uv provisioning, native replay, scoring and cleanup remain unresolved under existing shared replay owner #1390. Restore only after tracing those stages, fixing the demonstrated cause and ten baseline and ten candidate Linux observations at equal load. Linux retains the other fifteen native fixture comparisons, WASM physics and persistence. Existing Windows quarantines remain separate and macOS retains the complete matrix. Preserve 1e-6 state and margin limits, exact active contacts, verdict agreement and failure without contacts."
+  },
+  {
+    "file": "tools/fleet/facilities.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44353177242 exhausted the unchanged 10000 ms beforeAll budget before any of six facility cases ran. Same-revision Windows diagnostic 44354762014 reproduced the setup timeout with one worker, zero retries and quarantine off. Previous Windows Check 44344443437 passed all six in 9099 ms with unchanged Fleet sources and configuration, but used an older runner image. DXF preparation, native cluster initialization, migrations, HTTP startup, identity preparation and the image contribution remain unresolved under existing priority shared fixture owner #1401. Whole-file filtering is required because setup precedes individual test filtering. Restore after stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load. Linux and macOS retain the complete matrix. Windows retains pure import, registration, position and browser coverage, but lacks this complete HTTP matrix."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for weak",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44353177242 exhausted the unchanged 5000 ms deadline at 5018 ms. Same-revision Windows diagnostic 44357103546 reproduced it at 5005.1493 ms with one worker, zero retries and quarantine off. Full green Check 44245137178 passed in 4524 ms with unchanged parity, capture, variants, native replay, Case runner, dependencies and unit configuration. WASM capture, uv provisioning, native startup, replay, scoring and cleanup remain unresolved under existing priority owner #1390. Windows retains short, resisted, reversed and rotated drawers, WASM fixture physics and persistence. Other platforms retain weak drawer parity. Restore after stage and cleanup tracing, an established fix and ten baseline and ten candidate Windows observations at equal load without retries. Preserve 1e-6 state and margin limits, exact contacts, native verdict agreement, stop bounds and failure without contacts."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "folding arm replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44358913096 exhausted the unchanged 5000 ms deadline at 5005 ms. Previous Linux Check 44353177242 passed in 3173 ms with unchanged test, preparation, capture and native replay sources. Same-revision Linux diagnostic 44360482589 passed in 2342.79267 ms with one worker, zero retries and quarantine off on a different runner image. WASM capture, uv provisioning, native startup, replay, comparison and cleanup are not distinguished. Existing priority shared replay owner #1390 owns stage tracing, a demonstrated fix and ten baseline and ten candidate Linux observations at equal load without retries before restoration. Linux retains the other nine native self-contact comparisons, all ten WASM contact and negative-control cases, package and recording coverage. Other platforms retain folding-arm parity. Preserve drift below 1e-6 and exact contact identities."
+  },
+  {
+    "file": "tools/fleet/recovery.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44358913096 exhausted the unchanged 10000 ms beforeAll budget awaiting fleetFixture before any of nine recovery assertions ran. Previous Linux Check 44353177242 passed the complete file in 13451 ms including assertions with unchanged recovery, PostgreSQL, fixture and service sources. Same-revision Linux diagnostic 44360510021 passed setup and the selected recovery assertion in a 7956 ms process on the same runner image with one worker, zero retries and quarantine off. Docker startup, readiness, migrations and HTTP startup are not distinguished. Existing priority shared fixture owner #1401 owns stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Linux observations at equal load without retries before restoration. Whole-file filtering is required because setup precedes individual-test filtering. macOS retains the full matrix. Linux retains recovery migration and browser recovery checks, which do not replace the full recovery matrix. Existing Windows quarantine remains separate."
+  },
+  {
+    "file": "e2e/buildCheck.e2e.test.ts",
+    "test": "puts /pass and the open Case in the composer from \u2318K when its row fails",
+    "issue": 988,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44358913096 completed scene loading and selected Build, then found zero Reach a Spot rows through the unchanged 90000 ms poll on both Windows attempts. The following fit-refusal declaration loaded the same robot and Case and passed in 1475 ms. Previous Windows Check 44353177242 passed this declaration in 23912 ms, and Linux at the failing revision passed in 3266 ms. Same-revision Windows diagnostic 44362858893 passed in 4648.0942 ms with one worker, zero retries and quarantine off on the same runner image, confirming intermittency. The log does not distinguish mesh readiness, model preparation, worker inspection, readiness invalidation or publication. Existing priority Check-row owner #988 owns this separate refusal-row path, stage tracing and ten baseline and ten candidate Windows observations at equal load with retries disabled before restoration. Other platforms retain Make It Pass composer coverage. Windows retains the fit-refusal row, Case header and New Case sibling, plus fast row ownership and real worker-session coverage. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for short",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44364437393 exhausted the unchanged 5000 ms deadline at 5007 ms. Same-revision Windows diagnostic 44366221140 reproduced the timeout in 5004.9236 ms with one worker, zero retries and quarantine off on the same runner image. Previous Windows Check 44353177242 passed short drawer in 2204 ms with unchanged parity, capture, variants, native replay, Case builder and runner, dependency lock and unit configuration on the same runner image. WASM capture, uv provisioning, native startup, replay, scoring and cleanup are not distinguished. Existing priority native replay owner #1390 owns stage tracing, an established fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Windows retains resisted, reversed and rotated drawers, WASM fixture physics and persistence. Linux retains short drawer and all comparisons except its existing nominal-lid quarantine. macOS retains all sixteen. Preserve state and margin drift below 1e-6, exact contacts, verdict agreement, stop bounds and failure without contacts. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "tools/fleet/facilities.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44364437393 exhausted the unchanged 10000 ms beforeAll hook before any of six facility assertions ran. Same-revision Linux diagnostic 44369576621 passed setup and the source-hash/restart assertion in a 9504 ms process with one worker, zero retries and quarantine off on the same Ubuntu image. DXF preparation, Docker readiness, migrations, HTTP startup and identity enrollment are not distinguished. Existing priority shared fixture owner #1401 owns stage and cleanup tracing, an established fix and ten baseline and ten candidate Linux observations at equal load before restoration. Whole-file filtering is required because setup precedes per-test filtering. macOS retains all six cases. Linux retains pure import, registration, robot-position and browser checks, which do not replace the full HTTP matrix. The existing Windows entry remains separate. No deadline or assertion changes."
+  },
+  {
+    "file": "tools/fleet/scale.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44364437393 exhausted the unchanged 10000 ms beforeAll hook before the eleven scale assertions ran. Same-revision Windows diagnostic 44369584582 passed setup and enumeration in an 8893 ms process with one worker, zero retries and quarantine off on an older Windows image. Native PostgreSQL startup, migrations, identity setup, seeding 10000 robots and subscription startup are unresolved, including image contribution. Existing priority shared fixture owner #1401 owns stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load before restoration. Whole-file filtering is required because setup precedes per-test filtering. Linux and macOS retain the complete scale matrix. Windows retains authorization, adapter and browser coverage, which do not replace 10000-robot ingestion and enumeration. No deadline or assertion changes."
+  },
+  {
+    "file": "tools/testing/vitestCache.test.mjs",
+    "test": "linked-worktree invalidation > runs concurrent cold starts against distinct source and reuses warm transforms",
+    "issue": 1808,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44364437393 passed both cold and warm child runs, then failed the unchanged requirement that both warm outputs contain [read]. Same-revision Windows diagnostic 44369593658 passed in 1404.5088 ms with one worker, zero retries and quarantine off on the same runner image, establishing intermittency. Child outputs, cache slots, metadata invalidation and debug delivery remain unresolved under priority owner #1808. Restore after tracing these stages, fixing the demonstrated cause and ten baseline and ten candidate Windows observations at equal load with retries disabled. Only this declaration is quarantined. The dependency-invalidation sibling primes its own cache precondition. Windows retains all other cache lifecycle and configuration checks. Linux and macOS retain concurrent cold/warm reuse. No assertion or deadline changes."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for resisted",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44370011621 exhausted the unchanged 5000 ms deadline at 5039 ms. Same-revision Windows diagnostic 44372994329 reproduced the timeout at 5019.5244 ms with one worker, zero retries and quarantine off on the same image. Last full green Check 44245137178 passed in 1162 ms with unchanged parity, capture, variants, native replay, Case builder and scoring, dependency lock and unit configuration on the same Windows image. WASM capture, uv provisioning, native startup, replay, scoring and cleanup are not distinguished. Existing priority replay owner #1390 owns stage tracing, an established fix and ten baseline and ten candidate Windows observations at equal load with retries disabled before restoration. Windows retains reversed and rotated drawer parity, WASM fixture physics and persistence. Linux retains fifteen native fixture comparisons outside its existing nominal-lid quarantine, and macOS retains all sixteen. Preserve state and margin drift below 1e-6, exact contacts, verdict agreement, stop bounds and failure without contacts. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/site.e2e.test.ts",
+    "test": "goes from the landing to the changelog",
+    "issue": 1811,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44370011621 completed landing navigation and resolved the Changelog anchor, then exhausted the unchanged 30000 ms click actionability deadline on both Windows attempts before reaching the destination URL. Same-revision Windows diagnostic 44374070244 passed the exact declaration in 2501.6471 ms with one worker, zero retries and quarantine off, confirming intermittency. Previous Windows Check 44364437393 passed in 5883 ms with unchanged site, browser harness, dependency lock and configuration. Linux at the failed revision passed in 2714 ms. Layout stability, renderer scheduling, pointer delivery and page ownership remain unresolved under priority owner #1811. Restore after stage and cleanup tracing, an established fix and ten baseline and ten candidate Windows observations at equal load with retries disabled. Coordinate shared browser lifecycle changes with #1139. Other platforms retain the complete story. Windows retains all three help stories and static route, feed, image-reference and conditional navigation coverage, which do not replace real changelog navigation and image loading. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/site.e2e.test.ts",
+    "test": "goes from the changelog to a blog post and back",
+    "issue": 1811,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44370011621 completed changelog navigation, then exhausted the unchanged 30000 ms Blog click deadline on both Windows attempts before reaching the blog URL. One attempt only logged selector waiting and the other resolved the Blog anchor before waiting for visible, enabled and stable. Same-revision Windows diagnostic 44374113214 passed the exact declaration in 2640.6814 ms with one worker, zero retries and quarantine off, confirming intermittency. Previous Windows Check 44364437393 passed in 521 ms with unchanged site, browser harness, dependency lock and configuration. Linux at the failed revision passed in 584 ms. Layout stability, renderer scheduling, pointer delivery and page ownership remain unresolved under priority owner #1811, separately from the landing path until a shared cause is established. Restore after stage and cleanup tracing, an established fix and ten baseline and ten candidate Windows observations at equal load with retries disabled. Other platforms retain the complete story. Windows retains all three help stories and static page and blog-link coverage, which do not replace real blog navigation. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "tools/fleet/scale.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44375421899 exhausted the unchanged 10000 ms beforeAll deadline before all eleven scale assertions. Cleanup queried the initialized database, but memoryBefore was absent and ingestion and snapshots stayed at zero. Bootstrap, registry seeding, service credentials and subscription readiness are not distinguished. Fleet scale, fixture and PostgreSQL sources are unchanged since full green Check 44245137178, which passed all eleven cases in 11164 ms including bodies. Same-revision Linux diagnostic 44377678789 reproduced the setup-hook timeout in a 10649 ms process on another image with one worker, zero retries and quarantine off. No selected assertion ran, so the retained artifact is setup evidence and is not verified as selected-test execution. The Linux runner images differ, without an established environment cause to pin. Shared priority fixture owner #1401 owns stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Linux observations at equal load without retries before restoration. Whole-file containment is necessary because shared setup precedes test selection. macOS retains the full 10000-robot matrix. Linux retains authorization, adapter, registry and browser checks, which do not replace scale ingestion, enumeration or subscriptions. No deadline or assertion changes."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for reversed",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44375421899 exhausted the unchanged 5000 ms deadline at 5006 ms. Last full green Check 44245137178 passed in 1099 ms on the same Windows image with unchanged parity, capture and native replay sources. Linux passed at the failing revision in 772 ms. Same-revision Windows diagnostic 44377675097 passed in 3257.4653 ms on the same image with one worker, zero retries and quarantine off, establishing intermittency. WASM capture, uv provisioning, native startup, replay, scoring and cleanup are not distinguished. Existing priority replay owner #1390 owns stage tracing, an established fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Windows retains rotated drawer parity, WASM fixture physics and persistence. Linux retains fifteen native fixture comparisons outside its existing nominal-lid quarantine, and macOS retains all sixteen. Preserve state and margin drift below 1e-6, exact contacts, verdict agreement, stop bounds and failure without contacts. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/cableEditing.e2e.test.ts",
+    "test": "edits a Cable reach route with local anchors and stock, then restores it through undo and redo",
+    "issue": 1815,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44375421899 passed editor changes, undo/redo, Cable reach and BOM, then missed the unchanged scene-download poll on both Linux attempts. Same-revision diagnostic 44379268899 passed the complete declaration in 27627.621812 ms with one worker, retries disabled and quarantine off. Export command delivery, thumbnail preparation, encoding, download and reopening remain distinct untraced stages. Priority owner #1815 owns tracing and ten baseline and ten candidate observations at equal load with retries disabled and the original assertions and deadlines before restoration. Fast cable matrices, worker routing, BOM, history and actual scene-file byte tests remain active. They do not replace this browser editor and persistence path. Windows has a separate readiness-after-redo observation and is assessed independently."
+  },
+  {
+    "file": "e2e/cableEditing.e2e.test.ts",
+    "test": "edits a Cable reach route with local anchors and stock, then restores it through undo and redo",
+    "issue": 1815,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44375421899 first missed the unchanged post-redo Cable reach pass poll after authored wiring was restored. Its retry passed readiness and BOM, then missed the scene-download poll. Same-revision Windows diagnostic 44380049632 reproduced missing download registration after completing editor, history, Checks and BOM assertions with one worker, retries disabled and quarantine off. It does not establish a complete Windows pass or a shared cause with the readiness stall. Linux passed this complete declaration at the same revision, proving Linux intermittency only. Priority owner #1815 owns separate readiness and export stage traces and ten baseline and ten candidate observations at equal load on each platform before restoration. Preserve assertions and deadlines. Fast cable matrices, worker analysis, BOM, history and real scene-file byte tests remain active but do not replace Windows browser editor and persistence coverage."
+  },
+  {
+    "file": "src/sim/fixtures/passiveParity.test.ts",
+    "test": "matches C and WASM drawer travel, stops, contacts and verdict for rotated",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44380885141 exhausted the unchanged 5000 ms callback deadline at 5008 ms without a numerical, contact or verdict assertion failure. Full green Check 44245137178 passed rotated drawer in 1140 ms on the same Windows image with unchanged parity, capture, variants and native replay sources. Linux passed at the failed revision in 827 ms. Same-revision Windows diagnostic 44382490339 passed in 4077.557 ms on the same image with one worker, zero retries and quarantine off, establishing intermittency. WASM capture, uv provisioning, native startup, replay, scoring and cleanup are not distinguished. Existing open priority replay owner #1390 owns stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. This completes the Windows quarantine of all sixteen passive fixture native comparisons. Windows retains WASM fixture physics and persistence, which do not replace native state, contact and verdict parity. Linux retains fifteen comparisons outside its existing nominal-lid quarantine, and macOS retains all sixteen. Preserve drift below 1e-6, exact contacts, verdict and margin agreement, stop bounds and failure without contacts. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "electron/remoteTraining/config.test.mjs",
+    "test": "spawns the installed OpenSSH client without a shell on this platform",
+    "issue": 1819,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44386066760 exhausted the unchanged 5000 ms deadline at 5012 ms. Full green Check 44245137178 passed in 1301 ms with unchanged config, executable lookup, tests, lockfile and unit configuration on the same Windows image. Exact-revision Windows diagnostic 44387897125 passed in 3727.9397 ms with one worker, zero retries and quarantine off on a newer image. Lookup, spawn, stdin, OpenSSH execution and callback delivery are not distinguished, and no image cause is established. Priority owner #1819 owns tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Windows retains the other thirteen configuration cases and trainer, transport, bundle and selection coverage, which do not prove the installed client launches. Other platforms retain the probe. Preserve shell-free native discovery, argument boundaries, host-key pinning and failure classification. No deadline or assertion changes."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "folding arm replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44386066760 exhausted the unchanged 5000 ms callback deadline at 5015 ms. Exact-revision Windows diagnostic 44387905638 passed in 4023.5489 ms on the same image with one worker, zero retries and quarantine off, establishing intermittency. Preparation, WASM capture, uv provisioning, native startup, replay, comparison and cleanup are not distinguished. Existing open priority replay owner #1390 owns stage tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Windows retains eight other native self-contact comparisons and all ten WASM contact and negative-control cases, package and recording coverage. Linux retains nine native comparisons outside its separate folding-arm quarantine, and macOS retains ten. Preserve the three-second trajectory, drift below 1e-6 and exact contact identities. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "crossed humanoid arms replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44386066760 exhausted the unchanged 5000 ms callback deadline at 5084 ms. Exact-revision Windows diagnostic 44387914542 passed in 3463.2089 ms on the same image with one worker, zero retries and quarantine off, establishing intermittency. Linux passed at the failed revision in 3077 ms. Preparation, WASM capture, uv provisioning, native startup, replay, comparison and cleanup are not distinguished. Existing open priority replay owner #1390 owns stage tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Windows retains eight other native self-contact comparisons and all ten WASM contact and negative-control cases, package and recording coverage. Linux and macOS retain this native comparison. Preserve the three-second trajectory, drift below 1e-6 and exact contact identities. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "tools/fleet/recoveryMigration.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44386066760 exhausted the unchanged 10000 ms beforeAll deadline before its sole legacy migration assertion ran. Full green Check 44245137178 passed the file in 5218 ms including a 611 ms body with unchanged relevant Fleet, fixture, PostgreSQL, lockfile and unit configuration sources. Exact-revision Windows diagnostic 44387921285 passed the body in 343.6958 ms in an 8660 ms process on the same image with one worker, zero retries and quarantine off, establishing intermittent setup. PostgreSQL startup, connection, legacy schema preparation, identity and inventory seeding are not distinguished. Existing open priority fixture owner #1401 owns tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Whole-file filtering is required because shared setup precedes test filtering. macOS retains migration acceptance. Linux setup has a separate quarantine under the same owner. Windows retains authorization and browser recovery, which do not replace legacy migration and audit coverage. Preserve real PostgreSQL, local command, inventory and audit assertions and deadlines."
+  },
+  {
+    "file": "tools/fleet/recoveryMigration.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44693928469 exhausted the unchanged 10000 ms beforeAll deadline in 10010 ms before the legacy migration assertion ran. Last full green Check 44558099086 passed the unchanged Fleet pipeline in 9215 ms including a 695 ms body. Exact-revision single-worker Linux diagnostic 44695023204 reproduced the setup timeout in a 10649 ms process with retries disabled and quarantine off, on the older image that passed the last green. Docker launch, readiness, connection, legacy schema preparation, identity and inventory seeding are not separately traced. Existing open priority fixture owner #1401 owns cause tracing, a demonstrated fix and ten baseline and ten candidate Linux observations at equal load without retries before restoration. Whole-file filtering is required because setup precedes individual test filtering. macOS retains legacy migration acceptance. Linux retains authorization, adapter and browser recovery, which do not replace existing-schema migration, unchanged inventory and organization UUIDs, and the recovery audit assertion. Preserve real PostgreSQL, local command, all assertions and existing deadlines."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "quadruped leg and torso replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 exhausted the unchanged 5000 ms callback deadline at 5004 ms. Last full green 44391437908 passed in 2865 ms with unchanged replay, fixture and native helper sources. Exact-revision diagnostic 44476051750 passed in 3531.5076 ms on the same Windows image 20261103.298.1 with one worker, zero retries and quarantine off. Preparation, WASM capture, uv provisioning, native startup, replay, comparison and cleanup remain unresolved. Existing priority owner #1390 covers stage tracing and equal-load baseline and candidate measurements. Seven other Windows native self-contact comparisons and all ten WASM contact and negative-control cases remain active."
+  },
+  {
+    "file": "e2e/operate.e2e.test.ts",
+    "test": "starts camera calibration from the command palette",
+    "issue": 987,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44474977845 exhausted the unchanged 15000 ms callback deadline on both Windows attempts, totaling 30681 ms, without identifying the failing operation. Exact-revision diagnostic 44477091304 passed in 7006.3338 ms on the same Windows image 20261116.315.1 with one worker, zero retries and quarantine off. Linux passed the failing revision in 1382 ms. Existing priority calibration owner #987 covers this command path separately from replay, rollback and Fix, including scene load, connection, ladder, palette delivery, capture state, disconnect and cleanup tracing and equal-load measurements before restoration. Other platforms and fast calibration pipelines remain active."
+  },
+  {
+    "file": "tools/fleet/adapter.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44495446798 exhausted the unchanged 10000 ms beforeAll deadline awaiting fleetFixture before either adapter assertion ran. Previous Windows Check 44474977845 passed both cases in 6246 ms with unchanged Fleet, fixture, PostgreSQL, publisher and unit configuration sources. Exact-revision Windows diagnostic 44496846595 passed setup and the publication assertion in a 9047 ms process with one worker, zero retries and quarantine off on the older image 20261103.298.1. Native cluster initialization, migrations and HTTP startup are not distinguished, and runner image contribution remains unresolved. Existing open priority shared fixture owner #1401 owns stage and cleanup tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Whole-file filtering is required because setup precedes individual test filtering. Linux and macOS retain the authenticated TCP loopback, scoped publication, persistent disconnect and transport-refusal matrix. Windows retains publisher, authorization and listener unit coverage, which do not replace this complete integration. No deadline, retry or assertion changes."
+  },
+  {
+    "file": "e2e/print.e2e.test.ts",
+    "test": "plates one coupon per fit with Print Fit Test from \u2318K, and leaves the scene as it was",
+    "issue": 1853,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Both Windows attempts in Check 44495446798 reached the final empty-console assertion with ERR_CONNECTION_REFUSED for the STS3215 mesh on the local bundle server. Last full green 44391437908 passed in 14465 ms with unchanged print and test sources. Same-revision diagnostic 44498263448 passed this declaration in 13709.1286 ms on Windows image 20261103.298.1 with one worker, zero retries and quarantine off. This confirms intermittent delivery without establishing a server-refusal cause. The server refusal cause remains unresolved. Existing priority owner #1853 coordinates the four paths and shared app. Require a demonstrated cause and fix and ten baseline and ten candidate equal-load Windows observations for each failed path with retries disabled before restoration. Linux and macOS retain these declarations. Windows retains Print panel, shortcut and backend-call assertions, print-placement browser coverage and fast coupon, label, packing, tracker and fleet pipelines. These do not replace the quarantined complete stories. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/print.e2e.test.ts",
+    "test": "debosses the guide letter into the tray\u2019s hidden floor, and Label parts off writes plain meshes",
+    "issue": 1853,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44495446798 first returned no omitted-label notes instead of the four expected entries, then failed on a retained mesh-request console error on retry. Last full green 44391437908 passed in 6740 ms with unchanged print, guide and test sources. Exact-revision diagnostic 44499134700 passed the isolated story in 32083.0393 ms on image 20261116.315.1 with one worker, zero retries and quarantine off. It does not reproduce the preceding shared-app history. Label generation, guide readiness and shared-app error contamination must be traced separately. Existing priority owner #1853 coordinates the four paths and shared app. Require a demonstrated cause and fix and ten baseline and ten candidate equal-load Windows observations for each failed path with retries disabled before restoration. Linux and macOS retain these declarations. Windows retains Print panel, shortcut and backend-call assertions, print-placement browser coverage and fast coupon, label, packing, tracker and fleet pipelines. These do not replace the quarantined complete stories. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/print.e2e.test.ts",
+    "test": "lays out plates on the CORE One\u2019s bed once it\u2019s added in Settings \u25b8 Printers",
+    "issue": 1853,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44495446798 first failed on the earlier retained mesh-request error, then found two matching Prusa descriptions instead of one on retry. Last full green 44391437908 passed in 3193 ms with unchanged printer and browser sources. Exact-revision diagnostic 44499137907 passed the isolated story in 11603.4913 ms on the same image 20261103.298.1 with one worker, zero retries and quarantine off. Shared printer state and retry isolation remain unresolved. Existing priority owner #1853 coordinates the four paths and shared app. Require a demonstrated cause and fix and ten baseline and ten candidate equal-load Windows observations for each failed path with retries disabled before restoration. Linux and macOS retain these declarations. Windows retains Print panel, shortcut and backend-call assertions, print-placement browser coverage and fast coupon, label, packing, tracker and fleet pipelines. These do not replace the quarantined complete stories. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/print.e2e.test.ts",
+    "test": "puts the base on plate 1 and gives two idle printers different plates with Start Next",
+    "issue": 1853,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44495446798 first failed on the earlier retained mesh-request error, then omitted base from its expected three-plate layout on retry. Last full green 44391437908 passed in 5155 ms with unchanged print and browser sources. Exact-revision diagnostic 44499140745 reached the expected three plates, then failed at line 397 with zero observed sends instead of one in 23505.5384 ms on the same image 20261103.298.1, one worker, zero retries and quarantine off. Original base eligibility and this later send-delivery failure are separate unresolved paths. Existing priority owner #1853 coordinates the four paths and shared app. Require a demonstrated cause and fix and ten baseline and ten candidate equal-load Windows observations for each failed path with retries disabled before restoration. Linux and macOS retain these declarations. Windows retains Print panel, shortcut and backend-call assertions, print-placement browser coverage and fast coupon, label, packing, tracker and fleet pipelines. These do not replace the quarantined complete stories. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/fitVariants.e2e.test.ts",
+    "test": "prepares a bearing comparison through Print Fit Test, exports its real plate, applies a value and undoes it",
+    "issue": 1854,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44495446798 prepared three coupons, inspected the exported 3MF and selected 22.1 mm, then exhausted the unchanged 30000 ms click deadline because Apply stayed disabled. Stale source and busy state are not distinguished. Last full green 44391437908 passed Windows in 16913 ms with unchanged browser, guard and preparation-hook sources. Same-revision diagnostic 44498284294 passed the complete story in 10977.1068 ms on Windows image 20261103.298.1, compared with 20261116.315.1 in the failed shard, with one worker, zero retries and quarantine off. This establishes a pass at the failed revision without identifying stale or busy state or an image component to pin. Priority owner #1854 owns stage tracing, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations before restoration. Linux and macOS retain the complete walkthrough. Windows retains the ten-interface geometry matrix, source guards, worker lifecycle, 3MF identity and parameter commit/history/save integration coverage, which do not replace candidate-selection and Apply delivery. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/buildCheck.e2e.test.ts",
+    "test": "applies the direct print-face Fix and refreshes the verdict",
+    "issue": 1855,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44495446798 saved the expected print.down but timed out awaiting a passing Strength row, then failed at the initial failing-row poll on retry. Attempts totaled 37138 ms and share browser and worker prototype state. The fixture introduced in 9ba78ef88 is newer than full green 44391437908, whose former real-solve walkthrough passed in 31529 ms, but the log does not establish a fixture, RPC or readiness cause. Reverting would restore longer polls and a 200-second declaration. Same-revision diagnostic 44498287095 also saved the face and timed out awaiting the passing row in 25339.5288 ms on Windows image 20261103.298.1, with one worker, zero retries and quarantine off. This reproduces verdict delivery failure without identifying its cause. Priority owner #1855 owns stage tracing, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations before restoration. Linux and macOS retain direct Fix and verdict coverage. Windows retains real engineeringStrength failure, blocker, suggested-face, passing-face and thicker-control solves plus the worker-fixture protocol test. These do not replace direct browser Fix delivery. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "neighboring hexapod legs replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44500060639 exhausted the unchanged 5000 ms callback deadline at 5006 ms. Previous Windows Check 44495446798 passed in 3037 ms on the same image 20261116.315.1 with unchanged simulation, fixture, preparation, capture and native helper sources. No drift or contact assertion failed. Exact-revision Windows diagnostic 44503195355 passed in 3508.7074 ms with one worker, zero retries and quarantine off on image 20261103.298.1. This single observation does not isolate an image component or failing stage. Preparation, WASM capture, uv provisioning, native startup, replay, comparison and cleanup remain unresolved under existing priority replay owner #1390. Restore after stage tracing, an established fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. Six other Windows native self-contact comparisons and all ten WASM contact and negative-control cases, package and recording coverage remain active. Linux and macOS retain this comparison. Preserve the three-second trajectory, drift below 1e-6 and exact contact identities."
+  },
+  {
+    "file": "e2e/inputs.e2e.test.ts",
+    "test": "pairs a phone from \u2318K and drives a rover by its tilt, and refuses the phone after Unpair Phone",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44500060639 connected the phone and reached Drive on, then measured 0.0473696773983312 m through the unchanged 30000 ms greater-than-0.1 m motion poll. Its shared-app retry never displayed the pairing QR. Previous Windows Check 44495446798 passed in 12804 ms with unchanged input, phone, simulation and harness sources on image 20261103.298.1 rather than the failing image 20261116.315.1. Exact-revision Windows diagnostic 44503214963 passed in 10963.187 ms with one worker, zero retries and quarantine off on image 20261103.298.1, while retaining the preview-server close timeout. This single observation does not establish an image cause or repair. Input delivery, simulation progress, pairing state, retained socket ownership and cleanup remain separate unresolved stages under existing input-path owner #995. Restore only after tracing each stage, establishing a fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. Preserve QR, connection, motion, Unpair Phone, revoked connection refusal and empty app errors with existing deadlines. Linux and macOS retain the walkthrough. Fast TLS protocol, event-stream, store, tilt mapping and real MuJoCo movement checks remain active but do not replace the combined browser path."
+  },
+  {
+    "file": "tools/fleet/registry.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44504735978 exhausted the unchanged 10000 ms beforeAll deadline awaiting fleetFixture before the registry assertion ran. Previous Linux Check 44500060639 passed the file in 8345 ms on the same Ubuntu image 20261111.196.1 with unchanged Fleet, fixture, PostgreSQL and unit configuration sources. Same-revision Linux diagnostic 44505926442 passed in a 9411 ms process with a 449.24056 ms assertion on the same image, one worker, zero retries and quarantine off. Docker launch, database readiness, connection, migrations, HTTP startup and cleanup are not distinguished. Existing open priority shared fixture owner #1401 owns tracing, a demonstrated fix and ten baseline and ten candidate equal-load Linux observations with retries disabled before restoration. Whole-file filtering is required because setup precedes individual test filtering. macOS retains the complete ten-class inventory, duplicate vendor identities, two vendors at one site, stale state and robot.control acceptance. Linux retains authorization, adapter and legacy migration checks, which do not replace this combined registry assertion. Windows retains its separate existing quarantine. No deadline, retry or assertion changes."
+  },
+  {
+    "file": "e2e/buildCheck.e2e.test.ts",
+    "test": "",
+    "issue": 1860,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44509387028 exhausted the unchanged 120000 ms beforeAll deadline awaiting openApp before any of the twelve declarations ran, with no studio-ready message. Previous Windows Check 44504735978 started the same unchanged setup in 7879 ms and passed ten active declarations in 55560 ms. The only intervening merge added a Linux Fleet quarantine. Exact-revision Windows diagnostic 44511835373 passed startup in 8723 ms and the selected Checks assertion in 3909.0344 ms with one worker, zero retries and quarantine off on the older image 20261103.298.1. Runner images differed, without an identified component to pin. Chrome launch, page creation, fixture routing, navigation, studio readiness and late cleanup remain unresolved. Priority setup owner #1860 owns stage tracing, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled before restoration. Whole-file filtering is required because setup precedes declaration filtering. Keep the independent #988 Case-row and #1855 Strength verdict quarantines when restoring setup. Linux and macOS retain the file. Windows retains fast readiness, engineering, Case worker-session and BOM pipelines, which do not replace these combined browser interactions. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "src/sim/fixtures/selfContactParity.test.ts",
+    "test": "replays a folding arm with self-contact true in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44527768820 exhausted the unchanged 5000 ms callback deadline at 5009 ms without a drift or contact assertion failure. Previous Windows Check 44523077433 passed this exact declaration in 3017 ms with unchanged simulation, fixture, capture, native helper, lockfile and unit configuration sources. Linux passed both comparisons at the failing revision. The Windows image changed from 20261103.298.1 to 20261116.315.1, without an identified environment component to pin. Exact-revision Windows diagnostic 44529594474 passed enabled contact in 4461.274 ms on the same image as the failure with one worker, zero retries and quarantine off. These single observations establish intermittency without a rate estimate or a responsible stage. WASM loading, model compilation, capture, uv provisioning, native startup, replay, comparison and cleanup are not distinguished. Existing open priority native replay owner #1390 owns tracing, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled before restoration. Preserve the two-second trajectory, native version agreement, drift below 1e-6, exact contact identities and enabled/disabled contact assertion. Linux and macOS retain this comparison. Windows retains the ten WASM contact and negative-control cases, package and recording coverage and six native self-contact matrix comparisons, which do not replace these enabled/disabled fixture comparisons. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "src/sim/fixtures/selfContactParity.test.ts",
+    "test": "replays a folding arm with self-contact false in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44527768820 exhausted the unchanged 5000 ms callback deadline at 5004 ms without a drift or contact assertion failure. Previous Windows Check 44523077433 passed this exact declaration in 817 ms with unchanged simulation, fixture, capture, native helper, lockfile and unit configuration sources. Linux passed both comparisons at the failing revision. The Windows image changed from 20261103.298.1 to 20261116.315.1, without an identified environment component to pin. Exact-revision Windows diagnostic 44529622953 passed disabled contact in 3746.163 ms on image 20261103.298.1 with one worker, zero retries and quarantine off. These single observations establish intermittency without a rate estimate or a responsible stage. WASM loading, model compilation, capture, uv provisioning, native startup, replay, comparison and cleanup are not distinguished. Existing open priority native replay owner #1390 owns tracing, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled before restoration. Preserve the two-second trajectory, native version agreement, drift below 1e-6, exact contact identities and enabled/disabled contact assertion. Linux and macOS retain this comparison. Windows retains the ten WASM contact and negative-control cases, package and recording coverage and six native self-contact matrix comparisons, which do not replace these enabled/disabled fixture comparisons. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "opposed gripper fingers replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44532657394 exhausted the unchanged 5000 ms callback deadline at 5005 ms without a drift or contact assertion failure. Previous Windows Check 44527768820 passed this declaration in 2758 ms with unchanged simulation, fixture, preparation, capture, native helper, lockfile and unit configuration sources. Linux passed it at the failing revision in 300 ms. The failed Windows image matches last full green 44391437908, so no changed environment component is identified. Exact-revision Windows diagnostic 44534108387 passed in 3593.8117 ms with one worker, zero retries and quarantine off on image 20261116.315.1. This single observation establishes intermittency without a rate estimate, an equal-load comparison or a responsible stage. Preparation, WASM capture, uv provisioning, native startup, replay, comparison and cleanup remain unresolved. Existing open priority replay owner #1390 owns stage tracing, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled before restoration. Windows retains three native self-contact matrix comparisons and all ten WASM contact and negative-control cases, package and recording coverage. Linux retains nine native matrix comparisons and macOS retains all ten. These do not replace the missing Windows native comparison. Preserve the three-second trajectory, drift below 1e-6 and exact contact identities. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "pan-tilt camera and mount replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44532657394 exhausted the unchanged 5000 ms callback deadline at 5025 ms without a drift or contact assertion failure. Previous Windows Check 44527768820 passed this declaration in 603 ms with unchanged simulation, fixture, preparation, capture, native helper, lockfile and unit configuration sources. Linux passed it at the failing revision in 454 ms. The failed Windows image matches last full green 44391437908, so no changed environment component is identified. Exact-revision Windows diagnostic 44534117234 passed in 3554.2339 ms with one worker, zero retries and quarantine off on image 20261116.315.1. This single observation establishes intermittency without a rate estimate, an equal-load comparison or a responsible stage. Preparation, WASM capture, uv provisioning, native startup, replay, comparison and cleanup remain unresolved. Existing open priority replay owner #1390 owns stage tracing, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled before restoration. Windows retains three native self-contact matrix comparisons and all ten WASM contact and negative-control cases, package and recording coverage. Linux retains nine native matrix comparisons and macOS retains all ten. These do not replace the missing Windows native comparison. Preserve the three-second trajectory, drift below 1e-6 and exact contact identities. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "asymmetric payload arm replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44532657394 exhausted the unchanged 5000 ms callback deadline at 5015 ms without a drift or contact assertion failure. Previous Windows Check 44527768820 passed this declaration in 510 ms with unchanged simulation, fixture, preparation, capture, native helper, lockfile and unit configuration sources. Linux passed it at the failing revision in 443 ms. The failed Windows image matches last full green 44391437908, so no changed environment component is identified. Exact-revision Windows diagnostic 44534123671 passed in 4018.3154 ms with one worker, zero retries and quarantine off on image 20261103.298.1. This single observation establishes intermittency without a rate estimate, an equal-load comparison or a responsible stage. Preparation, WASM capture, uv provisioning, native startup, replay, comparison and cleanup remain unresolved. Existing open priority replay owner #1390 owns stage tracing, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled before restoration. Windows retains three native self-contact matrix comparisons and all ten WASM contact and negative-control cases, package and recording coverage. Linux retains nine native matrix comparisons and macOS retains all ten. These do not replace the missing Windows native comparison. Preserve the three-second trajectory, drift below 1e-6 and exact contact identities. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/selfContact.e2e.test.ts",
+    "test": "retains the authored Self-contact switch through scene export and reopening",
+    "issue": 1885,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44763278076 failed this unchanged declaration twice on Windows. The first attempt enabled contact but timed out waiting for an exported scene name, which remained undefined at line 38. Its retry failed earlier waiting for the enabled switch state at line 28. Last full green Check 44697629334 passed the declaration in 10645 ms with unchanged test, scene fixture, export-retention helper, Self-contact authoring, browser harness, configuration and lockfile on the same Windows image 20261116.315.1. Exact-revision Windows diagnostic 44765865475 passed the complete declaration in 22271.1182 ms on that same image with one worker, zero retries and quarantine off. A second exact-revision Windows diagnostic 44767947593 passed in 17632.1992 ms on the same image with one worker, zero retries and quarantine off, while its process log retained a Vite close timeout after successful assertions. These observations establish intermittency without a rate estimate or candidate verification. Coordinate shared export helpers with #1815 and #1621. No causative merge or environment pin is established. The switch input, project update, render state, palette delivery, export completion and cleanup stages remain unresolved and are not presumed to share a cause. Priority owner #1885 owns tracing, a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled before restoration. Linux and macOS retain the browser switch, export and reopen path. Windows retains fast Self-contact authoring, undo/redo, actual scene-byte persistence, WASM physics, contact matrix and portable package and recording coverage, which do not replace the combined browser path. Preserve every assertion and existing deadline, with no added retries."
+  },
+  {
+    "file": "e2e/drive.e2e.test.ts",
+    "test": "",
+    "issue": 1860,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44777833264 exhausted the unchanged 120000 ms beforeAll deadline awaiting openApp before any of nine declarations ran, with no studio-ready message. The preceding Windows Check 44770263184 started the unchanged setup in 15949 ms and passed all three active declarations in 40391 ms. The only intervening merge changed the macOS runner. Windows images differed without an identified component to pin. Linux passed all nine declarations at the failed revision in 42744 ms. Exact-revision Windows diagnostic 44780580604 passed startup in 45200 ms and the rover declaration in 4595.7611 ms on the same image as the failure, with one worker, quarantine off and zero retries. This establishes intermittency without a rate estimate or demonstrated correction. Chrome launch, page creation, fixture routing, navigation, studio readiness and late cleanup remain unresolved. Existing priority shared startup owner #1860 owns this drive setup path separately from Build setup until tracing establishes a common cause. Whole-file filtering is required because setup precedes declaration filtering. Restore after a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled, preserving all three active declarations and the six existing #205 exclusions. Linux and macOS retain the file. Windows temporarily lacks combined studio rover keyboard movement and edit-shortcut checks, the biped teaching offer and gripper pickup recording. Fast drive physics, key mapping, gripper holding, recording and contract checks remain active but do not replace those browser paths. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "tools/fleet/adapter.test.mjs",
+    "test": "",
+    "issue": 1401,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44782838288 exhausted the unchanged 10000 ms beforeAll deadline awaiting fleetFixture, reporting 10020 ms before either adapter assertion ran. Last full green Check 44697629334 passed both cases in 9360 ms on the same Ubuntu image 20261116.202.1 with unchanged Fleet, PostgreSQL fixture, publisher, dependency and unit configuration sources. Exact-revision Linux diagnostic 44784441807 reproduced setup expiry in a 10751 ms process with one worker, zero retries and quarantine off on image 20261116.88.1. No assertion ran. No causative merge or changed environment component is established. Docker launch, readiness, connection, migrations, HTTP startup and cleanup are not separately traced. Existing open priority shared fixture owner #1401 owns tracing, a demonstrated fix and ten baseline and ten candidate equal-load Linux observations with retries disabled before restoration. Whole-file filtering is required because setup precedes individual-test filtering. macOS retains both adapter cases. Linux retains publisher, authorization and HTTP listener unit coverage, which does not replace authenticated TCP loopback, scoped publication and persistent-disconnect integration. Windows retains its separate setup quarantine. No deadline, retry or assertion changes."
   }
 ]

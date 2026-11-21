@@ -47,11 +47,14 @@ async function readClip(bytes: Uint8Array): Promise<Clip> {
       throw new Error('A camera video has no video track. Export or publish the dataset again.');
 
     const packets: EncodedPacket[] = [];
+    let start = Infinity;
+    let end = -Infinity;
 
-    for await (const packet of new EncodedPacketSink(track).packets()) packets.push(packet);
-
-    const start = Math.min(...packets.map((p) => p.timestamp));
-    const end = Math.max(...packets.map((p) => p.timestamp + p.duration));
+    for await (const packet of new EncodedPacketSink(track).packets()) {
+      packets.push(packet);
+      start = Math.min(start, packet.timestamp);
+      end = Math.max(end, packet.timestamp + packet.duration);
+    }
 
     return { bytes: bytes.byteLength, codec: track.codec, config, packets, start, duration: seconds(end - start) };
   } finally {

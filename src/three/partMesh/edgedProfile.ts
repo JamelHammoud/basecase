@@ -58,17 +58,20 @@ export function clockwise(outline: Outline): Outline {
 export function outlineCorners(outline: Outline, edges: PartEdges): Corner[] {
   const ring = clockwise(outline);
 
+  if (!ring.length) return [];
+
+  const closing = edgeNormal(ring[ring.length - 1], ring[0]);
+  let previous = closing;
+
   return ring.map((at, i) => {
-    const prev = ring[(i + ring.length - 1) % ring.length];
-    const next = ring[(i + 1) % ring.length];
-    const normals: [Vec2, Vec2] = [edgeNormal(prev, at), edgeNormal(at, next)];
+    const next = i + 1 < ring.length ? edgeNormal(at, ring[i + 1]) : closing;
+    const normals: [Vec2, Vec2] = [[previous[0], previous[1]], next];
+
+    previous = next;
 
     return { center: insetCorner(at, normals, edges.mm), dirs: cornerDirs(normals[0], normals[1], edges.kind) };
   });
 }
-
-export const contourAt = (corners: Corner[], reach: number): Vec2[] =>
-  corners.flatMap(({ center, dirs }) => dirs.map((d): Vec2 => [center[0] + d[0] * reach, center[1] + d[1] * reach]));
 
 export function edgeLayers(height: number, edges: PartEdges, middle: number): Array<[number, number]> {
   const flat = height / 2 - edges.mm;

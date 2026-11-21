@@ -91,7 +91,7 @@ const ConnectionTest: React.FC<{ id: string }> = ({ id }) => {
 
   return (
     <Row
-      label="Connection"
+      label={null}
       hint={result && <span className={result.ok ? 'text-white/60' : 'text-red-400'}>{result.message}</span>}
     >
       <Button size="sm" variant="secondary" onClick={() => void run()} disabled={testing}>

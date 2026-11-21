@@ -22,6 +22,11 @@ export interface ConvertedLink {
 }
 
 export interface ConvertedJoint {
+  actuation?: 'powered' | 'passive';
+  damping?: number;
+  frictionloss?: number;
+  stiffness?: number;
+  springref?: number;
   name: string;
   type: 'revolute' | 'prismatic' | 'fixed';
   parent: string;
@@ -95,6 +100,9 @@ function joint(j: ConvertedJoint): ModelJoint {
     limit: j.limit ?? undefined,
     effort: j.effort ?? undefined,
     velocity: j.velocity ?? undefined,
+    ...(j.actuation ? { actuation: j.actuation, damping: j.damping, frictionloss: j.frictionloss } : {}),
+    ...(j.stiffness === undefined ? {} : { stiffness: j.stiffness }),
+    ...(j.springref === undefined ? {} : { springref: j.springref }),
   };
 }
 

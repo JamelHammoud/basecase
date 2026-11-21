@@ -112,6 +112,8 @@ export interface KeptSnapshot {
 }
 
 export interface TrainerStatus {
+  engine?: 'forge' | 'python';
+  local?: { ready: boolean; engine: 'forge' | 'python' };
   uv: boolean;
   uvInstall?: string;
   ready: boolean;
@@ -135,6 +137,7 @@ export interface TrainStartPayload {
   xml: string;
   job: Record<string, unknown>;
   priority?: number;
+  recoveryKey?: string;
 }
 
 export interface EvidenceFilePayload {
@@ -257,9 +260,11 @@ declare global {
       printCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       hubCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       triesCall?: (channel: string, payload?: unknown) => Promise<unknown>;
+      electricalCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       visionTrainingCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       datasetsCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       onshapeCall?: (channel: string, payload?: unknown) => Promise<unknown>;
+      remoteTrainingCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       roboflowCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       earthCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       robotConnect?: (spec: ConnectSpec, unit?: string) => Promise<ConnectReply>;

@@ -27,9 +27,11 @@ keywords:
 related:
   - save-a-model-to-the-library
   - cut-join-and-intersect-parts
+  - keep-a-sketch-on-a-face
 covers:
   - src/components/studio/SketchPanel.tsx
   - src/components/studio/SketchCanvas.tsx
+  - src/components/studio/sketchView.ts
   - src/components/studio/useSketchDrawing.ts
   - src/components/studio/useSketchSelection.ts
   - src/components/studio/useSketchKeys.ts
@@ -39,7 +41,10 @@ covers:
   - src/components/SculptAndDrawStudio.tsx
   - src/components/ViewportToolbar.tsx
   - src/utils/sketch/solver.ts
+  - src/utils/sketch/bounds.ts
+  - src/utils/sketch/profile.ts
   - src/utils/sketch/face.ts
+  - src/utils/sketch/boundaryMerge.ts
   - src/utils/sketch/placement.ts
   - src/utils/svgTo3DParser.ts
   - src/workspace/useSketchSession.ts
@@ -53,7 +58,7 @@ Draw an outline with typed lengths, or load an SVG file, and turn it into a soli
 
 ## Sketch an outline
 
-1. To sketch on a part, click its face, such as the top of a box. To sketch on the ground, skip this step.
+1. To sketch on a part, click a supported rectangular face, such as the top of a box. To sketch on the ground, skip this step.
 2. Click **Shapes** in the bottom toolbar, then choose **Sketch**. If you clicked a face, the sketch opens with the face's edges dashed.
 
 ![Sketch open on the top face of a box, the face's outline dashed](/help/draw-a-part-from-a-sketch-or-svg/face.png)
@@ -79,6 +84,8 @@ While you draw, a point snaps onto an existing point and a line snaps level or u
 
 The new part is called Sketch. Rename it and pick its color in the Inspector. Click **Save to Library**, the bookmark in the part's Inspector header, to keep a copy in the Library as well.
 
+A sketch made on a supported rectangular face follows later edits to that part. [Keep a sketch on a face](/help/keep-a-sketch-on-a-face) covers resizing, moving and replacing its support.
+
 ## Change a sketched part
 
 Double-click a sketched part to reopen its sketch. Click a dimension, type the new value and press [[↩]], and the part re-extrudes in place. Press [[⌘Z]] to put it back.
@@ -99,7 +106,7 @@ You can hold two lines parallel, perpendicular or equal. Click the active tool t
 
 Or drag the SVG onto **Choose or drop an SVG**, which turns blue while the file is over it.
 
-The part starts 64 mm wide and 10 mm thick. You can set the width from 5 to 500 mm and the thickness from 1 to 250 mm. **Bevel** softens the edges and is on by default.
+The outline's longer side starts at 64 mm, and the part starts 10 mm thick. You can set the width from 5 to 500 mm and the thickness from 1 to 250 mm. **Bevel** softens the edges and is on by default.
 
 Click **Paste Code** to paste SVG code from a design app such as Figma or Illustrator. **Edit in Sketch**, beside the preview, opens the outline in Sketch so you can change it before you add it.
 

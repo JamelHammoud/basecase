@@ -72,10 +72,12 @@ export class LiveCase {
     this.logic?.input({ at: this.t, name, value });
   }
 
-  advance(seconds: number) {
+  advance(seconds: number, beforeStep?: () => void) {
     this.owed += seconds;
 
     while (this.owed >= STEP_S - 1e-9) {
+      beforeStep?.();
+
       const read = this.reader.read(this.engine.poses(), this.t, torqueShare(this.engine));
 
       sampleSignals({ ...read, ...this.logic?.cameraFacts() }, this.names, this.signals);

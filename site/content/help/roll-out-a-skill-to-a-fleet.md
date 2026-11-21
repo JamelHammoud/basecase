@@ -35,7 +35,9 @@ hub_the_design_agent: |
 
 Send a skill to several emulated robots, after Arena proves it on each robot's calibrated twin.
 
-A fleet holds up to 32 robots in the desktop app. Roll Out sends saved network policies to emulated Feetech and Dynamixel units.
+Operate connects up to 32 robots at once in the desktop app. Roll Out sends saved network policies to emulated Feetech and Dynamixel units.
+
+View shared organization inventory through [Open Basecase Fleet](/help/open-basecase-fleet). The registry keeps identities after disconnect and has its own capacity limits.
 
 ## Connect and calibrate the units
 
@@ -43,7 +45,7 @@ A fleet holds up to 32 robots in the desktop app. Roll Out sends saved network p
 2. At the top of the left panel, click **Operate**.
 3. Click **Connect Emulated Robot**. The first robot is named robot.
 4. Press [[⌘K]] and choose **Connect Emulated Robot** for each robot you add. They're named robot-2, robot-3 and so on.
-5. In Operate, click a robot's row. Its readings, calibration history and measured pose appear.
+5. In Operate, click a connected robot's row. Its readings, calibration history and measured pose appear.
 6. In the **Ladder**, click **Set Up**.
 7. In the **Ladder**, click **Test**.
 8. Click **Calibrate Servos**. Repeat steps 5 through 8 for each robot.

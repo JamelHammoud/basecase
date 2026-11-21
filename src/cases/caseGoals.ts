@@ -11,12 +11,31 @@ import { FLOOR_PROBE_DEPTH_MM } from './probes';
 import { lengthLabel } from '../utils/size';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
 import { plural } from '../../electron/plural.mjs';
+import { fixtureHinge, type HouseholdKind } from './householdKinds';
+import type { CustomModelDefinition } from '../types/robotics';
 
-export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk' | 'pick' | 'handoff';
+export type GoalKind =
+  'reach' | 'touch' | 'push' | 'path' | 'walk' | 'pick' | 'handoff' | 'lid' | 'drawer' | 'chest' | HouseholdKind;
 
 export type { GoalParam, GoalValues, ParamKey } from './goalParams';
 
 const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
+  fixtureLowerStop: { key: 'fixtureLowerStop', label: 'Lower stop', unit: 'mm', min: -10000, max: 0, step: 1 },
+  fixtureStiffness: {
+    key: 'fixtureStiffness',
+    label: 'Return spring',
+    unit: 'mN/m',
+    min: 0,
+    max: 1000000000,
+    step: 10,
+  },
+  fixtureSpringref: { key: 'fixtureSpringref', label: 'Rest position', unit: 'mm', min: -10000, max: 10000, step: 1 },
+  fixtureWidthMm: { key: 'fixtureWidthMm', label: 'Width', unit: 'mm', min: 0.1, max: 10000, step: 5 },
+  fixtureDepthMm: { key: 'fixtureDepthMm', label: 'Depth', unit: 'mm', min: 0.1, max: 10000, step: 5 },
+  fixtureTravel: { key: 'fixtureTravel', label: 'Travel', unit: 'mm', min: 0.01, max: 10000, step: 5 },
+  fixtureMassG: { key: 'fixtureMassG', label: 'Weight', unit: 'g', min: 0.1, max: 1000000, step: 5 },
+  fixtureFriction: { key: 'fixtureFriction', label: 'Joint friction', unit: 'mN', min: 0, max: 1000000, step: 1 },
+  fixtureDamping: { key: 'fixtureDamping', label: 'Damping', unit: 'mN s/m', min: 0, max: 1000000, step: 1 },
   dots: { key: 'dots', label: 'Dots', unit: '', min: 1, max: DOT_COUNT, step: 1 },
   distanceMm: { key: 'distanceMm', label: 'Distance', unit: 'mm', min: 0, max: 5000, step: 50 },
   heightMm: { key: 'heightMm', label: 'Height', unit: 'mm', min: 0, max: 2000, step: 10 },
@@ -32,6 +51,8 @@ const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
 };
 
 export interface BuilderRobot {
+  fixtureEdits?: Partial<GoalValues>;
+  fixture?: CustomModelDefinition;
   rig?: Rig;
   facts: RobotFacts;
   pivot: V3;
@@ -84,7 +105,27 @@ export interface CaseGoal {
   bounds?: Partial<Record<ParamKey, Pick<GoalParam, 'min'>>>;
 }
 
-export const goalParam = (goal: CaseGoal, key: ParamKey): GoalParam => ({ ...GOAL_PARAMS[key], ...goal.bounds?.[key] });
+const HINGE_UNITS: Partial<Record<ParamKey, string>> = {
+  fixtureTravel: '°',
+  fixtureLowerStop: '°',
+  fixtureSpringref: '°',
+  fixtureFriction: 'mN m',
+  fixtureDamping: 'mN m s/rad',
+  fixtureStiffness: 'mN m/rad',
+};
+
+const HINGE_BOUNDS: Partial<Record<ParamKey, Partial<GoalParam>>> = {
+  fixtureTravel: { max: 179 },
+  fixtureLowerStop: { min: -179 },
+  fixtureSpringref: { min: -179, max: 179 },
+};
+
+export const goalParam = (goal: CaseGoal, key: ParamKey): GoalParam => ({
+  ...GOAL_PARAMS[key],
+  unit: fixtureHinge(goal.kind) ? (HINGE_UNITS[key] ?? GOAL_PARAMS[key].unit) : GOAL_PARAMS[key].unit,
+  ...(fixtureHinge(goal.kind) ? HINGE_BOUNDS[key] : {}),
+  ...goal.bounds?.[key],
+});
 
 const GOAL_BLUE = '#0d99ff';
 const BOX_GREY = '#c8a26a';
@@ -392,6 +433,8 @@ export function fallGuard(robot: BuilderRobot): { probe: CaseProbe; failure: Con
   };
 }
 
-const pickGoal = pickGoalWith([...REACH, { id: 'grip', label: 'Grip', input: 'grip' }]);
+export const GRIP: CaseControl[] = [...REACH, { id: 'grip', label: 'Grip', input: 'grip' }];
+
+const pickGoal = pickGoalWith(GRIP);
 
 export const CASE_GOALS: CaseGoal[] = [reachGoal, pushGoal, pathGoal, walkGoal, touchGoal, pickGoal];

@@ -58,11 +58,13 @@ Real components can't be built as mirror images, so Basecase doesn't flip them. 
 
 Parts the agent modeled, imported meshes and sculpted parts are fully mirrored, shape included.
 
+A mirrored [sketch attached to a face](/help/keep-a-sketch-on-a-face) becomes independent. Its reflected geometry stays in place when the original support changes.
+
 ## Joints and mates
 
 If all of a joint's moving parts are mirrored, the copies get a twin of that joint with the same range. The twin's hinge axis is mirrored, so setting both joints to the same angle moves the two sides as mirror images.
 
-A joint to a part you didn't mirror, such as the body, stays attached to that part. Mates move to the matching port on the other side.
+A joint to a part you didn't mirror, such as the body, stays attached to that part. A mate follows the copied target when you mirror both parts. Otherwise, it uses a matching port on the original target.
 
 ## Ask the agent
 

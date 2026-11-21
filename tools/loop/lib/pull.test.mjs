@@ -18,6 +18,13 @@ const change = (kind, copy) => ({
 const copy = [{ string: 'Print  failed:\n${reason}', why: 'Names the failure\nso it can be fixed.' }];
 
 describe('pullBody', () => {
+  it.each(Object.keys(KINDS))('preserves the reason in a %s body', (kind) => {
+    const answer = { ...change(kind, []), why: 'Change `.github/workflows/check.yml` to bound optional work.' };
+    const body = pullBody(answer, { branch: 'loop/test', protectedPaths: ['.github/workflows/check.yml'] });
+
+    expect(body.split(answer.why)).toHaveLength(2);
+  });
+
   it.each(Object.keys(KINDS))('puts the copy lines in a %s body', (kind) => {
     const body = pullBody(change(kind, copy), { branch: 'loop/test' });
 
@@ -110,6 +117,29 @@ describe('the screenshots section', () => {
 });
 
 describe('revisedBody', () => {
+  it.each(Object.keys(KINDS))('restates the reason in an existing %s body', (kind) => {
+    const original = pullBody(change(kind, []), { branch: 'loop/test' });
+    const answer = { ...change(kind, []), why: 'Change `.github/workflows/check.yml` to bound optional work.' };
+    const body = revisedBody(original, answer, { branch: 'loop/test' });
+
+    expect(body.split(answer.why)).toHaveLength(2);
+    expect(body).not.toContain(change(kind, []).why);
+  });
+
+  it.each(['repair', 'fix'])('adds a missing reason to a legacy %s body', (kind) => {
+    const answer = change(kind, []);
+    const body = revisedBody(
+      '## Fix\n\nOriginal fix.\n\n## Protected paths\n\n`.github/workflows/check.yml`.',
+      answer,
+      {
+        branch: 'loop/test',
+      },
+    );
+
+    expect(body).toContain(`## Why\n\n${answer.why}`);
+    expect(body.indexOf('## Why')).toBeLessThan(body.indexOf('## Protected paths'));
+  });
+
   const opened = `${pullBody(change('feature', []), {
     branch: 'b',
     slug: 'acme/basecase',

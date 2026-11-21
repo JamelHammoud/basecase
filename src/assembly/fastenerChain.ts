@@ -10,7 +10,7 @@ import type {
   ThreadEnd,
 } from './assemblyTypes';
 import type { ScrewSpec, SetScrewSpec, SleeveSpec } from './fastenerSpec';
-import { frameOf, insideSolid, isNear, ringAround, type Frame } from './probe';
+import { frameOf, hasThreeContacts, insideSolid, isNear, ringAround, type Frame } from './probe';
 
 interface PlacedSleeve {
   spec: SleeveSpec;
@@ -154,15 +154,14 @@ function seatRing(ctx: ScrewCtx): THREE.Vector3[] {
 
 function isSeated(ctx: ScrewCtx): boolean {
   const under = [...ctx.solids, ...ctx.seats];
-  const touching = seatRing(ctx).filter((q) => onWasher(ctx, q) || under.some((o) => isNear(o, q, 0.45)));
 
-  return touching.length >= 3;
+  return hasThreeContacts(seatRing(ctx), (q) => onWasher(ctx, q) || under.some((o) => isNear(o, q, 0.45)));
 }
 
 function sunkIn(ctx: ScrewCtx): ChainProblem | null {
   const mid = ctx.spec.countersunk ? ctx.topT - 0.3 : (ctx.underT + ctx.topT) / 2;
   const ring = ringAround(at(ctx, mid), ctx.u, ctx.spec.headR * 0.75);
-  const host = ctx.solids.find((o) => ring.filter((q) => insideSolid(o, q)).length >= 3);
+  const host = ctx.solids.find((o) => hasThreeContacts(ring, (q) => insideSolid(o, q)));
 
   return host ? { code: 'sunk', part: host.id } : null;
 }

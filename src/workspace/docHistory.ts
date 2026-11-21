@@ -30,7 +30,22 @@ export const consolesOf = (cases: Case[] | undefined, ids: string[]): Consoles =
 export const withCaseConsoles = (cases: Case[] | undefined, consoles: Consoles) =>
   cases?.map((c) => (c.id in consoles ? { ...c, console: consoles[c.id] } : c));
 
-export const trackedOf = ({ pose, joints, marks, skeleton }: ProjectSettings): Omit<Snapshot, 'parts'> => ({
+export const trackedOf = ({
+  wiring,
+  pose,
+  joints,
+  marks,
+  skeleton,
+  electronicsBoard,
+  designParameters,
+  dimensionalRequirements,
+  selfContact,
+}: ProjectSettings): Omit<Snapshot, 'parts'> => ({
+  wiring,
+  electronicsBoard,
+  designParameters,
+  dimensionalRequirements,
+  selfContact,
   pose,
   joints,
   marks,
@@ -44,11 +59,17 @@ function supplyFor(next: Snapshot | undefined, project: ProjectSettings): Partia
     ...(next && 'tether' in next ? { tether: project.tether } : {}),
     ...(next?.consoles ? { consoles: consolesOf(project.cases, Object.keys(next.consoles)) } : {}),
     ...(next?.routines ? { routines: routinesView(project) } : {}),
+    ...(next?.project ? { project } : {}),
   };
 }
 
 function restoredProject(to: Snapshot, here: Snapshot, cases: Case[] | undefined): Partial<ProjectSettings> {
   return {
+    ...('wiring' in to ? { wiring: to.wiring } : {}),
+    ...('selfContact' in to ? { selfContact: to.selfContact } : {}),
+    ...('designParameters' in to ? { designParameters: to.designParameters } : {}),
+    ...('dimensionalRequirements' in to ? { dimensionalRequirements: to.dimensionalRequirements } : {}),
+    ...(to.electronicsBoard === here.electronicsBoard ? {} : { electronicsBoard: to.electronicsBoard }),
     ...(to.joints === here.joints ? {} : { joints: to.joints }),
     ...(to.marks === here.marks ? {} : { marks: to.marks }),
     ...(to.skeleton === here.skeleton ? {} : { skeleton: to.skeleton }),
@@ -60,19 +81,29 @@ function restoredProject(to: Snapshot, here: Snapshot, cases: Case[] | undefined
 export interface HistoryStep {
   direction: HistoryDirection;
   codeOnly?: boolean;
+  scene?: Snapshot['scene'];
 }
 
-export function travelProject(d: DocState, project: ProjectSettings, { direction, codeOnly = false }: HistoryStep) {
+export function travelProject(
+  d: DocState,
+  project: ProjectSettings,
+  { direction, codeOnly = false, scene }: HistoryStep,
+) {
   const next = nextStep(d, direction);
 
   if (codeOnly && !next?.consoles) return null;
 
-  const here: Snapshot = { parts: d.parts, ...trackedOf(project), ...supplyFor(next, project) };
+  const here: Snapshot = {
+    parts: d.parts,
+    ...trackedOf(project),
+    ...supplyFor(next, project),
+    ...(next?.scene ? { scene } : {}),
+  };
   const moved = stepHistory(d, here, direction);
 
   if (!moved) return null;
 
-  const restored = { ...project, ...restoredProject(moved.to, here, project.cases) };
+  const restored = { ...(moved.to.project ?? project), ...restoredProject(moved.to, here, project.cases) };
   const { routines } = moved.to;
 
   return { ...moved, here, project: routines ? writeRoutines(restored, routines) : restored };

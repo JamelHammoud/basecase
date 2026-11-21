@@ -1,3 +1,4 @@
+import type { LocalJudgment } from './localJudgments';
 import type { MainModule } from '@mujoco/mujoco';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
@@ -35,6 +36,7 @@ export interface RaceCandidate {
 }
 
 export interface RaceAttempt {
+  terminal?: boolean;
   method: Method;
   passed: boolean;
   cost: RaceCost;
@@ -47,6 +49,7 @@ export type RaceOutcome =
   | { kind: 'not-found'; route: Route; cost: RaceCost; attempts: RaceAttempt[]; reason: string };
 
 export interface RaceInput {
+  judgment?: LocalJudgment;
   mj: MainModule;
   task: RaceTask;
   forge: ForgeRunner;
@@ -55,6 +58,7 @@ export interface RaceInput {
   robustnessCandidate?: boolean;
   budgetSteps?: number;
   signal?: AbortSignal;
+  seed?: number;
 }
 
 export interface SolveResult {

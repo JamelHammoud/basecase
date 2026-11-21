@@ -9,49 +9,53 @@ export interface DataRow {
 
 export type LayerListRow = LayerRow | DataRow;
 
-const belongsTo = (row: LayerRow, owner: string) =>
-  row.type === 'group' ? row.id === owner : row.part.id === owner || row.part.group?.id === owner;
-
-function ownerEnd(rows: LayerListRow[], owner: string): { at: number; depth: number } | null {
-  let at = -1;
-  let depth = 0;
-
-  rows.forEach((row, i) => {
-    if (row.type === 'data' || !belongsTo(row, owner)) return;
-
-    if (at < 0) depth = row.type === 'group' ? 1 : row.depth + 1;
-
-    at = i;
-  });
-
-  return at < 0 ? null : { at, depth };
+interface OwnerPosition {
+  at: number;
+  depth: number;
 }
 
-const isTrailing = (row: LayerListRow) => row.type === 'data' || (row.type === 'part' && !!row.operandOf);
+function ownerPositions(rows: LayerRow[]): Map<string, OwnerPosition> {
+  const positions = new Map<string, OwnerPosition>();
+  let at = rows.length;
 
-const matches = (layer: DataLayerRow, query: string) => {
-  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const row = rows[i];
+    const owners = row.type === 'group' ? [row.id] : [row.part.id, row.part.group?.id];
+    const depth = row.type === 'group' ? 1 : row.depth + 1;
 
-  return words.every((word) => layer.name.toLowerCase().includes(word));
-};
+    for (const owner of owners) {
+      if (owner) positions.set(owner, { at: positions.get(owner)?.at ?? at, depth });
+    }
+
+    if (row.type === 'group' || !row.operandOf) at = i;
+  }
+
+  return positions;
+}
 
 export function withDataRows(
   rows: LayerRow[],
   layers: DataLayerRow[],
   view: { collapsed: ReadonlySet<string>; query: string },
 ): LayerListRow[] {
-  const out: LayerListRow[] = [...rows];
-  const searching = view.query.trim() !== '';
+  if (layers.length === 0) return [...rows];
+
+  const positions = ownerPositions(rows);
+  const insertions = new Map<number, DataRow[]>();
+  const words = view.query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const searching = words.length > 0;
   const loose: DataRow[] = [];
 
   for (const layer of layers) {
-    if (!matches(layer, view.query)) continue;
+    const name = layer.name.toLowerCase();
+
+    if (!words.every((word) => name.includes(word))) continue;
 
     const owner = layer.owner;
 
     if (owner && !searching && view.collapsed.has(owner)) continue;
 
-    const end = owner ? ownerEnd(out, owner) : null;
+    const end = owner ? positions.get(owner) : undefined;
 
     if (!end) {
       loose.push({ type: 'data', layer, depth: 0 });
@@ -59,12 +63,21 @@ export function withDataRows(
       continue;
     }
 
-    let at = end.at + 1;
+    const bucket = insertions.get(end.at) ?? [];
 
-    while (at < out.length && isTrailing(out[at])) at++;
-
-    out.splice(at, 0, { type: 'data', layer, depth: end.depth });
+    bucket.push({ type: 'data', layer, depth: end.depth });
+    insertions.set(end.at, bucket);
   }
+
+  const out: LayerListRow[] = [];
+
+  rows.forEach((row, i) => {
+    for (const data of insertions.get(i) ?? []) out.push(data);
+
+    out.push(row);
+  });
+
+  for (const data of insertions.get(rows.length) ?? []) out.push(data);
 
   return [...out, ...loose];
 }

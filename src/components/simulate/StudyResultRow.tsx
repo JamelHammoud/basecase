@@ -1,9 +1,12 @@
+import { percent } from '../../../electron/percent.mjs';
+import { StudyVisibilityDetails } from './StudyVisibilityDetails';
 import { Button, RowActions, Tooltip } from '../../design-system';
 import type { StudyRow } from '../../study/types';
 import { useMoney } from '../../utils/useMoney';
 import { weight } from '../../utils/weight';
 
 interface StudyResultRowProps {
+  names: Record<string, string>;
   row: StudyRow;
   current: boolean;
   selected: boolean;
@@ -13,10 +16,26 @@ interface StudyResultRowProps {
   onPick: (shift: boolean) => void;
 }
 
-export function StudyResultRow({ row, current, selected, stale, onApply, onPreview, onPick }: StudyResultRowProps) {
-  const money = useMoney();
+function rowStatus(row: StudyRow): string {
   const passes = row.checks.filter((c) => c.status === 'pass').length;
-  const status = row.runs ? `${row.runs.passes} of ${row.runs.runs}` : `${passes} of ${row.checks.length}`;
+  const checksStatus = row.runs ? `${row.runs.passes} of ${row.runs.runs}` : `${passes} of ${row.checks.length}`;
+  const visibilityStatus = row.visibility?.coverage === undefined ? 'Unavailable' : percent(row.visibility.coverage);
+
+  return row.visibility ? visibilityStatus : checksStatus;
+}
+
+export function StudyResultRow({
+  row,
+  current,
+  selected,
+  stale,
+  onApply,
+  onPreview,
+  onPick,
+  names,
+}: StudyResultRowProps) {
+  const money = useMoney();
+  const status = rowStatus(row);
 
   return (
     <div
@@ -52,6 +71,7 @@ export function StudyResultRow({ row, current, selected, stale, onApply, onPrevi
         {row.error ? '—' : money.format(row.costUsd)}
       </span>
       <span className="text-right text-[12px] text-white/50 tabular">{row.error ? '—' : weight(row.massG)}</span>
+      {selected && row.visibility && <StudyVisibilityDetails result={row.visibility} names={names} />}
       {!current && (
         <RowActions fill="#2a2a2a" className="inset-y-0 right-0 pr-1 rounded-r-lg">
           <Button

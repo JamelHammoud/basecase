@@ -96,10 +96,20 @@ describe('Case slots', () => {
   });
 
   it('offers Hand Off to a Spot only when a second arm is open', () => {
-    expect(goalsFor(builder('arm-6dof')).map((g) => g.kind)).toEqual(['touch', 'pick']);
-    expect(goalsFor(builder('arm-6dof', 'rover-diff')).map((g) => g.kind)).toEqual(['touch', 'pick']);
-    expect(goalsFor(builder('arm-6dof', 'arm-3dof')).map((g) => g.kind)).toEqual(['touch', 'pick']);
-    expect(goalsFor(builder('arm-6dof', 'arm-6dof')).map((g) => g.kind)).toEqual(['touch', 'pick', 'handoff']);
+    const household = ['cupboard', 'door', 'lever', 'knob', 'button', 'bin', 'gate', 'chest'];
+    const single = ['touch', 'pick', 'lid', 'drawer', ...household];
+
+    expect(goalsFor(builder('arm-6dof')).map((g) => g.kind)).toEqual(single);
+    expect(goalsFor(builder('arm-6dof', 'rover-diff')).map((g) => g.kind)).toEqual(single);
+    expect(goalsFor(builder('arm-6dof', 'arm-3dof')).map((g) => g.kind)).toEqual(single);
+    expect(goalsFor(builder('arm-6dof', 'arm-6dof')).map((g) => g.kind)).toEqual([
+      'touch',
+      'pick',
+      'handoff',
+      'lid',
+      'drawer',
+      ...household,
+    ]);
   });
 });
 

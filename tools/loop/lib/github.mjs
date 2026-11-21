@@ -1,4 +1,5 @@
 import { stepLabels } from './stepLinks.mjs';
+import { acceptTask } from './capabilities.mjs';
 import { cached } from './cache.mjs';
 import { failureDigest, jobsOf, withTimeouts } from './failedLog.mjs';
 import { LOOP_MARK, withMark } from './mark.mjs';
@@ -277,6 +278,8 @@ const openIssueSummaries = () =>
 export const findOpenIssue = ({ title, similarAmong }) => openMatch(title, openIssueSummaries(), similarAmong);
 
 export const createIssue = ({ title, body, labels, similarAmong }) => {
+  if (labels.includes('loop:next') && !acceptTask({ title, body })) return null;
+
   if (findOpenIssue({ title, similarAmong })) return null;
 
   return ghCreating(

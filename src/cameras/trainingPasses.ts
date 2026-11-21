@@ -77,6 +77,7 @@ function labelMaterial(id: number, origin: THREE.Vector3, original: THREE.Materi
 }
 
 interface LabelPass {
+  isolate?: string;
   shot: LensShot;
   items: Posed[];
   width: number;
@@ -85,12 +86,16 @@ interface LabelPass {
 
 type LabelMaterial = (id: number, original: THREE.Material) => THREE.ShaderMaterial;
 
-function overrideLabels(scene: THREE.Scene, materialFor: LabelMaterial, ids: Map<string, number>) {
+function overrideLabels(scene: THREE.Scene, materialFor: LabelMaterial, ids: Map<string, number>, isolate?: string) {
   const restores: Array<() => void> = [];
 
   scene.traverse((child) => {
     if (child instanceof THREE.Mesh) {
       const material = child.material;
+      const visible = child.visible;
+
+      child.visible = visible && (!isolate || child.userData.partId === isolate);
+
       const id = ids.get(String(child.userData.partId)) ?? 0;
 
       child.material = Array.isArray(material)
@@ -98,6 +103,7 @@ function overrideLabels(scene: THREE.Scene, materialFor: LabelMaterial, ids: Map
         : materialFor(id, material);
       restores.push(() => {
         child.material = material;
+        child.visible = visible;
       });
 
       return;
@@ -147,7 +153,7 @@ export class TrainingPasses {
     const background = scene.background;
     const gl = renderer.getContext();
     const dithering = gl.isEnabled(gl.DITHER);
-    const restore = overrideLabels(scene, (id, original) => this.material(id, original), ids);
+    const restore = overrideLabels(scene, (id, original) => this.material(id, original), ids, job.isolate);
     const pixels = new Uint8Array(width * height * 4);
     const distances = new Uint8Array(pixels.length);
 

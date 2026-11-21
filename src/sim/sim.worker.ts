@@ -15,7 +15,14 @@ import { SimEngine, type Controller } from './engine';
 import type { FaultKind } from './faults';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
-import { commandTimeline, runFor, type RunRequest, type RunResult } from './simRun';
+import {
+  commandTimeline,
+  runFor,
+  stepScriptedCase,
+  type ScriptTimeline,
+  type RunRequest,
+  type RunResult,
+} from './simRun';
 import { LiveRoutine, type LiveRoutineInput, type LiveUpdate } from '../routines/routineLive';
 import { LiveCase, type LiveCaseInput } from '../cases/liveCase';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
@@ -100,7 +107,7 @@ let liveCase: LiveCase | null = null;
 let watching: LiveWatch | null = null;
 let driveController: Controller = { kind: 'hold' };
 let cameraPort: MessagePort | null = null;
-let script: { start: number; commands: ReturnType<typeof commandTimeline> } | null = null;
+let script: ScriptTimeline | null = null;
 let scanShown = -1;
 const poseGate = new PoseGate();
 const livePhysics = new LivePhysics();
@@ -169,10 +176,10 @@ function loop() {
 
   const t0 = performance.now();
 
-  if (script) script.commands.advance(engine.data.time - script.start);
+  if (script && !liveCase) script.commands.advance(engine.data.time - script.start);
 
   if (live) advanceRoutine(live, wall * speed);
-  else if (liveCase) liveCase.advance(wall * speed);
+  else if (liveCase) stepScriptedCase(engine, liveCase, script, wall * speed);
   else if (watching) watching.advance(wall * speed);
   else engine.step(wall * speed);
 

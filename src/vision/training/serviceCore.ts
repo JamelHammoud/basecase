@@ -1,3 +1,4 @@
+import { canonicalRequirements } from './requirements';
 import type { Dataset } from '../../datasets/datasetFile';
 import { VISION_MODEL_BYTES } from '../manifest';
 import { defaultTrainingMetric } from './metrics';
@@ -15,12 +16,17 @@ function taskFor(
   kind: TrainingKind,
   options: TrainingOptions,
 ): TrainingTask {
-  return {
+  const task: TrainingTask = {
     kind,
     classes: prepared.classes,
     metric: defaultTrainingMetric(kind),
     limits: options.limits ?? { maxInferenceMs: 100, maxModelBytes: VISION_MODEL_BYTES },
     ...(kind === 'keypoints' ? { keypointTolerance: 0.05 } : {}),
+  };
+
+  return {
+    ...task,
+    ...(options.requirements?.length ? { requirements: canonicalRequirements(options.requirements, task) } : {}),
   };
 }
 
@@ -53,6 +59,8 @@ export async function executeVisionTraining(
   options: TrainingOptions,
   ports: TrainingServicePorts,
 ): Promise<TrainingRun> {
+  options = { ...options, ...(options.requirements ? { requirements: structuredClone(options.requirements) } : {}) };
+
   trainingStopped(options.signal);
   options.onProgress?.('Preparing images');
 
@@ -65,7 +73,7 @@ export async function executeVisionTraining(
 
   trainingStopped(options.signal);
 
-  const artifacts = await ports.train(prepared, task, options);
+  const artifacts = await ports.train(prepared, structuredClone(task), options);
 
   trainingStopped(options.signal);
   checkedParity(artifacts.parity);

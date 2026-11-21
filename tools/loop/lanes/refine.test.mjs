@@ -1,13 +1,24 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 
-process.env.BASECASE_LOOP_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'refine-lane-'));
+const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'refine-lane-'));
+
+vi.stubEnv('BASECASE_LOOP_DIR', directory);
+vi.mock('../lib/quota.mjs', () => ({
+  quotaSnapshot: () => ({ at: Date.now(), windows: [{ minutes: 10080, used: 0, reset: Date.now() + 600_000 }] }),
+}));
 
 const { refineIdeas } = await import('../lib/refines.mjs');
 const { default: refine, promptFor } = await import('./refine.mjs');
 const { stepAreas } = await import('../lib/stepAreas.mjs');
+const { recordSession } = await import('../lib/sessionJournal.mjs');
+
+afterAll(() => {
+  fs.rmSync(directory, { recursive: true, force: true });
+  vi.unstubAllEnvs();
+});
 
 const marks = stepAreas({
   number: 251,
@@ -68,8 +79,27 @@ describe('the refine prompt', () => {
 });
 
 describe('the refine guard', () => {
+  it('holds standalone work before creating its worktree when the journal has no budget', () => {
+    const { deps, log, calls } = world();
+    const openBranch = vi.fn(deps.openBranch);
+
+    refine({ log }, { ...deps, openBranch });
+
+    expect(openBranch).not.toHaveBeenCalled();
+    expect(calls.prompts).toHaveLength(0);
+    expect(calls.log).toEqual(['waiting: standalone refinement reached its 24-hour work budget']);
+  });
+
   it("holds a change confined to one waiting step's files and names the step", () => {
     const { deps, log, calls } = world();
+
+    for (let count = 0; count < 9; count++)
+      recordSession({
+        lane: 'build',
+        provider: 'codex',
+        startedAt: Date.now(),
+        usage: { input_tokens: 99, output_tokens: 1 },
+      });
 
     refine({ log }, deps);
 

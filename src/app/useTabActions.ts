@@ -1,8 +1,10 @@
+import { branchScene } from './sceneBranches';
+import { closedSeed, retireTabs } from './tabRetirement';
+import { errorMessage } from '../utils/errorMessage';
 import { useState } from 'react';
-import type { WorkspaceHandle, WorkspaceSeed } from '../SceneWorkspace';
+import type { WorkspaceSeed } from '../SceneWorkspace';
 import type { SavedSceneSummary } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
-import { newSceneId } from '../utils/sceneIds';
 import { sceneStore } from '../utils/sceneStore';
 import { loadSceneSeed } from './sceneSeeds';
 import {
@@ -14,55 +16,40 @@ import {
   newTabId,
   nextActiveAfterClose,
   omitKeys,
-  sceneCopyName,
   type ClosedTab,
-  type Metas,
   type TabEntry,
 } from './tabModel';
 import type { TabsCore } from './useTabs';
 
-interface RetireInput {
-  closing: TabEntry[];
-  list: TabEntry[];
-  metas: Metas;
-  handles: Map<string, WorkspaceHandle>;
-  discard: boolean;
-}
+async function duplicateSceneTab(core: TabsCore, id: string) {
+  const { latestRef, handles, snapshotOf, openTab } = core;
+  const tab = latestRef.current.tabs.find((t) => t.id === id);
+  const snap = tab && snapshotOf(tab);
 
-function retireTabs({ closing, list, metas, handles, discard }: RetireInput) {
-  const remember: ClosedTab[] = [];
-  let stoppedAgent = false;
+  if (!snap) return;
 
-  for (const tab of closing) {
-    const handle = handles.get(tab.id);
-    const meta = metas[tab.id];
+  const branched = await handles.current.get(id)?.branch?.();
 
-    if (meta?.busy) {
-      stoppedAgent = true;
-      handle?.stopAgent();
-    }
+  if (branched) {
+    openTab(branched);
 
-    handle?.persistChat();
-
-    if (discard) handle?.discard();
-    else void handle?.flush();
-
-    const seed = handle ? handle.snapshot() : tab.seed;
-
-    if (seed && !meta?.pristine && !discard) remember.push({ seed, index: list.indexOf(tab) });
-
-    platformBridge.closeAcpWorkspace(tab.id);
+    return;
   }
 
-  return { remember, stoppedAgent };
+  const { tabs, metas } = latestRef.current;
+  const names = [...Object.values(metas).map((meta) => meta.name), ...sceneStore.get().map((entry) => entry.name)];
+  const seed = await branchScene(snap, names);
+
+  openTab(seed, tabs.findIndex((tab) => tab.id === id) + 1);
 }
 
 export function useTabActions(core: TabsCore) {
   'use memo';
 
   const { latestRef, handles, setTabs, setActiveId, setMetas, setThumbs, setClosed } = core;
-  const { selectTab, openTab, toastInFront, snapshotOf } = core;
+  const { selectTab, openTab, toastInFront } = core;
   const [renamingTab, setRenamingTab] = useState<string | null>(null);
+  const reportError = (error: unknown) => toastInFront(errorMessage(error), { tone: 'error' });
 
   const openSeed = (seed: WorkspaceSeed) => {
     const { tabs, metas, activeId } = latestRef.current;
@@ -93,15 +80,23 @@ export function useTabActions(core: TabsCore) {
       return;
     }
 
-    void loadSceneSeed(summary.id).then((seed) => {
-      if (seed) openSeed(seed);
-      else toastInFront(`Couldn’t open ${summary.name}`, { tone: 'error' });
-    });
+    const closed = latestRef.current.closed.findLast((tab) => tab.seed.sceneId === summary.id);
+
+    void Promise.resolve(closed?.ready)
+      .then(() => loadSceneSeed(summary.id))
+      .then((seed) => {
+        if (seed) openSeed(seed);
+        else toastInFront(`Couldn’t open ${summary.name}`, { tone: 'error' });
+      })
+      .catch(reportError);
   };
 
-  const undoClose = (remember: ClosedTab[], replacement: TabEntry | null) => {
+  const undoClose = async (remember: ClosedTab[], replacement: TabEntry | null) => {
     setClosed((prev) => prev.filter((c) => !remember.includes(c)));
-    remember.forEach((c) => openTab(c.seed, c.index));
+
+    const seeds = await Promise.all(remember.map(closedSeed));
+
+    remember.forEach((c, index) => openTab(seeds[index], c.index));
 
     if (!replacement || !latestRef.current.metas[replacement.id]?.pristine) return;
 
@@ -116,7 +111,14 @@ export function useTabActions(core: TabsCore) {
 
     if (closing.length === 0) return;
 
-    const { remember, stoppedAgent } = retireTabs({ closing, list, metas, handles: handles.current, discard });
+    const { remember, stoppedAgent } = retireTabs({
+      closing,
+      list,
+      metas,
+      handles: handles.current,
+      discard,
+      onError: reportError,
+    });
     const kept = list.filter((t) => !ids.includes(t.id));
     const replacement = kept.length === 0 ? { id: newTabId(), seed: blankSeed(metas, ids) } : null;
     const remaining = replacement ? [replacement] : kept;
@@ -130,38 +132,21 @@ export function useTabActions(core: TabsCore) {
 
     setClosed((prev) => [...prev, ...remember].slice(-CLOSED_LIMIT));
 
-    const action = { label: 'Undo', onClick: () => undoClose(remember, replacement) };
+    const action = { label: 'Undo', onClick: () => void undoClose(remember, replacement).catch(reportError) };
 
     window.setTimeout(() => toastInFront(closedMessage(remember, stoppedAgent), { tone: 'neutral', action }), 0);
   };
 
   const closeTab = (id: string) => closeTabs([id]);
 
-  const reopenTab = () => {
+  const reopenTab = async () => {
     const { closed } = latestRef.current;
     const last = closed[closed.length - 1];
 
     if (!last) return;
 
     setClosed((prev) => prev.slice(0, -1));
-    openTab(last.seed, last.index);
-  };
-
-  const duplicateTab = (id: string) => {
-    const tab = latestRef.current.tabs.find((t) => t.id === id);
-    const snap = tab && snapshotOf(tab);
-
-    if (!snap) return;
-
-    const { tabs, metas } = latestRef.current;
-    const at = tabs.findIndex((t) => t.id === id) + 1;
-    const sceneName = sceneCopyName(
-      snap.sceneName,
-      metas,
-      sceneStore.get().map((s) => s.name),
-    );
-
-    openTab({ ...snap, sceneId: newSceneId(), sceneName, chat: undefined, unsaved: true }, at);
+    openTab(await closedSeed(last), last.index);
   };
 
   const cycleTab = (step: number) => {
@@ -196,11 +181,15 @@ export function useTabActions(core: TabsCore) {
   };
 
   return {
+    showHistory: (id: string) => {
+      selectTab(id);
+      handles.current.get(id)?.showHistory?.();
+    },
     openScene,
     closeTabs,
     closeTab,
-    reopenTab,
-    duplicateTab,
+    reopenTab: () => void reopenTab().catch(reportError),
+    duplicateTab: (id: string) => void duplicateSceneTab(core, id).catch(reportError),
     cycleTab,
     reorderTab,
     renameTab,

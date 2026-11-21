@@ -78,7 +78,7 @@ export function recoverStepPulls(index, { steps, commentsOf, pullOf, slug }) {
 const PULL_QUERY = `query($owner: String!, $name: String!, $endCursor: String) {
   repository(owner: $owner, name: $name) {
     pullRequests(first: 100, after: $endCursor) {
-      nodes { number state headRefName body labels(first: 100) { nodes { name } } }
+      nodes { number state headRefName body mergedAt closedAt createdAt title labels(first: 100) { nodes { name } } }
       pageInfo { hasNextPage endCursor }
     }
   }
@@ -106,8 +106,14 @@ function load() {
   );
 }
 
-export function stepPullIndex({ fresh = false } = {}) {
+export function pullHistory({ fresh = false } = {}) {
   const pulls = cached('all-step-pulls', { ttlMs: 60_000, refresh: fresh }, () => load() ?? null);
 
-  return Array.isArray(pulls) ? indexByStep(pulls) : null;
+  return Array.isArray(pulls) ? pulls : null;
+}
+
+export function stepPullIndex(options) {
+  const pulls = pullHistory(options);
+
+  return pulls ? indexByStep(pulls) : null;
 }

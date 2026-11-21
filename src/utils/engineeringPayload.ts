@@ -35,10 +35,28 @@ function chainTo(rig: Rig, tip: RobotJoint): RobotJoint[] {
   for (let id: string | null | undefined = tip.id; id; id = rig.parentOf.get(id)) {
     const joint = rig.byId.get(id);
 
-    if (joint && isMovable(joint)) chain.unshift(joint);
+    if (joint && isMovable(joint)) chain.push(joint);
   }
 
-  return chain;
+  return chain.reverse();
+}
+
+function centerNear(corners: V3[], far: V3, radius: number): V3 {
+  let x = 0;
+  let y = 0;
+  let z = 0;
+  let count = 0;
+
+  for (const point of corners) {
+    if (length(sub(point, far)) <= radius) {
+      x += point[0];
+      y += point[1];
+      z += point[2];
+      count++;
+    }
+  }
+
+  return [x / count, y / count, z / count];
 }
 
 function handPoint(ctx: CheckContext, tip: RobotJoint): V3 | null {
@@ -52,12 +70,13 @@ function handPoint(ctx: CheckContext, tip: RobotJoint): V3 | null {
 
   const from = (p: V3) => length(sub(p, tip.origin));
   const far = corners.reduce((best, p) => (from(p) > from(best) ? p : best));
-  const near = corners.filter((p) => length(sub(p, far)) <= from(far) * 0.5);
 
-  return [0, 1, 2].map((k) => near.reduce((s, p) => s + p[k], 0) / near.length) as V3;
+  return centerNear(corners, far, from(far) * 0.5);
 }
 
 function linksOf(ctx: CheckContext, chain: RobotJoint[], volts?: number): ArmModel['links'] | null {
+  if (chain.some((j) => j.actuation === 'passive')) return null;
+
   const carried = chain.map((j) => downstreamOf(j, ctx.joints));
   const stalls = chain.map((j) => jointRating(ctx, j, volts)?.stallNm ?? j.effortNm);
 

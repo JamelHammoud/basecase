@@ -1,3 +1,4 @@
+import { horizontalDeg } from '../cameras/lens';
 import { COMPONENT_BY_ID, componentVariant } from '../data/components';
 import { validateStudyKnobs } from './knobs';
 import type { StudyKnob, StudySelection } from './types';
@@ -102,11 +103,25 @@ export function studyLabel(knobs: StudyKnob[], selection: StudySelection): strin
         battery_offset: 'Battery position',
         foot: 'Feet',
         dimension: 'Dimension',
+        camera_pose: 'Camera pose',
+        camera_lens: 'Camera lens',
       };
       const label = knob.label ?? names[knob.kind];
 
       if (knob.kind === 'servo' || knob.kind === 'battery')
         return `${label} ${studyCatalogLabel(knob.values[selection[i]])}`;
+
+      if (knob.kind === 'camera_pose') {
+        const pose = knob.values[selection[i]];
+
+        return `${label} ${pose.position.join(' ')} mm / ${pose.rotation.join(' ')}°`;
+      }
+
+      if (knob.kind === 'camera_lens') {
+        const lens = knob.values[selection[i]];
+
+        return `${label} ${lens.model} ${horizontalDeg(lens)}°`;
+      }
 
       if (knob.kind === 'voltage') return `${label} ${String(value)} V`;
 

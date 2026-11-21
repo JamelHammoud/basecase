@@ -10,14 +10,21 @@ export interface SceneShapes {
 
 const round = (v: number) => Math.round(v * 1e4) / 1e4;
 
-function geometryId(g: THREE.BufferGeometry) {
+function geometryId(g: THREE.BufferGeometry, ids: Map<THREE.BufferGeometry, string>) {
+  const cached = ids.get(g);
+
+  if (cached !== undefined) return cached;
+
   const attr = g.attributes.position;
   const version = attr instanceof THREE.InterleavedBufferAttribute ? attr.data.version : attr.version;
+  const id = `${g.uuid}@${version}`;
 
-  return `${g.uuid}@${version}`;
+  ids.set(g, id);
+
+  return id;
 }
 
-function meshesOf(object: THREE.Object3D, frameInverse: THREE.Matrix4) {
+function meshesOf(object: THREE.Object3D, frameInverse: THREE.Matrix4, transform: THREE.Matrix4) {
   const meshes: Array<{ geometry: THREE.BufferGeometry; matrix: number[] }> = [];
 
   object.traverse((o) => {
@@ -27,7 +34,7 @@ function meshesOf(object: THREE.Object3D, frameInverse: THREE.Matrix4) {
 
     meshes.push({
       geometry: mesh.geometry,
-      matrix: frameInverse.clone().multiply(mesh.matrixWorld).toArray().map(round),
+      matrix: transform.multiplyMatrices(frameInverse, mesh.matrixWorld).elements.map(round),
     });
   });
 
@@ -38,16 +45,18 @@ export function snapshotShapes(objects: Array<{ id: string; object: THREE.Object
   const instances: Instance[] = [];
   const shapes = new Map<string, ShapeSpec>();
   const geometries = new Map<string, THREE.BufferGeometry>();
+  const geometryIds = new Map<THREE.BufferGeometry, string>();
+  const transform = new THREE.Matrix4();
 
   for (const { id, object } of objects) {
     object.updateWorldMatrix(true, true);
 
     const frame = rigidFrame(object).matrix;
-    const meshes = meshesOf(object, frame.clone().invert());
+    const meshes = meshesOf(object, frame.clone().invert(), transform);
 
     if (!meshes.length) continue;
 
-    const ids = meshes.map((m) => geometryId(m.geometry));
+    const ids = meshes.map((m) => geometryId(m.geometry, geometryIds));
     const key = meshes.map((m, i) => `${ids[i]}:${m.matrix.join(',')}`).join(';');
 
     meshes.forEach((m, i) => geometries.set(ids[i], m.geometry));

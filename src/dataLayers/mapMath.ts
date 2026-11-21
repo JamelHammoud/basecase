@@ -7,7 +7,7 @@ export interface Eigen3 {
 
 const SWEEPS = 24;
 
-function rotateJacobi(a: number[][], v: number[][], [p, q]: [number, number]) {
+function rotateJacobi(a: number[][], v: number[][], p: number, q: number) {
   if (Math.abs(a[p][q]) < 1e-18) return;
 
   const theta = (a[q][q] - a[p][p]) / (2 * a[p][q]);
@@ -55,9 +55,9 @@ export function symmetricEigen(m: ArrayLike<number>): Eigen3 {
   for (let sweep = 0; sweep < SWEEPS; sweep++) {
     if (Math.abs(a[0][1]) + Math.abs(a[0][2]) + Math.abs(a[1][2]) < 1e-15) break;
 
-    rotateJacobi(a, v, [0, 1]);
-    rotateJacobi(a, v, [0, 2]);
-    rotateJacobi(a, v, [1, 2]);
+    rotateJacobi(a, v, 0, 1);
+    rotateJacobi(a, v, 0, 2);
+    rotateJacobi(a, v, 1, 2);
   }
 
   const order = [0, 1, 2].sort((i, j) => a[i][i] - a[j][j]);

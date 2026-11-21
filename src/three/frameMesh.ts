@@ -77,9 +77,7 @@ export function extrusionProfile(e: Extrusion): THREE.Shape {
   const shape = new THREE.Shape(points.map(([x, y]) => new THREE.Vector2(x, y)));
   const [w, d] = e.size;
   const hole = (x: number, y: number, dia: number) => {
-    const p = holePath(dia / 2, 24);
-
-    shape.holes.push(new THREE.Path(p.getPoints().map((v) => new THREE.Vector2(v.x + x, v.y + y))));
+    shape.holes.push(holePath(dia / 2, 24, 0, [x, y]));
   };
 
   for (const b of e.bores) hole(b.at[0] - w / 2, b.at[1] - d / 2, b.diameter);

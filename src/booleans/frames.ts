@@ -24,8 +24,9 @@ const sameFrame = (frame: BooleanFrame, part: ScenePart) =>
   sameVec(sizeOf(frame.dimensions), sizeOf(part.dimensions));
 
 interface Delta {
-  from: { position: THREE.Vector3; rotation: THREE.Quaternion };
+  from: { position: THREE.Vector3; inverse: THREE.Quaternion };
   to: { position: THREE.Vector3; rotation: THREE.Quaternion };
+  rotation: THREE.Quaternion;
   scale: THREE.Vector3;
   scaled: boolean;
 }
@@ -34,10 +35,13 @@ function deltaOf(frame: BooleanFrame, part: ScenePart): Delta {
   const before = sizeOf(frame.dimensions);
   const after = sizeOf(part.dimensions);
   const scale = new THREE.Vector3(...before.map((b, i) => (b > 1e-6 ? after[i] / b : 1)));
+  const inverse = quaternionOf(frame.rotation).invert();
+  const rotation = quaternionOf(part.rotation);
 
   return {
-    from: { position: new THREE.Vector3(...frame.position), rotation: quaternionOf(frame.rotation) },
-    to: { position: new THREE.Vector3(...part.position), rotation: quaternionOf(part.rotation) },
+    from: { position: new THREE.Vector3(...frame.position), inverse },
+    to: { position: new THREE.Vector3(...part.position), rotation },
+    rotation: rotation.clone().multiply(inverse),
     scale,
     scaled: !sameVec(scale.toArray(), [1, 1, 1]),
   };
@@ -58,12 +62,14 @@ function scaledDimensions(operand: ScenePart, local: THREE.Quaternion, scale: TH
 }
 
 function moveOperand(operand: ScenePart, delta: Delta): ScenePart {
-  const inverse = delta.from.rotation.clone().invert();
+  const inverse = delta.from.inverse;
   const local = new THREE.Vector3(...operand.position).sub(delta.from.position).applyQuaternion(inverse);
   const position = local.multiply(delta.scale).applyQuaternion(delta.to.rotation).add(delta.to.position);
   const own = quaternionOf(operand.rotation);
-  const rotation = delta.to.rotation.clone().multiply(inverse).multiply(own);
-  const dimensions = delta.scaled ? scaledDimensions(operand, inverse.multiply(own), delta.scale) : operand.dimensions;
+  const rotation = delta.rotation.clone().multiply(own);
+  const dimensions = delta.scaled
+    ? scaledDimensions(operand, own.premultiply(inverse), delta.scale)
+    : operand.dimensions;
 
   return { ...operand, position: position.toArray().map(round) as Vec3, rotation: degrees(rotation), dimensions };
 }

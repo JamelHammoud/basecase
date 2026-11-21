@@ -67,6 +67,40 @@ describe('photo masks', () => {
     expect(checkMask(leaked).refused).toMatch(/covers 85% of the photo/);
   });
 
+  it.each([
+    { pixels: 0, reads: 0, reason: 'too small' },
+    { pixels: 3, reads: 0, reason: 'too small' },
+    { pixels: 4, reads: 80, reason: undefined },
+    { pixels: 240, reads: 80, reason: 'touches' },
+    { pixels: 241, reads: 0, reason: 'covers' },
+    { pixels: 400, reads: 0, reason: 'covers' },
+  ])('checks border contact only after the area passes for $pixels pixels', ({ pixels, reads, reason }) => {
+    const source = new Uint8Array(400).fill(1, 0, pixels);
+    let borderReads = 0;
+    const data = new Proxy(source, {
+      get(target, key) {
+        if (typeof key === 'string' && /^\d+$/.test(key)) borderReads++;
+
+        if (key === Symbol.iterator) return target[Symbol.iterator].bind(target);
+
+        return Reflect.get(target, key, target);
+      },
+    });
+    const result = checkMask({ data, width: 20, height: 20 });
+
+    expect(result.share).toBe(pixels / 400);
+    expect(borderReads).toBe(reads);
+    expect(source).toEqual(new Uint8Array(400).fill(1, 0, pixels));
+
+    if (reason) {
+      expect(result.refused).toContain(reason);
+
+      return;
+    }
+
+    expect(result).toEqual({ share: 0.01, cut: 'top' });
+  });
+
   it('notices a subject cut off by the frame', () => {
     const cropped = draw(200, 240, rect(60, 100, 140, 239));
 

@@ -1,6 +1,6 @@
 # Case comparison under Linux load
 
-This records the earlier simulation walkthrough’s fixture investigation. [#1086](https://github.com/JamelHammoud/basecase/issues/1086) replaces its repeated simulation with deterministic worker replies while retaining the command-to-results browser path. These measurements apply to the earlier test. Current comparison coverage is listed in [Running and testing](../guide/running-and-testing.md).
+This records the earlier simulation walkthrough’s fixture investigation. [#1086](https://github.com/JamelHammoud/basecase/issues/1086) replaces its repeated simulation with deterministic worker replies while retaining the command-to-results browser path. These measurements apply to the earlier test. Current comparison coverage is listed in [Cases](../guide/cases.md#testing-coverage).
 
 ## Scope
 
@@ -75,3 +75,7 @@ Passed 10 of 10 runs.
 Median comparison time: 14,667 ms. Total process time: 373,105 ms.
 
 All ten replacement runs log Rover at 20 of 20 and Weak rover at 0 of 20. The three baseline runs with count logging show the same values. Every run retains the original format, marker, name and browser-error assertions. The Linux-only quarantine entry for #996 is removed.
+
+## Case comparison
+
+The simulation walkthrough was replaced after taking 33 s in run 43715791435 (#1086). The measurements above retain its earlier fixture investigation.

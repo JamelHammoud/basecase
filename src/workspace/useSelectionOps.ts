@@ -1,3 +1,4 @@
+import { copiedSketchSupports } from '../utils/sketch/supportCopies';
 import { evaluateBoolean } from '../booleans/evaluate';
 import { booleanHash } from '../booleans/hash';
 import { booleanPart, findPartDeep, freshOperandIds, withResult } from '../booleans/parts';
@@ -34,7 +35,7 @@ export function duplicateParts(parts: ScenePart[], scene: ScenePart[]): ScenePar
   const partNames = scene.map((p) => p.name);
   const partName = (p: ScenePart) => (parts.length === 1 ? copyName(p.name, partNames) : p.name);
 
-  return parts.map((p) => ({
+  const copies = parts.map((p) => ({
     ...freshOperandIds(p, () => newId()),
     id: newId(),
     name: partName(p),
@@ -42,6 +43,8 @@ export function duplicateParts(parts: ScenePart[], scene: ScenePart[]): ScenePar
     position: [p.position[0] + DUPLICATE_STEP, p.position[1], p.position[2] + DUPLICATE_STEP] as Vec3,
     mates: undefined,
   }));
+
+  return copiedSketchSupports(parts, copies);
 }
 
 export function clearanceCutouts(sources: ScenePart[]): ScenePart[] {

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { remappedTendon } from '../joints/tendonReferences';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { buildRig, partMatrix, type V3 } from '../utils/kinematics';
 import type { EndEffector, RobotFacts } from './robotFit';
@@ -7,6 +8,7 @@ import type { RobotSlot } from './schema';
 import { plural } from '../../electron/plural.mjs';
 
 export interface SlotRobot {
+  selfContact?: import('../sim/selfContact').SelfContactSettings;
   parts: ScenePart[];
   joints: RobotJoint[];
 }
@@ -70,6 +72,7 @@ function placedJoint(j: RobotJoint, place: Placement): RobotJoint {
     ...(j.parentJoint ? { parentJoint: place.id(j.parentJoint) } : {}),
     ...(j.actuators ? { actuators: j.actuators.map(place.id) } : {}),
     ...(j.loop ? { loop: { ...j.loop, driver: place.id(j.loop.driver) } } : {}),
+    ...remappedTendon(j.tendon, place.id),
     ...(j.frame
       ? { frame: { part: place.id(j.frame.part), origin: place.at(j.frame.origin), axis: place.turn(j.frame.axis) } }
       : {}),
@@ -78,6 +81,16 @@ function placedJoint(j: RobotJoint, place: Placement): RobotJoint {
 
 export function placedRobot(robot: SlotRobot, place: Placement): SlotRobot {
   return {
+    ...(robot.selfContact
+      ? {
+          selfContact: Object.fromEntries(
+            Object.entries(robot.selfContact).map(([key, setting]) => [
+              place.id(key),
+              { ...setting, exclusions: setting.exclusions?.map(([a, b]) => [place.id(a), place.id(b)]) },
+            ]),
+          ),
+        }
+      : {}),
     parts: robot.parts.map((p) => placedPart(p, place)),
     joints: robot.joints.map((j) => placedJoint(j, place)),
   };

@@ -74,6 +74,19 @@ export function robotPackageFiles(job: RobotPackageJob): Record<string, Uint8Arr
     'joint_map.json': jsonBytes(map),
     ...policyFiles(job.policies, model),
   };
+  const transmissions = model.joints
+    .filter((joint) => joint.tendon)
+    .map((joint) => ({ motor: joint.id, tendon: joint.tendon }));
+
+  if (transmissions.length)
+    files['transmissions.json'] = jsonBytes({
+      format: 'basecase-ideal-tendons',
+      version: 1,
+      unsupported: ['urdf', 'runtime'],
+      coordinates: model.joints.map(({ id, name, actuator }) => ({ id, name, actuator })),
+      transmissions,
+    });
+
   const ros = rosPackageFiles({ name, robot, fixedFrame: root, files: Object.keys(files) });
 
   return { ...files, ...Object.fromEntries(Object.entries(ros).map(([path, body]) => [path, text.encode(body)])) };

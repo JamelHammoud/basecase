@@ -38,8 +38,10 @@ Publish recorded tries or labeled images to a Hugging Face dataset repo, with Le
 ![The Accounts pane with a token saved](/help/publish-a-dataset-to-hugging-face/accounts.png)
 
 4. In **Library** ▸ **Datasets**, click the dataset to publish.
-5. Click **Publish to Hugging Face**.
+5. In the dataset’s upper pane, click **Publish to Hugging Face**.
 6. When the toast says "Published to" followed by the dataset's name, click **Open** to see the dataset on the Hub.
+
+In an image dataset, scroll within the upper pane if training controls or results put the publishing button out of view.
 
 To make a dataset first, follow [Make a dataset from tries](/help/make-a-dataset-from-tries) or [Import an image dataset](/help/import-an-image-dataset).
 
@@ -55,11 +57,13 @@ Datasets with tries also get a `v2.1` tag holding a LeRobot v2.1 copy that inclu
 
 Image datasets put COCO files in `coco/` and YOLO files in `yolo/` on the main branch. Their dataset card links both formats and carries the `basecase-image-dataset` tag. A dataset with both tries and images includes both image folders alongside its LeRobot files. See [Make training images](/help/make-training-images).
 
+Canonical image packages preserve supplied condition definitions and membership. See [Compare vision models by condition](/help/compare-vision-conditions).
+
 ## Publishing again
 
 If you publish the same dataset again, Basecase updates the folders included in the export. Tries rewrite `data/`, `videos/` and `meta/`, while images rewrite `coco/` and `yolo/` and the image dataset's `README.md` card. Folders outside that export stay as they are.
 
-The working dataset leaves out real-robot tries, failed tries, tries with quality flags and tries on another robot model. The toast shows how many samples were left out. A saved version uses its original samples, robot and scene.
+The working dataset leaves out real-robot tries, failed tries, tries with quality flags and tries on another robot model. Topic-only recordings are also left out because they have no robot joint recording. The toast shows how many samples were left out. A saved version uses its original samples, robot and scene.
 
 Each publish tags its commit with the dataset's version, such as `dataset-v2`. Publishing freezes the selected frames, labels, recording and image content, exclusions and split assignments. Editing an instruction or segment boundary creates a new version on the next publish. Publishing unchanged samples keeps the same version.
 
@@ -71,6 +75,6 @@ To download an earlier published version, use its tag: `hf download <account>/to
 
 Your token stays in the app's main process, sealed on disk, and Basecase never passes it to the page you work in. That page only learns whether you're signed in and what your account name is.
 
-Publishing a ready skill uses the same token. See [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face).
+Publishing a ready skill uses the same token. Installing public skills needs no token, including in the web studio. See [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face).
 
 When you're signed in, Basecase also sends the token when it downloads a dataset or a skill, so you can import your own private datasets. To import one, see [Import robot data as tries](/help/import-robot-data-as-tries).

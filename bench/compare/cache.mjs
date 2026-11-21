@@ -93,13 +93,14 @@ const canonical = (id) =>
 
 const reusable = (e) => e.grade === 'pass' || e.grade === 'fail' || e.grade === 'unavailable';
 
-export function cachedRuns(entries, { harness, effort, served }) {
+export function cachedRuns(entries, { harness, effort, served, provider = 'claude' }) {
   const byTask = new Map();
 
   if (!harness || !served) return byTask;
 
   const matches = entries
     .filter((e) => e.kind === 'micro' && e.harness === harness && (e.effort ?? null) === (effort ?? null))
+    .filter((e) => (e.provider ?? 'claude') === provider)
     .filter((e) => canonical(e.servedBy) === canonical(served) && reusable(e))
     .sort((a, b) => a.at.localeCompare(b.at));
 
@@ -113,10 +114,14 @@ export function runFromCache(entry, label) {
     task: entry.task,
     seed: entry.seed,
     status: entry.grade,
+    checks: entry.checks,
+    effort: entry.effort,
     costUsd: entry.costUsd,
     seconds: entry.seconds,
     tokens: entry.tokens,
+    toolCalls: entry.toolCalls,
     servedBy: entry.servedBy,
+    provider: entry.provider ?? 'claude',
     model: label,
     cached: entry.run,
   };

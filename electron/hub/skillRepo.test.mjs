@@ -110,7 +110,10 @@ describe('downloading a skill', () => {
     expect(got.repo).toBe('tester/quad-stand');
     expect(Object.keys(got.files)).toEqual([...SKILL_DOWNLOADS]);
     expect(JSON.parse(got.files['policy.json'])).toEqual(policy);
-    expect(resolves.map((r) => r.path)).toEqual(SKILL_DOWNLOADS.map((p) => `/tester/quad-stand/resolve/main/${p}`));
+    expect(got.revision).toMatch(/^[a-f0-9]{40}$/);
+    expect(resolves.map((r) => r.path)).toEqual(
+      SKILL_DOWNLOADS.map((p) => `/tester/quad-stand/resolve/${got.revision}/${p}`),
+    );
     expect(resolves.every((r) => r.auth === undefined)).toBe(true);
   });
 
@@ -157,11 +160,13 @@ describe('downloading a skill', () => {
     await new Promise((resolve) => other.listen(0, '127.0.0.1', resolve));
     hub = { url: `http://127.0.0.1:${other.address().port}`, close: async () => {} };
 
-    await expect(account({ outbound }).skillFiles({ owner: 'tester', repo: 'quad-stand' })).rejects.toThrow(
-      'Hugging Face sent an address that isn’t https.',
-    );
+    const revision = 'a'.repeat(40);
+
+    await expect(
+      account({ outbound }).skillFiles({ owner: 'tester', repo: 'quad-stand', rev: revision }),
+    ).rejects.toThrow('Hugging Face sent an address that isn’t https.');
     expect(outbound).toHaveBeenCalledTimes(1);
-    expect(outbound.mock.calls[0][0]).toBe('https://cdn.example.com/tester/quad-stand/resolve/main/skill.json');
+    expect(outbound.mock.calls[0][0]).toBe(`https://cdn.example.com/tester/quad-stand/resolve/${revision}/skill.json`);
     expect(JSON.stringify(outbound.mock.calls)).not.toContain('Bearer');
   });
 });

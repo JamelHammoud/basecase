@@ -1,6 +1,8 @@
 import type { FrozenImageSample } from '../../datasets/snapshotImages';
 import type { FrameSet, ImageClass } from '../frameSet';
 import type { VisionResult } from '../types';
+import type { TrainingRequirement, RequirementOutcome } from './requirementTypes';
+import type { PredictionEvidence } from './evidenceTypes';
 
 export type TrainingKind = 'detect' | 'segment' | 'keypoints' | 'classify';
 export type TrainingMetric = 'box-map' | 'mask-map' | 'keypoint-pck' | 'accuracy';
@@ -16,6 +18,7 @@ export interface TrainingTask {
   classes: ImageClass[];
   metric: TrainingMetric;
   limits: TrainingLimits;
+  requirements?: TrainingRequirement[];
   keypointTolerance?: number;
 }
 
@@ -56,6 +59,8 @@ export interface TrainingEvaluation {
   snapshot: FrozenImageSample[];
   realTest: FrozenImageSample[];
   testHash: string;
+  evidence?: PredictionEvidence;
+  requirementEvidenceFailure?: 'resources';
   metrics: {
     primary: number | null;
     perClass: ClassEvaluation[];
@@ -64,7 +69,14 @@ export interface TrainingEvaluation {
 }
 
 export type TrainingRetentionReason =
-  'improved' | 'no-real-test' | 'no-incumbent' | 'different-test' | 'different-task' | 'limits' | 'no-improvement';
+  | 'improved'
+  | 'no-real-test'
+  | 'no-incumbent'
+  | 'different-test'
+  | 'different-task'
+  | 'limits'
+  | 'no-improvement'
+  | 'requirements';
 
 export interface TrainingComparisonAttempt {
   id: string;
@@ -76,6 +88,7 @@ export interface TrainingComparisonAttempt {
   candidateScore: number | null;
   incumbentScore: number | null;
   previousAttempts: number;
+  requirements?: RequirementOutcome[];
   status: 'retained' | 'checkpoint';
   reason: TrainingRetentionReason;
 }

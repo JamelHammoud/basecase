@@ -24,6 +24,8 @@ covers:
   - src/workspace/buildCommands.tsx
   - src/components/build/BuyRow.tsx
   - src/components/build/buyLine.ts
+  - src/utils/bomCategories.ts
+  - src/utils/bomFormat.ts
   - src/components/build/AddSupplyMenu.tsx
   - src/components/build/QtyEditor.tsx
   - src/components/PartDetails.tsx
@@ -46,21 +48,25 @@ From the bill of materials, you can fill an Amazon cart, open listings in other 
 
 You can also press [[⌘K]] and choose **Buy All**.
 
-Basecase leaves any parts you [already own](/help/count-the-parts-you-already-own) out of the cart. Pack counts come from the price you checked, so six servos sold in pairs go in as 3, and 13 screws sold by the hundred go in as 1. If a line has no saved pack size, it goes in by the piece.
+Basecase leaves any parts you [already own](/help/count-the-parts-you-already-own) out of the cart. Completing a [named build](/help/resume-a-robot-build) leaves those on-hand counts unchanged. Pack counts come from the price you checked, so six servos sold in pairs go in as 3, and 13 screws sold by the hundred go in as 1. If a line has no saved pack size, it goes in by the piece.
 
 Other stores don't take a shared cart, so you open their listings one at a time. To buy a line with no store link, hover over it and click the link at its right end to search Amazon.
 
-Exports save to your downloads as `<scene>-bom.csv` or `<scene>-bom.md`. You can order from either file in any store.
+Exports save to your downloads as `<scene>-bom.csv` or `<scene>-bom.md`. For exact supplier numbers, remaining quantities and DigiKey column mapping, see [Export remaining purchases](/help/export-remaining-purchases).
 
 Some lines are added for you. If your design has a battery, you get a switch, fuse, wire and charger. Filament is counted in grams from the printed parts, so it isn't in the **+** menu. If you choose **Made by a Service**, **Printed parts** takes its place, and Basecase doesn't order them.
 
-Cables come from the wiring, one for each hop of each servo bus, starting at the adapter. Once routes are measured, Basecase chooses the shortest compatible stock cable that covers the route through joint motion, including slack. Waveshare 5264 cables come in 300 mm and 900 mm lengths. DYNAMIXEL X servos use the 180 mm **ROBOTIS Robot Cable-X3P**.
+A [board placement](/help/fit-an-electronics-board) adds its required connectors to the list. Existing regulators and their included headers are counted once. For files to send to a board maker, see [Export board fabrication files](/help/export-board-fabrication-files).
+
+Cables come from the wiring, one for each hop of each servo bus, starting at the adapter. With **Automatic** selected, Basecase chooses the shortest compatible stock cable that covers the route through joint motion, including slack. [Route a robot cable](/help/route-a-robot-cable) shows how to choose different stock. Waveshare 5264 cables come in 300 mm and 900 mm lengths. DYNAMIXEL X servos use the 180 mm **ROBOTIS Robot Cable-X3P**.
 
 Each product and length has its own line, price and on-hand count. Extra cables you add count toward the required quantity only on the same product's line. The remaining pieces round up to whole packs. A route without a suitable known length stays blocked in **Cable reach**, even if a cable appears in the list. [Servo bus or Cable reach is red](/help/troubleshoot-servo-bus) explains unresolved routes.
 
 Power connections use the same routing check. Without a selected compatible cable, the list keeps a pigtail for each battery plug and barrel jack on the power path, such as the XT60 on a LiPo.
 
 To find links for one part, select it and look in the **Product** section of the Inspector. It has **Buy on Amazon** or **Find on Amazon**, **Datasheet** and **Product Page**.
+
+Compare dated quotes and export a selected purchasing plan with [Compare supplier offers](/help/compare-supplier-offers).
 
 **Note:** Basecase never places an order or reads store pages. You buy everything in the store yourself.
 

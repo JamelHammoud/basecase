@@ -22,8 +22,9 @@ it('refuses missing models before snapshotting and measures again after their ge
   const snapshot = vi.fn((run: () => unknown) => run());
   const complete = vi.fn();
   let currentParts = scene.parts;
+  let sourceParts: typeof scene.parts | undefined;
   const ctx = {
-    props: () => ({ parts: currentParts }),
+    props: () => ({ parts: currentParts, sourceParts }),
     layer: { withRest: snapshot },
     stage: { partsRoot: new Group() },
     applyPose: vi.fn(),
@@ -68,4 +69,14 @@ it('refuses missing models before snapshotting and measures again after their ge
   await expect(pending).rejects.toThrow('Open the scene to measure cable routes.');
   expect(snapshot).not.toHaveBeenCalled();
   expect(complete).not.toHaveBeenCalled();
+
+  sourceParts = scene.parts;
+  currentParts = [...scene.parts.map((part) => ({ ...part })), { ...adapter, id: 'derived-board-header' }];
+
+  expect((await measure()).buses[0].nets[0].route?.status).toBe('pass');
+
+  const derivedPending = measure();
+
+  sourceParts = [adapter, { ...servo, position: [170, 0, 0] }];
+  await expect(derivedPending).rejects.toThrow('Open the scene to measure cable routes.');
 });

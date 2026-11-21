@@ -21,7 +21,7 @@ export const sceneCases = (scene: SharedScene): Case[] => (scene.project?.cases 
 export async function sceneRobot(scene: SharedScene, meshes: MeshFiles): Promise<CaseRobot> {
   const loaded = await headlessParts(scene.parts, scene.project?.joints ?? [], meshes);
 
-  return { id: scene.name, parts: scene.parts, ...loaded };
+  return { id: scene.name, parts: scene.parts, ...loaded, selfContact: scene.project?.selfContact };
 }
 
 function failedLabel(result: CaseResult): string | null {

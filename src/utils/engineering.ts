@@ -1,3 +1,4 @@
+import { actuationProblem } from '../joints/actuation';
 import type { RobotJoint } from '../types/robotics';
 import { weightRow } from './engineeringWeight';
 import { isLegJoint, robotBodies, type RobotBody } from './engineeringBody';
@@ -58,6 +59,10 @@ export const ENGINEERING_CHECKS = [
 ];
 
 function jointPartsRows(ctx: CheckContext): CheckRow[] {
+  const contradictions = ctx.joints.map(actuationProblem).filter((problem) => problem !== null);
+
+  if (contradictions.length) return [{ check: 'Joint parts', status: 'fail', detail: contradictions.join(', ') }];
+
   const unknownIds = ctx.joints.flatMap((j: RobotJoint) =>
     [...j.parent, ...j.child, ...(j.actuators ?? [])].filter((id) => !ctx.byPart.has(id)),
   );
@@ -123,7 +128,9 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
   };
   const floating = bodies.filter((b) => hasNoFeet(ctx, b));
   const env = { volts: servoSupplyVolts(ctx), crouch: crouchModel(ctx) };
-  const loads = ctx.joints.filter((j) => j.type === 'revolute').map((j) => jointLoad(ctx, j, env));
+  const loads = ctx.joints
+    .filter((j) => j.type === 'revolute' && j.actuation !== 'passive')
+    .map((j) => jointLoad(ctx, j, env));
   const wiring = input.wiring ?? wiringNetlist({ parts, project });
   const stability = stabilityOf(ctx);
   const rows: CheckRow[] = [

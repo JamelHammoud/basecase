@@ -12,12 +12,23 @@ function reshape(values: number[], like: unknown[]): unknown[] {
   return fill(like);
 }
 
+function aggregateBound(stats: Record<string, unknown[]>[], key: 'min' | 'max', width: number): number[] {
+  const select = key === 'min' ? Math.min : Math.max;
+  const bound = Array<number>(width).fill(key === 'min' ? Infinity : -Infinity);
+
+  for (const stat of stats) {
+    const values = flat(stat[key]);
+
+    for (let col = 0; col < width; col++) bound[col] = select(bound[col], values[col]);
+  }
+
+  return bound;
+}
+
 function aggregateFeature(stats: Record<string, unknown[]>[]): Record<string, unknown[]> {
   const like = stats[0];
   const means = stats.map((s) => flat(s.mean));
   const stds = stats.map((s) => flat(s.std));
-  const mins = stats.map((s) => flat(s.min));
-  const maxes = stats.map((s) => flat(s.max));
   const counts = stats.map((s) => flat(s.count)[0]);
   const total = counts.reduce((n, c) => n + c, 0);
   const columns = means[0].map((_, col) => col);
@@ -27,14 +38,8 @@ function aggregateFeature(stats: Record<string, unknown[]>[]): Record<string, un
   );
 
   return {
-    min: reshape(
-      columns.map((col) => Math.min(...mins.map((m) => m[col]))),
-      like.min,
-    ),
-    max: reshape(
-      columns.map((col) => Math.max(...maxes.map((m) => m[col]))),
-      like.max,
-    ),
+    min: reshape(aggregateBound(stats, 'min', columns.length), like.min),
+    max: reshape(aggregateBound(stats, 'max', columns.length), like.max),
     mean: reshape(mean, like.mean),
     std: reshape(std, like.std),
     count: [total],

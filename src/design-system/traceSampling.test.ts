@@ -102,4 +102,29 @@ describe('trace sampling', () => {
     expect(path(before.subarray(1, 102))).toBe(first);
     expect(storage).toEqual(edited);
   });
+
+  it('reads each reduced sample once, including missing values and tied extrema', () => {
+    const source = Array.from({ length: 6001 }, (_, i) => {
+      if (i % 13 === 0) return Number.NaN;
+
+      if (i % 17 === 0) return Infinity;
+
+      return Math.round(Math.sin(i) * 8);
+    });
+    const reads = new Uint32Array(source.length);
+    const values = { length: source.length };
+
+    for (let i = 0; i < source.length; i++) {
+      Object.defineProperty(values, i, {
+        get() {
+          reads[i]++;
+
+          return source[i];
+        },
+      });
+    }
+
+    expect(path(values as ArrayLike<number>)).toBe(referencePath(source, BOX));
+    expect(reads).toEqual(new Uint32Array(source.length).fill(1));
+  });
 });

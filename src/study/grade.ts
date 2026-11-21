@@ -18,7 +18,7 @@ import { printReportOf } from '../three/analysis/shapeReports';
 import type { SweepSpec } from '../three/analysis/sweep';
 import type { CheckRow } from '../utils/engineeringTypes';
 import { strengthOf } from '../three/analysis/strengthPart';
-import { buildBom, isPrinted } from '../utils/bom';
+import { boughtKey, buildBom, describeKey, isPrinted } from '../utils/bom';
 import { designedFits } from '../utils/designedFits';
 import { runEngineering } from '../utils/engineering';
 import { SERVO_TOUCH_MM, servoTouchPairs } from '../utils/engineeringHeat';
@@ -72,6 +72,12 @@ function studyChecks(readiness: Readiness): CheckRow[] {
       items,
     };
   });
+}
+
+function missingPurchase(part: StudyScene['parts'][number]) {
+  const key = boughtKey(part);
+
+  return (part.kind === 'mesh' && !key) || (!!key && !describeKey(key));
 }
 
 function gradeWithCache(scene: StudyScene, options: StudyGradeOptions, cache: StudyGradeCache): StudyRow {
@@ -139,7 +145,16 @@ function gradeWithCache(scene: StudyScene, options: StudyGradeOptions, cache: St
   ];
   const readiness = readinessOf(findings, { parts: scene.parts, fingerprint: '', rows: report.rows });
   const row = gradeStudyReport({ ...scene, measures }, options, report);
-  const checks = studyChecks(readiness);
+  const unknownCost = bom.totals.unpriced + bom.madeElsewhere.length + bom.unmeasured.length + bom.standIns.length;
+  const missingMeshPrice = parts.some(missingPurchase);
+  const checks = studyChecks(readiness).map((check) =>
+    options.completeBudget &&
+    (unknownCost > 0 || missingMeshPrice) &&
+    check.check === 'Budget' &&
+    check.status !== 'fail'
+      ? { ...check, status: 'not run' as const, detail: 'Budget needs a price for every part.' }
+      : check,
+  );
 
   if (geometry.timedOut)
     checks.push({ check: 'Checks', status: 'fail', detail: 'The assembly checks reached their time limit.', ids: [] });

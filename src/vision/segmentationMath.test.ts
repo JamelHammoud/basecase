@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { decodeMask } from './imageMasks';
-import { segmentationPoints, segmentationMask, segmentationBank, segmentationSequence } from './segmentationMath';
+import {
+  segmentationPoints,
+  segmentationMask,
+  segmentationBank,
+  segmentationSequence,
+  segmentationPointers,
+} from './segmentationMath';
 
 const memory = (index: number) => ({
   index,
@@ -81,4 +87,47 @@ describe('SAM 2 video memory', () => {
     expect(bank.memory[4096 * 64]).toBe(0);
     expect(bank.memory.at(-1)).toBe(20);
   });
+});
+
+it.each([0, 1, 5, 6, 7, 14, 15, 16, 20])('preserves every memory slot with %i recent frames', (count) => {
+  const initial = memory(0);
+  const recent = Array.from({ length: count }, (_, index) => memory(index + 1));
+  const saved = [...recent];
+  const temporal = Array.from({ length: 7 }, (_, row) => Array.from({ length: 64 }, (_, column) => row * 100 + column));
+  const pointerPosition = Float32Array.from({ length: 1024 }, (_, index) => index / 8);
+  const bank = segmentationBank({ initial, recent, frame: count + 1, temporal, pointerPosition });
+  const expectedMemory = new Float32Array(bank.memory.length);
+  const expectedPosition = new Float32Array(bank.position.length);
+  const spatial = recent.slice(-6);
+  const latest = spatial.at(-1) ?? initial;
+  const entries = [initial, ...Array.from({ length: 6 }, (_, index) => spatial[index] ?? latest)];
+  const pointers = [initial, ...recent.slice(-15).reverse()];
+  const padded = Array.from({ length: 16 }, (_, index) => pointers[Math.min(index, pointers.length - 1)]);
+
+  entries.forEach((entry, slot) => {
+    const offset = slot * 4096 * 64;
+    const row = slot === 0 ? 6 : Math.min(5, count - entry.index);
+
+    expectedMemory.set(entry.tokens, offset);
+
+    for (let i = 0; i < entry.position.length; i++)
+      expectedPosition[offset + i] = entry.position[i] + temporal[row][i % 64];
+  });
+  padded.forEach((entry, slot) => {
+    const offset = 7 * 4096 * 64 + slot * 256;
+
+    expectedMemory.set(entry.pointer, offset);
+
+    for (let i = 0; i < 256; i++) expectedPosition[offset + i] = pointerPosition[slot * 64 + (i % 64)];
+  });
+
+  expect(Buffer.from(bank.memory.buffer).equals(Buffer.from(expectedMemory.buffer))).toBe(true);
+  expect(Buffer.from(bank.position.buffer).equals(Buffer.from(expectedPosition.buffer))).toBe(true);
+
+  const actualPointers = segmentationPointers(initial, recent);
+
+  for (let i = 0; i < padded.length; i++) expect(actualPointers[i]).toBe(padded[i]);
+
+  expect(recent).toEqual(saved);
+  expect(segmentationPointers(initial, recent)).not.toBe(actualPointers);
 });

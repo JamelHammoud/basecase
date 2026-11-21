@@ -1,5 +1,5 @@
 import { Box3, Vector3 } from 'three';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { collisionPairs, type SkipPair } from './collisionPairs';
 
 interface Boxed {
@@ -42,7 +42,7 @@ const box = (id: string, min: number[], max: number[]): Boxed => ({
   box: new Box3(new Vector3().fromArray(min), new Vector3().fromArray(max)),
 });
 
-const idsOf = (pairs: Array<[Boxed, Boxed]>) => pairs.map(([a, b]) => [a.id, b.id]);
+const idsOf = (pairs: Iterable<[Boxed, Boxed]>) => Array.from(pairs, ([a, b]) => [a.id, b.id]);
 
 function subsets(ids: string[]): string[][] {
   return Array.from({ length: 1 << ids.length }, (_, mask) => ids.filter((_, i) => mask & (1 << i)));
@@ -107,11 +107,67 @@ describe('collision pair planning', () => {
         return Reflect.get(target, key, receiver);
       },
     });
-    const pairs = collisionPairs(scene, { focus: ['0'], straddle: ['0'] });
+    const pairs = [...collisionPairs(scene, { focus: ['0'], straddle: ['0'] })];
 
     expect(reads).toBe(count);
     expect(sceneReads).toBeLessThanOrEqual(count * 4);
     expect(pairs).toHaveLength(count - 1);
     expect(idsOf(pairs)).toEqual(Array.from({ length: count - 1 }, (_, i) => ['0', String(i + 1)]));
   });
+});
+
+it.each([300, 600])('reuses one padded box across %i parts without changing sources or pairs', (count) => {
+  const solids = Array.from({ length: count }, (_, i) => box(String(i), [i, 0, 0], [i + 1, 1, 1]));
+  const before = solids.map((part) => part.box.clone());
+  const expected = idsOf(originalPairs(solids, {}));
+  const clone = vi.spyOn(Box3.prototype, 'clone');
+  const expand = vi.spyOn(Box3.prototype, 'expandByScalar');
+
+  try {
+    expect(idsOf(collisionPairs(solids, {}))).toEqual(expected);
+    expect(clone).not.toHaveBeenCalled();
+    expect(expand).toHaveBeenCalledTimes(count - 1);
+    expect(new Set(expand.mock.contexts).size).toBe(1);
+    expect(solids.map((part) => part.box)).toEqual(before);
+  } finally {
+    clone.mockRestore();
+    expand.mockRestore();
+  }
+});
+
+it('keeps padded bounds independent across nested queries and later geometry edits', () => {
+  const solids = [box('a', [0, 0, 0], [1, 1, 1]), box('b', [1.1, 0, 0], [2, 1, 1])];
+  const distant = [box('x', [100, 0, 0], [101, 1, 1]), box('y', [101.1, 0, 0], [102, 1, 1])];
+  const skip = () => {
+    expect(idsOf(collisionPairs(distant, {}))).toEqual([['x', 'y']]);
+
+    return false;
+  };
+
+  expect(idsOf(collisionPairs(solids, {}, skip))).toEqual([['a', 'b']]);
+  solids[1].box.translate(new Vector3(1, 0, 0));
+  expect([...collisionPairs(solids, {}, skip)]).toEqual([]);
+});
+
+it.each([300, 600])('streams dense %i-part pairs without preparing the unconsumed suffix', (count) => {
+  const solids = Array.from({ length: count }, (_, i) => box(String(i), [0, 0, 0], [1, 1, 1]));
+  let visited = 0;
+  const pairs = collisionPairs(solids, {}, () => {
+    visited++;
+
+    return false;
+  });
+
+  expect(visited).toBe(0);
+  expect(pairs.next().value).toEqual([solids[0], solids[1]]);
+  expect(visited).toBe(1);
+  expect(pairs.next().value).toEqual([solids[0], solids[2]]);
+  expect(visited).toBe(2);
+
+  let consumed = 2;
+
+  while (!pairs.next().done) consumed++;
+
+  expect(consumed).toBe((count * (count - 1)) / 2);
+  expect(visited).toBe(consumed);
 });

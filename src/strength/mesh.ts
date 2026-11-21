@@ -109,9 +109,12 @@ export function components(grid: VoxelGrid): Int32Array {
 
 export const cellCenter = (grid: VoxelGrid, c: number): V3 => {
   const [nx, ny] = grid.n;
-  const ijk = [c % nx, Math.floor(c / nx) % ny, Math.floor(c / (nx * ny))];
 
-  return [0, 1, 2].map((k) => grid.origin[k] + (ijk[k] + 0.5) * grid.h[k]) as V3;
+  return [
+    grid.origin[0] + ((c % nx) + 0.5) * grid.h[0],
+    grid.origin[1] + ((Math.floor(c / nx) % ny) + 0.5) * grid.h[1],
+    grid.origin[2] + (Math.floor(c / (nx * ny)) + 0.5) * grid.h[2],
+  ];
 };
 
 export { cellIndex };

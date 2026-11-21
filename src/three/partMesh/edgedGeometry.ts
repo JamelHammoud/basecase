@@ -2,12 +2,17 @@ import * as THREE from 'three';
 import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { PartEdges } from '../../types/robotics';
 import type { Outline } from '../../utils/partEdges';
-import { contourAt, cornerDirs, edgeLayers, insetCorner, outlineCorners, type Vec2 } from './edgedProfile';
+import { cornerDirs, edgeLayers, insetCorner, outlineCorners, type Corner, type Vec2 } from './edgedProfile';
 
 type V3 = [number, number, number];
 
 const CREASE = THREE.MathUtils.degToRad(25);
 const LATHE_SEGMENTS = 48;
+const LATHE_DIRECTIONS = Array.from({ length: LATHE_SEGMENTS + 1 }, (_, i): Vec2 => {
+  const theta = (i / LATHE_SEGMENTS) * Math.PI * 2;
+
+  return [Math.sin(theta), Math.cos(theta)];
+});
 const DEFORM_LAYERS = 16;
 const MIN_AREA = 1e-9;
 const CACHE_SIZE = 64;
@@ -24,9 +29,12 @@ class Triangles {
     const vx = c[0] - a[0];
     const vy = c[1] - a[1];
     const vz = c[2] - a[2];
-    const area = Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx);
+    const nx = uy * vz - uz * vy;
+    const ny = uz * vx - ux * vz;
+    const nz = ux * vy - uy * vx;
+    const largest = Math.max(Math.abs(nx), Math.abs(ny), Math.abs(nz));
 
-    if (area > MIN_AREA) this.values.push(...a, ...b, ...c);
+    if (largest > MIN_AREA || Math.hypot(nx, ny, nz) > MIN_AREA) this.values.push(...a, ...b, ...c);
   }
 
   quad(a: V3, b: V3, c: V3, d: V3) {
@@ -35,21 +43,42 @@ class Triangles {
   }
 }
 
-function prismTriangles(outline: Outline, height: number, edges: PartEdges, middle: number): number[] {
-  const corners = outlineCorners(outline, edges);
-  const rings = edgeLayers(height, edges, middle).map(([y, reach]) =>
-    contourAt(corners, reach).map(([x, z]): V3 => [x, y, z]),
-  );
-  const out = new Triangles();
+function placePrismRing(ring: V3[], corners: Corner[], [y, reach]: Vec2) {
+  let i = 0;
 
-  for (let k = 0; k + 1 < rings.length; k++) {
-    const [low, high] = [rings[k], rings[k + 1]];
+  for (const { center, dirs } of corners) {
+    for (const dir of dirs) {
+      const vertex = ring[i++];
+
+      vertex[0] = center[0] + dir[0] * reach;
+      vertex[1] = y;
+      vertex[2] = center[1] + dir[1] * reach;
+    }
+  }
+}
+
+export function prismTriangles(outline: Outline, height: number, edges: PartEdges, middle: number): number[] {
+  const corners = outlineCorners(outline, edges);
+  const layers = edgeLayers(height, edges, middle);
+  const out = new Triangles();
+  let low = corners.flatMap(({ dirs }) => dirs.map((): V3 => [0, 0, 0]));
+  let high = low.map((): V3 => [0, 0, 0]);
+
+  placePrismRing(low, corners, layers[0]);
+
+  for (let k = 1; k < layers.length; k++) {
+    placePrismRing(high, corners, layers[k]);
 
     low.forEach((a, j) => {
       const next = (j + 1) % low.length;
 
       out.quad(a, low[next], high[next], high[j]);
     });
+
+    const previous = low;
+
+    low = high;
+    high = previous;
   }
 
   const cap = corners.map(({ center }) => center);
@@ -91,19 +120,34 @@ function densified(points: Vec2[], parts: number, closed: boolean): Vec2[] {
   });
 }
 
-function latheTriangles(profile: Vec2[], closed: boolean): number[] {
-  const out = new Triangles();
-  const at = ([u, y]: Vec2, i: number): V3 => {
-    const theta = (i / LATHE_SEGMENTS) * Math.PI * 2;
+function placeRing(ring: V3[], [u, y]: Vec2) {
+  for (let i = 0; i < ring.length; i++) {
+    ring[i][0] = u * LATHE_DIRECTIONS[i][0];
+    ring[i][1] = y;
+    ring[i][2] = u * LATHE_DIRECTIONS[i][1];
+  }
+}
 
-    return [u * Math.sin(theta), y, u * Math.cos(theta)];
-  };
+export function latheTriangles(profile: Vec2[], closed: boolean): number[] {
+  const out = new Triangles();
   const spans = closed ? profile.length : profile.length - 1;
 
-  for (let j = 0; j < spans; j++) {
-    const [p, q] = [profile[j], profile[(j + 1) % profile.length]];
+  if (spans <= 0) return out.values;
 
-    for (let i = 0; i < LATHE_SEGMENTS; i++) out.quad(at(p, i), at(p, i + 1), at(q, i + 1), at(q, i));
+  let low = LATHE_DIRECTIONS.map((): V3 => [0, 0, 0]);
+  let high = LATHE_DIRECTIONS.map((): V3 => [0, 0, 0]);
+
+  placeRing(low, profile[0]);
+
+  for (let j = 0; j < spans; j++) {
+    placeRing(high, profile[(j + 1) % profile.length]);
+
+    for (let i = 0; i < LATHE_SEGMENTS; i++) out.quad(low[i], low[i + 1], high[i + 1], high[i]);
+
+    const previous = low;
+
+    low = high;
+    high = previous;
   }
 
   return out.values;

@@ -18,7 +18,7 @@ function facePoints(pos: Float32Array, cellMm: number): number[] {
     b.fromArray(pos, t + 3);
     c.fromArray(pos, t + 6);
 
-    const longest = Math.max(a.distanceTo(b), b.distanceTo(c), c.distanceTo(a));
+    const longest = Math.sqrt(Math.max(a.distanceToSquared(b), b.distanceToSquared(c), c.distanceToSquared(a)));
     const n = Math.min(MAX_FACE_DIVISIONS, Math.ceil(longest / Math.max(cellMm, 1e-6)));
 
     for (let i = 1; n > 1 && i < n; i++) {

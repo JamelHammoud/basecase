@@ -34,7 +34,7 @@ You can step through a Case try one frame at a time. For each joint, you can see
    - The top plot shows the joint's position in blue over its target in gray.
    - The bottom plot shows its effort in N·m (or N for a sliding joint). The dashed line is the servo's limit.
 
-   Red lines mark where the Case's failure checks tripped. The timeline opens at the first one, with its failure name beside the playback controls. Above the joints, a lane splits the try into labeled segments such as reach and idle.
+   Red lines mark where the Case's failure checks tripped. When opened from **Results**, the timeline starts at the first one, with its failure name beside the playback controls. Above the joints, a lane splits the try into labeled segments such as reach and idle.
 4. Move the playhead with your keyboard. The robot on the canvas follows it.
    - To move one frame (1/50 s), press [[→]] or [[←]].
    - To move one second, hold [[⇧]] and press [[→]] or [[←]].
@@ -46,7 +46,9 @@ You can step through a Case try one frame at a time. For each joint, you can see
 ![The Touch the Dots console around the canvas, with the timeline under the arm at 2.4 s](/help/scrub-a-try-on-the-timeline/timeline.png)
 
 6. To loop part of the try, hold [[⇧]] and drag across a lane. To remove the loop, hold [[⇧]] and click a lane.
-7. To close the timeline, click **Done** or press [[Esc]]. You return to the Simulate tab.
+7. To close the timeline, click **Done** or press [[Esc]]. For a Case try opened from **Results**, you return to the **Simulate** tab.
+
+A [vision model comparison](/help/inspect-vision-comparisons) opens its source try at the evaluated image's recorded frame.
 
 When the timeline opens, Basecase recalculates effort from the recording, so its peaks match Peak torque in Results.
 
@@ -58,4 +60,4 @@ To split, merge, rename or tag segments, see [Label a try](/help/label-a-try).
 
 For more on the cards around the canvas, see [Play a try through its console](/help/play-a-try-through-its-console).
 
-You can't open a try that you recorded before you added or removed a joint. To open a try from another scene, use the Library. See [Open a try from any scene](/help/open-a-try-from-any-scene).
+Joint playback can't open a try recorded before you added or removed a joint. You can [Compare saved tries](/help/compare-saved-tries) without that match. To open a try from another scene, use the Library. See [Open a try from any scene](/help/open-a-try-from-any-scene).

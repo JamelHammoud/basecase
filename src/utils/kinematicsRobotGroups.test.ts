@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { buildRig } from './kinematicsRig';
 
@@ -27,6 +27,37 @@ const part = (id: string, group?: string): ScenePart => ({
   visible: true,
   locked: false,
   group: group === undefined ? undefined : { id: group, name: group },
+});
+
+describe('robot pivot summaries', () => {
+  it('preserves lexical keys and source-order pivot arithmetic across connected roots', () => {
+    const names = ['z', 'a', 'A', '10', '2', 'é', '😀', '\uE000', ''];
+    const values = [0, -0, 1e16, -1e16, 1, -3, Infinity, -Infinity, NaN];
+
+    for (let fixture = 0; fixture < 80; fixture++) {
+      const roots = Array.from({ length: 1 + (fixture % names.length) }, (_, i) =>
+        joint(`${names[(i + fixture) % names.length]}-${i}`, {
+          parent: ['base'],
+          origin: [values[(i + fixture) % values.length], i - fixture, (i % 3) / 10],
+        }),
+      );
+      const joints = roots.concat(joint('descendant', { parentJoint: roots[0].id, origin: [999, 999, 999] }));
+      const before = structuredClone(joints);
+      const rig = buildRig(joints, [part('base')]);
+      const expectedKey = roots.map((root) => root.id).sort()[0];
+      const expectedPivot = [0, 1, 2].map(
+        (axis) => roots.reduce((sum, root) => sum + root.origin[axis], 0) / roots.length,
+      );
+
+      expect(rig.robots).toHaveLength(1);
+      expect(rig.robots[0].key).toBe(expectedKey);
+      expect(rig.robots[0].pivot).toEqual(expectedPivot);
+      expect(rig.rootPivot).toEqual(expectedPivot);
+      expect([...rig.robotOf.values()].every((key) => key === expectedKey)).toBe(true);
+      expect(joints).toEqual(before);
+      expect(buildRig(joints, [part('base')])).toEqual(rig);
+    }
+  });
 });
 
 describe('ordered robot groups', () => {
@@ -129,5 +160,36 @@ describe('ordered robot groups', () => {
     }
 
     expect(buildReads).toBeLessThan(size * 20);
+  });
+
+  it.each([300, 600])('compresses shared-part component paths across %i root joints', (size) => {
+    const joints = Array.from({ length: size }, (_, i) =>
+      joint(`joint-${i}`, { parent: [`part-${i}`, `part-${i + 1}`], origin: [i, 0, 0] }),
+    );
+    const parts = Array.from({ length: size + 1 }, (_, i) => part(`part-${i}`));
+    const before = structuredClone({ joints, parts });
+    const spy = vi.spyOn(Map.prototype, 'get');
+    let rig: ReturnType<typeof buildRig>;
+    let reads: number;
+
+    try {
+      rig = buildRig(joints, parts);
+      reads = spy.mock.calls.length;
+    } finally {
+      spy.mockRestore();
+    }
+
+    expect(rig.robots).toEqual([
+      {
+        key: 'joint-0',
+        name: 'Robot',
+        joints: joints.map((j) => j.id),
+        parts: new Set(parts.map((p) => p.id)),
+        pivot: [(size - 1) / 2, 0, 0],
+      },
+    ]);
+    expect([...rig.robotOf.values()]).toEqual(new Array(size * 2 + 1).fill('joint-0'));
+    expect(reads).toBeLessThan(size * 65);
+    expect({ joints, parts }).toEqual(before);
   });
 });

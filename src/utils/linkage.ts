@@ -14,9 +14,10 @@ import {
   type Vec2,
 } from './linkageKinematics';
 import { seededRandom, type Random } from './seededRandom';
+import { planarDiameter } from './planarDiameter';
 
 export type { FourBar, GrashofClass, PlacedFourBar, Vec2 } from './linkageKinematics';
-export { couplerCurve, couplerPoint, fourBarPose, linkAngles, placed } from './linkageKinematics';
+export { couplerCurve, couplerPoint, fourBarPose, linkAngle, placed } from './linkageKinematics';
 
 export const MIN_PATH_POINTS = 5;
 export const MAX_PATH_POINTS = 12;
@@ -47,8 +48,20 @@ interface Frame {
   scale: number;
 }
 
+function meanPoint(points: Vec2[]): Vec2 {
+  let x = 0;
+  let y = 0;
+
+  for (const point of points) {
+    x += point[0];
+    y += point[1];
+  }
+
+  return [x / points.length, y / points.length];
+}
+
 function frameOf(points: Vec2[]): Frame {
-  const center: Vec2 = [0, 1].map((k) => points.reduce((s, p) => s + p[k], 0) / points.length) as Vec2;
+  const center = meanPoint(points);
   const scale = Math.max(...points.map((p) => Math.hypot(p[0] - center[0], p[1] - center[1])));
 
   return { center, scale: scale || 1 };
@@ -59,11 +72,12 @@ const between = (random: Random, lo: number, hi: number) => lo + (hi - lo) * ran
 function randomShape(random: Random): Omit<FitLinkage, 'origin' | 'angle' | 'thetas'> {
   for (;;) {
     const crank = between(random, 0.2, 1);
-    const [ground, coupler, rocker] = [0, 1, 2].map(() => crank * between(random, 1.3, 4.5));
-    const links = [ground, coupler, rocker];
-    const longest = Math.max(...links);
+    const ground = crank * between(random, 1.3, 4.5);
+    const coupler = crank * between(random, 1.3, 4.5);
+    const rocker = crank * between(random, 1.3, 4.5);
+    const longest = Math.max(ground, coupler, rocker);
 
-    if (crank + longest < links.reduce((s, v) => s + v, 0) - longest) {
+    if (crank + longest < ground + coupler + rocker - longest) {
       return {
         ground,
         crank,
@@ -84,15 +98,17 @@ function localPoints(shape: Omit<FitLinkage, 'origin' | 'angle'>): Vec2[] {
 }
 
 function similarity(from: Vec2[], to: Vec2[]) {
-  const mean = (ps: Vec2[]): Vec2 => [0, 1].map((k) => ps.reduce((s, p) => s + p[k], 0) / ps.length) as Vec2;
-  const [fc, tc] = [mean(from), mean(to)];
+  const fc = meanPoint(from);
+  const tc = meanPoint(to);
   let dot = 0;
   let cross = 0;
   let norm = 0;
 
   from.forEach((f, i) => {
-    const [ax, ay] = [f[0] - fc[0], f[1] - fc[1]];
-    const [bx, by] = [to[i][0] - tc[0], to[i][1] - tc[1]];
+    const ax = f[0] - fc[0];
+    const ay = f[1] - fc[1];
+    const bx = to[i][0] - tc[0];
+    const by = to[i][1] - tc[1];
 
     dot += ax * bx + ay * by;
     cross += ax * by - ay * bx;
@@ -101,7 +117,8 @@ function similarity(from: Vec2[], to: Vec2[]) {
 
   const angle = Math.atan2(cross, dot);
   const scale = Math.hypot(dot, cross) / (norm || 1);
-  const [cos, sin] = [Math.cos(angle) * scale, Math.sin(angle) * scale];
+  const cos = Math.cos(angle) * scale;
+  const sin = Math.sin(angle) * scale;
 
   return { angle, scale, origin: [tc[0] - (fc[0] * cos - fc[1] * sin), tc[1] - (fc[0] * sin + fc[1] * cos)] as Vec2 };
 }
@@ -148,12 +165,19 @@ function scored(l: PlacedFourBar & { thetas: number[] }, targets: Vec2[]): Linka
   const samples = Math.max(8, Math.ceil((Math.abs(to - from) / 360) * CURVE_SAMPLES));
   const distance = curveDistance(couplerCurve(l, from, to, samples));
   const sample = couplerSampler(l);
-  const errors = targets.map((t, i) => {
+  let maxErrorMm = -Infinity;
+  let squaredError = 0;
+
+  for (let i = 0; i < targets.length; i++) {
+    const t = targets[i];
     const at = sample(l.thetas[i]);
     const direct = at ? Math.hypot(at[0] - t[0], at[1] - t[1]) : Infinity;
+    const error = Math.min(direct, distance(t));
 
-    return Math.min(direct, distance(t));
-  });
+    maxErrorMm = Math.max(maxErrorMm, error);
+    squaredError += error * error;
+  }
+
   const linkage: PlacedFourBar = {
     origin: l.origin,
     angle: l.angle,
@@ -166,8 +190,8 @@ function scored(l: PlacedFourBar & { thetas: number[] }, targets: Vec2[]): Linka
 
   return {
     linkage,
-    maxErrorMm: Math.max(...errors),
-    rmsErrorMm: Math.sqrt(errors.reduce((s, e) => s + e * e, 0) / errors.length),
+    maxErrorMm,
+    rmsErrorMm: Math.sqrt(squaredError / targets.length),
     minTransmissionDeg: minTransmission(linkage),
     crank: [from, to],
     grashof: grashofClass(linkage),
@@ -199,9 +223,6 @@ function same(a: PlacedFourBar, b: PlacedFourBar, span: number): boolean {
     close(a.origin[1], b.origin[1])
   );
 }
-
-const pathSpan = (points: Vec2[]) =>
-  Math.max(...points.flatMap((a) => points.map((b) => Math.hypot(a[0] - b[0], a[1] - b[1]))));
 
 const CHECK_AT = 25;
 const WORST_SHARE = 100;
@@ -244,9 +265,17 @@ function reach(s: LinkageSolution, center: Vec2): number {
 const REACH_WEIGHT = 0.02;
 
 function follows(s: LinkageSolution, distance: (point: Vec2) => number): number {
-  const traced = couplerCurve(s.linkage, s.crank[0], s.crank[1], CURVE_SAMPLES / 8);
+  const sample = couplerSampler(s.linkage);
+  const samples = CURVE_SAMPLES / 8;
+  let worst = -Infinity;
 
-  return Math.max(...traced.map(distance));
+  for (let i = 0; i <= samples; i++) {
+    const point = sample(s.crank[0] + ((s.crank[1] - s.crank[0]) * i) / samples);
+
+    if (point) worst = Math.max(worst, distance(point));
+  }
+
+  return worst;
 }
 
 function ranking(points: Vec2[], center: Vec2) {
@@ -269,7 +298,7 @@ export function synthesizeFourBar(points: Vec2[]): LinkageSolution[] {
     (p[0] - frame.center[0]) / frame.scale,
     (p[1] - frame.center[1]) / frame.scale,
   ]);
-  const span = pathSpan(points);
+  const span = planarDiameter(points);
   const kept: LinkageSolution[] = [];
 
   for (const solution of fits(targets, frame)

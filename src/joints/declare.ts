@@ -1,6 +1,7 @@
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { anchorJoint } from '../utils/kinematics';
 import type { FoundAxis } from './axisFinder';
+import { actuationProblem } from './actuation';
 import { mergeJoints } from './merge';
 
 export type JointDraft = Omit<RobotJoint, 'frame'>;
@@ -13,10 +14,17 @@ interface Sides {
   id: string;
   parent: string[];
   child: string[];
+  actuation?: RobotJoint['actuation'];
+  damping?: number;
+  frictionloss?: number;
   actuators?: string[];
 }
 
 export function jointProblem(j: Sides, ids: Set<string>): string | null {
+  const problem = actuationProblem(j);
+
+  if (problem) return problem;
+
   const missing = [...j.parent, ...j.child, ...(j.actuators ?? [])].filter((id) => !ids.has(id));
 
   if (missing.length) return `${j.id}: no parts named ${missing.join(', ')}`;
@@ -26,7 +34,23 @@ export function jointProblem(j: Sides, ids: Set<string>): string | null {
   return both.length ? `${j.id}: ${both.join(', ')} can’t be on both sides` : null;
 }
 
-export const jointFrom = (draft: JointDraft, parts: ScenePart[]): RobotJoint => anchorJoint(draft, parts);
+export function jointFrom(draft: JointDraft, parts: ScenePart[]): RobotJoint {
+  const problem = jointProblem(draft, new Set(parts.map((p) => p.id)));
+
+  if (problem) throw new Error(problem);
+
+  return anchorJoint(draft, parts);
+}
+
+export function withActuation(
+  joints: RobotJoint[],
+  id: string,
+  actuation: NonNullable<RobotJoint['actuation']>,
+): RobotJoint[] {
+  return joints.map((j) =>
+    j.id === id ? { ...j, actuation, ...(actuation === 'passive' ? { actuators: undefined } : {}) } : j,
+  );
+}
 
 function withFirstRanges(known: ProjectSettings['firstRanges'], made: RobotJoint[]) {
   const out = { ...known };

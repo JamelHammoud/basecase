@@ -1,5 +1,7 @@
 # Motion picker command
 
+Current coverage: [Joints, poses and motion](../guide/joints-and-motion.md#testing-coverage). Shared harness contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
+
 ## Failure and correction
 
 [Issue #994](https://github.com/JamelHammoud/basecase/issues/994) tracks the file chooser timeout in [run 43687018679](https://github.com/JamelHammoud/basecase/actions/runs/43687018679). The Linux command test failed both attempts, while its three file-drop and scene-tab tests passed. The Windows job passed all four tests, including the picker test in 3,692 ms.

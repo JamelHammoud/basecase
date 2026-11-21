@@ -38,6 +38,8 @@ const scanned = (o: WorldObject) => o.behavior === 'static' && !!o.jitter;
 export function jitteredWorld(kase: Case, random: Random, { spots = false } = {}): Case {
   const fixed = kase.world.objects.filter((o) => o.behavior === 'static' && !o.jitter).map(footprint);
   const objects = kase.world.objects.map((o) => {
+    if (o.parent || o.joint) return o;
+
     if (scanned(o)) return jitteredFurniture(o, fixed, random);
 
     if (o.behavior === 'static' || (o.behavior === 'marker' && !spots)) return o;

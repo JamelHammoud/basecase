@@ -58,7 +58,10 @@ function surfaceSamples(solid: ShapeSolid): Float32Array {
     let u = random();
     let v = random();
 
-    if (u + v > 1) [u, v] = [1 - u, 1 - v];
+    if (u + v > 1) {
+      u = 1 - u;
+      v = 1 - v;
+    }
 
     for (let k = 0; k < 3; k++) {
       const o = p[t * 9 + k];
@@ -73,26 +76,27 @@ function surfaceSamples(solid: ShapeSolid): Float32Array {
 }
 
 function worldSamples(parts: VisibilityInput[]) {
-  const chunks = parts.map((part) => {
-    const local = surfaceSamples(part.solid);
-    const world = new Float32Array(local.length);
-    const v = new THREE.Vector3();
-
-    for (let i = 0; i < local.length; i += 3) v.fromArray(local, i).applyMatrix4(part.matrix).toArray(world, i);
-
-    return world;
-  });
-  const points = new Float32Array(chunks.reduce((n, c) => n + c.length, 0));
+  const samples = parts.map((part) => surfaceSamples(part.solid));
+  const points = new Float32Array(samples.reduce((n, local) => n + local.length, 0));
   const owner = new Int32Array(points.length / 3);
+  const v = new THREE.Vector3();
+  const box = new THREE.Box3();
   let offset = 0;
 
-  chunks.forEach((chunk, i) => {
-    points.set(chunk, offset);
-    owner.fill(i, offset / 3, (offset + chunk.length) / 3);
-    offset += chunk.length;
+  samples.forEach((local, partIndex) => {
+    const matrix = parts[partIndex].matrix;
+
+    for (let i = 0; i < local.length; i += 3) {
+      v.fromArray(local, i).applyMatrix4(matrix);
+      v.set(Math.fround(v.x), Math.fround(v.y), Math.fround(v.z)).toArray(points, offset + i);
+      box.expandByPoint(v);
+    }
+
+    owner.fill(partIndex, offset / 3, (offset + local.length) / 3);
+    offset += local.length;
   });
 
-  return { points, owner };
+  return { points, owner, box };
 }
 
 interface SplatWorkspace {
@@ -132,12 +136,12 @@ function splat(workspace: SplatWorkspace, [axis, sign]: [number, number], counts
 export function visibleShares(parts: VisibilityInput[]): Record<string, number> {
   if (!parts.length) return {};
 
-  const { points, owner } = worldSamples(parts);
+  const { points, owner, box } = worldSamples(parts);
   const counts = new Float64Array(parts.length);
   const workspace: SplatWorkspace = {
     points,
     owner,
-    box: new THREE.Box3().setFromArray(points),
+    box,
     depth: new Float64Array(GRID * GRID),
     winner: new Int32Array(GRID * GRID),
   };

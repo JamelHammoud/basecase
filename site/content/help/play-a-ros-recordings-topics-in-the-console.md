@@ -39,7 +39,7 @@ covers:
 
 You can open a ROS 1 bag or an MCAP file and read its logs, diagnostics, modes and sensor data on one timeline, next to your robot.
 
-1. Open the scene with the robot from the recording.
+1. For recordings with joint positions, open the scene with the recorded robot.
 2. Right-click an empty spot on the canvas, then choose **Import**.
 3. Pick the recording's `.mcap` or `.bag` file. To play several files on one timeline, select them all at once.
 4. Click **Library** in the view rail on the left, then click your robot under **Tries**.
@@ -77,7 +77,7 @@ Every field of every topic is also a signal. Its name is `topic.` followed by th
 - Custom topics open with a message tree, a scalar plot and a text field as states when those fields exist.
 - Large 64-bit integers stay exact in Message and States. Values outside JavaScript’s safe integer range leave gaps in numeric plots.
 - A recording can be up to 10 minutes long. Each file can be up to 512 MB.
-- The scene must have a robot in it, even if the recording has no joints.
-- Basecase keeps camera images, but the cards don't show them.
+- Recordings without joints open in source panels without a scene robot. These panels share the [Compare saved tries](/help/compare-saved-tries) controls.
+- Topic cards don't show embedded camera images. Source panels for topic-only recordings and comparison show supported recorded images.
 
 To import LeRobot datasets and ROS joints onto your robot, see [Import robot data as tries](/help/import-robot-data-as-tries).

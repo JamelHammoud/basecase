@@ -66,7 +66,7 @@ First, Basecase wiggles each joint whose zero and direction it has never found. 
 
 ![The Shoulder wiggling in Operate while Calibrate Servos watches it, with the measured robot drawn in blue](/help/calibrate-an-emulated-robot/wiggle.png)
 
-Next, all the joints move together through a slow bench sequence for about 18 seconds. Then Basecase fits each servo, one joint at a time.
+Next, all the powered joints move together through a slow bench sequence for about 18 seconds. Then Basecase fits each servo, one joint at a time.
 
 6. Read each joint's row under **Emulated servos**. The row shows the joint's name, bus ID, position and temperature. **Measured** beside the name means that unit's twin uses the fit. The version in use appears under the name, after any other verdict.
 
@@ -91,7 +91,7 @@ To see what an older version would do before you roll back, choose it in the sam
 
 **Calibrate Servos** is also in [[⌘K]]. It appears there only when the robot is in **Test** with the motors running, in the scene you connected the robot from.
 
-Once a scene has calibrations, Operate lists its joints and their verdicts before you connect.
+Once a scene has calibrations, Operate lists its powered joints and their verdicts before you connect.
 
 ## Verdicts
 
@@ -134,7 +134,7 @@ Basecase fits the first half of each recording, then checks the fit against the 
 
 In a run with three emulated STS3215 servos, all three read **Measured**. Each fit was 7 to 10% closer than the catalog model.
 
-If the robot leaves **Test** or faults during the run, Basecase records nothing. A message under the servo count tells you why.
+If the robot leaves **Test** or faults during the run, Basecase saves no calibration for that run. A message under the servo count tells you why. A fault also remains in the unit's [retained problems](/help/inspect-fleet-problems).
 
 Replays use the latest bench run, which Basecase keeps until it reloads. After a reload, the verdicts and versions stay, and the replays come back the next time you run **Calibrate Servos**.
 

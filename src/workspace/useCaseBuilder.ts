@@ -1,3 +1,4 @@
+import { prepareFixtureCase } from '../cases/fixtureCaptureClient';
 import { useState } from 'react';
 import { buildCase, builderRobot, goalsFor, type BuiltCase, type CaseSpec } from '../cases/caseBuilder';
 import type { ImportedCaseWorld } from '../cases/importedWorld';
@@ -6,10 +7,11 @@ import type { BuilderRobot } from '../cases/caseGoals';
 import type { Room } from '../cases/roomPlan';
 import type { Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
-import type { ScenePart } from '../types/robotics';
+import type { CustomModelDefinition, ScenePart } from '../types/robotics';
 import { buildRig, type Rig } from '../utils/kinematics';
 
 interface CaseBuilderOptions {
+  fixtures?: CustomModelDefinition[];
   rig: Rig;
   parts: ScenePart[];
   add: (kase: Case) => Case;
@@ -34,7 +36,7 @@ function importedByHash(hash: string): ImportedCaseWorld | undefined {
   return asset ? { hash, asset } : undefined;
 }
 
-export function useCaseBuilder({ rig, parts, add, partners }: CaseBuilderOptions) {
+export function useCaseBuilder({ rig, parts, add, partners, fixtures = [] }: CaseBuilderOptions) {
   const [open, setOpen] = useState(false);
   const [partner, setPartner] = useState<BuilderRobot | undefined>(undefined);
   const [dropped, setDropped] = useState<Dropped | null>(null);
@@ -54,8 +56,8 @@ export function useCaseBuilder({ rig, parts, add, partners }: CaseBuilderOptions
     return built.ok ? { ok: true, kase: add(built.kase) } : built;
   };
 
-  const create = (spec: CaseSpec): BuiltCase => {
-    const built = addSpec(spec);
+  const create = (spec: CaseSpec, prepared?: BuiltCase): BuiltCase => {
+    const built = prepared?.ok ? { ok: true as const, kase: add(prepared.kase) } : addSpec(spec);
 
     if (built.ok) setOpen(false);
 
@@ -75,12 +77,14 @@ export function useCaseBuilder({ rig, parts, add, partners }: CaseBuilderOptions
   };
 
   return {
+    fixtures: fixtures.filter((model) => model.caseFixture),
     open: open && goals.length > 0,
     robot,
     goals,
     room,
     imported,
     roomKey: dropped?.key ?? 0,
+    prepare: (spec: CaseSpec) => prepareFixtureCase(withWorld(spec), robot),
     preview: (spec: CaseSpec) => buildCase(withWorld(spec), robot),
     create,
     add: addSpec,

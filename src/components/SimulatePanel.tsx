@@ -21,6 +21,7 @@ import type { CaseCompare } from '../workspace/useCaseCompare';
 import type { Study } from '../workspace/useStudy';
 import { StudySection } from './simulate/StudySection';
 import { SimControls } from './simulate/SimControls';
+import { SelfContactSection } from './simulate/SelfContactSection';
 import { TrainSection, type CoachSend } from './simulate/TrainSection';
 import { coachMenuItems, rollOutMenuItems, stressMenuItems, type RollOutMenu } from './simulate/skillMenu';
 
@@ -134,6 +135,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
       <SimControls sim={sim} on={on} />
 
       <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        <SelfContactSection sim={sim} rig={rig} />
         {kase && (
           <CaseSection
             cases={cases}

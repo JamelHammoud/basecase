@@ -13,6 +13,7 @@ export type PreparedVisionTraining = Awaited<ReturnType<typeof prepareVisionTrai
 export interface TrainingOptions {
   signal?: AbortSignal;
   limits?: TrainingLimits;
+  requirements?: TrainingTask['requirements'];
   onProgress?: (message: string) => void;
 }
 export interface TrainingArtifacts {

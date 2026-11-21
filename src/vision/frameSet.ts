@@ -3,6 +3,7 @@ import { MB } from '../../electron/fileSize.mjs';
 import { sha256 } from '../cases/tries';
 import { depthBytes } from './imageBytes';
 import type { ImageSplit } from './imageSplit';
+import { MAX_FRAME_CONDITIONS, validConditionNames, validateConditionMembership } from './conditions';
 
 export interface ImageClass {
   id: number;
@@ -46,6 +47,7 @@ export interface TrainingFrame {
   split?: 'train' | 'validation' | 'test';
   source?: 'import' | 'try';
   origin?: { tryId: string; frame: number; seconds: number };
+  conditions?: string[];
 }
 
 export interface FrameSet {
@@ -59,6 +61,7 @@ export interface FrameSet {
   frames: TrainingFrame[];
   createdAt: string;
   splits?: Record<string, ImageSplit>;
+  conditions?: string[];
 }
 
 const object = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
@@ -157,6 +160,7 @@ function frameFields(value: unknown): boolean {
     frameDimensions(value) &&
     (value.source === undefined || value.source === 'import' || value.source === 'try') &&
     validOrigin(value.origin) &&
+    (value.conditions === undefined || validConditionNames(value.conditions, MAX_FRAME_CONDITIONS)) &&
     (value.split === undefined ||
       (typeof value.split === 'string' && ['train', 'validation', 'test'].includes(value.split)))
   );
@@ -212,7 +216,8 @@ function setFields(value: unknown): boolean {
     uint(value.seed) &&
     text(value.createdAt) &&
     (value.caseId === null || id(value.caseId)) &&
-    (value.sceneId === null || id(value.sceneId))
+    (value.sceneId === null || id(value.sceneId)) &&
+    (value.conditions === undefined || validConditionNames(value.conditions))
   );
 }
 
@@ -249,6 +254,7 @@ export function validateFrameSet(value: unknown): asserts value is FrameSet {
   if (!Array.isArray(set.frames) || set.frames.length > 100_000 || !unique(set.frames.map((f) => f?.id))) refuse();
 
   validateFrameSplits(set);
+  validateConditionMembership(set);
   set.frames.forEach((f) => validateTrainingFrame(f, set.classes));
 }
 
@@ -281,6 +287,7 @@ export async function frameHash(frame: Omit<TrainingFrame, 'id'> | TrainingFrame
       depth: await byteHash(depthBytes(frame.depth)),
       ...(frame.split ? { split: frame.split } : {}),
       ...(frame.source ? { source: frame.source } : {}),
+      ...(frame.conditions ? { conditions: frame.conditions } : {}),
       ...(frame.origin
         ? { origin: { tryId: frame.origin.tryId, frame: frame.origin.frame, seconds: frame.origin.seconds } }
         : {}),
@@ -305,6 +312,7 @@ export async function frameSetManifestHash(set: Omit<FrameSet, 'frames'>, frames
         ...(category.objectId ? { objectId: category.objectId } : {}),
       })),
       frames,
+      ...(set.conditions ? { conditions: set.conditions } : {}),
       ...(set.splits ? { splits: Object.entries(set.splits).sort(([a], [b]) => (a < b ? -1 : 1)) } : {}),
     }),
   );

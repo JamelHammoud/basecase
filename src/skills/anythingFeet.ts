@@ -1,4 +1,5 @@
 import type { MainModule } from '@mujoco/mujoco';
+import { planarDiameter } from '../utils/planarDiameter';
 import type { SimEngine } from '../sim/engine';
 import type { BodyFacts, V3 } from './anythingBody';
 import { tiltGoal, type IkTarget } from './anythingIk';
@@ -45,9 +46,6 @@ function contactsByBody(mj: MainModule, engine: SimEngine): Map<number, V3[]> {
   return out;
 }
 
-const spreadOf = (points: V3[]) =>
-  Math.max(0, ...points.flatMap((a) => points.map((b) => Math.hypot(a[0] - b[0], a[1] - b[1]))));
-
 export function restFeet(options: {
   mj: MainModule;
   engine: SimEngine;
@@ -78,7 +76,7 @@ export function restFeet(options: {
         body,
         local,
         world,
-        flat: spreadOf(points) >= FLAT_SPREAD,
+        flat: Math.max(0, planarDiameter(points)) >= FLAT_SPREAD,
         tilt: [xmat[body * 9 + 2], xmat[body * 9 + 5]] as [number, number],
       };
     });

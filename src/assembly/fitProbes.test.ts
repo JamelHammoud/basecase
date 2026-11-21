@@ -176,3 +176,91 @@ describe('battery lead clearance', () => {
     ]);
   });
 });
+
+function insertShell(outer: [number, number, number], inner: [number, number, number], matrix: THREE.Matrix4) {
+  const outside = box('outside', outer).solid.positions;
+  const inside = box('inside', inner).solid.positions;
+  const positions = new Float32Array(outside.length + inside.length);
+
+  positions.set(outside);
+  positions.set(inside, outside.length);
+
+  return place('host', new ShapeSolid(positions), matrix);
+}
+
+const insertChains: ChainResult = {
+  screws: [],
+  sleeves: [{ id: 'insert', kind: 'insert', host: 'host', screw: null }],
+};
+
+describe('insert wall minima', () => {
+  it.each([24.875, 25, 25.125, 40])('retains the inclusive probe limit for an outer wall at %j mm', (outer) => {
+    const insert = box('insert', [2, 8, 2]);
+    const host = insertShell([outer * 2, 12, outer * 2], [10, 10, 10], new THREE.Matrix4());
+    const result = fitProbes([insert, host], insertChains, []).insertWalls;
+
+    expect(result).toEqual(outer <= 25 ? { insert: { host: 'host', minMm: outer - 5 } } : {});
+  });
+
+  it.each([150, 300])('bounds crossing collection for a host with %j nested shells', (layers) => {
+    const insert = box('insert', [2, 8, 2]);
+    const positions = new Float32Array(layers * 108);
+
+    for (let i = 0; i < layers; i++) {
+      const size = 10 + i * 4;
+
+      positions.set(box('layer', [size, 20, size]).solid.positions, i * 108);
+    }
+
+    const host = place('host', new ShapeSolid(positions), new THREE.Matrix4());
+    const raycast = host.solid.bvh.raycast.bind(host.solid.bvh);
+    const hits = vi.spyOn(host.solid.bvh, 'raycast');
+    let unbounded = 0;
+
+    hits.mockImplementation((query, side) => {
+      const all = raycast(query, side);
+
+      unbounded += all.length;
+
+      return all.filter((hit) => hit.distance <= 25);
+    });
+
+    const expected = fitProbes([insert, host], insertChains, []);
+
+    hits.mockClear();
+    hits.mockImplementation(raycast);
+
+    expect(fitProbes([insert, host], insertChains, [])).toEqual(expected);
+    expect(expected.insertWalls.insert.minMm).toBeCloseTo(2, 10);
+    expect(hits).toHaveBeenCalledTimes(24);
+    expect(hits.mock.calls.every((call) => call[2] === 0 && call[3] === 25)).toBe(true);
+    expect(unbounded).toBeGreaterThanOrEqual(layers * 24);
+    expect(hits.mock.results.reduce((total, result) => total + result.value.length, 0)).toBeLessThanOrEqual(264);
+  });
+
+  it.each([0, 0.3, Math.PI / 2])('measures the thinnest radial wall after rotation %j', (angle) => {
+    const matrix = new THREE.Matrix4().makeRotationZ(angle).setPosition(7, -4, 11);
+    const insert = box('insert', [2, 8, 2], matrix);
+    const host = insertShell([12, 12, 14], [10, 10, 10], matrix);
+    const before = host.solid.positions.slice();
+
+    expect(fitProbes([insert, host], insertChains, []).insertWalls).toEqual({
+      insert: { host: 'host', minMm: expect.closeTo(1, 10) },
+    });
+    expect(host.solid.positions).toEqual(before);
+  });
+
+  it('keeps valid measurements among missing levels and rereads changed hosts', () => {
+    const matrix = new THREE.Matrix4();
+    const insert = box('insert', [2, 8, 2]);
+    const host = insertShell([12, 4, 14], [10, 2, 10], matrix);
+    const thinner = insertShell([11, 4, 14], [10, 2, 10], matrix);
+    const measure = (target: Placed) => fitProbes([insert, target], insertChains, []).insertWalls;
+
+    expect(measure(host)).toEqual({ insert: { host: 'host', minMm: 1 } });
+    expect(measure(thinner)).toEqual({ insert: { host: 'host', minMm: 0.5 } });
+    expect(measure(host)).toEqual({ insert: { host: 'host', minMm: 1 } });
+    expect(measure(box('host', [10, 10, 10]))).toEqual({});
+    expect(fitProbes([insert], insertChains, []).insertWalls).toEqual({});
+  });
+});

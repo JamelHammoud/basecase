@@ -173,3 +173,80 @@ describe('triangle crossings', () => {
     solid.dispose();
   });
 });
+
+it.each([300, 600])('normalizes crossing directions only after both plane cuts pass across %i pairs', (count) => {
+  const [a, b] = crossingPair();
+  const transform = (matrix: THREE.Matrix4) =>
+    triangle([b.a, b.b, b.c].map((p) => p.clone().applyMatrix4(matrix).toArray()));
+  const outsideFirst = transform(new THREE.Matrix4().makeTranslation(5, 0, 0));
+  const outsideSecond = transform(new THREE.Matrix4().makeTranslation(0, 0, 5));
+  const shallow = transform(new THREE.Matrix4().makeScale(1, 1, 0.005));
+  const rejected = [outsideFirst, outsideSecond, shallow];
+  const pairs: Pair[] = Array.from({ length: count }, (_, i) => [a, rejected[i % rejected.length]]);
+  const expected = gather([[a, b]]);
+  const normalize = vi.spyOn(THREE.Vector3.prototype, 'normalize');
+  let found: ReturnType<typeof gather>;
+  let calls: number;
+
+  try {
+    found = gather([...pairs, [a, b]]);
+    calls = normalize.mock.calls.length;
+  } finally {
+    normalize.mockRestore();
+  }
+
+  expect(calls).toBe(2);
+  expect(found).toEqual(expected);
+  expect(found[0].point.toArray()).toEqual([0, -0.5, 0]);
+});
+
+it.each([300, 600])('builds vectors only for retained results across %i crossings', (count) => {
+  const pairs = Array.from({ length: count }, (_, i) => crossingPair(i * 4));
+  const all = gather(pairs, count);
+  const clone = vi.spyOn(THREE.Vector3.prototype, 'clone');
+  let found: ReturnType<typeof gather>;
+  let clones: number;
+
+  try {
+    found = gather(pairs, 24);
+    clones = clone.mock.calls.length;
+  } finally {
+    clone.mockRestore();
+  }
+
+  const stride = Math.floor(count / 24);
+
+  expect(clones).toBe(0);
+  expect(found).toEqual(all.filter((_, i) => i % stride === 0).slice(0, 24));
+  expect(new Set(found.flatMap(({ point, into }) => [point, into])).size).toBe(48);
+  found[0].point.set(100, 200, 300);
+  found[0].into.set(0, 0, 0);
+  expect(gather(pairs, 24)).toEqual(all.filter((_, i) => i % stride === 0).slice(0, 24));
+
+  for (const keep of [
+    1,
+    23,
+    24,
+    25,
+    count - 1,
+    count,
+    count + 1,
+    0,
+    -0,
+    -Number.MIN_VALUE,
+    -0.5,
+    -0.999,
+    -1,
+    -2.5,
+    -count,
+    0.5,
+    2.5,
+    NaN,
+    Infinity,
+    -Infinity,
+  ]) {
+    const step = Math.max(1, Math.floor(count / keep));
+
+    expect(gather(pairs, keep)).toEqual(all.filter((_, i) => i % step === 0).slice(0, keep));
+  }
+});

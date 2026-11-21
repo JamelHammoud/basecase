@@ -33,12 +33,12 @@ covers:
 
 You can run the robot in your scene against emulated servos. It goes through the same control program and safety checks that a real robot will use.
 
-Every servo is emulated, and no released build of Basecase can drive real motors. Operate is available only in the desktop app.
+Every servo is emulated, and no released build of Basecase can drive real motors. Authored ideal tendon robots run only in simulation. Operate's live robot controls are available only in the desktop app.
 
 1. Open a scene with a robot that has joints.
 2. Click **Play** in the view rail.
 3. Click **Operate** at the top of the panel.
-4. Click **Connect Emulated Robot**. The header names the servos, one for each joint that moves. For example, "2 emulated Feetech servos".
+4. Click **Connect Emulated Robot**. The header names the servos, one for each powered joint that moves. For example, "2 emulated Feetech servos".
 5. Under **Ladder**, click **Set Up** to check that every servo answers.
 6. Click **Test** to turn on the motors. Once they're on, the header reads "Motors running".
 
@@ -56,15 +56,17 @@ When you choose **Connect Emulated Robot**, Basecase starts its robot daemon on 
 
 To run the daemon on a Linux computer instead, see [Connect a robot computer](/help/connect-a-robot-computer). That connection uses your local network and keeps real motors locked.
 
-The daemon runs the emulated servos on the Feetech bus, numbered from 1 upward in the order of the scene's moving joints. Each Feetech or Dynamixel servo behaves like the servo from Parts on its joint. Any other joint gets an STS3215. A joint whose motor isn't a Feetech or Dynamixel servo, such as the DS3218, reads No reply.
+The daemon runs the emulated servos on the Feetech bus, numbered from 1 upward in the order of the scene's powered moving joints. Each Feetech or Dynamixel servo behaves like the servo from Parts on its joint. Any other powered joint gets an STS3215. A joint whose motor isn't a Feetech or Dynamixel servo, such as the DS3218, reads No reply.
 
 Each emulated servo sits on its joint with its own hidden offset of up to 12°, and about one in four is reversed. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) finds both using a camera.
 
 A robot with a leg joint connects as a legged robot, and anything else connects as an arm. This decides what **Stop** does: an arm holds where it is, and a legged robot walks to its standing pose first.
 
-To connect another unit of this design, press [[⌘K]] and choose **Connect Emulated Robot** again. Operate lists each unit separately. [Roll out a skill to a fleet of emulated robots](/help/roll-out-a-skill-to-a-fleet) covers per-unit twins and canaries.
+To connect another unit of this design, press [[⌘K]] and choose **Connect Emulated Robot** again. Operate lists each unit separately. A disconnected unit can keep a row for its [retained problems](/help/inspect-fleet-problems). That history doesn't mean the unit is connected. [Roll out a skill to a fleet of emulated robots](/help/roll-out-a-skill-to-a-fleet) covers per-unit twins and canaries.
 
 You can connect up to 32 servos on each unit. For a robot with more than that, **Connect Emulated Robot** doesn't appear.
+
+View organization-wide inventory through [Open Basecase Fleet](/help/open-basecase-fleet). Its robot identities remain in the registry after you disconnect a studio unit.
 
 ## What's locked
 

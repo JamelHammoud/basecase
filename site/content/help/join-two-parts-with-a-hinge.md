@@ -28,6 +28,8 @@ You can turn two parts of a model you drew or imported into a joint, then pose, 
 
 ![The Pose tab with the new hinge turned to 40°](/help/join-two-parts-with-a-hinge/pose.png)
 
+New joints start powered. To let gravity or contact move one without a motor, [make it passive](/help/make-a-joint-passive).
+
 By default, a hinge turns ±90°. A slider travels as far as it can while the two parts still overlap along its axis. To change either range, right-click the joint's row in the Pose tab and point at Range.
 
 ![Range in a joint row's right-click menu, with the lowest and highest angle](/help/join-two-parts-with-a-hinge/range.png)

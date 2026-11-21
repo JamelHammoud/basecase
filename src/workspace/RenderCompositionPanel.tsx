@@ -68,7 +68,7 @@ export function RenderCompositionPanel({ composition }: { composition: RenderCom
             onChange={(rotation) => update({ rotation })}
           />
         </FieldRow>
-        <FieldRow label="Background">
+        <FieldRow label="Background" group>
           <ColorField value={settings.background} onChange={(background) => update({ background })} />
         </FieldRow>
         <Switch

@@ -1,3 +1,4 @@
+import { SimReadySection } from './SimReadySection';
 import React from 'react';
 import type { SceneAnnotation, ScenePart } from '../../types/robotics';
 import { COMPONENT_BY_ID } from '../../data/components';
@@ -52,6 +53,8 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
   return (
     <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
       <PartHeader {...props} />
+
+      <SimReadySection key={part.id} part={part} />
 
       {isImage && <ImageSection part={part} onUpdate={onUpdate} />}
 

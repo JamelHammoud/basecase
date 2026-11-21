@@ -74,6 +74,7 @@ A `.basecase` file is a copy of one scene that you can send to someone. It holds
 - Case tries
 - Rendered training images and their datasets
 - Taught skills
+- SimReady texture packages, which you can [download for selected parts](/help/add-objects-to-the-scene#restore-saved-simready-textures)
 - The build guide
 
 Your chat, named versions and branch links stay on your computer and aren’t included in the file. See [Save and merge robot versions](/help/save-and-merge-robot-versions).

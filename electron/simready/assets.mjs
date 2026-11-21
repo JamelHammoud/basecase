@@ -6,8 +6,6 @@ import { fileSize, MB } from '../fileSize.mjs';
 import { percent } from '../percent.mjs';
 
 const HF = 'https://huggingface.co';
-const SHA = /^[0-9a-f]{40}$/;
-const SAFE_SEGMENT = /^[\w.@+-]+$/;
 const SKIP_DIRS = ['/source_assets/', '/.thumbs/', '/.metadata/'];
 const IMAGE = /\.(png|jpe?g|exr|hdr|tga|tiff?|bmp|dds|ktx2?)$/i;
 const NOT_ALBEDO =
@@ -18,22 +16,7 @@ const MAX_TOTAL = 600 * MB;
 const refused = (res) =>
   new Error(serviceRefusal('SimReady Central', { status: res.status, again: 'Insert it again' }));
 
-export function parseAssetUrl(url) {
-  const u = new URL(String(url));
-  const parts = u.pathname.split('/').filter(Boolean).map(decodeURIComponent);
-  const [kind, namespace, dataset, mode, sha, ...rest] = parts;
-  const valid =
-    u.hostname === 'huggingface.co' &&
-    kind === 'datasets' &&
-    (mode === 'blob' || mode === 'resolve') &&
-    SHA.test(sha ?? '') &&
-    rest.length >= 2 &&
-    [namespace, dataset, ...rest].every((s) => SAFE_SEGMENT.test(s) && s !== '..');
-
-  if (!valid) throw new Error('That isn’t a SimReady asset link.');
-
-  return { namespace, dataset, sha, packageName: rest[0], rootPath: rest.join('/') };
-}
+export { parseAssetUrl } from './catalog.mjs';
 
 export const assetKey = (a) => `${a.namespace}--${a.dataset}--${a.packageName}--${a.sha.slice(0, 12)}`;
 

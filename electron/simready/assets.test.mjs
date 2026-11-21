@@ -4,7 +4,9 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { downloadAsset, parseAssetUrl } from './assets.mjs';
 
-const asset = parseAssetUrl(`https://huggingface.co/datasets/maker/assets/resolve/${'a'.repeat(40)}/Pack/root.usd`);
+const asset = parseAssetUrl(
+  `https://huggingface.co/datasets/nvidia/simready-assets/resolve/${'a'.repeat(40)}/Pack/root.usd`,
+);
 const folders = [];
 
 function temporaryFolder() {
@@ -83,3 +85,12 @@ describe('SimReady file batches', () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 });
+
+it.each(['attacker/simready-assets', 'nvidia/unlisted-assets'])(
+  'refuses an unlisted dataset %s before conversion',
+  (repo) => {
+    expect(() => parseAssetUrl(`https://huggingface.co/datasets/${repo}/blob/${'a'.repeat(40)}/Pack/root.usd`)).toThrow(
+      'That isn’t a SimReady asset link.',
+    );
+  },
+);

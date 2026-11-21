@@ -115,3 +115,51 @@ describe('scene files', () => {
     ).rejects.toThrow('damaged');
   });
 });
+
+it.each(['attacker/simready-assets', 'nvidia/private-data'])(
+  'refuses saved SimReady URLs outside the catalog: %s',
+  async (repo) => {
+    const scene = {
+      name: 'Shared',
+      globalGoal: '',
+      annotations: [],
+      parts: [
+        part('mug', {
+          simready: {
+            url: `https://huggingface.co/datasets/${repo}/blob/${'a'.repeat(40)}/Pack/root.usd`,
+            name: 'Mug',
+            maker: '',
+            license: '',
+          },
+        }),
+      ],
+    };
+
+    await expect(decodeSceneFile(await encodeSceneFile(scene))).rejects.toThrow('damaged');
+  },
+);
+
+it('round-trips catalog visuals and refuses a mismatched cache reference or damaged transform', async () => {
+  const url = `https://huggingface.co/datasets/nvidia/simready-assets/blob/${'a'.repeat(40)}/Pack/root.usd`;
+  const visual = {
+    key: 'nvidia--simready-assets--Pack--aaaaaaaaaaaa',
+    node: 'body',
+    matrix: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+  };
+  const source = part('mug', {
+    simready: { url, name: 'Mug', maker: 'NVIDIA', license: '' },
+    mesh: { positions: [], indices: [], baseSize: [1, 1, 1], visual },
+  });
+  const scene = { name: 'Shared', globalGoal: '', annotations: [], parts: [source] };
+
+  expect((await decodeSceneFile(await encodeSceneFile(scene))).parts[0]).toEqual(source);
+
+  for (const damaged of [
+    { ...visual, key: 'other' },
+    { ...visual, matrix: [1] },
+  ]) {
+    const parts = [{ ...source, mesh: { ...source.mesh!, visual: damaged } }];
+
+    await expect(decodeSceneFile(await encodeSceneFile({ ...scene, parts }))).rejects.toThrow('damaged');
+  }
+});

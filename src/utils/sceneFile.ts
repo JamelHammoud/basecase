@@ -1,3 +1,4 @@
+import { validSimReadyFields } from '../simready/validation';
 import { validateFixtureImports } from '../cases/fixtureImports';
 import { withValidStudy } from '../study/record';
 import type { Skill } from '../skills/artifacts';
@@ -50,7 +51,8 @@ const isPart = (value: unknown): value is ScenePart =>
   typeof value.id === 'string' &&
   typeof value.kind === 'string' &&
   isVec3(value.position) &&
-  validSheetFields(value);
+  validSheetFields(value) &&
+  validSimReadyFields(value);
 
 function localProject(project: ProjectSettings | undefined): ProjectSettings | undefined {
   if (!isObject(project)) return undefined;

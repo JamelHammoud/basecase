@@ -35,6 +35,8 @@ A saved [electronics board](/help/fit-an-electronics-board) keeps its mounting c
 
 Imported worlds come with the scene, including their colliders, textures and optional splats. You don't need the original capture files.
 
+SimReady parts use locally cached textures. To download missing textures in the desktop app, follow [Add everyday objects to the scene](/help/add-objects-to-the-scene#restore-saved-simready-textures).
+
 You can also choose **File** ▸ **Open Scene File**, or drop the file on the canvas. Double-clicking a `.basecase` file in Finder or File Explorer doesn't open it in Basecase.
 
 If the file won't open, see [Scene file doesn't open](/help/troubleshoot-scene-files).

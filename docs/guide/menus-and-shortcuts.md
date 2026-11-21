@@ -74,3 +74,7 @@ Route Board appears in the desktop command palette and selected carrier Inspecto
 ### Saved-run comparison
 
 Compare Tries appears in the View command group when exactly two recorded Library tries are selected and ordinary playback or live driving is closed. It opens the shared recording timeline without running a Case. Existing timeline keyboard controls apply to its shared cursor. [Behavior and coverage](cases.md#comparison-preparation-coverage).
+
+### SimReady textures
+
+Download Textures appears in the Selection group for one selected SimReady mesh without cached textures. It uses the same explicit download action as the Inspector and has no dedicated shortcut. [SimReady](simready.md#catalog-download-consent-coverage) owns its request and test coverage.

@@ -34,9 +34,12 @@ export async function assertContinuationLayout(page: Page) {
     }
 
     const track = root.querySelector('input[type="range"]')!;
+    const canvas = root.closest('[data-canvas-card]')!;
 
     return {
       root: box(root),
+      canvas: box(canvas),
+      inertPanels: [...canvas.parentElement!.querySelectorAll(':scope > aside[inert]')].map(box),
       controls: controls.map((element) => ({
         ...box(element),
         name: element.getAttribute('aria-label') ?? element.textContent ?? element.tagName,
@@ -51,10 +54,16 @@ export async function assertContinuationLayout(page: Page) {
 
   expect(measured.root.left).toBeGreaterThanOrEqual(0);
   expect(measured.root.right).toBeLessThanOrEqual(1240);
+  expect(measured.root.left).toBeGreaterThanOrEqual(measured.canvas.left);
+  expect(measured.root.right).toBeLessThanOrEqual(measured.canvas.right);
   expect(measured.track.width).toBeGreaterThanOrEqual(40);
   expect(measured.track.left).toBeCloseTo(measured.slider.left, 0);
   expect(measured.track.right).toBeCloseTo(measured.slider.right, 0);
   expect(measured.selectText).toBeLessThanOrEqual(measured.selectContent);
+
+  for (const panel of measured.inertPanels) {
+    expect(panel.width).toBe(0);
+  }
 
   for (const control of measured.controls) {
     expect(control.left, control.name).toBeGreaterThanOrEqual(measured.root.left);

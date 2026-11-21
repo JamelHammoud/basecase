@@ -21,8 +21,8 @@ it('branches a newly scripted Library try from the timeline and saves a manual r
   const source = await recordSource(app);
   const original = (await call<{ data: string }>(app.page, 'tries-recording', source.id)).data;
 
-  await openSaved(app, source.id);
   await app.page.setViewportSize({ width: 1240, height: 720 });
+  await openSaved(app, source.id);
   await assertContinuationLayout(app.page);
 
   const scrubber = app.page.getByTestId('timeline-playback').getByRole('slider');

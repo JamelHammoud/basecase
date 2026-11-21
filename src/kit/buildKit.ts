@@ -14,6 +14,7 @@ import { validateKit } from './validateKit';
 
 import { checkKitSource, KIT_MAX_BYTES } from './limits';
 import { kitSheets } from './sheets';
+import { purchaseSnapshot } from '../utils/purchaseSnapshot';
 
 function servoSheet(job: KitJob): KitManifest['servos'] {
   const map = jointMap(job.mapInput);
@@ -57,6 +58,7 @@ export function kitManifest(job: KitJob): KitManifest {
   );
   const bom = buildBom({
     ...job,
+    purchases: purchaseSnapshot(job.purchases),
     supportG,
     wiring: job.wiring,
   });
@@ -161,7 +163,7 @@ export async function buildKit(job: KitJob): Promise<Uint8Array> {
     'provenance.json': jsonBytes({
       parts: job.parts,
       project: job.project,
-      purchases: job.purchases,
+      purchases: purchaseSnapshot(job.purchases),
       measures: job.measures,
       printPlan: job.print.plan,
       printSpec: job.spec,

@@ -66,7 +66,7 @@ The list also includes things the build needs that the model doesn't show:
 - Bus servos add one cable for each measured hop, grouped by the selected product and length.
 - Each battery plug or barrel jack on the power path adds a pigtail.
 
-Prices you check in a store are exact. The others are list prices, and Basecase marks them with ≈. Parts you own cost nothing.
+Prices you check in a store are exact. The others are list prices, and Basecase marks them with ≈. Unallocated parts you own cost nothing in purchasing.
 
 **Electrical connections** checks documented pins and declared supplies. Missing pin maps, unknown loads and unresolved power interfaces remain blockers. To continue the documented connections in KiCad, [export a robot schematic](/help/export-a-robot-schematic).
 

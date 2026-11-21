@@ -314,7 +314,9 @@ export interface PurchaseRecord {
   onHand?: number;
 }
 
-export type StoredPurchase = (PurchaseRecord | { onHand?: number }) & PurchasingEvidence;
+export type StoredPurchase = (PurchaseRecord | { onHand?: number }) &
+  PurchasingEvidence &
+  import('../kit/allocationTypes').ProductionPurchase;
 
 export type Purchases = Record<string, StoredPurchase>;
 

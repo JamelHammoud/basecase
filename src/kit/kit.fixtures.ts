@@ -88,7 +88,7 @@ function sourceOf(name: string) {
   return robot;
 }
 
-export function kitFixture(name = 'SO-101-style arm'): KitJob {
+export function kitFixture(name = 'SO-101-style arm', edit?: (parts: ScenePart[]) => ScenePart[]): KitJob {
   const source = sourceOf(name);
   const moving = source.joints.filter((j) => j.type !== 'fixed');
   const actuators = moving.map((j, i) =>
@@ -98,7 +98,7 @@ export function kitFixture(name = 'SO-101-style arm'): KitJob {
       name === 'mixed-servo arm' && i % 4 === 3 ? 'c018' : 'c001',
     ),
   );
-  const parts: ScenePart[] = [
+  const initial: ScenePart[] = [
     ...source.parts.map((p, i) => ({
       ...p,
       ...(name === 'mixed sheet-and-printed' && i === 0
@@ -118,7 +118,9 @@ export function kitFixture(name = 'SO-101-style arm'): KitJob {
     },
   ];
 
-  parts.push({ ...parts.at(-1)!, id: 'screw-2' });
+  initial.push({ ...initial.at(-1)!, id: 'screw-2' });
+
+  const parts = edit?.(initial) ?? initial;
 
   const joints = source.joints.map((j) => ({ ...j, actuators: moving.includes(j) ? [`servo-${j.id}`] : undefined }));
   const { job } = fixturePackageJob({ id: name, parts, joints });

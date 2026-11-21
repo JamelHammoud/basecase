@@ -14,6 +14,9 @@ import { kitManifest } from './buildKit';
 import { kitSheets } from './sheets';
 import { checkKitSource } from './limits';
 import type { KitJob, KitManifest } from './types';
+import { copySourceKeys } from '../print/copySource';
+import { shapeKey } from '../print/shapeKey';
+import { purchaseSnapshot } from '../utils/purchaseSnapshot';
 
 export interface FrozenKit {
   format: 'basecase-frozen-build';
@@ -23,6 +26,8 @@ export interface FrozenKit {
   project: ProjectSettings;
   geometry: Record<string, { positions: number[]; indices: number[] }>;
   outputs: Record<string, number[]>;
+  productionKeys?: Record<string, string>;
+  legacyKeys?: Record<string, string>;
   provenance: Pick<KitJob, 'purchases' | 'measures' | 'spec'> & { printPlan: KitJob['print']['plan'] };
 }
 
@@ -32,6 +37,7 @@ export async function freezeBuildKit({ job, meshes = {} }: { job: KitJob; meshes
   const electrical = await checkedKitElectrical(job);
   const drawings = job.drawings ? (await checkedKitDrawings(job)).files : {};
   const manifest = kitManifest(job);
+  const printedIds = new Set(manifest.printed.map((part) => part.id));
   const geometry = Object.fromEntries(
     Object.entries(meshes).map(([id, mesh]) => [
       id,
@@ -46,6 +52,10 @@ export async function freezeBuildKit({ job, meshes = {} }: { job: KitJob; meshes
     parts: job.parts,
     project: job.project,
     geometry,
+    productionKeys: copySourceKeys(
+      job.parts.filter((part) => printedIds.has(part.id)),
+      geometry,
+    ),
     outputs: Object.fromEntries(
       Object.entries({
         ...Object.fromEntries(Object.entries(job.files).map(([key, bytes]) => [`plates/${key}.3mf`, bytes])),
@@ -54,7 +64,12 @@ export async function freezeBuildKit({ job, meshes = {} }: { job: KitJob; meshes
         ...drawings,
       }).map(([key, bytes]) => [key, Array.from(bytes)]),
     ),
-    provenance: { purchases: job.purchases, measures: job.measures, spec: job.spec, printPlan: job.print.plan },
+    provenance: {
+      purchases: purchaseSnapshot(job.purchases),
+      measures: job.measures,
+      spec: job.spec,
+      printPlan: job.print.plan,
+    },
   });
 }
 
@@ -70,7 +85,14 @@ export function readFrozenKit(content: PreparedFrozenKit): FrozenKit {
 
   checkFrozenOutputs(kit);
 
-  return kit;
+  const printedIds = new Set(kit.manifest.printed.map((part) => part.id));
+  const printed = kit.parts.filter((part) => printedIds.has(part.id));
+
+  return {
+    ...kit,
+    productionKeys: copySourceKeys(printed, kit.geometry),
+    legacyKeys: Object.fromEntries(printed.map((part) => [part.id, shapeKey(part)])),
+  };
 }
 
 function checkFrozenOutputs(kit: FrozenKit) {

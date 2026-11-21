@@ -10,6 +10,7 @@ export interface BuildAlongServo {
 }
 
 export interface BuildAlongStep {
+  action?: 'disconnect' | 'connect' | 'joint';
   shown: string[];
   moves: GuideMove[];
   arrows: GuideArrow[];

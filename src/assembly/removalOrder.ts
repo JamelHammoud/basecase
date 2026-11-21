@@ -173,6 +173,7 @@ function hostedMap(g: AssemblyGeometry): Map<string, string[]> {
 
 export function planRemoval(g: AssemblyGeometry, groups: Record<string, string | undefined>): RemovalPlan {
   const tracked = new Set([
+    ...(g.fixed ?? []),
     ...Object.keys(g.moves),
     ...g.chains.screws.map((c) => c.id),
     ...g.chains.sleeves.map((x) => x.id),

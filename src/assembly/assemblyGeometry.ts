@@ -10,6 +10,7 @@ import type { MergeInput, MergePlan } from '../print/merge/mergeTypes';
 
 export interface AssemblyGeometryInput extends FastenerInput {
   serviceable: string[];
+  movable?: string[];
   budgetMs: number;
   batteries?: string[];
   merges?: MergeInput;
@@ -25,6 +26,7 @@ export interface PartMoves {
 }
 
 export interface AssemblyGeometry {
+  fixed?: string[];
   chains: ChainResult;
   moves: Record<string, PartMoves>;
   drivers: Record<string, DriverOption[]>;
@@ -53,7 +55,9 @@ function sceneOf(placed: Placed[], input: AssemblyGeometryInput, deadline: numbe
   const robot = new THREE.Box3();
   const pinAxes = new Map<string, V3[]>();
 
-  majors.forEach((m) => robot.union(m.box));
+  const boundary = input.movable ? placed : majors;
+
+  boundary.forEach((part) => robot.union(part.box));
 
   for (const c of chains.screws) for (const id of c.stack) pinAxes.set(id, [...(pinAxes.get(id) ?? []), c.axis]);
 
@@ -94,6 +98,7 @@ export function assemblyGeometry(placed: Placed[], input: AssemblyGeometryInput)
   const started = performance.now();
   const scene = sceneOf(placed, input, started + input.budgetMs);
   const serviceable = new Set(input.serviceable);
+  const movable = input.movable && new Set(input.movable);
   const out: AssemblyGeometry = {
     chains: scene.chains,
     moves: {},
@@ -112,7 +117,7 @@ export function assemblyGeometry(placed: Placed[], input: AssemblyGeometryInput)
     out.drivers[c.id] = driverOptions(c, placed, skipForDrivers);
   }
 
-  for (const p of scene.majors) {
+  for (const p of scene.majors.filter((part) => !movable || movable.has(part.id))) {
     if (late()) break;
 
     out.moves[p.id] = partMoves(scene, p, serviceable.has(p.id));
@@ -125,6 +130,15 @@ export function assemblyGeometry(placed: Placed[], input: AssemblyGeometryInput)
       p,
       scene.majors.filter((q) => q.id !== p.id),
     );
+  }
+
+  if (movable) {
+    const fasteners = new Set([
+      ...scene.chains.screws.map((entry) => entry.id),
+      ...scene.chains.sleeves.map((entry) => entry.id),
+    ]);
+
+    out.fixed = placed.filter((part) => !out.moves[part.id] && !fasteners.has(part.id)).map((part) => part.id);
   }
 
   if (!late()) out.fits = fitProbes(placed, scene.chains, input.batteries ?? []);

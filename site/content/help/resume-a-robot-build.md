@@ -57,10 +57,12 @@ Basecase saves your place as you move between steps. You keep the same completed
 
 Set **Quantity** in **Make Build** to create up to twenty numbered builds from one preparation. Each build keeps its own name, position and completed steps. You can edit or rename the design without changing existing builds.
 
-The saved Checks describe the design as it was when you created the build. Completing a step leaves blockers, print records, stock and robot movement permissions unchanged.
+The saved Checks describe the retained revision currently displayed. Completing a step leaves blockers, print records, stock and robot movement permissions unchanged.
 
-You can access your builds on this device, within this app or browser profile. You can store up to 100 builds and 256 MB of shared Kit content. Delete the last build using a Kit to free that content.
+You can access your builds on this device, within this app or browser profile. You can store up to 100 builds and 256 MB of shared Kit content. A Kit stays retained while any build or repair history references it.
 
 For temporary instructions without saved progress, use [Build Along](/help/build-along).
 
 [Allocate parts to robot builds](/help/allocate-parts-to-robot-builds) covers component reservations, individual printed copies and confirmed returns. Deleting a build releases none of its assigned materials.
+
+[Repair a robot build](/help/repair-a-robot-build) advances one build to a checked revision and keeps its original assembly history.

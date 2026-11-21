@@ -3,6 +3,7 @@ import type { FacilitySummary } from '../sites/facilityTypes';
 
 export interface RegistryItem {
   id: string;
+  attributes?: Record<string, string>;
   kind?: string;
   name: string;
   parent: string | null;

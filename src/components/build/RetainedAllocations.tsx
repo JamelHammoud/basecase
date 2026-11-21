@@ -8,20 +8,25 @@ import { useAllocationAction } from './useAllocationAction';
 export function RetainedAllocations({
   builds,
   onError,
+  buildId,
+  exceptRepair,
 }: {
   builds: BuildSummary[];
+  buildId?: string;
+  exceptRepair?: string;
   onError: (error: unknown) => void;
 }) {
   const [purchases] = usePurchases();
   const { busy, run } = useAllocationAction(onError);
   const known = new Set(builds.map((build) => build.id));
+  const retained = (owner: import('../../kit/allocationTypes').BuildOwner) => buildId ? owner.id === buildId && !!owner.repair && owner.repair !== exceptRepair : !known.has(owner.id);
   const components = Object.values(purchases)
     .flatMap((entry) => entry.reservations ?? [])
-    .filter((entry) => entry.quantity > 0 && !known.has(entry.build.id));
+    .filter((entry) => entry.quantity > 0 && retained(entry.build));
   const copies = Object.entries(purchases).flatMap(([key, entry]) =>
     Object.entries(entry.printOutput?.assignments ?? {}).flatMap(([copy, history]) =>
       history
-        .filter((assignment) => !assignment.returnedAt && !known.has(assignment.build.id))
+        .filter((assignment) => !assignment.returnedAt && retained(assignment.build))
         .map((assignment) => ({ key, copy, assignment })),
     ),
   );
@@ -40,7 +45,7 @@ export function RetainedAllocations({
   return (
     <Section title="Retained allocations" className="!px-0 !py-0 !border-b-0">
       {components.map((entry) => (
-        <div key={`${entry.build.id}:${entry.demand.key}`} className="py-2 text-[13px]">
+        <div key={`${entry.build.id}:${entry.build.repair ?? ''}:${entry.demand.key}`} className="py-2 text-[13px]">
           <div className="break-words">{entry.build.name}</div>
           <ComponentAllocation
             returnOnly

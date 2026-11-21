@@ -2,6 +2,16 @@
 
 Implementation and current coverage: [Fleet](../guide/fleet.md). Runtime coverage: [Robot runtime](../guide/robot-runtime.md#fleet-publisher). Security boundary: [Node-side evidence](node.md#fleet-authorization-boundary).
 
+## Build repair reference evidence
+
+`tools/fleet/buildRepairReference.test.mjs` exercises the production service with generated organizations and existing robots. Authorized inventory mutation retains controller, vendor, unrelated attributes, observations and generations. Repeated attachment is idempotent. Malformed references, extra fields, wrong types and an inventory viewer without manage permission are rejected. Robot enumeration proves there is no duplicate identity. Browser client tests check the only requests are existing-robot GET and PUT, including 401 and 403 denial before a write. Local imports discard extra fields rather than storing credentials.
+
+The focused acceptance check in `scratch/repair-acceptance-check.log` passed 95 tests across seventeen selected files, including these service and browser-client cases. `e2e/fleetBuildRepair.e2e.test.ts` declares authenticated browser linking, reference download, denied mutation and absence of creation and command requests. Browser execution remains CI work. The article capture uses a real local service and generated repair. Its initial fixture name contained spaces, producing an unusable email for the browser login form. The fixture name was corrected without changing validation, deadlines or retry policy. The corrected fixture first encountered the existing navigation deadline. Capture then passed using the supported Vite cache under node_modules, rather than a scratch cache that Babel treated as application code. Evidence is retained in `scratch/repair-fleet-capture-cache.log`. No shared harness changed.
+
+The final current-main changed-file check passed 5,705 selected tests, including the existing-robot reference service and browser-client cases. Evidence is `scratch/repair-four-worker-check.log`. Browser execution still belongs to CI.
+
+Local build references are descriptive. They neither authorize a Fleet request nor prove continued inventory access. The server's existing authenticated evaluator remains authoritative. No external account, robot or printer participates in these fixtures.
+
 ## Generated registry measurement
 
 The local acceptance run uses the pinned Node runtime and PostgreSQL 18 in Docker on macOS. `tools/fleet/scale.test.mjs` seeds 10,000 robot identities across 100 sites. Its ten repeated deployment classes include warehouse, factory, hospital, cleaning, agriculture, quadruped inspection, aerial, road, harbor and kitchen inventories. Vendor names deliberately repeat. Seed construction writes through PostgreSQL, outside the measured ingest interval. All measured updates and reads use the authenticated HTTP API and its real authorization evaluator.

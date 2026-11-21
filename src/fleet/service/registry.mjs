@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { allowed } from './authorization.mjs';
 import { protectRecovery } from './recoveryProtection.mjs';
-import { administrative, identifier, insist, resourceData } from './validation.mjs';
+import { administrative, identifier, insist, resourceData, isObject, isId } from './validation.mjs';
 
 export const organization = (org) => ({
   id: org,
@@ -186,6 +186,8 @@ export async function createResource(client, actor, kind, body) {
 export async function updateResource(client, actor, options) {
   const { kind, id, body } = options;
 
+  if (isObject(body) && body.buildRepair !== undefined) return updateBuildRepairReference(client, actor, options);
+
   if (administrative(kind))
     await protectRecovery(client, actor, { id, data: resourceData(kind, body), action: `recovery.${kind}.update` });
 
@@ -227,4 +229,38 @@ function proposedResource(current, data, parent) {
     siteAttributes: { ...parent.siteAttributes, ...(current.kind === 'site' ? data.attributes : {}) },
     robotAttributes: parent.kind === 'robot' ? parent.attributes : parent.robotAttributes,
   };
+}
+
+async function updateBuildRepairReference(client, actor, { kind, id, body }) {
+  insist(kind === 'robot' && Object.keys(body).length === 1);
+
+  const evidence = body.buildRepair;
+
+  insist(isObject(evidence) && Object.keys(evidence).length === 4);
+  insist(isId(evidence.build) && isId(evidence.repair));
+  insist([evidence.source, evidence.target].every((hash) => typeof hash === 'string' && /^[a-f0-9]{64}$/.test(hash)));
+  await client.query('SELECT id FROM fleet_resources WHERE org=$1 AND id=$2 FOR UPDATE', [actor.org, identifier(id)]);
+
+  const current = await readResource(client, actor.org, id);
+
+  insist(current.kind === 'robot', 403);
+  demand(actor, 'inventory.manage', current);
+
+  const attributes = {
+    ...current.attributes,
+    buildId: evidence.build,
+    buildRepairId: evidence.repair,
+    buildSourceKit: evidence.source,
+    buildTargetKit: evidence.target,
+  };
+  const data = resourceData('robot', { name: current.name, attributes });
+  const parent = await readResource(client, actor.org, current.parent);
+
+  demand(actor, 'inventory.manage', proposedResource(current, data, parent));
+  await client.query(
+    "UPDATE fleet_resources SET data=jsonb_set(data,'{attributes}',$3::jsonb,true) WHERE org=$1 AND id=$2",
+    [actor.org, id, JSON.stringify(data.attributes)],
+  );
+
+  return visible(await readResource(client, actor.org, id), actor);
 }

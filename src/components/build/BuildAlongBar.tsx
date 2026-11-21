@@ -25,6 +25,9 @@ interface BuildAlongBarProps {
   onPrint: (id: string) => void;
 }
 
+const barPlacement = (buildAlong: BuildAlong) =>
+  buildAlong.frozen ? 'relative shrink-0 py-[12px]' : 'absolute inset-x-0 top-3';
+
 export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active, ready, onPrint, cradle }) => {
   const { step, index, count, opening, progress } = buildAlong;
   const partsReady = !!step && step.repairPhase !== 'remove' && ready[index];
@@ -34,13 +37,16 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
   if (!buildAlong.active || !active) return null;
 
   return (
-    <div className="absolute inset-x-0 top-3 z-20 flex flex-col items-center gap-2 px-6 pointer-events-none">
+    <div
+      className={`${barPlacement(buildAlong)} z-20 flex flex-col items-center gap-2 px-[12px] pointer-events-none`}
+      data-build-along-bar
+    >
       <FloatingIsland
         role="toolbar"
         aria-label="Build Along"
         data-step={step ? index + 1 : undefined}
         data-ready={partsReady || undefined}
-        className="pointer-events-auto h-[40px]"
+        className="pointer-events-auto min-h-[40px] max-w-full flex-wrap justify-center [&>button]:shrink-0"
       >
         {opening ? (
           <div className="flex items-center gap-2 px-[8px] text-[12.5px] text-white/60 whitespace-nowrap">

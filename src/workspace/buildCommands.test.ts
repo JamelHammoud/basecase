@@ -4,9 +4,10 @@ import { DEFAULT_PROJECT, type ScenePart } from '../types/robotics';
 import { buildCommands } from './buildCommands';
 import type { CommandInputs } from './sceneCommands';
 
-function commandsFor(parts: ScenePart[], frozen = false) {
+function commandsFor(parts: ScenePart[], frozen = false, state = { busy: false, opening: false }) {
   const open = vi.fn();
   const generate = vi.fn();
+  const importPhotos = vi.fn();
   const inputs = {
     core: {
       parts,
@@ -14,12 +15,26 @@ function commandsFor(parts: ScenePart[], frozen = false) {
       printing: { measures: {} },
       readiness: { current: null, fingerprint: '' },
       guide: { record: null, progress: null, generate },
-      buildAlong: { open, frozen },
+      buildAlong: { open, frozen, opening: state.opening, photos: { busy: state.busy, importPhotos } },
     },
   } as unknown as CommandInputs;
 
-  return { commands: buildCommands(inputs), open, generate };
+  return { commands: buildCommands(inputs), open, generate, importPhotos };
 }
+
+it('imports photos from the palette only while an idle frozen build is open', () => {
+  const { commands, importPhotos } = commandsFor([], true);
+
+  commands.find((entry) => entry.id === 'import-build-photos')!.run();
+  expect(importPhotos).toHaveBeenCalledOnce();
+  expect(commandsFor([]).commands.map((entry) => entry.id)).not.toContain('import-build-photos');
+
+  for (const state of [
+    { busy: true, opening: false },
+    { busy: false, opening: true },
+  ])
+    expect(commandsFor([], true, state).commands.map((entry) => entry.id)).not.toContain('import-build-photos');
+});
 
 it('offers purchasing only for the editable scene that mounts its sheet', () => {
   expect(commandsFor([]).commands.map((command) => command.id)).toContain('supplier-offers');

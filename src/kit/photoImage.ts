@@ -73,15 +73,19 @@ export async function prepareBuildPhoto(input: Blob): Promise<BuildPhotoImage> {
       size: [width, height],
     } = photoHeader(bytes);
     const original = new Blob([bytes], { type });
-    const bitmap = await createImageBitmap(original, { imageOrientation: 'none' });
+    const bitmap = await createImageBitmap(original, { imageOrientation: 'from-image' });
 
     try {
-      if (bitmap.width !== width || bitmap.height !== height) throw photoFormatError();
+      if (
+        !(bitmap.width === width && bitmap.height === height) &&
+        !(bitmap.width === height && bitmap.height === width)
+      )
+        throw photoFormatError();
 
-      const ratio = Math.min(1, PHOTO_LIMITS.edge / Math.max(width, height));
+      const ratio = Math.min(1, PHOTO_LIMITS.edge / Math.max(bitmap.width, bitmap.height));
       const canvas = new OffscreenCanvas(
-        Math.max(1, Math.round(width * ratio)),
-        Math.max(1, Math.round(height * ratio)),
+        Math.max(1, Math.round(bitmap.width * ratio)),
+        Math.max(1, Math.round(bitmap.height * ratio)),
       );
       const context = canvas.getContext('2d');
 

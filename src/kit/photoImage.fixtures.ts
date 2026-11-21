@@ -50,8 +50,11 @@ class PhotoCanvas {
 }
 
 export function installPhotoDecoder() {
-  vi.stubGlobal('createImageBitmap', async (blob: Blob) => {
-    const bytes = Buffer.from(await blob.arrayBuffer());
+  vi.stubGlobal('createImageBitmap', async (blob: Blob, options?: ImageBitmapOptions) => {
+    const input = Buffer.from(await blob.arrayBuffer());
+    const metadata = await sharp(input).metadata();
+    const oriented = options?.imageOrientation !== 'none' && metadata.orientation;
+    const bytes = oriented ? await sharp(input).autoOrient().png().toBuffer() : input;
     const { info } = await sharp(bytes).raw().toBuffer({ resolveWithObject: true });
 
     return { bytes, width: info.width, height: info.height, close: () => undefined };

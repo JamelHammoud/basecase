@@ -118,7 +118,7 @@ function supplierOfferCommands({ core }: CommandInputs): Command[] {
 }
 
 export const buildCommands = (inputs: CommandInputs): Command[] => [
-  ...(inputs.core.buildAlong?.frozen
+  ...(inputs.core.buildAlong?.frozen && !inputs.core.buildAlong.photos.busy && !inputs.core.buildAlong.opening
     ? [
         {
           id: 'import-build-photos',

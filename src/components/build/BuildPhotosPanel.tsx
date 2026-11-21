@@ -10,8 +10,11 @@ export function BuildPhotosPanel({ photos, onError }: { photos: BuildPhotos; onE
   if (!photos.records.length) return null;
 
   return (
-    <aside className="w-[38%] min-w-[240px] max-w-[520px] flex flex-col gap-3 p-3 pt-28 bg-[#242424]" data-build-photos>
-      <div className="flex flex-wrap gap-2 overflow-y-auto max-h-[180px] shrink-0">
+    <aside
+      className="w-[38%] min-w-0 max-w-[520px] shrink-0 flex flex-col gap-[12px] p-[12px] bg-[#242424]"
+      data-build-photos
+    >
+      <div className="flex flex-wrap gap-[8px] overflow-y-auto max-h-[180px] shrink-0">
         {photos.records.map((item) => (
           <Button
             key={item.id}
@@ -19,7 +22,7 @@ export function BuildPhotosPanel({ photos, onError }: { photos: BuildPhotos; onE
             aria-label={item.name}
             aria-pressed={photo?.id === item.id}
             variant={photo?.id === item.id ? 'active' : 'ghost'}
-            className="w-24 h-20 p-1"
+            className="w-[84px] h-[70px]! max-w-full p-1 [&>span]:h-full [&>span]:w-full"
             onClick={() => setSelected(item.id)}
           >
             <BuildPhotoImage hash={item.hash} onError={onError} />

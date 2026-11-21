@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useState } from 'react';
 import { localBuildPhotos } from '../../kit/buildPhotos';
 import { PreviewImage } from '../../design-system';
+import { photoHistoryError } from '../../kit/photoRecords';
 
 export function BuildPhotoImage({
   hash,
@@ -28,7 +29,10 @@ export function BuildPhotoImage({
         setLoaded({ key, url });
       })
       .catch((error: unknown) => {
-        if (current) failed(error);
+        if (!current) return;
+
+        setLoaded({ key, url: '' });
+        failed(error);
       });
 
     return () => {
@@ -38,5 +42,7 @@ export function BuildPhotoImage({
     };
   }, [hash, enlarged, key]);
 
-  return <PreviewImage src={loaded?.key === key ? loaded.url : undefined} />;
+  return (
+    <PreviewImage src={loaded?.key === key ? loaded.url : undefined} onError={() => onError(photoHistoryError())} />
+  );
 }

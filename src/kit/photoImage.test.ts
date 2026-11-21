@@ -66,6 +66,42 @@ it('independently refuses stored original and thumbnail corruption and dimension
   await expect(verifyBuildPhoto({ ...photo, width: 65 })).rejects.toThrow();
 });
 
+it.each([2, 3, 6, 8])(
+  'keeps JPEG EXIF orientation %s in the thumbnail without changing original bytes',
+  async (orientation) => {
+    const corner = await sharp({ create: { width: 32, height: 24, channels: 3, background: '#22cc44' } })
+      .png()
+      .toBuffer();
+    const bytes = await sharp({ create: { width: 64, height: 48, channels: 3, background: '#cc2211' } })
+      .composite([{ input: corner, left: 0, top: 0 }])
+      .withMetadata({ orientation })
+      .jpeg()
+      .toBuffer();
+    const photo = await prepareBuildPhoto(new Blob([Uint8Array.from(bytes)]));
+    const expected = await sharp(bytes).autoOrient().raw().toBuffer({ resolveWithObject: true });
+    const thumbnail = await sharp(Buffer.from(await photo.thumbnail.arrayBuffer()))
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    expect(thumbnail.info.width).toBe(expected.info.width);
+    expect(thumbnail.info.height).toBe(expected.info.height);
+
+    for (const [x, y] of [
+      [0.25, 0.25],
+      [0.75, 0.25],
+      [0.25, 0.75],
+      [0.75, 0.75],
+    ]) {
+      const at = (Math.floor(expected.info.height * y) * expected.info.width + Math.floor(expected.info.width * x)) * 3;
+
+      expect(thumbnail.data[at + 1] > thumbnail.data[at]).toBe(expected.data[at + 1] > expected.data[at]);
+    }
+
+    expect(Buffer.from(await photo.original.arrayBuffer())).toEqual(bytes);
+    await verifyBuildPhoto(photo);
+  },
+);
+
 it('accepts the exact pixel and byte limits and bounds the decoded thumbnail', async () => {
   const raster = await generatedPhoto(1, 'png', { width: 4096, height: 4096 });
   const input = new Blob([raster, new Uint8Array(PHOTO_LIMITS.image - raster.size)]);

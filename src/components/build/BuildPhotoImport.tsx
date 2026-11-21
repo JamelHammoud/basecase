@@ -1,4 +1,4 @@
-import { Button } from '../../design-system';
+import { Button, Spinner } from '../../design-system';
 import type { BuildAlong } from '../../workspace/useBuildAlong';
 
 export function BuildPhotoImport({ buildAlong }: { buildAlong: BuildAlong }) {
@@ -12,6 +12,8 @@ export function BuildPhotoImport({ buildAlong }: { buildAlong: BuildAlong }) {
         size="sm"
         variant="ghost"
         disabled={photos.busy || buildAlong.opening}
+        aria-busy={photos.busy}
+        icon={photos.busy ? <Spinner className="w-4 h-4" /> : undefined}
         onClick={() => void photos.importPhotos()}
       >
         Import Photos

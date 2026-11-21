@@ -19,6 +19,7 @@ import { plural } from '../../electron/plural.mjs';
 import { useCutFileExport } from './useCutFileExport';
 import { isSheetSolid } from './cutFileExport';
 import { useSchematicExport } from './useSchematicExport';
+import { useRenderComposition } from './useRenderComposition';
 
 function exportAvailability(parts: WorkspaceCore['parts'], hasRig: boolean) {
   return {
@@ -199,6 +200,7 @@ export function useExportActions(core: WorkspaceCore) {
     exportRobotPackage: useRobotPackageExport(core),
     exportKit: drawings.openKit,
     drawings,
+    composition: useRenderComposition(core),
     exportDrawings: drawings.openDrawings,
     exportSchematic: useSchematicExport(core),
     exportCutFiles,

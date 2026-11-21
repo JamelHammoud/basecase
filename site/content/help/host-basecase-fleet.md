@@ -42,6 +42,8 @@ Accounts, roles, groups and credential revocation are available in the browser t
 
 Create a site with `POST /v1/<org>/site` and a robot with `POST /v1/<org>/robot`. Both take `name` and optional string `attributes`. The robot also takes its site's UUID as `parent`. Nested sites take their parent site's UUID. Robots need no CAD scene.
 
+[Link a build repair to Fleet](/help/link-a-build-repair-to-fleet) attaches local repair evidence to an existing robot through authenticated inventory. It requires inventory read and manage access, without creating another robot or changing controller permissions.
+
 Create a custom role with `POST /v1/<org>/role`:
 
 ```json

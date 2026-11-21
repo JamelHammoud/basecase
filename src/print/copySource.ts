@@ -1,3 +1,4 @@
+import { physicalParts } from '../appearance/physical';
 import type { ScenePart } from '../types/robotics';
 import { sha256Hex } from '../skills/hash';
 
@@ -24,7 +25,7 @@ export function copySourceKeys(
   geometry: Record<string, { positions: ArrayLike<number>; indices: ArrayLike<number> }> = {},
 ): Record<string, string> {
   return Object.fromEntries(
-    parts.map((part) => {
+    physicalParts(parts).map((part) => {
       const source = Object.fromEntries(Object.entries(part).filter(([key]) => !presentation.has(key)));
       const bytes = new TextEncoder().encode(
         JSON.stringify({ source, geometry: geometry[part.id] }, (_key, value: unknown) => {

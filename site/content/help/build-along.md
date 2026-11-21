@@ -26,7 +26,7 @@ You can also choose **Build Along** from [[⌘K]] or the build guide's toolbar.
 
 ![A step with four screws flying into the base along blue arrows, and 4 × M3 × 6 Socket Head Screw listed under the bar](/help/build-along/step.png)
 
-If you changed the design since the guide was last made, Build Along makes the guide again first and shows its progress in the bar.
+For the editable design, Build Along regenerates an outdated guide and shows its progress in the bar. A retained build or repair uses saved instructions.
 
 ![Three servos labeled Shoulder pan, ID 1, Shoulder lift, ID 2 and Elbow, ID 3](/help/build-along/servos.png)
 
@@ -34,10 +34,10 @@ Each connection appears once, at the first step that has both endpoints. A callo
 
 ![The Wrist ID 3 step with its incoming Elbow ID 2 cable and 180 mm stock callout](/help/build-along/cable-route.png)
 
-A green check appears beside the step count when every printed part the step uses is marked printed. The build guide also shows a check beside the step number. When you [print plates on several printers](/help/print-plates-on-several-printers), the parts print in this order.
+In the editable design, a green check appears beside the step count when every printed part the step uses is marked printed. The build guide also shows a check beside the step number. When you [print plates on several printers](/help/print-plates-on-several-printers), the parts print in this order.
 
 ![Step 1 of 2 with a green check beside the count](/help/build-along/parts-ready.png)
 
 For a broken part, [Repair a part](/help/repair-a-part) opens a walkthrough of removal, replacement and reassembly in Build Along.
 
-To retain separate progress for physical copies of one design, [resume a robot build](/help/resume-a-robot-build).
+To retain separate progress for physical copies of one design, [resume a robot build](/help/resume-a-robot-build). You can [keep assembly photos](/help/keep-assembly-photos) beside each saved assembly step. [Repair a robot build](/help/repair-a-robot-build) advances only the selected build to a checked revision.

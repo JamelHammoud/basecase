@@ -1,5 +1,5 @@
 import { expect } from 'vitest';
-import type { Page } from 'playwright-core';
+import type { Locator, Page } from 'playwright-core';
 
 export const appearanceSection = (page: Page) =>
   page
@@ -8,7 +8,10 @@ export const appearanceSection = (page: Page) =>
     .filter({ visible: true });
 
 export async function expectAppearanceReadable(page: Page) {
-  const section = appearanceSection(page);
+  await expectPanelReadable(appearanceSection(page));
+}
+
+export async function expectPanelReadable(section: Locator) {
   const violations = await section.evaluate((root) => {
     const bounds = root.getBoundingClientRect();
     const canvas = document.createElement('canvas');
@@ -25,7 +28,11 @@ export async function expectAppearanceReadable(page: Page) {
       range.selectNodeContents(node);
 
       for (const rect of range.getClientRects()) {
+        const owner = parent.getBoundingClientRect();
+
         if (rect.left < bounds.left || rect.right > bounds.right) violations.push(node.textContent);
+
+        if (rect.left < owner.left - 1 || rect.right > owner.right + 1) violations.push(node.textContent);
 
         readings.push(rect);
       }

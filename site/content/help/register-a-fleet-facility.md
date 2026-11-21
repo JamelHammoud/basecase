@@ -37,7 +37,7 @@ You supply a signed, constant offset for this facility. To calculate ellipsoid h
 
 ![Registered Factory floorplan with replay-fed Rover 01 and Rover 02](/help/register-a-fleet-facility/facility.png)
 
-In **Site**, choose **All sites** to select a robot or registered site on the globe. Select a robot to see its position timestamp, status, current work and declared next work. Click **Open Facility** to return to its site.
+In **Site**, choose **All sites** to select a robot or registered site on the globe. Select a robot to see its position timestamp, status, current work and declared next work. Its details also show **Build repair** when a local repair reference is attached. Click **Open Facility** to return to its site.
 
 ![Rover 01 selected on the globe with current and declared next work](/help/register-a-fleet-facility/globe.png)
 

@@ -2,6 +2,33 @@
 
 Implementation: [Assembly and repair planning](../guide/build.md#performance-assembly-and-repair-planning). Shared requirements: [Performance](../guide/performance.md).
 
+## Retained build repair
+
+The disposable worker reads retained coordinate and index arrays directly, without serialized mesh equality. It expands each solid into owned triangle buffers using twelve bytes per mesh index before BVHs and planner state. Both revisions release their BVHs after planning. Cancellation terminates the worker and rejects late replies. The document refuses a geometry fallback.
+
+The initial whole-robot movement search exceeded existing test deadlines on hexapod and repeated-module fixtures, reaching 13.6 and 12.7 seconds in a focused run. Repair now prepares movement candidates for affected identities, their groups and a 160 mm neighborhood. All remaining solids stay fixed obstacles, and exit bounds include the entire assembly. This reduces search without dropping distant obstructions. The focused matrix then passed 32 tests in 2.79 seconds. These test durations are not a controlled performance comparison. No deadline, retry, wait or merge gate was added.
+
+On November 20, 2026, `scratch/repair-production-perf.mjs` measured the ten production Kit fixtures after integrating main revision `3699e8e13` in an isolated macOS arm64 Node worker. Each design had twenty retained builds. Three samples measured exact comparison and source/target planning, then a real build-store repair retained its target assets and plan. Generated fixture Checks are synthetic Ready declarations. Values below are maximum milliseconds across the three samples and exact retained byte counts.
+
+| Generated design | Compare ms | Plan ms | Source bytes | With repair bytes | Build record bytes |
+| --- | --- | --- | --- | --- | --- |
+| differential rover | 2.26 | 20.71 | 34,473 | 64,115 | 7,008 |
+| SO-101-style arm | 2.48 | 12.90 | 44,426 | 81,786 | 7,286 |
+| quadruped | 0.97 | 14.23 | 74,456 | 136,391 | 11,887 |
+| hexapod | 2.13 | 12.12 | 101,917 | 186,329 | 15,097 |
+| biped | 3.00 | 8.28 | 55,508 | 101,861 | 9,191 |
+| pan-tilt camera | 0.38 | 2.93 | 32,576 | 60,569 | 6,523 |
+| gripper | 0.45 | 8.80 | 30,030 | 56,062 | 6,270 |
+| conveyor mechanism | 1.86 | 2.88 | 27,667 | 51,745 | 6,007 |
+| mixed-servo arm | 0.67 | 8.95 | 59,663 | 109,863 | 9,660 |
+| repeated limb modules | 1.37 | 11.16 | 112,591 | 207,316 | 15,125 |
+
+The shared source byte count serves twenty builds. With-repair bytes include shared source and target assets, excluding the build record listed separately. Exact hashes, every timing sample and per-design memory snapshots are in `scratch/repair-production-perf.json`. The worker used v26.13.0. Worker used-heap snapshots changed from 104,182,120 to 75,281,992 bytes. Sampled process RSS peaked at 274,513,920 bytes. Heap includes the Vite loader and both retained fixtures, and RSS includes both Node isolates. Neither measures browser peak memory. Garbage collection can lower a later heap snapshot.
+
+Terminating the Node worker during another synchronous planning run took 5.30 ms. Browser worker tests separately establish abort and disposal semantics through controlled workers. Browser cancellation delivery and peak browser memory remain unmeasured. These observations establish neither a production memory bound nor an interactive latency guarantee. The run is not a controlled before-and-after comparison.
+
+The earlier captured seven-part bracket probe remains in `scratch/repair-perf.json`. Its synthetic manifest did not reconcile manufacturing outputs, so it is not the production matrix baseline. Frozen playback shares unchanged view parts and switches cached source/target parts. Export 3MF reads retained output bytes, without geometry preparation on the interaction thread.
+
 ## Screw-head contact thresholds stop at three
 
 `ringContacts.test.ts` compares every eight-point contact pattern with the previous full-count verdict. It checks that queries visit the original points in order and stop at the third contact, or visit the whole ring when fewer than three match. Later edits, independent calls, short rings and source preservation are covered. The remaining sleeve-host ranking needs exact counts and retains its full traversal.
@@ -168,3 +195,31 @@ The same phase record separates file I/O from total wall and process CPU.
 | Completion recovery | 7.29 ms | 8.44 ms | 0.08 ms | 0.27 ms | 0.15 ms |
 
 These individual samples do not establish a latency guarantee or a cause for the earlier 43.32 ms sample. No geometry is prepared or transmitted by these ownership changes.
+
+## Frozen build photographs
+
+Preparation, bitmap decode, thumbnail encoding, SHA-256 and retained-content verification run in `kit/photo.worker.ts`. The interaction thread passes immutable Blobs and bounded observation metadata through existing strict IndexedDB transactions. It never converts full-size raster bytes or serializes images into JSON. Thumbnails use at most a 320-pixel longest edge. Only an enlarged selection creates an original-image object URL, and view cleanup revokes each URL.
+
+The storage ceiling is 256 MiB of unique original-plus-thumbnail content and 2,000 associations, separate from frozen Kit storage. Per-step metadata is bounded to 20 photographs. Duplicate imports at one destination reuse the association, and identical originals across builds share retained bytes. Completion writes still read only their original build record. Deletion scans bounded observation metadata and removes unreferenced content in the same transaction as the build record.
+
+The November 20, 2026 observation used macOS arm64, Node 26.13.0 and headless Chrome through `openApp`. The documentation harness served the development app because this checkout had no production bundle. Two builds were created through ordinary Build controls. Generated PNG data, including bounded trailing padding, exercised the exact original-byte ceiling without a camera. The largest image was 4,096 × 4,096 pixels and 20,971,520 original bytes. Its 320 × 320 JPEG thumbnail occupied 1,360 bytes.
+
+| Observation | Result |
+| --- | ---: |
+| Worker preparation through available thumbnail, including startup, decoding and hashing | 202.34 ms |
+| First durable association, including worker verification and transaction commit | 394.71 ms |
+| Preparing and attaching eighteen additional generated images | 3,312.79 ms |
+| One build at the twenty-photo step limit | 268,435,456 unique image bytes |
+| Observation index at that step and byte ceiling | 7,663 UTF-8 JSON bytes |
+| Twenty retained builds, with the stress image shared into eighteen additional builds | 268,435,456 unique image bytes |
+| Observation index for that twenty-build workload | 13,135 UTF-8 JSON bytes |
+| Refusing an addition at a 2,000-association fixture | 60.25 ms |
+| Deleting one association from that fixture | 5.56 ms |
+
+The one-build baseline already contained the small generated bracket image used by the help article. After adding the maximum-size stress image, those two associations retained 20,990,828 unique bytes and an 835-byte index. Filling its step to twenty images reached the separate 256 MiB ceiling exactly. The second ordinary-control build remained without an attachment. Eighteen additional records were created through the production group store and shared the stress image without increasing image content bytes.
+
+The metadata-limit observation created 100 builds through the production store, then seeded the cross-product of their identities, two retained guide steps and twenty already-retained images into the real IndexedDB observation index. That bounded fixture contained 2,000 distinct associations. Refusal and deletion then used the unmodified production photograph store. This measures bounded metadata processing, not the cumulative cost of importing 2,000 files. The refused operation includes image verification before transaction refusal.
+
+A Chrome main-thread CPU profile sampled 6.39 ms of self time in `buildPhotos.ts`, 9.81 ms in `keyValueAtomic.ts` and 17.92 ms in the shared worker RPC helper across the whole setup and limit workload. These are sampled self times, not complete interaction latency or longest-task bounds. The profile also includes 92.09 ms of fixture-only synchronous Kit serialization from the scratch setup. Ordinary Build creation retains its existing worker path. No production image conversion or hashing runs on the interaction thread.
+
+Twenty sequential original-image opens included real store reads, worker hash checks, browser decoding and URL revocation. They ranged from 79.20 to 239.28 ms. After explicit garbage collection before and after that sequence, Chrome reported JavaScript heap use of 83,673,748 and 83,699,404 bytes, a 25,656-byte increase. Backing storage remained 78,424,640 bytes. These readings exclude physical IndexedDB disk usage, native decoded-image caches, peak worker memory and GPU memory. They establish neither a memory leak bound nor production, Linux or Windows latency. Raw measurements, the main-thread profile and the capture log remain in `scratch/photo-measurements.json`, `scratch/photo-main-thread-profile.json` and `scratch/photo-capture.log`.

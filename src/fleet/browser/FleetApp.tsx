@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Button, ErrorBoundary } from '../../design-system';
 import { fleetRequest } from './client';
+import { evidenceFromFragment } from '../buildReference';
 import { FleetSignIn } from './FleetSignIn';
 import { FleetAccess } from './FleetAccess';
 import { FleetInventory } from './FleetInventory';
 
 export function FleetApp() {
+  const [buildLink] = useState(() => evidenceFromFragment(location.hash));
   const [enrolling] = useState(() => Boolean(new URLSearchParams(location.hash.slice(1)).get('token')));
   const [managesAccess, setManagesAccess] = useState(false);
   const [access, setAccess] = useState(false);
@@ -26,7 +28,9 @@ export function FleetApp() {
 
   useEffect(() => {
     if (!enrolling) loadSession();
-  }, [enrolling]);
+
+    if (buildLink) history.replaceState(null, '', location.pathname);
+  }, [enrolling, buildLink]);
 
   async function signOut() {
     await fleetRequest('sessions/current', { method: 'DELETE' });
@@ -48,7 +52,7 @@ export function FleetApp() {
       {ready && (
         <ErrorBoundary region="Fleet">
           {org && access ? <FleetAccess key={`${org}:${credential}`} org={org} /> : null}
-          {org && !access ? <FleetInventory key={org} org={org} /> : null}
+          {org && !access ? <FleetInventory key={org} org={org} buildLink={buildLink} /> : null}
           {!org && <FleetSignIn onSignedIn={loadSession} />}
         </ErrorBoundary>
       )}

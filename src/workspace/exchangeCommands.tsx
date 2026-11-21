@@ -26,6 +26,27 @@ function drawingCommand(exports: ExportActions): Command {
   };
 }
 
+function imageCommands(exports: ExportActions): Command[] {
+  return [
+    {
+      id: 'render-image',
+      group: 'Scene',
+      label: 'Render Image',
+      icon: <PhotoIcon />,
+      keywords: 'png lighting background composition',
+      run: exports.composition.show,
+    },
+    {
+      id: 'export-image',
+      group: 'Scene',
+      label: 'Export Image',
+      icon: <PhotoIcon />,
+      keywords: 'png screenshot render download',
+      run: exports.exportImage,
+    },
+  ];
+}
+
 export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
   const { exports, files } = actions;
   const robotPackage: Command = {
@@ -128,14 +149,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
         ]
       : []),
     ...(IS_WEB_DEMO || !exports.canExportStep ? [] : [stepExport]),
-    {
-      id: 'export-image',
-      group: 'Scene',
-      label: 'Export Image',
-      icon: <PhotoIcon />,
-      keywords: 'png screenshot render download',
-      run: exports.exportImage,
-    },
+    ...imageCommands(exports),
     {
       id: 'import',
       group: 'Scene',

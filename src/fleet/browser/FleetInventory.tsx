@@ -4,10 +4,12 @@ import { timeAgo } from '../../utils/timeAgo';
 import { useInventory } from './useInventory';
 import { FleetMap } from './FleetMap';
 import { FleetSite } from './FleetSite';
+import type { FleetBuildEvidence } from '../buildReference';
+import { FleetBuildLink } from './FleetBuildLink';
 import { FleetRobot } from './FleetRobot';
 import { inventoryPlacement } from './inventoryPlacement';
 
-export function FleetInventory({ org }: { org: string }) {
+export function FleetInventory({ org, buildLink }: { org: string; buildLink?: FleetBuildEvidence | null }) {
   const inventory = useInventory(org);
   const [now, setNow] = useState(Date.now);
   const [selected, setSelected] = useState('');
@@ -60,6 +62,9 @@ export function FleetInventory({ org }: { org: string }) {
           now={now}
           onOpen={() => inventory.chooseSite(selectedRobot.facilitySite ?? '')}
         />
+      )}
+      {selectedRobot && buildLink && !inventory.error && (
+        <FleetBuildLink key={selectedRobot.id} org={org} robot={selectedRobot.id} evidence={buildLink} />
       )}
       <table className="w-full text-left text-[14px]">
         <thead>

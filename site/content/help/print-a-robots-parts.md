@@ -56,6 +56,8 @@ If you haven't saved a printer, the plate's button reads **Add Printer**. Clicki
 7. If you print with Bambu LAN, Klipper, PrusaLink or OctoPrint, read the material line in the sheet that opens, then click **Start Print**.
 8. When the plate is done, click **Mark Printed** if it doesn't already say Printed.
 
+To give each robot its own completed copies, [allocate parts to robot builds](/help/allocate-parts-to-robot-builds).
+
 If you use Bambu Studio, the plate opens in Bambu Studio and you start the print there. Bambu Connect works the same way.
 
 You can also open Print mode from **File** ▸ **Print**, from **Print** in the Build tab, or from [[⌘K]]. To slice every plate at once, choose **Slice Plates** in [[⌘K]]. A toast shows the progress and includes **Stop**.

@@ -1,4 +1,4 @@
-import { useState, type RefObject } from 'react';
+import { useRef, useState, type RefObject } from 'react';
 import { resolvePrinter, type MyPrinter, type PrinterSetup } from '../data/printers';
 import { turnedPrint, type Plate } from '../print/plan';
 import {
@@ -8,7 +8,6 @@ import {
   printRecordFor,
   readySteps,
   splitPrinted,
-  updateRecord,
   withRecord,
 } from '../print/tracker';
 import { printScopeParts } from '../print/repairPlate';
@@ -28,6 +27,10 @@ import type { GuidePlan } from '../guide/guideTypes';
 import { useDesignParameters, type DesignParameters } from './useDesignParameters';
 import type { SceneDocument } from './useSceneDocument';
 import { usePrintMode } from './usePrintMode';
+import { allocatePurchase } from '../components/build/usePurchases';
+import { errorMessage } from '../utils/errorMessage';
+import { productionCopySources } from '../kit/frozenClient';
+import { retainedPrintRecord } from '../../electron/backend/printAllocations.mjs';
 
 export type { PrintMode } from './usePrintMode';
 
@@ -60,25 +63,88 @@ function cleanPrint(print: PartPrint): PartPrint | undefined {
 }
 
 interface MarkerContext {
+  sceneId?: string;
+  labels?: string;
+  viewport: () => Pick<Viewport3DHandle, 'printMeshes'> | null;
+  marking: RefObject<Set<string>>;
   plateStatus: PlateStatusLookup;
   setRecords: (update: (prev: PrintRecord[]) => PrintRecord[]) => void;
   parts: ScenePart[];
-  printer: PrinterSetup;
+  printer: Pick<PrinterSetup, 'label'>;
+  showToast: ShowToast;
 }
 
-const plateMarker =
-  ({ plateStatus, setRecords, parts, printer }: MarkerContext) =>
-  (plate: Plate, state: PrintRecord['state']) => {
-    const existing = plateStatus(plate).record;
+async function enteredPlate(plate: Plate, context: MarkerContext) {
+  const existing = context.plateStatus(plate).record;
 
-    if (existing) return setRecords((prev) => updateRecord(prev, existing.id, { state }));
+  if (existing) return existing;
 
-    const record = printRecordFor(plate, { parts, keyOf: shapeKey, printer: printer.label, now: new Date() });
+  const meshes = await context.viewport()?.printMeshes([...new Set(plate.items.map((item) => item.id))]);
 
-    setRecords((prev) => withRecord(prev, { ...record, state }));
+  if (!meshes) throw new Error('The print geometry is missing.');
+
+  const sourceKeys = await productionCopySources({ parts: context.parts, meshes });
+
+  return printRecordFor(plate, {
+    parts: context.parts,
+    keyOf: shapeKey,
+    printer: context.printer.label,
+    now: new Date(),
+    sourceKeys,
+    labels: context.labels,
+    sceneId: context.sceneId,
+    origin: 'entered',
+  });
+}
+
+export const plateMarker = (context: MarkerContext) => async (plate: Plate, state: PrintRecord['state']) => {
+  const identity = JSON.stringify([plate.hash, plate.number]);
+
+  if (context.marking.current.has(identity)) return;
+
+  context.marking.current.add(identity);
+
+  try {
+    const source = await enteredPlate(plate, context);
+    const record = {
+      ...source,
+      state,
+      completion:
+        state === 'printed' ? { ...source.completion, enteredAt: new Date().toISOString() } : source.completion,
+    };
+
+    const saved = await allocatePurchase({ kind: 'print', record });
+    const retained = retainedPrintRecord(saved, record);
+
+    context.setRecords((prev) => withRecord(prev, retained));
+  } catch (error) {
+    context.showToast(errorMessage(error), { tone: 'error' });
+  } finally {
+    context.marking.current.delete(identity);
+  }
+};
+
+function reprintMarker({
+  records,
+  setRecords,
+  showToast,
+}: Pick<MarkerContext, 'setRecords' | 'showToast'> & { records: PrintRecord[] }) {
+  return async (id: string) => {
+    const next = markForReprint(records, id);
+
+    if (next === records) return;
+
+    try {
+      await allocatePurchase({ kind: 'print', record: next[0] });
+      setRecords((prev) => withRecord(prev, next[0]));
+    } catch (error) {
+      showToast(errorMessage(error), { tone: 'error' });
+    }
   };
+}
 
 export function usePrinting(options: PrintingOptions) {
+  const marking = useRef(new Set<string>());
   const { parts, printer, project, setProject, commitParts, showToast, viewport } = options;
   const fit = useFitTest({ ...options, parts, project, printer, viewport });
   const printingMode = usePrintMode({ jobId: options.jobId, parts, fit });
@@ -149,21 +215,25 @@ export function usePrinting(options: PrintingOptions) {
   };
 
   const fleet = usePrintFleet({
+    ...options,
     process: project.printProcess,
-    printer,
-    printers: options.printers,
-    parts,
     plates: shown?.plan.plates ?? [],
     records,
     plateStatus,
     setRecords,
     job,
+    labels: plates.key,
+    sceneId: options.jobId,
     recording: !fit.active,
     active: !!mode,
     showToast,
   });
 
-  const markPlate = plateMarker({ plateStatus, setRecords, parts, printer });
+  const markPlate = (plate: Plate, state: PrintRecord['state']) =>
+    plateMarker({ ...options, plateStatus, setRecords, marking, labels: plates.key, sceneId: options.jobId })(
+      plate,
+      state,
+    );
 
   return {
     ...printingMode,
@@ -180,7 +250,7 @@ export function usePrinting(options: PrintingOptions) {
     nextFor: fleet.nextFor,
     records,
     plateStatus,
-    markForReprint: (id: string) => setRecords((prev) => markForReprint(prev, id)),
+    markForReprint: reprintMarker({ records, setRecords, showToast }),
     fitTest: fit.parts && { parts: fit.parts, variants: fit.variants, downs: fit.downs },
     canFitTest: fit.available,
     fitCutting: fit.cutting,

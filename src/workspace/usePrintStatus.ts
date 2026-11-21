@@ -3,6 +3,7 @@ import type { MyPrinter } from '../data/printers';
 import { printBridge, type PrinterStatus } from '../print/printBridge';
 import { updateRecord } from '../print/tracker';
 import type { PrintRecord } from '../types/robotics';
+import { allocatePurchase } from '../components/build/usePurchases';
 
 const POLL_MS = 5000;
 
@@ -19,6 +20,7 @@ interface StatusOptions {
   records: PrintRecord[];
   setRecords: (update: (prev: PrintRecord[]) => PrintRecord[]) => void;
   active: boolean;
+  onError: (error: unknown) => void;
 }
 
 export const reportsStatus = (printer: MyPrinter) => !!printer.connection && printer.connection.kind !== 'bambu-studio';
@@ -26,7 +28,7 @@ export const reportsStatus = (printer: MyPrinter) => !!printer.connection && pri
 const openRecord = (records: PrintRecord[], printer: MyPrinter) =>
   records.find((r) => r.printer === printer.nickname && (r.state === 'sent' || r.state === 'printing'));
 
-export function usePrintStatus({ printers, records, setRecords, active }: StatusOptions) {
+export function usePrintStatus({ printers, records, setRecords, active, onError }: StatusOptions) {
   const [statuses, setStatuses] = useState<Record<string, PrinterStatus | null>>({});
   const polled = printers.filter((p) => reportsStatus(p) && (active || !!openRecord(records, p)));
   const ids = polled.map((p) => p.id).join('\n');
@@ -40,7 +42,13 @@ export function usePrintStatus({ printers, records, setRecords, active }: Status
 
     if (!open || !state || state === open.state) return;
 
-    setRecords((prev) => updateRecord(prev, open.id, { state }));
+    const completion =
+      state === 'printed' ? { ...open.completion, reportedAt: new Date().toISOString() } : open.completion;
+    const record = { ...open, state, completion };
+
+    void allocatePurchase({ kind: 'print', record })
+      .then(() => setRecords((prev) => updateRecord(prev, open.id, { state, completion })))
+      .catch(onError);
   });
 
   useEffect(() => {

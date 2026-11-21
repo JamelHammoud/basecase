@@ -130,7 +130,8 @@ noise are frozen alongside the ordered seeds. Both revisions always receive the 
 
 Execution is sequential. Limits are 16 Cases, 32 distinct seeds, 30 seconds per Case and 600 simulated seconds across
 both revisions, with at most 300,000 scored steps at the production model's 2 ms physics step. Recorded-effort
-reconstruction adds at most 120,000 steps for the retained failures. Policies are limited to one million weights,
+reconstruction attempts at most eight failures and adds at most 120,000 steps, including snapshots that exceed
+retention limits. Policies are limited to one million weights,
 a control interval of at least 2 ms and one billion weight applications per evaluation. Individual files are limited to 32 MiB. The aggregate
 output is bounded to 128 MiB, reserving 16 MiB for eight failure archives and model inputs and 4 MiB for reports and
 atomic writes. JSON and HTML together are capped at 1 MiB. A stop file works across platforms. POSIX interruption is

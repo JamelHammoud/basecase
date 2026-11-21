@@ -90,12 +90,14 @@ async function restoreRevision(declaration, name, context) {
   return { robot: evaluationRobot(scene, prepared), scene, meshes, controller: revision.controller };
 }
 
-async function retainFailure(result, trial, context) {
+export async function retainFailure(result, trial, context) {
   if (trial.passed) return;
 
   trial.recordingStatus = 'limit';
 
-  if (context.retained.count >= LIMITS.recordings) return;
+  if (context.retained.attempts >= LIMITS.recordings) return;
+
+  context.retained.attempts++;
 
   const { evaluationRecording } = await context.load('src/cases/evaluation.ts');
   const { evaluationReplay, readEvaluationReplay } = await context.load('src/cases/evaluationReplay.ts');
@@ -144,7 +146,6 @@ async function retainFailure(result, trial, context) {
   trial.recordingStatus = 'retained';
   trial.recording = `${id}.tries.zip`;
   trial.modelInput = `${id}.model.json`;
-  context.retained.count++;
   context.retained.bytes += archive.length + model.length;
 }
 
@@ -286,7 +287,7 @@ export async function runEvaluation(root, options, context) {
       declaration,
       report,
       output,
-      retained: { count: 0, bytes: 0 },
+      retained: { attempts: 0, bytes: 0 },
       stopped: () => cancelled || (!!options['stop-file'] && fs.existsSync(options['stop-file'])),
     });
 

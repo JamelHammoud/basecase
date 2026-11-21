@@ -855,3 +855,20 @@ Browser execution remains assigned to CI.
 The context correction's three-file changed check passed formatting, lint, documentation and types. It selected no
 unit tests. Preflight retained only the seven unchanged covering-article reminders already assessed above. A fresh
 read confirms that the context correction changes none of their commands, steps, labels or recorded states.
+
+### Oversized failure reconstruction bound
+
+Review found that the eight-failure reconstruction bound counted only successfully saved archives. Failures rejected
+by the source snapshot or archive byte limits left that count unchanged, allowing subsequent failures to reconstruct
+efforts beyond the documented 120,000-step bound. Retention now consumes one of eight attempts before reconstruction,
+including when its snapshot or archive exceeds its byte limit. Paired trial execution and scoring continue normally.
+
+`evaluationRetention.test.mjs` drives production retention with ten failed trials for each of those two limits. Before
+the fix, both declarations reported ten replay calls against an expectation of eight. They use controlled oversized
+payloads at the encoding boundary, without additional physics or CLI startup. Existing CLI workflow and matrix tests
+retain production physics, successful archive retention and portable recording coverage. Failure evidence is in
+`scratch/review-2012-retention-before.log`. Browser report and timeline assertions remain assigned to CI.
+
+The four-file review selection passed formatting, lint, docs and all four related tests across two files.
+The final check log is `scratch/review-2012-check.log`. No product strings, timeouts, retries or browser assertions
+changed.

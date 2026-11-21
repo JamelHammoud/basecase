@@ -34,7 +34,7 @@ You don't write a model file. Each time you start a simulation, Basecase writes 
 
 - **Bodies.** Each joint gets one body, which holds the parts that joint moves. A robot that walks or rolls floats free, while an arm stays bolted to the floor.
 - **Mass.** Link weights and terminal payloads include the active body fit, as in the Build tab's Weight check.
-- **Shape.** Each part collides as the convex hull of its mesh, the shape you'd get by stretching plastic wrap around the part.
+- **Shape.** A part's default collider is the convex hull of its mesh, like plastic wrap stretched around it. Generated gripper fingers use separate pieces to keep gripping recesses open.
 - **Start.** The robot starts in the pose shown on the canvas, raised until it clears the floor.
 
 An [imported world](/help/import-a-world) collides as up to 64 separate convex pieces, keeping gaps such as doorways and the space under a table. Its collider supplies the floor too, so holes stay open. The world's visible mesh or splat is separate from those hidden colliders.

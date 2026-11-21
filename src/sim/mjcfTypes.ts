@@ -26,6 +26,7 @@ export interface SimBody {
 export type WorldBehavior = 'static' | 'dynamic' | 'marker';
 
 export interface WorldItem extends ScenePart {
+  sourcePartId?: string;
   parent?: string;
   joint?: PassiveJoint;
   behavior: WorldBehavior;

@@ -282,3 +282,21 @@ The collapsed Dimensional tolerances section edits requirement names, expression
 Requirement bounds retain typed text until Add or Save, allowing signed and fractional intervals without converting partial input. Empty bounds disable saving. Deleting the requirement being edited resets its draft to Add.
 
 Renaming rewrites requirement expressions and dimension references together. Remove requirements before deleting or freezing a declaration. Unbinding or deleting a referenced part is refused until its requirement is removed. Duplication preserves shared bindings, while existing requirements keep their explicitly referenced source parts. Independent manufactured copies need separate declared dimensions. Bound parts retain the existing refusal for Library and cross-scene transfer. [Build](build.md#authored-dimensional-tolerances) owns evaluation, export evidence and current coverage.
+
+## Editable gripper fingers
+
+Select a declared `gripper_finger_mount_m3` carriage and a separate rigid box or circular cylinder. The command palette offers Make Flat Fingers and Make V Fingers on desktop. The target must declare mass and friction and rest on the floor. Existing generic gripper geometry without that declared interface is refused. The recipe defines local +X toward the opening and local +Z along the fingers.
+
+`workspace/useGripperFingers.ts` calls the existing native CAD bridge and geometry worker. Generation adds two replacement fingers, four M3 × 16 socket screws, four washers and four captive nuts. Existing jaw joint ids, axes, ranges and actuator assignments stay intact. One `commitParameters` document transaction retains both fingers, stock hardware, child references and parameter declarations. Cancellation and a changed source discard preparation before that commit.
+
+Ordinary Inspector parameters link finger length, thickness, clearance, mount height, depth and hole spacing across the pair. Parameter regeneration recompiles both fingers and carriers in the existing kernel, refreshes the stock hardware in the geometry worker, then validates the complete assembly before publishing. Unsupported geometry, unlinked mounting dimensions, obstructed driver access, impossible walls, insufficient travel or swept interference refuse the edit. Native Dimensions and Size remain ordinary editing controls, but an independently changed interface fails Finger mounts in Build.
+
+`gripperFingers/generation.test.ts` exercises native profiles and refusals. `lifecycle.test.ts` covers generation, parameter regeneration, complete undo/redo, cancellation and native reopening. `e2e/gripperFingers.e2e.test.ts` first refuses the grasp command without a gripper, then declares palette generation from Layers selection, an Inspector parameter edit and full undo/redo. Browser execution belongs to CI. [Evidence and limits](../notes/testing-cases.md#replacement-finger-launch).
+
+Generation sends the two native carriers and retained target to the geometry worker alongside compact obstacle bounds. It merges only affected carriers and generated attachments into the original part array. Unrelated parts retain their identities and geometry. Local dispatch and commit observations are in [Case performance evidence](../notes/performance-cases.md#editable-replacement-fingers).
+
+Motion validation normalizes axis directions for distance measurements without rewriting authored joint axes. Native generation tests retain scaled collinear axes and refuse nonparallel mounting faces.
+
+Freeze and Delete retains literal parameter bindings. Unbind can remove a finger binding while keeping its native CAD value. Hardware regeneration reads that current CAD thickness, so later linked length or mounting edits still work. Pair geometry and mechanical constraints remain mandatory.
+
+Finger commands also require the existing Case builder to offer the pick goal. A selected rigid object without a compatible gripper does not expose Test Grasp.

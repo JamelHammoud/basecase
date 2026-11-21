@@ -67,7 +67,8 @@ function useProjectCommits(commitProject: CommitProject, projectRef: RefObject<P
       parts: ScenePart[],
       designParameters: ProjectSettings['designParameters'],
       dimensionalRequirements = projectRef.current.dimensionalRequirements,
-    ) => commitProject({}, (p) => ({ ...p, designParameters, dimensionalRequirements }), parts),
+      joints = projectRef.current.joints,
+    ) => commitProject({}, (p) => ({ ...p, designParameters, dimensionalRequirements, joints }), parts),
     commitVersion: (parts: ScenePart[], project: ProjectSettings, scene: Snapshot['scene']) =>
       commitProject({ project: projectRef.current, scene }, () => project, parts),
     commitBoard: (parts: ScenePart[], electronicsBoard: ProjectSettings['electronicsBoard']) =>

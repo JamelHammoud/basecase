@@ -57,6 +57,7 @@ const EXPECTED_NAMES = [
   'fleetModel',
   'frameLabels',
   'frozenBuild',
+  'graspEvidence',
   'guide',
   'importRobot',
   'inputEvents',

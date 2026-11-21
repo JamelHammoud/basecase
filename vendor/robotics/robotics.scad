@@ -204,6 +204,19 @@ module linear_lift(stroke = 300, width = 70, at = 120, rail = 12) {
 }
 // Parallel gripper: a servo-driven rack-and-pinion with two fingers on a rail.
 // Origin: mounting face center (bolts to the wrist), fingers point −Z. open = jaw gap.
+module gripper_finger_mount_m3(h = 26, d = 20, spacing = 12) {
+  assert(h >= spacing + 12 && spacing >= 10 && h <= 50);
+  assert(d >= 16 && d <= 40);
+  difference() {
+    translate([-10,-d/2,-h]) cube([10,d,h]);
+    for (z = [-h/2-spacing/2,-h/2+spacing/2]) {
+      translate([-11,0,z]) rotate([0,90,0]) cylinder(d=3.4,h=12,$fn=32);
+      translate([-2.5,0,z]) rotate([0,90,0]) rotate([0,0,30]) cylinder(d=6.6,h=3,$fn=6);
+    }
+  }
+  for (i = [0,1]) port(str("mount_",i), [-10,0,-h/2+(i-0.5)*spacing], [-1,0,0], "bore", 3.4);
+}
+
 module parallel_gripper(open = 50, finger = 55, body = [80, 34, 40]) {
   diff() cuboid(body, rounding = 4, edges = "Z", anchor = TOP) {
     tag("remove") position(TOP) for (x = [-12, 12], y = [-10, 10]) translate([x, y, 0.01]) cyl(d = 3.4, h = 8, anchor = TOP); // wrist bolts

@@ -1,4 +1,5 @@
 import { once } from 'node:events';
+import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import type { Browser } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
@@ -6,6 +7,10 @@ import { CODE_PANEL_SANDBOX, codePanelDocument } from '../src/cases/console/code
 import { launchChrome } from './harness';
 
 let browser: Browser;
+
+const nestedPanel = (source: string) =>
+  `<iframe srcdoc="${source.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;')}"></iframe>` +
+  `<script>addEventListener('message', event => parent.postMessage(event.data, '*'));</script>`;
 
 beforeAll(async () => {
   browser = await launchChrome();
@@ -15,9 +20,13 @@ afterAll(async () => {
   await browser?.close();
 });
 
-it.each([true, false])(
-  'blocks panel WebRTC and TURN traffic with the WebRTC CSP directive enabled: %s',
-  async (csp) => {
+it.each([
+  { csp: true, nested: false },
+  { csp: false, nested: false },
+  { csp: false, nested: true },
+])(
+  'blocks panel WebRTC and TURN traffic with WebRTC CSP: $csp and a nested frame: $nested',
+  async ({ csp, nested }) => {
     let connections = 0;
     const server = createServer((socket) => {
       connections++;
@@ -36,6 +45,12 @@ it.each([true, false])(
 
     try {
       await page.goto('about:blank');
+
+      const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+      const policies = html.match(/<meta\s+http-equiv="Content-Security-Policy"[^>]*>/gi) ?? [];
+
+      expect(policies.length).toBeGreaterThan(0);
+      await page.setContent(`<!doctype html>${policies.join('')}<body></body>`);
       await page.evaluate(async (urls) => {
         const peer = new RTCPeerConnection({
           iceServers: [{ urls, username: 'probe', credential: 'probe' }],
@@ -50,7 +65,7 @@ it.each([true, false])(
       await page.evaluate(() => Reflect.get(window, 'probePeer').close());
 
       const controlConnections = connections;
-      const source = codePanelDocument(`<script>
+      const probe = `<script>
       const results = {};
       for (const name of ['RTCPeerConnection', 'webkitRTCPeerConnection']) {
         try {
@@ -67,7 +82,8 @@ it.each([true, false])(
           descriptor?.writable === false && descriptor?.configurable === false;
       }
       parent.postMessage({ probe: 'webrtc', results }, '*');
-    </script>`);
+    </script>`;
+      const source = codePanelDocument(nested ? nestedPanel(probe) : probe);
 
       await page.evaluate(
         ({ sandbox, document }) => {

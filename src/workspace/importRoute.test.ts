@@ -82,6 +82,7 @@ describe('import route', () => {
     expect(accept.sort()).toEqual(
       Object.values(EXPECTED)
         .flat()
+        .concat('mtl', 'bin')
         .map((ext) => `.${ext}`)
         .sort(),
     );
@@ -115,7 +116,7 @@ describe('import route', () => {
 
     routeImports(files, handlers, DESKTOP);
 
-    expect(handlers.parts).toHaveBeenCalledExactlyOnceWith([files[0], files[1]]);
+    expect(handlers.parts).toHaveBeenCalledExactlyOnceWith([files[0], files[1]], []);
     expect(handlers.svg).toHaveBeenCalledExactlyOnceWith(files[2]);
     expect(handlers.robot).toHaveBeenCalledExactlyOnceWith([files[4], files[5]]);
     expect(handlers.motion).toHaveBeenCalledExactlyOnceWith(files[6]);
@@ -124,6 +125,21 @@ describe('import route', () => {
     expect(handlers.scene).not.toHaveBeenCalled();
     expect(handlers.unknown).toHaveBeenCalledExactlyOnceWith([files[3], files[10], files[8], files[9]]);
     expect(couldntImport([files[8], files[9]])).toBe('Couldn’t import i.txt, j.doc');
+  });
+
+  it('passes MTL and BIN companions to model imports without separate error toasts', () => {
+    const parts = vi.fn();
+    const unknown = vi.fn();
+    const files = ['model.obj', 'colors.mtl', 'assembly.gltf', 'assembly.bin'].map((name) => ({ name }));
+    const noop = vi.fn();
+
+    routeImports(
+      files,
+      { parts, unknown, svg: noop, robot: noop, motion: noop, scene: noop, image: noop, data: noop },
+      DESKTOP,
+    );
+    expect(parts).toHaveBeenCalledExactlyOnceWith([files[0], files[2]], [files[1], files[3]]);
+    expect(unknown).not.toHaveBeenCalled();
   });
 
   it('is the one route for canvas drop and the Import command', () => {

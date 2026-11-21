@@ -79,7 +79,7 @@ Other files come in like this:
 - A `.mcap` or `.bag` recording, or a zip that holds a LeRobot dataset, comes in as tries on the robot in the scene. See [Import robot data as tries](/help/import-robot-data-as-tries).
 - A COCO, YOLO or Pascal VOC dataset folder or zip adds labeled images to the Library. See [Import an image dataset](/help/import-an-image-dataset).
 
-You can also choose **File** ▸ **Import**, or press [[⌘K]]. Dropping GLB, glTF or OBJ files on the canvas opens them as [Case worlds](/help/import-a-world). A dropped SPZ or PLY splat needs a collider mesh in the same drop. To bring these meshes in as parts, use **Import** instead.
+You can also choose **File** ▸ **Import**, or press [[⌘K]]. Dropping a model on the canvas imports it as parts too. To open GLB, glTF or OBJ files as [Case worlds](/help/import-a-world), press [[⌘K]] and choose **Import World**. A dropped SPZ or Gaussian PLY splat needs a collider mesh in the same drop.
 
 Other part files dropped on the canvas appear at the drop point. If you drop a `.mid` file, it plays in a Case's tries instead. See [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
 
@@ -97,9 +97,11 @@ For meshes brought in as parts with **Import**, Basecase reads each format with 
 
 If a model measures less than 1 mm across, Basecase reads it as meters instead.
 
-Basecase never simplifies a mesh, so your print keeps every triangle.
+Basecase keeps every triangle and source coordinate. Model imports have no captured-world size or triangle limit. Each mesh object and material group becomes an editable part, and the parts stay together in a group named after the file.
 
-**Note:** FBX textures don't come in with the model.
+Material colors, vertex colors, roughness, metalness, opacity and two-sided surfaces come in with the model. Include an OBJ's MTL files or a glTF's separate BIN buffers in the same pick or drop. GLB and glTF imports also read Draco and Meshopt compression.
+
+Texture maps and animation clips don't come in with model parts. Skinned and morphed meshes keep their loaded pose as static geometry.
 
 ## STEP and IGES files
 

@@ -11,7 +11,7 @@ import { readImageFile } from '../utils/imageFile';
 import { cadPartsFromFile } from './cadImport';
 import { couldntImport, isCadFileName } from './importRoute';
 import { bigCount } from '../../electron/bigCount.mjs';
-import { meshPartFromFile } from './meshImport';
+import { meshPartsFromFile } from './meshImport';
 import { modelToParts } from '../utils/libraryParts';
 import type { SnapPlacement } from '../agent/snap';
 import { modelBase, withPlacement } from './dropPreview';
@@ -101,17 +101,15 @@ function useSculptCreation(core: WorkspaceCore) {
 
 const MESH_STEP = 40;
 
-const partsFromFile = async (file: File, at: Vec3 | null): Promise<ScenePart[]> =>
-  isCadFileName(file.name)
-    ? cadPartsFromFile({ file, at, newId })
-    : [await meshPartFromFile({ file, id: newId('mesh'), at })];
+const partsFromFile = async (file: File, at: Vec3 | null, resources: File[]): Promise<ScenePart[]> =>
+  isCadFileName(file.name) ? cadPartsFromFile({ file, at, newId }) : meshPartsFromFile({ file, newId, at, resources });
 
 function useMeshImport(core: WorkspaceCore) {
   'use memo';
 
   const { docs, setSelectedIds, tool, showToast, toasts } = core;
 
-  const importMeshes = async (files: File[], at?: Vec3 | null) => {
+  const importMeshes = async (files: File[], at?: Vec3 | null, resources: File[] = []) => {
     if (files.length === 0) return;
 
     const label = files.length === 1 ? files[0].name : plural(files.length, 'mesh', 'meshes');
@@ -119,7 +117,7 @@ function useMeshImport(core: WorkspaceCore) {
     showToast(`Importing ${label}…`, { tone: 'progress' });
 
     const results = await Promise.allSettled(
-      files.map((file, i) => partsFromFile(file, at ? [at[0] + i * MESH_STEP, at[1], at[2]] : null)),
+      files.map((file, i) => partsFromFile(file, at ? [at[0] + i * MESH_STEP, at[1], at[2]] : null, resources)),
     );
     const imported = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
     const parts = imported.flat();
@@ -132,7 +130,10 @@ function useMeshImport(core: WorkspaceCore) {
     }
 
     if (failed.length > 0) {
-      showToast(couldntImport(failed), { tone: 'error' });
+      const rejection = results.find((result) => result.status === 'rejected');
+      const reason = rejection?.status === 'rejected' ? errorMessage(rejection.reason) : '';
+
+      showToast(`${couldntImport(failed)}${reason ? `. ${reason}` : ''}`, { tone: 'error' });
 
       return;
     }

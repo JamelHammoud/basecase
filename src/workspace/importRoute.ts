@@ -70,7 +70,7 @@ export function sortImports<T extends NamedFile>(files: T[], options: ImportOpti
 export const couldntImport = (files: { name: string }[]) => `Couldn’t import ${files.map((f) => f.name).join(', ')}`;
 
 export interface ImportHandlers<T> {
-  parts: (files: T[]) => void;
+  parts: (files: T[], resources: T[]) => void;
   svg: (file: T) => void;
   robot: (files: T[]) => void;
   motion: (file: T) => void;
@@ -84,9 +84,12 @@ export function routeImports<T extends NamedFile>(files: T[], handlers: ImportHa
   const sorted = sortImports(files, options);
   const [svg, ...extraSvgs] = sorted.svg;
   const [motion, ...extraMotions] = sorted.motion;
-  const unknown = [...extraSvgs, ...extraMotions, ...sorted.unknown];
+  const resources = sorted.parts.some((file) => /\.(obj|gltf)$/i.test(file.name))
+    ? sorted.unknown.filter((file) => /\.(mtl|bin)$/i.test(file.name))
+    : [];
+  const unknown = [...extraSvgs, ...extraMotions, ...sorted.unknown.filter((file) => !resources.includes(file))];
 
-  if (sorted.parts.length) handlers.parts(sorted.parts);
+  if (sorted.parts.length) handlers.parts(sorted.parts, resources);
 
   if (sorted.robot.length) handlers.robot(sorted.robot);
 
@@ -106,4 +109,5 @@ export const importAccept = ({ cad }: ImportOptions) =>
   KINDS.flatMap((kind) => KIND_EXTENSIONS[kind])
     .filter((ext) => cad || !CAD_FILE_EXTENSIONS.includes(ext))
     .map((ext) => `.${ext}`)
+    .concat('.mtl', '.bin')
     .join(',');

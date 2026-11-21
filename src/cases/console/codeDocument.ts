@@ -34,9 +34,25 @@ const scriptHash = (script: string) => {
   return `'sha256-${btoa(String.fromCharCode(...bytes))}'`;
 };
 
+const isExecutableScript = (open: string) => {
+  const attributes = [...open.matchAll(/\s+([^\s=/>]+)(?:\s*=\s*("[^"]*"|'[^']*'|[^\s>]+))?/g)];
+  const value = attributes.find((attribute) => attribute[1].toLowerCase() === 'type')?.[2] ?? '';
+  const type = value
+    .replace(/^(["'])([\s\S]*)\1$/, '$2')
+    .trim()
+    .toLowerCase();
+
+  return (
+    !type ||
+    type === 'module' ||
+    /^(?:(?:application|text)\/(?:x-)?(?:java|ecma)script|text\/(?:javascript1\.[0-5]|jscript|livescript))$/.test(type)
+  );
+};
+
 const documentHead = (policy = CODE_PANEL_CSP) =>
   '<!doctype html><meta charset="utf-8">' +
   `<meta http-equiv="Content-Security-Policy" content="${policy}">` +
+  '<meta http-equiv="Content-Security-Policy" content="script-src \'unsafe-inline\'">' +
   `<style>${codePanelTokenCss()}${BASE_STYLE}</style>` +
   `<script>${codeClientScript()}</script>`;
 
@@ -45,13 +61,18 @@ export function codePanelDocument(source: string) {
   const protectedSource = source
     .replace(/\r\n?/g, '\n')
     .replace(/\0/g, '\ufffd')
-    .replace(/(<script\b[^>]*>)([\s\S]*?)(<\/script\s*>)/gi, (_match, open: string, script: string, close: string) => {
-      const protectedScript = lockWebrtc + script;
+    .replace(
+      /(<script\b(?:[^>"']|"[^"]*"|'[^']*')*>)([\s\S]*?)(<\/script\s*>)/gi,
+      (_match, open: string, script: string, close: string) => {
+        if (!isExecutableScript(open)) return open + script + close;
 
-      hashes.add(scriptHash(protectedScript));
+        const protectedScript = lockWebrtc + script;
 
-      return open + protectedScript + close;
-    });
+        hashes.add(scriptHash(protectedScript));
+
+        return open + protectedScript + close;
+      },
+    );
   const policy = CODE_PANEL_CSP.replace("script-src 'none'", `script-src ${[...hashes].join(' ')}`);
 
   return documentHead(policy) + protectedSource;

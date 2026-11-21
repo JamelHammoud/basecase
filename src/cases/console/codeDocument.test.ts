@@ -14,6 +14,8 @@ describe('a code panel’s document', () => {
 
     expect(policy).toBeGreaterThan(0);
     expect(policy).toBeLessThan(doc.indexOf('<script>'));
+    expect(doc.indexOf('content="script-src \'unsafe-inline\'"')).toBeLessThan(doc.indexOf('<script>'));
+    expect(doc).toContain('content="script-src \'unsafe-inline\'"');
     expect(doc).toContain('basecase.event("go")</script>');
     expect(CODE_PANEL_CSP.split('; ')).toEqual([
       "default-src 'none'",
@@ -43,6 +45,35 @@ describe('a code panel’s document', () => {
     expect(lines[codeSourceFirstLine()]).toBe('<p>two</p>');
   });
 });
+
+it.each(['"left>right"', "'left>right'"])(
+  'keeps quoted script attributes intact and hashes the actual script body: %s',
+  (attribute) => {
+    const open = `<script data-label=${attribute}>`;
+    const doc = codePanelDocument(`${open}window.ran = true;\r\n</script>`);
+    const script = doc.slice(doc.indexOf(open) + open.length, doc.lastIndexOf('</script>'));
+    const window = {};
+
+    expect(doc).toContain(open);
+    expect(script).toContain('window.ran = true;\n');
+    expect(doc).toContain(`'sha256-${createHash('sha256').update(script).digest('base64')}'`);
+    runInNewContext(script, { window });
+    expect(window).toHaveProperty('ran', true);
+    expect(Object.getOwnPropertyDescriptor(window, 'RTCPeerConnection')?.writable).toBe(false);
+  },
+);
+
+it.each(['application/json', 'application/ld+json', 'importmap'])(
+  'preserves nonexecutable %s data scripts without authorizing them as code',
+  (type) => {
+    const data = '{"label":"turn left"}';
+    const source = `<script type="${type}">${data}</script>`;
+    const doc = codePanelDocument(source);
+
+    expect(doc.endsWith(source)).toBe(true);
+    expect(doc).not.toContain(createHash('sha256').update(data).digest('base64'));
+  },
+);
 
 it('blocks both peer connection constructors before panel code and prevents restoring them without CSP support', () => {
   const connect = vi.fn();

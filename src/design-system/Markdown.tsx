@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react';
-import ReactMarkdown, { Components, Options } from 'react-markdown';
+import ReactMarkdown, { Components, Options, defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock } from './CodeBlock';
 import { HexSwatch } from './HexSwatch';
@@ -64,6 +64,12 @@ const components: Components = {
   ol: ({ children }) => <ol className="my-2 pl-5 list-decimal space-y-1 marker:text-white/40">{children}</ol>,
   li: ({ children }) => <li className="pl-0.5">{children}</li>,
   a: ({ href, children }) => <MarkdownLink href={href}>{children}</MarkdownLink>,
+  img: ({ src, alt }) =>
+    src?.startsWith('data:image/') ? (
+      <img src={src} alt={alt ?? ''} />
+    ) : (
+      <MarkdownLink href={src}>{alt || src}</MarkdownLink>
+    ),
   blockquote: ({ children }) => (
     <blockquote className="my-2 pl-3 border-l-2 border-white/15 text-white/60">{children}</blockquote>
   ),
@@ -104,6 +110,9 @@ export const Markdown: React.FC<{
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkHtmlAsText, remarkHexSwatches, ...(remarkPlugins ?? [])]}
         components={components}
+        urlTransform={(url, key, node) =>
+          node.tagName === 'img' && key === 'src' && url.startsWith('data:image/') ? url : defaultUrlTransform(url)
+        }
       >
         {children}
       </ReactMarkdown>

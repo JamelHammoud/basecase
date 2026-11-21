@@ -20,6 +20,7 @@ covers:
   - electron/backend/sessionParams.mjs
   - electron/cad-kernel/sandbox/policy.mjs
   - electron/publicFetch.mjs
+  - src/design-system/Markdown.tsx
   - src/workspace/agentLanes.ts
   - src/workspace/useAgentSession.ts
   - electron/acp-3d-agent.mjs
@@ -42,6 +43,8 @@ Offline works without AI. It traces one outline from an image, or works from you
 ## It reaches only the public web
 
 The agent can read public web pages up to 8 MB and images up to 20 MB. It can't reach your local network or private addresses.
+
+Remote images in replies appear as links. Click a link to open it in your browser. Embedded images appear in the reply without a network request.
 
 ## It has time and size limits
 

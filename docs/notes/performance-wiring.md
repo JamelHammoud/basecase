@@ -74,3 +74,18 @@ The whole-app search for `routeTopology` and its corner-distance predicate found
 The test's 300- and 600-obstacle fixtures each have one matching interior point. Spying on `Math.hypot` measures 2,400 and 4,800 calls before, respectively, and one after in each fixture. These are local operation counts, without timing assertions or a claim about complete routing latency. The comparison still scans all corners and adds up to three scalar coordinate checks per candidate.
 
 No action, label or visible state changes. The existing cable-routing help steps and capture remain accurate.
+
+## Resistive motor-current replay
+
+Implementation: [Build](../guide/build.md#resistive-motor-current-replay). Numerical preparation, solving, hashing and retained-record verification run in the existing electrical worker. The tree solver uses a breadth-first edge ordering and one reverse current pass and forward voltage pass per sample. It does not allocate a dense matrix. Storage grows with samples times loads and segments, within 64 loads, 128 paired segments and 4,096 windows. The independent 4 MiB retained-record cap can refuse a network inside those individual axis limits.
+
+Local observations on 20 November 2026 used Node 26.13.0 on an arm64 Apple M5 Pro with 18 logical CPUs. The scratch workload bundled the production `electrical.worker.ts` as an IIFE, hosted its ordinary message protocol in a Node worker thread, and timed message delivery through its response. This is a numerical worker-host observation, not browser-worker or CI latency. The generated load windows came from the real `TorqueRecorder` and current model. All resistances were explicit generated controls. Preparing 4,096 current windows for 32 motors through the production recorder and retained-trace producer took 46.407 ms. Together with 32 prescribed adapter loads, this reached the 64-load limit. No electrical hardware was used.
+
+| Workload | Preparation | Solve | Worker round trip | Retained bytes | Worker heap observation |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 2 motors and 1 adapter, 9 windows | 0.430 ms | 0.078 ms | 8.207 ms | 15,580 | 17,718,928 bytes |
+| 64 loads, 128 segments, 4,096 windows | 30.450 ms | 87.282 ms | 27.379 ms to refuse retention | Refused above 4 MiB | 29,599,224 bytes |
+
+The maximum-axis trace serialized to 2,567,667 bytes. Its unrestricted pure-solver result serialized to 26,511,336 bytes. The production retention call refused its input before constructing that oversized retained result. Pure preparation and solving were measured separately to establish numerical cost at the axis limits. The figures do not claim that all axis maxima fit the storage cap. Worker startup took 83.351 ms and is outside the round-trip column. Heap observations are process-reported used heap after a reply, without forced collection, rather than isolated peak allocation.
+
+After posting another maximum-axis request to the same ready worker, termination completed in 2.648 ms including message submission. This establishes termination of that scratch worker host. The fast delivery test checks disposal of the production client and refusal of renderer fallback. Browser cancellation and late-result suppression are separate delivery observations. Concurrent repository workloads produced substantial timing variation across exploratory observations. This table retains the last observation against the final numerical inputs and establishes neither a rate nor a performance improvement. No timeout, retry, merge gate or shared performance policy changed.

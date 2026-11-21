@@ -17,6 +17,7 @@ export interface FindingActions {
 export interface FindingContext {
   readOnly?: boolean;
   focusedCheck?: string;
+  onInspectCurrent?: () => void;
   parts: ScenePart[];
   panScroll: boolean;
   actions: FindingActions;

@@ -57,6 +57,8 @@ If a saved build is open, click **Done** first to return to the editable design 
 
 If **Electrical connections** is red, open it to read the missing pin maps, source requirements or conflicting supply settings. Changing declared volts and amps doesn't change a selected product's ratings.
 
+With a saved modeled current trace, **Inspect Current** opens [Replay motor current](/help/replay-motor-current) from **Electrical connections**. It compares evidenced resistance changes without clearing unknown loads or transient requirements.
+
 ![Electrical connections reports a supply setting that disagrees with the selected module](/help/export-a-robot-schematic/supply.png)
 
 If **Board fit** is red, open it to find the affected placement, mounting hole or missing geometry. Use **Edit Board** to change its constraints, as described in [Fit an electronics board](/help/fit-an-electronics-board).

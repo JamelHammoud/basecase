@@ -1,3 +1,5 @@
+import { useSimReadyVisualStatus } from '../three/simreadyVisuals';
+import { simreadyCommands } from './simreadyCommands';
 import { useSyncExternalStore } from 'react';
 import { CommandPalette, type Command } from '../components/CommandPalette';
 import { ErrorBoundary } from '../design-system';
@@ -32,10 +34,15 @@ function OpenPalette({ inputs, onClose }: Omit<WorkspacePaletteProps, 'open'>) {
 
   useSyncExternalStore(dataLayers.subscribe, dataLayers.rows);
 
+  const status = useSimReadyVisualStatus(selection.selectedParts[0]);
+
   const facts = selectionFacts(selection.selectedParts, parts);
-  const all = [...sceneCommands(inputs), ...editCommands(inputs), ...viewCommands(inputs)].filter((c) =>
-    canRunOnSelection(c.id, facts),
-  );
+  const all = [
+    ...sceneCommands(inputs),
+    ...editCommands(inputs),
+    ...viewCommands(inputs),
+    ...simreadyCommands(inputs, status),
+  ].filter((c) => canRunOnSelection(c.id, facts));
   const running = inputs.core.caseRun;
   const commands = running.open ? leavingFirst(all, running) : all;
 

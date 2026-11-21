@@ -321,3 +321,7 @@ Motion validation normalizes axis directions for distance measurements without r
 Freeze and Delete retains literal parameter bindings. Unbind can remove a finger binding while keeping its native CAD value. Hardware regeneration reads that current CAD thickness, so later linked length or mounting edits still work. Pair geometry and mechanical constraints remain mandatory.
 
 Finger commands also require the existing Case builder to offer the pick goal. Generation requires a selected declared carriage owned by one of that builder’s jaws, so a loose spare cannot redirect generation to a different pair. A selected rigid object without a compatible gripper does not expose Test Grasp.
+
+### Saved SimReady textures
+
+A selected SimReady mesh whose visual is absent from the local cache offers Download Textures after Appearance in the Inspector, keeping sizing and placement controls first. The collision mesh remains visible while the action runs. The button uses Spinner and stays disabled during the request, then disappears when the visual is ready. Failure uses the shared error tone and keeps the download action available. [SimReady](simready.md#catalog-download-consent-coverage) owns the request and test contract.

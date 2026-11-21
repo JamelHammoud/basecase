@@ -1,3 +1,4 @@
+import { refreshSimReadyVisual } from '../three/simreadyVisuals';
 import * as THREE from 'three';
 import type { ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
@@ -57,6 +58,9 @@ export async function loadSimReady(
 
   try {
     const fetched = await platformBridge.simreadyFetch({ url: asset.url, requestId: id });
+
+    refreshSimReadyVisual(fetched.key);
+
     const robot = await importRobot(
       { kind: 'converted', url: asset.url, model: fetched.model, files: fetched.files },
       { name: asset.name, onProgress: (m) => say(`${asset.name}: ${m}`) },

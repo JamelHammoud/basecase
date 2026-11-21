@@ -9,7 +9,8 @@ let app: App;
 const SO101 = 'https://raw.githubusercontent.com/TheRobotStudio/SO-ARM100/main/Simulation/SO101/';
 const SIMREADY_SEARCH = 'https://nvidia-simready-central.hf.space/search';
 const PIXEL = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-const FR3 = 'https://huggingface.co/datasets/frankarobotics/franka-simready/blob/main/fr3/fr3.usd';
+const FR3 =
+  'https://huggingface.co/datasets/frankarobotics/simready-assets/blob/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/fr3/fr3.usd';
 
 const jointCount = () =>
   app.page.evaluate(

@@ -40,7 +40,7 @@ The sender's Basecase is newer than yours, and it saved something your version c
 
 ## “The scene’s parts are damaged”
 
-At least one part is missing its id, its kind or its position, or has damaged sheet settings. A sheet needs a supported material, a positive thickness and a usable thickness transform. Ask the sender to export the scene again.
+At least one part is missing its id, its kind or its position, or has damaged sheet settings. A sheet needs a supported material, a positive thickness and a usable thickness transform. SimReady parts must link to a supported catalog dataset with a matching visual reference. Ask the sender to export the scene again.
 
 ## The message names a world asset
 

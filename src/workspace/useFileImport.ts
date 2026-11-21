@@ -7,6 +7,7 @@ import type { PartCreation } from './usePartCreation';
 import type { PoseActions } from './usePoseActions';
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { modelFolderImports } from './modelFolders';
 import { sourceKind } from '../datasets/import/sourceKind';
 
 const OPTIONS = { cad: !IS_WEB_DEMO };
@@ -46,12 +47,13 @@ export function useFileImport(core: WorkspaceCore, { creation, pose, data }: Fil
 
     if (sourceKind(paths)) return openRobot(files, at ?? undefined, folders);
 
+    const modelImports = modelFolderImports(files, folders);
     const robotFiles: File[] = [];
 
     routeImports(
-      files,
+      modelImports.files,
       {
-        parts: (parts) => void creation.importMeshes(parts, at),
+        parts: (parts, resources) => void creation.importMeshes(parts, at, resources),
         svg: (file) => void openSvg(file),
         robot: (picked) => robotFiles.push(...picked),
         data: data.importFiles,
@@ -64,7 +66,7 @@ export function useFileImport(core: WorkspaceCore, { creation, pose, data }: Fil
       OPTIONS,
     );
 
-    if (robotFiles.length || folders.length) openRobot(robotFiles, at ?? undefined, folders);
+    if (robotFiles.length || modelImports.folders.length) openRobot(robotFiles, at ?? undefined, modelImports.folders);
   };
 
   const pickImports = async (at?: Vec3 | null) =>

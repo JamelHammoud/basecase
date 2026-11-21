@@ -89,6 +89,24 @@ const highlightLines = (edges: THREE.BufferGeometry, ctx: BuildContext, opacity:
   return lines;
 };
 
+function importedMaterial(ctx: BuildContext) {
+  const material = ctx.material();
+  const source = ctx.part.mesh?.material;
+
+  if (!source || ctx.part.role !== 'solid') return material;
+
+  material.vertexColors = Boolean(ctx.part.mesh?.colors);
+  material.name = source.name;
+  material.color.set(ctx.part.color);
+  material.roughness = source.roughness;
+  material.metalness = source.metalness;
+  material.opacity = source.opacity;
+  material.transparent = source.transparent;
+  material.side = source.doubleSided ? THREE.DoubleSide : THREE.FrontSide;
+
+  return material;
+}
+
 const importedMesh: PartBuilder = (ctx) => {
   const src = ctx.part.mesh;
 
@@ -98,7 +116,7 @@ const importedMesh: PartBuilder = (ctx) => {
 
   const geometry = sharedCreased(ctx, src, MESH_CREASE_DEG);
   const textured = texturedVisual(ctx);
-  const mesh = plainMesh(geometry, textured?.standIn ?? ctx.material(), ctx.part.role);
+  const mesh = plainMesh(geometry, textured?.standIn ?? importedMaterial(ctx), ctx.part.role);
 
   ctx.group.add(mesh);
 

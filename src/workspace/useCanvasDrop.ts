@@ -4,13 +4,11 @@ import { catalogItemFromKey } from '../data/catalog';
 import { MODEL_DRAG_TYPE, PART_DRAG_TYPE, ROBOT_DRAG_TYPE, SIMREADY_DRAG_TYPE, isSceneDrag } from '../data/dnd';
 import { isMidiFileName, loadMidiSong } from '../midi/midiSource';
 import { hasPrimaryModifier } from '../utils/os';
-import { showRoomCase, showWorldCase } from './caseCommands';
+import { openWorldFiles } from './caseCommands';
 import { droppedPart } from './dropPreview';
 import { droppedFolders, type DroppedFolder } from './droppedFolders';
 import { isImageType } from './importRoute';
-import { readDroppedWorld, splitWorldDrop } from './worldImport';
-import { registerWorldAsset } from '../cases/worldAssets';
-import { errorMessage } from '../utils/errorMessage';
+import { splitWorldDrop } from './worldImport';
 import type { Vec3 } from './types';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -76,21 +74,6 @@ export function useCanvasDrop(core: WorkspaceCore, { creation, robots, files }: 
     return true;
   };
 
-  const openWorld = async (all: File[], folders?: DroppedFolder[]) => {
-    try {
-      const prepared = await readDroppedWorld(all, folders);
-
-      if (prepared.kind === 'room') return showRoomCase(core, prepared.room);
-
-      const asset = { world: prepared.world, pieces: prepared.pieces };
-
-      registerWorldAsset(prepared.hash, asset, prepared.serializedJson);
-      showWorldCase(core, prepared.hash, asset);
-    } catch (error) {
-      showToast(errorMessage(error), { tone: 'error' });
-    }
-  };
-
   const routeFiles = async (all: File[], at?: Vec3, folders?: DroppedFolder[]) => {
     const midi = all.filter((file) => isMidiFileName(file.name));
     const remaining = all.filter((file) => !midi.includes(file));
@@ -105,9 +88,11 @@ export function useCanvasDrop(core: WorkspaceCore, { creation, robots, files }: 
       }),
     );
 
-    const dropped = splitWorldDrop(remaining);
+    const dropped = await splitWorldDrop(remaining);
 
-    await Promise.all(dropped.worlds.map((world) => openWorld(world, dropped.worldFolders ? folders : undefined)));
+    await Promise.all(
+      dropped.worlds.map((world) => openWorldFiles(core, world, dropped.worldFolders ? folders : undefined)),
+    );
     files.importFiles({ files: dropped.remaining, at, folders: dropped.worldFolders ? [] : folders });
   };
 

@@ -5,11 +5,34 @@ import type { SimModel } from '../sim/mjcfTypes';
 import { applyBodyFit } from './bodyModel';
 import type { BodyFit } from './bodyTypes';
 
+export interface BodyReplayBudget {
+  remainingSteps: number;
+  cancelled?: () => boolean;
+}
+
+export class BodyReplayStopped extends Error {
+  readonly reason: 'cancelled' | 'budget';
+
+  constructor(reason: 'cancelled' | 'budget') {
+    super(reason);
+    this.reason = reason;
+  }
+}
+
+function spendStep(budget: BodyReplayBudget) {
+  if (budget.cancelled?.()) throw new BodyReplayStopped('cancelled');
+
+  if (budget.remainingSteps <= 0) throw new BodyReplayStopped('budget');
+
+  budget.remainingSteps--;
+}
+
 export interface BodyReplayInput {
   mj: MainModule;
   model: SimModel;
   robot: string;
   run: RobotRun;
+  budget?: BodyReplayBudget;
 }
 
 export function replayBody(input: BodyReplayInput, fit: BodyFit): number[][] {
@@ -45,6 +68,8 @@ function replayFrames(engine: SimEngine, input: BodyReplayInput & { indices: num
     const until = (status.at - firstAt) / 1000;
 
     while (engine.data.time + engine.dt / 2 < until) {
+      if (input.budget) spendStep(input.budget);
+
       const at = firstAt + engine.data.time * 1000;
 
       while (intent + 1 < run.intents.length && run.intents[intent + 1].at <= at + 1e-6) intent++;

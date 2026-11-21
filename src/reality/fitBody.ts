@@ -2,7 +2,7 @@ import type { MainModule } from '@mujoco/mujoco';
 import type { RobotRun } from '../robot/runBuffer';
 import type { SimModel } from '../sim/mjcfTypes';
 import { replayBody, type BodyReplayInput } from './bodyReplay';
-import type { BodyCalibration, BodyFit } from './bodyTypes';
+import type { BodyCalibration } from './bodyTypes';
 import { bodyErrorUnits, bodyRunWindow, excitedBodyJoints } from './bodyRun';
 import { bodyKey } from './bodyLayout';
 import { prepareBodyResiduals, type BodyResidual } from './bodyResiduals';
@@ -10,56 +10,13 @@ import { loadedMujoco } from './calibrate';
 import { BODY_RUNG } from './ladder';
 import { levenbergMarquardt } from './leastSquares';
 import { median } from './verdict';
+import { bodyParameters, emptyBodyFit, unpackBodyParameters, type BodyParameter } from './bodyParameters';
 
 export interface BodyFitRequest {
   model: SimModel;
   run: RobotRun;
   robot: string;
   mj?: MainModule;
-}
-
-interface Parameter {
-  name: string;
-  kind: 'massScales' | 'payloadKg' | 'floorFrictionScale';
-  lower: number;
-  upper: number;
-}
-
-const emptyFit = (): BodyFit => ({ massScales: {}, payloadKg: {}, floorFrictionScale: 1 });
-
-function parameters(model: SimModel, robot: string): Parameter[] {
-  const target = model.robots.find((r) => r.key === robot);
-  const bodies = model.bodies.filter((b) => b.robot === robot && (b.joint || target?.floating));
-  const masses: Parameter[] = bodies.map((b) => ({
-    name: b.name,
-    kind: 'massScales',
-    lower: Math.log(0.25),
-    upper: Math.log(4),
-  }));
-  const payloads: Parameter[] = bodies
-    .filter((b) => model.bodyPayloads?.[b.name])
-    .map((b) => ({ name: b.name, kind: 'payloadKg', lower: 0, upper: 20 }));
-  const friction: Parameter[] = target?.floating
-    ? [{ name: '', kind: 'floorFrictionScale', lower: Math.log(0.1), upper: Math.log(4) }]
-    : [];
-
-  return [...masses, ...payloads, ...friction];
-}
-
-function unpack(params: Parameter[], values: number[]): BodyFit {
-  const fit = emptyFit();
-
-  params.forEach((p, i) => {
-    if (p.kind === 'floorFrictionScale') {
-      fit.floorFrictionScale = Math.exp(values[i]);
-
-      return;
-    }
-
-    fit[p.kind][p.name] = p.kind === 'payloadKg' ? values[i] * 0.1 : Math.exp(values[i]);
-  });
-
-  return fit;
 }
 
 function usable({ model, robot, run }: BodyFitRequest): boolean {
@@ -107,7 +64,7 @@ function believable(run: RobotRun, fittedError: number, joints: number[]): boole
   return fittedError < median(spreads) * 0.35;
 }
 
-function fitRun(ctx: BodyReplayInput, params: Parameter[], residual: BodyResidual) {
+function fitRun(ctx: BodyReplayInput, params: BodyParameter[], residual: BodyResidual) {
   const cache = new Map<string, number[][]>();
   const predict = (values: number[]) => {
     const key = values.join(',');
@@ -115,7 +72,7 @@ function fitRun(ctx: BodyReplayInput, params: Parameter[], residual: BodyResidua
 
     if (saved) return saved;
 
-    const result = replayBody(ctx, unpack(params, values));
+    const result = replayBody(ctx, unpackBodyParameters(params, values));
 
     cache.set(key, result);
 
@@ -131,10 +88,10 @@ function fitRun(ctx: BodyReplayInput, params: Parameter[], residual: BodyResidua
     residual: (values) => residual(predict(values)),
   });
 
-  return { fit: unpack(params, solved.x), predicted: predict(solved.x) };
+  return { fit: unpackBodyParameters(params, solved.x), predicted: predict(solved.x) };
 }
 
-function frictionStart(params: Parameter[], residual: (values: number[]) => Float64Array): number[] {
+function frictionStart(params: BodyParameter[], residual: (values: number[]) => Float64Array): number[] {
   const index = params.findIndex((p) => p.kind === 'floorFrictionScale');
   const initial = params.map(() => 0);
 
@@ -157,7 +114,7 @@ export async function fitBody(asked: BodyFitRequest): Promise<BodyCalibration> {
     version: 0,
     verdict: 'cant-tell',
     robot: request.robot,
-    fit: emptyFit(),
+    fit: emptyBodyFit(),
     evidence: { presetErrorRad: 0, fittedErrorRad: 0, gain: 0 },
     modelFingerprint: request.model.robots.find((r) => r.key === request.robot)?.fingerprint ?? '',
     bodyKeys: Object.fromEntries(
@@ -174,11 +131,11 @@ export async function fitBody(asked: BodyFitRequest): Promise<BodyCalibration> {
   const units = bodyErrorUnits(request.model, request.run, joints);
   const residuals = prepareBodyResiduals(request.run, joints);
   const ctx = { ...request, mj: request.mj ?? (await loadedMujoco()) };
-  const presetErrorRad = error(residuals.check(replayBody(ctx, emptyFit())));
+  const presetErrorRad = error(residuals.check(replayBody(ctx, emptyBodyFit())));
 
   if (presetErrorRad < 1e-6) return { ...result, evidence: { ...result.evidence, presetErrorRad, units } };
 
-  const fitted = fitRun(ctx, parameters(request.model, request.robot), residuals.fit);
+  const fitted = fitRun(ctx, bodyParameters(request.model, request.robot), residuals.fit);
   const fittedErrorRad = error(residuals.check(fitted.predicted));
   const gain = 1 - fittedErrorRad / presetErrorRad;
   const kept = Number.isFinite(gain) && gain >= BODY_RUNG.passGain && believable(request.run, fittedErrorRad, joints);
@@ -186,7 +143,7 @@ export async function fitBody(asked: BodyFitRequest): Promise<BodyCalibration> {
   return {
     ...result,
     verdict: kept ? 'measured' : 'cant-tell',
-    fit: kept ? fitted.fit : emptyFit(),
+    fit: kept ? fitted.fit : emptyBodyFit(),
     evidence: { presetErrorRad, fittedErrorRad, gain, units },
   };
 }

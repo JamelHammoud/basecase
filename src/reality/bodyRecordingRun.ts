@@ -17,7 +17,9 @@ export function readBodyRecording({ session, joints, motion }: BodyRecordingRequ
 
   if (!log || (motion && !recordedMotionMatches(session, motion))) return null;
 
-  if (!log.statuses.length) return motion ? emptyRecordedMotion(joints, motion) : null;
+  if (motion) return { ...bodyRunFromLog(log, joints), observations: motion.backend };
+
+  if (!log.statuses.length) return null;
 
   const end = log.statuses.at(-1)!.t;
   const statuses = log.statuses.filter((sample) => sample.t >= end - LIMITS.durationMs / 1000);
@@ -27,19 +29,18 @@ export function readBodyRecording({ session, joints, motion }: BodyRecordingRequ
 
   if (previous) intents.unshift(previous);
 
+  return bodyRunFromLog({ ...log, statuses, intents }, joints);
+}
+
+function bodyRunFromLog(log: OperateLog, joints: string[]): RobotRun {
   return {
-    ...(motion ? { observations: motion.backend } : {}),
     joints: [...joints],
-    statuses: statuses.map((sample) => ({ at: sample.t * 1000, positions: sample.q })),
-    intents: intents.map((sample) => ({ at: sample.t * 1000, joints: sample.q })),
+    statuses: log.statuses.map((sample) => ({ at: sample.t * 1000, positions: sample.q })),
+    intents: log.intents.map((sample) => ({ at: sample.t * 1000, joints: sample.q })),
     faultJoint: null,
     faultAt: 0,
     message: '',
   };
-}
-
-function emptyRecordedMotion(joints: string[], motion: MotionRecording): RobotRun {
-  return { joints, statuses: [], intents: [], faultJoint: null, faultAt: 0, message: '', observations: motion.backend };
 }
 
 function checkedSession(text: string, joints: number): OperateLog | null {

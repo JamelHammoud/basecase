@@ -59,9 +59,13 @@ function storage() {
   };
 }
 
-it.each(['completed', 'cancelled'] as const)(
-  'reopens exact recommendations and actual %s observations without current scene inputs',
-  async (completion) => {
+it.each([
+  ['completed', true, 2],
+  ['cancelled', true, 0.08],
+  ['cancelled', false, 0],
+] as const)(
+  'reopens exact recommendations and actual %s observations with commands %s without current scene inputs',
+  async (completion, commandsPresent, seconds) => {
     const store = storage();
     const recommendation = await store.remember(original);
     const bodyMotion = {
@@ -82,8 +86,8 @@ it.each(['completed', 'cancelled'] as const)(
       source: 'operate',
       input: null,
       startedAt: new Date(0).toISOString(),
-      seconds: completion === 'completed' ? 2 : 0,
-      frames: completion === 'completed' ? 21 : 0,
+      seconds,
+      frames: completion === 'completed' ? 20 : 0,
       rate: 10,
       seed: 0,
       sourceTry: null,
@@ -94,14 +98,19 @@ it.each(['completed', 'cancelled'] as const)(
     const lines = [{ k: 'motion', t: 0, ...bodyMotion }];
     const statuses =
       completion === 'completed'
-        ? Array.from({ length: 21 }, (_, frame) => ({
+        ? Array.from({ length: 20 }, (_, frame) => ({
             k: 'status',
-            t: frame / 10,
+            t: (frame + 1) / 10,
             q: recommendation.joints.map(() => frame / 10000),
           }))
         : [];
+    const commands = (commandsPresent ? [0.025, 0.05, 0.075] : []).map((t) => ({
+      k: 'intent',
+      t,
+      q: recommendation.joints.map(() => t / 10),
+    }));
     const session =
-      [...lines, ...statuses, { k: 'motion-end', t: stored.seconds, completion }]
+      [...lines, ...commands, ...statuses, { k: 'motion-end', t: stored.seconds, completion }]
         .map((line) => JSON.stringify(line))
         .join('\n') + '\n';
     const accepted = readStoredTry(JSON.parse(JSON.stringify(stored)));
@@ -122,7 +131,9 @@ it.each(['completed', 'cancelled'] as const)(
     expect(reopened?.request.run.statuses.map((status) => status.positions)).toEqual(
       statuses.map((status) => status.q),
     );
-    expect(reopened?.request.run.intents).toEqual([]);
+    expect(reopened?.request.run.intents).toEqual(
+      commands.map((command) => ({ at: command.t * 1000, joints: command.q })),
+    );
     expect(reopened?.sessionHash).toBe(await sha256(session));
     expect((await store.read(recommendation))?.motion).toEqual(original.motion);
     expect(

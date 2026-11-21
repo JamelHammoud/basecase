@@ -5,6 +5,15 @@ import { BodyAnalysisRefusal } from './BodyAnalysisRefusal';
 import { BodyExperimentMethod } from './BodyExperimentMethod';
 import { BodyAnalysisSourceStatus } from './BodyAnalysisSourceStatus';
 
+function canFitExperiment(analysis: BodyAnalysisView): boolean {
+  return (
+    !analysis.pending &&
+    analysis.applicable &&
+    analysis.result?.kind === 'analyzed' &&
+    analysis.experiment?.recording.completion === 'completed'
+  );
+}
+
 export function BodyAnalysis({ analysis }: { analysis: BodyAnalysisView }) {
   return (
     <Modal
@@ -36,13 +45,7 @@ export function BodyAnalysis({ analysis }: { analysis: BodyAnalysisView }) {
         {analysis.result?.kind === 'refused' && <BodyAnalysisRefusal reason={analysis.result.reason} />}
         {analysis.experiment && <BodyExperimentMethod analysis={analysis} />}
         {analysis.experiment && (
-          <Button
-            variant="secondary"
-            disabled={
-              analysis.pending || !analysis.applicable || analysis.experiment.recording.completion !== 'completed'
-            }
-            onClick={analysis.fit}
-          >
+          <Button variant="secondary" disabled={!canFitExperiment(analysis)} onClick={analysis.fit}>
             Fit Body
           </Button>
         )}

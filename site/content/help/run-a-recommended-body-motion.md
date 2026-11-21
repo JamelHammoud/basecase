@@ -59,6 +59,6 @@ You can find the recording under **Tries** in **Library**. See [Open a try from 
 
 To reopen its analysis, choose that recording in **Analyze Try**. You can read its original recommendation and observations after design edits. **Out of date** marks evidence that no longer matches the source.
 
-**Fit Body** uses that selected recording. You can’t activate a body calibration with unsupported dynamics, even if the predicted motion had a higher information score.
+**Fit Body** uses that selected recording. It stays unavailable for unsupported dynamics, even if the predicted motion had a higher information score.
 
 The motion bounds are simulation declarations. They aren’t hardware safety limits, and you can’t drive real devices with this workflow.

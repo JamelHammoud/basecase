@@ -42,7 +42,7 @@ it(
     await page.getByRole('button', { name: 'Method', exact: true }).press('Enter');
     expect(await page.getByText('Observations:', { exact: false }).textContent()).toMatch(/\d/);
     await expectBodyMotionLayout(page);
-    await page.getByRole('button', { name: 'Fit Body', exact: true }).press('Enter');
+    expect(await page.getByRole('button', { name: 'Fit Body', exact: true }).isDisabled()).toBe(true);
     expect(
       await page.evaluate(() => (window as unknown as { __studio: BodyMotionStudio }).__studio.bodyCalibrations()),
     ).toEqual(before);

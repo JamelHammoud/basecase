@@ -1224,6 +1224,22 @@
   },
   {
     "file": "e2e/workbenchPlacement.e2e.test.ts",
+    "test": "undoes an entered placement and reopens it through scene persistence",
+    "issue": 2021,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44889841702 clicked Rehearse but no entered-placement output appeared at line 79 in either attempt. Undo, save and reload were never reached, so this does not establish a persistence failure or the cause of the separate applicability failure. Owner #2021 keeps preparation, worker completion, source guards and evidence installation separate. Linux and macOS retain both browser stories. Fast placement, source identity, history, scene-file persistence, transport and actual WASM rehearsal coverage remain active on Windows. Restore this path only after a demonstrated correction and ten baseline and ten candidate equal-load Windows observations with retries disabled and existing assertions and deadlines intact."
+  },
+  {
+    "file": "e2e/renderComposition.e2e.test.ts",
+    "test": "keeps composition fields readable on a narrow canvas and cancels drafts before closing",
+    "issue": 2022,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44889841702 reached palette opening and Escape, then its z-95 backdrop intercepted Preview clicks until the unchanged 30000 ms deadline in both attempts. Rendering and cancellation were never reached. The log does not distinguish keyboard focus, Escape delivery and palette closure. Owner #2022 traces this separately from PNG delivery and Linux renderer setup. Windows retains saved-settings palette restoration and fast composition scene, settings, client, lifecycle and renderer coverage. Linux and macOS retain the field and cancellation story. Restore this path only after a demonstrated correction and ten baseline and ten candidate equal-load Windows observations with retries disabled and existing assertions and deadlines intact."
+  },
+  {
+    "file": "e2e/workbenchPlacement.e2e.test.ts",
     "test": "rehearses an existing arm Case at an entered placement and refuses an unreachable base without daemon commands",
     "issue": 2021,
     "until": "2026-11-28",
@@ -1236,7 +1252,7 @@
     "issue": 2022,
     "until": "2026-11-28",
     "platform": "win32",
-    "reason": "Check 44878070469 retained an unhandled 30000 ms download-event rejection from an earlier attempt even though its retry passed. Owner #2022 owns worker completion, export delivery, source identity and event-promise ownership. Linux passed all three stories. Windows retains field cancellation, saved settings and the fast composition renderer pipeline. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
+    "reason": "Check 44878070469 retained an unhandled 30000 ms download-event rejection from an earlier attempt even though its retry passed. Owner #2022 owns worker completion, export delivery, source identity and event-promise ownership. Linux passed all three stories. Windows retains saved settings and the fast composition renderer pipeline. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platform coverage remains active."
   },
   {
     "file": "e2e/classroom.e2e.test.ts",

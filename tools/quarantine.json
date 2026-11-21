@@ -1269,5 +1269,37 @@
     "until": "2026-11-28",
     "platform": "linux",
     "reason": "Check 44885120824 exceeded the unchanged 15000 ms beforeAll deadline before all ten rendered occlusion assertions. The same setup path is already quarantined on Windows under #1400. MuJoCo loading, bundling, server startup, browser launch, worker readiness and shader initialization are not separately traced, so the timeout does not establish a shared platform cause. Whole-file quarantine is required because setup precedes declaration filtering. Person physics, sensing, persistence and geometry coverage remain active. Restore only after stage tracing, a demonstrated fix and ten baseline and ten candidate equal-load observations on Linux with retries disabled and existing assertions and deadlines intact. macOS remains active."
+  },
+  {
+    "file": "e2e/appearance.e2e.test.ts",
+    "test": "finishes two parts, imports a local texture, changes scale and reloads the saved scene",
+    "issue": 2028,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44885120824 observed scale 25 in live parts and IndexedDB, then reloaded both parts with scale 10 at line 144. Another attempt exhausted 180000 ms. The exact-revision Windows diagnostic 44886986248 passed in 10106.9 ms with one worker and retries disabled, confirming intermittency without a rate or cause. The final writer and reload boundary are unresolved. Priority #2028 owns separate document, autosave, version, preview, transaction and restoration traces. Linux, Original-first mixed editing and the real asset, history and portable-file matrices remain active. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. No flake rate is claimed."
+  },
+  {
+    "file": "e2e/buildPhotos.e2e.test.ts",
+    "test": "imports a photograph beside frozen CAD and reopens only its original build and step",
+    "issue": 2013,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44885120824 missed the new build button after Make at create line 18, before choosing or decoding a photograph. Existing owner #2013 retains this creation boundary separately from photo thumbnail delivery. Linux and the frozen-Kit, transactional storage and photo association matrices remain active. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. No flake rate is claimed."
+  },
+  {
+    "file": "e2e/tendons.e2e.test.ts",
+    "test": "authors and edits a remote elbow tendon in Pose, simulates it and reopens separate recorded channels",
+    "issue": 2020,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 44885120824 failed the output-motion predicate at line 60 in one attempt and never produced a saved try at line 108 in another. Existing owner #2020 keeps command delivery, physical response and recording persistence separate, including shared-app state between attempts. The independent invalid-declaration and undo/redo browser story, real WASM fixtures and recording tests remain active. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. No flake rate is claimed."
+  },
+  {
+    "file": "e2e/powerReplay.e2e.test.ts",
+    "test": "replays modeled current from Build, selects its limiting endpoint and compares an edited resistance",
+    "issue": 2016,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 44885120824 passed minimum-width Build layout, mounted another Build tab and selected the original, then exhausted 30000 ms clicking Build in openBuildReplay. The resolved tab became invisible. Active-tab handoff, panel state and actionability remain unresolved under existing owner #2016, separately from Windows electrical-row and retained-result failures. Linux retains the historical replay story and analytical solver, conservation, identity, persistence and disposal tests. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. No flake rate is claimed."
   }
 ]

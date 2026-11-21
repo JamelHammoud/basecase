@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
-import { simreadyVisual } from './simreadyVisuals';
+import { downloadSimReadyVisual, simreadyVisual, simreadyVisualStatus } from './simreadyVisuals';
 
 const { parseAsync } = vi.hoisted(() => ({ parseAsync: vi.fn() }));
 
@@ -83,4 +83,64 @@ it.each([300, 600])('groups %i visual pieces without replacing growing node list
   expect(simreadyVisual(source)).toBe(pieces);
   expect(platformBridge.simreadyFile).toHaveBeenCalledTimes(1);
   expect(geometry.attributes.position.array).toEqual(new THREE.BoxGeometry(2, 3, 4).attributes.position.array);
+});
+
+it('keeps an uncached saved visual local until the download action runs', async () => {
+  const source = part('nvidia--simready-assets--Pack--aaaaaaaaaaaa', 'body');
+
+  source.simready = {
+    url: `https://huggingface.co/datasets/nvidia/simready-assets/blob/${'a'.repeat(40)}/Pack/root.usd`,
+    name: 'Mug',
+    maker: 'NVIDIA',
+    license: '',
+  };
+
+  const read = vi.spyOn(platformBridge, 'simreadyFile').mockResolvedValue(null);
+  const fetcher = vi.spyOn(platformBridge, 'simreadyFetch').mockRejectedValue(new Error('Offline'));
+
+  expect(simreadyVisualStatus(source)).toBe('loading');
+  expect(simreadyVisual(source)).toBeNull();
+  await vi.waitFor(() => expect(simreadyVisualStatus(source)).toBe('missing'));
+  expect(read).toHaveBeenCalledTimes(1);
+  expect(fetcher).not.toHaveBeenCalled();
+  await downloadSimReadyVisual(source);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(simreadyVisualStatus(source)).toBe('error');
+  simreadyVisual(source);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});
+
+it('loads the downloaded visual once for all saved links and reuses cached visuals without fetching', async () => {
+  const source = part('nvidia--simready-assets--Ready--bbbbbbbbbbbb', 'body');
+
+  source.simready = {
+    url: `https://huggingface.co/datasets/nvidia/simready-assets/blob/${'b'.repeat(40)}/Ready/root.usd`,
+    name: 'Mug',
+    maker: 'NVIDIA',
+    license: '',
+  };
+
+  const scene = new THREE.Group();
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial());
+
+  mesh.name = 'body';
+  scene.add(mesh);
+  parseAsync.mockResolvedValue({ scene });
+
+  let downloaded = false;
+  const read = vi
+    .spyOn(platformBridge, 'simreadyFile')
+    .mockImplementation(async () => (downloaded ? new Uint8Array([1]) : null));
+  const fetcher = vi.spyOn(platformBridge, 'simreadyFetch').mockImplementation(async () => {
+    downloaded = true;
+
+    return {} as Awaited<ReturnType<typeof platformBridge.simreadyFetch>>;
+  });
+
+  simreadyVisual(source);
+  await vi.waitFor(() => expect(simreadyVisualStatus(source)).toBe('missing'));
+  await Promise.all([downloadSimReadyVisual(source), downloadSimReadyVisual(source)]);
+  expect(simreadyVisual(source)).toHaveLength(1);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(read).toHaveBeenCalledTimes(2);
 });

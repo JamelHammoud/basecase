@@ -14,13 +14,14 @@ vi.mock('../../cases/tryStore', () => ({
 it('publishes a saved recording before its completion boundary', async () => {
   let emit: (event: RobotEvent) => void = () => {};
   const events: RobotEvent[] = [];
+  const command = vi.fn(async () => ({ ok: true as const }));
   const link = recordedLink({
     onRobotEvent: (listener) => {
       emit = listener;
 
       return () => {};
     },
-    robotCommand: async () => ({ ok: true }),
+    robotCommand: command,
   });
 
   link.onRobotEvent!((event) => events.push(event));
@@ -62,6 +63,7 @@ it('publishes a saved recording before its completion boundary', async () => {
   );
 
   expect(claim.ok).toBe(true);
+  expect(command).toHaveBeenCalledWith({ cmd: 'intent', joints: [0] }, 'robot');
 
   if (!claim.ok) throw new Error(claim.message);
 

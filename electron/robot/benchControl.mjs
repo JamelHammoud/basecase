@@ -123,6 +123,9 @@ export class BenchControl {
 
     this.revision++;
     this.held = true;
+
+    if (ask.recording) this.session.pipe.hold({ joints: [...ask.binding.start], tag: this.snapshot() });
+
     this.deadline = this.clock() + ask.seconds * 1000;
     this.timer = setTimeout(
       () => this.revoke(true, ready(this.session, this.clock()) ? 'completed' : 'fault'),

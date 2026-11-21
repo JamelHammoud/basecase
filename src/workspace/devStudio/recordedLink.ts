@@ -46,6 +46,16 @@ function recorderFor(rec: Recording, event: RobotEvent, forward: Listener) {
   });
 }
 
+async function deliver(link: RobotLinkApi, rec: Recording, command: Record<string, unknown>, unit?: string) {
+  const recorder = rec.recorder;
+  const reply = (await link.robotCommand?.(command, unit)) ?? { ok: false, message: '' };
+
+  if (reply.ok && command.cmd === 'intent' && rec.state.status?.run === 'running')
+    recorder?.intent(command.joints as number[]);
+
+  return reply;
+}
+
 function observe(rec: Recording, event: RobotEvent, forward: Listener, link: RobotLinkApi) {
   const closing = event.event === 'link' && event.state !== 'connected';
 
@@ -63,7 +73,9 @@ function observe(rec: Recording, event: RobotEvent, forward: Listener, link: Rob
       recorder: rec.recorder,
       pipe: {
         idle: () => {},
-        write: (command: Record<string, unknown>) => void link.robotCommand?.(command, unitOfEvent(event)),
+        hold: (value: { joints: number[] }) =>
+          void deliver(link, rec, { cmd: 'intent', joints: value.joints }, unitOfEvent(event)),
+        write: (command: Record<string, unknown>) => void deliver(link, rec, command, unitOfEvent(event)),
       },
     };
     rec.control = new BenchControl({
@@ -124,13 +136,7 @@ export function recordedLink(link: RobotLinkApi): RobotLinkApi {
 
       if (checked && !('command' in checked)) return checked;
 
-      const applied = checked?.command ?? command;
-      const reply = (await link.robotCommand?.(applied, unit)) ?? { ok: false, message: '' };
-
-      if (reply.ok && command.cmd === 'intent' && rec.state.status?.run === 'running')
-        rec.recorder?.intent(command.joints as number[]);
-
-      return reply;
+      return deliver(link, rec, checked?.command ?? command, unit);
     },
     robotState: async (unit) => {
       const state = await link.robotState?.(unit);

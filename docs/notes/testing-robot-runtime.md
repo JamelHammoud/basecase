@@ -304,3 +304,11 @@ A further review found that the ordinary observation-window reader discarded ear
 ### Selected-motion browser setup correction
 
 The #2025 changed-browser check passed historical-evidence reopening, then failed both selected-motion suites before their test bodies ran. Their shared `beforeAll` called `expect.poll`, which Vitest rejects outside a test. Setup now waits for the same visible `data-mode="set_up"` through Playwright before clicking Test. The Run, recording, Library reopening, Stop and second-unit assertions remain intact, with unchanged deadlines and retries. Browser execution remains with CI. The aggregate Check also failed on the independent electrical container-installation boundary recorded in [Build evidence](testing-build.md#electrical-container-installation). The Vite shutdown warning does not establish another cause for either failure.
+
+### Selected-motion initial command handoff
+
+Review #2025 reproduced an old target surviving a successful recording claim. With a measured and declared start of `[0, 0]`, a previously accepted `[0.4, -0.3]` target still reached the daemon on the next pacer tick when the renderer had not sent its first owned target. That write also lacked the selected recording's ownership tag. `bodyMotionRecording.test.mjs` failed on the actual outgoing target in `scratch/review-2025-start-red.log`, while its other nine declarations passed.
+
+The claim now installs the retained first target with the new connection/revision tag before returning. The regression checks the first paced write and the retained raw intent through RobotLink and TryStore after Stop. It adds no timer, wait or command interval. Browser and native execution remain with CI.
+
+The first integration check exposed the browser recording adapter's missing `hold` implementation. The adapter now routes that initial target through its existing accepted-command recording path, and its persistence-boundary test checks the target sent to the underlying link. The final changed-file check passed formatting, lint, docs, site copy across 385 pages, types and 143 tests across 19 files. Logs are `scratch/review-2025-handoff-check.log` and `scratch/review-2025-handoff-final.log`.

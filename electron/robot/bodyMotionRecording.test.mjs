@@ -119,6 +119,26 @@ describe('selected motions as ordinary Operate recordings', () => {
     expect(parsed.robot.joints).toEqual(['a', 'b']);
   });
 
+  it('replaces the previous stream with the declared start before the first renderer target arrives', async () => {
+    expect(rig.link.command({ cmd: 'intent', joints: [0.4, -0.3] }).ok).toBe(true);
+
+    const claimed = start();
+
+    expect(claimed.ok).toBe(true);
+    now += 30;
+    await vi.advanceTimersByTimeAsync(30);
+    expect(rig.spawned[0].child.sent.filter((command) => command.cmd === 'intent')).toEqual([
+      { cmd: 'intent', joints: [0, 0] },
+    ]);
+    rig.link.command({ cmd: 'stop', control: claimed.control });
+
+    const [stored] = store.manifests(store.list().map((entry) => entry.id));
+    const log = readOperateLog(store.session(stored.id).toString());
+
+    expect(log.intents.map((entry) => entry.q)).toEqual([[0, 0]]);
+    expect(stored.bodyMotion.completion).toBe('cancelled');
+  });
+
   it.each(['stop', 'disconnect', 'fault'])('retains an interrupted %s without a completed claim', (ending) => {
     const claimed = start();
 

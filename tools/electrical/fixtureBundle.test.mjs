@@ -2,7 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { expect, it } from 'vitest';
-import { buildElectricalFixtures } from './fixtureBundle.mjs';
+import { build } from 'rolldown';
+import { fixtureBundle } from './fixtureBundle.mjs';
 
 it.each([
   ['fixtures.ts', 'acceptanceFixtures'],
@@ -14,7 +15,12 @@ it.each([
   const file = path.join(temporary, 'fixtures.mjs');
 
   try {
-    await buildElectricalFixtures({ input: `tools/electrical/${entry}`, file });
+    const result = await build({
+      ...fixtureBundle(`./${entry}`),
+      output: { file, format: 'esm', codeSplitting: false },
+    });
+
+    expect(result.output.find((entry) => entry.type === 'chunk')?.exports).toContain(exported);
 
     const fixture = await import(pathToFileURL(file).href);
     const source = await fs.readFile(file, 'utf8');

@@ -1,5 +1,13 @@
 # Build test evidence
 
+## Electrical Node fixture bundles
+
+Pull request #1975's Electrical jobs failed on Linux and Windows before any KiCad validation on November 21, 2026. Standalone Rolldown tried to open Earth's Draco decoder files with the literal `?url` suffix. Linux reported missing files and Windows reported invalid filename syntax. The aggregate Check failed because Electrical failed. The original plugin handled only Manifold's browser WASM URL, and the routing acceptance build had the same gap.
+
+Both acceptance scripts now share that configuration with explicit mappings for the two Draco browser assets as well as Manifold. The existing empty asset module is safe only for these unused browser decoder and worker paths. Other URL imports resolve to actual file URLs and are not silently discarded. The regression test bundles and imports both actual fixture entry points and checks their exported fixture producers. It does not invoke KiCad, Docker, routing tools or a browser. Linux and Windows CI retain the full native acceptance responsibility.
+
+The six-file changed check passed formatting, lint, documentation and both real-entry bundling cases under Node 26.13.1. Its related-test phase completed in 661 ms. Output is retained in `scratch/revise-1975-check.log`. The checkout uses the loop's shared dependency directory, so this result does not establish a fresh lockfile installation or hosted-platform acceptance. No timeout, retry, assertion relaxation or quarantine was added.
+
 ## Requested blocker repairs
 
 `src/workspace/agentTurnCompletion.test.ts` runs the production send loop with controlled readiness results and bridge replies. Its readiness fixture starts clean and offers a new blocker on any later check. The legacy enabled preference remains in the fixture so the former completion gate would send synthetic repairs and fail the single-send assertion. The tests also retain queued-request delivery, explicit `/fix` delivery and lane cleanup assertions.

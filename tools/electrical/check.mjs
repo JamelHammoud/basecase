@@ -5,10 +5,11 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { buildElectricalFixtures } from './fixtureBundle.mjs';
+import { build } from 'rolldown';
 import { unzipSync, strFromU8 } from 'three/examples/jsm/libs/fflate.module.js';
 import { xmlConnections } from './netlist.mjs';
 import { checkBoard } from './boardCheck.mjs';
+import { fixtureBundle } from './fixtureBundle.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const output = path.join(root, 'scratch', 'electrical', 'acceptance');
@@ -137,7 +138,10 @@ async function main() {
   try {
     const bundle = path.join(temporary, 'fixtures.mjs');
 
-    await buildElectricalFixtures({ input: 'tools/electrical/fixtures.ts', file: bundle });
+    await build({
+      ...fixtureBundle('./fixtures.ts'),
+      output: { file: bundle, format: 'esm', codeSplitting: false },
+    });
 
     const { acceptanceFixtures } = await import(pathToFileURL(bundle).href);
     const selectedName = process.argv.includes('--fixture')

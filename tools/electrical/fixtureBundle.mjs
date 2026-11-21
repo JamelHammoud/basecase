@@ -1,20 +1,22 @@
-import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { build } from 'rolldown';
 
-const root = fileURLToPath(new URL('../../', import.meta.url));
+const unusedBrowserAssets = new Set([
+  'manifold-3d/manifold.wasm?url',
+  'three/examples/jsm/libs/draco/gltf/draco_decoder.wasm?url',
+  'three/examples/jsm/libs/draco/gltf/draco_wasm_wrapper.js?url',
+]);
 const assetPrefix = '\0electrical-asset:';
 
-export function buildElectricalFixtures({ input, file }) {
-  return build({
-    input: path.resolve(root, input),
+export function fixtureBundle(input) {
+  return {
+    input: fileURLToPath(new URL(input, import.meta.url)),
     platform: 'node',
     transform: { define: { 'import.meta.env.MODE': '"production"', 'import.meta.env.BASE_URL': '"/"' } },
     plugins: [
       {
         name: 'electrical-node-assets',
         async resolveId(id, importer) {
-          if (id === 'manifold-3d/manifold.wasm?url') return path.join(root, 'tools/cli/assetUrl.mjs');
+          if (unusedBrowserAssets.has(id)) return fileURLToPath(new URL('../cli/assetUrl.mjs', import.meta.url));
 
           if (!id.endsWith('?url')) return null;
 
@@ -29,6 +31,5 @@ export function buildElectricalFixtures({ input, file }) {
         },
       },
     ],
-    output: { file, format: 'esm', codeSplitting: false },
-  });
+  };
 }

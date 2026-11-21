@@ -1,6 +1,8 @@
 import type { CaseCheckJob } from '../cases/caseCheckJob';
 
 export async function pipelineHandlers(kind: string) {
+  if (kind.includes('body')) return (await import('../reality/bodyWorkerHandlers')).bodyWorkerHandlers;
+
   if (kind.includes('study')) return (await import('../study/studyHandlers')).createStudyHandlers();
 
   if (kind.includes('worldAssetRestore')) return (await import('../cases/worldAssetRestore')).worldAssetRestoreHandlers;

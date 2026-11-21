@@ -1,6 +1,7 @@
 import { Modal, Select, Spinner } from '../../design-system';
 import type { BodyAnalysisView } from '../../workspace/useBodyAnalysis';
 import { BodyAnalysisResult } from './BodyAnalysisResult';
+import { BodyAnalysisRefusal } from './BodyAnalysisRefusal';
 
 export function BodyAnalysis({ analysis }: { analysis: BodyAnalysisView }) {
   return (
@@ -29,9 +30,14 @@ export function BodyAnalysis({ analysis }: { analysis: BodyAnalysisView }) {
           onChange={(event) => analysis.pick(event.target.value)}
         />
         {analysis.problem && <p className="text-[13px] text-amber-400">{analysis.problem}</p>}
-        {analysis.result?.kind === 'refused' && <p className="text-[13px] text-white/60">Can’t tell from this try.</p>}
+        {analysis.result?.kind === 'refused' && <BodyAnalysisRefusal reason={analysis.result.reason} />}
         {analysis.result?.kind === 'analyzed' && (
-          <BodyAnalysisResult result={analysis.result} applicable={analysis.applicable} checking={!analysis.ready} />
+          <BodyAnalysisResult
+            result={analysis.result}
+            applicable={analysis.applicable}
+            checking={!analysis.ready}
+            analysis={analysis}
+          />
         )}
       </div>
     </Modal>

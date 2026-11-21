@@ -24,7 +24,7 @@ export async function measuredBodyAnalysis(request: BodyAnalysisRequest) {
   };
 }
 
-function wasmHeapBytes(mj: MainModule): number {
+export function wasmHeapBytes(mj: MainModule): number {
   const probe = new mj.Uint8Buffer(1);
 
   try {

@@ -1,27 +1,41 @@
 import { bodyClient, bodyAnalysisMetrics } from '../../../reality/bodyClient';
+import { bodyMotionRenderMetrics } from '../../../reality/bodyMotionRenderer';
 import { rememberBodyEvidence, type BodyEvidenceSnapshot } from '../../../reality/bodyEvidence';
 import type { RobotRun } from '../../../robot/runBuffer';
 import type { SimModel } from '../../../sim/mjcfTypes';
 import { bodyRecordingContext, retainBodyRecording } from '../../../reality/bodyRecordingEvidence';
 import { withBodyEvidence } from '../../../reality/bodyEvidence';
-import { selectedUnit } from '../../../robot/robotStore';
+import { selectedUnit, robotSnapshot, robotSceneJoints, robotBenchDriving } from '../../../robot/robotStore';
 import { keepSession } from '../../../cases/tryStore';
 import type { StoredTry } from '../../../cases/tryFile';
 import type { Studio } from '../types';
 
 export default function bodyAnalysisStudio(studio: Studio) {
   return {
-    bodyAnalysisMetrics,
+    bodyAnalysisMetrics: () => ({
+      ...bodyAnalysisMetrics(),
+      preview: bodyMotionRenderMetrics(),
+      runtime: {
+        unit: selectedUnit(),
+        link: robotSnapshot().link,
+        mode: robotSnapshot().mode,
+        joints: robotSceneJoints(),
+        bench: robotBenchDriving(),
+        pose: studio().core.posing.pose,
+      },
+    }),
     seedBodyEvidence: async ({
       run,
       model,
       id,
       analyzed = false,
+      recommended = false,
     }: {
       run: RobotRun;
       model: SimModel;
       id: string;
       analyzed?: boolean;
+      recommended?: boolean;
     }) => {
       const { core } = studio();
       const project = core.docs.projectRef.current;
@@ -69,12 +83,19 @@ export default function bodyAnalysisStudio(studio: Studio) {
 
       if (!ref) throw new Error('Body evidence missing');
 
-      if (analyzed) {
-        const saved = await analyzeRetained({
-          ...context.snapshot,
-          sessionHash: ref.sessionHash,
-          request: { ...context.snapshot.request, run, source: { ...context.snapshot.request.source, recording: id } },
-        });
+      if (analyzed || recommended) {
+        const saved = await analyzeRetained(
+          {
+            ...context.snapshot,
+            sessionHash: ref.sessionHash,
+            request: {
+              ...context.snapshot.request,
+              run,
+              source: { ...context.snapshot.request.source, recording: id },
+            },
+          },
+          recommended,
+        );
 
         core.docs.updateProjectNow((current) => withBodyEvidence(current, saved));
 
@@ -90,7 +111,7 @@ export default function bodyAnalysisStudio(studio: Studio) {
   };
 }
 
-async function analyzeRetained(snapshot: BodyEvidenceSnapshot) {
+async function analyzeRetained(snapshot: BodyEvidenceSnapshot, recommended = false) {
   const client = bodyClient();
 
   try {
@@ -98,7 +119,13 @@ async function analyzeRetained(snapshot: BodyEvidenceSnapshot) {
 
     if (result.kind !== 'analyzed') throw new Error(result.reason);
 
-    return await rememberBodyEvidence({ ...snapshot, result });
+    const motion = recommended
+      ? await client.recommend({ request: snapshot.request, result, selected: [0] })
+      : undefined;
+
+    if (recommended && motion?.kind !== 'recommended') throw new Error('Motion fixture could not be recommended');
+
+    return await rememberBodyEvidence({ ...snapshot, result, motion });
   } finally {
     client.dispose();
   }

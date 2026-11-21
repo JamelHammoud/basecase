@@ -131,7 +131,7 @@ A Case is named after its goal and world, such as "Push a Box in a Corridor", an
 3. The contract's success rule and failure rules read those readings.
 4. The try passes when the success rule holds and no failure rule fires.
 
-Hand Off to a Spot and selected-object pickups also read physical contact. A contact probe is 1 while any part of the named arm touches the block, and 0 otherwise. A grip probe is 1 only while both jaws touch that block in the same frame. Moving a hand near the block or sending a close command alone never counts as a grasp.
+Hand Off to a Spot, selected-object pickups and person encounters also read physical contact. A person’s contact probe reads contact with any body of the first robot, including a rover without an end effector. A contact probe is 1 while any part of the named arm touches the block, and 0 otherwise. A grip probe is 1 only while both jaws touch that block in the same frame. Moving a hand near the block or sending a close command alone never counts as a grasp.
 
 For Hand Off, the block must rise by more than its height before transfer. It must stay in at least one gripper until placement. The donor must withdraw farther from the block's center than the gap between the 2 grasp points. In the final 0.3 s, neither arm can touch the block, its center must be within **Radius** of the spot, and its lift reading must be less than 4 mm above its initial reading.
 
@@ -165,7 +165,7 @@ A Case with generated targets scales its world to another arm’s reach, measure
 
 For [training images](/help/make-training-images), named object points, object pose variation, distractors and camera mount tolerance in millimeters scale too. Color classes and angular tolerances stay the same.
 
-Imported rooms, captured worlds and selected-object pickups keep their true size when you change robots. Selected-object pickups also retain supplied weight and friction.
+Imported rooms, captured worlds, selected-object pickups and Cases with people keep their true size when you change robots. Selected-object pickups also retain supplied weight and friction.
 
 
 ## Operate alerts
@@ -179,3 +179,5 @@ The live readings are `joint.<id>.volts`, `joint.<id>.temp_c`, `joint.<id>.veloc
 A reading older than 500 ms, a gap over 500 ms or a missing input breaks a pending duration. Missing data never counts as recovery, even inside a negated condition. Fresh healthy data recovers an active incident. Another occurrence starts a new incident.
 
 [Inspect fleet problems](/help/inspect-fleet-problems) to acknowledge an incident or open its kept try.
+
+For authored routes, body dimensions and timing limits, see [Test a person crossing](/help/test-a-person-crossing).

@@ -78,6 +78,8 @@ To have the Case react to a movement, such as a wave, name it. The agent sets it
 
 Ask for a control the panels don't have, such as a joystick or a piano, and the agent draws it as a code panel. While the Case runs, you can ask for a change in the **Agent** tab and the agent rewrites that panel in place. For the steps, see [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).
 
+Finish a simulated try before asking for changes to its Case. Changes made during recording prevent that try from being saved.
+
 ## Rename or delete a Case
 
 Basecase names a new Case after its goal and world, such as Touch the Dots. To rename it, right-click it in the **Cases** tab and choose **Rename**. Type the new name and press [[↩]], or press [[Esc]] to keep the old name. To rename the open Case, you can also choose **Rename Case** in [[⌘K]].

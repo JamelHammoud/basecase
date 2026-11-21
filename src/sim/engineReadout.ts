@@ -1,8 +1,16 @@
 import type { MjData } from '@mujoco/mujoco';
+import { Matrix4, Vector3 } from 'three';
+import { simDelta } from './mjcfFrames';
 import type { DriveHand, DriveLoop } from './drive';
 import type { SimStats } from './engineStats';
 import type { ActuatorFaults, FaultKind } from './faults';
 import type { SimModel } from './mjcfTypes';
+
+export function effectorAt(model: SimModel, poses: Float64Array, { part, point }: DriveHand): [number, number, number] {
+  const delta = simDelta(model, poses, part);
+
+  return new Vector3(...point).applyMatrix4(delta ?? new Matrix4()).toArray();
+}
 
 export interface EngineRobot {
   key: string;

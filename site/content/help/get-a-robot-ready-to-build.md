@@ -91,11 +91,11 @@ Each Case runs 20 times. On each run, Basecase changes friction, weight, servo s
 
 The Case's most common failure, such as Fell or Missed, shows under it.
 
-If a Case has a skill you kept with **Train from Tries**, the Case runs that skill instead of its scripted motion. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+If a kept **Train from Tries** skill matches the current robot and sensor settings, the Case runs that skill instead of its scripted motion. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 
 If the robot can't run a Case, the Case gets a red row that names the first thing stopping it, such as driven wheels the Case needs or a fall on hold. [Try a Case](/help/try-a-case) lists each reason. If the robot lacks what the Case needs, the row's note offers **New Case**.
 
-Cases never count toward Ready to build. To ignore one, right-click the note under it and choose **Ignore**, as you would for any other note. A Case runs again only when the robot or the Case changes. To have the agent change the robot until a red or amber Case passes, follow [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
+Cases never count toward Ready to build. To ignore one, right-click the note under it and choose **Ignore**, as you would for any other note. A Case runs again when the robot or the Case changes, including changes to camera lenses or sensor components. To have the agent change the robot until a red or amber Case passes, follow [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
 
 ![Checks on a rover with Reach a Spot passing 20 of 20](/help/get-a-robot-ready-to-build/cases-in-checks.png)
 

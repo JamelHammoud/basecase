@@ -45,7 +45,7 @@ The simulation crashed in the background, but your scene is safe.
 1. Click **Stop simulation** beside the speed buttons.
 2. Click **Simulate** to start it again.
 
-Other red text under **Simulate** explains why the model can't run. Stop the simulation, change the part or joints the message names, and start the simulation again.
+Other red text under **Simulate** explains why the model can't run. Stop the simulation, change the part, joints or Case route the message names, and start the simulation again.
 
 For a four-bar with a missing crank servo variant, ask the agent to replace that servo with the exact catalog variant you use. For inconsistent or singular joints, repair the joints. In either case, you can also insert the Sketch Path again. See [Simulate a four-bar](/help/simulate-a-four-bar).
 

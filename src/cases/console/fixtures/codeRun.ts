@@ -5,7 +5,7 @@ import { fixtureMeasures, fixtureTriangles, type FixtureRobot } from '../../../s
 import { buildMjcf } from '../../../sim/mjcf';
 import { worldDelta } from '../../../sim/mjcfFrames';
 import { Recorder, type Recording } from '../../../sim/recorder';
-import { WorldMoves } from '../../../sim/worldMoves';
+import type { WorldMoves } from '../../../sim/worldMoves';
 import { DEFAULT_PROJECT } from '../../../types/robotics';
 import { buildRig, type V3 } from '../../../utils/kinematics';
 import { stageCase, stagedEffectors } from '../../caseCast';
@@ -75,7 +75,7 @@ export async function openCodeRun(mj: MainModule, input: CodeRunInput): Promise<
 
   engine.setController(controller);
 
-  const world = new WorldMoves(mj, engine);
+  const world = engine.world;
   const recorder = new Recorder(engine, controller, world);
   const { plan } = logicPlan(staged.kase, {});
   const live = await LiveCase.start(

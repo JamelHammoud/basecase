@@ -1,6 +1,14 @@
 import type { MainModule } from '@mujoco/mujoco';
+import { personAt, preparePerson, type PreparedPerson } from '../cases/personEncounter';
 import * as THREE from 'three';
-import { worldRefusal, type WorldChange, type WorldEvent, type WorldLooks, type WorldPose } from '../cases/worldSet';
+import {
+  worldRefusal,
+  type MovableObject,
+  type WorldChange,
+  type WorldEvent,
+  type WorldLooks,
+  type WorldPose,
+} from '../cases/worldSet';
 import type { V3 } from '../utils/kinematics';
 import type { SimEngine } from './engine';
 import { quatToMj, toMj } from './mjcfFrames';
@@ -33,11 +41,13 @@ export class WorldMoves {
   private readonly mj: MainModule;
   private readonly engine: SimEngine;
   private readonly movers = new Map<string, Mover>();
-  private readonly objects: Array<{ id: string; movable: boolean }> = [];
+  private readonly objects: MovableObject[] = [];
   private readonly placed = new Map<string, WorldPose>();
   private readonly hiddenAt = new Map<string, Float64Array>();
   private shown: WorldLooks = {};
   private version = 0;
+  private readonly people: Array<{ mover: Mover; person: PreparedPerson; position: V3 }> = [];
+  private peopleStartedAt = 0;
 
   constructor(mj: MainModule, engine: SimEngine) {
     this.mj = mj;
@@ -47,7 +57,7 @@ export class WorldMoves {
     const BODY = mj.mjtObj.mjOBJ_BODY.value;
 
     for (const b of engine.sim.bodies) {
-      for (const id of b.world ?? []) this.objects.push({ id, movable: !!b.moves });
+      for (const id of b.world ?? []) this.objects.push({ id, movable: !!b.moves, person: b.moves?.person });
 
       const id = b.world?.[0];
 
@@ -70,7 +80,18 @@ export class WorldMoves {
         rgba: Float32Array.from(geoms.flatMap((g) => Array.from(model.geom_rgba.subarray(g * 4, g * 4 + 4)))),
         rest: turnOf(b.moves.rotation),
       });
+
+      if (b.moves.person)
+        this.people.push({
+          mover: this.movers.get(id)!,
+          person: preparePerson(structuredClone(b.moves.person)),
+          position: [0, 0, 0],
+        });
     }
+  }
+
+  get hasPeople(): boolean {
+    return this.people.length > 0;
   }
 
   get looksVersion(): number {
@@ -123,7 +144,7 @@ export class WorldMoves {
     for (const [id, pose] of copy.hidden) this.hiddenAt.set(id, pose);
   }
 
-  reset() {
+  reset(options: { forward?: boolean } = {}) {
     const { model, data } = this.engine;
 
     for (const m of this.movers.values()) {
@@ -145,7 +166,30 @@ export class WorldMoves {
     if (Object.keys(this.shown).length) this.version++;
 
     this.shown = {};
-    this.mj.mj_forward(model, data);
+    this.peopleStartedAt = 0;
+    this.advance(0);
+
+    if (options.forward !== false) this.mj.mj_forward(model, data);
+  }
+
+  startPeople() {
+    if (!this.hasPeople) return;
+
+    this.peopleStartedAt = this.engine.data.time;
+    this.advance(this.peopleStartedAt);
+    this.mj.mj_forward(this.engine.model, this.engine.data);
+  }
+
+  advance(time: number) {
+    for (const entry of this.people) {
+      const position = personAt(entry.person, time - this.peopleStartedAt, entry.position);
+      const offset = entry.mover.mocap * 3;
+      const into = this.engine.data.mocap_pos;
+
+      into[offset] = position[0] / 1000;
+      into[offset + 1] = -position[2] / 1000;
+      into[offset + 2] = position[1] / 1000;
+    }
   }
 
   replay(events: readonly WorldEvent[], until: number) {

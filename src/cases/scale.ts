@@ -23,13 +23,17 @@ function reachFrame(kase: Case, reachMm: number, anchor: V3) {
 const unmoved = (p: V3): V3 => p;
 
 export function movableWorld(kase: Case | null, facts: { reachMm: number; anchor: V3 }): CaseWorld {
-  const frame = kase && !kase.world.pickTarget && reachFrame(kase, facts.reachMm, facts.anchor);
+  const frame =
+    kase &&
+    !kase.world.pickTarget &&
+    !kase.world.objects.some((o) => o.person) &&
+    reachFrame(kase, facts.reachMm, facts.anchor);
 
   return { objects: kase?.world.objects ?? [], place: !frame || frame.same ? unmoved : frame.place };
 }
 
 export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
-  if (kase.world.imported || kase.world.pickTarget) return kase;
+  if (kase.world.imported || kase.world.pickTarget || kase.world.objects.some((o) => o.person)) return kase;
 
   const { s, place, same } = reachFrame(kase, reachMm, anchor);
 

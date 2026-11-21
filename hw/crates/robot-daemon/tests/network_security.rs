@@ -117,22 +117,16 @@ fn pairing_consumption_survives_restart_and_keeps_the_same_restricted_key_file()
 
 #[test]
 fn robot_identity_hashes_the_decoded_permanent_key() {
-    let pairing = robot_daemon::network::Pairing {
-        key: "00".repeat(32),
-        code: None,
-    };
+    let pairing: robot_daemon::network::Pairing =
+        serde_json::from_value(serde_json::json!({"key": "00".repeat(32), "code": null})).unwrap();
     assert_eq!(
         pairing.robot_id().unwrap(),
         "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
     );
-    let lower = robot_daemon::network::Pairing {
-        key: "ab".repeat(32),
-        code: None,
-    };
-    let upper = robot_daemon::network::Pairing {
-        key: "AB".repeat(32),
-        code: None,
-    };
+    let lower: robot_daemon::network::Pairing =
+        serde_json::from_value(serde_json::json!({"key": "ab".repeat(32), "code": null})).unwrap();
+    let upper: robot_daemon::network::Pairing =
+        serde_json::from_value(serde_json::json!({"key": "AB".repeat(32), "code": null})).unwrap();
     assert_eq!(lower.robot_id().unwrap(), upper.robot_id().unwrap());
 }
 
@@ -174,4 +168,102 @@ fn a_rejected_pairing_seed_stays_available_until_credentials_can_be_created() {
     assert!(Pairing::load_seed(&directory, Some("123456"), Some(&seed)).is_err());
     assert!(seed.exists());
     std::fs::remove_dir_all(directory).unwrap();
+}
+
+#[test]
+fn failed_guesses_spend_the_code_across_restart_without_replacing_the_robot_key() {
+    use robot_daemon::network::Pairing;
+    let directory = std::env::temp_dir().join(format!(
+        "pairing-guesses-{}",
+        robot_daemon::network::random_hex().unwrap()
+    ));
+    let mut pairing = Pairing::load(&directory, Some("123456")).unwrap();
+    let key = pairing.key.clone();
+
+    for _ in 0..9 {
+        pairing.failed(&directory).unwrap();
+        assert_eq!(pairing.code.as_deref(), Some("123456"));
+    }
+
+    let mut restarted = Pairing::load(&directory, Some("123456")).unwrap();
+    restarted.failed(&directory).unwrap();
+    assert_ne!(restarted.code.as_deref(), Some("123456"));
+    assert_eq!(restarted.code.as_ref().unwrap().len(), 6);
+    assert_eq!(restarted.key, key);
+    assert!(!can_enroll(&restarted, "123456"));
+    assert!(can_enroll(&restarted, restarted.code.as_deref().unwrap()));
+    assert_eq!(Pairing::load(&directory, None).unwrap().code, restarted.code);
+    std::fs::remove_dir_all(directory).unwrap();
+}
+
+#[test]
+fn pairing_deadline_survives_restart_and_legacy_codes_are_replaced() {
+    use robot_daemon::network::Pairing;
+    use std::time::{Duration, SystemTime};
+    let directory = std::env::temp_dir().join(format!(
+        "pairing-expiry-{}",
+        robot_daemon::network::random_hex().unwrap()
+    ));
+    let mut pairing = Pairing::load(&directory, Some("123456")).unwrap();
+    let key = pairing.key.clone();
+    let saved: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(directory.join("pairing.json")).unwrap()).unwrap();
+    let deadline = SystemTime::UNIX_EPOCH + Duration::from_secs(saved["expires_at"].as_u64().unwrap());
+    assert!(!pairing.refresh(&directory, deadline - Duration::from_secs(1)).unwrap());
+    let mut restarted = Pairing::load(&directory, None).unwrap();
+    assert!(restarted.refresh(&directory, deadline).unwrap());
+    assert_ne!(restarted.code, pairing.code);
+    assert!(!can_enroll(&restarted, "123456"));
+    assert!(can_enroll(&restarted, restarted.code.as_deref().unwrap()));
+    assert_eq!(restarted.key, key);
+    std::fs::write(
+        directory.join("pairing.json"),
+        serde_json::to_vec(&serde_json::json!({"key": key, "code": "123456"})).unwrap(),
+    )
+    .unwrap();
+    let mut migrated = Pairing::load(&directory, None).unwrap();
+    assert_ne!(migrated.code.as_deref(), Some("123456"));
+    assert_eq!(migrated.key, key);
+    migrated.consume(&directory).unwrap();
+    assert!(!migrated
+        .refresh(&directory, deadline + Duration::from_secs(86400))
+        .unwrap());
+    assert!(migrated.code.is_none());
+    std::fs::remove_dir_all(directory).unwrap();
+}
+
+#[test]
+fn one_peer_cannot_spend_another_peers_pairing_window() {
+    use robot_daemon::network::PairingAttempts;
+    use std::time::{Duration, Instant};
+    let mut attempts = PairingAttempts::default();
+    let now = Instant::now();
+    let attacker = "192.168.1.20".parse().unwrap();
+    let owner = "192.168.1.21".parse().unwrap();
+
+    for _ in 0..5 {
+        assert!(attempts.allow(attacker, now));
+    }
+
+    assert!(!attempts.allow(attacker, now));
+    assert!(!attempts.allow("::ffff:192.168.1.20".parse().unwrap(), now));
+    assert!(attempts.allow(owner, now));
+    let pairing = serde_json::from_value(serde_json::json!({"key": "ab".repeat(32), "code": "123456"})).unwrap();
+    assert!(can_enroll(&pairing, "123456"));
+    assert!(!attempts.allow(attacker, now + Duration::from_secs(59)));
+    assert!(attempts.allow(attacker, now + Duration::from_secs(60)));
+}
+
+fn can_enroll(pairing: &robot_daemon::network::Pairing, code: &str) -> bool {
+    use robot_daemon::network::enrollment::{decrypt, encrypt, transcript, Exchange};
+    let server = Exchange::server(pairing.code.as_deref().unwrap());
+    let client = Exchange::client(code);
+    let context = transcript("nonce", &server.message, &client.message);
+    let server_message = server.message.clone();
+    let server_key = server.finish(&client.message, "nonce").unwrap();
+    let client_key = client.finish(&server_message, "nonce").unwrap();
+
+    let encrypted = encrypt(&server_key, &context, &pairing.key_bytes().unwrap()).unwrap();
+
+    decrypt(&client_key, &context, &encrypted).is_ok()
 }

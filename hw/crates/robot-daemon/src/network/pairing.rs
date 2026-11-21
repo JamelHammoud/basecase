@@ -3,13 +3,19 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::net::IpAddr;
 use std::path::Path;
+use std::time::{Duration, Instant, SystemTime};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Pairing {
     pub key: String,
     pub code: Option<String>,
+    #[serde(default)]
+    expires_at: u64,
+    #[serde(default)]
+    failures: u8,
 }
 
 pub fn random_hex() -> Result<String, String> {
@@ -56,7 +62,8 @@ impl Pairing {
 
         if path.exists() {
             let bytes = std::fs::read(&path).map_err(|error| error.to_string())?;
-            let pairing: Self = serde_json::from_slice(&bytes).map_err(|_| "The robot pairing file can't be read.")?;
+            let mut pairing: Self =
+                serde_json::from_slice(&bytes).map_err(|_| "The robot pairing file can't be read.")?;
             pairing.key_bytes()?;
 
             if pairing
@@ -65,6 +72,10 @@ impl Pairing {
                 .is_some_and(|code| code.len() != 6 || !code.bytes().all(|byte| byte.is_ascii_digit()))
             {
                 return Err("The saved pairing code needs six digits.".into());
+            }
+
+            if !pairing.refresh(directory, SystemTime::now())? {
+                pairing.show_code();
             }
 
             return Ok(pairing);
@@ -83,6 +94,8 @@ impl Pairing {
         let pairing = Self {
             key,
             code: Some(code.clone()),
+            expires_at: unix_seconds(SystemTime::now())?.saturating_add(600),
+            failures: 0,
         };
         let mut options = OpenOptions::new();
         options.write(true).create_new(true);
@@ -92,26 +105,73 @@ impl Pairing {
             .map_err(|error| error.to_string())?;
         file.sync_all().map_err(|error| error.to_string())?;
 
-        eprintln!("Pairing code: {code}");
+        pairing.show_code();
 
         Ok(pairing)
     }
 
     pub fn consume(&mut self, directory: &Path) -> Result<(), String> {
-        let replacement = Self {
-            key: self.key.clone(),
-            code: None,
-        };
+        let mut replacement = self.clone();
+        replacement.code = None;
+        replacement.expires_at = 0;
+        replacement.failures = 0;
+        replacement.save(directory)?;
+        *self = replacement;
+
+        Ok(())
+    }
+
+    pub fn refresh(&mut self, directory: &Path, now: SystemTime) -> Result<bool, String> {
+        let seconds = unix_seconds(now)?;
+
+        if self.code.is_none() || (self.expires_at > seconds && self.failures < 10) {
+            return Ok(false);
+        }
+
+        let number = u32::from_str_radix(&random_hex()?[..6], 16).map_err(|error| error.to_string())?;
+        let previous = self
+            .code
+            .as_deref()
+            .unwrap()
+            .parse::<u32>()
+            .map_err(|error| error.to_string())?;
+        let mut replacement = self.clone();
+        replacement.code = Some(format!("{:06}", (previous + 1 + number % 999_999) % 1_000_000));
+        replacement.expires_at = seconds.saturating_add(600);
+        replacement.failures = 0;
+        replacement.save(directory)?;
+        *self = replacement;
+        self.show_code();
+
+        Ok(true)
+    }
+
+    pub fn failed(&mut self, directory: &Path) -> Result<(), String> {
+        self.failures = self.failures.saturating_add(1);
+
+        if !self.refresh(directory, SystemTime::now())? {
+            self.save(directory)?;
+        }
+
+        Ok(())
+    }
+
+    fn show_code(&self) {
+        if let Some(code) = &self.code {
+            eprintln!("Pairing code: {code}");
+        }
+    }
+
+    fn save(&self, directory: &Path) -> Result<(), String> {
         let temporary = directory.join(format!(".pairing-{}.incoming", random_hex()?));
         let mut options = OpenOptions::new();
         options.write(true).create_new(true);
         secure_permissions(&mut options);
         let mut file = options.open(&temporary).map_err(|error| error.to_string())?;
-        file.write_all(&serde_json::to_vec(&replacement).map_err(|error| error.to_string())?)
+        file.write_all(&serde_json::to_vec(self).map_err(|error| error.to_string())?)
             .map_err(|error| error.to_string())?;
         file.sync_all().map_err(|error| error.to_string())?;
         std::fs::rename(temporary, directory.join("pairing.json")).map_err(|error| error.to_string())?;
-        self.code = None;
 
         Ok(())
     }
@@ -147,3 +207,33 @@ fn secure_permissions(options: &mut OpenOptions) {
 
 #[cfg(not(unix))]
 fn secure_permissions(_options: &mut OpenOptions) {}
+
+fn unix_seconds(now: SystemTime) -> Result<u64, String> {
+    now.duration_since(SystemTime::UNIX_EPOCH)
+        .map(|duration| duration.as_secs())
+        .map_err(|error| error.to_string())
+}
+
+#[derive(Default)]
+pub struct PairingAttempts {
+    recent: Vec<(IpAddr, Instant)>,
+}
+
+impl PairingAttempts {
+    pub fn allow(&mut self, peer: IpAddr, now: Instant) -> bool {
+        let peer = match peer {
+            IpAddr::V6(address) => address.to_ipv4_mapped().map(IpAddr::V4).unwrap_or(peer),
+            _ => peer,
+        };
+        self.recent
+            .retain(|(_, at)| now.duration_since(*at) < Duration::from_secs(60));
+
+        if self.recent.iter().filter(|(address, _)| *address == peer).count() >= 5 {
+            return false;
+        }
+
+        self.recent.push((peer, now));
+
+        true
+    }
+}

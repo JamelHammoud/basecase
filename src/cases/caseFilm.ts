@@ -2,7 +2,7 @@ import type { Recording } from '../sim/recorder';
 import type { ScenePart } from '../types/robotics';
 import { filmBoxes, type FilmShot } from './filmstrip';
 import type { CaseFrame, CaseResult } from './runCase';
-import { worldItem } from './schema';
+import { caseWorldItems } from './importedWorldItems';
 
 export const FILM_FRAMES = 3;
 
@@ -43,6 +43,6 @@ export function caseFilm(result: CaseResult, parts: ScenePart[], count = FILM_FR
   return {
     model: result.model,
     recording: sparseRecording(frames, nbody, dt),
-    boxes: filmBoxes(parts, result.case.world.objects.map(worldItem)),
+    boxes: filmBoxes(parts, caseWorldItems(result.case)),
   };
 }

@@ -18,7 +18,10 @@ export async function preparedCalibratedModel(
 
   const calibrated = calibratedInput(input, simCalibrations(histories));
 
-  if (input.rig.robots.some((robot) => input.project.selfContact?.[robot.key]?.enabled))
+  if (
+    input.parts.some((part) => part.gripperFinger?.role === 'finger') ||
+    input.rig.robots.some((robot) => input.project.selfContact?.[robot.key]?.enabled)
+  )
     return prepareContactModel(calibrated, options);
 
   const model = buildMjcf(calibrated);

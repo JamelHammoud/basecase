@@ -79,8 +79,14 @@ export async function expectOwnershipScrolling(app: App, id: string) {
   await expectOwnershipReadable(ownership);
 
   const bounds = (await timeline.boundingBox())!;
-  const canvas = (await app.page.locator('canvas:not([inert] *):visible').first().boundingBox())!;
+  const canvas = await timeline.evaluate((element) => {
+    const { x, y, width, height } = element.closest('[data-canvas-card]')!.getBoundingClientRect();
 
+    return { x, y, width, height };
+  });
+
+  expect(bounds.x).toBeGreaterThanOrEqual(canvas.x);
+  expect(bounds.x + bounds.width).toBeLessThanOrEqual(canvas.x + canvas.width);
   expect(bounds.y).toBeGreaterThanOrEqual(canvas.y);
   expect(bounds.y + bounds.height).toBeLessThanOrEqual(canvas.y + canvas.height);
   expect(await list.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);

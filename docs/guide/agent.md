@@ -340,3 +340,7 @@ The ordinary cable editor stores stock and ordered owner-local anchors in `proje
 The existing joint history contains the declaration, and model fingerprints include its physics. `sim/tendonPersistence.test.ts` covers the authoring transaction, history and reference remapping. [Joints and motion](joints-and-motion.md#ideal-fixed-tendons) documents the schema bounds and [simulation evidence](../notes/testing-simulate.md#ideal-tendon-transmissions) records current execution scope.
 
 Retarget URL downloads use `motionSkeletonSource` and `publicFetch` in the tool process before the existing renderer bridge call. The 8 MiB download cap and renderer fallback are documented in [Joints and motion](joints-and-motion.md#renderer-download-budgets). `electron/cad-mcp/robotTools.test.mjs` checks forwarding and refusal without adding a bridge route.
+
+## Token bridge request bodies
+
+The token agent server shares the [bounded HTTP body reader](security.md#0h-security-mandatory) with the Vite bridge. Its existing 80,000,000-byte budget now counts UTF-8 bytes before retaining a chunk. Oversized requests receive JSON 413 without invoking a local, raw or renderer handler. Split UTF-8 characters decode after the complete body arrives. `electron/readBridgeBody.test.mjs` covers byte overflow and the common reader's HTTP delivery and cancellation behavior. [Budget evidence](../notes/node.md#http-bridge-body-budgets) records the scope.

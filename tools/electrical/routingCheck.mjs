@@ -11,6 +11,7 @@ import { checkRoutedArtifacts } from './routedCheck.mjs';
 import { expectedPads } from './boardCheck.mjs';
 import { readKiCadBoard, kiCadChildren, kiCadChild } from '../../src/wiring/boardKiCad.mjs';
 import { routingExecute, nativeElectricalCli } from './routingExecute.mjs';
+import { fixtureBundle } from './fixtureBundle.mjs';
 
 if (process.argv.includes('--docker')) process.env.BASECASE_KICAD_DOCKER = '1';
 
@@ -18,15 +19,7 @@ const output = path.resolve('scratch/electrical/routing');
 
 await fs.mkdir(output, { recursive: true });
 await build({
-  input: 'tools/electrical/routeFixtures.ts',
-  platform: 'node',
-  transform: { define: { 'import.meta.env.MODE': '"production"', 'import.meta.env.BASE_URL': '"/"' } },
-  plugins: [
-    {
-      name: 'native-routing-assets',
-      resolveId: (id) => (id === 'manifold-3d/manifold.wasm?url' ? path.resolve('tools/cli/assetUrl.mjs') : null),
-    },
-  ],
+  ...fixtureBundle('./routeFixtures.ts'),
   output: { file: path.join(output, 'fixtures.mjs'), format: 'esm', codeSplitting: false },
 });
 

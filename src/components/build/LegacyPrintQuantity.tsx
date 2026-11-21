@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Modal, NumberInput } from '../../design-system';
+import { Button, FieldRow, Modal, NumberInput } from '../../design-system';
 import type { PrintedDemand } from '../../kit/allocationTypes';
 import type { Purchases } from '../../types/robotics';
 import { reconcileCopies } from '../../print/productionCopies';
@@ -70,19 +70,21 @@ export function LegacyPrintQuantity({
         title="Reconcile Quantity"
         action={{ label: 'Confirm', onClick: () => void save(), disabled }}
       >
-        {legacy.parts.map((part) => (
-          <NumberInput
-            key={part.id}
-            aria-label={part.id}
-            title={part.id}
-            value={quantities[part.id] ?? 1}
-            min={1}
-            max={50}
-            precision={0}
-            unit=""
-            onChange={(quantity) => setQuantities({ ...quantities, [part.id]: quantity })}
-          />
-        ))}
+        <div className="space-y-3">
+          {legacy.parts.map((part) => (
+            <FieldRow key={part.id} label={kit.parts.find((source) => source.id === part.id)?.name ?? part.id} group>
+              <NumberInput
+                aria-label={kit.parts.find((source) => source.id === part.id)?.name ?? part.id}
+                value={quantities[part.id] ?? 1}
+                min={1}
+                max={50}
+                precision={0}
+                unit=""
+                onChange={(quantity) => setQuantities({ ...quantities, [part.id]: quantity })}
+              />
+            </FieldRow>
+          ))}
+        </div>
       </Modal>
     </>
   );

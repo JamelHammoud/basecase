@@ -4,6 +4,7 @@ import { printBridge, type PrinterStatus } from '../print/printBridge';
 import { updateRecord } from '../print/tracker';
 import type { PrintRecord } from '../types/robotics';
 import { allocatePurchase } from '../components/build/usePurchases';
+import { retainedPrintRecord } from '../../electron/backend/printAllocations.mjs';
 
 const POLL_MS = 5000;
 
@@ -28,6 +29,13 @@ export const reportsStatus = (printer: MyPrinter) => !!printer.connection && pri
 const openRecord = (records: PrintRecord[], printer: MyPrinter) =>
   records.find((r) => r.printer === printer.nickname && (r.state === 'sent' || r.state === 'printing'));
 
+export async function retainReportedPrint(record: PrintRecord, setRecords: StatusOptions['setRecords']) {
+  const saved = await allocatePurchase({ kind: 'print', record });
+  const retained = retainedPrintRecord(saved, record);
+
+  setRecords((prev) => updateRecord(prev, record.id, retained));
+}
+
 export function usePrintStatus({ printers, records, setRecords, active, onError }: StatusOptions) {
   const [statuses, setStatuses] = useState<Record<string, PrinterStatus | null>>({});
   const polled = printers.filter((p) => reportsStatus(p) && (active || !!openRecord(records, p)));
@@ -46,9 +54,7 @@ export function usePrintStatus({ printers, records, setRecords, active, onError 
       state === 'printed' ? { ...open.completion, reportedAt: new Date().toISOString() } : open.completion;
     const record = { ...open, state, completion };
 
-    void allocatePurchase({ kind: 'print', record })
-      .then(() => setRecords((prev) => updateRecord(prev, open.id, { state, completion })))
-      .catch(onError);
+    void retainReportedPrint(record, setRecords).catch(onError);
   });
 
   useEffect(() => {

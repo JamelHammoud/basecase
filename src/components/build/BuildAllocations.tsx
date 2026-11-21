@@ -26,7 +26,7 @@ export function BuildAllocations({
   }, [frozen.record.id]);
 
   return (
-    <Section title="Allocations">
+    <Section title="Allocations" className="!px-0 !py-0 !border-b-0">
       {demand.components.map((item) => (
         <ComponentAllocation
           key={`${build.id}:${item.key}`}

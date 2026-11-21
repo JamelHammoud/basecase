@@ -72,7 +72,7 @@ export function PrintedAllocation({
 
   return (
     <div className="py-2 space-y-2" data-allocation-part={demand.partId}>
-      <div className="text-[13px]">{demand.name}</div>
+      <div className="text-[13px] break-words">{demand.name}</div>
       <div className="text-[12px] text-white/60">{`Assigned ${held.length}/${demand.qty}, available ${available.length}`}</div>
       {demand.refusal && <div className="text-[12px] text-white/60">{demand.refusal}</div>}
       {available.length > 0 && (

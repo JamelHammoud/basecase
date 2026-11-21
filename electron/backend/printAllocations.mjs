@@ -136,7 +136,8 @@ function retainedEvidence(purchases, incoming, saved) {
   const cycle = saved?.cycle ?? (incoming.sceneId ? printCycle(purchases, incoming) : undefined);
   const record = { ...incoming, cycle, completion: { ...incoming.completion, ...saved?.completion } };
 
-  if (saved?.completion?.enteredAt && ['sent', 'printing'].includes(incoming.state)) record.state = saved.state;
+  if ((saved?.completion?.enteredAt || saved?.completion?.reportedAt) && ['sent', 'printing'].includes(incoming.state))
+    record.state = saved.state;
 
   return record;
 }

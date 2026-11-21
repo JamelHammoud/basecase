@@ -38,10 +38,10 @@ export function RetainedAllocations({
   if (!components.length && !copies.length) return null;
 
   return (
-    <Section title="Retained allocations">
+    <Section title="Retained allocations" className="!px-0 !py-0 !border-b-0">
       {components.map((entry) => (
         <div key={`${entry.build.id}:${entry.demand.key}`} className="py-2 text-[13px]">
-          <div>{entry.build.name}</div>
+          <div className="break-words">{entry.build.name}</div>
           <ComponentAllocation
             returnOnly
             build={entry.build}
@@ -54,7 +54,7 @@ export function RetainedAllocations({
       ))}
       {copies.map(({ key, copy, assignment }) => (
         <div key={copy} className="py-2 text-[13px]">
-          <div>{`${assignment.build.name}: ${copy}`}</div>
+          <div className="break-all">{`${assignment.build.name}: ${copy}`}</div>
           <Button
             disabled={busy}
             onClick={() =>

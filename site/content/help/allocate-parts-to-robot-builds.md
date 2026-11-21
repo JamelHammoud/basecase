@@ -65,7 +65,11 @@ You can trace each listed copy to one recorded print attempt. After you assign a
 
 You can assign copies that match the frozen source geometry, material and declared guide-letter revision. You can’t assign completed copies from failed, canceled, incomplete or pending-reprint records.
 
-For older records, use **Reconcile Quantity** before assigning copies. Confirm the number of copies you produced for each supported part.
+Reconcile older records before assigning copies.
+
+1. Under **Allocations**, beside the printed part, click **Reconcile Quantity**.
+2. In **Reconcile Quantity**, enter the number you produced in each part's named field.
+3. Click **Confirm**.
 
 ![Explicit quantity reconciliation for the older rover chassis record](/help/allocate-parts-to-robot-builds/reconcile.png)
 
@@ -79,9 +83,19 @@ You can’t use records if you can’t establish their historical source geometr
 
 ![The confirmation to return one Feetech motor to stock](/help/allocate-parts-to-robot-builds/return.png)
 
-For a printed item, click its numbered return button and confirm the returned copy.
+For a printed copy:
 
-If you delete a build, you keep its materials assigned. Under **Retained allocations**, you can see ownership for builds absent from this profile and return their materials. Before confirming, enter the component quantity you returned to physical stock.
+1. In the build's **Allocations**, beside the printed part, click **Return Copy ⟨number⟩** for that copy.
+2. In the confirmation, click **Return** after checking the physical copy.
+
+## Return retained materials
+
+If you delete a build, you keep its materials assigned. Under **Retained allocations**, you can see ownership for builds absent from this profile.
+
+1. Under **Retained allocations**, find the build and material to return.
+2. Beside a component, enter its **Quantity**. A printed-copy row returns one copy.
+3. Beside the material, click **Return**.
+4. In the confirmation, click **Return** after checking the physical quantity.
 
 ![Rover 1’s motor ownership retained after deleting its saved build](/help/allocate-parts-to-robot-builds/retained.png)
 

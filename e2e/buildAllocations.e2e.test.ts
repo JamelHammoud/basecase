@@ -8,6 +8,7 @@ import { openKitScene } from './kitScene';
 import { retainSelfContactSceneFiles } from './selfContactScene';
 import type { Purchases } from '../src/types/robotics';
 import { motor, purchasing, create, rover } from './buildAllocationScene';
+import { allocationQuantityBounds, narrowBuildPanel } from './buildAllocationLayout';
 
 it('allocates a rover motor and two printed copies to independent builds through reload', { retry: 0 }, async () => {
   const app = await openApp();
@@ -18,11 +19,13 @@ it('allocates a rover motor and two printed copies to independent builds through
     await purchasing(app.page, directory);
     await retainSelfContactSceneFiles(app.page);
     await openKitScene(app.page, rover());
+    await narrowBuildPanel(app.page);
     await create(app.page, 'Rover', 2);
     await app.page.getByRole('button', { name: 'Rover 1', exact: true }).click();
 
     const component = app.page.locator(`[data-allocation-key="${motor}"]`);
 
+    await allocationQuantityBounds(component);
     await component.getByRole('button', { name: 'Reserve', exact: true }).click();
     await expect.poll(() => component.textContent()).toContain('Assigned 1/');
     await app.page.getByRole('button', { name: 'Complete Step', exact: true }).click();
@@ -51,8 +54,17 @@ it('allocates a rover motor and two printed copies to independent builds through
 
     expect(two).toBeDefined();
 
-    for (const name of ['Rover 1', 'Rover 2']) {
+    const outputs = output.record.copies!.filter((copy) => copy.partId === two.id);
+
+    for (const [index, name] of ['Rover 1', 'Rover 2'].entries()) {
       await app.page.getByRole('button', { name, exact: true }).click();
+
+      const selector = app.page.locator(`[data-allocation-part="${two.id}"]`).getByRole('combobox');
+
+      await expect.poll(() => selector.inputValue()).toBe(outputs[index].id);
+
+      if (index === 0) await selector.selectOption(outputs[index].id);
+
       await app.page
         .locator(`[data-allocation-part="${two.id}"]`)
         .getByRole('button', { name: 'Assign Copy', exact: true })
@@ -60,6 +72,9 @@ it('allocates a rover motor and two printed copies to independent builds through
       await expect
         .poll(() => app.page.locator(`[data-allocation-part="${two.id}"]`).textContent())
         .toContain('Assigned 1/');
+
+      if (index === 0) await expect.poll(() => selector.inputValue()).toBe(outputs[1].id);
+
       await app.page.getByRole('button', { name: 'Done', exact: true }).click();
     }
 

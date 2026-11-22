@@ -90,7 +90,7 @@ You can also [train a vision model](/help/train-a-vision-model) on your own labe
 
 Boxes also appear on live camera tiles and recorded camera videos at the playhead. Captures and exported camera images contain the camera image alone.
 
-Each box carries an id such as `#3` that stays with the object from frame to frame. To count objects through a line or a zone, see [Count objects through zones and lines](/help/count-objects-through-zones-and-lines).
+On a camera with a line or a zone, each box carries an id such as `#3` that stays with the object from frame to frame. To count objects through a line or a zone, see [Count objects through zones and lines](/help/count-objects-through-zones-and-lines).
 
 Detectors recognize their model's classes. The CPU fallback can take seconds per image, and Routines ignore images older than their freshness limit.
 

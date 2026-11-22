@@ -81,6 +81,7 @@ describe('tracked camera overlay', () => {
     expect(html).toContain('bin 1');
     expect(html).toContain('gate 3 in 1 out');
     expect(html).not.toContain('<canvas');
+    expect(html).toContain('pointer-events-none');
   });
 
   it('shows zero counts before the first tracked result', () => {

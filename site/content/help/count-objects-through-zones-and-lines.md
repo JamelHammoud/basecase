@@ -48,7 +48,7 @@ You need a Case with a camera panel and a detection model on that camera. Draw t
 
 ![The conveyor Case after a try: the line on the camera panel reads line1 4 in 0 out, and the Crossings panel reads 4](/help/count-objects-through-zones-and-lines/crossings.png)
 
-Basecase names them `line1`, `zone2` and so on, and saves them with the Case. Each camera keeps its own, so two cameras can both have a `line1`.
+Basecase names them `line1`, `zone1` and so on, and saves them with the Case. Each camera keeps its own, so two cameras can both have a `line1`.
 
 ## Read the counts
 

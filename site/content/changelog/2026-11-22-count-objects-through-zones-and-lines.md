@@ -8,7 +8,7 @@ A Case can now track detected objects from frame to frame and count them through
 
 A conveyor is the plain case. Draw a line across it on the camera panel, run the try, and `vision.target_camera.line.line1.in` counts each block that passes. A zone reads how many blocks sit in a bin and for how long.
 
-Each object keeps one id while it moves. Two people who cross paths keep separate ids, and an object hidden for a moment keeps its own. A flickering detection doesn’t count twice. Tracking runs in the vision worker, so the main thread takes on no extra work. At 64 detections a frame it costs about 0.1 ms.
+Each object keeps one id while it moves. Two people who cross paths keep separate ids, and an object hidden for a moment keeps its own. A flickering detection doesn’t count twice. Tracking runs in the vision worker, so the main thread barely notices it. At 64 detections a frame it costs about 0.1 ms.
 
 The same counts work on simulated cameras, recorded tries and the operator camera. Paused playback holds them. Counts return to zero when nothing is left.
 

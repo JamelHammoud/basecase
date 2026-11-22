@@ -19,25 +19,34 @@ const Label: React.FC<{ at: Point; mirrorText?: boolean; children: React.ReactNo
   at,
   mirrorText,
   children,
-}) => (
-  <span
-    data-testid="vision-region-label"
-    className={`absolute max-w-full truncate font-medium text-white/90 ${tileChip} ${mirrorText ? '-scale-x-100' : ''}`}
-    style={{ left: `${at[0] * 100}%`, top: `${at[1] * 100}%` }}
-  >
-    {children}
-  </span>
-);
+}) => {
+  const right = at[0] > 0.5;
+  const bottom = at[1] > 0.5;
+
+  return (
+    <span
+      data-testid="vision-region-label"
+      className={`absolute truncate font-medium text-white/90 ${tileChip} ${mirrorText ? '-scale-x-100' : ''}`}
+      style={{
+        ...(right ? { right: `${(1 - at[0]) * 100}%` } : { left: `${at[0] * 100}%` }),
+        ...(bottom ? { bottom: `${(1 - at[1]) * 100}%` } : { top: `${at[1] * 100}%` }),
+        maxWidth: `${(right ? at[0] : 1 - at[0]) * 100}%`,
+      }}
+    >
+      {children}
+    </span>
+  );
+};
 
 export const RegionShapes: React.FC<{
   regions: CameraRegions;
   tracking?: TrackingSnapshot;
   mirrorText?: boolean;
 }> = ({ regions, tracking, mirrorText }) => (
-  <>
+  <div className="pointer-events-none absolute inset-0 overflow-hidden">
     <svg
       data-testid="vision-regions"
-      className="absolute inset-0 h-full w-full overflow-visible"
+      className="absolute inset-0 h-full w-full"
       viewBox="0 0 1 1"
       preserveAspectRatio="none"
     >
@@ -94,5 +103,5 @@ export const RegionShapes: React.FC<{
         </Label>
       );
     })}
-  </>
+  </div>
 );

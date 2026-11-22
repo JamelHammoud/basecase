@@ -124,6 +124,19 @@ it('draws a line on a Case camera tile, keeps it with the Case and counts script
   expect(saved?.[CAMERA].lines[0].from[1]).toBeGreaterThan(0.8);
   expect(saved?.[CAMERA].lines[0].to[1]).toBeLessThan(0.2);
 
+  const label = tile().getByTestId('vision-region-label').first();
+  const frame = (await tile().boundingBox())!;
+  const text = (await label.boundingBox())!;
+
+  expect(text.x).toBeGreaterThanOrEqual(frame.x - 1);
+  expect(text.y).toBeGreaterThanOrEqual(frame.y - 1);
+  expect(text.x + text.width).toBeLessThanOrEqual(frame.x + frame.width + 1);
+  expect(text.y + text.height).toBeLessThanOrEqual(frame.y + frame.height + 1);
+
+  await tile().click({ button: 'right', position: { x: frame.width * 0.5, y: frame.height * 0.5 } });
+  await expect.poll(() => page.getByRole('menuitem', { name: 'Delete Lines and Zones', exact: true }).count()).toBe(1);
+  await page.keyboard.press('Escape');
+
   await page.locator(shown('[data-panel="go"] button'), { hasText: 'Try It' }).first().click();
   await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
   await page.evaluate(

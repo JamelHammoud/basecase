@@ -44,6 +44,19 @@ describe('Claude quota windows', () => {
     (limits) => expect(claudeWindows(usage({ limits }))).toEqual([]),
   );
 
+  it('keeps one overflow budget when the provider changes reset timestamp fractions', () => {
+    const first = currentUsage();
+    const second = currentUsage();
+
+    first.rate_limits.limits[0].resets_at = reset.replace('.000Z', '.321492Z');
+    second.rate_limits.limits[0].resets_at = reset.replace('.000Z', '.225000Z');
+
+    const baseline = { used: 2, reset: claudeWindows(first)[0].reset };
+    const windows = claudeWindows(second).map((item) => ({ ...item, used: 7 }));
+
+    expect(overflowAvailable({ used: { at: now, windows }, baseline, now })).toBe(false);
+  });
+
   it.each([{ group: 'unknown' }, { percent: null }, { percent: 101 }, { resets_at: null }])(
     'refuses a malformed current model limit: %j',
     (change) => {

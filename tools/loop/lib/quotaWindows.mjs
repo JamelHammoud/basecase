@@ -43,7 +43,7 @@ function serverWindows(limits) {
     bucket: limit?.kind === 'weekly_all' ? 'seven_day' : `${limit?.kind}:${limit?.scope?.model?.display_name ?? ''}`,
     used: limit?.percent,
     minutes: limit?.group === 'weekly' ? 10080 : 300,
-    reset: Date.parse(limit?.resets_at),
+    reset: Math.floor(Date.parse(limit?.resets_at) / 1000) * 1000,
   }));
 
   if (

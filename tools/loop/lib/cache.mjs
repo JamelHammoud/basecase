@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { LOOP_DIR } from './paths.mjs';
+import { claimWithin } from './claim.mjs';
 
 const DIR = path.join(LOOP_DIR, 'state', 'cache');
 
@@ -18,16 +20,29 @@ const readFresh = (file, ttlMs) => {
 
 export function cached(key, { ttlMs, refresh = false }, load) {
   const file = fileFor(key);
-  const hit = refresh ? null : readFresh(file, ttlMs);
+  const startedAt = Date.now();
+  const previous = readFresh(file, ttlMs);
 
-  if (hit) return hit.value;
+  if (!refresh && previous) return previous.value;
 
-  const value = load();
-  const tmp = `${file}.${process.pid}`;
+  const release = claimWithin(`cache-${path.basename(file)}`, { ms: 30_000, every: 25 });
 
-  fs.mkdirSync(DIR, { recursive: true });
-  fs.writeFileSync(tmp, JSON.stringify({ at: Date.now(), value }));
-  fs.renameSync(tmp, file);
+  if (!release) throw new Error(`Cache refresh still running: ${key}`);
 
-  return value;
+  try {
+    const loaded = readFresh(file, ttlMs);
+
+    if (loaded && (!refresh || (loaded.at >= startedAt && loaded.id !== previous?.id))) return loaded.value;
+
+    const value = load();
+    const tmp = `${file}.${process.pid}`;
+
+    fs.mkdirSync(DIR, { recursive: true });
+    fs.writeFileSync(tmp, JSON.stringify({ id: randomUUID(), at: Date.now(), value }));
+    fs.renameSync(tmp, file);
+
+    return value;
+  } finally {
+    release();
+  }
 }

@@ -11,7 +11,11 @@ const REVIEW_CONTEXT = 'agent-review';
 let slug;
 
 export const repo = () => {
-  slug ??= run('gh', ['repo', 'view', '--json', 'nameWithOwner', '--jq', '.nameWithOwner']).out;
+  slug ??= cached(
+    'repository-slug',
+    { ttlMs: 86_400_000 },
+    () => run('gh', ['repo', 'view', '--json', 'nameWithOwner', '--jq', '.nameWithOwner']).out,
+  );
 
   return slug;
 };

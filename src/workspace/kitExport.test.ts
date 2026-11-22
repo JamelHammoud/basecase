@@ -259,3 +259,31 @@ it('binds carrier build evidence to its source without preparing drawing PDFs', 
     jsonHash({ parts: core.parts, project: core.project }),
   );
 });
+
+it.each(['buildGuide', 'bodyEvidence'] as const)(
+  'keeps kit preparation valid while generated %s metadata is published',
+  async (field) => {
+    const { core, run, job } = context();
+
+    calls.print.mockImplementation(async () => {
+      core.docs.projectRef.current = {
+        ...core.project,
+        [field]:
+          field === 'bodyEvidence'
+            ? []
+            : {
+                id: 'generated-guide',
+                fingerprint: 'generated',
+                generatedAt: '2026-11-22T00:00:00Z',
+                pages: 1,
+                steps: 1,
+                stepParts: [[]],
+                orderTimedOut: false,
+              },
+      };
+
+      return job.print;
+    });
+    await expect(prepareKit(core, run)).resolves.toMatchObject({ files: job.files });
+  },
+);

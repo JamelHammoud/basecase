@@ -129,3 +129,52 @@ it('refuses an old Case world when the active world changes during preparation',
   await expect(work).rejects.toMatchObject({ name: 'AbortError' });
   expect(preparedCalibratedModel).not.toHaveBeenCalled();
 });
+
+it.each(['buildGuide', 'bodyEvidence', 'physics', 'snapshot'] as const)(
+  'retains pending model source checks across %s publication',
+  async (field) => {
+    const scene = sceneModel();
+    const prepared = gate();
+
+    vi.mocked(preparedCalibratedModel).mockImplementationOnce(async (_input, _calibrations, options) => {
+      await prepared.promise;
+
+      if (!options?.current?.()) throw new Error('Model source changed');
+
+      return {} as Awaited<ReturnType<typeof preparedCalibratedModel>>;
+    });
+    scene.meshes.release();
+    scene.measurement.release();
+
+    const work = scene.model.buildModel();
+
+    await vi.waitFor(() => expect(preparedCalibratedModel).toHaveBeenCalledOnce());
+
+    const captured = scene.model.inputsRef.current;
+    const guide = {
+      id: 'guide',
+      fingerprint: 'generated',
+      generatedAt: '2026-11-22T00:00:00Z',
+      pages: 1,
+      steps: 1,
+      orderTimedOut: false,
+    };
+    const updates = {
+      buildGuide: { buildGuide: guide },
+      bodyEvidence: { bodyEvidence: [] },
+      physics: { material: 'petg' },
+      snapshot: {},
+    };
+
+    scene.model.inputsRef.current = { ...captured, project: { ...captured.project, ...updates[field] } };
+    prepared.release();
+
+    if (field === 'physics' || field === 'snapshot') {
+      await expect(work).rejects.toThrow('Model source changed');
+
+      return;
+    }
+
+    await expect(work).resolves.toEqual({});
+  },
+);

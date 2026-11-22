@@ -1,18 +1,25 @@
 import loadMujoco, { type MainModule } from '@mujoco/mujoco';
-import { beforeAll, expect, it } from 'vitest';
+import { afterAll, beforeAll, expect, it } from 'vitest';
 import { SimEngine } from './engine';
 import { buildMjcf } from './mjcf';
 import { prepareContactModel } from './contactPreparationClient';
 import { selfContactDesigns } from './fixtures/selfContactDesigns';
 import { captureContactReplay } from './fixtures/contactReplay';
-import { nativeContactReplay } from '../../tools/sim/nativeContactReplay.mjs';
+import {
+  closeNativeContactReplays,
+  nativeContactReplay,
+  prepareNativeContactReplay,
+} from '../../tools/sim/nativeContactReplay.mjs';
 import { replayDifferences } from '../../tools/sim/contactReplayComparison.mjs';
 
 let mj: MainModule;
 
 beforeAll(async () => {
   mj = await loadMujoco();
+  await prepareNativeContactReplay(mj.mj_versionString());
 });
+
+afterAll(closeNativeContactReplays);
 
 function pairs(engine: SimEngine): Set<string> {
   const contacts = engine.contactPairs();

@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { setFlagsFromString } from 'node:v8';
-import { runInNewContext } from 'node:vm';
 import sharp from 'sharp';
 import { metricResult, metricSet, metricTask } from './metricsFixtures';
 import { frameSetHash } from '../frameSet';
@@ -9,10 +7,6 @@ import { packImageSnapshots } from '../imageSnapshot';
 import { datasetContentHash } from '../../datasets/contentHash';
 import { evaluateTraining } from './metrics';
 import { evaluateImageGroup } from './conditionEvaluation';
-
-setFlagsFromString('--expose_gc');
-
-const collect = runInNewContext('gc') as () => void;
 
 async function fixture(count: number) {
   const set = metricSet();
@@ -69,17 +63,10 @@ describe('bounded condition evaluation resources', () => {
       const { report, load } = await fixture(count);
       const input = { candidate: report, incumbent: report, group: { kind: 'condition' as const, name: 'glare' } };
 
-      await evaluateImageGroup(input, load);
-      collect();
-
-      const heapBefore = process.memoryUsage().heapUsed;
       const start = performance.now();
       const result = await evaluateImageGroup(input, load);
       const elapsedMs = performance.now() - start;
 
-      collect();
-
-      const retainedHeapBytes = process.memoryUsage().heapUsed - heapBefore;
       const resultBytes = Buffer.byteLength(JSON.stringify(result));
 
       expect(result.support.realTest).toBe(count);
@@ -95,7 +82,6 @@ describe('bounded condition evaluation resources', () => {
             elapsedMs,
             evidenceBytesPerModel: Buffer.byteLength(JSON.stringify(report.evidence)),
             resultBytes,
-            retainedHeapBytes,
           },
           null,
           2,

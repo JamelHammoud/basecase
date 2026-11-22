@@ -215,10 +215,21 @@ export async function openApp(
     posts,
     requests,
     close: async () => {
+      if (process.env.BASECASE_DIAGNOSTIC_BROWSER_TRACE === '1') await reportBrowserState(page, errors);
+
       await browser.close();
       fs.rmSync(libraryDir, { recursive: true, force: true });
     },
   };
+}
+
+async function reportBrowserState(page: Page, errors: string[]) {
+  const text = await page
+    .locator('body')
+    .innerText({ timeout: 1000 })
+    .catch((error: unknown) => String(error));
+
+  console.log('Browser diagnostic state', JSON.stringify({ errors, text: text.slice(-16_384) }));
 }
 
 export const partCount = (page: Page) =>

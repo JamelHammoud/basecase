@@ -17,6 +17,7 @@ vi.stubEnv('BASECASE_LOOP_DIR', directory);
 vi.mock('./agent.mjs', () => ({ CHANGE_SCHEMA: {} }));
 vi.mock('./github.mjs', () => ({
   openPulls: () => [],
+  lastFinishedMainCheck: () => null,
   issues: (label) => calls.steps.filter((step) => step.labels.some((entry) => entry.name === label)),
   hasLabel: (step, label) => step.labels.some((entry) => entry.name === label),
   closeIssue: vi.fn(),

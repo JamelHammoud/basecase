@@ -1,3 +1,4 @@
+import { stubKitGuideWorker } from './kitGuideWorker';
 import { analysisArmScene } from '../src/reality/bodyAnalysisMatrix.fixtures';
 import { parkedBodyRun } from '../src/reality/bodyMotion.fixtures';
 import type { SimModel } from '../src/sim/mjcfTypes';
@@ -8,6 +9,7 @@ export interface BodyMotionStudio {
   load: (record: unknown) => void;
   attachRobot: (link: unknown) => void;
   bodyModel: () => Promise<SimModel>;
+  guide: () => Promise<unknown>;
   seedBodyEvidence: (input: {
     run: RobotRun;
     model: SimModel;
@@ -41,6 +43,9 @@ export async function attachBodyMotionRobot(app: App) {
 
 export async function openBodyMotionApp(recommended = false) {
   const app = await openApp();
+
+  await stubKitGuideWorker(app.page);
+
   const scene = analysisArmScene();
   const joints = scene.joints.map((joint) => ({ ...joint, name: `${joint.name} ${'retained-link-'.repeat(10)}` }));
 
@@ -49,6 +54,11 @@ export async function openBodyMotionApp(recommended = false) {
     ...scene,
     project: { ...scene.project, joints },
     id: 'body-motion-scene',
+  });
+  await app.page.evaluate(async () => {
+    const guide = await (window as unknown as { __studio: BodyMotionStudio }).__studio.guide();
+
+    if (!guide) throw new Error('Motion fixture guide preparation failed');
   });
   await openPlayTab(app.page, 'Operate');
 

@@ -1,3 +1,4 @@
+import { sameProjectSnapshot } from '../utils/projectInputs';
 import { Matrix4, Vector3 } from 'three';
 import type { RefObject } from 'react';
 import type { V3 } from '../guide/guideTypes';
@@ -109,7 +110,7 @@ export async function makeAssemblyCradle(context: CradleActionContext) {
       cradleSourcesCurrent(live.docs.parts, live.parameters.status.state === 'current') &&
       live.active &&
       live.docs.partsRef.current === binding.parts &&
-      live.docs.projectRef.current === binding.project &&
+      sameProjectSnapshot(binding.project, live.docs.projectRef.current) &&
       live.buildAlong.index === binding.step &&
       live.buildAlong.active &&
       live.buildAlong.sessionId === buildAlong.sessionId &&
@@ -191,7 +192,7 @@ export function printAssemblyCradle(context: CradleActionContext) {
             cradleSourcesCurrent(live.docs.parts, live.parameters.status.state === 'current') &&
             live.buildAlong.active &&
             live.docs.partsRef.current === job.parts &&
-            live.docs.projectRef.current === job.project &&
+            sameProjectSnapshot(job.project, live.docs.projectRef.current) &&
             live.buildAlong.index === job.step &&
             live.buildAlong.sessionId === job.sessionId &&
             live.buildAlong.plan === job.plan &&
@@ -217,7 +218,7 @@ export function currentCradleResult(
     !current ||
     !result ||
     result.job.parts !== options.docs.parts ||
-    result.job.project !== options.docs.project ||
+    !sameProjectSnapshot(result.job.project, options.docs.project) ||
     JSON.stringify(result.job.printer) !== JSON.stringify(options.printing.printer) ||
     result.job.sessionId !== options.buildAlong.sessionId ||
     result.job.plan !== options.buildAlong.plan ||

@@ -1,3 +1,5 @@
+import { sameProjectSnapshot } from '../utils/projectInputs';
+import { useProjectInputsChange } from './useProjectInputsChange';
 import { findPartDeep } from '../booleans/parts';
 import { useEffect, useRef, type RefObject } from 'react';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
@@ -34,7 +36,8 @@ export function useImportRecovery({
   const active = useRef<AbortController | null>(null);
   const workspace = useLatestRef(activeWorkspace);
 
-  useEffect(() => () => active.current?.abort(), [activeWorkspace, parts, project]);
+  useProjectInputsChange(project, () => active.current?.abort(), sameProjectSnapshot);
+  useEffect(() => () => active.current?.abort(), [activeWorkspace, parts]);
 
   const convert = async (id: string) => {
     if (!workspace.current) return;
@@ -52,7 +55,10 @@ export function useImportRecovery({
     active.current = abort;
 
     const current = () =>
-      workspace.current && !abort.signal.aborted && partsRef.current === before && projectRef.current === project;
+      workspace.current &&
+      !abort.signal.aborted &&
+      partsRef.current === before &&
+      sameProjectSnapshot(project, projectRef.current);
     const discard = () => {
       if (active.current === abort) dismissToast();
     };

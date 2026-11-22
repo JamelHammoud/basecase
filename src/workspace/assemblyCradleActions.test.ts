@@ -101,3 +101,36 @@ it('keeps only the latest selected source faces and discards a closed sheet repl
   await c;
   expect(setDirections).toHaveBeenCalledTimes(1);
 });
+
+it.each(['buildGuide', 'bodyEvidence'] as const)(
+  'keeps prepared cradle tooling valid across generated %s metadata',
+  (field) => {
+    const job = cradleJobFixture(api, 0);
+    const result = { job, prepared: {} as PreparedCradle };
+    const options = {
+      scene: { sceneId: job.sceneId },
+      docs: {
+        parts: job.parts,
+        project: {
+          ...job.project,
+          [field]:
+            field === 'bodyEvidence'
+              ? []
+              : {
+                  id: 'generated-guide',
+                  fingerprint: 'generated',
+                  generatedAt: '2026-11-22T00:00:00Z',
+                  pages: 1,
+                  steps: 1,
+                  stepParts: [[]],
+                  orderTimedOut: false,
+                },
+        },
+      },
+      buildAlong: { sessionId: job.sessionId, index: job.step, plan: job.plan },
+      printing: { printer: job.printer },
+    } as CradleOptions;
+
+    expect(currentCradleResult(result, options, true)).toBe(result);
+  },
+);

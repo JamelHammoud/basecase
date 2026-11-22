@@ -464,3 +464,5 @@ The stationary-rover declaration in `bodyMotion.test.ts` is quarantined on Linux
 ### Body source identity
 
 New body recordings use source version 2. Physical body inputs remain part of the content hash, while generated build guides and body evidence are excluded. Saving a guide during analysis or execution does not cancel that work. Part, joint, calibration and other project edits retain their cancellation guards. Older references without a version retain version 1 hashing, and references must match the snapshot version before they can be used.
+
+Body investigations share `utils/projectInputs.ts` with Kit export and cradle tooling for fieldwise project comparison. Generated build-guide and body-evidence updates preserve the source, while every other project field and immutable part identity retain their existing invalidation rules.

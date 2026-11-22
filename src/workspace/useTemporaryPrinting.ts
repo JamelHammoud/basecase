@@ -1,3 +1,4 @@
+import { sameProjectSnapshot } from '../utils/projectInputs';
 import { useState } from 'react';
 import type { TemporaryPrint } from './temporaryPrint';
 import type { PrintingOptions } from './usePrinting';
@@ -54,7 +55,7 @@ function toolingForScene(
     !tooling ||
     tooling.scene !== options.jobId ||
     tooling.data.sourceParts !== options.parts ||
-    tooling.data.sourceProject !== options.project ||
+    !sameProjectSnapshot(tooling.data.sourceProject, options.project) ||
     JSON.stringify(tooling.data.report.printer) !== JSON.stringify(options.printer)
   )
     return null;

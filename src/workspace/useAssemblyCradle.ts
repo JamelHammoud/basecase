@@ -1,3 +1,4 @@
+import { sameProjectSnapshot } from '../utils/projectInputs';
 import {
   currentCradleResult,
   FACE_DIRECTIONS,
@@ -156,7 +157,8 @@ function sourceSessionCurrent({ active, docs, buildAlong, parameters }: CradleOp
     buildAlong.active &&
     !!buildAlong.sourceStep &&
     buildAlong.sourceParts === docs.parts &&
-    buildAlong.sourceProject === docs.project &&
+    !!buildAlong.sourceProject &&
+    sameProjectSnapshot(buildAlong.sourceProject, docs.project) &&
     cradleSourcesCurrent(docs.parts, parameters.status.state === 'current')
   );
 }

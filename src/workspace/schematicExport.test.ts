@@ -165,3 +165,31 @@ it.each(['cancel', 'placement', 'routing evidence'] as const)(
     expect(work.dispose).toHaveBeenCalled();
   },
 );
+
+it.each(['buildGuide', 'bodyEvidence'] as const)(
+  'keeps schematic preparation valid across generated %s metadata',
+  async (field) => {
+    const { core, run } = context();
+
+    work.build.mockImplementationOnce(async () => {
+      core.docs.projectRef.current = {
+        ...core.project,
+        [field]:
+          field === 'bodyEvidence'
+            ? []
+            : {
+                id: 'generated-guide',
+                fingerprint: 'generated',
+                generatedAt: '2026-11-22T00:00:00Z',
+                pages: 1,
+                steps: 1,
+                stepParts: [[]],
+                orderTimedOut: false,
+              },
+      };
+
+      return { bytes: new Uint8Array([1]), sourceFingerprint: 'original' };
+    });
+    await expect(schematicExport(core, run)).resolves.toMatchObject({ sourceFingerprint: 'original' });
+  },
+);

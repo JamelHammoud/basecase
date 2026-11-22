@@ -1381,5 +1381,28 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44887426902 never reached the source try clock at 1.5 seconds in one attempt and found no saved source try in another, before branch creation or scene switching. Existing reference-recording owner #1026 retains startup, clock, recording and persistence boundaries separately. Linux and macOS retain the browser declaration, while Windows retains fast checkpoint, cancellation, source-identity and persistence coverage. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on this platform with retries disabled. No flake rate is claimed. Exact-revision diagnostic 44889813364 passed in 24648.1903 ms, confirming intermittency without a rate."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "folded snake replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Nightly run 45033521946 exhausted the unchanged 5000 ms callback deadline on Windows shard 1 of 2 without a drift or contact assertion failure. The same declaration shape is already quarantined on Windows for seven sibling designs under the same owner. WASM capture, uv provisioning, native startup, replay, comparison and cleanup are not distinguished. Existing open priority replay owner #1390 owns stage tracing, a demonstrated fix and ten baseline and ten candidate Windows observations at equal load without retries before restoration. Windows retains the WASM contact and negative-control cases and the remaining native comparisons are quarantined only as listed. Linux and macOS retain this comparison. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "src/vision/training/conditionResources.test.ts",
+    "test": "bounded condition evaluation resources > rescores 1000 retained predictions without inference or extra retained image content",
+    "issue": 2054,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Nightly run 45033521946 exhausted the unchanged 5000 ms deadline on Windows shard 1 of 2 without an assertion mismatch. Linux passed at the same revision. Earlier notes record the same case reaching 5004 ms under load on other hosts. Fixture construction, warmup, measured rescoring and heap collection are not distinguished. Issue #2054 owns stage timing, a fix that keeps the result-bytes and retained-heap bounds, and ten baseline and ten candidate Windows observations at equal load with retries disabled before restoration. The four-prediction case and fast evidence tests stay active on Windows, and Linux and macOS retain this case. No assertion, deadline or retry changes."
+  },
+  {
+    "file": "e2e/bodyExperiment.e2e.test.ts",
+    "test": "runs a retained recommendation and opens its measured recording and bound analysis through Library",
+    "issue": 2055,
+    "until": "2026-11-28",
+    "reason": "Nightly run 45033521946 timed out at the unchanged 15000 ms deadline on Linux shard 5 of 8 and Windows shard 4 of 6 at the same revision. The log names no stage. The walkthrough spans Analyze Try, Preview Motion, a paced Run, completion, Library reopening, a bound historical analysis and four layout measurements. The declaration was added by #2025, and the sibling bodyMotion walkthrough took 10.6 s of its 15 s on Windows in the same run. Issue #2055 owns stage timing, a fix that shortens the slow stage and keeps the Run, Library and bound-analysis assertions, and ten baseline and ten candidate observations per platform at equal load with retries disabled before restoration. Fast executor, retention, recording and native daemon coverage remain active. No assertion, deadline or retry changes."
   }
 ]

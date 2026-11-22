@@ -235,6 +235,12 @@ The repair updates only the control-delay source hash in `verify/gates/s3a-motor
 
 The focused baseline reproduced both source-lock failures and the separate help-reader failure. The corrected changed-file check passed formatting, lint, documentation, types, all 381 site-copy pages and 55 tests across six files. Direct source-lock invocation passes and `manifestDrift()` returns an empty list. Logs are `scratch/repair-before.log`, `scratch/repair-after.log`, `scratch/checkpoint-revert-check.log` and `scratch/person-revert-check.log`. Current coverage is recorded in [Proof](../guide/proof.md#motor-kit-source-lock-coverage). The help metadata cause is recorded in [Node-side notes](node.md#person-crossing-help-type-regression).
 
+## Arena source lock after teaching control
+
+[Check 45033521946](https://github.com/JamelHammoud/basecase/actions/runs/45033521946) at `2bf50f994febb2be665afad262463b7ffbec2050` failed both `freezes Arena latency` cases in `verify/lib/run.test.mjs` on Linux and Windows, again at the initial assertion on the unmodified tree. The frozen judge reported only `src/sim/controlDelay.ts`.
+
+Classification is a deterministic regression from teaching-correction merge `c46b76306` (#2026), which added action owners, teaching sessions and a controlled step wrapper to `ControlDelay` and left the pin from #2011 unchanged. Delayed output, bounded buffer reuse, reset and restore keep their definitions, and the existing continuation tests cover them. The repair updates only the control-delay hash and the gate file's hash in `verify/manifest.json`. Counts, bars, canaries and the source-mutation tests for both latency files are unchanged. No test is deleted, loosened or quarantined, and no hosted run is claimed. A second source change to this file now fails the same way until its pin moves with it.
+
 ## Windows grouped recovery quarantine
 
 [#1365](https://github.com/JamelHammoud/basecase/issues/1365) owns the Windows-only quarantine through 28 November 2026. Run 43831610288 observed one train-start instead of two after reload at line 75, then stalled clicking Concurrent attempts on retry. The same file passed both tests on Windows in run 43824172798 in 75.040 seconds, with unchanged training, worker and fixture code. Linux passed at the failing revision in 30.052 seconds. The earlier run 43820519938 alternated between zero initial dispatches and no reattachment. These observations do not identify whether model reconstruction, journal persistence, worker startup or reattachment stalled.

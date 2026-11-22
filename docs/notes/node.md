@@ -841,6 +841,14 @@ A reverse-patch check of the feature fails against the subsequently edited Case 
 
 The corrected changed-file check passed 55 tests across six files, including the source-lock tests, delay and continuation tests, help-center and help-page tests, and site-rendering tests. The separately named help-hub file passed all five tests. Both checks passed formatting, lint, types and all 381 site-copy pages, and the change's documentation check passed. Candidate logs are `scratch/repair-after.log` and `scratch/repair-hubs.log`. Preflight returned no findings in `scratch/repair-preflight.json`. These local observations do not claim a hosted full-suite result.
 
+## Nightly 45033521946 platform and browser failures
+
+[Check 45033521946](https://github.com/JamelHammoud/basecase/actions/runs/45033521946) at `2bf50f994febb2be665afad262463b7ffbec2050` failed six declarations. The two Arena latency cases on both platforms are a [source-pin regression](testing-skills.md#arena-source-lock-after-teaching-control) and are fixed in place.
+
+The Windows-only deadline failures are the unchanged five-second limit in `selfContactDesigns.test.ts` for the folded snake, a sibling of seven designs already quarantined under [#1390](https://github.com/JamelHammoud/basecase/issues/1390), and the 1000-prediction case in `conditionResources.test.ts`, now owned by [#2054](https://github.com/JamelHammoud/basecase/issues/2054). Both are quarantined on win32 only through 28 November 2026 with their assertions and deadlines intact. The same two files passed on Linux.
+
+`e2e/bodyExperiment.e2e.test.ts`, added by #2025, timed out at its 15-second deadline on Linux shard 5 and Windows shard 4 with no stage in the log. It is quarantined on both platforms under [#2055](https://github.com/JamelHammoud/basecase/issues/2055). Fast executor, retention, recording and native daemon coverage stays active. No Linux container reproduction ran inside the 30-minute repair budget. Linux e2e shard 2 passed all 21 files and was then cancelled by GitHub during quarantine observation, with no failing test named. No measurement of a failure rate ran in this session.
+
 ## Documentation claim consistency
 
 The learn evidence since 12 November 2026 shows two forms of the same documentation failure across distinct pull requests:

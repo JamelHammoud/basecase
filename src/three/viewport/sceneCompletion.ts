@@ -7,6 +7,23 @@ const active = new WeakMap<ViewportContext, { parts: ScenePart[]; world?: SceneP
 const sameParts = (before: ScenePart[] = [], after: ScenePart[] = []) =>
   before === after || (before.length === after.length && before.every((part, index) => part === after[index]));
 
+const isAbort = (error: unknown) => error instanceof Error && error.name === 'AbortError';
+
+export async function prepareCurrentViewport(ctx: ViewportContext, built: () => void): Promise<string[]> {
+  for (;;) {
+    const { parts, worldParts } = ctx.props();
+
+    try {
+      return await prepareViewport(ctx, built);
+    } catch (error) {
+      const now = ctx.props();
+      const unchanged = sameParts(parts, now.parts) && sameParts(worldParts, now.worldParts);
+
+      if (!isAbort(error) || unchanged || ctx.stage.renderer.getContext().isContextLost()) throw error;
+    }
+  }
+}
+
 export function prepareViewport(ctx: ViewportContext, built: () => void): Promise<string[]> {
   const parts = ctx.props().parts;
   const world = ctx.props().worldParts;

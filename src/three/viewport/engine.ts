@@ -1,4 +1,4 @@
-import { completeViewport, prepareViewport } from './sceneCompletion';
+import { completeViewport, prepareCurrentViewport } from './sceneCompletion';
 import { syncSceneParts } from './sceneSources';
 
 import { readyCapture } from './captureReadiness';
@@ -196,7 +196,7 @@ export class ViewportEngine {
     this.api = completing(
       this.handle(),
       (ids) => completeViewport(this.ctx, ids),
-      () => prepareViewport(this.ctx, () => this.scheduleBuilds()),
+      () => prepareCurrentViewport(this.ctx, () => this.scheduleBuilds()),
     );
     this.syncWorld();
     this.syncScene();
@@ -391,7 +391,7 @@ export class ViewportEngine {
             : query,
         ),
       jointAxes: (ids) => jointAxesIn(restShapes(ids), ids),
-      meshesReady: () => prepareViewport(ctx, () => this.scheduleBuilds()),
+      meshesReady: () => prepareCurrentViewport(ctx, () => this.scheduleBuilds()),
       sweepClashes: (sweeps) => sweepsIn(restSolids(false), sweeps),
       ...strengthHandle(restShapes),
       pickAt: (x, y) => measure.pickAt(ctx, x, y),

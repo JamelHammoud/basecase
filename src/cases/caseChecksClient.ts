@@ -44,11 +44,6 @@ export const caseWorkerCount = (cores: number | undefined) =>
 const spawnCaseWorker = () =>
   new Worker(new URL('./caseChecks.worker.ts', import.meta.url), { type: 'module' }) as WorkerLike;
 
-const cancellableJob = (job: CaseCheckJob, tag: string | undefined): CaseCheckJob =>
-  job.type === 'runs' && tag && typeof SharedArrayBuffer !== 'undefined'
-    ? { ...job, stopFlag: new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT)) }
-    : job;
-
 export class CaseCheckPool {
   private slots = new Map<number, Slot>();
   private calls = 0;
@@ -82,7 +77,7 @@ export class CaseCheckPool {
     return new Promise((resolve, reject) => {
       const queued: Queued = {
         id: ++this.calls,
-        job: this.withWorld(cancellableJob(job, options.tag)),
+        job: this.withWorld(job),
         tag: options.tag ?? '',
         group: options.group ?? '',
         robot: options.robot,
@@ -111,50 +106,13 @@ export class CaseCheckPool {
   }
 
   keepOnly(tags: ReadonlySet<string>, group = '') {
-    const replaced = new Error('A newer check replaced this one.');
-    const stale = (q: Queued) => q.group === group && q.tag && !tags.has(q.tag);
-
-    for (const slot of [...this.slots.values()]) {
-      const dropped = slot.queue.filter(stale);
+    for (const slot of this.slots.values()) {
+      const dropped = slot.queue.filter((q) => q.group === group && q.tag && !tags.has(q.tag));
 
       slot.queue = slot.queue.filter((q) => !dropped.includes(q));
 
-      for (const q of dropped) q.reject(replaced);
-
-      if (slot.running && stale(slot.running)) this.cancelRunning(slot, replaced);
+      for (const q of dropped) q.reject(new Error('A newer check replaced this one.'));
     }
-
-    this.closeWhenIdle();
-  }
-
-  private cancelRunning(slot: Slot, error: Error) {
-    const running = slot.running;
-
-    if (running?.job.type === 'runs' && running.job.stopFlag) {
-      Atomics.store(running.job.stopFlag, 0, 1);
-      running.reject(error);
-
-      return;
-    }
-
-    this.replaceSlot(slot, error);
-  }
-
-  private replaceSlot(slot: Slot, error: Error) {
-    const pending = slot.queue;
-
-    slot.worker.onmessage = null;
-    slot.worker.onerror = null;
-    slot.worker.terminate();
-    this.slots.delete(slot.index);
-    slot.running?.reject(error);
-    slot.running = null;
-    slot.queue = [];
-
-    if (!pending.length) return;
-
-    this.slot(slot.index).queue = pending;
-    this.next(slot.index);
   }
 
   private slot(index: number): Slot {
@@ -225,9 +183,7 @@ export class CaseCheckPool {
   private closeWhenIdle() {
     const busy = [...this.slots.values()].some((s) => s.running || s.queue.length);
 
-    if (busy || this.idle || !this.slots.size) return;
-
-    this.idle = setTimeout(() => this.close(), IDLE_MS);
+    if (!busy) this.idle = setTimeout(() => this.close(), IDLE_MS);
   }
 
   private failAll(error: Error) {

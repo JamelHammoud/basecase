@@ -28,7 +28,7 @@ vi.mock('../kit/kitClient', () => ({ kitClient: calls.worker }));
 
 vi.mock('../three/componentMeshes', () => ({ componentMeshesReady: calls.catalog }));
 vi.mock('../guide/generateGuide', () => ({ generateGuide: calls.guide, generateGuidePlan: calls.plan }));
-vi.mock('../utils/printReportPreparation', async (load) => ({ ...(await load<object>()), printReportOf: calls.print }));
+vi.mock('../utils/printReport', async (load) => ({ ...(await load<object>()), printReportOf: calls.print }));
 vi.mock('./robotPackageExport', () => ({ robotJointMapJob: calls.map }));
 
 function context() {

@@ -77,15 +77,3 @@ export function factSampler(kase: Case, facts: CaseFactReader, reader: { sample:
     return read;
   };
 }
-
-export function configuredEngine<T extends { dispose: () => void }>(started: T, configure: () => void): T {
-  try {
-    configure();
-
-    return started;
-  } catch (error) {
-    started.dispose();
-
-    throw error;
-  }
-}

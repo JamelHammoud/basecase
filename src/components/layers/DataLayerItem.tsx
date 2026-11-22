@@ -1,10 +1,9 @@
 import React from 'react';
-import type { LayerPosition } from './layerWindow';
 import { HiddenIcon, LookIcon, RowActions, Tooltip, WarningIcon } from '../../design-system';
 import type { DataLayerRow } from '../../dataLayers/store';
 import { ACTIONS_PLACE, ROW, ROW_FILL, RowToggle, rowIndent, rowTone } from './LayerItems';
 
-export interface DataLayerItemProps extends LayerPosition {
+export interface DataLayerItemProps {
   layer: DataLayerRow;
   depth: number;
   onToggle: (id: string, visible: boolean) => void;
@@ -19,21 +18,12 @@ const Glyph: React.FC = () => (
   </span>
 );
 
-export const DataLayerItem: React.FC<DataLayerItemProps> = ({
-  layer,
-  depth,
-  onToggle,
-  onMenu,
-  listPosition,
-  listSize,
-}) => {
+export const DataLayerItem: React.FC<DataLayerItemProps> = ({ layer, depth, onToggle, onMenu }) => {
   const hidden = !layer.visible;
 
   return (
     <li
       data-layer-row={`data:${layer.id}`}
-      aria-posinset={listPosition}
-      aria-setsize={listSize}
       data-visible={layer.visible}
       onClick={(e) => e.stopPropagation()}
       onContextMenu={(e) => {

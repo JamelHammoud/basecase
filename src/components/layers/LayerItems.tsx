@@ -1,5 +1,4 @@
 import React from 'react';
-import type { LayerPosition } from './layerWindow';
 import {
   ChevronRightIcon,
   GroupIcon,
@@ -131,7 +130,7 @@ const INDENT_STEP = 22;
 
 export const rowIndent = (depth: number, withChevron: boolean) => (withChevron ? 4 : 10) + depth * INDENT_STEP;
 
-export interface PartRowProps extends LayerPosition {
+export interface PartRowProps {
   part: ScenePart;
   depth: number;
   operandOf?: string;
@@ -149,8 +148,6 @@ export interface PartRowProps extends LayerPosition {
 
 export const PartRow: React.FC<PartRowProps> = ({
   part,
-  listPosition,
-  listSize,
   depth,
   operandOf,
   collapsed,
@@ -165,8 +162,6 @@ export const PartRow: React.FC<PartRowProps> = ({
   return (
     <li
       data-layer-row={`part:${part.id}`}
-      aria-posinset={listPosition}
-      aria-setsize={listSize}
       data-operand-of={operandOf}
       onClick={(e) => {
         e.stopPropagation();
@@ -201,7 +196,7 @@ export const PartRow: React.FC<PartRowProps> = ({
   );
 };
 
-export interface GroupRowProps extends LayerPosition {
+export interface GroupRowProps {
   id: string;
   name: string;
   memberIds: string[];
@@ -215,21 +210,9 @@ export interface GroupRowProps extends LayerPosition {
   onContextMenu: (ids: string[], selected: boolean, at: { x: number; y: number }) => void;
 }
 
-export const GroupRow: React.FC<GroupRowProps> = ({
-  id,
-  name,
-  memberIds,
-  selected,
-  collapsed,
-  editing,
-  listPosition,
-  listSize,
-  ...on
-}) => (
+export const GroupRow: React.FC<GroupRowProps> = ({ id, name, memberIds, selected, collapsed, editing, ...on }) => (
   <li
     data-layer-row={`group:${id}`}
-    aria-posinset={listPosition}
-    aria-setsize={listSize}
     onClick={(e) => {
       e.stopPropagation();
       on.onSelect(memberIds, e.shiftKey || hasPrimaryModifier(e));

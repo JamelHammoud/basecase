@@ -14,7 +14,7 @@ import { jobSpec } from '../print/job';
 import { labelsKey, lettersToWrite, unlabeledNotes } from '../print/labels/partLetters';
 import { componentMeshesReady } from '../three/componentMeshes';
 import { platformBridge } from '../utils/platformBridge';
-import { printReportOf } from '../utils/printReportPreparation';
+import { printReportOf } from '../utils/printReport';
 import { robotJointMapJob } from './robotPackageExport';
 import type { WorkspaceCore } from './useWorkspaceCore';
 

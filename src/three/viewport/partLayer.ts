@@ -44,11 +44,6 @@ interface PendingBuild {
   meshVersion: number;
 }
 
-interface ReadyWaiter {
-  resolve: () => void;
-  reject: (error: unknown) => void;
-}
-
 const rememberRest = (group: THREE.Group) => {
   group.userData.restPosition = group.position.clone();
   group.userData.restQuaternion = group.quaternion.clone();
@@ -58,9 +53,6 @@ export class PartLayer {
   pose = new Map<string, THREE.Matrix4>();
   poseOwners: ReadonlyMap<string, string> = new Map();
 
-  private disposed = false;
-  private source: ScenePart[] = [];
-
   private readonly entries = new Map<string, Entry>();
 
   private readonly pending = new Set<PendingBuild>();
@@ -68,8 +60,6 @@ export class PartLayer {
   private readonly waiting = new Map<string, PendingBuild>();
 
   private readonly failures = new Map<string, unknown>();
-
-  private readonly readers = new Set<ReadyWaiter>();
 
   private readonly uploaded = new WeakSet<THREE.BufferGeometry>();
 
@@ -113,56 +103,7 @@ export class PartLayer {
     return this.pending.size > 0 || this.waiting.size > 0;
   }
 
-  whenReady(): Promise<void> {
-    if (this.disposed) return Promise.reject(AbortSignal.abort().reason);
-
-    if (this.failures.size) return Promise.reject(this.failures.values().next().value);
-
-    if (!this.hasPending) return Promise.resolve();
-
-    return new Promise((resolve, reject) => this.readers.add({ resolve, reject }));
-  }
-
-  private settleReaders(): void {
-    if (this.hasPending && !this.failures.size) return;
-
-    for (const reader of this.readers) {
-      if (this.failures.size) reader.reject(this.failures.values().next().value);
-      else reader.resolve();
-    }
-
-    this.readers.clear();
-  }
-
-  pendingGeometry(ids?: ReadonlySet<string>): boolean {
-    return [...this.pending, ...this.waiting.values()].some(({ part, meshVersion }) => {
-      if (ids && !ids.has(part.id)) return false;
-
-      const entry = this.entries.get(part.id);
-      const versioned = part.kind === 'component' || !!part.mesh?.visual;
-
-      return (
-        !entry ||
-        entry.part !== part ||
-        !!entry.group.userData.placeholder ||
-        (versioned && entry.meshVersion !== meshVersion)
-      );
-    });
-  }
-
   sync(parts: ScenePart[], selected: ReadonlySet<string>, meshVersion: number): boolean {
-    if (this.disposed) return false;
-
-    const sameSource = this.source.length === parts.length && this.source.every((part, index) => part === parts[index]);
-
-    if (!sameSource) {
-      for (const reader of this.readers) reader.reject(AbortSignal.abort().reason);
-
-      this.readers.clear();
-    }
-
-    this.source = parts;
-
     const visible = parts.filter((p) => p.visible);
     const keep = new Set(visible.map((p) => p.id));
     let changed = false;
@@ -200,8 +141,6 @@ export class PartLayer {
       built = true;
     }
 
-    this.settleReaders();
-
     return built;
   }
 
@@ -220,7 +159,22 @@ export class PartLayer {
   }
 
   buildAll(): boolean {
+    for (const [id, next] of this.waiting) {
+      if (next.appearance?.pending) continue;
+
+      this.waiting.delete(id);
+      this.pending.add(next);
+    }
+
     return this.buildPending();
+  }
+
+  async whenReady(): Promise<void> {
+    await Promise.all([...this.waiting.values()].map((next) => next.ready));
+
+    if (this.failures.size) throw this.failures.values().next().value;
+
+    this.buildAll();
   }
 
   applyPose(skip?: THREE.Object3D | null): void {
@@ -311,13 +265,7 @@ export class PartLayer {
   }
 
   dispose(): void {
-    this.disposed = true;
-    this.source = [];
     this.clearPending();
-
-    for (const reader of this.readers) reader.reject(AbortSignal.abort().reason);
-
-    this.readers.clear();
 
     for (const [id, entry] of this.entries) this.remove(id, entry);
   }
@@ -412,7 +360,6 @@ export class PartLayer {
         this.waiting.delete(id);
         this.failures.set(id, error);
         next.appearance?.release();
-        this.settleReaders();
         this.onReady();
       },
     );

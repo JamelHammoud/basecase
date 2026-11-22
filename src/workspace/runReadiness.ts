@@ -29,7 +29,7 @@ import { buildBom } from '../utils/bom';
 import { designedFits } from '../utils/designedFits';
 import { jsonHash } from '../utils/geometryHash';
 import { platformBridge } from '../utils/platformBridge';
-import { printReportOf } from '../utils/printReportPreparation';
+import { printReportOf } from '../utils/printReport';
 import { caseFindings } from '../readiness/caseChecks';
 import { caseCheckRows, nextCaseTurn } from './caseChecks';
 import { runEngineeringNow } from './engineeringNow';
@@ -120,7 +120,7 @@ export async function runReadiness({
   printerCount,
   slices,
 }: ReadinessInput): Promise<Readiness> {
-  const turn = nextCaseTurn({ parts, project });
+  const turn = nextCaseTurn();
 
   await loadSourced();
   registerSourced(project.sourced ?? []);

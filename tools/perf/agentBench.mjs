@@ -29,23 +29,6 @@ function buildApp() {
 
 buildApp();
 
-if (flag('workflow')) {
-  const { runAgentWorkflow } = await import('./agentWorkflowBench.mjs');
-
-  await runAgentWorkflow({
-    dist: outDir,
-    gpu,
-    only,
-    output: option('json', 'scratch/agent-workflow.json'),
-    fixtureFile: option('fixtures', 'scratch/agent-workloads.json'),
-    profile: option('profile', ''),
-    baseline: option('baseline', ''),
-    headless: !flag('headed'),
-    baselineDist: option('baseline-dist', ''),
-  });
-  process.exit(0);
-}
-
 const scene = fixtureScene();
 const { joints, ...record } = scene;
 const triangles = record.parts.reduce((n, p) => n + p.cad.indices.length / 3, 0);

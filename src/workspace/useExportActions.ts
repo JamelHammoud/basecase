@@ -2,10 +2,10 @@ import { useRef } from 'react';
 import { useDrawingExport } from './useDrawingExport';
 import { useKitExport } from './useKitExport';
 import { jobSpec } from '../print/job';
-import { handoffInWorker } from '../utils/aiHandoffClient';
+import { buildAIHandoffPayload } from '../utils/aiHandoff';
 import { downloadBytes as download } from '../utils/downloadBytes';
 import { platformBridge } from '../utils/platformBridge';
-import { printReportOf } from '../utils/printReportPreparation';
+import { printReportOf } from '../utils/printReport';
 import { encodeSceneFile, SCENE_FILE_EXTENSION, sharedScene } from '../utils/sceneFile';
 import { scenePreview } from '../three/scenePreview';
 import { fileSafe } from './helpers';
@@ -119,15 +119,9 @@ export function useExportActions(core: WorkspaceCore) {
   };
 
   const copyBrief = async () => {
-    try {
-      const markdown = await handoffInWorker({
-        name: scene.sceneName,
-        goal: scene.globalGoal,
-        parts,
-        annotations: annotations.annotations,
-        markdownOnly: true,
-      });
+    const { markdown } = buildAIHandoffPayload(scene.sceneName, scene.globalGoal, parts, annotations.annotations);
 
+    try {
       await navigator.clipboard.writeText(markdown);
       showToast('Copied as Markdown');
     } catch (err) {

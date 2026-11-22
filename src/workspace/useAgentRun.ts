@@ -18,7 +18,6 @@ import type { AgentCursors } from './useAgentCursors';
 import type { QueuedPrompt } from './agentLanes';
 import type { AgentLanes } from './useAgentLanes';
 import type { WorkspaceCore } from './useWorkspaceCore';
-import { startAgentRequests } from './agentRequestScope';
 
 interface AgentRunOptions {
   core: WorkspaceCore;
@@ -140,7 +139,6 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
 
     const flags = flagsOf(id);
 
-    startAgentRequests(flags);
     flags.stopped = false;
     setBusy(id, true);
     updateLane(id, (l) => ({ ...l, edits: {} }));

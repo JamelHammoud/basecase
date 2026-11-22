@@ -1,10 +1,8 @@
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { readWorldImage, worldImagePixels } from '../cases/worldImport/image';
 import { isWorldAssetHash } from '../cases/worldAssetHash';
-import { opaqueTexture } from './textureOpacity';
 
 export interface TextureAsset {
-  opaque?: boolean;
   encoded: Blob;
   texture: { bytes: Uint8Array; mimeType: string };
 }
@@ -25,14 +23,10 @@ export function textureAsset(bytes: Uint8Array): TextureAsset {
 
   if (worldImagePixels(bytes) > MAX_TEXTURE_PIXELS) throw new Error('Choose a texture under 4 million pixels.');
 
-  const asset: TextureAsset = {
+  return {
     texture: { bytes, mimeType: image.mimeType },
     encoded: new Blob([bytes as BlobPart], { type: image.mimeType }),
   };
-
-  asset.opaque = opaqueTexture(asset);
-
-  return asset;
 }
 
 export const serializeTextureAsset = ({ texture }: TextureAsset): SerializedTextureAsset => ({

@@ -40,7 +40,7 @@ Each imported world is stored once per scene, including its mesh, colliders, tex
 
 [Part finishes and textures](/help/apply-finishes-and-textures) save with the scene too. Parts that use the same image share one stored copy. The images travel in the scene's `.basecase` file.
 
-Basecase starts saving your scene 1.2 seconds after your last change, and again when you switch tabs, close a scene or quit. If you open a blank scene and close it without making a change, Basecase discards it.
+Basecase saves your scene 1.2 seconds after your last change, and again when you switch tabs, close a scene or quit. If you open a blank scene and close it without making a change, Basecase discards it.
 
 You can undo your last 50 steps in each scene.
 

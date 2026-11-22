@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { rigidFrame } from '../meshMeasure';
-import { cachedLocalOutputPoint, cachedLocalTriangles } from './localTriangleCache';
+import { outputLine } from '../analysis/rotorSplit';
+import { localTriangles, rigidFrame } from '../meshMeasure';
 import { floorPoint, hitPartId, partMeshes, rayAt } from './picking';
 import type { Vec3 } from './types';
 import type { ViewportContext } from './viewportContext';
@@ -59,7 +59,7 @@ export function boundsOf(ctx: ViewportContext, ids: string[]): { min: Vec3; max:
 export function partTriangles(ctx: ViewportContext, id: string): Float32Array | null {
   const object = ctx.layer.get(id) ?? ctx.world.get(id);
 
-  return object && !object.userData.placeholder ? cachedLocalTriangles(object) : null;
+  return object && !object.userData.placeholder ? localTriangles(object) : null;
 }
 
 export function servoOutput(ctx: ViewportContext, id: string): { point: Vec3; axis: Vec3 } | null {
@@ -69,16 +69,17 @@ export function servoOutput(ctx: ViewportContext, id: string): { point: Vec3; ax
     return null;
   }
 
-  const point = cachedLocalOutputPoint(object);
+  const triangles = localTriangles(object);
 
-  if (!point) {
+  if (!triangles.length) {
     return null;
   }
 
   const { t, q } = rigidFrame(object);
+  const line = outputLine(triangles);
 
   return {
-    point: toVec3(point.applyQuaternion(q).add(t)),
+    point: toVec3(line.start.applyQuaternion(q).add(t)),
     axis: toVec3(new THREE.Vector3(0, 1, 0).applyQuaternion(q).normalize()),
   };
 }

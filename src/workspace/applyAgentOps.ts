@@ -1,41 +1,26 @@
-import {
-  applySpec,
-  describeOp,
-  mirrorParts,
-  opTarget,
-  specToPart,
-  type AgentOp,
-  type AgentPartSpec,
-} from '../agent/agentScene';
+import { applySpec, describeOp, mirrorParts, opTarget, specToPart, type AgentOp } from '../agent/agentScene';
 import { findPartDeep } from '../booleans/parts';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { followedText, followMates } from '../agent/mateFollow';
 import { alignToSkeleton } from '../agent/skeletonMirror';
 import type { ScenePart } from '../types/robotics';
-import { timeSlicer } from '../utils/yieldToMain';
-import { agentTransaction, assertAgentCurrent } from './agentTransaction';
+import { sleep } from './helpers';
 import { twinHints } from './mirrorHints';
 import type { CommitParts, Vec3 } from './types';
 import { errorMessage } from '../utils/errorMessage';
 import { requestsSheet, sheetSpec } from '../agent/agentSheet';
-import { incomingSheetProfile, profileForUpdate, updatedSheetProfile } from '../agent/sheetProfiles';
+import { incomingSheetProfile, profileForUpdate } from '../agent/sheetProfiles';
 import { shapeKey } from '../print/shapeKey';
-import type { AgentPartJob } from '../agent/prepareAgentPart';
 
 export interface AgentOpsContext {
-  signal?: AbortSignal;
-  isCurrent?: () => boolean;
-  preparePart?: (job: AgentPartJob) => Promise<ScenePart>;
   current: () => ScenePart[];
-  latest?: () => ScenePart[];
-  original?: () => ScenePart[];
   commitParts: CommitParts;
   viewport: () => Viewport3DHandle | null;
   setCursor: (target: Vec3) => void;
   setAction: (action: string) => void;
   isFollowing: () => boolean;
   guard: (partId: string) => string | null;
-  touch: (partId: string, before?: ScenePart | null) => void;
+  touch: (partId: string) => void;
 }
 
 interface OpLog {
@@ -64,9 +49,29 @@ const VERBS: Record<AgentOp['op'], string> = {
   mirror: 'Mirroring',
 };
 
-function claim(ctx: AgentOpsContext, log: OpLog, partId: string) {
-  assertAgentCurrent(ctx);
+const OP_DELAY_MS = { add: 260, other: 160, mirrorCopy: 140, settle: 30 };
+const ANIMATION_BUDGET_MS = 600;
 
+const plannedDelay = (op: AgentOp) =>
+  (op.op === 'add' ? OP_DELAY_MS.add : OP_DELAY_MS.other) +
+  OP_DELAY_MS.settle +
+  (op.op === 'mirror' ? op.ids.length * OP_DELAY_MS.mirrorCopy : 0);
+
+export function animationPacer(ops: AgentOp[], wait: (ms: number) => Promise<unknown> = sleep) {
+  const planned = ops.reduce((sum, op) => sum + plannedDelay(op), 0);
+  const scale = planned > ANIMATION_BUDGET_MS ? ANIMATION_BUDGET_MS / planned : 1;
+  let left = ANIMATION_BUDGET_MS;
+
+  return async (ms: number) => {
+    const delay = Math.min(left, Math.round(ms * scale));
+
+    left -= delay;
+
+    if (delay > 0) await wait(delay);
+  };
+}
+
+function claim(ctx: AgentOpsContext, log: OpLog, partId: string) {
   const blocked = ctx.guard(partId);
 
   if (blocked) {
@@ -84,12 +89,7 @@ async function applyAdd({ op, current, live, ctx, log }: OpStep<'add'>) {
   let part: ScenePart;
 
   try {
-    const profile = await incomingSheetProfile(op.part);
-
-    assertAgentCurrent(ctx);
-    part =
-      op.part.cad && ctx.preparePart ? await ctx.preparePart({ spec: op.part, profile }) : specToPart(op.part, profile);
-    assertAgentCurrent(ctx);
+    part = specToPart(op.part, await incomingSheetProfile(op.part));
   } catch (err) {
     log.problems.push(errorMessage(err));
 
@@ -101,24 +101,10 @@ async function applyAdd({ op, current, live, ctx, log }: OpStep<'add'>) {
   const exists = current.some((p) => p.id === part.id);
 
   ctx.commitParts((prev) => (exists ? prev.map((p) => (p.id === part.id ? part : p)) : [...prev, part]), live);
+  ctx.viewport()?.animateSpawn([part.id]);
   log.added.push(part.id);
 
   return true;
-}
-
-async function updateProfile(part: ScenePart, spec: AgentPartSpec, ctx: AgentOpsContext) {
-  const original = findPartDeep((ctx.original ?? ctx.current)(), part.id);
-  const changedInTransaction = !original || shapeKey(original) !== shapeKey(part);
-  const profile =
-    requestsSheet(spec) && changedInTransaction
-      ? await updatedSheetProfile(part, spec)
-      : await profileForUpdate(part, spec, ctx);
-
-  return { original, profile };
-}
-
-function currentUpdateSource(ctx: AgentOpsContext, part: ScenePart, original: ScenePart | undefined) {
-  return findPartDeep((ctx.latest ?? ctx.current)(), part.id) ?? (!original ? part : undefined);
 }
 
 async function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
@@ -134,22 +120,14 @@ async function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
 
   try {
     const spec = sheetSpec(part, op.part);
-    const { original, profile } = await updateProfile(part, spec, ctx);
-
-    assertAgentCurrent(ctx);
-
-    const latest = currentUpdateSource(ctx, part, original);
+    const profile = await profileForUpdate(part, spec, ctx);
+    const latest = findPartDeep(ctx.current(), part.id);
 
     if (!latest) return false;
 
-    if (requestsSheet(spec) && original && shapeKey(latest) !== shapeKey(original))
-      throw new Error('Measure the sheet profile first.');
+    if (requestsSheet(spec) && shapeKey(latest) !== shapeKey(part)) throw new Error('Measure the sheet profile first.');
 
-    const next =
-      spec.cad && ctx.preparePart ? await ctx.preparePart({ part, spec, profile }) : applySpec(part, spec, profile);
-
-    assertAgentCurrent(ctx);
-    ctx.commitParts((prev) => prev.map((p) => (p.id === op.part.id ? next : p)), live);
+    ctx.commitParts((prev) => prev.map((p) => (p.id === op.part.id ? applySpec(p, spec, profile) : p)), live);
     log.updated.push(op.part.id);
   } catch (err) {
     log.problems.push(errorMessage(err));
@@ -181,9 +159,9 @@ async function applyMirror({ op, current, live, ctx, log, pace }: OpStep<'mirror
     const c = copies[j];
 
     ctx.setCursor([c.position[0], c.position[1] + c.dimensions.height / 2, c.position[2]]);
-    await pace(0);
-    assertAgentCurrent(ctx);
+    await pace(OP_DELAY_MS.mirrorCopy);
     ctx.commitParts((prev) => [...prev.filter((p) => p.id !== c.id), c], live || j < copies.length - 1);
+    ctx.viewport()?.animateSpawn([c.id]);
     log.added.push(c.id);
     log.mirrored.push(c.id);
 
@@ -250,17 +228,13 @@ function settle(ctx: AgentOpsContext, log: OpLog, before: ScenePart[], placed: S
   return followedText(result);
 }
 
-async function prepareAgentOps(ops: AgentOp[], ctx: AgentOpsContext): Promise<string> {
+export async function applyAgentOps(ops: AgentOp[], ctx: AgentOpsContext): Promise<string> {
   const log: OpLog = { added: [], updated: [], removed: [], mirrored: [], replaced: [], problems: [], notes: [] };
   const total = ops.length;
-  const breathe = timeSlicer();
-  const pace = (_ms: number) => breathe();
+  const pace = animationPacer(ops);
   const before = ctx.current();
 
   for (let i = 0; i < total; i++) {
-    await breathe();
-    assertAgentCurrent(ctx);
-
     const op = ops[i];
     const current = ctx.current();
     const target = opTarget(op, current);
@@ -268,9 +242,11 @@ async function prepareAgentOps(ops: AgentOp[], ctx: AgentOpsContext): Promise<st
     if (target) ctx.setCursor(target);
 
     ctx.setAction(`${VERBS[op.op] ?? VERBS.mirror} ${describeOp(op, current)}`);
+    await pace(op.op === 'add' ? OP_DELAY_MS.add : OP_DELAY_MS.other);
 
-    await applyOp(op, { current, live: true, ctx, log, pace });
-    assertAgentCurrent(ctx);
+    const applied = await applyOp(op, { current, live: true, ctx, log, pace });
+
+    if (applied !== false) await pace(OP_DELAY_MS.settle);
   }
 
   const followed = settle(ctx, log, before, placedIds(ops));
@@ -283,6 +259,3 @@ async function prepareAgentOps(ops: AgentOp[], ctx: AgentOpsContext): Promise<st
 
   return summary(log, [...followed, ...twinHints(edited, before, ctx.current())]);
 }
-
-export const applyAgentOps = (ops: AgentOp[], ctx: AgentOpsContext): Promise<string> =>
-  agentTransaction(ctx, (staged) => prepareAgentOps(ops, staged));

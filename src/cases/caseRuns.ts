@@ -1,5 +1,5 @@
 import type { MainModule } from '@mujoco/mujoco';
-import { assertCaseRunning, caseRunner, type CaseRobot, type RunOptions } from './runCase';
+import { caseRunner, type CaseRobot, type RunOptions } from './runCase';
 import type { Case } from './schema';
 import { runPath } from './runPath';
 import { tripFrames, type Trip } from './tripFrames';
@@ -104,8 +104,6 @@ export async function runSeeds(
   const outcomes: RunOutcome[] = [];
 
   for (const seed of options.seeds) {
-    assertCaseRunning(options);
-
     const result = await runner.run(seed);
     const { passed, margin, failed } = result;
     const trips = passed ? [] : await tripFrames(result.case.task.contract, result.trace);

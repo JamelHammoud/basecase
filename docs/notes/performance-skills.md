@@ -65,8 +65,3 @@ A whole-app search found one topology attribute reader in `skills/artifacts.ts`.
 For B body opening tags, F freejoint tags and J joint tags, the previous reader constructed B + F + 3J regular expressions per hash. It now constructs none during hashing and retains three module-level patterns. For 300 body tags, one freejoint and 300 joints, this removes 1,201 constructor calls per hash. These are code-derived operation counts, not timings or a claim about complete training speed. Tag-match arrays and hash serialization remain unchanged.
 
 The patterns have no global or sticky flag, so repeated reads hold no cursor state. `artifacts.test.ts` checks the expected topology digest for nested bodies, a self-closing body, reordered attributes, prefixed attribute names, missing attributes and edited names between repeated reads. Existing cases cover physics, actuator and topology changes and their skill freshness decisions. No workflow, artifact schema, hash input or screen state changes, so help steps and screenshots remain current.
-
-
-## Physical model hashes during agent edits
-
-The [workspace investigation](performance-workspace.md#agent-edit-production-investigation) owns the production agent-edit profile, model-preparation change, focused coverage and remaining interaction measurement gaps. It does not establish complete workflow responsiveness or a controlled speedup.

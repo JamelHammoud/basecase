@@ -96,10 +96,10 @@ export function useReadiness({
 
     const run = runs.begin();
     const keepIfNewest = (result: Readiness) => {
-      if (!run.isNewest() || now !== fingerprintNow()) return null;
-
-      latestRef.current = result;
-      setMeasured(result);
+      if (run.isNewest()) {
+        latestRef.current = result;
+        setMeasured(result);
+      }
 
       return decided(result);
     };

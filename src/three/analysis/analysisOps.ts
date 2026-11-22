@@ -26,7 +26,6 @@ import { lightenPart, type LightenResult } from '../../strength/lighten';
 import { lightenInFrame, lightenResultInFrame, type LightenTask } from './lightenFrame';
 import type { WiringScene } from '../../wiring/netlist';
 import { wiringOf } from './analysisWiring';
-import { buildPreparedPrintReport, type PreparedPrintReport } from '../../utils/printReport';
 
 export type { PlateFilesInput, ThreeMfFileSpec, ThreeMfResult } from './plateFiles';
 
@@ -248,7 +247,6 @@ const meshBuffers = (result: unknown) =>
   ]);
 
 export const analysisHandlers = {
-  printReport: (input: PreparedPrintReport) => reply(buildPreparedPrintReport(input)),
   tolerances: (design: ParameterDesign) => reply(analyzeTolerances(design)),
   analyze: async ({ geometries: newGeometries, shapes, task }: AnalyzePayload) => {
     newGeometries.forEach((g) => geometries.set(g.id, g));

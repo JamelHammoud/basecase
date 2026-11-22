@@ -272,25 +272,6 @@ Kernel surface sampling in `cad-kernel/meshQuery.mjs` passes barycentric coordin
 
 Measurements and limits: [Agent and CAD kernel performance evidence](../notes/performance-agent-kernel.md).
 
-Agent mutations prepare a private transaction before one document commit. CAD conversion uses an isolated instance of the existing geometry worker, which terminates on cancellation or completion. Stop, another turn, scene replacement and unmount reject stale work. Unrelated user edits survive the commit. Disjoint fields on the same part merge, while overlapping fields refuse the agent transaction. First-edit originals are recorded only after document validation accepts the commit. Project settings and Case creation share document history with part edits.
-
-The apply path no longer waits for cursor animation between operations. Its uncached preparation yields in short chunks without postponing loading. Unchanged guide-item shape keys reuse immutable part identities across Checks and build-guide preparation. Renderer simulation models and physical hashes use the existing preparation worker. Active-scene handoffs and Copy as Markdown prepare their payloads in the geometry worker, without mesh arrays or texture bytes. The [complete workflow comparison](../notes/performance-workspace.md#final-merged-workflow-comparison-on-fe8b) records the measured interaction, worker, memory and completion results with their limits.
-
-Assembly movement probes reuse transformed grid samples for the same placed solid. Every blocker query still runs. A changed sample source or any changed matrix element rebuilds those world points. The weak cache retains no placed solid. [Coverage and measurements](../notes/performance-assembly.md#movement-probes-reuse-world-samples) distinguish this coordinate reuse from collision-result caching.
-
-### Agent-edit coverage
-
-After switching back to the edited scene, the composer browser test locates the running Agent tab through its labelled working indicator. The indicator contributes to the tab's accessible name, so an exact idle-name lookup cannot select it while the agent runs. Cancellation and durable reopening assertions remain in the same walkthrough.
-
-`workspace/agentTransactions.test.ts` exercises atomic publication, interleaved user edits, conflict refusal, Stop, ordered undo and redo, later operations on newly added parts, stale document generations and document validation refusal. `agentRequestScope.test.ts` keeps previous turns cancelled after a new turn starts. `agentViewportTransaction.test.ts` retains unchanged viewport groups through a transaction, selection and undo. `agentProjectHistory.test.ts` covers project authoring and manual part edits on one undo timeline. Existing sheet tests retain hand edits during profile measurement and refuse stale geometry. `e2e/agentEditing.e2e.test.ts` declares the ordinary composer stream, Layers selection, Inspector editing, orbit, undo and redo, Stop during a held geometry reply, scene switching and reopening from the real scene store. Its geometry reply hold controls the correctness interleaving, not performance timing. The on-demand production driver uses unheld workers.
-
-The on-demand workflow report records 100 ms input-to-next-paint p95 and 250 ms maximum targets. Frame-gap targets are 50 ms p95 and 100 ms maximum, with no task above 50 ms. Paired completion and sampled renderer memory targets allow at most a 10% increase. `tools/perf/workflowBudgets.mjs` reports violations without failing a check or changing merge policy. The owner note records measured violations and limits. The same driver records actual request start and response intervals beside input observations. Its process sampler uses Chromium process ids and OS resident-memory readings on macOS and Linux. Summed resident memory includes shared pages more than once, and is not unique physical or GPU allocation. Windows reports this sampler as unsupported. Renderer heap samples and worker task CPU remain separate.
-
-Whole-scene tool reads await the viewport's existing worker jobs and incrementally build ready results. A synchronous selection or pick cannot force a pending geometry worker onto the renderer. Model preparation checks cancellation between mesh readiness, measurement, world preparation and model dispatch, so an abandoned source does not queue the next expensive stage. `sim/useSceneModel.test.ts` covers each preparation barrier. These boundaries preserve the existing tool schemas and snapshot response format.
-
-Apply and cursor requests do not wait for unrelated display preparation. Measuring requests await readiness, including worker-backed first triangle extraction. Concurrent readers share ordered immutable part identities, so an equivalent array wrapper does not cancel a valid source. Viewport coverage includes that distinction and refusal after an actual part replacement.
-
-
 - **CAD coordinates write directly into output arrays.** `agent/cadMesh.ts` writes CAD coordinates directly into the mesh and edge output arrays using the scene frame `(x, z, −y)`. It allocates no coordinate tuples per vertex or edge endpoint. Agent part creation and updates, recompilation, linkage placement and sheet detection share this converter. Bounds, centering, rounding and index order stay unchanged. `cadMesh.test.ts` compares complete results against the prior conversion across varied meshes, later edits, empty and malformed coordinates, signed zero and nonfinite values. [Evidence](../notes/performance-agent-kernel.md#cad-coordinate-conversion-writes-output-directly).
 
 
@@ -367,11 +348,3 @@ Retarget URL downloads use `motionSkeletonSource` and `publicFetch` in the tool 
 ## Token bridge request bodies
 
 The token agent server shares the [bounded HTTP body reader](security.md#0h-security-mandatory) with the Vite bridge. Its existing 80,000,000-byte budget now counts UTF-8 bytes before retaining a chunk. Oversized requests receive JSON 413 without invoking a local, raw or renderer handler. Split UTF-8 characters decode after the complete body arrives. `electron/readBridgeBody.test.mjs` covers byte overflow and the common reader's HTTP delivery and cancellation behavior. [Budget evidence](../notes/node.md#http-bridge-body-budgets) records the scope.
-
-## Agent-edit workflow tooling
-
-The on-demand workflow profiler writes CPU profiles beneath the selected report's `.profiles` directory. Baseline and candidate reports keep separate profile directories, preventing one arm from replacing the other's attribution. This changes no CI selection or performance gate.
-
-Workflow timing keeps ordinary canvas orbit input active through the durable save and agent handoff, including the final Checks pass. Inputs intercepted by modal UI are excluded from camera response timing. Cleanup stops input generation and releases its protocol session on both completion and failure. Frame gaps and long tasks still cover the whole timed operation.
-
-Agent printability and readiness tools await final pose selection, plate packing and report totals in the existing analysis pool. The shared preparation entry carries compact print metadata and the exact prepared guide order. Direct calls inside a worker keep that work in the current realm. Source changes and cancellation retain the existing request and Checks publication barriers. [Printing](printing.md) owns payload and complete-report parity coverage.

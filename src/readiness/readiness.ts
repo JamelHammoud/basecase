@@ -1,7 +1,5 @@
 import { physicalParts } from '../appearance/physical';
 import { itemKeyOf } from '../guide/guideItems';
-import { isBooleanPart } from '../booleans/parts';
-import { booleanHash } from '../booleans/hash';
 import { hashText, jsonHash, numbersHash } from '../utils/geometryHash';
 import type { MessageQuote, ScenePart, ProjectSettings } from '../types/robotics';
 import { parameterFindings } from './designParameters';
@@ -43,7 +41,6 @@ function readingsLine(p: ScenePart): string {
     jsonHash(p.sheet),
     jsonHash(p.sheetTransform),
     jsonHash(p.customNodes),
-    isBooleanPart(p) ? booleanHash(p) : '',
     numbersHash(p.cad?.positions),
     numbersHash(p.sculptMesh?.positions),
     numbersHash(p.mesh?.positions),

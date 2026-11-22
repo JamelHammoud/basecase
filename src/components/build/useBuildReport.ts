@@ -3,8 +3,7 @@ import { getComponentMesh } from '../../three/componentMeshes';
 import type { MeshMeasure } from '../../three/meshMeasure';
 import type { PrinterSetup } from '../../data/printers';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
-import { type PrintReport, type PrintShapes } from '../../utils/printReport';
-import { printReportOf } from '../../utils/printReportPreparation';
+import { printReportOf, type PrintReport, type PrintShapes } from '../../utils/printReport';
 
 const SETTLE_MS = 120;
 

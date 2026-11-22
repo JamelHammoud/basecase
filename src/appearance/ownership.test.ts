@@ -105,7 +105,7 @@ it('keeps forced viewport builds and captures waiting for texture readiness and 
   });
 
   const item = await part(120);
-  const layer = new PartLayer(new THREE.Group(), () => queueMicrotask(() => layer.buildPending()));
+  const layer = new PartLayer(new THREE.Group());
 
   layer.sync([item], new Set(), 0);
   layer.buildAll();
@@ -123,13 +123,13 @@ it('keeps forced viewport builds and captures waiting for texture readiness and 
   layer.dispose();
   layer.sync([await part(121)], new Set(), 0);
   layer.dispose();
-  await expect(layer.whenReady()).rejects.toMatchObject({ name: 'AbortError' });
+  await layer.whenReady();
   expect(textureResources().leases).toBe(0);
 });
 
 it('retains compiled-material identities through first finish, scalar edits and restoration', async () => {
   const original = box('persistent-material', [0, 0, 0], [20, 20, 20], 10);
-  const layer = new PartLayer(new THREE.Group(), () => queueMicrotask(() => layer.buildPending()));
+  const layer = new PartLayer(new THREE.Group());
 
   layer.sync([original], new Set(), 0);
   layer.buildAll();
@@ -165,7 +165,7 @@ it('retains material identity and live projection uniforms across texture mappin
   vi.stubGlobal('createImageBitmap', async () => ({ width: 2048, height: 2048, close: vi.fn() }));
 
   const original = await part(130);
-  const layer = new PartLayer(new THREE.Group(), () => queueMicrotask(() => layer.buildPending()));
+  const layer = new PartLayer(new THREE.Group());
 
   layer.sync([original], new Set(), 0);
   await layer.whenReady();

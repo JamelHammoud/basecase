@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CaseCheckJob, CaseCheckReply } from '../cases/caseCheckJob';
+import type { CaseCheckJob } from '../cases/caseCheckJob';
 import { caseCheckPool } from '../cases/caseChecksClient';
 import { presetCase } from '../cases/testing';
 import type { PresetId } from '../cases/caseBuilder';
@@ -32,53 +32,13 @@ function sceneWith(robotId: string, templateId: PresetId) {
 
 const modelReply = { type: 'model', modelHash: 'm', walk: null, stop: null } as const;
 
-beforeEach(() => {
-  run.mockReset();
-  keepOnly.mockReset();
-  forgetCaseModels();
-});
-
-describe('Case model preparation', () => {
-  it('retires obsolete seeded runs before replacement model preparation, retaining known immutable geometry', async () => {
-    run.mockResolvedValue(modelReply);
-
-    const scene = sceneWith('arm-3dof', 'touch-the-dots');
-
-    await caseCheckRows({ ...scene, turn: nextCaseTurn(scene) });
-    keepOnly.mockClear();
-    nextCaseTurn({ ...scene, parts: [...scene.parts] });
-    expect(keepOnly).not.toHaveBeenCalled();
-    nextCaseTurn({
-      ...scene,
-      parts: scene.parts.map((part, index) => (index ? part : { ...part, position: [37, 0, 0] })),
-    });
-    expect(keepOnly).toHaveBeenCalledExactlyOnceWith(new Set());
-  });
-
-  it('shares pending model preparation across checks of equivalent immutable geometry', async () => {
-    let release = () => {};
-    const preparing = new Promise<Extract<CaseCheckReply, { type: 'model' }>>((resolve) => {
-      release = () => resolve({ ...modelReply, modelHash: 'coalesced' });
-    });
-    const outcomes = Array.from({ length: 10 }, (_, seed) => ({ seed, passed: true, margin: 1, failed: [] }));
-
-    run.mockImplementation((_index, job: CaseCheckJob) =>
-      job.type === 'model' ? preparing : (Promise.resolve({ type: 'runs', result: { outcomes } }) as never),
-    );
-
-    const scene = sceneWith('rover-diff', 'reach-the-flag');
-    const older = caseCheckRows({ ...scene, turn: nextCaseTurn(scene) });
-    const newest = caseCheckRows({ ...scene, parts: [...scene.parts], turn: nextCaseTurn(scene) });
-
-    expect(run.mock.calls.filter(([, job]) => job.type === 'model')).toHaveLength(1);
-    release();
-    await older;
-    expect((await newest)[0]).toMatchObject({ status: 'pass', detail: '20 of 20' });
-    expect(run).toHaveBeenCalledTimes(3);
-  });
-});
-
 describe('Case rows in Checks', () => {
+  beforeEach(() => {
+    run.mockReset();
+    keepOnly.mockReset();
+    forgetCaseModels();
+  });
+
   it('turn a Case whose runs throw into a red note, leaving every other finding and the verdict alone', async () => {
     run.mockImplementation((_index, job: CaseCheckJob) =>
       job.type === 'model' ? Promise.resolve(modelReply) : Promise.reject(new Error('mj_loadXML failed')),

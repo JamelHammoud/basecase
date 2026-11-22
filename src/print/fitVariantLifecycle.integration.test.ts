@@ -15,7 +15,7 @@ import { useSceneDocument, type SceneDocument } from '../workspace/useSceneDocum
 import { useDesignParameters, type DesignParameters } from '../workspace/useDesignParameters';
 import { decodeSceneFile, encodeSceneFile } from '../utils/sceneFile';
 import { readinessFingerprint } from '../readiness/readiness';
-import { printReportOf } from '../utils/printReportPreparation';
+import { printReportOf } from '../utils/printReport';
 import { partSoup } from '../utils/sketch/fixtures/supportDesigns';
 import { sliceLookup } from './slices';
 import { printReportOf as shapeReport } from '../three/analysis/shapeReports';

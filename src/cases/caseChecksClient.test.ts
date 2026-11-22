@@ -21,11 +21,6 @@ class FakeWorker implements WorkerLike {
 
   answer(reply: CaseCheckReply | { error: string }) {
     const { id } = this.posted.at(-1)!;
-
-    this.answerFor(id, reply);
-  }
-
-  answerFor(id: number, reply: CaseCheckReply | { error: string }) {
     const data = 'error' in reply ? { id, error: reply.error } : { id, reply };
 
     this.onmessage?.({ data } as MessageEvent);
@@ -78,52 +73,29 @@ describe('the Case checks pool', () => {
     expect(wire).toHaveBeenCalledTimes(1);
   });
 
-  it('releases stale running and queued checks, ignores late answers and puts the latest model first', async () => {
+  it('drops queued jobs a newer check no longer wants, and puts the model first', async () => {
     const { pool: p, workers } = pool();
     const running = p.run(0, runs([1]), { tag: 'old', robot: () => robot });
     const stale = p.run(0, runs([2]), { tag: 'old', robot: () => robot });
     const wanted = p.run(0, runs([3]), { tag: 'new', robot: () => robot });
     const model = p.run(0, { type: 'model', robot, walks: [] }, { first: true });
-    const stopped = Promise.allSettled([running, stale]);
 
     p.keepOnly(new Set(['new']));
-    expect((await stopped).map((result) => result.status)).toEqual(['rejected', 'rejected']);
-    expect(workers[0].terminated).toBe(false);
-    expect(workers[0].posted[0].job).toHaveProperty('stopFlag', new Int32Array([1]));
+    await expect(stale).rejects.toThrow();
     workers[0].answer(ran);
-    expect(workers).toHaveLength(1);
+    await running;
     expect(workers[0].posted[1].job.type).toBe('model');
-    workers[0].answerFor(workers[0].posted[0].id, ran);
-    expect(workers[0].posted).toHaveLength(2);
     workers[0].answer({ type: 'model', modelHash: 'm1', walk: null, stop: null });
     await model;
     expect(workers[0].posted[2].job).toMatchObject({ seeds: [3] });
     expect(workers[0].posted[2].job).not.toHaveProperty('robot');
     workers[0].answer(ran);
     await wanted;
-    p.dispose();
-  });
-
-  it('terminates stale workers when shared cancellation memory is unavailable', async () => {
-    vi.stubGlobal('SharedArrayBuffer', undefined);
-
-    const { pool: p, workers } = pool();
-    const running = p.run(0, runs([1]), { tag: 'old', robot: () => robot });
-    const wanted = p.run(0, runs([2]), { tag: 'new', robot: () => robot });
-    const stopped = expect(running).rejects.toThrow();
-
-    p.keepOnly(new Set(['new']));
-    await stopped;
-    expect(workers[0].terminated).toBe(true);
-    expect(workers[1].posted[0].job).toMatchObject({ seeds: [2], robot });
-    workers[1].answer(ran);
-    await wanted;
-    p.dispose();
   });
 
   it('keeps another group’s queued jobs when a check drops its own', async () => {
     const { pool: p, workers } = pool();
-    const running = p.run(0, runs([1]), { group: 'recording', tag: 'held', robot: () => robot });
+    const running = p.run(0, runs([1]), { tag: 'old', robot: () => robot });
     const stale = p.run(0, runs([2]), { tag: 'old', robot: () => robot });
     const other = p.run(0, runs([3]), { tag: 'multiply', group: 'multiply', robot: () => robot });
 
@@ -132,16 +104,9 @@ describe('the Case checks pool', () => {
     workers[0].answer(ran);
     await running;
     expect(workers[0].posted[1].job).toMatchObject({ seeds: [3] });
-
-    const stopped = expect(other).rejects.toThrow();
-
     p.keepOnly(new Set(), 'multiply');
-    await stopped;
-    expect(workers[0].terminated).toBe(false);
-    expect(workers[0].posted[1].job).toHaveProperty('stopFlag', new Int32Array([1]));
     workers[0].answer(ran);
-    expect(workers).toHaveLength(1);
-    p.dispose();
+    await other;
   });
 
   it('rejects every job when a worker dies, and the next job starts a fresh worker', async () => {
@@ -206,34 +171,4 @@ it('disposes running and queued class jobs without recreating a worker', async (
   expect(workers.every((worker) => worker.terminated)).toBe(true);
   await expect(p.run(0, runs([3]))).rejects.toThrow('Canceled');
   expect(workers).toHaveLength(1);
-});
-
-it('keeps one existing idle deadline after cancellation leaves a cached worker', async () => {
-  vi.useFakeTimers();
-  vi.stubGlobal('navigator', { hardwareConcurrency: 8 });
-
-  const { pool: p, workers } = pool();
-
-  try {
-    const cached = p.run(1, runs([1]));
-
-    workers[0].answer(ran);
-    await cached;
-
-    const running = p.run(0, runs([2]), { tag: 'superseded' });
-    const stopped = expect(running).rejects.toThrow();
-
-    p.keepOnly(new Set());
-    await stopped;
-    expect(vi.getTimerCount()).toBe(0);
-    workers[1].answer({ error: 'Canceled' });
-    p.keepOnly(new Set());
-    expect(vi.getTimerCount()).toBe(1);
-    vi.runOnlyPendingTimers();
-    expect(workers.every((worker) => worker.terminated)).toBe(true);
-  } finally {
-    p.dispose();
-    vi.useRealTimers();
-    vi.unstubAllGlobals();
-  }
 });

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { CadAudit } from '../types/cadAudit';
+import { animationPacer } from '../workspace/applyAgentOps';
 import { partCode, partRecord } from './agentPartRecord';
-import { specToPart } from './agentScene';
+import { specToPart, type AgentOp } from './agentScene';
 
 const audit: CadAudit = { bodies: 1, genus: 2, nonManifoldEdges: 0, openEdges: 0, hullVolume: 9000 };
 
@@ -34,5 +35,21 @@ describe('part records', () => {
   it('returns plain code, and suggests the closest ids for a guessed one', () => {
     expect(partCode(parts, 'left-thigh')).toEqual({ text: 'left-thigh (openscad):\ncube(10);' });
     expect(partCode(parts, 'shoulder-yoke-left').error).toMatch(/Closest CAD parts: left-shoulder-yoke, left-thigh\.$/);
+  });
+});
+
+describe('animation pacing', () => {
+  it('caps the cursor animation of one call at 600 ms', async () => {
+    const waits: number[] = [];
+    const ops: AgentOp[] = Array.from({ length: 20 }, (_, i) => ({ op: 'delete', id: `p${i}` }));
+    const pace = animationPacer(ops, async (ms) => waits.push(ms));
+
+    for (let i = 0; i < 20; i++) {
+      await pace(160);
+      await pace(30);
+    }
+
+    expect(waits.reduce((s, x) => s + x, 0)).toBeLessThanOrEqual(600);
+    expect(waits).toHaveLength(40);
   });
 });

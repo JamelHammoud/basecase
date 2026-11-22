@@ -1,6 +1,4 @@
 import * as THREE from 'three';
-import { planarMaterial } from '../../appearance/render';
-import type { Appearance } from '../../appearance/model';
 
 const TEXTURE_SLOTS = [
   'map',
@@ -17,14 +15,6 @@ const TEXTURE_SLOTS = [
 ] as const;
 
 const hasTexture = (material: THREE.MeshStandardMaterial) => TEXTURE_SLOTS.some((slot) => material[slot]);
-
-const batchesColorMap = (material: THREE.MeshStandardMaterial) =>
-  Boolean(
-    material.map &&
-    material.map.channel === 0 &&
-    material.userData.appearance &&
-    material.userData.appearanceMappingSupported,
-  ) && TEXTURE_SLOTS.every((slot) => slot === 'map' || !material[slot]);
 
 const glows = (material: THREE.MeshStandardMaterial) =>
   material.emissiveIntensity > 0 && material.emissive.getHex() !== 0;
@@ -63,9 +53,7 @@ export function batchMaterial(mesh: THREE.Mesh): THREE.MeshStandardMaterial | nu
 
   if (!(material instanceof THREE.MeshStandardMaterial) || material instanceof THREE.MeshPhysicalMaterial) return null;
 
-  return drawsPlainly(material) && (!hasTexture(material) || batchesColorMap(material)) && !glows(material)
-    ? material
-    : null;
+  return drawsPlainly(material) && !hasTexture(material) && !glows(material) ? material : null;
 }
 
 type AnyAttribute = THREE.BufferAttribute | THREE.InterleavedBufferAttribute;
@@ -90,8 +78,6 @@ export function batchKey(mesh: THREE.Mesh, material: THREE.MeshStandardMaterial)
     material.fog,
     mesh.castShadow,
     mesh.receiveShadow,
-    material.map?.uuid ?? '',
-    material.map && mesh.geometry.hasAttribute('uv') ? attributeKey(mesh.geometry.getAttribute('uv')) : '',
     attributeKey(mesh.geometry.getAttribute('position')),
     attributeKey(mesh.geometry.getAttribute('normal')),
     mesh.geometry.getIndex() ? 'indexed' : 'soup',
@@ -104,21 +90,15 @@ export function batchedMaterialFrom(material: THREE.MeshStandardMaterial): THREE
   batched.color.setRGB(1, 1, 1);
   batched.name = 'batched';
 
-  const appearance = material.userData.appearance as Appearance | undefined;
-
-  if (appearance) planarMaterial(batched, appearance);
-
   return batched;
 }
 
-export function batchView(geometry: THREE.BufferGeometry, uv = false): THREE.BufferGeometry {
+export function batchView(geometry: THREE.BufferGeometry): THREE.BufferGeometry {
   const view = new THREE.BufferGeometry()
     .setAttribute('position', geometry.getAttribute('position'))
     .setAttribute('normal', geometry.getAttribute('normal'));
 
   if (geometry.index) view.setIndex(geometry.index);
-
-  if (uv && geometry.hasAttribute('uv')) view.setAttribute('uv', geometry.getAttribute('uv'));
 
   view.boundingBox = geometry.boundingBox;
   view.boundingSphere = geometry.boundingSphere;
@@ -126,11 +106,8 @@ export function batchView(geometry: THREE.BufferGeometry, uv = false): THREE.Buf
   return view;
 }
 
-export function geometryVersion(geometry: THREE.BufferGeometry, uv = false): string {
-  const attribute = geometry.getAttribute('uv');
-  const uvVersion = uv && attribute ? versionOf(attribute) : '';
-
-  return `${versionOf(geometry.getAttribute('position'))}:${versionOf(geometry.getAttribute('normal'))}:${geometry.index?.version ?? 0}:${uvVersion}`;
+export function geometryVersion(geometry: THREE.BufferGeometry): string {
+  return `${versionOf(geometry.getAttribute('position'))}:${versionOf(geometry.getAttribute('normal'))}:${geometry.index?.version ?? 0}`;
 }
 
 const plainLines = (lines: THREE.LineSegments) =>

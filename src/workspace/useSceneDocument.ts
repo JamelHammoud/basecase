@@ -61,7 +61,6 @@ function useProjectCommits(commitProject: CommitProject, projectRef: RefObject<P
   'use memo';
 
   return {
-    commitSettings: (project: ProjectSettings) => commitProject({ project: projectRef.current }, () => project),
     commitWorkbenchPlacements: (update: PlacementUpdate) =>
       commitProject({}, (p) => ({ ...p, workbenchPlacements: update(p.workbenchPlacements) })),
     commitWiring: (wiring: ProjectSettings['wiring']) => commitProject({}, (p) => ({ ...p, wiring })),

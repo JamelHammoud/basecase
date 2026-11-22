@@ -1,11 +1,10 @@
 import type { MjcfInput, SimModel } from './mjcfTypes';
 import type { ContactHullEntry, ContactPreparationJob, ContactPreparationResult } from './contactPreparation';
-import { rememberModelHashes } from '../skills/artifacts';
 
 const MAX_CACHE_BYTES = 16 * 1024 * 1024;
 const cache = new Map<string, ContactHullEntry>();
 
-export function contactJob(input: MjcfInput, copyTriangles = true): ContactPreparationJob {
+export function contactJob(input: MjcfInput): ContactPreparationJob {
   const { partTriangles, worldTriangles, ...data } = input;
   const parts = [...input.parts, ...(input.world ?? [])];
   const triangles: Record<string, Float32Array> = {};
@@ -13,7 +12,7 @@ export function contactJob(input: MjcfInput, copyTriangles = true): ContactPrepa
   for (const part of parts) {
     const values = partTriangles(part.id) ?? worldTriangles?.(part.id);
 
-    if (values) triangles[part.id] = copyTriangles ? values.slice() : values;
+    if (values) triangles[part.id] = values.slice();
   }
 
   return { input: data, triangles, cache: [...cache.values()] };
@@ -83,15 +82,14 @@ async function prepareInWorker(job: ContactPreparationJob, signal?: AbortSignal)
 export async function prepareContactModel(input: MjcfInput, options: PreparationOptions = {}): Promise<SimModel> {
   assertCurrent(options);
 
-  const inRenderer = typeof window !== 'undefined';
-  const job = contactJob(input, inRenderer);
-  const result = !inRenderer
-    ? await (await import('./contactPreparation')).prepareContactJob(job)
-    : await prepareInWorker(job, options.signal);
+  const job = contactJob(input);
+  const result =
+    typeof Worker === 'undefined' && typeof window === 'undefined'
+      ? await (await import('./contactPreparation')).prepareContactJob(job)
+      : await prepareInWorker(job, options.signal);
 
   assertCurrent(options);
   remember(result.cache);
-  rememberModelHashes(result.model, result.hashes);
 
   return result.model;
 }

@@ -46,6 +46,9 @@ export const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'sweepClashes',
   'strength',
   'lightenPart',
+  'pickAt',
+  'focusSelected',
+  'measureFrom',
 ];
 
 export const changed = (a: ViewportProps, b: ViewportProps, keys: Array<keyof ViewportProps>) =>
@@ -74,53 +77,17 @@ export function shownPropsChanged(previous: ViewportProps, next: ViewportProps):
   return [...keys].some((key) => previous[key] !== next[key] && !bothCallbacks(previous[key], next[key]));
 }
 
-const SYNC_SCENE_READS = new Set<keyof Viewport3DHandle>([
-  'restBounds',
-  'restShapes',
-  'silhouetteShots',
-  'partTriangles',
-  'servoOutput',
-]);
-
-function sceneReadIds(key: keyof Viewport3DHandle, args: unknown[]): string[] | undefined {
-  if (key === 'partTriangles' || key === 'servoOutput') return [args[0] as string];
-
-  if (key === 'restBounds' || key === 'restShapes') return args[0] as string[];
-
-  return (args[1] as { onlyIds?: string[] } | undefined)?.onlyIds;
-}
-
-const NULLABLE_SCENE_READS = new Set<keyof Viewport3DHandle>(['restBounds', 'partTriangles', 'servoOutput']);
-
-function completeRead(key: keyof Viewport3DHandle, args: unknown[], complete: (ids?: string[]) => void) {
-  try {
-    complete(SYNC_SCENE_READS.has(key) ? sceneReadIds(key, args) : undefined);
-
-    return true;
-  } catch (error) {
-    if (NULLABLE_SCENE_READS.has(key) && error instanceof Error && error.name === 'AbortError') return false;
-
-    throw error;
-  }
-}
-
-export function completing(
-  api: Viewport3DHandle,
-  complete: (ids?: string[]) => void,
-  ready: () => Promise<string[]>,
-): Viewport3DHandle {
+export function completing(api: Viewport3DHandle, complete: () => void): Viewport3DHandle {
   const wrapped = { ...api } as Record<string, (...args: never[]) => unknown>;
 
   for (const key of NEEDS_WHOLE_SCENE) {
     const run = api[key] as (...args: never[]) => unknown;
 
-    const finished = (...args: never[]) => {
-      if (!completeRead(key, args, complete)) return null;
+    wrapped[key] = (...args) => {
+      complete();
 
       return run(...args);
     };
-
-    wrapped[key] = SYNC_SCENE_READS.has(key) ? finished : (...args) => ready().then(() => finished(...args));
   }
 
   return wrapped as unknown as Viewport3DHandle;

@@ -164,7 +164,6 @@ it.each(['abort', 'edit'])('discards an in-flight worker result after %s', async
   }
 
   vi.stubGlobal('Worker', PreparationWorker);
-  vi.stubGlobal('window', {});
 
   try {
     const pending = prepareContactModel(original, { signal: controller.signal, current: () => current });

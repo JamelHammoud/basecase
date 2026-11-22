@@ -45,19 +45,13 @@ interface RobotReading {
 
 const KEPT_VERDICTS = 64;
 const KEPT_MODELS = 8;
-const models = new Map<string, ModelReading | Promise<ModelReading>>();
+const models = new Map<string, ModelReading>();
 const verdicts = new Map<string, CaseRuns>();
 const inFlight = new Map<string, Promise<CaseRuns>>();
 const policies = new Map<string, Promise<PolicySpec | null>>();
 let turns = 0;
 
-export function nextCaseTurn(input?: Pick<CaseRobotInput, 'parts' | 'project'>) {
-  turns += 1;
-
-  if (input && !models.has(modelIdentity(input).key)) caseCheckPool.keepOnly(new Set());
-
-  return turns;
-}
+export const nextCaseTurn = () => ++turns;
 
 export const forgetCaseModels = () => models.clear();
 
@@ -101,7 +95,7 @@ export function wireRobot(input: CaseRobotInput): WireRobot {
   };
 }
 
-function keepModel(key: string, reading: ModelReading | Promise<ModelReading>) {
+function keepModel(key: string, reading: ModelReading) {
   models.delete(key);
   models.set(key, reading);
 
@@ -112,45 +106,27 @@ function keepModel(key: string, reading: ModelReading | Promise<ModelReading>) {
   }
 }
 
-function modelIdentity(input: Pick<CaseRobotInput, 'parts' | 'project'>) {
+async function readModel(input: CaseRobotInput, robot: () => WireRobot, turn: number | null): Promise<ModelReading> {
+  const records = walkRecords(input.project);
   const geometry = readinessFingerprint(input.parts, {
     joints: input.project.joints,
     selfContact: input.project.selfContact,
     sensors: caseSensorKey(input.parts),
   });
-  const walks = hashOf(walkRecords(input.project));
+  const walks = hashOf(records);
   const key = `${geometry}|${walks}`;
-
-  return { geometry, walks, key };
-}
-
-async function readModel(input: CaseRobotInput, robot: () => WireRobot, turn: number | null): Promise<ModelReading> {
-  const records = walkRecords(input.project);
-  const { geometry, walks, key } = modelIdentity(input);
   const known = models.get(key);
 
   if (known) return known;
 
   if (turn !== null && isNewest(turn)) caseCheckPool.keepOnly(new Set());
 
-  const loading = caseCheckPool.run(0, { type: 'model', robot: robot(), walks: records }, { first: true }).then(
-    (reply) => {
-      const reading = { geometry, walks, modelHash: reply.modelHash, walk: reply.walk, stop: reply.stop };
+  const reply = await caseCheckPool.run(0, { type: 'model', robot: robot(), walks: records }, { first: true });
+  const reading = { geometry, walks, modelHash: reply.modelHash, walk: reply.walk, stop: reply.stop };
 
-      if (models.get(key) === loading) keepModel(key, reading);
+  keepModel(key, reading);
 
-      return reading;
-    },
-    (error: unknown) => {
-      if (models.get(key) === loading) models.delete(key);
-
-      throw error;
-    },
-  );
-
-  keepModel(key, loading);
-
-  return loading;
+  return reading;
 }
 
 async function readingOf({

@@ -48,7 +48,6 @@ interface Member {
   position: number;
   normal: number;
   index: number;
-  uv: number;
 }
 
 type AnyAttribute = THREE.BufferAttribute | THREE.InterleavedBufferAttribute | undefined;
@@ -63,14 +62,12 @@ const versionsOf = (geometry: THREE.BufferGeometry) => ({
   position: versionOf(geometry.getAttribute('position')),
   normal: versionOf(geometry.getAttribute('normal')),
   index: geometry.index?.version ?? 0,
-  uv: versionOf(geometry.getAttribute('uv')),
 });
 
-const edited = ({ geometry, position, normal, index, material, uv }: Member) =>
+const edited = ({ geometry, position, normal, index }: Member) =>
   versionOf(geometry.getAttribute('position')) !== position ||
   versionOf(geometry.getAttribute('normal')) !== normal ||
-  (geometry.index?.version ?? 0) !== index ||
-  (!!material.map && versionOf(geometry.getAttribute('uv')) !== uv);
+  (geometry.index?.version ?? 0) !== index;
 
 const replaced = ({ object, geometry, material, color, batch }: Member) =>
   object.geometry !== geometry || object.material !== material || (!batch.tintable && !color.equals(material.color));
@@ -97,7 +94,6 @@ function meshPlan(mesh: THREE.Mesh): Plan | null {
         castShadow: mesh.castShadow,
         receiveShadow: mesh.receiveShadow,
         indexed: Boolean(mesh.geometry.index),
-        keepUv: Boolean(material.map),
       }),
   };
 }

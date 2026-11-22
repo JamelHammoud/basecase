@@ -33,8 +33,6 @@ import type { LightenTask } from './lightenFrame';
 import { workerIndices } from '../../../electron/workerIndices.mjs';
 import type { Netlist, WiringScene } from '../../wiring/netlist';
 import { wiringCache } from './wiringCache';
-import { printReportsCache } from './printReportCache';
-import type { PreparedPrintReport } from '../../utils/printReport';
 
 interface Client {
   rpc: WorkerClient<typeof analysisHandlers>;
@@ -135,18 +133,6 @@ async function analyze<R>(client: Client, scene: SceneShapes, task: AnalysisTask
 
 const leastBusy = () => pool().reduce((best, c) => (c.busy < best.busy ? c : best));
 
-export async function printReportIn(input: PreparedPrintReport) {
-  const client = leastBusy();
-
-  client.busy++;
-
-  try {
-    return await client.rpc.call('printReport', input);
-  } finally {
-    client.busy--;
-  }
-}
-
 export function interferenceIn(
   scene: SceneShapes,
   options: CollideOptions & { riders?: OutputRiders },
@@ -166,15 +152,11 @@ export function rememberWiring(shapes: SceneShapes, scene: WiringScene, result: 
   void cachedWiring(shapes.instances, scene, () => Promise.resolve(result)).catch(() => {});
 }
 
-const cachedPrintReports = printReportsCache();
-
 export function printReportsIn(
   scene: SceneShapes,
   faces?: Record<string, Array<[number, number, number]>>,
 ): Promise<Record<string, ShapeReport>> {
-  return cachedPrintReports(scene, faces, (instances, requestedFaces) =>
-    analyze(leastBusy(), scene, { kind: 'print', instances, faces: requestedFaces }),
-  );
+  return analyze(leastBusy(), scene, { kind: 'print', instances: scene.instances, faces });
 }
 
 export function printMeshesIn(scene: SceneShapes): Promise<Record<string, MeshData>> {

@@ -37,7 +37,7 @@ The agent may block out a robot with stand-ins first: a generic servo, board or 
 
 ## Checks give the verdict
 
-The **Build** tab tells you whether you can build the design. Its **Checks** run in the background about 1.5 seconds after an engineering input changes. Visual finishes keep the current verdict.
+The **Build** tab tells you whether you can build the design. Its **Checks** run in the background about 1.5 seconds after an engineering input changes. Visual finishes keep the current verdict. A robot with 225 parts gets its verdict in about 5 seconds.
 
 Each problem counts as a blocker or a note:
 

@@ -72,18 +72,3 @@ A whole-app search for `uploadEvidenceFolder`, `evidenceKind`, `MAX_FOLDER_FILES
 For the 10,000-file fixture, selection reads 800 names instead of 10,000. Upload classification still reads the 400 selected names, so total name reads fall from 10,400 to 1,200. The previous selector retained 5,000 supported references before slicing to 400. The new selector retains only the final 400 references. These are deterministic operation and storage counts, not timings or a claim about complete attachment latency. Folder traversal, file reading and upload costs remain.
 
 [Attach photos, files and sketches](../../site/content/help/attach-photos-files-and-sketches.md) was checked against the final uploader. Its 400-file cap, skipped-file counts and attachment actions stay accurate. No action, label or visible state changes, so the article and screenshots stay unchanged.
-
-
-## Agent-edit production investigation
-
-The [workspace investigation](performance-workspace.md#agent-edit-production-investigation) owns the production agent-edit profile, model-preparation change, focused coverage and remaining interaction measurement gaps. It does not establish complete workflow responsiveness or a controlled speedup.
-
-The [current-main comparison](performance-workspace.md#current-main-opaque-texture-batching-comparison) measures ten actual composer-driven mutation streams. All candidate workloads show orbit, selection and Inspector changes before request completion. Atomic edits retain unchanged geometry identities and disjoint concurrent document edits. The final real-store checkpoint retains accepted edits and handoff content. Summed completion improves, but mesh replacement and other interaction targets remain unresolved. The deterministic CI declaration separately covers Stop, undo/redo and scene switching without adding timing assertions.
-
-The [full-scope main 371 comparison](performance-workspace.md#full-scope-main-371-comparison) supersedes earlier source and input-scope observations. All ten completion ratios pass, and every candidate records all three controls during actual requests. Remaining interaction and resource targets keep acceptance incomplete. The original Stop and scene-switching browser assertions remain with CI.
-
-The [final report-reuse comparison](performance-workspace.md#final-report-reuse-comparison-on-main-371) supersedes earlier candidate-source measurements. All twenty observations retain accepted edits after reopening. Remaining latency, task and joint-completion targets keep original acceptance incomplete.
-
-## Agent entry and cancellation coverage
-
-The [fe8b production comparison](performance-workspace.md#final-merged-workflow-comparison-on-fe8b) characterizes the final merged pipeline and engine-helper layout on pinned Node 26.13.1. All twenty observations retain accepted edits and fresh Checks after reopening. Every candidate records ordinary controls during actual requests and meets the unchanged interaction, completion and sampled-memory targets. This is one paired observation per workload, with the measurement limits recorded there. Earlier profiles and violations remain evidence for their own source hashes. The Stop and scene-switching declarations remain with CI.

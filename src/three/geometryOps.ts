@@ -29,10 +29,6 @@ import type { ParameterGeometryJob } from '../utils/designParameters/transaction
 import { prepareCradleJob, type CradleJob } from '../print/cradleJob';
 import { writeCradlePlate } from '../print/cradlePlate';
 import { assembleFingers, type FingerAssemblyJob } from '../gripperFingers/assembly';
-import { buildAIHandoffPayload } from '../utils/aiHandoff';
-import type { SceneAnnotation } from '../types/robotics';
-import { prepareAgentPart, type AgentPartJob } from '../agent/prepareAgentPart';
-import { triangleSnapshots, type TriangleSnapshots } from './triangleSnapshots';
 
 type Vec3 = [number, number, number];
 
@@ -203,23 +199,6 @@ async function parseMesh({ data, path }: ParseMeshJob): Promise<Float32Array | n
 const transferLines = (lines: Float32Array) => reply(lines, [lines.buffer]);
 
 export const geometryHandlers = {
-  triangleSnapshots: (input: TriangleSnapshots) => {
-    const result = triangleSnapshots(input);
-
-    return reply(result, [...new Set(result.map(({ triangles }) => triangles.buffer))]);
-  },
-  agentPart: (job: AgentPartJob) => reply(prepareAgentPart(job)),
-  handoff: (input: {
-    name: string;
-    goal: string;
-    parts: ScenePart[];
-    annotations: SceneAnnotation[];
-    markdownOnly?: boolean;
-  }) => {
-    const result = buildAIHandoffPayload(input.name, input.goal, input.parts, input.annotations);
-
-    return reply(input.markdownOnly ? result.markdown : JSON.stringify(result));
-  },
   cradlePrepare: async (job: CradleJob) => {
     const result = await prepareCradleJob(job);
 

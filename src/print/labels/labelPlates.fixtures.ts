@@ -5,7 +5,7 @@ import { approximateScene } from '../../guide/guideScene';
 import { printReportsIn, threeMfIn } from '../../three/analysis/analysisPool';
 import { snapshotShapes } from '../../three/analysis/sceneShapes';
 import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../../types/robotics';
-import { printReportOf } from '../../utils/printReportPreparation';
+import { printReportOf } from '../../utils/printReport';
 import { jobSpec } from '../job';
 import { fixtureMesh } from './label.fixtures';
 import { partLetters } from './partLetters';

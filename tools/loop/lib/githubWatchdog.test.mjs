@@ -47,6 +47,10 @@ it('does not cancel when current job activity cannot be read', () => {
 
     throw new Error('GitHub unavailable');
   });
-  expect(() => unstickMainChecks(vi.fn(), now)).toThrow('GitHub unavailable');
+
+  const log = vi.fn();
+
+  unstickMainChecks(log, now);
   expect(cancelled()).toEqual([]);
+  expect(log).toHaveBeenCalledWith(expect.stringContaining('could not be read'));
 });

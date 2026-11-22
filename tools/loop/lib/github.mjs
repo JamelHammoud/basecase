@@ -423,6 +423,16 @@ const STUCK_AFTER_MS = 30 * 60 * 1000;
 export const stuckRuns = (runs, now) =>
   runs.filter((r) => r.status !== 'completed' && now - Date.parse(r.createdAt) > STUCK_AFTER_MS);
 
+function currentJobs(id) {
+  try {
+    const pages = json('gh', ['api', '--paginate', '--slurp', `repos/${repo()}/actions/runs/${id}/jobs?per_page=100`]);
+
+    return pages.flatMap((page) => page.jobs);
+  } catch {
+    return null;
+  }
+}
+
 export function unstickMainChecks(log, now = Date.now()) {
   const unfinished =
     json('gh', [
@@ -439,21 +449,15 @@ export function unstickMainChecks(log, now = Date.now()) {
     ]) ?? [];
 
   for (const stuck of stuckRuns(unfinished, now)) {
-    const pages = json('gh', [
-      'api',
-      '--paginate',
-      '--slurp',
-      `repos/${repo()}/actions/runs/${stuck.databaseId}/jobs?per_page=100`,
-    ]);
+    const jobs = currentJobs(stuck.databaseId);
 
-    if (
-      !runIsStalled(
-        stuck,
-        pages.flatMap((page) => page.jobs),
-        now,
-      )
-    )
+    if (!jobs) {
+      log(`kept Check on main at ${stuck.headSha.slice(0, 7)}, its job activity could not be read`);
+
       continue;
+    }
+
+    if (!runIsStalled(stuck, jobs, now)) continue;
 
     const done = run('gh', ['api', '-X', 'POST', `repos/${repo()}/actions/runs/${stuck.databaseId}/force-cancel`], {
       allowFail: true,

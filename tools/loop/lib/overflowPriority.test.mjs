@@ -33,3 +33,23 @@ it('admits producers again when the last repair closes', () => {
 
   expect(repairOverflowHold('build', dependencies)).toBeNull();
 });
+
+it('keeps overflow with recovery between repair pull requests while main is red', () => {
+  const dependencies = { held: () => true, pulls: () => [], check: () => ({ conclusion: 'failure' }) };
+
+  expect(repairOverflowHold('build', dependencies)).toContain('main');
+  expect(repairOverflowHold('refine', dependencies)).toContain('main');
+});
+
+it.each(['success', null])('releases the recovery reservation after a %s main verdict', (conclusion) => {
+  const dependencies = { held: () => true, pulls: () => [], check: () => conclusion && { conclusion } };
+
+  expect(repairOverflowHold('build', dependencies)).toBeNull();
+});
+
+it('does not query the main verdict when a repair already reserves overflow', () => {
+  const dependencies = { held: () => true, pulls: () => [repair], check: vi.fn() };
+
+  expect(repairOverflowHold('build', dependencies)).toContain('repair #12');
+  expect(dependencies.check).not.toHaveBeenCalled();
+});

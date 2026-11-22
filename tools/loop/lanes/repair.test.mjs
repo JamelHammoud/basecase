@@ -1,8 +1,8 @@
-import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
-import { publish } from '../lib/pull.mjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runAgent } from '../lib/agent.mjs';
 import { failedJobs, lastFinishedMainCheck, openPulls } from '../lib/github.mjs';
+import { publish } from '../lib/pull.mjs';
+import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
 import { json } from '../lib/sh.mjs';
 import { store } from '../lib/store.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';

@@ -50,3 +50,18 @@ it('allows source work without touching test exclusions', () => {
   git('commit', '-qm', 'Source repair');
   expect(expandsTestExclusions(dir)).toBe(false);
 });
+
+it('ignores exclusion changes that landed on main after the branch was made', () => {
+  git('checkout', '-qb', 'work');
+  write([]);
+  git('add', '.');
+  git('commit', '-qm', 'Main removes the exclusion');
+  git('update-ref', 'refs/remotes/origin/main', 'HEAD');
+  git('checkout', '-q', 'HEAD~1', '-B', 'branch');
+  expect(expandsTestExclusions(dir)).toBe(false);
+});
+
+it('refuses an unreadable exclusion list', () => {
+  fs.writeFileSync(path.join(dir, 'tools/quarantine.json'), '[');
+  expect(expandsTestExclusions(dir)).toBe(true);
+});

@@ -1,4 +1,3 @@
-import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
 import {
   failedJobs,
@@ -10,6 +9,7 @@ import {
   hasLabel,
 } from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
+import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
 import { repairPlan } from '../lib/repairPlan.mjs';
 import { store } from '../lib/store.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';

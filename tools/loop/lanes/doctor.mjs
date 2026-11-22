@@ -1,4 +1,3 @@
-import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
@@ -7,6 +6,7 @@ import { breaches } from '../lib/flow.mjs';
 import { fullCheck, isPaused, openPulls, pullReview, quickCheck } from '../lib/github.mjs';
 import { LOGS } from '../lib/paths.mjs';
 import { publish } from '../lib/pull.mjs';
+import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
 import { json } from '../lib/sh.mjs';
 import { store } from '../lib/store.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';

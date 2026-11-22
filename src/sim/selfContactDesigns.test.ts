@@ -1,5 +1,5 @@
 import loadMujoco, { type MainModule } from '@mujoco/mujoco';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { SimEngine } from './engine';
 import { buildMjcf } from './mjcf';
 import { prepareContactModel } from './contactPreparationClient';
@@ -81,7 +81,7 @@ it.each(selfContactDesigns)(
 );
 
 describe('native C replay', () => {
-  beforeAll(async () => {
+  beforeEach(async () => {
     await prepareNativeContactReplay(mj.mj_versionString());
   });
 

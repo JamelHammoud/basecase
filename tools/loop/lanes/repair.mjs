@@ -1,3 +1,4 @@
+import { releaseAbandonedRepair } from '../lib/abandonedRepair.mjs';
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
 import {
   failedJobs,
@@ -50,7 +51,12 @@ export default function repair({ log }) {
     return;
   }
 
-  const taken = repaired.get(latest.databaseId).jobs;
+  const saved = repaired.get(latest.databaseId);
+  const reconciled = releaseAbandonedRepair(latest, saved);
+
+  if (reconciled !== saved) repaired.save(latest.databaseId, reconciled);
+
+  const taken = reconciled.jobs;
   const plan = repairPlan({
     run: latest,
     failed: failedJobs(latest).map(({ name }) => name),
@@ -93,7 +99,7 @@ export default function repair({ log }) {
     if (expandsTestExclusions(worktree.dir))
       return log('repair cannot expand quarantine coverage; the failed jobs remain eligible for a source repair');
 
-    repaired.save(latest.databaseId, { jobs: [...taken, ...plan.jobs] });
+    repaired.save(latest.databaseId, { ...reconciled, jobs: [...taken, ...plan.jobs] });
 
     const url = publish(
       { ...result.output, kind: 'repair' },

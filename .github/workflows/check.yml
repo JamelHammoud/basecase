@@ -165,6 +165,9 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -192,6 +195,9 @@ jobs:
         if: ${{ !cancelled() }}
         continue-on-error: true
         timeout-minutes: 1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          QUARANTINE_JOB_MINUTES: 15
         run: npm run test:quarantine -- ${{ matrix.shard }}/${{ strategy.job-total }}
 
   e2e-changed:
@@ -267,6 +273,9 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6]
     runs-on: windows-latest
     timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
     defaults:
       run:
         shell: bash
@@ -297,6 +306,9 @@ jobs:
         if: ${{ !cancelled() }}
         continue-on-error: true
         timeout-minutes: 1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          QUARANTINE_JOB_MINUTES: 25
         run: npm run test:quarantine -- ${{ matrix.shard }}/${{ strategy.job-total }}
 
   app:

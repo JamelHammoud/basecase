@@ -21,3 +21,12 @@ it('rejects physical edits, simultaneous generated changes and plain clones', ()
   expect(sameProjectSnapshot(DEFAULT_PROJECT, { ...DEFAULT_PROJECT, buildGuide: guide, material: 'ABS' })).toBe(false);
   expect(sameProjectSnapshot(DEFAULT_PROJECT, { ...DEFAULT_PROJECT })).toBe(false);
 });
+
+it('keeps saved skills strict by default and allows a simulation-specific record comparison', () => {
+  const records = new Set(['skills']);
+  const saved = { ...DEFAULT_PROJECT, skills: [] };
+
+  expect(sameProjectSnapshot(DEFAULT_PROJECT, saved)).toBe(false);
+  expect(sameProjectSnapshot(DEFAULT_PROJECT, saved, records)).toBe(true);
+  expect(sameProjectSnapshot(DEFAULT_PROJECT, { ...saved, infillPct: 99 }, records)).toBe(false);
+});

@@ -69,27 +69,39 @@ function guideWorkerFixture() {
   };
 }
 
+async function whilePageLives(page: Page, request: () => Promise<void>) {
+  try {
+    await request();
+  } catch (error) {
+    if (!page.isClosed()) throw error;
+  }
+}
+
 export async function stubKitGuideWorker(page: Page) {
   const rendered: Array<{ job: GuideJob; result: RenderedGuide }> = [];
 
-  await page.context().route(/\/guide\.worker[.-].*(?:\?|$)/, async (route) => {
-    const response = await route.fetch();
-    const source = await response.text();
+  await page.context().route(/\/guide\.worker[.-].*(?:\?|$)/, (route) =>
+    whilePageLives(page, async () => {
+      const response = await route.fetch();
+      const source = await response.text();
 
-    await route.fulfill({
-      response,
-      contentType: 'text/javascript',
-      headers: { ...response.headers(), 'Cross-Origin-Embedder-Policy': 'credentialless' },
-      body: `${source}\n;(${guideWorkerFixture.toString()})()`,
-    });
-  });
-  await page.context().route('**/__kit-guide', async (route) => {
-    const job = route.request().postDataJSON() as GuideJob;
-    const result = kitGuideReply(job);
+      await route.fulfill({
+        response,
+        contentType: 'text/javascript',
+        headers: { ...response.headers(), 'Cross-Origin-Embedder-Policy': 'credentialless' },
+        body: `${source}\n;(${guideWorkerFixture.toString()})()`,
+      });
+    }),
+  );
+  await page.context().route('**/__kit-guide', (route) =>
+    whilePageLives(page, async () => {
+      const job = route.request().postDataJSON() as GuideJob;
+      const result = kitGuideReply(job);
 
-    rendered.push({ job, result });
-    await route.fulfill({ json: result });
-  });
+      rendered.push({ job, result });
+      await route.fulfill({ json: result });
+    }),
+  );
 
   return rendered;
 }

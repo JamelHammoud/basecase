@@ -92,7 +92,7 @@ describe('Claude quota windows', () => {
   });
 
   it('rejects incomplete or malformed plan data instead of dropping an unknown window', () => {
-    expect(claudeWindows(usage({ five_hour: null }))).toEqual([]);
+    expect(claudeWindows(usage({ five_hour: undefined }))).toEqual([]);
     expect(claudeWindows(usage({ seven_day: null }))).toEqual([]);
     expect(claudeWindows(usage({ model_scoped: [{ ...window(null), display_name: 'Fable' }] }))).toEqual([]);
     expect(claudeWindows(usage({ seven_day_opus: { utilization: 10, resets_at: 'unknown' } }))).toEqual([]);
@@ -101,5 +101,52 @@ describe('Claude quota windows', () => {
 
   it('ignores unavailable optional windows and extra credit settings', () => {
     expect(claudeWindows(usage({ seven_day_opus: null, extra_usage: { utilization: 95 } }))).toHaveLength(2);
+  });
+});
+
+describe('weekly-only legacy subscription responses', () => {
+  const weeklyOnly = (percent = 4) =>
+    usage({
+      five_hour: null,
+      seven_day: window(4),
+      model_scoped: [{ display_name: 'Fable', ...window(percent) }],
+      spend: { enabled: false, percent: 0, used: { amount_minor: 0 } },
+      member_dashboard_available: false,
+      seven_day_breakdown: { rows: [{ key: 'claude_code', percent: 100, percent_of_limit: 4 }] },
+      weekly_scoped_shares: [{ limit_index: 1, used_percent_of_weekly: 2, allowance_percent_of_weekly: 50 }],
+    });
+
+  it('reads the observed weekly-only legacy allowance and dashboard metadata', () => {
+    const response = weeklyOnly();
+    const before = structuredClone(response);
+    const windows = claudeWindows(response);
+
+    expect(windows).toEqual([
+      { bucket: 'seven_day', used: 4, minutes: 10080, reset: Date.parse(reset) },
+      { bucket: 'model:Fable', used: 4, minutes: 10080, reset: Date.parse(reset) },
+    ]);
+    expect(response).toEqual(before);
+    expect(overflowAvailable({ used: { at: now, windows }, now })).toBe(true);
+    expect(overflowAvailable({ used: { at: now, windows: claudeWindows(weeklyOnly(80)) }, now })).toBe(false);
+  });
+
+  it('keeps one budget when the server switches formats and reset timestamp fractions', () => {
+    const response = weeklyOnly(7);
+
+    response.rate_limits.seven_day.utilization = 7;
+    response.rate_limits.seven_day.resets_at = reset.replace('.000Z', '.321492Z');
+
+    const windows = claudeWindows(response);
+
+    expect(windows[0].reset).toBe(Date.parse(reset));
+    expect(
+      overflowAvailable({ used: { at: now, windows }, baseline: { used: 2, reset: Date.parse(reset) }, now }),
+    ).toBe(false);
+  });
+
+  it('continues refusing unknown malformed allowance fields beside recognized dashboard data', () => {
+    expect(claudeWindows(usage({ ...weeklyOnly().rate_limits, future_allowance: { utilization: null } }))).toEqual([]);
+    expect(claudeWindows(usage({ ...weeklyOnly().rate_limits, model_scoped: [{ ...window(101) }] }))).toEqual([]);
+    expect(claudeWindows(usage({ ...weeklyOnly().rate_limits, model_scoped: [] }))).toEqual([]);
   });
 });

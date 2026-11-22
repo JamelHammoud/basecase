@@ -59,7 +59,7 @@ export function PanelTabs<T extends string>({ tabs, value, onChange, label }: Pa
         el.scrollTo({ left: right + room - el.clientWidth, behavior });
     };
 
-    reveal('auto');
+    reveal('smooth');
 
     let first = true;
     const ro = new ResizeObserver(() => {

@@ -59,6 +59,7 @@ it(
     await page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
     await page.locator(shown('[data-testid="library-tries"] button')).first().click();
     await page.locator(shown(`[data-testid="try-tile"][data-try="${id}"]`)).click();
+    await page.locator('[data-testid="case-run-area"]').getByRole('button', { name: 'Done', exact: true }).click();
     await openPlayTab(page, 'Operate');
     await page.getByRole('button', { name: 'Analyze Try', exact: true }).filter({ visible: true }).click();
     await page.getByRole('combobox', { name: 'Try' }).selectOption(id);

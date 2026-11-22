@@ -1,9 +1,9 @@
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
-import { openApp, openPlayTab, shown, type App } from './harness';
+import { openApp, openPlayTab, shown } from './harness';
 import { bodyExecutionScene, parkedBodyRun } from '../src/reality/bodyMotion.fixtures';
 import type { BodyMotionStudio } from './bodyMotionHarness';
 
-export async function openBodyExperimentApp(options: { recommended?: boolean; evidence?: boolean } = {}) {
+export async function openBodyExperimentApp(options: { recommended?: boolean } = {}) {
   const app = await openApp();
   const { page } = app;
 
@@ -21,20 +21,6 @@ export async function openBodyExperimentApp(options: { recommended?: boolean; ev
   await page.getByRole('button', { name: 'Connect Emulated Robot', exact: true }).filter({ visible: true }).click();
   await climb();
 
-  if (options.evidence !== false) await seedEvidence(app, options.recommended);
-
-  return app;
-
-  async function climb() {
-    await page.locator(shown('[data-robot-rung="set_up"]')).first().click();
-    await page.locator(shown('[data-testid="robot-mode"][data-mode="set_up"]')).first().waitFor({ timeout: 10_000 });
-    await page.locator(shown('[data-robot-rung="test"]')).first().click();
-    await page.getByText('Motors running', { exact: true }).filter({ visible: true }).waitFor();
-  }
-}
-
-async function seedEvidence(app: App, recommended?: boolean) {
-  const { page } = app;
   const model = await page.evaluate(() => (window as unknown as { __studio: BodyMotionStudio }).__studio.bodyModel());
   const run = parkedBodyRun(model);
 
@@ -47,6 +33,15 @@ async function seedEvidence(app: App, recommended?: boolean) {
         recommended,
       });
     },
-    { model, run, recommended },
+    { model, run, recommended: options.recommended },
   );
+
+  return app;
+
+  async function climb() {
+    await page.locator(shown('[data-robot-rung="set_up"]')).first().click();
+    await page.locator(shown('[data-testid="robot-mode"][data-mode="set_up"]')).first().waitFor({ timeout: 10_000 });
+    await page.locator(shown('[data-robot-rung="test"]')).first().click();
+    await page.getByText('Motors running', { exact: true }).filter({ visible: true }).waitFor();
+  }
 }

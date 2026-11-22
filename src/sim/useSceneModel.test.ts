@@ -130,7 +130,7 @@ it('refuses an old Case world when the active world changes during preparation',
   expect(preparedCalibratedModel).not.toHaveBeenCalled();
 });
 
-it.each(['buildGuide', 'bodyEvidence', 'physics', 'snapshot'] as const)(
+it.each(['buildGuide', 'bodyEvidence', 'skills', 'physics', 'snapshot'] as const)(
   'retains pending model source checks across %s publication',
   async (field) => {
     const scene = sceneModel();
@@ -162,6 +162,7 @@ it.each(['buildGuide', 'bodyEvidence', 'physics', 'snapshot'] as const)(
     const updates = {
       buildGuide: { buildGuide: guide },
       bodyEvidence: { bodyEvidence: [] },
+      skills: { skills: [] },
       physics: { infillPct: 99 },
       snapshot: {},
     };

@@ -105,6 +105,10 @@ describe('Operate a fleet of emulated arms', () => {
     for (const unit of UNITS) await climbToTest(unit);
 
     await expect
+      .poll(async () => (await fleet()).units.map((unit) => [unit.unit, unit.mode, unit.run]))
+      .toEqual(UNITS.map((unit) => [unit, 'test', 'running']));
+
+    await expect
       .poll(async () => (await fleet()).units.map((unit) => unit.version))
       .toEqual(UNITS.map(() => previousSkill.record.hash));
     await page.evaluate(

@@ -8,6 +8,8 @@ import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
 import type { SimModel, WorldItem } from './mjcfTypes';
 import type { SelfContactSetting, SelfContactSettings } from './selfContact';
 
+const MODEL_RECORD_FIELDS = new Set(['buildGuide', 'bodyEvidence', 'skills']);
+
 export function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: SimInputs) {
   const inputsRef = useRef({ parts, project, rig, pose, restDeltas });
   const [worldParts, setWorldParts] = useState<WorldItem[]>([]);
@@ -19,7 +21,11 @@ export function useSceneModel({ parts, project, rig, pose, viewportRef, restDelt
   useLayoutEffect(() => {
     const previous = inputsRef.current;
 
-    if (previous.parts !== parts || !sameProjectSnapshot(previous.project, project) || previous.pose !== pose)
+    if (
+      previous.parts !== parts ||
+      !sameProjectSnapshot(previous.project, project, MODEL_RECORD_FIELDS) ||
+      previous.pose !== pose
+    )
       preparations.current.forEach((controller) => controller.abort());
 
     inputsRef.current = { parts, project, rig, pose, restDeltas };
@@ -74,7 +80,7 @@ export function useSceneModel({ parts, project, rig, pose, viewportRef, restDelt
           signal,
           current: () =>
             inputsRef.current.parts === current.parts &&
-            sameProjectSnapshot(current.project, inputsRef.current.project) &&
+            sameProjectSnapshot(current.project, inputsRef.current.project, MODEL_RECORD_FIELDS) &&
             inputsRef.current.pose === current.pose,
         });
       } finally {

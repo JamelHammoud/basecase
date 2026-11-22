@@ -239,11 +239,11 @@
   },
   {
     "file": "e2e/fleet.e2e.test.ts",
-    "test": "",
-    "issue": 1401,
+    "test": "opens Fleet from Operate, restricts a site viewer and reopens persistent inventory",
+    "issue": 1386,
     "until": "2026-11-28",
     "platform": "win32",
-    "reason": "Nightly run 45056273339 at a65b5b221 failed the shared beforeAll on Windows shard 4 of 6 with 'POST robot: 400' while creating 31 robots at once, skipping both Fleet browser cases. The service answers every error without a status as 400 and its pool holds eight connections with 5000 ms statement and connection timeouts, so a pool or statement timeout is possible but unestablished. The inventory walkthrough was already quarantined on Windows under #1386 after check 44380885141 and a same-revision diagnostic passed it in 10606.9314 ms. Existing Fleet fixture owner #1401 owns shared setup tracing, the swallowed error and equal-load baseline and candidate measurements, and #1386 keeps the walkthrough measurements. Other platforms and the fast Fleet service tests remain active. Whole-file filtering is required because setup precedes individual-test filtering."
+    "reason": "Check 44380885141 completed inventory, cross-site denial, scrolling, service restart and role removal, then could not locate Reload Fleet after rows cleared. The retry reused the signed-in beforeAll browser and revoked viewer, then could not locate Organization ID. Last full green 44245137178 passed the unchanged declaration in 6693 ms. Same-revision Windows diagnostic 44383903662 passed the complete declaration in 10606.9314 ms with one worker, retries disabled and quarantine off, establishing intermittency without a failure rate. No responsible stage or common cause with the Linux network-change failure is established. Existing walkthrough owner #1386 owns Windows reset delivery, session and attempt-isolation traces and ten baseline and ten candidate Windows observations at equal load with retries disabled before restoration. Enrollment, browser access administration, fast subscription guards and macOS inventory coverage remain active. Preserve assertions and deadlines."
   },
   {
     "file": "e2e/caseCode.e2e.test.ts",
@@ -1397,37 +1397,5 @@
     "until": "2026-12-04",
     "platform": "win32",
     "reason": "Nightly 45043548948 failed this declaration on Windows at correctTwice line 106: Take Control was not visible within the unchanged 5000 ms poll after Try Policy was activated with Enter. The same file passed on Windows in runs 45033521946 and 44964826807 and on Linux in all three, and the commits between touch no teaching code. The stalled stage (activation, live worker start or owner publication) is not established. Existing owner #2060 owns stage timing and the fix. Linux and macOS retain the browser declaration, and the teaching, task, worker, tries and Case unit coverage stays active on Windows. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. No flake rate is claimed."
-  },
-  {
-    "file": "src/vision/training/conditionResources.test.ts",
-    "test": "bounded condition evaluation resources > rescores 1000 retained predictions without inference or extra retained image content",
-    "issue": 2054,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Nightly run 45056273339 at a65b5b221 exhausted the unchanged 5000 ms deadline on Windows shard 1 of 2 after the earlier removal of the warm-up and forced collections, with no assertion mismatch. The same case takes about 300 ms in total on an idle macOS host, with 116 ms in the measured rescoring, so the Windows stall is not established. Earlier notes record the case at 5004 ms under load on other hosts. Existing owner #2054 owns stage timing for fixture construction, hashing and rescoring and ten baseline and ten candidate Windows observations at equal load with retries disabled. The four-prediction case and the other platforms remain active."
-  },
-  {
-    "file": "tools/cli/evaluationResources.test.mjs",
-    "test": "reuses frozen geometry and matches nominal outcomes from ordinary scene checks",
-    "issue": 2084,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Nightly run 45056273339 at a65b5b221 exhausted the unchanged 5000 ms deadline on Windows shard 2 of 2 with no assertion mismatch, while Linux and macOS passed. The case takes about one second of test time on an idle macOS host. The log names no stage among fixture, freeze, run, MuJoCo load and the ordinary checks. New owner #2084 owns stage timing and ten baseline and ten candidate Windows observations at equal load with retries disabled. Other platforms and the faster evaluation tests remain active."
-  },
-  {
-    "file": "e2e/bodyExperiment.e2e.test.ts",
-    "test": "runs a retained recommendation and opens its measured recording and bound analysis through Library",
-    "issue": 2055,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Nightly run 45056273339 at a65b5b221 timed out the walkthrough at its unchanged 15000 ms deadline on Windows shard 4 of 6 with no stage named. Issue #2055 records the same timeout on Linux in run 45033521946. Fast executor, retention, recording and native daemon coverage remains active. Existing owner #2055 owns stage timing from page entry through Run completion, Library reopening and the bound historical analysis and ten baseline and ten candidate observations per platform at equal load with retries disabled."
-  },
-  {
-    "file": "e2e/bodyExperiment.e2e.test.ts",
-    "test": "runs a retained recommendation and opens its measured recording and bound analysis through Library",
-    "issue": 2055,
-    "until": "2026-11-28",
-    "platform": "linux",
-    "reason": "Nightly run 45033521946 timed out the walkthrough at its unchanged 15000 ms deadline on Linux shard 5 of 8 with no stage named, and run 45056273339 timed out the same declaration on Windows. Fast executor, retention, recording and native daemon coverage remains active. Existing owner #2055 owns stage timing from page entry through Run completion, Library reopening and the bound historical analysis and ten baseline and ten candidate observations per platform at equal load with retries disabled."
   }
 ]

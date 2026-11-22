@@ -162,7 +162,7 @@ it.each(['buildGuide', 'bodyEvidence', 'physics', 'snapshot'] as const)(
     const updates = {
       buildGuide: { buildGuide: guide },
       bodyEvidence: { bodyEvidence: [] },
-      physics: { material: 'petg' },
+      physics: { infillPct: 99 },
       snapshot: {},
     };
 

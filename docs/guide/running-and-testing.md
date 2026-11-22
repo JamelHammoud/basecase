@@ -63,6 +63,10 @@ Changes to imports, hooks, helpers, suite declarations or other lines outside te
 
 The pre-install Git scan avoids dependency installation when no browser test file changed. Parsing uses the existing TypeScript dependency after installation. Browser assertions, quarantine, timeouts and retries keep their existing configuration.
 
+### TypeScript cache ownership
+
+The app, Node and browser-test TypeScript projects keep separate incremental build records in each worktree’s ignored `scratch/typecheck/` directory. They never store those records under `node_modules`, because linked worktrees share that directory. An older checkout must not reuse another checkout’s newer verification result. `tools/testing/typecheckCache.test.mjs` reproduces the false pass with two real Git worktrees sharing dependencies, then verifies the second checkout’s type error is reported with the configured cache paths. All compiler checks remain enabled.
+
 ### Vitest cache ownership
 
 `tools/testing/vitestCache.mjs` supplies `cacheDir` and `test.fsModuleCachePath` to the five root configurations and the verification base configuration. The verification app configuration inherits its base's cache family. npm commands, changed-file checks, diagnostics and benchmark children inherit these paths through their existing configurations.

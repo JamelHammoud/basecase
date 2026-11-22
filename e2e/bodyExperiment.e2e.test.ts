@@ -9,6 +9,7 @@ let app: App;
 beforeAll(async () => {
   app = await openBodyExperimentApp({ recommended: true });
   await narrowBodyMotionPanel(app.page);
+  await openRetainedBodyExperiment(app);
 });
 afterAll(async () => {
   await app?.close();
@@ -23,7 +24,6 @@ it(
       (window as unknown as { __studio: BodyMotionStudio }).__studio.bodyCalibrations(),
     );
 
-    await openRetainedBodyExperiment(app);
     await expectBodyMotionLayout(page);
     await page.getByRole('button', { name: 'Method', exact: true }).press('Enter');
     await page.getByText('This emulator doesn’t model body mass, payload or floor contact.', { exact: true }).waitFor();

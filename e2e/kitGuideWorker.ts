@@ -41,11 +41,18 @@ export function kitGuideReply(job: GuideJob): RenderedGuide {
 
 function guideWorkerFixture() {
   const scope = self as unknown as DedicatedWorkerGlobalScope;
+  const original = scope.onmessage;
 
-  scope.onmessage = async ({ data }: MessageEvent<{ id: number; op: string; payload: { job: GuideJob } }>) => {
+  scope.onmessage = async (event: MessageEvent<{ id: number; op: string; payload: { job: GuideJob } }>) => {
+    const { data } = event;
+
+    if (data.op !== 'render') {
+      await original?.call(scope, event);
+
+      return;
+    }
+
     try {
-      if (data.op !== 'render') throw new Error('Expected guide rendering.');
-
       const response = await fetch('/__kit-guide', {
         method: 'POST',
         body: JSON.stringify(data.payload.job, (_key, value: unknown) =>
@@ -65,13 +72,17 @@ function guideWorkerFixture() {
 export async function stubKitGuideWorker(page: Page) {
   const rendered: Array<{ job: GuideJob; result: RenderedGuide }> = [];
 
-  await page.context().route(/\/guide\.worker[.-].*(?:\?|$)/, (route) =>
-    route.fulfill({
+  await page.context().route(/\/guide\.worker[.-].*(?:\?|$)/, async (route) => {
+    const response = await route.fetch();
+    const source = await response.text();
+
+    await route.fulfill({
+      response,
       contentType: 'text/javascript',
-      headers: { 'Cross-Origin-Embedder-Policy': 'credentialless' },
-      body: `(${guideWorkerFixture.toString()})()`,
-    }),
-  );
+      headers: { ...response.headers(), 'Cross-Origin-Embedder-Policy': 'credentialless' },
+      body: `${source}\n;(${guideWorkerFixture.toString()})()`,
+    });
+  });
   await page.context().route('**/__kit-guide', async (route) => {
     const job = route.request().postDataJSON() as GuideJob;
     const result = kitGuideReply(job);

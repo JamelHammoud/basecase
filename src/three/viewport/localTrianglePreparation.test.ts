@@ -110,6 +110,46 @@ it('preserves attribute precision, normalized values and interleaved layouts in 
   for (const [index, root] of roots.entries()) expect(cachedLocalTriangles(root)).toEqual(expected[index]);
 });
 
+it('accepts an unchanged local mesh while its presentation moves during worker preparation', async () => {
+  const root = new Group().add(new Group().add(new Mesh(new BoxGeometry(20, 30, 40))));
+  const stationary = new Group().add(new Mesh(new BoxGeometry(10, 20, 30)));
+  let release = () => {};
+
+  worker.run.mockClear();
+  worker.wait = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  const pending = prepareLocalTriangles([root, stationary], () => true);
+
+  root.position.set(31, 42, 53);
+  root.rotation.set(0.2, 0.3, 0.4);
+  root.scale.set(1.1, 1.2, 1.3);
+  release();
+  await pending;
+  expect(cachedLocalTriangles(root)).toEqual(localTriangles(root));
+  expect(worker.run).toHaveBeenCalledTimes(2);
+  expect(worker.run.mock.calls[1][1].sources).toHaveLength(1);
+  worker.wait = Promise.resolve();
+});
+
+it('refuses a changed descendant transform while preparing an unchanged scene', async () => {
+  const child = new Group().add(new Mesh(new BoxGeometry(20, 30, 40)));
+  const root = new Group().add(child);
+  let release = () => {};
+
+  worker.wait = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  const pending = prepareLocalTriangles([root], () => true);
+
+  child.position.x = 4;
+  release();
+  await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+  worker.wait = Promise.resolve();
+});
+
 it('retains worker-prepared output points with triangle identity and returns owned vectors after geometry edits', async () => {
   const geometry = new BoxGeometry(20, 30, 40);
   const root = new Group().add(new Mesh(geometry));

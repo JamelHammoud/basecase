@@ -1,6 +1,7 @@
 import type { BodyAnalysisOutcome, BodyAnalysisRequest } from '../reality/bodyAnalysisTypes';
 import { readBodyEvidence, rememberBodyEvidence, type BodyEvidenceRef } from '../reality/bodyEvidence';
 import { bodyRecordingUnchanged } from '../reality/bodyRecordingIdentity';
+import { bodyProjectUnchanged } from '../reality/bodySource';
 
 interface AnalysisAction {
   reference: BodyEvidenceRef;
@@ -56,6 +57,6 @@ export function bodyAnalysisCurrent(before: BodyAnalysisSourceState, now: BodyAn
     before.generation === now.generation &&
     before.unit === now.unit &&
     before.parts === now.parts &&
-    before.project === now.project
+    bodyProjectUnchanged(before.project, now.project)
   );
 }

@@ -168,7 +168,8 @@ async function bodyFitReferenceCurrent(core: WorkspaceCore, reference: BodyEvide
   return (
     reference.unit === unit &&
     (await bodyRecordingUnchanged(reference)) &&
-    reference.sourceKey === (await bodySourceKey(core.docs.partsRef.current, core.docs.projectRef.current))
+    reference.sourceKey ===
+      (await bodySourceKey(core.docs.partsRef.current, core.docs.projectRef.current, reference.sourceVersion ?? 1))
   );
 }
 

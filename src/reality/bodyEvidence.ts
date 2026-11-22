@@ -8,11 +8,13 @@ import type { BodyExperimentEvidence } from './bodyExperimentTypes';
 import { checkedMotionRecording } from '../../electron/robot/bodyMotionRecording.mjs';
 import type { BodyMotionOutcome } from './bodyMotionTypes';
 import { safeBodyMotion } from './bodyMotionEvidence';
+import { bodySourceProject, validBodySourceVersion, type BodySourceVersion } from './bodySource';
 
 export const BODY_EVIDENCE_BYTES = 8_388_608;
 export const BODY_EVIDENCE_COUNT = 32;
 
 export interface BodyEvidenceSnapshot {
+  sourceVersion?: BodySourceVersion;
   experiment?: BodyExperimentEvidence;
   refusal?: BodyAnalysisRefusal;
   request: BodyAnalysisRequest;
@@ -24,6 +26,7 @@ export interface BodyEvidenceSnapshot {
 }
 
 export interface BodyEvidenceRef {
+  sourceVersion?: BodySourceVersion;
   content: string;
   joints: string[];
   sessionHash?: string;
@@ -49,8 +52,12 @@ const defaults: BodyEvidencePorts = {
   load: loadDatasetContent,
 };
 
-export async function bodySourceKey(parts: ScenePart[], project: ProjectSettings): Promise<string> {
-  const source = { ...project, bodyEvidence: undefined };
+export async function bodySourceKey(
+  parts: ScenePart[],
+  project: ProjectSettings,
+  version?: BodySourceVersion,
+): Promise<string> {
+  const source = bodySourceProject(project, version);
   const bytes = await encodeJson({ parts: physicalParts(parts), project: source });
 
   if (bytes.byteLength > BODY_EVIDENCE_BYTES) throw new Error('Body analysis source exceeds its storage limit.');
@@ -72,6 +79,7 @@ function bodyReference(input: BodyEvidenceSnapshot, content: string): BodyEviden
   const { source } = input.request;
 
   return {
+    ...(input.sourceVersion ? { sourceVersion: input.sourceVersion } : {}),
     content,
     joints: [...input.request.run.joints],
     sessionHash: input.sessionHash,
@@ -121,6 +129,7 @@ function matchesBodyReference(value: BodyEvidenceSnapshot | null, ref: BodyEvide
   const { source, run } = value.request;
 
   return (
+    matchingSourceVersion(value, ref) &&
     source.recording === ref.recording &&
     source.unit === ref.unit &&
     source.scene === ref.scene &&
@@ -133,6 +142,11 @@ function matchesBodyReference(value: BodyEvidenceSnapshot | null, ref: BodyEvide
     safeBodyEvidenceResults(value)
   );
 }
+
+const matchingSourceVersion = (value: BodyEvidenceSnapshot, ref: BodyEvidenceRef) =>
+  validBodySourceVersion(value.sourceVersion) &&
+  validBodySourceVersion(ref.sourceVersion) &&
+  (value.sourceVersion ?? 1) === (ref.sourceVersion ?? 1);
 
 function safeBodyEvidenceResults(value: BodyEvidenceSnapshot): boolean {
   return safeBodyResult(value.result, value.request.source) && safeExperiment(value) && safeBodyMotion(value);

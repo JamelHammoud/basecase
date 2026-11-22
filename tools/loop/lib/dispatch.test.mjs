@@ -16,6 +16,7 @@ const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'loop-dispatch-'));
 vi.stubEnv('BASECASE_LOOP_DIR', directory);
 vi.mock('./agent.mjs', () => ({ CHANGE_SCHEMA: {} }));
 vi.mock('./github.mjs', () => ({
+  openPulls: () => [],
   issues: (label) => calls.steps.filter((step) => step.labels.some((entry) => entry.name === label)),
   hasLabel: (step, label) => step.labels.some((entry) => entry.name === label),
   closeIssue: vi.fn(),
@@ -58,6 +59,7 @@ const run = (counts = {}) =>
     lane: 'refine',
     module: { default: calls.fallback, schedule: { agent: true }, selectWork },
     context,
+    priority: () => null,
     capacity: () => ({ sessions: 0, loadPerCore: 0 }),
     counts: () => ({ openWaiting: 0, queuedRuns: 0, ...counts }),
   });
@@ -138,6 +140,7 @@ it('runs an eligible product from the refinement worker when the standalone work
     lane: 'refine',
     module: { default: refine, schedule: { agent: true }, selectWork },
     context,
+    priority: () => null,
     capacity: () => ({ sessions: 0, loadPerCore: 0 }),
     counts: () => ({ openWaiting: 0, queuedRuns: 0 }),
   };
@@ -231,6 +234,7 @@ it('refuses selected work at the existing producer capacity boundary and release
     lane: 'refine',
     module: { default: calls.fallback, schedule: { agent: true }, selectWork },
     context,
+    priority: () => null,
     capacity: () => ({ sessions: 8, loadPerCore: 0 }),
     counts: () => {
       throw new Error('capacity must stop before flow lookup');
@@ -283,6 +287,7 @@ it('reserves distinct product steps for simultaneous workers before either start
       lane: 'refine',
       module: { default: calls.fallback, schedule: { agent: true }, selectWork: () => selected },
       context,
+      priority: () => null,
       capacity: () => ({ sessions: 0, loadPerCore: 0 }),
       counts: () => ({ openWaiting: 0, queuedRuns: 0 }),
     });
@@ -310,4 +315,23 @@ it('keeps completed work recoverable when publication history cannot be verified
   });
   await expect(run()).rejects.toThrow('Could not verify step publication history.');
   expect(calls.publish).not.toHaveBeenCalled();
+});
+
+it('reserves overflow for repairs and releases the selected product claim', async () => {
+  await dispatch({
+    lane: 'refine',
+    module: { default: calls.fallback, schedule: { agent: true }, selectWork },
+    context,
+    capacity: () => ({ sessions: 0, loadPerCore: 0 }),
+    counts: () => ({ openWaiting: 0, queuedRuns: 0 }),
+    priority: (lane) => (lane === 'build' ? 'repair #12 needs the protected overflow session' : null),
+  });
+  expect(calls.execute).not.toHaveBeenCalled();
+  expect(calls.fallback).not.toHaveBeenCalled();
+  expect(context.log).toHaveBeenCalledWith('waiting: repair #12 needs the protected overflow session');
+
+  const release = claim('step-1');
+
+  expect(release).toBeTypeOf('function');
+  release();
 });

@@ -3,7 +3,7 @@ import { isHash } from '../skills/hash';
 import { boundedInteger, finiteValue, recordValue, vectorValue } from '../study/recordValues';
 import type { EngineContinuationState } from './engineContinuation';
 import { readEngineContinuation } from './continuationStateReader';
-import type { ControlDelayState } from './controlDelay';
+import type { ControlDelayState } from './liveControlDelay';
 import type { WorldMoveState } from './worldMoves';
 import { CONTINUATION_MAX_BYTES, CONTINUATION_MAX_POINTS } from './continuationLimits';
 

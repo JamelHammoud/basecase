@@ -1,5 +1,5 @@
 import type { MainModule } from '@mujoco/mujoco';
-import { ControlDelay, type ControlDelayState } from './controlDelay';
+import { LiveControlDelay, type ControlDelayState } from './liveControlDelay';
 import type { SimEngine } from './engine';
 
 export interface SimPhysics {
@@ -28,7 +28,7 @@ const ratio = (now: ArrayLike<number>, base: ArrayLike<number>, from = 0) => {
 };
 
 export class LivePhysics {
-  private delay = new ControlDelay();
+  private delay = new LiveControlDelay();
   private engine: SimEngine | null = null;
   private baseline: Record<Field, Float64Array> | null = null;
   private active = false;

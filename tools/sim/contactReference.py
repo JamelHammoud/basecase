@@ -79,5 +79,18 @@ def reference(case):
     return [sample(model, snapshot, case.get("steps", 0)) for snapshot in snapshots]
 
 
-result = {"version": mujoco.__version__, "cases": [reference(case) for case in json.load(sys.stdin)]}
-print(json.dumps(result, allow_nan=False))
+def result(cases):
+    return {"version": mujoco.__version__, "cases": [reference(case) for case in cases]}
+
+
+def main():
+    if "--stream" not in sys.argv:
+        print(json.dumps(result(json.load(sys.stdin)), allow_nan=False))
+        return
+    print(json.dumps({"ready": True, "version": mujoco.__version__}), flush=True)
+    for line in sys.stdin:
+        print(json.dumps(result(json.loads(line)), allow_nan=False), flush=True)
+
+
+if __name__ == "__main__":
+    main()

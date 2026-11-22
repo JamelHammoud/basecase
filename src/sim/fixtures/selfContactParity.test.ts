@@ -1,13 +1,25 @@
-import loadMujoco from '@mujoco/mujoco';
-import { expect, it } from 'vitest';
-import { nativeContactReplay } from '../../../tools/sim/nativeContactReplay.mjs';
+import loadMujoco, { type MainModule } from '@mujoco/mujoco';
+import { afterAll, beforeAll, expect, it } from 'vitest';
+import {
+  closeNativeContactReplays,
+  nativeContactReplay,
+  prepareNativeContactReplay,
+} from '../../../tools/sim/nativeContactReplay.mjs';
 import { replayDifferences } from '../../../tools/sim/contactReplayComparison.mjs';
 import { SimEngine } from '../engine';
 import { selfContactArm } from './selfContactArm';
 import { captureContactReplay } from './contactReplay';
 
+let mj: MainModule;
+
+beforeAll(async () => {
+  mj = await loadMujoco();
+  await prepareNativeContactReplay(mj.mj_versionString());
+});
+
+afterAll(closeNativeContactReplays);
+
 it.each([true, false])('replays a folding arm with self-contact %s in native C and WASM', async (enabled) => {
-  const mj = await loadMujoco();
   const model = selfContactArm(enabled);
   const capture = captureContactReplay(mj);
   const engine = new SimEngine(capture.module, model);

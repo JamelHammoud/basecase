@@ -195,7 +195,6 @@ The review lane sees the diff, the pull request body, the titles of the other pu
 
 The repair lane recognizes an active repair by its `loop:repair` label as well as the legacy `loop/repair/` branch prefix. A repair published from another loop branch receives the same six-hour coordination window. Unrelated branches do not reserve repair work. `lanes/repair.test.mjs` covers both branch forms, unrelated work and expiry.
 
-
 A red `check` on `main` is the first thing any lane fixes. Classify it before touching code:
 
 1. **Broke at a commit.** Find the commit; if one merge caused it, revert it, then fix forward.

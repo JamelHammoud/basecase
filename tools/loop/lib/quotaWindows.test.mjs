@@ -11,6 +11,62 @@ const usage = (extra = {}) => ({
 });
 
 describe('Claude quota windows', () => {
+  const currentUsage = (percent = 4) =>
+    usage({
+      five_hour: null,
+      limits: [
+        { kind: 'weekly_all', group: 'weekly', percent: 2, resets_at: reset, is_active: false },
+        {
+          kind: 'weekly_scoped',
+          group: 'weekly',
+          percent,
+          resets_at: reset,
+          is_active: true,
+          scope: { model: { display_name: 'Fable' } },
+        },
+      ],
+      spend: { enabled: false, percent: 0 },
+    });
+
+  it('admits the current weekly-only subscription response while preserving every model limit', () => {
+    const windows = claudeWindows(currentUsage());
+
+    expect(windows).toEqual([
+      { bucket: 'seven_day', used: 2, minutes: 10080, reset: Date.parse(reset) },
+      { bucket: 'weekly_scoped:Fable', used: 4, minutes: 10080, reset: Date.parse(reset) },
+    ]);
+    expect(overflowAvailable({ used: { at: now, windows }, now })).toBe(true);
+    expect(overflowAvailable({ used: { at: now, windows: claudeWindows(currentUsage(80)) }, now })).toBe(false);
+  });
+
+  it.each([null, [], [{ kind: 'weekly_scoped', group: 'weekly', percent: 4, resets_at: reset }]])(
+    'refuses incomplete current limits: %j',
+    (limits) => expect(claudeWindows(usage({ limits }))).toEqual([]),
+  );
+
+  it('keeps one overflow budget when the provider changes reset timestamp fractions', () => {
+    const first = currentUsage();
+    const second = currentUsage();
+
+    first.rate_limits.limits[0].resets_at = reset.replace('.000Z', '.321492Z');
+    second.rate_limits.limits[0].resets_at = reset.replace('.000Z', '.225000Z');
+
+    const baseline = { used: 2, reset: claudeWindows(first)[0].reset };
+    const windows = claudeWindows(second).map((item) => ({ ...item, used: 7 }));
+
+    expect(overflowAvailable({ used: { at: now, windows }, baseline, now })).toBe(false);
+  });
+
+  it.each([{ group: 'unknown' }, { percent: null }, { percent: 101 }, { resets_at: null }])(
+    'refuses a malformed current model limit: %j',
+    (change) => {
+      const response = currentUsage();
+
+      Object.assign(response.rate_limits.limits[1], change);
+      expect(claudeWindows(response)).toEqual([]);
+    },
+  );
+
   it('includes every reported model window in overflow admission', () => {
     const windows = claudeWindows(
       usage({ model_scoped: [{ display_name: 'Fable', ...window(80) }], seven_day_opus: window(30) }),

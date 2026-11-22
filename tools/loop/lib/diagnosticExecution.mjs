@@ -55,7 +55,10 @@ function measure({ selection, output, index }, execute) {
   ];
   const startedAt = Date.now();
   const response = execute(process.execPath, args, {
-    env: diagnosticEnvironment(process.env),
+    env: {
+      ...diagnosticEnvironment(process.env),
+      ...(selection.browserTrace ? { DEBUG: 'pw:api', BASECASE_DIAGNOSTIC_BROWSER_TRACE: '1' } : {}),
+    },
     encoding: 'utf8',
     maxBuffer: FILE_LIMIT,
     timeout: 15 * 60 * 1000,

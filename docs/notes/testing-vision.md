@@ -268,7 +268,7 @@ Baseline [45043451089](https://github.com/JamelHammoud/basecase/actions/runs/450
 
 ## Resource fixture lifetime on Windows
 
-[Check 45056273339](https://github.com/JamelHammoud/basecase/actions/runs/45056273339) passed 6,314 tests in Windows unit shard 1 and timed out only the 1,000-prediction condition resource declaration. The callback included initial snapshot packing and training-report creation before the already separate rescoring measurement. Retained fixtures now prepare once in the existing beforeAll budget. Both callbacks still rescore the real 4- and 1,000-member reports, assert support and both scores, and enforce the same 64 KiB result bound and five-second deadline. The scratch measurement records fixture time separately from evaluation time. No fixture count, archive, assertion, retry or quarantine changes.
+[Check 45056273339](https://github.com/JamelHammoud/basecase/actions/runs/45056273339) passed 6,314 tests in Windows unit shard 1 and timed out only the 1,000-prediction condition resource declaration. The callback included initial snapshot packing and training-report creation before the already separate rescoring measurement. Retained fixtures now prepare once in beforeAll under the default hook deadline. Both callbacks still rescore the real 4- and 1,000-member reports, assert support and both scores, and enforce the same 64 KiB result bound and five-second deadline. The scratch measurement records fixture time separately from evaluation time. No fixture count, archive, assertion, retry or quarantine changes.
 
 ## Condition resources after nightly 45056273339
 

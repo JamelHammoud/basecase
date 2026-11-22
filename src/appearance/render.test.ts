@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { openOffscreenWorker, type OffscreenTestWorker } from '../../tools/testing/offscreenWorker';
 import type { appearanceRenderChecks } from './renderChecks';
+import type { textureBatchRenderChecks } from './textureBatchRenderChecks';
 
 let worker: OffscreenTestWorker;
 let opening: Promise<OffscreenTestWorker>;
@@ -10,8 +11,8 @@ const setup = new AbortController();
 
 beforeAll(async () => {
   opening = openOffscreenWorker(
-    fileURLToPath(new URL('./renderChecks.ts', import.meta.url)),
-    'appearanceRenderChecks',
+    fileURLToPath(new URL('./appearanceCheckWorkloads.ts', import.meta.url)),
+    'appearanceCheckWorkloads',
     { signal: setup.signal, timeout: 15000 },
   );
   worker = await opening;
@@ -30,7 +31,7 @@ const difference = (a: number[], b: number[]) =>
   a.reduce((sum, value, index) => sum + (Math.abs(value - b[index]) > 40 ? 1 : 0), 0) / a.length;
 
 it('applies local color textures, preserves UV orientation and changes scale and projection reproducibly', async () => {
-  const result = await worker.run<Awaited<ReturnType<typeof appearanceRenderChecks>>>(null);
+  const result = await worker.run<Awaited<ReturnType<typeof appearanceRenderChecks>>>('render');
 
   console.info(
     JSON.stringify({
@@ -74,6 +75,7 @@ it('applies local color textures, preserves UV orientation and changes scale and
   expect(difference(result.uv, result.scaled)).toBeGreaterThan(0.15);
   expect(difference(result.uv, result.rotated)).toBeGreaterThan(0.15);
   expect(difference(result.uv, result.planar)).toBeGreaterThan(0.15);
+
   expect(result.malformedRefused).toBe(true);
   expect(result.drawCalls).toBe(1);
   expect(result.sharedUploads).toBe(1);
@@ -89,4 +91,17 @@ it('applies local color textures, preserves UV orientation and changes scale and
   expect(result.maximum.decodedPixels).toBeGreaterThanOrEqual(8_388_608);
   expect(result.maximum.decodedPixels).toBeLessThanOrEqual(8_388_624);
   expect(result.maximum.reservedPixels).toBe(0);
+});
+
+it('preserves textured batch pixels, mapping splits, alpha fallbacks and resource ownership', async () => {
+  const result = await worker.run<Awaited<ReturnType<typeof textureBatchRenderChecks>>>('batching');
+
+  for (const state of result.states) {
+    expect(state.difference).toBeLessThan(0.01);
+    expect(state.instances).toBe(state.alpha ? 0 : 4);
+    expect(state.batches).toBe(state.alpha ? 0 : 2);
+  }
+
+  expect(result.resources.textures).toBe(0);
+  expect(result.resources.leases).toBe(0);
 });

@@ -1,6 +1,7 @@
+import { completeViewport, prepareViewport } from './sceneCompletion';
 import { syncSceneParts } from './sceneSources';
 
-import { readyCapture, readyMeshes } from './captureReadiness';
+import { readyCapture } from './captureReadiness';
 import { wiringReader } from './wiringReader';
 import type * as THREE from 'three';
 import { fastenerInput } from '../../assembly/fastenerSpec';
@@ -192,7 +193,11 @@ export class ViewportEngine {
       () => outline.dispose(),
     ];
     this.cleanups.push(this.skeleton.install(), this.overlays.cableRoute.install());
-    this.api = completing(this.handle(), () => this.complete());
+    this.api = completing(
+      this.handle(),
+      (ids) => completeViewport(this.ctx, ids),
+      () => prepareViewport(this.ctx, () => this.scheduleBuilds()),
+    );
     this.syncWorld();
     this.syncScene();
     frameScene(stage, options.props.parts);
@@ -302,8 +307,8 @@ export class ViewportEngine {
       return result;
     };
 
-    const wiring = wiringReader(ctx, () => this.complete());
-    const capture = <T>(run: () => T | Promise<T>) => readyCapture(ctx, () => this.complete(), run);
+    const wiring = wiringReader(ctx, () => completeViewport(ctx));
+    const capture = <T>(run: () => T | Promise<T>) => readyCapture(ctx, () => completeViewport(ctx), run);
 
     this.cleanups.push(wiring.dispose);
 
@@ -386,7 +391,7 @@ export class ViewportEngine {
             : query,
         ),
       jointAxes: (ids) => jointAxesIn(restShapes(ids), ids),
-      meshesReady: () => readyMeshes(ctx, this.props.parts),
+      meshesReady: () => prepareViewport(ctx, () => this.scheduleBuilds()),
       sweepClashes: (sweeps) => sweepsIn(restSolids(false), sweeps),
       ...strengthHandle(restShapes),
       pickAt: (x, y) => measure.pickAt(ctx, x, y),
@@ -462,17 +467,6 @@ export class ViewportEngine {
 
       this.scheduleBuilds();
     });
-  }
-
-  private complete(): void {
-    this.ctx.loop.finishSpawns();
-    this.ctx.layer.queueLoadedComponents();
-
-    if (!this.ctx.layer.hasPending) return;
-
-    cancelAnimationFrame(this.buildFrame);
-    this.ctx.layer.buildAll();
-    this.afterBuild();
   }
 
   private frameAll(): void {

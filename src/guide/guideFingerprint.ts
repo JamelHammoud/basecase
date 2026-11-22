@@ -23,7 +23,11 @@ function partLine(p: ScenePart): string {
   return line;
 }
 
-export function guideFingerprint(title: string, parts: ScenePart[], project: ProjectSettings): string {
+export function guideFingerprint(
+  title: string,
+  parts: ScenePart[],
+  project: Pick<ProjectSettings, 'material' | 'infillPct' | 'joints'>,
+): string {
   const built = parts.filter(isBuilt).map(partLine).sort();
   const joints = (project.joints ?? []).map((j) =>
     [j.id, j.parent.join(','), j.child.join(','), j.limb ?? ''].join('|'),

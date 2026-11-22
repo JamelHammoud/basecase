@@ -66,17 +66,22 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
   const { parts, selectedIds, renamingLayer: editingId, onRenamingLayer: setEditingId } = props;
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const [query, setQuery] = useState('');
-  const scrollerRef = useRevealSelection(parts, selectedIds[0], props.open ?? true);
   const data = useDataLayerRows(props.dataLayers);
-
-  if (parts.length === 0) {
-    return null;
-  }
 
   const selected = new Set(selectedIds);
   const searching = query.trim() !== '';
   const closed = openFor(collapsed, parts, editingId);
   const rows = withDataRows(layerRows(parts, closed, query), data.layers, { collapsed: closed, query });
+  const { scrollerRef, listRef, slots } = useRevealSelection({
+    parts,
+    rows,
+    primaryId: selectedIds[0],
+    editingId,
+    open: props.open ?? true,
+  });
+
+  if (parts.length === 0) return null;
+
   const size = overallSize(parts);
   const hasImages = parts.some((p) => p.kind === 'image_plane');
   const toggleCollapsed = (id: string) =>
@@ -121,12 +126,18 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
       </div>
       <div ref={scrollerRef} className="flex-1 overflow-y-auto px-[8px] pb-3" onClick={() => props.onSelectPart(null)}>
         <SectionHeader title={layersTitle(parts)} action={hasImages && <ReferenceImagesToggle props={props} />} />
-        <ul className="space-y-px">
-          {rows.map((row) => {
+        <ul ref={listRef} className="space-y-px">
+          {slots.map((slot) => {
+            if (slot.type === 'space') return <li key={slot.key} aria-hidden style={{ height: slot.height }} />;
+
+            const row = slot.row;
+
             if (row.type === 'data') {
               return (
                 <DataLayerItem
-                  key={`d-${row.layer.id}`}
+                  key={slot.key}
+                  listPosition={slot.index + 1}
+                  listSize={rows.length}
                   layer={row.layer}
                   depth={row.depth}
                   onToggle={data.toggle}
@@ -137,7 +148,9 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
 
             return row.type === 'group' ? (
               <GroupRow
-                key={`g-${row.id}`}
+                key={slot.key}
+                listPosition={slot.index + 1}
+                listSize={rows.length}
                 id={row.id}
                 name={row.name}
                 memberIds={row.members.map((m) => m.id)}
@@ -152,7 +165,9 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
               />
             ) : (
               <PartRow
-                key={row.part.id}
+                key={slot.key}
+                listPosition={slot.index + 1}
+                listSize={rows.length}
                 part={row.part}
                 depth={row.depth}
                 operandOf={row.operandOf}

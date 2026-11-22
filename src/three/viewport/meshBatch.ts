@@ -25,6 +25,7 @@ const sizeOf = (geometry: THREE.BufferGeometry): Size => ({
 const holds = (slot: Size, size: Size) => slot.vertices >= size.vertices && slot.indices >= size.indices;
 
 export interface BatchOptions {
+  keepUv?: boolean;
   material: THREE.MeshStandardMaterial;
   castShadow: boolean;
   receiveShadow: boolean;
@@ -41,13 +42,15 @@ export class MeshBatch {
   private free: Array<{ id: number; reserved: Size }> = [];
 
   private readonly indexed: boolean;
+  private readonly keepUv: boolean;
 
   private capacity: Size;
 
   private live: Size = { vertices: 0, indices: 0 };
 
-  constructor({ material, castShadow, receiveShadow, indexed }: BatchOptions) {
+  constructor({ material, castShadow, receiveShadow, indexed, keepUv = false }: BatchOptions) {
     this.indexed = indexed;
+    this.keepUv = keepUv;
     this.capacity = { vertices: START_VERTICES, indices: indexed ? START_VERTICES * 2 : 0 };
     this.mesh = new THREE.BatchedMesh(START_INSTANCES, START_VERTICES, START_VERTICES * 2, material);
     this.mesh.name = 'part-batch';
@@ -111,14 +114,14 @@ export class MeshBatch {
 
   refresh(geometry: THREE.BufferGeometry): void {
     const slot = this.slots.get(geometry);
-    const version = geometryVersion(geometry);
+    const version = geometryVersion(geometry, this.keepUv);
 
     if (!slot || slot.version === version) return;
 
     slot.version = version;
 
     if (holds(slot.reserved, sizeOf(geometry))) {
-      this.mesh.setGeometryAt(slot.id, batchView(geometry));
+      this.mesh.setGeometryAt(slot.id, batchView(geometry, this.keepUv));
 
       return;
     }
@@ -163,12 +166,12 @@ export class MeshBatch {
 
   private acquire(geometry: THREE.BufferGeometry): GeometrySlot {
     const size = sizeOf(geometry);
-    const view = batchView(geometry);
+    const view = batchView(geometry, this.keepUv);
     const reused = this.reuse(size);
     const slot = reused
       ? { id: this.mesh.setGeometryAt(reused.id, view), reserved: reused.reserved }
       : this.fresh(view, size);
-    const filled: GeometrySlot = { ...slot, version: geometryVersion(geometry), instances: new Set() };
+    const filled: GeometrySlot = { ...slot, version: geometryVersion(geometry, this.keepUv), instances: new Set() };
 
     this.slots.set(geometry, filled);
     this.live.vertices += filled.reserved.vertices;

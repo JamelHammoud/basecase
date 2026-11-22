@@ -25,9 +25,11 @@ const MEASURING = new Set([
 ]);
 
 export async function awaitPartModels(kind: string, viewport: Viewport3DHandle | null): Promise<void> {
+  if (!MEASURING.has(kind)) return;
+
   const failed = (await viewport?.meshesReady()) ?? [];
 
-  if (!failed.length || !MEASURING.has(kind)) return;
+  if (!failed.length) return;
 
   const names = failed.map((id) => COMPONENT_BY_ID[id]?.name ?? id);
 

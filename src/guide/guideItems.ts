@@ -52,7 +52,7 @@ function shapeSignature(p: ScenePart): string {
   );
 }
 
-export function itemKeyOf(p: ScenePart): string {
+function calculateItemKey(p: ScenePart): string {
   if (p.componentId) return `component:${p.componentId}${p.componentVariant ? `|${p.componentVariant}` : ''}`;
 
   if (p.supplyId) return `supply:${p.supplyId}`;
@@ -64,6 +64,24 @@ export function itemKeyOf(p: ScenePart): string {
   if (sheet) return `sheet:${sheet.material}|${sheet.thicknessMm}|${shapeSignature(p)}`;
 
   return `printed:${shapeSignature(p)}`;
+}
+
+const itemKeys = new WeakMap<ScenePart, string>();
+
+export function rememberItemKeys(parts: ScenePart[], keys: string[]): void {
+  parts.forEach((part, index) => itemKeys.set(part, keys[index]));
+}
+
+export function itemKeyOf(part: ScenePart): string {
+  const known = itemKeys.get(part);
+
+  if (known !== undefined) return known;
+
+  const key = calculateItemKey(part);
+
+  itemKeys.set(part, key);
+
+  return key;
 }
 
 const kindOfKey = (key: string): GuideItemKind => {

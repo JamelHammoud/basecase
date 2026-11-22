@@ -5,7 +5,7 @@ import { resolvePrinter } from '../data/printers';
 import { printReportsIn, threeMfIn } from '../three/analysis/analysisPool';
 import { snapshotShapes } from '../three/analysis/sceneShapes';
 import { DEFAULT_PROJECT, type ScenePart } from '../types/robotics';
-import { printReportOf } from '../utils/printReport';
+import { printReportOf } from '../utils/printReportPreparation';
 import { printScopeParts, repairPrintParts } from './repairPlate';
 import { jobSpec } from './job';
 

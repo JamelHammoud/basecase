@@ -1397,5 +1397,77 @@
     "until": "2026-12-04",
     "platform": "win32",
     "reason": "Nightly 45043548948 failed this declaration on Windows at correctTwice line 106: Take Control was not visible within the unchanged 5000 ms poll after Try Policy was activated with Enter. The same file passed on Windows in runs 45033521946 and 44964826807 and on Linux in all three, and the commits between touch no teaching code. The stalled stage (activation, live worker start or owner publication) is not established. Existing owner #2060 owns stage timing and the fix. Linux and macOS retain the browser declaration, and the teaching, task, worker, tries and Case unit coverage stays active on Windows. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. No flake rate is claimed."
+  },
+  {
+    "file": "e2e/evaluation.e2e.test.ts",
+    "test": "imports an actual CLI failure and opens its frozen identity and failure in the ordinary timeline",
+    "issue": 2080,
+    "until": "2026-12-04",
+    "platform": "win32",
+    "reason": "Nightly run 45067663787 at 07b4c76c65a78644ac44f9c83ee7360195a95413 on Windows shard 2 of 6 reopened the saved Try after New Scene and found no try-timeline within the unchanged 10000 ms poll, in openSaved at continuation.helpers.ts:82. The same declaration failed in runs 45064805192 and 45061969197 on Windows. Linux passed. The last completed stage is the first reopen, which showed Missed. Existing owner #2080 owns Windows stage tracing and ten baseline and ten candidate observations at equal load with retries disabled before restoration. Linux and macOS declarations remain active, alongside fast evaluation freeze, run and report coverage."
+  },
+  {
+    "file": "e2e/operateG1.e2e.test.ts",
+    "test": "Operate an emulated Unitree G1 > connects the G1 and offers its writable joints and Test controls",
+    "issue": 2080,
+    "until": "2026-12-04",
+    "platform": "win32",
+    "reason": "Nightly run 45067663787 at 07b4c76c65a78644ac44f9c83ee7360195a95413 on Windows shard 2 of 6 exhausted the unchanged 15000 ms test deadline. The log names no stage, so connection, joint listing and Test controls are not distinguished. Linux passed. Existing owner #2080 owns Windows stage tracing and ten baseline and ten candidate observations at equal load with retries disabled before restoration. Linux and macOS declarations remain active, alongside fast G1 adapter coverage."
+  },
+  {
+    "file": "e2e/studySourcing.e2e.test.ts",
+    "test": "reopens historical purchasing evidence and refuses Apply after the selected offer changes",
+    "issue": 2015,
+    "until": "2026-12-04",
+    "platform": "win32",
+    "reason": "Nightly run 45067663787 at 07b4c76c65a78644ac44f9c83ee7360195a95413 on Windows shard 2 of 6 waited 30000 ms for the refusal text after Apply and never saw it. The same declaration failed in runs 45064805192 and 45061969197 on Windows, after the guide picture isolation in #2098. Linux passed. Existing owner #2015 owns Windows result delivery tracing and ten baseline and ten candidate observations at equal load with retries disabled before restoration. Linux and macOS declarations and the late and on-time offer comparison remain active."
+  },
+  {
+    "file": "e2e/bodyMotion.e2e.test.ts",
+    "test": "recommends and scrubs a simulated motion through Operate without changing the robot",
+    "issue": 2055,
+    "until": "2026-12-04",
+    "platform": "win32",
+    "reason": "Nightly run 45067663787 at 07b4c76c65a78644ac44f9c83ee7360195a95413 on Windows shard 4 of 6 exhausted the unchanged 15000 ms test deadline. The preceding retained execution story already prepares its preview in setup, so the cold body worker and MuJoCo load now sit in this story. The log names no stage. Linux passed. Existing owner #2055 owns Windows stage timing from Analyze through Preview Motion and scrubbing, and ten baseline and ten candidate observations at equal load with retries disabled before restoration. Linux and macOS declarations, the retained execution story and fast body motion coverage remain active."
+  },
+  {
+    "file": "e2e/leagueEntry.e2e.test.ts",
+    "test": "opens Enter League through Share Robot, refuses a different Case and copies a pinned submission",
+    "issue": 2110,
+    "until": "2026-12-04",
+    "platform": "win32",
+    "reason": "Nightly run 45067663787 at 07b4c76c65a78644ac44f9c83ee7360195a95413 on Windows shard 5 of 6 showed 'signal is aborted without reason' in the Share Robot dialog instead of the pinned Hub link after the second Enter League click. The three earlier Windows nightlies passed it and Linux passed it here. The abort source is not established. New owner #2110 owns tracing it and ten baseline and ten candidate observations at equal load with retries disabled before restoration. Linux and macOS declarations and fast League entry coverage remain active."
+  },
+  {
+    "file": "e2e/skillDiscovery.e2e.test.ts",
+    "test": "reorders discovery after reported installs on a second robot",
+    "issue": 2110,
+    "until": "2026-12-04",
+    "platform": "win32",
+    "reason": "Nightly run 45067663787 at 07b4c76c65a78644ac44f9c83ee7360195a95413 on Windows shard 3 of 6 failed both attempts with no published skill rows at lines 167 and 198. The three earlier Windows nightlies passed it and Linux passed it here. The stage that stopped listing is not established. New owner #2110 owns tracing it and ten baseline and ten candidate observations at equal load with retries disabled before restoration. Linux and macOS declarations and fast discovery ranking coverage remain active."
+  },
+  {
+    "file": "e2e/gallery.e2e.test.ts",
+    "test": "shared Case apps > keeps a shared code panel away from the page\u2019s IndexedDB, its cookies and the Hub",
+    "issue": 1139,
+    "until": "2026-12-04",
+    "platform": "linux",
+    "reason": "Nightly run 45067663787 at 07b4c76c65a78644ac44f9c83ee7360195a95413 on Linux shard 3 of 10 found no probe frames for 60000 ms and then lost the frame. The same declaration is already quarantined on Windows under #1139 for shared Case panel startup. Existing owner #1139 owns frame startup tracing and ten baseline and ten candidate observations at equal load with retries disabled before restoration. macOS and the fast sandbox and bridge isolation tests remain active."
+  },
+  {
+    "file": "src/appearance/render.test.ts",
+    "test": "",
+    "issue": 1400,
+    "until": "2026-12-04",
+    "platform": "linux",
+    "reason": "Nightly run 45067663787 at 07b4c76c65a78644ac44f9c83ee7360195a95413 on Linux unit shard 2 of 2 exhausted the unchanged 15000 ms beforeAll budget in openOffscreenWorker, skipping both render cases. The Vite bundle build, server, Chrome launch and worker readiness stages are not distinguished. Windows and macOS are unchanged. Existing shared OffscreenCanvas setup owner #1400 owns stage tracing and ten baseline and ten candidate observations at equal load before restoration, as for the Linux guide stage entry. Whole-file filtering is required because setup precedes individual-test filtering. Fast appearance, texture and batch unit coverage remains active."
+  },
+  {
+    "file": "tools/cli/evaluationInterruption.test.mjs",
+    "test": "cancels the actual CLI through its portable stop file and retains incomplete evidence",
+    "issue": 2084,
+    "until": "2026-12-04",
+    "platform": "win32",
+    "reason": "Nightly run 45067663787 at 07b4c76c65a78644ac44f9c83ee7360195a95413 on Windows unit shard 2 of 2 exhausted the unchanged 5000 ms test deadline. The declaration builds the evaluation fixture, freezes sixteen seeds and runs the actual CLI, so stages are not distinguished. Existing Windows portable evaluation owner #2084 owns stage timing and ten baseline and ten candidate observations at equal load with retries disabled before restoration. The forced interruption declaration, Linux and macOS stay active."
   }
 ]

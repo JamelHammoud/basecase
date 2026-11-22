@@ -394,3 +394,15 @@ The worker now shares byte-identical results within a snapshot job. Exact 32-bit
 ## Current merged viewport characterization
 
 The [fe8b production comparison](performance-workspace.md#final-merged-workflow-comparison-on-fe8b) characterizes the final merged pipeline and engine-helper layout on pinned Node 26.13.1. All twenty observations retain accepted edits and fresh Checks after reopening. Every candidate records ordinary controls during actual requests and meets the unchanged interaction, completion and sampled-memory targets. This is one paired observation per workload, with the measurement limits recorded there. Earlier profiles and violations remain evidence for their own source hashes. The Stop and scene-switching declarations remain with CI.
+
+## Readiness reads restart on a changed scene
+
+Nightly [45046326630](https://github.com/JamelHammoud/basecase/actions/runs/45046326630) at `1e7cd566b` failed first launch, Case drive, Try stop, passive joint, robot import and cradle browser declarations on Linux and Windows. The previous nightly at `7ba2890a9` passed them, and the only product merge between them is `e5005ea0d` (#2037). `e2e/firstLaunch.e2e.test.ts` reproduced on macOS: the rover scene opened but the simulation never built a model.
+
+Cause: `prepareViewport` refuses a pending read with an `AbortError` when the viewport's parts or world change before it finishes. Opening a Case calls `sim.setWorld` and starts the model build in the same task, before React hands the viewport its new world, so the read was refused and `drive.start` returned no model. The handle's `meshesReady` and the whole-scene reads now go through `prepareCurrentViewport`, which restarts the read against the current scene up to five times and still refuses once the context is lost. `prepareViewport` keeps refusing stale reads, and `sceneCompletion.test.ts` covers both. With the change, `firstLaunch`, `passiveJoints` and `tryStop` pass locally.
+
+Not established: `e2e/cradle.e2e.test.ts` and `e2e/buildAllocations.e2e.test.ts` still failed in the macOS dev-server run. The latter logs `signal is aborted without reason` from a reader other than `meshesReady`, so another caller still leaks the refusal. Their Windows and Linux outcomes after this change are unmeasured.
+
+The retained body experiment walkthrough has failed on both platforms in every full run since `87e19e015` and passes on macOS. It is quarantined under [#2055](https://github.com/JamelHammoud/basecase/issues/2055). The Windows `folded snake` self-contact parity case is quarantined under [#1390](https://github.com/JamelHammoud/basecase/issues/1390) and the Windows hexapod turn-away transition under [#2071](https://github.com/JamelHammoud/basecase/issues/2071), all until 4 December 2026.
+
+The Motor Kit gate pinned `src/sim/controlDelay.ts` at a hash from before `c46b76306` (#2026) added teaching owners. The repair updates only that hash and the gate's manifest entry.

@@ -1397,5 +1397,28 @@
     "until": "2026-12-04",
     "platform": "win32",
     "reason": "Nightly 45043548948 failed this declaration on Windows at correctTwice line 106: Take Control was not visible within the unchanged 5000 ms poll after Try Policy was activated with Enter. The same file passed on Windows in runs 45033521946 and 44964826807 and on Linux in all three, and the commits between touch no teaching code. The stalled stage (activation, live worker start or owner publication) is not established. Existing owner #2060 owns stage timing and the fix. Linux and macOS retain the browser declaration, and the teaching, task, worker, tries and Case unit coverage stays active on Windows. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. No flake rate is claimed."
+  },
+  {
+    "file": "e2e/bodyExperiment.e2e.test.ts",
+    "test": "runs a retained recommendation and opens its measured recording and bound analysis through Library",
+    "issue": 2055,
+    "until": "2026-12-04",
+    "reason": "Every full Check since the declaration landed in 87e19e015 has exhausted its 15000 ms deadline on both Linux and Windows, including nightly 45046326630, 45043548948, 45033521946 and 44964826807, while the same declaration passes on macOS. The stalled stage between Analyze Try, Preview Motion, Run and Library reopening is not established. Existing owner #2055 owns fitting the walkthrough to its deadline. Retained body experiment, retention, cost and analysis unit coverage stays active on every platform. Preserve the assertions, the 15000 ms deadline and zero retries. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on each platform. No flake rate is claimed."
+  },
+  {
+    "file": "src/sim/selfContactDesigns.test.ts",
+    "test": "folded snake replays the same contact identities and states in native C and WASM",
+    "issue": 1390,
+    "until": "2026-12-04",
+    "platform": "win32",
+    "reason": "Nightly 45046326630 exhausted the unchanged 5000 ms deadline on Windows shard 1 of 2, and Windows nightly 45033521946 failed the same declaration. Linux passed it in both runs. No commit between them touches self-contact, preparation or native replay sources. Existing owner #1390 owns making native and WASM parity deterministic on Windows. Linux and macOS retain the declaration and the other self-contact designs stay active on Windows. Preserve the deadline and zero retries. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load Windows observations. No flake rate is claimed."
+  },
+  {
+    "file": "src/skills/kitTransitions.test.ts",
+    "test": "hexapod turn-away to walk { fromMove: { turn: -90 } }",
+    "issue": 2071,
+    "until": "2026-12-04",
+    "platform": "win32",
+    "reason": "Nightly 45046326630 exhausted the unchanged 5000 ms deadline on Windows shard 1 of 2. The same file passed on Linux in that run and on Windows in nightly 45043548948 and 45033521946, and no commit between them touches kit transitions or the hexapod fixture. The slow stage is not established. New owner #2071 owns the measurement and the fix. Linux and macOS retain the declaration and the other transitions stay active on Windows. Preserve the deadline and zero retries. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load Windows observations. No flake rate is claimed."
   }
 ]

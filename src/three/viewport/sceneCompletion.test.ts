@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { Group } from 'three';
 import { specToPart } from '../../agent/agentScene';
 import { PartLayer } from './partLayer';
-import { completeViewport, prepareViewport } from './sceneCompletion';
+import { completeViewport, prepareCurrentViewport, prepareViewport } from './sceneCompletion';
 import type { ViewportContext } from './viewportContext';
 import type { Viewport3DHandle } from './types';
 import { completing } from './engineKeys';
@@ -91,6 +91,29 @@ it.each(['replace', 'replaceWorld', 'dispose'] as const)(
     current.ctx.layer.dispose();
   },
 );
+
+it.each(['replace', 'replaceWorld'] as const)(
+  'restarts the readiness read for the current scene after %s instead of refusing it',
+  async (change) => {
+    const current = scene();
+    const pending = prepareCurrentViewport(current.ctx, () => {});
+
+    current[change]();
+    current.release();
+    await expect(pending).resolves.toEqual([]);
+    expect(current.ctx.layer.get('prepared')).toBeDefined();
+    current.ctx.layer.dispose();
+  },
+);
+
+it('still refuses a readiness read once the context is lost', async () => {
+  const current = scene();
+  const pending = prepareCurrentViewport(current.ctx, () => {});
+
+  current.dispose();
+  current.release();
+  await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+});
 
 it('keeps selection styling independent of correct geometry reads', async () => {
   const current = scene();

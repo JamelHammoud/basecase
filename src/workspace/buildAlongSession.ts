@@ -19,7 +19,7 @@ export interface Session {
   stepParts: string[][];
   views: BuildStepView[];
   index: number;
-  camera: ViewShot;
+  camera?: ViewShot;
   frozen?: {
     record: BuildRecord;
     kit: FrozenKit;

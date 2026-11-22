@@ -29,8 +29,6 @@ export function useFrozenBuildAlong({
     const run = ++openingRef.current;
     const camera = session?.camera ?? viewportRef.current?.currentView();
 
-    if (!camera) return;
-
     setOpening(true);
 
     try {

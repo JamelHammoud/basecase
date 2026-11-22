@@ -215,10 +215,27 @@ export async function openApp(
     posts,
     requests,
     close: async () => {
+      await logBrowserState(page, errors);
       await browser.close();
       fs.rmSync(libraryDir, { recursive: true, force: true });
     },
   };
+}
+
+async function logBrowserState(page: Page, errors: string[]) {
+  if (process.env.BASECASE_DIAGNOSTIC_BROWSER_TRACE !== '1') return;
+
+  const text = await page
+    .locator('body')
+    .innerText({ timeout: 2000 })
+    .catch(() => '');
+
+  console.log(
+    `e2e browser state: ${JSON.stringify({
+      errors: errors.slice(-20).map((error) => error.slice(0, 500)),
+      text: text.slice(0, 4000),
+    })}`,
+  );
 }
 
 export const partCount = (page: Page) =>

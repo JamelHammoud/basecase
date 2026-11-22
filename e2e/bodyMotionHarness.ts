@@ -9,6 +9,7 @@ export interface BodyMotionStudio {
   load: (record: unknown) => void;
   attachRobot: (link: unknown) => void;
   bodyModel: () => Promise<SimModel>;
+  guide: () => Promise<unknown>;
   seedBodyEvidence: (input: {
     run: RobotRun;
     model: SimModel;
@@ -53,6 +54,11 @@ export async function openBodyMotionApp(recommended = false) {
     ...scene,
     project: { ...scene.project, joints },
     id: 'body-motion-scene',
+  });
+  await app.page.evaluate(async () => {
+    const guide = await (window as unknown as { __studio: BodyMotionStudio }).__studio.guide();
+
+    if (!guide) throw new Error('Motion fixture guide preparation failed');
   });
   await openPlayTab(app.page, 'Operate');
 

@@ -7,7 +7,7 @@ import { narrowBodyMotionPanel, expectBodyMotionLayout } from './bodyMotionLayou
 let app: App;
 
 beforeAll(async () => {
-  app = await openBodyExperimentApp();
+  app = await openBodyExperimentApp({ recommended: true });
   await narrowBodyMotionPanel(app.page);
 });
 afterAll(async () => {
@@ -25,9 +25,7 @@ it(
 
     await page.getByRole('button', { name: 'Analyze Try', exact: true }).filter({ visible: true }).click();
     await page.getByRole('combobox', { name: 'Try' }).selectOption('body-experiment-source');
-    await page.getByRole('button', { name: 'Analyze', exact: true }).click();
-    await page.getByRole('dialog', { name: 'Analyze Try' }).getByRole('switch').first().click();
-    await page.getByRole('button', { name: 'Preview Motion', exact: true }).click();
+    await page.locator('[data-testid="body-motion-preview"][data-ready="true"] canvas').waitFor();
     await expectBodyMotionLayout(page);
     await page.getByRole('button', { name: 'Method', exact: true }).press('Enter');
     await page.getByText('This emulator doesn’t model body mass, payload or floor contact.', { exact: true }).waitFor();

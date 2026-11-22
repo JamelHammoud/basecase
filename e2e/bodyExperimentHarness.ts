@@ -33,6 +33,7 @@ export async function openBodyExperimentApp(options: { recommended?: boolean } =
         run,
         id: 'body-experiment-source',
         recommended,
+        speedRadS: 0.5,
       });
     },
     { model, run, recommended: options.recommended },

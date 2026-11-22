@@ -8,7 +8,13 @@ export interface BodyMotionStudio {
   load: (record: unknown) => void;
   attachRobot: (link: unknown) => void;
   bodyModel: () => Promise<SimModel>;
-  seedBodyEvidence: (input: { run: RobotRun; model: SimModel; id: string; recommended?: boolean }) => Promise<void>;
+  seedBodyEvidence: (input: {
+    run: RobotRun;
+    model: SimModel;
+    id: string;
+    recommended?: boolean;
+    speedRadS?: number;
+  }) => Promise<void>;
   bodyCalibrations: () => unknown;
   bodyChecks: () => Promise<unknown>;
   sceneRecord: () => { parts: unknown[]; project: Record<string, unknown> };

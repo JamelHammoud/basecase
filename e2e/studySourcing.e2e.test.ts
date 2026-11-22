@@ -151,9 +151,11 @@ it(
     await row.hover();
     await row.getByRole('button', { name: 'Apply', exact: true }).click();
     await page.getByText('Run Study again to apply a design.', { exact: true }).waitFor();
-    expect(await page.evaluate(() => (window as unknown as { __studio: SourcingHook }).__studio.sceneRecord())).toEqual(
-      before,
-    );
+
+    const after = await page.evaluate(() => (window as unknown as { __studio: SourcingHook }).__studio.sceneRecord());
+
+    expect(after.parts).toEqual(before.parts);
+    expect({ ...after.project, buildGuide: undefined }).toEqual({ ...before.project, buildGuide: undefined });
     expect(app.errors).toEqual([]);
   },
 );

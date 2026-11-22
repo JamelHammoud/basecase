@@ -69,6 +69,8 @@ Measurements and limits: [Scene storage and startup performance evidence](../not
 
 ### First-launch relaunch
 
+The opening Case stages its world first, then starts driving after the active Case has committed. Mesh preparation therefore observes the Case's world instead of an obsolete empty world. The existing startup and Stop Try browser walkthroughs cover this ordering. [Startup cancellation evidence](../notes/testing-first-launch.md#case-world-startup-ordering) records the regression and validation.
+
 `app/firstLaunch.test.ts` retains saved-tab restoration and fresh-profile behavior, and `workspace/sceneDraft.test.ts` retains edit detection. The rover startup walkthrough runs on Linux and macOS and is quarantined only on Windows through 28 November 2026 under [#795](https://github.com/JamelHammoud/basecase/issues/795), which also owns the saved-scene relaunch quarantine. Windows temporarily lacks the combined fresh-profile, advancing-clock and untouched-scene persistence walkthrough. First-launch keyboard takeover runs on Linux and macOS and is quarantined only on Windows through that date under [#1799](https://github.com/JamelHammoud/basecase/issues/1799). The ordinary rover keyboard walkthrough in `e2e/drive.e2e.test.ts` is also quarantined on Windows through that date under [#1860](https://github.com/JamelHammoud/basecase/issues/1860). Windows retains rover command physics in `sim/drive.test.ts` and the reference trajectory in `app/firstRobotSim.test.ts`. These do not establish first-launch startup or reference-to-keyboard takeover on Windows. Camera refusal runs on Linux and macOS.
 
 [Incident evidence and limits](../notes/testing-first-launch.md).

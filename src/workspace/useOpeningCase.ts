@@ -16,6 +16,7 @@ interface OpeningCaseOptions {
 
 export function useOpeningCase({ seed, core, active }: OpeningCaseOptions) {
   const caseId = seed?.playCase ?? null;
+  const activeCaseId = core.simTraining.cases.active?.id ?? null;
   const played = useRef(false);
 
   const play = useEffectEvent(async () => {
@@ -29,10 +30,15 @@ export function useOpeningCase({ seed, core, active }: OpeningCaseOptions) {
     const facts = robotFacts(rig, parts);
     const scaled = scaledToReach(kase, facts.reachMm, facts.anchor);
 
+    if (cases.active?.id !== kase.id) {
+      core.tool.setRightTab('sim');
+      cases.open(kase.id);
+      core.viewportRef.current?.lookThrough(sceneCamera(parts, scaled.world.objects.map(worldItem)));
+
+      return;
+    }
+
     played.current = true;
-    core.tool.setRightTab('sim');
-    cases.open(kase.id);
-    core.viewportRef.current?.lookThrough(sceneCamera(parts, scaled.world.objects.map(worldItem)));
 
     const model = (await sim.drive.start()) ? sim.modelNow() : null;
 
@@ -56,5 +62,5 @@ export function useOpeningCase({ seed, core, active }: OpeningCaseOptions) {
     const soon = setTimeout(() => void play(), 0);
 
     return () => clearTimeout(soon);
-  }, [caseId, active]);
+  }, [caseId, active, activeCaseId]);
 }

@@ -11,6 +11,7 @@ const files = [
   'tools/quarantine.mjs',
   'tools/quarantineShard.mjs',
   'tools/quarantineProcess.mjs',
+  'tools/quarantineJobBudget.mjs',
   'electron/executables.mjs',
 ];
 

@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { ROOT, activeEntries, configFor, entryMatches, loadQuarantine, onPlatform, today } from './quarantine.mjs';
 import { quarantineShard } from './quarantineShard.mjs';
+import { fetchGitHubJson, hasObservationHeadroom, jobRemainingMs } from './quarantineJobBudget.mjs';
 import { runQuarantineProcess } from './quarantineProcess.mjs';
 import { IS_WINDOWS } from '../electron/executables.mjs';
 
@@ -73,6 +74,15 @@ const expired = entries.filter((entry) => !live.includes(entry));
 
 if (active.length === 0) {
   console.log('No quarantined tests.');
+  process.exit(0);
+}
+
+const remainingMs = await jobRemainingMs({ env: process.env, fetchJson: fetchGitHubJson(process.env.GITHUB_TOKEN) });
+
+if (!hasObservationHeadroom(remainingMs)) {
+  console.log(
+    `Quarantine observation skipped with ${Math.max(0, Math.round(remainingMs / 1000))} seconds left in the job.`,
+  );
   process.exit(0);
 }
 

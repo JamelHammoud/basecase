@@ -1,4 +1,4 @@
-import { runIsStalled } from './runActivity.mjs';
+import { STALL_AFTER_MS, runIsStalled } from './runActivity.mjs';
 import { stepLabels } from './stepLinks.mjs';
 import { acceptTask } from './capabilities.mjs';
 import { cached } from './cache.mjs';
@@ -418,10 +418,8 @@ export const issueIsOpen = (number) =>
   run('gh', ['issue', 'view', String(number), '--json', 'state', '--jq', '.state'], { allowFail: true }).out.trim() ===
   'OPEN';
 
-const STUCK_AFTER_MS = 30 * 60 * 1000;
-
 export const stuckRuns = (runs, now) =>
-  runs.filter((r) => r.status !== 'completed' && now - Date.parse(r.createdAt) > STUCK_AFTER_MS);
+  runs.filter((r) => r.status !== 'completed' && now - Date.parse(r.createdAt) > STALL_AFTER_MS);
 
 function currentJobs(id) {
   try {

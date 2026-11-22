@@ -1,3 +1,4 @@
+import { runIsStalled } from './runActivity.mjs';
 import { stepLabels } from './stepLinks.mjs';
 import { acceptTask } from './capabilities.mjs';
 import { cached } from './cache.mjs';
@@ -438,12 +439,28 @@ export function unstickMainChecks(log, now = Date.now()) {
     ]) ?? [];
 
   for (const stuck of stuckRuns(unfinished, now)) {
+    const pages = json('gh', [
+      'api',
+      '--paginate',
+      '--slurp',
+      `repos/${repo()}/actions/runs/${stuck.databaseId}/jobs?per_page=100`,
+    ]);
+
+    if (
+      !runIsStalled(
+        stuck,
+        pages.flatMap((page) => page.jobs),
+        now,
+      )
+    )
+      continue;
+
     const done = run('gh', ['api', '-X', 'POST', `repos/${repo()}/actions/runs/${stuck.databaseId}/force-cancel`], {
       allowFail: true,
     }).ok;
 
     log(
-      `${done ? 'force-cancelled' : 'could not cancel'} Check on main at ${stuck.headSha.slice(0, 7)}, unfinished after 30 minutes`,
+      `${done ? 'force-cancelled' : 'could not cancel'} Check on main at ${stuck.headSha.slice(0, 7)}, without job or step progress for 30 minutes`,
     );
   }
 }

@@ -41,6 +41,7 @@ export async function retainBodyExperiment(
     return ports.remember({
       request,
       sourceKey: original.sourceKey,
+      sourceVersion: original.sourceVersion,
       calibration: original.calibration,
       sessionHash: await sha256(session),
       experiment: { recommendation, recording: motion },

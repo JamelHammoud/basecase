@@ -64,7 +64,7 @@ function useBodySource(
     let current = true;
 
     void Promise.all([
-      bodySourceKey(core.parts, core.project),
+      bodySourceKey(core.parts, core.project, ref?.sourceVersion ?? 1),
       ref ? bodyRecordingUnchanged(ref) : Promise.resolve(false),
     ])
       .then(([key, unchanged]) => {

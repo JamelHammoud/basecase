@@ -14,6 +14,7 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock('react', () => ({
+  useEffectEvent: (callback: unknown) => callback,
   useLayoutEffect: vi.fn(),
   useRef: (current: unknown) => ({ current }),
   useState: (value: unknown) => [value, vi.fn()],

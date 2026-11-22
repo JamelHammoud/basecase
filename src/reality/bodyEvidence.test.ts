@@ -58,4 +58,13 @@ describe('retained body analysis evidence', () => {
       rememberBodyEvidence({ request, sourceKey: 'source', calibration: 'x'.repeat(8_388_608) }, ports),
     ).rejects.toThrow();
   });
+
+  it('retains the source version and refuses a reference that changes its interpretation', async () => {
+    const { ports } = storage();
+    const ref = await rememberBodyEvidence({ request, sourceKey: 'source', sourceVersion: 2, calibration: {} }, ports);
+
+    expect(ref.sourceVersion).toBe(2);
+    expect((await readBodyEvidence(ref, ports))?.sourceVersion).toBe(2);
+    expect(await readBodyEvidence({ ...ref, sourceVersion: 1 }, ports)).toBeNull();
+  });
 });

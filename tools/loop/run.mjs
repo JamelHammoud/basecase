@@ -169,6 +169,7 @@ function announcePause(error) {
 }
 
 const KEEPS_RUNNING_FOR_GATES = new Set([
+  'ci',
   'merge',
   'delivery',
   'nightly',

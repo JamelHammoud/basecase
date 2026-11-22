@@ -1381,5 +1381,21 @@
     "until": "2026-11-28",
     "platform": "win32",
     "reason": "Check 44887426902 never reached the source try clock at 1.5 seconds in one attempt and found no saved source try in another, before branch creation or scene switching. Existing reference-recording owner #1026 retains startup, clock, recording and persistence boundaries separately. Linux and macOS retain the browser declaration, while Windows retains fast checkpoint, cancellation, source-identity and persistence coverage. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on this platform with retries disabled. No flake rate is claimed. Exact-revision diagnostic 44889813364 passed in 24648.1903 ms, confirming intermittency without a rate."
+  },
+  {
+    "file": "e2e/teaching.e2e.test.ts",
+    "test": "takes over a saved arm policy twice and reopens one continuous try with its owners in Library",
+    "issue": 2060,
+    "until": "2026-12-04",
+    "platform": "win32",
+    "reason": "Nightly 45043548948 failed this declaration on Windows at correctTwice line 106: Take Control was not visible within the unchanged 5000 ms poll after Try Policy was activated with Enter. The same file passed on Windows in runs 45033521946 and 44964826807 and on Linux in all three, and the commits between touch no teaching code. The stalled stage (activation, live worker start or owner publication) is not established. Existing owner #2060 owns stage timing and the fix. Linux and macOS retain the browser declaration, and the teaching, task, worker, tries and Case unit coverage stays active on Windows. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. No flake rate is claimed."
+  },
+  {
+    "file": "e2e/teaching.e2e.test.ts",
+    "test": "selects saved corrections in a dataset and sends a frozen compatible warm-start request",
+    "issue": 2060,
+    "until": "2026-12-04",
+    "platform": "win32",
+    "reason": "Nightly 45043548948 failed this declaration on Windows at correctTwice line 106: Take Control was not visible within the unchanged 5000 ms poll after Try Policy was activated with Enter. The same file passed on Windows in runs 45033521946 and 44964826807 and on Linux in all three, and the commits between touch no teaching code. The stalled stage (activation, live worker start or owner publication) is not established. Existing owner #2060 owns stage timing and the fix. Linux and macOS retain the browser declaration, and the teaching, task, worker, tries and Case unit coverage stays active on Windows. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. No flake rate is claimed."
   }
 ]

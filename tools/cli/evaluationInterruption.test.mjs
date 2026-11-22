@@ -3,7 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { afterEach, expect, it } from 'vitest';
-import { evaluationFixture, invokeEvaluation } from './evaluationFixture.mjs';
+import { evaluationFixture } from './evaluationFixture.mjs';
+import { evaluationContext } from './evaluationContext.fixtures.mjs';
+import { freezeEvaluation } from './evaluationFreeze.mjs';
 
 const dirs = [];
 
@@ -17,18 +19,17 @@ async function interrupt(mode) {
   dirs.push(dir);
 
   const fixture = await evaluationFixture(dir);
-  const frozen = await invokeEvaluation(
-    'freeze',
+  const frozen = await freezeEvaluation(
     fixture.baseline,
-    '--candidate',
-    fixture.candidate,
-    '--package',
-    fixture.package,
-    '--seeds',
-    Array.from({ length: 16 }, (_, i) => i).join(','),
+    {
+      candidate: fixture.candidate,
+      package: fixture.package,
+      seeds: Array.from({ length: 16 }, (_, i) => i).join(','),
+    },
+    evaluationContext,
   );
 
-  expect(frozen.code).toBe(0);
+  expect(frozen).toBe(0);
 
   const stopFile = path.join(dir, 'stop');
   const child = spawn(

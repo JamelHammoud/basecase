@@ -19,3 +19,5 @@ Never skip or `.only` a test, raise a timeout, add a retry, or loosen an asserti
 Answer with `kind` set to `repair`. `cause` holds the class and the root cause; `checked` holds the evidence.
 
 Record current test coverage in the owning area guide and detailed failure evidence, measurements, gaps and quarantine conditions in its linked subsystem note under `docs/notes/`. Reuse existing notes. Keep shared test policy, selection, fixture ownership and browser harness contracts in `docs/guide/running-and-testing.md`. A subsystem repair leaves that shared guide and its navigation alone.
+
+A pass on macOS or Linux does not establish that a Windows failure is flaky. Name the affected platform and exact revision for every pass and fail used for classification. When a controlled run fails every selected attempt, diagnose that failure rather than quarantine it as intermittent load. Preserve active coverage while a direct source repair or measured investigation is underway.

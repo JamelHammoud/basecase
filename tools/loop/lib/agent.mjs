@@ -60,6 +60,9 @@ function measured(provider, options, execute) {
     pid: process.pid,
   };
   const id = recordSession(pending);
+
+  options.onStart?.(startedAt);
+
   const result = execute(options);
   const finishedAt = Date.now();
   const quotaAfter = quotaSnapshot(provider);
@@ -176,6 +179,7 @@ export function runAgent({
   workId,
   shared,
   worker,
+  onStart,
 }) {
   const policy = policyFor(name);
   const options = {
@@ -194,6 +198,7 @@ export function runAgent({
     workId,
     shared,
     worker,
+    onStart,
     brief: system ?? brief(name),
   };
 

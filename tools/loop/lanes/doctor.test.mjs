@@ -1,0 +1,101 @@
+import fs from 'node:fs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { LOGS } from '../lib/paths.mjs';
+import { UsageLimit } from '../lib/usage.mjs';
+import doctor from './doctor.mjs';
+
+const mocks = vi.hoisted(() => ({ state: {}, agent: vi.fn(), open: vi.fn(), close: vi.fn(), pulls: vi.fn() }));
+
+vi.mock('../lib/agent.mjs', () => ({ CHANGE_SCHEMA: {}, runAgent: mocks.agent }));
+vi.mock('../lib/store.mjs', () => ({
+  store: () => ({
+    get: () => structuredClone(mocks.state),
+    save: (_key, state) => {
+      mocks.state = structuredClone(state);
+    },
+  }),
+}));
+vi.mock('../lib/github.mjs', () => ({
+  isPaused: () => false,
+  openPulls: mocks.pulls,
+  quickCheck: vi.fn(),
+  fullCheck: vi.fn(),
+  pullReview: vi.fn(),
+}));
+vi.mock('../lib/sh.mjs', () => ({ json: () => [] }));
+vi.mock('../lib/pull.mjs', () => ({ publish: () => null }));
+vi.mock('../lib/worktree.mjs', () => ({ openBranch: mocks.open, close: mocks.close }));
+vi.mock('./health.mjs', () => ({ measure: () => ({ mainRedSince: '2026-11-21T00:00:00Z' }) }));
+
+const now = Date.UTC(2026, 10, 22, 16);
+const previous = now - 3 * 60 * 60_000;
+const log = vi.fn();
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(now);
+  vi.clearAllMocks();
+  mocks.state = { stalledSince: now - 60 * 60_000, lastCallAt: previous };
+  mocks.open.mockReturnValue({ dir: '.', branch: 'loop/repair/doctor' });
+  mocks.pulls.mockReturnValue([]);
+
+  const exists = fs.existsSync.bind(fs);
+
+  vi.spyOn(fs, 'existsSync').mockImplementation((file) => (file === LOGS ? false : exists(file)));
+  mocks.agent.mockImplementation(({ onStart }) => {
+    onStart(Date.now());
+
+    return { ok: false, error: 'investigation failed' };
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
+
+describe('doctor capacity recovery', () => {
+  it('keeps the prior cooldown after a capacity wait and investigates on its next scheduled visit', () => {
+    mocks.agent.mockImplementationOnce(() => {
+      throw new UsageLimit(now + 86_400_000);
+    });
+
+    expect(() => doctor({ log })).toThrow(UsageLimit);
+    expect(mocks.state.lastCallAt).toBe(previous);
+    expect(mocks.close).toHaveBeenCalledOnce();
+    vi.advanceTimersByTime(10 * 60_000);
+    doctor({ log });
+    expect(mocks.agent).toHaveBeenCalledTimes(2);
+    expect(mocks.state.lastCallAt).toBe(now + 10 * 60_000);
+  });
+
+  it('does not consume cooldown when preparing its GitHub evidence fails', () => {
+    mocks.pulls.mockImplementationOnce(() => {
+      throw new Error('GitHub unavailable');
+    });
+
+    expect(() => doctor({ log })).toThrow('GitHub unavailable');
+    expect(mocks.agent).not.toHaveBeenCalled();
+    expect(mocks.state.lastCallAt).toBe(previous);
+    expect(mocks.close).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the two-hour cooldown after an admitted investigation returns a failure', () => {
+    doctor({ log });
+    expect(mocks.state.lastCallAt).toBe(now);
+    vi.advanceTimersByTime(10 * 60_000);
+    doctor({ log });
+    expect(mocks.agent).toHaveBeenCalledOnce();
+    expect(log).toHaveBeenLastCalledWith('watching');
+  });
+
+  it('retains cooldown when an admitted provider throws', () => {
+    mocks.agent.mockImplementationOnce(({ onStart }) => {
+      onStart(Date.now());
+
+      throw new Error('provider failed');
+    });
+    expect(() => doctor({ log })).toThrow('provider failed');
+    expect(mocks.state.lastCallAt).toBe(now);
+    expect(mocks.close).toHaveBeenCalledOnce();
+  });
+});

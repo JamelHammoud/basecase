@@ -336,3 +336,11 @@ Three public `SkillsRuntime` cases failed against the rollback: an edited in-fli
 `runtimeRace.ts` and its existing save, cancellation, retention and report assertions are restored. The three public runtime cases remain alongside them. Draft revision tracking, taught-race aborts and pose and world invalidation inputs are retained without any arm-planning dependency. The storage guide also retains its distinction between saved local references and the optional artifact list accepted by the scene-file reader. `sharedScene` removes skill references and Export Scene does not attach artifacts, so a rollback must not imply that an ordinary export carries saved skills.
 
 The review's six-file changed check passed formatting, lint, documentation, all 344 site pages, TypeScript and 157 tests across 31 related files. Vitest reported 1.36 seconds. The log is `scratch/review-check.log`. No browser or hosted-platform execution ran locally.
+
+## Arena source lock after teaching ownership
+
+[Check 45053376172](https://github.com/JamelHammoud/basecase/actions/runs/45053376172) at `b541e6c4ea4b09a7586a577ec1f28cf6bf3648bf` failed both `freezes Arena latency` cases in `verify/lib/run.test.mjs` on Linux and Windows. Both failed the initial assertion on the unmodified tree. Every other unit test passed on both platforms.
+
+Classification is a deterministic regression introduced by merge `c46b76306` (#2026). It added optional teaching ownership tracking and `stepControlled` to `src/sim/controlDelay.ts` and left the Motor Kit source pin unchanged. Only that file's hash differed from the pin. The other five pinned files match their hashes. The delay buffer logic is unchanged when no teaching session is passed.
+
+The repair updates only the control-delay hash in `verify/gates/s3a-motor-kit.mjs` and that gate file's hash in `verify/manifest.json`. Counts, bars, canaries and the source-mutation tests are unchanged. After the update the twelve declarations in `verify/lib/run.test.mjs` pass and `manifestDrift()` returns an empty list.

@@ -3,13 +3,15 @@ import { fleetIncidents, inspectUnitProblems } from '../robot/fleetIncidentStore
 import type { Command } from '../components/CommandPalette';
 import { OperateIcon } from '../design-system';
 import { canCalibrate } from '../robot/calibrationSession';
+import { canCheckPower } from '../robot/powerOn';
 import { emulatedSpec } from '../robot/emulatedUnits';
-import { connectRobot, disconnectRobot, fleetSnapshot, robotSnapshot } from '../robot/robotStore';
+import { connectRobot, disconnectRobot, fleetSnapshot, robotSnapshot, selectedUnit } from '../robot/robotStore';
 import { servoFamily } from '../robot/robotState';
 import { sceneRobot } from '../robot/sceneRobot';
 import { canSetUpServos, servoSetup, setUpServos } from '../robot/servoSetup';
+import { unitHistories } from '../reality/projectCalibrations';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
-import { calibrateConnectedRobot } from './calibrationActions';
+import { calibrateConnectedRobot, checkConnectedPowerOn } from './calibrationActions';
 import { replayableFault, replayRobotRun } from './robotReplay';
 import type { CommandInputs } from './sceneCommands';
 import { showLeftTab } from './showView';
@@ -49,6 +51,27 @@ function setUpServosCommands({ core }: CommandInputs, showOperate: () => void): 
       run: () => {
         showOperate();
         void setUpServos({ joints, parts: core.parts, select: core.setSelectedIds });
+      },
+    },
+  ];
+}
+
+function checkServosCommands({ core }: CommandInputs, showOperate: () => void): Command[] {
+  const joints = core.project.joints ?? [];
+  const unit = selectedUnit();
+
+  if (!canCheckPower(joints, unitHistories(core.project, unit), unit)) return [];
+
+  return [
+    {
+      id: 'check-servos',
+      group: 'Operate',
+      label: 'Check Servos',
+      icon: <OperateIcon />,
+      keywords: 'first power on wiring swapped reversed offset simulation guided',
+      run: () => {
+        showOperate();
+        void checkConnectedPowerOn(core.docs.updateProjectNow, { joints, parts: core.parts, project: core.project });
       },
     },
   ];
@@ -199,6 +222,7 @@ export function operateCommands(inputs: CommandInputs): Command[] {
           },
         ]
       : []),
+    ...checkServosCommands(inputs, showOperate),
     ...setUpServosCommands(inputs, showOperate),
     ...(bodyRobot(core)
       ? [

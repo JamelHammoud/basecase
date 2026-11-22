@@ -32,7 +32,7 @@ Basecase is a 3D CAD studio for robots, with an agent that designs alongside you
 | Simulate | Run robots and closed Sketch linkages under MuJoCo physics, and try robots on Cases | The **Simulate** tab, and **Play** ▸ **Cases** |
 | Train | Teach the robot a skill, such as standing up or walking, train a policy on a dataset of your tries, or install one from Hugging Face | The **Train** section of the **Simulate** tab, a dataset in the **Library**, and **Install Skill** in [[⌘K]] |
 | Build | Clear the Checks, price every part, print the plates and export the manufacturing files together | The **Build** tab and **Export** ▸ **Kit** |
-| Operate | Connect emulated robots locally or on Linux computers, calibrate each unit, roll skills out to canaries and run Routines | **Play** ▸ **Operate** and **Play** ▸ **Routines** |
+| Operate | Connect emulated robots locally or on Linux computers, check and calibrate each unit, roll skills out to canaries and run Routines | **Play** ▸ **Operate** and **Play** ▸ **Routines** |
 
 MuJoCo is the physics engine that robotics labs use to test robots before they build them. Basecase runs it inside the app, on the same model it exports.
 

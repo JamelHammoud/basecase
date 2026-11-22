@@ -84,6 +84,7 @@ export interface JointStatus {
   torque_on: boolean | null;
   reply: string;
   link_rad?: number | null;
+  drives?: number;
   velocity?: number | null;
   effort?: number | null;
 }

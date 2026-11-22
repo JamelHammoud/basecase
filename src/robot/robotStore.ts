@@ -266,7 +266,13 @@ function adopted(link: RobotLinkState | RobotUnitState, unit: string): UnitEntry
   const pins =
     'version' in link ? { version: link.version, previous: link.previous, hasPrevious: link.hasPrevious } : {};
 
-  return { ...unitEntry(unit), ...pins, state: robot, joints: recalledSceneJoints(unit) };
+  return {
+    ...unitEntry(unit),
+    ...pins,
+    state: robot,
+    joints: recalledSceneJoints(unit),
+    home: recalledSceneJoints(unit),
+  };
 }
 
 async function adoptAll(link: RobotLinkApi) {
@@ -304,13 +310,19 @@ const takenUnits = () => connectedUnits(fleet).map((u) => u.unit);
 
 export const discoverRobots = async () => (await api?.robotDiscover?.()) ?? [];
 
-function rememberConnectedJoints(name: string, joints: string[]) {
+export const robotHomeJoints = (unit: string = selected) => units.get(unit)?.home ?? null;
+
+function rememberConnectedJoints(name: string, joints: string[], home: string[] | null = joints) {
   rememberSceneJoints(name, joints);
-  units.set(name, { ...(units.get(name) ?? unitEntry(name)), joints });
+  units.set(name, { ...(units.get(name) ?? unitEntry(name)), joints, home });
 
   if (name === selected) sceneJoints = joints;
 
   notify();
+}
+
+export function remapConnectedJoints(unit: string, joints: string[]) {
+  rememberConnectedJoints(unit, joints, robotHomeJoints(unit));
 }
 
 export async function connectNetworkRobot(

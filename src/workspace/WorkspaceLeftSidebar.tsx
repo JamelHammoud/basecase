@@ -7,6 +7,7 @@ import { measuredJoints } from '../reality/measuredJoints';
 import { unitHistories } from '../reality/projectCalibrations';
 import { useFleet } from '../robot/useRobot';
 import { calibrateConnectedRobot, rollBackCalibration } from './calibrationActions';
+import { powerOnProps } from './powerOnActions';
 import { canReplayRuns, replayRobotRun } from './robotReplay';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -114,6 +115,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
             }),
           onRollBack: (jointId) => rollBackCalibration(core.docs.updateProjectNow, jointId),
         },
+        powerOn: powerOnProps(core, parts),
         onAddRobotComputer: IS_WEB_DEMO ? undefined : () => addRobotComputer(core),
         onSetUpServos: () =>
           void setUpServos({ joints: core.project.joints ?? [], parts, select: core.setSelectedIds }),

@@ -31,8 +31,10 @@ function withLinkAngle(joint, hornFor) {
   if (!joint || typeof joint !== 'object') return joint;
 
   const known = typeof joint.position === 'number' && typeof joint.id === 'number';
+  const horn = known ? hornFor(joint.id) : null;
+  const drives = Number.isInteger(horn?.drives) && horn.drives !== joint.id ? { drives: horn.drives } : {};
 
-  return { ...joint, link_rad: known ? linkRadians(joint.position, hornFor(joint.id)) : null };
+  return { ...joint, link_rad: horn ? linkRadians(joint.position, horn) : null, ...drives };
 }
 
 export function statusWithLinkAngles(status, hornFor) {

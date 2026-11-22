@@ -19,6 +19,7 @@ keywords:
   - dynamixel
 related:
   - connect-an-emulated-robot
+  - check-a-robots-wiring-on-first-power-on
   - simulation-in-basecase
 covers:
   - src/components/operate/RobotCalibration.tsx
@@ -46,7 +47,7 @@ covers:
 
 Calibration makes simulation and training move the way your servos do. Basecase uses a camera to find each joint's zero and direction, then fits a model to each emulated servo.
 
-Calibration works on the emulated robot and hasn't logged a real servo. Basecase fits each joint against the servo and variant that joint uses, and the emulated servo stands in for that part.
+Calibration works on the emulated robot and hasn't logged a real servo. For a new robot, run [Check Servos](/help/check-a-robots-wiring-on-first-power-on) first. It finds a swapped pair of motors, which Calibrate Servos can't. Basecase fits each joint against the servo and variant that joint uses, and the emulated servo stands in for that part.
 
 The STS3215 C001 and XL330 start from a measured catalog model. Every other Feetech and Dynamixel servo starts from an estimate, scaled from its stall torque, speed and volts.
 
@@ -60,7 +61,7 @@ To calibrate a robot:
 4. Click **Test**, then wait for "Motors running".
 5. Click **Calibrate Servos**.
 
-![Operate in Test, with Calibrate Servos above the emulated servos](/help/calibrate-an-emulated-robot/test.png)
+![Operate in Test, with Check Servos and Calibrate Servos above the emulated servos](/help/calibrate-an-emulated-robot/test.png)
 
 First, Basecase wiggles each joint whose zero and direction it has never found. Each joint moves on its own for about 4 seconds while a camera watches, then Basecase writes what it finds to the robot.
 

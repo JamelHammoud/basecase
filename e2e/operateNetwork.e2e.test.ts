@@ -23,7 +23,11 @@ const binary = path.resolve('hw/dist', process.platform === 'win32' ? 'robot-dae
 type Link = { receive: (event: Record<string, unknown>) => void };
 
 type StudioWindow = {
-  __studio: { attachRobot: (link: unknown) => void; load: (record: unknown) => void };
+  __studio: {
+    attachRobot: (link: unknown) => void;
+    load: (record: unknown) => void;
+    calibrations: () => Record<string, { versions: Array<{ evidence: { reason: string } }> }>;
+  };
   networkLink: Link;
 };
 
@@ -86,6 +90,7 @@ beforeAll(async () => {
   );
   fleet = new RobotFleet({
     binary,
+    hornFor: (id: number) => ({ offsetCounts: 0, direction: 1, drives: id === 1 ? 2 : 1 }),
     tmpDir: directory,
     networkStoreDir: path.join(directory, 'credentials'),
     emit: (event: Record<string, unknown>) => {
@@ -154,6 +159,39 @@ afterAll(async () => {
   }
 });
 
+async function checkSwappedPair() {
+  const { page } = app;
+  const power = page.locator(shown('[data-testid="power-on"]')).first();
+
+  await openPlayTab(page, 'Operate');
+
+  for (const rung of ['set_up', 'test']) {
+    await page
+      .locator(shown(`[data-robot-rung="${rung}"]`))
+      .first()
+      .click();
+    await expect.poll(mode).toBe(rung);
+  }
+
+  await page
+    .locator(shown('button'), { hasText: /^Check Servos$/ })
+    .first()
+    .click();
+  await expect.poll(() => power.innerText(), { timeout: 30000 }).toContain('Motor 1 moves Elbow, not Shoulder.');
+  await power.getByRole('button', { name: 'Fix', exact: true }).click();
+  await page
+    .locator(shown('button'), { hasText: /^Check Servos$/ })
+    .first()
+    .click();
+  await expect.poll(() => power.innerText(), { timeout: 60000 }).toContain('Matches the simulation.');
+
+  const histories = await page.evaluate(() => (window as unknown as StudioWindow).__studio.calibrations());
+
+  expect(Object.keys(histories).sort()).toEqual(['elbow', 'shoulder']);
+  expect(histories.elbow.versions.some((v) => v.evidence.reason === 'Motor 1 moves Elbow, not Shoulder.')).toBe(true);
+  expect(app.errors).toEqual([]);
+}
+
 describe('Operate a network robot', () => {
   it('pairs once, climbs the daemon ladder to Test and stops on a lost client', async () => {
     await openPlayTab(app.page, 'Operate');
@@ -220,6 +258,8 @@ describe('Operate a network robot', () => {
     expect(events.filter((event) => event.event === 'hello')).toHaveLength(2);
     expect(app.errors).toEqual([]);
   }, 60000);
+
+  it('names a swapped pair, fixes it and confirms the robot repeats the simulation', checkSwappedPair, 120000);
 
   it('sends the scene joint map from the robot computer form', async () => {
     let request: Record<string, unknown> | null = null;

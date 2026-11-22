@@ -12,7 +12,7 @@ import type { RobotJoint, ScenePart } from '../types/robotics';
 import { canRunBench, playBench } from './benchRun';
 import { captureWiggle, connectionMounts, remount } from './mountCapture';
 import { servoFamily } from './robotState';
-import { robotSceneJoints, robotSnapshot, selectedUnit } from './robotStore';
+import { robotHomeJoints, robotSceneJoints, robotSnapshot, selectedUnit } from './robotStore';
 import { forgetLag } from './robotTwin';
 import { sceneRobotChoices } from './sceneRobot';
 
@@ -41,16 +41,31 @@ const subscribe = (listener: () => void) => {
 
 export const calibrationPhase = () => phase;
 
+export async function holdCalibration<T>(run: () => Promise<T>): Promise<T> {
+  setPhase('moving');
+
+  try {
+    return await run();
+  } finally {
+    setPhase('idle');
+  }
+}
+
 export const useCalibrationPhase = () => useSyncExternalStore(subscribe, calibrationPhase);
 
 const sameIds = (a: readonly string[], b: readonly string[]) =>
   a.length === b.length && a.every((id, i) => id === b[i]);
 
+const samePlaces = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && a.every((id) => b.includes(id));
+
 export function connectedFrom(sceneJoints: readonly RobotJoint[], unit: string = selectedUnit()): string[] | null {
   const connected = robotSceneJoints(unit);
+  const home = robotHomeJoints(unit) ?? connected;
   const robot = sceneRobotChoices(sceneJoints);
+  const asked = connected && home && samePlaces(connected, home);
 
-  return connected && robot.ok && robot.choices.some((c) => sameIds(connected, c.joints)) ? connected : null;
+  return asked && robot.ok && robot.choices.some((c) => sameIds(home, c.joints)) ? connected : null;
 }
 
 export const canCalibrate = (sceneJoints: readonly RobotJoint[], unit: string = selectedUnit()) =>

@@ -299,6 +299,10 @@ Measurements and limits: [Motion fitting and retargeting performance evidence](.
 
 - **Character shells.** `src/wrap/wrapCore.test.ts` checks shell generation, wall thickness, clearance at rest and clearance across both joints' full ranges on a two-joint arm. `src/wrap/wrapPlan.test.ts` checks target selection, link splitting, mesh hiding, printed shells, joint attachment, posing and one-step undo and redo. Undo and redo now use the real document history with prebuilt shell geometry, without running the wrap worker in Chrome. [Incident evidence](../notes/testing-joints-and-motion.md#character-shells).
 
+## Joint order on a connected robot
+
+A robot connected in Operate keeps the scene's joint ids in the order of its servo ids. Operate's Check Servos ([Robot runtime](robot-runtime.md#guided-first-power-on)) can reorder them when two motors are wired to each other's joints: `remapConnectedJoints` changes which design joint each servo id drives while the connection's original joints stay as `home`, and `connectedFrom` accepts the same joints in another order. The measured ghost and the joint rows read that order. A fix records each affected joint's mount through `recordMount`, so the design's calibration history keeps it and a roll back restores the earlier mount.
+
 ## Passive robot joints
 
 `RobotJoint.actuation` is optional. Omitted and `powered` retain legacy powered simulation. `passive` preserves the physical hinge or slider, axis, range and initial pose without an actuator. `damping` and `frictionloss` declare nonnegative finite resistance in SI units. Passive joints have no estimated damping, friction, armature or holding torque. They are distinct from fixed joints.

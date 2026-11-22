@@ -7,6 +7,7 @@ order: 3
 related:
   - connect-an-emulated-robot
   - calibrate-an-emulated-robot
+  - check-a-robots-wiring-on-first-power-on
 covers:
   - src/components/operate/RobotJoints.tsx
   - src/components/operate/JointRow.tsx
@@ -27,6 +28,8 @@ You can compare a connected emulated robot with the simulation joint by joint to
 6. If a joint's gap stays over 4° for 2 seconds while the joint moves, its row shows Calibrate where the temperature was. To calibrate only that joint, click Calibrate. If the joint's zero was never found, the joint wiggles for about 4 seconds before it runs the 18-second bench. The other joints hold still, and the selected unit keeps the new fit. Ordinary simulation uses the first robot's fits. Fleet rollout uses each unit's own fits.
 
 ![The measured robot in blue beside the simulated arm, with the largest gap labeled at the joint](/help/compare-the-robot-with-the-simulation/moving.png)
+
+[Check a robot's wiring on first power-on](/help/check-a-robots-wiring-on-first-power-on) draws the same blue robot while it replays a reference motion.
 
 ![Operate offering Calibrate on both joint rows after they lagged](/help/compare-the-robot-with-the-simulation/calibrate.png)
 

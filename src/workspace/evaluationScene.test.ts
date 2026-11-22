@@ -14,6 +14,7 @@ import { importTryArchive } from '../cases/tryArchive';
 import { evaluationRecording } from '../cases/evaluation';
 import { evaluationReplayHash } from '../cases/evaluationReplayValidation';
 import { encodeSceneFile } from '../utils/sceneFile';
+import type { WorkspaceHandle, WorkspaceSeed } from './types';
 
 it('opens the recorded source in a new scene when the working geometry differs, preserving the working scene', async () => {
   const mj = await loadMujoco();
@@ -46,15 +47,42 @@ it('opens the recorded source in a new scene when the working geometry differs, 
   const working = { parts: robot.parts.map((part) => ({ ...part, color: '#eeeeee' })), project: scene.project };
   const before = structuredClone(working);
   const newScene = vi.fn();
+  const snapshot = { parts: scene.parts, project: scene.project } as WorkspaceSeed;
+  const handle = { snapshot: vi.fn(() => snapshot), openTry: vi.fn() } as unknown as WorkspaceHandle;
+  const studio = {
+    newScene,
+    tabs: [] as Array<{ id: string; name: string; sceneId: string }>,
+    handleOf: vi.fn(() => handle),
+    selectTab: vi.fn(),
+  };
 
-  expect(await ensureEvaluationScene({ newScene }, working, input)).toBe(false);
+  expect(await ensureEvaluationScene(studio, working, input)).toBe(false);
   expect(working).toEqual(before);
   expect(newScene).toHaveBeenCalledWith(
     expect.objectContaining({ sceneName: scene.name, parts: scene.parts, openTry: 'saved-evaluation' }),
   );
   newScene.mockClear();
-  expect(await ensureEvaluationScene({ newScene }, { parts: scene.parts, project: scene.project }, input)).toBe(true);
+  expect(await ensureEvaluationScene(studio, { parts: scene.parts, project: scene.project }, input)).toBe(true);
   expect(newScene).not.toHaveBeenCalled();
+
+  studio.tabs = [{ id: 'frozen-tab', name: scene.name, sceneId: 'frozen-scene' }];
+  expect(await ensureEvaluationScene(studio, working, input)).toBe(false);
+  expect(newScene).not.toHaveBeenCalled();
+  expect(studio.selectTab).toHaveBeenCalledWith('frozen-tab');
+  expect(handle.openTry).toHaveBeenCalledWith('saved-evaluation');
+
+  studio.selectTab.mockClear();
+  vi.mocked(handle.snapshot)
+    .mockReturnValueOnce(snapshot)
+    .mockReturnValueOnce({ ...snapshot, parts: working.parts });
+  expect(await ensureEvaluationScene(studio, working, input)).toBe(false);
+  expect(studio.selectTab).not.toHaveBeenCalled();
+  expect(newScene).toHaveBeenCalledOnce();
+  newScene.mockClear();
+  studio.handleOf.mockReturnValueOnce(handle).mockReturnValueOnce(null as unknown as WorkspaceHandle);
+  expect(await ensureEvaluationScene(studio, working, input)).toBe(false);
+  expect(studio.selectTab).not.toHaveBeenCalled();
+  expect(newScene).toHaveBeenCalledOnce();
 
   const sim = {
     status: 'off',

@@ -44,7 +44,9 @@ export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspa
   useMenuCommands({ active, core, actions, ui });
   useDevStudioHook({ active, core, actions, agent, routeFiles: drop.routeFiles });
   useOpeningCase({ seed, core, active });
-  useOpeningTry({ seed, core, active });
+
+  const openTry = useOpeningTry({ seed, core, active });
+
   useAssignmentOpening(core, active);
   useRobotGhost({
     rig: core.posing.rig,
@@ -53,7 +55,7 @@ export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspa
     viewportRef: core.viewportRef,
   });
 
-  const rightIslandRef = useWorkspaceHost({ active, seed, core, agent });
+  const rightIslandRef = useWorkspaceHost({ active, seed, core, agent, openTry });
 
   return { core, actions, ui, clipboard, agent, canvasMenu, drop, rightIslandRef };
 }

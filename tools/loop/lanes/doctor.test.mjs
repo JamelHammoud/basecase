@@ -4,7 +4,15 @@ import { LOGS } from '../lib/paths.mjs';
 import { UsageLimit } from '../lib/usage.mjs';
 import doctor from './doctor.mjs';
 
-const mocks = vi.hoisted(() => ({ state: {}, agent: vi.fn(), open: vi.fn(), close: vi.fn(), pulls: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  state: {},
+  agent: vi.fn(),
+  open: vi.fn(),
+  close: vi.fn(),
+  pulls: vi.fn(),
+  diff: vi.fn(),
+  publish: vi.fn(),
+}));
 
 vi.mock('../lib/agent.mjs', () => ({ CHANGE_SCHEMA: {}, runAgent: mocks.agent }));
 vi.mock('../lib/store.mjs', () => ({
@@ -22,8 +30,8 @@ vi.mock('../lib/github.mjs', () => ({
   fullCheck: vi.fn(),
   pullReview: vi.fn(),
 }));
-vi.mock('../lib/sh.mjs', () => ({ json: () => [] }));
-vi.mock('../lib/pull.mjs', () => ({ publish: () => null }));
+vi.mock('../lib/sh.mjs', () => ({ json: () => [], run: mocks.diff }));
+vi.mock('../lib/pull.mjs', () => ({ publish: mocks.publish }));
 vi.mock('../lib/worktree.mjs', () => ({ openBranch: mocks.open, close: mocks.close }));
 vi.mock('./health.mjs', () => ({ measure: () => ({ mainRedSince: '2026-11-21T00:00:00Z' }) }));
 
@@ -38,6 +46,8 @@ beforeEach(() => {
   mocks.state = { stalledSince: now - 60 * 60_000, lastCallAt: previous };
   mocks.open.mockReturnValue({ dir: '.', branch: 'loop/repair/doctor' });
   mocks.pulls.mockReturnValue([]);
+  mocks.diff.mockReturnValue({ out: 'src/workspace/evaluationScene.ts' });
+  mocks.publish.mockReturnValue(null);
 
   const exists = fs.existsSync.bind(fs);
 
@@ -98,4 +108,20 @@ describe('doctor capacity recovery', () => {
     expect(mocks.state.lastCallAt).toBe(now);
     expect(mocks.close).toHaveBeenCalledOnce();
   });
+});
+
+it('refuses a doctor proposal that changes the quarantine list before publication', () => {
+  mocks.agent.mockReturnValue({ ok: true, output: { changed: true } });
+  mocks.diff.mockReturnValue({ out: 'docs/guide/loop.md\ntools/quarantine.json' });
+  doctor({ log });
+  expect(mocks.publish).not.toHaveBeenCalled();
+  expect(mocks.close).toHaveBeenCalledOnce();
+  expect(log).toHaveBeenLastCalledWith(expect.stringMatching(/quarantine/));
+});
+
+it('publishes a doctor source repair without changing test exclusions', () => {
+  mocks.agent.mockReturnValue({ ok: true, output: { changed: true } });
+  doctor({ log });
+  expect(mocks.publish).toHaveBeenCalledOnce();
+  expect(mocks.close).toHaveBeenCalledOnce();
 });

@@ -388,3 +388,7 @@ Protected paths always require agent review, including a one-line proof manifest
 ### Conflict resolution capacity
 
 A provider capacity wait during conflict resolution propagates to the runner without consuming a conflict failure or triggering rebuild. The temporary merge worktree is still closed, and the next eligible run starts from the current published head. Completed unsuccessful resolutions and actual resolver errors retain the existing two-failure rebuild policy. `lanes/rebase.test.mjs` covers all three outcomes through the lane entry point.
+
+### Doctor publication coverage
+
+The doctor cannot publish changes to `tools/quarantine.json`. Its lane checks the actual worktree diff against main after investigation and before publication, including changes committed by the investigation. Source repairs and operational fixes retain their existing path. The doctor leaves test-exclusion changes to the existing repair owner and cannot use provider capacity waits or an open repair as grounds for excluding coverage. `lanes/doctor.test.mjs` checks refusal before publication and continued publication of source repairs.

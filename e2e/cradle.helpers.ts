@@ -44,9 +44,12 @@ export async function cradleStory(app: App, capture?: (state: string) => Promise
   await app.page.getByRole('toolbar', { name: 'Build Along', exact: true }).waitFor();
 
   const parts = await supportParts(app.page);
-  const weight = await app.page.evaluate(() =>
-    (window as unknown as { __studio: CradleStudio }).__studio.assemblyRobotWeight(),
-  );
+  const readWeight = () =>
+    app.page.evaluate(() => (window as unknown as { __studio: CradleStudio }).__studio.assemblyRobotWeight());
+
+  await expect.poll(readWeight).toBeTruthy();
+
+  const weight = await readWeight();
   const before = await app.page.evaluate(() =>
     (window as unknown as { __studio: CradleStudio }).__studio.assemblyCradleState(),
   );
@@ -86,6 +89,9 @@ export async function cradleStory(app: App, capture?: (state: string) => Promise
 
   const file = await download;
   const archive = unzipSync(new Uint8Array(await fs.readFile((await file.path())!)));
+
+  expect(Object.keys(archive)).toContain('Metadata/basecase-assembly-cradle.json');
+
   const identity = JSON.parse(strFromU8(archive['Metadata/basecase-assembly-cradle.json']));
   const model = strFromU8(archive['3D/3dmodel.model']);
 

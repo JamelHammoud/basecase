@@ -1,3 +1,4 @@
+import { stubKitGuideWorker } from './kitGuideWorker';
 import type { Page } from 'playwright-core';
 import { readFile } from 'node:fs/promises';
 import { expect } from 'vitest';
@@ -11,6 +12,8 @@ export const picoRow = (page: Page) =>
   page.locator('li.group').filter({ hasText: 'Raspberry Pi Pico 2' }).filter({ visible: true });
 
 export async function openPurchasingRobot(page: Page) {
+  await stubKitGuideWorker(page);
+
   const scene = { ...kitArmScene(), id: 'purchasing-arm' };
 
   scene.name = 'Purchasing arm';

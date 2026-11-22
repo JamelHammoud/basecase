@@ -40,12 +40,13 @@ it('runs every independent measurement without retries and retains failures and 
 
   dirs.push(output);
 
-  const manifest = runMeasurements({ selection, output, revision }, execute);
+  const manifest = runMeasurements({ selection: { ...selection, browserTrace: true }, output, revision }, execute);
 
   expect(calls).toHaveLength(3);
   expect(calls[0].args).toContain('--retry=0');
   expect(calls[0].args).toContain('--testNamePattern=^gallery opens \\(one\\)$');
   expect(calls[0].args).toContain('vitest.e2e.config.ts');
+  expect(calls[0].options.env.DEBUG).toBe('pw:api');
   expect(manifest.results.map((item) => item.status)).toEqual(['failed', 'passed', 'passed']);
   expect(manifest.results[0].cleanup).toContain('cleanup failed');
   expect(fs.readdirSync(output)).toHaveLength(7);
@@ -85,4 +86,30 @@ it('executes an existing unit test through the real Vitest CLI and reads its exa
   const report = fs.readFileSync(path.join(output, 'run-1.json'), 'utf8');
 
   expect(manifest.results[0], report).toMatchObject({ selected: 1, status: 'passed', exitCode: 0 });
+});
+
+it('leaves browser action tracing off for unit diagnostics', () => {
+  const output = fs.mkdtempSync(path.join(os.tmpdir(), 'measurement-'));
+  let environment;
+
+  dirs.push(output);
+  runMeasurements(
+    { selection: { ...selection, file: 'src/sim/engine.test.ts', runs: 1 }, output, revision },
+    (_command, _args, options) => {
+      environment = options.env;
+
+      return { status: 1, stdout: '', stderr: '' };
+    },
+  );
+  expect(environment.DEBUG).toBeUndefined();
+});
+
+it('rejects browser action tracing for a unit selection', () => {
+  expect(() =>
+    runMeasurements({
+      selection: { ...selection, file: 'src/sim/engine.test.ts', browserTrace: true },
+      output: '.',
+      revision,
+    }),
+  ).toThrow();
 });

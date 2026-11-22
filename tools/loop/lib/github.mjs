@@ -1,3 +1,4 @@
+import { STALL_AFTER_MS, runIsStalled } from './runActivity.mjs';
 import { stepLabels } from './stepLinks.mjs';
 import { acceptTask } from './capabilities.mjs';
 import { cached } from './cache.mjs';
@@ -417,10 +418,18 @@ export const issueIsOpen = (number) =>
   run('gh', ['issue', 'view', String(number), '--json', 'state', '--jq', '.state'], { allowFail: true }).out.trim() ===
   'OPEN';
 
-const STUCK_AFTER_MS = 30 * 60 * 1000;
-
 export const stuckRuns = (runs, now) =>
-  runs.filter((r) => r.status !== 'completed' && now - Date.parse(r.createdAt) > STUCK_AFTER_MS);
+  runs.filter((r) => r.status !== 'completed' && now - Date.parse(r.createdAt) > STALL_AFTER_MS);
+
+function currentJobs(id) {
+  try {
+    const pages = json('gh', ['api', '--paginate', '--slurp', `repos/${repo()}/actions/runs/${id}/jobs?per_page=100`]);
+
+    return pages.flatMap((page) => page.jobs);
+  } catch {
+    return null;
+  }
+}
 
 export function unstickMainChecks(log, now = Date.now()) {
   const unfinished =
@@ -438,12 +447,22 @@ export function unstickMainChecks(log, now = Date.now()) {
     ]) ?? [];
 
   for (const stuck of stuckRuns(unfinished, now)) {
+    const jobs = currentJobs(stuck.databaseId);
+
+    if (!jobs) {
+      log(`kept Check on main at ${stuck.headSha.slice(0, 7)}, its job activity could not be read`);
+
+      continue;
+    }
+
+    if (!runIsStalled(stuck, jobs, now)) continue;
+
     const done = run('gh', ['api', '-X', 'POST', `repos/${repo()}/actions/runs/${stuck.databaseId}/force-cancel`], {
       allowFail: true,
     }).ok;
 
     log(
-      `${done ? 'force-cancelled' : 'could not cancel'} Check on main at ${stuck.headSha.slice(0, 7)}, unfinished after 30 minutes`,
+      `${done ? 'force-cancelled' : 'could not cancel'} Check on main at ${stuck.headSha.slice(0, 7)}, without job or step progress for 30 minutes`,
     );
   }
 }

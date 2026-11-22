@@ -37,6 +37,7 @@ const failedRun = {
 };
 const jobs = ['unit (windows-latest, 2/2)', 'e2e-windows (3)', 'check'];
 const state = store('repair');
+const closedPages = (nodes) => [{ data: { repository: { pullRequests: { nodes } } } }];
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -44,7 +45,7 @@ beforeEach(() => {
   lastFinishedMainCheck.mockReturnValue(failedRun);
   failedJobs.mockReturnValue(jobs.map((name) => ({ name })));
   openPulls.mockReturnValue([]);
-  json.mockReturnValue([{ headRefName: 'loop/repair/older-run', mergedAt: '2026-11-18T02:19:36Z' }]);
+  json.mockReturnValue([]);
   state.get.mockReturnValue({ jobs: [] });
   openBranch.mockReturnValue({ dir: 'scratch/repair-fixture' });
   runAgent.mockReturnValue({ ok: true, output: { changed: false, notes: 'already repaired on current main' } });
@@ -140,4 +141,41 @@ it('refuses new test exclusions without marking the failed jobs handled', () => 
   repair({ log: vi.fn() });
   expect(runAgent).toHaveBeenCalledTimes(2);
   expect(state.save).toHaveBeenCalledWith(failedRun.databaseId, { jobs });
+});
+
+it('reopens handled jobs once after their repair closes without merging', () => {
+  state.get.mockReturnValue({ jobs });
+  json.mockReturnValue(
+    closedPages([
+      {
+        number: 99,
+        body: `[Check](https://github.com/example/studio/actions/runs/${failedRun.databaseId})`,
+        mergedAt: null,
+      },
+    ]),
+  );
+  repair({ log: vi.fn() });
+  expect(runAgent).toHaveBeenCalledOnce();
+  expect(state.save).toHaveBeenCalledWith(failedRun.databaseId, { jobs: [], releasedPulls: [99] });
+  expect(state.save).toHaveBeenLastCalledWith(failedRun.databaseId, { jobs, releasedPulls: [99] });
+  runAgent.mockClear();
+  state.get.mockReturnValue({ jobs, releasedPulls: [99] });
+  repair({ log: vi.fn() });
+  expect(runAgent).not.toHaveBeenCalled();
+});
+
+it('keeps merged repairs and closures from another run handled', () => {
+  state.get.mockReturnValue({ jobs });
+  json.mockReturnValue(
+    closedPages([
+      {
+        number: 99,
+        body: `https://github.com/example/studio/actions/runs/${failedRun.databaseId}`,
+        mergedAt: '2026-11-18T02:19:36Z',
+      },
+      { number: 100, body: `https://github.com/example/studio/actions/runs/${failedRun.databaseId}0`, mergedAt: null },
+    ]),
+  );
+  repair({ log: vi.fn() });
+  expect(runAgent).not.toHaveBeenCalled();
 });

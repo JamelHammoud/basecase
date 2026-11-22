@@ -51,6 +51,8 @@ Use these primitives. Never hand-roll a styled `<button>` or input when one fits
 - `ImageViewer`: full-window image viewer. Pinch or ⌘-scroll zooms at the pointer, two-finger scroll and drag pan, double-click toggles fit / 100%+, − + 0 keys, ← → and a filmstrip for several images, Esc or a backdrop click closes. Controls float in glass islands: Zoom out, the zoom readout, which zooms to fit (0), Zoom in and Close. A control never sits beside another that does its job, so there's no separate fit button.
 - Tokens in `theme.ts` (`THEME_COLORS`, `LAYOUT`, `DRAG_REGION`, `NO_DRAG_REGION`) mirror the `@theme` block in `index.css`.
 
+`PanelTabs` reveals the selected tab with immediate scrolling when mounted or changed. This keeps the selected hit target stable when a narrow card reopens. The 230 px Play sidebar regression checks full tab containment, hit testing and an ordinary pointer click after Library.
+
 ## Error toast recovery text
 
 Error `Toast` messages wrap at the existing text-width limit and grow above their 40px minimum height so recovery instructions remain visible. Canvas toast wrappers leave 12px on each side, and message words may break to fit long filenames. Action buttons retain their width. Other toast tones keep their single-line pill. Rendered recovery-text bounds and canvas containment lack dedicated browser coverage after removal of the scene-limit test, which failed before import. [Coverage evidence](../notes/ui.md#error-toast-recovery-text).

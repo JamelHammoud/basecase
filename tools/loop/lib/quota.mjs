@@ -36,7 +36,7 @@ export function reserveOverflow() {
 
   if (!release) return null;
 
-  const used = quotaSnapshot('claude', { refresh: true });
+  const used = quotaSnapshot('claude');
 
   if (!overflowAvailable({ used, baseline: used.baseline })) {
     release();

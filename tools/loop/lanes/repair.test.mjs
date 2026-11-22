@@ -9,6 +9,7 @@ import repair from './repair.mjs';
 vi.mock('../lib/agent.mjs', () => ({ CHANGE_SCHEMA: {}, runAgent: vi.fn() }));
 vi.mock('../lib/github.mjs', () => ({
   failedJobs: vi.fn(),
+  hasLabel: (pull, label) => (pull.labels ?? []).some((entry) => entry.name === label),
   failedLog: vi.fn(() => 'Stop Driving left no saved try'),
   lastFinishedMainCheck: vi.fn(),
   openPulls: vi.fn(),
@@ -85,4 +86,41 @@ describe('repair dispatch', () => {
 
     expect(runAgent).not.toHaveBeenCalled();
   });
+});
+
+it('leaves a labeled repair on a custom loop branch to finish before starting another', () => {
+  openPulls.mockReturnValue([
+    {
+      headRefName: 'loop/restore-nightly-pipelines',
+      labels: [{ name: 'loop:repair' }],
+      createdAt: new Date().toISOString(),
+    },
+  ]);
+  repair({ log: vi.fn() });
+  expect(runAgent).not.toHaveBeenCalled();
+  expect(openBranch).not.toHaveBeenCalled();
+});
+
+it('does not treat an unrelated custom branch as an active repair', () => {
+  openPulls.mockReturnValue([
+    {
+      headRefName: 'loop/new-feature',
+      labels: [{ name: 'loop:feature' }],
+      createdAt: new Date().toISOString(),
+    },
+  ]);
+  repair({ log: vi.fn() });
+  expect(runAgent).toHaveBeenCalledOnce();
+});
+
+it('keeps the existing six-hour bound for a labeled repair', () => {
+  openPulls.mockReturnValue([
+    {
+      headRefName: 'loop/restore-nightly-pipelines',
+      labels: [{ name: 'loop:repair' }],
+      createdAt: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString(),
+    },
+  ]);
+  repair({ log: vi.fn() });
+  expect(runAgent).toHaveBeenCalledOnce();
 });

@@ -146,6 +146,14 @@ async function dispatch(options) {
   reply(response, result);
 }
 
+function observeFailure(listener, error, request) {
+  try {
+    listener?.(error, request);
+  } catch {
+    return;
+  }
+}
+
 export async function startService(options) {
   const origin = new URL(options.origin);
 
@@ -167,6 +175,8 @@ export async function startService(options) {
       origin,
       assets: options.assets ?? ((_request, res) => reply(res, {}, 404)),
     }).catch((error) => {
+      observeFailure(options.onError, error, request);
+
       if (response.headersSent) return response.end();
 
       reply(response, { error: 'Fleet request refused' }, error.status ?? 400);

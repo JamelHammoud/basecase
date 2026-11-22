@@ -36,7 +36,7 @@ Federation enforcement must exempt identities listed in `fleet_recovery` from ex
 
 ### Version 1 API
 
-All organization paths start with `/v1/<organization UUID>/`. JSON bodies are capped at 128 KiB. Errors disclose no database text or credentials. Browser sessions use an HttpOnly, SameSite=Strict cookie, with Secure on HTTPS. Automation uses `Authorization: Bearer <token>`. Neither browser sessions nor publisher tokens enter project data, scene storage or inventory exports.
+All organization paths start with `/v1/<organization UUID>/`. JSON bodies are capped at 128 KiB. Errors disclose no database text or credentials. The trusted service host may supply `startService` with an `onError(error, request)` observer. It receives internal failures without changing the generic HTTP response, and observer errors cannot interrupt that response. The browser-test fixture keeps at most sixteen internal diagnostics and includes matching error codes and messages in its setup failure. Production has no observer or new logging by default. Browser sessions use an HttpOnly, SameSite=Strict cookie, with Secure on HTTPS. Automation uses `Authorization: Bearer <token>`. Neither browser sessions nor publisher tokens enter project data, scene storage or inventory exports.
 
 | Path | Methods | Contract |
 | --- | --- | --- |

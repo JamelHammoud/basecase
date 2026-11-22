@@ -255,7 +255,7 @@
   },
   {
     "file": "e2e/caseCodeAgent.e2e.test.ts",
-    "test": "edits and undoes live panels, then sends the running Case context through ⌘I",
+    "test": "edits and undoes live panels, then sends the running Case context through \u2318I",
     "issue": 1377,
     "until": "2026-11-28",
     "reason": "Run 44034821423 left sentPrompt() undefined at line 126 after composer fill and Enter on both Windows attempts. Full green run 43948835889 passed Windows in 15816 ms with unchanged walkthrough and composer. Linux was already quarantined for missing syntax-error delivery in run 43831610288. These symptoms have no established shared cause. Issue #1377 owns both platform traces, exact error-line, Undo and outgoing Case context assertions and equal-load baseline and candidate measurements."
@@ -310,7 +310,7 @@
   },
   {
     "file": "e2e/gallery.e2e.test.ts",
-    "test": "keeps a shared code panel away from the page’s IndexedDB, its cookies and the Hub",
+    "test": "keeps a shared code panel away from the page\u2019s IndexedDB, its cookies and the Hub",
     "issue": 1139,
     "until": "2026-11-28",
     "platform": "win32",
@@ -334,7 +334,7 @@
   },
   {
     "file": "e2e/firstLaunch.e2e.test.ts",
-    "test": "says why Try on Real Robot didn’t start, and keeps saying it under the button",
+    "test": "says why Try on Real Robot didn\u2019t start, and keeps saying it under the button",
     "issue": 1127,
     "until": "2026-11-28",
     "platform": "win32",
@@ -374,7 +374,7 @@
   },
   {
     "file": "e2e/inputs.e2e.test.ts",
-    "test": "hears a recorded “sit” in a Case whose logic listens for it",
+    "test": "hears a recorded \u201csit\u201d in a Case whose logic listens for it",
     "issue": 995,
     "until": "2026-11-28",
     "platform": "win32",
@@ -688,7 +688,7 @@
   },
   {
     "file": "e2e/inputs.e2e.test.ts",
-    "test": "moves a fixed arm’s hand right with a recorded hand once a Case naming hand starts a try",
+    "test": "moves a fixed arm\u2019s hand right with a recorded hand once a Case naming hand starts a try",
     "issue": 995,
     "until": "2026-11-28",
     "platform": "win32",
@@ -696,7 +696,7 @@
   },
   {
     "file": "e2e/tryStop.e2e.test.ts",
-    "test": "ends the try at once from the canvas’s Stop Driving",
+    "test": "ends the try at once from the canvas\u2019s Stop Driving",
     "issue": 1026,
     "until": "2026-11-28",
     "platform": "win32",
@@ -720,7 +720,7 @@
   },
   {
     "file": "e2e/caseRun.e2e.test.ts",
-    "test": "opens a Case’s own console: its areas, a live timer and score, Try It and Reset as buttons",
+    "test": "opens a Case\u2019s own console: its areas, a live timer and score, Try It and Reset as buttons",
     "issue": 1026,
     "until": "2026-11-28",
     "platform": "win32",
@@ -768,7 +768,7 @@
   },
   {
     "file": "e2e/buildCheck.e2e.test.ts",
-    "test": "puts /pass and the open Case in the composer from ⌘K when its row fails",
+    "test": "puts /pass and the open Case in the composer from \u2318K when its row fails",
     "issue": 988,
     "until": "2026-11-28",
     "platform": "win32",
@@ -936,7 +936,7 @@
   },
   {
     "file": "e2e/print.e2e.test.ts",
-    "test": "plates one coupon per fit with Print Fit Test from ⌘K, and leaves the scene as it was",
+    "test": "plates one coupon per fit with Print Fit Test from \u2318K, and leaves the scene as it was",
     "issue": 1853,
     "until": "2026-11-28",
     "platform": "win32",
@@ -944,7 +944,7 @@
   },
   {
     "file": "e2e/print.e2e.test.ts",
-    "test": "debosses the guide letter into the tray’s hidden floor, and Label parts off writes plain meshes",
+    "test": "debosses the guide letter into the tray\u2019s hidden floor, and Label parts off writes plain meshes",
     "issue": 1853,
     "until": "2026-11-28",
     "platform": "win32",
@@ -952,7 +952,7 @@
   },
   {
     "file": "e2e/print.e2e.test.ts",
-    "test": "lays out plates on the CORE One’s bed once it’s added in Settings ▸ Printers",
+    "test": "lays out plates on the CORE One\u2019s bed once it\u2019s added in Settings \u25b8 Printers",
     "issue": 1853,
     "until": "2026-11-28",
     "platform": "win32",
@@ -992,7 +992,7 @@
   },
   {
     "file": "e2e/inputs.e2e.test.ts",
-    "test": "pairs a phone from ⌘K and drives a rover by its tilt, and refuses the phone after Unpair Phone",
+    "test": "pairs a phone from \u2318K and drives a rover by its tilt, and refuses the phone after Unpair Phone",
     "issue": 995,
     "until": "2026-11-28",
     "platform": "win32",
@@ -1397,21 +1397,5 @@
     "until": "2026-12-04",
     "platform": "win32",
     "reason": "Nightly 45043548948 failed this declaration on Windows at correctTwice line 106: Take Control was not visible within the unchanged 5000 ms poll after Try Policy was activated with Enter. The same file passed on Windows in runs 45033521946 and 44964826807 and on Linux in all three, and the commits between touch no teaching code. The stalled stage (activation, live worker start or owner publication) is not established. Existing owner #2060 owns stage timing and the fix. Linux and macOS retain the browser declaration, and the teaching, task, worker, tries and Case unit coverage stays active on Windows. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. No flake rate is claimed."
-  },
-  {
-    "file": "e2e/evaluation.e2e.test.ts",
-    "test": "imports an actual CLI failure and opens its frozen identity and failure in the ordinary timeline",
-    "issue": 2080,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Nightly 45056273339 on Windows shard 2 found no timeline after reopening the saved failure at openSaved line 82, ending a 58680 ms test, and the shared-app retry did the same. The same file failed identically in 45053376172, and Linux passed in 40591 ms at the same revision. No commit is established as the cause. Source restoration, timeline mounting and reopening are not distinguished. Issue #2080 owns tracing from page load and ten baseline and ten candidate Windows observations at equal load with retries disabled and unchanged assertions and deadlines before restoration. Linux and macOS stay active, alongside fast CLI evaluation, scene reopening and timeline tests. No assertion, timeout or retry changes."
-  },
-  {
-    "file": "e2e/webSkillDiscovery.e2e.test.ts",
-    "test": "installs a ranked pinned Walk through the web palette and restores its target evidence after reload",
-    "issue": 2088,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Nightly 45056273339 on Windows shard 2 exhausted the unchanged 10000 ms poll for the Walk row tries line after Install at line 115, and the retry exhausted the same poll after reload at line 145. Linux passed in 21126 ms at the same revision and the direct-link case in the same file passed on both platforms. No commit is established as the cause. Install delivery, the stubbed trainer job, the saved skill and its evidence, and row rendering are not distinguished. Issue #2088 owns tracing from page load and ten baseline and ten candidate Windows observations at equal load with retries disabled and unchanged assertions and deadlines before restoration. Linux and macOS stay active, alongside fast skill discovery, install and evidence tests. No assertion, timeout or retry changes."
   }
 ]

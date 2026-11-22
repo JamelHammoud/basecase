@@ -126,6 +126,9 @@ jobs:
           cache: npm
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - run: npm ci
+      - name: Prepare the pinned native MuJoCo dependency before unit hooks
+        if: ${{ github.event_name != 'pull_request' }}
+        run: node tools/sim/prepareNativeContact.mjs
       - name: Check only what the pull request changed
         if: ${{ github.event_name == 'pull_request' }}
         run: |

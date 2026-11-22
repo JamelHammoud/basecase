@@ -21,7 +21,10 @@ export function FrozenBuildView({ core, active }: { core: WorkspaceCore; active:
   }, [active]);
 
   useEffect(() => {
-    void viewport.current?.meshesReady().then(() => viewport.current?.frameAll());
+    void viewport.current
+      ?.meshesReady()
+      .then(() => viewport.current?.frameAll())
+      .catch(ignore);
   }, [frozen?.record.id]);
 
   if (!frozen) return null;

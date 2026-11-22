@@ -30,12 +30,14 @@ export default function bodyAnalysisStudio(studio: Studio) {
       id,
       analyzed = false,
       recommended = false,
+      speedRadS,
     }: {
       run: RobotRun;
       model: SimModel;
       id: string;
       analyzed?: boolean;
       recommended?: boolean;
+      speedRadS?: number;
     }) => {
       const { core } = studio();
       const project = core.docs.projectRef.current;
@@ -95,6 +97,7 @@ export default function bodyAnalysisStudio(studio: Studio) {
             },
           },
           recommended,
+          speedRadS,
         );
 
         core.docs.updateProjectNow((current) => withBodyEvidence(current, saved));
@@ -111,7 +114,7 @@ export default function bodyAnalysisStudio(studio: Studio) {
   };
 }
 
-async function analyzeRetained(snapshot: BodyEvidenceSnapshot, recommended = false) {
+async function analyzeRetained(snapshot: BodyEvidenceSnapshot, recommended = false, speedRadS?: number) {
   const client = bodyClient();
 
   try {
@@ -120,7 +123,7 @@ async function analyzeRetained(snapshot: BodyEvidenceSnapshot, recommended = fal
     if (result.kind !== 'analyzed') throw new Error(result.reason);
 
     const motion = recommended
-      ? await client.recommend({ request: snapshot.request, result, selected: [0] })
+      ? await client.recommend({ request: snapshot.request, result, selected: [0], speedRadS })
       : undefined;
 
     if (recommended && motion?.kind !== 'recommended') throw new Error('Motion fixture could not be recommended');

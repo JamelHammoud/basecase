@@ -41,6 +41,10 @@ jobs:
           node --input-type=module -e 'import {diagnosticSelection} from "../tools/loop/lib/diagnosticContract.mjs"; import fs from "node:fs"; const s=diagnosticSelection(JSON.parse(process.env.DIAGNOSTIC)); if(!fs.statSync(s.file).isFile()) throw Error("Missing test file");'
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2
       - run: npm ci
+      - name: Prepare a published unit workload’s pinned native MuJoCo dependency
+        if: ${{ !startsWith(fromJSON(inputs.selection).file, 'e2e/') }}
+        run: |
+          if [ -f tools/sim/prepareNativeContact.mjs ]; then node tools/sim/prepareNativeContact.mjs; fi
       - if: startsWith(fromJSON(inputs.selection).file, 'e2e/')
         run: rustup toolchain install stable --profile minimal
       - if: startsWith(fromJSON(inputs.selection).file, 'e2e/')

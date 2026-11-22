@@ -1,4 +1,5 @@
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
+import { stubKitGuideWorker } from './kitGuideWorker';
 import { openApp, openPlayTab, shown } from './harness';
 import { bodyExecutionScene, parkedBodyRun } from '../src/reality/bodyMotion.fixtures';
 import type { BodyMotionStudio } from './bodyMotionHarness';
@@ -7,6 +8,7 @@ export async function openBodyExperimentApp(options: { recommended?: boolean } =
   const app = await openApp();
   const { page } = app;
 
+  await stubKitGuideWorker(page);
   await page.addScriptTag({ content: FAKE_DAEMON_SCRIPT });
   await page.evaluate(() => {
     const target = window as unknown as { __studio: BodyMotionStudio; __fakeRobotLink: unknown };

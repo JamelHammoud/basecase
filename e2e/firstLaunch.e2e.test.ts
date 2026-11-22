@@ -59,7 +59,7 @@ describe('first launch', () => {
     expect(running.activeCase).toBe(rover.case.id);
     expect(await page.locator(shown('[role=tab][aria-selected="true"]'), { hasText: 'Simulate' }).count()).toBe(1);
     await expect.poll(() => forward(page), { timeout: 20000 }).toBeGreaterThan(0.1);
-    expect((await simState(page)).stats!.time).toBeGreaterThan(running.stats?.time ?? 0);
+    await expect.poll(async () => (await simState(page)).stats?.time ?? 0).toBeGreaterThan(running.stats?.time ?? 0);
     expect(sceneWrites()).toEqual([]);
   }, 120000);
 

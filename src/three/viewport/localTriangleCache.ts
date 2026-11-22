@@ -13,6 +13,7 @@ interface MeshStamp {
   positionVersion: number;
   index: THREE.BufferAttribute | null;
   indexVersion: number;
+  transforms: Array<{ object: THREE.Object3D; matrix: number[] }>;
   matrix: number[];
 }
 
@@ -41,7 +42,20 @@ function meshesOf(object: THREE.Object3D) {
   return meshes;
 }
 
-function sameMesh(mesh: THREE.Mesh, stamp: MeshStamp | undefined) {
+function sameTransforms(root: THREE.Object3D, mesh: THREE.Mesh, transforms: MeshStamp['transforms']) {
+  let child: THREE.Object3D | null = mesh;
+
+  for (const stamp of transforms) {
+    if (child !== stamp.object || !stamp.matrix.every((value, axis) => value === stamp.object.matrix.elements[axis]))
+      return false;
+
+    child = stamp.object.parent;
+  }
+
+  return child === root;
+}
+
+function sameMesh(root: THREE.Object3D, mesh: THREE.Mesh, stamp: MeshStamp | undefined) {
   const position = mesh.geometry.attributes.position;
   const index = mesh.geometry.index;
 
@@ -53,13 +67,17 @@ function sameMesh(mesh: THREE.Mesh, stamp: MeshStamp | undefined) {
     stamp.positionVersion === version(position) &&
     stamp.index === index &&
     stamp.indexVersion === (index?.version ?? 0) &&
-    stamp.matrix.every((value, axis) => value === mesh.matrixWorld.elements[axis])
+    sameTransforms(root, mesh, stamp.transforms)
   );
 }
 
-function meshStamp(mesh: THREE.Mesh): MeshStamp {
+function meshStamp(root: THREE.Object3D, mesh: THREE.Mesh): MeshStamp {
   const position = mesh.geometry.attributes.position;
   const index = mesh.geometry.index;
+  const transforms: MeshStamp['transforms'] = [];
+
+  for (let child: THREE.Object3D | null = mesh; child && child !== root; child = child.parent)
+    transforms.push({ object: child, matrix: child.matrix.toArray() });
 
   return {
     object: mesh,
@@ -68,17 +86,38 @@ function meshStamp(mesh: THREE.Mesh): MeshStamp {
     positionVersion: version(position),
     index,
     indexVersion: index?.version ?? 0,
+    transforms,
     matrix: mesh.matrixWorld.toArray(),
   };
+}
+
+function currentShape(object: THREE.Object3D, meshes: THREE.Mesh[], entry?: Entry) {
+  return (
+    entry &&
+    entry.meshes.length === meshes.length &&
+    meshes.every((mesh, index) => sameMesh(object, mesh, entry.meshes[index]))
+  );
 }
 
 function currentEntry(object: THREE.Object3D, meshes: THREE.Mesh[], entry?: Entry) {
   return (
     entry &&
-    entry.meshes.length === meshes.length &&
+    currentShape(object, meshes, entry) &&
     entry.root.every((value, axis) => value === object.matrixWorld.elements[axis]) &&
-    meshes.every((mesh, index) => sameMesh(mesh, entry.meshes[index]))
+    meshes.every((mesh, index) =>
+      entry.meshes[index].matrix.every((value, axis) => value === mesh.matrixWorld.elements[axis]),
+    )
   );
+}
+
+function presentationMoved(object: THREE.Object3D, entry: Entry) {
+  object.updateWorldMatrix(true, true);
+
+  const meshes = meshesOf(object);
+
+  if (!currentShape(object, meshes, entry)) throw AbortSignal.abort().reason;
+
+  return !currentEntry(object, meshes, entry);
 }
 
 function snapshotAttribute(attribute: Attribute): SnapshotAttribute {
@@ -104,7 +143,7 @@ export async function prepareLocalTriangles(objects: THREE.Object3D[], current: 
     if (currentEntry(object, meshes, entries.get(object))) return [];
 
     const entry: Entry = {
-      meshes: meshes.map(meshStamp),
+      meshes: meshes.map((mesh) => meshStamp(object, mesh)),
       root: object.matrixWorld.toArray(),
       triangles: new Float32Array(),
       output: null,
@@ -140,13 +179,19 @@ export async function prepareLocalTriangles(objects: THREE.Object3D[], current: 
 
   if (!current()) throw AbortSignal.abort().reason;
 
-  for (const [index, { object, entry }] of sources.entries()) {
-    object.updateWorldMatrix(true, true);
+  const moved: THREE.Object3D[] = [];
 
-    if (!currentEntry(object, meshesOf(object), entry)) throw AbortSignal.abort().reason;
+  for (const [index, { object, entry }] of sources.entries()) {
+    if (presentationMoved(object, entry)) {
+      moved.push(object);
+
+      continue;
+    }
 
     entries.set(object, { ...entry, ...result[index] });
   }
+
+  if (moved.length) await prepareLocalTriangles(moved, current);
 }
 
 function currentTriangles(object: THREE.Object3D): Entry {
@@ -160,7 +205,7 @@ function currentTriangles(object: THREE.Object3D): Entry {
 
   const triangles = localTriangles(object);
   const next: Entry = {
-    meshes: meshes.map(meshStamp),
+    meshes: meshes.map((mesh) => meshStamp(object, mesh)),
     root: object.matrixWorld.toArray(),
     triangles,
   };

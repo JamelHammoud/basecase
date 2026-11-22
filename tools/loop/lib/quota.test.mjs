@@ -23,7 +23,7 @@ vi.mock('./store.mjs', () => ({
 }));
 vi.mock('./sh.mjs', () => ({ run: state.execute }));
 
-const { reserveOverflow } = await import('./quota.mjs');
+const { reserveOverflow, quotaSnapshot } = await import('./quota.mjs');
 const now = Date.UTC(2026, 10, 22, 18);
 const reset = now + 3 * 24 * 60 * 60_000;
 const snapshot = (used = 4) => ({
@@ -100,4 +100,35 @@ it('preserves a blocked model-scoped window', () => {
   state.values.set('claude', value);
   expect(reserveOverflow()).toBeNull();
   expect(state.held.size).toBe(0);
+});
+
+it('retains a verified measurement after an empty response without renewing its age', () => {
+  state.values.set('claude', { ...snapshot(), at: now - 90_000 });
+  state.execute.mockReturnValue({ ok: true, out: JSON.stringify({ at: now, windows: [] }) });
+
+  const value = quotaSnapshot('claude');
+
+  expect(value.at).toBe(now - 90_000);
+  expect(value.windows).toEqual(snapshot().windows);
+  expect(value.baseline).toEqual(snapshot().baseline);
+  expect(quotaSnapshot('claude')).toEqual(value);
+  expect(state.execute).toHaveBeenCalledOnce();
+  vi.advanceTimersByTime(5 * 60_000);
+  expect(reserveOverflow()).toBeNull();
+  expect(state.held.size).toBe(0);
+});
+
+it.each([
+  { ok: false, out: '' },
+  { ok: true, out: 'malformed' },
+])('bounds failed provider probes with no usable measurement at %j', (response) => {
+  state.execute.mockReturnValue(response);
+
+  for (let index = 0; index < 8; index++) expect(reserveOverflow()).toBeNull();
+
+  expect(state.execute).toHaveBeenCalledOnce();
+  expect(state.held.size).toBe(0);
+  vi.advanceTimersByTime(60_000);
+  expect(reserveOverflow()).toBeNull();
+  expect(state.execute).toHaveBeenCalledTimes(2);
 });

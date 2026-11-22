@@ -47,7 +47,7 @@ You can run a Case in the whole window, with the layout the Case asks for. The r
 
 3. Look at the cards around the canvas. If the Case doesn't have its own layout, its cameras sit on the left: first the Scene view or your stationary camera views, then one tile for each camera on the robot. The brief, the emulated robot and your tries sit on the right.
    - To show a camera tile in sharper detail, click it.
-   - To choose Look Through, Rename or Lens, right-click the tile.
+   - To choose Look Through, Rename or Lens, right-click the tile. The same menu draws counting lines and zones, as in [Count objects through zones and lines](/help/count-objects-through-zones-and-lines).
 
 ![The Case running with the cameras on the left, the arm in the middle and the brief, Connect Emulated Robot and Try It on the right](/help/run-a-case/center.png)
 

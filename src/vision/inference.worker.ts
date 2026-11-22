@@ -7,7 +7,10 @@ import { VisionEngine } from './engine';
 import { LatestFrameQueue } from './frameQueue';
 import { visionMetadata } from './metadata';
 import { ProducerPorts } from './producerPorts';
-import type { VisionPixels, VisionSource } from './types';
+import { TrackingSession } from './tracking/session';
+import { trackResult } from './tracking/trackResult';
+import type { CameraRegions } from './tracking/types';
+import type { VisionPixels, VisionResult, VisionSource } from './types';
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
 const engine = new VisionEngine();
@@ -42,10 +45,35 @@ function pixels(frame: ImageBitmap | VideoFrame | VisionPixels): VisionPixels {
   return context.getImageData(0, 0, width, height);
 }
 
+const MAX_REGION_CAMERAS = 256;
+const regions = new Map<string, CameraRegions>();
+const sessions = new Map<MessagePort, TrackingSession>();
+
+function tracked(job: FrameJob, result: VisionResult): VisionResult {
+  const session = sessions.get(job.port) ?? new TrackingSession();
+
+  sessions.set(job.port, session);
+
+  const camera = `${job.source?.id ?? ''}/${job.camera ?? ''}`;
+  const key = `${camera}:${job.modelId}`;
+
+  return trackResult(session, key, regions.get(camera), result);
+}
+
+function setRegions(data: Record<string, unknown>) {
+  const camera = `${String(data.source)}/${String(data.camera)}`;
+
+  regions.delete(camera);
+
+  if (data.regions) regions.set(camera, data.regions as CameraRegions);
+
+  while (regions.size > MAX_REGION_CAMERAS) regions.delete(regions.keys().next().value!);
+}
+
 const queue = new LatestFrameQueue<FrameJob>(
   async (job) => {
     try {
-      const result = visionMetadata(await engine.infer(job.modelId, pixels(job.frame), job));
+      const result = tracked(job, visionMetadata(await engine.infer(job.modelId, pixels(job.frame), job)));
 
       if (!ports.has(job.producerId, job.port)) return;
 
@@ -87,7 +115,10 @@ const queue = new LatestFrameQueue<FrameJob>(
 
 const ports = new ProducerPorts(
   (data, port, producerId) => queue.push({ ...data, port, producer: port, producerId } as unknown as FrameJob),
-  (port) => queue.removeProducer(port),
+  (port) => {
+    sessions.delete(port);
+    queue.removeProducer(port);
+  },
 );
 
 scope.onmessage = async ({ data }) => {
@@ -99,6 +130,20 @@ scope.onmessage = async ({ data }) => {
 
   if (data.type === 'detach') {
     ports.detach(data.producerId);
+
+    return;
+  }
+
+  if (data.type === 'track') {
+    setRegions(data);
+
+    return;
+  }
+
+  if (data.type === 'track-reset') {
+    const prefix = `${String(data.source)}/${String(data.camera)}:`;
+
+    for (const session of sessions.values()) session.removeWhere((camera) => camera.startsWith(prefix));
 
     return;
   }

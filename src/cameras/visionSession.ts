@@ -5,7 +5,8 @@ import type { VisionManifest } from '../vision/manifest';
 import { errorMessage } from '../utils/errorMessage';
 import { visionRuntime } from '../vision/runtime';
 import type { VisionAssignment } from './visionFrames';
-import { preferredVisionDetections, visionSignalClass, visionSignalValues } from './visionSignals';
+import { resetCameraTracking } from './visionRegions';
+import { preferredVisionDetections, trackingSignalNames, visionSignalClass, visionSignalValues } from './visionSignals';
 
 const DEFAULT_MODEL = 'rfdetr-nano';
 const assignments = new Map<string, VisionAssignment>();
@@ -98,6 +99,8 @@ export function publishCameraVision(incoming: VisionResult) {
   for (const detection of result.detections)
     knownSignals.add(`vision.${result.camera}.${visionSignalClass(detection.label)}`);
 
+  for (const name of trackingSignalNames(result.camera, result.tracking)) knownSignals.add(name);
+
   errors.delete(result.camera);
   resultListeners.forEach((listen) => listen(result));
   changed(result.camera);
@@ -173,6 +176,7 @@ export const visionNeedsFrames = (cameras: string[]) =>
 
 export function invalidateVisionCamera(camera: string, timestamp = performance.now()) {
   minimum.set(camera, timestamp);
+  resetCameraTracking(camera);
   clearVisionCamera(camera);
 }
 

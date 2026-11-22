@@ -1,4 +1,4 @@
-import { visionSignalClass, visionSignalValues } from '../cameras/visionSignals';
+import { trackingSignalNames, visionSignalClass, visionSignalValues } from '../cameras/visionSignals';
 import type { VisionResult } from '../vision/types';
 import { RoutineVisionFacts } from '../routines/visionFacts';
 import type { SimEngine } from '../sim/engine';
@@ -124,6 +124,8 @@ export class CaseLogicRun {
     this.visionFrames.set(`${result.camera}:${result.modelId}`, { result, at });
 
     for (const detection of result.detections) this.visionNames.add(`${prefix}${visionSignalClass(detection.label)}`);
+
+    for (const name of trackingSignalNames(result.camera, result.tracking)) this.visionNames.add(name);
 
     for (const reading of this.cameraReadings(this.factsAt)) this.visionInputs.set(reading.name, reading);
   }

@@ -4,6 +4,7 @@ import { lensLabel } from '../../cameras/lens';
 import { RenameField } from '../../design-system';
 import type { CameraView } from '../../cameras/views';
 import { DetectionOverlay } from './DetectionOverlay';
+import { RegionDraw, type RegionDrawing } from './RegionDraw';
 import { tileChip, tileFrame, tileLabel } from './tileStyle';
 
 export interface CameraTileProps {
@@ -16,6 +17,7 @@ export interface CameraTileProps {
   canvasRef: (canvas: HTMLCanvasElement | null) => void;
   onToggleSize: () => void;
   onMenu: (x: number, y: number) => void;
+  drawing?: RegionDrawing;
 }
 
 export const CameraTile: React.FC<CameraTileProps> = ({
@@ -26,6 +28,7 @@ export const CameraTile: React.FC<CameraTileProps> = ({
   renaming,
   onRename,
   canvasRef,
+  drawing,
   ...on
 }) => (
   <div data-testid="camera-tile" data-camera={view.key} className={tileFrame(fill, large)}>
@@ -42,6 +45,7 @@ export const CameraTile: React.FC<CameraTileProps> = ({
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
     </button>
     <DetectionOverlay vision={vision} camera={view.key} />
+    {drawing && <RegionDraw {...drawing} />}
     {renaming ? (
       <div className="absolute left-1.5 right-1.5 top-1.5 flex">
         <RenameField name={view.label} onDone={onRename} />

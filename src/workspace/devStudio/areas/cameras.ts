@@ -19,6 +19,7 @@ import {
 } from '../../../cameras/operator/operatorCamera';
 import type { PoseSample } from '../../../cameras/operator/poseFollow';
 import { phoneSnapshot } from '../../../phone/phoneStore';
+import type { CameraRegions } from '../../../vision/tracking/types';
 
 function operatorCameraState() {
   const { open, label, estimator, error } = operatorCameraSnapshot();
@@ -91,6 +92,37 @@ export default function camerasStudio(studio: Studio) {
       return cameraVisionState(activeVision(cameras[0]));
     },
     cameraVisionState: () => cameraVisionState(activeVision()),
+    loadVisionModel: (manifest: VisionManifest, bytes: number[]) => loadVisionManifest(manifest, new Uint8Array(bytes)),
+    caseRegions: () => studio().core.simTraining.cases.active?.console?.regions ?? null,
+    setCameraRegions: (camera: string, regions: CameraRegions | undefined) =>
+      activeVision(camera).setCameraRegions(camera, regions),
+    feedVisionFrames: async (camera: string, modelId: string, frames: { pixels: number[]; at: number }[]) => {
+      const vision = activeVision(camera);
+      const { port, disconnect } = await vision.connectVisionFrames();
+      const base = performance.now();
+
+      try {
+        for (const frame of frames) {
+          const bitmap = await createImageBitmap(new ImageData(new Uint8ClampedArray(frame.pixels), 2, 2));
+          const answered = new Promise<void>((resolve) => {
+            port.onmessage = ({ data }) => {
+              if (['result', 'error', 'dropped'].includes(data.type)) resolve();
+            };
+          });
+
+          port.postMessage(
+            { type: 'frame', frame: bitmap, modelId, camera, source: vision.source, timestamp: base + frame.at },
+            [bitmap],
+          );
+          await answered;
+        }
+      } finally {
+        disconnect();
+        port.close();
+      }
+
+      return cameraVisionState(vision);
+    },
     feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
     feedHand: (samples: HandSample[], fps?: number) => feedOperatorHand(samples, fps),
     feedFace: (samples: FaceSample[], fps?: number) => feedOperatorFace(samples, fps),

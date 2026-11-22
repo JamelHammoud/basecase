@@ -35,3 +35,30 @@ describe('camera vision playhead', () => {
     expect(cameraVisionSignals()['vision.camera-shot:request:wrist.cup']).toBeUndefined();
   });
 });
+
+describe('tracked camera vision', () => {
+  const tracked = (timestamp: number, lines = 1): VisionResult => ({
+    ...result(timestamp),
+    camera: 'door-camera',
+    tracking: { tracks: [], zones: [], lines: [{ name: 'door', in: lines, out: 0, recent: [] }] },
+  });
+
+  it('rejects a stale tracked reply after a scene switch and zeroes the line counts', () => {
+    publishCameraVision(tracked(10));
+    expect(cameraVisionSignals(['door-camera'])['vision.door-camera.line.door.in']).toBe(1);
+
+    invalidateVisionCamera('door-camera', 20);
+    publishCameraVision(tracked(19, 5));
+    expect(cameraVisionSignals(['door-camera'])['vision.door-camera.line.door.in']).toBe(0);
+
+    publishCameraVision(tracked(21, 2));
+    expect(cameraVisionSignals(['door-camera'])['vision.door-camera.line.door.in']).toBe(2);
+  });
+
+  it('keeps the counts of a paused source and ignores a reordered older reply', () => {
+    publishCameraVision(tracked(100, 3));
+    publishCameraVision(tracked(90, 1));
+    expect(cameraVisionSignals(['door-camera'])['vision.door-camera.line.door.in']).toBe(3);
+    expect(cameraVisionSignals(['door-camera'])['vision.door-camera.line.door.in']).toBe(3);
+  });
+});

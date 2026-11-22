@@ -38,9 +38,11 @@ export function studyFingerprint(
   const settings = { ...project };
 
   delete settings.study;
+  delete settings.bodyEvidence;
+  delete settings.buildGuide;
 
   const key = readinessFingerprint(parts, {
-    project: settings,
+    project: { ...settings, buildGuide: project.buildGuide?.stepParts },
     appearances: rendered ? appearanceParts(parts).map((part) => part.appearance) : undefined,
     transforms: parts.map((part) => [
       part.id,

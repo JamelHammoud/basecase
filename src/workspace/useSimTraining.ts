@@ -27,7 +27,10 @@ interface SimTrainingOptions {
   posing: Posing;
   viewportRef: RefObject<Viewport3DHandle | null>;
   showToast: ShowToast;
-  studio: Pick<StudioShared, 'openSettings' | 'robotsBeside' | 'customModels' | 'newScene'>;
+  studio: Pick<
+    StudioShared,
+    'openSettings' | 'robotsBeside' | 'customModels' | 'newScene' | 'tabs' | 'handleOf' | 'selectTab'
+  >;
 }
 
 function withPolicy(policies: PolicyRecord[], record: PolicyRecord, replaces: string | null): PolicyRecord[] {

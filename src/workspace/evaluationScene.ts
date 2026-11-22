@@ -8,8 +8,44 @@ import type { TryRecord } from '../cases/tries';
 import type { ScenePart, ProjectSettings } from '../types/robotics';
 import type { StudioShared } from './types';
 
+type EvaluationStudio = Pick<StudioShared, 'newScene' | 'tabs' | 'handleOf' | 'selectTab'>;
+
+async function reopenEvaluationScene(studio: EvaluationStudio, scene: Uint8Array, id: string) {
+  for (const tab of studio.tabs) {
+    const handle = studio.handleOf(tab.id);
+
+    if (!handle) continue;
+
+    const snapshot = handle.snapshot();
+
+    if (!snapshot.project) continue;
+
+    const matches = await tryArchiveWorker.call('evaluationScene', {
+      scene,
+      parts: snapshot.parts,
+      physics: evaluationScenePhysics(snapshot.project),
+    });
+    const current = handle.snapshot();
+
+    if (
+      !matches ||
+      studio.handleOf(tab.id) !== handle ||
+      current.parts !== snapshot.parts ||
+      current.project !== snapshot.project
+    )
+      continue;
+
+    studio.selectTab(tab.id);
+    handle.openTry(id);
+
+    return true;
+  }
+
+  return false;
+}
+
 export async function ensureEvaluationScene(
-  studio: Pick<StudioShared, 'newScene'>,
+  studio: EvaluationStudio,
   current: { parts: ScenePart[]; project: ProjectSettings },
   input: { record: TryRecord; recording: Recording },
 ): Promise<boolean> {
@@ -28,6 +64,8 @@ export async function ensureEvaluationScene(
   if ((await componentMeshesReady(Object.keys(source.meshes))).length) throw new Error('The robot mesh can’t be read.');
 
   if (matches) return true;
+
+  if (await reopenEvaluationScene(studio, source.scene, input.record.id)) return false;
 
   const scene = await decodeSceneFile(source.scene);
 

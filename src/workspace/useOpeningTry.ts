@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { loadManifests } from '../cases/tryStore';
 import { tryRecordOf } from '../cases/tryFile';
 import { errorMessage } from '../utils/errorMessage';
@@ -6,13 +6,9 @@ import type { WorkspaceSeed } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 export function useOpeningTry({ seed, core, active }: { seed?: WorkspaceSeed; core: WorkspaceCore; active: boolean }) {
-  const id = seed?.openTry;
-  const opened = useRef(false);
-  const open = useEffectEvent(async () => {
-    if (opened.current || !id) return;
-
-    opened.current = true;
-
+  const [request, setRequest] = useState(() => (seed?.openTry ? { id: seed.openTry } : null));
+  const opened = useRef<typeof request>(null);
+  const open = useEffectEvent(async (id: string) => {
     try {
       const [stored] = await loadManifests([id]);
 
@@ -23,6 +19,11 @@ export function useOpeningTry({ seed, core, active }: { seed?: WorkspaceSeed; co
   });
 
   useEffect(() => {
-    if (active && id) void open();
-  }, [active, id]);
+    if (!active || !request || opened.current === request) return;
+
+    opened.current = request;
+    void open(request.id);
+  }, [active, request]);
+
+  return (id: string) => setRequest({ id });
 }

@@ -90,7 +90,12 @@ it(
           ),
         )
         .toHaveLength(0);
+
+      const frozenTabs = await app.page.getByRole('tab', { name: 'Rover', exact: true }).count();
+
       await openSaved(app, stored.id);
+      expect(await app.page.getByRole('tab', { name: 'Rover', exact: true }).count()).toBe(frozenTabs);
+      expect(await app.page.getByRole('tab', { name: /^Untitled/ }).count()).toBe(1);
       await expect.poll(() => app.page.locator(shown('[data-testid="try-timeline"]')).innerText()).toContain('Missed');
       expect(app.errors).toEqual([]);
     } finally {

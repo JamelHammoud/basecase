@@ -103,7 +103,7 @@ export function useBuildAlong({ guide, showToast, partsRef, projectRef, viewport
     openingRef.current++;
     setOpening(false);
 
-    if (session) viewportRef.current?.lookThrough(session.camera);
+    if (session?.camera) viewportRef.current?.lookThrough(session.camera);
 
     setSession(null);
   };

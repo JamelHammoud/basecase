@@ -12,7 +12,7 @@ function repairView(state: NonNullable<Session['repairSession']>, index: number)
     : { kit: state.source, parts: state.sourceParts };
 }
 
-export async function frozenBuildSession(id: string, camera: ViewShot, history?: string): Promise<Session> {
+export async function frozenBuildSession(id: string, camera: ViewShot | undefined, history?: string): Promise<Session> {
   const frozen = await localBuilds.open(id);
   const { record } = frozen;
   const kit = history === 'original' ? await localBuilds.openRevision(id, record.kit) : frozen.kit;
@@ -42,7 +42,7 @@ export async function frozenBuildSession(id: string, camera: ViewShot, history?:
 async function repairSession(
   record: BuildRecord,
   repair: NonNullable<BuildRecord['repairs']>[number],
-  camera: ViewShot,
+  camera: ViewShot | undefined,
   frozen: Awaited<ReturnType<typeof localBuilds.open>>,
 ): Promise<Session> {
   const currentHash = record.configuration ?? record.kit;

@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   open: vi.fn(),
   close: vi.fn(),
   pulls: vi.fn(),
-  diff: vi.fn(),
+  exclusions: vi.fn(),
   publish: vi.fn(),
 }));
 
@@ -30,7 +30,8 @@ vi.mock('../lib/github.mjs', () => ({
   fullCheck: vi.fn(),
   pullReview: vi.fn(),
 }));
-vi.mock('../lib/sh.mjs', () => ({ json: () => [], run: mocks.diff }));
+vi.mock('../lib/sh.mjs', () => ({ json: () => [] }));
+vi.mock('../lib/repairCoverage.mjs', () => ({ expandsTestExclusions: mocks.exclusions }));
 vi.mock('../lib/pull.mjs', () => ({ publish: mocks.publish }));
 vi.mock('../lib/worktree.mjs', () => ({ openBranch: mocks.open, close: mocks.close }));
 vi.mock('./health.mjs', () => ({ measure: () => ({ mainRedSince: '2026-11-21T00:00:00Z' }) }));
@@ -46,7 +47,7 @@ beforeEach(() => {
   mocks.state = { stalledSince: now - 60 * 60_000, lastCallAt: previous };
   mocks.open.mockReturnValue({ dir: '.', branch: 'loop/repair/doctor' });
   mocks.pulls.mockReturnValue([]);
-  mocks.diff.mockReturnValue({ out: 'src/workspace/evaluationScene.ts' });
+  mocks.exclusions.mockReturnValue(false);
   mocks.publish.mockReturnValue(null);
 
   const exists = fs.existsSync.bind(fs);
@@ -112,7 +113,7 @@ describe('doctor capacity recovery', () => {
 
 it('refuses a doctor proposal that changes the quarantine list before publication', () => {
   mocks.agent.mockReturnValue({ ok: true, output: { changed: true } });
-  mocks.diff.mockReturnValue({ out: 'docs/guide/loop.md\ntools/quarantine.json' });
+  mocks.exclusions.mockReturnValue(true);
   doctor({ log });
   expect(mocks.publish).not.toHaveBeenCalled();
   expect(mocks.close).toHaveBeenCalledOnce();

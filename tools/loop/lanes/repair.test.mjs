@@ -1,3 +1,5 @@
+import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
+import { publish } from '../lib/pull.mjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runAgent } from '../lib/agent.mjs';
 import { failedJobs, lastFinishedMainCheck, openPulls } from '../lib/github.mjs';
@@ -6,6 +8,7 @@ import { store } from '../lib/store.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 import repair from './repair.mjs';
 
+vi.mock('../lib/repairCoverage.mjs', () => ({ expandsTestExclusions: vi.fn() }));
 vi.mock('../lib/agent.mjs', () => ({ CHANGE_SCHEMA: {}, runAgent: vi.fn() }));
 vi.mock('../lib/github.mjs', () => ({
   failedJobs: vi.fn(),
@@ -37,6 +40,7 @@ const state = store('repair');
 
 beforeEach(() => {
   vi.clearAllMocks();
+  expandsTestExclusions.mockReturnValue(false);
   lastFinishedMainCheck.mockReturnValue(failedRun);
   failedJobs.mockReturnValue(jobs.map((name) => ({ name })));
   openPulls.mockReturnValue([]);
@@ -123,4 +127,17 @@ it('keeps the existing six-hour bound for a labeled repair', () => {
   ]);
   repair({ log: vi.fn() });
   expect(runAgent).toHaveBeenCalledOnce();
+});
+
+it('refuses new test exclusions without marking the failed jobs handled', () => {
+  expandsTestExclusions.mockReturnValue(true);
+  runAgent.mockReturnValueOnce({ ok: true, output: { changed: true } });
+  repair({ log: vi.fn() });
+  expect(publish).not.toHaveBeenCalled();
+  expect(state.save).not.toHaveBeenCalled();
+  expect(close).toHaveBeenCalledOnce();
+  expandsTestExclusions.mockReturnValue(false);
+  repair({ log: vi.fn() });
+  expect(runAgent).toHaveBeenCalledTimes(2);
+  expect(state.save).toHaveBeenCalledWith(failedRun.databaseId, { jobs });
 });

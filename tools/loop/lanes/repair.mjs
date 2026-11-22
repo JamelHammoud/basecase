@@ -1,3 +1,4 @@
+import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
 import {
   failedJobs,
@@ -88,6 +89,9 @@ export default function repair({ log }) {
 
       return;
     }
+
+    if (expandsTestExclusions(worktree.dir))
+      return log('repair cannot expand quarantine coverage; the failed jobs remain eligible for a source repair');
 
     repaired.save(latest.databaseId, { jobs: [...taken, ...plan.jobs] });
 

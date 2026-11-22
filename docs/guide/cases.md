@@ -1257,3 +1257,5 @@ The student-attempt download/reload declaration joins the Windows download quara
 Seeded cancellation checks run before and after the existing optional evaluation checkpoint. Ordinary Case jobs add no checkpoint or wait. A cancellation arriving while that callback is awaited exits before the next physics frame and uses the existing engine cleanup. `caseCancellation.test.ts` covers that interleaving alongside interrupted references and reuse for accepted seeds.
 
 Engine setup cleanup lives in `runCaseLogic.ts` alongside the runner helpers. Controller setup failure disposes the newly started engine before propagating the error. Moving that existing helper changes neither checkpoints nor cancellation boundaries.
+
+The CLI interruption tests freeze their immutable sixteen-seed package once before the test callbacks. Each cancellation or forced-interruption run keeps its own output directory and stop file. Callback deadlines cover the actual child process and incomplete-evidence assertions, while fixture creation retains the ordinary setup deadline.

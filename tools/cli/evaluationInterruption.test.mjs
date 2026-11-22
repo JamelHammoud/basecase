@@ -2,23 +2,24 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { afterEach, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, expect, it } from 'vitest';
 import { evaluationFixture } from './evaluationFixture.mjs';
 import { evaluationContext } from './evaluationContext.fixtures.mjs';
 import { freezeEvaluation } from './evaluationFreeze.mjs';
 
 const dirs = [];
+let fixture;
+let sourceDir;
 
 afterEach(() => {
   for (const dir of dirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
 });
 
-async function interrupt(mode) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'evaluation-stop-'));
+beforeAll(async () => {
+  sourceDir = fs.mkdtempSync(path.join(os.tmpdir(), 'evaluation-stop-source-'));
 
-  dirs.push(dir);
+  fixture = await evaluationFixture(sourceDir);
 
-  const fixture = await evaluationFixture(dir);
   const frozen = await freezeEvaluation(
     fixture.baseline,
     {
@@ -30,6 +31,17 @@ async function interrupt(mode) {
   );
 
   expect(frozen).toBe(0);
+});
+afterAll(() => {
+  if (sourceDir) fs.rmSync(sourceDir, { recursive: true, force: true });
+});
+
+async function interrupt(mode) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'evaluation-stop-'));
+
+  dirs.push(dir);
+
+  const output = path.join(dir, 'results');
 
   const stopFile = path.join(dir, 'stop');
   const child = spawn(
@@ -40,7 +52,7 @@ async function interrupt(mode) {
       'run',
       fixture.package,
       '--output',
-      fixture.output,
+      output,
       '--stop-file',
       stopFile,
     ],
@@ -48,7 +60,7 @@ async function interrupt(mode) {
   );
   let stopped = false;
   const watcher = fs.watch(dir, { recursive: true }, () => {
-    if (stopped || !fs.existsSync(path.join(fixture.output, 'comparison.json'))) return;
+    if (stopped || !fs.existsSync(path.join(output, 'comparison.json'))) return;
 
     stopped = true;
 
@@ -63,11 +75,11 @@ async function interrupt(mode) {
     });
     expect(stopped).toBe(true);
 
-    const report = JSON.parse(fs.readFileSync(path.join(fixture.output, 'comparison.json'), 'utf8'));
+    const report = JSON.parse(fs.readFileSync(path.join(output, 'comparison.json'), 'utf8'));
 
     expect(report.status).toBe('incomplete');
     expect(report.pairs.length).toBeLessThan(16);
-    expect(fs.readFileSync(path.join(fixture.output, 'report.html'), 'utf8')).toContain('incomplete');
+    expect(fs.readFileSync(path.join(output, 'report.html'), 'utf8')).toContain('incomplete');
 
     if (mode === 'cancel') expect(report.problem).toBe('cancelled');
   } finally {

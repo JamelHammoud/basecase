@@ -1,25 +1,36 @@
+import { sameProjectSnapshot } from '../utils/projectInputs';
+import { useProjectInputsChange } from './useProjectInputsChange';
 import { useEffect, useEffectEvent, type RefObject } from 'react';
 import type { CradleOptions } from './useAssemblyCradle';
 
 export function useCradleLifetime(
   options: CradleOptions,
-  controller: RefObject<AbortController | null>,
-  faceRun: RefObject<number>,
+  controllerRef: RefObject<AbortController | null>,
+  faceRunRef: RefObject<number>,
 ) {
   const { docs, scene, buildAlong, active, parameters } = options;
   const closeTemporary = useEffectEvent(() => options.printing.closeTemporary());
 
+  useProjectInputsChange(
+    docs.project,
+    () => {
+      controllerRef.current?.abort();
+      faceRunRef.current++;
+      options.printing.closeTemporary();
+    },
+    sameProjectSnapshot,
+  );
+
   useEffect(
     () => () => {
-      controller.current?.abort();
-      faceRun.current++;
+      controllerRef.current?.abort();
+      faceRunRef.current++;
       closeTemporary();
     },
     [
-      controller,
-      faceRun,
+      controllerRef,
+      faceRunRef,
       docs.parts,
-      docs.project,
       scene.sceneId,
       buildAlong.index,
       buildAlong.sessionId,

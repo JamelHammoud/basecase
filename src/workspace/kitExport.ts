@@ -1,3 +1,4 @@
+import { sameProjectSnapshot } from '../utils/projectInputs';
 import { kitElectricalExport } from './schematicExport';
 import { drawingsClient } from '../sheet/drawingsClient';
 import type { DrawingOptions } from '../sheet/drawingTypes';
@@ -41,7 +42,7 @@ export function kitGuard(core: WorkspaceCore, run: KitRun) {
       knownPurchases() !== purchases ||
       current.active !== active ||
       current.docs.partsRef.current !== core.parts ||
-      current.docs.projectRef.current !== core.project ||
+      !sameProjectSnapshot(core.project, current.docs.projectRef.current) ||
       current.scene.sceneId !== id ||
       current.scene.sceneName !== name ||
       JSON.stringify(current.printer) !== printer

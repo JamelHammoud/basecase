@@ -1,3 +1,4 @@
+import { sameProjectSnapshot } from '../utils/projectInputs';
 import type { KitElectrical } from '../kit/electrical';
 import type { SchematicResult } from '../wiring/electricalClient';
 import type { BoardNativeResult } from '../wiring/boardRoutingTypes';
@@ -31,7 +32,7 @@ async function runElectricalExport(core: WorkspaceCore, run: SchematicRun, desig
 
     if (
       current.docs.partsRef.current !== original.parts ||
-      current.docs.projectRef.current !== original.project ||
+      !sameProjectSnapshot(original.project, current.docs.projectRef.current) ||
       current.scene.sceneId !== original.id ||
       current.scene.sceneName !== original.name
     )

@@ -1,3 +1,5 @@
+import { sameProjectSnapshot } from '../utils/projectInputs';
+import { useProjectInputsChange } from './useProjectInputsChange';
 import type { DrawingOptions } from '../sheet/drawingTypes';
 import { useEffect, useRef } from 'react';
 import { downloadBytes } from '../utils/downloadBytes';
@@ -13,10 +15,9 @@ export function useKitExport(core: WorkspaceCore) {
   const latest = useLatestRef(core);
   const active = useRef<AbortController | null>(null);
 
-  useEffect(
-    () => () => active.current?.abort(),
-    [core.parts, core.project, core.scene.sceneId, core.scene.sceneName, core.active],
-  );
+  useProjectInputsChange(core.project, () => active.current?.abort(), sameProjectSnapshot);
+
+  useEffect(() => () => active.current?.abort(), [core.parts, core.scene.sceneId, core.scene.sceneName, core.active]);
 
   return async (drawingOptions?: DrawingOptions) => {
     if (active.current) return;

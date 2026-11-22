@@ -248,3 +248,35 @@ it('refuses selected boolean operands and duplicate identities before starting g
   expect(RecoveryWorker.instances).toHaveLength(previousWorkers);
   expect(() => validateRecoveryReferences([source, { ...source }], source, DEFAULT_PROJECT)).toThrow();
 });
+
+it.each(['buildGuide', 'bodyEvidence'] as const)(
+  'keeps imported Sketch conversion across generated %s metadata',
+  async (field) => {
+    vi.stubGlobal('Worker', RecoveryWorker);
+
+    const source = stepDerivedPart(plateTriangles());
+    const fixture = session(source);
+    const pending = fixture.controls.convert(source.id);
+    const result = recoverImportedSketch(source);
+
+    fixture.projectRef.current = {
+      ...DEFAULT_PROJECT,
+      [field]:
+        field === 'bodyEvidence'
+          ? []
+          : {
+              id: 'generated-guide',
+              fingerprint: 'generated',
+              generatedAt: '2026-11-22T00:00:00Z',
+              pages: 1,
+              steps: 1,
+              stepParts: [[]],
+              orderTimedOut: false,
+            },
+    };
+    RecoveryWorker.latest.onmessage!({ data: { result } });
+    await pending;
+    expect(fixture.commitParts).toHaveBeenCalledOnce();
+    expect(fixture.partsRef.current[0].sketch?.mode).toBe('extrude');
+  },
+);

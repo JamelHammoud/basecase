@@ -1,5 +1,13 @@
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
-import { failedJobs, failedLog, lastFinishedMainCheck, openPulls, repo, unstickMainChecks } from '../lib/github.mjs';
+import {
+  failedJobs,
+  failedLog,
+  lastFinishedMainCheck,
+  openPulls,
+  repo,
+  unstickMainChecks,
+  hasLabel,
+} from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
 import { repairPlan } from '../lib/repairPlan.mjs';
 import { store } from '../lib/store.mjs';
@@ -19,7 +27,9 @@ const repaired = store('repair', { jobs: [] });
 
 const beingRepaired = () =>
   openPulls().some(
-    (pull) => pull.headRefName.startsWith('loop/repair/') && Date.now() - Date.parse(pull.createdAt) < HANDLED_FOR_MS,
+    (pull) =>
+      (hasLabel(pull, 'loop:repair') || pull.headRefName.startsWith('loop/repair/')) &&
+      Date.now() - Date.parse(pull.createdAt) < HANDLED_FOR_MS,
   );
 
 export default function repair({ log }) {

@@ -1,3 +1,4 @@
+import { stubKitGuideWorker } from './kitGuideWorker';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -48,6 +49,7 @@ export async function sourcingBrowserFixture() {
 }
 
 export async function routeSourcingPurchases(page: Page, fixture: Awaited<ReturnType<typeof sourcingBrowserFixture>>) {
+  await stubKitGuideWorker(page);
   await page.route('**/api/bridge/purchases', (route) => route.fulfill({ json: listPurchases(fixture.dir) }));
   await page.route('**/api/bridge/purchase-save', (route) =>
     route.fulfill({ json: savePurchase(fixture.dir, route.request().postDataJSON()) }),

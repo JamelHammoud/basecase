@@ -1,3 +1,13 @@
+const METADATA = new Set([
+  'extra_usage',
+  'model_scoped',
+  'spend',
+  'member_dashboard_available',
+  'seven_day_breakdown',
+  'weekly_scoped_shares',
+]);
+const resetTime = (value) => Math.floor(Date.parse(value) / 1000) * 1000;
+
 const validWindow = (window) =>
   Number.isFinite(window?.utilization) &&
   window.utilization >= 0 &&
@@ -11,14 +21,15 @@ export function claudeWindows(usage) {
 
   if (limits.limits !== undefined) return serverWindows(limits.limits);
 
-  if (!limits.five_hour || !limits.seven_day) return [];
+  if (limits.five_hour === undefined || !limits.seven_day) return [];
 
   const ordinary = Object.entries(limits).filter(
-    ([name, window]) => name !== 'extra_usage' && name !== 'model_scoped' && window,
+    ([name, window]) => !METADATA.has(name) && window !== null && window !== undefined,
   );
   const scoped = limits.model_scoped ?? [];
+  const shares = limits.weekly_scoped_shares ?? [];
 
-  if (!Array.isArray(scoped)) return [];
+  if (!Array.isArray(scoped) || !Array.isArray(shares) || shares.length > scoped.length) return [];
 
   const windows = [
     ['seven_day', limits.seven_day],
@@ -32,7 +43,7 @@ export function claudeWindows(usage) {
     bucket: name,
     used: window.utilization,
     minutes: name === 'five_hour' ? 300 : 10080,
-    reset: Date.parse(window.resets_at),
+    reset: resetTime(window.resets_at),
   }));
 }
 
@@ -45,7 +56,7 @@ function serverWindows(limits) {
       bucket: limit?.kind === 'weekly_all' ? 'seven_day' : `${limit?.kind}:${limit?.scope?.model?.display_name ?? ''}`,
       used: limit?.percent,
       minutes: limit?.group === 'weekly' ? 10080 : 300,
-      reset: Math.floor(Date.parse(limit?.resets_at) / 1000) * 1000,
+      reset: resetTime(limit?.resets_at),
     }));
 
   if (

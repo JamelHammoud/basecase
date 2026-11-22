@@ -175,12 +175,10 @@ preparation, duplicate-seed rejection and evaluation execution use production fu
 by Vitest through the shared `evaluationContext.fixtures.mjs` loader. Variant preparation and execution use the same
 production functions. The bounded-retention variant uses the same in-process freeze, retaining all 16 ordered seed pairs and eight failure archives without a redundant child startup. The runtime-seed refusal still invokes the CLI. `evaluationInterruption.test.mjs` retains successful CLI freeze and run dispatch, cancellation and forced interruption coverage.
 `evaluationResources.test.mjs` checks exactly two freeze preparations, zero additional run preparations, both ordered
-
-The frozen-evaluation resource test prepares its real scenes and independent ordinary-Case reference results in beforeAll. The callback still freezes both geometries, executes both declared seeds, checks atomic report publication and compares every nominal outcome, with the existing five-second deadline. Fixture cleanup runs in afterAll even when setup fails. This separates oracle construction from the resource and reuse assertions without reducing their coverage.
-
 seeds, nominal parity with ordinary scene checks, positive process RSS and the output byte bound. It also inspects every JSON publication synchronously, verifying matching HTML and incomplete-to-complete progression. It no longer runs
 four additional CLI children to collect wall-clock comparisons. These checks retain the existing five-second deadlines.
 [Checkpoint and remaining-nightly repair evidence](../notes/testing-cases.md#checkpoint-publication-and-check-44887426902) records the failure and remaining platform limits.
+The frozen-evaluation resource test prepares its real scenes and independent ordinary-Case reference results in beforeAll. The callback still freezes both geometries, executes both declared seeds, checks atomic report publication and compares every nominal outcome, with the existing five-second deadline. Fixture cleanup runs in afterAll even when setup fails. This separates oracle construction from the resource and reuse assertions without reducing their coverage.
 The ten-workflow matrix keeps independent reruns, exact pose comparisons and portable recording round trips. Its
 hexapod traversal uses a two-second, 100 mm authored Case with an explicit pass assertion, bounding physics and effort
 reconstruction without changing the production timestep, controller, contract evaluator or test deadlines.

@@ -298,6 +298,8 @@ Existing recorded body poses retain realized person motion. `setRecordedFrame` r
 
 `personEncounter.test.ts` covers geometry identity, batch invariance, reset, script refusal and binary recording pose restoration. `personSensing.test.ts` compares visible mesh intersections and real MuJoCo depth-eye and LiDAR returns across all ten generated encounters. `cases/personCamera.test.ts` exercises their actual `LiveStage` RGB, instance and depth rendering in an OffscreenCanvas worker. The route parser retains the declared actor and waypoint caps. [Execution evidence](../notes/testing-simulate.md#authored-person-encounters) and [measurements](../notes/performance-simulation.md#authored-person-encounters) state their limits.
 
+### Preparation cancellation and worker realms
+
 `useSceneModel` checks its combined cancellation signal before mesh readiness and after each awaited readiness, measurement and world-preparation stage. Cancellation avoids issuing the next stage instead of waiting until calibrated-model dispatch. `useSceneModel.test.ts` exercises all three pending-stage interleavings and checks that later work is not called. This does not change contact physics, model schema or the existing simulation and recording repair conditions.
 
 Replacing the active Case world or its guest robots also aborts pending model preparation. The world-change barrier test refuses the old result before model dispatch.

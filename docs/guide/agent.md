@@ -368,6 +368,8 @@ Retarget URL downloads use `motionSkeletonSource` and `publicFetch` in the tool 
 
 The token agent server shares the [bounded HTTP body reader](security.md#0h-security-mandatory) with the Vite bridge. Its existing 80,000,000-byte budget now counts UTF-8 bytes before retaining a chunk. Oversized requests receive JSON 413 without invoking a local, raw or renderer handler. Split UTF-8 characters decode after the complete body arrives. `electron/readBridgeBody.test.mjs` covers byte overflow and the common reader's HTTP delivery and cancellation behavior. [Budget evidence](../notes/node.md#http-bridge-body-budgets) records the scope.
 
+## Agent-edit workflow tooling
+
 The on-demand workflow profiler writes CPU profiles beneath the selected report's `.profiles` directory. Baseline and candidate reports keep separate profile directories, preventing one arm from replacing the other's attribution. This changes no CI selection or performance gate.
 
 Workflow timing keeps ordinary canvas orbit input active through the durable save and agent handoff, including the final Checks pass. Inputs intercepted by modal UI are excluded from camera response timing. Cleanup stops input generation and releases its protocol session on both completion and failure. Frame gaps and long tasks still cover the whole timed operation.

@@ -140,6 +140,8 @@ Portable scene JSON is capped at 128 MiB of decoded UTF-8, for gzip and plain fi
 
 Switching tabs, replacing a scene or closing its workspace cancels a pending composition job. Source identity is checked before delivery, so an image prepared from a replaced revision cannot download for its successor. The CAD camera and selection are never changed by entering, framing or leaving composition. `three/composition/settings.test.ts` verifies ordinary serialization and portable save/reopen. `workspace/useRenderComposition.test.ts` covers source-edit and scene-replacement refusal. The browser declarations and rendering limits are documented in [Canvas](canvas.md#rendered-robot-composition).
 
+### Scene reads and saves during agent edits
+
 Pending viewport reads bind ordered source part and Case world identities and the rendering context. Replacing that source or closing its context rejects the read. Layer disposal rejects readers and releases preparation leases and queued builds before releasing groups. Late worker preparation can populate the shared geometry cache, but cannot rebuild or schedule that closed layer. `three/viewport/sceneCompletion.test.ts` covers replacement, disposal and late replies.
 
 Texture opacity classification is derived once from validated encoded bytes during asset construction and restoration. The derived field is absent from serialized texture records. Existing scene files and texture content hashes retain their format.

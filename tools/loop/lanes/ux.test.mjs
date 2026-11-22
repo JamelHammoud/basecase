@@ -35,6 +35,7 @@ describe('the daily UI and UX audit', () => {
       lane: 'ux',
       module: { schedule, default: (context) => ux(context, deps) },
       context: { log },
+      priority: () => null,
       capacity: () => ({ sessions: 0, loadPerCore: 0 }),
       counts: () => ({ ...counts, byLane: { refine: 3 } }),
     });

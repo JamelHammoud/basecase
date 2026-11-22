@@ -13,6 +13,8 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 import { errorMessage } from '../utils/errorMessage';
 import { RECORDING_STORAGE_FAILURE } from '../../electron/robot/operateRecorder.mjs';
 import type { RobotEvent } from '../robot/robotState';
+import { bodyProjectUnchanged } from '../reality/bodySource';
+import { useBodyProjectChange } from './useBodyProjectChange';
 
 export function useBodyExecution(input: {
   core: WorkspaceCore;
@@ -27,7 +29,7 @@ export function useBodyExecution(input: {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
 
-  useLayoutEffect(() => () => active.current?.abort(), [unit, reference, open, core.active, core.parts, core.project]);
+  useLayoutEffect(() => () => active.current?.abort(), [unit, reference, open, core.active, core.parts]);
 
   const recorded = useEffectEvent((event: RobotEvent) => {
     const manifest = event.manifest as { id?: string; bodyMotion?: { recommendation?: string } } | undefined;
@@ -45,6 +47,7 @@ export function useBodyExecution(input: {
   });
 
   useLayoutEffect(() => subscribeFleetEvents(recorded), [unit]);
+  useBodyProjectChange(core.project, () => active.current?.abort());
 
   const run = async () => {
     if (!reference || active.current) return;
@@ -56,7 +59,7 @@ export function useBodyExecution(input: {
       !controller.signal.aborted &&
       selectedUnit() === unit &&
       core.docs.partsRef.current === parts &&
-      core.docs.projectRef.current === project;
+      bodyProjectUnchanged(core.docs.projectRef.current, project);
 
     awaiting.current = reference.content;
     active.current = controller;

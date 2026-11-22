@@ -1,7 +1,11 @@
 import loadMujoco, { type MainModule } from '@mujoco/mujoco';
-import { beforeAll, expect, it } from 'vitest';
+import { afterAll, beforeAll, expect, it } from 'vitest';
 import { replayDifferences } from '../../../tools/sim/contactReplayComparison.mjs';
-import { nativeContactReplay } from '../../../tools/sim/nativeContactReplay.mjs';
+import {
+  closeNativeContactReplays,
+  nativeContactReplay,
+  prepareNativeContactReplay,
+} from '../../../tools/sim/nativeContactReplay.mjs';
 import { buildCase, builderRobot } from '../../cases/caseBuilder';
 import { scoreTry } from '../../cases/tries';
 import { buildRig } from '../../utils/kinematics';
@@ -18,7 +22,10 @@ const builder = builderRobot(rig, robot.parts);
 
 beforeAll(async () => {
   mj = await loadMujoco();
+  await prepareNativeContactReplay(mj.mj_versionString());
 });
+
+afterAll(closeNativeContactReplays);
 
 for (const goal of ['lid', 'drawer'] as const) {
   for (const variant of PASSIVE_VARIANTS) {

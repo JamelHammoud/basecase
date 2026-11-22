@@ -1,6 +1,10 @@
 import loadMujoco from '@mujoco/mujoco';
-import { beforeAll, expect, it } from 'vitest';
-import { nativeContactReplay } from '../../../tools/sim/nativeContactReplay.mjs';
+import { afterAll, beforeAll, expect, it } from 'vitest';
+import {
+  closeNativeContactReplays,
+  nativeContactReplay,
+  prepareNativeContactReplay,
+} from '../../../tools/sim/nativeContactReplay.mjs';
 import { replayDifferences } from '../../../tools/sim/contactReplayComparison.mjs';
 import { closedReplays } from './closedReplay';
 import { closedLinkages } from './closedLinkages';
@@ -12,8 +16,11 @@ beforeAll(async () => {
   const mj = await loadMujoco();
 
   version = mj.mj_versionString();
+  await prepareNativeContactReplay(version);
   replays = closedReplays(mj);
 });
+
+afterAll(closeNativeContactReplays);
 
 it.each(closedLinkages.map((spec, index) => ({ name: spec.name, index })))(
   'replays $name in native C and WASM',

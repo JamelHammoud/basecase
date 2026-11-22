@@ -11,6 +11,7 @@ import { bodyClient } from './bodyClient';
 import { sha256 } from '../cases/tries';
 import { encodeJson } from '../datasets/snapshotWorker';
 import { datasetContentHash } from '../datasets/contentHash';
+import { BODY_SOURCE_VERSION } from './bodySource';
 
 export interface BodyRecordingContext {
   snapshot: BodyEvidenceSnapshot;
@@ -43,6 +44,7 @@ export async function bodyRecordingContext(input: {
   return {
     modelHash,
     snapshot: {
+      sourceVersion: BODY_SOURCE_VERSION,
       sourceKey: await bodySourceKey(parts, project),
       calibration,
       request: {

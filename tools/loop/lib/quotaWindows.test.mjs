@@ -44,6 +44,19 @@ describe('Claude quota windows', () => {
     (limits) => expect(claudeWindows(usage({ limits }))).toEqual([]),
   );
 
+  it('keeps the overall weekly allowance first when server model rows change order', () => {
+    const response = currentUsage();
+
+    response.rate_limits.limits.reverse();
+
+    const before = structuredClone(response);
+    const windows = claudeWindows(response);
+
+    expect(windows[0]).toMatchObject({ bucket: 'seven_day', used: 2 });
+    expect(windows[1]).toMatchObject({ bucket: 'weekly_scoped:Fable', used: 4 });
+    expect(response).toEqual(before);
+  });
+
   it('keeps one overflow budget when the provider changes reset timestamp fractions', () => {
     const first = currentUsage();
     const second = currentUsage();

@@ -1,6 +1,6 @@
 import loadMujoco, { type MainModule } from '@mujoco/mujoco';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { ControlDelay } from './controlDelay';
+import { LiveControlDelay } from './liveControlDelay';
 import { SimEngine } from './engine';
 import { ActuatorFaults, FAULT_KINDS } from './faults';
 import { contactSliders } from './fixtures/contactRobots';
@@ -14,8 +14,8 @@ beforeAll(async () => {
 describe('continuation state outside MuJoCo', () => {
   it.each([0, 1, 20])('preserves a %i step control delay at startup and after wrapping', (steps) => {
     for (const checkpointAt of [0, 1, 19, 44]) {
-      const original = new ControlDelay();
-      const restored = new ControlDelay();
+      const original = new LiveControlDelay();
+      const restored = new LiveControlDelay();
       const ctrl = Float64Array.from([1, -2, 3]);
 
       original.reset(steps);

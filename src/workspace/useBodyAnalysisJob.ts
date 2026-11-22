@@ -9,6 +9,8 @@ import { recommendBodyEvidence } from './bodyMotionAction';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { errorMessage } from '../utils/errorMessage';
 import type { BodyExperimentEvidence } from '../reality/bodyExperimentTypes';
+import { bodyProjectUnchanged } from '../reality/bodySource';
+import { useBodyProjectChange } from './useBodyProjectChange';
 
 export interface BodyInvestigationOutcome {
   experiment?: BodyExperimentEvidence;
@@ -55,7 +57,12 @@ export function useBodyAnalysisJob(input: {
       active.worker?.dispose();
       active.worker = null;
     };
-  }, [unit, selected, core.parts, core.project, open]);
+  }, [unit, selected, core.parts, open]);
+  useBodyProjectChange(core.project, () => {
+    state.current.generation++;
+    state.current.worker?.dispose();
+    state.current.worker = null;
+  });
 
   const run = async (operation: 'analyze' | 'recommend', parameters: number[] = []) => {
     cancel();
@@ -116,7 +123,7 @@ export function useBodyAnalysisJob(input: {
       busy?.unit === unit &&
       busy.selected === selected &&
       busy.parts === core.parts &&
-      busy.project === core.project,
+      bodyProjectUnchanged(busy.project, core.project),
     problem,
     cancel,
     clear: () => setProblem(''),

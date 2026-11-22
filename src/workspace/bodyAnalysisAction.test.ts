@@ -35,7 +35,7 @@ function harness() {
       }
 
       if (cause === 'calibration edit') {
-        current.project = {};
+        current.project = { servoCalibrations: {} };
 
         return;
       }

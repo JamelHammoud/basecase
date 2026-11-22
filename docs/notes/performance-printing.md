@@ -2,6 +2,14 @@
 
 Implementation: [Print planning and labels](../guide/printing.md#performance-print-planning-and-labels). Shared requirements: [Performance](../guide/performance.md).
 
+## Guide worker fixture operations
+
+Full Check [45046326630](https://github.com/JamelHammoud/basecase/actions/runs/45046326630) failed the cradle story on Linux and Windows. The local production-bundle walkthrough also returned no Weight before making its cradle. The shared kit fixture replaced the guide worker and rejected every operation other than render with Expected guide rendering. Moving readiness's guide steps to that same worker exposed the outdated fixture.
+
+The fixture now loads the real worker source and wraps its installed handler. Only render is replaced with controlled images. Steps and planning use the production implementation, and all other operations keep the production protocol. The unchanged cradle assertions then passed with Passive Joints in 18.55 seconds including setup, using the production desktop bundle. The existing web development-server teardown warning remained. The story still downloads and inspects the actual 3MF, compares robot mass and parts and returns to the original step. No deadline, retry or quarantine changed.
+
+The other fixture consumers passed the ordinary Kit and Drawings stories and the edited-electrical refusal. The routed-electrical declaration separately returned fabrication missing instead of included. Restoring the original guide fixture reproduced the same routed assertion in 8.65 seconds including setup, so this observation does not establish a regression in the fixture wrapper. That electrical result remains unresolved rather than weakening its assertion.
+
 ## 3MF project instances are grouped while numbered
 
 Repository search found one project membership serializer in `src/print/threeMf.ts`. Multi-material Open in Bambu Studio uses this writer through the analysis worker. Ordinary per-material exports do not write project membership. No other project membership implementation needs the change.

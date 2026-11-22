@@ -39,12 +39,14 @@ export function claudeWindows(usage) {
 function serverWindows(limits) {
   if (!Array.isArray(limits) || !limits.some((limit) => limit?.kind === 'weekly_all')) return [];
 
-  const windows = limits.map((limit) => ({
-    bucket: limit?.kind === 'weekly_all' ? 'seven_day' : `${limit?.kind}:${limit?.scope?.model?.display_name ?? ''}`,
-    used: limit?.percent,
-    minutes: limit?.group === 'weekly' ? 10080 : 300,
-    reset: Math.floor(Date.parse(limit?.resets_at) / 1000) * 1000,
-  }));
+  const windows = limits
+    .toSorted((a, b) => Number(b?.kind === 'weekly_all') - Number(a?.kind === 'weekly_all'))
+    .map((limit) => ({
+      bucket: limit?.kind === 'weekly_all' ? 'seven_day' : `${limit?.kind}:${limit?.scope?.model?.display_name ?? ''}`,
+      used: limit?.percent,
+      minutes: limit?.group === 'weekly' ? 10080 : 300,
+      reset: Math.floor(Date.parse(limit?.resets_at) / 1000) * 1000,
+    }));
 
   if (
     limits.some((limit) => !['weekly', 'session'].includes(limit?.group)) ||

@@ -53,6 +53,16 @@ describe('the nightly full suite', () => {
     expect(rerunSuite({ ...base, last: { ...last, headSha: 'bbb' } })).toBe(false);
   });
 
+  it('waits for ready repairs before either replacement path and resumes when they land', () => {
+    const now = Date.parse('2026-11-14T13:10:00Z');
+    const last = { conclusion: 'failure', headSha: 'aaa', createdAt: '2026-11-14T11:40:11Z' };
+    const base = { now, last, mainHead: 'bbb', running: false, repairMerged: () => true };
+
+    expect(rerunSuite({ ...base, repairOpen: () => true })).toBe(false);
+    expect(rerunSuite({ ...base, repairOpen: () => false })).toBe(true);
+    expect(rerunSuite({ ...base, repairMerged: () => false, repairOpen: () => true })).toBe(false);
+  });
+
   it('releases right after the suite passes on a commit it has not tried, once a day, never over a running release', () => {
     const now = Date.parse('2026-11-14T13:00:00Z');
     const base = { now, green: 'bbb', tried: ['aaa'], lastReleaseAt: '2026-11-13T09:40:00Z', running: false };

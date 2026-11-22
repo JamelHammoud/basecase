@@ -35,6 +35,7 @@ beforeEach(() => {
   releaseState.save.mockClear();
   nightlyHarness.mockClear();
   vi.spyOn(github, 'isPaused').mockReturnValue(false);
+  vi.spyOn(github, 'openPulls').mockReturnValue([]);
   vi.spyOn(sh, 'json').mockImplementation((_cmd, args) => {
     if (args[0] === 'pr') return repairs;
 
@@ -145,6 +146,26 @@ describe('nightly suite dispatch', () => {
       'mergedAt',
     ]);
     expect(dispatches()).toEqual([['gh', ['workflow', 'run', 'check.yml', '--ref', 'main'], { allowFail: true }]]);
+  });
+
+  it.each([
+    { headRefName: 'loop/repair/pending-fix', labels: [] },
+    { headRefName: 'fix/pending', labels: [{ name: 'loop:repair' }] },
+  ])('waits for ready repair $headRefName before replacing the failed suite', (pull) => {
+    github.openPulls.mockReturnValue([pull]);
+    vi.setSystemTime(new Date('2026-11-14T13:41:00Z'));
+    nightly({ log: vi.fn() });
+    expect(dispatches()).toEqual([]);
+    github.openPulls.mockReturnValue([]);
+    nightly({ log: vi.fn() });
+    expect(dispatches()).toHaveLength(1);
+  });
+
+  it('keeps the scheduled fallback while a ready repair is open', () => {
+    github.openPulls.mockReturnValue([{ headRefName: 'loop/repair/pending-fix', labels: [] }]);
+    mainRuns = [{ ...failed, createdAt: '2026-11-13T12:40:11Z' }];
+    nightly({ log: vi.fn() });
+    expect(dispatches()).toHaveLength(1);
   });
 
   it('keeps the hourly fallback for unrelated commits', () => {

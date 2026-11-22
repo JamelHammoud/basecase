@@ -376,3 +376,7 @@ The final `check` requires `static` to succeed for scheduled and dispatched runs
 The changed-browser declaration parser requires an identifier at the root of each test or suite chain. A regular expression's `.test()` call is ordinary helper code and does not enter the declaration inventory. `e2e-changed.test.mjs` covers that boundary, and the inventory audit still requires precise selections or the existing explicit dynamic-title fallback.
 
 Site image scanning reads each file into a Buffer before Sharp decodes it. The decoder therefore cannot retain an operating-system file handle after validation. `imageHealth.test.mjs` retains nested help, blog and changelog diagnostics and immediate directory cleanup on Windows. `browserShard.test.mjs` checks complete, disjoint browser and native-dependency assignment for both six and eight shards. [Repair evidence](../notes/node.md#nightly-repair-on-21-november) records the capacity and platform limits.
+
+### Conflict resolution capacity
+
+A provider capacity wait during conflict resolution propagates to the runner without consuming a conflict failure or triggering rebuild. The temporary merge worktree is still closed, and the next eligible run starts from the current published head. Completed unsuccessful resolutions and actual resolver errors retain the existing two-failure rebuild policy. `lanes/rebase.test.mjs` covers all three outcomes through the lane entry point.

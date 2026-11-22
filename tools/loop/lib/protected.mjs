@@ -34,8 +34,9 @@ export function changedLines(diff) {
   return files;
 }
 
-const isProtected = (file, lines) =>
-  PROTECTED_PATHS.some((prefix) => file.startsWith(prefix)) || lines.some((line) => PROTECTED_NAMES.test(line));
+export const protectedPath = (file) => PROTECTED_PATHS.some((prefix) => file.startsWith(prefix));
+
+const isProtected = (file, lines) => protectedPath(file) || lines.some((line) => PROTECTED_NAMES.test(line));
 
 export const protectedFiles = (diff) =>
   [...changedLines(diff)].filter(([file, lines]) => isProtected(file, lines)).map(([file]) => file);

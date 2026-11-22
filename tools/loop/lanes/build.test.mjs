@@ -44,6 +44,7 @@ vi.mock('../lib/workRecovery.mjs', async (importOriginal) => ({
   refreshRecovery: calls.refresh,
 }));
 
+const { UsageLimit } = await import('../lib/usage.mjs');
 const { default: build } = await import('./build.mjs');
 const { recoveryFor, saveRecovery } = await import('../lib/workRecovery.mjs');
 const { recordDecline } = await import('../lib/stepState.mjs');
@@ -331,4 +332,23 @@ describe('builder task readiness', () => {
     expect(calls.checkedRun).not.toHaveBeenCalled();
     expect(calls.openBranch).not.toHaveBeenCalled();
   });
+});
+
+it('keeps retained work retryable across repeated provider waits', () => {
+  const worktree = { dir: directory, branch: 'loop/build/61-feature' };
+  const session = { provider: 'codex', id: 'waiting-thread' };
+  const limit = new UsageLimit(Date.now() + 60_000);
+
+  calls.steps = [queuedStep(61)];
+  calls.openBranch.mockReturnValue(worktree);
+  saveRecovery(61, { worktree, session, inputSignature: 'source-a' });
+  calls.checkedRun.mockImplementation(() => {
+    throw limit;
+  });
+
+  for (let index = 0; index < 3; index++) expect(() => build({ log: vi.fn(), slot: 1 })).toThrow(limit);
+
+  expect(calls.checkedRun).toHaveBeenCalledTimes(3);
+  expect(recoveryFor(61)).toMatchObject({ attempts: 0, session, ...worktree });
+  expect(calls.publish).not.toHaveBeenCalled();
 });

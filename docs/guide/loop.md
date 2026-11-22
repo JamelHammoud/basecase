@@ -388,3 +388,7 @@ Protected paths always require agent review, including a one-line proof manifest
 ### Conflict resolution capacity
 
 A provider capacity wait during conflict resolution propagates to the runner without consuming a conflict failure or triggering rebuild. The temporary merge worktree is still closed, and the next eligible run starts from the current published head. Completed unsuccessful resolutions and actual resolver errors retain the existing two-failure rebuild policy. `lanes/rebase.test.mjs` covers all three outcomes through the lane entry point.
+
+### Automatic repair coverage
+
+The doctor and repair lanes refuse new file, declaration or platform exclusions and later quarantine deadlines. The guard compares the actual worktree with the commit where its branch left main before publication, including committed changes, so exclusion changes that landed on main meanwhile are ignored. An unreadable exclusion list is refused. Removing or shortening exclusions and correcting their descriptive metadata remain allowed. A rejected repair leaves its failed jobs eligible rather than recording them as handled. Both briefs require source or fixture repairs with the affected coverage intact. Provider waits and an open repair do not justify excluding tests. The lane tests cover refusal, ordinary source publication and continued eligibility. `lib/repairCoverage.test.mjs` verifies working-tree and committed changes through real Git repositories.

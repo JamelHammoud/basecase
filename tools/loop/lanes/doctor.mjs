@@ -6,6 +6,7 @@ import { breaches } from '../lib/flow.mjs';
 import { fullCheck, isPaused, openPulls, pullReview, quickCheck } from '../lib/github.mjs';
 import { LOGS } from '../lib/paths.mjs';
 import { publish } from '../lib/pull.mjs';
+import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
 import { json } from '../lib/sh.mjs';
 import { store } from '../lib/store.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
@@ -97,6 +98,9 @@ export default function doctor({ log }) {
     });
 
     if (!result.ok) return log(`doctor session failed: ${String(result.error).slice(0, 300)}`);
+
+    if (expandsTestExclusions(worktree.dir))
+      return log('doctor cannot expand quarantine coverage; fix the source failure or leave it to its repair owner');
 
     const url = publish({ ...result.output, kind: 'repair' }, worktree);
 

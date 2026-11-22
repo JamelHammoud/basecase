@@ -9,6 +9,7 @@ import {
   hasLabel,
 } from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
+import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
 import { repairPlan } from '../lib/repairPlan.mjs';
 import { store } from '../lib/store.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
@@ -88,6 +89,9 @@ export default function repair({ log }) {
 
       return;
     }
+
+    if (expandsTestExclusions(worktree.dir))
+      return log('repair cannot expand quarantine coverage; the failed jobs remain eligible for a source repair');
 
     repaired.save(latest.databaseId, { jobs: [...taken, ...plan.jobs] });
 

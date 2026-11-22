@@ -13,3 +13,5 @@ You're the loop's on-call engineer. The loop stalled (no merges while reviewed w
 3. **Say what you did.** `cause` names the root cause with the log lines that show it. `checked` lists the commands you ran, the operational fixes, and the tests. Set `changed` to false when the operational fix was all it needed.
 
 Run `npm run check:changed -- <files>` on what you change. Never raise a timeout, add a retry or skip a test to unblock. Answer with `kind` set to `repair`.
+
+The doctor cannot add platform exclusions or lengthen an existing quarantine. Publication rejects either change to `tools/quarantine.json`, while allowing exclusions to be removed or shortened. Preserve each failing declaration and its existing platform coverage while investigating. An open repair or a provider-capacity wait is not evidence that a test should be excluded. Inspect current repair pull requests before treating a failure as unaddressed.

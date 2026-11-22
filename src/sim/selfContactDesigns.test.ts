@@ -1,5 +1,5 @@
 import loadMujoco, { type MainModule } from '@mujoco/mujoco';
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SimEngine } from './engine';
 import { buildMjcf } from './mjcf';
 import { prepareContactModel } from './contactPreparationClient';
@@ -16,7 +16,6 @@ let mj: MainModule;
 
 beforeAll(async () => {
   mj = await loadMujoco();
-  await prepareNativeContactReplay(mj.mj_versionString());
 });
 
 afterAll(closeNativeContactReplays);
@@ -81,27 +80,33 @@ it.each(selfContactDesigns)(
   },
 );
 
-it.each(selfContactDesigns)(
-  '$name replays the same contact identities and states in native C and WASM',
-  async (spec) => {
-    const fixture = spec.build();
-    const model = await prepareContactModel(fixture.input);
-    const capture = captureContactReplay(mj);
-    const engine = new SimEngine(capture.module, model);
+describe('native C replay', () => {
+  beforeAll(async () => {
+    await prepareNativeContactReplay(mj.mj_versionString());
+  });
 
-    try {
-      engine.setController({ kind: 'hold', values: fixture.reference });
+  it.each(selfContactDesigns)(
+    '$name replays the same contact identities and states in native C and WASM',
+    async (spec) => {
+      const fixture = spec.build();
+      const model = await prepareContactModel(fixture.input);
+      const capture = captureContactReplay(mj);
+      const engine = new SimEngine(capture.module, model);
 
-      for (let i = 0; i < 150; i++) engine.step(0.02);
+      try {
+        engine.setController({ kind: 'hold', values: fixture.reference });
 
-      const replay = capture.finish(`self-contact-${spec.name}`, model);
-      const native = await nativeContactReplay(replay, mj.mj_versionString());
-      const differences = replayDifferences(replay, native.cases[0]);
+        for (let i = 0; i < 150; i++) engine.step(0.02);
 
-      expect(differences.contactDifferences).toBe(0);
-      expect(differences.drift).toBeLessThan(1e-6);
-    } finally {
-      engine.dispose();
-    }
-  },
-);
+        const replay = capture.finish(`self-contact-${spec.name}`, model);
+        const native = await nativeContactReplay(replay, mj.mj_versionString());
+        const differences = replayDifferences(replay, native.cases[0]);
+
+        expect(differences.contactDifferences).toBe(0);
+        expect(differences.drift).toBeLessThan(1e-6);
+      } finally {
+        engine.dispose();
+      }
+    },
+  );
+});

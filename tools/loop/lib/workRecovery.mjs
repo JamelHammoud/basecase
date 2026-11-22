@@ -12,10 +12,13 @@ export const recoveryFor = (number) => {
   return entry.dir && fs.existsSync(entry.dir) ? entry : null;
 };
 
-export function saveRecovery(number, { worktree, inputSignature, taskHead, session, reason, outcome, execution }) {
+export function saveRecovery(
+  number,
+  { worktree, inputSignature, taskHead, session, reason, outcome, execution, waiting = false },
+) {
   const previous = recoveryFor(number);
   const sameInputs = previous && previous.inputSignature === inputSignature && previous.outcome?.status !== 'blocked';
-  const attempts = sameInputs ? (previous.attempts ?? 0) + 1 : 0;
+  const attempts = sameInputs ? (previous.attempts ?? 0) + Number(!waiting) : 0;
 
   return recoveries.save(number, {
     ...worktree,

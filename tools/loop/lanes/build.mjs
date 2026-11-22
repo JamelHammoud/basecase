@@ -1,5 +1,6 @@
 import { buildOutcome, buildSchema } from '../lib/buildOutcome.mjs';
 import { CHANGE_SCHEMA } from '../lib/agent.mjs';
+import { UsageLimit } from '../lib/usage.mjs';
 import { claim } from '../lib/claim.mjs';
 import { closeIssue, commentOnIssue, editIssueLabels, hasLabel, issues } from '../lib/github.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
@@ -137,7 +138,7 @@ function recoveryContext(step, inputSignature, recovery) {
     .join('\n\n');
 }
 
-function retainFailedSession(step, inputSignature, worktree, { session, reason, outcome, execution }) {
+function retainFailedSession(step, inputSignature, worktree, { session, reason, outcome, execution, waiting }) {
   if (!worktree) return;
 
   saveRecovery(step.number, {
@@ -148,6 +149,7 @@ function retainFailedSession(step, inputSignature, worktree, { session, reason, 
     reason: String(reason ?? '').slice(-6000),
     outcome,
     execution,
+    waiting,
   });
 }
 
@@ -158,7 +160,11 @@ function retainPublicationFailure(step, { inputSignature, worktree, session, err
     return;
   }
 
-  retainFailedSession(step, inputSignature, worktree, { session: error.session ?? session, reason: error });
+  retainFailedSession(step, inputSignature, worktree, {
+    session: error.session ?? session,
+    reason: error,
+    waiting: error instanceof UsageLimit,
+  });
 }
 
 const executionIdentity = (step, { slot, worker }) => ({

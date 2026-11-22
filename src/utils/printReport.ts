@@ -47,6 +47,7 @@ export interface PartShape {
 }
 
 const shapes = new Map<string, PartShape>();
+const pendingShapes = new WeakMap<PrintShapes, Map<string, Promise<void>>>();
 const MAX_CACHED = 4000;
 
 const cacheKey = (p: ScenePart) => `${shapeKey(p)}|${p.print?.down?.join(',') ?? ''}`;
@@ -56,6 +57,21 @@ export type PrintShapes = (
   faces?: Record<string, Vec3[]>,
 ) => Promise<Record<string, { check: PrintShape | null; measure: MeshMeasure } | undefined>>;
 
+async function fetchPrintShapes(parts: ScenePart[], fetchShapes: PrintShapes): Promise<void> {
+  const faces = Object.fromEntries(parts.filter((p) => p.print?.down).map((p) => [p.id, [p.print!.down!]]));
+  const found = await fetchShapes(
+    parts.map((p) => p.id),
+    faces,
+  );
+
+  for (const part of parts) {
+    const shape = found[part.id];
+    const key = cacheKey(part);
+
+    if (shape?.check && !shapes.has(key)) shapes.set(key, { check: shape.check, measure: shape.measure });
+  }
+}
+
 export async function loadPrintShapes(parts: ScenePart[], fetchShapes: PrintShapes): Promise<void> {
   const missing = parts.filter(isPrinted).filter((p) => !shapes.has(cacheKey(p)));
 
@@ -63,17 +79,22 @@ export async function loadPrintShapes(parts: ScenePart[], fetchShapes: PrintShap
 
   if (shapes.size > MAX_CACHED) shapes.clear();
 
-  const faces = Object.fromEntries(missing.filter((p) => p.print?.down).map((p) => [p.id, [p.print!.down!]]));
-  const found = await fetchShapes(
-    missing.map((p) => p.id),
-    faces,
-  );
+  const pending = pendingShapes.get(fetchShapes) ?? new Map<string, Promise<void>>();
 
-  for (const part of missing) {
-    const shape = found[part.id];
+  pendingShapes.set(fetchShapes, pending);
 
-    if (shape?.check) shapes.set(cacheKey(part), { check: shape.check, measure: shape.measure });
+  const fresh = missing.filter((part) => !pending.has(cacheKey(part)));
+
+  if (fresh.length) {
+    const keys = fresh.map(cacheKey);
+    const job: Promise<void> = fetchPrintShapes(fresh, fetchShapes).finally(() => {
+      for (const key of keys) if (pending.get(key) === job) pending.delete(key);
+    });
+
+    for (const key of keys) pending.set(key, job);
   }
+
+  await Promise.all(new Set(missing.map((part) => pending.get(cacheKey(part)))));
 }
 
 const THIN_PANEL_MM2 = 100;
@@ -106,10 +127,10 @@ function issuesFor(check: PrintCheck, grams: number, supportG: number): string[]
   return issues;
 }
 
-function reportPart(part: ScenePart, shape: PartShape, ctx: { project: ProjectSettings; printer: PrinterSetup }) {
+function reportPart(part: PrintReportPart, shape: PartShape, ctx: PreparedPrintReport['ctx']) {
   const { measure } = shape;
   const check = choosePose(shape.check, bedOf(ctx.printer.model, ctx.project.printProcess), part.print);
-  const material = printMaterialOf(part, ctx.project);
+  const { material } = part;
   const grams = filamentGrams(measure, material, ctx.project.infillPct);
   const supportG = (check.supportMm3 * SUPPORT_FILL * MATERIAL_DENSITY[material]) / 1000;
   const shell = Math.min(measure.volumeMm3, measure.areaMm2 * SHELL_MM);
@@ -146,29 +167,37 @@ export interface PrintContext {
   scene?: ScenePart[];
 }
 
-export async function printReportOf(parts: ScenePart[], ctx: PrintContext, fetchShapes: PrintShapes) {
-  await loadPrintShapes(
-    parts.filter((part) => part.id !== ctx.project.electronicsBoard?.partId),
-    fetchShapes,
-  );
+export const printSettingsKey = (project: Pick<ProjectSettings, 'printProcess' | 'infillPct'>) =>
+  `${project.printProcess ?? ''}|${project.infillPct}`;
 
-  return buildPrintReport(parts, ctx);
+type PrintReportPart = Pick<ScenePart, 'id' | 'name' | 'print'> & { material: PrintMaterial };
+
+export interface PreparedPrintReport {
+  entries: Array<{ part: PrintReportPart; shape: PartShape; key: string }>;
+  ctx: { project: Pick<ProjectSettings, 'material' | 'infillPct' | 'printProcess'>; printer: PrinterSetup };
+  firstStep: ReadonlyMap<string, number>;
 }
 
-export const printSettingsKey = (project: ProjectSettings) => `${project.printProcess ?? ''}|${project.infillPct}`;
-
-export function buildPrintReport(parts: ScenePart[], ctx: PrintContext): PrintReport {
+export function preparePrintReport(
+  parts: ScenePart[],
+  ctx: PrintContext,
+  firstStep = firstSteps(guideStepParts(ctx.scene ?? parts, ctx.project)),
+): PreparedPrintReport {
   const printed = parts.filter((p) => p.id !== ctx.project.electronicsBoard?.partId && isPrinted(p) && !p.print?.skip);
 
-  return reportFromShapes(
+  return preparedFromShapes(
     printed.flatMap((part) => {
       const shape = shapes.get(cacheKey(part));
 
       return shape ? [{ part, shape }] : [];
     }),
     ctx,
-    firstSteps(guideStepParts(ctx.scene ?? parts, ctx.project)),
+    firstStep,
   );
+}
+
+export function buildPrintReport(parts: ScenePart[], ctx: PrintContext): PrintReport {
+  return buildPreparedPrintReport(preparePrintReport(parts, ctx));
 }
 
 export function reportFromShapes(
@@ -176,7 +205,34 @@ export function reportFromShapes(
   ctx: PrintContext,
   firstStep: ReadonlyMap<string, number> = new Map(),
 ): PrintReport {
-  const byId = new Map(entries.map(({ part }) => [part.id, part]));
+  return buildPreparedPrintReport(preparedFromShapes(entries, ctx, firstStep));
+}
+
+function preparedFromShapes(
+  entries: Array<{ part: ScenePart; shape: PartShape }>,
+  ctx: PrintContext,
+  firstStep: ReadonlyMap<string, number>,
+): PreparedPrintReport {
+  const { material, infillPct, printProcess } = ctx.project;
+
+  return {
+    entries: entries.map(({ part, shape }) => ({
+      part: {
+        id: part.id,
+        name: part.name,
+        material: printMaterialOf(part, ctx.project),
+        print: part.print,
+      },
+      shape,
+      key: shapeKey(part),
+    })),
+    ctx: { project: { material, infillPct, printProcess }, printer: ctx.printer },
+    firstStep,
+  };
+}
+
+export function buildPreparedPrintReport({ entries, ctx, firstStep }: PreparedPrintReport): PrintReport {
+  const byId = new Map(entries.map((entry) => [entry.part.id, entry]));
   const out: PrintedPartReport[] = entries.map(({ part, shape }) => ({
     ...reportPart(part, shape, ctx),
     copies: Math.max(1, part.print?.copies ?? 1),
@@ -184,8 +240,8 @@ export function reportFromShapes(
   const plan = buildPrintPlan(
     out.map((r) => ({
       ...r,
-      shapeKey: shapeKey(byId.get(r.id)!),
-      print: byId.get(r.id)!.print,
+      shapeKey: byId.get(r.id)!.key,
+      print: byId.get(r.id)!.part.print,
       firstStep: firstStep.get(r.id),
     })),
     ctx.printer,

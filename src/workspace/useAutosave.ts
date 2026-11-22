@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useRef } from 'react';
 import { scenePreview } from '../three/scenePreview';
-import { buildAIHandoffPayload } from '../utils/aiHandoff';
+import { handoffInWorker } from '../utils/aiHandoffClient';
 import { platformBridge } from '../utils/platformBridge';
 import { sceneJson } from '../utils/sceneJson';
 import { queueSceneWrite } from '../utils/sceneWrites';
@@ -86,14 +86,22 @@ export function useAutosave({ draft, active, pristine, unsaved }: AutosaveOption
   const previews = useScenePreviews(savedRef, activeRef);
 
   const write = async (next: SceneDraft) => {
-    const handoff = activeRef.current
-      ? buildAIHandoffPayload(next.sceneName, next.globalGoal, next.parts, next.annotations)
-      : {};
-
     await queueSceneWrite(next.sceneId, async () => {
-      const payload = { ...draftPayload(next), ...handoff, history: undefined };
+      const handoff = activeRef.current
+        ? await handoffInWorker({
+            name: next.sceneName,
+            goal: next.globalGoal,
+            parts: next.parts,
+            annotations: next.annotations,
+          })
+        : null;
 
-      sceneStore.upsert(await platformBridge.saveSceneJson(await sceneJson(payload)));
+      if (discardedRef.current) return;
+
+      const json = await sceneJson({ ...draftPayload(next), history: undefined });
+      const payload = handoff ? `${json.slice(0, -1)},${handoff.slice(1)}` : json;
+
+      sceneStore.upsert(await platformBridge.saveSceneJson(payload));
     });
     previews.schedule();
   };

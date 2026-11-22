@@ -226,6 +226,8 @@ Measurements and limits: [Sketch performance evidence](../notes/performance-sket
 
 ## Performance: selection
 
+Inspector and selection edits share the scene document with agent operations. The [current production comparison](../notes/performance-workspace.md#final-merged-workflow-comparison-on-fe8b) records ordinary selection and Inspector effects during actual agent requests. Prepared agent transactions retain unrelated user edits and disjoint field edits on the same part. Overlapping fields refuse the agent transaction. User and agent edits retain their commit order for undo and redo. The composer browser declaration covers ordinary selection and Position editing during a tool stream. Production timing remains in the [agent-edit investigation](../notes/performance-workspace.md#agent-edit-production-investigation).
+
 Measurements and limits: [Selection performance evidence](../notes/performance-selection.md).
 
 - **Marquee reuses its ray-grid workspace.** `three/viewport/marquee.ts` keeps one coordinate vector and one cleared intersection array for all 49 probes. Selectable hits enter the existing selection set directly, preserving vertex-first selection order and every overlapping surface. Storage ends with each selection. `marquee.test.ts` drives pointer events with real Three.js geometry and checks ordering, locked and hidden exclusions, missing parts, edited geometry, empty results and workspace reuse. [Evidence](../notes/performance-selection.md#marquee-reuses-its-ray-grid-workspace).
@@ -355,3 +357,9 @@ A selected SimReady mesh whose visual is absent from the local cache offers Down
 ### Replacement-finger coverage exclusions
 
 Only `short-cylinder-v` in the replacement-finger production matrix is quarantined on Linux and Windows through 28 November 2026 under [#2014](https://github.com/JamelHammoud/basecase/issues/2014). The other 19 geometry, grasp, replay and archive cases remain active, and macOS retains the complete matrix. The selected-cylinder saved-grasp browser declaration is separately quarantined only on Windows through that date under the same owner. Its authoring story, geometry, lifecycle and manufacturing tests remain active. [Distinct verdict and recording evidence](../notes/testing-simulate.md#gripper-and-tendon-exclusions-on-21-november) records the gaps without claiming a shared cause.
+
+### Selection during agent loading
+
+During agent loading, ordinary picking uses geometry already drawn in the viewport. Geometry queries for an unchanged selected part are independent of pending parts elsewhere. Pending selection styling remains geometry-neutral. A requested part whose source geometry is changing returns unavailable bounds, triangles or servo geometry until preparation finishes. Snapshot reads require complete current geometry. `three/viewport/sceneCompletion.test.ts` covers this boundary without timing assertions.
+
+Known opaque JPEG and PNG color maps retain opaque depth writes and may share viewport batches. Images with alpha or unknown opacity retain blending. This derives from encoded image content and changes neither Inspector values nor manufacturing properties. Texture batching and pixel parity coverage are described in [Canvas](canvas.md#visual-finish-consumption).

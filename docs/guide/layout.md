@@ -114,3 +114,9 @@ Library modifier-click and range selection keep Tries visible rather than openin
 
 
 Library capture requires the complete motor and passive-joint assembly for an authored ideal tendon. Selecting even one of its parts requires the complete assembly, including when the selection contains no complete joint. Unrelated parts remain independently reusable. Placement remaps each output reference to the copied joint ID. Partial captures refuse rather than losing the coupling. `tendonPersistence.test.ts` covers partial geometry and complete placement. [Joints and motion](joints-and-motion.md#ideal-fixed-tendons) owns the schema and coverage.
+
+### Layers row preparation during agent edits
+
+Layers keeps its complete group, operand, search and sensor-row index while mounting the visible fixed-height row window with six extra rows on each side. Spacer items preserve the original 32px rows and 1px gaps. Part, group and sensor rows retain their full list position and size for assistive technology. An active rename row stays mounted when scrolled outside that window, preserving its draft and focus. Selection reveal uses the same displayed part, boolean ancestor or collapsed group as before, and scrolls before the next paint. Resize and scroll listeners belong to the active panel and release on closure. Geometry, Checks and saves continue through their existing paths.
+
+`layerWindow.test.ts` covers list-height parity, bounded mounted rows, source identity, renaming retention and selected operands through collapsed ancestors. `e2e/layersWindow.e2e.test.ts` declares ordinary Layers scrolling, searching, renaming while offscreen and selection reveal across 1,000 parts. The agent production workload also opens Layers and selects through ordinary controls while mutations and Checks run. Timing observations remain in the [Layers note](../notes/performance-layout.md#agent-edit-layers-window).

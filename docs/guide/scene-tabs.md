@@ -42,6 +42,8 @@ Several scenes stay open at once, each with its own parts, undo history, selecti
 
 ## Performance: scene storage and startup
 
+Automatic simulation-model preparation and agent requests check their source generation before publishing results. Scene persistence keeps its existing queued writes and history worker. Autosave reserves its queue entry before preparing the active handoff, so handoff preparation cannot reorder the save behind a later checkpoint. Handoff serialization runs in the geometry worker and joins the scene's serialized fields without quoting its large text again on the renderer. Scene switching retains accepted edits through the normal flush and reopening path. The [agent-edit investigation](../notes/performance-workspace.md#agent-edit-production-investigation) records saving, reopening and historical responsiveness violations. The [current merged comparison](../notes/performance-workspace.md#final-merged-workflow-comparison-on-fe8b) retains the final source hashes and measurement limits.
+
 Measurements and limits: [Scene storage and startup performance evidence](../notes/performance-workspace.md).
 
 - **Closing selects a surviving tab directly.** `app/tabModel.ts` searches right from the closed active tab, then left only when no right tab survives. It returns at the first survivor without copying or reversing tab ranges. Every scene-close command shares this helper through `useTabActions`. `tabModel.test.ts` checks all 256 closing subsets and all eight active positions at the tab limit, including keeping an active survivor and selecting the replacement blank tab. [Evidence](../notes/performance-workspace.md#close-selection-without-copied-tab-ranges).
@@ -137,3 +139,14 @@ Portable scene JSON is capped at 128 MiB of decoded UTF-8, for gzip and plain fi
 `project.rendering` stores the robot image's camera framing, lighting, exposure, environment rotation, background, alpha choice and output dimensions. Ordinary autosave, named versions and portable scene files retain it through the existing whole-project path. Composition does not save another camera list or asset table. Loading malformed or out-of-budget settings uses the default composition before controls or rendering consume them.
 
 Switching tabs, replacing a scene or closing its workspace cancels a pending composition job. Source identity is checked before delivery, so an image prepared from a replaced revision cannot download for its successor. The CAD camera and selection are never changed by entering, framing or leaving composition. `three/composition/settings.test.ts` verifies ordinary serialization and portable save/reopen. `workspace/useRenderComposition.test.ts` covers source-edit and scene-replacement refusal. The browser declarations and rendering limits are documented in [Canvas](canvas.md#rendered-robot-composition).
+
+### Scene reads and saves during agent edits
+
+Pending viewport reads bind ordered source part and Case world identities and the rendering context. Replacing that source or closing its context rejects the read. Layer disposal rejects readers and releases preparation leases and queued builds before releasing groups. Late worker preparation can populate the shared geometry cache, but cannot rebuild or schedule that closed layer. `three/viewport/sceneCompletion.test.ts` covers replacement, disposal and late replies.
+
+Texture opacity classification is derived once from validated encoded bytes during asset construction and restoration. The derived field is absent from serialized texture records. Existing scene files and texture content hashes retain their format.
+
+
+HTTP scene saves prepare UTF-8 JSON bodies as immutable Blobs through the existing encoding worker. The original JSON bytes, Content-Type, guarded route and per-scene queue order remain unchanged. Desktop preload saves retain their JSON-string API, and browser storage retains its string input. A body preparation failure refuses delivery before issuing a write. `utils/platform/sceneBody.test.ts` verifies byte parity with Unicode and asset content, route delivery, native and browser-storage paths and preparation failure. The ordinary agent performance workflow verifies accepted edits through real-store saving and reopening.
+
+An existing worker realm encodes a raw scene body locally instead of dispatching a nested encoding worker. The renderer retains the encoding-worker path. The transport tests distinguish these realms explicitly.

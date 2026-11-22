@@ -6,7 +6,7 @@ import { printReportsIn } from '../three/analysis/analysisPool';
 import { snapshotShapes } from '../three/analysis/sceneShapes';
 import type { PrintQuote, ProjectSettings, ScenePart } from '../types/robotics';
 import { bomText, buildBom } from '../utils/bom';
-import { printReportOf } from '../utils/printReport';
+import { printReportOf } from '../utils/printReportPreparation';
 import { quotesWanted, withQuotes, type QuoteRequest } from './serviceQuotes';
 
 const NOW = new Date('2026-11-13T12:00:00');

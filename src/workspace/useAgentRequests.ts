@@ -6,8 +6,7 @@ import { platformBridge } from '../utils/platformBridge';
 import { conflictText, type ActorIndex } from './agentActors';
 import { MAIN_LANE, splitLaneKey } from './agentLanes';
 import { applyAgentOps } from './applyAgentOps';
-import { awaitPartModels } from './agentPartModels';
-import { requestHandler, type RequestContext } from './agentRequestHandlers';
+import type { RequestContext } from './agentRequestHandlers';
 import { calibrationErrorsText } from '../agent/agentCalibration';
 import { selectedUnit } from '../robot/robotStore';
 import { runPoseTool, runSimTool, withSavedPose } from './agentRobotTools';
@@ -27,6 +26,9 @@ import type { TryReadSources } from './agentTryRequests';
 import type { TryTimeline } from './useTryTimeline';
 import { fitBodyFor } from './bodyActions';
 import { parameterEditor } from './agentParameterEdits';
+import { useAgentRequestScope } from './useAgentRequestScope';
+import { assertAgentCurrent, AGENT_EDIT_CHANGED } from './agentTransaction';
+import type { Cases } from './useCases';
 
 type Payload = Record<string, unknown>;
 
@@ -49,6 +51,8 @@ interface Author {
   setAction: SetAction;
   setCursor: (target: Vec3) => void;
   claim: (partId: string) => void;
+  signal?: AbortSignal;
+  isCurrent?: () => boolean;
 }
 
 const quiet: SetAction = () => {};
@@ -125,12 +129,75 @@ function sharedParameterEditor(
   });
 }
 
+function guardedCommits(author: Author, docs: SceneDocument) {
+  return {
+    setAction: (action: string) => {
+      assertAgentCurrent(author);
+      author.setAction(action);
+    },
+    setCursor: (point: Vec3) => {
+      assertAgentCurrent(author);
+      author.setCursor(point);
+    },
+    setProjectNow: (project: Parameters<SceneDocument['setProjectNow']>[0]) => {
+      assertAgentCurrent(author);
+      docs.commitSettings(project);
+    },
+    commitConsole: (id: string, console: Parameters<SceneDocument['commitConsole']>[1]) => {
+      assertAgentCurrent(author);
+      docs.commitConsole(id, console);
+    },
+    insertParts: (
+      parts: Parameters<SceneDocument['commitSkeleton']>[0],
+      joints: Parameters<RequestContext['insertParts']>[1],
+    ) => {
+      assertAgentCurrent(author);
+      partInserter(docs)(parts, joints);
+    },
+    commitSkeleton: (
+      parts: Parameters<SceneDocument['commitSkeleton']>[0],
+      skeleton: Parameters<SceneDocument['commitSkeleton']>[1],
+    ) => {
+      assertAgentCurrent(author);
+      docs.commitSkeleton(parts, skeleton);
+    },
+  };
+}
+
+function guardedCases(cases: Cases, docs: SceneDocument, author: Author): Cases {
+  const source = docs.partsRef.current;
+
+  return {
+    ...cases,
+    builder: {
+      ...cases.builder,
+      add: (spec) => {
+        assertAgentCurrent(author);
+
+        if (docs.partsRef.current !== source) throw new Error(AGENT_EDIT_CHANGED);
+
+        const project = docs.projectRef.current;
+        const built = cases.builder.add(spec);
+
+        if (built.ok) docs.commitSettings({ ...project, cases: [...(project.cases ?? []), built.kase] });
+
+        return built;
+      },
+    },
+  };
+}
+
 export function useAgentRequests(options: AgentRequestOptions) {
   const { core, lanes, controls, actors, cursors, robots, wrap, lighten } = options;
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
-  const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts, commitConsole, commitSkeleton } = docs;
+  const { partsRef, projectRef, updateProjectNow, commitParts } = docs;
   const queueRef = useRef<Promise<void>>(Promise.resolve());
   const timelineRef = useLatestRef(simTraining.cases.timeline);
+  const scopedRequest = useAgentRequestScope({
+    sceneId: core.scene.sceneId,
+    flagsOf: lanes.flagsOf,
+    viewport: () => viewportRef.current,
+  });
 
   const poseTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>
     runPoseTool(kind, payload, {
@@ -174,6 +241,8 @@ export function useAgentRequests(options: AgentRequestOptions) {
   const applyOps = (ops: AgentOp[], author: Author) => {
     const result = queueRef.current.then(() =>
       applyAgentOps(ops, {
+        signal: author.signal,
+        isCurrent: author.isCurrent,
         current: () => partsRef.current,
         commitParts,
         viewport: () => viewportRef.current,
@@ -181,8 +250,12 @@ export function useAgentRequests(options: AgentRequestOptions) {
         setAction: author.setAction,
         isFollowing: () => controls.isFollowing(author.laneId),
         guard: (partId) => guardPart(author, partId, actors, lanes.isBusy),
-        touch: (partId) =>
-          controls.recordEdit(author.laneId, partId, partsRef.current.find((p) => p.id === partId) ?? null),
+        touch: (partId, before) =>
+          controls.recordEdit(
+            author.laneId,
+            partId,
+            before === undefined ? (partsRef.current.find((p) => p.id === partId) ?? null) : before,
+          ),
       }),
     );
 
@@ -198,16 +271,11 @@ export function useAgentRequests(options: AgentRequestOptions) {
     printer: () => resolvePrinter(projectRef.current.printer, core.studio.printers.printers),
     slice: (report) => core.printing.job.sliceReport(report),
     viewport: () => viewportRef.current,
-    setProjectNow,
-    commitConsole,
-    insertParts: partInserter(docs),
-    commitSkeleton,
+    ...guardedCommits(author, docs),
     openSkeleton: () => {
       core.skeleton.setEditing(true);
       core.tool.setMode('pose');
     },
-    setAction: author.setAction,
-    setCursor: author.setCursor,
     poseTool: (kind, payload) => poseTool(kind, payload, author.setAction),
     simTool: (kind, payload) => simTool(kind, payload, author.setAction),
     ...sceneChecks(core, author.setAction),
@@ -225,7 +293,7 @@ export function useAgentRequests(options: AgentRequestOptions) {
       return lighten.apply(id, settings);
     },
     routines: core.simTraining.routines,
-    cases: core.simTraining.cases,
+    cases: guardedCases(core.simTraining.cases, docs, author),
     caseCompare: core.caseCompare,
     study: core.study,
     caseRun: core.caseRun,
@@ -234,15 +302,8 @@ export function useAgentRequests(options: AgentRequestOptions) {
     tryRead: tryReadOf(core, () => timelineRef.current),
   });
 
-  const runRequest = async (event: Pick<AgentRequestEvent, 'kind' | 'payload'>, author: Author) => {
-    const handler = requestHandler(event.kind);
-
-    if (!handler) throw new Error(`Unknown request "${event.kind}"`);
-
-    await awaitPartModels(event.kind, viewportRef.current);
-
-    return handler(event.payload, contextFor(author), event.kind);
-  };
+  const runRequest = (event: Pick<AgentRequestEvent, 'kind' | 'payload'>, author: Author) =>
+    scopedRequest(event, author, contextFor);
 
   const handleAgentRequest = async (event: AgentRequestEvent) => {
     if (!firstDelivery(event.requestId)) return;

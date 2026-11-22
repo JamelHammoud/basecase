@@ -55,6 +55,7 @@ function finishMaterial(
 ): THREE.MeshStandardMaterial {
   const material = source.clone();
   const releases: (() => void)[] = [];
+  let colorOpaque = false;
 
   material.color.set(appearance.baseColor);
   material.roughness = appearance.roughness;
@@ -76,7 +77,10 @@ function finishMaterial(
 
     releases.push(owned.release);
 
-    if (slot === 'baseColor') material.map = owned.texture;
+    if (slot === 'baseColor') {
+      material.map = owned.texture;
+      colorOpaque = owned.opaque;
+    }
 
     if (slot === 'normal') material.normalMap = owned.texture;
 
@@ -86,7 +90,7 @@ function finishMaterial(
     }
   }
 
-  material.transparent = appearance.opacity < 1 || Boolean(material.map);
+  material.transparent = appearance.opacity < 1 || Boolean(material.map && (!colorOpaque || material.alphaMap));
   material.depthWrite = !material.transparent;
   material.userData.appearanceMappingSupported = mappingSupported;
   ownTextures(material, releases);

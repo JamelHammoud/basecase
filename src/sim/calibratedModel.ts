@@ -19,6 +19,7 @@ export async function preparedCalibratedModel(
   const calibrated = calibratedInput(input, simCalibrations(histories));
 
   if (
+    typeof window !== 'undefined' ||
     input.parts.some((part) => part.gripperFinger?.role === 'finger') ||
     input.rig.robots.some((robot) => input.project.selfContact?.[robot.key]?.enabled)
   )

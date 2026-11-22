@@ -12,10 +12,10 @@ import { payloadMapsIn } from '../three/analysis/analysisPool';
 import type { ArmModel } from '../utils/payload';
 import { printBridge } from '../print/printBridge';
 import { resolvePrinter } from '../data/printers';
-import { printReportOf } from '../utils/printReport';
+import { printReportOf } from '../utils/printReportPreparation';
 import { rememberStress } from '../strength/fields';
 import type { StrengthJob } from '../strength/types';
-import { guideStepParts } from '../guide/guideSteps';
+import { generateGuideSteps } from '../guide/generateGuide';
 
 const isServo = (p: ScenePart) =>
   p.kind === 'component' && !!p.componentId && COMPONENT_BY_ID[p.componentId]?.group === 'Servos';
@@ -153,7 +153,7 @@ export async function runEngineeringNow(options: EngineeringNowInput) {
     print,
     slices: options.slices,
     printerCount: options.printerCount ?? printers.length,
-    assemblySteps: guideStepParts(parts, project),
+    assemblySteps: await generateGuideSteps(parts, project),
     walk,
     falls,
     supportG,

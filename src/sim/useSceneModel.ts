@@ -33,17 +33,26 @@ export function useSceneModel({ parts, project, rig, pose, viewportRef, restDelt
       if (!vp) throw new Error('The canvas isn’t ready.');
 
       const controller = new AbortController();
+      const signal = AbortSignal.any([controller.signal, ...(options?.signal ? [options.signal] : [])]);
 
       preparations.current.add(controller);
 
       try {
+        signal.throwIfAborted();
         await vp.meshesReady();
+        signal.throwIfAborted();
 
         const current = inputsRef.current;
         const [measures, posedFloor] = await Promise.all([
           vp.measureParts(),
           vp.posedFloor(undefined, current.restDeltas),
         ]);
+
+        signal.throwIfAborted();
+
+        const world = options?.alone ? [] : await preparedWorldItems(worldRef.current);
+
+        signal.throwIfAborted();
 
         const input = withGuests(
           {
@@ -54,14 +63,14 @@ export function useSceneModel({ parts, project, rig, pose, viewportRef, restDelt
             measures,
             partTriangles: vp.partTriangles,
             posedFloor,
-            world: options?.alone ? [] : await preparedWorldItems(worldRef.current),
+            world,
             ...(options?.pin ? { fixedBase: { [options.pin]: true } } : {}),
           },
           options?.alone ? NO_GUESTS : guestsRef.current,
         );
 
         return await preparedCalibratedModel(input, options?.calibrations ?? current.project.servoCalibrations, {
-          signal: AbortSignal.any([controller.signal, ...(options?.signal ? [options.signal] : [])]),
+          signal,
           current: () =>
             inputsRef.current.parts === current.parts &&
             inputsRef.current.project === current.project &&
@@ -75,6 +84,9 @@ export function useSceneModel({ parts, project, rig, pose, viewportRef, restDelt
   );
 
   const setWorldItems = (items: WorldItem[], cast: SimGuests) => {
+    if (worldRef.current !== items || guestsRef.current !== cast)
+      preparations.current.forEach((controller) => controller.abort());
+
     worldRef.current = items;
     guestsRef.current = cast;
     setWorldParts(items);

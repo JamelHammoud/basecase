@@ -133,6 +133,37 @@ function measured(query: Parameters<typeof blocksAlong>[0]) {
 }
 
 describe('straight-move probe workspace', () => {
+  it('reuses world samples across directions and refreshes them after matrix or geometry replacement', () => {
+    const part = solid('part', [0, 0, 0, 10, 2, 10]);
+    const ahead = solid('ahead', [0, 8, 0, 10, 10, 10]);
+    const query = { part, dir: new THREE.Vector3(0, 1, 0), travel: 20, candidates: [ahead, ahead] };
+    const points = vi.spyOn(samples, 'worldPoints');
+
+    try {
+      const expected = blocksAlong(query);
+      const initial = points.mock.calls.length;
+
+      expect(expected).toEqual({ solid: ['ahead', 'ahead'], lips: [] });
+      expect(initial).toBeGreaterThan(0);
+      expect(blocksAlong(query)).toEqual(expected);
+      query.dir.negate();
+      expect(blocksAlong(query)).toEqual({ solid: [], lips: [] });
+      expect(points).toHaveBeenCalledTimes(initial);
+      Object.assign(part, transformed(part, new THREE.Matrix4().makeTranslation(100, 0, 0)));
+      expect(blocksAlong(query)).toEqual({ solid: [], lips: [] });
+      expect(points).toHaveBeenCalledTimes(initial + 1);
+
+      const replacement = transformed(solid('part', [-100, 0, 0, -90, 2, 10]), part.matrix.clone());
+
+      Object.assign(part, replacement);
+      query.dir.negate();
+      expect(blocksAlong(query)).toEqual(expected);
+      expect(points).toHaveBeenCalledTimes(initial + 2);
+    } finally {
+      points.mockRestore();
+    }
+  });
+
   it.each([
     new THREE.Matrix4(),
     new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0.31, -0.74, 1.2)).setPosition(17, -9, 24),

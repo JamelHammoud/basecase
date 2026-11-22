@@ -21,7 +21,7 @@ const loader = (color) =>
   );
 
 const article = Buffer.from(
-  '<svg width="1440" height="900"><rect width="1440" height="900" fill="#121212"/><rect x="100" y="50" width="1240" height="800" rx="12" fill="#242424"/><text x="200" y="200" fill="white" font-size="32">Export Kit</text></svg>',
+  '<svg width="1440" height="900"><rect width="1440" height="900" fill="#121212"/><rect x="100" y="50" width="1240" height="800" rx="12" fill="#242424"/><rect x="200" y="160" width="360" height="48" rx="8" fill="#ffffff"/></svg>',
 );
 
 describe('article image health', () => {

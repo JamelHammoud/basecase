@@ -4,6 +4,12 @@ import { expect, it, vi } from 'vitest';
 import type { BuildRecord } from '../kit/buildRecords';
 import type { Session } from './buildAlongSession';
 import { useFrozenBuildAlong } from './useFrozenBuildAlong';
+import { frozenBuildSession } from './frozenBuildSession';
+
+vi.mock('./frozenBuildSession', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./frozenBuildSession')>()),
+  frozenBuildSession: vi.fn(),
+}));
 
 it.each(['one', 'two', null])('applies a committed save only to the matching open build: %s', async (currentId) => {
   const record: BuildRecord = {
@@ -57,4 +63,33 @@ it.each(['one', 'two', null])('applies a committed save only to the matching ope
   }
 
   expect(current).toBe(before);
+});
+
+it('opens a saved build before the scene viewport has mounted', async () => {
+  const opened = { steps: [], stepParts: [], views: [], index: 0 } as Session;
+  let controls!: ReturnType<typeof useFrozenBuildAlong>;
+  const setSession = vi.fn();
+  const setOpening = vi.fn();
+
+  vi.mocked(frozenBuildSession).mockResolvedValue(opened);
+
+  function Host() {
+    controls = useFrozenBuildAlong({
+      session: null,
+      setSession,
+      openingRef: { current: 0 },
+      setOpening,
+      viewportRef: { current: null },
+      showToast: vi.fn(),
+    });
+
+    return null;
+  }
+
+  renderToStaticMarkup(createElement(Host));
+  await controls.openFrozen('one');
+
+  expect(frozenBuildSession).toHaveBeenCalledWith('one', undefined, undefined);
+  expect(setSession).toHaveBeenCalledWith(opened);
+  expect(setOpening).toHaveBeenLastCalledWith(false);
 });

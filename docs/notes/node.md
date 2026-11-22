@@ -96,6 +96,11 @@ The first local named check exposed Vitest's configuration-dependency selection 
 
 Linux and Windows execution remains for the existing CI unit jobs. macOS observations establish neither hosted-platform performance nor a failure rate. Forced termination can retain a lease, and old tool generations consume local cache space until idle cleanup. Neither condition permits another runner to delete an active cache.
 
+### TypeScript verification across linked worktrees
+
+Main Check 45073139898 reported TS2322 in the pending-model regression fixture after its incremental local check passed. A forced local type build reproduced it. The three projects had shared `node_modules/.tmp` build records. A tiny reproduction creates two Git worktrees sharing dependencies, writes an older invalid source in the second checkout, then builds the valid first checkout. With the previous configured build-info path the second build incorrectly exits zero. Separate `scratch/typecheck` paths report the second checkout’s TS2322. The simulator regression fixture uses a numeric physical setting so its unchanged metadata and physical-edit assertions remain well typed.
+
+
 ## Windows diagnostic log assertion cost
 
 [Check 44218519123](https://github.com/JamelHammoud/basecase/actions/runs/44218519123) exhausted the unchanged 5,000 ms deadline in `diagnosticLog.test.mjs`, reporting 8,710 ms for its streamed-tail case. Previous Windows Check 44214681066 passed the unchanged case in 4,531 ms. The fixture emits more than 2 MiB and compares its final 1 MiB with generic deep equality. This is a load-sensitive assertion workload with an identified avoidable cost, not evidence of a failed download or changed streaming implementation.

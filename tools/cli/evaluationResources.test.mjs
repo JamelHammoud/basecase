@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import loadMujoco from '@mujoco/mujoco';
-import { expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { evaluationFixture } from './evaluationFixture.mjs';
 import { runEvaluation } from './evaluationRun.mjs';
 import { freezeEvaluation } from './evaluationFreeze.mjs';
@@ -12,66 +12,77 @@ import { evaluationPreparations } from '../../src/cases/evaluation';
 import { decodeSceneFile } from '../../src/utils/sceneFile';
 import { checkCase, sceneRobot } from '../../src/cases/sceneCheck';
 
+let dir;
+let fixture;
+const expected = new Map();
+
+beforeAll(async () => {
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), 'evaluation-resources-'));
+  fixture = await evaluationFixture(dir);
+
+  const mj = await loadMujoco();
+
+  for (const name of ['baseline', 'candidate']) {
+    const scene = await decodeSceneFile(fs.readFileSync(fixture[name]));
+
+    expected.set(name, await checkCase(mj, fixture.kase, await sceneRobot(scene, {})));
+  }
+});
+afterAll(() => {
+  if (dir) fs.rmSync(dir, { recursive: true, force: true });
+});
+
 it('reuses frozen geometry and matches nominal outcomes from ordinary scene checks', async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'evaluation-resources-'));
+  const before = evaluationPreparations();
+
+  expect(
+    await freezeEvaluation(
+      fixture.baseline,
+      {
+        candidate: fixture.candidate,
+        package: fixture.package,
+        seeds: '7,3',
+        conditions: 'fixed',
+        randomization: 'nominal',
+      },
+      evaluationContext,
+    ),
+  ).toBe(0);
+  expect(evaluationPreparations() - before).toBe(2);
+
+  const rename = fs.renameSync;
+  const published = [];
+  const publication = vi.spyOn(fs, 'renameSync').mockImplementation((from, to) => {
+    rename(from, to);
+
+    if (to !== path.join(fixture.output, 'comparison.json')) return;
+
+    published.push(inspectReport(fixture.output).status);
+  });
 
   try {
-    const fixture = await evaluationFixture(dir);
-    const before = evaluationPreparations();
-
-    expect(
-      await freezeEvaluation(
-        fixture.baseline,
-        {
-          candidate: fixture.candidate,
-          package: fixture.package,
-          seeds: '7,3',
-          conditions: 'fixed',
-          randomization: 'nominal',
-        },
-        evaluationContext,
-      ),
-    ).toBe(0);
-    expect(evaluationPreparations() - before).toBe(2);
-
-    const rename = fs.renameSync;
-    const published = [];
-    const publication = vi.spyOn(fs, 'renameSync').mockImplementation((from, to) => {
-      rename(from, to);
-
-      if (to !== path.join(fixture.output, 'comparison.json')) return;
-
-      published.push(inspectReport(fixture.output).status);
-    });
-
-    try {
-      expect(await runEvaluation(fixture.package, { output: fixture.output }, evaluationContext)).toBe(1);
-    } finally {
-      publication.mockRestore();
-    }
-
-    expect(published).toEqual(['incomplete', 'incomplete', 'incomplete', 'complete']);
-    expect(evaluationPreparations() - before).toBe(2);
-
-    const report = JSON.parse(fs.readFileSync(path.join(fixture.output, 'comparison.json'), 'utf8'));
-    const mj = await loadMujoco();
-
-    for (const name of ['baseline', 'candidate']) {
-      const scene = await decodeSceneFile(fs.readFileSync(fixture[name]));
-      const result = await checkCase(mj, fixture.kase, await sceneRobot(scene, {}));
-
-      expect(report.pairs.map((pair) => pair.seed)).toEqual([7, 3]);
-
-      for (const pair of report.pairs) {
-        expect(pair[name].margin).toBe(result.margin);
-        expect(pair[name].passed).toBe(result.passes === 1);
-      }
-    }
-
-    expect(report.metrics.geometryPreparations).toBe(0);
-    expect(report.metrics.peakRss).toBeGreaterThan(0);
-    expect(report.metrics.bytes).toBeLessThan(128 * 1024 * 1024);
+    expect(await runEvaluation(fixture.package, { output: fixture.output }, evaluationContext)).toBe(1);
   } finally {
-    fs.rmSync(dir, { recursive: true, force: true });
+    publication.mockRestore();
   }
+
+  expect(published).toEqual(['incomplete', 'incomplete', 'incomplete', 'complete']);
+  expect(evaluationPreparations() - before).toBe(2);
+
+  const report = JSON.parse(fs.readFileSync(path.join(fixture.output, 'comparison.json'), 'utf8'));
+
+  for (const name of ['baseline', 'candidate']) {
+    const result = expected.get(name);
+
+    expect(report.pairs.map((pair) => pair.seed)).toEqual([7, 3]);
+
+    for (const pair of report.pairs) {
+      expect(pair[name].margin).toBe(result.margin);
+      expect(pair[name].passed).toBe(result.passes === 1);
+    }
+  }
+
+  expect(report.metrics.geometryPreparations).toBe(0);
+  expect(report.metrics.peakRss).toBeGreaterThan(0);
+  expect(report.metrics.bytes).toBeLessThan(128 * 1024 * 1024);
 });

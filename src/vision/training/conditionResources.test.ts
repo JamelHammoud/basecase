@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import sharp from 'sharp';
 import { metricResult, metricSet, metricTask } from './metricsFixtures';
@@ -56,11 +56,22 @@ async function fixture(count: number) {
   return { report, load: async (hash: string) => content.get(hash) ?? null };
 }
 
+const retained = new Map<number, Awaited<ReturnType<typeof fixture>> & { fixtureMs: number }>();
+
+beforeAll(async () => {
+  for (const count of [4, 1000]) {
+    const started = performance.now();
+    const value = await fixture(count);
+
+    retained.set(count, { ...value, fixtureMs: performance.now() - started });
+  }
+});
+
 describe('bounded condition evaluation resources', () => {
   it.each([4, 1000])(
     'rescores %s retained predictions without inference or extra retained image content',
     async (count) => {
-      const { report, load } = await fixture(count);
+      const { report, load, fixtureMs } = retained.get(count)!;
       const input = { candidate: report, incumbent: report, group: { kind: 'condition' as const, name: 'glare' } };
 
       const start = performance.now();
@@ -79,6 +90,7 @@ describe('bounded condition evaluation resources', () => {
         JSON.stringify(
           {
             count,
+            fixtureMs,
             elapsedMs,
             evidenceBytesPerModel: Buffer.byteLength(JSON.stringify(report.evidence)),
             resultBytes,

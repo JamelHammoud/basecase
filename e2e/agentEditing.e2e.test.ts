@@ -123,10 +123,7 @@ it('edits through the composer while orbiting and using the Inspector, cancels p
       .poll(() => page.evaluate(() => (window as unknown as StudioWindow).__studio.sceneRecord().parts[0].position[0]))
       .toBe(37);
     await visitBlankScene(page);
-    await page
-      .getByRole('tab')
-      .filter({ has: page.getByRole('img', { name: 'Agent working', exact: true }) })
-      .click();
+    await page.getByRole('tab', { name: 'Agent working Agent', exact: true }).click();
     await page.getByRole('button', { name: 'Stop', exact: true }).click();
     await page.evaluate(() => (window as unknown as StudioWindow).__workflowRelease());
     await expect.poll(() => backend.responses.has('workflow-pending')).toBe(true);

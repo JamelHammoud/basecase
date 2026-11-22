@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { chromium, type Browser, type Page } from 'playwright-core';
 import { inject } from 'vitest';
+import { browserWorkerDiagnostics } from '../tools/testing/browserDiagnostics';
 import { datasetPostRoutes } from '../electron/library/datasetRoutes.mjs';
 import { DatasetStore } from '../electron/library/datasetStore.mjs';
 import { tryPostRoutes } from '../electron/library/tryRoutes.mjs';
@@ -234,6 +235,7 @@ async function logBrowserState(page: Page, errors: string[]) {
     `e2e browser state: ${JSON.stringify({
       errors: errors.slice(-20).map((error) => error.slice(0, 500)),
       text: text.slice(0, 4000),
+      workers: await browserWorkerDiagnostics(page),
     })}`,
   );
 }

@@ -19,7 +19,17 @@ export function fleetClient(fixture, identity) {
       const response = await client.call(method, suffix, body);
       const result = await response.json();
 
-      if (!response.ok) throw new Error(`${method} ${suffix}: ${response.status}`);
+      if (!response.ok) {
+        const failure = fixture.failures?.findLast(
+          (entry) => entry.method === method && entry.path === `/v1/${identity.org}/${suffix.split('?')[0]}`,
+        );
+        const reasons = [
+          ...new Set([result?.error, failure?.code, failure?.message].filter((value) => typeof value === 'string')),
+        ];
+        const detail = reasons.length ? `: ${reasons.join(': ').slice(0, 800)}` : '';
+
+        throw new Error(`${method} ${suffix}: ${response.status}${detail}`);
+      }
 
       return result;
     },
@@ -88,8 +98,20 @@ export async function fleetFixture(options = {}) {
   const port = await freePort();
   let pool = await database(postgres.url);
   let service;
+  const failures = [];
+  const onError = (error, request) => {
+    failures.push({
+      method: request.method,
+      path: request.url?.split('?')[0],
+      code: typeof error.code === 'string' ? error.code.slice(0, 64) : '',
+      message: typeof error.message === 'string' ? error.message.slice(0, 500) : '',
+    });
+
+    if (failures.length > 16) failures.shift();
+  };
   const fixture = {
     origin: `http://127.0.0.1:${port}`,
+    failures,
     databaseUrl: postgres.url,
     get pool() {
       return pool;
@@ -123,7 +145,7 @@ export async function fleetFixture(options = {}) {
       await service.close();
       await pool.end();
       pool = await database(postgres.url);
-      service = await startService({ pool, origin: fixture.origin, assets: options.assets });
+      service = await startService({ pool, origin: fixture.origin, assets: options.assets, onError });
     },
     async close() {
       await service.close();
@@ -132,7 +154,7 @@ export async function fleetFixture(options = {}) {
     },
   };
 
-  service = await startService({ pool, origin: fixture.origin, assets: options.assets });
+  service = await startService({ pool, origin: fixture.origin, assets: options.assets, onError });
 
   return fixture;
 }

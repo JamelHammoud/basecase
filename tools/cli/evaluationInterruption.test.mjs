@@ -2,23 +2,19 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { afterEach, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, expect, it } from 'vitest';
 import { evaluationFixture } from './evaluationFixture.mjs';
 import { evaluationContext } from './evaluationContext.fixtures.mjs';
 import { freezeEvaluation } from './evaluationFreeze.mjs';
 
-const dirs = [];
+let fixture;
+let sourceDir;
+let current;
 
-afterEach(() => {
-  for (const dir of dirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
-});
+beforeAll(async () => {
+  sourceDir = fs.mkdtempSync(path.join(os.tmpdir(), 'evaluation-stop-source-'));
+  fixture = await evaluationFixture(sourceDir);
 
-async function interrupt(mode) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'evaluation-stop-'));
-
-  dirs.push(dir);
-
-  const fixture = await evaluationFixture(dir);
   const frozen = await freezeEvaluation(
     fixture.baseline,
     {
@@ -30,7 +26,14 @@ async function interrupt(mode) {
   );
 
   expect(frozen).toBe(0);
+});
+afterAll(() => {
+  if (sourceDir) fs.rmSync(sourceDir, { recursive: true, force: true });
+});
 
+function startRun() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'evaluation-stop-'));
+  const output = path.join(dir, 'results');
   const stopFile = path.join(dir, 'stop');
   const child = spawn(
     process.execPath,
@@ -40,40 +43,69 @@ async function interrupt(mode) {
       'run',
       fixture.package,
       '--output',
-      fixture.output,
+      output,
       '--stop-file',
       stopFile,
     ],
     { stdio: 'ignore' },
   );
-  let stopped = false;
-  const watcher = fs.watch(dir, { recursive: true }, () => {
-    if (stopped || !fs.existsSync(path.join(fixture.output, 'comparison.json'))) return;
-
-    stopped = true;
-
-    if (mode === 'cancel') fs.writeFileSync(stopFile, 'stop');
-    else child.kill(process.platform === 'win32' ? undefined : 'SIGKILL');
+  const finished = new Promise((resolve, reject) => {
+    child.once('error', reject);
+    child.once('close', resolve);
   });
 
-  try {
-    await new Promise((resolve, reject) => {
-      child.once('error', reject);
-      child.once('close', resolve);
-    });
-    expect(stopped).toBe(true);
+  return { dir, output, stopFile, child, finished, watcher: null };
+}
 
-    const report = JSON.parse(fs.readFileSync(path.join(fixture.output, 'comparison.json'), 'utf8'));
+async function waitForCheckpoint(run) {
+  const ready = new Promise((resolve) => {
+    const check = () => {
+      if (fs.existsSync(path.join(run.output, 'comparison.json'))) resolve();
+    };
 
-    expect(report.status).toBe('incomplete');
-    expect(report.pairs.length).toBeLessThan(16);
-    expect(fs.readFileSync(path.join(fixture.output, 'report.html'), 'utf8')).toContain('incomplete');
+    run.watcher = fs.watch(run.dir, { recursive: true }, check);
+    check();
+  });
 
-    if (mode === 'cancel') expect(report.problem).toBe('cancelled');
-  } finally {
-    watcher.close();
-    child.kill();
-  }
+  await Promise.race([
+    ready,
+    run.finished.then(() => {
+      throw new Error('CLI exited before interruption setup completed');
+    }),
+  ]);
+  run.watcher.close();
+}
+
+beforeEach(async () => {
+  current = startRun();
+  await waitForCheckpoint(current);
+});
+afterEach(async () => {
+  current?.watcher?.close();
+  current?.child.kill();
+  await current?.finished;
+
+  if (current) fs.rmSync(current.dir, { recursive: true, force: true });
+});
+
+async function interrupt(mode) {
+  const { output, stopFile, child, finished } = current;
+  const before = JSON.parse(fs.readFileSync(path.join(output, 'comparison.json'), 'utf8'));
+
+  expect(before.status).toBe('incomplete');
+
+  if (mode === 'cancel') fs.writeFileSync(stopFile, 'stop');
+  else child.kill(process.platform === 'win32' ? undefined : 'SIGKILL');
+
+  await finished;
+
+  const report = JSON.parse(fs.readFileSync(path.join(output, 'comparison.json'), 'utf8'));
+
+  expect(report.status).toBe('incomplete');
+  expect(report.pairs.length).toBeLessThan(16);
+  expect(fs.readFileSync(path.join(output, 'report.html'), 'utf8')).toContain('incomplete');
+
+  if (mode === 'cancel') expect(report.problem).toBe('cancelled');
 }
 
 it('cancels the actual CLI through its portable stop file and retains incomplete evidence', async () => {

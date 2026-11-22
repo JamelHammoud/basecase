@@ -14,6 +14,7 @@ keywords:
   - columns
 related:
   - run-a-case
+  - count-objects-through-zones-and-lines
   - build-a-case-app-with-the-agent
 covers:
   - src/cases/console/consoleEdits.ts

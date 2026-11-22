@@ -45,6 +45,20 @@ type Shaper = (parts: string[], scope: SignalScope) => SignalShape | string;
 
 const has = (list: readonly string[], value: string | undefined) => value !== undefined && list.includes(value);
 
+const VISION_BOX_FIELDS = ['score', 'x', 'y', 'width', 'height', 'tracks'];
+const VISION_REGION_FIELDS: Record<string, readonly string[]> = { zone: ['count', 'dwell'], line: ['in', 'out'] };
+const VISION_REFUSAL = 'must be vision.<camera>.<class> with an optional box field or tracks';
+
+function visionShape([camera, label, name, field]: string[]): SignalShape | string {
+  if (!camera || !label) return VISION_REFUSAL;
+
+  const region = VISION_REGION_FIELDS[label];
+
+  if (region && field !== undefined) return name && region.includes(field) ? 'number' : VISION_REFUSAL;
+
+  return name === undefined || (VISION_BOX_FIELDS.includes(name) && field === undefined) ? 'number' : VISION_REFUSAL;
+}
+
 const SHAPERS: Record<string, Shaper> = {
   joint: ([id, field]) =>
     id && has(JOINT_FIELDS, field) ? 'number' : `must be joint.<id or *>.${JOINT_FIELDS.join(' or ')}`,
@@ -71,10 +85,7 @@ const SHAPERS: Record<string, Shaper> = {
 
     return key ? 'camera' : 'must be camera.<name or *>';
   },
-  vision: ([camera, label, field]) =>
-    camera && label && (!field || ['score', 'x', 'y', 'width', 'height'].includes(field))
-      ? 'number'
-      : 'must be vision.<camera>.<class> with an optional box field',
+  vision: visionShape,
   topic: ([name]) => (name ? 'topic' : TOPIC_REFUSAL),
 };
 

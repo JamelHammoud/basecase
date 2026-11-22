@@ -3,6 +3,7 @@ import type { VisionManifest } from './manifest';
 import { validateVisionManifest } from './manifest';
 import { hubBridge } from '../hub/hubBridge';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
+import type { CameraRegions } from './tracking/types';
 import type { VisionFrameOptions, VisionPixels, VisionResult } from './types';
 
 export interface VisionRuntimeError {
@@ -189,6 +190,12 @@ export function createVisionRuntime() {
     },
     attach,
     connect: attach,
+    track(source: string, camera: string, regions?: CameraRegions) {
+      if (!closed) worker.postMessage({ type: 'track', source, camera, regions });
+    },
+    resetTracking(source: string, camera: string) {
+      if (!closed) worker.postMessage({ type: 'track-reset', source, camera });
+    },
     subscribe(listener: (result: VisionResult) => void) {
       listeners.add(listener);
 

@@ -4,6 +4,7 @@ import type { WorldObject } from '../schema';
 import { gestureNames, type CaseGesture } from '../gestures';
 import { asId, asNumber, asRecord, asString, listOf, oneOf, optional, refuse, type Reader } from '../validate';
 import { PANEL_KIND_NAMES, readPanelConfig, type PanelSpec } from './panelKinds';
+import { readRegions, type ConsoleRegions } from './regions';
 import { NAMESPACES, signalRef, type SignalScope } from './signalNames';
 
 export type ConsoleSignal =
@@ -40,6 +41,7 @@ export interface CaseConsole {
   signals?: ConsoleSignal[];
   panels: PanelSpec[];
   layout: { areas: ConsoleArea[] };
+  regions?: ConsoleRegions;
 }
 
 export const MAX_PANELS = 24;
@@ -271,10 +273,13 @@ export const consoleReader =
 
     if (fifth) refuse(`${where}.panels[${panels.indexOf(fifth)}]`, 'is a fifth code panel; a Case runs at most 4');
 
+    const regions = optional(readRegions, v.regions, `${where}.regions`);
+
     return {
       input,
       ...(signals ? { signals } : {}),
       panels,
       layout: readLayout(v.layout, `${where}.layout`, panels),
+      ...(regions && Object.keys(regions).length ? { regions } : {}),
     };
   };

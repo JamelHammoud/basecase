@@ -3,6 +3,8 @@ import { registerVisionModelSource } from '../vision/training/modelBindings';
 import type { VisionAssignment } from './visionFrames';
 import type { VisionResult, VisionSource } from '../vision/types';
 import * as session from './visionSession';
+import { cameraRegions, onCameraRegions, setCameraRegions } from './visionRegions';
+import type { CameraRegions } from '../vision/tracking/types';
 
 export function scopedVision(source: VisionSource) {
   registerVisionModelSource(source);
@@ -40,6 +42,12 @@ export function scopedVision(source: VisionSource) {
     onCameraVision: (listener: () => void) =>
       session.onCameraVision((camera) => {
         if (!camera || camera.startsWith(prefix)) listener();
+      }),
+    cameraRegions: (camera: string) => cameraRegions(key(camera)),
+    setCameraRegions: (camera: string, next: CameraRegions | undefined) => setCameraRegions(source, camera, next),
+    onCameraRegions: (listener: () => void) =>
+      onCameraRegions((camera) => {
+        if (camera.startsWith(prefix)) listener();
       }),
     onVisionAssignments: (listener: () => void) =>
       session.onVisionAssignments((camera) => {

@@ -1,13 +1,14 @@
 import React, { useSyncExternalStore } from 'react';
 import type { CameraVision } from '../../cameras/scopedVision';
 import { DetectionBoxes } from './DetectionBoxes';
+import { RegionShapes } from './RegionShapes';
 
 export const DetectionOverlay: React.FC<{ camera: string; mirrorText?: boolean; vision: CameraVision }> = ({
   camera,
   mirrorText,
   vision,
 }) => {
-  const { cameraVision, cameraVisionError, onCameraVision } = vision;
+  const { cameraVision, cameraVisionError, onCameraVision, cameraRegions, onCameraRegions } = vision;
   const result = useSyncExternalStore(
     onCameraVision,
     () => cameraVision(camera),
@@ -19,9 +20,16 @@ export const DetectionOverlay: React.FC<{ camera: string; mirrorText?: boolean; 
     () => null,
   );
 
+  const regions = useSyncExternalStore(
+    onCameraRegions,
+    () => cameraRegions(camera),
+    () => undefined,
+  );
+
   return (
     <>
-      <DetectionBoxes result={result} mirrorText={mirrorText} />
+      <DetectionBoxes result={result} mirrorText={mirrorText} ids={!!regions} />
+      {regions && <RegionShapes regions={regions} tracking={result?.tracking} mirrorText={mirrorText} />}
       {error && (
         <span
           role="status"

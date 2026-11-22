@@ -19,6 +19,7 @@ import type { PanelContext } from '../components/caseRun/panelContext';
 import type { ConsoleEditing } from './useConsoleEditing';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { regionEditing } from './useCaseRegions';
 import { useConsoleSignals } from './useConsoleSignals';
 import { useRecordedSignals } from './useRecordedSignals';
 import { showPartsSection } from './showView';
@@ -77,6 +78,8 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
     cameras: actions.cameras,
     patchPart: actions.edits.patchPart,
     active: () => open && wantsCameras,
+    regions: regionEditing(core.consoleEditing),
+    declared: caseConsole.regions,
   });
   const live = useConsoleSignals({
     open: caseRun.live && !caseRun.playback,

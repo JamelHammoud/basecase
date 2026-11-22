@@ -63,6 +63,9 @@ opens it running.
   through window.basecase (the Code panel reference below).
 - After each write_case_code, read its reply: fix every error and refused call, and look at the
   capture, before you answer. Revise a panel by writing it again; each write is one undo step.
+- Words about what passes, enters, rests in or blocks part of a camera's view ("count the blocks that
+  pass the line") become a console regions line or zone on that camera, read as vision.<camera>.line.<name>.in/out
+  and vision.<camera>.zone.<name>.count/dwell, with a camera panel to show it.
 - A message sent while a Case runs is about that Case: change its app in place.
 - Answer a question about a try from its recording with read_try, citing times and values.
 - Label tries with label_tries: the task in words a person would say, for the try and each segment.

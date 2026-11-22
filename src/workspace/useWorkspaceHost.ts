@@ -13,6 +13,7 @@ interface HostOptions {
   seed?: WorkspaceSeed;
   core: WorkspaceCore;
   agent: AgentSession;
+  openTry: (id: string) => void;
 }
 
 const THUMBNAIL_SIDE = 560;
@@ -20,6 +21,7 @@ const THUMBNAIL_SIDE = 560;
 interface HandleOptions {
   core: WorkspaceCore;
   agent: AgentSession;
+  openTry: (id: string) => void;
   autosave: Autosave;
 }
 
@@ -33,12 +35,13 @@ function openCaseIn(core: WorkspaceCore, kase: Case) {
   core.tool.setRightTab('sim');
 }
 
-function useRegisterHandle({ core, agent, autosave }: HandleOptions) {
+function useRegisterHandle({ core, agent, autosave, openTry }: HandleOptions) {
   const { workspaceId, studio, scene, docs, annotations, viewportRef, showToast, loadSeed } = core;
   const { setSceneName } = scene;
   const stopped = useRef<Promise<unknown>>(Promise.resolve());
   const hostRef = useLatestRef({
     event: agent.onEvent,
+    openTry,
     snapshot: (): WorkspaceSeed => ({
       history: core.versions.historyRef.current,
       sceneId: scene.sceneId,
@@ -108,6 +111,7 @@ function useRegisterHandle({ core, agent, autosave }: HandleOptions) {
       fingerprint: () => hostRef.current.fingerprint,
       caseRobot: () => hostRef.current.caseRobot(),
       openCase: (kase) => hostRef.current.openCase(kase),
+      openTry: (id) => hostRef.current.openTry(id),
     };
 
     register(workspaceId, handle);
@@ -182,7 +186,7 @@ function useRightIslandWidth(active: boolean, core: WorkspaceCore) {
   return rightIslandRef;
 }
 
-export function useWorkspaceHost({ active, seed, core, agent }: HostOptions) {
+export function useWorkspaceHost({ active, seed, core, agent, openTry }: HostOptions) {
   const updateChat = useEffectEvent((id: string | null) => core.versions.setChat(id));
 
   const chatId = agent.current.chatId;
@@ -203,7 +207,7 @@ export function useWorkspaceHost({ active, seed, core, agent }: HostOptions) {
   };
   const autosave = useAutosave({ draft, active, pristine, unsaved: !!seed?.unsaved });
 
-  useRegisterHandle({ core, agent, autosave });
+  useRegisterHandle({ core, agent, autosave, openTry });
   useReportMeta({ core, agent, pristine });
 
   return useRightIslandWidth(active, core);

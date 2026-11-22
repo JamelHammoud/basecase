@@ -153,8 +153,7 @@ Failures use ordinary `.tries.zip` archives and the existing binary recording co
 keeps the exact source scene and component meshes, model, realized Case, trace, efforts and trip frames. Import validates
 that extension and ordinary manifest identities before saving anything, then opens the source scene through ordinary
 scene import. Library and the existing timeline load its retained model and failure without borrowing the current
-scene, policy or calibration. Opening from a different or edited scene opens a new source scene and its timeline,
-preserving the working design. The timeline exposes the retained Case console and trace without reach scaling.
+scene, policy or calibration. Opening from a different or edited scene first checks mounted scene snapshots in the archive worker. An unchanged open scene matching the frozen source is selected and receives the Try after activation. Otherwise a new source scene opens with its timeline. A tab closed or edited during verification is never selected, and the working design is preserved. The timeline exposes the retained Case console and trace without reach scaling.
 Frozen evaluation recordings remain unavailable as branch sources. Scene matching and asset checks run in the archive
 worker, including refusal of component references missing from the archive before persistence. Closing restores the previous simulation. The snapshot is inspectable and exportable,
 but does not enable branching against a different live source. Validation and desktop recording decoding run through

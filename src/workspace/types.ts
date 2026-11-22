@@ -76,6 +76,7 @@ export interface WorkspaceHandle {
   fingerprint: () => string;
   caseRobot: () => Promise<CompareRobot | null>;
   openCase: (kase: Case) => void;
+  openTry: (id: string) => void;
 }
 
 export interface Preferences {

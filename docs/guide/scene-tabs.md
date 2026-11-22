@@ -8,7 +8,7 @@ Several scenes stay open at once, each with its own parts, undo history, selecti
 
 - **Studies** (§8b) save their captured baseline, knob values, seed, Checks and graded rows in `project.study`. Background scene tabs stay mounted, so their Study workers keep running when another tab is in front. The saved baseline is serialized once across incremental result saves, using the same immutable part cache as the scene. Portable scene files carry the Study too. Export and import remove machine-local print, quote, policy, try, skill and build-guide records from its captured baseline as well as the live project.
 
-- **Portable evaluation failures** (§8h) open their frozen source scene through ordinary import. Library reopening from a different or edited scene creates a source tab and opens its retained timeline, preserving the working document. The transient `WorkspaceSeed.openTry` is consumed by `useOpeningTry` and is not a saved scene format field.
+- **Portable evaluation failures** (§8h) open their frozen source scene through ordinary import. Library reopening from a different or edited scene selects a verified matching mounted tab or creates a source tab, then opens its retained timeline while preserving the working document. The transient `WorkspaceSeed.openTry` is consumed by `useOpeningTry` and is not a saved scene format field.
 
 - **Architecture:** `App.tsx` is the tab host; each tab is a `SceneWorkspace` (`src/SceneWorkspace.tsx`).
   - Every tab stays mounted (background tabs mount shortly after launch, §0f), so a background agent keeps building and can render its review shots. Background tabs are `invisible` + `inert`, and their `Viewport3D` is `paused` (no render loop; captures still render on demand). Closing a tab frees its WebGL context (`forceContextLoss`).
@@ -150,3 +150,7 @@ Texture opacity classification is derived once from validated encoded bytes duri
 HTTP scene saves prepare UTF-8 JSON bodies as immutable Blobs through the existing encoding worker. The original JSON bytes, Content-Type, guarded route and per-scene queue order remain unchanged. Desktop preload saves retain their JSON-string API, and browser storage retains its string input. A body preparation failure refuses delivery before issuing a write. `utils/platform/sceneBody.test.ts` verifies byte parity with Unicode and asset content, route delivery, native and browser-storage paths and preparation failure. The ordinary agent performance workflow verifies accepted edits through real-store saving and reopening.
 
 An existing worker realm encodes a raw scene body locally instead of dispatching a nested encoding worker. The renderer retains the encoding-worker path. The transport tests distinguish these realms explicitly.
+
+### Frozen evaluation reopening
+
+Opening a saved evaluation from another scene reuses a mounted tab only after archive-worker verification of its current geometry and physics. The captured parts and project references must still match when verification finishes. The workspace queues the Try until its tab is active, so inactive simulator cleanup completes before playback starts. An edited or closed tab is left alone and a new frozen source tab is opened instead.

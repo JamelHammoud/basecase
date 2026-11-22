@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { runAgent } from '../lib/agent.mjs';
+import { UsageLimit } from '../lib/usage.mjs';
 import { claim } from '../lib/claim.mjs';
 import { conflictLog, recordConflict } from '../lib/conflicts.mjs';
 import { behindMain, conflictsWithMain, fetchAll } from '../lib/branches.mjs';
@@ -93,6 +94,8 @@ function merged(pull, dir, log) {
   try {
     return git(['merge', '--no-edit', 'origin/main'], dir, { allowFail: true }).ok || resolveConflicts(pull, dir);
   } catch (error) {
+    if (error instanceof UsageLimit) throw error;
+
     log(`#${pull.number}: resolving the conflicts failed: ${String(error.message).slice(0, 300)}`);
 
     return false;

@@ -1,3 +1,4 @@
+import { sameProjectSnapshot } from '../utils/projectInputs';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { SimInputs, SceneModelOptions } from './useSimulation';
@@ -18,7 +19,7 @@ export function useSceneModel({ parts, project, rig, pose, viewportRef, restDelt
   useLayoutEffect(() => {
     const previous = inputsRef.current;
 
-    if (previous.parts !== parts || previous.project !== project || previous.pose !== pose)
+    if (previous.parts !== parts || !sameProjectSnapshot(previous.project, project) || previous.pose !== pose)
       preparations.current.forEach((controller) => controller.abort());
 
     inputsRef.current = { parts, project, rig, pose, restDeltas };
@@ -73,7 +74,7 @@ export function useSceneModel({ parts, project, rig, pose, viewportRef, restDelt
           signal,
           current: () =>
             inputsRef.current.parts === current.parts &&
-            inputsRef.current.project === current.project &&
+            sameProjectSnapshot(current.project, inputsRef.current.project) &&
             inputsRef.current.pose === current.pose,
         });
       } finally {

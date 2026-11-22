@@ -1128,3 +1128,7 @@ Linux browser shard 8 in the same check found zero Mark Incomplete controls afte
 ## Nightly Linux browser shard capacity in Check 45056273339
 
 Linux browser shard 2 of eight ran its tests for 11.6 minutes after a 3.5 minute build and was cancelled at the 15-minute job limit with no failing test. Several preceding nightlies also contained Linux browser shards that reached the job limit. Completed shards took 10 to 14.5 minutes. Vitest assigns files to shards by hash, so file counts balance but test time does not. The nightly now runs ten Linux browser shards. This adds runners, not a longer timeout or a retry. `browserShard.test.mjs` checks complete, disjoint assignment for six and ten shards. Windows keeps six shards with its 25-minute limit, where the slowest shard finished in 15 minutes.
+
+## Quarantine of unrepaired failures in Check 45067663787
+
+The repair lane was waiting on provider quota until 24 November while main stayed red. Check 45067663787 failed on eight declarations that no merged repair covered. Each is quarantined through 28 November 2026 under its existing owner. `evaluation.e2e.test.ts` and `studySourcing.e2e.test.ts` failed on Windows in at least four consecutive main checks. `operateG1`, `leagueEntry` and `skillDiscovery` failed on Windows, the shared code panel gallery story on Linux, the evaluation cancellation unit test on Windows and the appearance render file setup on Linux. Logs name no stalled stage for any of them, so no cause is claimed. Restoration follows the equal-load measurement rule in the entries.

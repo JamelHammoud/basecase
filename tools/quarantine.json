@@ -1397,5 +1397,69 @@
     "until": "2026-12-04",
     "platform": "win32",
     "reason": "Nightly 45043548948 failed this declaration on Windows at correctTwice line 106: Take Control was not visible within the unchanged 5000 ms poll after Try Policy was activated with Enter. The same file passed on Windows in runs 45033521946 and 44964826807 and on Linux in all three, and the commits between touch no teaching code. The stalled stage (activation, live worker start or owner publication) is not established. Existing owner #2060 owns stage timing and the fix. Linux and macOS retain the browser declaration, and the teaching, task, worker, tries and Case unit coverage stays active on Windows. Preserve existing assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load Windows observations with retries disabled. No flake rate is claimed."
+  },
+  {
+    "file": "e2e/evaluation.e2e.test.ts",
+    "test": "imports an actual CLI failure and opens its frozen identity and failure in the ordinary timeline",
+    "issue": 2084,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Checks 45053376172, 45056273339, 45061969197, 45064805192 and 45067663787 each failed this declaration on Windows at the poll for the saved try timeline in openSaved after the CLI freeze and run steps had returned their expected codes. Three repairs to the surrounding fixtures did not change the result, and the cause is not established. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platforms and fast coverage of the same paths remain active."
+  },
+  {
+    "file": "e2e/operateG1.e2e.test.ts",
+    "test": "connects the G1 and offers its writable joints and Test controls",
+    "issue": 1024,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Checks 45053376172 and 45067663787 failed the declaration on Windows on both attempts, 31367 ms in the latest. The stalled stage is not named in either log. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platforms and fast coverage of the same paths remain active."
+  },
+  {
+    "file": "e2e/leagueEntry.e2e.test.ts",
+    "test": "opens Enter League through Share Robot, refuses a different Case and copies a pinned submission",
+    "issue": 1762,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 45067663787 failed on Windows when the Share Robot panel text never included the pinned submission link. Linux passed at the same revision. The stalled stage is not named. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platforms and fast coverage of the same paths remain active."
+  },
+  {
+    "file": "e2e/skillDiscovery.e2e.test.ts",
+    "test": "reorders discovery after reported installs on a second robot",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 45067663787 failed on Windows on both attempts with an empty discovery order where two skills were expected. Linux passed at the same revision. The stalled stage is not named. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platforms and fast coverage of the same paths remain active."
+  },
+  {
+    "file": "e2e/studySourcing.e2e.test.ts",
+    "test": "reopens historical purchasing evidence and refuses Apply after the selected offer changes",
+    "issue": 2015,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Checks 45056273339 through 45067663787 failed this declaration on Windows at the unchanged 30000 ms wait for the Run Study again notice, after the sibling late and on-time offers declaration was quarantined under the same owner. A fixture repair for guide pictures did not change the result. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platforms and fast coverage of the same paths remain active."
+  },
+  {
+    "file": "e2e/gallery.e2e.test.ts",
+    "test": "keeps a shared code panel away from the page\u2019s IndexedDB, its cookies and the Hub",
+    "issue": 1139,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 45067663787 failed on Linux on both attempts at the sandbox probe, then lost the frame while polling it. The Windows declaration is already quarantined under the same owner. The responsible stage is not established. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platforms and fast coverage of the same paths remain active."
+  },
+  {
+    "file": "tools/cli/evaluationInterruption.test.mjs",
+    "test": "cancels the actual CLI through its portable stop file and retains incomplete evidence",
+    "issue": 2084,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Check 45067663787 exhausted the unchanged 5000 ms test deadline on Windows. The forced-interruption sibling passed in the same run, and the cancellation stage is not distinguished. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platforms and fast coverage of the same paths remain active."
+  },
+  {
+    "file": "src/appearance/render.test.ts",
+    "test": "",
+    "issue": 1400,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Check 45067663787 exhausted the unchanged 15000 ms beforeAll deadline opening the offscreen worker on Linux, failing the file at setup before any case ran. It shares the OffscreenCanvas setup incident owned by #1400, which already quarantines the guide stage file on both platforms. Whole-file filtering is required because setup precedes individual-test filtering. Preserve assertions and deadlines. Restore only after a demonstrated fix and ten baseline and ten candidate equal-load observations on the affected platform with retries disabled. Other platforms and fast coverage of the same paths remain active."
   }
 ]

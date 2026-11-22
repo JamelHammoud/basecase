@@ -47,6 +47,7 @@ it('runs every independent measurement without retries and retains failures and 
   expect(calls[0].args).toContain('--testNamePattern=^gallery opens \\(one\\)$');
   expect(calls[0].args).toContain('vitest.e2e.config.ts');
   expect(calls[0].options.env.DEBUG).toBe('pw:api');
+  expect(calls[0].options.env.BASECASE_DIAGNOSTIC_BROWSER_TRACE).toBe('1');
   expect(manifest.results.map((item) => item.status)).toEqual(['failed', 'passed', 'passed']);
   expect(manifest.results[0].cleanup).toContain('cleanup failed');
   expect(fs.readdirSync(output)).toHaveLength(7);
@@ -102,6 +103,7 @@ it('leaves browser action tracing off for unit diagnostics', () => {
     },
   );
   expect(environment.DEBUG).toBeUndefined();
+  expect(environment.BASECASE_DIAGNOSTIC_BROWSER_TRACE).toBeUndefined();
 });
 
 it('rejects browser action tracing for a unit selection', () => {

@@ -80,6 +80,16 @@ it(
         .locator(shown('button[data-idx]'))
         .filter({ hasText: /^New Scene/ })
         .click();
+      await app.page.getByRole('tab', { name: /^Untitled/, selected: true }).waitFor();
+      await expect
+        .poll(() =>
+          app.page.evaluate(
+            () =>
+              (window as unknown as { __studio: { sceneRecord: () => { parts: unknown[] } } }).__studio.sceneRecord()
+                .parts,
+          ),
+        )
+        .toHaveLength(0);
       await openSaved(app, stored.id);
       await expect.poll(() => app.page.locator(shown('[data-testid="try-timeline"]')).innerText()).toContain('Missed');
       expect(app.errors).toEqual([]);

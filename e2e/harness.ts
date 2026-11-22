@@ -4,6 +4,7 @@ import path from 'node:path';
 import { chromium, type Browser, type Page } from 'playwright-core';
 import { inject } from 'vitest';
 import { browserWorkerDiagnostics } from '../tools/testing/browserDiagnostics';
+import { installBrowserWorkerTrace } from '../tools/testing/browserWorkerTrace';
 import { datasetPostRoutes } from '../electron/library/datasetRoutes.mjs';
 import { DatasetStore } from '../electron/library/datasetStore.mjs';
 import { tryPostRoutes } from '../electron/library/tryRoutes.mjs';
@@ -203,6 +204,7 @@ export async function openApp(
     errors.push(where ? `${m.text()} (${where})` : m.text());
   });
   await exposeTestHooks(page);
+  await installBrowserWorkerTrace(page);
   await stubBackend(page, { posts, lists, live, libraryDir, roboflowUrl: options.roboflowUrl });
   await page.goto(inject('appUrl'));
   await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {

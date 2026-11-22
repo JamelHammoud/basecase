@@ -1,3 +1,4 @@
+import { stubKitGuideWorker } from './kitGuideWorker';
 import { analysisArmScene } from '../src/reality/bodyAnalysisMatrix.fixtures';
 import { parkedBodyRun } from '../src/reality/bodyMotion.fixtures';
 import type { SimModel } from '../src/sim/mjcfTypes';
@@ -41,6 +42,9 @@ export async function attachBodyMotionRobot(app: App) {
 
 export async function openBodyMotionApp(recommended = false) {
   const app = await openApp();
+
+  await stubKitGuideWorker(app.page);
+
   const scene = analysisArmScene();
   const joints = scene.joints.map((joint) => ({ ...joint, name: `${joint.name} ${'retained-link-'.repeat(10)}` }));
 

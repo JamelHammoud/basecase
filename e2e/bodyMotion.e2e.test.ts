@@ -11,6 +11,10 @@ beforeAll(async () => {
 
   app = fixture.app;
   await narrowBodyMotionPanel(app.page);
+  await app.page.getByRole('button', { name: 'Analyze Try', exact: true }).filter({ visible: true }).click();
+  await app.page.getByRole('combobox', { name: 'Try' }).selectOption('body-motion-arm');
+  await app.page.getByRole('button', { name: 'Analyze', exact: true }).click();
+  await app.page.locator('[data-body-parameter]').first().waitFor();
 });
 
 afterAll(async () => {
@@ -32,10 +36,6 @@ it(
       };
     });
 
-    await app.page.getByRole('button', { name: 'Analyze Try', exact: true }).filter({ visible: true }).click();
-    await app.page.getByRole('combobox', { name: 'Try' }).selectOption('body-motion-arm');
-    await app.page.getByRole('button', { name: 'Analyze', exact: true }).click();
-    await app.page.locator('[data-body-parameter]').first().waitFor();
     expect(await app.page.getByRole('button', { name: 'Preview Motion', exact: true }).isDisabled()).toBe(true);
     await expectBodyMotionLayout(app.page);
     await app.page.getByRole('dialog', { name: 'Analyze Try' }).getByRole('switch').first().press('Space');
@@ -76,9 +76,10 @@ it(
       );
 
     expect(bindings(after.scene.project.bodyEvidence)).toEqual(bindings(before.scene.project.bodyEvidence));
-    expect({ ...after.scene.project, bodyEvidence: undefined }).toEqual({
+    expect({ ...after.scene.project, bodyEvidence: undefined, buildGuide: undefined }).toEqual({
       ...before.scene.project,
       bodyEvidence: undefined,
+      buildGuide: undefined,
     });
     await app.page.keyboard.press('Escape');
     expect(app.errors).toEqual([]);

@@ -464,3 +464,5 @@ The stationary-rover declaration in `bodyMotion.test.ts` is quarantined on Linux
 ### Body source identity
 
 New body recordings use source version 2. Physical body inputs remain part of the content hash, while generated build guides and body evidence are excluded. Saving a guide during analysis or execution does not cancel that work. Part, joint, calibration and other project edits retain their cancellation guards. Older references without a version retain version 1 hashing, and references must match the snapshot version before they can be used.
+
+The motion recommendation browser fixture completes ordinary Analyze Try setup before its timed recommendation and scrub assertions. The independent body analysis walkthrough retains Analyze coverage. Motion fixtures use the shared guide image fixture while retaining real planning and source binding. Unchanged-design comparisons exclude generated build-guide metadata alongside separately checked body-evidence content.

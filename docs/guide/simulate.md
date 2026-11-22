@@ -311,3 +311,5 @@ Seeded Case Checks use a shared cancellation flag at preparation and physics rec
 
 
 Contact preparation already executing in a worker borrows its immutable source triangle arrays. Renderer preparation still makes owned copies before transferring buffers. The local preparation never transfers or mutates borrowed arrays. `scenePreparation.test.ts` checks retained buffer ownership, absence of redundant copies and exact prepared-model parity beside the worker-realm and cancellation assertions.
+
+Full CI unit jobs prepare the exact WASM engine version’s native MuJoCo dependency before starting Vitest (`tools/sim/prepareNativeContact.mjs`). The existing version handshake verifies preparation and closes its process. Individual parity suites retain their independent replay processes, cleanup and unchanged setup and callback deadlines. This keeps dependency resolution outside suite setup hooks.

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { isPaused } from '../lib/github.mjs';
+import { hasLabel, isPaused, openPulls } from '../lib/github.mjs';
 import { nightlyHarness } from '../lib/harnessNightly.mjs';
 import { nextVersion, releaseDue, rerunSuite, suiteDue } from '../lib/nightly.mjs';
 import { json, run } from '../lib/sh.mjs';
@@ -68,6 +68,8 @@ function suite(log, now) {
     mainHead: mainHead(),
     running,
     repairMerged: () => repairMergedSince(last.createdAt),
+    repairOpen: () =>
+      openPulls().some((pull) => hasLabel(pull, 'loop:repair') || pull.headRefName.startsWith('loop/repair/')),
   });
 
   if (rerun && dispatch('check.yml')) log('the full suite failed and fixes have landed since; running it again');

@@ -1,6 +1,10 @@
 import loadMujoco from '@mujoco/mujoco';
-import { beforeAll, expect, it } from 'vitest';
-import { nativeContactReplay } from '../../../tools/sim/nativeContactReplay.mjs';
+import { afterAll, beforeAll, expect, it } from 'vitest';
+import {
+  closeNativeContactReplays,
+  nativeContactReplay,
+  prepareNativeContactReplay,
+} from '../../../tools/sim/nativeContactReplay.mjs';
 import { replayDifferences } from '../../../tools/sim/contactReplayComparison.mjs';
 import { tendonMechanism, tendonMechanisms } from './tendonMechanisms';
 import { captureContactReplay } from './contactReplay';
@@ -14,7 +18,10 @@ let mj: Awaited<ReturnType<typeof loadMujoco>>;
 
 beforeAll(async () => {
   mj = await loadMujoco();
+  await prepareNativeContactReplay(mj.mj_versionString());
 });
+
+afterAll(closeNativeContactReplays);
 
 async function compareNative(replay: ContactReplay) {
   const started = performance.now();

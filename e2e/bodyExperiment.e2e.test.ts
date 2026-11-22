@@ -32,7 +32,11 @@ it(
     await page.getByRole('button', { name: 'Method', exact: true }).press('Enter');
     await page.getByText('This emulator doesn’t model body mass, payload or floor contact.', { exact: true }).waitFor();
     await expectBodyMotionLayout(page);
-    await page.getByRole('button', { name: 'Run', exact: true }).press('Enter');
+
+    const runButton = page.getByRole('button', { name: 'Run', exact: true });
+
+    await expect.poll(() => runButton.isEnabled()).toBe(true);
+    await runButton.press('Enter');
     await page.locator('[data-experiment-completion="completed"]').waitFor({ state: 'attached' });
     await page.getByText('This emulator doesn’t model body mass, payload or floor contact.', { exact: true }).waitFor();
 

@@ -46,6 +46,26 @@ afterEach(() => {
 });
 
 describe('agent routing', () => {
+  it('reports admission after journaling and before the provider starts', () => {
+    const onStart = vi.fn();
+
+    mocks.codex.mockReturnValue({ ok: true, output: { changed: false } });
+    runAgent({ ...task, onStart });
+    expect(onStart).toHaveBeenCalledWith(expect.any(Number));
+    expect(mocks.journal.mock.invocationCallOrder[0]).toBeLessThan(onStart.mock.invocationCallOrder[0]);
+    expect(onStart.mock.invocationCallOrder[0]).toBeLessThan(mocks.codex.mock.invocationCallOrder[0]);
+  });
+
+  it('reports no admission while primary and overflow capacity are unavailable', () => {
+    const onStart = vi.fn();
+
+    mocks.codexHeld = { until: Date.now() + 60_000 };
+    mocks.reserve.mockReturnValue(null);
+
+    expect(() => runAgent({ ...task, onStart })).toThrow('limited');
+    expect(onStart).not.toHaveBeenCalled();
+  });
+
   it('uses Codex even when Claude has available capacity and records start and completion', () => {
     mocks.codex.mockReturnValue({ ok: true, output: { changed: true } });
 

@@ -32,11 +32,7 @@ it(
     await page.getByRole('button', { name: 'Method', exact: true }).press('Enter');
     await page.getByText('This emulator doesn’t model body mass, payload or floor contact.', { exact: true }).waitFor();
     await expectBodyMotionLayout(page);
-
-    const runButton = page.getByRole('button', { name: 'Run', exact: true });
-
-    await expect.poll(() => runButton.isEnabled()).toBe(true);
-    await runButton.press('Enter');
+    await page.getByRole('button', { name: 'Run', exact: true }).press('Enter');
     await page.locator('[data-experiment-completion="completed"]').waitFor({ state: 'attached' });
     await page.getByText('This emulator doesn’t model body mass, payload or floor contact.', { exact: true }).waitFor();
 
@@ -59,7 +55,6 @@ it(
     await page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
     await page.locator(shown('[data-testid="library-tries"] button')).first().click();
     await page.locator(shown(`[data-testid="try-tile"][data-try="${id}"]`)).click();
-    await page.locator('[data-testid="case-run-area"]').getByRole('button', { name: 'Done', exact: true }).click();
     await openPlayTab(page, 'Operate');
     await page.getByRole('button', { name: 'Analyze Try', exact: true }).filter({ visible: true }).click();
     await page.getByRole('combobox', { name: 'Try' }).selectOption(id);

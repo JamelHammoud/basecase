@@ -82,7 +82,6 @@ export default function doctor({ log }) {
     return log(found.length + failing.length > 0 ? 'watching' : 'flowing');
   }
 
-  state.lastCallAt = now;
   visits.save('state', state);
 
   const worktree = openBranch('repair', 'doctor');
@@ -94,6 +93,7 @@ export default function doctor({ log }) {
       prompt: prompt({ found, failing, logs }),
       schema: CHANGE_SCHEMA,
       hours: 3,
+      onStart: (at) => visits.save('state', { ...state, lastCallAt: at }),
     });
 
     if (!result.ok) return log(`doctor session failed: ${String(result.error).slice(0, 300)}`);

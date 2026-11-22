@@ -29,9 +29,9 @@ beforeAll(async () => {
   const other = await admin.create('site', { name: 'Ward B' });
   const robot = await admin.create('robot', { name: 'Delivery 01', parent: site.id });
 
-  await Promise.all(
-    Array.from({ length: 30 }, (_, index) => admin.create('robot', { name: `Ward robot ${index}`, parent: site.id })),
-  );
+  for (let index = 0; index < 30; index++) {
+    await admin.create('robot', { name: `Ward robot ${index}`, parent: site.id });
+  }
 
   const role = await admin.create('role', {
     name: 'Ward viewer',

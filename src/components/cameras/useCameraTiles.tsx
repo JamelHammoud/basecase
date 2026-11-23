@@ -10,6 +10,10 @@ import type { Simulation } from '../../sim/useSimulation';
 import type { ScenePart } from '../../types/robotics';
 import type { FixedCameras } from '../../workspace/useFixedCameras';
 import { cameraMenu } from './cameraMenu';
+import type { ConsoleRegions } from '../../cases/console/regions';
+import { useCaseRegions } from '../../workspace/useCaseRegions';
+import type { RegionKind } from './RegionDraw';
+import { regionEntries, type RegionEditing } from './regionMenu';
 import type { CameraTileProps } from './CameraTile';
 
 export interface CameraTilesInput {
@@ -20,6 +24,8 @@ export interface CameraTilesInput {
   patchPart: (id: string, patch: Partial<ScenePart>) => void;
   active: (views: CameraView[]) => boolean;
   onFrames?: (frames: number) => void;
+  regions?: RegionEditing;
+  declared?: ConsoleRegions;
 }
 
 export interface CameraTiles {
@@ -35,15 +41,19 @@ const shownWorld = (world: ScenePart[]) =>
 export function useCameraTiles(input: CameraTilesInput): CameraTiles {
   const scope = useVisionScope();
   const { recordedCanvasRef, streamRecordedCamera, useRecordedCameraViews } = scope.playback;
-  const { parts, sim, cameras, patchPart, active, onFrames } = input;
+  const { parts, sim, cameras, patchPart, active, onFrames, regions, declared } = input;
   const { enlarged } = useCameraViewsState();
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
+  const [drawing, setDrawing] = useState<{ camera: string; kind: RegionKind } | null>(null);
   const solid = stripParts(parts);
   const recorded = useRecordedCameraViews();
   const recordedKeys = new Set(recorded.map((view) => view.key));
   const simulated = cameraViews(solid, sim.worldParts, cameras.cameras).filter((view) => !recordedKeys.has(view.key));
   const views = [...recorded, ...simulated];
+
+  useCaseRegions(scope, declared, [...recordedKeys]);
+
   const feed = useCameraFeed({
     active: active(views),
     parts: solid,
@@ -81,8 +91,28 @@ export function useCameraTiles(input: CameraTilesInput): CameraTiles {
         ? (canvas) => recordedCanvasRef(view.key, canvas)
         : feed.canvasRef(view.key),
       onToggleSize: () => enlargeCameraView(view.key),
+      drawing:
+        regions && drawing?.camera === view.key
+          ? {
+              kind: drawing.kind,
+              onLine: (from, to) => {
+                setDrawing(null);
+                regions.drawLine(view.key, from, to);
+              },
+              onZone: (points) => {
+                setDrawing(null);
+                regions.drawZone(view.key, points);
+              },
+              onCancel: () => setDrawing(null),
+            }
+          : undefined,
       onMenu: (x, y) => {
-        if (!view.recorded) setMenu({ x, y, items: cameraMenu(view, actions) });
+        const items = [
+          ...(view.recorded ? [] : cameraMenu(view, actions)),
+          ...(regions ? regionEntries(view.key, regions, (kind) => setDrawing({ camera: view.key, kind })) : []),
+        ];
+
+        if (items.length) setMenu({ x, y, items });
       },
     }),
     menu: menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />,

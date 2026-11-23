@@ -1,3 +1,5 @@
+import type { TrackingSnapshot } from './tracking/types';
+
 export interface VisionSource {
   scene: string;
   kind: 'simulated' | 'recorded' | 'operator';
@@ -29,6 +31,7 @@ export interface VisionResult {
   detections: VisionDetection[];
   depth?: { values?: Float32Array; width: number; height: number; relative: true; nearness?: number };
   classes?: { label: string; score: number }[];
+  tracking?: TrackingSnapshot;
 }
 
 export interface VisionFrameOptions {

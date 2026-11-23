@@ -11,6 +11,9 @@ import {
   type PanelPlace,
 } from '../cases/console/consoleEdits';
 import type { CaseConsole } from '../cases/console/format';
+import { addLine, addZone, clearRegions } from '../cases/console/regionEdits';
+import type { ConsoleRegions } from '../cases/console/regions';
+import type { Point } from '../vision/tracking/types';
 import { DEFAULT_CONSOLE, type ConsoleLayout } from '../cases/console/layout';
 import { panelLabel } from '../components/caseRun/panelChoices';
 import { confirmAction } from '../design-system/confirmStore';
@@ -35,6 +38,10 @@ export interface ConsoleEditing {
   remove: (id: string) => void;
   startRename: (id: string) => void;
   finishRename: (id: string, title: string | null) => void;
+  regions: ConsoleRegions | undefined;
+  drawLine: (camera: string, from: Point, to: Point) => void;
+  drawZone: (camera: string, points: Point[]) => void;
+  clearRegions: (camera: string) => void;
 }
 
 function placeInConsole(c: CaseConsole, layout: ConsoleLayout, to: PanelPlace): PanelPlace {
@@ -95,6 +102,11 @@ export function useConsoleEditing({ caseRun, docs, showToast }: EditingInput): C
     },
     cancelAdd: () => setAdding(null),
     remove,
+    regions: current.regions,
+    drawLine: (camera, from, to) => apply((c) => addLine(c, camera, from, to)),
+    drawZone: (camera, points) => apply((c) => addZone(c, camera, points)),
+    clearRegions: (camera) =>
+      confirmAction({ title: 'Delete lines and zones?', onConfirm: () => apply((c) => clearRegions(c, camera)) }),
     startRename: setRenaming,
     finishRename: (id, title) => {
       setRenaming(null);

@@ -636,7 +636,7 @@ An image dataset publishes the same `coco/` and `yolo/` packages that Export Dat
 
 ### Running a Case
 
-Camera detections and live console signals belong to the Case’s workspace and camera source. Recorded consoles select recorded results for video-backed tiles and simulated results for other tiles in that workspace. Each workspace owns its playback decoder, seek boundary and error state.
+A Case saves its zones and lines under the console's `regions`, keyed by camera name, so reopening it, exporting it and handing it to the agent keep them. The agent's `create_case` takes `console.regions`. Camera detections and live console signals belong to the Case’s workspace and camera source. Recorded consoles select recorded results for video-backed tiles and simulated results for other tiles in that workspace. Each workspace owns its playback decoder, seek boundary and error state.
 
 **Run Case** (the expand button in the Case's header in Simulate, and ⌘K, with a Case open) runs the open Case in the whole window, laid out by its console. It has no name of its own: what a Case shows when it runs is part of the Case. It's a mode of the scene's workspace like Print (§8f), not a second scene: `useCaseRun` (`src/workspace/`) holds it, and `CaseRunProvider` gives both sides of the canvas one signal bus and one camera feed.
 
@@ -655,6 +655,7 @@ Camera detections and live console signals belong to the Case’s workspace and 
 - `input.<source>.forward`, `.left`, `.turn`, `.lift`, `.grip`, for the console's sources;
 - `goal.passed`, `goal.margin` and `goal.failed` (the labels so far) while a try runs;
 - `camera.<name>`: each camera view, keyed like dataset cameras (`wrist_camera`); `camera.operator` needs the `camera`, `hand` or `face` input;
+- `vision.<camera>.<class>.tracks`, `vision.<camera>.zone.<name>.count` and `.dwell`, `vision.<camera>.line.<name>.in` and `.out`: what a detector's objects do on a camera, from the zones and lines in `console.regions` (§8l, Tracking, zones and lines). They read like `vision.<camera>.<class>`, in consoles, Routine facts and recorded playback, and return to zero when nothing is left. A camera panel's tile right-click menu draws them in a Case open for editing;
 - `gesture.<name>`: 1 for half a second after that gesture, else 0, for a built-in or one of the Case's gestures; it needs the `camera` input, and a `counter` on it counts the gestures;
 - `topic.<topic>.<path>`: while a try carrying an imported recording plays (§ Imported tries, **Topics**), every field of every topic, by a message path of fields, `[i]` for one item and `[:]` for all (`topic./imu.angular_velocity.z`, `topic./joint_states.effort[:]`). A Case's console is read without the recording, so `signalNames.ts` accepts any well-formed one (shape `topic`, up to 240 characters, `/ ~ [ ] :` allowed) wherever a number or labels go, and `[:]` counts as a wildcard like `*`. `topic.<topic>` alone names a topic (`readTopicRef`). The recorded bus serves them from the try's `TopicIndex` (`topicBus` in `src/topics/topicBus.ts`: `read` at the playhead, `series` on the topic's own times, `expand`, `topics()` and `listed()`);
 - `time`, and the Case's own signals.

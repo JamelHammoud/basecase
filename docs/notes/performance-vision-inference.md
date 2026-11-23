@@ -54,3 +54,21 @@ Whole-app search found the spatial bank and pointer ordering in `vision/segmenta
 With 15 recent memories, a bank previously built six temporary lists: six spatial references, six padded spatial references, seven complete spatial entries, 15 sliced pointer references, 16 pointer entries and the 16-slot pointer result. It reversed the pointer slice in place. Direct bank lookup removes all six lists, totaling 66 reference entries. The engine still receives its required 16-slot result, without the 15-entry slice and 16-entry staging list. These are allocation counts derived from the code, not elapsed-time measurements or a claim about model inference latency. Tensor sizes and arithmetic are unchanged.
 
 `segmentationMath.test.ts` compares every byte in both complete tensor buffers against the previous slot construction for histories of 0, 1, 5, 6, 7, 14, 15, 16 and 20 frames. It also checks exact pointer identities, independent returned lists and history preservation. Existing prompt, mask and initial-bank tests remain active. No model execution, browser interaction, label or visible state changes, so existing help and screenshots remain accurate.
+
+## Tracking runs in the inference worker at a fixed small cost
+
+`src/vision/tracking/` tracks each camera's detections and counts them through zones and lines inside `inference.worker.ts`, after decoding and before the result returns. The main thread gains no tracking work. It reads the finished `tracking` field when it builds signals. A tracker holds at most 64 tracks and reads at most 64 detections a frame, a session at most 64 cameras and a worker at most 256 camera region entries.
+
+A local probe on an Apple M5 Pro, macOS arm64 and Node 26.13.0 replayed 2,000 frames per size after a 200-frame warm-up. Each frame held the stated number of moving detections of two classes, two zones and two lines. It timed `trackResult` and `visionSignalValues` for the same frames with and without the `tracking` field.
+
+| Detections per frame | Tracking median | Tracking p99 | Signals without tracking | Signals with tracking |
+|---|---|---|---|---|
+| 1 | 0.9 µs | 7 µs | 1.0 µs | 2.5 µs |
+| 8 | 5.5 µs | 12.9 µs | 3.5 µs | 6.0 µs |
+| 32 | 33.9 µs | 74 µs | 11.0 µs | 16.8 µs |
+| 64 | 100.5 µs | 148.5 µs | 21.5 µs | 29.4 µs |
+
+At the 64-detection cap, tracking adds about 0.1 ms in the worker and 8 µs on the main thread's signal build, against an inference step that takes milliseconds even for the smallest model. The added latency to the signal path is the worker time. A real 4-slot WASM detector frame in `routines/visionTracking.test.ts` runs through the same path.
+
+Memory was measured as heap growth over 64 cameras, each fed 300 frames of 64 detections with two zones and two lines, after forcing garbage collection. It came to 17.3 KiB per camera at the track cap. This is a single-machine probe, not a CI threshold, and no timing assertion exists. The bound itself is asserted: `tracker.test.ts` checks the track, detection and camera caps hold however many objects appear.
+

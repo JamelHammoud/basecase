@@ -56,7 +56,7 @@ If the try's Case has a [captured world](/help/import-a-world), its camera cards
 
 Plots show the whole try, with a line at the playhead. The map draws the whole path the robot took, with a dot where the robot is at the playhead. If a try's Case isn't in this scene, the try plays through the default cards: the cameras, the brief, the failures, the servos and the tries. A try imported from a ROS recording adds a column of cards for its topics, as in [Play a ROS recording's topics in the console](/help/play-a-ros-recordings-topics-in-the-console).
 
-If a try has saved camera videos, their tiles show the recorded images at the playhead. Basecase runs detection on those images during playback, so the boxes and detection signals are computed again. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
+If a try has saved camera videos, their tiles show the recorded images at the playhead. Basecase runs detection on those images during playback, so the boxes, object ids, line crossings, zone counts and other detection signals are computed again. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
 
 **Note:** Joint playback requires the robot to fit as it is now. If you've added or removed a joint since the try was recorded, it won't open. Tries from a real robot don't play through these cards. [Compare saved tries](/help/compare-saved-tries) reads saved evidence without requiring a matching scene robot.
 

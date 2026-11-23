@@ -16,6 +16,7 @@ keywords:
   - /operate
 related:
   - add-a-camera-view
+  - count-objects-through-zones-and-lines
   - lerobot-dataset-contents
 hub_run_a_case_order: 15
 hub_run_a_case: |
@@ -88,6 +89,8 @@ You can also [train a vision model](/help/train-a-vision-model) on your own labe
 ![A wrist camera with a fixture detector's block box and score](/help/watch-what-the-robots-cameras-see/detections.png)
 
 Boxes also appear on live camera tiles and recorded camera videos at the playhead. Captures and exported camera images contain the camera image alone.
+
+On a camera with a line or a zone, each box carries an id such as `#3` that stays with the object from frame to frame. To count objects through a line or a zone, see [Count objects through zones and lines](/help/count-objects-through-zones-and-lines).
 
 Detectors recognize their model's classes. The CPU fallback can take seconds per image, and Routines ignore images older than their freshness limit.
 

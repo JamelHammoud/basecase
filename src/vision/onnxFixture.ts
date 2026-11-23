@@ -1,4 +1,4 @@
-const join = (...chunks: Uint8Array[]) => {
+export const join = (...chunks: Uint8Array[]) => {
   const bytes = new Uint8Array(chunks.reduce((size, chunk) => size + chunk.length, 0));
   let offset = 0;
 
@@ -22,11 +22,13 @@ function varint(value: number) {
   return new Uint8Array(bytes);
 }
 
-const number = (field: number, value: number) => join(varint(field * 8), varint(value));
-const message = (field: number, value: Uint8Array) => join(varint(field * 8 + 2), varint(value.length), value);
-const string = (field: number, value: string) => message(field, new TextEncoder().encode(value));
+export const number = (field: number, value: number) => join(varint(field * 8), varint(value));
+export const message = (field: number, value: Uint8Array) => join(varint(field * 8 + 2), varint(value.length), value);
+export const string = (field: number, value: string) => message(field, new TextEncoder().encode(value));
+
 const shape = (dims: number[]) => join(...dims.map((dim) => message(1, number(1, dim))));
-const valueInfo = (name: string, dims: number[]) =>
+
+export const valueInfo = (name: string, dims: number[]) =>
   join(string(1, name), message(2, message(1, join(number(1, 1), message(2, shape(dims))))));
 
 export function tinyDetectionOnnx(rows = [0.1, 0.2, 0.3, 0.4, 0.9, 0]) {

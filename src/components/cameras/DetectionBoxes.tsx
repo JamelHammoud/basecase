@@ -2,9 +2,19 @@ import React from 'react';
 import { percent } from '../../../electron/percent.mjs';
 import type { VisionResult } from '../../vision/types';
 
-export const DetectionBoxes: React.FC<{ result: VisionResult | null; mirrorText?: boolean }> = ({
+const trackOf = (result: VisionResult, detection: VisionResult['detections'][number]) =>
+  result.tracking?.tracks.find(
+    (track) =>
+      !track.coasting &&
+      track.label === detection.label &&
+      track.box[0] === detection.box[0] &&
+      track.box[1] === detection.box[1],
+  );
+
+export const DetectionBoxes: React.FC<{ result: VisionResult | null; mirrorText?: boolean; ids?: boolean }> = ({
   result,
   mirrorText,
+  ids,
 }) => (
   <div
     data-testid="vision-overlay"
@@ -15,6 +25,7 @@ export const DetectionBoxes: React.FC<{ result: VisionResult | null; mirrorText?
       <div
         key={`${detection.label}:${index}`}
         data-testid="vision-box"
+        data-track={ids ? trackOf(result, detection)?.id : undefined}
         data-label={detection.label}
         data-score={detection.score}
         data-box={detection.box.join(',')}
@@ -29,7 +40,8 @@ export const DetectionBoxes: React.FC<{ result: VisionResult | null; mirrorText?
         <span
           className={`absolute left-0 top-0 max-w-full truncate rounded-br bg-black/80 px-1.5 text-[12px] leading-6 text-white/90 ${mirrorText ? '-scale-x-100' : ''}`}
         >
-          {detection.label} {percent(detection.score)}
+          {detection.label} {ids && trackOf(result, detection) ? `#${trackOf(result, detection)?.id} ` : ''}
+          {percent(detection.score)}
         </span>
       </div>
     ))}

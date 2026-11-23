@@ -46,12 +46,33 @@ it('fails one knee in the quadruped’s Walk Without Falling Case, opens the fai
     await item('Limp').click();
     await expect.poll(() => listed.textContent()).toMatch(/Limp leg0_bend/);
 
+    const faultBounds = await listed.first().evaluate((row) => {
+      const name = row.querySelector('span')!.getBoundingClientRect();
+      const remove = row.querySelector('button')!.getBoundingClientRect();
+      const box = row.getBoundingClientRect();
+
+      return { nameRight: name.right, removeLeft: remove.left, removeRight: remove.right, boxRight: box.right };
+    });
+
+    expect(faultBounds.nameRight).toBeLessThanOrEqual(faultBounds.removeLeft);
+    expect(faultBounds.removeRight).toBeLessThanOrEqual(faultBounds.boxRight + 0.5);
+
     await app.page.locator('[role=tab]:not([inert] *):visible', { hasText: 'Build' }).first().click();
 
     const row = app.page.locator(shown('[data-testid="case-fault-check"]'));
 
     await expect.poll(() => row.textContent(), { timeout: 120000 }).toMatch(/of 20$/);
     await expect.poll(() => row.getAttribute('data-status')).toBe('fail');
+
+    const rowBounds = await row.evaluate((button) => {
+      const [label, count] = [...button.querySelectorAll('span')].map((s) => s.getBoundingClientRect());
+      const box = button.getBoundingClientRect();
+
+      return { labelRight: label.right, countLeft: count.left, countRight: count.right, boxRight: box.right };
+    });
+
+    expect(rowBounds.labelRight).toBeLessThanOrEqual(rowBounds.countLeft);
+    expect(rowBounds.countRight).toBeLessThanOrEqual(rowBounds.boxRight + 0.5);
     await expect
       .poll(() => app.page.locator(shown('#case-check-walk-without-falling')).getAttribute('data-status'))
       .not.toBe('fail');

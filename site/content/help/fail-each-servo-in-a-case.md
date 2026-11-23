@@ -33,7 +33,7 @@ Add a broken servo to a Case, and Checks tells you whether the robot still passe
 
    ![A failing seed open on the timeline with leg0_bend limp](/help/fail-each-servo-in-a-case/replay.png)
 
-To add a fault you set during a run, right-click the joint's row under **Peak torque**, then choose **Fault** ▸ **Add to Case**. A Case is open and the joint must have a fault.
+To add a fault you set during a run, right-click the joint's row under **Peak torque**, then choose **Fault** ▸ **Add to Case**. It needs an open Case and a fault already set on that joint.
 
 To remove an entry, press **Delete** beside it and confirm.
 

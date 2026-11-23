@@ -12,7 +12,7 @@ Open a Case in the Simulate tab and add a fault under Faults: a servo, then Limp
 
 The list is saved with the Case. It goes with a shared Case and reopens with the scene. A fault applied in a live run can be added with **Fault** ▸ **Add to Case**. The agent's `create_case` takes the same list.
 
-Faults are tried one at a time, so a row says what that single failure does. On the fixtures, a limp knee fails the quadruped's Walk Without Falling in all 20 runs, while the hexapod keeps passing on its other five legs.
+Faults are tried one at a time, so a row says what that single failure does. On the sample robots, a limp knee fails the quadruped's Walk Without Falling in all 20 runs, while the hexapod keeps passing on its other five legs.
 
 A passing row is simulation evidence only. It doesn't count toward Ready to build, and Forge training doesn't apply Case faults.
 

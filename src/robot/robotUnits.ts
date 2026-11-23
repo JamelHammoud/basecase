@@ -5,6 +5,7 @@ export interface UnitEntry {
   unit: string;
   state: RobotState;
   joints: string[] | null;
+  home: string[] | null;
   version: string | null;
   previous: string | null;
   hasPrevious: boolean;
@@ -21,6 +22,7 @@ export const unitEntry = (unit: string): UnitEntry => ({
   unit,
   state: INITIAL_ROBOT,
   joints: null,
+  home: null,
   version: null,
   previous: null,
   hasPrevious: false,
@@ -46,6 +48,7 @@ export function withEvent(entry: UnitEntry, event: RobotEvent): UnitEntry {
     ...versions(entry, event),
     state: applyRobotEvent(entry.state, event),
     joints: closing ? null : entry.joints,
+    home: closing ? null : entry.home,
   };
 }
 

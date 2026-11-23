@@ -22,6 +22,7 @@ interface FleetOptions {
   emit: (event: RobotEvent) => void;
   tmpDir?: string;
   networkStoreDir?: string;
+  hornFor?: (id: number) => { offsetCounts: number; direction: 1 | -1; drives?: number };
 }
 
 interface FleetEntry {

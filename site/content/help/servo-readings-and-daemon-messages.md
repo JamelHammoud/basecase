@@ -79,6 +79,21 @@ Under **Emulated servos**, each joint has one row with its name and bus ID. IDs 
 | Garbled reply | The servo's answer was corrupted |
 | Wrong ID answered | Another servo answered for this one |
 
+## Check Servos lines
+
+While **Check Servos** runs, one highlighted row shows the joint being moved and its bus ID. **Skip** leaves it for later. When the check stops, a line names the joint:
+
+| Line | What it means |
+|---|---|
+| "Motor 2 moves Shoulder, not Elbow." | Two motors are wired to each other's joints |
+| "Elbow turns the wrong way." | The servo's direction is reversed |
+| "Elbow starts 12° off zero." | The servo's zero sits that far from the design's |
+| "Elbow doesn’t answer." | The motor didn't move, or no motor answers to that ID |
+| "Elbow shares its ID." | Two motors claim one joint |
+| "Elbow strays 9° from the simulation." | The reference motion left that joint furthest from the simulation |
+
+**Fix** appears under the first three. When every joint matches, Operate reads "Matches the simulation." [Check a robot's wiring on first power-on](/help/check-a-robots-wiring-on-first-power-on) has the steps.
+
 ## Messages from the daemon
 
 The newest six messages show under the first line, each labeled by kind: **Stopped by a fault**, **Refused**, **Stopped** or **Daemon lost**. A new connection clears them.

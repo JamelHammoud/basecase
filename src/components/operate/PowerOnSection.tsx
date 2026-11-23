@@ -1,9 +1,18 @@
 import React, { useEffect } from 'react';
 import { Button } from '../../design-system';
 import type { CalibrationHistory } from '../../reality/history';
-import { canCheckPower, describeFinding, resetPowerOn, skipPowerOnStep, usePowerOn } from '../../robot/powerOn';
+import {
+  canCheckPower,
+  describeFinding,
+  IDLE_POWER_ON,
+  powerOnState,
+  resetPowerOn,
+  skipPowerOnStep,
+  usePowerOn,
+} from '../../robot/powerOn';
 import { isFixable } from '../../robot/powerOnCheck';
 import type { RobotState } from '../../robot/robotState';
+import { selectedUnit } from '../../robot/robotStore';
 import type { RobotJoint } from '../../types/robotics';
 
 const CURRENT_ROW = 'bg-[color-mix(in_srgb,#0d99ff_18%,var(--color-panel-bg))]';
@@ -21,13 +30,15 @@ interface PowerOnSectionProps extends PowerOnProps {
 }
 
 export const PowerOnSection: React.FC<PowerOnSectionProps> = ({ robot, joints, calibrations, onCheck, onFix }) => {
-  const power = usePowerOn();
+  const shared = usePowerOn();
   const live = robot.link === 'connected';
+  const unit = selectedUnit();
+  const power = shared.unit === unit ? shared : IDLE_POWER_ON;
   const { step, findings, refusal, outcome } = power;
 
   useEffect(() => {
-    if (!live) resetPowerOn();
-  }, [live]);
+    if (!live && powerOnState().unit === unit) resetPowerOn();
+  }, [live, unit]);
 
   if (!live) return null;
 

@@ -177,6 +177,26 @@ async function checkSwappedPair() {
     .locator(shown('button'), { hasText: /^Check Servos$/ })
     .first()
     .click();
+
+  const step = page.locator(shown('[data-power-on="running"] [data-joint]')).first();
+
+  await expect.poll(() => step.isVisible(), { timeout: 10000 }).toBe(true);
+
+  const cells = await step.evaluate((row) => {
+    const outer = row.parentElement!.getBoundingClientRect();
+
+    return {
+      inside: [...row.children].every((c) => c.getBoundingClientRect().right <= outer.right + 0.5),
+      edges: [...row.children].map((c) => {
+        const box = c.getBoundingClientRect();
+
+        return { left: box.left, right: box.right };
+      }),
+    };
+  });
+
+  expect(cells.inside).toBe(true);
+  cells.edges.slice(1).forEach((edge, i) => expect(edge.left).toBeGreaterThanOrEqual(cells.edges[i].right - 0.5));
   await expect.poll(() => power.innerText(), { timeout: 30000 }).toContain('Motor 1 moves Elbow, not Shoulder.');
   await power.getByRole('button', { name: 'Fix', exact: true }).click();
   await page

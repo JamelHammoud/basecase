@@ -6,7 +6,7 @@ import type { RobotJoint } from '../types/robotics';
 import { playBench } from './benchRun';
 import { checkPowerOn, fixPowerOn, powerOnState, resetPowerOn, skipPowerOnStep } from './powerOn';
 import { REFERENCE_PLAN, TEST_CAPS, WIGGLE_PLAN, withinTestCaps } from './powerOnCheck';
-import { connectRobot, receiveRobotEvent, robotSceneJoints, startRobotStore } from './robotStore';
+import { connectRobot, receiveRobotEvent, robotHomeJoints, robotSceneJoints, startRobotStore } from './robotStore';
 import { remount, robotMounts } from './mountCapture';
 import { radiansFromCounts, servoFamily, type RobotEvent, type RobotStatus } from './robotState';
 
@@ -254,6 +254,7 @@ describe.each(FAMILIES)('first power-on on a %s robot', (family) => {
 
     const first = powerOnState();
 
+    expect(first.unit).toBe(unit);
     expect(first.outcome).toBe(outcome);
     expect(first.running).toBe(false);
 
@@ -278,7 +279,10 @@ describe.each(FAMILIES)('first power-on on a %s robot', (family) => {
     expect(powerOnState().outcome).toBe('confirmed');
     expect(powerOnState().refusal).toBeNull();
 
-    if (wiring.horns?.[1]?.drives) expect(robotSceneJoints(unit)?.slice(0, 2)).toEqual(['joint-2', 'joint-1']);
+    if (!wiring.horns?.[1]?.drives) return;
+
+    expect(robotSceneJoints(unit)?.slice(0, 2)).toEqual(['joint-2', 'joint-1']);
+    expect(robotHomeJoints(unit)).toEqual(joints.map((j) => j.id));
   });
 
   it('resumes a skipped step with only the steps left', async () => {

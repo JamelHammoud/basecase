@@ -34,6 +34,7 @@ export interface PowerOnStep {
 }
 
 export interface PowerOnState {
+  unit: string | null;
   running: boolean;
   step: PowerOnStep | null;
   replaying: boolean;
@@ -43,7 +44,8 @@ export interface PowerOnState {
   refusal: { jointId: string; message: string } | null;
 }
 
-const IDLE: PowerOnState = {
+export const IDLE_POWER_ON: PowerOnState = {
+  unit: null,
   running: false,
   step: null,
   replaying: false,
@@ -63,7 +65,7 @@ export interface PowerOnInput {
   record: RecordPowerOn;
 }
 
-let snapshot: PowerOnState = IDLE;
+let snapshot: PowerOnState = IDLE_POWER_ON;
 let session: { unit: string; passed: Set<string>; unverified: Set<string> } | null = null;
 let skipping = false;
 const listeners = new Set<() => void>();
@@ -89,7 +91,7 @@ export const usePowerOn = () => useSyncExternalStore(subscribe, powerOnState);
 export function resetPowerOn() {
   session = null;
   skipping = false;
-  snapshot = IDLE;
+  snapshot = IDLE_POWER_ON;
 
   for (const listener of listeners) listener();
 }
@@ -375,7 +377,7 @@ export async function checkPowerOn(input: PowerOnInput): Promise<void> {
 
   if (session?.unit !== run.unit) session = { unit: run.unit, passed: new Set(), unverified: new Set() };
 
-  publish({ ...IDLE, running: true });
+  publish({ ...IDLE_POWER_ON, unit: run.unit, running: true });
 
   const stop = subscribeUnitRobot(run.unit, (event: RobotEvent) => {
     if (event.event === 'fault') run.faults.push({ id: faultMotor(event), code: String(event.code ?? '') });
@@ -394,10 +396,10 @@ export async function checkPowerOn(input: PowerOnInput): Promise<void> {
 const mountFor = (finding: Extract<PowerOnFinding, { mount: JointMount }>) => finding.mount;
 
 export async function fixPowerOn(input: PowerOnInput): Promise<boolean> {
-  const run = runOf({ ...input, calibrations: input.calibrations });
+  const run = runOf(input);
   const faults = snapshot.findings.filter(isFixable);
 
-  if (snapshot.running || !run || !faults.length) return false;
+  if (snapshot.running || snapshot.unit !== run?.unit || !run || !faults.length) return false;
 
   const bus = servoFamily(robotSnapshot(run.unit).spec);
   const order = [...run.connected];

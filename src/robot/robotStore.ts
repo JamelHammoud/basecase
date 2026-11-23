@@ -8,7 +8,7 @@ import { readOperateLog } from './operateLog';
 import type { RobotPolicyRef } from './robotPolicy';
 import type { NetworkRobotAsk } from './networkTypes';
 import { NETWORK_ROBOT_MISMATCH, networkRobotMatches } from './networkRobot';
-import { recalledSceneJoints, rememberSceneJoints } from './sceneJointsMemory';
+import { recalledHomeJoints, recalledSceneJoints, rememberSceneJoints } from './sceneJointsMemory';
 import { runOf, type RobotRun, type RunFault } from './runBuffer';
 import {
   applyRobotEvent,
@@ -271,7 +271,7 @@ function adopted(link: RobotLinkState | RobotUnitState, unit: string): UnitEntry
     ...pins,
     state: robot,
     joints: recalledSceneJoints(unit),
-    home: recalledSceneJoints(unit),
+    home: recalledHomeJoints(unit) ?? recalledSceneJoints(unit),
   };
 }
 
@@ -313,7 +313,7 @@ export const discoverRobots = async () => (await api?.robotDiscover?.()) ?? [];
 export const robotHomeJoints = (unit: string = selected) => units.get(unit)?.home ?? null;
 
 function rememberConnectedJoints(name: string, joints: string[], home: string[] | null = joints) {
-  rememberSceneJoints(name, joints);
+  rememberSceneJoints(name, joints, home);
   units.set(name, { ...(units.get(name) ?? unitEntry(name)), joints, home });
 
   if (name === selected) sceneJoints = joints;

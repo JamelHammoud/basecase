@@ -4,6 +4,8 @@ export type FaultKind = 'limp' | 'weak' | 'stuck' | 'laggy';
 
 export const FAULT_KINDS: readonly FaultKind[] = ['limp', 'weak', 'stuck', 'laggy'];
 
+export const FAULT_LABEL: Record<FaultKind, string> = { limp: 'Limp', weak: 'Weak', stuck: 'Stuck', laggy: 'Laggy' };
+
 export const LAG_S = 0.06;
 
 export interface RecordedFault {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { CaseFault } from '../../cases/caseFaults';
 import { Button, ContextMenu, RowActions, type ContextMenuEntry } from '../../design-system';
 import type { FindingFix, ReadinessFinding } from '../../readiness/types';
 import type { ScenePart } from '../../types/robotics';
@@ -23,7 +24,7 @@ export interface FindingContext {
   actions: FindingActions;
   tether?: TetherControl;
   board?: { exists: boolean; onClick: () => void };
-  onOpenCase?: (id: string) => void;
+  onOpenCase?: (id: string, fault?: CaseFault) => void;
   showDots?: (check: string | null) => void;
 }
 

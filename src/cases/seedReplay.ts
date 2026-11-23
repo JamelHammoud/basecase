@@ -42,6 +42,9 @@ export async function seedReplay(
   let efforts: RecordedEfforts;
 
   try {
+    for (const f of result.recording.faults ?? [])
+      if (f.at === 0 && f.until === undefined) engine.setFault(f.joint, f.kind);
+
     efforts = recordedEfforts(mj, engine, result.recording);
   } finally {
     dispose();

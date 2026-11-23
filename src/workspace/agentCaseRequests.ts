@@ -1,6 +1,7 @@
 import { sceneImageRandomization, sceneObjects, type AgentObject } from '../agent/agentDrive';
 import { isBuiltinGesture } from '../cameras/gestures/builtinGestures';
 import type { CaseSpec } from '../cases/caseBuilder';
+import { missingFault } from '../cases/caseFaults';
 import { untaught } from '../cases/gestures';
 import { CASE_GOALS, goalParam, type GoalKind, type GoalValues, type ParamKey } from '../cases/caseGoals';
 import type { WorldKind } from '../cases/caseWorlds';
@@ -12,6 +13,7 @@ import type { Cases } from './useCases';
 import type { CaseCompare } from './useCaseCompare';
 import type { CaseRun } from './useCaseRun';
 import { errorMessage } from '../utils/errorMessage';
+import type { RobotJoint } from '../types/robotics';
 
 type Payload = Record<string, unknown>;
 
@@ -85,6 +87,19 @@ function toTeach(names: unknown) {
   return taught.length ? taught.map((name) => ({ name, examples: [] })) : undefined;
 }
 
+function faultProblem(faults: unknown, joints: RobotJoint[]): string | null {
+  if (!Array.isArray(faults)) return null;
+
+  for (const entry of faults as Array<Record<string, unknown>>) {
+    const joint = typeof entry?.joint === 'string' ? entry.joint : '';
+    const refusal = missingFault(joints, { joint, kind: entry?.kind as 'limp' });
+
+    if (refusal) return refusal;
+  }
+
+  return null;
+}
+
 async function logicProblem(spec: CaseSpec, ctx: CaseContext): Promise<string | null> {
   if (spec.logic === undefined) return null;
 
@@ -102,9 +117,13 @@ async function createCase(payload: Payload, ctx: CaseContext) {
   const targets = caseTargets(payload);
   const miscounted = targetCountProblem(payload.goal, targets);
 
+  const absent = faultProblem(payload.faults, ctx.project().joints ?? []);
+
   if (typeof objects === 'string') return { ok: false, problem: objects };
 
   if (miscounted) return { ok: false, problem: miscounted };
+
+  if (absent) return { ok: false, problem: absent };
 
   ctx.setAction('Making a Case');
 
@@ -124,6 +143,7 @@ async function createCase(payload: Payload, ctx: CaseContext) {
     score: payload.score,
     console: payload.console,
     gestures: toTeach(payload.gestures),
+    faults: payload.faults,
   };
   const refused = await logicProblem(spec, ctx);
 

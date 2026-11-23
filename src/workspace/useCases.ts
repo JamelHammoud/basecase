@@ -37,6 +37,7 @@ import type { CaseRobotInput } from './caseChecks';
 import { useCaseWorkbench } from './useCaseWorkbench';
 import { readPlacements, type PlacementUpdate } from '../cases/workbench/retention';
 import { casePeople } from './casePeople';
+import { caseFaultEditing } from './caseFaultEditing';
 
 interface CasesOptions {
   ensureEvaluationScene?: import('./tryTimelineOpening').TimelineOptions['ensureEvaluationScene'];
@@ -182,7 +183,6 @@ export function useCases(options: CasesOptions) {
   const trails = useCaseTrails({ ...options, active, timeline, open });
 
   const builder = useCaseBuilder({ rig, parts, add, partners, fixtures: options.fixtures });
-  const naming = useCaseNames(setProject);
   const dataset = useDatasetExport({
     ...{ sim, rig, parts, cases, active, showToast, openAccounts },
     sceneTries: project.tries ?? [],
@@ -214,6 +214,8 @@ export function useCases(options: CasesOptions) {
 
     people: casePeople({ ...options, active, stage, attempt, realTry: real.realTry, timeline }),
 
+    faultList: caseFaultEditing({ active, joints: project.joints ?? [], setProject }),
+
     workbench,
     cases,
     active,
@@ -232,7 +234,7 @@ export function useCases(options: CasesOptions) {
     add,
     addAndTry: useAddAndTry({ add, active, attempt }),
     remove,
-    naming,
+    naming: useCaseNames(setProject),
     removeTry: (record: TryRecord) => confirmRemoveTry(record, { tries, multiply, timeline, setProject, showToast }),
     saveGesture: (gesture: CaseGesture) => active && saveGesture(setProject, { id: active.id, gesture }),
     timeline,

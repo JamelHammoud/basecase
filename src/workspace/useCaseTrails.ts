@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useState, type RefObject } from 'react';
+import type { CaseFault } from '../cases/caseFaults';
 import type { Case } from '../cases/schema';
 import { tryManifest, type TryRecord } from '../cases/tries';
 import type { SeedReplay } from '../cases/seedReplay';
@@ -6,7 +7,7 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { ShowToast } from './types';
 import { errorMessage } from '../utils/errorMessage';
-import { caseVerdict, type CaseRobotInput } from './caseChecks';
+import { caseFaultVerdict, caseVerdict, type CaseRobotInput } from './caseChecks';
 import type { TryTimeline } from './useTryTimeline';
 
 interface TrailOptions {
@@ -38,6 +39,7 @@ async function replayRecord(replay: SeedReplay): Promise<TryRecord> {
 export function useCaseTrails(options: TrailOptions) {
   const { active, parts, project, viewportRef } = options;
   const [selected, setSelected] = useState<string | null>(null);
+  const [fault, setFault] = useState<CaseFault | null>(null);
   const readRobot = useEffectEvent(options.caseRobot);
   const onError = useEffectEvent((message: string) => options.showToast(message, { tone: 'error' }));
   const show = useEffectEvent(async (replay: SeedReplay, current: () => boolean) => {
@@ -63,7 +65,7 @@ export function useCaseTrails(options: TrailOptions) {
 
       if (!live || !kase || !input) return;
 
-      const verdict = await caseVerdict(input, kase);
+      const verdict = fault ? await caseFaultVerdict(input, kase, fault) : await caseVerdict(input, kase);
 
       if (!live) return;
 
@@ -90,13 +92,17 @@ export function useCaseTrails(options: TrailOptions) {
       live = false;
       viewport?.setCaseTrails([], () => {});
     };
-  }, [selected, id, parts, project.joints, project.cases, project.skills, viewportRef]);
+  }, [selected, id, fault, parts, project.joints, project.cases, project.skills, viewportRef]);
 
   return {
-    select: setSelected,
-    openCheck: (id: string) => {
+    select: (id: string | null) => {
+      setSelected(id);
+      setFault(null);
+    },
+    openCheck: (id: string, broken?: CaseFault) => {
       options.open(id);
       setSelected(id);
+      setFault(broken ?? null);
     },
   };
 }

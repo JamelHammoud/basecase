@@ -13,6 +13,7 @@ import { designOf } from '../skills/skillsRuntime';
 import { DEFAULT_PROJECT, type RobotJoint, type ScenePart } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
 import { caseFilm } from './caseFilm';
+import type { CaseFault } from './caseFaults';
 import { runSeeds, type SeedRuns } from './caseRuns';
 import type { FilmShot } from './filmstrip';
 import { checkFit } from './fitCheck';
@@ -48,6 +49,7 @@ interface Controlled {
   policy?: PolicySpec | null;
   jointNoiseDeg?: number;
   worldColliders?: WorldItem[];
+  fault?: CaseFault;
 }
 
 export interface RunsJob extends Controlled {
@@ -148,10 +150,13 @@ function walkPick(records: SkillRecord[], model: SimModel | null): WalkPick | nu
   return record ? { hash: record.hash, topSpeed: kitTopSpeed(model) } : null;
 }
 
-const controlOf = (job: Controlled): RunOptions =>
-  job.policy
-    ? { controller: 'policy', policy: job.policy, jointNoiseDeg: job.jointNoiseDeg, worldColliders: job.worldColliders }
-    : { controller: 'reference', walk: job.walk, jointNoiseDeg: job.jointNoiseDeg, worldColliders: job.worldColliders };
+const controlOf = (job: Controlled): RunOptions => {
+  const shared = { jointNoiseDeg: job.jointNoiseDeg, worldColliders: job.worldColliders, fault: job.fault };
+
+  return job.policy
+    ? { controller: 'policy', policy: job.policy, ...shared }
+    : { controller: 'reference', walk: job.walk, ...shared };
+};
 
 function modelHashOf(model: SimModel, parts: ScenePart[]) {
   const { physics, actuators } = modelHashes(model);

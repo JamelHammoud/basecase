@@ -1,11 +1,12 @@
 import type { WalkPick, WireRobot } from '../cases/caseCheckJob';
 import type { FilmShot } from '../cases/filmstrip';
 import { caseCheckPool } from '../cases/caseChecksClient';
+import { faultKey, faultsOf, type CaseFault } from '../cases/caseFaults';
 import { CASE_RUNS, seedBatches, summarizeRuns, type CaseRuns } from '../cases/caseRuns';
 import { readCases, type Case } from '../cases/schema';
 import { caseSensorKey } from '../cases/sensorIdentity';
 import { readinessFingerprint } from '../readiness/readiness';
-import { caseRow, replacedRow, stoppedRow } from '../readiness/caseChecks';
+import { caseRow, faultRow, replacedRow, stoppedFault, stoppedRow } from '../readiness/caseChecks';
 import type { VelocityDrive } from '../sim/driveAccess';
 import type { Skill } from '../skills/artifacts';
 import type { PolicySpec } from '../sim/policy';
@@ -13,7 +14,7 @@ import { hashOf } from '../skills/hash';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { SkillRecord } from '../skills/skillRecords';
-import type { CheckRow } from '../utils/engineeringTypes';
+import type { CaseFaultRow, CheckRow } from '../utils/engineeringTypes';
 import { platformBridge } from '../utils/platformBridge';
 
 export interface CaseRobotInput {
@@ -182,10 +183,11 @@ interface Judging {
   runs?: number;
   tag?: string;
   control?: CaseControl | null;
+  fault?: CaseFault;
 }
 
 async function judge(judging: Judging): Promise<CaseRuns> {
-  const { kase, key, reading, robot, runs = CASE_RUNS, tag = key, control } = judging;
+  const { kase, key, reading, robot, runs = CASE_RUNS, tag = key, control, fault } = judging;
   const wire = robot();
   const batches = seedBatches(runs, caseCheckPool.size);
   const job = {
@@ -195,6 +197,7 @@ async function judge(judging: Judging): Promise<CaseRuns> {
     walk: reading.walk,
     stop: reading.stop,
     ...control,
+    ...(fault ? { fault } : {}),
   };
   const replies = await Promise.all(
     batches.map((seeds, i) => caseCheckPool.run(i, { ...job, seeds }, { tag, robot: () => wire })),
@@ -239,13 +242,16 @@ function verdictOf(judging: Judging): Promise<CaseRuns> {
   return running;
 }
 
-const judged = (kase: Case) => Object.fromEntries(Object.entries(kase).filter(([key]) => key !== 'console'));
+const judged = (kase: Case) =>
+  Object.fromEntries(Object.entries(kase).filter(([key]) => key !== 'console' && key !== 'faults'));
 
 const verdictKey = (kase: Case, reading: RobotReading) =>
   `${hashOf(judged(kase))}|${reading.modelHash}|${reading.walkHash}`;
 
 const controlKey = (control: CaseControl | null | undefined) =>
   control ? `|${hashOf(control.policy)}|${control.jointNoiseDeg ?? 0}` : '';
+
+const faultedKey = (key: string, fault: CaseFault) => `${key}|fault:${faultKey(fault)}`;
 
 const newestFirst = (a: SkillRecord, b: SkillRecord) => b.createdAt.localeCompare(a.createdAt);
 
@@ -263,22 +269,51 @@ async function caseSkillControl(project: ProjectSettings, kase: Case, reading: R
 
 const isNewest = (turn: number) => turn === turns;
 
-function sharedVerdict(kase: Case, key: string): Promise<CheckRow> {
+function sharedVerdict(key: string): Promise<CaseRuns | null> {
   const shared = verdicts.get(key) ?? inFlight.get(key);
 
-  if (!shared) return Promise.resolve(replacedRow(kase));
+  return shared ? Promise.resolve(shared).catch(() => null) : Promise.resolve(null);
+}
 
-  return Promise.resolve(shared).then(
-    (runs) => caseRow(kase, runs),
-    () => replacedRow(kase),
+const jointNameOf = (input: CaseChecksInput, fault: CaseFault) =>
+  input.project.joints?.find((j) => j.id === fault.joint)?.name ?? fault.joint;
+
+interface Keyed {
+  kase: Case;
+  key: string;
+  control: CaseControl | null;
+}
+
+async function faultRows(input: CaseChecksInput, keyed: Keyed, reading: RobotReading, robot: () => WireRobot) {
+  const { kase, key, control } = keyed;
+  const newest = isNewest(input.turn);
+
+  return Promise.all(
+    faultsOf(kase).map(async (fault): Promise<CaseFaultRow> => {
+      const name = jointNameOf(input, fault);
+      const at = faultedKey(key, fault);
+      const runs = newest
+        ? await verdictOf({ kase, key: at, reading, robot, control, fault }).catch(() => null)
+        : await sharedVerdict(at);
+
+      return runs ? faultRow(fault, name, runs) : stoppedFault(fault, name, !isNewest(input.turn));
+    }),
   );
 }
 
-function rowOf(input: CaseChecksInput, kase: Case, verdict: Promise<CaseRuns>): Promise<CheckRow> {
-  return verdict.then(
-    (runs) => caseRow(kase, runs),
-    () => (isNewest(input.turn) ? stoppedRow(kase) : replacedRow(kase)),
-  );
+async function rowOf(input: CaseChecksInput, keyed: Keyed, reading: RobotReading, robot: () => WireRobot) {
+  const { kase, key, control } = keyed;
+  const newest = isNewest(input.turn);
+  const runs = newest ? verdictOf({ kase, key, reading, robot, control }) : sharedVerdict(key);
+  const [base, faults] = await Promise.all([
+    Promise.resolve(runs).then(
+      (verdict) => (verdict ? caseRow(kase, verdict) : replacedRow(kase)),
+      () => (isNewest(input.turn) ? stoppedRow(kase) : replacedRow(kase)),
+    ),
+    faultRows(input, keyed, reading, robot),
+  ]);
+
+  return faults.length ? { ...base, faults } : base;
 }
 
 export async function caseCheckRows(input: CaseChecksInput): Promise<CheckRow[]> {
@@ -295,20 +330,19 @@ export async function caseCheckRows(input: CaseChecksInput): Promise<CheckRow[]>
   if (!reading) return cases.map(isNewest(input.turn) ? stoppedRow : replacedRow);
 
   const keyed = await Promise.all(
-    cases.map(async (kase) => {
+    cases.map(async (kase): Promise<Keyed> => {
       const control = await caseSkillControl(input.project, kase, reading);
 
       return { kase, control, key: `${verdictKey(kase, reading)}${controlKey(control)}` };
     }),
   );
 
-  if (!isNewest(input.turn)) return Promise.all(keyed.map(({ kase, key }) => sharedVerdict(kase, key)));
+  if (isNewest(input.turn))
+    caseCheckPool.keepOnly(
+      new Set(keyed.flatMap((k) => [k.key, ...faultsOf(k.kase).map((f) => faultedKey(k.key, f))])),
+    );
 
-  caseCheckPool.keepOnly(new Set(keyed.map((k) => k.key)));
-
-  return Promise.all(
-    keyed.map(({ kase, key, control }) => rowOf(input, kase, verdictOf({ kase, key, reading, robot, control }))),
-  );
+  return Promise.all(keyed.map((k) => rowOf(input, k, reading, robot)));
 }
 
 export interface CaseVerdict {
@@ -319,34 +353,36 @@ export interface CaseVerdict {
   record: (seed: number) => Promise<import('../cases/seedReplay').SeedReplay>;
 }
 
-export async function caseVerdict(
-  input: CaseRobotInput,
-  kase: Case,
-  runs = CASE_RUNS,
-  given?: CaseControl,
-): Promise<CaseVerdict> {
+interface VerdictRequest {
+  runs: number;
+  given?: CaseControl;
+  fault?: CaseFault;
+}
+
+async function verdictFor(input: CaseRobotInput, kase: Case, request: VerdictRequest): Promise<CaseVerdict> {
+  const { runs, given, fault } = request;
   let wired: WireRobot | null = null;
   const robot = () => (wired ??= wireRobot(input));
   const reading = await readRobot(input, robot, null);
   const control = given ?? (await caseSkillControl(input.project, kase, reading));
-  const base = `${verdictKey(kase, reading)}${controlKey(control)}`;
+  const own = `${verdictKey(kase, reading)}${controlKey(control)}`;
+  const base = fault ? faultedKey(own, fault) : own;
   const key = runs === CASE_RUNS ? base : `${base}|${runs}`;
   const cached = verdicts.has(key) || inFlight.has(key);
-  const judged = await verdictOf({ kase, key, reading, robot, runs, tag: '', control });
-  const film = async (seed: number) => {
-    const job = { type: 'replay' as const, kase, modelHash: reading.modelHash, seed, walk: reading.walk, ...control };
-
-    return (await caseCheckPool.run(0, job, { robot })).film;
-  };
-
-  const record = async (seed: number) => {
-    const job = { type: 'record' as const, kase, modelHash: reading.modelHash, seed, walk: reading.walk, ...control };
-
-    return (await caseCheckPool.run(0, job, { robot })).replay;
-  };
+  const judged = await verdictOf({ kase, key, reading, robot, runs, tag: '', control, fault });
+  const job = { kase, modelHash: reading.modelHash, walk: reading.walk, ...control, ...(fault ? { fault } : {}) };
+  const film = async (seed: number) => (await caseCheckPool.run(0, { type: 'replay', seed, ...job }, { robot })).film;
+  const record = async (seed: number) =>
+    (await caseCheckPool.run(0, { type: 'record', seed, ...job }, { robot })).replay;
 
   return { runs: judged, cached, modelHash: reading.modelHash, film, record };
 }
+
+export const caseVerdict = (input: CaseRobotInput, kase: Case, runs = CASE_RUNS, given?: CaseControl) =>
+  verdictFor(input, kase, { runs, given });
+
+export const caseFaultVerdict = (input: CaseRobotInput, kase: Case, fault: CaseFault) =>
+  verdictFor(input, kase, { runs: CASE_RUNS, fault });
 
 export async function exploreVerdict(input: CaseRobotInput, kase: Case, runs: number): Promise<CaseRuns> {
   const wire = wireRobot(input);

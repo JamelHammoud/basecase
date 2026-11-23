@@ -160,7 +160,7 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
   return (
     <Section title="Results">
       {comparing && <CompareRows compare={comparing} />}
-      {run && showRun && <RunResult {...run} />}
+      {run && showRun && <RunResult {...run} faultList={cases.active ? cases.faultList : undefined} />}
       {tries.length > 0 && (
         <div className="flex flex-col">
           {tries.map((t) => (

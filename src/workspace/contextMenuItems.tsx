@@ -169,7 +169,13 @@ function faultItems({ core }: ContextInputs, part: ScenePart): ContextMenuEntry[
 
   const current = sim.stats?.joints.find((j) => j.id === jointId)?.fault;
 
-  return [faultSubmenu(current, (kind) => sim.setFault(jointId, kind)), { divider: true }];
+  const { active, faultList } = core.simTraining.cases;
+  const addToCase = active && {
+    listed: !!current && faultList.has({ joint: jointId, kind: current }),
+    onSelect: () => current && faultList.add({ joint: jointId, kind: current }),
+  };
+
+  return [faultSubmenu(current, (kind) => sim.setFault(jointId, kind), addToCase || undefined), { divider: true }];
 }
 
 function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextMenuEntry[]): ContextMenuEntry[] {

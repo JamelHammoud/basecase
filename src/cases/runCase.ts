@@ -40,6 +40,7 @@ import { varyFixtureResistance } from './fixtureRandom';
 import { preparedWorldItems } from './fixtureCollision';
 import { reseededGround } from './terrain';
 import { caseSlots, type Case, type ReferenceCommand } from './schema';
+import { limpen, missingFault, type CaseFault } from './caseFaults';
 import { caseWorldItems } from './importedWorldItems';
 import { slotRefusals } from './slots';
 import type { WorldMoves } from '../sim/worldMoves';
@@ -91,6 +92,7 @@ export interface RunOptions extends LogicOptions {
   walk?: VelocityDrive | null;
   partners?: CaseRobot[];
   limp?: string[];
+  fault?: CaseFault;
   world?: WorldEvent[];
   worldColliders?: WorldItem[];
 }
@@ -227,13 +229,6 @@ function fixedBaseFor(slots: CastSlot[]): Record<string, boolean> | undefined {
   return fixed.length ? Object.fromEntries(fixed) : undefined;
 }
 
-function limpen(engine: SimEngine, model: SimModel, keys: Set<string>) {
-  const range = engine.model.actuator_forcerange;
-
-  for (const j of model.joints)
-    if (keys.has(j.robot) && j.actuator >= 0) range.fill(0, j.actuator * 2, j.actuator * 2 + 2);
-}
-
 const ownFacts = (robot: CaseRobot | undefined) =>
   robot ? robotFacts(buildRig(robot.joints, robot.parts), robot.parts) : null;
 
@@ -331,6 +326,10 @@ function fitted(authored: Case, robot: CaseRobot, options: RunOptions): Fitted |
   const slots = caseSlots(scaled);
   const guests = guestsOf(slots, partners).map((g, i) => ({ ...g, robot: partners[i] }));
   const team = castRobot(robot, guests);
+  const broken = options.fault ? missingFault(team.joints, options.fault) : null;
+
+  if (broken) return { refusal: broken, input: ownInput(robot, options.project) };
+
   const rig = buildRig(team.joints, team.parts);
   const cast = castSlots(slots, { rig, parts: team.parts, guests });
   const input: MjcfInput = { ...ownInput(team, options.project), rig };
@@ -399,6 +398,8 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
   });
 
   try {
+    if (options.fault) engine.setFault(options.fault.joint, options.fault.kind);
+
     const recorder = options.record ? new Recorder(engine, controller) : null;
     const changes = {
       world: engine.world,

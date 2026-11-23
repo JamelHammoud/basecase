@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import type { CaseFaultEditing } from '../../workspace/caseFaultEditing';
 import { Badge, ContextMenu, MetaLine, type ContextMenuEntry } from '../../design-system';
 import type { FaultKind } from '../../sim/faults';
 import type { Simulation } from '../../sim/useSimulation';
@@ -41,7 +42,8 @@ const PeakTorque: React.FC<{
   rig: Rig;
   onSelectParts: (ids: string[]) => void;
   onFault: OnFault;
-}> = ({ worst, rig, onSelectParts, onFault }) => {
+  faultList?: CaseFaultEditing;
+}> = ({ worst, rig, onSelectParts, onFault, faultList }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const linkOf = (jointId: string) => [...rig.ownerOf].filter(([, owner]) => owner === jointId).map(([p]) => p);
   const openMenu = (e: React.MouseEvent, j: SimStats['joints'][number], name: string) => {
@@ -49,7 +51,17 @@ const PeakTorque: React.FC<{
     setMenu({
       x: e.clientX,
       y: e.clientY,
-      items: [{ heading: name }, faultSubmenu(j.fault, (kind) => onFault(j.id, kind))],
+      items: [
+        { heading: name },
+        faultSubmenu(
+          j.fault,
+          (kind) => onFault(j.id, kind),
+          faultList && {
+            listed: !!j.fault && faultList.has({ joint: j.id, kind: j.fault }),
+            onSelect: () => j.fault && faultList.add({ joint: j.id, kind: j.fault }),
+          },
+        ),
+      ],
     });
   };
 
@@ -98,7 +110,8 @@ export const RunResult: React.FC<{
   rig: Rig;
   onSelectParts: (ids: string[]) => void;
   onFault: OnFault;
-}> = ({ stats, model, rig, onSelectParts, onFault }) => {
+  faultList?: CaseFaultEditing;
+}> = ({ stats, model, rig, onSelectParts, onFault, faultList }) => {
   const worst = useMemo(() => hardestFirst(stats.joints), [stats]);
 
   return (
@@ -106,7 +119,9 @@ export const RunResult: React.FC<{
       {stats.robots.map((r) => (
         <RobotResult key={r.key} result={r} model={model} />
       ))}
-      {worst.length > 0 && <PeakTorque worst={worst} rig={rig} onSelectParts={onSelectParts} onFault={onFault} />}
+      {worst.length > 0 && (
+        <PeakTorque worst={worst} rig={rig} onSelectParts={onSelectParts} onFault={onFault} faultList={faultList} />
+      )}
     </div>
   );
 };

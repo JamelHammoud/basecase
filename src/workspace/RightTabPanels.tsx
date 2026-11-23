@@ -107,8 +107,8 @@ function BuildTab({ core, agent, actions }: RightTabPanelsProps) {
             }
       }
       onQuoteFinding={IS_WEB_DEMO ? undefined : (finding) => tool.requestQuote(findingQuote(finding, parts))}
-      onOpenCase={(id) => {
-        simTraining.cases.openCheck(id);
+      onOpenCase={(id, fault) => {
+        simTraining.cases.openCheck(id, fault);
         tool.setRightTab('sim');
       }}
       onNewCase={simTraining.cases.builder.goals.length ? () => showNewCase(core) : undefined}

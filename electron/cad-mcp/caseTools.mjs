@@ -25,6 +25,7 @@ export const createCase = {
       'logic is a Routine (as in make_routine) the Case runs; score counts dynamic objects in or out of a marker spot. ' +
       'console makes the Case an app the person runs: with one, the app opens the new Case running, laid out by it. ' +
       'gestures names the body movements the Case reacts to; reply.teach lists the ones the person teaches with Teach Gesture. ' +
+      'faults lists servos to fail one at a time, each a joint id from this scene and a kind (limp, weak, stuck, laggy); Checks runs the Case once per entry from time zero and reports which single failures the design survives in simulation. ' +
       'Returns { ok, id, name, brief, seconds, objects, running?, teach? } or { ok: false, problem } saying what to change, e.g. the goals this robot can try or the console path it refused.',
     inputSchema: {
       goal: z.enum(['reach', 'push', 'path', 'walk', 'touch', 'pick', 'handoff']),
@@ -87,6 +88,13 @@ export const createCase = {
         .object({ spot: z.string(), counts: z.enum(['in', 'out']) })
         .optional()
         .describe('in: objects inside the spot; out: objects that started in it and left'),
+      faults: z
+        .array(
+          z.object({ joint: z.string().regex(/^[\w.-]{1,80}$/), kind: z.enum(['limp', 'weak', 'stuck', 'laggy']) }),
+        )
+        .max(32)
+        .optional()
+        .describe('Servos to fail one at a time: the joint’s id and how it fails'),
       gestures: z
         .array(z.string().regex(/^[a-z][a-z0-9-]{0,31}$/))
         .max(18)

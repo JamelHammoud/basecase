@@ -33,4 +33,6 @@ A trail is sampled ten times per second. Clicking a failed trail reruns that see
 
 The replay stays temporary. It doesn’t add a saved try. Closing it restores the previous simulation world.
 
+To replay a seed with a servo broken, see [Fail each servo in a Case](/help/fail-each-servo-in-a-case).
+
 For playback controls and joint lanes, see [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline).

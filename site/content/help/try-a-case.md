@@ -63,7 +63,7 @@ Instead of driving the robot, you can teach it the Case's task. Go to **Train**,
 
 ## Whether the robot can do it
 
-The icon next to the Case's name shows the Case's row in **Build** ▸ **Checks**. Hold your pointer over the icon to see how many of 20 runs passed, or click it to open the row.
+The icon next to the Case's name shows the Case's row in **Build** ▸ **Checks**. Hold your pointer over the icon to see how many of 20 runs passed, or click it to open the row. A Case with a fault list has one more row under it for each fault, as in [Fail each servo in a Case](/help/fail-each-servo-in-a-case).
 
 ![The Simulate tab with Touch the Dots open and its Checks icon beside the name](/help/try-a-case/case.png)
 

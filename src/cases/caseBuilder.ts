@@ -52,6 +52,7 @@ export interface CaseSpec {
   score?: unknown;
   console?: unknown;
   gestures?: unknown;
+  faults?: unknown;
   imageRandomization?: unknown;
   room?: Room;
   imported?: ImportedCaseWorld;
@@ -328,6 +329,7 @@ function caseJson(draft: Draft): unknown {
     ...(spec.logic !== undefined ? { logic: spec.logic } : {}),
     ...(spec.console !== undefined ? { console: spec.console } : {}),
     ...(spec.gestures !== undefined ? { gestures: spec.gestures } : {}),
+    ...(spec.faults !== undefined ? { faults: spec.faults } : {}),
     imageRandomization: spec.imageRandomization,
   };
 }

@@ -27,6 +27,8 @@ You can break one servo while the simulation runs to see whether your robot can 
 
 A fault stays on through Reset and Start over (R), as a broken servo would.
 
+To keep a fault in the Case you have open, right-click the joint again and choose **Fault** ▸ **Add to Case**. Checks then tries the Case with that servo broken. See [Fail each servo in a Case](/help/fail-each-servo-in-a-case).
+
 If you set faults during a Case try, Basecase saves them with the try. The try's row in Results shows each fault. Hold the pointer over a fault to see which joint failed and when, counted from the start of the try.
 
 ![A missed try in Results marked Weak, with Arm1 at 1.3 s in its tooltip](/help/fail-a-servo-mid-run/results.png)

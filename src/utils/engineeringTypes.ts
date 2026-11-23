@@ -1,3 +1,4 @@
+import type { FaultKind } from '../sim/faults';
 import type { RouteIdentity } from '../wiring/routeEditing';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, Purchases, RobotJoint, ScenePart } from '../types/robotics';
@@ -39,6 +40,15 @@ export type FindingFix =
   | { kind: 'new-case' }
   | { kind: 'replay-fall'; deg: number };
 
+export interface CaseFaultRow {
+  joint: string;
+  kind: FaultKind;
+  label: string;
+  status: 'pass' | 'warn' | 'fail' | 'not run';
+  detail: string;
+  refusal?: string;
+}
+
 export interface CheckRow {
   check: string;
   hours?: number;
@@ -57,6 +67,7 @@ export interface CheckRow {
   itemsAreContext?: boolean;
   detailInItems?: boolean;
   caseId?: string;
+  faults?: CaseFaultRow[];
   dots?: CheckDot[];
   envelopes?: JointEnvelope[];
 }

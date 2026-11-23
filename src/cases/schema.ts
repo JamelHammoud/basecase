@@ -16,6 +16,7 @@ import type { V3 } from '../utils/kinematics';
 import { consoleReader, type CaseConsole } from './console/format';
 import { validateRoutine, type Routine } from '../routines/schema';
 import { readContract, type Contract } from './contract';
+import { readCaseFaults, type CaseFault } from './caseFaults';
 import { readWorldReference, type ImportedWorldRef } from './worldReference';
 import { gestureNames, readGestures, type CaseGesture } from './gestures';
 import {
@@ -43,6 +44,7 @@ import {
 export const CASE_FORMAT_VERSION = 1;
 
 export type { ImageRandomization, WorldColor } from './imageRandomization';
+export type { CaseFault } from './caseFaults';
 
 const WORLD_KINDS = ['box', 'cube', 'sphere', 'cylinder', 'wedge', 'cone', 'custom_model'] as const;
 const CAPABILITIES = ['arm', 'gripper', 'wheels', 'legs'] as const;
@@ -161,6 +163,7 @@ export interface Case {
   logic?: Routine;
   gestures?: CaseGesture[];
   imageRandomization?: ImageRandomization;
+  faults?: CaseFault[];
 }
 
 const v3 = vector(3) as unknown as Reader<V3>;
@@ -425,6 +428,7 @@ export function parseCase(input: unknown): Case {
     ...(caseConsole ? { console: caseConsole } : {}),
     ...(v.logic !== undefined ? { logic: readLogic(v.logic, 'logic') } : {}),
     ...(gestures ? { gestures } : {}),
+    ...(v.faults === undefined ? {} : { faults: readCaseFaults(v.faults, 'faults') }),
     ...(v.imageRandomization === undefined
       ? {}
       : { imageRandomization: readImageRandomization(v.imageRandomization, objects, readObject) }),

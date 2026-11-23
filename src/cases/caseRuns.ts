@@ -97,7 +97,7 @@ export async function runSeeds(
 ): Promise<SeedRuns> {
   const runner = caseRunner(mj, kase, robot, { ...options, controller: options.controller ?? 'reference' });
 
-  if (runner.refusal) return { refusal: runner.refusal, misfit: true };
+  if (runner.refusal) return { refusal: runner.refusal, misfit: !options.fault };
 
   if (options.stop) return { refusal: options.stop, misfit: false };
 

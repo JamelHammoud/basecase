@@ -1,3 +1,4 @@
+import type { CaseFault } from '../cases/caseFaults';
 import { PowerReplayInspection } from './build/PowerReplayInspection';
 import { setPowerReplayOpen } from './build/powerReplayDialog';
 import { usePurchaseSheet } from './build/usePurchaseSheet';
@@ -46,7 +47,7 @@ interface BuildPanelProps {
   onToast: ShowToast;
   onFixFinding?: (finding: ReadinessFinding) => void;
   onQuoteFinding?: (finding: ReadinessFinding) => void;
-  onOpenCase?: (id: string) => void;
+  onOpenCase?: (id: string, fault?: CaseFault) => void;
   onNewCase?: () => void;
   onCalibrate?: (jointIds: string[]) => void;
   onReplayFall?: (deg: number) => void;

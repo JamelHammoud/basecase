@@ -1,5 +1,7 @@
+import type { CaseFault } from '../cases/caseFaults';
 import { MISSED, noRuns, type CaseRuns } from '../cases/caseRuns';
-import type { CheckRow } from '../utils/engineeringTypes';
+import { FAULT_LABEL } from '../sim/faults';
+import type { CaseFaultRow, CheckRow } from '../utils/engineeringTypes';
 import type { CheckStatus, Finding, Readiness } from './types';
 
 export const CASE_RULE = 'case';
@@ -24,6 +26,8 @@ export function caseStatus(runs: Pick<CaseRuns, 'runs' | 'passes' | 'refusal'>):
 export const failureText = (label: string) =>
   label === MISSED ? 'Missed' : label.charAt(0).toUpperCase() + label.slice(1);
 
+const passesOf = (runs: Pick<CaseRuns, 'passes' | 'runs'>) => `${runs.passes} of ${runs.runs}`;
+
 export function caseRow(kase: { id: string; name: string }, runs: CaseRuns): CheckRow {
   const status = caseStatus(runs);
   const base = { check: kase.name, status, caseId: kase.id };
@@ -34,10 +38,19 @@ export function caseRow(kase: { id: string; name: string }, runs: CaseRuns): Che
     return { ...base, detail: '', items: [{ text: runs.refusal, status: 'fail', ...fix }] };
   }
 
-  const detail = `${runs.passes} of ${runs.runs}`;
+  const detail = passesOf(runs);
   const failure = status === 'pass' || !runs.commonFailure ? [] : [{ text: failureText(runs.commonFailure) }];
 
   return { ...base, detail, items: failure };
+}
+
+export function faultRow(fault: CaseFault, jointName: string, runs: CaseRuns): CaseFaultRow {
+  const label = `${FAULT_LABEL[fault.kind]} ${jointName}`;
+  const base = { joint: fault.joint, kind: fault.kind, label, status: caseStatus(runs) };
+
+  if (runs.refusal) return { ...base, detail: '', refusal: runs.refusal };
+
+  return { ...base, detail: passesOf(runs) };
 }
 
 export const stoppedRow = (kase: { id: string; name: string }): CheckRow => caseRow(kase, noRuns(CASE_STOPPED));
@@ -45,6 +58,11 @@ export const stoppedRow = (kase: { id: string; name: string }): CheckRow => case
 export const replacedRow = (kase: { id: string; name: string }): CheckRow => ({
   ...stoppedRow(kase),
   status: 'not run',
+});
+
+export const stoppedFault = (fault: CaseFault, jointName: string, replaced: boolean): CaseFaultRow => ({
+  ...faultRow(fault, jointName, noRuns(CASE_STOPPED)),
+  ...(replaced ? { status: 'not run' as const } : {}),
 });
 
 function agentTextOf(row: CheckRow, failure: string): string {

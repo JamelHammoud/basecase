@@ -1,4 +1,4 @@
-import type { CheckRow, FindingFix, JointEnvelope } from '../utils/engineeringTypes';
+import type { CaseFaultRow, CheckRow, FindingFix, JointEnvelope } from '../utils/engineeringTypes';
 import type { Netlist } from '../wiring/netlist';
 
 export type { FindingFix } from '../utils/engineeringTypes';
@@ -50,6 +50,7 @@ export interface CheckSummary {
   detail: string;
   ids: string[];
   caseId?: string;
+  faults?: CaseFaultRow[];
   hasDots?: boolean;
   detailInItems?: boolean;
   envelopes?: JointEnvelope[];

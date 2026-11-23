@@ -101,6 +101,15 @@ The full message is "The app stopped talking to the robot, so the robot is holdi
 1. Switch to the tab of the scene you connected from.
 2. Climb to **Test**, then wait for "Motors running".
 
+## Check Servos is missing
+
+**Check Servos** appears in **Test** once "Motors running" shows, for an emulated Feetech or Dynamixel robot connected from the scene you're in. It hides when every joint has a calibration and the last check passed. An emulated Unitree G1 and an emulated ROS 2 robot don't offer it.
+
+1. Switch to the tab of the scene you connected from.
+2. Climb to **Test**, then wait for "Motors running".
+
+If a line says a joint doesn’t answer or shares its ID, fix that first. See [Number a robot's servos](/help/number-a-robots-servos) and [Check a robot's wiring on first power-on](/help/check-a-robots-wiring-on-first-power-on).
+
 ## "Lost contact with the robot"
 
 If the robot daemon closes or its network connection drops, Operate shows **Daemon lost** with the daemon's lost-contact message. For Feetech, it reads "Lost contact with the robot. Feetech servos keep holding their last position, so switch off their power."

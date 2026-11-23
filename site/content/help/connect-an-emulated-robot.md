@@ -16,6 +16,7 @@ keywords:
   - test motors
 related:
   - the-motor-lock-and-safety-ladder
+  - check-a-robots-wiring-on-first-power-on
   - calibrate-an-emulated-robot
   - connect-an-emulated-ros-2-robot
   - keep-a-robot-session-as-a-try
@@ -58,7 +59,7 @@ To run the daemon on a Linux computer instead, see [Connect a robot computer](/h
 
 The daemon runs the emulated servos on the Feetech bus, numbered from 1 upward in the order of the scene's powered moving joints. Each Feetech or Dynamixel servo behaves like the servo from Parts on its joint. Any other powered joint gets an STS3215. A joint whose motor isn't a Feetech or Dynamixel servo, such as the DS3218, reads No reply.
 
-Each emulated servo sits on its joint with its own hidden offset of up to 12°, and about one in four is reversed. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) finds both using a camera.
+Each emulated servo sits on its joint with its own hidden offset of up to 12°, and about one in four is reversed. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) finds both using a camera. [Check a robot's wiring on first power-on](/help/check-a-robots-wiring-on-first-power-on) names them first, along with a swapped pair of motors.
 
 The servo emulator doesn’t model your design’s link masses, terminal payload or floor contact.
 

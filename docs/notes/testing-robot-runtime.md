@@ -32,6 +32,10 @@ The mixed-arm browser test was replaced after taking 49 s in run 43642970706 (#8
 
 The duplicate two-session walkthrough in `e2e/operateTries.e2e.test.ts` was removed under [#1146](https://github.com/JamelHammoud/basecase/issues/1146) after taking 30 s in run 43739315274. It included eight seconds of fixed driving waits and repeated the stall replay.
 
+## Guided first power-on
+
+`src/robot/powerOn.test.ts` runs in about a quarter of a second locally. The swapped-pair story in `e2e/operateNetwork.e2e.test.ts` needs the release daemon in `hw/dist`, which this checkout didn't have, so it was typechecked and not run here. Its first observation is CI's. The story spends about 15 s of real motion: two 3 s wiggles, a 6 s replay, then the same again after the fix.
+
 ## Servo zero and direction
 
 The zero-and-direction browser test was narrowed after taking 41 s in run 43642970706 (#857).

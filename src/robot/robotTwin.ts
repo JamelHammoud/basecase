@@ -33,6 +33,11 @@ let seen: { unit: string | null; spec: RobotSpec | null; status: RobotStatus | n
   status: null,
 };
 let started = false;
+let showingReference = false;
+
+export const showReferenceMotion = (showing: boolean) => {
+  showingReference = showing;
+};
 
 function publish(next: RobotTwin | null) {
   if (next === twin) return;
@@ -71,7 +76,7 @@ function onRobot() {
 
   const atMs = clock.pageMs(state.status.at_us, performance.now());
   const measured = measuredAngles(state);
-  const sim = robotBenchDriving() ? null : trace.at(atMs);
+  const sim = robotBenchDriving() && !showingReference ? null : trace.at(atMs);
   const gaps = jointGaps(measured, sim);
 
   if (sim && state.mode !== 'rehearse') watch.note({ atMs, joints, measured, gaps });

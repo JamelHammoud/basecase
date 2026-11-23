@@ -14,6 +14,7 @@ import { RobotHeader } from './RobotHeader';
 import { RobotJoints, type JointCalibrate } from './RobotJoints';
 import { RobotLadder } from './RobotLadder';
 import { RobotMessages } from './RobotMessages';
+import { PowerOnSection, type PowerOnProps } from './PowerOnSection';
 import { ServoSetupSection } from './ServoSetupSection';
 import { Button } from '../../design-system';
 import { BodyCalibration, type BodyCalibrationProps } from './BodyCalibration';
@@ -23,6 +24,7 @@ export interface OperatePanelProps {
   parts: readonly ScenePart[];
   onShowRobots: () => void;
   calibration: CalibrationProps;
+  powerOn: PowerOnProps;
   onSetUpServos: () => void;
   onAddRobotComputer?: () => void;
   onReplay?: (messageId: number) => void;
@@ -45,6 +47,7 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({
   parts,
   onShowRobots,
   calibration,
+  powerOn,
   onSetUpServos,
   onAddRobotComputer,
   onReplay,
@@ -77,6 +80,7 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({
       <ServoSetupSection robot={robot} joints={joints} onSetUp={onSetUpServos} />
       <RobotMessages messages={robot.messages} onReplay={onReplay} />
       {connected && <RobotLadder robot={robot} />}
+      <PowerOnSection robot={robot} joints={joints} calibrations={calibration.calibrations} {...powerOn} />
       <RobotCalibration robot={robot} joints={joints} onCalibrate={calibration.onCalibrate} />
       {bodyCalibration && <BodyCalibration {...bodyCalibration} />}
       <RobotJoints

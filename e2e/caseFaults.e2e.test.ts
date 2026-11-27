@@ -93,6 +93,10 @@ it('fails one knee in the quadruped’s Walk Without Falling Case, opens the fai
 
     await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), saved);
     await expect.poll(() => partCount(app.page)).toBe(quad.parts.length);
+
+    const partsView = app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Parts"]'));
+
+    await expect.poll(() => partsView.getAttribute('aria-pressed')).toBe('true');
     await openPlayTab(app.page, 'Cases');
     await app.page.locator(shown('[data-testid="cases-panel"] button'), { hasText: kase.name }).first().click();
     await expect.poll(() => listed.textContent()).toMatch(/Limp leg0_bend/);

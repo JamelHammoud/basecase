@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { emptyBounds, includePoint } from './bounds';
 import { supportedSourceTransform } from './supportSource';
 import type { ScenePart } from '../../types/robotics';
 import { withinSupportBudget, SUPPORT_SOURCE_BYTES } from './supportBudget';
@@ -142,10 +143,14 @@ export function supportFingerprint(part: ScenePart): string {
 function canonicalRectangle(face: Face): Face | null {
   if (face.edges.length !== 4 || !axisNormal(face.plane.n)) return null;
 
-  const xs = face.edges.flatMap(([a, b]) => [a[0], b[0]]);
-  const ys = face.edges.flatMap(([a, b]) => [a[1], b[1]]);
-  const min: Vec2 = [Math.min(...xs), Math.min(...ys)];
-  const max: Vec2 = [Math.max(...xs), Math.max(...ys)];
+  const bounds = emptyBounds();
+
+  for (const [a, b] of face.edges) {
+    includePoint(bounds, a[0], a[1]);
+    includePoint(bounds, b[0], b[1]);
+  }
+
+  const { min, max } = bounds;
   const corners: Vec2[] = [
     [min[0], min[1]],
     [max[0], min[1]],

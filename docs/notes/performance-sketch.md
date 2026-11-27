@@ -2,6 +2,16 @@
 
 Implementation: [Sketch](../guide/inspector-and-selection.md#performance-sketch). Shared requirements: [Performance](../guide/performance.md).
 
+## Sketch support rectangle bounds
+
+The whole-app search found one rectangular support canonicalizer, in `utils/sketch/support.ts`. Initial face capture and saved support resolution both call it. Other Sketch extent paths already use `emptyBounds` and `includePoint`, which this validator now shares.
+
+For each four-edge validation, the previous formula constructed two eight-coordinate flat-map results and eight two-coordinate callback arrays. The replacement removes those ten temporary arrays and creates one bounds object. Both versions retain the minimum and maximum tuples and the canonical output corners. The replacement visits the eight endpoints once instead of collecting coordinates and then scanning each coordinate list twice. Edge matching, rejection rules and tolerance remain unchanged. These are source-derived allocation and traversal counts, not latency or heap measurements.
+
+A scratch Vitest comparison checks exact extrema parity for 64 four-edge inputs using finite, infinite, NaN and signed-zero coordinates. Existing `bounds.test.ts` covers shared extrema semantics. `support.integration.test.ts` exercises capture, retriangulation, regeneration, off-surface picks, ambiguity and persistence. `supportFailures.integration.test.ts` retains unsupported-topology refusal and real Subtract coverage. No permanent test duplicates the existing helper coverage.
+
+The steps and captured states in [Keep a sketch on a face](../../site/content/help/keep-a-sketch-on-a-face.md) remain accurate. Attachment, supporting-part edits, edge offsets and explicit support replacement use the same controls and canonical corners. The mount, moved deck, missing support, Select Face and replacement deck captures describe unchanged output states. No step, label, limit or screenshot requires replacement, so the article remains unchanged. Browser execution stays with CI, and no timeout, retry or exclusion changes.
+
 ## Four-bar eligibility checks lengths directly
 
 Whole-app search found one candidate eligibility predicate in `utils/linkage.ts`, shared by Sketch Path and agent synthesis. It now checks the four link lengths directly. The coupler-point radius retains its upper bound only, and `Math.hypot` runs after the earlier eligibility checks pass. Class, transmission, inclusive length bounds and path-error acceptance are unchanged.

@@ -17,6 +17,7 @@ let directory: string;
 let forwarding: ReturnType<typeof networkRobotEvents>;
 const events: Array<Record<string, unknown>> = [];
 const daemonEvents: Array<Record<string, unknown>> = [];
+let daemonErrors = '';
 const endpoint = { host: '127.0.0.1', port: 0, name: 'Kitchen Arm' };
 const binary = path.resolve('hw/dist', process.platform === 'win32' ? 'robot-daemon.exe' : 'robot-daemon');
 
@@ -80,6 +81,9 @@ beforeAll(async () => {
 
   let pending = '';
 
+  daemon.stderr.on('data', (chunk) => {
+    daemonErrors = `${daemonErrors}${String(chunk)}`.slice(-2000);
+  });
   daemon.stdout.on('data', (chunk) => {
     pending += String(chunk);
 
@@ -156,6 +160,17 @@ beforeAll(async () => {
 }, 120000);
 
 afterAll(async () => {
+  if (process.env.BASECASE_DIAGNOSTIC_BROWSER_TRACE === '1')
+    console.log(
+      'e2e network state:',
+      JSON.stringify({
+        daemonExit: daemon?.exitCode,
+        daemonErrors,
+        daemonEvents: daemonEvents.slice(-20),
+        linkEvents: events.slice(-20),
+      }),
+    );
+
   try {
     await forwarding?.close();
   } finally {
@@ -193,22 +208,32 @@ async function checkSwappedPair() {
     .first()
     .click();
 
-  const step = page.locator(shown('[data-power-on="running"] [data-joint]')).first();
+  const measured = await page.waitForFunction(
+    () => {
+      const row = [...document.querySelectorAll('[data-power-on="running"] [data-joint]')].find(
+        (element) =>
+          !element.closest('[inert]') &&
+          element.getClientRects().length > 0 &&
+          getComputedStyle(element).visibility === 'visible',
+      );
 
-  await expect.poll(() => step.isVisible(), { timeout: 10000 }).toBe(true);
+      if (!row?.parentElement) return null;
 
-  const cells = await step.evaluate((row) => {
-    const outer = row.parentElement!.getBoundingClientRect();
+      const outer = row.parentElement.getBoundingClientRect();
 
-    return {
-      inside: [...row.children].every((c) => c.getBoundingClientRect().right <= outer.right + 0.5),
-      edges: [...row.children].map((c) => {
-        const box = c.getBoundingClientRect();
+      return {
+        inside: [...row.children].every((c) => c.getBoundingClientRect().right <= outer.right + 0.5),
+        edges: [...row.children].map((c) => {
+          const box = c.getBoundingClientRect();
 
-        return { left: box.left, right: box.right };
-      }),
-    };
-  });
+          return { left: box.left, right: box.right };
+        }),
+      };
+    },
+    undefined,
+    { timeout: 10000 },
+  );
+  const cells = (await measured.jsonValue())!;
 
   expect(cells.inside).toBe(true);
   cells.edges.slice(1).forEach((edge, i) => expect(edge.left).toBeGreaterThanOrEqual(cells.edges[i].right - 0.5));

@@ -2,6 +2,18 @@
 
 Implementation: [Sketch](../guide/inspector-and-selection.md#performance-sketch). Shared requirements: [Performance](../guide/performance.md).
 
+## Four-bar eligibility checks lengths directly
+
+Whole-app search found one candidate eligibility predicate in `utils/linkage.ts`, shared by Sketch Path and agent synthesis. It now checks the four link lengths directly. The coupler-point radius retains its upper bound only, and `Math.hypot` runs after the earlier eligibility checks pass. Class, transmission, inclusive length bounds and path-error acceptance are unchanged.
+
+Each synthesis scores 72 fits. The change removes one five-entry list from every candidate and a second four-entry list when class and transmission checks pass. It also removes the two `every` callback expressions. These are source-derived operation counts, not heap measurements or timings. No interaction speedup is claimed.
+
+On November 27, 2026, `scratch/linkage-eligibility.mjs` evaluated the actual changed predicate against the previous implementation for 177,957 combinations. Cases covered all four link roles, both inclusive boundaries, negative lengths, signed zero, infinities, NaN, coupler-point reach, classes, transmission angles, path errors and spans. All matched. Existing `linkage.test.ts` retains full seeded synthesis, repeatability, straight-path fitting and oversized-path refusal coverage. Browser execution remains in CI.
+
+The steps and captured states in [Design a linkage from a path](../../site/content/help/design-a-linkage-from-a-path.md) remain accurate. No workflow, result, label or visible state changes, so the article and screenshots remain unchanged.
+
+The changed-file check passed formatting, lint, docs, site copy for 393 pages, types and 210 tests across 25 related files. The log is `scratch/refine-check.log`. Copy diff reported zero additions, changes and removals. Preflight retains its unchanged-covered-article advisory. Reading the article against the changed predicate confirmed its 5 to 12 points, 10 to 300 mm links, insertion, undo and shared agent fitting claims remain accurate.
+
 ## Four-bar classification sorts one length list
 
 Whole-app search found one Grashof classifier, `grashofClass` in `utils/linkageKinematics.ts`. `utils/linkage.ts` uses it when scoring every fitted candidate for both Sketch Path and agent synthesis. It now sorts the length list directly instead of copying it and shares a module-local class table instead of recreating it. Sorting, slack arithmetic, change-point tolerance and first-shortest tie priority stay unchanged.

@@ -198,15 +198,19 @@ function scored(l: PlacedFourBar & { thetas: number[] }, targets: Vec2[]): Linka
   };
 }
 
+const linkFits = (length: number) => length >= MIN_LINK_MM && length <= MAX_LINK_MM;
+
 function buildable(s: LinkageSolution, span: number): boolean {
   const { linkage: l } = s;
-  const links = [l.ground, l.crank, l.coupler, l.rocker, Math.hypot(...l.point)];
 
   return (
     s.grashof === 'crank-rocker' &&
     s.minTransmissionDeg >= MIN_TRANSMISSION_DEG &&
-    [l.ground, l.crank, l.coupler, l.rocker].every((v) => v >= MIN_LINK_MM) &&
-    links.every((v) => v <= MAX_LINK_MM) &&
+    linkFits(l.ground) &&
+    linkFits(l.crank) &&
+    linkFits(l.coupler) &&
+    linkFits(l.rocker) &&
+    Math.hypot(...l.point) <= MAX_LINK_MM &&
     s.maxErrorMm <= Math.max(ACCEPT_FLOOR_MM, ACCEPT_SHARE * span)
   );
 }

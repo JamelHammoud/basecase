@@ -1,15 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
 import { failingLanes, shouldCall } from '../lib/doctor.mjs';
 import { breaches } from '../lib/flow.mjs';
 import { fullCheck, isPaused, openPulls, pullReview, quickCheck } from '../lib/github.mjs';
 import { LOGS } from '../lib/paths.mjs';
 import { publish } from '../lib/pull.mjs';
-import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
+import { repairSession } from '../lib/repairSession.mjs';
 import { json } from '../lib/sh.mjs';
 import { store } from '../lib/store.mjs';
-import { close, openBranch } from '../lib/worktree.mjs';
 import { measure } from './health.mjs';
 
 export const schedule = {
@@ -85,29 +83,19 @@ export default function doctor({ log }) {
 
   visits.save('state', state);
 
-  const worktree = openBranch('repair', 'doctor');
-
-  try {
-    const result = runAgent({
-      cwd: worktree.dir,
-      name: 'doctor',
-      prompt: prompt({ found, failing, logs }),
-      schema: CHANGE_SCHEMA,
+  repairSession({
+    name: 'doctor',
+    slug: 'doctor',
+    log,
+    prompt: () => prompt({ found, failing, logs }),
+    options: () => ({
       hours: 3,
       onStart: (at) => visits.save('state', { ...state, lastCallAt: at }),
-    });
+    }),
+    complete: (output, worktree) => {
+      const url = publish({ ...output, kind: 'repair' }, worktree);
 
-    if (!result.ok) return log(`doctor session failed: ${String(result.error).slice(0, 300)}`);
-
-    if (expandsTestExclusions(worktree.dir))
-      return log('doctor cannot expand quarantine coverage; fix the source failure or leave it to its repair owner');
-
-    const url = publish({ ...result.output, kind: 'repair' }, worktree);
-
-    log(
-      url ? `opened ${url}` : `no code change: ${String(result.output.notes ?? result.output.summary).slice(0, 300)}`,
-    );
-  } finally {
-    close(worktree);
-  }
+      log(url ? `opened ${url}` : `no code change: ${String(output.notes ?? output.summary).slice(0, 300)}`);
+    },
+  });
 }

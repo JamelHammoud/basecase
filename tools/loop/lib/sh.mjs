@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 
 const tail = (text, chars) => (text || '').slice(-chars);
+const failureOf = ({ error, status, signal }) => error?.message ?? `exit ${status}, signal ${signal ?? 'none'}`;
 
 export function run(cmd, args, { cwd, input, timeout = 10 * 60 * 1000, allowFail = false, env } = {}) {
   const result = spawnSync(cmd, args, {
@@ -19,7 +20,7 @@ export function run(cmd, args, { cwd, input, timeout = 10 * 60 * 1000, allowFail
     throw new Error(`${cmd} ${args.slice(0, 4).join(' ')} failed (${why}): ${tail(result.stderr, 2000)}`);
   }
 
-  return { ok, out: (result.stdout || '').trim(), err: (result.stderr || '').trim() };
+  return { ok, out: (result.stdout || '').trim(), err: (result.stderr || '').trim() || (ok ? '' : failureOf(result)) };
 }
 
 export const json = (cmd, args, opts) => {

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { verticalDeg, type Lens } from './lens';
 import type { V3 } from '../utils/kinematics';
+import { softwareGl } from '../three/softwareGl';
 
 const NEAR_MM = 5;
 const FAR_MM = 40000;
@@ -147,6 +148,8 @@ export class LensRenderer {
   }
 
   warm(scene: THREE.Scene): Promise<unknown> {
+    if (softwareGl()) return Promise.resolve();
+
     return Promise.all([
       this.renderer.compileAsync(scene, this.camera),
       this.renderer.compileAsync(this.quadScene, this.quadCamera),

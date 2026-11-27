@@ -28,7 +28,7 @@ let stairs: MapWorldRequest;
 let corridorAsset: WorldAsset;
 
 beforeAll(async () => {
-  const bytes = await Promise.all([corridorMcap(), writeMcap(depthRoomMessages()), writeMcap(stairMessages())]);
+  const bytes = await Promise.all([corridorMcap(), writeMcap(depthRoomMessages(4)), writeMcap(stairMessages())]);
 
   [corridor, depth, stairs] = await Promise.all(bytes.map(request));
   corridorAsset = await reconstructMapWorld(corridor);

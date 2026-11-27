@@ -84,7 +84,12 @@ function orderTotal(offer: SupplierOffer, qty: number | undefined): number | und
 
   if (qty === undefined) return undefined;
 
-  const priceBreak = offer.breaks.filter((item) => item.minOrders <= qty).sort((a, b) => b.minOrders - a.minOrders)[0];
+  let priceBreak: SupplierOffer['breaks'][number] | undefined;
+
+  for (const item of offer.breaks) {
+    if (item.minOrders <= qty && (!priceBreak || item.minOrders > priceBreak.minOrders)) priceBreak = item;
+  }
+
   const total = priceBreak ? Number((priceBreak.price * qty).toFixed(6)) : NaN;
 
   return Number.isFinite(total) && total <= Number.MAX_SAFE_INTEGER ? total : undefined;

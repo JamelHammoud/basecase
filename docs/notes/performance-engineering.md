@@ -1,5 +1,15 @@
 # Engineering calculations performance
 
+## Supplier quantity tier selection
+
+The app-wide source search found one applicable-tier selector, `orderTotal` in `src/utils/supplierOffers.ts`. Build's offer rows call it through `compareOffer`. Purchasing totals, CSV exports and Study purchasing grades use it through `comparePurchasing`.
+
+Previously each nonzero, known order quantity filtered every break into a temporary array, sorted the retained tiers and read the first entry. The replacement scans the original breaks once and retains one winning reference. For an offer with 32 eligible tiers, the validator's current maximum, this removes one 32-reference result array and the sort. Both versions inspect all 32 thresholds. The new version makes at most 31 winning-threshold comparisons. Strict replacement preserves the first entry for equal thresholds, though stored evidence rejects duplicate thresholds. Source evidence remains untouched.
+
+These are source-derived operation counts, not latency or heap measurements. No UI speedup or platform timing is claimed. The seven additional `supplierOffers.test.ts` cases exercise the real BOM, remaining-pack conversion, comparison and CSV export with ascending, descending and mixed thresholds, exact and intermediate quantities, free prices, missing tiers and overflow. Existing purchasing tests retain zero-demand and corrected-packaging coverage. There is no UI or workflow change.
+
+On November 27, the changed-file check passed formatting, lint, docs, all 393 site pages and types. Related tests reported 315 passing files, one skipped file and one failing file, with 2,735 passing assertions. The failure is `studySourcingRun.test.ts`, which expects purchasing completion after generating observations from the current clock. Its shared `sourcingFixtures.ts` sets arrival latest to November 25, so the comparator correctly reports stale arrival on November 27. The selector does not change arrival checks. Open repair [#2160](https://github.com/JamelHammoud/basecase/pull/2160) owns fixture clocks. No test exclusion or fixture edit was made in this refinement.
+
 ## Whole-price formatters are prepared on first use
 
 The app-wide search found `createMoney` in the currency store and the Settings currency-option builder. Settings builds labels for all 30 supported currencies using only the symbol and name. Previously those labels constructed 60 `Intl.NumberFormat` objects, including 30 discarded whole-price formatters. They now construct 30 exact formatters. Each money object prepares at most one additional formatter if a whole-price consumer uses it. There is no shared cache or change to rate ownership.

@@ -294,3 +294,9 @@ Historical cross-owner observations remain in the linked summaries. Add new evid
 
 - [Nightly build exclusions on 21 November](node.md#nightly-build-exclusions-on-21-november).
 - [Additional build and replay boundaries in Check 44885120824](node.md#additional-build-and-replay-boundaries-in-check-44885120824).
+
+## Cable reach playback on 27 November
+
+[Check 46035381829](https://github.com/JamelHammoud/basecase/actions/runs/46035381829) at `0879a160f8182db93dd9d80034145c8fdb8ba554` failed the active Windows Cable reach playback declaration at line 80. Build opened, but the initial check never exposed the required fail status. Endpoint selection and playback had not started. Same-revision run 46001412880 passed the Windows declaration in 17442 ms. The failure therefore does not establish incorrect cable routing, playback persistence or an environment regression.
+
+Focused [diagnostic 46062007041](https://github.com/JamelHammoud/basecase/actions/runs/46062007041), ticket `4a01b538-4de3-4c4f-a92e-46dfa3256adc`, passed the complete declaration in 21043.6614 ms, with a 32680 ms process, one worker, retries disabled and quarantine off. Its verified manifest retains the Windows environment. Classification is intermittent Windows initial-check delivery with the source stage unresolved. The full endpoint, step-specific routes, labels, backward navigation and unchanged scene assertions remain active. No retry, timeout, assertion or exclusion changes. Existing wiring owner #1815 retains readiness preparation and delivery separately from route export and persistence.

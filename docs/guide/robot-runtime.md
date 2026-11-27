@@ -483,3 +483,7 @@ The motion recommendation browser fixture completes ordinary Analyze Try setup b
 Body investigations share `utils/projectInputs.ts` with Kit export and cradle tooling for fieldwise project comparison. Generated build-guide and body-evidence updates preserve the source, while every other project field and immutable part identity retain their existing invalidation rules.
 
 The emulated Fleet rollout walkthrough waits until every connected unit is actually running before injecting the weak unit’s stall. Entering Test mode alone can still be in soft-start. Its immediate check that the other units remain running stays intact.
+
+The network browser fixture pairs its daemon in shared setup before declarations run. The servo-swap story therefore starts connected when the independent transport-loss declaration is filtered on Windows or by an exact diagnostic selection. Its ladder, finding, Fix, replay and calibration assertions remain active. [Fixture ownership evidence](../notes/testing-robot-runtime.md#network-power-on-fixture-ownership) records the regression.
+
+The retained-motion history declaration remains active on Windows, including reload, no new search, source-edit staleness, retained rendering, final scrubbing and zero robot commands. [First-frame evidence](../notes/testing-robot-runtime.md#retained-motion-preview-on-27-november) records the reproduced readiness stall without changing its action deadline.

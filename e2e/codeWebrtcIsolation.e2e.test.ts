@@ -55,13 +55,17 @@ it.each(['direct', 'unapproved child', 'copied module'])(
     const page = await browser.newPage();
 
     try {
-      await page.goto('about:blank');
-
       const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
       const policies = html.match(/<meta\s+http-equiv="Content-Security-Policy"[^>]*>/gi) ?? [];
 
       expect(policies.length).toBeGreaterThan(0);
-      await page.setContent(`<!doctype html>${policies.join('')}<body></body>`);
+
+      const origin = 'http://127.0.0.1/webrtc-isolation';
+
+      await page.route(origin, (route) =>
+        route.fulfill({ contentType: 'text/html', body: `<!doctype html>${policies.join('')}<body></body>` }),
+      );
+      await page.goto(origin);
       await page.evaluate(async (urls) => {
         const peer = new RTCPeerConnection({
           iceServers: [{ urls, username: 'probe', credential: 'probe' }],

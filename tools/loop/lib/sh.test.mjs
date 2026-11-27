@@ -10,6 +10,7 @@ it.each([
   [{ error: new Error('spawnSync codex ETIMEDOUT') }, 'spawnSync codex ETIMEDOUT'],
   [{ status: null, signal: 'SIGTERM' }, 'exit null, signal SIGTERM'],
   [{ status: 7 }, 'exit 7, signal none'],
+  [{ status: 7, stderr: ' \r\n\t ' }, 'exit 7, signal none'],
   [{ status: 1, stderr: 'provider unavailable' }, 'provider unavailable'],
 ])('retains subprocess failure evidence when failure is allowed: %j', (result, error) => {
   spawnSync.mockReturnValue({ status: null, stdout: 'partial output', ...result });

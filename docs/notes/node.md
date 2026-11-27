@@ -775,6 +775,8 @@ The doctor requested one failed-job rerun of [Check 46035381829](https://github.
 
 The final changed-file check passed formatting, ESLint, documentation validation and 572 related tests across 66 files. Vitest reported 1.95 seconds. The existing usage CLI negative fixture prints its expected invalid-date error while its assertion passes. `git diff --check` passed. The operational rerun remained in progress, so these results establish local recovery behavior, not a green hosted suite. The complete result is `scratch/doctor/check-final.log`.
 
+Review found that whitespace-only stderr still produced an empty diagnostic because fallback selection happened before trimming. The subprocess helper now trims stderr before selecting the fallback. A regression fixture with exit status 7 and whitespace-only stderr requires `exit 7, signal none`. The review changed-file check passed formatting, ESLint, documentation validation and 573 related tests across 66 files in 2.52 seconds. Hosted execution remains outside this local verification.
+
 ## Cache lifecycle nightly deadline
 
 [Check 44227652023](https://github.com/JamelHammoud/basecase/actions/runs/44227652023) failed the compound `vitestCache.test.mjs` declaration at its five-second deadline on both Windows and Linux. It was introduced by `772559997` (#1761), after the last full green [43948835889](https://github.com/JamelHammoud/basecase/actions/runs/43948835889) at `348373decd8013d264fc3e2e9fe1f8b298051b34`. This is a newly introduced slow test with a code-established workload cause, not evidence of a cache-ownership defect or changed environment.

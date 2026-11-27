@@ -2,7 +2,7 @@ import { componentPorts } from '../data/componentPorts';
 import { COMPONENT_BY_ID, componentWeightG } from '../data/components';
 import { SkeletonTree } from '../utils/skeletonTree';
 import type { RobotSkeleton } from '../types/skeleton';
-import { actuatorOptions } from '../utils/actuatorCatalog';
+import { actuatorOptions, type ActuatorOption } from '../utils/actuatorCatalog';
 import { jointVerdict, sizeActuators, type Family } from '../utils/actuatorSizing';
 import type { MotionSkeletonFit } from '../utils/motionSkeleton';
 import { skeletonSizing } from '../utils/skeletonSizing';
@@ -28,9 +28,9 @@ export const motionServoOptions = () =>
     );
   });
 
-function estimatedSkeleton(skeleton: RobotSkeleton): RobotSkeleton {
+function estimatedSkeleton(skeleton: RobotSkeleton, options: ActuatorOption[]): RobotSkeleton {
   const tree = new SkeletonTree(skeleton);
-  const lightest = motionServoOptions().sort((a, b) => gramsOf(a.key) - gramsOf(b.key))[0];
+  const lightest = [...options].sort((a, b) => gramsOf(a.key) - gramsOf(b.key))[0];
   const joints = skeleton.joints.map((joint) => ({
     ...joint,
     linkMassG: joint.linkMassG ?? 15 + 0.35 * tree.linkLength(joint),
@@ -51,7 +51,6 @@ function inputFor(skeleton: RobotSkeleton, fit: MotionSkeletonFit) {
   return {
     ...input,
     joints: input.joints.map((joint) => ({ ...joint, ...dynamics.get(joint.id) })),
-    options: motionServoOptions(),
   };
 }
 
@@ -75,11 +74,12 @@ function passes(skeleton: RobotSkeleton, fit: MotionSkeletonFit, family: Family)
 export type SizedMotion = MotionSkeletonFit & { volts: number };
 
 export function motionServos(fit: MotionSkeletonFit): SizedMotion | { problem: string; limb?: string } {
-  let skeleton = estimatedSkeleton(fit.skeleton);
+  const options = motionServoOptions();
+  let skeleton = estimatedSkeleton(fit.skeleton, options);
   const seen = new Set<string>();
 
   while (true) {
-    const families = sizeActuators(inputFor(skeleton, fit));
+    const families = sizeActuators({ ...inputFor(skeleton, fit), options });
     const complete = families.filter((family) => !family.failures.length);
 
     for (const family of complete) {

@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import * as catalog from '../utils/actuatorCatalog';
 import type { MotionSkeletonFit } from '../utils/motionSkeleton';
 import { motionServos } from './motionServos';
 
@@ -20,7 +21,10 @@ const motion: MotionSkeletonFit = {
 };
 
 describe('motion servo mass estimates', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   it('finds lightweight servos without requiring an initial actuator choice', () => {
+    const options = vi.spyOn(catalog, 'actuatorOptions');
     const seeded = motionServos({
       ...motion,
       skeleton: {
@@ -28,9 +32,13 @@ describe('motion servo mass estimates', () => {
         joints: motion.skeleton.joints.map((joint) => ({ ...joint, actuator: 'component:dynamixel-xl330-m288' })),
       },
     });
+
+    expect(options).toHaveBeenCalledTimes(1);
+
     const automatic = motionServos(motion);
 
     expect(seeded).not.toHaveProperty('problem');
     expect(automatic).not.toHaveProperty('problem');
+    expect(options).toHaveBeenCalledTimes(2);
   });
 });

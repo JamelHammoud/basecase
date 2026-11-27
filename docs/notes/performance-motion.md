@@ -185,3 +185,18 @@ Both preflight coverage reminders were checked against the complete articles and
 - [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) covers the edited contributor guide. Joint fields, hierarchy, modeled poses, IK and selected-robot import behavior remain unchanged. The added guide paragraph describes internal matrix preparation and introduces no action or joint behavior to explain in this concept article. The article has no screenshots.
 
 Both help articles remain unchanged because every described action, label and screen state still holds. No new user-facing copy is needed.
+
+## Motion servo sizing shares one catalog collection
+
+A whole-app search for `motionServos`, `motionServoOptions` and `designMotion` found one servo-sizing implementation. File selection, dropping a clip and the agent use it through the motion worker. The catalog is now collected once per fit, shared by initial mass estimation and all sizing rounds. Candidate load rechecks no longer collect unused options. Initial mass estimation sorts a copy, so the shared options retain their original price order and stable tie behavior. No options survive the call.
+
+A local comparison used the generated wave BVH at heights of 100, 300 and 1,000 mm and frame intervals of 0.01, 0.05, 0.1 and 1 second. Complete outputs matched the preceding implementation for all 12 fits, including nine successful designs and three servo refusals. Source fits remained unchanged. Catalog collections fell from three to one for each successful fit and from two to one for each refusal. These are measured call counts, without a timing assertion or a claim about total fitting speed. The probe, preceding implementation and raw results remain in `scratch/motion-options.test.ts`, `scratch/motionServos.before.ts` and `scratch/motion-options-results.json`.
+
+`motionServos.test.ts` retains real catalog sizing for both an explicitly seeded skeleton and an automatic skeleton, and bounds collection to one per call. Existing `motionDesign.test.ts` covers complete BVH fitting, catalog weights and loaded-speed verdicts. No timeout, retry or test exclusion changes.
+
+Both preflight coverage reminders were checked against the final implementation:
+
+- [Design a robot from a motion clip](../../site/content/help/design-a-robot-from-motion.md): `skeletonCommands.tsx` still offers Design From Motion, and `usePoseActions.ts` still opens the BVH picker and routes clips without a movable rig to the design sheet. `MotionDesignSheet.tsx` retains Height, its 300 mm default and Design Skeleton. `useMotionDesign.ts` still passes a 2 mm tolerance, commits skeleton and servos together, opens Pose with skeleton editing active and leaves the scene untouched on refusal. The height and skeleton screenshot states therefore remain applicable. Complete sizing outputs match the preceding implementation in the comparison above, so catalog reuse changes neither the illustrated result nor the refusal instructions.
+- [Joints and kinematics](../../site/content/help/joints-and-kinematics.md): the edited guide paragraph describes catalog preparation only. It changes no joint field, parent or child ownership, range, pose, IK, import routing or simulation eligibility. `motionBuild.ts` still returns a planned skeleton and servo parts without connected scene joints, matching the article's Design From Motion limitation. The article has no screenshots.
+
+Both articles remain unchanged intentionally. Every described action, label and screen state still holds, and no new user-facing explanation is needed for operation-local catalog reuse.

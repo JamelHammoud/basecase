@@ -42,6 +42,7 @@ import { registerShareHandlers } from './shareFile.mjs';
 import { adoptShellPath } from './shellPath.mjs';
 import { storageMigration } from './storageMigration.mjs';
 import { Updates } from './updates.mjs';
+import { registerWindowLifetime } from './appLifetime.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -352,10 +353,7 @@ app.on('before-quit', () => {
   backend.printing.dispose();
 });
 
-app.on('window-all-closed', () => {
-  backend.disconnectAcpAgent();
-
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+registerWindowLifetime(app, {
+  disconnect: () => backend.disconnectAcpAgent(),
+  selfTesting: Boolean(selfTestFile || cadImportSelfTestSpec),
 });

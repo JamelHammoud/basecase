@@ -37,12 +37,7 @@ async function importPlate() {
     name: 'Mounting plate.stl',
     base64: Buffer.from(binaryStl(plateTriangles())).toString('base64'),
   });
-  await app.page.keyboard.press('ControlOrMeta+k');
-  await app.page.keyboard.type('Import');
-  await app.page
-    .locator(shown('button[data-idx]'))
-    .and(app.page.getByRole('button', { name: 'Import', exact: true }))
-    .click();
+  await supportCommand(app.page, 'Import');
   await expect.poll(async () => (await supportParts(app.page)).length).toBe(1);
 
   const source = (await supportParts(app.page))[0];

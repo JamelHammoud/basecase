@@ -41,8 +41,11 @@ export const supportPlane = (page: Page) => page.locator(shown('[data-testid="sk
 
 export async function supportCommand(page: Page, name: string) {
   await page.keyboard.press('ControlOrMeta+k');
-  await page.keyboard.type(name);
-  await page.keyboard.press('Enter');
+  await page.getByRole('textbox', { name: 'Search commands', exact: true }).fill(name);
+  await page
+    .locator(shown('button[data-idx]'))
+    .and(page.getByRole('button', { name, exact: true }))
+    .click();
 }
 
 export async function loadSupportScene(page: Page, parts: ScenePart[]) {

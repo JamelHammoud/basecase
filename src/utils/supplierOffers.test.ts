@@ -69,6 +69,48 @@ it('recomputes destination and preserves mixed currencies without conversion', (
   expect(comparison({ currency: 'EUR' }).totals).toEqual({ EUR: 30 });
 });
 
+it.each([
+  [
+    [
+      { minOrders: 1, price: 12 },
+      { minOrders: 3, price: 10 },
+      { minOrders: 5, price: 8 },
+    ],
+    30,
+  ],
+  [
+    [
+      { minOrders: 5, price: 8 },
+      { minOrders: 3, price: 10 },
+      { minOrders: 1, price: 12 },
+    ],
+    30,
+  ],
+  [
+    [
+      { minOrders: 2, price: 11 },
+      { minOrders: 5, price: 8 },
+      { minOrders: 1, price: 12 },
+    ],
+    33,
+  ],
+  [[{ minOrders: 3, price: 0 }], 0],
+  [[{ minOrders: 4, price: 8 }], undefined],
+  [[], undefined],
+  [[{ minOrders: 1, price: Number.MAX_SAFE_INTEGER }], undefined],
+] as const)('prices remaining packs from the highest applicable tier %j', (breaks, total) => {
+  const evidence = breaks.map((item) => ({ ...item }));
+  const before = JSON.stringify(evidence);
+  const result = comparison({ breaks: evidence });
+  const row = parseBomCsv(purchasingCsv(result))[0];
+
+  expect(result.lines[0].orderQty).toBe(3);
+  expect(result.lines[0].total).toBe(total);
+  expect(result.lines[0].issues).toEqual(total === undefined ? ['Quantity break unavailable'] : []);
+  expect(row['Line Total']).toBe(total === undefined ? '' : String(total));
+  expect(JSON.stringify(evidence)).toBe(before);
+});
+
 it('rechecks identity edits and packaging corrections without rewriting quote evidence', () => {
   const offer = quote();
   const purchases: Purchases = { [key]: { identity, priceUsd: 1, packQty: 1, checkedAt: '2026-11-20' } };

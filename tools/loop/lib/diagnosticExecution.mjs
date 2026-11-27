@@ -38,6 +38,15 @@ function resultOf(file, selection) {
   };
 }
 
+function retainedOutput(response) {
+  const limit = FILE_LIMIT / 4;
+  const stdout = Buffer.from(response.stdout ?? '').subarray(-limit / 4);
+  const error = Buffer.from(response.error?.message ?? '').subarray(-4096);
+  const stderr = Buffer.from(response.stderr ?? '').subarray(-(limit - stdout.length - error.length - 2));
+
+  return Buffer.concat([stdout, Buffer.from('\n'), stderr, Buffer.from('\n'), error]);
+}
+
 function measure({ selection, output, index }, execute) {
   const file = path.join(output, `run-${index}.json`);
   const args = [
@@ -64,9 +73,8 @@ function measure({ selection, output, index }, execute) {
     timeout: 15 * 60 * 1000,
     windowsHide: true,
   });
-  const log = `${response.stdout ?? ''}\n${response.stderr ?? ''}\n${response.error?.message ?? ''}`;
 
-  fs.writeFileSync(path.join(output, `run-${index}.log`), Buffer.from(log).subarray(-FILE_LIMIT / 4));
+  fs.writeFileSync(path.join(output, `run-${index}.log`), retainedOutput(response));
 
   try {
     const result = resultOf(file, selection);

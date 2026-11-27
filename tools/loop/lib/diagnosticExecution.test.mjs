@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, expect, it } from 'vitest';
 import { runMeasurements } from './diagnosticExecution.mjs';
+import { FILE_LIMIT } from './diagnosticContract.mjs';
 
 const dirs = [];
 const revision = 'b'.repeat(40);
@@ -67,6 +68,31 @@ it('reports an unmatched test as a failed measurement even if Vitest exits succe
   expect(manifest.results[0].status).toBe('failed');
   expect(manifest.results[0].selected).toBe(0);
 });
+
+it.each(['stdout', 'stderr', 'both'])(
+  'retains fixture state, blocked actions and process errors after %s floods',
+  (stream) => {
+    const output = fs.mkdtempSync(path.join(os.tmpdir(), 'measurement-'));
+    const stdout = `${stream !== 'stderr' ? 'stdout noise\n'.repeat(30000) : ''}daemon snapshot: client_lost`;
+    const stderr = `${stream !== 'stdout' ? 'action trace\n'.repeat(30000) : ''}failed action: Check Servos`;
+
+    dirs.push(output);
+    runMeasurements({ selection: { ...selection, runs: 1 }, output, revision }, () => ({
+      status: 1,
+      stdout,
+      stderr,
+      error: new Error('The test process stopped'),
+    }));
+
+    const bytes = fs.readFileSync(path.join(output, 'run-1.log'));
+    const log = bytes.toString('utf8');
+
+    expect(bytes.length).toBeLessThanOrEqual(FILE_LIMIT / 4);
+    expect(log).toContain('daemon snapshot: client_lost');
+    expect(log).toContain('failed action: Check Servos');
+    expect(log).toContain('The test process stopped');
+  },
+);
 
 it('executes an existing unit test through the real Vitest CLI and reads its exact named result', () => {
   const output = fs.mkdtempSync(path.join(os.tmpdir(), 'measurement-'));

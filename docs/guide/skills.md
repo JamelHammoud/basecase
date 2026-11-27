@@ -359,3 +359,5 @@ Taught drafts and races retain their revision and cancellation guards independen
 ### Ideal tendon admission
 
 `trainingJob` and `kitJob` refuse authored tendon models before preparing jobs. These models keep powered motor spool actions and passive physical observations, and the existing policy format is not extended to train them. Existing ready evidence becomes stale through changed robot physics fingerprints. Hold, animation and motor pose driving remain available in Simulate. `sim/tendonAdmission.test.ts` checks these refusals and the separate motor pose control path. [Simulation evidence](../notes/testing-simulate.md#ideal-tendon-transmissions) records execution scope.
+
+The controlled discovery feedback walkthrough remains active on Windows with both its initial ordering and reopening after reported outcomes. [November 27 evidence](../notes/testing-skills.md#windows-discovery-ordering-on-27-november) records the exact-revision pass and the distinct missing-row boundaries in the nightly failure.

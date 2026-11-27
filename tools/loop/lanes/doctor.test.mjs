@@ -34,6 +34,12 @@ vi.mock('../lib/sh.mjs', () => ({ json: () => [] }));
 vi.mock('../lib/repairCoverage.mjs', () => ({ expandsTestExclusions: mocks.exclusions }));
 vi.mock('../lib/pull.mjs', () => ({ publish: mocks.publish }));
 vi.mock('../lib/worktree.mjs', () => ({ openBranch: mocks.open, close: mocks.close }));
+vi.mock('../lib/workRecovery.mjs', () => ({
+  recoveryFor: () => null,
+  saveRecovery: vi.fn(),
+  clearRecovery: vi.fn(),
+}));
+vi.mock('../lib/deliveryState.mjs', () => ({ hasPendingWorktree: () => false }));
 vi.mock('./health.mjs', () => ({ measure: () => ({ mainRedSince: '2026-11-21T00:00:00Z' }) }));
 
 const now = Date.UTC(2026, 10, 22, 16);

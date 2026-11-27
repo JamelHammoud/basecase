@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runAgent } from '../lib/agent.mjs';
+import { hasPendingWorktree } from '../lib/deliveryState.mjs';
 import { failedJobs, lastFinishedMainCheck, openPulls } from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
 import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
@@ -27,6 +28,12 @@ vi.mock('../lib/store.mjs', () => {
   return { store: () => state };
 });
 vi.mock('../lib/worktree.mjs', () => ({ openBranch: vi.fn(), close: vi.fn() }));
+vi.mock('../lib/workRecovery.mjs', () => ({
+  recoveryFor: vi.fn(() => null),
+  saveRecovery: vi.fn(),
+  clearRecovery: vi.fn(),
+}));
+vi.mock('../lib/deliveryState.mjs', () => ({ hasPendingWorktree: vi.fn(() => false) }));
 
 const failedRun = {
   databaseId: 44222219427,
@@ -42,6 +49,7 @@ const closedPages = (nodes) => [{ data: { repository: { pullRequests: { nodes } 
 beforeEach(() => {
   vi.clearAllMocks();
   expandsTestExclusions.mockReturnValue(false);
+  hasPendingWorktree.mockReturnValue(false);
   lastFinishedMainCheck.mockReturnValue(failedRun);
   failedJobs.mockReturnValue(jobs.map((name) => ({ name })));
   openPulls.mockReturnValue([]);
@@ -178,4 +186,19 @@ it('keeps merged repairs and closures from another run handled', () => {
   );
   repair({ log: vi.fn() });
   expect(runAgent).not.toHaveBeenCalled();
+});
+
+it('records handled jobs only after publication preparation or durable delivery', () => {
+  publish.mockImplementationOnce(() => {
+    throw new Error('body preparation failed');
+  });
+  expect(() => repair({ log: vi.fn() })).toThrow('body preparation failed');
+  expect(state.save).not.toHaveBeenCalled();
+  publish.mockImplementationOnce(() => {
+    hasPendingWorktree.mockReturnValue(true);
+
+    throw new Error('delivery failed');
+  });
+  expect(() => repair({ log: vi.fn() })).toThrow('delivery failed');
+  expect(state.save).toHaveBeenCalledWith(failedRun.databaseId, { jobs });
 });

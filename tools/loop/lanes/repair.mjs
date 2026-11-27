@@ -1,5 +1,5 @@
 import { releaseAbandonedRepair } from '../lib/abandonedRepair.mjs';
-import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
+import { hasPendingWorktree } from '../lib/deliveryState.mjs';
 import {
   failedJobs,
   failedLog,
@@ -10,10 +10,9 @@ import {
   hasLabel,
 } from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
-import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
+import { repairSession } from '../lib/repairSession.mjs';
 import { repairPlan } from '../lib/repairPlan.mjs';
 import { store } from '../lib/store.mjs';
-import { close, openBranch } from '../lib/worktree.mjs';
 
 export const schedule = {
   agent: true,
@@ -71,43 +70,36 @@ export default function repair({ log }) {
   }
 
   const runUrl = `https://github.com/${repo()}/actions/runs/${latest.databaseId}`;
-  const worktree = openBranch('repair', `main-${latest.headSha.slice(0, 7)}`);
 
-  try {
-    const prompt = [
-      `Check failed on main at ${latest.headSha} (${runUrl}).`,
-      taken.length > 0 ? `An earlier repair already took ${taken.join(', ')}; leave those jobs to it.` : '',
-      'Every failed job, with the end of its log:',
-      failedLog(latest.databaseId, MAX_LOG, plan.jobs),
-    ]
-      .filter(Boolean)
-      .join('\n\n');
-    const result = runAgent({
-      cwd: worktree.dir,
-      name: 'repair',
-      prompt,
-      schema: CHANGE_SCHEMA,
-      deadlineAt: Date.now() + SESSION_MS,
-    });
+  repairSession({
+    name: 'repair',
+    slug: `main-${latest.headSha.slice(0, 7)}`,
+    log,
+    options: () => ({ deadlineAt: Date.now() + SESSION_MS }),
+    prompt: () =>
+      [
+        `Check failed on main at ${latest.headSha} (${runUrl}).`,
+        taken.length > 0 ? `An earlier repair already took ${taken.join(', ')}; leave those jobs to it.` : '',
+        'Every failed job, with the end of its log:',
+        failedLog(latest.databaseId, MAX_LOG, plan.jobs),
+      ]
+        .filter(Boolean)
+        .join('\n\n'),
+    complete: (output, worktree) => {
+      let prepared = false;
 
-    if (!result.ok) {
-      log(`repair session failed: ${String(result.error).slice(0, 500)}`);
+      try {
+        const url = publish(
+          { ...output, kind: 'repair' },
+          { ...worktree, extra: { failure: `[Check on main, ${latest.headSha.slice(0, 7)}](${runUrl})` } },
+        );
 
-      return;
-    }
-
-    if (expandsTestExclusions(worktree.dir))
-      return log('repair cannot expand quarantine coverage; the failed jobs remain eligible for a source repair');
-
-    repaired.save(latest.databaseId, { ...reconciled, jobs: [...taken, ...plan.jobs] });
-
-    const url = publish(
-      { ...result.output, kind: 'repair' },
-      { ...worktree, extra: { failure: `[Check on main, ${latest.headSha.slice(0, 7)}](${runUrl})` } },
-    );
-
-    log(url ? `opened ${url}` : `no change: ${result.output.notes}`);
-  } finally {
-    close(worktree);
-  }
+        prepared = true;
+        log(url ? `opened ${url}` : `no change: ${output.notes}`);
+      } finally {
+        if (prepared || hasPendingWorktree(worktree.dir))
+          repaired.save(latest.databaseId, { ...reconciled, jobs: [...taken, ...plan.jobs] });
+      }
+    },
+  });
 }

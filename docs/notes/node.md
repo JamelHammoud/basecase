@@ -1185,3 +1185,22 @@ The local handoff retains `scratch/nightly-failed.log`, `scratch/previous-full.l
 | Packaged app | The kernel self-test reports passed. The converter again stops during memory with exit 4294930435 and Crashpad not connected before any of its five assertions run. This repeats the [preexisting Windows converter failure](#windows-converter-memory-probe-on-27-november) under #54. No exception extension or proof change. |
 
 Eight focused diagnostics were submitted and collected in this repair context. Each ran the exact failed workload revision with one worker, zero retries and quarantine off. Browser traces identify reached actions but their durations are not comparable untraced measurements or flake rates. Every browser diagnostic process retains the Vite close warning even when its assertions pass. The manifest cleanup arrays are empty, so process logs remain necessary cleanup evidence. The Windows packaged-app configuration is outside the diagnostic contract. Its source cause remains unproved and its blocking failure remains available to #54. No shared harness, frozen proof dependency, gate, manifest, assertion, deadline, retry or quarantine entry changes.
+
+
+## Diagnostic stream retention on Check 46075290592
+
+[Check 46075290592](https://github.com/JamelHammoud/basecase/actions/runs/46075290592) failed three Windows browser declarations at `3bcc9cde87a8414cf77edfbd4e1e1ed0a8b1febb`. All three exact-revision diagnostics used Windows x64, four CPUs, Node 26.13.1, image `20261123.321.1`, one worker, zero retries and quarantine off. The diagnostic runner revision was `1770e5caf0dc49cd5336b0992727895ef0fd58eb`.
+
+| Path | Diagnostic | Callback | Result |
+| --- | --- | --- | --- |
+| Network servo swap | [46077790182](https://github.com/JamelHammoud/basecase/actions/runs/46077790182) | 71,620.848 ms | Failed after Fix, with Elbow not answering during confirmation |
+| Web pinned Walk installation | [46077790405](https://github.com/JamelHammoud/basecase/actions/runs/46077790405) | 34,911.7359 ms | Passed complete installation and reload |
+| Composer editing and Stop | [46077790004](https://github.com/JamelHammoud/basecase/actions/runs/46077790004) | 45,398.4029 ms | Passed complete editing and reopening |
+
+The latter two paths are intermittent on Windows at the exact failed revision. These single traced passes do not establish rates or source repairs. The network observation failed its only attempt, at a different stage from the nightly Set Up click. It provides no passing observation for the complete path. No single causative merge or changed environment component was established. The last full green remains `04c830ec7de8eabf859ad011c6e143466529daab`. Unit and packaged Windows failures belong to the earlier repair.
+
+The network artifact exposed a deterministic diagnostic defect. `diagnosticExecution.mjs` concatenated stdout before stderr, then retained only the final 256 KiB. The 256 KiB network log starts partway through a Playwright action line and contains none of the fixture's daemon snapshot or browser state. A large stderr trace displaced the stdout that held those summaries. Commit `676a50615eebb6d4038269a845fe54b802260842` introduced this retention order with targeted diagnostics. Reverting that integration would remove the execution facility needed by existing repair owners, so the correction changes its log assembly directly.
+
+The correction reserves up to 64 KiB for the stdout tail and 4 KiB for process errors, then gives stderr the remaining bytes of the unchanged 256 KiB log. Small streams release their unused allocation. The existing process-output, archive, timeout, selection and credential limits stay in place. Controlled runner regressions flood stdout, stderr and both, verifying that the persisted artifact keeps fixture state, the failed action and the process error within its byte limit. They do not launch a browser or native daemon. No additional check, wait, retry or observation is scheduled.
+
+Tickets are `0206b553-051e-4b80-9b5c-dd5f1f73316f`, `1db45f23-cf0e-4ac7-94e7-82f25ecdd8ff` and `517d825e-4622-479a-8fad-b5bae841ebfc`. Verified manifests and retained logs are in `scratch/diagnostics/<ticket>/`, linked from the task handoff. The network's missing stdout cannot be reconstructed from that artifact. A hosted observation using the corrected runner remains uncollected. All three browser declarations stay active with their complete assertions and deadlines, and no quarantine changes. Their owning notes retain the distinct stage evidence.

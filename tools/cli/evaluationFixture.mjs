@@ -20,7 +20,7 @@ export const invokeEvaluation = (...args) =>
 export async function evaluationFixture(dir) {
   const robot = fixtureRobots().find((r) => r.id === 'rover-diff');
   const made = buildCase(
-    { goal: 'reach', world: 'floor' },
+    { goal: 'reach', world: 'floor', values: { seconds: 4, distanceMm: 450 } },
     builderRobot(buildRig(robot.joints, robot.parts), robot.parts),
   );
 

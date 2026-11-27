@@ -1,5 +1,10 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { sourcingEvidence, sourcingMorphologies, SOURCING_REQUIREMENTS } from '../study/sourcingFixtures';
+import {
+  sourcingEvidence,
+  sourcingMorphologies,
+  SOURCING_REQUIREMENTS,
+  SOURCING_TIME,
+} from '../study/sourcingFixtures';
 import type { StudyRecord } from '../study/types';
 import type { Simulation } from '../sim/useSimulation';
 import type { Viewport3DHandle } from '../components/Viewport3D';
@@ -12,9 +17,15 @@ vi.mock('./engineeringNow', () => ({ engineeringInputs: vi.fn() }));
 vi.mock('../print/printBridge', () => ({ printBridge: { printers: async () => [] } }));
 vi.mock('./studyHold', () => ({ runStudyHold: async () => 'no legs' }));
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 it('captures purchases once and cancels after a completed row without publishing later results', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(SOURCING_TIME);
+
   const scene = sourcingMorphologies().find((item) => item.name === 'fixed arm')!.scene;
   const purchases = await sourcingEvidence(scene, new Date().toISOString());
   const read = vi.spyOn(platformBridge, 'listPurchases').mockResolvedValue(purchases);

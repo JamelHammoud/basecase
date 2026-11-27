@@ -281,3 +281,9 @@ Coverage for object tracking and counting, added with the tracker in `src/vision
 
 The scripted frames are 2 × 2 images whose twelve color values encode up to four box centres and a presence flag, so a frame's boxes come from real model output and not a mock. The frame alpha is opaque, since a transparent pixel loses its color when the browser makes a bitmap. Not covered: a trained detector's own flicker and misses on real footage, an operator camera feed with a live person, and the onboard runtime. Timings and memory are in [Vision inference performance](performance-vision-inference.md#tracking-runs-in-the-inference-worker-at-a-fixed-small-cost).
 
+
+## Operating requirement result on 27 November
+
+[Check 46035381829](https://github.com/JamelHammoud/basecase/actions/runs/46035381829) at `0879a160f8182db93dd9d80034145c8fdb8ba554` failed the active Windows declaration in `visionRequirements.e2e.test.ts` at line 77. Dataset import, condition assignment, backend model configuration and requirement entry completed. After Train, the Below score floor result did not appear within the unchanged poll. Aggregate-score, checkpoint and frozen-requirement reopening assertions had not run. The preceding same-revision Windows run 46001412880 passed in 16352 ms. Classification is intermittent Windows training-result delivery, with training completion, comparison and presentation still untraced. The later code-panel browser crash in this shard happened in a separate browser and does not explain this earlier failure.
+
+The declaration, exact scores, retention and historical evidence assertions remain active without a new exclusion. Existing training and dataset persistence coverage remains in place. No dependency change, timeout increase, retry or weaker score assertion is introduced. This repair claims neither a source fix nor a measured rate for this path.

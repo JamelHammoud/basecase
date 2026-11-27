@@ -33,6 +33,20 @@ type StudioWindow = {
 
 const mode = () => app.page.locator(shown('[data-testid="robot-mode"]')).first().getAttribute('data-mode');
 
+async function connectNetworkRobot() {
+  await openPlayTab(app.page, 'Operate');
+  await vi.waitFor(async () => expect(await app.page.locator(shown('[data-testid="network-robot"]')).count()).toBe(1), {
+    timeout: 10000,
+  });
+  await app.page.getByLabel('Robot', { exact: true }).selectOption(`${endpoint.host}:${endpoint.port}`);
+  await app.page.getByLabel('Pairing code').fill('482619');
+  await app.page
+    .locator(shown('button'), { hasText: /^Connect Robot$/ })
+    .first()
+    .click();
+  await vi.waitFor(async () => expect(await mode()).toBe('look'), { timeout: 10000 });
+}
+
 beforeAll(async () => {
   directory = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-operate-network-'));
   fs.writeFileSync(
@@ -138,6 +152,7 @@ beforeAll(async () => {
   });
   await app.page.evaluate((record) => (window as unknown as StudioWindow).__studio.load(record), ARM);
   await vi.waitFor(async () => expect(await partCount(app.page)).toBe(ARM.parts.length), { timeout: 10000 });
+  await connectNetworkRobot();
 }, 120000);
 
 afterAll(async () => {
@@ -214,15 +229,6 @@ async function checkSwappedPair() {
 
 describe('Operate a network robot', () => {
   it('pairs once, climbs the daemon ladder to Test and stops on a lost client', async () => {
-    await openPlayTab(app.page, 'Operate');
-    await expect.poll(() => app.page.locator(shown('[data-testid="network-robot"]')).count()).toBe(1);
-    await app.page.getByLabel('Robot', { exact: true }).selectOption(`${endpoint.host}:${endpoint.port}`);
-    await app.page.getByLabel('Pairing code').fill('482619');
-    await app.page
-      .locator(shown('button'), { hasText: /^Connect Robot$/ })
-      .first()
-      .click();
-    await expect.poll(mode).toBe('look');
     await expect.poll(() => events.some((event) => event.event === 'hello')).toBe(true);
     expect(await app.page.locator(shown('[data-testid="operate-panel"]')).first().innerText()).toContain('Kitchen Arm');
 

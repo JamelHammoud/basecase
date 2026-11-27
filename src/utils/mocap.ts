@@ -27,16 +27,12 @@ export function parseBvh(text: string, name = 'Motion'): Mocap {
 
   for (const b of bones) parentOf.set(b.name, b.parent && (b.parent as THREE.Bone).isBone ? b.parent.name : null);
 
-  const collect = () => {
-    root.updateMatrixWorld(true);
+  const collect = () => new Map(bones.map((b) => [b.name, new THREE.Vector3().setFromMatrixPosition(b.matrixWorld)]));
+  const collectEnds = () =>
+    new Map(ends.map(({ bone, id }) => [id, new THREE.Vector3().setFromMatrixPosition(bone.matrixWorld)]));
 
-    return new Map(bones.map((b) => [b.name, new THREE.Vector3().setFromMatrixPosition(b.matrixWorld)]));
-  };
-  const collectEnds = () => {
-    root.updateMatrixWorld(true);
+  root.updateMatrixWorld(true);
 
-    return new Map(ends.map(({ bone, id }) => [id, new THREE.Vector3().setFromMatrixPosition(bone.matrixWorld)]));
-  };
   const rest = collect();
   const restEnds = collectEnds();
   const mixer = new THREE.AnimationMixer(root);

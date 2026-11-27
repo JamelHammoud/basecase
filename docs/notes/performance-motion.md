@@ -170,3 +170,18 @@ A local macOS arm64 run on Apple M5 Pro with Node v26.13.0 compared the previous
 `mocapChannels.test.ts` checks mixed translation and rotation channels, nonstandard axis order, repeated bone names, translation-only bones, signed zero, nonfinite and missing values, frame rounding and clamping, changed imports and independent sampled outputs. Existing motion fitting tests exercise the sampler through complete BVH pipelines. Retargeting tests cover imported clip preparation and position-based animation output. No quarantine applies.
 
 No label, action or screen state changes. The covered [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) article retains its joint fields, hierarchy, posing and motion-fitting instructions. Motion import and animation help steps and screenshots remain accurate.
+
+## BVH position collectors read prepared world matrices
+
+A whole-app search for `updateMatrixWorld(true)` and BVH position collectors found duplicate hierarchy updates in both collectors in `utils/mocap.ts`. Each sampled time already updates the hierarchy in `setTime`. Bone and end-site collectors now read those matrices directly. Rest bones and rest end sites share one initial update before playback begins. Root-quaternion reads retain their existing three.js update path.
+
+For a hierarchy of B bones including end sites, either position sampler previously updated B matrices twice per sample. It now updates B matrices once. Rest collection likewise drops from two full hierarchy traversals to one. The two-bone pan/tilt fixture in `mocapSampling.test.ts` observes two `updateMatrixWorld` calls for each sampler, compared with four in the preceding implementation. These are operation counts, not timings or a claim about total import speed. Mixer interpolation, output-vector creation and separate requests for the same time retain their existing work.
+
+The focused test checks an interpolated end-site position, initial rest positions, independent returned vectors, interleaved bone, end-site and root-quaternion reads, backward seeks and both clamp boundaries. Existing retargeting snapshots and motion-fitting tests cover complete imported clips. No test exclusion, retry or timeout changed.
+
+Both preflight coverage reminders were checked against the complete articles and the final diff:
+
+- [Animate a robot with a walk cycle or motion capture](../../site/content/help/animate-a-robot.md) retains the same BVH file selection, bone matching, In place and Frame rate controls, import result and playback commands. Matrix preparation changes none of those steps. The menu, matching-sheet and playback-menu screenshots still show the applicable states.
+- [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) covers the edited contributor guide. Joint fields, hierarchy, modeled poses, IK and selected-robot import behavior remain unchanged. The added guide paragraph describes internal matrix preparation and introduces no action or joint behavior to explain in this concept article. The article has no screenshots.
+
+Both help articles remain unchanged because every described action, label and screen state still holds. No new user-facing copy is needed.

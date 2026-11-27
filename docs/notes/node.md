@@ -1161,6 +1161,13 @@ The existing handler now lives in `electron/appLifetime.mjs` and leaves self-tes
 
 This establishes the lifecycle defect and its correction, not the cause of the native Crashpad exit. Packaged Windows execution remains necessary evidence for that outcome and is outside the targeted diagnostic contract. The memory allocation probe, five packaged assertions, deadlines, original exception date, kernel implementation, frozen proof sources, gates and manifest are unchanged.
 
+### Converter observation in Check 46081294385
+
+[Check 46081294385](https://github.com/JamelHammoud/basecase/actions/runs/46081294385) at `467eac629c95cb420be136e2e4a3f8367a447ea9` again passed the Windows kernel self-test, then exited during the converter memory probe with 4294930435 and Crashpad not connected. All five packaged converter assertions remained unexecuted because setup failed. This repeats the preexisting Windows failure unmasked by #54's dated exception, rather than establishing a new causative merge. The macOS app pass cannot classify Windows intermittency.
+
+The failed workload precedes `db618a39a03568caf783a4eabf0a7012bef8d61b`, which contains the headless window-lifetime correction already present in this repair's starting checkout. That correction's native packaged Windows outcome is still unmeasured here. No duplicate lifecycle change, exception extension or speculative kernel change is made. The targeted diagnostic contract excludes packaged-app configurations. The frozen implementation, proof gates and manifest stay unchanged, and the original blocking packaged test remains available to #54.
+
+
 ## Nightly classification on 27 November
 
 [Check 46035381829](https://github.com/JamelHammoud/basecase/actions/runs/46035381829) ran `0879a160f8182db93dd9d80034145c8fdb8ba554`. Last green 45076902944 ran `04c830ec7de8eabf859ad011c6e143466529daab`, followed by three feature merges. There is no single merge accounting for all failures, so reverting that range would remove unrelated features without repairing the dated fixture or preexisting converter crash. The preceding full run 46001412880 uses the same failed revision and supplies affected-platform passes for the intermittent paths. No dependency or runner-image change is established as a common cause.

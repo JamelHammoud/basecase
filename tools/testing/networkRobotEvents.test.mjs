@@ -1,5 +1,26 @@
 import { expect, it, vi } from 'vitest';
-import { networkRobotEvents } from '../../e2e/networkRobotEvents';
+import { networkEventSnapshot, networkRobotEvents } from '../../e2e/networkRobotEvents';
+
+it('retains connection and fault transitions through a telemetry flood within the snapshot event budget', () => {
+  const connected = { event: 'link', state: 'connected' };
+  const fault = { event: 'fault', code: 'client_lost', at_us: 100 };
+  const lost = { event: 'link', state: 'lost' };
+  const statuses = Array.from({ length: 1000 }, (_, at_us) => ({ event: 'status', at_us }));
+  const events = [connected, fault, ...statuses, lost];
+  const before = structuredClone(events);
+
+  expect(networkEventSnapshot(events)).toEqual({ transitions: [connected, fault, lost], statuses: statuses.slice(-2) });
+  expect(events.slice(-20)).not.toContain(fault);
+  expect(events).toEqual(before);
+  expect(networkEventSnapshot([])).toEqual({ transitions: [], statuses: [] });
+
+  const transitions = Array.from({ length: 100 }, (_, index) => ({ event: 'mode', index }));
+
+  expect(networkEventSnapshot([...transitions, ...statuses])).toEqual({
+    transitions: transitions.slice(-18),
+    statuses: statuses.slice(-2),
+  });
+});
 
 it('drains every active telemetry delivery before browser closure and blocks later events', async () => {
   const first = Promise.withResolvers();

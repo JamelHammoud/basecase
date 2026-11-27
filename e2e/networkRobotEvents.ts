@@ -1,5 +1,10 @@
 type RobotEvent = Record<string, unknown>;
 
+export const networkEventSnapshot = (events: readonly RobotEvent[]) => ({
+  transitions: events.filter((event) => event.event !== 'status').slice(-18),
+  statuses: events.filter((event) => event.event === 'status').slice(-2),
+});
+
 export function networkRobotEvents(deliver: (event: RobotEvent) => Promise<unknown>) {
   const pending = new Set<Promise<void>>();
   const errors: unknown[] = [];

@@ -362,4 +362,4 @@ Taught drafts and races retain their revision and cancellation guards independen
 
 The controlled discovery feedback walkthrough remains active on Windows with both its initial ordering and reopening after reported outcomes. [November 27 evidence](../notes/testing-skills.md#windows-discovery-ordering-on-27-november) records the exact-revision pass and the distinct missing-row boundaries in the nightly failure.
 
-The web installation declaration also remains active on Windows, retaining pinned downloads, mapped training input, fresh target evidence and IndexedDB reopening. [The current missing-candidate evidence](../notes/testing-skills.md#windows-web-installation-on-check-46075290592) records its exact-revision pass without claiming a source repair or a measured failure rate.
+The web installation declaration also remains active on Windows, retaining pinned downloads, mapped training input, fresh target evidence and IndexedDB reopening. [Current discovery and reload evidence](../notes/testing-skills.md#windows-web-installation-on-check-46081294385) records its exact-revision pass without claiming a source repair or a measured failure rate.

@@ -2,12 +2,13 @@ import { afterAll, beforeAll, expect, it } from 'vitest';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import type { ProjectSettings, ScenePart } from '../src/types/robotics';
 import { isPrinted } from '../src/utils/bom';
-import { openApp, type App } from './harness';
+import { openApp, partCount, type App } from './harness';
 import { visible } from './buildCheckFixtures';
 
 interface TimeStudio {
   load: (record: { parts: ScenePart[]; project: Partial<ProjectSettings> }) => void;
   select: (ids: string[]) => void;
+  selection: () => string[];
   buildTime: () => { hours: number; status: string } | null;
 }
 
@@ -42,10 +43,13 @@ it('holds the rover to an hours budget and updates after deleting a printed part
   const before = (await reading())!.hours;
   const printed = rover.parts.find(isPrinted)!;
 
-  await app.page.evaluate((id) => (window as unknown as { __studio: TimeStudio }).__studio.select([id]), printed.id);
   await app.page.locator(visible('canvas')).first().click();
   await app.page.evaluate((id) => (window as unknown as { __studio: TimeStudio }).__studio.select([id]), printed.id);
+  await expect
+    .poll(() => app.page.evaluate(() => (window as unknown as { __studio: TimeStudio }).__studio.selection()))
+    .toEqual([printed.id]);
   await app.page.keyboard.press('Backspace');
+  await expect.poll(() => partCount(app.page)).toBe(rover.parts.length - 1);
   await expect.poll(async () => (await reading())?.hours ?? before).toBeLessThan(before);
   await budget.fill('1000');
   await budget.press('Enter');

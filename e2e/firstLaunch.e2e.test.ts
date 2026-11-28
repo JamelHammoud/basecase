@@ -1,5 +1,5 @@
 import type { Page } from 'playwright-core';
-import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, inject, it } from 'vitest';
 import { galleryBundles } from '../src/gallery/galleryEntries';
 import { exposeTestHooks, launchChrome, openApp, partCount, shown, type App } from './harness';
 
@@ -33,15 +33,15 @@ async function showLayers(page: Page) {
   if ((await rail.getAttribute('aria-pressed')) !== 'true') await rail.click();
 }
 
-beforeAll(async () => {
-  app = await openApp({ scenes: [] });
-}, 120000);
-
-afterAll(async () => {
-  await app?.close();
-});
-
 describe('first launch', () => {
+  beforeEach(async () => {
+    app = await openApp({ scenes: [] });
+  }, 120000);
+
+  afterEach(async () => {
+    await app?.close();
+  });
+
   it('opens on the rover, already driving to its flag, without saving it', async () => {
     const { page } = app;
 
@@ -66,6 +66,7 @@ describe('first launch', () => {
   it('moves the base forward while W is held', async () => {
     const { page } = app;
 
+    await expect.poll(async () => (await simState(page)).drive, { timeout: 60000 }).toBe('on');
     await page.mouse.click(720, 450);
 
     const from = await forward(page);
@@ -77,30 +78,25 @@ describe('first launch', () => {
   });
 
   it('says why Try on Real Robot didn’t start, and keeps saying it under the button', async () => {
-    const cameraApp = await openApp({ scenes: [] });
-    const { page } = cameraApp;
+    const { page } = app;
 
-    try {
-      await page.evaluate(() => {
-        Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
-          configurable: true,
-          value: () => Promise.reject(new DOMException('Camera access denied', 'NotAllowedError')),
-        });
+    await page.evaluate(() => {
+      Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+        configurable: true,
+        value: () => Promise.reject(new DOMException('Camera access denied', 'NotAllowedError')),
       });
+    });
 
-      const button = page.locator(shown('button'), { hasText: 'Try on Real Robot' }).first();
-      const status = page.locator(shown('[data-testid="real-try-status"]'));
+    const button = page.locator(shown('button'), { hasText: 'Try on Real Robot' }).first();
+    const status = page.locator(shown('[data-testid="real-try-status"]'));
 
-      await button.click();
-      await expect.poll(() => status.count(), { timeout: 15000 }).toBe(1);
-      await expect.poll(() => status.innerText(), { timeout: 15000 }).toBe('Couldn’t open the camera.');
-      expect(await button.isEnabled()).toBe(true);
-      await showLayers(page);
-      expect(await status.innerText()).toBe('Couldn’t open the camera.');
-      expect(cameraApp.posts.filter((p) => p.route.startsWith('save-scene'))).toEqual([]);
-    } finally {
-      await cameraApp.close();
-    }
+    await button.click();
+    await expect.poll(() => status.count(), { timeout: 15000 }).toBe(1);
+    await expect.poll(() => status.innerText(), { timeout: 15000 }).toBe('Couldn’t open the camera.');
+    expect(await button.isEnabled()).toBe(true);
+    await showLayers(page);
+    expect(await status.innerText()).toBe('Couldn’t open the camera.');
+    expect(app.posts.filter((p) => p.route.startsWith('save-scene'))).toEqual([]);
   });
 
   it('opens the saved scene instead after a relaunch', async () => {

@@ -47,7 +47,7 @@ it('opens a finished arm, composes and downloads a transparent PNG while preserv
     const chooser = app.page.waitForEvent('filechooser');
 
     await app.page.keyboard.press('ControlOrMeta+k');
-    await app.page.keyboard.type('Open Scene File');
+    await app.page.getByLabel('Search commands').fill('Open Scene File');
     await app.page.locator(shown('button[data-idx]')).filter({ hasText: 'Open Scene File' }).click();
     await (
       await chooser
@@ -167,8 +167,9 @@ it('keeps composition fields readable on a narrow canvas and cancels drafts befo
     expect(containment.right).toBeGreaterThanOrEqual(12);
     await panel.getByRole('button', { name: 'Use Current View', exact: true }).focus();
     await app.page.keyboard.press('ControlOrMeta+k');
-    await app.page.getByPlaceholder('Search commands').waitFor();
+    await app.page.getByPlaceholder('Search commands').press('Tab');
     await app.page.keyboard.press('Escape');
+    await app.page.getByPlaceholder('Search commands').waitFor({ state: 'detached' });
     expect(await panel.count()).toBe(1);
 
     let requested = () => {};
@@ -229,7 +230,7 @@ it('reopens saved composition settings through the command palette', async () =>
       inject('webUrl'),
     );
     await app.page.keyboard.press('ControlOrMeta+k');
-    await app.page.keyboard.type('Render Image');
+    await app.page.getByLabel('Search commands').fill('Render Image');
     await app.page.locator(shown('button[data-idx]')).filter({ hasText: 'Render Image' }).click();
 
     const panel = app.page.getByRole('region', { name: 'Render image', exact: true });

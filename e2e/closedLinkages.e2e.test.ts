@@ -1,14 +1,14 @@
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it } from 'vitest';
 import { openApp, type App } from './harness';
 import { insertClosedLinkage, runClosedLinkage, reopenClosedRecording } from './closedLinkageSteps';
 
 let app: App;
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
 });
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 

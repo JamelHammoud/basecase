@@ -25,6 +25,7 @@ covers:
   - src/reality/bodyAnalysis.ts
   - src/reality/bodySensitivity.ts
   - src/reality/bodyMotion.ts
+  - src/reality/bodyMotionResponses.ts
 ---
 
 Run the robot in your scene under MuJoCo physics to find out whether it stands, walks and holds its weight before you print a part.

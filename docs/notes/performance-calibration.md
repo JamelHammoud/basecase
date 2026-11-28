@@ -136,3 +136,23 @@ The native CI fixture compares selected and fixed bench-prefix delivery over equ
 The exact-revision Windows baseline in [diagnostic 46071186759](https://github.com/JamelHammoud/basecase/actions/runs/46071186759) at `77609f673e688ff56804bee5abe7b09537aa41f6` took 8,974 ms from the completed Preview Motion click to the first ready canvas. Its complete callback passed in 9,868.9947 ms. Windows x64 had four CPUs, Node 26.13.1, image `20261123.321.1`, one test worker, retries disabled and browser API tracing enabled. This is one traced baseline observation, not a production latency distribution or a comparison with the local candidate.
 
 Software camera warm-up now submits zero `compileAsync` calls, instead of one for scene materials and one for the fisheye pass. Actual drawing still compiles the programs it needs. Hardware keeps both precompilations and their shared completion boundary. The fast lens regression supplies unresolved compilation promises and checks that software pinhole rendering still executes with its requested camera placement and projection. These are work-count and ordering assertions, not timings. No candidate Windows first-frame time, complete-story rate or per-stage cost has been measured. [Failure evidence](testing-robot-runtime.md#windows-browser-repair-on-check-46068805254) records the unchanged browser assertions and unresolved stages.
+
+
+## Shared nominal motion probes
+
+The stationary-rover motion search at baseline `fca012606d4bd48243fbe0e8278d124ad99922f3` has eight physical parameters, two probes per parameter, six candidate plans and 1,000 physics steps per plan. Three clipped lower payload probes produce the same nominal model. Per-search response reuse reduces engine constructions from 16 to 14 and executed steps from 96,000 to 84,000, a 12.5% reduction. Both complete searches in the unchanged matrix callback benefit. The conservative preflight estimate, candidate library, scoring, probe bounds and million-step cap remain unchanged.
+
+`bodyMotionResponses.ts` compares the applied XML with the applied nominal XML. This supports identity and nonidentity nominal fits without equating distinct payload or mass models. It retains only one set of nominal normalized response buffers during one search, at most 6 plans × 65 frames × 16 joints × 8 bytes, or 49,920 numeric bytes. Array and object overhead is additional. Sensitivity columns allocate independently. Each engine is still disposed after its plans, and no engine or response survives the call.
+
+One local paired observation used macOS arm64 and Node 26.13.0 through Vite's server-side module loader, without an app preview or browser. The baseline loader substituted the exact HEAD selector source. The candidate used the response-reuse implementation on that same base. Raw stages, complete outcomes and CPU profiles are in `scratch/body-motion-baseline.json`, `scratch/body-motion-candidate.json`, `scratch/body-motion-baseline.cpuprofile` and `scratch/body-motion-candidate.cpuprofile`. `scratch/body-motion-comparison.json` records the complete outcome comparison, excluding only the intentionally reduced physics-step count.
+
+| Stage | Baseline, ms | Candidate, ms |
+| --- | ---: | ---: |
+| Generated fixture | 54.112 | 57.476 |
+| Analysis | 155.450 | 157.311 |
+| First search | 692.841 | 607.687 |
+| Repeated search | 666.273 | 585.041 |
+
+Every candidate, score, direction, selected index and outcome is exactly equal in that comparison. The candidate's repeat also equals its first result. These single local observations establish work reduction and numerical parity. They are not a latency distribution, a Linux or Windows candidate measurement, or evidence of an improved intermittent pass rate. [Exact-revision Linux failure and pass](testing-robot-runtime.md#stationary-rover-on-check-46129801611) establish the baseline classification separately.
+
+After extracting the response calculation into its final module, `scratch/body-motion-final-candidate.json` recorded first and repeated searches at 632.357 and 640.320 ms with the same 84,000 steps. Its complete outcomes again exactly match the baseline except for the step count. This second local observation does not establish a stable timing improvement or an affected-platform pass rate.

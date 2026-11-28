@@ -2,9 +2,9 @@ import type { MainModule } from '@mujoco/mujoco';
 import { loadedMujoco } from './calibrate';
 import { bodyAnalysisProblem } from './bodyAnalysisInput';
 import { BODY_ANALYSIS_METHOD } from './bodyAnalysisTypes';
-import { changedFit, physicalParameters } from './bodyAnalysisParameters';
-import { replayBodies, BodyReplayStopped, type BodyReplayBudget } from './bodyReplay';
-import { normalizedBodyResponse } from './bodySensitivity';
+import { physicalParameters } from './bodyAnalysisParameters';
+import { BodyReplayStopped, type BodyReplayBudget } from './bodyReplay';
+import { bodyMotionResponses } from './bodyMotionResponses';
 import { bodyMotionInformation } from './bodyMotionInformation';
 import { bodyMotionPlans } from './bodyMotionPlans';
 import { bodyMotionPreview, BodyPreviewStopped } from './bodyMotionPreview';
@@ -48,51 +48,6 @@ function matchingAnalysis({ request, result, selected }: BodyMotionRequest): boo
       );
     })
   );
-}
-
-function libraryResponses(input: {
-  input: BodyMotionRequest;
-  plans: BodyMotionPlan[];
-  mj: MainModule;
-  budget: BodyReplayBudget;
-}) {
-  const { request, result } = input.input;
-  const replayInput = {
-    ...request,
-    runs: input.plans.map((plan) => plan.run),
-    model: { ...request.model, scans: undefined },
-    mj: input.mj,
-    budget: input.budget,
-  };
-  const normalized = (positions: number[][]) =>
-    Float64Array.from(
-      positions.flatMap((row) =>
-        row.map(
-          (value, index) => value / (request.units[index] === 'rad' ? result.method.noiseRad : result.method.noiseM),
-        ),
-      ),
-    );
-  const columns = input.plans.map(() => [] as Float64Array[]);
-
-  for (const parameter of result.parameters) {
-    const probe = (value: number) =>
-      replayBodies(replayInput, changedFit({ request, parameter, value })).map(normalized);
-    const low = probe(parameter.probe[0]);
-    const high = probe(parameter.probe[1]);
-
-    input.plans.forEach((_, index) =>
-      columns[index].push(
-        normalizedBodyResponse({
-          low: low[index],
-          high: high[index],
-          span: parameter.probe[1] - parameter.probe[0],
-          scale: parameter.scale,
-        }),
-      ),
-    );
-  }
-
-  return { columns };
 }
 
 export async function recommendBodyMotion(
@@ -180,7 +135,7 @@ function searchPlans(context: {
     'method' | 'selected' | 'candidates' | 'physicsSteps' | 'preview'
   > | null = null;
 
-  const responses = libraryResponses({ input, plans, mj, budget });
+  const responses = bodyMotionResponses({ input, plans, mj, budget });
 
   for (const [index, plan] of plans.entries()) {
     const score = bodyMotionInformation({

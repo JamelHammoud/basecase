@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import type { Locator } from 'playwright-core';
 import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { writeJob } from '../electron/print/jobs.mjs';
@@ -47,14 +48,47 @@ beforeAll(async () => {
 }, 120000);
 
 afterAll(async () => {
-  await app?.close();
-  fs.rmSync(root, { recursive: true, force: true });
+  try {
+    await app?.close();
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
+
+async function assertRecoveryLayout(dialog: Locator) {
+  for (const select of await dialog.locator('select').all()) {
+    const bounds = await select.evaluate((element: HTMLSelectElement) => {
+      const row = element.parentElement!.parentElement!.parentElement!.parentElement!;
+      const label = row.firstElementChild!.firstElementChild!;
+      const range = document.createRange();
+      const style = getComputedStyle(element);
+      const context = document.createElement('canvas').getContext('2d')!;
+
+      range.selectNodeContents(label);
+      context.font = style.font;
+
+      return {
+        row: row.getBoundingClientRect().toJSON(),
+        label: range.getBoundingClientRect().toJSON(),
+        select: element.getBoundingClientRect().toJSON(),
+        valueWidth: context.measureText(element.selectedOptions[0].text).width,
+        padding: parseFloat(style.paddingLeft) + parseFloat(style.paddingRight),
+      };
+    });
+
+    expect(bounds.label.left).toBeGreaterThanOrEqual(bounds.row.left);
+    expect(bounds.label.right).toBeLessThanOrEqual(bounds.select.left);
+    expect(bounds.select.right).toBeLessThanOrEqual(bounds.row.right);
+    expect(bounds.valueWidth + bounds.padding).toBeLessThanOrEqual(bounds.select.width);
+    expect(bounds.select.height).toBe(32);
+  }
+}
 
 it(
   'selects a refreshed CORE One in Settings and opens the robot project with its preset identities',
   { retry: 0 },
   async () => {
+    await app.page.setViewportSize({ width: 1240, height: 720 });
     await app.page.route('**/api/bridge/print-save-printers', (route) =>
       route.fulfill({ json: (route.request().postDataJSON() as { arg: unknown }).arg }),
     );
@@ -78,10 +112,21 @@ it(
     await settingsDialog.getByRole('navigation').getByRole('button', { name: 'Printers' }).click();
     await settingsDialog.getByRole('button', { name: 'Old printer', exact: true }).click();
     expect(await settingsDialog.locator('select[aria-label="Model"]').inputValue()).toBe('bambu-lab-h3c');
+    expect(await settingsDialog.locator('option:checked').first().isDisabled()).toBe(true);
+    await assertRecoveryLayout(settingsDialog);
     await settingsDialog.locator('select[aria-label="Model"]').selectOption({ label: 'Prusa CORE One' });
     expect(await settingsDialog.locator('select[aria-label="Nozzle"]').inputValue()).toBe('0.6');
-    await settingsDialog.locator('select[aria-label="Nozzle"]').selectOption('0.4');
+    expect(await settingsDialog.locator('select[aria-label="Nozzle"] option:checked').isDisabled()).toBe(true);
+    await assertRecoveryLayout(settingsDialog);
+    await settingsDialog.locator('select[aria-label="Model"]').focus();
+    await app.page.keyboard.press('Tab');
+    expect(
+      await settingsDialog.locator('select[aria-label="Nozzle"]').evaluate((e) => e === document.activeElement),
+    ).toBe(true);
+    await app.page.keyboard.press('ArrowDown');
+    await app.page.keyboard.press('Tab');
     await expect.poll(() => settingsDialog.getByText('Prusa CORE One, 0.4 mm nozzle, Export only').count()).toBe(1);
+    expect(await settingsDialog.locator('select[aria-label="Nozzle"]').count()).toBe(0);
     await app.page.keyboard.press('Escape');
     await expect.poll(() => settingsDialog.count()).toBe(0);
     await app.page

@@ -202,10 +202,19 @@ it.each(['machine', 'process', 'filament'])('refuses a missing installed %s pres
   await expect(prepareProject(file, source, printer)).rejects.toThrow('profile named');
 });
 
-it('keeps unavailable CORE One L materials explicit instead of substituting generic presets', () => {
+it('refuses unavailable CORE One L materials instead of substituting generic presets', async () => {
   const setup = resolvePrinter('prusa-core-one-l', []);
   const spec = projectJobSpec(roverPlan(), setup, DEFAULT_PROJECT);
+  const source = sources.find((s) => s.slicer === 'orca');
 
   expect(Object.keys(setup.model.presets.filaments)).toEqual(['PLA']);
   expect(spec.files[0].project.filaments.map((f) => f.preset)).toEqual([setup.model.presets.filaments.PLA.name, '']);
+
+  const { files } = await threeMfIn(roverShapes(), spec);
+  const file = path.join(root, 'unsupported-material.3mf');
+  const original = files[spec.groups[0].material];
+
+  fs.writeFileSync(file, original);
+  await expect(prepareProject(file, source, spec.printer)).rejects.toThrow('no filament profile');
+  expect(fs.readFileSync(file)).toEqual(Buffer.from(original));
 });

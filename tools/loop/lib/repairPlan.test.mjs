@@ -3,7 +3,6 @@ import { repairPlan } from './repairPlan.mjs';
 
 const plan = (change) =>
   repairPlan({
-    run: { status: 'completed' },
     failed: ['unit', 'e2e (2)'],
     taken: [],
     repairOpen: () => false,
@@ -19,11 +18,12 @@ describe('repairPlan', () => {
     expect(plan({ repairOpen: () => true }).wait).toMatch(/already open/);
   });
 
-  it('repairs the jobs that failed after the first repair started, once the Check finishes', () => {
-    const later = { taken: ['unit'], repairOpen: () => true };
+  it('repairs newly failed jobs without waiting for unfinished jobs', () => {
+    expect(plan({ taken: ['unit'] })).toEqual({ jobs: ['e2e (2)'] });
+  });
 
-    expect(plan({ ...later, run: { status: 'in_progress' } }).wait).toMatch(/never saw/);
-    expect(plan(later)).toEqual({ jobs: ['e2e (2)'] });
+  it('coordinates late failures with an open repair too', () => {
+    expect(plan({ taken: ['unit'], repairOpen: () => true }).wait).toMatch(/already open/);
   });
 
   it('stops once every failed job has had a repair, whatever the gate job says', () => {

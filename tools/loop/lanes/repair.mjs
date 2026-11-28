@@ -57,7 +57,6 @@ export default function repair({ log }) {
 
   const taken = reconciled.jobs;
   const plan = repairPlan({
-    run: latest,
     failed: failedJobs(latest).map(({ name }) => name),
     taken,
     repairOpen: beingRepaired,

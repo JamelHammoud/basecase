@@ -103,6 +103,14 @@ A 100 × 18 × 9 mm solid PLA bracket at 0.5 target mass, 1.5 mm wall and 500 N�
 
 `mountRegions.test.ts` checks region membership, source preservation, changed inputs and preparation counts on 300- and 600-cell fixtures. A seeded scratch comparison matched the previous screw and combined frozen-region results on 100,000 points each. On 300- and 600-point mixed-region scans, screw length calculations fell from 300 and 600 to one. Plane normalizations also fell from 300 and 600 to one. These are operation counts, without wall-clock assertions or a claim about full solve latency.
 
+### Frozen-region membership without per-cell callbacks
+
+A whole-app search found one shared frozen-region query and three callers, in Lighten grid preparation, load paths and optimization. Direct loops replace its three region callbacks. Scalar box comparisons and plane sums also remove one axis callback per visited box or plane. A point that misses one screw, one box and one plane previously constructed five callbacks and now constructs none inside the query. These are source-derived counts, without heap measurements, timings or a claim about complete Lighten latency.
+
+The plane sum retains the reduction's initial zero and addition order. Box comparisons retain axis order and inclusive bounds. Screw preparation, region precedence, early returns and input ownership stay unchanged. A seeded scratch replay compared 100,200 memberships across 40 mixed-region fixtures, including absent region lists, axial slack, box boundaries, signed zeros and nonfinite points. Every result matched the previous implementation. Replay source and output remain local in `scratch/frozen-query-parity.test.ts` and `scratch/frozen-query-parity.log`.
+
+Existing `mountRegions.test.ts` covers inclusive boundaries, oblique and collapsed screws, mixed regions, wall allowances, input edits and source preservation. Existing Lighten tests retain grid, load-path and optimization coverage. User actions and visible states stay unchanged, so the Lighten help article and screenshots remain accurate.
+
 ## Lighten prepares fixed filter neighborhoods once
 
 `strength/lightenNeighborhoods.test.ts` checks exact density-filter entries against all element pairs on sparse anisotropic grids, source preservation and bounded distance calculations. A scratch comparison matched the previous filter in 80 cases and complete mass-search grids in 12 cases. Density-filter distance calculations fell from 37,500 and 75,000 to 125 on 300- and 600-cell fixtures. Wall-neighborhood distance calculations fell from 1,925 to 175 on both 120- and 240-cell fixtures. These are operation counts, without wall-clock assertions or a claim about full Lighten latency.

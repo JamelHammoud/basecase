@@ -56,6 +56,8 @@ Measurements and limits: [Scene storage and startup performance evidence](../not
 
 - **Autosave never re-serializes unchanged parts.** `sceneJson` caches each part's JSON by object identity, slices the work across frames and sends one string (`saveSceneJson`).
 
+  Change detection compares the next document with its pending draft before the last queued draft. Returning to a saved design through Redo must replace a pending Undo save. `workspace/useAutosave.test.ts` covers appearance scale, project settings, scene names and writes already in progress through the production save queue. The ordinary Appearance browser story retains full IndexedDB equality and reload assertions. [Failure and regression evidence](../notes/performance-workspace.md#autosave-retains-redo-over-a-pending-undo).
+
 - **Duplicate naming indexes taken names once.** `workspace/helpers.ts` builds a set before checking copy suffixes for parts, groups, scenes and Library models. It keeps the first available suffix without rescanning every name for each occupied suffix. [Evidence](../notes/performance-workspace.md#duplicate-naming-indexes-taken-names-once).
 
 - **Desktop scene replacement is atomic.** `electron/library/sceneLibrary.mjs` uses the existing `writeAtomic` helper for scene records. A replacement writes a sibling temporary file before renaming it over the saved record. An interruption before rename leaves the previous record readable. Listings ignore unfinished temporary files. This does not guarantee recovery from power loss.

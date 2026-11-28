@@ -1,0 +1,68 @@
+# Training and retention testing evidence
+
+Coverage: [Cases](../guide/cases.md#testing-coverage) and [Cameras](../guide/cameras.md#testing-coverage). Placement: [Vision evidence index](testing-vision.md). Shared contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
+
+## Windows real-image vision training
+
+The complete preparation, ONNX comparison, persistence and Apply Model test in `e2e/visionTraining.e2e.test.ts` is quarantined only on Windows through 28 November 2026 under [#1129](https://github.com/JamelHammoud/basecase/issues/1129). Run 43728033376 observed zero saved runs after Train on both attempts, while Linux passed the same commit in 12.825 s. The walkthrough was introduced by `899e7069c` after the last green nightly. The failing preparation, inference or persistence stage is not established. Restoring Windows coverage requires stage traces and at least ten runs before and after at equal load.
+
+Run 43856125616 at `3ef3c70d1c36e8629b5097260dffe1d802075e48` observed the same zero-saved-run failure at line 58 on both Windows attempts, taking 32.972 seconds in total. Both controlled training-and-stop tests were excluded from this observation because they are not quarantined. The optional quarantine step completed without failing the job. This repeats #1129's completion symptom without identifying a preparation, inference or persistence cause. Its existing Windows entry and restoration conditions remain unchanged.
+
+## Frame labels
+
+The reference-pick walkthrough in `e2e/labelFrames.e2e.test.ts` is quarantined only on Windows through 28 November 2026 under [#1049](https://github.com/JamelHammoud/basecase/issues/1049). In run 43703438118, the first attempt saved no try after Stop Try, and the retry lost the Stop Try button during its click. The attempts share one `beforeAll` app. Linux passed at the same commit in 11.8 s, and the preceding Windows run passed in 41.4 s with unchanged walkthrough, recording, simulation and Case code. The cause is not established. The fix issue requires Windows traces through recording, scoring and persistence, and at least ten runs before and after at the same load.
+
+## Declared operating requirements
+
+Review coverage in `requirementChoices.test.ts` restores two cameras and legacy class choices from real snapshot archives without condition metadata. It edits current camera and class metadata, checks saved choices remain frozen, and verifies complete frozen summaries need no content reads. The earlier condition-rescoring performance table retains its original measurements, separate from the requirement observations below.
+
+The review's changed-file check passed formatting, lint, documentation, site copy for 332 pages, types and 183 related tests across 40 files. The log is `scratch/review-1752-check.log`. Its first run caught a new fixture editing the original image array instead of the cloned saved snapshot. The corrected fixture changes the saved snapshot when exercising summary-only reads. No browser tests ran locally during review.
+
+Issue #1745 extends the existing evaluator and comparison. Requirements remain optional and freeze before backend dispatch. The candidate and incumbent use the same prepared snapshot and declarations. Tests preserve group membership, source ancestry, exact model hashes and dataset identity through JSON save/reopen. Exploratory group selection does not change a saved retention decision.
+
+The generated ONNX matrix declares expected aggregate and subgroup results separately. Every listed subgroup scores 0 for the candidate and 1 for the incumbent. Floors are zero, support minima are one and permitted regression is zero, so each comparison records a regression checkpoint. Cases without aggregate improvement also remain checkpoints. Class names distinguish people, parts, pallets, mugs, bins, handles, landmarks, appliance states and inspection defects.
+
+| Workflow | Task | Candidate aggregate | Incumbent aggregate | Required real-test members |
+| --- | --- | --- | --- | --- |
+| Low-light rover person detector | Detection | 67/101 | 34/101 | 1 |
+| Occluded arm part detector | Detection | 67/101 | 34/303 | 1 |
+| Rare warehouse pallet detector | Detection | 134/303 | 34/101 | 1 |
+| Kitchen mug segmenter | Segmentation | 0 | 1 | 2 |
+| Reflective bin segmenter | Segmentation | 0 | 1 | 2 |
+| Gripper handle landmarks | Keypoints | 0 | 1 | 1 |
+| Desk robot named landmarks | Keypoints | 0 | 1 | 1 |
+| Appliance state classifier | Classification | 2/3 | 1/3 | 1 |
+| Inspection defect classifier | Classification | 2/3 | 1/3 | 1 |
+| Weak wrist camera on a two-camera robot | Detection | 67/101 | 34/101 | 1 |
+
+`requirementWorkflows.test.ts` runs actual preparation, JPEG decoding, tiny ONNX WASM inference, shared task scoring, comparison, saved-run validation, checkpoint Apply Model refusal and JSON reopening. The camera fixture repeats a frame ID across sets. Existing ONNX parity tests independently check confidence, masks, landmark order and classification outputs. Generated arithmetic fixtures do not establish physical perception or transfer performance.
+
+`requirements.test.ts` covers score-floor and support equality, passing all declarations, overlapping membership, missing and empty groups, absent classes, unavailable evidence, corrupted digests, unsupported metrics/classes and declaration bounds. Its segmentation resource case refuses 300 resized mask comparisons on a 512 by 512 image before mask decoding. A second resource case uses a checkerboard prediction exceeding the mask-encoding run cap. Its candidate wins aggregate scoring 1 to 0 but saves a resource checkpoint without prediction evidence. `requirementBoundaries.test.ts` accepts exactly a one-point permitted regression and refuses a value one millionth below that boundary. It also excludes generated and unverified source support using the production ancestry resolver. `requirementLifecycle.test.ts` mutates working declarations during preparation, checks their earlier frozen values and identical incumbent/candidate tasks, preserves historical labels, rejects source leakage and discards a completion after cancellation without saving. A passing control meets score and support thresholds exactly and ties its incumbent subgroup at the zero-regression boundary. Existing global-limit and no-requirement coverage remains active.
+
+The documentation capture follows the new focused browser walkthrough through ordinary Import Robot, assignment of night to a dark image, declaration, real preparation and ONNX evaluation. Candidate aggregate mAP is 67/101 versus 34/101, while night scores are 0 versus 1. The result remains a checkpoint without Apply Model. Inspection loads the contributing frozen image. Removing current night membership and changing the current floor leaves saved requirements, outcomes and dataset versions unchanged. Committed captures are in `site/public/help/require-vision-conditions/` and `site/public/changelog/vision-operating-requirements/`.
+
+The initial capture exposed a pointer-access failure after expanding training controls and results. The fixed-height view let that content cover the image condition editor. Dataset controls/results now occupy at most half the view and scroll independently. The corrected capture completed in 23.54 seconds. The final capture after input-unit and Delete-tone corrections completed in 27.20 seconds. No test deadline or retry increased. Both used the development fallback because production bundles were absent. They are documentation observations, not Linux/Windows reliability results. The existing Vite shutdown warning followed completion.
+
+The first changed-file check passed 2,389 related tests and failed the existing Delete-tone invariant for the new requirement Delete button. It also reported a test-only group type mismatch and five site contraction findings. Corrections use the existing danger button variant, explicitly narrow condition/camera groups and follow site copy conventions. The complete changed-file check then passed formatting, lint, documentation, site copy, types and 2,394 related tests, with one existing skipped file and test. Logs are `scratch/requirements-check.log`, `scratch/requirements-corrections-check.log` and `scratch/requirements-final-check.log`. Later focused checks cover the inference call counter, full comparison byte accounting and conservative segmentation pixel accounting. The final evaluation check passed all 227 related tests in 45 files, including the resource checkpoint for oversized prediction evidence. No new test is skipped or quarantined.
+
+The production worker-memory probe initially failed because the test transform rewrote a dynamic import inside a browser callback. Its scratch-only loader now leaves that import in the browser. The corrected probe completed in 15.56 seconds. It ran the shipped evaluation worker, without inference or image decoding, and saved `scratch/requirements-worker-memory.json`. [Performance evidence](performance-vision-training.md#declared-operating-requirements) records its limits.
+
+The focused browser file declares retry zero. CI owns Linux and Windows execution. No GPU, physical device, external account or paid backend was used. These requirements express supplied operating criteria, without statistical-significance, physical-safety or deployment guarantees.
+
+## Windows condition training completion
+
+[Check 44227652023](https://github.com/JamelHammoud/basecase/actions/runs/44227652023) at `8416f27ec38e9271d3cb3cf10b28848cf4a81e4d` completed image import, image selection and both condition assignments, then clicked Train. The saved-run count remained zero through the existing poll at line 78. It never reached historical image inspection. Windows [run 44218519123](https://github.com/JamelHammoud/basecase/actions/runs/44218519123) passed the exact declaration in 21,484 ms. The test and preparation, evaluation and persistence paths are unchanged between those revisions. The intervening condition-result copy removal changes no training computation.
+
+Classification is Windows-observed intermittency. The last observed action is the Train click, without evidence that the training handler or backend dispatch completed. The log does not distinguish preparation, backend fitting, ONNX evaluation or persistence. The exact declaration is quarantined only on Windows through 28 November 2026 under existing real-image completion owner #1129, rather than creating a second training owner. Linux and macOS retain the complete path. Windows retains the real ONNX condition workflow matrix, score arithmetic, frozen membership, content-port restoration and revoked-result tests. Those do not establish the combined import-to-history browser path. Restoration requires stage tracing and at least ten baseline and ten candidate Windows observations at equal load with retries disabled and the original assertions and deadlines.
+
+## Requirement resource correctness workload
+
+Check 44885120824 exceeded the unchanged 5000 ms callback deadline for the 1,000-image requirement resource declaration on Windows. The code performed twelve complete evaluations: one ordinary baseline, one warmup and five ordinary/required pairs. It also forced garbage collection twice and serialized reports repeatedly for scratch measurements. No individual scoring or resource-bound assertion failed. The declaration originated in #1752 and was present in last full green `943616a63`, so this is intermittent workload exhaustion without evidence of an environment change or newly incorrect metric.
+
+The correctness declaration now evaluates ordinary and required scoring once each for both 4 and 1,000 images. It preserves aggregate equality, complete support, exact passing scores, the 24 KiB retained-byte bound and explicit resource refusal. It additionally asserts both complete overlapping index lists. Opaque fixture image bytes still require no content loading or inference. Repeated timing, forced collection and scratch measurement output have been removed from this unit test. The ten-workflow matrix retains real image decoding, ONNX inference and save/reopen coverage. Historical measurements and their limitations remain in [vision training performance evidence](performance-vision-training.md#declared-operating-requirements). No production scorer, deadline, retry or quarantine changes.
+
+## Operating requirement result on 27 November
+
+[Check 46035381829](https://github.com/JamelHammoud/basecase/actions/runs/46035381829) at `0879a160f8182db93dd9d80034145c8fdb8ba554` failed the active Windows declaration in `visionRequirements.e2e.test.ts` at line 77. Dataset import, condition assignment, backend model configuration and requirement entry completed. After Train, the Below score floor result did not appear within the unchanged poll. Aggregate-score, checkpoint and frozen-requirement reopening assertions had not run. The preceding same-revision Windows run 46001412880 passed in 16352 ms. Classification is intermittent Windows training-result delivery, with training completion, comparison and presentation still untraced. The later code-panel browser crash in this shard happened in a separate browser and does not explain this earlier failure.
+
+The declaration, exact scores, retention and historical evidence assertions remain active without a new exclusion. Existing training and dataset persistence coverage remains in place. No dependency change, timeout increase, retry or weaker score assertion is introduced. This repair claims neither a source fix nor a measured rate for this path.

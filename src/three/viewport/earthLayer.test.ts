@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { FIXTURE_COPYRIGHT, FIXTURE_GROUND_M, FIXTURE_SPOT, fixtureTileBytes } from '../../earth/tileFixture';
 import type { EarthOrigin } from '../../earth/earthOrigin';
 import { Hider, hideHelpers } from './captures';
@@ -21,7 +21,10 @@ beforeAll(() => {
 
 const layers: EarthLayer[] = [];
 
-afterEach(() => layers.splice(0).forEach((layer) => layer.dispose()));
+afterEach(() => {
+  layers.splice(0).forEach((layer) => layer.dispose());
+  vi.restoreAllMocks();
+});
 
 const fetchTile = async (path: string) => {
   const bytes = fixtureTileBytes(path);
@@ -71,6 +74,51 @@ const leavesIn = (layer: EarthLayer, span: { min: number; max: number }) =>
     .filter((tile) => enu(tile.center).east > span.min && enu(tile.center).east < span.max);
 
 describe('EarthLayer', () => {
+  it('retains the prepared ground probe across redraws, altitude changes and renderer replacement', async () => {
+    const { layer } = await placed();
+    const { TilesRenderer } = await import('3d-tiles-renderer/three');
+    const register = vi.spyOn(TilesRenderer.prototype, 'setCamera');
+    const view = camera([3000, 2000, 3000], [0, 0, 0]);
+
+    layer.update(view, WIDTH, HEIGHT);
+
+    const probe = register.mock.calls.map(([camera]) => camera).find((camera) => camera !== view);
+
+    expect(probe).toBeInstanceOf(THREE.PerspectiveCamera);
+
+    if (!probe) throw new Error('Missing ground probe');
+
+    const expected = new THREE.PerspectiveCamera(20, 1, 1, 1e7);
+
+    expected.position.set(0, 50000, 0);
+    expected.up.set(0, 0, -1);
+    expected.lookAt(0, 0, 0);
+    expected.updateMatrixWorld();
+
+    const aim = vi.spyOn(probe, 'lookAt');
+
+    for (const altitudeM of [null, FIXTURE_GROUND_M, null]) {
+      await layer.set({ origin: { ...FIXTURE_SPOT, altitudeM, offsetM: 2 }, fetchTile });
+      register.mockClear();
+
+      for (let i = 0; i < 20; i++) layer.update(view, WIDTH + i, HEIGHT);
+
+      expect(register.mock.calls.filter(([camera]) => camera === probe)).toHaveLength(altitudeM === null ? 20 : 0);
+    }
+
+    await layer.set({
+      origin: { ...FIXTURE_SPOT, lat: FIXTURE_SPOT.lat + 0.00001, altitudeM: null, offsetM: 0 },
+      fetchTile: (path) => fetchTile(path),
+    });
+    register.mockClear();
+    layer.update(view, WIDTH, HEIGHT);
+    expect(register.mock.calls.some(([camera]) => camera === probe)).toBe(true);
+    expect(probe.matrixWorld.elements).toEqual(expected.matrixWorld.elements);
+    expect(probe.matrixWorldInverse.elements).toEqual(expected.matrixWorldInverse.elements);
+    expect(probe.projectionMatrix.elements).toEqual(expected.projectionMatrix.elements);
+    expect(aim).not.toHaveBeenCalled();
+  });
+
   it('samples the tiles under the origin and puts their surface on the floor', async () => {
     const { layer, attributions } = await placed();
 

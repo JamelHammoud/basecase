@@ -84,6 +84,10 @@ export class EarthLayer {
 
   constructor(parent: THREE.Object3D, hooks: Hooks) {
     this.hooks = hooks;
+    this.probe.position.set(0, PROBE_HEIGHT_MM, 0);
+    this.probe.up.set(0, 0, -1);
+    this.probe.lookAt(0, 0, 0);
+    this.probe.updateMatrixWorld();
     this.group.name = 'earth';
     this.group.matrixAutoUpdate = false;
     this.group.visible = false;
@@ -204,10 +208,6 @@ export class EarthLayer {
       return;
     }
 
-    probe.position.set(0, PROBE_HEIGHT_MM, 0);
-    probe.up.set(0, 0, -1);
-    probe.lookAt(0, 0, 0);
-    probe.updateMatrixWorld();
     tiles.setCamera(probe);
     tiles.setResolution(probe, PROBE_PX, PROBE_PX);
   }

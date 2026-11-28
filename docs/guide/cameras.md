@@ -158,6 +158,8 @@ Measurements and limits: [Camera mat tracking performance evidence](../notes/per
 
 Include `liveCamera.test.ts` explicitly in `check:changed` after editing `liveCameraFixture.ts`. The fixture's browser entry is loaded by URL, so the related-test dependency scan does not select these integration declarations from a fixture edit alone. The [exact-revision Linux callback observation](../notes/testing-cameras.md#compiled-camera-callback-on-check-46132153464) also fails after setup, while the same nightly's Windows failure remains in setup. Both declarations and their assertions remain active.
 
+The [exact-revision Web Vision observation on Check 46134524354](../notes/testing-cameras.md#web-vision-signal-on-check-46134524354) again fails its sole Linux attempt at the count signal. It supplies no passing hosted observation or source cause. Full-studio inference, boxes and normalized-coordinate coverage remain active on Linux and Windows.
+
 ### Study camera visibility
 
 Study camera choices use `ScenePart.position`, `rotation` and `cameraLens`. Pose edits move fastened mates, press fits and part-frame links together, without treating slider, coaxial or face mates as rigid connections. They reuse `cameraViews`, `LiveStage`, `LensRenderer` and the training instance/depth passes. They do not add a renderer, optimizer, camera driver or dataset format. Existing training-image generation reads the applied scene fields directly.

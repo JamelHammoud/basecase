@@ -74,6 +74,8 @@ it('renders 500 repeated modules and releases their GPU textures', async () => {
 it('preserves scalar cover alpha inside the solid and excludes hidden assets and references', async () => {
   const { alpha } = await worker.run<Awaited<ReturnType<typeof compositionChecks>>>({ index: -3, cameraBytes: [] });
 
+  await mkdir('scratch', { recursive: true });
+  await writeFile('scratch/composition-alpha.json', JSON.stringify(alpha));
   expect(alpha!.center).toBeGreaterThanOrEqual(88);
   expect(alpha!.center).toBeLessThanOrEqual(90);
   expect(alpha!.corner).toBe(0);

@@ -1,5 +1,6 @@
 import { fetchWithTimeout } from './shared.mjs';
 import { bigFigures } from '../bigCount.mjs';
+import { pathDepth } from '../pathDepth.mjs';
 
 const IGNORED_REPO_WORDS = ['description', 'urdf', 'model', 'robot', 'ros', 'mjcf', 'assets'];
 
@@ -64,9 +65,7 @@ async function repoLines(repo, words) {
   if (!files.length) return null;
 
   const score = (p) =>
-    words.filter((w) => p.toLowerCase().includes(w)).length * 2 +
-    (/\.urdf$/i.test(p) ? 1 : 0) -
-    p.split('/').length * 0.05;
+    words.filter((w) => p.toLowerCase().includes(w)).length * 2 + (/\.urdf$/i.test(p) ? 1 : 0) - pathDepth(p) * 0.05;
 
   files.sort((x, y) => score(y) - score(x));
 

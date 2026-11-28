@@ -1,10 +1,9 @@
+import { pathDepth } from '../../../electron/pathDepth.mjs';
 import { imageSourceKind, type ImageSourceKind } from '../../vision/import/imageSourceKind';
 import { pathsByDepth } from '../../utils/pathsByDepth';
 
 export const INFO_FILE = 'meta/info.json';
 export const BAG_METADATA_FILE = 'metadata.yaml';
-
-const depthOf = (path: string) => path.split('/').length;
 
 const isInfoFile = (path: string) => path === INFO_FILE || path.endsWith(`/${INFO_FILE}`);
 
@@ -27,7 +26,7 @@ export function isRosbag2Folder(paths: string[]): string | null {
 
   if (prefixes.length === 0) return null;
 
-  return prefixes.reduce((best, prefix) => (depthOf(prefix) < depthOf(best) ? prefix : best));
+  return prefixes.reduce((best, prefix) => (pathDepth(prefix) < pathDepth(best) ? prefix : best));
 }
 
 export function sourceKind(paths: string[]): 'lerobot' | 'rosbag2' | 'mcap' | ImageSourceKind | null {

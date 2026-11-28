@@ -122,6 +122,12 @@ The changed-file check passed formatting, lint, docs, site copy and types. Relat
 
 `driverSweep.test.ts` checks all 15 tool options, blocker order, rigid placements, exclusions, changed inputs and result ownership. On its 300- and 600-part fixtures, envelope expansions fall from 300 and 600 to one per screw. Cosine calls fall from 298 to 262 and sine calls from 306 to 270. These are operation counts, without timing assertions or a claim about complete assembly-check time.
 
+On November 28, 2026, driver screening began returning clear options immediately when the existing search envelope contains no eligible solids. Repository search found one tool-option generator, consumed by assembly geometry and print-cradle access screening. Both now omit straight, L-key and ball-end segment preparation for empty candidates. The envelope, self and skip filters, 15-option order and independent result lists remain unchanged. Nearby candidates still use the complete geometry path.
+
+For the same 300- and 600-part distant-solid fixtures, cosine and sine calls now fall from 262 and 270 to zero. The envelope still expands once and visits every candidate. These are asserted operation counts, without elapsed-time or heap measurements. No whole-scene speedup is claimed. The suite also compares clear option order with measured options, checks excluded solids and independent blocker lists, then measures a nearby lid on a later call. Existing rotated-scene tests retain exact blocker order. No user action, visible state, timeout, retry or exclusion changes, so help instructions and screenshots remain accurate.
+
+Validation passed formatting, lint, documentation, site copy, TypeScript and 3,302 related tests across 432 passing files. One existing file and test were skipped. The related run took 60.72 seconds locally. Copy diff reported net zero, and loop preflight found no issues. Logs remain in `scratch/refine-check.log` and `scratch/refine-docs-check.log`. Browser tests remain with CI.
+
 ## Mirror-twin checks count clashes once
 
 `twinLint.test.ts` checks these contracts, geometry reports, later edits and source preservation. Its 150- and 300-pair fixtures reduce endpoint reads from 179,700 and 719,400 to at most 600 and 1,200. These are operation counts, without timing assertions or a claim about complete scene-check time.

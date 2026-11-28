@@ -102,7 +102,7 @@ describe('driver sweep preparation', () => {
     expect(driverOptions(chain, [], skipped).map((option) => option.tool)).toEqual(first.map((option) => option.tool));
   });
 
-  it.each([300, 600])('prepares one search envelope for %i scene parts', (count) => {
+  it.each([300, 600])('skips tool probes outside the search envelope for %i scene parts', (count) => {
     const solid = box('source', [2, 2, 2], [500, 500, 500]);
     const parts = Array.from({ length: count }, (_, i) => ({ ...solid, id: `part-${i}` }));
     const expansion = vi.spyOn(THREE.Box3.prototype, 'expandByScalar');
@@ -126,6 +126,23 @@ describe('driver sweep preparation', () => {
       sine.mockRestore();
     }
 
-    expect({ expansions, cosines, sines }).toEqual({ expansions: 1, cosines: 262, sines: 270 });
+    expect({ expansions, cosines, sines }).toEqual({ expansions: 1, cosines: 0, sines: 0 });
+  });
+
+  it('returns independent clear options for excluded solids and measures later candidates', () => {
+    const parts = fixture();
+    const excluded = new Set(parts.map((part) => part.id));
+    const clear = driverOptions(chain, parts, excluded);
+    const empty = driverOptions(chain, [], new Set());
+    const measured = driverOptions(chain, parts, skipped);
+
+    expect(clear).toEqual(measured.map(({ tool }) => ({ tool, blockers: [] })));
+    expect(clear).toEqual(empty);
+    expect(new Set(clear.map((option) => option.blockers)).size).toBe(15);
+    clear[0].blockers.push('edited');
+    expect(empty.every((option) => option.blockers.length === 0)).toBe(true);
+    expect(clear.slice(1).every((option) => option.blockers.length === 0)).toBe(true);
+    expect(driverOptions(chain, parts, excluded)).toEqual(empty);
+    expect(measured[0].blockers).toEqual(['lid']);
   });
 });

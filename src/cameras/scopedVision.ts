@@ -5,6 +5,7 @@ import type { VisionResult, VisionSource } from '../vision/types';
 import * as session from './visionSession';
 import { cameraRegions, onCameraRegions, setCameraRegions } from './visionRegions';
 import type { CameraRegions } from '../vision/tracking/types';
+import { cameraFeedOwners } from './cameraFeedOwners';
 
 export function scopedVision(source: VisionSource) {
   registerVisionModelSource(source);
@@ -39,6 +40,7 @@ export function scopedVision(source: VisionSource) {
 
   return {
     source,
+    cameraFeeds: cameraFeedOwners(),
     onCameraVision: (listener: () => void) =>
       session.onCameraVision((camera) => {
         if (!camera || camera.startsWith(prefix)) listener();

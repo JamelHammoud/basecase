@@ -9,12 +9,16 @@ import { useCameraFeed, type CameraFeedInput } from './useCameraFeed';
 import { cameraViews } from './views';
 import type { FixedCamera } from './fixed';
 
-function CameraHarness(input: CameraFeedInput) {
-  useCameraFeed({ ...input, active: false, onFrames: () => undefined });
-
+function CameraTile(input: CameraFeedInput) {
   const feed = useCameraFeed(input);
 
   return createElement('canvas', { ref: feed.canvasRef(input.views[0].key) });
+}
+
+function CameraHarness({ input, visible }: { input: CameraFeedInput; visible: boolean }) {
+  useCameraFeed({ ...input, active: false, onFrames: () => undefined });
+
+  return visible ? createElement(CameraTile, input) : null;
 }
 
 export async function mountCamera(input: {
@@ -29,6 +33,8 @@ export async function mountCamera(input: {
   const root = createRoot(host);
   let scope = createVisionScope('initial');
   let frames = 0;
+  let visible = true;
+  let connected = false;
   const waiters = new Set<() => void>();
   let closed = false;
   const feed: CameraFeedInput = {
@@ -38,7 +44,9 @@ export async function mountCamera(input: {
     model: null,
     views: cameraViews(input.parts, [], input.cameras),
     enlarged: null,
-    connectCameras: () => undefined,
+    connectCameras: (link) => {
+      connected = Boolean(link);
+    },
     onFrames: (count) => {
       frames = count;
       waiters.forEach((listen) => listen());
@@ -46,7 +54,9 @@ export async function mountCamera(input: {
   };
   const render = () =>
     flushSync(() =>
-      root.render(createElement(VisionScopeContext, { value: scope }, createElement(CameraHarness, feed))),
+      root.render(
+        createElement(VisionScopeContext, { value: scope }, createElement(CameraHarness, { input: feed, visible })),
+      ),
     );
 
   document.body.append(host);
@@ -71,7 +81,7 @@ export async function mountCamera(input: {
             return true;
           }
 
-          if (frames > 0 && scope.simulated.cameraVision(key)) {
+          if ((!visible || frames > 0) && scope.simulated.cameraVision(key)) {
             resolve();
 
             return true;
@@ -92,17 +102,33 @@ export async function mountCamera(input: {
         changed();
       }),
     configure: () => scope.simulated.configureVisionCamera(feed.views[0].key, { modelId: input.manifest.id, fps: 10 }),
+    hideTile: () => {
+      visible = false;
+      frames = 0;
+      scope.simulated.invalidateVisionCamera(feed.views[0].key);
+      render();
+    },
+    showTile: () => {
+      visible = true;
+      frames = 0;
+      scope.simulated.invalidateVisionCamera(feed.views[0].key);
+      render();
+    },
     replace: (kind: 'scene scope' | 'simulation link') => {
       frames = 0;
 
       if (kind === 'scene scope') scope = createVisionScope('replacement');
-      else feed.connectCameras = () => undefined;
+      else
+        feed.connectCameras = (link) => {
+          connected = Boolean(link);
+        };
 
       scope.simulated.invalidateVisionCamera(feed.views[0].key);
       render();
     },
     state: () => ({
       frames,
+      connected,
       result: scope.simulated.cameraVision(feed.views[0].key),
       error: scope.simulated.cameraVisionError(feed.views[0].key),
       signals: scope.simulated.cameraVisionSignals(),

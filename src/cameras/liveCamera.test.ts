@@ -31,26 +31,30 @@ afterAll(async () => {
   );
 });
 
+async function mountFixture() {
+  const scene = simulatedCameraFixture();
+  const bytes = inputSensitiveDetectionOnnx();
+
+  await app.page.evaluate(
+    async (input) => {
+      const fixture = window as unknown as BrowserFixture;
+
+      fixture.camera = await fixture.mountCamera(input);
+      await fixture.camera.configure();
+    },
+    {
+      parts: scene.parts,
+      cameras: scene.project.cameras,
+      manifest: visionManifest(bytes, 'block'),
+      bytes: [...bytes],
+    },
+  );
+}
+
 it.each(['scene scope', 'simulation link'] as const)(
   'keeps pixel-sensitive inference after replacing the %s with identical inputs',
   async (kind) => {
-    const scene = simulatedCameraFixture();
-    const bytes = inputSensitiveDetectionOnnx();
-
-    await app.page.evaluate(
-      async (input) => {
-        const fixture = window as unknown as BrowserFixture;
-
-        fixture.camera = await fixture.mountCamera(input);
-        await fixture.camera.configure();
-      },
-      {
-        parts: scene.parts,
-        cameras: scene.project.cameras,
-        manifest: visionManifest(bytes, 'block'),
-        bytes: [...bytes],
-      },
-    );
+    await mountFixture();
 
     const state = () => app.page.evaluate(() => (window as unknown as BrowserFixture).camera.state());
 
@@ -68,6 +72,7 @@ it.each(['scene scope', 'simulation link'] as const)(
     const result = await state();
 
     expect(result.frames).toBeGreaterThan(0);
+    expect(result.connected).toBe(true);
     expect(result.error).toBeNull();
     expect(result.assignments).toEqual([expect.objectContaining({ fps: 10, continuous: true })]);
     expect(result.result!.backend).toBe('wasm');
@@ -80,3 +85,28 @@ it.each(['scene scope', 'simulation link'] as const)(
     result.result!.detections[0].box.forEach((value, i) => expect(value).toBeCloseTo([0.1, 0.2, 0.3, 0.4][i]));
   },
 );
+
+it('continues pixel-sensitive inference through the hidden consumer after the visible tile unmounts', async () => {
+  await mountFixture();
+  await app.page.evaluate(() => (window as unknown as BrowserFixture).camera.wait());
+  await app.page.evaluate(() => (window as unknown as BrowserFixture).camera.hideTile());
+  await app.page.evaluate(() => (window as unknown as BrowserFixture).camera.wait());
+
+  const state = await app.page.evaluate(() => (window as unknown as BrowserFixture).camera.state());
+
+  expect(state.frames).toBe(0);
+  expect(state.connected).toBe(true);
+  expect(state.error).toBeNull();
+  expect(state.result!.backend).toBe('wasm');
+  expect(state.result!.detections).toEqual([expect.objectContaining({ label: 'block', score: expect.any(Number) })]);
+  expect(state.signals['vision.target_camera.block']).toBe(1);
+  expect(state.assignments).toEqual([expect.objectContaining({ fps: 10, continuous: true })]);
+  await app.page.evaluate(() => (window as unknown as BrowserFixture).camera.showTile());
+  await app.page.evaluate(() => (window as unknown as BrowserFixture).camera.wait());
+
+  const resumed = await app.page.evaluate(() => (window as unknown as BrowserFixture).camera.state());
+
+  expect(resumed.connected).toBe(true);
+  expect(resumed.frames).toBeGreaterThan(0);
+  expect(resumed.signals['vision.target_camera.block']).toBe(1);
+});

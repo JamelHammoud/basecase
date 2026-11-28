@@ -1,13 +1,14 @@
 import type { MainModule } from '@mujoco/mujoco';
+import type { BodyAnalysisRequest, BodyAnalysisResult } from './bodyAnalysisTypes';
 import { changedFit } from './bodyAnalysisParameters';
 import { applyBodyFit } from './bodyModel';
 import { emptyBodyFit } from './bodyParameters';
 import { replayBodies, type BodyReplayBudget } from './bodyReplay';
 import { normalizedBodyResponse } from './bodySensitivity';
-import type { BodyMotionRequest, BodyMotionPlan } from './bodyMotionTypes';
+import type { BodyMotionPlan } from './bodyMotionTypes';
 
 export function bodyMotionResponses(input: {
-  input: BodyMotionRequest;
+  input: { request: BodyAnalysisRequest; result: Pick<BodyAnalysisResult, 'parameters' | 'method'> };
   plans: BodyMotionPlan[];
   mj: MainModule;
   budget: BodyReplayBudget;

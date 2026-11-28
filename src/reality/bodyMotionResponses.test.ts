@@ -1,7 +1,7 @@
 import loadMujoco, { type MainModule } from '@mujoco/mujoco';
 import { beforeAll, expect, it, vi } from 'vitest';
-import { analyzeBody } from './bodyAnalysis';
-import { changedFit } from './bodyAnalysisParameters';
+import { changedFit, physicalParameters } from './bodyAnalysisParameters';
+import { BODY_ANALYSIS_METHOD } from './bodyAnalysisTypes';
 import { bodyAnalysisScenario } from './bodyAnalysisMatrix.fixtures';
 import { bodyMotionPlans } from './bodyMotionPlans';
 import { bodyMotionResponses } from './bodyMotionResponses';
@@ -29,10 +29,7 @@ it.each([1, 1.1])(
     request.source.modelFingerprint = model.robots[0].fingerprint;
     request.source.modelHash = await sha256(model.xml);
 
-    const result = await analyzeBody(request, { mj });
-
-    if (result.kind !== 'analyzed') throw new Error(result.reason);
-
+    const result = { parameters: physicalParameters(request), method: BODY_ANALYSIS_METHOD };
     const plans = bodyMotionPlans(request).slice(0, 1);
     const budget = { remainingSteps: 1_000_000 };
     const spy = vi.spyOn(replay, 'replayBodies');
@@ -40,7 +37,7 @@ it.each([1, 1.1])(
     let calls: number;
 
     try {
-      actual = bodyMotionResponses({ input: { request, result, selected: [0] }, plans, mj, budget });
+      actual = bodyMotionResponses({ input: { request, result }, plans, mj, budget });
       calls = spy.mock.calls.length;
     } finally {
       spy.mockRestore();
@@ -79,11 +76,14 @@ it.each([1, 1.1])(
     });
 
     expect(actual.columns).toEqual([expected]);
+    expect(
+      result.parameters.filter((parameter) => parameter.kind === 'payloadKg' && parameter.probe[0] === 0).length,
+    ).toBeGreaterThan(1);
     expect(plans).toHaveLength(1);
     expect(calls).toBeLessThan(result.parameters.length * 2);
     expect(budget.remainingSteps).toBeGreaterThan(independent.remainingSteps);
-    expect(() =>
-      bodyMotionResponses({ input: { request, result, selected: [0] }, plans, mj, budget: { remainingSteps: 1 } }),
-    ).toThrow(replay.BodyReplayStopped);
+    expect(() => bodyMotionResponses({ input: { request, result }, plans, mj, budget: { remainingSteps: 1 } })).toThrow(
+      replay.BodyReplayStopped,
+    );
   },
 );

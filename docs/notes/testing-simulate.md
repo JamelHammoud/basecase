@@ -693,3 +693,14 @@ All twenty cases and their exact grip, replay and archive assertions remain acti
 Windows shard 2 at `bec6b2749a7db3e429481c97e280d945bfa4a5fd` first failed `runClosedLinkage` because simulation never reached playing at line 78. Its configured retry then failed earlier at insertion, finding ten parts where the same declaration requires five at line 46. The beforeAll browser retained the five inserted parts across attempts. This is demonstrated fixture contamination after an unresolved initial simulation-start failure.
 
 The same declaration now acquires and closes its existing app in beforeEach and afterEach. Every attempt begins with the original empty scene and still performs Sketch insertion, joined-link simulation, encoded recording checks and articulated reopening. No assertions, deadlines, configured retries or platforms change. Additional construction occurs only when another attempt runs. The failed retry spent its existing poll on an impossible five-part assertion, but no hosted candidate duration or rate is measured. Existing owner #1479 retains simulation-start attribution.
+
+
+## Replacement-finger lift rebuild
+
+The #2183 and #2187 investigation found that both jaws lost the short-cylinder-v target for one recorded interval, from 5.52 s to 5.54 s on x64. The retained grasp contract correctly rejected that interruption. Hosted Linux and Windows failures and arm64 passes are recorded above. This is a numerical contact-continuity failure, not a callback deadline.
+
+The reference now reuses the existing eased interpolation for a loaded upward move when the selected target has a declared replacement finger on an active gripper jaw. Its movement duration and settling interval stay within the original schedule. Ordinary-jaw motion, placement easing, jaw force, friction, geometry, Case duration and contract thresholds remain unchanged. The existing ordinary-jaw and twenty-row replacement matrices retain contact, saved-score, serialization and replay assertions.
+
+The prior rebuild reported all 32 integration declarations passing under pinned Node 26.13.1 x64. That supplied evidence motivates retaining this correction but is not a fresh observation of this worktree. Current checks and platform limits are recorded below. No physical grasp performance is established.
+
+The final named check on macOS arm64 with pinned Node 26.13.1 passed all 2,037 related tests, including all 32 declarations in the ordinary-jaw and replacement integration files. Its test phase took 45.59 seconds. Short-cylinder-v retained 751 frames, 320 grip frames and passed its saved-score and replay assertions. Evidence is `scratch/rebuild-check.log`. No fresh x64 or hosted browser observation accompanies this rebuild, and the existing Windows saved-grasp workflow remains for CI.

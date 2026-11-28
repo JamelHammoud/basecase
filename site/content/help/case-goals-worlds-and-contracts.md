@@ -137,6 +137,8 @@ For Hand Off, the block must rise by more than its height before transfer. It mu
 
 A [selected-object pickup](/help/design-gripper-fingers) requires 0.2 s of contact with both jaws while raised above its lift threshold. That threshold is half the object’s height, with a 4 mm minimum. It must stay gripped until placed, then finish released within **Radius** for 0.3 s. Its final lift reading must be within 4 mm of its initial value. Pushing, palm contact and dropping before placement fail.
 
+With generated replacement fingers, the reference eases the loaded lift within the scheduled movement time.
+
 A Case made by **Replay in Sim** reads torque instead: each frame's highest joint torque, as a share of the most its servo can push.
 
 A success rule is built from a few parts:

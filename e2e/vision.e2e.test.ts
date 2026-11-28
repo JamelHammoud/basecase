@@ -21,7 +21,10 @@ interface Studio {
 }
 
 const state = (page: Page = app.page) =>
-  page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.cameraVisionState());
+  page.evaluate(() => ({
+    ...(window as unknown as { __studio: Studio }).__studio.cameraVisionState(),
+    renderedFrames: Number(document.querySelector('[data-testid="camera-strip"]')?.getAttribute('data-frames') ?? 0),
+  }));
 
 afterEach(async () => {
   await app?.close();
@@ -95,7 +98,13 @@ it('publishes rendered camera detections, boxes and signals in the web studio', 
     },
     { model: manifest(bytes, 'block'), data: [...bytes] },
   );
-  await expect.poll(async () => (await state(page)).signals['vision.target_camera.block']).toBe(1);
+  await expect
+    .poll(async () => {
+      const snapshot = await state(page);
+
+      return snapshot.signals['vision.target_camera.block'] === 1 ? null : JSON.stringify(snapshot);
+    })
+    .toBeNull();
 
   const box = page.locator(shown('[data-camera="target_camera"]')).first().getByTestId('vision-box');
 

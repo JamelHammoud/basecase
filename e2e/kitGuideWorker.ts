@@ -82,14 +82,20 @@ export async function stubKitGuideWorker(page: Page) {
 
   await page.context().route(/\/guide\.worker[.-].*(?:\?|$)/, (route) =>
     whilePageLives(page, async () => {
-      const response = await route.fetch();
-      const source = await response.text();
+      const original = new URL(route.request().url());
+
+      if (original.searchParams.has('basecase-guide-original')) {
+        await route.continue();
+
+        return;
+      }
+
+      original.searchParams.set('basecase-guide-original', '1');
 
       await route.fulfill({
-        response,
         contentType: 'text/javascript',
-        headers: { ...response.headers(), 'Cross-Origin-Embedder-Policy': 'credentialless' },
-        body: `${source}\n;(${guideWorkerFixture.toString()})()`,
+        headers: { 'Cross-Origin-Embedder-Policy': 'credentialless' },
+        body: `const queued = []; self.onmessage = (event) => queued.push(event);\nawait import(${JSON.stringify(original.href)});\n;(${guideWorkerFixture.toString()})();\nfor (const event of queued) self.onmessage(event);`,
       });
     }),
   );

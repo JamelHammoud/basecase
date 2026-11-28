@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { stubKitGuideWorker } from '../../e2e/kitGuideWorker';
 
-it.each(['fetch', 'body', 'fulfill'])(
+it.each(['continue', 'fulfill', 'render'])(
   'keeps %s errors visible only while the guide fixture page is live',
   async (phase) => {
     for (const closed of [false, true]) {
@@ -13,33 +13,23 @@ it.each(['fetch', 'body', 'fulfill'])(
 
         throw error;
       };
-
       const page = {
         isClosed: () => retired,
         context: () => ({ route: async (_match, handler) => handlers.push(handler) }),
       };
-      const response = {
-        headers: () => ({}),
-        text: async () => {
-          if (phase === 'body') fail();
-
-          return 'self.onmessage = () => {};';
-        },
-      };
+      const query = phase === 'continue' ? '?basecase-guide-original=1' : '';
       const route = {
-        fetch: async () => {
-          if (phase === 'fetch') fail();
-
-          return response;
-        },
-        fulfill: async () => {
-          if (phase === 'fulfill') fail();
-        },
+        request: () => ({
+          url: () => `https://example.com/assets/guide.worker-fixture.js${query}`,
+          postDataJSON: fail,
+        }),
+        continue: fail,
+        fulfill: fail,
       };
 
       await stubKitGuideWorker(page);
 
-      const pending = handlers[0](route);
+      const pending = handlers[phase === 'render' ? 1 : 0](route);
 
       if (closed) await expect(pending).resolves.toBeUndefined();
       else await expect(pending).rejects.toBe(error);

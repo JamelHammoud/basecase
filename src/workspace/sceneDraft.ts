@@ -1,4 +1,5 @@
 import type { ProjectSettings, SceneAnnotation, ScenePart } from '../types/robotics';
+import { sameProjectInputs } from '../utils/projectInputs';
 
 export interface SceneDraft {
   history?: string;
@@ -16,7 +17,7 @@ const sameItems = <T>(a: T[], b: T[]) => a === b || (a.length === b.length && a.
 const sameText = (a: SceneDraft, b: SceneDraft) =>
   a.sceneName === b.sceneName && a.globalGoal === b.globalGoal && a.chatId === b.chatId;
 
-export function draftChanged(saved: SceneDraft, next: SceneDraft): boolean {
+export function draftChanged(saved: SceneDraft, next: SceneDraft, includeGenerated = true): boolean {
   if (!sameText(saved, next) || saved.history !== next.history) return true;
 
   if (!sameItems(saved.parts, next.parts) || !sameItems(saved.annotations, next.annotations)) return true;
@@ -24,6 +25,8 @@ export function draftChanged(saved: SceneDraft, next: SceneDraft): boolean {
   if (saved.project === next.project) return false;
 
   if (saved.project.study !== next.project.study) return true;
+
+  if (!includeGenerated && sameProjectInputs(saved.project, next.project)) return false;
 
   const savedSettings = { ...saved.project };
   const nextSettings = { ...next.project };

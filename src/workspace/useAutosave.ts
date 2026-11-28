@@ -16,6 +16,7 @@ interface AutosaveOptions {
   active: boolean;
   pristine: boolean;
   unsaved: boolean;
+  temporary: boolean;
 }
 
 interface PreviewState {
@@ -73,11 +74,12 @@ function useScenePreviews(savedRef: React.RefObject<SceneDraft>, activeRef: Reac
   return { refresh, schedule, cancel, forget };
 }
 
-export function useAutosave({ draft, active, pristine, unsaved }: AutosaveOptions) {
+export function useAutosave({ draft, active, pristine, unsaved, temporary }: AutosaveOptions) {
   'use memo';
 
   const savedRef = useRef<SceneDraft>(draft);
   const unsavedRef = useRef(unsaved);
+  const temporaryRef = useRef(temporary);
   const pendingRef = useRef<SceneDraft | null>(null);
   const timerRef = useRef(0);
   const chainRef = useRef<Promise<unknown>>(Promise.resolve());
@@ -131,6 +133,7 @@ export function useAutosave({ draft, active, pristine, unsaved }: AutosaveOption
     if (next.sceneId !== savedRef.current.sceneId) {
       savedRef.current = next;
       pendingRef.current = null;
+      temporaryRef.current = false;
       previews.forget();
 
       return;
@@ -138,8 +141,11 @@ export function useAutosave({ draft, active, pristine, unsaved }: AutosaveOption
 
     if (isPristine || discardedRef.current) return;
 
+    if (temporaryRef.current && !draftChanged(savedRef.current, next, false)) return;
+
     if (!unsavedRef.current && !draftChanged(savedRef.current, next)) return;
 
+    temporaryRef.current = false;
     unsavedRef.current = false;
     pendingRef.current = next;
     window.clearTimeout(timerRef.current);

@@ -205,7 +205,7 @@ export function useWorkspaceHost({ active, seed, core, agent, openTry }: HostOpt
     project: core.project,
     chatId: agent.current.chatId,
   };
-  const autosave = useAutosave({ draft, active, pristine, unsaved: !!seed?.unsaved });
+  const autosave = useAutosave({ draft, active, pristine, unsaved: !!seed?.unsaved, temporary: !!seed?.playCase });
 
   useRegisterHandle({ core, agent, autosave, openTry });
   useReportMeta({ core, agent, pristine });

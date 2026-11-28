@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { once } from 'node:events';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RobotFleet } from '../electron/robot/robotFleet.mjs';
 import type { NetworkRobotAsk } from '../src/robot/networkTypes';
 import { ARM } from './armFixture';
@@ -48,7 +48,10 @@ async function connectNetworkRobot() {
   await vi.waitFor(async () => expect(await mode()).toBe('look'), { timeout: 10000 });
 }
 
-beforeAll(async () => {
+beforeEach(async () => {
+  events.length = 0;
+  daemonEvents.length = 0;
+  daemonErrors = '';
   directory = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-operate-network-'));
   fs.writeFileSync(
     path.join(directory, 'calibration.json'),
@@ -159,7 +162,7 @@ beforeAll(async () => {
   await connectNetworkRobot();
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   if (process.env.BASECASE_DIAGNOSTIC_BROWSER_TRACE === '1')
     console.log(
       'e2e network state:',

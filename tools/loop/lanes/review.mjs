@@ -112,13 +112,14 @@ function pushFixes({ pull, worktree, judged, log }) {
 }
 
 function judge({ pull, worktree, diff, copy, onMain, log }) {
+  const deadlineAt = Date.now() + 30 * 60_000;
   const where = onMain
     ? 'The worktree is the pull request merged onto current main, so judge it as it would land.'
     : 'It conflicts with current main, so the worktree is its own head; the rebase lane will bring it up to date.';
   const others = inFlight();
   const duplicates = `Other pull requests, open or merged in the last day:\n\n${inFlightText({ ...others, except: pull.number })}\n\nIf one of them makes this same change (the same strings or the same behaviour, not merely the same area), set duplicateOf to its number.`;
   const prompt = reviewPrompt({ pull, where, copy, duplicates, fix: FIX_IT, diff });
-  const result = runAgent({ cwd: worktree.dir, name: 'review', prompt, schema: SCHEMA, hours: 2 });
+  const result = runAgent({ cwd: worktree.dir, name: 'review', prompt, schema: SCHEMA, deadlineAt });
 
   if (!result.ok) {
     setReview(pull.headRefOid, 'error', 'The review session failed; it will run again');

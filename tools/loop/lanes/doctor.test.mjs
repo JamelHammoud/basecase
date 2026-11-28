@@ -12,8 +12,10 @@ const mocks = vi.hoisted(() => ({
   pulls: vi.fn(),
   exclusions: vi.fn(),
   publish: vi.fn(),
+  repairs: vi.fn(),
 }));
 
+vi.mock('../lib/activeRepairEvidence.mjs', () => ({ activeRepairEvidence: mocks.repairs }));
 vi.mock('../lib/agent.mjs', () => ({ CHANGE_SCHEMA: {}, runAgent: mocks.agent }));
 vi.mock('../lib/store.mjs', () => ({
   store: () => ({
@@ -55,6 +57,7 @@ beforeEach(() => {
   mocks.pulls.mockReturnValue([]);
   mocks.exclusions.mockReturnValue(false);
   mocks.publish.mockReturnValue(null);
+  mocks.repairs.mockReturnValue([]);
 
   const exists = fs.existsSync.bind(fs);
 
@@ -131,4 +134,13 @@ it('publishes a doctor source repair without changing test exclusions', () => {
   doctor({ log });
   expect(mocks.publish).toHaveBeenCalledOnce();
   expect(mocks.close).toHaveBeenCalledOnce();
+});
+
+it('includes unpublished repair work without delaying the admitted investigation', () => {
+  mocks.repairs.mockReturnValue([{ worker: 'repair-1', worktree: 'retained-repair', handoff: 'camera diagnostic' }]);
+  doctor({ log });
+  expect(mocks.agent).toHaveBeenCalledOnce();
+  expect(mocks.agent.mock.calls[0][0].prompt).toContain('camera diagnostic');
+  expect(mocks.agent.mock.calls[0][0].prompt).toContain('retained-repair');
+  expect(mocks.state.lastCallAt).toBe(now);
 });

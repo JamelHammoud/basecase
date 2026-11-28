@@ -1254,3 +1254,56 @@ The dated Case agent, workbench and Fleet incident exclusions expired at UTC mid
 Classification for cancellation is Windows shard capacity. The Windows matrix now has ten shards instead of six, retaining the 25-minute job limit and every declaration and assertion. The existing native-dependency installer and optional observations use the actual matrix size. The existing six- and ten-shard inventory test checks complete, disjoint file assignment and exactly one assignment of each native dependency. Four additional jobs duplicate their setup and may spend time queued. Hosted completion and total CI cost after this change are unmeasured. This repairs partition capacity, not the five browser source failures.
 
 Separate observations and limits remain with [Case code](testing-case-code.md#windows-case-agent-on-check-46084134521), [workbench placement](testing-cases.md#windows-workbench-on-check-46084134521) and [robot runtime](testing-robot-runtime.md#windows-network-and-incidents-on-check-46084134521). All five declarations remain active. No exclusion is added or extended, and no timeout, retry or behavioral assertion changes.
+
+## Full failure inventory for Check 46086809992
+
+The repair reads the complete [failed Check](https://github.com/JamelHammoud/basecase/actions/runs/46086809992) at `c940e1474e604a3126c4c809d89a7b9f006b1351`, including job logs for the four cancelled Windows shards. Last green main Check [45076902944](https://github.com/JamelHammoud/basecase/actions/runs/45076902944) ran `04c830ec7de8eabf859ad011c6e143466529daab` on 22 November. Many affected declarations were excluded then and became active when their dated exclusions expired at UTC midnight on 28 November. No single intervening merge establishes a shared cause or supports a clean revert. No changed runner component or dependency is established as an environment cause.
+
+| Failed job | Last observed failure stage and disposition |
+| --- | --- |
+| Ubuntu unit 1/2 | short-cylinder-v returned margin -0.5. The exact-revision Linux diagnostic fails again. [Simulation evidence](testing-simulate.md#short-cylinder-grasp-on-28-november) retains the reproducible x64 failure and unresolved contact source. |
+| Windows unit 1/2 | The same grasp result, plus an afterAll timeout after all eleven visibility assertions. [Camera evidence](testing-cameras.md#visibility-matrix-teardown-on-28-november) records removal of the worker-reply dependency before owned browser cleanup. |
+| Ubuntu unit 2/2 | Stationary-rover body-motion callback exceeded 5,000 ms. The internal stalled stage is unresolved. |
+| Windows unit 2/2 | Stationary rover and asymmetric quadruped exceeded 5,000 ms. Stationary rover passes the exact revision in a focused Windows observation. [Body-motion evidence](testing-robot-runtime.md#body-motion-deadlines-in-check-46086809992) separates Windows intermittency from the unmeasured Linux and quadruped paths. |
+| Linux e2e 8 | First-launch saved-scene flow first found no save, then timed out clicking New scene on retry. Replacement printing exceeded its 15-second callback. [Print fixture evidence](performance-printing.md#allocation-aware-print-fixtures-on-28-november) records its obsolete allocation backend and the corrected fixture. First-launch action delivery and save remain unresolved under #795. |
+| Linux e2e 1 | Independent builds reopened without Mark Incomplete at line 60. Web vision returned signal zero at line 98 before box assertions. [The build diagnostic](performance-assembly.md#saved-source-fixture-for-independent-builds) passes progress reopening then restores a gallery scene instead of the editable arm. Its saved-source fixture is corrected. [The vision diagnostic](testing-cameras.md#web-vision-signal-on-check-46086809992) reproduces signal zero. Remaining reopening stays with #2013 and vision with #1129. |
+| Windows e2e 1 | Appearance reopened texture scale 10 after observing 25 in IndexedDB, then timed out on retry. [The preview race](performance-workspace.md#preview-updates-preserve-concurrent-scene-saves) is repaired with a deterministic regression. Closed linkage first failed to reach playing, then inserted ten parts instead of five on retry, leaving startup and attempt ownership distinct under #1479 and #1128. Gripper reference never produced its first saved try under #2014. Fleet printing hit the same Voron B action and then Settings retry boundary. Sourcing remained running or lacked two graded rows at line 44. Web vision had the same missing signal as Linux. These paths retain their declarations and assertions. |
+| Linux e2e 2 | Voron B Start Next remained disabled and detached. Retry stalled earlier in Settings. Corrected allocation-aware, independent-attempt fixtures do not establish a measured repair of slicing or dispatch. |
+| Linux e2e 7 | The palette backdrop intercepted Preview after Escape. Exact-revision [diagnostic 46089861133](https://github.com/JamelHammoud/basecase/actions/runs/46089861133), ticket `3ca83d99-4806-4b54-b9e5-067274df2444`, passed in 15,437.86718 ms, with a 27,492 ms process on x64 Node 26.13.1, one worker, zero retries and quarantine off. This establishes Linux intermittency at that revision, not the focus or dismissal source. The declaration stays active under existing composition owner #2022. |
+| Windows e2e 3 | Electrical connections did not reach expected data-status at schematic line 27 in either attempt. There is no exact-revision Windows pass or source trace. Keep this worker/publication boundary with the electrical investigation. |
+| Windows e2e 2, 4, 5 and 6 | Each reached the existing job limit. The additional failed declarations below preceded cancellation, which prevented final assertion stacks. Commit `40d6f6458` (#2175), already on this worktree's base, expands Windows to ten shards. That capacity change is not evidence that any declaration passed. |
+| check | Aggregate failure correctly reflects failed unit, Linux browser and Windows browser jobs. It contains no additional failing test or independent aggregation defect. |
+
+The cancelled jobs retain these additional failures. Durations include configured retries where the original log says retry x1. They are historical evidence, not added retries. Without final stacks, a failed declaration identifies its path but not its stalled action. Existing owner numbers are taken from the unchanged quarantine registry. Import and dimensional-tolerance failures have no matching registry owner. No entry is created or extended.
+
+| Windows shard | File | Failed declaration | Reported ms |
+| --- | --- | --- | --- |
+| 2 | `e2e/operateNetwork.e2e.test.ts` | pairs once, climbs the daemon ladder to Test and stops on a lost client | 60992 |
+| 2 | `e2e/operateNetwork.e2e.test.ts` | names a swapped pair, fixes it and confirms the robot repeats the simulation | 60136 |
+| 2 | `e2e/inputs.e2e.test.ts` | hears a recorded “sit” in a Case whose logic listens for it | 137262 |
+| 2 | `e2e/inputs.e2e.test.ts` | fires one wave event for a wave held 3 s | 88681 |
+| 2 | `e2e/inputs.e2e.test.ts` | fires a gesture its Case was taught from three examples and ends camera capture on Escape | 42091 |
+| 2 | `e2e/study.e2e.test.ts` | grades a two by three quadruped study from commands and applies its complete design in one undo step | 49779 |
+| 2 | `e2e/caseCodeAgent.e2e.test.ts` | edits and undoes live panels, then sends the running Case context through ⌘I | 80065 |
+| 6 | `e2e/buildAllocations.e2e.test.ts` | allocates a rover motor and two printed copies to independent builds through reload | 55175 |
+| 6 | `e2e/buildAllocations.e2e.test.ts` | accepts only one reservation for the final motor from independent browser contexts | 72279 |
+| 6 | `e2e/import.e2e.test.ts` | turns an STL into a part | 73866 |
+| 6 | `e2e/buildAllocationReturns.e2e.test.ts` | labels historical quantities and confirms retained material returns at minimum panel width | 43401 |
+| 6 | `e2e/caseRun.e2e.test.ts` | opens a Case’s own console: its areas, a live timer and score, Try It and Reset as buttons | 123212 |
+| 6 | `e2e/cableEditing.e2e.test.ts` | edits a Cable reach route with local anchors and stock, then restores it through undo and redo | 47336 |
+| 4 | `e2e/renderComposition.e2e.test.ts` | opens a finished arm, composes and downloads a transparent PNG while preserving the editing scene | 131211 |
+| 4 | `e2e/operateCalibration.e2e.test.ts` | replays a measured joint, confirms rollback and offers calibration from Checks | 30144 |
+| 4 | `e2e/powerReplay.e2e.test.ts` | reopens retained replay evidence and preserves it as historical after a wiring edit | 70517 |
+| 4 | `e2e/manufacturingTolerances.e2e.test.ts` | authors spacer deviations and a failing stack, edits a dimension and undoes the result | 71952 |
+| 4 | `e2e/kitElectrical.e2e.test.ts` | downloads the routed carrier through Export Kit | 47426 |
+| 4 | `e2e/kitElectrical.e2e.test.ts` | downloads the edited carrier through Export Kit | 48374 |
+| 5 | `e2e/buildPhotos.e2e.test.ts` | imports a photograph beside frozen CAD and reopens only its original build and step | 30449 |
+| 5 | `e2e/buildPhotos.e2e.test.ts` | retains a photo through completion reversal and confirms individual deletion | 28762 |
+| 5 | `e2e/tendons.e2e.test.ts` | authors and edits a remote elbow tendon in Pose, simulates it and reopens separate recorded channels | 113974 |
+| 5 | `e2e/visionTraining.e2e.test.ts` | freezes real image sources, compares ONNX models, saves the result and applies the retained model | 53894 |
+| 5 | `e2e/firstLaunch.e2e.test.ts` | says why Try on Real Robot didn’t start, and keeps saying it under the button | 194959 |
+| 5 | `e2e/firstLaunch.e2e.test.ts` | opens the saved scene instead after a relaunch | 19498 |
+| 5 | `e2e/firstLaunch.e2e.test.ts` | opens on the rover driving to its flag | 211818 |
+| 5 | `e2e/visionConditions.e2e.test.ts` | imports images, assigns conditions and inspects unchanged historical members after current edits | 26866 |
+
+The full raw logs remain in `scratch/all-jobs.log` and `scratch/cancelled-<job-id>.log`. Diagnostic selections, verified manifests and run logs are retained under `scratch/diagnostics/` and referenced by `scratch/task-handoff.json`. These unresolved failures remain available to their owning investigations. The repair neither declares main green nor changes proof sources, deadlines, assertions, retries or exclusions.

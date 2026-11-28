@@ -8,8 +8,8 @@ export async function contactCommand(app: App, name: string) {
   await app.page.locator('button[data-idx]').filter({ hasText: name }).first().click();
 }
 
-export async function retainSelfContactSceneFiles(page: Page) {
-  const saved = new Map<string, SavedSceneRecord>();
+export async function retainSelfContactSceneFiles(page: Page, initial: SavedSceneRecord[] = []) {
+  const saved = new Map(initial.map((scene) => [scene.id, scene]));
 
   await page.route(/\/api\/bridge\/(scene|scenes|save-scene)(\?|$)/, async (route) => {
     const url = new URL(route.request().url());

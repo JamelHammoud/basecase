@@ -22,7 +22,6 @@ beforeAll(async () => {
 }, 15000);
 
 afterAll(async () => {
-  await worker?.run({ close: true });
   setup.abort();
   await opening?.then(
     (opened) => opened.close(),

@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { NoMatches, Kbd, ReturnIcon, SearchIcon } from '../design-system';
+import { listenForPaletteEscape } from './paletteKeys';
 
 export interface Command {
   id: string;
@@ -40,6 +41,9 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const close = useEffectEvent(onClose);
+
+  useEffect(() => listenForPaletteEscape(window, close), []);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -98,10 +102,6 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
               } else if (e.key === 'Enter') {
                 e.preventDefault();
                 run(results[active]);
-              } else if (e.key === 'Escape') {
-                e.preventDefault();
-                e.stopPropagation();
-                onClose();
               }
             }}
             placeholder={SEARCH_LABEL}

@@ -59,7 +59,7 @@ export async function importReplayScene(page: Page, retained = false) {
 export async function inspectCurrent(page: Page) {
   await page.keyboard.press('ControlOrMeta+k');
   await page.getByLabel('Search commands').fill('Inspect Current');
-  await page.keyboard.press('Enter');
+  await page.locator('button[data-idx]').getByText('Inspect Current', { exact: true }).click();
 }
 
 export async function openBuildReplay(page: Page) {

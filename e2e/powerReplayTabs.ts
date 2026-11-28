@@ -10,8 +10,11 @@ interface ReplayTabs {
 }
 
 const activeTab = (page: Page) => page.evaluate(() => (window as unknown as ReplayTabs).__studioTabs.list().activeId);
-const selectTab = (page: Page, id: string) =>
-  page.evaluate((tab) => (window as unknown as ReplayTabs).__studioTabs.select(tab), id);
+
+async function selectTab(page: Page, id: string) {
+  await page.evaluate((tab) => (window as unknown as ReplayTabs).__studioTabs.select(tab), id);
+  await expect.poll(() => activeTab(page)).toBe(id);
+}
 
 export async function mountOtherBuildTab(page: Page) {
   const original = await activeTab(page);
@@ -22,7 +25,10 @@ export async function mountOtherBuildTab(page: Page) {
   const other = await activeTab(page);
 
   await page.locator(shown('[role=tab]'), { hasText: 'Build' }).first().click();
+  await page.keyboard.press('ControlOrMeta+k');
+  await page.getByLabel('Search commands').fill('Inspect Current');
   await selectTab(page, original);
+  await page.getByLabel('Search commands').waitFor({ state: 'detached' });
 
   return { original, other };
 }

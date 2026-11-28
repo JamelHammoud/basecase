@@ -72,7 +72,7 @@ function SceneWorkspaceImpl(props: SceneWorkspaceProps & { setVisionScope: Dispa
         <CanvasContextMenu menu={canvasMenu.menu} inputs={inputs} onClose={canvasMenu.closeMenu} />
       </div>
       <WorkspacePalette
-        open={ui.paletteOpen}
+        open={props.active && ui.paletteOpen}
         inputs={{ ...inputs, clipboard, agent }}
         onClose={() => setPaletteOpen(false)}
       />

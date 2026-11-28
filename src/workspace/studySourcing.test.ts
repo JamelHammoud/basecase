@@ -231,3 +231,29 @@ it('rebuilds unchanged geometry before revalidating a saved sourcing choice in a
   expect(study).toEqual(saved);
   expect(replayed).toEqual(originalInput);
 });
+
+it.each(['hidden', 'guide', 'cutout'] as const)(
+  'revalidates purchasing without loading absent geometry for an unchanged %s component',
+  async (kind) => {
+    const { study, next, purchases } = await fixture();
+    const component = next.parts.find((part) => part.kind === 'component')!;
+    const reference = {
+      ...component,
+      id: 'unmeasured-reference',
+      visible: kind !== 'hidden',
+      role: { hidden: 'solid', guide: 'reference', cutout: 'cutout' }[kind] as typeof component.role,
+    };
+    const scene = { ...next, parts: [...next.parts, reference] };
+    const grader = createStudyGrader();
+    const row = grader.grade({ ...scene, sourcing: study.sourcing }, { knobs: study.knobs, selection: [1], purchases });
+
+    grader.dispose();
+
+    const fetch = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Catalog mesh unavailable'));
+    const saved = structuredClone(scene);
+
+    expect(await validateStudyPurchasing(study, row, scene)).toBe(true);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(scene).toEqual(saved);
+  },
+);

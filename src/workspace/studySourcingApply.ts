@@ -25,7 +25,10 @@ export async function validateStudyPurchasing(record: StudyRecord, row: StudyRow
       evaluatedAt: new Date().toISOString(),
     });
     const missing = scene.parts
-      .filter((part) => part.kind !== 'image_plane' && !scene.triangles[part.id]?.length)
+      .filter(
+        (part) =>
+          part.visible && part.role === 'solid' && part.kind !== 'image_plane' && !scene.triangles[part.id]?.length,
+      )
       .map((part) => part.id);
     const measured = missing.length
       ? await session.refresh(await prepareStudyMeshes(scene, record.knobs), missing)

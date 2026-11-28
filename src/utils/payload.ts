@@ -64,8 +64,10 @@ function moverOf(joint: JointAxis, value: number) {
   return { move: (p: V3) => add(joint.anchor, turn(sub(p, joint.anchor))), turn };
 }
 
-export function poseArm(arm: ArmModel, values: number[]): Posed {
-  const joints = arm.links.map((l) => ({ anchor: l.anchor, axis: norm(l.axis), revolute: l.revolute }));
+const jointAxes = (arm: ArmModel): JointAxis[] =>
+  arm.links.map((l) => ({ anchor: l.anchor, axis: norm(l.axis), revolute: l.revolute }));
+
+function posePreparedArm(arm: ArmModel, values: number[], joints: JointAxis[]): Posed {
   const coms = arm.links.map((l) => l.com);
   let tip = arm.tip;
 
@@ -81,6 +83,10 @@ export function poseArm(arm: ArmModel, values: number[]): Posed {
   });
 
   return { joints, coms, tip };
+}
+
+export function poseArm(arm: ArmModel, values: number[]): Posed {
+  return posePreparedArm(arm, values, jointAxes(arm));
 }
 
 function holdingKg(loads: GravityLoad[], posed: Posed): number {
@@ -104,10 +110,14 @@ export function payloadMap(arm: ArmModel, count = PAYLOAD_SAMPLES): PayloadMap |
   const random = seededRandom(SEED);
   const samples: Array<PayloadSample & { reach: number }> = [];
   let loads: GravityLoad[] | undefined;
+  let axes: JointAxis[] | undefined;
 
   for (let n = 0; n < count; n++) {
     const values = arm.links.map((l) => l.range[0] + (l.range[1] - l.range[0]) * random());
-    const posed = poseArm(arm, values);
+
+    axes ??= jointAxes(arm);
+
+    const posed = posePreparedArm(arm, values, [...axes]);
 
     if (posed.tip[1] < arm.floorY) continue;
 

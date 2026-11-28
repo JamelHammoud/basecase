@@ -10,6 +10,7 @@ import { selectedPickTargets } from './selectedPick.fixtures';
 import { runCase } from './testing';
 import { scoreTry, trySignals } from './tries';
 import { replayTry } from './tryReplay';
+import { graspTransitions } from './graspTrace.fixtures';
 
 let mj: MainModule;
 
@@ -38,7 +39,10 @@ describe('selected-object pick through MuJoCo and saved contact evidence', () =>
       const object = kase.world.objects.find((item) => item.id === target.id)!;
 
       console.info('selected-pick', target.id, { referenceMs: elapsed, frames: recording.frames });
-      expect(result.passed).toBe(true);
+      expect(
+        result.passed,
+        JSON.stringify({ margin: result.margin, failed: result.failed, contacts: graspTransitions(result.trace) }),
+      ).toBe(true);
       expect(object.geometry).toEqual(target);
       expect(object.size).toEqual([target.dimensions.width, target.dimensions.height, target.dimensions.depth]);
       expect(object.massG).toBe(target.massG);

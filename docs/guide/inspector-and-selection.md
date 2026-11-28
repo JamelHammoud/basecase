@@ -364,7 +364,7 @@ A selected SimReady mesh whose visual is absent from the local cache offers Down
 
 ### Replacement-finger coverage exclusions
 
-The former short-cylinder-v and Windows saved-grasp exclusions under [#2014](https://github.com/JamelHammoud/basecase/issues/2014) expired at 00:00 UTC on 28 November 2026. All twenty geometry, grasp, replay and archive cases and the saved-grasp browser declaration are active, alongside authoring, geometry, lifecycle and manufacturing tests. [Current x64 simulation evidence](../notes/testing-simulate.md#short-cylinder-grasp-on-28-november) records the reproducible unresolved result. [Earlier verdict and recording evidence](../notes/testing-simulate.md#gripper-and-tendon-exclusions-on-21-november) keeps the numerical contract and browser recording boundaries separate.
+The former short-cylinder-v and Windows saved-grasp exclusions under [#2014](https://github.com/JamelHammoud/basecase/issues/2014) expired at 00:00 UTC on 28 November 2026. All twenty geometry, grasp, replay and archive cases and the saved-grasp browser declaration are active, alongside authoring, geometry, lifecycle and manufacturing tests. [Current x64 simulation evidence](../notes/testing-simulate.md#replacement-finger-lift-on-check-46105490716) records the contact-loss reproduction, reference repair and hosted verification limit. [Earlier verdict and recording evidence](../notes/testing-simulate.md#gripper-and-tendon-exclusions-on-21-november) keeps the numerical contract and browser recording boundaries separate.
 
 ### Selection during agent loading
 

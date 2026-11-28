@@ -108,16 +108,22 @@ const distance = (a: V3, b: V3) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b
 
 function timeline(robot: BuilderRobot, layout: Layout): ReferenceCommand[] {
   const speed = Math.max(robot.facts.reachMm, 1) * REACH_PER_SECOND;
+  const jaws = new Set(robot.facts.gripper?.jaws.map((jaw) => jaw.joint));
+  const replacementFingers = robot.rig?.parts.some(
+    (part) => part.gripperFinger?.role === 'finger' && jaws.has(part.gripperFinger.joint),
+  );
   let from = robot.facts.endEffector?.point ?? layout.block;
   let at = START_S;
 
   return steps(layout, layout.selected ? robot.facts.endEffector?.point : undefined).flatMap((s) => {
     const command = { at: Math.round(at * 100) / 100, target: s.target, aux: s.aux };
 
-    const duration = distance(from, s.target) / (speed * 0.2);
-    const commands = s.lower ? lowerCommands(command, from, duration) : [command];
+    const movingSeconds = (distance(from, s.target) / speed) * MOVE_SLACK;
+    const duration = s.lower ? distance(from, s.target) / (speed * 0.2) : movingSeconds;
+    const lifting = replacementFingers && !!layout.selected && s.aux === SHUT && s.target[1] > from[1];
+    const commands = s.lower || lifting ? lowerCommands(command, from, duration) : [command];
 
-    at += s.wait ?? (s.lower ? duration + SETTLE_S : (distance(from, s.target) / speed) * MOVE_SLACK + SETTLE_S);
+    at += s.wait ?? duration + SETTLE_S;
     from = s.target;
 
     return commands;

@@ -95,7 +95,19 @@ it('publishes rendered camera detections, boxes and signals in the web studio', 
     },
     { model: manifest(bytes, 'block'), data: [...bytes] },
   );
-  await expect.poll(async () => (await state(page)).signals['vision.target_camera.block']).toBe(1);
+
+  let snapshot: VisionState | undefined;
+
+  await expect
+    .poll(async () => {
+      snapshot = await state(page);
+
+      return snapshot.signals['vision.target_camera.block'];
+    })
+    .toBe(1)
+    .catch((cause: unknown) => {
+      throw new Error(JSON.stringify(snapshot), { cause });
+    });
 
   const box = page.locator(shown('[data-camera="target_camera"]')).first().getByTestId('vision-box');
 

@@ -149,6 +149,31 @@ describe('camera inference ownership', () => {
   });
 });
 
+it.each(['rfdetr-nano', 'yolo11n'])(
+  'keeps explicit %s inference when an older default model load finishes later',
+  async (modelId) => {
+    const session = await setup();
+    let finish: () => void = () => undefined;
+
+    runtime.load.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+    );
+    session.registerVisionCameras({}, ['wrist']);
+
+    const pending = session.ensureVisionCamera('wrist');
+    const { visionModel } = await import('../vision/catalogue');
+
+    await session.loadVisionManifest(visionModel(modelId)!, new Uint8Array([1]));
+    await session.configureVisionCamera('wrist', { modelId, fps: 10 });
+    finish();
+    await pending;
+    expect(session.visionAssignments()).toEqual([{ camera: 'wrist', modelId, fps: 10, continuous: true }]);
+    expect(session.visionNeedsFrames(['wrist'])).toBe(true);
+  },
+);
+
 describe('acquisition commit boundary', () => {
   it('rechecks cancellation after the final model await before publishing an assignment', async () => {
     const session = await setup();

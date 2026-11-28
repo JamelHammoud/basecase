@@ -19,6 +19,7 @@ import { frameContacts } from '../sim/recorder';
 import { decodeSceneFile, encodeSceneFile } from '../utils/sceneFile';
 import { galleryBundleOf } from '../gallery/buildBundle';
 import { galleryBundleBytes, readGalleryBundleBytes } from '../gallery/galleryBundle';
+import { graspTransitions } from '../cases/graspTrace.fixtures';
 
 interface Kernel {
   renderPart: (language: string, code: string) => Promise<RenderedCad>;
@@ -110,7 +111,10 @@ describe('replacement-finger production pipeline', () => {
       expect(targetBodies).toHaveLength(1);
       expect(targetBodies[0].world).toEqual([target.id]);
       expect(run.case.world.objects.find((object) => object.id === target.id)!.geometry).toEqual(targetSnapshot);
-      expect(run.passed, JSON.stringify({ margin: run.margin, failed: run.failed })).toBe(true);
+      expect(
+        run.passed,
+        JSON.stringify({ margin: run.margin, failed: run.failed, contacts: graspTransitions(trace) }),
+      ).toBe(true);
       expect((await scoreTry(source)).passed).toBe(true);
       expect(trace.signals.grip.some((value) => value === 1)).toBe(true);
 

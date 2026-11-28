@@ -18,4 +18,14 @@ HTTP route and IPC registration tests preserve the same pending identity and pro
 
 Help captures use the real Import Robot, Accounts and Library interaction with the fake server. The capture-only scratch run completed in 22.61 seconds and saved pending and completed states through `captureArticle`. Captures were made for documentation without visual judgment. No real account, credentials, inference service or robot was used. Linux and Windows execution remains assigned to CI. No test quarantine or retry was added.
 
-The final focused check passed formatting, lint, documentation links, site copy, TypeScript and 117 tests across 18 related files. The site check covered 394 pages. The browser walkthrough remains declared for CI.
+The implementation focused check passed formatting, lint, documentation links, site copy, TypeScript and 117 tests across 18 related files. The site check covered 394 pages. The browser walkthrough remains declared for CI.
+
+## Review corrections
+
+Source tracing found that Import Robot mounted its portal even when its workspace was inactive. Switching tabs did not unmount its activation, so a pending request could finish over a different scene. `WorkspaceSheets.tsx` now mounts the import sheet only for the active workspace. The browser declarations hold a fake export, switch with the New Scene shortcut and release the completed archive before returning to the original tab. They assert no saved dataset, no opened dataset pane and no retained continuation.
+
+A cancelled worker read also left the nonexpiring import progress toast active. Roboflow imports now use the sheet's Spinner throughout the request and import. They neither start a separate progress toast nor dismiss unrelated toasts on success. Bridge tests cancel during the account check and before base64 decoding. Workspace tests retain the original scene context for an already-started dataset write without opening its result after cancellation.
+
+The existing shared text-bound assertion measures the sheet's text nodes and input values in empty, running and pending states at 1240 × 720. The fixture owns its fake server before app acquisition and closes both resources after setup or assertion failures. These browser assertions remain for CI execution. The changelog entry and its duplicate cover were removed because this repairs an existing integration, below the announcement bar.
+
+The review focused check passed formatting, lint, documentation links, TypeScript, 393 site pages and 28 tests across 10 related files. No browser execution, full suite or security scan ran during review. Browser cancellation and layout assertions remain unexecuted locally.

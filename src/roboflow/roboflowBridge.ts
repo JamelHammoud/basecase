@@ -20,8 +20,10 @@ const asAccount = (value: unknown): RoboflowAccountState => ({
 export const roboflowBridge = {
   account: async () => asAccount(await call('roboflow:account')),
   setKey: async (key: string) => asAccount(await call('roboflow:set-key', key)),
-  importProject: async (link: string | RoboflowContinuation) => {
+  importProject: async (link: string | RoboflowContinuation, active = () => true) => {
     const reply = await call<ArchiveReply | RoboflowPending>('roboflow:import', link);
+
+    if (!active()) return null;
 
     if (reply.kind === 'pending') return reply;
 
@@ -35,8 +37,14 @@ export const roboflowBridge = {
   },
 };
 
-export async function roboflowImportSource(link: string | RoboflowContinuation, openAccounts: () => void) {
+export async function roboflowImportSource(
+  link: string | RoboflowContinuation,
+  openAccounts: () => void,
+  active = () => true,
+) {
   const account = await roboflowBridge.account();
+
+  if (!active()) return null;
 
   if (!account.saved) {
     openAccounts();
@@ -44,5 +52,5 @@ export async function roboflowImportSource(link: string | RoboflowContinuation, 
     return null;
   }
 
-  return roboflowBridge.importProject(link);
+  return roboflowBridge.importProject(link, active);
 }

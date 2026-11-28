@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Button, ChoiceGrid, Modal, TextInput, FolderImportIcon, ProgressBar } from '../design-system';
+import { Button, ChoiceGrid, Modal, TextInput, FolderImportIcon, ProgressBar, Spinner } from '../design-system';
 import { canImportLink } from '../workspace/importLink';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { pickedFiles } from '../utils/robotImport';
@@ -61,6 +61,11 @@ export const ImportRobotSheet: React.FC<{
       title="Import Robot"
       icon={<FolderImportIcon className="w-4 h-4" />}
       maxWidth="max-w-[520px]"
+      headerActions={
+        <span hidden={!preparation.busy} aria-busy={preparation.busy}>
+          <Spinner className="w-4 h-4 text-white/60" />
+        </span>
+      }
       action={{
         label: preparation.pending ? 'Continue' : 'Import',
         disabled: !ready || preparation.busy,

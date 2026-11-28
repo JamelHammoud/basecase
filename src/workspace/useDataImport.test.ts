@@ -82,7 +82,7 @@ it.each(['cancel', 'close', 'scene change'])('discards late archive bytes after 
 });
 
 it('discards an archive decoded after cancellation', async () => {
-  const { data, read, close, openDataset } = harness();
+  const { data, read, close, openDataset, core } = harness();
   const activation = new ImportActivation();
   let complete!: (value: unknown) => void;
   let reading!: () => void;
@@ -109,4 +109,41 @@ it('discards an archive decoded after cancellation', async () => {
   expect(keepImportedImages).not.toHaveBeenCalled();
   expect(openDataset).not.toHaveBeenCalled();
   expect(close).toHaveBeenCalledOnce();
+  expect(core.showToast).not.toHaveBeenCalled();
+});
+
+it('keeps an in-flight dataset write in its original scene without opening it after cancellation', async () => {
+  const { data, read, openDataset, core } = harness();
+  const activation = new ImportActivation();
+  let complete!: (value: Awaited<ReturnType<typeof keepImportedImages>>) => void;
+  let writing!: () => void;
+  const started = new Promise<void>((resolve) => {
+    writing = resolve;
+  });
+
+  vi.mocked(roboflowImportSource).mockResolvedValue({ kind: 'zip', name: 'project-v2.zip', blob: new Blob() });
+  vi.mocked(keepImportedImages).mockImplementation(() => {
+    writing();
+
+    return new Promise((resolve) => {
+      complete = resolve;
+    });
+  });
+
+  const work = data.prepareRoboflow('https://app.roboflow.com/workspace/project', activation.start());
+
+  await started;
+  expect(read).toHaveBeenCalledOnce();
+  expect(keepImportedImages).toHaveBeenCalledWith(expect.anything(), {
+    caseId: null,
+    sceneId: 'original',
+    objects: [],
+  });
+  activation.cancel();
+  core.scene.sceneId = 'replacement';
+  complete({ dataset: { id: 'dataset' }, added: true } as Awaited<ReturnType<typeof keepImportedImages>>);
+  await work;
+  expect(openDataset).not.toHaveBeenCalled();
+  expect(core.showToast).not.toHaveBeenCalled();
+  expect(core.toasts.dismissToast).not.toHaveBeenCalled();
 });

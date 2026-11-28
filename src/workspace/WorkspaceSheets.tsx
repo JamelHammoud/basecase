@@ -114,10 +114,29 @@ function SceneHistoryHost({ active, core }: Pick<WorkspaceSheetsProps, 'active' 
   );
 }
 
+function RobotImportHost({ active, core, actions }: WorkspaceSheetsProps) {
+  const { robots, data } = actions;
+
+  if (!active) return null;
+
+  return (
+    <ErrorBoundary region="Import Robot" resetKey={robots.importRobotOpen} onClose={robots.closeImportRobot}>
+      <ImportRobotSheet
+        key={`${core.scene.sceneId}:${robots.importRobotOpen}:${robots.robotChoice?.choices.join('\n') ?? 'link'}`}
+        open={robots.importRobotOpen}
+        choice={robots.robotChoice}
+        onClose={robots.closeImportRobot}
+        prepareRoboflow={data.prepareRoboflow}
+        onImport={(src, at) => void data.importOrRobot(src, at)}
+      />
+    </ErrorBoundary>
+  );
+}
+
 export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps) {
   const { posing, guide } = core;
   const desktop = platformBridge.isElectron();
-  const { robots, pose, arm, data } = actions;
+  const { pose, arm, data } = actions;
   const { motionInputRef } = pose;
   const { skillHub, share } = core.simTraining;
   const installing = active && skillHub.installOpen;
@@ -139,16 +158,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           />
         </ErrorBoundary>
       )}
-      <ErrorBoundary region="Import Robot" resetKey={robots.importRobotOpen} onClose={robots.closeImportRobot}>
-        <ImportRobotSheet
-          key={`${core.scene.sceneId}:${robots.importRobotOpen}:${robots.robotChoice?.choices.join('\n') ?? 'link'}`}
-          open={robots.importRobotOpen}
-          choice={robots.robotChoice}
-          onClose={robots.closeImportRobot}
-          prepareRoboflow={data.prepareRoboflow}
-          onImport={(src, at) => void data.importOrRobot(src, at)}
-        />
-      </ErrorBoundary>
+      <RobotImportHost active={active} core={core} actions={actions} />
       <MatchJointsHost active={active} data={data} />
       <ShareRobotHost active={active} share={share} />
       <ErrorBoundary region="Install Skill" resetKey={installing} onClose={skillHub.closeInstall}>

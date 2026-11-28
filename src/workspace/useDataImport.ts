@@ -59,7 +59,16 @@ const importedMessage = (built: BuiltTries, added: number) =>
     ? `Imported ${plural(added, 'try', 'tries')}. Skipped ${plural(built.refused, 'episode')} out of range.`
     : `Imported ${plural(added, 'try', 'tries')}`;
 
-async function importImages(core: WorkspaceCore, run: DataImportRun, active: () => boolean) {
+interface ImportActivity {
+  active: () => boolean;
+  progress: boolean;
+}
+
+function dismissImportProgress(core: WorkspaceCore, activity: ImportActivity) {
+  if (activity.progress) core.toasts.dismissToast();
+}
+
+async function importImages(core: WorkspaceCore, run: DataImportRun, activity: ImportActivity) {
   const activeCase = core.simTraining.cases.active;
   const result = await keepImportedImages(run, {
     caseId: activeCase?.id ?? null,
@@ -67,9 +76,9 @@ async function importImages(core: WorkspaceCore, run: DataImportRun, active: () 
     objects: activeCase?.world.objects.map(({ id, name }) => ({ id, name })) ?? [],
   });
 
-  if (!active()) return result.dataset;
+  if (!activity.active()) return result.dataset;
 
-  core.toasts.dismissToast();
+  dismissImportProgress(core, activity);
   core.triesView.openDataset(result.dataset.id);
 
   return result.dataset;
@@ -84,9 +93,13 @@ async function prepareRoboflow(
   active: () => boolean,
 ) {
   try {
-    const source = await roboflowImportSource(input, () => {
-      if (active()) core.studio.openSettings('accounts', 'roboflow');
-    });
+    const source = await roboflowImportSource(
+      input,
+      () => {
+        if (active()) core.studio.openSettings('accounts', 'roboflow');
+      },
+      active,
+    );
 
     if (!active() || !source) return null;
 
@@ -106,7 +119,7 @@ interface ImportWork {
   loaded: Loaded;
   summary: SourceSummary;
   build: (model: SimModel | null) => Promise<string[] | undefined>;
-  active: () => boolean;
+  activity: ImportActivity;
   offerRobot: (name: string, preset: RobotPreset | null) => void;
 }
 
@@ -123,10 +136,10 @@ async function targetOf(core: WorkspaceCore, loaded: Loaded, summary: SourceSumm
   };
 }
 
-async function finishImport({ core, run, loaded, summary, build, offerRobot, active }: ImportWork) {
-  const images: Dataset | null = summary.images ? await importImages(core, run, active) : null;
+async function finishImport({ core, run, loaded, summary, build, offerRobot, activity }: ImportWork) {
+  const images: Dataset | null = summary.images ? await importImages(core, run, activity) : null;
 
-  if (!active() || (images && summary.episodes === 0)) return;
+  if (!activity.active() || (images && summary.episodes === 0)) return;
 
   if (summary.names.length === 0) {
     const ids = await build(null);
@@ -248,23 +261,20 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
     return keep(showToast, built);
   };
 
-  const importLoaded = async (
-    name: string,
-    load: () => Promise<Loaded | null>,
-    active = () => true,
-  ): Promise<boolean> => {
+  const importLoaded: ImportLoaded = async (name, load, active) => {
+    const activity = { active: active ?? (() => true), progress: !active };
     const run = openDataImport();
 
-    showToast(importing(name), { tone: 'progress' });
+    if (activity.progress) showToast(importing(name), { tone: 'progress' });
 
     try {
       const loaded = await load();
-      const summary = loaded && active() && (await run.read(loaded.source));
+      const summary = loaded && activity.active() && (await run.read(loaded.source));
 
-      if (!active()) return false;
+      if (!activity.active()) return false;
 
       if (!loaded || !summary) {
-        toasts.dismissToast();
+        dismissImportProgress(core, activity);
 
         return false;
       }
@@ -276,10 +286,10 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
         summary,
         build: (model) => build(run, loaded, summary, model),
         offerRobot,
-        active,
+        activity,
       });
     } catch (e) {
-      if (active()) showToast(errorMessage(e), { tone: 'error' });
+      if (activity.active()) showToast(errorMessage(e), { tone: 'error' });
     } finally {
       run.close();
     }

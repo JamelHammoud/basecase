@@ -57,6 +57,29 @@ describe('Roboflow bridge', () => {
     expect(call).toHaveBeenLastCalledWith('roboflow:import', pending.continuation);
   });
 
+  it('discards a late completion before decoding base64 or constructing a Blob', async () => {
+    call.mockResolvedValue({ kind: 'complete', name: 'project-v2.zip', data: 'unreadable archive!' });
+
+    let active = true;
+    const result = roboflowBridge.importProject('https://app.roboflow.com/workspace/project/2', () => active);
+
+    active = false;
+    expect(await result).toBeNull();
+  });
+
+  it('does not start an export after cancellation during the account check', async () => {
+    call.mockResolvedValue({ saved: true });
+
+    let active = true;
+    const open = vi.fn();
+    const result = roboflowImportSource('https://app.roboflow.com/workspace/project/2', open, () => active);
+
+    active = false;
+    expect(await result).toBeNull();
+    expect(call).toHaveBeenCalledExactlyOnceWith('roboflow:account', undefined);
+    expect(open).not.toHaveBeenCalled();
+  });
+
   it('does not expose a key included in a malformed account reply', async () => {
     call.mockResolvedValue({ saved: true, key: 'secret' });
     expect(await roboflowBridge.account()).toEqual({ saved: true });

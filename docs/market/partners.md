@@ -46,14 +46,21 @@ Bambu Lab printers are integrated already ([Printing](../guide/printing.md)).
 ### Bambu Lab
 
 - **Link:** https://bambulab.com
-- **Checked:** 2026-11-15
-- **Better than Basecase:** Bambu Studio 2.9.1 supports the H3C and assigns different nozzle diameters and layer heights to regions of one model ([maker's release](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.01.70)).
-- **Worse than Basecase:** Bambu's release describes preparing a supplied model for printing ([release](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.01.70)). Basecase also prepares all printed parts of a robot, in build order, with their materials and printed inventory ([Printing](../guide/printing.md)).
-- **Basecase should:** integrate using the multi-material project handoff that already ships, with every plate and per-part filament assignment in one unsliced project ([Printing](../guide/printing.md), [Bambu Studio](competitors.md#bambu-studio)). Keep that distinct from Basecase's per-material CLI slicing when describing what a multi-tool printer can receive.
+- **Checked:** 2026-11-28
+- **Better than Basecase:** Studio 2.9.2 adds P3C and H2D mixed-diameter support ([maker's release](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.02.62)).
+- **Worse than Basecase:** those features prepare supplied models ([release](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.02.62)). Basecase prepares a robot's printed parts by material and build order, with printed inventory ([Printing](../guide/printing.md)).
+- **Basecase should:** integrate through the existing multi-material project handoff and update supported catalog profiles without claiming multi-tool slicing support ([Printing](../guide/printing.md), [integration](integrations.md#bambu-lab)).
+
+### Prusa Research
+
+- **Link:** https://www.prusa3d.com
+- **Checked:** 2026-11-28
+- **Better than Basecase:** Prusa Connect manages printers remotely with per-printer production statistics and includes 1 GB of G-code and telemetry storage for Prusa owners ([comparison](https://help.prusa3d.com/article/prusa-connect-and-prusalink-explained_302608)). PrusaSlicer 2.9.7 fixes malformed 3MF and binary G-code handling, placeholder buffer overflows and Printables downloader issues ([release](https://github.com/prusa3d/PrusaSlicer/releases/tag/version_2.9.7)).
+- **Worse than Basecase:** Connect is a cloud service, while PrusaLink is local ([comparison](https://help.prusa3d.com/article/prusa-connect-and-prusalink-explained_302608)). Basecase already uploads, monitors and controls local PrusaLink jobs and arranges a robot's printed parts before slicing ([connector](../../electron/print/connectors/prusalink.mjs), [Printing](../guide/printing.md)). This is a connection comparison, not evidence that Prusa lacks local printing.
+- **Basecase should:** integrate through the existing local connector while keeping the cloud path a separate account investigation ([integration](integrations.md#prusa-connect), [accounts](accounts.md)). Verify the CORE One overhang corrections with installed Orca 2.5.2 profiles alongside the catalog refresh, since slicing reads process values from the installed slicer ([OrcaSlicer](competitors.md#orcaslicer), [profile reader](../../electron/print/slice.mjs)).
 
 ### To check
 
-- Prusa Research
 - Creality
 - Elegoo
 

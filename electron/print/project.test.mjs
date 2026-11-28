@@ -81,6 +81,9 @@ describe.skipIf(!bambu)('Bambu Studio project compatibility', () => {
 
     expect(settings.filament_type).toEqual(['PLA', 'TPU']);
     expect(settings.filament_colour).toEqual(['#EEEEEE', '#EEEEEE']);
+    expect(settings.printer_settings_id).toBe('Bambu Lab P1S 0.4 nozzle');
+    expect(settings.print_settings_id).toBe('0.12mm Fine @BBL X1C');
+    expect(settings.nozzle_diameter).toEqual(['0.4']);
     expect(settings.layer_height).toBe('0.12');
     expect(settings.sparse_infill_density).toBe('31%');
     expect(settings.nozzle_temperature).toHaveLength(2);

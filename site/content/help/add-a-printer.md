@@ -45,7 +45,7 @@ Once you save your printer, Print mode lays parts out on its real bed and sends 
 7. Type the **Access code** or **API key**. For Bambu LAN, also type the **Serial number**.
 8. Click **Test Connection**. If it works, the row reads “Connected to” followed by the printer's name.
 
-**Model** lists more than a hundred printers, taken from the profiles that ship with Bambu Studio and OrcaSlicer. On first launch, Basecase adds the printer you last chose in Bambu Studio, if you have it.
+**Model** lists 97 printers from Bambu Studio 2.9.2 and OrcaSlicer 2.5.2 profiles. These entries use a 0.4 mm nozzle. On first launch, Basecase adds the printer you last chose in Bambu Studio, if you have it.
 
 Custom printers save only a build volume, without bed clips or tool docks. For the limits of imported obstacle profiles, see [Printability estimates](/help/printability-estimates).
 
@@ -53,7 +53,13 @@ You can also click **Find on Network** in the same pane to list the Bambu Lab, K
 
 ## Prusa printers
 
-The Prusa CORE One, MK4, MK4S, MK3.5, MINI IS and XL slice with OrcaSlicer, so install OrcaSlicer before you slice for them. The XL in the list is the single-tool version. The 5-tool XL and printers with an MMU aren't listed.
+The Prusa CORE One, CORE One L, MK4, MK4S, MK3.5, MINI IS and XL slice with OrcaSlicer, so install OrcaSlicer before you slice for them. The XL in the list is the single-tool version. The 5-tool XL, MMU and INDX configurations aren't listed.
+
+Install OrcaSlicer 2.5.2 to use its inherited CORE One overhang corrections. The catalog version doesn't update your installed slicer. Missing installed presets stop preparation. The CORE One L profiles match PLA only.
+
+![Settings with a Prusa CORE One saved at a 0.4 mm nozzle](/help/add-a-printer/supported-profiles.png)
+
+Multi-nozzle machines, including H2D, H3C and P3C, aren't supported. Saved unsupported models keep their names but can't prepare plates. Saved nozzles other than 0.4 mm can't prepare slicer settings. Choose a supported model and nozzle before opening it in a slicer.
 
 ## Connections
 

@@ -19,7 +19,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Anker',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Anker M5 0.4 nozzle',
@@ -88,7 +88,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Anker',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Anker M5C 0.4 nozzle',
@@ -157,7 +157,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Anycubic',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Anycubic 4Max Pro 0.4 nozzle',
@@ -210,7 +210,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Anycubic',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Anycubic 4Max Pro 2 0.4 nozzle',
@@ -271,7 +271,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Anycubic',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Anycubic Chiron 0.4 nozzle',
@@ -332,7 +332,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Anycubic',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Anycubic i3 Mega S 0.4 nozzle',
@@ -393,7 +393,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Anycubic',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Anycubic Kobra 2 0.4 nozzle',
@@ -454,7 +454,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Anycubic',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Anycubic Kobra Max 0.4 nozzle',
@@ -515,7 +515,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Anycubic',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Anycubic Kobra Plus 0.4 nozzle',
@@ -568,7 +568,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Anycubic',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Anycubic Vyper 0.4 nozzle',
@@ -623,13 +623,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 256,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: 'Textured PEI Plate',
     vendor: 'BBL',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Bambu Lab A1 0.4 nozzle',
@@ -696,13 +696,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 180,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: 'Textured PEI Plate',
     vendor: 'BBL',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Bambu Lab A1 mini 0.4 nozzle',
@@ -761,13 +761,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 325,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: 'Textured PEI Plate',
     vendor: 'BBL',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Bambu Lab A2L 0.4 nozzle',
@@ -811,213 +811,6 @@ export const PRINTER_MODELS: PrinterModel[] = [
     },
   },
   {
-    id: 'bambu-lab-h2c',
-    maker: 'Bambu Lab',
-    name: 'Bambu Lab H2C',
-    bed: [
-      [0, 0],
-      [330, 0],
-      [330, 320],
-      [0, 320],
-    ],
-    height: 325,
-    keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
-    enclosed: true,
-    bedType: 'Textured PEI Plate',
-    vendor: 'BBL',
-    source: {
-      slicer: 'bambu',
-      version: '02.09.01.70',
-    },
-    presets: {
-      machine: 'Bambu Lab H2C 0.4 nozzle',
-      process: '0.20mm Standard @BBL H2C',
-      processes: [
-        {
-          name: '0.08mm High Quality @BBL H2C',
-          layer: 0.08,
-        },
-        {
-          name: '0.12mm High Quality @BBL H2C',
-          layer: 0.12,
-        },
-        {
-          name: '0.16mm Standard @BBL H2C',
-          layer: 0.16,
-        },
-        {
-          name: '0.20mm Standard @BBL H2C',
-          layer: 0.2,
-        },
-        {
-          name: '0.24mm Standard @BBL H2C',
-          layer: 0.24,
-        },
-      ],
-      filaments: {
-        ABS: {
-          name: 'Generic ABS @BBL H2C 0.4 nozzle',
-          density: 1.04,
-        },
-        ASA: {
-          name: 'Generic ASA @BBL H2C 0.4 nozzle',
-          density: 1.04,
-        },
-        PETG: {
-          name: 'Generic PETG @BBL H2C 0.4 nozzle',
-          density: 1.27,
-        },
-        PLA: {
-          name: 'Bambu PLA Basic @BBL H2C',
-          density: 1.26,
-        },
-        TPU: {
-          name: 'Generic TPU @BBL H2C 0.4 nozzle',
-          density: 1.24,
-        },
-      },
-    },
-  },
-  {
-    id: 'bambu-lab-h2d',
-    maker: 'Bambu Lab',
-    name: 'Bambu Lab H2D',
-    bed: [
-      [0, 0],
-      [350, 0],
-      [350, 320],
-      [0, 320],
-    ],
-    height: 325,
-    keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
-    enclosed: true,
-    bedType: 'Textured PEI Plate',
-    vendor: 'BBL',
-    source: {
-      slicer: 'bambu',
-      version: '02.09.01.70',
-    },
-    presets: {
-      machine: 'Bambu Lab H2D 0.4 nozzle',
-      process: '0.20mm Standard @BBL H2D',
-      processes: [
-        {
-          name: '0.08mm Extra Fine @BBL H2D',
-          layer: 0.08,
-        },
-        {
-          name: '0.12mm Fine @BBL H2D',
-          layer: 0.12,
-        },
-        {
-          name: '0.16mm Standard @BBL H2D',
-          layer: 0.16,
-        },
-        {
-          name: '0.20mm Standard @BBL H2D',
-          layer: 0.2,
-        },
-        {
-          name: '0.24mm Standard @BBL H2D',
-          layer: 0.24,
-        },
-      ],
-      filaments: {
-        ABS: {
-          name: 'Generic ABS @BBL H2D',
-          density: 1.04,
-        },
-        ASA: {
-          name: 'Generic ASA @BBL H2D',
-          density: 1.04,
-        },
-        PETG: {
-          name: 'Generic PETG @BBL H2D',
-          density: 1.27,
-        },
-        PLA: {
-          name: 'Bambu PLA Basic @BBL H2D',
-          density: 1.26,
-        },
-        TPU: {
-          name: 'Generic TPU @BBL H2D',
-          density: 1.24,
-        },
-      },
-    },
-  },
-  {
-    id: 'bambu-lab-h2d-pro',
-    maker: 'Bambu Lab',
-    name: 'Bambu Lab H2D Pro',
-    bed: [
-      [0, 0],
-      [350, 0],
-      [350, 320],
-      [0, 320],
-    ],
-    height: 325,
-    keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
-    enclosed: true,
-    bedType: 'Textured PEI Plate',
-    vendor: 'BBL',
-    source: {
-      slicer: 'bambu',
-      version: '02.09.01.70',
-    },
-    presets: {
-      machine: 'Bambu Lab H2D Pro 0.4 nozzle',
-      process: '0.20mm Standard @BBL H2DP',
-      processes: [
-        {
-          name: '0.08mm Extra Fine @BBL H2DP',
-          layer: 0.08,
-        },
-        {
-          name: '0.12mm Fine @BBL H2DP',
-          layer: 0.12,
-        },
-        {
-          name: '0.16mm Standard @BBL H2DP',
-          layer: 0.16,
-        },
-        {
-          name: '0.20mm Standard @BBL H2DP',
-          layer: 0.2,
-        },
-        {
-          name: '0.24mm Standard @BBL H2DP',
-          layer: 0.24,
-        },
-      ],
-      filaments: {
-        ABS: {
-          name: 'Generic ABS @BBL H2DP',
-          density: 1.04,
-        },
-        ASA: {
-          name: 'Generic ASA @BBL H2DP',
-          density: 1.04,
-        },
-        PETG: {
-          name: 'Generic PETG @BBL H2DP',
-          density: 1.27,
-        },
-        PLA: {
-          name: 'Bambu PLA Basic @BBL H2DP',
-          density: 1.26,
-        },
-        TPU: {
-          name: 'Generic TPU @BBL H2DP',
-          density: 1.24,
-        },
-      },
-    },
-  },
-  {
     id: 'bambu-lab-h2s',
     maker: 'Bambu Lab',
     name: 'Bambu Lab H2S',
@@ -1029,13 +822,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 340,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: 'Textured PEI Plate',
     vendor: 'BBL',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Bambu Lab H2S 0.4 nozzle',
@@ -1087,75 +880,6 @@ export const PRINTER_MODELS: PrinterModel[] = [
     },
   },
   {
-    id: 'bambu-lab-h3c',
-    maker: 'Bambu Lab',
-    name: 'Bambu Lab H3C',
-    bed: [
-      [0, 0],
-      [330, 0],
-      [330, 320],
-      [0, 320],
-    ],
-    height: 325,
-    keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
-    enclosed: true,
-    bedType: 'Textured PEI Plate',
-    vendor: 'BBL',
-    source: {
-      slicer: 'bambu',
-      version: '02.09.01.70',
-    },
-    presets: {
-      machine: 'Bambu Lab H3C 0.4 nozzle',
-      process: '0.20mm Standard @BBL H3C',
-      processes: [
-        {
-          name: '0.08mm High Quality @BBL H3C',
-          layer: 0.08,
-        },
-        {
-          name: '0.12mm High Quality @BBL H3C',
-          layer: 0.12,
-        },
-        {
-          name: '0.16mm Standard @BBL H3C',
-          layer: 0.16,
-        },
-        {
-          name: '0.20mm Standard @BBL H3C',
-          layer: 0.2,
-        },
-        {
-          name: '0.24mm Standard @BBL H3C',
-          layer: 0.24,
-        },
-      ],
-      filaments: {
-        ABS: {
-          name: 'Generic ABS @BBL H3C 0.4 nozzle',
-          density: 1.04,
-        },
-        ASA: {
-          name: 'Generic ASA @BBL H3C 0.4 nozzle',
-          density: 1.04,
-        },
-        PETG: {
-          name: 'Generic PETG @BBL H3C',
-          density: 1.27,
-        },
-        PLA: {
-          name: 'Bambu PLA Basic @BBL H3C',
-          density: 1.26,
-        },
-        TPU: {
-          name: 'Generic TPU @BBL H3C',
-          density: 1.24,
-        },
-      },
-    },
-  },
-  {
     id: 'bambu-lab-p1p',
     maker: 'Bambu Lab',
     name: 'Bambu Lab P1P',
@@ -1174,13 +898,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
         [0, 28],
       ],
     ],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: 'Textured PEI Plate',
     vendor: 'BBL',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Bambu Lab P1P 0.4 nozzle',
@@ -1254,13 +978,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
         [0, 28],
       ],
     ],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: 'Textured PEI Plate',
     vendor: 'BBL',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Bambu Lab P1S 0.4 nozzle',
@@ -1327,13 +1051,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 256,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: 'Textured PEI Plate',
     vendor: 'BBL',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Bambu Lab P2S 0.4 nozzle',
@@ -1403,13 +1127,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
         [0, 28],
       ],
     ],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: 'Textured PEI Plate',
     vendor: 'BBL',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Bambu Lab X1 0.4 nozzle',
@@ -1483,13 +1207,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
         [0, 28],
       ],
     ],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: 'Textured PEI Plate',
     vendor: 'BBL',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Bambu Lab X1 Carbon 0.4 nozzle',
@@ -1563,13 +1287,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
         [0, 28],
       ],
     ],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: 'Textured PEI Plate',
     vendor: 'BBL',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Bambu Lab X1E 0.4 nozzle',
@@ -1625,75 +1349,6 @@ export const PRINTER_MODELS: PrinterModel[] = [
     },
   },
   {
-    id: 'bambu-lab-x2d',
-    maker: 'Bambu Lab',
-    name: 'Bambu Lab X2D',
-    bed: [
-      [0, 0],
-      [256, 0],
-      [256, 256],
-      [0, 256],
-    ],
-    height: 261,
-    keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
-    enclosed: true,
-    bedType: 'Textured PEI Plate',
-    vendor: 'BBL',
-    source: {
-      slicer: 'bambu',
-      version: '02.09.01.70',
-    },
-    presets: {
-      machine: 'Bambu Lab X2D 0.4 nozzle',
-      process: '0.20mm Standard @BBL X2D',
-      processes: [
-        {
-          name: '0.08mm High Quality @BBL X2D',
-          layer: 0.08,
-        },
-        {
-          name: '0.12mm High Quality @BBL X2D',
-          layer: 0.12,
-        },
-        {
-          name: '0.16mm Standard @BBL X2D',
-          layer: 0.16,
-        },
-        {
-          name: '0.20mm Standard @BBL X2D',
-          layer: 0.2,
-        },
-        {
-          name: '0.24mm Standard @BBL X2D',
-          layer: 0.24,
-        },
-      ],
-      filaments: {
-        ABS: {
-          name: 'Generic ABS @BBL X2D 0.4 nozzle',
-          density: 1.04,
-        },
-        ASA: {
-          name: 'Generic ASA @BBL X2D 0.4 nozzle',
-          density: 1.04,
-        },
-        PETG: {
-          name: 'Generic PETG @BBL X2D 0.4 nozzle',
-          density: 1.27,
-        },
-        PLA: {
-          name: 'Bambu PLA Basic @BBL X2D 0.4 nozzle',
-          density: 1.26,
-        },
-        TPU: {
-          name: 'Generic TPU @BBL X2D 0.4 nozzle',
-          density: 1.24,
-        },
-      },
-    },
-  },
-  {
     id: 'creality-cr-6-max',
     maker: 'Creality',
     name: 'Creality CR-6 Max',
@@ -1705,13 +1360,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 400,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality CR-6 Max 0.4 nozzle',
@@ -1770,13 +1425,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 250,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality CR-6 SE 0.4 nozzle',
@@ -1841,7 +1496,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality CR-10 Max 0.4 nozzle',
@@ -1906,7 +1561,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality CR-10 V2 0.4 nozzle',
@@ -1963,7 +1618,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality Ender-3 S1 0.4 nozzle',
@@ -2020,7 +1675,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality Ender-3 S1 Pro 0.4 nozzle',
@@ -2077,7 +1732,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality Ender-3 V2 0.4 nozzle',
@@ -2136,13 +1791,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 250,
     keepOut: [],
-    nozzles: [0.4, 0.6],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality Ender-3 V3 0.4 nozzle',
@@ -2195,7 +1850,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality Ender-3 V3 KE 0.4 nozzle',
@@ -2242,13 +1897,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 330,
     keepOut: [],
-    nozzles: [0.4, 0.6],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality Ender-3 V3 Plus 0.4 nozzle',
@@ -2301,7 +1956,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality Ender-5 0.4 nozzle',
@@ -2358,7 +2013,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality Ender-5 Plus 0.4 nozzle',
@@ -2415,7 +2070,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality Ender-5 S1 0.4 nozzle',
@@ -2472,7 +2127,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality Ender-5S 0.4 nozzle',
@@ -2529,7 +2184,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality Ender-6 0.4 nozzle',
@@ -2580,13 +2235,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 250,
     keepOut: [],
-    nozzles: [0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: null,
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality K1 0.4 nozzle',
@@ -2637,13 +2292,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 300,
     keepOut: [],
-    nozzles: [0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: null,
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality K1 Max 0.4 nozzle',
@@ -2698,13 +2353,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 250,
     keepOut: [],
-    nozzles: [0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: null,
     vendor: 'Creality',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Creality K1C 0.4 nozzle',
@@ -2757,7 +2412,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Elegoo',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Elegoo Neptune 0.4 nozzle',
@@ -2822,7 +2477,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Elegoo',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Elegoo Neptune 2 0.4 nozzle',
@@ -2870,71 +2525,6 @@ export const PRINTER_MODELS: PrinterModel[] = [
     },
   },
   {
-    id: 'elegoo-neptune-2d',
-    maker: 'Elegoo',
-    name: 'Elegoo Neptune 2D',
-    bed: [
-      [0, 0],
-      [220, 0],
-      [220, 220],
-      [0, 220],
-    ],
-    height: 250,
-    keepOut: [],
-    nozzles: [0.4],
-    enclosed: false,
-    bedType: null,
-    vendor: 'Elegoo',
-    source: {
-      slicer: 'bambu',
-      version: '02.09.01.70',
-    },
-    presets: {
-      machine: 'Elegoo Neptune 2D 0.4 nozzle',
-      process: '0.20mm Standard @Elegoo Neptune2D',
-      processes: [
-        {
-          name: '0.08mm Extra Fine @Elegoo Neptune2D',
-          layer: 0.08,
-        },
-        {
-          name: '0.12mm Fine @Elegoo Neptune2D',
-          layer: 0.12,
-        },
-        {
-          name: '0.16mm Optimal @Elegoo Neptune2D',
-          layer: 0.16,
-        },
-        {
-          name: '0.20mm Standard @Elegoo Neptune2D',
-          layer: 0.2,
-        },
-        {
-          name: '0.24mm Draft @Elegoo Neptune2D',
-          layer: 0.24,
-        },
-        {
-          name: '0.28mm Extra Draft @Elegoo Neptune2D',
-          layer: 0.28,
-        },
-      ],
-      filaments: {
-        ABS: {
-          name: 'Generic ABS @Elegoo',
-          density: 1.04,
-        },
-        PETG: {
-          name: 'Generic PETG @Elegoo',
-          density: 1.27,
-        },
-        PLA: {
-          name: 'Generic PLA @Elegoo',
-          density: 1.24,
-        },
-      },
-    },
-  },
-  {
     id: 'elegoo-neptune-2s',
     maker: 'Elegoo',
     name: 'Elegoo Neptune 2S',
@@ -2952,7 +2542,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Elegoo',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Elegoo Neptune 2S 0.4 nozzle',
@@ -3017,7 +2607,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Elegoo',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Elegoo Neptune 3 0.4 nozzle',
@@ -3082,7 +2672,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Elegoo',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Elegoo Neptune 3 Max 0.4 nozzle',
@@ -3147,7 +2737,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Elegoo',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Elegoo Neptune 3 Plus 0.4 nozzle',
@@ -3212,7 +2802,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Elegoo',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Elegoo Neptune 3 Pro 0.4 nozzle',
@@ -3271,13 +2861,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 265,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Elegoo',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Elegoo Neptune 4 0.4 nozzle',
@@ -3316,13 +2906,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 480,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Elegoo',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Elegoo Neptune 4 Max 0.4 nozzle',
@@ -3361,13 +2951,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 385,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Elegoo',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Elegoo Neptune 4 Plus 0.4 nozzle',
@@ -3406,13 +2996,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 265,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Elegoo',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Elegoo Neptune 4 Pro 0.4 nozzle',
@@ -3457,7 +3047,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Elegoo',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Elegoo Neptune X 0.4 nozzle',
@@ -3522,7 +3112,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech A10 M 0.4 nozzle',
@@ -3589,13 +3179,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 260,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech A10 Pro 0.4 nozzle',
@@ -3668,7 +3258,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech A10 T 0.4 nozzle',
@@ -3735,13 +3325,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 260,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech A20 0.4 nozzle',
@@ -3814,7 +3404,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech A20 M 0.4 nozzle',
@@ -3887,7 +3477,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech A20 T 0.4 nozzle',
@@ -3960,7 +3550,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech A30 M 0.4 nozzle',
@@ -4027,13 +3617,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 420,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech A30 Pro 0.4 nozzle',
@@ -4106,7 +3696,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech A30 T 0.4 nozzle',
@@ -4173,13 +3763,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 95,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech M1 0.4 nozzle',
@@ -4234,13 +3824,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 260,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech Mizar 0.4 nozzle',
@@ -4313,7 +3903,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech Mizar M 0.4 nozzle',
@@ -4380,13 +3970,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 400,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech Mizar Max 0.4 nozzle',
@@ -4453,13 +4043,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 260,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech Mizar Pro 0.4 nozzle',
@@ -4526,13 +4116,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 260,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech Mizar S 0.4 nozzle',
@@ -4599,13 +4189,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 260,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Geeetech',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Geeetech Thunder 0.4 nozzle',
@@ -4668,13 +4258,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 270,
     keepOut: [],
-    nozzles: [0.25, 0.3, 0.4, 0.5, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: null,
     vendor: 'Prusa',
     source: {
       slicer: 'orca',
-      version: '2.5.0',
+      version: '2.5.2',
     },
     presets: {
       machine: 'Prusa CORE One 0.4 nozzle',
@@ -4729,13 +4319,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 270,
     keepOut: [],
-    nozzles: [0.4, 0.5, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: null,
     vendor: 'Prusa',
     source: {
       slicer: 'orca',
-      version: '2.5.0',
+      version: '2.5.2',
     },
     presets: {
       machine: 'Prusa CORE One HF 0.4 nozzle',
@@ -4798,13 +4388,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 331,
     keepOut: [],
-    nozzles: [0.4, 0.5, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: null,
     vendor: 'Prusa',
     source: {
       slicer: 'orca',
-      version: '2.5.0',
+      version: '2.5.2',
     },
     presets: {
       machine: 'Prusa CORE One L 0.4 nozzle',
@@ -4843,13 +4433,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 331,
     keepOut: [],
-    nozzles: [0.4, 0.5, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: null,
     vendor: 'Prusa',
     source: {
       slicer: 'orca',
-      version: '2.5.0',
+      version: '2.5.2',
     },
     presets: {
       machine: 'Prusa CORE One L HF 0.4 nozzle',
@@ -4902,7 +4492,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Prusa',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Prusa MINI 0.4 nozzle',
@@ -4949,13 +4539,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 180,
     keepOut: [],
-    nozzles: [0.25, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Prusa',
     source: {
       slicer: 'orca',
-      version: '2.5.0',
+      version: '2.5.2',
     },
     presets: {
       machine: 'Prusa MINIIS 0.4 nozzle',
@@ -5010,13 +4600,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 210,
     keepOut: [],
-    nozzles: [0.25, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Prusa',
     source: {
       slicer: 'orca',
-      version: '2.5.0',
+      version: '2.5.2',
     },
     presets: {
       machine: 'Prusa MK3.5 0.4 nozzle',
@@ -5077,7 +4667,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Prusa',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Prusa MK3S 0.4 nozzle',
@@ -5124,13 +4714,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 220,
     keepOut: [],
-    nozzles: [0.25, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Prusa',
     source: {
       slicer: 'orca',
-      version: '2.5.0',
+      version: '2.5.2',
     },
     presets: {
       machine: 'Prusa MK4 0.4 nozzle',
@@ -5201,13 +4791,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 220,
     keepOut: [],
-    nozzles: [0.25, 0.3, 0.4, 0.5, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Prusa',
     source: {
       slicer: 'orca',
-      version: '2.5.0',
+      version: '2.5.2',
     },
     presets: {
       machine: 'Prusa MK4S 0.4 nozzle',
@@ -5262,13 +4852,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 220,
     keepOut: [],
-    nozzles: [0.4, 0.5, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Prusa',
     source: {
       slicer: 'orca',
-      version: '2.5.0',
+      version: '2.5.2',
     },
     presets: {
       machine: 'Prusa MK4S HF0.4 nozzle',
@@ -5331,13 +4921,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 360,
     keepOut: [],
-    nozzles: [0.25, 0.3, 0.4, 0.5, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: false,
     bedType: null,
     vendor: 'Prusa',
     source: {
       slicer: 'orca',
-      version: '2.5.0',
+      version: '2.5.2',
     },
     presets: {
       machine: 'Prusa XL 0.4 nozzle',
@@ -5408,13 +4998,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
         [208, 245],
       ],
     ],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: null,
     vendor: 'Qidi',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Qidi Q1 Pro 0.4 nozzle',
@@ -5491,7 +5081,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Qidi',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Qidi X-CF Pro 0.4 nozzle',
@@ -5560,7 +5150,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Qidi',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Qidi X-Max 0.4 nozzle',
@@ -5623,13 +5213,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 315,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: null,
     vendor: 'Qidi',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Qidi X-Max 3 0.4 nozzle',
@@ -5706,7 +5296,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Qidi',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Qidi X-Plus 0.4 nozzle',
@@ -5769,13 +5359,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 270,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: null,
     vendor: 'Qidi',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Qidi X-Plus 3 0.4 nozzle',
@@ -5846,13 +5436,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 280,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: null,
     vendor: 'Qidi',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Qidi X-Plus 4 0.4 nozzle',
@@ -5923,13 +5513,13 @@ export const PRINTER_MODELS: PrinterModel[] = [
     ],
     height: 170,
     keepOut: [],
-    nozzles: [0.2, 0.4, 0.6, 0.8],
+    nozzles: [0.4],
     enclosed: true,
     bedType: null,
     vendor: 'Qidi',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Qidi X-Smart 3 0.4 nozzle',
@@ -6006,7 +5596,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Tronxy',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Tronxy X5SA 400 0.4 nozzle',
@@ -6079,7 +5669,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Vivedino',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Troodon 2.0 Klipper 0.4 nozzle',
@@ -6152,7 +5742,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Vivedino',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Troodon 2.0 RRF 0.4 nozzle',
@@ -6225,7 +5815,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Voron',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Voron 0.1 0.4 nozzle',
@@ -6298,7 +5888,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Voron',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Voron 2.4 250 0.4 nozzle',
@@ -6371,7 +5961,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Voron',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Voron 2.4 300 0.4 nozzle',
@@ -6444,7 +6034,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Voron',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Voron 2.4 350 0.4 nozzle',
@@ -6517,7 +6107,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Voron',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Voron Trident 250 0.4 nozzle',
@@ -6590,7 +6180,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Voron',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Voron Trident 300 0.4 nozzle',
@@ -6663,7 +6253,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Voron',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Voron Trident 350 0.4 nozzle',
@@ -6736,7 +6326,7 @@ export const PRINTER_MODELS: PrinterModel[] = [
     vendor: 'Voxelab',
     source: {
       slicer: 'bambu',
-      version: '02.09.01.70',
+      version: '02.09.02.62',
     },
     presets: {
       machine: 'Voxelab Aquila X2 0.4 nozzle',

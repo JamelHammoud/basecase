@@ -53,7 +53,7 @@ export const configFor = (file) => (file.startsWith('e2e/') ? 'vitest.e2e.config
 export const literalTestPattern = (name) => `^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`;
 
 const ENVIRONMENT =
-  /^(?:PATH|HOME|USERPROFILE|APPDATA|LOCALAPPDATA|TEMP|TMP|TMPDIR|SystemRoot|WINDIR|COMSPEC|PATHEXT|NUMBER_OF_PROCESSORS|PROCESSOR_ARCHITECTURE|PLAYWRIGHT_BROWSERS_PATH)$/i;
+  /^(?:PATH|HOME|USERPROFILE|APPDATA|LOCALAPPDATA|TEMP|TMP|TMPDIR|SystemRoot|WINDIR|COMSPEC|PATHEXT|NUMBER_OF_PROCESSORS|PROCESSOR_ARCHITECTURE|PLAYWRIGHT_BROWSERS_PATH|BASECASE_KICAD_CLI|BASECASE_KICAD_DOCKER|BASECASE_ROUTING_TOOLS)$/i;
 
 export const diagnosticEnvironment = (environment) => ({
   ...Object.fromEntries(Object.entries(environment).filter(([name]) => ENVIRONMENT.test(name))),

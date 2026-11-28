@@ -295,11 +295,18 @@ it('bounds archive expansion and excludes credentials from the test environment'
       NODE_OPTIONS: '--require=secret',
       HOME: '/home/runner',
       SystemRoot: 'C:\\Windows',
+      BASECASE_KICAD_CLI: 'scratch/kicad/bin/kicad-cli.exe',
+      BASECASE_KICAD_DOCKER: '1',
+      BASECASE_ROUTING_TOOLS: 'scratch/routing-tools',
+      BASECASE_UNRELATED_SECRET: 'secret',
     }),
   ).toEqual({
     PATH: '/tools',
     HOME: '/home/runner',
     SystemRoot: 'C:\\Windows',
+    BASECASE_KICAD_CLI: 'scratch/kicad/bin/kicad-cli.exe',
+    BASECASE_KICAD_DOCKER: '1',
+    BASECASE_ROUTING_TOOLS: 'scratch/routing-tools',
     CI: 'true',
     BASECASE_QUARANTINE: 'off',
   });

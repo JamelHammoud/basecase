@@ -2,6 +2,20 @@
 
 Implementation: [Assembly and repair planning](../guide/build.md#performance-assembly-and-repair-planning). Shared requirements: [Performance](../guide/performance.md).
 
+## Build-guide groups append members
+
+Whole-planner search found three growing-list copies in `guideModules.ts`, `guideItems.ts` and `guideSequence.ts`. They group scene parts, equivalent items and inserts by host. All now append through `guideGroups.ts`. The maps and lists belong to the current planning call and do not escape before grouping finishes. Input parts remain unchanged. All consumers of the shared planner receive the same ordered groups, including preview, PDF, Kit, Build Along and approximate steps.
+
+For a bucket containing n members, the previous spread operations copied n(n - 1) / 2 earlier references and allocated n member arrays. The new path copies no earlier references and creates one member array. A 1,000-member bucket therefore removes 499,500 copied references and 999 member arrays. These are source-derived operation counts, not measured heap usage or interaction timings. No complete guide-generation speedup is claimed.
+
+Existing `guideModules.test.ts` covers repeated modules, first-name ordering, missing geometry, small-group folding, joint-defined modules and changed inputs. `guidePlan.test.ts` covers real plan generation, item quantities, insert-before-host sequencing, repeated assemblies and document output. No test deadline, retry or exclusion changes. Browser execution remains with CI.
+
+The steps and screenshots in [Make a build guide](../../site/content/help/make-a-build-guide.md) and the claims in [The path from design to build](../../site/content/help/from-design-to-build.md) describe the same workflow and output. No control, visible state or user action changes, so both articles and their captures remain unchanged. These are the two unchanged-covered-article advisories reported by preflight.
+
+The article comparison traced item quantities and printed-part letters through `buildItems`, scene-group naming through `groupModules`, and insert-before-host ordering through `partsOfModule`. Appending preserves the first member, member order and map insertion order in all three paths. The concept article's guide, printing and retained-build claims therefore need no correction. The task article's Make Guide, Open, Update, PDF and navigation actions are outside this edit. Its 15-second automatic update and 20-second order budget remain in the existing settings and guide hook. The current-guide and out-of-date captures show unchanged card states, so neither screenshot needs replacement.
+
+On November 27, the first changed-file check passed static checks and 4,576 tests, with three existing five-second deadline failures in `sim/continuationMatrix.test.ts` and `reality/bodyMotion.test.ts`. The same check with `VITEST_MAX_WORKERS=4` passed all 4,579 active tests across 631 files, with one existing file and test skipped. Logs are `scratch/refine-check.log` and `scratch/refine-check-bounded.log`. This passing local run does not establish a cause or failure rate for the first run. No repository concurrency, deadline, retry or quarantine setting changed. Copy diff reported zero additions, changes and removals.
+
 ## Retained build repair
 
 The disposable worker reads retained coordinate and index arrays directly, without serialized mesh equality. It expands each solid into owned triangle buffers using twelve bytes per mesh index before BVHs and planner state. Both revisions release their BVHs after planning. Cancellation terminates the worker and rejects late replies. The document refuses a geometry fallback.

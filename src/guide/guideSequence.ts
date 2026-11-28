@@ -1,4 +1,5 @@
 import { explode } from './guideExplode';
+import { appendGroup } from './guideGroups';
 import { fastenerSteps } from './guideFastenerSteps';
 import { isFastener, isInsert, isMajor, itemKeyOf } from './guideItems';
 import { fastenerHomes, insertHosts, isUnproven, orderMajors, type FastenerHome, type PlanContext } from './guideOrder';
@@ -41,7 +42,7 @@ function partsOfModule(ctx: PlanContext, module: GuideModule, homes: Homes): Mod
   const inserts = new Map<string, string[]>();
 
   for (const [insert, host] of homes.hosts) {
-    if (majorSet.has(host)) inserts.set(host, [...(inserts.get(host) ?? []), insert]);
+    if (majorSet.has(host)) appendGroup(inserts, host, insert);
   }
 
   const homed = [...homes.fasteners].filter(([, h]) => h.module === module.id);

@@ -293,6 +293,8 @@ Measurements and limits: [Motion fitting and retargeting performance evidence](.
 
 ## Testing coverage
 
+- **Robot imports.** `e2e/robotImport.e2e.test.ts` opens and closes a fresh app for each declaration and configured attempt. ZIP drops, folder xacro, GitHub selection and Hugging Face imports retain their exact joint-count assertions. An unfinished import cannot add joints to another attempt's scene. [Windows attempt evidence](../notes/testing-joints-and-motion.md#windows-import-attempt-ownership-on-check-46136891399) distinguishes that fixture correction from the unresolved initial import deadline.
+
 - **Leader arms.** `e2e/leader.e2e.test.ts` creates a leader through ⌘K and checks its new scene tab, follower joint mapping and printing plates. `src/leader/makeLeader.test.ts` checks fixed-base eligibility, joint preservation, forward-kinematics orientation, servo counts, follower mapping and gripper handling. The browser suite does not separately check context-menu visibility. [Removal evidence](../notes/testing-joints-and-motion.md#leader-context-menu).
 
 - **Windows linkage history.** All three tests share a scene: insertion needs the path test, and the coupler sweep needs insertion. `linkage/linkageParts.test.ts` checks servo assignment and posed coupler kinematics on two planes, and `workspace/docHistory.test.ts` checks undo and redo through background part updates. Linux and macOS retain the complete browser walkthrough. [Incident evidence](../notes/testing-joints-and-motion.md#windows-linkage-history).

@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { ProjectSettings } from '../src/types/robotics';
 import { deskArmFiles, deskArmZip, hubListing } from '../src/utils/robotImport/robotImport.fixtures';
 import { fusionArmFiles } from '../src/utils/robotImport/xacro.fixtures';
@@ -68,11 +68,11 @@ function folderOf(files: Record<string, Uint8Array>): string {
   return root;
 }
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 

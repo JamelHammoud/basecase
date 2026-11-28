@@ -78,7 +78,7 @@ The table maps each recorded pull request's testing-guide edits to the resulting
 | [#957](https://github.com/JamelHammoud/basecase/pull/957) | 1 | [Multiply](testing-datasets.md#multiply) moves to Cases and its dataset evidence. Merged commit `58c7260af`. |
 | [#1007](https://github.com/JamelHammoud/basecase/pull/1007) | 1 | Captured-world coverage moves to [Cases](../guide/cases.md#testing-coverage), retaining the existing [world-render measurements](world-render-setup.md). Merged commit `84aa2146d`. |
 | [#1076](https://github.com/JamelHammoud/basecase/pull/1076) | 1 | Recorded-video coverage moves to [Cases](../guide/cases.md#testing-coverage), retaining the existing [setup measurements](recorded-video-worker-setup.md). The shared offscreen-worker harness contract stays central. Merged commit `52138ae11`. |
-| [#1107](https://github.com/JamelHammoud/basecase/pull/1107) | 1 | [Rendered vision](testing-vision.md#rendered-vision) moves to Cases. Merged commit `72d0d08b3`. |
+| [#1107](https://github.com/JamelHammoud/basecase/pull/1107) | 1 | [Rendered vision](testing-vision-delivery.md#rendered-vision) moves to Cases. Merged commit `72d0d08b3`. |
 | [#1108](https://github.com/JamelHammoud/basecase/pull/1108) | 1 | [Build Along and Cable reach](performance-assembly.md#build-along) move to Build. Merged commit `b29229fbb`. |
 | [#1157](https://github.com/JamelHammoud/basecase/pull/1157) | 2 | [Pose animation training](testing-skills.md#pose-animation-training) moves to Skills. Merged commit `08d4ffe8b`. |
 | [#1162](https://github.com/JamelHammoud/basecase/pull/1162) | 1 | [Dataset versions](testing-datasets.md#dataset-versions) move to Cases. Live-route and common browser-harness cleanup remain shared. Merged commit `aa054400e`. |

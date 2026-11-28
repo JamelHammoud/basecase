@@ -35,6 +35,7 @@ export async function subscriptions(pool) {
 
   return {
     async open({ request, response, token, actor, client = pool, access = false }) {
+      await listener.query('SELECT 1');
       insist(streams.size < 64, 503);
 
       if (access) demand(actor, 'iam.manage', organization(actor.org));

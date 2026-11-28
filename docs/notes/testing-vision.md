@@ -2,7 +2,7 @@
 
 Current coverage lives in [Cases](../guide/cases.md#testing-coverage) and [Cameras](../guide/cameras.md#testing-coverage). Shared test policy, selection and harness contracts remain in [Running and testing](../guide/running-and-testing.md#0e-tests).
 
-Add evidence to the implementation owner's note below. Keep complete feature sections and their repair history together. Reuse their sections for later observations and restoration evidence. This page is navigation, not an incident log. Roboflow importer evidence belongs with its importer continuation, outside these vision repair sections.
+Add evidence to the implementation owner's note below. Keep complete feature sections and their repair history together. Reuse their sections for later observations and restoration evidence. This page is navigation, not an incident log.
 
 ## Placement map
 
@@ -16,8 +16,4 @@ Add evidence to the implementation owner's note below. Keep complete feature sec
 | [Live and rendered camera delivery](testing-vision-delivery.md) | [Rendered vision](testing-vision-delivery.md#rendered-vision), [Linux live operator overlay](testing-vision-delivery.md#linux-live-operator-overlay), [Controlled Linux measurements, 16 November 2026](testing-vision-delivery.md#controlled-linux-measurements-16-november-2026), [Windows live operator readiness recurrence](testing-vision-delivery.md#windows-live-operator-readiness-recurrence), [Rendered camera quarantine observation](testing-vision-delivery.md#rendered-camera-quarantine-observation), [Rendered web camera on Check 46132153464](testing-vision-delivery.md#rendered-web-camera-on-check-46132153464) |
 | [Tracking](testing-vision-tracking.md) | [Tracking, zones and lines](testing-vision-tracking.md#tracking-zones-and-lines) |
 
-## Conflict baseline and limits
-
-Issue [#2219](https://github.com/JamelHammoud/basecase/issues/2219) reports 38 conflicts attributed to the former combined `testing-vision.md`. Its baseline build median step-to-merge time rose from 0.76 to 7.09 hours. These are the original planning inputs, not measurements of this split. No merge-time improvement has been measured.
-
-All 21 original top-level evidence sections retain their prose, headings, measurements, gaps and restoration conditions. Only link destinations and section-separator whitespace change. The map includes their two nested headings. Existing repair owners retain investigations, assertions and restoration decisions. Exclusion-expiry decisions remain with #2143. No tests, quarantine records, application behavior, gates or scheduling waits change.
+[Documentation placement evidence](performance-documentation.md#vision-evidence-ownership) records the conflict baseline, preservation and measurement limits.

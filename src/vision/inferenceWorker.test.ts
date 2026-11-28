@@ -1,42 +1,9 @@
 import crypto from 'node:crypto';
-import { createServer } from 'node:http';
-import { resolve } from 'node:path';
 import { afterAll, beforeAll, expect, it } from 'vitest';
-import { build } from 'vite';
-import { chromium } from 'playwright-core';
+import { openInferenceWorker } from './inferenceWorkerFixture';
 import { inputSensitiveDetectionOnnx } from './onnxFixture';
 import type { VisionManifest } from './manifest';
 import type { VisionResult } from './types';
-
-async function inferenceWorkerFiles() {
-  const built = await build({
-    configFile: false,
-    logLevel: 'silent',
-    define: { 'process.env.NODE_ENV': '"production"' },
-    build: {
-      write: false,
-      minify: false,
-      assetsInlineLimit: 0,
-      rolldownOptions: {
-        input: resolve(import.meta.dirname, 'inference.worker.ts'),
-        output: { codeSplitting: false, entryFileNames: 'worker.js' },
-      },
-    },
-  });
-  const output = Array.isArray(built) ? built[0] : built;
-
-  if (!('output' in output)) throw new Error('Expected the compiled inference worker.');
-
-  return new Map(
-    output.output.map((item) => [
-      `/${item.fileName}`,
-      {
-        bytes: item.type === 'chunk' ? item.code : item.source,
-        type: item.fileName.endsWith('.wasm') ? 'application/wasm' : 'text/javascript',
-      },
-    ]),
-  );
-}
 
 function manifestOf(bytes: Uint8Array): VisionManifest {
   return {
@@ -54,61 +21,21 @@ function manifestOf(bytes: Uint8Array): VisionManifest {
   };
 }
 
-async function openInferenceWorker() {
-  const files = await inferenceWorkerFiles();
-  const server = createServer((request, response) => {
-    const file = files.get(request.url ?? '/');
-
-    response.setHeader('content-type', file?.type ?? 'text/html');
-    response.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-    response.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
-    response.end(file?.bytes ?? '<!doctype html><title>Inference worker test</title>');
-  });
-
-  await new Promise<void>((done) => server.listen(0, '127.0.0.1', done));
-
-  const graphics =
-    process.platform === 'darwin'
-      ? ['--use-angle=metal', '--enable-gpu']
-      : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
-  const browser = await chromium.launch({
-    channel: 'chrome',
-    headless: true,
-    args: [...graphics, '--ignore-gpu-blocklist', '--enable-unsafe-webgpu'],
-  });
-
-  try {
-    const address = server.address();
-
-    if (!address || typeof address === 'string') throw new Error('Expected the inference test server port.');
-
-    const page = await browser.newPage();
-
-    await page.goto(`http://127.0.0.1:${address.port}`);
-
-    return {
-      page,
-      close: async () => {
-        await browser.close();
-        await new Promise<void>((done) => server.close(() => done()));
-      },
-    };
-  } catch (error) {
-    await browser.close();
-    await new Promise<void>((done) => server.close(() => done()));
-
-    throw error;
-  }
-}
-
 let app: Awaited<ReturnType<typeof openInferenceWorker>>;
+const setup = new AbortController();
+let opening: ReturnType<typeof openInferenceWorker>;
 
 beforeAll(async () => {
-  app = await openInferenceWorker();
+  opening = openInferenceWorker(setup.signal);
+  app = await opening;
 });
 
 afterAll(async () => {
-  await app?.close();
+  setup.abort();
+  await opening?.then(
+    (opened) => opened.close(),
+    () => undefined,
+  );
 });
 
 it('runs pixel-sensitive detection in the compiled production inference worker', async () => {

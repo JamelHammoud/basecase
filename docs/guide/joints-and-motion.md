@@ -360,7 +360,7 @@ Robot import `fetchBytes` requires an explicit byte budget. Individual model and
 
 ### Tendon recording browser coverage
 
-The combined authoring, simulation and recorded-channel declaration in `e2e/tendons.e2e.test.ts` is quarantined on Linux and Windows through 28 November 2026 under [#2020](https://github.com/JamelHammoud/basecase/issues/2020). macOS retains it. Linux and Windows retain the independent singular-declaration and undo/redo story and the real WASM tendon fixtures, package and recording tests. Those checks do not replace the combined browser path. [Evidence and restoration conditions](../notes/testing-simulate.md#windows-tendon-recording-in-check-44885120824).
+The combined authoring, simulation and recorded-channel declaration in `e2e/tendons.e2e.test.ts` is active on Linux and Windows after its dated exclusion under #2020 expired on 28 November 2026. Its passive-joint command helper and the closed-linkage helper reuse `contactCommand`, which fills the mounted palette input and clicks its matching command rather than sending unowned typing and Enter events. The independent singular-declaration and undo/redo story and real WASM tendon fixtures, package and recording tests remain active. [Current delivery evidence](../notes/testing-simulate.md#tendon-command-delivery-on-check-46099587690) separates the observed palette race from unmeasured candidate simulation and recording.
 
 The Make a Leader browser declaration remains active on Windows, retaining new-tab ownership, joint identity and Build printing assertions. [November 27 evidence](../notes/testing-joints-and-motion.md#leader-build-navigation-on-27-november) separates the initial Build click from state left by the existing retry.
 

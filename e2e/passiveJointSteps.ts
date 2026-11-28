@@ -1,3 +1,4 @@
+import { contactCommand as command } from './selfContactScene';
 import { expect } from 'vitest';
 import { passiveMechanism, passiveMechanisms } from '../src/sim/fixtures/passiveMechanisms';
 import type { RobotJoint } from '../src/types/robotics';
@@ -27,11 +28,7 @@ export const passiveRecord = () => {
 export const sceneJoints = (app: App) =>
   app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.sceneRecord().project.joints);
 
-export async function command(app: App, label: string) {
-  await app.page.keyboard.press('Meta+k');
-  await app.page.keyboard.type(label);
-  await app.page.keyboard.press('Enter');
-}
+export { command };
 
 export async function openFinger(app: App) {
   await app.page.evaluate(

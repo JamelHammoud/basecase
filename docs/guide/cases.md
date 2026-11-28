@@ -993,7 +993,7 @@ Each `e2e/caseStartup.e2e.test.ts` attempt opens a fresh app. `src/workspace/use
 
 ### Shared Case code panels
 
-[Web gallery](#web-gallery) records joystick movement, live HUD speed, Open Scene preservation, and the shared-page IndexedDB, cookie and Hub isolation checks. The isolation test remains unchanged.
+[Web gallery](#web-gallery) records joystick movement, live HUD speed, Open Scene preservation, and the shared-page IndexedDB, cookie and Hub isolation checks. The isolation declaration remains active with all five storage, Hub and WebRTC refusal assertions. [Current Linux probe evidence](../notes/testing-gallery.md#shared-probe-execution-on-check-46099587690) records a reproduced missing-result failure without weakening the sandbox checks.
 
 [Incident evidence and limits](../notes/testing-gallery.md).
 

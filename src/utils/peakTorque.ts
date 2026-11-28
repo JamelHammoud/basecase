@@ -152,17 +152,25 @@ function selectRank(values: number[], rank: number): number {
   return values[rank];
 }
 
-export function percentile(values: number[], q: number): number {
-  if (!values.length) return 0;
+function orderedSamples(samples: number[]): boolean {
+  for (const value of samples) {
+    if (typeof value !== 'number' || Number.isNaN(value) || Object.is(value, -0)) return false;
+  }
 
-  const samples = [...values];
+  return true;
+}
+
+export function percentileInPlace(samples: number[], q: number): number {
+  if (!samples.length) return 0;
+
   const rank = Math.min(samples.length - 1, Math.max(0, Math.ceil(q * samples.length) - 1));
-  const ordered = samples.every((value) => typeof value === 'number' && !Number.isNaN(value) && !Object.is(value, -0));
 
-  if (!ordered || Number.isNaN(rank)) return samples.sort((a, b) => a - b)[rank];
+  if (!orderedSamples(samples) || Number.isNaN(rank)) return samples.sort((a, b) => a - b)[rank];
 
   return selectRank(samples, rank);
 }
+
+export const percentile = (values: number[], q: number): number => percentileInPlace([...values], q);
 
 function longestRun(values: number[], above: number): number {
   let best = 0;
@@ -182,11 +190,12 @@ export function jointPeak(series: TorqueSeries, index: number, stallNm: number, 
   const w = series.windowS;
   const demand = series.absDemand[index].slice(Math.ceil(span.settleS / w));
   const heat = series.sqForce[index].slice(Math.floor(span.heatFromS / w), Math.floor(span.heatToS / w));
+  const overS = longestRun(demand, stallNm) * w;
 
   return {
-    p99Nm: percentile(demand, 0.99),
+    p99Nm: percentileInPlace(demand, 0.99),
     rmsNm: Math.sqrt(mean(heat)),
-    overS: longestRun(demand, stallNm) * w,
+    overS,
   };
 }
 

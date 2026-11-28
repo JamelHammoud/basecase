@@ -1,0 +1,68 @@
+# Comparison inspection testing evidence
+
+Coverage: [Cases](../guide/cases.md#testing-coverage) and [Cameras](../guide/cameras.md#testing-coverage). Placement: [Vision evidence index](testing-vision.md). Shared contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
+
+## Frozen comparison inspection
+
+`evidenceMatrix.test.ts` runs all ten required cases through generated JPEGs, real generated ONNX graphs on WASM, frozen preparation, production evaluation, retention and JSON save/reopen validation. The cases cover a missed person, duplicate detections, a wrong object class, a correct empty image, localization and mask-boundary errors, missed visible and invisible keypoints, classification confusion and a two-camera regression. Both cameras use the same candidate graph. Their different pixels produce the regression in one camera. Repeated frame IDs in different sets and reordered source classes retain their identities and source group. The invisible-point graph changes only the ignored landmark while preserving visible-point accuracy.
+
+The matrix independently asserts expected misses, false positives, visible-point counts and retention outcomes. It reconciles sums of image diagnostics against the existing metric reports, verifies model and test hashes, restores each frozen image and verifies evidence digests after serialization. `evidence.test.ts` retains the geometry matrix, corruption cases, changed valid predictions with unchanged aggregate totals, older aggregate-only reports, 1,000-image refusal and the 3 MiB all-or-nothing refusal. Per-image data has no AP score.
+
+Review found that valid all-background prediction masks reached the label editor's foreground-only geometry builder and made the complete image unavailable. `inspectionImage.test.ts` now crosses evaluation, frozen image packing and restoration for missing masks, all-background masks and foreground lost during nearest-neighbor resizing. Each case preserves both predictions and its false-positive diagnostic while displaying the historical image and the remaining nonempty prediction. Rendered SVG assertions distinguish white ground-truth landmarks from blue predicted landmarks and exclude landmarks from detection and segmentation tasks. These are geometry and markup assertions, not visual judgments.
+
+`evidencePipeline.test.ts` checks frozen restoration after current labels change. `visionInspectionOriginal.test.ts` rejects changed JPEGs, labels, classes and missing frames, and ignores reads completed after cancellation or scene switching. `visionInspectionNavigation.test.ts` rejects changed or missing source manifests and recording bytes, verifies exact frame navigation, and passes the already-verified recording into existing playback without reloading a replacement. `inspectionSource.test.ts` also checks changed camera-video bytes and changed timestamps. Existing service cancellation tests continue to prove that stopping before persistence saves no candidate result.
+
+The original browser inspection walkthrough entered through Library, selected a class failure, switched model overlays, opened source frame 6 at 0.12 seconds and edited the original image's class through the existing editor. It opened the comparison through the scoped command, checked refusal of the changed original, checked dismissal on scene switching and return, and confirmed saved evidence and dataset versions stayed unchanged. [Walkthrough cost and current coverage](#combined-inspection-walkthrough-cost) records the shortened sequence and limits. The unrelated Windows training-completion quarantine under #1129 is unchanged.
+
+Local changed-file checks passed the production matrix and source-navigation coverage. The browser test was authored for CI and was not run locally. A separate scratch capture used `openApp`, real evaluation and ordinary backend persistence to produce the help and changelog images. It verified source frame 6 before taking the source capture. The capture never judged appearance. Browser resource observations also opened actual comparisons with 4 and 1,000 frozen test images. [Resource evidence](performance-vision-training.md#frozen-prediction-evidence-bounds) records their bounds and limits.
+
+An initial resource fixture added images to the frame set without updating the dataset's selected frame IDs. Its observed runs contained only one test image and were discarded. The corrected fixture updates the explicit member selection and asserts the retained evidence length before recording measurements. One subsequent observation failed the unchanged 30-second navigation timeout before the app loaded. It supplies no feature measurement. The final worker-index observations passed both sizes without retries or longer deadlines. The local Vite servers emitted their existing shutdown warning after successful capture and measurement tests. No quarantine or shared harness setting changed.
+
+## Combined inspection walkthrough cost
+
+Issue [#1782](https://github.com/JamelHammoud/basecase/issues/1782) shortens the combined saved-comparison browser walkthrough while retaining its unique UI coverage and `visionInspectionFlow.ts` fixture helper. In [Check 44245137178](https://github.com/JamelHammoud/basecase/actions/runs/44245137178), the declaration passed in 44,483 ms on Windows shard 6 and 26,639 ms on Linux shard 6. Both observations are from the existing full browser workload, not isolated benchmarks. These observations describe the original five-opening walkthrough. No candidate browser timing or wall-clock shard improvement has been measured locally.
+
+The walkthrough reopened the same comparison five times while combining overlay selection, source playback, label editing, source refusal, scene switching and command-palette entry. Existing tests already cover the underlying evidence contract:
+
+- `src/vision/training/evidencePipeline.test.ts` runs real ONNX WASM inference, saves and reopens the comparison, checks candidate and incumbent predictions, and restores frozen labels after current labels change.
+- `src/workspace/visionInspectionOriginal.test.ts` refuses changed labels, classes, JPEGs and missing images, and ignores loads completed after cancellation or scene switching.
+- `src/workspace/visionInspectionNavigation.test.ts` passes the verified historical recording and exact frame into existing playback, refuses changed or missing sources and ignores stale requests.
+- `src/vision/training/inspectionSource.test.ts` rejects replaced recordings, video bytes and timestamps. `inspectionImage.test.ts` retains frozen-image geometry and rendered-markup coverage.
+- `e2e/visionRequirements.e2e.test.ts` enters Library, opens a frozen image and reopens it after current membership and requirement edits, then compares saved runs and dataset versions. The condition walkthrough also retains reopening coverage outside its existing Windows quarantine.
+
+The shortened walkthrough opens the comparison three times instead of five. It retains Library entry, Class and Finding selection, displayed candidate and incumbent model hashes, incumbent/candidate overlay counts, source playback at frame 6, original-image class editing with persisted content change, scoped command entry, changed-original refusal, and dismissal when switching away and back. The command uses ControlOrMeta for both supported desktop platforms. The third opening checks the refusal status after command entry. One final snapshot checks saved-run and dataset-version preservation after editing and scene switching. These assertions need no additional comparison opening. The requirement walkthrough also retains browser reopening and saved-evidence preservation coverage.
+
+The original-image unit test checks changed-content refusal, while source navigation refusal stays in the navigation and source tests. The browser checks that the original-image rejection reaches the dialog's status text. No timeout, retry, quarantine or production behavior changes. Browser execution and candidate duration measurement belong to CI.
+
+The initial deletion's changed-file check passed formatting, lint, documentation, site copy and types, plus 12 retained unit and integration tests in 463 ms. That result did not establish replacement coverage for the removed controls. The revision restores those browser interactions without running them locally.
+
+
+### Follow-up inspection navigation refinement
+
+Issue [#1825](https://github.com/JamelHammoud/basecase/issues/1825) follows the three-opening trim. [Check 44391437908](https://github.com/JamelHammoud/basecase/actions/runs/44391437908) still took 37,612 ms on Windows shard 6 and 20,470 ms on Linux shard 6 for the combined declaration. Both passed. These are shared-workload observations, not isolated timings.
+
+Review of #1834 rejected reducing the test to source playback because unit tests do not cover the removed UI wiring. The revision retains all browser assertions from the three-opening walkthrough, including Class and Finding selection, both displayed model hashes, overlay counts, original-image editing and persisted hash change, changed-original refusal feedback, scoped command entry, scene-switch dismissal and saved-evidence preservation.
+
+After the label editor closes, the dataset remains selected. The walkthrough now opens the scoped command directly, removing an Escape and dataset-row click that dismissed and reopened the same dataset. Fixture setup remains shared in one app. Unused image-count and before-inspection options are removed. Source playback waits for the visible timeline and verifies saved frame 6 with a nullable timeline read. No timeout, retry or quarantine changes. No runtime reduction is claimed before CI executes this revision on Linux and Windows.
+
+Scoped revision validation is recorded in `scratch/revise-1834-check.log`. Browser execution and timing remain with CI.
+
+## Inspection fixture refinement
+
+Issue [#1873](https://github.com/JamelHammoud/basecase/issues/1873) reports the combined inspection declaration taking 59 seconds in [Check 44537680149](https://github.com/JamelHammoud/basecase/actions/runs/44537680149). The report does not identify which action consumed the time, so no individual action is classified as a stall.
+
+Review of #1878 rejected the overlay-only reduction because it removed unique browser coverage. The restored walkthrough retains Library entry, Class and Finding selection, both displayed model hashes, candidate and incumbent overlays, comparison-to-source playback at frame 6, original-image editing and persisted hash change, changed-original refusal feedback, scoped command entry, scene-switch dismissal and unchanged saved runs and dataset versions. The unit and requirements tests listed above complement these controls rather than replace their browser wiring assertions.
+
+That revision changed the shared fixture to two primitive boxes with one revolute joint instead of the three-joint arm. It retained real model preparation, saved recording creation, ONNX evaluation, frozen-image restoration and source playback. The recording still has 12 frames at 50 Hz and the browser verifies source frame 6. The fixture reduction targeted model preparation and playback work without removing any UI interaction. Three comparison openings remain because successful source and original-image navigation close the comparison. Overlay counts poll the rendered result of each selection, including the initial candidate. The [inspection-only evaluation fixture](#inspection-only-evaluation-fixture) below replaces ONNX evaluation in the current setup.
+
+No browser speedup is claimed without candidate execution. Browser execution and timing remain with Linux and Windows CI. No timeout, retry, quarantine or production behavior changes.
+
+## Inspection-only evaluation fixture
+
+Issue [#1895](https://github.com/JamelHammoud/basecase/issues/1895) reports the combined inspection declaration taking 63 seconds in [Check 44792356422](https://github.com/JamelHammoud/basecase/actions/runs/44792356422). No per-action timings establish which stage dominated that observation. Earlier fixture reductions still left two real ONNX evaluations before the first browser inspection.
+
+`devStudio/inspectionTrainingFixture.ts` now runs the existing training service core with controlled prediction results for this inspection-only setup. It supplies a full-image cup detection for the candidate and no detections for the incumbent. Both reports still pass production scoring, evidence construction, retention comparison, saved-run validation and persistence. Dataset preparation still freezes real JPEGs, labels and source identities. Source recording creation, articulated frame-6 playback and all existing browser interactions remain real. The browser additionally asserts retained status and candidate/incumbent scores of one and zero before exercising the controls.
+
+This removes both ONNX inference calls and their session initialization from inspection fixture setup. It does not change `configureVisionBackend` for training browser workflows, which retain real ONNX evaluation. `evidencePipeline.test.ts` continues to cross real ONNX inference, immutable run persistence and image restoration. The inspection walkthrough no longer proves browser ONNX startup, which remains covered by the requirement and condition training walkthroughs within their documented platform limits.
+
+No browser duration or shard speedup was measured locally. Candidate browser timing belongs to Linux and Windows CI. No assertion was removed or loosened, and no timeout, retry, quarantine or production behavior changed.

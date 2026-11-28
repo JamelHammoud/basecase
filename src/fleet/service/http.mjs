@@ -106,7 +106,13 @@ async function dispatch(options) {
     });
 
   if (url.pathname === '/v1/sessions/current' && method === 'DELETE') {
-    await pool.query('DELETE FROM fleet_credentials WHERE id=$1', [actor.credential]);
+    await auditedIdentityTransaction(pool, async (client) => {
+      await lockIdentity(client, actor.org);
+
+      const current = await authenticate(client, token);
+
+      await client.query('DELETE FROM fleet_credentials WHERE id=$1', [current.credential]);
+    });
     response.setHeader('Set-Cookie', sessionCookie('', origin.protocol === 'https:'));
     reply(response, { revoked: true });
 

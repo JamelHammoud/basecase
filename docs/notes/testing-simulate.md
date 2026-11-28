@@ -2,6 +2,14 @@
 
 Current coverage: [owning guide](../guide/simulate.md#testing-coverage). Shared policy and harness contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
 
+## Two-slot Case on Check 46129801611
+
+[Check 46129801611](https://github.com/JamelHammoud/basecase/actions/runs/46129801611) at `fca012606d4bd48243fbe0e8278d124ad99922f3` fails the Windows Hand Off to a Spot callback at `slots.test.ts:117` after its unchanged 5000 ms budget. That callback loads MuJoCo and runs the paired-arm reference, limp-partner control and missing-partner refusal. Its failure does not identify which stage expired.
+
+Exact-workload Windows x64 [diagnostic 46132431364](https://github.com/JamelHammoud/basecase/actions/runs/46132431364), ticket `72fbacce-4e00-4421-8a88-ecf9c96dc4bb`, passes the complete declaration in 1342.0953 ms within a 4014 ms process. The verified manifest records Node 26.13.1, four CPUs, image `20261123.321.1`, one worker, one selected attempt, retries disabled and quarantine off. Native MuJoCo preparation completes before execution. This establishes Windows intermittency at the failed revision without a cause, candidate source repair or measured failure rate.
+
+The declaration still requires a passing paired reference, completion faster than the Case duration, failure with the recipient limp and refusal without a second robot. Slot validation and generated-goal coverage remain active alongside it. Source, assertions, deadlines, retries, exclusions and proof dependencies are unchanged. The durable artifact is retained under `scratch/diagnostics/72fbacce-4e00-4421-8a88-ecf9c96dc4bb/` during implementation.
+
 ## Continuation runtime snapshots
 
 `continuationMatrix.test.ts` runs ten generated scripted scenarios through production WASM MuJoCo: block pickup, cylinder transfer, tray placement, drawer pulling, hinged-lid opening, button pressing, lever operation, rover obstacle contact, pan-tilt following and spring-return contact. Models include 6 ms native servo delay, 6 ms wrapper delay and realized mass/friction changes. Arm rows branch at three seconds, except the loaded spring fixture at five seconds. The rover branches at two seconds and pan-tilt at one second. Every row except pan-tilt requires active recorded contact at that retained checkpoint. A lag fault starts 0.2 seconds before the checkpoint and clears 0.2 seconds after it. A world color change follows 0.3 seconds after the checkpoint. The rover uses a velocity command into a 200 mm tall obstacle with a 20 ms contact time constant. Its former target-only script left the rover stationary, which the new contact assertion rejected. The spring fixture releases at 6.4 seconds. Its final displacement must fall below half its maximum, after exceeding 1 mm, so the source exercises return motion. Each row compares uninterrupted controls with retained restoration, then applies different controls and requires a changed suffix and unchanged encoded source.

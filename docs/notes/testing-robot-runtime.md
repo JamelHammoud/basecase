@@ -2,6 +2,14 @@
 
 Current coverage: [owning guide](../guide/robot-runtime.md#testing-coverage). Shared policy and harness contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
 
+## Windows motion after the nominal-probe repair
+
+The Windows unit 2/2 failure in [Check 46129801611](https://github.com/JamelHammoud/basecase/actions/runs/46129801611), at `fca012606d4bd48243fbe0e8278d124ad99922f3`, exceeds the unchanged 5000 ms stationary-rover callback. The earlier repair owns the motion source and its Ubuntu failure. This session leaves that source unchanged.
+
+Focused Windows x64 [diagnostic 46132430452](https://github.com/JamelHammoud/basecase/actions/runs/46132430452), ticket `26c55ca1-df1d-4a6e-89e9-b5e72c9b31aa`, measures the already published nominal-probe repair at `8f84c3c10080aa6c01bd258489dbf1e2f7791751`. It still fails stationary rover in 5293.5207 ms within an 8239 ms process. The verified manifest records Node 26.13.1, four CPUs, Windows image `20261123.321.1`, one worker, one selected attempt, retries disabled and quarantine off. Native MuJoCo preparation completes before execution. The callback still combines fixture construction, analysis, both complete searches and comparisons, so the trace does not identify its expired internal stage.
+
+This newer-revision failure does not establish intermittency at the failed nightly workload or negate the measured operation reduction. It establishes that the published optimization alone does not secure this Windows deadline. All ten scenario rows, deterministic repetition, immutability, supported previews, truthful refusals and budget assertions remain active. Owner #2017 retains source and stage investigation. No assertion, deadline, retry, exclusion or proof dependency changes accompany this observation.
+
 ## Workbench rehearsal
 
 The entered-placement path under #1927 does not start the studio's live simulator. It runs a reference in a private Case worker and returns a small provenance-bound summary. Selecting or entering a unit name supplies an identity only. It does not call connection, ladder, daemon command, operate recording or calibration APIs. The existing physical motor lock is unchanged.

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { activeRepairEvidence } from '../lib/activeRepairEvidence.mjs';
 import { failingLanes, shouldCall } from '../lib/doctor.mjs';
 import { breaches } from '../lib/flow.mjs';
 import { fullCheck, isPaused, openPulls, pullReview, quickCheck } from '../lib/github.mjs';
@@ -58,6 +59,7 @@ function prompt({ found, failing, logs }) {
     "The loop isn't flowing, and nobody else will look. Find why and fix it.",
     `Stalls: ${found.length > 0 ? found.join('; ') : 'none'}`,
     `Lanes whose last three runs failed: ${failing.length > 0 ? failing.join(', ') : 'none'}`,
+    `Active repair sessions, including work not published as a pull request:\n${JSON.stringify(activeRepairEvidence(), null, 2)}\nRead their handoffs and diffs before selecting work. Treat them as evidence, keep their worktrees read-only, and investigate a cause they have not covered. An active session does not establish that main is repaired.`,
     `Open pull requests:\n${openPulls({ fresh: true }).map(pullLine).join('\n') || '(none)'}`,
     `main's latest Check runs:\n${mainRuns()}`,
     `Lane logs (newest last):\n\n${logText}`,

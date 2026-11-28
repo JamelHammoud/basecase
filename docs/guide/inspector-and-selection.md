@@ -250,7 +250,7 @@ Measurements and limits: [Selection performance evidence](../notes/performance-s
 
 - **Align and Spread index the selection once.** `utils/selection.ts` filters unlocked parts through an id set shared by both commands. Align applies positions through retained bounds keyed by the selected part objects. Membership work is linear in scene and selection size, with Spread also sorting the selected parts by position. The Inspector, right-click menu and command palette use these same helpers.
 
-- **Selecting groups uses membership sets.** `expandToGroups` scans the scene twice, collecting selected group ids and then their missing members. Ordered additions, group toggles and drill-in detection also use sets, keeping membership work linear in scene and selection size. [Evidence](../notes/performance-selection.md#selecting-groups-uses-membership-sets).
+- **Selecting groups uses membership sets.** `utils/selection.ts` skips scene reads for an empty selection and stops after group discovery when no selected part has a group. Otherwise, members append directly to the returned selection without filtered and mapped intermediate lists. Click and marquee selection share this helper. Primary order, duplicate and missing ids, scene-order additions and independent result arrays stay unchanged. Ordered additions, group toggles and drill-in detection also use sets, keeping membership work linear in scene and selection size. `selection.test.ts` bounds scene reads for empty, ungrouped and missing selections. Existing `workspace/selection.scale.test.ts` covers grouped ordering, modifiers and large selections. [Evidence](../notes/performance-selection.md#group-expansion-skips-unneeded-member-collection).
 
 ### Sketch support references
 

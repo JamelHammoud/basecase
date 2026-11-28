@@ -111,7 +111,8 @@ function revisePull(pull, { reason, comments, jamelAt }, log) {
       return;
     }
 
-    const prompt = `Revise pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${evidence(pull, reason, comments)}`;
+    const context = evidence(pull, reason, comments);
+    const prompt = `Revise pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${context}`;
     const result = checkedRun({
       cwd: worktree.dir,
       name: 'revise',
@@ -127,7 +128,7 @@ function revisePull(pull, { reason, comments, jamelAt }, log) {
     if (!result.ok || !result.output.changed) {
       log(`#${pull.number}: nothing to change: ${String(result.error ?? result.output.notes).slice(0, 400)}`);
 
-      return;
+      return result.ok ? { notes: result.output.notes, context } : null;
     }
 
     publishRevision(pull, { dir: worktree.dir, output: result.output });
@@ -155,7 +156,22 @@ function handle(pull, need, log) {
       return;
     }
 
-    revisePull(pull, { reason, comments, jamelAt: latestJamel }, log);
+    const unresolved = revisePull(pull, { reason, comments, jamelAt: latestJamel }, log);
+
+    if (!unresolved || need.entry.rebuilt || reason === 'jamel') return;
+
+    rebuild(pull, {
+      comments: [
+        ...comments,
+        {
+          author: 'Revision lane',
+          createdAt: new Date().toISOString(),
+          body: `The revision completed without a change:\n\n${unresolved.notes}\n\n${unresolved.context}`,
+        },
+      ],
+      stuck: `completed a revision without resolving its failed ${reason}`,
+      log,
+    });
   } finally {
     editPullLabels(pull.number, { remove: [REVISING] });
   }

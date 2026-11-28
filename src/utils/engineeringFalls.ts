@@ -5,7 +5,7 @@ import { RATED_OF_STALL } from './actuatorRules';
 import { jointLabel } from './engineeringFormat';
 import { peakJoints } from './engineeringPeak';
 import type { CheckRow, FallJoint, FallSim, JointLoad } from './engineeringTypes';
-import { percentile } from './peakTorque';
+import { percentileInPlace } from './peakTorque';
 
 export const FALLS = 'Falls';
 export const FALL_AROUND_S = 0.3;
@@ -46,7 +46,7 @@ export function aroundTouch(values: number[], windowS: number, touchS: number): 
 }
 
 export const fallPeakNm = (values: number[], windowS: number, touchS: number) =>
-  percentile(aroundTouch(values, windowS, touchS), 0.99);
+  percentileInPlace(aroundTouch(values, windowS, touchS), 0.99);
 
 const worse = (a: FallJoint | undefined, b: FallJoint) => (!a || b.p99Nm > a.p99Nm ? b : a);
 

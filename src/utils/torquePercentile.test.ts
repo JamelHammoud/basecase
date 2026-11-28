@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { jointPeak, percentile } from './peakTorque';
+import { jointPeak, percentile, percentileInPlace } from './peakTorque';
 import { fallPeakNm } from './engineeringFalls';
 
 const reference = (values: number[], q: number) => {
@@ -19,6 +19,7 @@ it('retains percentile ranks across sample orders, duplicates and edited inputs 
 
       for (const q of [-Infinity, -1, 0, 0.01, 0.5, 0.95, 0.99, 1, 2, Infinity, NaN]) {
         expect(percentile(values, q)).toBe(reference(values, q));
+        expect(percentileInPlace([...values], q)).toBe(reference(values, q));
       }
 
       expect(values).toEqual(before);
@@ -32,8 +33,24 @@ it('preserves stable-sort behavior for signed zeros, nonfinite values and sparse
   const cases = [[-0, 0], [0, -0], [NaN, 4, 2], [4, NaN, 2], [-Infinity, 4, Infinity], Array<number>(5)];
 
   for (const values of cases) {
-    for (const q of [0, 0.5, 0.99, 1, NaN]) expect(percentile(values, q)).toBe(reference(values, q));
+    for (const q of [0, 0.5, 0.99, 1, NaN]) {
+      expect(percentile(values, q)).toBe(reference(values, q));
+      expect(percentileInPlace(values.slice(), q)).toBe(reference(values, q));
+    }
   }
+});
+
+it('measures overload runs before percentile selection reorders privately owned windows', () => {
+  const values = [99, 0, 8, 9, 0, 7, 8, 9, 0, 6];
+  const before = [...values];
+  const series = { windowS: 0.025, absDemand: [values], sqForce: [values] };
+  const result = jointPeak(series, 0, 5, { settleS: 0.025, heatFromS: 0, heatToS: 0.25 });
+
+  expect(result.p99Nm).toBe(9);
+  expect(result.overS).toBe(3 * series.windowS);
+  expect(values).toEqual(before);
+  expect(fallPeakNm(values, 0.01, 0.04)).toBe(99);
+  expect(values).toEqual(before);
 });
 
 it('keeps walk and fall results on their existing sample windows', () => {

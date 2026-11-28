@@ -52,20 +52,29 @@ export async function mountCamera(input: {
   return {
     wait: () =>
       new Promise<void>((resolve, reject) => {
-        const stop = scope.simulated.onCameraVision(() => {
+        const ready = () => {
           const key = feed.views[0].key;
           const error = scope.simulated.cameraVisionError(key);
 
           if (error) {
-            stop();
             reject(new Error(error));
+
+            return true;
           }
 
           if (scope.simulated.cameraVision(key)) {
-            stop();
             resolve();
+
+            return true;
           }
+
+          return false;
+        };
+        const stop = scope.simulated.onCameraVision(() => {
+          if (ready()) stop();
         });
+
+        if (ready()) stop();
       }),
     configure: () => scope.simulated.configureVisionCamera(feed.views[0].key, { modelId: input.manifest.id, fps: 10 }),
     replace: (kind: 'scene scope' | 'simulation link') => {

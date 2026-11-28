@@ -66,6 +66,50 @@ it('prepares only obstacles reached before a segment is blocked', () => {
   expect(bound.mock.calls.every((call) => call[1] === 'wall')).toBe(true);
 });
 
+it('prepares containment points once while retaining distinct endpoint envelopes', () => {
+  const transform = new Matrix4().makeRotationZ(Math.PI / 4).setPosition(5, -3, 2);
+  const box: RouteObstacle = {
+    id: 'box',
+    min: [0, 0, 0],
+    max: [10, 10, 10],
+    inverse: transform.clone().invert(),
+  };
+  const envelope: RelativeBound = (point) => (point.obstacleId === 'moving' ? 4 : 0);
+  const bound = vi.fn(envelope);
+  const apply = vi.spyOn(Vector3.prototype, 'applyMatrix4');
+  const points = [-5, 0, EPSILON, 2 * EPSILON, 5, 10, 15].flatMap((x) =>
+    [undefined, 'moving'].map((obstacleId) => ({
+      position: new Vector3(x, 5, 5).applyMatrix4(transform).toArray() as PortVec,
+      obstacleId,
+    })),
+  );
+  const snapshot = structuredClone(points);
+
+  for (const point of points) {
+    const expected = crossesBox(point, { ...point }, box, envelope);
+
+    bound.mockClear();
+    apply.mockClear();
+    expect(crossesBox(point, point, box, bound)).toBe(expected);
+    expect(bound).toHaveBeenCalledTimes(1);
+    expect(apply).toHaveBeenCalledTimes(1);
+
+    const clearance = routeClearance(bound);
+
+    bound.mockClear();
+    apply.mockClear();
+    expect(clearance.crosses(point, point, box)).toBe(expected);
+    expect(bound).toHaveBeenCalledTimes(1);
+    expect(apply).toHaveBeenCalledTimes(1);
+    expect(clearance.crosses(point, { ...point, obstacleId: 'moving' }, box)).toBe(
+      crossesBox(point, { ...point, obstacleId: 'moving' }, box, envelope),
+    );
+  }
+
+  apply.mockRestore();
+  expect(points).toEqual(snapshot);
+});
+
 it('reuses point transforms across anchored detours and releases them before an edit or undo', () => {
   const obstacles: RouteObstacle[] = Array.from({ length: 4 }, (_, i) => ({
     id: `box-${i}`,

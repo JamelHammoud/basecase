@@ -361,6 +361,8 @@ Removal clearance checks stop at the first live blocker. `assembly/removalOrder.
 
 ## Performance: cable routing
 
+- **Containment queries prepare one endpoint.** `wiring/routeCollision.ts` reuses local coordinates and the motion radius when both endpoints are the same point object. Cached detour queries also reuse the first prepared endpoint without a second cache lookup. Connector exits, anchors and detour corners share these paths for bus and power routing. Distinct point objects retain separate preparation even when their coordinates match, since their motion owners can differ. `routeClearance.test.ts` covers rotated obstacles, boundary points, motion envelopes, preparation counts and input preservation. [Evidence](../notes/performance-wiring.md#containment-queries-prepare-one-endpoint).
+
 - **Connector exits accumulate the nearest housing boundary.** `wiring/routeGeometry.ts` keeps one minimum while scanning the three local axes, without temporary distance lists. Bus and power routes share this owner-exit calculation. Axis order, the parallel threshold, rotated local frames, the 8 mm minimum and neighbouring-solid checks stay unchanged. Existing `routeGeometry.test.ts` covers extended exits, rotated owners and blocked exits. [Evidence](../notes/performance-wiring.md#connector-exits-accumulate-the-nearest-housing-boundary).
 
 Measurements and limits: [Cable routing performance evidence](../notes/performance-wiring.md).

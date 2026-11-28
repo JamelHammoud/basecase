@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../lib/agent.mjs', () => ({ runAgent: mocks.agent }));
 vi.mock('../lib/sessionJournal.mjs', () => ({ updateSession: mocks.update }));
-vi.mock('../lib/claim.mjs', () => ({ claim: () => () => {} }));
+vi.mock('../lib/claim.mjs', () => ({ claim: vi.fn(() => vi.fn()) }));
 vi.mock('../lib/branches.mjs', () => ({ fetchAll: () => {}, ownPatchId: mocks.patch, resolveSha: mocks.resolve }));
 vi.mock('../lib/copy.mjs', () => ({ copyReport: () => ({ text: 'Copy: 0' }) }));
 vi.mock('../lib/reviewPrompt.mjs', () => ({ reviewPrompt: () => 'Review fixture' }));
@@ -41,10 +41,13 @@ vi.mock('../lib/github.mjs', () => ({
 }));
 
 const { default: review } = await import('./review.mjs');
+const { claim } = await import('../lib/claim.mjs');
+const { close } = await import('../lib/worktree.mjs');
 const runReview = () => review({ log: () => {} });
 
 beforeEach(() => {
   vi.resetAllMocks();
+  claim.mockImplementation(() => vi.fn());
   mocks.pullReview.mockReturnValue(null);
   mocks.comments.mockReturnValue([]);
   mocks.agent.mockReturnValue({
@@ -52,6 +55,30 @@ beforeEach(() => {
     journalId: 'invocation',
     output: { verdict: 'pass', summary: 'Fixture', findings: [] },
   });
+});
+
+it('bounds provider startup and releases a failed review for the next ordinary visit', () => {
+  const startedAt = Date.now();
+  const log = vi.fn();
+
+  mocks.agent.mockReturnValueOnce({ ok: false, error: 'spawnSync codex ETIMEDOUT' });
+  review({ log });
+
+  const options = mocks.agent.mock.calls[0][0];
+  const release = claim.mock.results[0].value;
+
+  expect(options.deadlineAt).toBeGreaterThanOrEqual(startedAt + 30 * 60_000);
+  expect(options.deadlineAt).toBeLessThanOrEqual(Date.now() + 30 * 60_000);
+  expect(mocks.status).toHaveBeenLastCalledWith('abcdef123', 'error', expect.any(String));
+  expect(mocks.comment).not.toHaveBeenCalled();
+  expect(mocks.update).not.toHaveBeenCalled();
+  expect(close).toHaveBeenCalledExactlyOnceWith({ dir: 'fixture' });
+  expect(release).toHaveBeenCalledOnce();
+  expect(log).toHaveBeenCalledWith(expect.stringContaining('spawnSync codex ETIMEDOUT'));
+  mocks.pullReview.mockReturnValue('error');
+  runReview();
+  expect(mocks.agent).toHaveBeenCalledTimes(2);
+  expect(mocks.status).toHaveBeenLastCalledWith('abcdef123', 'success', 'Fixture');
 });
 
 it.each([null, 'error'])('handles an unchanged patch with review state %s', (state) => {

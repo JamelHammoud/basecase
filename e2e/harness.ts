@@ -187,42 +187,61 @@ export async function openApp(
   options: { args?: string[]; roboflowUrl?: string } = {},
 ): Promise<App> {
   const started = Date.now();
-  const browser: Browser = await launchChrome([...SOFTWARE_GL, ...(options.args ?? [])]);
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors: string[] = [];
   const posts: App['posts'] = [];
   const requests: string[] = [];
   const libraryDir = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-e2e-library-'));
+  let browser: Browser | undefined;
 
-  page.on('request', (request) => requests.push(request.url()));
-  page.on('pageerror', (e) => errors.push(e.message));
-  page.on('console', (m) => {
-    if (m.type() !== 'error') return;
-
-    const where = m.location().url;
-
-    errors.push(where ? `${m.text()} (${where})` : m.text());
-  });
-  await exposeTestHooks(page);
-  await installBrowserWorkerTrace(page);
-  await stubBackend(page, { posts, lists, live, libraryDir, roboflowUrl: options.roboflowUrl });
-  await page.goto(inject('appUrl'));
-  await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
-    timeout: 60000,
-  });
-  console.log(`e2e: studio ready in ${Date.now() - started} ms from the ${inject('served')} server`);
-
-  return {
-    page,
-    errors,
-    posts,
-    requests,
-    close: async () => {
-      await logBrowserState(page, errors);
-      await browser.close();
+  const close = async () => {
+    try {
+      await browser?.close();
+    } finally {
       fs.rmSync(libraryDir, { recursive: true, force: true });
-    },
+    }
   };
+
+  try {
+    browser = await launchChrome([...SOFTWARE_GL, ...(options.args ?? [])]);
+
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+
+    page.on('request', (request) => requests.push(request.url()));
+    page.on('pageerror', (e) => errors.push(e.message));
+    page.on('console', (m) => {
+      if (m.type() !== 'error') return;
+
+      const where = m.location().url;
+
+      errors.push(where ? `${m.text()} (${where})` : m.text());
+    });
+    await exposeTestHooks(page);
+    await installBrowserWorkerTrace(page);
+    await stubBackend(page, { posts, lists, live, libraryDir, roboflowUrl: options.roboflowUrl });
+    await page.goto(inject('appUrl'));
+    await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
+      timeout: 60000,
+    });
+    console.log(`e2e: studio ready in ${Date.now() - started} ms from the ${inject('served')} server`);
+
+    return {
+      page,
+      errors,
+      posts,
+      requests,
+      close: async () => {
+        try {
+          await logBrowserState(page, errors);
+        } finally {
+          await close();
+        }
+      },
+    };
+  } catch (error) {
+    await close().catch(() => undefined);
+
+    throw error;
+  }
 }
 
 async function logBrowserState(page: Page, errors: string[]) {

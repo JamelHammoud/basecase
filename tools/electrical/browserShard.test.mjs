@@ -3,7 +3,7 @@ import path from 'node:path';
 import { expect, it } from 'vitest';
 import { browserShard } from './browserShard.mjs';
 
-it.each([6, 10])(
+it.each([6, 10, 20])(
   'assigns every browser file and each native dependency to exactly one of %i CI shards',
   async (count) => {
     const inventory = (await readdir('e2e')).filter((file) => file.endsWith('.e2e.test.ts'));

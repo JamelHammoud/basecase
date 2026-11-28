@@ -129,13 +129,16 @@ it('rejects forged identities before requesting and never retains provider metad
   expect(JSON.stringify(pending)).not.toContain(KEY);
 });
 
-it('refuses an export URL that embeds the saved API key', async () => {
-  const { fake, rf } = await setup();
+it.each([`/archive.zip?key=${KEY}`, '/archive.zip?api_key=export-token', `/${KEY}/archive.zip`, '/%ZZ/archive.zip'])(
+  'refuses secret-bearing or malformed archive paths before downloading: %s',
+  async (archivePath) => {
+    const { fake, rf } = await setup();
 
-  fake.advance({ exportLink: `${fake.url}/archive.zip?key=${KEY}` });
-  await expect(rf.importProject(`${PROJECT}/2`)).rejects.toThrow('Roboflow download');
-  expect(fake.requests.map((r) => r.path)).toEqual(['/workspace/project/2/coco']);
-});
+    fake.advance({ exportLink: `${fake.url}${archivePath}` });
+    await expect(rf.importProject(`${PROJECT}/2`)).rejects.toThrow('Roboflow download');
+    expect(fake.requests.map((r) => r.path)).toEqual(['/workspace/project/2/coco']);
+  },
+);
 
 it('bounds retained metadata at the maximum validated identity lengths', async () => {
   const { fake, rf } = await setup({ status: 202, body: { progress: 99.12345678901234 } });

@@ -42,6 +42,14 @@ function archiveUrl(link, origin, redirected = false) {
   return url;
 }
 
+function archiveValues(url) {
+  try {
+    return [decodeURIComponent(url.pathname), ...url.searchParams.values()];
+  } catch {
+    throw new Error(BAD_DOWNLOAD);
+  }
+}
+
 function latestVersion(payload, source) {
   const prefix = `${source.workspace}/${source.project}/`;
   const versions = payload?.versions;
@@ -110,7 +118,7 @@ export class RoboflowAccount {
 
     for (let hop = 0; hop <= REDIRECTS_MAX; hop += 1) {
       const key = this.keys.get('roboflow');
-      const values = [decodeURIComponent(url.pathname), ...url.searchParams.values()];
+      const values = archiveValues(url);
 
       if (url.searchParams.has('api_key') || (key && values.some((value) => value.includes(key))))
         throw new Error(BAD_DOWNLOAD);

@@ -2,6 +2,14 @@
 
 Implementation: [Recorded signals and playback](../guide/cases.md#performance-recorded-signals-and-playback). Shared requirements: [Performance](../guide/performance.md).
 
+## Filmstrip projection prepares its fixed basis once
+
+A scratch comparison on 28 November 2026 ran the former and current `filmFrames` implementations against 300 and 600 boxes over four recorded frames. Boxes varied position, rotation and dimensions, with both robot and world transforms. Complete polygons and frame bounds matched exactly. A second call after editing a box position also matched at one frame.
+
+For 9,600 and 19,200 projected corners, per-render basis normalizations fell from 9,600 and 19,200 to zero. Cross products fell from 19,200 and 38,400 to zero. Two temporary vectors per corner are replaced by two retained module vectors. Module preparation still performs one normalization and two cross products after preparing the view direction. These are operation and source-derived allocation counts, not timings or a claim about complete image generation latency. Hull construction, body transforms and image encoding remain unchanged.
+
+The existing recorded-arm test in `src/cases/tries.test.ts` checks four filmstrip frames, polygon counts, outline viability and motion between frames. The scratch comparison isolates projection parity without starting physics or encoding images. This refinement adds no browser flow, screenshot, test exclusion or timing assertion.
+
 ## Recorded log queries materialize only matching entries
 
 `logs.test.ts` compares complete results across 80 mixed-schema fixtures, combined filters, sparse columns, edits and frozen inputs. With 300 and 600 messages in each of five schema variants and one severity match in ten, node and message reads fall from 3,000 and 6,000 to 300 and 600. These are operation counts without timing assertions or a claim about complete playback time.

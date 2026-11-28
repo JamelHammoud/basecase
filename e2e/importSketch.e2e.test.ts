@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { openApp, shown, type App } from './harness';
 import { plateTriangles } from '../src/sheet/sheet.fixtures';
@@ -18,11 +18,11 @@ import {
 
 let app: App;
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
   await supportSceneStorage(app.page);
 });
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 

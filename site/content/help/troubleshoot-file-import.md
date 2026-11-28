@@ -21,6 +21,7 @@ related:
   - import-a-file
 covers:
   - src/workspace/usePartCreation.ts
+  - src/workspace/useMeshImport.ts
   - src/workspace/meshImport.ts
   - src/workspace/cadImport.ts
   - src/workspace/importRoute.ts

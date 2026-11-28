@@ -45,6 +45,7 @@ covers:
   - src/workspace/meshImport.ts
   - src/workspace/cadImport.ts
   - src/workspace/usePartCreation.ts
+  - src/workspace/useMeshImport.ts
   - src/workspace/useCanvasDrop.ts
   - src/workspace/contextMenuItems.tsx
   - src/workspace/exchangeCommands.tsx

@@ -340,3 +340,10 @@ Exact-revision [Windows diagnostic 46135006074](https://github.com/JamelHammoud/
 At `bd4d286130f97803876ecea7d1f8bcbc5581486f`, [Check 46160172750](https://github.com/JamelHammoud/basecase/actions/runs/46160172750) Windows shard 19 misses the initial Cable reach fail status at `cableEditing.e2e.test.ts:37` on both attempts. Stock editing, local anchors, undo/redo, export and reopening are unreached. Windows shard 11 separately reopens retained replay, adds a route point and invokes Inspect Current again, then misses Historical evidence at `powerReplay.e2e.test.ts:86`. That is a later source-applicability presentation boundary, not the editor's initial Checks failure.
 
 Existing wiring owners #1815 and #2016 retain these separate stages. All authored-stock, anchor, history, BOM, frozen-evidence, comparison, clearing and zero-command assertions remain active. The log supplies no current-revision Windows pass or changed environment component and identifies no single merge to revert. No wiring source, timeout, retry or exclusion changes accompany this repair.
+
+
+## Cable export and initial verdicts on Check 46168665096
+
+Ubuntu shard 19 of [Check 46168665096](https://github.com/JamelHammoud/basecase/actions/runs/46168665096) at `83351e0b80d76e675e14b86215b9bab823350587` completes cable editing, stock selection, local anchor edits, full undo/redo, Cable reach and BOM assertions, then receives no scene download through `reopenCableScene`’s existing poll. Both attempts observe an undefined filename before file reopening. Windows shard 2 separately fails both attempts of the Build Along cable story at its initial Cable reach fail-status poll at line 80, before endpoint selection or playback. These are distinct export-delivery and initial-readiness boundaries.
+
+Existing editor owner #1815 and playback owner #1091 retain source attribution. All original editor, stock, anchor, history, purchasing, file round-trip, endpoint, step-specific route and unchanged-scene assertions stay active. No source correction, exact-revision pass, changed environment component or common cause is established here. No timeout, retry, assertion or exclusion changes.

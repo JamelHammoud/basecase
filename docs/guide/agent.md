@@ -265,6 +265,8 @@ Measurements and limits: [Image comparison performance evidence](../notes/perfor
 
 ## Performance: agent and cad kernel
 
+CAD part suggestions in `agent/agentPartRecord.ts` lowercase and tokenize the requested ID once per lookup. Each eligible candidate's ID and name are tokenized once when the query has words. Shared-word scoring counts repeated query words separately, without constructing a filtered match list. Scores, stable ties, the five-result limit and CAD-only filtering stay unchanged. `agentPartRecord.test.ts` covers prior-ranking parity, empty and repeated-word queries, filtering, source preservation and later name edits. [Suggestion evidence](../notes/performance-agent-kernel.md#cad-part-suggestions-prepare-words-once).
+
 Kernel surface sampling in `cad-kernel/meshQuery.mjs` passes barycentric coordinates as scalars and reflects them without temporary pairs. Seeds, triangle selection, point arithmetic and normals stay unchanged. `meshQuery.test.mjs` checks complete seeded points against an independent area scan and the previous interpolation. [Sampling evidence](../notes/performance-agent-kernel.md#seeded-triangle-samples-keep-scalar-coordinates).
 
 

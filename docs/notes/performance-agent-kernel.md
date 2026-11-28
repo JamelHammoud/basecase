@@ -87,3 +87,14 @@ The [final report-reuse comparison](performance-workspace.md#final-report-reuse-
 ## Agent entry and cancellation coverage
 
 The [fe8b production comparison](performance-workspace.md#final-merged-workflow-comparison-on-fe8b) characterizes the final merged pipeline and engine-helper layout on pinned Node 26.13.1. All twenty observations retain accepted edits and fresh Checks after reopening. Every candidate records ordinary controls during actual requests and meets the unchanged interaction, completion and sampled-memory targets. This is one paired observation per workload, with the measurement limits recorded there. Earlier profiles and violations remain evidence for their own source hashes. The Stop and scene-switching declarations remain with CI.
+
+
+## CAD part suggestions prepare words once
+
+A whole-app search for `nearestIds`, `closeness` and word-tokenization helpers found one closest-ID suggestion implementation. Missing-ID replies from `partCode` use it with the CAD filter. Parts search, recipe search and scene queries use separate matching semantics and do not call this scorer.
+
+For N eligible candidates and Q query words, the previous scorer tokenized the query N times and each candidate Q times. The shared helper now tokenizes the query once and each candidate once, with no filtered shared-word list. A query without words skips candidate tokenization. Duplicate query words still contribute separately. Edit distance, containment, stable ordering and the five-result cap remain unchanged.
+
+`src/agent/agentPartRecord.test.ts` compares full suggestion lists with the historical scorer for 40 candidates, seven query forms and filtered or unfiltered inputs. It retains empty inputs, no eligible candidates and source preservation. A 100-candidate, five-word fixture measures candidate-name reads falling from 500 to 100 with identical results, then edits a name and checks fresh ranking. These are deterministic operation counts, not wall-clock or heap measurements. No quarantine applies. Edit-distance and sorting costs remain.
+
+[The design agent](../../site/content/help/the-design-agent.md) was read against the change. Modeling, Checks, steering, undo and agent limits remain accurate. The change adds no action, label or visible state, so the article and screenshots stay unchanged.

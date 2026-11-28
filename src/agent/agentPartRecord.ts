@@ -9,19 +9,27 @@ const words = (s: string) =>
     .split(/[^a-z0-9]+/)
     .filter(Boolean);
 
-function closeness(wanted: string, part: ScenePart): number {
-  const query = wanted.toLowerCase();
+function closeness(query: string, terms: string[], part: ScenePart): number {
   const id = part.id.toLowerCase();
-  const shared = words(query).filter((w) => words(`${part.id} ${part.name}`).includes(w)).length;
+  const candidateTerms = terms.length ? words(`${part.id} ${part.name}`) : [];
+  let shared = 0;
+
+  for (const term of terms) {
+    if (candidateTerms.includes(term)) shared++;
+  }
+
   const contains = id.includes(query) || query.includes(id) ? 2 : 0;
 
   return editDistance(query, id) / Math.max(query.length, id.length, 1) - shared * 0.25 - contains * 0.25;
 }
 
 export function nearestIds(parts: ScenePart[], wanted: string, filter: (p: ScenePart) => boolean = () => true) {
+  const query = wanted.toLowerCase();
+  const terms = words(query);
+
   return parts
     .filter(filter)
-    .map((p) => ({ id: p.id, score: closeness(wanted, p) }))
+    .map((p) => ({ id: p.id, score: closeness(query, terms, p) }))
     .sort((a, b) => a.score - b.score)
     .slice(0, MAX_SUGGESTIONS)
     .map((s) => s.id);

@@ -1,6 +1,6 @@
 import { unit } from './loads';
 import { screwRegion } from './screwRegion';
-import type { LightenFrozen, LightenInput } from './lightenTypes';
+import type { LightenBox, LightenFrozen, LightenInput, LightenPlane } from './lightenTypes';
 import type { V3 } from './types';
 
 export function frozenRegions(input: LightenInput): LightenFrozen {
@@ -16,24 +16,45 @@ export function frozenRegions(input: LightenInput): LightenFrozen {
   };
 }
 
+function boxContains(box: LightenBox, p: V3, slack: number): boolean {
+  return (
+    p[0] >= box.min[0] - slack &&
+    p[0] <= box.max[0] + slack &&
+    p[1] >= box.min[1] - slack &&
+    p[1] <= box.max[1] + slack &&
+    p[2] >= box.min[2] - slack &&
+    p[2] <= box.max[2] + slack
+  );
+}
+
+function planeContains(plane: LightenPlane, p: V3, slack: number): boolean {
+  const distance =
+    0 +
+    (p[0] - plane.point[0]) * plane.normal[0] +
+    (p[1] - plane.point[1]) * plane.normal[1] +
+    (p[2] - plane.point[2]) * plane.normal[2];
+
+  return Math.abs(distance) <= plane.halfThickness + slack;
+}
+
 export function frozenQuery(regions: LightenFrozen, slack = 0): (p: V3) => boolean {
-  const lines = regions.lines?.map((line) => screwRegion({ ...line, radius: line.radius + slack }, slack));
-  const planes = regions.planes?.map((plane) => ({ ...plane, normal: unit(plane.normal) }));
+  const lines = regions.lines?.map((line) => screwRegion({ ...line, radius: line.radius + slack }, slack)) ?? [];
+  const planes = regions.planes?.map((plane) => ({ ...plane, normal: unit(plane.normal) })) ?? [];
+  const noBoxes: LightenBox[] = [];
 
   return (p) => {
-    if (lines?.some((contains) => contains(p))) return true;
+    for (const contains of lines) {
+      if (contains(p)) return true;
+    }
 
-    if (
-      regions.boxes?.some((box) =>
-        p.every((value, axis) => value >= box.min[axis] - slack && value <= box.max[axis] + slack),
-      )
-    )
-      return true;
+    for (const box of regions.boxes ?? noBoxes) {
+      if (boxContains(box, p, slack)) return true;
+    }
 
-    return !!planes?.some((plane) => {
-      const distance = p.reduce((sum, value, axis) => sum + (value - plane.point[axis]) * plane.normal[axis], 0);
+    for (const plane of planes) {
+      if (planeContains(plane, p, slack)) return true;
+    }
 
-      return Math.abs(distance) <= plane.halfThickness + slack;
-    });
+    return false;
   };
 }

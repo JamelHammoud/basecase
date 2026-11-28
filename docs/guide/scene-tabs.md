@@ -158,3 +158,9 @@ An existing worker realm encodes a raw scene body locally instead of dispatching
 Opening a saved evaluation from another scene reuses a mounted tab only after archive-worker verification of its current geometry and physics. The captured parts and project references must still match when verification finishes. The workspace queues the Try until its tab is active, so inactive simulator cleanup completes before playback starts. An edited or closed tab is left alone and a new frozen source tab is opened instead.
 
 The concurrent preview regression and the Windows appearance reload observation are recorded in [scene persistence evidence](../notes/performance-workspace.md#preview-updates-preserve-concurrent-scene-saves). The appearance browser assertions remain active and unchanged.
+
+### Autosave after Undo and Redo
+
+Autosave compares the current design with its pending draft before its last queued write. Returning to the last saved design therefore replaces an intervening pending Undo instead of leaving it scheduled. Equivalent pending drafts keep the existing save deadline. This applies to all draft fields and both desktop and browser storage, using the existing scene-write queue and delay.
+
+`workspace/useAutosave.test.ts` drives the real hook callbacks, change detection, serializer and scene-write queue with controlled effects, timers and storage. It covers explicit flush, automatic saving, equivalent draft renders and changes during an outstanding write. The appearance browser declaration retains its exact save and reload assertions on every platform. [Reproduction and remaining failures](../notes/performance-workspace.md#autosave-retains-redo-after-a-pending-undo) distinguish this source correction from full-suite recovery.

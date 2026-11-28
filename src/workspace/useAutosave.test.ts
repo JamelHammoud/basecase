@@ -1,8 +1,10 @@
 import { useEffectEvent } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { finishAppearance } from '../appearance/model';
 import { box } from '../sim/fixtures/parts';
 import { DEFAULT_PROJECT, type ProjectSettings } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
+import { sceneStore } from '../utils/sceneStore';
 import type { SceneDraft } from './sceneDraft';
 import { useAutosave } from './useAutosave';
 
@@ -14,7 +16,6 @@ vi.mock('react', () => ({
 }));
 vi.mock('../three/scenePreview', () => ({ scenePreview: async () => ({}) }));
 vi.mock('../utils/aiHandoffClient', () => ({ handoffInWorker: async () => null }));
-vi.mock('../utils/sceneJson', () => ({ sceneJson: async (record: unknown) => JSON.stringify(record) }));
 vi.mock('../utils/platformBridge', () => ({
   platformBridge: { saveSceneJson: vi.fn(), saveScenePreview: vi.fn() },
 }));
@@ -28,11 +29,13 @@ beforeEach(() => {
     partCount: 1,
     updatedAt: '2026-11-28',
   }));
+  vi.mocked(platformBridge.saveScenePreview).mockResolvedValue(null);
 });
 
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  sceneStore.set([]);
 });
 
 const guide = (id: string) => ({ id, fingerprint: id }) as ProjectSettings['buildGuide'];
@@ -142,4 +145,95 @@ it('ends temporary-scene handling when another scene is loaded into the workspac
   await autosave.flush();
   expect(platformBridge.saveSceneJson).toHaveBeenCalledTimes(1);
   expect(JSON.parse(vi.mocked(platformBridge.saveSceneJson).mock.calls[0][0]).id).toBe('saved-rover');
+});
+
+function AppearanceSession() {
+  const appearance = finishAppearance('paint', '#888888');
+  const part = {
+    ...box('cover', [0, 20, 0], [40, 40, 40], 30),
+    appearance: { ...appearance, mapping: { ...appearance.mapping, scale: 25 } },
+  };
+  const saved: SceneDraft = {
+    sceneId: 'appearance-robot',
+    sceneName: 'Textured cover',
+    globalGoal: '',
+    parts: [part],
+    annotations: [],
+    project: DEFAULT_PROJECT,
+    chatId: null,
+  };
+  const undo = {
+    ...saved,
+    parts: [{ ...part, appearance: { ...part.appearance, mapping: { ...part.appearance.mapping, scale: 10 } } }],
+  };
+  const firstEvent = vi.mocked(useEffectEvent).mock.calls.length;
+  const autosave = useAutosave({ draft: saved, active: false, pristine: false, unsaved: false, temporary: false });
+  const change = vi.mocked(useEffectEvent).mock.calls[firstEvent][0] as (next: SceneDraft, pristine: boolean) => void;
+
+  return { saved, undo, autosave, change };
+}
+
+it.each(['flush', 'timer'] as const)(
+  'saves Redo after Undo returns to the saved design through %s',
+  async (delivery) => {
+    const { saved, undo, autosave, change } = AppearanceSession();
+
+    change(undo, false);
+    change(saved, false);
+
+    if (delivery === 'flush') await autosave.flush();
+    else await vi.runAllTimersAsync();
+
+    expect(platformBridge.saveSceneJson).toHaveBeenCalledOnce();
+    expect(JSON.parse(vi.mocked(platformBridge.saveSceneJson).mock.calls[0][0]).parts).toEqual(saved.parts);
+  },
+);
+
+it('keeps the pending save deadline when equivalent draft containers render again', async () => {
+  const { undo, change } = AppearanceSession();
+
+  change(undo, false);
+  await vi.advanceTimersByTimeAsync(600);
+  change({ ...undo, parts: [...undo.parts], project: { ...undo.project } }, false);
+  await vi.advanceTimersByTimeAsync(600);
+  expect(platformBridge.saveSceneJson).toHaveBeenCalledOnce();
+  expect(JSON.parse(vi.mocked(platformBridge.saveSceneJson).mock.calls[0][0]).parts).toEqual(undo.parts);
+});
+
+it('retains the latest design when Undo and Redo occur during an earlier save', async () => {
+  const { saved, undo, autosave, change } = AppearanceSession();
+  let startSave = () => {};
+  let releaseSave = () => {};
+  const started = new Promise<void>((resolve) => {
+    startSave = resolve;
+  });
+  const release = new Promise<void>((resolve) => {
+    releaseSave = resolve;
+  });
+
+  vi.mocked(platformBridge.saveSceneJson).mockImplementationOnce(async (json) => {
+    const record = JSON.parse(json);
+
+    startSave();
+    await release;
+
+    return { ...record, partCount: record.parts.length, updatedAt: '2026-11-28' };
+  });
+  change(undo, false);
+
+  const first = autosave.flush();
+
+  await started;
+  change(saved, false);
+  change(undo, false);
+
+  const final = autosave.flush();
+
+  releaseSave();
+  await Promise.all([first, final]);
+  expect(platformBridge.saveSceneJson).toHaveBeenCalledTimes(2);
+  expect(vi.mocked(platformBridge.saveSceneJson).mock.calls.map(([json]) => JSON.parse(json).parts)).toEqual([
+    undo.parts,
+    undo.parts,
+  ]);
 });

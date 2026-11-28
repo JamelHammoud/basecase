@@ -143,7 +143,7 @@ export function useAutosave({ draft, active, pristine, unsaved, temporary }: Aut
 
     if (temporaryRef.current && !draftChanged(savedRef.current, next, false)) return;
 
-    if (!unsavedRef.current && !draftChanged(savedRef.current, next)) return;
+    if (!unsavedRef.current && !draftChanged(pendingRef.current ?? savedRef.current, next)) return;
 
     temporaryRef.current = false;
     unsavedRef.current = false;

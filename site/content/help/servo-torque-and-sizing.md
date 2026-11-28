@@ -34,7 +34,7 @@ covers:
   - src/utils/keySpecs.ts
 ---
 
-Servo torque helps you pick servos that won't stall or overheat. It compares the torque each joint has to hold with the torque its servo gives at your supply voltage.
+Servo torque helps you pick servos that won't stall or overheat. It compares each joint's holding load with its servos' combined torque at your supply voltage.
 
 ## What a servo can give
 
@@ -77,7 +77,9 @@ Once you have a trained walk policy, the agent can test it in simulation. The ro
 
 **Peak torque** fails if a joint asks for more than stall for over 50 ms, or if the robot falls. It warns above 0.8 of stall.
 
-A servo can't give full torque and full speed at once. Its torque-speed line runs from stall at 0 rpm down to its no-load speed at your supply voltage. Peak torque also warns when more than 5% of a joint's walk lies past that line, and the warning names the joint and the share.
+A servo can't give full torque and full speed at once. A joint's torque-speed line uses its servos' combined stall torque and the slowest servo's no-load speed at your supply voltage. Peak torque also warns when more than 5% of a joint's walk lies past that line, and the warning names the joint and the share.
+
+The plot needs a speed rating for every servo on the joint.
 
 Open **Peak torque** to plot each joint's walk on its servo's line, next to the next stronger servo in the catalog. [Checks in the Build tab](/help/build-checks) shows the plot.
 

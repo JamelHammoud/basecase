@@ -593,3 +593,12 @@ For 6 links and 300 candidates, source-axis reads and normalization calls fall f
 The existing generated pose and map comparisons retain mixed revolute and prismatic joints, zero axes, floor rejection, input preservation and gravity-limit edits. Two added cases compare complete maps with the former implementation while counting source-axis reads, then change axes and anchors and compare again. No UI or workflow changes.
 
 Changed-file validation passed formatting, lint, documentation, site copy for 393 pages and TypeScript. Related tests passed 483 files and 3,629 tests, with one existing skipped file and test, in 59.64 seconds. The final sampler edit also passed a separate formatting and lint check. Output remains in `scratch/refine-check.log`. Copy accounting is net zero.
+
+
+## Joint ratings accumulate in one pass
+
+The source search found one shared `jointRating` implementation, called by `jointLoad` and `engineeringPayload`. It serves Servo torque and Payload checks through the engineering pipeline. No UI, workflow, thresholds or catalog selection change.
+
+For a joint with N catalog actuators, accumulation removes two temporary arrays with N entries each. It also removes the later speed-presence scan, minimum-speed traversal and peak-flag scan. The existing actuator-specification list and each `ratingAt` result still exist. A two-actuator joint removes four temporary list entries, and a four-actuator joint removes eight. These are source-derived allocation and traversal counts, not timing, heap or complete Checks measurements.
+
+`utils/jointRating.test.ts` compares complete results against the previous calculation for each catalog actuator paired with its next catalog neighbor. It includes empty, single and paired lists, unrelated and missing parts, duplicate references, actuator-list edits, default supply, zero supply, 3.7, 7.4, 12 and 48 V, Infinity and NaN. This retains torque sums, estimated-rating flags, peak omission, missing speed and the last actuator's effective voltage. Existing engineering tests retain end-to-end row coverage. Browser execution and Linux or Windows measurements were not performed for this internal refinement.

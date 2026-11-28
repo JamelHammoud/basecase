@@ -68,27 +68,27 @@ function stanceTorque(ctx: CheckContext, { joint, a, r, down, grams, carriedG }:
   return Math.abs(tGrf + tDistal) / 1000;
 }
 
-const slowest = (rpms: Array<number | undefined>) =>
-  rpms.every((rpm) => rpm !== undefined) ? Math.min(...(rpms as number[])) : undefined;
-
 export function jointRating(ctx: CheckContext, j: RobotJoint, volts?: number): Rating | undefined {
   const specs = jointServos(j, ctx.byPart);
 
   if (!specs.length) return undefined;
 
   const total: Rating = { stallNm: 0, ratedNm: 0, ratedEstimated: false, volts: volts ?? 0 };
+  let rpm: number | undefined = Infinity;
+  let allPeak = true;
 
-  const ratings = specs.map((act) => ratingAt(act, volts));
+  for (const spec of specs) {
+    const r = ratingAt(spec, volts);
 
-  for (const r of ratings) {
     total.stallNm += r.stallNm;
     total.ratedNm += r.ratedNm;
     total.ratedEstimated ||= r.ratedEstimated;
     total.volts = r.volts;
+    rpm = rpm === undefined || r.rpm === undefined ? undefined : Math.min(rpm, r.rpm);
+    allPeak &&= !!spec.peak;
   }
 
-  const rpm = slowest(ratings.map((r) => r.rpm));
-  const peak = specs.every((s) => s.peak) ? { peakNm: total.stallNm } : {};
+  const peak = allPeak ? { peakNm: total.stallNm } : {};
 
   return rpm === undefined ? { ...total, ...peak } : { ...total, ...peak, rpm };
 }

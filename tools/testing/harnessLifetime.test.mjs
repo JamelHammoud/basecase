@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { openApp } from '../../e2e/harness';
+import { appAttempt } from '../../e2e/appAttempt';
 
 const fixture = vi.hoisted(() => ({ launch: vi.fn(), diagnostics: vi.fn() }));
 
@@ -122,3 +123,73 @@ it.each([false, true])(
     expectLibraryRemoved();
   },
 );
+
+it('resets permissions before each fresh browser attempt without retaining cookies or errors', async () => {
+  let roles = ['viewer'];
+  const open = vi.fn(async () => ({ cookies: [], errors: [], roles: [...roles], close: vi.fn() }));
+  const prepare = async () => {
+    roles = ['viewer'];
+  };
+  const first = appAttempt(prepare, open);
+  const old = await first.ready;
+
+  old.cookies.push('signed-in');
+  old.errors.push('Network changed');
+  roles = [];
+  await first.close();
+
+  const second = appAttempt(prepare, open);
+  const fresh = await second.ready;
+
+  expect(fresh).not.toBe(old);
+  expect(fresh).toMatchObject({ cookies: [], errors: [], roles: ['viewer'] });
+  await second.close();
+  expect(old.close).toHaveBeenCalledOnce();
+  expect(fresh.close).toHaveBeenCalledOnce();
+});
+
+it('preserves a failed permission reset without launching a browser', async () => {
+  const error = new Error('Grant reset failed');
+  const open = vi.fn();
+  const attempt = appAttempt(async () => {
+    throw error;
+  }, open);
+
+  await expect(attempt.ready).rejects.toBe(error);
+  await attempt.close();
+  expect(open).not.toHaveBeenCalled();
+});
+
+it('retires pending permission setup before it can launch a browser', async () => {
+  const preparing = Promise.withResolvers();
+  const open = vi.fn();
+  const attempt = appAttempt(() => preparing.promise, open);
+  const closed = attempt.close();
+
+  preparing.resolve();
+  await expect(attempt.ready).rejects.toThrow('Studio setup was closed.');
+  await closed;
+  expect(open).not.toHaveBeenCalled();
+});
+
+it.each([false, true])('closes a late browser exactly once and reports cleanup failure: %s', async (fails) => {
+  const opening = Promise.withResolvers();
+  const open = vi.fn(() => opening.promise);
+  const close = vi.fn(async () => {
+    if (fails) throw new Error('Browser cleanup failed');
+  });
+  const attempt = appAttempt(async () => undefined, open);
+
+  await vi.waitFor(() => expect(open).toHaveBeenCalledOnce());
+
+  const closed = attempt.close();
+  const message = fails ? 'Browser cleanup failed' : 'Studio setup was closed.';
+  const rejected = expect(attempt.ready).rejects.toThrow(message);
+  const released = fails ? expect(closed).rejects.toThrow(message) : closed;
+
+  opening.resolve({ close });
+  await rejected;
+  await released;
+  await attempt.close().catch(() => undefined);
+  expect(close).toHaveBeenCalledOnce();
+});

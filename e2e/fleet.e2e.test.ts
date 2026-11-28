@@ -1,9 +1,10 @@
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, expect, it } from 'vitest';
 import { inject } from 'vitest';
 import { attachLoopback } from '../tools/fleet/loopback.mjs';
 import { fleetFixture } from '../tools/fleet/fixture.mjs';
 import { StudioPublisher } from '../electron/fleet/studioPublisher.mjs';
-import { openApp, openPlayTab, type App } from './harness';
+import { openPlayTab, type App } from './harness';
+import { appAttempt } from './appAttempt';
 
 let app: App;
 let fixture: Awaited<ReturnType<typeof fleetFixture>>;
@@ -12,6 +13,8 @@ let admin: typeof viewer;
 let foreignSite: string;
 let publisher: StudioPublisher;
 let loopback: Awaited<ReturnType<typeof attachLoopback>>;
+let viewerRole: string;
+let attempt: ReturnType<typeof appAttempt> | undefined;
 
 beforeAll(async () => {
   fixture = await fleetFixture({
@@ -38,6 +41,7 @@ beforeAll(async () => {
     rules: [{ effect: 'allow', scope: site.id, actions: ['inventory.view'], conditions: {} }],
   });
 
+  viewerRole = role.id;
   viewer = await admin.enroll('ward@example.test', [role.id]);
   foreignSite = other.id;
 
@@ -52,11 +56,18 @@ beforeAll(async () => {
     units: { robot: robot.id },
   });
   loopback = await attachLoopback(publisher);
-  app = await openApp();
+});
+
+beforeEach(async () => {
+  attempt = appAttempt(() => admin.update('account', viewer.id, { name: 'Ward viewer', roles: [viewerRole] }));
+  app = await attempt.ready;
+});
+
+afterEach(async () => {
+  await attempt?.close();
 });
 
 afterAll(async () => {
-  await app?.close();
   await loopback?.close();
   await fixture?.close();
 });

@@ -29,16 +29,15 @@ it.each(['desktop', 'web'])(
       expect(app.requests.some((url) => url.includes('/gallery/rover-reach-the-flag.json'))).toBe(false);
       await app.page.getByRole('button', { name: 'Export', exact: true }).click();
 
-      const delivered = app.page.waitForEvent('download', { timeout: 10000 });
-
       await app.page.getByRole('menuitem', { name: 'Kit', exact: true }).click();
 
-      await app.page
-        .getByRole('dialog', { name: 'Kit', exact: true })
-        .getByRole('button', { name: 'Export', exact: true })
-        .click();
-
-      const download = await delivered.catch(async (error: unknown) => {
+      const [download] = await Promise.all([
+        app.page.waitForEvent('download', { timeout: 10000 }),
+        app.page
+          .getByRole('dialog', { name: 'Kit', exact: true })
+          .getByRole('button', { name: 'Export', exact: true })
+          .click(),
+      ]).catch(async (error: unknown) => {
         const evidence = await app.page.evaluate(() => ({
           screen: document.body.innerText,
           preparation: performance

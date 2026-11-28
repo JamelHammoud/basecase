@@ -1,20 +1,18 @@
 import { workerClient } from '../utils/workerRpc';
 import { renderMeshFiles } from './componentMeshes';
 import { packParts } from './packedMesh';
-import { renderThumbnailJob, type ThumbnailJob } from './thumbnailRender';
+import type { ThumbnailJob } from './thumbnailRender';
 
 type ThumbnailHandlers = { render: (job: ThumbnailJob) => Promise<{ result: Blob | null }> };
 
-const localHandlers = async (): Promise<ThumbnailHandlers> => ({
-  render: async (job) => ({ result: await renderThumbnailJob(job) }),
+const unavailableHandlers = async (): Promise<ThumbnailHandlers> => ({
+  render: async () => ({ result: null }),
 });
 
 const client = workerClient<ThumbnailHandlers>(
   () => new Worker(new URL('./thumbnail.worker.ts', import.meta.url), { type: 'module' }),
-  localHandlers,
+  unavailableHandlers,
 );
-
-let workerFailed = false;
 
 const dataUrl = (blob: Blob) =>
   new Promise<string>((resolve, reject) => {
@@ -26,19 +24,11 @@ const dataUrl = (blob: Blob) =>
   });
 
 async function renderBlob(job: ThumbnailJob): Promise<Blob | null> {
-  if (workerFailed) return renderThumbnailJob(job);
-
-  try {
-    return await client.call('render', {
-      ...job,
-      parts: packParts(job.parts),
-      meshes: await renderMeshFiles(job.parts),
-    });
-  } catch {
-    workerFailed = true;
-
-    return renderThumbnailJob(job);
-  }
+  return client.call('render', {
+    ...job,
+    parts: packParts(job.parts),
+    meshes: await renderMeshFiles(job.parts),
+  });
 }
 
 export async function renderThumbnailImage(job: ThumbnailJob): Promise<string> {

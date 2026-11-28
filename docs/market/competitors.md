@@ -7,10 +7,10 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 ### Onshape
 
 - **Link:** https://www.onshape.com
-- **Checked:** 2026-11-15
-- **Better than Basecase:** browser CAD with built-in branching, merging and collaboration. Its home page lists the 30 October release's URDF Merge Fastened feature ([home](https://www.onshape.com/en/)). Native URDF export targets robotics tools ([announcement](https://forum.onshape.com/discussion/30410/improvements-to-onshape-march-13-2026)), and 1.215 added frames, tool center points and adjustable STL and GLTF tessellation ([release](https://www.onshape.com/en/resource-center/what-is-new/mate-connectors-explicit-lights-render-studio-advanced-urdf-mate-limit-support-robotics-applications)).
-- **Worse than Basecase:** Free is for non-commercial work and makes documents public. Standard costs $1,500 per user per year and includes private storage, while Professional costs $2,500 ([pricing](https://www.onshape.com/en/pricing)). Basecase combines robot motion, training and print preparation in the desktop app ([Simulate](../guide/simulate.md), [Printing](../guide/printing.md)).
-- **Basecase should:** integrate through the existing assembly-link importer, which reads mates and their limits ([Joints and motion](../guide/joints-and-motion.md)). Compare native URDF output with that reader before changing import paths ([integration](integrations.md#onshape)).
+- **Checked:** 2026-11-28
+- **Better than Basecase:** release 1.224 on 20 November adds a context panel for assembly references, folder-level configured suppression and identification of parts missing mass in assembly center-of-mass calculations ([changelog](https://www.onshape.com/en/changelog/), [release](https://forum.onshape.com/discussion/32165)).
+- **Worse than Basecase:** Free remains non-commercial with public documents. Standard is $1,500 per user per year with private storage, and Professional is $2,500 ([pricing](https://www.onshape.com/en/pricing)). Basecase connects imported assemblies to robot motion, training and printing ([Joints and motion](../guide/joints-and-motion.md), [Simulate](../guide/simulate.md), [Printing](../guide/printing.md)).
+- **Basecase should:** integrate through the existing mate reader and identity-preserving Update from Onshape, which already retains assigned servos and user-added parts ([Joints and motion](../guide/joints-and-motion.md)). The new context panel is a useful reference for explaining source changes, but is not evidence that Basecase needs another assembly importer ([release](https://forum.onshape.com/discussion/32165)).
 
 ### Fusion
 
@@ -74,14 +74,6 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 
 ## Robot data
 
-### Roboflow
-
-- **Link:** https://docs.roboflow.com/
-- **Checked:** 2026-11-14
-- **Better than Basecase:** Roboflow manages computer vision datasets, annotation and model training, and exports versioned datasets through its web app, SDK, REST API or CLI in COCO, YOLO, Pascal VOC and other formats ([dataset exports](https://docs.roboflow.com/datasets/versions/dataset-versions/exporting-data)).
-- **Worse than Basecase:** its exported dataset versions are training snapshots with compressed images ([export behavior](https://docs.roboflow.com/datasets/versions/dataset-versions/exporting-data#export-behavior)). Basecase also makes labeled training images from a robot's own Case, with camera metadata and radial depth, then keeps imported and generated images in the same versioned datasets ([Cases](../guide/cases.md#training-images)).
-- **Basecase should:** integrate, as it does: Import Robot reads a project or version link through Roboflow's COCO export, with the API key in Settings ▸ Accounts. Local COCO, YOLO and Pascal VOC exports also import into Library with image and class counts ([Cases](../guide/cases.md#imported-image-datasets)).
-
 ### Foxglove
 
 - **Link:** https://foxglove.dev
@@ -95,38 +87,38 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 ### Roboflow
 
 - **Link:** https://roboflow.com
-- **Checked:** 2026-11-14
-- **Basecase today:** imports Roboflow project and version links as COCO image datasets through the desktop account key ([Imported image datasets](../guide/cases.md#imported-image-datasets)). It trains local detection, segmentation, keypoint and classification models from frozen image datasets, compares them on held-out real images and retains a model only after a strict score increase within recorded task limits ([Vision training](../guide/cases.md#vision-training)). Local camera detections feed Case signals and Routines ([Cameras](../guide/cameras.md)). Detected objects keep an id across frames, and a Case counts them through zones and lines per camera, with dwell time and crossings in each direction ([Cameras](../guide/cameras.md)).
-- **Better than Basecase:** Inference runs detection, classification and segmentation on camera streams, with composable Workflows. It hosts fine-tuned and foundation models, monitors predictions and connects results to external systems ([Inference](https://github.com/roboflow/inference)). Basecase's training and comparison history stay local ([Vision training](../guide/cases.md#vision-training)).
-- **Plans:** Free includes 10 monthly credits, private projects and unlimited admin seats. Core starts at $39 per month, billed monthly, for 20 total monthly credits. Enterprise has custom pricing. Self-hosted inference is included on every plan, while hosted inference, training and AI labeling consume credits ([pricing](https://roboflow.com/pricing)).
-- **Worse than Basecase:** its quickstart installs an inference server and connects cameras to it ([Inference quickstart](https://github.com/roboflow/inference#-quickstart)). Basecase already holds the robot's camera mounts, lenses and Case world, and renders those camera views inside the simulation ([Cameras](../guide/cameras.md)).
-- **Basecase should:** connect retained models' real-image evidence with the Case and Routine contracts that consume their detections ([Vision training](../guide/cases.md#vision-training), [Routines](../guide/routines.md#ml-nodes)).
+- **Checked:** 2026-11-28
+- **Basecase today:** imports project and version links as COCO datasets using Settings ▸ Accounts, then trains and compares local models against held-out real images ([Imported image datasets](../guide/cases.md#imported-image-datasets), [Vision training](../guide/cases.md#vision-training)). Camera detections already feed tracking, counting and Case signals ([Cameras](../guide/cameras.md)).
+- **Better than Basecase:** Inference combines fine-tuned and foundation models, composable Workflows, stream processing and prediction monitoring ([repository](https://github.com/roboflow/inference)). Its export documentation now specifies HTTP 202 with progress while an export is being prepared ([export API](https://docs.roboflow.com/datasets/versions/dataset-versions/exporting-data#http-api)).
+- **Plans:** Free includes 10 monthly credits. Core starts at $39 monthly with 20 total credits. Plans include private workspaces, model-weight downloads and self-hosted inference, while Enterprise has custom pricing ([pricing](https://roboflow.com/pricing)).
+- **Worse than Basecase:** its quickstart starts an inference server before connecting streams ([quickstart](https://github.com/roboflow/inference#-quickstart)). Basecase already renders the designed robot's mounted cameras inside its Case world ([Cameras](../guide/cameras.md)).
+- **Basecase should:** refine the existing importer to recognize the documented pending-export response before treating a missing download link as a refused host. The current reader recognizes only `ready: false`, so a documented progress reply without that field falls through to archive URL validation ([reader](../../electron/roboflow/index.mjs), [integration](integrations.md#roboflow)).
 
 ## Operate
 
 ### Viam
 
 - **Link:** https://www.viam.com
-- **Checked:** 2026-11-14
-- **Better than Basecase:** `viam-server` runs on a robot's computer, with Linux arm64 and x86_64 installation paths. Its agent manages the server and machine software as a service ([server reference](https://docs.viam.com/operate/reference/viam-server/manage-viam-server/)). The developer platform includes sensor data storage, fleet management, remote access, OTA updates, modular drivers and SDKs ([pricing](https://www.viam.com/pricing)).
-- **Pricing:** the first $5 of monthly cloud services is free. Published usage rates include $0.25/GB/month for tabular data, $0.05/GB/month for non-tabular storage, $0.15/GB uploaded and $0.25/GB downloaded ([pricing](https://www.viam.com/pricing)).
-- **Worse than Basecase:** Viam's installation starts from a machine and its configuration ([Pi setup](https://docs.viam.com/reference/device-setup/rpi-setup/)). Basecase already holds the robot's design, joint mapping and calibration, and can export those files together ([Robot runtime](../guide/robot-runtime.md)). Its local emulator, mode ladder and fault matrix run without a cloud account. Real motors remain locked, so this is evidence from emulation rather than a hardware comparison ([Robot runtime](../guide/robot-runtime.md)).
-- **Basecase should:** beat it on taking the same design through simulation, training, installation and operation. Use the design's joint map and calibration for deployment, retain the robot-side watchdog, and bring measured runs back into the same tries store ([Robot runtime](../guide/robot-runtime.md)).
+- **Checked:** 2026-11-28
+- **Better than Basecase:** the current setup documentation separates the machine runtime from its supervisor. Linux and Windows install `viam-agent` and `viam-server`, while macOS uses the server alone. The agent restarts the server and applies cloud version updates ([runtime and agent](https://docs.viam.com/set-up-a-machine/viam-agent-and-server/)). The platform offers telemetry storage, remote access, OTA updates and modular components ([pricing](https://www.viam.com/pricing)).
+- **Pricing:** the first $5 of monthly cloud services remains free. Tabular storage is $0.25/GB/month, non-tabular storage $0.05/GB/month, upload $0.15/GB and egress $0.25/GB. Hot data store adds $2.50/GB storage and $0.00125/second compute, so ordinary storage rates alone do not describe that path ([pricing](https://www.viam.com/pricing)).
+- **Worse than Basecase:** Viam's runtime reads a machine configuration and exposes component APIs ([runtime](https://docs.viam.com/set-up-a-machine/viam-agent-and-server/)). Basecase also holds the design, joint map, calibration and recorded tries. Its default motor transports remain emulated, so this comparison does not establish real-hardware performance ([Robot runtime](../guide/robot-runtime.md)).
+- **Basecase should:** beat it on carrying design and calibration evidence into operation through the existing network daemon and installer ([Robot runtime](../guide/robot-runtime.md)). Treat the supervisor's Windows support as a verified capability, without assuming the macOS installation uses that same service ([runtime and agent](https://docs.viam.com/set-up-a-machine/viam-agent-and-server/)).
 
 ## Printing
 
 ### Bambu Studio
 
 - **Link:** https://github.com/bambulab/BambuStudio
-- **Checked:** 2026-11-15
-- **Better than Basecase:** 2.9.1, released 3 November, adds H3C support and mixed nozzle diameters within regions of one model, each using its appropriate layer height. This release supports that feature on the H3C first ([release](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.01.70)).
-- **Worse than Basecase:** its slicing workflow starts from models ([release](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.01.70)). Basecase arranges a robot's parts by material and build order, chooses print orientation and can leave printed parts off the plates ([Printing](../guide/printing.md)).
-- **Basecase should:** integrate through the existing CLI slicing and GUI project handoff. Open in Bambu Studio already includes all plates and per-part filament assignments in one unsliced project, while CLI slicing stays per material because it cannot take per-object filaments with 3MF input ([Printing](../guide/printing.md)). The catalog importer is pinned to this release ([importer](../../tools/printers/import.mjs)).
+- **Checked:** 2026-11-28
+- **Better than Basecase:** 2.9.2, released 24 November, adds P3C support and mixed nozzle diameters on H2D. The preview identifies nozzle and filament per move and estimates time per filament ([release](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.02.62)).
+- **Worse than Basecase:** the release's slicing features operate on supplied models ([release](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.02.62)). Basecase also arranges robot parts by material and build order and retains printed inventory ([Printing](../guide/printing.md)).
+- **Basecase should:** integrate current profiles through the existing importer, still pinned to 2.9.1, while preserving its exclusion of unsupported multi-tool configurations ([importer](../../tools/printers/import.mjs), [Printing](../guide/printing.md)). Keep mixed-nozzle slicing in Studio through the existing project handoff until Basecase's own model supports those assignments ([integration](integrations.md#bambu-lab)).
 
 ### OrcaSlicer
 
 - **Link:** https://github.com/OrcaSlicer/OrcaSlicer
-- **Checked:** 2026-11-15
-- **Better than Basecase:** 2.5.0, released 7 November, adds Python plugins, belt printing, color mixing and an experimental parametric Design tab. Toolhead collision volumes keep arrangement, brims and travel clear of bed clips and tool docks ([release](https://github.com/OrcaSlicer/OrcaSlicer/releases/tag/v2.5.0)).
-- **Worse than Basecase:** plugin permissions are not a sandbox ([release](https://github.com/OrcaSlicer/OrcaSlicer/releases/tag/v2.5.0)). Basecase keeps print preparation connected to the robot's build order and printed inventory ([Printing](../guide/printing.md)).
-- **Basecase should:** integrate Orca's obstacle definitions into plate checks and packing because Basecase currently reads only bed_exclude_area polygons and arranges its own plates before slicing with arrangement disabled ([reader](../../tools/printers/catalog.mjs), [Printing](../guide/printing.md)). Extend the catalog importer and shared fit path with collision geometry and its required clearances, checked with a clip and a tool-dock fixture ([Orca release](https://github.com/OrcaSlicer/OrcaSlicer/releases/tag/v2.5.0)).
+- **Checked:** 2026-11-28
+- **Better than Basecase:** 2.5.2, released 21 November, fixes missing STEP faces, arrangement of near-bed-size parts and slicing crashes. It corrects overhang-speed slots in CORE One and CORE One L presets and tightens Snapmaker U1 rod clearances ([release](https://github.com/OrcaSlicer/OrcaSlicer/releases/tag/v2.5.2)).
+- **Worse than Basecase:** its release notes describe model slicing and printer presets ([release](https://github.com/OrcaSlicer/OrcaSlicer/releases/tag/v2.5.2)). Basecase connects print preparation with a robot's build order and printed inventory ([Printing](../guide/printing.md)).
+- **Basecase should:** integrate the corrected Prusa profiles by refreshing the existing 2.5.0 source pin and checking inherited process values ([importer](../../tools/printers/import.mjs), [release](https://github.com/OrcaSlicer/OrcaSlicer/releases/tag/v2.5.2)). Shared obstacle volumes and conservative clearances already feed packing, dragging and Checks, so the earlier recommendation to add them is complete. Keep unsupported per-extruder and toolhead-offset volumes refused ([Printing](../guide/printing.md), [parser](../../tools/printers/obstacles.mjs)).

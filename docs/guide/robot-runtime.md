@@ -498,3 +498,5 @@ The retained-motion history story also remains active after its full Windows pas
 
 
 The Body Fit and Operate calibration browser declarations acquire their app, fake daemon and calibration setup per attempt and close them afterward. Their fitting, replay, Checks, rollback and source assertions retain their existing deadlines and platform coverage. [Attempt-ownership evidence](../notes/testing-robot-runtime.md#calibration-browser-attempt-ownership-on-check-46105490716) separates retry state from unresolved initial completion failures.
+
+The [Check 46114697234 observation](../notes/testing-robot-runtime.md#stationary-rover-on-check-46114697234) establishes an exact-revision Windows stationary-rover pass only 14.2 ms inside its callback deadline. All ten scenario, repeated-result and refusal assertions stay active. Linux stationary rover and Windows asymmetric quadruped retain separate unresolved deadline failures.

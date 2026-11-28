@@ -11,7 +11,11 @@ vi.stubEnv('BASECASE_LOOP_DIR', directory);
 const { saveRecovery, recoveryFor, recoveryReady, clearRecovery, hasRecovery, refreshRecovery } =
   await import('./workRecovery.mjs');
 
-const git = (cwd, ...args) => run('git', args, { cwd });
+const configuration = ['user.name=test', 'user.email=test@example.com', 'core.autocrlf=true'].flatMap((value) => [
+  '-c',
+  value,
+]);
+const git = (cwd, ...args) => run('git', [...configuration, ...args], { cwd });
 
 function recoveryCheckout() {
   const root = fs.mkdtempSync(path.join(directory, 'checkout-'));
@@ -20,17 +24,12 @@ function recoveryCheckout() {
 
   fs.mkdirSync(main);
   git(main, 'init', '-q', '-b', 'main');
-  git(main, 'config', 'user.name', 'test');
-  git(main, 'config', 'user.email', 'test@example.com');
-  git(main, 'config', 'core.autocrlf', 'true');
   fs.writeFileSync(path.join(main, '.gitattributes'), '* text=auto eol=lf\n');
   fs.writeFileSync(path.join(main, 'source.txt'), 'original source\n');
   fs.writeFileSync(path.join(main, 'retained.txt'), 'original work\n');
   git(main, 'add', '.');
   git(main, 'commit', '-qm', 'fixture');
-  git(root, 'clone', '-q', '-c', 'core.autocrlf=true', main, dir);
-  git(dir, 'config', 'user.name', 'test');
-  git(dir, 'config', 'user.email', 'test@example.com');
+  git(root, 'clone', '-q', ...configuration, main, dir);
 
   return { main, dir };
 }

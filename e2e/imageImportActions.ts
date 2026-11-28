@@ -23,6 +23,9 @@ export async function openRobotImport(app: App) {
   await app.page.keyboard.press('ControlOrMeta+k');
   await app.page.getByLabel('Search commands').fill('Import Robot');
   await app.page.getByRole('button', { name: 'Import Robot', exact: true }).click();
+  await app.page
+    .getByRole('dialog', { name: 'Import Robot' })
+    .evaluate((element) => Promise.all(element.getAnimations().map((animation) => animation.finished)));
 }
 
 export async function importRoboflowLink(app: App) {

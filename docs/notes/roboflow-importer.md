@@ -29,3 +29,9 @@ A cancelled worker read also left the nonexpiring import progress toast active. 
 The existing shared text-bound assertion measures the sheet's text nodes and input values in empty, running and pending states at 1240 × 720. The fixture owns its fake server before app acquisition and closes both resources after setup or assertion failures. These browser assertions remain for CI execution. The changelog entry and its duplicate cover were removed because this repairs an existing integration, below the announcement bar.
 
 The review focused check passed formatting, lint, documentation links, TypeScript, 393 site pages and 28 tests across 10 related files. No browser execution, full suite or security scan ran during review. Browser cancellation and layout assertions remain unexecuted locally.
+
+## Import sheet entrance measurement
+
+Pull request #2226's Linux changed-browser job failed both image-import stories at `expectPanelReadable`. The pending story reported the link value, and the empty-sheet story reported an empty value. Both reached the input minimum-height assertion while the sheet could still be entering. `sheet-in` runs for 220 ms from scale 0.98, making a 32 px input measure 31.36 px at its start. The assertion compares transformed bounds against the 32 px minimum, so visible content alone does not establish measurement readiness.
+
+`openRobotImport` now awaits the dialog's own entrance animation before returning, using the animation's completion promise. This adds at most the remaining entrance duration, without a fixed delay, polling, retry, changed deadline or weaker assertion. It does not await descendant animations such as the running Spinner. Both browser stories retain empty, running and pending readability checks, exact-version continuation and cancellation coverage. The aggregate Check failure was downstream of this browser failure, with required checks and copy already successful. Browser verification remains assigned to CI.

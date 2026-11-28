@@ -1,9 +1,8 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { expect, it } from 'vitest';
+import { expect, it, onTestFinished } from 'vitest';
 import { listPurchases, savePurchase } from '../electron/backend/purchases.mjs';
-import { openApp } from './harness';
+import { buildAllocationApps } from './buildAllocationApps';
 import { openKitScene } from './kitScene';
 import { retainSelfContactSceneFiles } from './selfContactScene';
 import type { Purchases } from '../src/types/robotics';
@@ -11,10 +10,14 @@ import { motor, purchasing, create, rover } from './buildAllocationScene';
 import { allocationCopyBounds, allocationQuantityBounds, narrowBuildPanel } from './buildAllocationLayout';
 
 it('allocates a rover motor and two printed copies to independent builds through reload', { retry: 0 }, async () => {
-  const app = await openApp();
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'rover-build-allocation-'));
+  const group = buildAllocationApps(1);
+  const { directory } = group;
+
+  onTestFinished(group.close);
 
   try {
+    const [app] = await group.ready;
+
     savePurchase(directory, { key: motor, record: { onHand: 1 } });
     await purchasing(app.page, directory);
     await retainSelfContactSceneFiles(app.page);
@@ -137,16 +140,19 @@ it('allocates a rover motor and two printed copies to independent builds through
     expect([...declared.values()].filter((copy) => copy.partId === two.id)).toHaveLength(2);
     expect(app.errors).toEqual([expect.stringMatching(/status of 500.*\/api\/bridge\/purchase-save/)]);
   } finally {
-    await app.close();
-    fs.rmSync(directory, { recursive: true, force: true });
+    await group.close();
   }
 });
 
 it('accepts only one reservation for the final motor from independent browser contexts', { retry: 0 }, async () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'contended-build-allocation-'));
-  const apps = await Promise.all([openApp(), openApp()]);
+  const group = buildAllocationApps(2);
+  const { directory } = group;
+
+  onTestFinished(group.close);
 
   try {
+    const apps = await group.ready;
+
     savePurchase(directory, { key: motor, record: { onHand: 1 } });
     await Promise.all(
       apps.map(async (app, index) => {
@@ -178,7 +184,6 @@ it('accepts only one reservation for the final motor from independent browser co
       .toBe(1);
     expect(listPurchases(directory)[motor].reservations![0].quantity).toBe(1);
   } finally {
-    await Promise.all(apps.map((app) => app.close()));
-    fs.rmSync(directory, { recursive: true, force: true });
+    await group.close();
   }
 });

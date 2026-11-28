@@ -8,7 +8,7 @@ import { RobotFleet } from '../electron/robot/robotFleet.mjs';
 import type { NetworkRobotAsk } from '../src/robot/networkTypes';
 import { ARM } from './armFixture';
 import { openApp, openPlayTab, partCount, shown, type App } from './harness';
-import { networkRobotEvents } from './networkRobotEvents';
+import { networkEventSnapshot, networkRobotEvents } from './networkRobotEvents';
 
 let app: App;
 let daemon: ChildProcessWithoutNullStreams;
@@ -166,8 +166,8 @@ afterAll(async () => {
       JSON.stringify({
         daemonExit: daemon?.exitCode,
         daemonErrors,
-        daemonEvents: daemonEvents.slice(-20),
-        linkEvents: events.slice(-20),
+        daemonEvents: networkEventSnapshot(daemonEvents),
+        linkEvents: networkEventSnapshot(events),
       }),
     );
 

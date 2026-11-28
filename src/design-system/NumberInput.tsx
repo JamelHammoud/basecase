@@ -144,12 +144,14 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={onBlur}
         onKeyDown={onKeyDown}
-        className={`w-full min-w-0 h-full bg-transparent text-[13px] text-white/90 tabular outline-none ${
+        className={`w-full min-w-0 flex-1 h-full bg-transparent text-[13px] text-white/90 tabular outline-none ${
           label !== undefined ? 'pl-0' : 'pl-2'
-        } ${unit ? 'pr-7' : 'pr-2'}`}
+        } pr-[8px]`}
       />
       {unit && (
-        <span className="absolute right-2 text-[12px] text-white/50 select-none pointer-events-none">{unit}</span>
+        <span className="shrink-0 whitespace-nowrap pr-[8px] text-[12px] text-white/50 select-none pointer-events-none">
+          {unit}
+        </span>
       )}
     </div>
   );

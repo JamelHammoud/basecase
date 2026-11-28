@@ -1372,3 +1372,19 @@ The shared fixture inherited the builder's eight-second, 900 mm reach. One compa
 On macOS arm64 with Node 26.13.0, the original fixture's named-file check passed all ten tests in 2.03 seconds. A candidate check passed the same ten tests in 2.11 seconds. These single warm local observations establish preserved outcomes, not a wall-clock improvement or a Windows failure-rate change. The deterministic reduction is the authored rollout horizon. The earlier two-second candidate failed baseline/regression assertions and was discarded. Windows candidate execution belongs to publication CI. No quarantine is added or extended.
 
 This repair addresses only the CLI workload. The same Check also failed Windows import-to-Sketch conversion, network servo checking, motion preview, saved person-Case reopening, Linux code-panel probes and the [packaged Windows converter memory probe](node.md#windows-converter-memory-probe-on-27-november). Repairs #2163 and #2164 already changed depth reconstruction, software camera warm-up and servo-layout capture. They do not establish resolution of the remaining paths. The newer full Check 46075290592 was progressing during this investigation, so rerunning the older failed Check or cancelling the newer run would duplicate or interrupt useful work.
+
+
+## Windows workbench on Check 46084134521
+
+[Check 46084134521](https://github.com/JamelHammoud/basecase/actions/runs/46084134521) at `cf5197af3938ae19fad1cf0c887185e00ef51d7d` failed both Windows attempts of each workbench declaration. Together they took 141,953 ms before the job was later cancelled. Their dated exclusions had expired before execution. The preceding run skipped both, so it establishes no passing result.
+
+Two exact-revision Windows diagnostics used one worker, zero retries, quarantine off and browser tracing on Windows x64, Node 26.13.1, four CPUs and image `20261123.321.1`:
+
+| Declaration | Diagnostic | Test duration | Observed failure |
+| --- | --- | --- | --- |
+| Ordinary entry and unreachable refusal | [46087159721](https://github.com/JamelHammoud/basecase/actions/runs/46087159721), ticket `ca597af7-ccd3-4477-b9ce-9c739f86e22e` | 35,721.996 ms | Rehearse click completed, then the existing applicability poll expired at line 56 |
+| Undo and scene persistence | [46087159619](https://github.com/JamelHammoud/basecase/actions/runs/46087159619), ticket `7846ca2b-10a9-4f22-9c21-34a7b3376763` | 69,520.611 ms | Rehearse click completed, then zero entered outputs remained through the existing poll at line 79 |
+
+Both close snapshots showed Rehearsing and no console errors. The ordinary-entry trace finally resolved an entered output with `data-passed=true` at 00:30:18.977 UTC, after browser closure began and about 13.8 seconds after the Rehearse click completed. Its hashes, unreachable refusal and no-command assertions were never reached. The persistence trace never reached Undo, save or reload. Worker execution, model preparation and outcome installation are not separately timed. A busy worker failing the one-second diagnostic resource query does not identify which of those stages is responsible. Both processes retained the existing ten-second Vite close warning despite empty manifest cleanup lists.
+
+Classification remains a Windows-observed completion deadline with source cause unresolved. Each controlled selection failed its only attempt, so neither is classified as intermittent load from these observations. Owner [#2021](https://github.com/JamelHammoud/basecase/issues/2021) retains both investigations. Both declarations remain active after expiry with the original assertions and deadlines. Fast transforms, source identity, cancellation, unit isolation, history, portable scene persistence, transport and the ten-task real-WASM rehearsal matrix remain active. They do not replace the ordinary Rehearse-to-reload browser path. No source repair or failure-rate improvement is claimed.

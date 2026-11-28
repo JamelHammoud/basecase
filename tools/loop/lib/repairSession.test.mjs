@@ -20,6 +20,7 @@ const root = fs.mkdtempSync(path.join(os.tmpdir(), 'repair-session-'));
 vi.stubEnv('BASECASE_LOOP_DIR', root);
 
 const { repairSession } = await import('./repairSession.mjs');
+const { retainedRepairEvidence } = await import('./activeRepairEvidence.mjs');
 const { clearRecovery, recoveryFor } = await import('./workRecovery.mjs');
 const { close, openBranch } = await import('./worktree.mjs');
 const home = path.join(root, 'home');
@@ -98,6 +99,59 @@ it.each(['repair', 'doctor'])('resumes %s edits and context on the next ordinary
   expect(recoveryFor(`repair-${name}`)).toBeNull();
   expect(fs.existsSync(retained.dir)).toBe(false);
 });
+
+it.each(['repair', 'doctor'])(
+  'preserves a completed %s investigation until a later eligible task publishes',
+  (name) => {
+    const request = task(name);
+    const session = { provider: 'codex', id: 'investigated-thread' };
+    const notes = `Unresolved failure evidence ${'x'.repeat(600)}`;
+    const output = { changed: false, notes };
+
+    runAgent.mockImplementationOnce(({ cwd }) => {
+      fs.mkdirSync(path.join(cwd, 'scratch'));
+      fs.writeFileSync(path.join(cwd, 'scratch', 'task-handoff.json'), '{"evidence":"scratch/diagnostic.log"}');
+      fs.writeFileSync(path.join(cwd, 'scratch', 'diagnostic.log'), 'Exact-revision failed assertion');
+
+      return { ok: true, output, session };
+    });
+    repairSession(request);
+
+    const retained = recoveryFor(`repair-${name}`);
+
+    expect(request.complete).toHaveBeenCalledWith(output, expect.objectContaining({ dir: retained.dir }));
+    expect(runAgent).toHaveBeenCalledOnce();
+    expect(retained.reason).toContain(notes);
+    expect(retained.session).toEqual(session);
+    expect(retainedRepairEvidence()).toEqual(
+      name === 'repair'
+        ? {
+            worktree: retained.dir,
+            at: retained.at,
+            reason: retained.reason,
+            handoff: '{"evidence":"scratch/diagnostic.log"}',
+          }
+        : null,
+    );
+    expect(fs.readFileSync(path.join(retained.dir, 'scratch', 'diagnostic.log'), 'utf8')).toBe(
+      'Exact-revision failed assertion',
+    );
+    runAgent.mockImplementationOnce(({ cwd, continuation, prompt }) => {
+      expect(cwd).toBe(retained.dir);
+      expect(continuation).toEqual(session);
+      expect(prompt).toContain(notes);
+      expect(prompt).toContain('Do not repeat completed work');
+      expect(fs.existsSync(path.join(cwd, 'scratch', 'task-handoff.json'))).toBe(true);
+
+      return { ok: true, output: { changed: true } };
+    });
+    repairSession(request);
+    expect(openBranch).toHaveBeenCalledOnce();
+    expect(request.complete).toHaveBeenCalledTimes(2);
+    expect(recoveryFor(`repair-${name}`)).toBeNull();
+    expect(fs.existsSync(retained.dir)).toBe(false);
+  },
+);
 
 it('retains thrown execution and publication failures without recording completion', () => {
   const request = task();

@@ -13,9 +13,13 @@ const mocks = vi.hoisted(() => ({
   exclusions: vi.fn(),
   publish: vi.fn(),
   repairs: vi.fn(),
+  retained: vi.fn(),
 }));
 
-vi.mock('../lib/activeRepairEvidence.mjs', () => ({ activeRepairEvidence: mocks.repairs }));
+vi.mock('../lib/activeRepairEvidence.mjs', () => ({
+  activeRepairEvidence: mocks.repairs,
+  retainedRepairEvidence: mocks.retained,
+}));
 vi.mock('../lib/agent.mjs', () => ({ CHANGE_SCHEMA: {}, runAgent: mocks.agent }));
 vi.mock('../lib/store.mjs', () => ({
   store: () => ({
@@ -58,6 +62,7 @@ beforeEach(() => {
   mocks.exclusions.mockReturnValue(false);
   mocks.publish.mockReturnValue(null);
   mocks.repairs.mockReturnValue([]);
+  mocks.retained.mockReturnValue(null);
 
   const exists = fs.existsSync.bind(fs);
 
@@ -143,4 +148,21 @@ it('includes unpublished repair work without delaying the admitted investigation
   expect(mocks.agent.mock.calls[0][0].prompt).toContain('camera diagnostic');
   expect(mocks.agent.mock.calls[0][0].prompt).toContain('retained-repair');
   expect(mocks.state.lastCallAt).toBe(now);
+});
+
+it('delivers completed repair findings on its existing cadence without repeating the repair session', () => {
+  mocks.retained.mockReturnValue({
+    worktree: 'completed-investigation',
+    reason: 'Failures remain unresolved',
+    handoff: 'scratch/diagnostics/collected-report.json',
+  });
+  doctor({ log });
+  expect(mocks.agent).toHaveBeenCalledOnce();
+  expect(mocks.agent.mock.calls[0][0].prompt).toContain('Failures remain unresolved');
+  expect(mocks.agent.mock.calls[0][0].prompt).toContain('scratch/diagnostics/collected-report.json');
+  expect(mocks.agent.mock.calls[0][0].prompt).toContain('without changing its worktree');
+  expect(mocks.state.lastCallAt).toBe(now);
+  vi.advanceTimersByTime(10 * 60_000);
+  doctor({ log });
+  expect(mocks.agent).toHaveBeenCalledOnce();
 });

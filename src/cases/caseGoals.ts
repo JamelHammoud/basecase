@@ -20,6 +20,7 @@ export type GoalKind =
 export type { GoalParam, GoalValues, ParamKey } from './goalParams';
 
 const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
+  gripForceN: { key: 'gripForceN', label: 'Grip force ceiling', unit: 'N', min: 0, max: 1000000, step: 1 },
   fixtureLowerStop: { key: 'fixtureLowerStop', label: 'Lower stop', unit: 'mm', min: -10000, max: 0, step: 1 },
   fixtureStiffness: {
     key: 'fixtureStiffness',

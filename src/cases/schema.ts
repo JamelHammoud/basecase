@@ -1,3 +1,4 @@
+import { readForceProbeOptions } from './gripForceValidation';
 import type { ScenePart } from '../types/robotics';
 import type { PassiveJoint } from '../sim/passiveJoint';
 import { fixtureSignals } from './fixtureTravel';
@@ -133,7 +134,9 @@ export interface CaseProbe {
   signal: string;
   from: ProbeEnd;
   to: ProbeEnd;
-  kind?: 'contact' | 'grip';
+  kind?: 'contact' | 'grip' | 'grip-force' | 'grip-force-peak';
+  jaw?: number;
+  ceilingN?: number;
 }
 
 export interface ScoreRule {
@@ -323,7 +326,7 @@ const readProbeEnd: Reader<ProbeEnd> = (value, where) => {
 
 const readProbe: Reader<CaseProbe> = (value, where) => {
   const v = asRecord(value, where);
-  const kind = optional(oneOf(['contact', 'grip'] as const), v.kind, `${where}.kind`);
+  const kind = optional(oneOf(['contact', 'grip', 'grip-force', 'grip-force-peak'] as const), v.kind, `${where}.kind`);
   const from = readProbeEnd(v.from, `${where}.from`);
   const to = readProbeEnd(v.to, `${where}.to`);
   const hand = from === 'end-effector' || (typeof from === 'object' && 'effector' in from);
@@ -332,7 +335,13 @@ const readProbe: Reader<CaseProbe> = (value, where) => {
 
   if (kind && (!source || !object)) refuse(where, 'must probe from a robot to an object');
 
-  return { signal: asId(v.signal, `${where}.signal`), from, to, ...(kind ? { kind } : {}) };
+  return {
+    signal: asId(v.signal, `${where}.signal`),
+    from,
+    to,
+    ...(kind ? { kind } : {}),
+    ...readForceProbeOptions(v, kind, where),
+  };
 };
 
 const readScore: Reader<ScoreRule> = (value, where) => {

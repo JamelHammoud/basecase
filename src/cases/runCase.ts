@@ -20,12 +20,16 @@ import { caseCommand } from './caseTarget';
 import { judgeSoFar, usesBodySkills, type CaseLogicResult, type CaseLogicRun } from './caseLogic';
 import { CASE_RANDOMIZATION, caseInstance, caseRandom, jitteredWorld, worldRandom } from './caseRandom';
 import { GroundSteer } from './groundSteer';
+import { observeCaseForces } from './gripForce';
 import { probeReader } from './probes';
 import { castRobot, castSlots, guestsOf, type CaseRobot, type CastSlot } from './caseCast';
 import { driveFor, slotIndexOf, teamDrive, toCommand } from './caseDrives';
 import { robotFacts, type EndEffector, type RobotFacts } from './robotFit';
 import {
   bodyFor,
+  assertCaseRunning,
+  momentFor,
+  finishForceSample,
   castGrippers,
   factSampler,
   hookRecorder,
@@ -97,9 +101,7 @@ export interface RunOptions extends LogicOptions {
   worldColliders?: WorldItem[];
 }
 
-export function assertCaseRunning(options: Pick<RunOptions, 'cancelled'>) {
-  if (options.cancelled?.()) throw AbortSignal.abort().reason;
-}
+export { assertCaseRunning } from './runCaseLogic';
 
 const JUDGE_EVERY_TICKS = 12;
 
@@ -157,7 +159,7 @@ interface Rollout {
   kase: Case;
   steer: GroundSteer | null;
   send: (c: DriveCommand) => void;
-  sample: (poses: Float64Array, t: number, torque?: number, contacts?: ArrayLike<number>) => CaseFacts;
+  sample: ReturnType<typeof factSampler>;
   logic: CaseLogicRun | null;
   judge: () => Promise<CaseFacts>;
   changes: { world: WorldMoves; events: WorldEvent[]; record: (e: WorldEvent) => void };
@@ -210,7 +212,7 @@ async function roll(rollout: Rollout): Promise<CaseFrame[]> {
 
     if (driving && steer?.steering) send(steer.command(poses));
 
-    const facts = sample(poses, t, torqueShare(engine), engine.contactPairs());
+    const facts = sample(poses, t, torqueShare(engine), momentFor(engine));
 
     logic?.advance(t * 1000, facts);
 
@@ -219,6 +221,8 @@ async function roll(rollout: Rollout): Promise<CaseFrame[]> {
     frames.push({ t, poses });
     engine.step(RECORD_DT);
   }
+
+  finishForceSample(rollout);
 
   return frames;
 }
@@ -399,6 +403,8 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
 
   try {
     if (options.fault) engine.setFault(options.fault.joint, options.fault.kind);
+
+    observeCaseForces(engine, kase, castGrippers(fit.cast));
 
     const recorder = options.record ? new Recorder(engine, controller) : null;
     const changes = {

@@ -2,6 +2,7 @@ import { decodeRecording } from '../cases/recordingFile';
 import type { Recording } from '../sim/recorder';
 import { labelSegments } from './segmentRows';
 import type { FrozenTrySample } from './snapshotTypes';
+import { sliceForces } from '../cases/gripForceRecording';
 import { sliceTeaching } from '../sim/teachingRecording';
 
 export function readSnapshotRecording(bytes: Uint8Array): Recording {
@@ -42,6 +43,7 @@ export function sampleRecording(recording: Recording, sample: Pick<FrozenTrySamp
           contactOffsets: contacts.slice(from, to + 1).map((offset) => offset - contactStart),
         }
       : {}),
+    ...sliceForces(recording, { from, to }),
     ...(recording.scan ? { scan: recording.scan.slice(from * recording.scanWidth!, to * recording.scanWidth!) } : {}),
     ...(recording.torque ? { torque: recording.torque.slice(from, to) } : {}),
     faults: recording.faults

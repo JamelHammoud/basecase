@@ -72,3 +72,7 @@ export function readEngineStats(input: EngineReadout, rtf = 1): SimStats {
     ...(input.drive?.hands ? { effectors: input.drive.hands.map((h) => input.handAt(h)) } : {}),
   };
 }
+
+export function robotTilt(data: MjData, body: number): number {
+  return Math.acos(Math.max(-1, Math.min(1, data.xmat[body * 9 + 8]))) / (Math.PI / 180);
+}

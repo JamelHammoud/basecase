@@ -68,6 +68,8 @@ export class LivePhysics {
     if (physics) this.scale(physics);
 
     mj.mj_setConst(engine.model, engine.data);
+
+    if (engine.forces) engine.observeForces(engine.forces.evidence);
   }
 
   applied(): SimPhysics | null {

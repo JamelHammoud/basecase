@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import type { MainModule } from '@mujoco/mujoco';
 import { loadMujoco } from './loadMujoco';
+import { liveForceSignals } from './contactForces';
 import { frameContacts, type Recorder, type Recording } from './recorder';
 import { effortsTransfer, fitsRecording, recordedEfforts, setRecordedFrame } from './recordedFrames';
 import { SimEngine, type Controller } from './engine';
@@ -79,6 +80,7 @@ const frame = (force = false, recordedContacts?: Int32Array) => {
       poses,
       joints,
       contacts,
+      forces: liveForceSignals(engine, scrubbed),
       stats: engine.stats(rtf),
       playing,
       facts,
@@ -435,6 +437,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   case: startCase,
   caseEnd: () => {
     liveCase = null;
+    engine?.observeForces(null);
   },
   watch,
   input: (msg) => {

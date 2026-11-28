@@ -719,3 +719,71 @@ The final named check on macOS arm64 with pinned Node 26.13.1 passed all 2,037 r
 At `09f200360232c8867c506572a83fe8ed1bfbf0ca`, [Check 46114697234](https://github.com/JamelHammoud/basecase/actions/runs/46114697234) reproduces short-cylinder-v with margin -0.5 and no named failed labels on Ubuntu and Windows. This is the recorded contact-continuity failure above, independent of unit callback deadlines.
 
 The already merged loaded-lift correction is present at `3a91b2021fd95aeac0db4ebd21ed15322201ae68`. [Windows diagnostic 46121338061](https://github.com/JamelHammoud/basecase/actions/runs/46121338061), ticket `e595c000-42ca-497f-a565-a5ba603c5dca`, passes that exact short-cylinder-v declaration in 1,640.1953 ms within a 5,999 ms process. The verified manifest records Windows x64, Node 26.13.1, four CPUs, 16 GiB memory, image `20261123.321.1`, one worker, one selected attempt, zero retries and quarantine off, without cleanup errors. This is a candidate observation of the landed correction on the affected architecture, not a twenty-row hosted matrix or repeated reliability measurement. It does not establish completion of the separate Windows browser saved-grasp workflow, whose nightly failed at zero retained tries. All declarations and contract assertions remain active. No further finger source or proof hash change is made.
+
+## Grip-force evidence
+
+The force observer runs inside the existing worker engine after solved MuJoCo steps. Direct-query comparison permits absolute roundoff below 1e-12 N because summing contact points into a total and adding two independently summed jaws have different addition orders. Contact identities and controlled-state replay comparisons remain exact. The fixture includes multiple box contact points, independent target pairs, asymmetric one-jaw contact and an independently supported object whose floor contact must contribute zero grip force.
+
+The overload fixture inserts a solved compression pulse at 6 ms and releases it before the 20 ms recording frame. Sampled force is zero at the retained frame while the cumulative peak remains above the declared 1 N test ceiling. The ordinary contract evaluator accepts the sampled-only control and rejects the retained peak trace. A separate stop within the first recording interval verifies final partial evidence. Neither test synthesizes force values.
+
+The production worker declaration loads the arm and Case, records the reference through worker commands, transfers the typed channels, round-trips the binary recording and scores it independently. Scrubbing suppresses live force observations. Force-enabled checkpoint capture refuses the unsupported closure state. Existing no-force continuation coverage remains active.
+
+Local check results and resource evidence are retained in the task handoff. Hosted Linux and Windows declarations remain for CI. No physical object or robot was tested.
+
+The prior attempt’s final focused check passed direct-query aggregation, independent-gripper and unrelated-contact controls, the substep overload verdict, partial-interval finalization and production worker transfer tests. Its complete result was 30 passed and two failed positive Case rows, as recorded in [Case evidence](testing-cases.md#grip-force-evidence). The force observer and retained verdict correctly expose those overloads. The reference closure was incomplete at that point. The declared 3 N ceilings remain unchanged.
+
+
+### Grip-force continuation on current main
+
+The retained edits applied cleanly after main advanced to `bd4d28613`. A new symmetric-range workflow reproduced a 12.19762122182064 N overload because closure direction was guessed from range magnitude. The controller now reads the existing gripper’s open and closed values from its controller setup, which the recording already retains.
+
+A substep trace of the two remaining failures found jaw velocities around 14–20 mm/s just before first contact while the position target was about 0.56 mm ahead. Reducing the unloaded target ramp from 10 to 5 mm/s within the original closing schedule resolved the heavy cube’s impact. Gentler eased lowering at 5% drive speed resolved the low-friction object’s placement impact. The 3 N assertions and the complete hold/placement contract stayed unchanged. A focused check then passed all fourteen positive workflows and the worker declaration.
+
+Worker lifecycle coverage explicitly requests frames after seeking and ending a Case. The prior optional lookup could succeed without any frame. The corrected test exposed live observations surviving Case end. Case end now clears the observer and limiter. A second new physics test changes the observation source during capture and requires missing force evidence rather than relabeling earlier samples with the new source. The recorder now binds to one source throughout capture. The focused retention, controls and persistence selection passed all ten tests. These observations precede the final required changed-file run.
+
+The final required `check:changed` on all 55 changed files passed formatting, ESLint, docs, site copy and types on pinned Node 26.13.1. Its related selection passed 5,503 tests across 754 files, with one existing skipped file, in 73.82 seconds. All fourteen positive force workflows passed, including heavy and low-friction cubes and symmetric jaw ranges. The largest retained peak was 2.3916134985239044 N for the narrow cylinder against its unchanged 3 N ceiling. The heavy cube peaked at 2.0096406404007277 N and the low-friction cube at 2.38433081516981 N. The earlier stationary-rover deadline failure did not recur. Evidence is `scratch/force-resume-all-check.log` and the per-workflow summaries. This is a macOS arm64 observation. Linux and Windows run the same declarations through existing CI.
+
+
+### Grip-force check after main 382aa1189
+
+The retained feature applied cleanly after main advanced from `bd4d28613` to `382aa11899907fcec82cced8e5e64d7f0167acce`. All feature-code hashes matched the previously checked implementation. The Cases guide also retained main’s imported-image changes. Main’s filmstrip change hoists the same projection basis vectors without changing their values.
+
+The fresh pinned Node 26.13.1 `check:changed` named all 55 changed files. Formatting, lint, docs, 395-page site copy and types passed. The related selection took 134.99 seconds and reported 5,481 passed, ten failed and twenty skipped tests across 757 selected files. Six positive force-workflow callbacks and two force-control callbacks exceeded their unchanged 5,000 ms deadlines. Stationary-rover body motion exceeded 5,000 ms, rendered rover visibility exceeded 15,000 ms, and the electrical fixture setup exceeded 10,000 ms. No failed assertion was reported.
+
+Immediately afterward, host load averages were 30.05, 25.64 and 15.05. This observation does not establish the cause of the deadlines or a failure rate. The earlier passing check remains historical evidence, not a green check of current main. No timeout, retry, assertion, worker configuration or quarantine was changed, and no rerun was used to declare success. Verification was incomplete at that point. The complete log is `scratch/force-current-main-check.log`, with continuation details in `scratch/task-handoff.json`.
+
+
+### Force collector traversal correction
+
+The new multi-contact regression failed before correction with 48 native geometry-array reads in one sample. After reading the array once per sample and replacing string pair keys with numeric keys, the same regression passes with exactly one read and direct-query force agreement below 1e-12 N. Contact identities and substep peak assertions remain intact. No test callback, fixture deadline, retry, exclusion or worker-count setting changed.
+
+The named observer-source and integration-test check passed 2,691 related tests across 358 files, with one existing skipped test/file, in 53.09 seconds. Logs are `scratch/force-fast-acceptance.log` and `scratch/force-fast-candidate.log`. This is a concrete traversal correction with passing related coverage. It does not attribute every earlier timeout to the force collector, and does not establish a failure rate.
+
+
+### Complete selection after observer traversal correction
+
+The first corrected 55-file selection passed formatting, lint, docs, site copy, types and 5,509 tests across 755 files. One existing test/file was skipped. Stationary-rover body motion alone still exceeded its unchanged 5,000 ms callback deadline. The test phase took 92.84 seconds. All force acceptance callbacks, electrical setup and rendered visibility passed. Evidence is `scratch/force-fast-all-changed.log`.
+
+Tracing the remaining replay found repeated native control-array reads in ordinary Hold updates. The new small four-actuator regression failed before correction with five reads instead of two in one step. The corrected update borrows one view, while the fault stage retains its independent view. Exact control, solved position, velocity and contact assertions remain active against an independent engine. Views in the other existing controller writes and force feedback have the same update-local lifetime. No callback budget, retry, physics step, quarantine or assertion was relaxed. Final verification follows this concrete correction rather than rerunning the unchanged source.
+
+
+### Bounded local check concurrency
+
+The next full selection, including the control-view correction, passed 5,508 tests and both new native-read assertions. Small-cube, the combined closure-outcome callback and stationary-rover body motion exceeded their unchanged 5,000 ms deadlines. No force, contract, state-parity or recording assertion failed. The test phase took 120.82 seconds across 758 files. Host load immediately afterward was 31.10, 26.23 and 19.08. Evidence is `scratch/force-control-all-changed.log`. These observations do not establish a shared source cause.
+
+The following local verification limits the existing runner to four workers through Vitest’s supported `VITEST_MAX_WORKERS=4` environment variable. The named changed-file command, entire related selection, fixture ownership, callback deadlines and assertions remain unchanged. There is no retry setting, wait gate, CI configuration change or quarantine. The earlier unrestricted selections failed under concurrent host work, so reducing local concurrency avoids increasing the host’s competing physics workload. A pass with four workers establishes that execution only, not a failure rate or a repair of every historical deadline. Its complete command and result belong to `scratch/force-bounded-all-changed.log`.
+
+
+### Completed local force verification
+
+The final `check:changed` names all 56 changed files under Node 26.13.1 with `VITEST_MAX_WORKERS=4`. Formatting, lint, docs, 395-page site copy and types pass. The complete related selection passes 5,511 tests across 757 files, with one existing skipped test/file, in 163.72 seconds. Both native-read regressions, the fourteen strict 3 N workflows, closure controls, recording portability, production worker, seeded determinism, stale evidence and cancellation declarations pass. Stationary-rover body motion, electrical setup and rendered visibility also pass in this execution. Evidence is `scratch/force-bounded-all-changed.log`.
+
+This is a four-worker local observation on macOS arm64, not evidence that unrestricted concurrent execution or hosted Linux and Windows deadlines are repaired. The earlier failure logs remain retained. No deadline, retry, assertion, quarantine or repository runner setting changed. A first bounded invocation was stopped after detecting a formatting error in the engine edit. Formatting was corrected before this completed invocation. The stopped log is `scratch/force-bounded-format-interrupted.log`.
+
+### Grip-force live physics provenance
+
+Review reproduced an active force observer surviving `LivePhysics.apply` after native mass, friction and actuator limits changed. Its evidence still described the previous physical configuration, and the recorder could retain rows across both configurations under that identity. The initial named regression check failed at the unchanged observer assertion in 48 ms. The log is `scratch/review-force-physics-before.log`.
+
+Applying or clearing live physics now replaces an active observer after updating the native model. The regression checks the hash of actual native physical values, omission of force evidence from a recording spanning the change, a fresh recording's binary round trip and restoration of the nominal physical identity. No force ceiling, contract, physics step or callback deadline changes. Browser execution remains with CI.
+
+The named five-file changed check on pinned Node 26.13.1 passes formatting, lint, documentation, the 395-page site scan, types and all 38 related tests across 14 files. It used four local workers and took 3.73 seconds in the test phase. The complete log is `scratch/review-force-physics-check.log`. The existing browser declaration retains keyboard authoring, the 230px sidebar and measured text bounds, reference execution, force traces and Library reopening for CI. The builder screenshot now follows its ceiling-entry step in the help article.

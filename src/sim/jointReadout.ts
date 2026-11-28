@@ -44,3 +44,16 @@ export function readHoldValues(
     }),
   );
 }
+
+export function readControlTarget(sim: SimModel, i: number, values?: Record<string, number>): number {
+  const joint = sim.joints[i];
+
+  if (joint.drive === 'velocity') return 0;
+
+  const value = values?.[joint.id] ?? sim.initial.values[joint.id] ?? 0;
+
+  return jointQposOf(joint.type, value);
+}
+
+export const jointQposOf = (type: 'revolute' | 'prismatic', value: number) =>
+  type === 'revolute' ? value * (Math.PI / 180) : value / 1000;

@@ -9,6 +9,7 @@ import type { IdealTendon } from '../types/tendon';
 import { ContinuationCapture, type ContinuationCaptureOptions } from './continuationCapture';
 import type { TeachingRecording } from './teachingRecording';
 import type { AppliedOwner } from './teaching';
+import type { ForceEvidence, ContactForces } from './contactForces';
 
 export const RECORD_HZ = 50;
 
@@ -63,6 +64,9 @@ export interface Recording {
   world?: WorldEvent[];
   inputs?: RecordedInput[];
   topics?: Uint8Array;
+  forceEvidence?: ForceEvidence;
+  contactForce?: Float64Array;
+  contactForcePeak?: Float64Array;
   contacts?: Int32Array;
   contactOffsets?: Int32Array;
   continuation?: Uint8Array;
@@ -141,6 +145,10 @@ export class Recorder {
   private readonly contacts = new Growing(i32, 512);
   private readonly contactOffsets = new Growing(i32, 512);
   private contactCount = 0;
+  private readonly forceSource: ContactForces | null;
+  private forceSourceCurrent = true;
+  private readonly contactForce = new Growing(f64, 1);
+  private readonly contactForcePeak = new Growing(f64, 1);
   private readonly continuation: ContinuationCapture | null;
   private sampledAt = -1;
   private teaching: TeachingRecording | null = null;
@@ -160,6 +168,7 @@ export class Recorder {
     const { model } = engine;
 
     this.engine = engine;
+    this.forceSource = engine.forces;
     this.started = engine.data.time;
     this.clock = options && 'clock' in options ? options.clock : this.started;
     this.next = this.started;
@@ -276,6 +285,13 @@ export class Recorder {
     this.contacts.push(contacts);
     this.contactCount += contacts.length;
 
+    this.forceSourceCurrent &&= this.forceSource === this.engine.forces;
+
+    if (this.forceSource && this.forceSourceCurrent) {
+      this.contactForce.push(this.forceSource.values);
+      this.contactForcePeak.push(this.forceSource.peaks);
+    }
+
     if (this.scan && this.engine.scanner) {
       this.engine.scanner.tick();
       this.scan.push(this.engine.scanner.values);
@@ -285,7 +301,21 @@ export class Recorder {
     this.next += this.dt;
   }
 
+  private recordedForces(): Pick<Recording, 'forceEvidence' | 'contactForce' | 'contactForcePeak'> {
+    if (!this.forceSource || !this.forceSourceCurrent) return {};
+
+    return {
+      forceEvidence: structuredClone(this.forceSource.evidence),
+      contactForce: this.contactForce.done(),
+      contactForcePeak: this.contactForcePeak.done(),
+    };
+  }
+
   finish(): Recording {
+    this.forceSourceCurrent &&= this.forceSource === this.engine.forces;
+
+    if (this.engine.forces && this.sampledAt < this.engine.data.time) this.sample();
+
     const { model } = this.engine;
     const motors = this.engine.sim.joints.flatMap((joint) =>
       joint.tendon ? [{ joint: joint.id, actuator: joint.actuator, tendon: structuredClone(joint.tendon) }] : [],
@@ -316,6 +346,7 @@ export class Recorder {
         : {}),
       ...(transmission ? { transmission } : {}),
       ...(this.started !== this.clock ? { timeOffset: this.started - this.clock } : {}),
+      ...this.recordedForces(),
       dt: this.dt,
       frames: this.frames,
       nq: model.nq,
@@ -358,6 +389,8 @@ export const recordingTransfer = (r: Recording): Transferable[] =>
     r.scan,
     r.topics,
     r.contacts,
+    r.contactForce,
+    r.contactForcePeak,
     r.contactOffsets,
     r.continuation,
     r.actionTime,

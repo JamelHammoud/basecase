@@ -1429,14 +1429,65 @@ The complete custom-console declaration is active on Windows after its dated exc
 
 Exact-revision [Windows diagnostic 46135005958](https://github.com/JamelHammoud/basecase/actions/runs/46135005958), ticket `9c868395-474f-4cb4-aa74-8725c91f847f`, passes the complete declaration in 42,744.4016 ms within a 55,776 ms process. Its verified manifest records Windows x64, Node 26.13.1, four CPUs, 16 GiB memory, image `20261123.321.1`, one worker, one attempt, zero retries, quarantine off and browser tracing. The pointer click, early-stop bound, saved try, Reset and final Escape all pass. This establishes same-revision Windows intermittency, not a candidate repair or a failure rate. The process log retains the ten-second Vite close warning despite an empty manifest cleanup array. The source and original assertions stay intact.
 
-
 ## Windows Case entry on Check 46160172750
 
 At `bd4d286130f97803876ecea7d1f8bcbc5581486f`, [Check 46160172750](https://github.com/JamelHammoud/basecase/actions/runs/46160172750) Windows shard 5 reports five Case-related failures. Open a Lid and Pull a Drawer both start reference driving, then retain zero tries at line 46 before playback and travel assertions. The quadruped Study retains zero of six rows at line 84 before grading, Apply and Undo. The first workbench declaration receives no passed entered evidence at line 56. The persistence declaration receives no initial entered record at line 79, before Undo, Redo, storage or reopening.
 
 The logs do not establish shared recording, worker, model or persistence causes. There is no new exact-revision passing observation or source correction for these five declarations in this repair. Existing recording and Study owners and workbench owner #2021 retain their respective stages. All reference-result, travel, six-row grading, complete-design Apply, unreachable-placement refusal, zero-command and persistence assertions remain active with unchanged deadlines. Full job log `scratch/new-job-141025536028.log` and the complete assigned-job inventory are retained in `scratch/task-handoff.json` during repair.
 
-
 ## Windows seeded trails on Check 46160172750
 
 At `bd4d286130f97803876ecea7d1f8bcbc5581486f`, [Check 46160172750](https://github.com/JamelHammoud/basecase/actions/runs/46160172750) Windows shard 17 misses the initial Checks row whose text ends in of 20 at `caseTrails.e2e.test.ts:46`, on both attempts. Opening all twenty trails and replaying a failed seed at its first trip have not started. The stack does not distinguish seeded evaluation from Checks result delivery. Existing Case ownership retains that boundary, with every seed, trail, replay and first-trip assertion active. No current-revision Windows pass, introducing merge or changed environment component is established. No Case source, deadline, retry or exclusion changes accompany this observation.
+
+## Grip-force evidence
+
+The Case acceptance matrix uses the existing editable six-axis arm, its two prismatic jaws and generated rigid targets. It retains each jaw's normal force, the simultaneous total and its substep maximum through binary encoding and reference replay. Selected-object lift, continuous hold and released-placement assertions remain intact. Additional controls separate a lift that exceeds the ceiling, a force-controlled lift and insufficient closure that fails to hold the object.
+
+Portable evidence passes through the existing scene codec, gallery bundle and try archive. An old recording still decodes after the optional force fields are absent, but cannot satisfy a newly added force requirement. Relevant Case edits and model XML changes leave force judgment unresolved. Malformed metadata, missing arrays and nonfinite channels are refused. Seeded reruns compare force arrays exactly. Cancellation returns no partial retained try.
+
+The prior attempt’s final article capture authored a 20 N generated-block Case through ordinary controls, ran Try Reference, opened its force plot and reopened the retained try through Library. It retained 770 force samples, a 12.080975183656879 N peak, a passing verdict and identical reopened evidence, with no browser errors. The capture took 42.18 seconds. The existing Vite close warning remains in `scratch/force-final-capture.log`. The dedicated browser acceptance declaration remains for CI.
+
+The final focused named check passed formatting, ESLint, documentation, site copy and types. Thirty tests passed and two positive matrix rows failed. The 60 g heavy cube reached 3.188787301812111 N against its unchanged 3 N ceiling at 8.14 seconds. The low-friction cube reached 3.7463812704118498 N at the same time. Both overloads occurred during the 0.75 closure command, before lifting. Their margins were -0.06292910060403696 and -0.2487937568039499. Eleven other generated shape rows passed. Those observations left #2221 incomplete at that point. Their limits, contracts and assertions were not relaxed. Evidence is `scratch/force-retained-check.log`.
+
+The broader all-changed selection reported 5,183 passing tests, seven failures and one skip across 712 selected files. It included an unchanged stationary-rover motion declaration timing out at 5,000 ms. That observation does not establish its cause. An intermediate missing import was corrected and the final focused type check passed. The broader selection preceded the last controller restoration and is not an exact final-input pass. Evidence is `scratch/force-final-check.log`. No timeout, retry or quarantine changed.
+
+
+### Grip-force completion after source refresh
+
+The autostash reapplied without conflicts on `bd4d28613`. Positive requirements remain at 3 N. The controller now derives closing direction from its recognized gripper, limits the unloaded target ramp to 5 mm/s and uses the existing eased reference for gentler placement. The fourteen-row positive matrix includes symmetric jaw ranges alongside the thirteen retained shapes and material variants. Current per-row peak, margin, sample count and provenance are retained under `scratch/grip-force-workflows/`.
+
+The three prior failures were reproduced before correction. Symmetric ranges reached 12.19762122182064 N. The heavy and low-friction cube impacts matched the earlier 3.188787301812111 N and 3.7463812704118498 N peaks. The corrected positive selection passed all fourteen rows without relaxing a ceiling or assertion. Separate controls continue to require dropping, excessive-force failure and controlled success. Worker frames after Case end now prove that live force observations clear. Mid-recording observation-source changes omit force evidence and keep the recording readable.
+
+The final all-changed check on Node 26.13.1 passed 5,503 related tests across 754 files, with one existing skipped file. All 34 focused force tests passed, including all fourteen positive workflows, physical negative controls, seeded repetition, source replacement, cancellation, persistence and worker lifecycle. The heavy cube now peaks at 2.0096406404007277 N and the low-friction cube at 2.38433081516981 N under their original 3 N ceilings. Evidence is `scratch/force-resume-all-check.log` and `scratch/grip-force-workflows/`.
+
+A new article capture on the final source passed ordinary 20 N authoring, Try Reference, recorded plotting and Library reopening. It retained 770 samples and an 11.001810921848715 N peak. Reopened evidence matched exactly and the browser reported no errors. The capture took 57.58 seconds and retained the existing Vite server-close warning after successful completion. Evidence is `scratch/force-resume-capture.log`, `scratch/force-resume-browser-summary.json` and the three article images. The dedicated browser declaration remains for Linux and Windows CI. No assertion, timeout, retry or quarantine was relaxed.
+
+
+### Grip-force deadlines after main 382aa1189
+
+The required 55-file check after the clean main refresh is not green. `gripForce.integration.test.ts` exceeded its existing 5,000 ms callback deadline for small-cube, tall-carton, thin-bar, wide-box, offset-cylinder and low-friction-cube. The two `gripForceControls.integration.test.ts` callbacks covering closure outcomes and seeded recording equality also exceeded 5,000 ms. No force-ceiling, hold-contract or recording assertion failed. The source code is unchanged from the earlier passing fourteen-workflow observation.
+
+The same run reports body-motion and visibility callback deadlines and an electrical-fixture setup deadline. [Simulation evidence](testing-simulate.md#grip-force-check-after-main-382aa1189) records the exact current main, totals, host load and verification limits. That selection did not complete verification. All acceptance declarations, strict 3 N ceilings and existing deadlines remain active. No retries or exclusions were added.
+
+
+### Force-case continuation after traversal correction
+
+The observer traversal correction reduces native geometry-array reads from 48 to one in the solved multi-contact fixture. Its two-file related selection passes 2,691 tests, including the force-Case matrix and closure controls, with their original 3 N ceilings and callback deadlines. [Traversal evidence](testing-simulate.md#force-collector-traversal-correction) retains the failing operation-count assertion and candidate check separately from the complete changed-file selection. The earlier deadline observation remains historical evidence, not a demonstrated shared source cause.
+
+
+### Force acceptance under local contention
+
+The complete selection after update-local native-view reuse passed the exact-physics control regression but still timed out small-cube, combined closure outcomes and stationary-rover body motion. The first two are force acceptance callbacks, so that result cannot be called complete. [Local concurrency evidence](testing-simulate.md#bounded-local-check-concurrency) records the failing selection and subsequent four-worker verification with every original assertion and deadline active.
+
+
+### Completed force acceptance selection
+
+The final named 56-file check passes all 5,511 related tests with four local Vitest workers, including all fourteen positive workflows below their original 3 N ceilings. The largest peak remains 2.3916134985239044 N. Heavy and low-friction cubes retain peaks of 2.0096406404007277 N and 2.38433081516981 N. Closure-outcome, deterministic seeded equality, recording and archive round trips, stale/missing evidence and cancellation assertions remain intact. Native-view tests require 48-to-one geometry-array read reduction and five-to-two control-array read reduction in their respective fixtures, together with numerical parity. The complete log is `scratch/force-bounded-all-changed.log`, and archived workflow rows are in `scratch/grip-force-workflows-bounded/`.
+
+The earlier ordinary-controls article capture and exact Library reopening evidence remain in `scratch/force-resume-capture.log` and `scratch/force-resume-browser-summary.json`. The traversal changes preserve force summation and controls, and do not change labels or depicted states. The dedicated browser declaration remains active for Linux and Windows CI. The local passing selection does not establish an unrestricted-host failure rate.
+
+### Grip-force builder review
+
+The ceiling field used `FieldRow`'s fixed 88px label column with truncation. It now uses the existing stacked layout. The browser declaration narrows the actual Cases sidebar to its 230px minimum, toggles the limit through Space and Enter, checks that the field disappears while off, and enters the maximum 1,000,000 N value. Its geometry assertions measure complete label text, input padding and value width, the unit and both main action buttons. The existing reference, retained trace, passing verdict and Library reopening assertions remain active.
+
+The named five-file review check on Node 26.13.1 passes formatting, lint, documentation, the 395-page site scan, types and all 13 related tests across seven files. The complete log is `scratch/review-2234-check-final.log`. No browser was run locally, so the new minimum-width and keyboard declarations await CI execution. Physics source and its acceptance limits are unchanged by these review corrections.

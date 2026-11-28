@@ -73,6 +73,7 @@ export type SimResponse =
       poses: Float64Array;
       joints: Float64Array;
       contacts?: Int32Array;
+      forces?: Record<string, number>;
       stats: ReturnType<SimEngine['stats']>;
       playing: boolean;
       facts?: CaseFacts;

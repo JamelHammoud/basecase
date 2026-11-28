@@ -2,7 +2,7 @@ import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import type { RobotAnimation, RobotPoseState } from '../types/robotics';
 import { loopInitial } from './loopInitial';
 import { controlValues, assertTendonController } from './controlValues';
-import { primeCtrlHistory } from './ctrlHistory';
+import { primeJointControls } from './primeJointControls';
 import { stepControlled } from './controlStep';
 import { createDrive, type DriveCommand, type DriveLoop, type DriveSetup } from './drive';
 import { PoseDrive, type PoseSetup } from './drivePose';
@@ -10,19 +10,21 @@ import { GrabForce } from './grabForce';
 import { PushForce, type PushTiming } from './pushForce';
 import type { SimModel } from './mjcf';
 import type { SimStats } from './engineStats';
-import { eyeCaster, type EyeCaster } from './eyes';
+import { policyEyes } from './eyes';
 import { ActuatorFaults, type FaultKind } from './faults';
 import type { PolicySpec } from './policy';
 import { createPolicyState, stepPolicy, type PolicyState } from './policyStep';
 import { routePolicy, RouteRunner, type RouteController } from './route';
-import { readBodyPoses, readHoldValues, readJointAngles, readJointStates } from './jointReadout';
+import * as readout from './jointReadout';
 import { Scanner } from './scanner';
 import { BodyContacts } from './contacts';
-import { effectorAt, readEngineStats, type EngineRobot } from './engineReadout';
+import { effectorAt, readEngineStats, robotTilt, type EngineRobot } from './engineReadout';
 import { EngineContinuation } from './engineContinuation';
 import { TeachingControl, type ActionOwner, type AppliedOwner } from './teaching';
 import type { ArmSetup } from './drive';
 import { WorldMoves } from './worldMoves';
+import { ContactForces, type ForceEvidence } from './contactForces';
+import { ForceClosure } from './forceClosure';
 
 export type Controller =
   | { kind: 'hold'; values?: Record<string, number> }
@@ -34,15 +36,13 @@ export type Controller =
 
 export type { JointStat, RobotStat, SimStats } from './engineStats';
 
-const D2R = Math.PI / 180;
-
-const jointQposOf = (type: 'revolute' | 'prismatic', v: number) => (type === 'revolute' ? v * D2R : v / 1000);
-
 export class SimEngine {
   readonly model: MjModel;
   readonly data: MjData;
   private bodyIds: number[];
   private contacts: BodyContacts;
+  forces: ContactForces | null = null;
+  private forceClosure: ForceClosure | null = null;
   private jointQpos: number[];
   private jointDof: number[];
   private robots: EngineRobot[];
@@ -114,7 +114,7 @@ export class SimEngine {
       sim,
       model: this.model,
       data: this.data,
-      busy: () => !!this.scanner || this.pushes.active || this.grab.active || this.world.hasPeople,
+      busy: () => !!this.forces || !!this.scanner || this.pushes.active || this.grab.active || this.world.hasPeople,
       runtime: () => ({
         controller: this.controller,
         drive: this.drive,
@@ -138,7 +138,7 @@ export class SimEngine {
     this.sim.joints.forEach((j, i) => {
       const v = initial.values[j.id];
 
-      if (v !== undefined) data.qpos[this.jointQpos[i]] = jointQposOf(j.type, v);
+      if (v !== undefined) data.qpos[this.jointQpos[i]] = readout.jointQposOf(j.type, v);
     });
 
     for (const r of this.robots) this.placeRoot(r, initial);
@@ -146,13 +146,21 @@ export class SimEngine {
     this.world.reset({ forward: false });
 
     mj.mj_forward(model, data);
-    this.holdDelayedControls(this.sim.joints.map((_, i) => i));
+    primeJointControls(
+      this.mj,
+      this,
+      this.jointQpos,
+      this.sim.joints.map((_, i) => i),
+    );
 
     for (const r of this.robots) {
       r.startZ = data.xpos[r.rootBody * 3 + 2];
       r.startXY = [data.xpos[r.rootBody * 3], data.xpos[r.rootBody * 3 + 1]];
     }
 
+    this.forces?.reset();
+    this.forces?.sample(mj, model, data);
+    this.forceClosure = this.forces ? new ForceClosure(this, this.forces, this.controller) : null;
     this.peaks.fill(0);
     this.saturated.fill(0);
     this.fellAt.clear();
@@ -184,7 +192,7 @@ export class SimEngine {
       const v = this.sim.initial.values[j.id];
       const at = this.jointQpos[i];
 
-      data.qpos[at] = v === undefined ? model.qpos0[at] : jointQposOf(j.type, v);
+      data.qpos[at] = v === undefined ? model.qpos0[at] : readout.jointQposOf(j.type, v);
       data.qvel[this.jointDof[i]] = 0;
     });
 
@@ -201,20 +209,8 @@ export class SimEngine {
     this.grab.forget();
     this.setController(this.controller);
     mj.mj_forward(model, data);
-    this.holdDelayedControls(r.joints);
+    primeJointControls(this.mj, this, this.jointQpos, r.joints);
     this.faults.reprime();
-  }
-
-  private holdDelayedControls(joints: number[]) {
-    const held = joints.flatMap((i) => {
-      const j = this.sim.joints[i];
-
-      if (j.actuator < 0) return [];
-
-      return [{ actuator: j.actuator, value: j.drive === 'position' ? this.data.qpos[this.jointQpos[i]] : 0 }];
-    });
-
-    primeCtrlHistory(this.mj, this.model, this.data, held);
   }
 
   setController(c: Controller) {
@@ -241,7 +237,7 @@ export class SimEngine {
       joints: this.sim.joints,
       root: r,
       addresses: { qpos: this.jointQpos, dof: this.jointDof },
-      eyes: () => this.eyesFor(pc.policy),
+      eyes: () => policyEyes(this.mj, this.model, this.data, pc.policy.eyes),
     });
   }
 
@@ -288,15 +284,7 @@ export class SimEngine {
   pushRobot(key: string, force: [number, number, number], timing: PushTiming = {}) {
     const r = this.robots.find((x) => x.key === key) ?? this.robots[0];
 
-    if (r) this.pushes.start(r.rootBody, force, { ...timing, tilt: () => this.tiltOf(r) });
-  }
-
-  private targetFor(i: number, values: Record<string, number> | undefined): number {
-    const j = this.sim.joints[i];
-
-    if (j.drive === 'velocity') return 0;
-
-    return jointQposOf(j.type, values?.[j.id] ?? this.sim.initial.values[j.id] ?? 0);
+    if (r) this.pushes.start(r.rootBody, force, { ...timing, tilt: () => robotTilt(this.data, r.rootBody) });
   }
 
   setFault(jointId: string, kind: FaultKind | null) {
@@ -323,9 +311,10 @@ export class SimEngine {
     }
 
     const values = controlValues(c, data.time);
+    const ctrl = data.ctrl;
 
     this.sim.joints.forEach((j, i) => {
-      if (j.actuator >= 0) data.ctrl[j.actuator] = this.targetFor(i, values);
+      if (j.actuator >= 0) ctrl[j.actuator] = readout.readControlTarget(this.sim, i, values);
     });
 
     const ps = this.policyState;
@@ -340,21 +329,25 @@ export class SimEngine {
 
   private applyArms(arms: PoseDrive) {
     const { values } = arms.tick(this.data.time);
+    const ctrl = this.data.ctrl;
 
     this.sim.joints.forEach((j, i) => {
       if (j.actuator >= 0 && j.drive === 'position' && values?.[j.id] !== undefined)
-        this.data.ctrl[j.actuator] = this.targetFor(i, values);
+        ctrl[j.actuator] = readout.readControlTarget(this.sim, i, values);
     });
   }
 
   private applyDrive(drive: DriveLoop) {
     const { values, wheels } = drive.tick(this.data.time);
+    const ctrl = this.data.ctrl;
 
     this.sim.joints.forEach((j, i) => {
       if (j.actuator < 0) return;
 
-      this.data.ctrl[j.actuator] = j.drive === 'velocity' ? (wheels?.[j.id] ?? 0) : this.targetFor(i, values);
+      ctrl[j.actuator] =
+        j.drive === 'velocity' ? (wheels?.[j.id] ?? 0) : readout.readControlTarget(this.sim, i, values);
     });
+    this.forceClosure?.apply();
   }
 
   private applyPolicy(policy: PolicySpec, ps: PolicyState) {
@@ -362,8 +355,10 @@ export class SimEngine {
 
     stepPolicy(policy, ps, data);
 
+    const ctrl = data.ctrl;
+
     ps.actuators.forEach((actuator, k) => {
-      if (actuator >= 0) data.ctrl[actuator] = ps.targets[k];
+      if (actuator >= 0) ctrl[actuator] = ps.targets[k];
     });
   }
 
@@ -380,6 +375,7 @@ export class SimEngine {
       this.pushes.apply();
       this.grab.apply();
       stepControlled(mj, this);
+      this.forces?.sample(mj, this.model, data);
       afterStep?.();
       this.scanner?.tick();
       this.stepHook?.();
@@ -414,20 +410,13 @@ export class SimEngine {
 
   readonly teachingSource = () => this.teaching;
 
-  private tiltOf(r: (typeof this.robots)[number]): number {
-    const m = this.data.xmat;
-    const zz = m[r.rootBody * 9 + 8];
-
-    return Math.acos(Math.max(-1, Math.min(1, zz))) / D2R;
-  }
-
   private checkFalls() {
     for (const r of this.robots) {
       if (!r.floating || this.fellAt.has(r.key)) continue;
 
       const z = this.data.xpos[r.rootBody * 3 + 2];
 
-      if (this.tiltOf(r) > 60 || z < r.startZ * 0.45) this.fellAt.set(r.key, this.data.time);
+      if (robotTilt(this.data, r.rootBody) > 60 || z < r.startZ * 0.45) this.fellAt.set(r.key, this.data.time);
     }
   }
 
@@ -442,7 +431,7 @@ export class SimEngine {
         saturated: this.saturated,
         faults: this.faults,
         drive: this.drive,
-        tiltOf: (r) => this.tiltOf(r),
+        tiltOf: (r) => robotTilt(this.data, r.rootBody),
         handAt: (h) => effectorAt(this.sim, this.poses(), h),
       },
       rtf,
@@ -450,7 +439,7 @@ export class SimEngine {
   }
 
   private holdValues(): Record<string, number> {
-    return readHoldValues(this.sim, this.model, this.data, { qpos: this.jointQpos, dof: this.jointDof });
+    return readout.readHoldValues(this.sim, this.model, this.data, { qpos: this.jointQpos, dof: this.jointDof });
   }
 
   jointAddresses(): Int32Array {
@@ -471,6 +460,13 @@ export class SimEngine {
     this.mj.mj_kinematics(this.model, this.data);
   }
 
+  observeForces(evidence: ForceEvidence | null) {
+    this.forces?.dispose();
+    this.forces = evidence ? new ContactForces(this.mj, this.model, this.bodyIds, evidence) : null;
+    this.forceClosure = this.forces ? new ForceClosure(this, this.forces, this.controller) : null;
+    this.forces?.sample(this.mj, this.model, this.data);
+  }
+
   contactPairs(): Int32Array {
     return this.contacts.sample(this.data);
   }
@@ -482,28 +478,21 @@ export class SimEngine {
   }
 
   poses(out = new Float64Array(this.bodyIds.length * 7)): Float64Array {
-    return readBodyPoses(this.data, this.bodyIds, out);
+    return readout.readBodyPoses(this.data, this.bodyIds, out);
   }
 
   jointStates(out = new Float64Array(this.sim.joints.length * 3)): Float64Array {
-    return readJointStates(this.sim, this.data, this.jointQpos, out);
+    return readout.readJointStates(this.sim, this.data, this.jointQpos, out);
   }
 
   jointAngles(): Float64Array {
-    return readJointAngles(this.data, this.jointQpos);
-  }
-
-  private eyesFor(policy: PolicySpec): EyeCaster | null {
-    const caster = policy.eyes?.length ? eyeCaster(this.mj, this.model, this.data, policy.eyes) : null;
-
-    if (typeof caster === 'string') throw new Error(`${caster} Train it again.`);
-
-    return caster;
+    return readout.readJointAngles(this.data, this.jointQpos);
   }
 
   dispose() {
     this.policyState?.eyes?.dispose();
     this.scanner?.dispose();
+    this.forces?.dispose();
     this.data.delete();
     this.model.delete();
   }

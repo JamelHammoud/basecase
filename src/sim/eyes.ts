@@ -242,3 +242,11 @@ export function eyeCaster(mj: MainModule, model: MjModel, data: MjData, eyes: Ey
     },
   };
 }
+
+export function policyEyes(mj: MainModule, model: MjModel, data: MjData, eyes?: Eye[]): EyeCaster | null {
+  const caster = eyes?.length ? eyeCaster(mj, model, data, eyes) : null;
+
+  if (typeof caster === 'string') throw new Error(`${caster} Train it again.`);
+
+  return caster;
+}

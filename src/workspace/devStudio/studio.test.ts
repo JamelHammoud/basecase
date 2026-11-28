@@ -62,6 +62,7 @@ const EXPECTED_NAMES = [
   'frameLabels',
   'frozenBuild',
   'graspEvidence',
+  'gripForceEvidence',
   'guide',
   'importRobot',
   'inputEvents',

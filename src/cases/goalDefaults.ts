@@ -57,6 +57,7 @@ export function goalDefaults(
   const legs = robot.facts.capabilities.includes('legs');
   const reach = robot.facts.reachMm;
   const base: GoalValues = {
+    gripForceN: 0,
     fixtureLowerStop: 0,
     fixtureStiffness: 0,
     fixtureSpringref: 0,
@@ -104,7 +105,7 @@ export function goalDefaults(
     path: { seconds: legs ? 22 : 13 },
     walk: { distanceMm: 500 },
     touch: { ...touchSpot(robot), radiusMm: Math.round(touchRadius(reach)), seconds: touchSeconds(chosen.dots ?? 1) },
-    pick: pickDefaults(robot),
+    pick: pickDefaults(robot, chosen),
     handoff: handoffDefaults(robot),
   };
 

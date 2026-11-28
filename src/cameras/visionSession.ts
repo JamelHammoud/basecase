@@ -257,14 +257,14 @@ async function prepareCameraModel(camera: string, modelId: string, current: () =
   }
 }
 
-export async function configureVisionCamera(
-  camera: string,
-  options: { modelId: string; fps?: number; continuous?: boolean; replaceModelId?: string },
-) {
-  const current = await prepareCameraModel(camera, options.modelId, () => true);
+interface CameraConfiguration {
+  modelId: string;
+  fps?: number;
+  continuous?: boolean;
+  replaceModelId?: string;
+}
 
-  if (!current()) return;
-
+function commitCameraBaseline(camera: string, options: CameraConfiguration) {
   baselines.set(identity(camera, options.modelId), {
     camera,
     modelId: options.modelId,
@@ -282,6 +282,12 @@ export async function configureVisionCamera(
   }
 
   commitCameraAssignment(camera, options.modelId);
+}
+
+export async function configureVisionCamera(camera: string, options: CameraConfiguration) {
+  const current = await prepareCameraModel(camera, options.modelId, () => true);
+
+  if (current()) commitCameraBaseline(camera, options);
 }
 
 export async function acquireVisionCamera(
@@ -319,9 +325,13 @@ export async function acquireVisionCamera(
 }
 
 export async function ensureVisionCamera(camera: string): Promise<void> {
-  if ([...baselines.values()].some((assignment) => assignment.camera === camera)) return;
+  const unconfigured = () => ![...baselines.values()].some((assignment) => assignment.camera === camera);
 
-  await configureVisionCamera(camera, { modelId: DEFAULT_MODEL, continuous: false });
+  if (!unconfigured()) return;
+
+  const current = await prepareCameraModel(camera, DEFAULT_MODEL, unconfigured);
+
+  if (current()) commitCameraBaseline(camera, { modelId: DEFAULT_MODEL, continuous: false });
 }
 
 export interface VisionFrameConnection {

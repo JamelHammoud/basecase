@@ -1631,3 +1631,24 @@ Completed no-change repair and doctor sessions now retain their existing recover
 The regression uses real Git worktrees, the real recovery store and the real retained-evidence reader with a controlled agent and publisher. With the former unconditional clearing restored, the two new repair and doctor cases fail because their recovery records are null, and 24 neighboring tests pass. The candidate retains the full notes beyond the ordinary log excerpt, the handoff, a referenced diagnostic file and the continuation thread, then removes the retained worktree after a later publishing result. Evidence-reader and lane tests separately cover absent files, unreadable evidence, bounded findings and handoffs, completed workers and unchanged cooldown. No app test, platform declaration, assertion, quarantine or timeout is changed.
 
 The doctor requested `gh run rerun 46142817350 --failed` once. Attempt 2 was still in progress at the last observation. It is an operational observation, not validation of this local candidate. The original unit and browser failures remain unresolved, and previously deleted scratch files cannot be recovered by this change. Baseline and candidate check logs and the completed session's result are referenced by the task handoff.
+
+
+## Coverage replacement and fixture ownership lessons
+
+The week ending 28 November 2026 repeated two mistakes despite existing coverage-preservation and test-speed rules. These lessons strengthen the shared testing contract and repair briefs without adding a publication check, wait or test run.
+
+### Preserve the tested boundary
+
+Review of [#2183](https://github.com/JamelHammoud/basecase/pull/2183#issuecomment-7234506607) restored the removed rendered-camera browser declaration and still found the hosted delivery failure unresolved. Review of [#2189](https://github.com/JamelHammoud/basecase/pull/2189#issuecomment-7235905257) again restored full-studio assertions and the unchanged #992 exclusion. Compiled-hook and real-worker tests establish useful source regressions but do not exercise studio startup, visible frames or overlays. [Camera evidence](testing-cameras.md#camera-inference-rebuild) retains the integration coverage and hosted limits.
+
+The shared rule now requires a mapping from removed behavior to surviving assertions at the same boundary. Repair and doctor briefs use that rule. The existing quarantine guard cannot detect assertion deletion, and a declaration-count check cannot establish equivalent coverage after a split, rename or replacement. Semantic equivalence remains part of the existing review rather than a new gate. This lesson changes no camera assertion or exclusion and claims no hosted recovery.
+
+### Own partial setup and every attempt
+
+Review of [#2180](https://github.com/JamelHammoud/basecase/pull/2180#issuecomment-7233101240) fixed browser leaks after Library or launch failures and preserved setup errors when cleanup rejected. Review of [#2181](https://github.com/JamelHammoud/basecase/pull/2181#issuecomment-7233352458) found stale cleanup handles across attempts and cleanup that stopped before releasing remaining resources. [#2192](https://github.com/JamelHammoud/basecase/pull/2192) independently repaired parallel allocation startup leaking successful siblings, including resources acquired after another startup failed.
+
+The shared fixture contract now names acquisition-time cleanup registration, late acquisition, parallel partial failure, cleanup rejection and attempt isolation. Existing `tools/testing/harnessLifetime.test.mjs` and `tools/testing/networkRobotFixture.test.mjs` cover their respective ownership paths. [Allocation ownership evidence](performance-assembly.md#allocation-fixture-ownership-on-check-46121646244) retains the six controlled allocation cases. Future ownership repairs seed their relevant failure paths in these existing suites. A universal syntax check cannot establish ownership across asynchronous fixture APIs. No new runtime or test behavior is claimed here.
+
+### Build median and existing fixes
+
+The supplied digest reports build median opened-to-merged time rising from 0.76 to 7.09 hours. [#2099](https://github.com/JamelHammoud/basecase/pull/2099) identifies step #2051 losing its recovery opportunity when a provider refusal consumed its attempt, and adds a seeded repeated-wait regression. [#2100](https://github.com/JamelHammoud/basecase/pull/2100) identifies weekly-only quota responses being rejected while reviews stayed paused, with parser regressions. Both fixes are already merged and the loop guide records their behavior. They already target build continuation and review availability, so this lesson does not duplicate them. The supplied aggregate and incidents do not quantify how much either cause contributed to the median or establish a post-fix improvement.

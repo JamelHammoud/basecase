@@ -2,10 +2,37 @@ import { readFile } from 'node:fs/promises';
 import { expect, inject, it } from 'vitest';
 import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { openKitScene } from './kitScene';
-import { stubKitGuideWorker } from './kitGuideWorker';
+import { kitGuideReply, stubKitGuideWorker } from './kitGuideWorker';
 import { kitArmScene } from '../src/kit/entry.fixtures';
+import { guideFingerprint } from '../src/guide/guideFingerprint';
 import { openApp, partCount } from './harness';
 import type { KitManifest } from '../src/kit/types';
+
+function exportScene() {
+  const scene = kitArmScene();
+  const guideId = 'kit-source-guide';
+  const generatedAt = '2026-11-16T00:00:00.000Z';
+  const guide = kitGuideReply({
+    guideId,
+    title: scene.name,
+    parts: scene.parts,
+    partKeys: Object.fromEntries(scene.parts.map((part) => [part.id, part.id])),
+    project: scene.project,
+    date: generatedAt,
+    mark: '',
+  });
+
+  scene.project.buildGuide = {
+    id: guideId,
+    pages: guide.pages,
+    steps: guide.plan.steps.length,
+    generatedAt,
+    fingerprint: guideFingerprint(scene.name, scene.parts, scene.project),
+    coverDataUrl: guide.coverDataUrl,
+  };
+
+  return scene;
+}
 
 it.each(['desktop', 'web'])(
   'downloads a reconciled kit through Export on %s with matching packing, guide, servo map and 3MF mesh',
@@ -13,7 +40,7 @@ it.each(['desktop', 'web'])(
     const app = await openApp();
 
     try {
-      const scene = kitArmScene();
+      const scene = exportScene();
       const guides = await stubKitGuideWorker(app.page);
 
       await openKitScene(app.page, scene, surface === 'web' ? inject('webUrl') : undefined);
@@ -66,6 +93,7 @@ it.each(['desktop', 'web'])(
       expect(manifest.packing.some((row) => row.step !== null && row.module !== null)).toBe(true);
       expect(strFromU8(files['build-guide.html'])).toContain('Kit arm');
       expect(guides).toHaveLength(1);
+      expect(guides[0].job.project.buildGuide).toEqual(scene.project.buildGuide);
       expect(guides[0].job.parts.map((part) => part.id)).toEqual(scene.parts.map((part) => part.id));
       expect(guides[0].job.project.joints).toEqual(scene.project.joints);
       expect(guides[0].job.order).toBeDefined();

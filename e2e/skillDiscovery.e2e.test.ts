@@ -111,13 +111,14 @@ it('keeps the skill link field usable from Train when Hub discovery is offline',
     await openQuad(app);
     await hub.close();
 
-    const discovery = app.page.waitForResponse((response) =>
-      new URL(response.url()).pathname.endsWith('/hub-find-skills'),
-    );
-
     await app.page.locator(shown('[data-testid="skill-row"]'), { hasText: 'Stand' }).first().click({ button: 'right' });
-    await app.page.getByRole('menuitem', { name: 'Install Skill', exact: true }).click();
-    expect(await (await discovery).json()).toEqual([]);
+
+    const [discovery] = await Promise.all([
+      app.page.waitForResponse((response) => new URL(response.url()).pathname.endsWith('/hub-find-skills')),
+      app.page.getByRole('menuitem', { name: 'Install Skill', exact: true }).click(),
+    ]);
+
+    expect(await discovery.json()).toEqual([]);
     expect(await app.page.getByTestId('published-skill').count()).toBe(0);
 
     const link = app.page.getByRole('textbox', { name: 'Skill link' });

@@ -1435,6 +1435,10 @@ At `bd4d286130f97803876ecea7d1f8bcbc5581486f`, [Check 46160172750](https://githu
 
 The logs do not establish shared recording, worker, model or persistence causes. There is no new exact-revision passing observation or source correction for these five declarations in this repair. Existing recording and Study owners and workbench owner #2021 retain their respective stages. All reference-result, travel, six-row grading, complete-design Apply, unreachable-placement refusal, zero-command and persistence assertions remain active with unchanged deadlines. Full job log `scratch/new-job-141025536028.log` and the complete assigned-job inventory are retained in `scratch/task-handoff.json` during repair.
 
+## Windows seeded trails on Check 46160172750
+
+At `bd4d286130f97803876ecea7d1f8bcbc5581486f`, [Check 46160172750](https://github.com/JamelHammoud/basecase/actions/runs/46160172750) Windows shard 17 misses the initial Checks row whose text ends in of 20 at `caseTrails.e2e.test.ts:46`, on both attempts. Opening all twenty trails and replaying a failed seed at its first trip have not started. The stack does not distinguish seeded evaluation from Checks result delivery. Existing Case ownership retains that boundary, with every seed, trail, replay and first-trip assertion active. No current-revision Windows pass, introducing merge or changed environment component is established. No Case source, deadline, retry or exclusion changes accompany this observation.
+
 ## Grip-force evidence
 
 The Case acceptance matrix uses the existing editable six-axis arm, its two prismatic jaws and generated rigid targets. It retains each jaw's normal force, the simultaneous total and its substep maximum through binary encoding and reference replay. Selected-object lift, continuous hold and released-placement assertions remain intact. Additional controls separate a lift that exceeds the ceiling, a force-controlled lift and insufficient closure that fails to hold the object.

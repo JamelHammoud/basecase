@@ -6,6 +6,7 @@ import type { SceneDocument } from './useSceneDocument';
 import type { ShowToast } from './types';
 import { loadStudyVisibility } from './studyVisibility';
 import { createStudySession } from '../study/client';
+import { prepareStudyMeshes } from '../study/meshFiles';
 import type { StudyRecord, StudyRow, StudyScene } from '../study/types';
 import { platformBridge } from '../utils/platformBridge';
 
@@ -23,8 +24,17 @@ export async function validateStudyPurchasing(record: StudyRecord, row: StudyRow
       purchases,
       evaluatedAt: new Date().toISOString(),
     });
+    const missing = scene.parts
+      .filter(
+        (part) =>
+          part.visible && part.role === 'solid' && part.kind !== 'image_plane' && !scene.triangles[part.id]?.length,
+      )
+      .map((part) => part.id);
+    const measured = missing.length
+      ? await session.refresh(await prepareStudyMeshes(scene, record.knobs), missing)
+      : scene;
     const current = await session.grade(
-      { ...scene, sourcing: snapshot },
+      { ...measured, sourcing: snapshot },
       { knobs: record.knobs, selection: row.selection, purchases: snapshot.purchases },
     );
 

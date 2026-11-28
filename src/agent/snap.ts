@@ -31,20 +31,22 @@ export const portsAt = (part: ScenePart): PortAt[] =>
   snapPorts(part).map((port) => ({ part: part.id, port, at: worldPort(part, port) }));
 
 function dependents(parts: ScenePart[], id: string): Set<string> {
+  const children = new Map<string, string[]>();
   const found = new Set([id]);
-  let grew = true;
 
-  while (grew) {
-    grew = false;
+  for (const part of parts) {
+    const target = part.mates?.at(-1)?.target;
 
-    for (const p of parts) {
-      const target = p.mates?.at(-1)?.target;
+    if (!target) continue;
 
-      if (target && found.has(target) && !found.has(p.id)) {
-        found.add(p.id);
-        grew = true;
-      }
-    }
+    const members = children.get(target);
+
+    if (members) members.push(part.id);
+    else children.set(target, [part.id]);
+  }
+
+  for (const parent of found) {
+    for (const child of children.get(parent) ?? []) found.add(child);
   }
 
   return found;

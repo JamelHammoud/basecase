@@ -137,17 +137,20 @@ function moduleGeometry(boxes: Record<string, Box>) {
 }
 
 function orderModules(drafts: Draft[], geometry: ReturnType<typeof moduleGeometry>): Draft[] {
-  const children = (id: string) =>
-    drafts
-      .filter((d) => d.parent === id)
-      .sort(
-        (a, b) =>
-          geometry.boundsOf(a.partIds).min[1] - geometry.boundsOf(b.partIds).min[1] || a.name.localeCompare(b.name),
-      );
+  const children = new Map<string, Draft[]>();
+
+  for (const draft of drafts) if (draft.parent !== null) appendGroup(children, draft.parent, draft);
+
   const out: Draft[] = [];
   const visit = (d: Draft) => {
     out.push(d);
-    children(d.id).forEach(visit);
+    children
+      .get(d.id)
+      ?.sort(
+        (a, b) =>
+          geometry.boundsOf(a.partIds).min[1] - geometry.boundsOf(b.partIds).min[1] || a.name.localeCompare(b.name),
+      )
+      .forEach(visit);
   };
 
   visit(drafts.find((d) => d.id === MAIN_MODULE)!);

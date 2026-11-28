@@ -9,6 +9,7 @@ covers:
   - src/components/operate/BodyMotionPreview.tsx
   - src/workspace/useBodyAnalysis.ts
   - src/reality/bodyMotion.ts
+  - src/reality/bodyMotionResponses.ts
 ---
 
 Check whether you could distinguish parameters that remain unresolved in a saved try using a short simulated motion.

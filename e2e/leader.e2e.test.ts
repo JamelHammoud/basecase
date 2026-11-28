@@ -1,9 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { fixtureRobots, withoutGripper } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT, type ProjectSettings, type RobotJoint } from '../src/types/robotics';
-import { openApp, partCount, shown, type App } from './harness';
+import { partCount, shown, type App } from './harness';
+import { appAttempt } from './appAttempt';
 
 let app: App;
+let attempt: ReturnType<typeof appAttempt> | undefined;
 
 interface Studio {
   load: (record: unknown) => void;
@@ -21,8 +23,9 @@ const tabs = () => app.page.evaluate(() => (window as unknown as { __studioTabs:
 const project = () =>
   app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.sceneRecord().project);
 
-beforeAll(async () => {
-  app = await openApp();
+beforeEach(async () => {
+  attempt = appAttempt(async () => undefined);
+  app = await attempt.ready;
   await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
     name: 'Desk Arm',
     parts: arm.parts,
@@ -30,8 +33,8 @@ beforeAll(async () => {
   });
 }, 120000);
 
-afterAll(async () => {
-  await app?.close();
+afterEach(async () => {
+  await attempt?.close();
 });
 
 describe('Make a Leader', () => {

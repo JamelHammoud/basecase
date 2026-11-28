@@ -167,3 +167,42 @@ describe('build guide module geometry', () => {
     ]);
   });
 });
+
+describe('build guide module hierarchy', () => {
+  it('orders nested modules after folding and reads changed parents on the next call', () => {
+    const scene = fixture(4);
+
+    scene.parts = scene.parts.filter((p) => p.id !== '1-2');
+    scene.joints = Array.from({ length: 4 }, (_, i) => ({
+      id: `joint-${i}`,
+      name: ['arm', 'torso', 'head', 'leg'][i],
+      type: 'revolute',
+      parentJoint: [undefined, 'joint-0', 'joint-1', 'joint-0'][i],
+      parent: [],
+      child: scene.parts.filter((p) => p.group!.id === String(i)).map((p) => p.id),
+      origin: [0, 0, 0],
+      axis: [1, 0, 0],
+    }));
+
+    const before = structuredClone(scene);
+    const modules = buildModules(scene, scene.parts);
+
+    expect(modules.map((m) => [m.id, m.parent])).toEqual([
+      ['main', null],
+      ['module:joint-0', 'main'],
+      ['module:joint-2', 'module:joint-0'],
+      ['module:joint-3', 'module:joint-0'],
+    ]);
+    expect(modules[1].partIds).toEqual(['0-0', '0-1', '0-2', '1-0', '1-1']);
+    expect(scene).toEqual(before);
+
+    scene.joints[3].parentJoint = undefined;
+
+    expect(buildModules(scene, scene.parts).map((m) => [m.id, m.parent])).toEqual([
+      ['main', null],
+      ['module:joint-0', 'main'],
+      ['module:joint-2', 'module:joint-0'],
+      ['module:joint-3', 'main'],
+    ]);
+  });
+});

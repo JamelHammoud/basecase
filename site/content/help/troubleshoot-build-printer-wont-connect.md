@@ -30,6 +30,18 @@ covers:
 
 Basecase shows a message beside **Test Connection** or in Print mode if it can't reach a printer or send it a plate. Find your message below and follow its steps.
 
+## A saved model or nozzle is no longer supported
+
+Saved selections keep their identities after a profile refresh. An unavailable model keeps its saved id selected but disabled. A nozzle without matching settings stays selected until you change it.
+
+1. In **Settings** ▸ **Printers**, click your printer's name.
+2. In **Model**, choose a [supported printer](/help/add-a-printer).
+3. If **Nozzle** appears, choose 0.4 mm.
+
+![Settings with a saved H3C model that is no longer supported](/help/add-a-printer/unavailable-model.png)
+
+![Settings with a 0.6 mm nozzle retained and 0.4 mm available](/help/add-a-printer/incompatible-nozzle.png)
+
 ## “Couldn’t reach the printer at …”
 
 The printer is off, asleep, or on a different network, or its address has changed.

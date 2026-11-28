@@ -17,7 +17,7 @@ export interface JobSpec {
 export function jobPrinter(setup: PrinterSetup, project: ProjectSettings): JobPrinter | null {
   const presets = setup.model.presets;
 
-  if (!presets || setup.model.id === 'custom') return null;
+  if (!presets || setup.model.id === 'custom' || !setup.model.nozzles.includes(setup.nozzle)) return null;
 
   const process = presets.processes.some((p) => p.name === project.printProcess)
     ? project.printProcess!

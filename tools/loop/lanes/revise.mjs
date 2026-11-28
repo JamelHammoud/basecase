@@ -15,7 +15,7 @@ import {
 import { HOME_CHECKOUT, OWNER_LOGIN, WORKTREES } from '../lib/paths.mjs';
 import { checkedRun } from '../lib/preflight.mjs';
 import { kindOf, REVISED_FIELDS } from '../lib/pull.mjs';
-import { entryFor, markLooked, recordAttempt } from '../lib/pullState.mjs';
+import { entryFor, markLooked, recordAttempt, saveRevisionHandoff } from '../lib/pullState.mjs';
 import { run } from '../lib/sh.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
 import { hasPendingDelivery } from '../lib/deliveryState.mjs';
@@ -29,7 +29,7 @@ export const schedule = {
   slots: 10,
   everySeconds: 60,
   labels: ['loop:revising'],
-  does: "Answers a failed review, a pull request's own Check failure or a comment from Jamel on its branch, and rebuilds a change from main after four failed attempts",
+  does: "Answers a failed review, a pull request's own Check failure or a comment from Jamel on its branch, and rebuilds from main after an unresolved revision or four failed attempts",
 };
 
 const MAX_ATTEMPTS = 4;
@@ -65,9 +65,10 @@ function needFor(pull) {
   const entry = entryFor(pull.number);
   const failing = pullReview(pull) === 'failure' || pullCheck(pull) === 'failure';
   const newHead = !entry.heads.includes(pull.headRefOid);
+  const handoff = !entry.rebuilt && entry.revisionHandoff?.head === pull.headRefOid ? entry.revisionHandoff : null;
 
-  if (failing && newHead && !conflictsWithMain(pull))
-    return { entry, reason: pullReview(pull) === 'failure' ? 'review' : 'check' };
+  if (failing && (newHead || handoff) && !conflictsWithMain(pull))
+    return { entry, handoff, reason: handoff?.reason ?? (pullReview(pull) === 'failure' ? 'review' : 'check') };
 
   return pull.updatedAt > entry.lastLook ? { entry, reason: 'maybe-jamel' } : null;
 }
@@ -111,7 +112,8 @@ function revisePull(pull, { reason, comments, jamelAt }, log) {
       return;
     }
 
-    const prompt = `Revise pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${evidence(pull, reason, comments)}`;
+    const context = evidence(pull, reason, comments);
+    const prompt = `Revise pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${context}`;
     const result = checkedRun({
       cwd: worktree.dir,
       name: 'revise',
@@ -127,7 +129,7 @@ function revisePull(pull, { reason, comments, jamelAt }, log) {
     if (!result.ok || !result.output.changed) {
       log(`#${pull.number}: nothing to change: ${String(result.error ?? result.output.notes).slice(0, 400)}`);
 
-      return;
+      return result.ok ? { notes: result.output.notes, context } : null;
     }
 
     publishRevision(pull, { dir: worktree.dir, output: result.output });
@@ -149,13 +151,37 @@ function handle(pull, need, log) {
   editPullLabels(pull.number, { add: [REVISING] });
 
   try {
-    if (need.entry.attempts >= MAX_ATTEMPTS && !need.entry.rebuilt && reason !== 'jamel') {
+    if (!need.handoff && need.entry.attempts >= MAX_ATTEMPTS && !need.entry.rebuilt && reason !== 'jamel') {
       rebuild(pull, { comments, stuck: 'went four rounds without passing review', log });
 
       return;
     }
 
-    revisePull(pull, { reason, comments, jamelAt: latestJamel }, log);
+    const unresolved = need.handoff ?? revisePull(pull, { reason, comments, jamelAt: latestJamel }, log);
+
+    if (!unresolved || need.entry.rebuilt || reason === 'jamel') return;
+
+    const handoff = need.handoff ?? {
+      ...unresolved,
+      head: pull.headRefOid,
+      reason,
+      createdAt: new Date().toISOString(),
+    };
+
+    saveRevisionHandoff(pull.number, handoff);
+    rebuild(pull, {
+      comments: [
+        ...comments,
+        {
+          author: 'Revision lane',
+          createdAt: handoff.createdAt,
+          body: `The revision completed without a change:\n\n${handoff.notes}\n\n${handoff.context}`,
+        },
+      ],
+      stuck: `completed a revision without resolving its failed ${reason}`,
+      log,
+    });
+    saveRevisionHandoff(pull.number, null);
   } finally {
     editPullLabels(pull.number, { remove: [REVISING] });
   }

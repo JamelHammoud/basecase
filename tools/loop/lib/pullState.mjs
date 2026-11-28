@@ -8,6 +8,7 @@ const pulls = store('pulls', {
   conflictFails: 0,
   refreshed: [],
   rebuilt: false,
+  revisionHandoff: null,
   judged: null,
 });
 
@@ -26,6 +27,8 @@ export const judgedAt = (number, sha) => {
 };
 
 export const markRebuilt = (number) => pulls.update(number, () => ({ rebuilt: true }));
+
+export const saveRevisionHandoff = (number, revisionHandoff) => pulls.update(number, () => ({ revisionHandoff }));
 
 export const markRefreshed = (number, head) =>
   pulls.update(number, (entry) => ({ refreshed: [...entry.refreshed, head].slice(-20) }));

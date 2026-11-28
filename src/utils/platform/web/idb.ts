@@ -81,6 +81,44 @@ export async function idbDelete(name: WebStore, key: string): Promise<void> {
 
 type Change = { store: WebStore; key: string } & ({ kind: 'put'; value: unknown } | { kind: 'delete' });
 
+export async function idbModify<T, R>(options: {
+  stores: WebStore[];
+  store: WebStore;
+  key: string;
+  change: (value: T | undefined) => { changes: Change[]; result: R };
+}): Promise<R> {
+  const db = await openDb();
+  const transaction = db.transaction(options.stores, 'readwrite');
+
+  return new Promise((resolve, reject) => {
+    let result: R;
+    let failure: unknown;
+
+    transaction.oncomplete = () => resolve(result);
+    transaction.onabort = () => reject(failure ?? transaction.error);
+
+    const request = transaction.objectStore(options.store).get(options.key);
+
+    request.onsuccess = () => {
+      try {
+        const update = options.change(request.result);
+
+        result = update.result;
+
+        for (const change of update.changes) {
+          const store = transaction.objectStore(change.store);
+
+          if (change.kind === 'delete') store.delete(change.key);
+          else store.put(change.value, change.key);
+        }
+      } catch (error) {
+        failure = error;
+        transaction.abort();
+      }
+    };
+  });
+}
+
 export async function idbWrite(changes: Change[]): Promise<void> {
   const db = await openDb();
   const transaction = db.transaction([...new Set(changes.map((change) => change.store))], 'readwrite');

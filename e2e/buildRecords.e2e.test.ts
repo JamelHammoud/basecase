@@ -6,6 +6,7 @@ import { kitArmScene } from '../src/kit/entry.fixtures';
 import { openKitScene } from './kitScene';
 import { retainSelfContactSceneFiles } from './selfContactScene';
 import type { BuildRecord } from '../src/kit/buildRecords';
+import type { SavedSceneRecord } from '../src/types/robotics';
 
 function frozenBuild(page: Page) {
   return page.evaluate(() =>
@@ -23,8 +24,17 @@ it('resumes two independent frozen builds through Build after reload and source 
   const app = await openApp();
 
   try {
-    await retainSelfContactSceneFiles(app.page);
-    await openKitScene(app.page, kitArmScene());
+    const scene: SavedSceneRecord = {
+      ...kitArmScene(),
+      id: 'frozen-build-source',
+      globalGoal: '',
+      annotations: [],
+      updatedAt: '2026-11-16T00:00:00.000Z',
+      partCount: 2,
+    };
+
+    await retainSelfContactSceneFiles(app.page, [scene]);
+    await openKitScene(app.page, scene);
     await app.page.getByRole('tab', { name: 'Build', exact: true }).click();
 
     const create = async (name: string) => {

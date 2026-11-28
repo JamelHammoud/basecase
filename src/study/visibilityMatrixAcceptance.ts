@@ -26,15 +26,8 @@ function targetRegion(frame: CameraTrainingFrame) {
 let stage: LiveStage | null = null;
 
 export async function visibilityMatrixChecks(
-  input: (Awaited<ReturnType<typeof visibilityMatrixInput>> & { mesh: number[] }) | { close: true },
+  input: Awaited<ReturnType<typeof visibilityMatrixInput>> & { mesh: number[] },
 ) {
-  if ('close' in input) {
-    stage?.dispose();
-    stage = null;
-
-    return null;
-  }
-
   const fixture = input.scene;
   const regions: Array<number[] | null> = [];
 

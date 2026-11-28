@@ -1,5 +1,9 @@
 import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { purchasing } from './buildAllocationScene';
 import { labelFixture } from '../src/print/labels/label.fixtures';
 import { openApp, partCount, type App } from './harness';
 
@@ -369,6 +373,24 @@ async function addFoundPrinters() {
 }
 
 describe('printing in build order on every printer', () => {
+  let directory: string;
+
+  beforeEach(async () => {
+    directory = fs.mkdtempSync(path.join(os.tmpdir(), 'print-fleet-'));
+    await app.close();
+    app = await openApp();
+    sends.length = 0;
+    await purchasing(app.page, directory);
+  });
+
+  afterEach(async () => {
+    try {
+      await app.close();
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it('puts the base on plate 1 and gives two idle printers different plates with Start Next', async () => {
     await stubPrinters();
     await app.page.evaluate((parts) => {

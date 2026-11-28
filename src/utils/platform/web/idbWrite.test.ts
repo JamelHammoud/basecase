@@ -5,7 +5,7 @@ function transactionFixture() {
   const started = new Promise<void>((resolve) => {
     start = resolve;
   });
-  const records = { put: vi.fn(), delete: vi.fn() };
+  const records = { put: vi.fn(), delete: vi.fn(), get: vi.fn() };
   const summaries = { put: vi.fn(), delete: vi.fn() };
   const stores = { scenes: records, sceneSummaries: summaries };
   const transaction = {
@@ -100,4 +100,65 @@ describe('atomic web database writes', () => {
     transaction.oncomplete?.();
     await write;
   });
+});
+
+it('reads and updates a scene and summary inside the same write transaction', async () => {
+  const { transaction, db, records, summaries, started } = transactionFixture();
+  const reading = { result: { parts: [25] }, onsuccess: null as (() => void) | null };
+  const { idbModify } = await import('./idb');
+
+  records.get.mockReturnValue(reading);
+
+  let committed = false;
+  const pending = idbModify<{ parts: number[] }, number>({
+    stores: ['scenes', 'sceneSummaries'],
+    store: 'scenes',
+    key: 'arm',
+    change: (value) => ({
+      changes: [
+        { kind: 'put', store: 'scenes', key: 'arm', value: { ...value, preview: 'new' } },
+        { kind: 'put', store: 'sceneSummaries', key: 'arm', value: { partCount: value!.parts.length } },
+      ],
+      result: value!.parts[0],
+    }),
+  }).then((result) => {
+    committed = true;
+
+    return result;
+  });
+
+  await started;
+  expect(db.transaction).toHaveBeenCalledExactlyOnceWith(['scenes', 'sceneSummaries'], 'readwrite');
+  expect(records.get).toHaveBeenCalledExactlyOnceWith('arm');
+  expect(records.put).not.toHaveBeenCalled();
+  reading.onsuccess?.();
+  expect(records.put).toHaveBeenCalledExactlyOnceWith({ parts: [25], preview: 'new' }, 'arm');
+  expect(summaries.put).toHaveBeenCalledExactlyOnceWith({ partCount: 1 }, 'arm');
+  expect(committed).toBe(false);
+  transaction.oncomplete?.();
+  expect(await pending).toBe(25);
+});
+
+it('rejects an aborted read-modify-write without publishing its result', async () => {
+  const { transaction, records, started } = transactionFixture();
+  const reading = { result: undefined, onsuccess: null as (() => void) | null };
+  const { idbModify } = await import('./idb');
+
+  records.get.mockReturnValue(reading);
+
+  const pending = idbModify({
+    stores: ['scenes'],
+    store: 'scenes',
+    key: 'arm',
+    change: () => {
+      throw new Error('cannot clone');
+    },
+  });
+  const rejected = expect(pending).rejects.toThrow('cannot clone');
+
+  await started;
+  reading.onsuccess?.();
+  expect(transaction.abort).toHaveBeenCalledExactlyOnceWith();
+  transaction.onabort?.();
+  await rejected;
 });

@@ -2,7 +2,7 @@ import { checkedSceneHistory } from '../../../../electron/library/sceneHistory.m
 import type { VersionedSceneRecord } from '../../../types/sceneHistory';
 import type { SavedSceneRecord, SavedSceneSummary } from '../../../types/robotics';
 import type { ScenePreviewPayload } from '../types';
-import { idbAll, idbGet, idbWrite } from './idb';
+import { idbAll, idbGet, idbModify, idbWrite } from './idb';
 import { webSceneHistory } from './webSceneHistoryClient';
 import { summarizeScene } from './sceneSummary';
 
@@ -82,11 +82,25 @@ export async function saveScene(payload: ScenePayload): Promise<SavedSceneSummar
 }
 
 export async function saveScenePreview({ id, previewDataUrl, sizeMm }: ScenePreviewPayload) {
-  const record = await idbGet<SavedSceneRecord>('scenes', id);
+  return idbModify<SavedSceneRecord, SavedSceneSummary | null>({
+    stores: ['scenes', 'sceneSummaries'],
+    store: 'scenes',
+    key: id,
+    change: (record) => {
+      if (!record) return { changes: [], result: null };
 
-  if (!record) return null;
+      const next = { ...record, previewDataUrl, sizeMm };
+      const summary = summarizeScene(next);
 
-  return writeScene({ ...record, previewDataUrl, sizeMm });
+      return {
+        changes: [
+          { kind: 'put', store: 'scenes', key: id, value: next },
+          { kind: 'put', store: 'sceneSummaries', key: id, value: summary },
+        ],
+        result: summary,
+      };
+    },
+  });
 }
 
 export async function deleteScene(id: string): Promise<SavedSceneSummary[]> {

@@ -352,7 +352,7 @@ Texture import state is bound to the selected immutable records, current scene p
 
 Import cancellation compares selected immutable records, scene records and baseline records. Recreating an array around the same records keeps the import active. Changing a record or choosing Cancel discards the late result. The browser walkthrough gates the real texture worker at startup, cancels through the Inspector and then loads the same image successfully.
 
-The combined texture, scale, undo/redo, save and reload declaration is quarantined on Linux and Windows through 28 November 2026 under [#2028](https://github.com/JamelHammoud/basecase/issues/2028). macOS retains it. Linux and Windows retain Original-first mixed-finish editing and the real asset, history and portable-file matrices. These do not replace the combined save and reload path on either excluded platform. [Reload failure evidence](../notes/performance-viewport.md#windows-appearance-reload) records the observed stage and restoration conditions.
+The former combined texture, scale, undo/redo, save and reload exclusions under [#2028](https://github.com/JamelHammoud/basecase/issues/2028) expired at 00:00 UTC on 28 November 2026. That declaration is active alongside Original-first mixed-finish editing and the real asset, history and portable-file matrices. Browser preview publication now preserves concurrent scene saves in one readwrite transaction. [Current persistence evidence](../notes/performance-workspace.md#preview-updates-preserve-concurrent-scene-saves) records the deterministic regression and Windows reload observation. [Earlier reload evidence](../notes/performance-viewport.md#windows-appearance-reload) remains historical.
 
 Captured Case object geometry, captured Study Cases and assigned Cases retain appearance asset references alongside scene parts. They count toward the same import budget before registration and commit. A removed scene source therefore cannot make a captured object lose its portable texture.
 
@@ -362,7 +362,7 @@ A selected SimReady mesh whose visual is absent from the local cache offers Down
 
 ### Replacement-finger coverage exclusions
 
-Only `short-cylinder-v` in the replacement-finger production matrix is quarantined on Linux and Windows through 28 November 2026 under [#2014](https://github.com/JamelHammoud/basecase/issues/2014). The other 19 geometry, grasp, replay and archive cases remain active, and macOS retains the complete matrix. The selected-cylinder saved-grasp browser declaration is separately quarantined only on Windows through that date under the same owner. Its authoring story, geometry, lifecycle and manufacturing tests remain active. [Distinct verdict and recording evidence](../notes/testing-simulate.md#gripper-and-tendon-exclusions-on-21-november) records the gaps without claiming a shared cause.
+The former short-cylinder-v and Windows saved-grasp exclusions under [#2014](https://github.com/JamelHammoud/basecase/issues/2014) expired at 00:00 UTC on 28 November 2026. All twenty geometry, grasp, replay and archive cases and the saved-grasp browser declaration are active, alongside authoring, geometry, lifecycle and manufacturing tests. [Current x64 simulation evidence](../notes/testing-simulate.md#short-cylinder-grasp-on-28-november) records the reproducible unresolved result. [Earlier verdict and recording evidence](../notes/testing-simulate.md#gripper-and-tendon-exclusions-on-21-november) keeps the numerical contract and browser recording boundaries separate.
 
 ### Selection during agent loading
 

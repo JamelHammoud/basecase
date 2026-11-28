@@ -1,3 +1,7 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { purchasing } from './buildAllocationScene';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { shapeKey } from '../src/print/shapeKey';
 import { DEFAULT_PROJECT, type PrintRecord, type ScenePart } from '../src/types/robotics';
@@ -16,6 +20,7 @@ interface Studio {
 }
 
 let app: App;
+let directory: string;
 
 const box = (id: string, y: number): ScenePart => ({
   id,
@@ -72,13 +77,19 @@ async function expectRepairPlan() {
 }
 
 beforeEach(async () => {
+  directory = fs.mkdtempSync(path.join(os.tmpdir(), 'repair-print-'));
   app = await openApp();
+  await purchasing(app.page, directory);
   await app.page.evaluate((scene) => (window as unknown as { __studio: Studio }).__studio.load(scene), record);
   await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Layers"]')).first().click();
 });
 
 afterEach(async () => {
-  await app?.close();
+  try {
+    await app?.close();
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 describe('Repair', () => {

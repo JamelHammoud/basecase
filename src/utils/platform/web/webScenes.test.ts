@@ -5,13 +5,13 @@ import { meshWorldAsset } from '../../../cases/worldAssets.fixtures';
 import { hashWorldAsset, serializeWorldAssets } from '../../../cases/worldAssets';
 import type { SavedSceneRecord } from '../../../types/robotics';
 import { webSceneHistory } from './webSceneHistoryClient';
-import { idbAll, idbGet, idbWrite } from './idb';
+import { idbAll, idbGet, idbModify, idbWrite } from './idb';
 import { summarizeScene } from './sceneSummary';
 import { deleteScene, getScene, listScenes, saveScene, saveScenePreview } from './webScenes';
 
 vi.mock('./webSceneHistoryClient', () => ({ webSceneHistory: { call: vi.fn() } }));
 
-vi.mock('./idb', () => ({ idbAll: vi.fn(), idbGet: vi.fn(), idbWrite: vi.fn() }));
+vi.mock('./idb', () => ({ idbAll: vi.fn(), idbGet: vi.fn(), idbModify: vi.fn(), idbWrite: vi.fn() }));
 
 const record = {
   id: 'arm',
@@ -25,7 +25,16 @@ const record = {
   sizeMm: [100, 200, 300],
 } as unknown as SavedSceneRecord;
 
-beforeEach(() => vi.resetAllMocks());
+beforeEach(() => {
+  vi.resetAllMocks();
+  vi.mocked(idbModify).mockImplementation(async (options) => {
+    const update = options.change(await idbGet(options.store, options.key));
+
+    if (update.changes.length) await idbWrite(update.changes);
+
+    return update.result;
+  });
+});
 
 describe('web scene summaries', () => {
   it('lists summaries newest first without reading full scene records', async () => {
@@ -146,4 +155,55 @@ it('keeps version content and head in the same browser scene transaction and out
   vi.mocked(webSceneHistory.call).mockRejectedValueOnce(new Error('Aborted transaction'));
 
   await expect(saveScene({ id: 'versioned', name: 'Arm', ...scene, history })).rejects.toThrow('Aborted transaction');
+});
+
+it('keeps a concurrent scene save when a preview update is waiting to read', async () => {
+  let saved = record;
+  let read!: () => void;
+  const reading = new Promise<void>((resolve) => {
+    read = resolve;
+  });
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  vi.mocked(idbGet).mockImplementation(async (store) => {
+    if (store === 'sceneSummaries') return summarizeScene(saved);
+
+    const previous = saved;
+
+    read();
+    await pending;
+
+    return previous;
+  });
+  vi.mocked(idbWrite).mockImplementation(async (changes) => {
+    const scene = changes.find((change) => change.store === 'scenes' && change.kind === 'put');
+
+    if (scene?.kind === 'put') saved = scene.value as SavedSceneRecord;
+  });
+  vi.mocked(idbModify).mockImplementation(async (options) => {
+    read();
+    await pending;
+
+    const update = options.change(saved);
+
+    await idbWrite(update.changes);
+
+    return update.result;
+  });
+
+  const preview = saveScenePreview({ id: record.id, previewDataUrl: 'data:image/png;base64,new' });
+
+  await reading;
+  await saveScene({ ...record, name: 'Edited arm', parts: record.parts.slice(0, 1), keepUpdatedAt: true });
+  release();
+  await preview;
+
+  expect(saved.name).toBe('Edited arm');
+  expect(saved.parts).toEqual(record.parts.slice(0, 1));
+  expect(saved.previewDataUrl).toBe('data:image/png;base64,new');
+  expect(saved.updatedAt).toBe(record.updatedAt);
+  expect(vi.mocked(idbWrite).mock.lastCall?.[0][1]).toMatchObject({ value: summarizeScene(saved) });
 });

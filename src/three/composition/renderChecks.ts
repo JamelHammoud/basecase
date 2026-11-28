@@ -244,14 +244,14 @@ async function compositionAlpha() {
       hfovDeg: 60,
     },
   };
-  const result = await renderCompositionJob({
+  const result = await renderCheckJob({
     snapshot: { parts: [cover, hidden, reference], pose: {} },
     settings,
     meshes: {},
   });
   const decoded = await decode(result.png);
 
-  return { center: decoded.pixels[(32 * 64 + 32) * 4 + 3], corner: decoded.pixels[3] };
+  return { center: decoded.pixels[(32 * 64 + 32) * 4 + 3], corner: decoded.pixels[3], metrics: result.metrics };
 }
 
 async function warmComposition() {

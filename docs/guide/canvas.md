@@ -337,7 +337,7 @@ The former Windows composed-PNG and narrow-canvas exclusions under [#2022](https
 
 ### Linux composition renderer coverage
 
-The former Linux whole-file exclusion for `composition/render.test.ts` under [#2022](https://github.com/JamelHammoud/basecase/issues/2022) expired at 00:00 UTC on 28 November 2026. All 13 renderer assertions are active on every platform. Composition scene, settings, client, workspace lifecycle and browser declarations also remain active. [Separate rendering and setup evidence](../notes/performance-viewport.md#linux-composition-renderer-deadlines) records the earlier callback and worker-setup failures without establishing current completion.
+The former Linux whole-file exclusion for `composition/render.test.ts` under [#2022](https://github.com/JamelHammoud/basecase/issues/2022) expired at 00:00 UTC on 28 November 2026. All 13 renderer assertions are active on every platform. The scalar-alpha case shares the stage prepared during setup, like the other renderer cases, instead of creating a second WebGL context and RoomEnvironment inside its five-second callback. It retains the exact center-alpha bounds, transparent corner and hidden-asset and reference inputs, and writes its existing renderer metrics to `scratch/composition-alpha.json`. Composition scene, settings, client, workspace lifecycle and browser declarations also remain active. [Current alpha evidence](../notes/performance-viewport.md#scalar-alpha-fixture-on-check-46134524354) separates this fixture correction from unverified hosted completion. [Earlier rendering and setup evidence](../notes/performance-viewport.md#linux-composition-renderer-deadlines) remains historical.
 
 ### Whole-scene reads, snapshots and print reports during agent edits
 

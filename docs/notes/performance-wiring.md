@@ -2,6 +2,14 @@
 
 Implementation: [Cable routing](../guide/build.md#performance-cable-routing). Shared requirements: [Performance](../guide/performance.md).
 
+## Containment queries prepare one endpoint
+
+The app-wide search for `crossesBox` and clearance `crosses` calls found identical-endpoint queries in ordered-stop validation and detour-corner rejection. Both bus and power routes reach them through `routePath`. Uncached containment now transforms the point and evaluates its relative motion bound once. Cached containment avoids a second prepared-point lookup. Ordinary segments keep independent endpoint preparation.
+
+The rotated-obstacle matrix in `routeClearance.test.ts` uses seven local x coordinates and two motion owners. Its 14 identical-endpoint queries match the results of distinct endpoint objects with the same data. Spies verify one transform and one bound evaluation per uncached query, compared with two each in the preceding implementation. This reduces those totals from 28 to 14. Cached queries retain one transform and bound evaluation on first use, while removing the second cache lookup. These are operation counts, without timing assertions or a claim about complete routing latency.
+
+The matrix covers interior, exterior and boundary points and preserves its inputs. It also checks different owners at identical coordinates against independent preparation, retaining different endpoint envelopes. Existing tests cover shrinking envelopes, nested bound queries, oriented visibility graphs, anchors, edits, undo and complete deterministic routes. No test deadline, retry or quarantine changes. No action, label or visible state changes, so the cable-routing help steps and screenshots remain accurate.
+
 ## Connector exits accumulate the nearest housing boundary
 
 The whole-app search for `ownerExitDistance` and local boundary distances found one housing-exit implementation. Both bus and power routes reach it through `routePath`. It retains the nearest boundary in axis order instead of building a flattened distance list from three axis-result lists. The outside-housing fast path still returns before this scan.

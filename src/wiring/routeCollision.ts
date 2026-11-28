@@ -87,9 +87,9 @@ function crossesPrepared(a: PortVec, b: PortVec, box: RouteObstacle, radii: [num
 
 export function crossesBox(start: RoutePoint, end: RoutePoint, box: RouteObstacle, bound: RelativeBound): boolean {
   const a = transformed(start.position, box.inverse);
-  const b = transformed(end.position, box.inverse);
+  const b = end === start ? a : transformed(end.position, box.inverse);
   const r0 = bound(start, box.id);
-  const r1 = bound(end, box.id);
+  const r1 = end === start ? r0 : bound(end, box.id);
 
   return crossesPrepared(a, b, box, [r0, r1]);
 }
@@ -111,7 +111,7 @@ export function routeClearance(bound: RelativeBound) {
   };
   const crosses = (start: RoutePoint, end: RoutePoint, box: RouteObstacle) => {
     const a = prepared(start, box);
-    const b = prepared(end, box);
+    const b = end === start ? a : prepared(end, box);
 
     return crossesPrepared(a.position, b.position, box, [a.radius, b.radius]);
   };

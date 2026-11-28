@@ -47,11 +47,37 @@ function Session(temporary = true) {
     project: DEFAULT_PROJECT,
     chatId: null,
   };
+  const firstEvent = vi.mocked(useEffectEvent).mock.calls.length;
   const autosave = useAutosave({ draft, active: true, pristine: false, unsaved: false, temporary });
-  const onDraft = vi.mocked(useEffectEvent).mock.calls[0][0] as (next: SceneDraft, pristine: boolean) => void;
+  const onDraft = vi.mocked(useEffectEvent).mock.calls[firstEvent][0] as (next: SceneDraft, pristine: boolean) => void;
 
   return { draft, autosave, onDraft };
 }
+
+it('retains temporary persistence across reopening until an authored edit', async () => {
+  const first = Session();
+
+  first.onDraft({ ...first.draft, project: { ...first.draft.project, buildGuide: guide('automatic') } }, false);
+  await first.autosave.flush();
+  expect(first.autosave.isTemporary()).toBe(true);
+
+  const reopened = Session(first.autosave.isTemporary());
+  const generated = { ...reopened.draft, project: { ...reopened.draft.project, buildGuide: guide('regenerated') } };
+
+  reopened.onDraft(generated, false);
+  await reopened.autosave.flush();
+  expect(platformBridge.saveSceneJson).not.toHaveBeenCalled();
+  reopened.onDraft({ ...generated, sceneName: 'My rover' }, false);
+  expect(reopened.autosave.isTemporary()).toBe(false);
+  await reopened.autosave.flush();
+  expect(platformBridge.saveSceneJson).toHaveBeenCalledTimes(1);
+
+  const saved = Session(reopened.autosave.isTemporary());
+
+  saved.onDraft({ ...saved.draft, project: { ...saved.draft.project, buildGuide: guide('later') } }, false);
+  await saved.autosave.flush();
+  expect(platformBridge.saveSceneJson).toHaveBeenCalledTimes(2);
+});
 
 it('keeps the first-launch scene unsaved through generated guides, then saves edits and subsequent guides', async () => {
   const { draft, autosave, onDraft } = Session();

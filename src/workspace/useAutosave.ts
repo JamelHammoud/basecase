@@ -172,6 +172,7 @@ export function useAutosave({ draft, active, pristine, unsaved, temporary }: Aut
   useEffect(() => () => stopTimers(), []);
 
   return {
+    isTemporary: () => temporaryRef.current,
     flush: async () => {
       await flush();
       await previews.refresh().catch(() => {});

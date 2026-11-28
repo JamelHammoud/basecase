@@ -38,6 +38,7 @@ export interface WorkspaceSeed {
   chat?: LaneChat;
   blank?: boolean;
   unsaved?: boolean;
+  temporary?: boolean;
   playCase?: string;
   openTry?: string;
 }

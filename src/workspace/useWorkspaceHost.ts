@@ -43,6 +43,7 @@ function useRegisterHandle({ core, agent, autosave, openTry }: HandleOptions) {
     event: agent.onEvent,
     openTry,
     snapshot: (): WorkspaceSeed => ({
+      temporary: autosave.isTemporary(),
       history: core.versions.historyRef.current,
       sceneId: scene.sceneId,
       sceneName: scene.sceneName,
@@ -205,7 +206,13 @@ export function useWorkspaceHost({ active, seed, core, agent, openTry }: HostOpt
     project: core.project,
     chatId: agent.current.chatId,
   };
-  const autosave = useAutosave({ draft, active, pristine, unsaved: !!seed?.unsaved, temporary: !!seed?.playCase });
+  const autosave = useAutosave({
+    draft,
+    active,
+    pristine,
+    unsaved: !!seed?.unsaved,
+    temporary: !!seed?.temporary || !!seed?.playCase,
+  });
 
   useRegisterHandle({ core, agent, autosave, openTry });
   useReportMeta({ core, agent, pristine });

@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { visionFrameSender } from './visionFrames';
+import { visionFrameSender as createFrameSender } from './visionFrames';
 
 const bitmap = () => ({ close: vi.fn() }) as unknown as ImageBitmap;
+const visionFrameSender = (capture: Parameters<typeof createFrameSender>[0]) => createFrameSender(capture, vi.fn());
 
 describe('vision camera frame producer', () => {
   it('caps each camera independently and transfers pixels directly through its worker port', async () => {
@@ -53,6 +54,63 @@ describe('vision camera frame producer', () => {
     await pending;
     expect(frame.close).toHaveBeenCalledOnce();
     expect(port.postMessage).not.toHaveBeenCalled();
+  });
+});
+
+describe('vision camera transfer failures', () => {
+  it('closes a rejected pending bitmap, reports its identity and permits the next scheduled transfer', async () => {
+    const made = [bitmap(), bitmap(), bitmap()];
+    let next = 0;
+    const report = vi.fn();
+    const sender = createFrameSender(async () => made[next++], report);
+    const postMessage = vi
+      .fn()
+      .mockImplementationOnce(() => undefined)
+      .mockImplementationOnce(() => {
+        throw new Error('Pending transfer failed.');
+      });
+    const port = { postMessage, close: vi.fn() } as unknown as MessagePort;
+
+    sender.connect(port);
+    sender.configure([{ camera: 'wrist', modelId: 'objects', fps: 10 }]);
+    await sender.send('wrist', 0);
+    await sender.send('wrist', 100);
+    expect(() =>
+      port.onmessage?.call(port, {
+        data: { type: 'result', result: { camera: 'wrist', modelId: 'objects' } },
+      } as MessageEvent),
+    ).not.toThrow();
+    expect(made[1].close).toHaveBeenCalledOnce();
+    expect(report).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ message: 'Pending transfer failed.' }), {
+      camera: 'wrist',
+      modelId: 'objects',
+      fps: 10,
+      frame: made[1],
+      timestamp: 100,
+    });
+    await sender.send('wrist', 200);
+    expect(postMessage).toHaveBeenLastCalledWith(expect.objectContaining({ frame: made[2] }), [made[2]]);
+    sender.close();
+  });
+
+  it('releases a rejected transfer and allows the next scheduled camera frame through', async () => {
+    const made = [bitmap(), bitmap()];
+    let next = 0;
+    const sender = visionFrameSender(async () => made[next++]);
+    const postMessage = vi.fn().mockImplementationOnce(() => {
+      throw new Error('Frame transfer failed.');
+    });
+    const port = { postMessage, close: vi.fn() } as unknown as MessagePort;
+
+    sender.connect(port);
+    sender.configure([{ camera: 'wrist', modelId: 'objects', fps: 10 }]);
+    await expect(sender.send('wrist', 0)).rejects.toThrow('Frame transfer failed.');
+    expect(made[0].close).toHaveBeenCalledOnce();
+    await sender.send('wrist', 100);
+    expect(postMessage).toHaveBeenCalledTimes(2);
+    expect(postMessage).toHaveBeenLastCalledWith(expect.objectContaining({ frame: made[1] }), [made[1]]);
+    expect(made[1].close).not.toHaveBeenCalled();
+    sender.close();
   });
 });
 

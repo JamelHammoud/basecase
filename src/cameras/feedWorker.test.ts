@@ -3,12 +3,13 @@ import type { FeedRequest } from './feedProtocol';
 import type { LiveJob } from './liveStage';
 import type { CameraView } from './views';
 
-const stage = vi.hoisted(() => ({ draw: vi.fn(), finish: vi.fn() }));
+const stage = vi.hoisted(() => ({ draw: vi.fn(), finish: vi.fn(), setScene: vi.fn() }));
 
 vi.mock('./liveStage', () => ({
   LiveStage: class {
     renderer = { getContext: () => ({ finish: stage.finish }) };
     setViews = vi.fn();
+    setScene = stage.setScene;
     draw = stage.draw;
   },
 }));
@@ -99,4 +100,63 @@ it('delivers rendered pixels to inference before transferring the visible tile a
     [expect.objectContaining({ pixels: true })],
   );
   expect(stage.finish).toHaveBeenCalled();
+});
+
+it('reports a failed inference transfer while retaining the rendered tile', async () => {
+  const port = {
+    postMessage: vi.fn(() => {
+      throw new Error('Frame transfer failed.');
+    }),
+    close: vi.fn(),
+  } as unknown as MessagePort;
+
+  send({ type: 'vision-port', port, timeOrigin: performance.timeOrigin });
+  send({ type: 'vision', assignments: [{ camera: 'wrist', modelId: 'objects', fps: 5, continuous: true }] });
+  send({ type: 'views', views: [{ key: 'wrist' } as CameraView], sizes: { wrist: [320, 240] } });
+  await vi.advanceTimersByTimeAsync(0);
+  expect(scope.postMessage).toHaveBeenCalledWith({ type: 'error', camera: 'wrist', message: 'Frame transfer failed.' });
+  expect(scope.postMessage).toHaveBeenCalledWith(
+    expect.objectContaining({ type: 'frame', frames: 1 }),
+    expect.any(Array),
+  );
+});
+
+it('reports a rejected pending transfer without stopping the feed and sends the next scheduled frame', async () => {
+  const port = { postMessage: vi.fn(), close: vi.fn() } as unknown as MessagePort;
+
+  send({ type: 'vision-port', port, timeOrigin: performance.timeOrigin });
+  send({ type: 'vision', assignments: [{ camera: 'wrist', modelId: 'objects', fps: 5, continuous: true }] });
+  send({ type: 'views', views: [{ key: 'wrist' } as CameraView], sizes: { wrist: [320, 240] } });
+  await vi.advanceTimersByTimeAsync(200);
+  expect(port.postMessage).toHaveBeenCalledOnce();
+  vi.mocked(port.postMessage).mockImplementationOnce(() => {
+    throw new Error('Pending transfer failed.');
+  });
+  expect(() =>
+    port.onmessage?.call(port, {
+      data: { type: 'result', result: { camera: 'wrist', modelId: 'objects' } },
+    } as MessageEvent),
+  ).not.toThrow();
+  expect(scope.postMessage).toHaveBeenCalledWith({
+    type: 'error',
+    camera: 'wrist',
+    message: 'Pending transfer failed.',
+  });
+  await vi.advanceTimersByTimeAsync(200);
+  expect(port.postMessage).toHaveBeenCalledTimes(3);
+});
+
+it('reports a rejected render and scene preparation without an unhandled rejection', async () => {
+  send({ type: 'views', views: [{ key: 'wrist' } as CameraView], sizes: { wrist: [320, 240] } });
+  stage.draw.mockRejectedValueOnce(new Error('Camera draw failed.'));
+  await vi.advanceTimersByTimeAsync(0);
+  expect(scope.postMessage).toHaveBeenCalledWith({ type: 'error', camera: 'wrist', message: 'Camera draw failed.' });
+  stage.setScene.mockRejectedValueOnce(new Error('Scene preparation failed.'));
+  send({ type: 'scene', parts: [], world: [], meshes: {} });
+  await vi.advanceTimersByTimeAsync(0);
+  expect(scope.postMessage).toHaveBeenCalledWith({
+    type: 'error',
+    camera: 'wrist',
+    message: 'Scene preparation failed.',
+  });
 });

@@ -315,6 +315,8 @@ Measurements and limits: [Engineering calculations performance evidence](../note
 
 ## Performance: assembly and repair planning
 
+Build-guide scene groups, item quantities and insert-host lists append members through `guide/guideGroups.ts`, without copying earlier members on each insertion. Each planning call owns its lists. First-seen group order, member order, item samples and insert sequencing remain unchanged. Existing `guideModules.test.ts` and `guidePlan.test.ts` cover module folding, repeated assemblies, item quantities and insert-before-host steps. [Operation counts](../notes/performance-assembly.md#build-guide-groups-append-members).
+
 Build-guide rendering shares one cover-thumbnail promise between the early cover event and the completed guide. Each render owns its promise, so edited covers convert afresh. The conversion still starts when the cover is drawn, before step rendering finishes. `guide/renderGuide.test.ts` covers early delivery, shared conversion, changed covers and failure cleanup without a second conversion. [Evidence](../notes/performance-assembly.md#build-guide-cover-conversion-runs-once).
 
 Step-page packing measures header rows without generating discarded callout, thumbnail or tool HTML. Portrait drawings and mirror steps bypass that measurement because they require full panels. Final header rendering shares the same width and row calculation, preserving pagination across preview, PDF and kit documents. `guide/guidePlan.test.ts` retains real plan-to-document coverage, including mirrored subassemblies. [Comparison evidence](../notes/performance-assembly.md#guide-pagination-measures-headers-without-rendering-them).

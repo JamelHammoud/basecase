@@ -680,6 +680,19 @@ Focused Linux x64 [diagnostic 46101896182](https://github.com/JamelHammoud/basec
 
 The helper does not locate the palette input or wait for a matching command. It and the identical closed-linkage helper now reuse the existing `contactCommand` implementation, which opens the palette with ControlOrMeta+K, fills its mounted search input and clicks the matching command. Those are actionability waits on the ordinary controls, with no new timeout or retry. All authoring, motion, recording, encoded channel, history and refusal assertions remain. Candidate Linux browser completion is unmeasured. The gallery probe and x64 short-cylinder failures remain separate unresolved paths.
 
+## Short-cylinder recurrence on Check 46105490716
+
+Windows unit shard 1 again failed `replacement-finger production pipeline > short-cylinder-v retains geometry, simulated grasp evidence and archive identity` with margin -0.5 and no failed labels at `bec6b2749a7db3e429481c97e280d945bfa4a5fd` in [Check 46105490716](https://github.com/JamelHammoud/basecase/actions/runs/46105490716). This matches the previously reproduced x64 numerical verdict, not a deadline failure. The earlier controlled Linux failure at `c940e1474e604a3126c4c809d89a7b9f006b1351` and macOS passes at other revisions remain distinct platform evidence. The unit matrix sources did not change between last full green `04c830ec7de8eabf859ad011c6e143466529daab` and this failure. The green predates exclusion expiry.
+
+All twenty cases and their exact grip, replay and archive assertions remain active. At that failed revision, contact continuity remained unresolved under #2014. The [replacement-finger lift repair](#replacement-finger-lift-on-check-46105490716) records the subsequent contact-loss reproduction and local candidate results. The separate Windows browser declaration at that failed revision reached the saved-grasp list poll with zero retained tries. That does not establish the unit matrix's numerical cause or prove a shared persistence defect. The browser-attempt repair made no physics, controller, contract, fixture geometry, proof source hash or exclusion changes.
+
+
+## Closed-linkage attempt ownership on Check 46105490716
+
+Windows shard 2 at `bec6b2749a7db3e429481c97e280d945bfa4a5fd` first failed `runClosedLinkage` because simulation never reached playing at line 78. Its configured retry then failed earlier at insertion, finding ten parts where the same declaration requires five at line 46. The beforeAll browser retained the five inserted parts across attempts. This is demonstrated fixture contamination after an unresolved initial simulation-start failure.
+
+The same declaration now acquires and closes its existing app in beforeEach and afterEach. Every attempt begins with the original empty scene and still performs Sketch insertion, joined-link simulation, encoded recording checks and articulated reopening. No assertions, deadlines, configured retries or platforms change. Additional construction occurs only when another attempt runs. The failed retry spent its existing poll on an impossible five-part assertion, but no hosted candidate duration or rate is measured. Existing owner #1479 retains simulation-start attribution.
+
 ## Replacement-finger lift on Check 46105490716
 
 [Check 46105490716](https://github.com/JamelHammoud/basecase/actions/runs/46105490716), workload `bec6b2749a7db3e429481c97e280d945bfa4a5fd`, failed short-cylinder-v on Ubuntu x64 with margin -0.5. Source history since the last full green `04c830ec7de8eabf859ad011c6e143466529daab` does not identify a new change to the replacement matrix or contract. This continues the reproduced x64 contact failure described above, rather than establishing an environment change or a clean reverting merge.

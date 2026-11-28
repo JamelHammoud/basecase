@@ -1,5 +1,5 @@
 import loadMujoco from '@mujoco/mujoco';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { applyBodyFit } from '../src/reality/bodyModel';
 import { recordedBodyRun } from '../src/reality/bodyFit.fixtures';
 import type { BodyHistory } from '../src/reality/bodyTypes';
@@ -30,7 +30,7 @@ const history = (robot: string) =>
   app.page.evaluate((key) => (window as unknown as BodyWindow).__studio.bodyCalibrations()[key], robot);
 const checks = () => app.page.evaluate(() => (window as unknown as BodyWindow).__studio.bodyChecks());
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
   await app.page.addScriptTag({ content: FAKE_DAEMON_SCRIPT });
   await app.page.evaluate((record) => {
@@ -47,7 +47,7 @@ beforeAll(async () => {
   await app.page.locator(visible('button'), { hasText: /^Disconnect$/ }).waitFor({ timeout: 10000 });
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 

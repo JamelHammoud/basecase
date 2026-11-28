@@ -4,7 +4,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 11. Menus, Palette & Shortcuts
 
-Escape in the command palette closes only the palette and stops before workspace shortcuts. The composition walkthrough in `e2e/renderComposition.e2e.test.ts` covers dismissing the palette while keeping Render image open.
+While the command palette is mounted, its window capture listener owns Escape regardless of focus. It prevents the default action and stops later keyboard listeners before closing, then releases ownership on unmount. Enter and navigation retain their existing input behavior. `components/paletteKeys.test.ts` covers ownership, unrelated keys and cleanup. The composition walkthrough in `e2e/renderComposition.e2e.test.ts` tabs from search to a command before dismissing the palette while keeping Render image open. [Failure evidence](../notes/performance-viewport.md#palette-keyboard-ownership-on-check-46105490716) separates this defect from image delivery.
 
 Import World in ⌘K opens a captured GLB, glTF or OBJ world and any selected companions. Import and ordinary model drops add editable parts instead. A dropped SPZ or Gaussian PLY with a collider still opens New Case.
 

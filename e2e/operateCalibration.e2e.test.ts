@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { presetServo } from '../src/reality/servoEstimate';
 import { FAMILY_SERVOS } from '../src/reality/servoPart';
 import type { ServoCalibration, ServoLog } from '../src/reality/types';
@@ -71,7 +71,7 @@ async function expectMeasured(ids: string[]) {
   await expect.poll(() => models().getAttribute('data-status')).toBe(ids.length === 2 ? 'pass' : 'warn');
 }
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
   await app.page.addScriptTag({ content: FAKE_DAEMON_SCRIPT });
   await app.page.evaluate((record) => {
@@ -105,7 +105,7 @@ beforeAll(async () => {
   });
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { openApp } from '../../e2e/harness';
 import { appAttempt } from '../../e2e/appAttempt';
+import { supportSceneStorage } from '../../e2e/sketchSupport.helpers';
 
 const fixture = vi.hoisted(() => ({ launch: vi.fn(), diagnostics: vi.fn() }));
 
@@ -146,6 +147,32 @@ it('resets permissions before each fresh browser attempt without retaining cooki
   await second.close();
   expect(old.close).toHaveBeenCalledOnce();
   expect(fresh.close).toHaveBeenCalledOnce();
+});
+
+it.each([false, true])('retires the import app after scene-storage setup fails, cleanup rejects: %s', async (fails) => {
+  const setupError = new Error('Scene-storage setup failed');
+  const cleanupError = new Error('Browser cleanup failed');
+  const page = appPage();
+  const close = vi.fn().mockResolvedValue(undefined);
+
+  if (fails) close.mockRejectedValue(cleanupError);
+
+  fixture.launch.mockResolvedValue({ close, newPage: async () => page });
+
+  const attempt = appAttempt(async () => undefined);
+  const app = await attempt.ready;
+
+  page.route.mockRejectedValueOnce(setupError);
+  await expect(supportSceneStorage(app.page)).rejects.toBe(setupError);
+
+  const closing = attempt.close();
+
+  if (fails) await expect(closing).rejects.toBe(cleanupError);
+  else await closing;
+
+  await attempt.close().catch(() => undefined);
+  expect(close).toHaveBeenCalledOnce();
+  expectLibraryRemoved();
 });
 
 it('preserves a failed permission reset without launching a browser', async () => {

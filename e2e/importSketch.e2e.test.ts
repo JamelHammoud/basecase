@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
-import { openApp, shown, type App } from './harness';
+import { shown, type App } from './harness';
+import { appAttempt } from './appAttempt';
 import { plateTriangles } from '../src/sheet/sheet.fixtures';
 import { detectSheet } from '../src/sheet/detectSheet';
 import { binaryStl } from '../src/utils/stlBytes';
@@ -17,13 +18,15 @@ import {
 } from './sketchSupport.helpers';
 
 let app: App;
+let attempt: ReturnType<typeof appAttempt> | undefined;
 
 beforeEach(async () => {
-  app = await openApp();
+  attempt = appAttempt(async () => undefined);
+  app = await attempt.ready;
   await supportSceneStorage(app.page);
 });
 afterEach(async () => {
-  await app?.close();
+  await attempt?.close();
 });
 
 async function importPlate() {

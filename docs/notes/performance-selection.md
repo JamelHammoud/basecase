@@ -22,6 +22,16 @@ On 16 November 2026, a scratch Vitest comparison ran on an Apple M5 Pro, macOS a
 
 `workspace/selection.scale.test.ts` checks interleaved groups, selection order and every selection subset for click modifiers, with array-read budgets on 600-part fixtures. Group expansion previously took 271,500 reads and a fully selected group toggle through a click took 543,301 reads on those fixtures.
 
+## Group expansion skips unneeded member collection
+
+A whole-app search found one group-expansion helper, `src/utils/selection.ts`, shared by click and marquee selection through `workspace/useSelectionActions.ts`. Empty selections now return an independent result without scanning parts. Nonempty selections still discover selected groups in scene order. When that set is empty, no member scan runs. Grouped selections append matching ids directly to the result, removing the filtered part list and mapped id list. Original selection duplicates, missing ids, locked and hidden group members and scene-order additions retain their previous behavior.
+
+On a 600-part scene, array element reads fall from 1,200 to zero for an empty selection and from 1,200 to 600 for ungrouped or missing selected ids. `src/utils/selection.test.ts` asserts these counts with a proxy around a mixed grouped and ungrouped scene. It also checks result independence and duplicate preservation. Existing `workspace/selection.scale.test.ts` retains grouped ordering, locked and hidden members, click modifiers and linear scaling coverage. Grouped selections still read the scene twice, but temporary result lists fall from three to one. These are structural counts, not timings or an end-to-end latency claim.
+
+No user action, control, copy or visible state changes. Existing help remains accurate. No browser test, timeout, retry or quarantine changes.
+
+The local related run on 28 November 2026 passed 795 files and 5,889 tests, with one skipped file and test. `reality/bodyMotion.test.ts` failed its stationary-rover preview or refusal case at the existing 5,000 ms timeout. No baseline replay established that failure's cause, and this refinement does not change its timeout or quarantine. After correcting the new test table's argument shape, `check:changed` on `selection.test.ts` passed formatting, lint, site copy, types and all 16 tests. The earlier related run covered the shared implementation and grouped-selection tests. Preflight's coverage reminder for `site/content/help/align-and-spread-parts.md` was checked against the unchanged Align and Spread paths. Its steps, labels and screenshots remain accurate.
+
 ## Boolean drill picking accumulates surface gaps directly
 
 `booleans/picking.ts` removes the mapped and flattened gap arrays for each operand, the scored operand array and its ranking records. A single intersection array replaces one result array per probe. Probe geometry construction and Three.js raycasting remain unchanged.

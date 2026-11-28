@@ -64,6 +64,10 @@ export function selectionBounds(parts: ScenePart[]) {
 }
 
 export function expandToGroups(parts: ScenePart[], ids: string[]): string[] {
+  const expanded = [...ids];
+
+  if (!ids.length) return expanded;
+
   const selected = new Set(ids);
   const groupIds = new Set<string>();
 
@@ -71,9 +75,13 @@ export function expandToGroups(parts: ScenePart[], ids: string[]): string[] {
     if (selected.has(part.id) && part.group?.id) groupIds.add(part.group.id);
   }
 
-  const extra = parts.filter((p) => p.group && groupIds.has(p.group.id) && !selected.has(p.id)).map((p) => p.id);
+  if (!groupIds.size) return expanded;
 
-  return [...ids, ...extra];
+  for (const part of parts) {
+    if (part.group && groupIds.has(part.group.id) && !selected.has(part.id)) expanded.push(part.id);
+  }
+
+  return expanded;
 }
 
 function alignTarget(bounds: Map<ScenePart, ReturnType<typeof partBounds>>, axis: Axis, mode: AlignMode): number {

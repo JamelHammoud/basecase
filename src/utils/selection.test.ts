@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import type { ScenePart } from '../types/robotics';
-import { alignParts, distributeParts, halfExtents, type Axis } from './selection';
+import { alignParts, distributeParts, expandToGroups, halfExtents, type Axis } from './selection';
 
 const part = (o: Partial<ScenePart> & { id: string }): ScenePart => ({
   name: o.id,
@@ -16,6 +16,34 @@ const part = (o: Partial<ScenePart> & { id: string }): ScenePart => ({
   visible: true,
   locked: false,
   ...o,
+});
+
+describe('expandToGroups', () => {
+  it.each([{ ids: [] }, { ids: ['p1', 'missing', 'p1'] }, { ids: ['missing'] }])(
+    'skips member collection without selected groups: $ids',
+    ({ ids }) => {
+      let reads = 0;
+      const parts = new Proxy(
+        Array.from({ length: 600 }, (_, i) =>
+          part({ id: `p${i}`, group: i % 2 === 0 ? { id: 'group', name: 'Group' } : undefined }),
+        ),
+        {
+          get(target, key, receiver) {
+            if (typeof key === 'string' && /^\d+$/.test(key)) reads++;
+
+            return Reflect.get(target, key, receiver);
+          },
+        },
+      );
+      const expanded = expandToGroups(parts, ids);
+
+      expect(reads).toBe(ids.length ? parts.length : 0);
+      expect(expanded).toEqual(ids);
+      expect(expanded).not.toBe(ids);
+      expanded.push('other');
+      expect(ids).not.toContain('other');
+    },
+  );
 });
 
 describe('halfExtents', () => {

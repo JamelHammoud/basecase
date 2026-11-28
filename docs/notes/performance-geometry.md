@@ -435,3 +435,13 @@ Whole-app search found one weighted retained-geometry cache, `three/partMesh/sha
 These are deterministic disposal and build counts, not wall-clock measurements or complete interaction speedups. Geometry output, user actions and visible states are unchanged, so existing help instructions and screenshots remain accurate. Browser rendering and GPU memory reclamation are outside this unit coverage. No timeout, retry or quarantine changes apply.
 
 Scoped changed-file validation passed formatting, lint, documentation, site copy for 330 pages, types and 1,751 tests across 251 passing related files. One file and test were skipped by the existing configuration. The related run reported 49.70 seconds. Full output is in `scratch/check-retained-geometry.log`. Copy accounting is net zero and preflight reports no findings.
+
+## Sculpt conversion prepares only coordinates
+
+The part conversion traversal previously expanded or cloned every source attribute, transformed its normals and tangents, and then collected only tessellated position values. It now wraps positions and indices before the existing expansion or clone. The transformed position buffer remains independently owned. Expansion still precedes transforms, including for packed and interleaved inputs. The no-subdivision path above 8,000 triangles also receives only coordinates.
+
+Repository search found one production mesh traversal preparing world triangles for Sculpt, in `partMesh/sculptConversion.ts`. Existing Sculpt refinement and the Subdivide command build coordinate geometry directly and do not copy arbitrary source attributes. Clay presets bypass the traversal. This change covers the shared ordinary part conversion path without changing controls or saved output.
+
+For an indexed 10-by-10-segment box, 3,600 expanded corners previously copied 43,200 bytes of normals and 28,800 bytes of UVs. Preparing only coordinates removes those 72,000 bytes and 3,600 normal transforms. The expanded version has the same attribute sizes. Position and index preparation, subdivision, welding and final coordinates remain unchanged. These are structural buffer and operation counts, not timings or process-memory measurements.
+
+`partMesh/sculptConversion.test.ts` compares final normalized positions and indices with the previous full-geometry traversal. It covers nested rotations, translation and reflected nonuniform scale, indexed and expanded meshes, interleaved and normalized integer positions, and a sphere above the subdivision limit. It also checks source attributes and indices remain unchanged and discarded normal and UV attributes are neither cloned nor read for transforms. No visible state or workflow changes require help screenshots. Browser coverage and timeouts remain unchanged.

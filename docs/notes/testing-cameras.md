@@ -2,6 +2,14 @@
 
 Current coverage: [owning guide](../guide/cameras.md#testing-coverage). Shared policy and harness contracts: [Running and testing](../guide/running-and-testing.md#0e-tests).
 
+## Compiled camera setup on Check 46164665357
+
+[Check 46164665357](https://github.com/JamelHammoud/basecase/actions/runs/46164665357), workload `2eb550f8a4b79f38511af1c46d33816a97a28e93`, exceeds the unchanged 10000 ms `liveCamera.test.ts:16` setup hook on Ubuntu and Windows. No selected pixel assertion executes on either platform. These are setup failures, separate from the full web-studio inference publication failure in the [complete inventory](node.md#full-failure-inventory-for-check-46164665357).
+
+Exact-workload Linux x64 [diagnostic 46167289159](https://github.com/JamelHammoud/basecase/actions/runs/46167289159), durable ticket `6cbce394-6829-4fb7-8ac8-35d8e56c740e`, repeats the setup failure within an 11588 ms process. Its manifest records Node 26.13.1, four CPUs, Ubuntu image `20261122.9.1`, one process, one worker, zero retries and quarantine off. Zero selected assertions execute, so collection correctly records `verified: false`. This is reproduced setup failure rather than established intermittency. Bundling, browser acquisition and module installation remain unseparated in the hosted evidence.
+
+A scratch phase probe on macOS arm64 with pinned Node 26.13.1 at base `f9f894c2e175339baba33ba8831b7ef9a0c8fc3d` completes bundling at 1497.7 ms, server acquisition at 1503.2 ms, browser acquisition at 1897.4 ms and module installation at 1970.3 ms. It does not mount a camera or establish a Linux or Windows pass. Its source and log remain in `scratch/profile-camera.ts` and `scratch/profile-camera.log`. The three compiled-hook declarations and all exact frame, pixel, detection, box, signal and takeover assertions remain active. No camera source, setup deadline or exclusion changes.
+
 ## Compiled camera setup on Check 46129801611
 
 [Check 46129801611](https://github.com/JamelHammoud/basecase/actions/runs/46129801611), workload `fca012606d4bd48243fbe0e8278d124ad99922f3`, exceeds the unchanged 10000 ms `liveCamera.test.ts` setup hook on Ubuntu and Windows. Neither compiled-hook assertion executes. The ordinary production inference-worker declaration passes at that same revision on Ubuntu in 2296 ms total file time and Windows in 2820 ms. That different fixture does not establish a passing compiled-camera setup on either affected platform.

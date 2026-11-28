@@ -2,6 +2,14 @@
 
 Implementation and current coverage: [Fleet](../guide/fleet.md). Runtime coverage: [Robot runtime](../guide/robot-runtime.md#fleet-publisher). Security boundary: [Node-side evidence](node.md#fleet-authorization-boundary).
 
+## Windows subscription signout setup
+
+[Check 46164665357](https://github.com/JamelHammoud/basecase/actions/runs/46164665357), workload `2eb550f8a4b79f38511af1c46d33816a97a28e93`, exceeds `subscriptionSignout.test.mjs:8`'s unchanged 10000 ms fixture hook on Windows. No signout assertion executes. PostgreSQL initialization, schema preparation and service setup remain unseparated by that log.
+
+Exact-workload Windows x64 [diagnostic 46167295946](https://github.com/JamelHammoud/basecase/actions/runs/46167295946), durable ticket `6427c63b-a404-4bb3-945f-3c5805d92d3a`, passes `retains revocation when signing out during a subscription handshake, access=false` in 290.2777 ms within a 5701 ms process. The verified manifest records Node 26.13.1, four CPUs, image `20261123.321.1`, one worker, one selected attempt, zero retries, quarantine off and an empty cleanup array. Request, manifest, report and logs remain under `scratch/diagnostics/6427c63b-a404-4bb3-945f-3c5805d92d3a/` during repair.
+
+This same-revision, affected-platform pass establishes intermittent fixture completion for the inventory path. It supplies no source correction, slow-stage attribution, Access-variant result or candidate reliability rate. Both original signout declarations remain active with their exact snapshot, reset, stream closure and rejected credential reuse assertions. Fleet enrollment remains a separate browser failure in the [complete inventory](node.md#full-failure-inventory-for-check-46164665357). No Fleet source, assertion, timeout or exclusion changes.
+
 ## Pending notifications at subscription handshake
 
 [Check 46129801611](https://github.com/JamelHammoud/basecase/actions/runs/46129801611) at `fca012606d4bd48243fbe0e8278d124ad99922f3` fails the Windows Access subscription declaration at `access.test.mjs:370`. After credential removal, its next event is another empty snapshot instead of reset. Exact-revision Windows x64 [diagnostic 46132006106](https://github.com/JamelHammoud/basecase/actions/runs/46132006106), ticket `4e71d4ac-c081-4300-bc97-fa7223b36346`, passes the same declaration in 191.1191 ms within a 6780 ms process. The verified manifest records Node 26.13.1, four CPUs, image `20261123.321.1`, one worker, no retries and quarantine off. This establishes Windows intermittency without a failure rate. The source predates the last green run, so no causative intervening merge or clean revert is established.

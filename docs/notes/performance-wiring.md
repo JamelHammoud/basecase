@@ -2,6 +2,16 @@
 
 Implementation: [Cable routing](../guide/build.md#performance-cable-routing). Shared requirements: [Performance](../guide/performance.md).
 
+## Cable editor startup on Check 46164665357
+
+[Check 46164665357](https://github.com/JamelHammoud/basecase/actions/runs/46164665357), workload `2eb550f8a4b79f38511af1c46d33816a97a28e93`, fails both Windows Cable Editing attempts at the initial Cable reach verdict, `cableEditing.e2e.test.ts:37`. No stock, point, history, BOM or persistence assertion executes. This remains separate from earlier export and post-redo failures.
+
+Exact-workload Windows x64 [diagnostic 46167556975](https://github.com/JamelHammoud/basecase/actions/runs/46167556975), durable ticket `beaa3335-154d-4e78-b805-d1964399fc56`, repeats that failure in its sole selected attempt, 28430.4972 ms within a 41519 ms process. The verified manifest records Node 26.13.1, four CPUs, image `20261123.321.1`, one worker, zero retries, quarantine off and browser tracing. Studio readiness completes in 8212 ms. Build's click completes at 16:58:55.755 UTC, and the next operation waits for the initial Cable reach row until its unchanged poll expires. The subsequent body-text snapshot also exceeds its two-second diagnostic budget. No console error is retained.
+
+The closing snapshot contains six workers. Geometry and two analysis workers respond with empty resource lists. The thumbnail, guide and another analysis worker are unavailable to the bounded snapshot. The available responses do not establish which request owns the missing verdict, and an unavailable worker does not identify its blocked operation. The process retains the ten-second Vite shutdown warning despite an empty manifest cleanup array. Traced timing is diagnostic evidence, not a comparable untraced performance rate.
+
+This is reproduced Windows initial-verdict failure, not established intermittency or a shared explanation for every Build failure. Existing owner #1815 retains the source investigation. All browser editor, undo/redo, BOM and scene-reopening assertions and the fast cable matrices remain active. No source, deadline, retry, assertion or exclusion changes. Request, manifest, report and logs remain under `scratch/diagnostics/beaa3335-154d-4e78-b805-d1964399fc56/` during repair. The [complete assigned inventory](node.md#full-failure-inventory-for-check-46164665357) keeps all other boundaries explicit.
+
 ## Containment queries prepare one endpoint
 
 The app-wide search for `crossesBox` and clearance `crosses` calls found identical-endpoint queries in ordered-stop validation and detour-corner rejection. Both bus and power routes reach them through `routePath`. Uncached containment now transforms the point and evaluates its relative motion bound once. Cached containment avoids a second prepared-point lookup. Ordinary segments keep independent endpoint preparation.

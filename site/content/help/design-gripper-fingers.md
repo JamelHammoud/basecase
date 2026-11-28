@@ -44,6 +44,7 @@ The pair includes four M3 × 16 screws, four washers and four captive nuts.
 Use Undo to remove the complete pair and its references together.
 
 The Case keeps the selected object's dimensions, weight and friction. Basecase doesn’t shrink the object to make a grasp pass.
+The reference eases the loaded lift when you use generated fingers.
 Both jaws must hold the raised object until placement, then release it near the spot.
 Palm contact alone and pushing without lifting don’t count as a grasp. Dropping the object before placement fails.
 After changing finger dimensions, you must treat affected results as stale.

@@ -2,11 +2,14 @@ import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { resolve } from 'node:path';
 import { build } from 'vite';
+import babel from '@rolldown/plugin-babel';
+import { reactCompilerPreset } from '@vitejs/plugin-react';
 import { chromium } from 'playwright-core';
 
-async function inferenceWorkerFiles() {
+async function inferenceWorkerFiles(entry: string) {
   const built = await build({
     configFile: false,
+    plugins: [babel({ presets: [reactCompilerPreset()] })],
     logLevel: 'silent',
     define: { 'process.env.NODE_ENV': '"production"' },
     build: {
@@ -14,7 +17,7 @@ async function inferenceWorkerFiles() {
       minify: false,
       assetsInlineLimit: 0,
       rolldownOptions: {
-        input: resolve(import.meta.dirname, 'inference.worker.ts'),
+        input: entry,
         output: { codeSplitting: false, entryFileNames: 'worker.js' },
       },
     },
@@ -34,9 +37,9 @@ async function inferenceWorkerFiles() {
   );
 }
 
-export async function openInferenceWorker(signal: AbortSignal) {
+export async function openInferenceWorker(signal: AbortSignal, entry?: string) {
   const started = performance.now();
-  const files = await inferenceWorkerFiles();
+  const files = await inferenceWorkerFiles(entry ?? resolve(import.meta.dirname, 'inference.worker.ts'));
 
   signal.throwIfAborted();
 
@@ -83,7 +86,7 @@ export async function openInferenceWorker(signal: AbortSignal) {
     if (!address || typeof address === 'string') throw new Error('Expected the inference test server port.');
 
     const graphics =
-      process.platform === 'darwin'
+      process.platform === 'darwin' && !entry
         ? ['--use-angle=metal', '--enable-gpu']
         : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
     const launched = await chromium.launchPersistentContext('', {
@@ -93,8 +96,7 @@ export async function openInferenceWorker(signal: AbortSignal) {
       ignoreDefaultArgs: ['about:blank'],
       args: [
         ...graphics,
-        '--ignore-gpu-blocklist',
-        '--enable-unsafe-webgpu',
+        ...(entry ? [] : ['--ignore-gpu-blocklist', '--enable-unsafe-webgpu']),
         `--app=http://127.0.0.1:${address.port}/`,
       ],
     });

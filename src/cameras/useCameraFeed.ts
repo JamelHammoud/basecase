@@ -41,6 +41,11 @@ export function useCameraFeed(input: CameraFeedInput): CameraFeed {
   );
   const active = input.active || streaming > 0 || visionActive;
   const onFrames = useEffectEvent((frames: number) => input.onFrames(frames));
+  const synchronize = useEffectEvent((feed: LiveFeed) => {
+    void feed.scene(parts, world, imported);
+    feed.model(model);
+    feed.views(views, input.active ? { enlarged } : null);
+  });
 
   useEffect(() => {
     const keys = cameraKeys.split('\n').filter(Boolean);
@@ -61,6 +66,7 @@ export function useCameraFeed(input: CameraFeedInput): CameraFeed {
     const feed = new LiveFeed(canvases.current, (frames) => onFrames(frames), simulated);
 
     feedRef.current = feed;
+    synchronize(feed);
     connectCameras(() => feed.link());
 
     for (const stream of streams.current) feed.stream(stream);
@@ -73,16 +79,8 @@ export function useCameraFeed(input: CameraFeedInput): CameraFeed {
   }, [active, connectCameras, simulated]);
 
   useEffect(() => {
-    if (active) void feedRef.current?.scene(parts, world, imported);
-  }, [active, parts, world, imported]);
-
-  useEffect(() => {
-    if (active) feedRef.current?.model(model);
-  }, [active, model]);
-
-  useEffect(() => {
-    if (active) feedRef.current?.views(views, input.active ? { enlarged } : null);
-  }, [active, input.active, views, enlarged]);
+    if (active && feedRef.current) synchronize(feedRef.current);
+  }, [active, parts, world, imported, model, input.active, views, enlarged]);
 
   return {
     canvasRef: (key) => (canvas) => {

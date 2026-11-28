@@ -27,9 +27,12 @@ let closed = false;
 const post = (event: RecordedCameraEvent, transfer: Transferable[] = []) => scope.postMessage(event, transfer);
 const fail = (camera: string, error: unknown, timestamp?: number) =>
   post({ type: 'error', camera, message: errorMessage(error), timestamp });
-const vision = visionFrameSender(async () => {
-  throw new Error('The camera frame is missing.');
-});
+const vision = visionFrameSender(
+  async () => {
+    throw new Error('The camera frame is missing.');
+  },
+  (error, frame) => fail(frame.camera, error, frame.timestamp),
+);
 
 function retryVision(camera: string, seek: RecordedSeek, delay: number) {
   clearTimeout(retryTimers.get(camera));

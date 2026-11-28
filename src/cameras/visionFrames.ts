@@ -14,7 +14,10 @@ type Pending = VisionAssignment & { frame: Picture; timestamp: number };
 
 const frameKey = (camera: string, modelId: string) => `${camera}:${modelId}`;
 
-export function visionFrameSender(capture: (camera: string) => Promise<Picture>) {
+export function visionFrameSender(
+  capture: (camera: string) => Promise<Picture>,
+  onQueuedError: (error: unknown, frame: Pending) => void,
+) {
   let port: MessagePort | null = null;
   let assignments: VisionAssignment[] = [];
   let generation = 0;
@@ -58,7 +61,13 @@ export function visionFrameSender(capture: (camera: string) => Promise<Picture>)
     pending.delete(id);
     inFlight.delete(id);
 
-    if (latest) post(latest);
+    if (!latest) return;
+
+    try {
+      post(latest);
+    } catch (error) {
+      onQueuedError(error, latest);
+    }
   };
 
   const queue = (frame: Pending) => {

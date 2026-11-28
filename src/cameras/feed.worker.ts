@@ -27,17 +27,20 @@ const fail = (error: unknown, cameras = [...viewKeys]) => {
   for (const camera of cameras)
     scope.postMessage({ type: 'error', camera, message: errorMessage(error) } satisfies FeedEvent);
 };
-const vision = visionFrameSender(async (camera) => {
-  const canvas =
-    visionSources.get(camera) ??
-    targets.get(camera)?.canvas ??
-    visionTargets.get(camera)?.canvas ??
-    [...streams.values()].find((stream) => stream.key === camera)?.target.canvas;
+const vision = visionFrameSender(
+  async (camera) => {
+    const canvas =
+      visionSources.get(camera) ??
+      targets.get(camera)?.canvas ??
+      visionTargets.get(camera)?.canvas ??
+      [...streams.values()].find((stream) => stream.key === camera)?.target.canvas;
 
-  if (!canvas) throw new Error('Camera frame unavailable.');
+    if (!canvas) throw new Error('Camera frame unavailable.');
 
-  return copyVision(camera, canvas);
-});
+    return copyVision(camera, canvas);
+  },
+  (error, frame) => fail(error, [frame.camera]),
+);
 
 let poses: Float64Array | null = null;
 let dirty = false;

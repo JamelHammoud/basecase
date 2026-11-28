@@ -4,7 +4,7 @@ import type { Picture } from './runners';
 export function createOperatorVision(fail: (error: unknown) => void) {
   const sender = visionFrameSender(async () => {
     throw new Error('The camera frame is missing.');
-  });
+  }, fail);
   let active = false;
 
   return {

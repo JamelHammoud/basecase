@@ -11,8 +11,8 @@ const OUT = path.join(ROOT, 'src', 'data', 'printerCatalog.ts');
 const CACHE = path.join(os.tmpdir(), 'basecase-printer-profiles');
 
 const PROFILE_SOURCES = [
-  { slicer: 'bambu', repo: 'bambulab/BambuStudio', tag: 'v02.09.01.70' },
-  { slicer: 'orca', repo: 'OrcaSlicer/OrcaSlicer', tag: 'v2.5.0', makers: ['Prusa'] },
+  { slicer: 'bambu', repo: 'bambulab/BambuStudio', tag: 'v02.09.02.62' },
+  { slicer: 'orca', repo: 'OrcaSlicer/OrcaSlicer', tag: 'v2.5.2', makers: ['Prusa'] },
 ];
 
 const git = (args, cwd) => execFileSync('git', args, { cwd, stdio: 'ignore' });
@@ -37,7 +37,7 @@ function fetchProfiles(source) {
   const dir = path.join(CACHE, `${source.repo.replace('/', '-')}-${source.tag}`);
   const profiles = path.join(dir, 'resources', 'profiles');
 
-  if (!fs.existsSync(profiles)) sparseClone(source, dir);
+  if (!fs.existsSync(path.join(dir, '.git')) || !fs.existsSync(profiles)) sparseClone(source, dir);
 
   return profiles;
 }

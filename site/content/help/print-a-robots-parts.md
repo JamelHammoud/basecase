@@ -70,7 +70,7 @@ You can also open Print mode from **File** ▸ **Print**, from **Print** in the 
 
 If your robot has a PLA body and TPU tires, both materials open together in one unsliced project. Every plate keeps its parts' filament assignments, orientation, position and copies. Parts left off the current plates stay out of the project.
 
-When your saved printer reports loaded AMS slots, matching materials follow slot order and use those colors. Other materials follow in plate order with gray filament colors. The project includes your selected printer, quality and infill settings.
+When your saved printer reports loaded AMS slots, matching materials follow slot order and use those colors. Other materials follow in plate order with gray filament colors. The project includes your selected printer, quality and infill settings from compatible installed presets. Missing printer, process or material presets stop preparation instead of substituting generic settings.
 
 Basecase slices each material separately before sending a plate.
 

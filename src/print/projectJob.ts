@@ -32,7 +32,7 @@ export function projectJobSpec(
   const filaments = ordered.map(({ type, tray }) => ({
     type,
     color: tray ? trayColor(tray.color) : FALLBACK_COLOR,
-    preset: spec.printer?.filaments[type] ?? `Generic ${type}`,
+    preset: spec.printer?.filaments[type] ?? '',
   }));
   const material = materials[0];
   const file = {

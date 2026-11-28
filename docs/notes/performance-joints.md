@@ -810,3 +810,14 @@ Rechecked [Import a robot](../../site/content/help/import-a-robot.md) and [A rob
 [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) also remains accurate. Imported joint fields, ownership, passive behavior, posing and inverse kinematics are untouched. Preflight reports all three covered articles mechanically because their covered paths changed. Each was read against this change and needs no correction.
 
 On November 20, 2026, the changed-file check passed formatting, lint, docs, site copy, types and 408 tests across 56 related files. The log is `scratch/check-changed.log`. Copy diff reports zero added, changed or removed strings. These local checks establish no browser or Windows timing result.
+
+
+## IK convergence normalizes only the largest residual
+
+The app-wide search found one convergence maximum in `utils/kinematicsIk.ts`. Pose, gait, retargeting, motion fitting, arm fitting and driving share `solveIK`. Each iteration now selects the largest squared residual and takes one square root, rather than taking a square root for every target. Final reporting still computes every individual error. The tolerance itself is not squared, preserving strict boundaries, negative tolerances, infinity and NaN. Empty residuals retain their previous negative-infinity convergence maximum.
+
+For N targets over I attempted iterations, source accounting reduces convergence square roots from N × I to I. A three-target, forty-iteration solve removes eighty square roots if all forty iterations run. These are operation counts, not timings or a claim about complete solve latency.
+
+`kinematics.test.ts` covers a three-target convergence boundary immediately at and above 0.3, zero, negative, infinite and NaN tolerances. Existing tests compare returned errors with independent world transforms across iteration limits and root offsets, and cover unreachable targets, weighted goals, preferences, rejected trials, joint limits and nonfinite summaries. No timeout, retry or quarantine changes apply.
+
+Rechecked [Joints and kinematics](../../site/content/help/joints-and-kinematics.md) and [Pose a robot](../../site/content/help/pose-a-robot.md). Targets, joint ranges, torso stiffness, saved poses and controls remain unchanged. This internal calculation changes no action, label or visible state, so their text and captures remain accurate without an edit.

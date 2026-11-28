@@ -112,3 +112,10 @@ The trace confirms completed navigation, studio readiness, scene loading and mod
 ## Windows rendered camera on Check 46160172750
 
 At `bd4d286130f97803876ecea7d1f8bcbc5581486f`, [Check 46160172750](https://github.com/JamelHammoud/basecase/actions/runs/46160172750) Windows shard 1 again configures the rendered-camera model but retains count zero at `vision.e2e.test.ts:98`. Visible boxes, confidence and normalized-coordinate assertions are unreached. No camera, transfer or inference stage error is retained in this log. The source snapshot already contains the shared-feed change, so that earlier correction is not a passing observation of this path. Existing owner #992 retains this reproduced signal boundary. The complete browser declaration and every assertion remain active, without a source, timeout, retry or exclusion change. There is no current-revision Windows pass or evidence for an environment pin or single-merge revert.
+
+
+## Full-studio vision delivery on Check 46168665096
+
+[Check 46168665096](https://github.com/JamelHammoud/basecase/actions/runs/46168665096) at `83351e0b80d76e675e14b86215b9bab823350587` fails the web-studio rendered-camera declaration on both Ubuntu and Windows shard 1. Model configuration completes, but the target-camera block signal remains zero at line 98 before the visible box, score and normalized-coordinate assertions. Windows also fails both attempts of the separate Find Faces declaration at line 59 because the operator camera does not become live, before the face-overlay assertions. A missing operator connection and a zero simulated signal do not establish one inference cause.
+
+Every full-studio declaration and original visible overlay, detection, coordinate, exact signal and error assertion remains active. The compiled-hook fixture’s separate setup and callback failures are recorded in [camera evidence](testing-cameras.md#camera-callbacks-and-visibility-teardown-on-check-46168665096). No current-revision pass, changed environment component or source repair is established for either studio path. No timeout, retry, assertion or exclusion changes.

@@ -81,7 +81,7 @@ The Library conversion functions support optional assembly joints in `CustomMode
 - **Frame labels** (`workspace/FrameLabelsHost.tsx`, §8h): Add Frames in the try timeline, a selected try's menu, or ⌘K opens a sheet for the playhead, every Nth frame, an inclusive range or an evenly sampled count. Multiple tries show the cameras they share. Extraction opens Frame labels in a full-size modal with the image, drawing tools, class list and labels. Label Objects below a working dataset's image reopens that frame in the same editor. Each sheet and editor has its own `ErrorBoundary`, mounts only in the active scene tab, and saves changes through the editor's undo history. Frozen dataset versions keep their image labels unchanged.
 - **Canvas overlays:**
   - Centered bottom toolbar.
-  - Toasts above the toolbar.
+  - Toasts above the toolbar. `useToast.showToast` returns a unique id, including for messages issued in the same millisecond. Mesh imports pass that id to `dismissToast(id)` so completion or cancellation clears only their own feedback. Ordinary dismissal and expiration keep their existing behavior. `useToast.test.ts` covers scoped completion, replacement progress, click dismissal and both timer durations.
   - No empty-scene prompt: an empty scene is just the canvas.
   - **First launch** is the one exception: a profile with no saved scenes and no tabs to restore opens on the two-wheel rover driving to its flag, with Simulate in front (§5a, §8h). Every new scene after that, ⌘T included, is an empty canvas.
   - Annotation pins and cards.

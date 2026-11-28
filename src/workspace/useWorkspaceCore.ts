@@ -10,7 +10,7 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import { newSceneId } from '../utils/sceneIds';
 import { usePosing } from '../utils/usePosing';
 import { projectFromSeed } from './helpers';
-import type { SceneWorkspaceProps, WorkspaceSeed } from './types';
+import type { SceneWorkspaceProps, ShowToast, WorkspaceSeed } from './types';
 import { useMarks } from './useMarks';
 import { usePoseScope } from './usePoseScope';
 import { useCadCompile } from './useCadCompile';
@@ -84,7 +84,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const scene = useSceneMeta(seed);
   const toasts = useToast(studio.openSettings);
-  const { showToast } = toasts;
+  const showToast: ShowToast = (message, options) => void toasts.showToast(message, options);
   const docs = useSceneDocument(seed, (reason) => showToast(reason, { tone: 'error' }));
   const documentContext = { scene, docs, studio };
   const { parts, project, projectRef } = docs;

@@ -6,12 +6,9 @@ import {
   extractSculptDataFromGeometry,
   tessellateGeometryForSculpting,
 } from '../three/sculptEngine';
-import type { CatalogItem, CustomModelDefinition, ScenePart } from '../types/robotics';
+import type { CatalogItem, CustomModelDefinition } from '../types/robotics';
 import { readImageFile } from '../utils/imageFile';
-import { cadPartsFromFile } from './cadImport';
-import { couldntImport, isCadFileName } from './importRoute';
 import { bigCount } from '../../electron/bigCount.mjs';
-import { meshPartsFromFile } from './meshImport';
 import { modelToParts } from '../utils/libraryParts';
 import type { SnapPlacement } from '../agent/snap';
 import { modelBase, withPlacement } from './dropPreview';
@@ -21,7 +18,7 @@ import type { Vec3 } from './types';
 import type { RobotInsert } from './useRobotInsert';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { errorMessage } from '../utils/errorMessage';
-import { plural } from '../../electron/plural.mjs';
+import { useMeshImport } from './useMeshImport';
 
 const IMAGE_STEP = 16;
 
@@ -97,51 +94,6 @@ function useSculptCreation(core: WorkspaceCore) {
   };
 
   return { addClayPreset, subdivideSelectedClay };
-}
-
-const MESH_STEP = 40;
-
-const partsFromFile = async (file: File, at: Vec3 | null, resources: File[]): Promise<ScenePart[]> =>
-  isCadFileName(file.name) ? cadPartsFromFile({ file, at, newId }) : meshPartsFromFile({ file, newId, at, resources });
-
-function useMeshImport(core: WorkspaceCore) {
-  'use memo';
-
-  const { docs, setSelectedIds, tool, showToast, toasts } = core;
-
-  const importMeshes = async (files: File[], at?: Vec3 | null, resources: File[] = []) => {
-    if (files.length === 0) return;
-
-    const label = files.length === 1 ? files[0].name : plural(files.length, 'mesh', 'meshes');
-
-    showToast(`Importing ${label}…`, { tone: 'progress' });
-
-    const results = await Promise.allSettled(
-      files.map((file, i) => partsFromFile(file, at ? [at[0] + i * MESH_STEP, at[1], at[2]] : null, resources)),
-    );
-    const imported = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
-    const parts = imported.flat();
-    const failed = files.filter((_, i) => results[i].status === 'rejected');
-
-    if (parts.length > 0) {
-      docs.commitParts((prev) => [...prev, ...parts]);
-      setSelectedIds(parts.map((p) => p.id));
-      tool.setTransformMode('translate');
-    }
-
-    if (failed.length > 0) {
-      const rejection = results.find((result) => result.status === 'rejected');
-      const reason = rejection?.status === 'rejected' ? errorMessage(rejection.reason) : '';
-
-      showToast(`${couldntImport(failed)}${reason ? `. ${reason}` : ''}`, { tone: 'error' });
-
-      return;
-    }
-
-    toasts.dismissToast();
-  };
-
-  return { importMeshes };
 }
 
 export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {

@@ -582,3 +582,10 @@ Exact-workload Linux x64 [diagnostic 46162603624](https://github.com/JamelHammou
 The named local code check passed formatting, lint, types and all 13 lifetime assertions in 195 ms of Vitest execution. It ran on macOS arm64 with Node 26.13.0. The final check on pinned Node 26.13.1 also passed formatting, lint, types and all 13 assertions, with 243 ms of Vitest execution. Its log is `scratch/fleet-attempt-pinned-check.log`. The documentation check also passed. Logs are retained in `scratch/fleet-attempt-code-check.log` and `scratch/fleet-attempt-doc-check.log` during repair.
 
 Browser candidate execution belongs to CI. No local e2e or before-and-after failure-rate measurement is performed in this repair. Existing owner [#1386](https://github.com/JamelHammoud/basecase/issues/1386) retains the network-change and access-reset investigations. All active platform coverage remains in place.
+
+
+## Subscription fixture setup on Check 46168665096
+
+[Check 46168665096](https://github.com/JamelHammoud/basecase/actions/runs/46168665096) at `83351e0b80d76e675e14b86215b9bab823350587` fails `tools/fleet/subscriptionSignout.test.mjs` in its Windows 10000 ms `beforeAll`, before either revocation assertion. PostgreSQL initialization, connection, schema preparation and HTTP startup are not individually attributed by the hook stack. Exact-revision Windows x64 [diagnostic 46171225022](https://github.com/JamelHammoud/basecase/actions/runs/46171225022), ticket `39bddcec-fd9b-48fc-bd51-a314c0d58c98`, passes the `access=false` handshake declaration in 262.2262 ms within a 6779 ms process. It uses Node 26.13.1, four CPUs, image `20261123.321.1`, one worker, retries disabled and quarantine off.
+
+This establishes intermittent startup for this fixture at this revision, not a candidate startup repair or an `access=true` verdict. Both declarations and their real database, held handshake, retained revocation, exact subscription response and rejected-session assertions remain active. Existing fixture owner #1401 retains the startup investigation. No fixture source, timeout, retry, assertion or exclusion changes.

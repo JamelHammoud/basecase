@@ -40,6 +40,8 @@ To find failures within declared conditions, cameras or sources, follow [Compare
 
 ![A completed training attempt with its incumbent comparison and model measurements](/help/train-a-vision-model/results.png)
 
+Object predictions match labels only within the same class. A box around a cup labeled as a plate counts as a false positive.
+
 7. For a retained model, in **Apply model to**, choose its destination.
 8. Click **Apply Model**.
 

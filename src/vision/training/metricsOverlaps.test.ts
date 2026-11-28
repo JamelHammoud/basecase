@@ -5,6 +5,7 @@ import type { VisionDetection } from '../types';
 import { objectMetrics, type EvaluatedFrame } from './metricsObjects';
 import { metricResult, metricSet, metricTask } from './metricsFixtures';
 import type { TrainingTask } from './types';
+import type { ImageDiagnostics } from './evidenceTypes';
 
 function previousOverlap(
   annotation: ImageAnnotation,
@@ -186,6 +187,43 @@ function freezeRows(rows: EvaluatedFrame[], task: TrainingTask) {
 }
 
 describe('prepared annotation overlaps', () => {
+  it.each(['detect', 'segment', 'keypoints'] as const)(
+    'keeps annotation indices and diagnostics across skipped classes for %s',
+    (kind) => {
+      const frame = metricSet().frames[0];
+      const annotation = frame.annotations[0];
+      const task = metricTask(kind);
+      const diagnostics: ImageDiagnostics[][] = [[]];
+
+      frame.annotations = [
+        { ...annotation, classId: 2, instance: 'plate-before' },
+        annotation,
+        { ...annotation, classId: 2, instance: 'plate-after' },
+      ];
+
+      const result = metricResult({
+        detections: [
+          {
+            label: 'Cup',
+            score: 1,
+            box: [0, 0, 1, 1],
+            mask: { width: 1, height: 1, values: new Uint8Array([1]) },
+            keypoints: [[0.5, 0.5]],
+          },
+        ],
+      });
+      const reports = objectMetrics([{ frame, result }], task, diagnostics);
+
+      expect(reports[0]).toMatchObject({ support: 1, truePositive: 1, falsePositive: 0, score: 1 });
+      expect(reports[1]).toMatchObject({ support: 2, truePositive: 0, falseNegative: 2, score: 0 });
+      expect(diagnostics[0][0]).toMatchObject({ support: 1, truePositive: 1, falseNegative: 0 });
+      expect(diagnostics[0][1]).toMatchObject({ support: 2, truePositive: 0, falseNegative: 2 });
+      expect(diagnostics[0][0]).toMatchObject(
+        kind === 'keypoints' ? { keypoints: { visible: 1, correct: 1 } } : { overlapMatches: Array(10).fill(1) },
+      );
+    },
+  );
+
   it.each(['detect', 'segment'] as const)(
     'preserves complete %s reports across mixed frames and score ties',
     (kind) => {
@@ -230,7 +268,7 @@ describe('prepared annotation overlaps', () => {
     expect(() => objectMetrics(rows, task)).toThrow('mask runs');
   });
 
-  it.each([300, 600])('prepares geometry per class instead of per prediction for %i detections', (count) => {
+  it.each([300, 600])('prepares only matching-class geometry for %i detections', (count) => {
     for (const kind of ['detect', 'segment'] as const) {
       const { rows, task } = fixture(3, kind);
       const row = rows[0];
@@ -261,7 +299,7 @@ describe('prepared annotation overlaps', () => {
       expect(reads).toBe(count * row.frame.annotations.length);
       reads = 0;
       expect(objectMetrics(rows, task)).toEqual(expected);
-      expect(reads).toBe(task.classes.length * row.frame.annotations.length);
+      expect(reads).toBe(row.frame.annotations.length);
     }
   });
 });

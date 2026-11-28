@@ -24,14 +24,21 @@ interface MatchedDetection extends RankedDetection {
 const thresholds = Array.from({ length: 10 }, (_, i) => (50 + 5 * i) / 100);
 const mean = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / Math.max(1, values.length);
 
-function frameDetections({ frame, result }: EvaluatedFrame, row: number, task: TrainingTask, name: string) {
+function frameDetections(
+  { frame, result }: EvaluatedFrame,
+  row: number,
+  task: TrainingTask,
+  category: TrainingTask['classes'][number],
+) {
   const ranked: RankedDetection[] = result.detections
-    .filter((detection) => detection.label === name)
+    .filter((detection) => detection.label === category.name)
     .map((detection) => ({ detection, row, overlaps: new Array<number>(frame.annotations.length) }));
 
   if (!ranked.length) return ranked;
 
   for (let index = 0; index < frame.annotations.length; index++) {
+    if (frame.annotations[index].classId !== category.id) continue;
+
     const overlap = annotationOverlap(frame.annotations[index], frame, task.kind === 'segment');
 
     for (const item of ranked) item.overlaps[index] = overlap(item.detection);
@@ -40,9 +47,13 @@ function frameDetections({ frame, result }: EvaluatedFrame, row: number, task: T
   return ranked;
 }
 
-function rankedDetections(rows: EvaluatedFrame[], task: TrainingTask, name: string): RankedDetection[] {
+function rankedDetections(
+  rows: EvaluatedFrame[],
+  task: TrainingTask,
+  category: TrainingTask['classes'][number],
+): RankedDetection[] {
   return rows
-    .flatMap((frame, row) => frameDetections(frame, row, task, name))
+    .flatMap((frame, row) => frameDetections(frame, row, task, category))
     .sort((a, b) => b.detection.score - a.detection.score);
 }
 
@@ -181,7 +192,7 @@ export function objectMetrics(
       (sum, { frame }) => sum + frame.annotations.filter((annotation) => annotation.classId === category.id).length,
       0,
     );
-    const ranked = rankedDetections(rows, task, category.name);
+    const ranked = rankedDetections(rows, task, category);
     const matches = matchDetections(ranked, rows, category.id, 0.5);
 
     recordDiagnostics({ rows, scorer: scoreKeypoints, matches, classId: category.id }, diagnostics);

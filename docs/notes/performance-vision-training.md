@@ -39,6 +39,14 @@ On 300- and 600-frame fixtures, assignment reads fall from 900 and 1,800 to 300 
 
 `metricsPrecision.test.ts` compares every ranking through eight detections and 80 generated longer rankings against the previous calculation, plus recall boundaries, missing ground truth, frozen inputs and subsequent edits. Its 300- and 600-detection fixtures reduce precision comparisons from 15,200 and 30,400 to 300 and 600. These are operation counts without timing assertions or a claim about complete model-comparison time.
 
+## Object evaluation skips unrelated annotation classes
+
+Whole-app searches found one object-overlap preparation path in `vision/training/metricsObjects.ts`, reached through the shared training evaluator. Training, retained-model comparisons and condition scoring use it. Previously, each prediction class prepared every annotation's geometry and calculated overlaps that matching rejected by class id. The scorer now rejects unrelated annotations before box normalization, mask decoding or overlap calculation. Original annotation indices remain in sparse overlap arrays. Matching order, score ties, thresholds and diagnostic indices stay unchanged.
+
+The existing 300- and 600-detection fixtures have three annotations across two classes, with equally divided predictions. Geometry reads fall from six to three in each fixture. Calculated overlap pairs fall from 900 to 450 and from 1,800 to 900 respectively by source-loop count. These are deterministic operation counts, not elapsed-time or end-to-end training measurements. Array capacity, prediction ranking and model inference remain unchanged. Single-class fixtures have no removed overlap pairs.
+
+`metricsOverlaps.test.ts` compares complete detection and segmentation reports against an independent all-annotation reference across 100 mixed fixtures each. It retains frozen inputs, subsequent edits, missing masks and malformed matching-class mask coverage. Added interleaved-class cases check original annotation indices, per-image diagnostics, all ten overlap thresholds and keypoint counts. Existing evaluation validation still owns malformed input refusal. No user action, visible state, help instructions, timeout or quarantine changes apply.
+
 ## Image imports index annotation classes
 
 `sourceClasses.test.ts` compares 80 mixed-label sequences against ordered scans and checks duplicate matches, edits, independent imports, malformed labels and the class cap. `classResolution.test.ts` checks sparse ids, named keypoints, VOC image order and Parquet rows and shards. A scratch comparison matched 120 complete imported frame sets against the previous readers. On 300- and 600-class fixtures with 3,000 lookups each by id, name and inferred id, source-property reads fell from 1,354,500 and 2,704,500 to 600 and 1,200. These are operation counts and complete-output comparisons, without timing assertions or a claim about complete import time.

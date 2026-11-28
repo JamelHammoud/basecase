@@ -103,6 +103,10 @@ const ConnectionTest: React.FC<{ id: string }> = ({ id }) => {
 
 const ModelRows: React.FC<Omit<PrinterEditorProps, 'onSecret'>> = ({ printer, onChange }) => {
   const model = printer.custom ? null : printerModel(printer.modelId);
+  const options =
+    model || printer.custom
+      ? MODEL_OPTIONS
+      : [{ value: printer.modelId, label: printer.modelId, disabled: true }, ...MODEL_OPTIONS];
 
   return (
     <>
@@ -119,7 +123,7 @@ const ModelRows: React.FC<Omit<PrinterEditorProps, 'onSecret'>> = ({ printer, on
         <div className="w-[240px]">
           <Select
             value={printer.custom ? CUSTOM : printer.modelId}
-            options={MODEL_OPTIONS}
+            options={options}
             aria-label="Model"
             onChange={(e) =>
               e.target.value === CUSTOM
@@ -130,12 +134,16 @@ const ModelRows: React.FC<Omit<PrinterEditorProps, 'onSecret'>> = ({ printer, on
         </div>
       </Row>
       {printer.custom && <CustomBed printer={printer} onChange={onChange} />}
-      {model && model.nozzles.length > 1 && (
+      {model && (model.nozzles.length > 1 || !model.nozzles.includes(printer.nozzle)) && (
         <Row label="Nozzle">
           <div className="w-[112px]">
             <Select
               value={String(printer.nozzle)}
-              options={model.nozzles.map((n) => ({ value: String(n), label: `${n} mm` }))}
+              options={[...new Set([printer.nozzle, ...model.nozzles])].map((n) => ({
+                value: String(n),
+                label: `${n} mm`,
+                disabled: !model.nozzles.includes(n),
+              }))}
               aria-label="Nozzle"
               onChange={(e) => onChange({ ...printer, nozzle: Number(e.target.value) })}
             />

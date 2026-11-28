@@ -30,8 +30,9 @@ describe('printer catalog', () => {
     expect(names.filter((n) => /\b(MMU\d*|INDX|\d+T)\b/.test(n))).toEqual([]);
   });
 
-  it('has the Bambu Lab H3C from Bambu Studio', () => {
-    expect(printerModel('bambu-lab-h3c')?.source?.slicer).toBe('bambu');
+  it('excludes machines whose tool assignments the catalog cannot represent', () => {
+    for (const id of ['bambu-lab-h3c', 'bambu-lab-p3c', 'bambu-lab-h2d', 'bambu-lab-x2d'])
+      expect(printerModel(id)).toBeUndefined();
   });
 
   it('records the slicer and version every printer came from', () => {

@@ -164,7 +164,7 @@ describe('buildCatalog', () => {
     expect(two.source).toEqual({ slicer: 'orca', version: '2.5.0' });
     expect(two.bed[2]).toEqual([250, 210]);
     expect(two.height).toBe(220);
-    expect(two.nozzles).toEqual([0.4, 0.6]);
+    expect(two.nozzles).toEqual([0.4]);
     expect(two.obstacles).toHaveLength(2);
     expect(two.brimClearance).toBeCloseTo(18.1);
     expect(two.obstacles[0].zMax).toBe(4);

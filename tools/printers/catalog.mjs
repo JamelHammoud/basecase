@@ -91,10 +91,29 @@ function filamentsFor(vendor, machine) {
   );
 }
 
-function machineFor(vendor, modelName) {
-  const names = instantiated(vendor.machine).filter(
-    (n) => resolvePreset(vendor.machine, n).printer_model === modelName,
+const atMostOne = (value = []) => Array.isArray(value) && value.length <= 1;
+const oneExtruder = (ids = []) => Array.isArray(ids) && new Set(ids).size <= 1;
+const singleValue = (value, expected) =>
+  Array.isArray(value) && value.length === 1 && [expected].includes(Number(value[0]));
+
+function singleTool(machine) {
+  return (
+    !MULTI_TOOL.test(machine.name) &&
+    singleValue(machine.nozzle_diameter ?? ['0.4'], 0.4) &&
+    atMostOne(machine.extruder_offset) &&
+    singleValue(machine.extruder_max_nozzle_count ?? ['1'], 1) &&
+    atMostOne(machine.physical_extruder_map) &&
+    oneExtruder(machine.printer_extruder_id) &&
+    String(machine.handle_hotend_as_extruder ?? '0') === '0'
   );
+}
+
+function machineFor(vendor, modelName) {
+  const names = instantiated(vendor.machine).filter((n) => {
+    const machine = resolvePreset(vendor.machine, n);
+
+    return machine.printer_model === modelName && singleTool(machine);
+  });
 
   return names.find((n) => /0\.4 nozzle/.test(n)) ?? names[0];
 }
@@ -125,11 +144,7 @@ function modelEntry(vendor, model, source) {
     keepOut: exclude.length >= 3 ? [points(exclude)] : [],
     ...obstacles,
     ...(obstacles.obstacles ? brimSettings(process) : {}),
-    nozzles: String(model.nozzle_diameter ?? first(machine.nozzle_diameter) ?? '0.4')
-      .split(';')
-      .map(Number)
-      .filter(Boolean)
-      .sort((a, b) => a - b),
+    nozzles: [Number(first(machine.nozzle_diameter) ?? '0.4')],
     enclosed: ENCLOSED.test(model.name),
     bedType: model.default_bed_type ?? null,
     vendor: vendor.vendor,

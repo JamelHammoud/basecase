@@ -591,3 +591,147 @@ Commit `af8437c13` (#1972), before the last green run, moved sent and entered pr
 Focused [Linux diagnostic 46090305395](https://github.com/JamelHammoud/basecase/actions/runs/46090305395), ticket `a6bddaf1-a452-4f37-9fe2-7375575ec226`, failed the same published workload in 28,106.375595 ms, with a 46,168 ms process, one worker, zero retries and quarantine off. The host was x64 Node 26.13.1 and Ubuntu image `20261122.9.1`. The trace reached Start Print but observed zero sends. Its close snapshot shows Slicing and Sending, no console errors, and a guide worker unable to answer the bounded resource query. This is earlier than allocation retention. It confirms that the allocation fixture correction alone does not establish a complete dispatch repair. The controlled selection failed its only attempt, so this observation is not classified as intermittent load. Owner #1853 retains the slicing/preparation boundary separately from canonical allocation publication.
 
 The pull request's subsequent changed-browser Check again observed zero sends at the first Start Print, with nine other browser declarations passing. The fleet declaration took 46,625 ms including its configured retry. The aggregate check failed solely because that browser job failed. The fleet fixture now loads its project with `labelParts: false`. Production `lettersToWrite` then returns before requesting `useBuildGuide.currentPlan`, leaving real plate mesh writing, slicing, sending, purchasing allocation and readiness intact. This removes guide generation from a story that asserts no letters. The separate debossing declaration in the same file still compares labeled and plain meshes. No assertion, timeout, retry or quarantine changes. This fixture change does not repair or establish successful default-label dispatch. That path remains owned by #1853, and execution of the revised browser fixture remains with CI.
+
+## Supported profile refresh
+
+Issue #2223 refreshes the existing catalog sources to [Bambu Studio v02.09.02.62](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.02.62) and [OrcaSlicer v2.5.2](https://github.com/OrcaSlicer/OrcaSlicer/releases/tag/v2.5.2). The source commits are `23a33758933e712c6041e1f8f135f7d6b50004aa` and `f92a7c065c5718b8ef1baac1cd704df2911238f4`. No connector, catalog format or multi-tool assignment model changes.
+
+### Source inventory
+
+The previous catalog held 103 models, 93 from Bambu and 10 from Orca. The regenerated catalog holds 97, 87 from Bambu and 10 from Orca. There are no additions, 97 changed entries and six removals. Every retained id, machine preset, process preset, selected filament, bed polygon, keep-out and height stays unchanged. Every retained entry changes its source version. Entries marked `nozzles` below also narrow their advertised alternatives to the selected 0.4 mm configuration. The stored process and filament identities do not describe the other nozzle diameters.
+
+Removed ids: `bambu-lab-h2c`, `bambu-lab-h2d`, `bambu-lab-h2d-pro`, `bambu-lab-h3c`, `bambu-lab-x2d`, `elegoo-neptune-2d`. Their inherited tool definitions cannot be represented completely by one tool assignment. New upstream P3C is excluded for the same reason. H3C and P3C each expose one nozzle-diameter entry, but have maximum nozzle capacities of nine and seven and enable hotend tool switching. Names and nozzle-array length alone would admit them incorrectly.
+
+Exact changed inventory relative to the prior committed catalog:
+
+| Retained id | Changed fields |
+| --- | --- |
+| `anker-m5` | `source` |
+| `anker-m5c` | `source` |
+| `anycubic-4max-pro` | `source` |
+| `anycubic-4max-pro-2` | `source` |
+| `anycubic-chiron` | `source` |
+| `anycubic-i3-mega-s` | `source` |
+| `anycubic-kobra-2` | `source` |
+| `anycubic-kobra-max` | `source` |
+| `anycubic-kobra-plus` | `source` |
+| `anycubic-vyper` | `source` |
+| `bambu-lab-a1` | `nozzles`, `source` |
+| `bambu-lab-a1-mini` | `nozzles`, `source` |
+| `bambu-lab-a2l` | `nozzles`, `source` |
+| `bambu-lab-h2s` | `nozzles`, `source` |
+| `bambu-lab-p1p` | `nozzles`, `source` |
+| `bambu-lab-p1s` | `nozzles`, `source` |
+| `bambu-lab-p2s` | `nozzles`, `source` |
+| `bambu-lab-x1` | `nozzles`, `source` |
+| `bambu-lab-x1-carbon` | `nozzles`, `source` |
+| `bambu-lab-x1e` | `nozzles`, `source` |
+| `creality-cr-6-max` | `nozzles`, `source` |
+| `creality-cr-6-se` | `nozzles`, `source` |
+| `creality-cr-10-max` | `source` |
+| `creality-cr-10-v2` | `source` |
+| `creality-ender-3-s1` | `source` |
+| `creality-ender-3-s1-pro` | `source` |
+| `creality-ender-3-v2` | `source` |
+| `creality-ender-3-v3` | `nozzles`, `source` |
+| `creality-ender-3-v3-ke` | `source` |
+| `creality-ender-3-v3-plus` | `nozzles`, `source` |
+| `creality-ender-5` | `source` |
+| `creality-ender-5-plus` | `source` |
+| `creality-ender-5-s1` | `source` |
+| `creality-ender-5s` | `source` |
+| `creality-ender-6` | `source` |
+| `creality-k1` | `nozzles`, `source` |
+| `creality-k1-max` | `nozzles`, `source` |
+| `creality-k1c` | `nozzles`, `source` |
+| `elegoo-neptune` | `source` |
+| `elegoo-neptune-2` | `source` |
+| `elegoo-neptune-2s` | `source` |
+| `elegoo-neptune-3` | `source` |
+| `elegoo-neptune-3-max` | `source` |
+| `elegoo-neptune-3-plus` | `source` |
+| `elegoo-neptune-3-pro` | `source` |
+| `elegoo-neptune-4` | `nozzles`, `source` |
+| `elegoo-neptune-4-max` | `nozzles`, `source` |
+| `elegoo-neptune-4-plus` | `nozzles`, `source` |
+| `elegoo-neptune-4-pro` | `nozzles`, `source` |
+| `elegoo-neptune-x` | `source` |
+| `geeetech-a10-m` | `source` |
+| `geeetech-a10-pro` | `nozzles`, `source` |
+| `geeetech-a10-t` | `source` |
+| `geeetech-a20` | `nozzles`, `source` |
+| `geeetech-a20-m` | `source` |
+| `geeetech-a20-t` | `source` |
+| `geeetech-a30-m` | `source` |
+| `geeetech-a30-pro` | `nozzles`, `source` |
+| `geeetech-a30-t` | `source` |
+| `geeetech-m1` | `nozzles`, `source` |
+| `geeetech-mizar` | `nozzles`, `source` |
+| `geeetech-mizar-m` | `source` |
+| `geeetech-mizar-max` | `nozzles`, `source` |
+| `geeetech-mizar-pro` | `nozzles`, `source` |
+| `geeetech-mizar-s` | `nozzles`, `source` |
+| `geeetech-thunder` | `nozzles`, `source` |
+| `prusa-core-one` | `nozzles`, `source` |
+| `prusa-core-one-hf` | `nozzles`, `source` |
+| `prusa-core-one-l` | `nozzles`, `source` |
+| `prusa-core-one-l-hf` | `nozzles`, `source` |
+| `prusa-mini` | `source` |
+| `prusa-mini-is` | `nozzles`, `source` |
+| `prusa-mk3-5` | `nozzles`, `source` |
+| `prusa-mk3s` | `source` |
+| `prusa-mk4` | `nozzles`, `source` |
+| `prusa-mk4s` | `nozzles`, `source` |
+| `prusa-mk4s-hf` | `nozzles`, `source` |
+| `prusa-xl` | `nozzles`, `source` |
+| `qidi-q1-pro` | `nozzles`, `source` |
+| `qidi-x-cf-pro` | `source` |
+| `qidi-x-max` | `source` |
+| `qidi-x-max-3` | `nozzles`, `source` |
+| `qidi-x-plus` | `source` |
+| `qidi-x-plus-3` | `nozzles`, `source` |
+| `qidi-x-plus-4` | `nozzles`, `source` |
+| `qidi-x-smart-3` | `nozzles`, `source` |
+| `tronxy-x5sa-400-marlin-firmware` | `source` |
+| `troodon-2-0-klipper` | `source` |
+| `troodon-2-0-rrf` | `source` |
+| `voron-0-1` | `source` |
+| `voron-2-4-250` | `source` |
+| `voron-2-4-300` | `source` |
+| `voron-2-4-350` | `source` |
+| `voron-trident-250` | `source` |
+| `voron-trident-300` | `source` |
+| `voron-trident-350` | `source` |
+| `voxelab-aquila-x2` | `source` |
+
+### Inheritance and delivery
+
+The bounded fixture `tools/printers/profileRefresh.fixture.json` retains 220 parsed upstream files, including inherited parents and negative machine configurations, with source commit ids. It contains only the selected workflow machines, their selected processes and materials, parents and representative unsupported machines. It is not a replacement upstream distribution. The production importer still reads the complete pinned trees.
+
+The ten workflows use A1, A1 mini, P1S, X1 Carbon, CORE One, CORE One L, MK4S, MINI IS, single-tool XL and Bambu's overlapping MINI. Fast tests write those source files to temporary installed-profile trees, run `buildCatalog`, compare the resulting entries to the bundled catalog and resolve machine, process and filament inheritance through `findPreset` and `flattenPresets`. PrinterStore save/read round trips retain supported ids and nozzles. Alternate process selection is checked against actual compatible presets. The production 3MF writer and `prepareProject` worker retain printer, nozzle, process and part identities and model bytes. CORE One L's archive fixture assigns both objects to its sole matching PLA preset. Negative material coverage preserves its absence of a matching TPU preset and refuses missing installed profiles rather than choosing a generic filament.
+
+For the default 0.20 mm SPEED processes, Orca 2.5.0 resolves CORE One's four overhang speed slots to `80%`, `30`, `50`, `15`. Orca 2.5.2 resolves them to `80%`, `50`, `25`, `15`. CORE One L already resolves to `80%`, `50`, `25`, `15` in both tags. The tests assert the pinned values in flattened slice files and project archives for both models. This distinguishes an actual CORE One correction from a CORE One L parity check. Catalog refresh alone does not install these settings into a user's slicer.
+
+Existing obstacle tests retain malformed polygons, ranges, clearances, per-extruder volumes and unsupported brim cases. The 2.5.2 `Brim.cpp` still caps automatic brim width at 18 mm. No new supported machine supplies obstacle volumes. Brim and obstacle placement policy stays conservative.
+
+The existing installed-slicer test ran on macOS with Bambu Studio 02.08.04.61. It prepared a refreshed P1S project and round-tripped it through the actual CLI, asserting printer, process, nozzle, per-object material assignments and plate membership. The installed version differs from bundled 02.09.02.62 provenance. Pinned Prusa process verification uses the bounded 2.5.2 trees through the same installed-profile reader, not an installed Orca executable.
+
+The new browser declaration recovers a saved H3C and 0.6 mm nozzle by choosing CORE One and 0.4 mm in Settings, opens Print on a generated PLA/PETG rover and invokes Open in OrcaSlicer. A routed opener writes the delivered payload and runs the production project-preparation worker against the pinned fixture tree, then checks archive identities and assignments. It has no retries and uses existing browser deadlines. The profile matrix stays in fast integration tests. Browser verification belongs to Linux and Windows CI. Local article capture exercised the same controls and archive assertions while saving the Settings and Print states. The capture completed in 35.86 seconds. Vite reported its existing 10-second shutdown warning after the capture passed. A follow-up recovery capture passed in 26.77 seconds, showing the unavailable model, incompatible nozzle, supported selection and Print project. No deadlines, retries or harness policy changed. Screenshots were captured for documentation without judging their appearance.
+
+### Measurements and limits
+
+Measurements were collected on 28 November 2026 on an Apple M5 Pro, macOS arm64, Node 26.13.0. Both source trees were already cached. Each regeneration sample runs `buildCatalog` and Prettier over the complete source trees, including rendering and configuration resolution, with three samples per version pair. Each preparation sample resolves and writes CORE One's machine, default process and PLA filament through `flattenPresets`. The first sample includes vendor indexing, later samples reuse the production reader cache. These are local preparation costs, not end-to-end slicing or UI timings.
+
+| Measurement | Previous pins | Refreshed pins |
+| --- | --- | --- |
+| Regeneration, milliseconds | 2576.346, 1816.765, 1997.872 | 1505.230, 1424.733, 1567.456 |
+| Preset preparation, milliseconds | 30.707, 0.424, 0.354 | 32.212, 0.425, 0.338 |
+| Catalog bytes | 142,369 | 132,900 |
+
+The catalog shrinks by 9,469 bytes. Two executions of the production importer took 1937.242 and 1702.992 milliseconds with warm source caches. Both produced SHA-256 `d934685cd6424432e96ef623516c557e3815b02159a860dda6a4113f1c4ac8aa`.
+
+An initial baseline run found a pre-existing Orca cache directory without a Git checkout and without Prusa profiles. It produced only 93 Bambu entries. Replacing that incomplete cache with the actual 2.5.0 tag restored the 103-entry baseline. The importer now rebuilds cache directories without Git metadata. Timing samples above use the complete trees, not the incomplete cache.
+
+No printer, physical print or print-quality result is involved. No Windows or Linux execution result is claimed from this macOS session. There is no quarantine, retry or timeout increase. Local checks and raw measurements are retained in the session's scratch handoff references.
+
+Final changed-file verification passed for all 31 changed files. It ran 1,155 related tests across 97 files, with a 43.76-second related-test phase, plus formatting, lint, types, docs and site copy. The copy inventory reports zero added, changed or removed app strings. Preflight reports no findings. This is changed-file verification, not the full suite.

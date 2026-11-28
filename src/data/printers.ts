@@ -109,10 +109,14 @@ export function customModel(size: { width: number; depth: number; height: number
 
 const fallbackModel = () => byId.get(FALLBACK_MODEL_ID) ?? PRINTER_MODELS[0];
 
+function unavailableModel(id: string, name = id): PrinterModel {
+  return { ...customModel({ width: 0, depth: 0, height: 0 }), id, name, nozzles: [] };
+}
+
 export function modelOf(mine: MyPrinter): PrinterModel {
   if (mine.custom) return { ...customModel(mine.custom), name: mine.nickname };
 
-  return byId.get(mine.modelId) ?? fallbackModel();
+  return byId.get(mine.modelId) ?? unavailableModel(mine.modelId, mine.nickname);
 }
 
 const setupOf = (mine: MyPrinter): PrinterSetup => ({
@@ -134,6 +138,9 @@ export function resolvePrinter(id: string | undefined, mine: MyPrinter[]): Print
   const model = catalogId && catalogId !== DEFAULT_PRINTER ? byId.get(catalogId) : undefined;
 
   if (model) return { id: model.id, label: model.name, model, nozzle: 0.4, mine: null };
+
+  if (catalogId && catalogId !== DEFAULT_PRINTER)
+    return { id: catalogId, label: catalogId, model: unavailableModel(catalogId), nozzle: 0.4, mine: null };
 
   const fallback = defaultPrinter(mine);
 

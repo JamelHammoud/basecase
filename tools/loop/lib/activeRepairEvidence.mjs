@@ -3,6 +3,7 @@ import path from 'node:path';
 import { isAlive, lockHolder } from './locks.mjs';
 import { LOCKS, WORKTREES } from './paths.mjs';
 import { sessionRecords } from './sessionJournal.mjs';
+import { recoveryFor } from './workRecovery.mjs';
 
 const HANDOFF_BYTES = 8000;
 
@@ -20,6 +21,23 @@ function handoffAt(dir) {
     return null;
   } finally {
     if (descriptor !== undefined) fs.closeSync(descriptor);
+  }
+}
+
+export function retainedRepairEvidence() {
+  try {
+    const recovery = recoveryFor('repair-repair');
+
+    if (!recovery) return null;
+
+    return {
+      worktree: recovery.dir,
+      at: recovery.at,
+      reason: recovery.reason?.slice(0, HANDOFF_BYTES),
+      handoff: handoffAt(recovery.dir),
+    };
+  } catch {
+    return { unavailable: true };
   }
 }
 

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeEach, expect, it, vi } from 'vitest';
-import { activeRepairEvidence } from './activeRepairEvidence.mjs';
+import { activeRepairEvidence, retainedRepairEvidence } from './activeRepairEvidence.mjs';
 
 const fixture = await vi.hoisted(async () => {
   const fs = await import('node:fs');
@@ -9,11 +9,18 @@ const fixture = await vi.hoisted(async () => {
   const path = await import('node:path');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'active-repairs-'));
 
-  return { dir, locks: path.join(dir, 'locks'), worktrees: path.join(dir, 'worktrees'), records: vi.fn() };
+  return {
+    dir,
+    locks: path.join(dir, 'locks'),
+    worktrees: path.join(dir, 'worktrees'),
+    records: vi.fn(),
+    recovery: vi.fn(),
+  };
 });
 
 vi.mock('./paths.mjs', () => ({ LOCKS: fixture.locks, WORKTREES: fixture.worktrees }));
 vi.mock('./sessionJournal.mjs', () => ({ sessionRecords: fixture.records }));
+vi.mock('./workRecovery.mjs', () => ({ recoveryFor: fixture.recovery }));
 
 const session = (overrides = {}) => ({
   name: 'repair',
@@ -31,6 +38,7 @@ beforeEach(() => {
   fs.mkdirSync(fixture.locks, { recursive: true });
   fs.writeFileSync(path.join(fixture.locks, 'repair-1.lock'), String(process.pid));
   fixture.records.mockReset().mockReturnValue([session()]);
+  fixture.recovery.mockReset().mockReturnValue(null);
 });
 afterAll(() => fs.rmSync(fixture.dir, { recursive: true, force: true }));
 
@@ -85,4 +93,35 @@ it('reports an unreadable session journal without blocking doctor evidence prepa
     throw new Error('Journal unavailable');
   });
   expect(activeRepairEvidence()).toEqual({ unavailable: true });
+});
+
+it('carries retained findings and artifacts after the worker finishes without implying a live session', () => {
+  const worktree = path.join(fixture.worktrees, session().task);
+  const handoff = path.join(worktree, 'scratch', 'task-handoff.json');
+  const content = JSON.stringify({ diagnostics: ['retained-report.json'], unresolved: ['camera publication'] });
+
+  fs.mkdirSync(path.dirname(handoff), { recursive: true });
+  fs.writeFileSync(handoff, content);
+  fixture.records.mockReturnValue([session({ state: 'completed' })]);
+  fixture.recovery.mockReturnValue({ dir: worktree, at: 200, reason: 'No source cause established' });
+  expect(activeRepairEvidence()).toEqual([]);
+  expect(retainedRepairEvidence()).toEqual({
+    worktree,
+    at: 200,
+    reason: 'No source cause established',
+    handoff: content,
+  });
+  expect(fixture.recovery).toHaveBeenCalledWith('repair-repair');
+  expect(fs.readFileSync(handoff, 'utf8')).toBe(content);
+  fs.unlinkSync(handoff);
+  fixture.recovery.mockReturnValue({ dir: worktree, reason: 'x'.repeat(9000) });
+  expect(retainedRepairEvidence()).toEqual({ worktree, reason: 'x'.repeat(8000), handoff: null });
+});
+
+it('keeps absent or unreadable retained evidence explicit without blocking the doctor', () => {
+  expect(retainedRepairEvidence()).toBeNull();
+  fixture.recovery.mockImplementation(() => {
+    throw new Error('Recovery unavailable');
+  });
+  expect(retainedRepairEvidence()).toEqual({ unavailable: true });
 });

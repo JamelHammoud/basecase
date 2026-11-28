@@ -41,7 +41,9 @@ export function repairSession({ name, slug, prompt, options, complete, log }) {
 
     const outcome = complete(result.output, worktree);
 
-    clearRecovery(key);
+    if (result.output.changed === false && !hasPendingWorktree(worktree.dir))
+      retain(`Investigation completed without publication. ${result.output.notes ?? result.output.summary ?? ''}`);
+    else clearRecovery(key);
 
     return outcome;
   } catch (error) {

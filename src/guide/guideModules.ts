@@ -1,6 +1,7 @@
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { jointGroupLabel } from '../utils/jointNames';
 import { buildRig } from '../utils/kinematics';
+import { appendGroup } from './guideGroups';
 import { boxCenter, unionBox } from './guideMath';
 import { isMajor, itemKeyOf } from './guideItems';
 import { MAIN_MODULE, type Box, type GuideModule, type GuideScene } from './guideTypes';
@@ -62,7 +63,7 @@ function groupModules(parts: ScenePart[]): { drafts: Draft[]; moduleOf: Map<stri
   const main: Draft = { id: MAIN_MODULE, name: '', parent: null, partIds: [] };
   const byGroup = new Map<string, ScenePart[]>();
 
-  for (const p of parts) if (p.group) byGroup.set(p.group.id, [...(byGroup.get(p.group.id) ?? []), p]);
+  for (const p of parts) if (p.group) appendGroup(byGroup, p.group.id, p);
 
   const moduleOf = new Map<string, string>(parts.map((p) => [p.id, MAIN_MODULE]));
   const drafts: Draft[] = [main];

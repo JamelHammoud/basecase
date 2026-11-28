@@ -284,3 +284,41 @@ describe('prepared payload gravity loads', () => {
     expect(stallReads).toBe(0);
   });
 });
+
+describe('prepared payload joint axes', () => {
+  it.each([
+    [6, 300],
+    [12, 600],
+  ])('reads each source axis once for %i links and %i samples', (links, samples) => {
+    const arm = armOf(links);
+    let reads = 0;
+
+    arm.links.forEach((link) => {
+      const axis = link.axis;
+
+      Object.defineProperty(link, 'axis', {
+        configurable: true,
+        get: () => {
+          reads++;
+
+          return axis;
+        },
+      });
+    });
+
+    const expected = formerMap(arm, samples);
+
+    expect(reads).toBe(links * samples);
+    reads = 0;
+    expect(payloadMap(arm, samples)).toEqual(expected);
+    expect(reads).toBe(links);
+    reads = 0;
+    expect(payloadMap(arm, 0)).toBeNull();
+    expect(reads).toBe(0);
+    arm.links.forEach((link, i) => {
+      Object.defineProperty(link, 'axis', { value: [i + 1, -3, 2] });
+      link.anchor[0] += 25;
+    });
+    expect(payloadMap(arm, samples)).toEqual(formerMap(arm, samples));
+  });
+});

@@ -580,3 +580,16 @@ Focused [Windows diagnostic 46083181599](https://github.com/JamelHammoud/basecas
 The old fixture did not observe committed selected ids or remaining scene parts. Its hours callback substitutes the old value while current readiness is absent, so the comparison failure cannot distinguish missed deletion from pending fresh Checks. The fixture now clicks the canvas before selecting once, waits for the exact selection and confirms one removed part after the ordinary Backspace action. The original lower-hours assertion and both budget verdicts remain intact under their existing deadlines. This closes the fixture's action synchronization gap and makes a later failure identify selection, removal or fresh measurement separately. It does not establish which boundary caused the published failure or prove a candidate Windows pass. Browser execution remains with CI. Fast `engineeringTime.test.ts` and `engineeringTimeGuide.test.ts` retain budget, changed printed contribution, slicing, printer-count, servo setup and saved-guide coverage.
 
 Verified manifests and traces are under `scratch/diagnostics/bfa7b31e-a063-4f9a-84d0-fb9506207dcd/` in the repair worktree. No estimate, assertion, timeout, retry or quarantine is relaxed.
+
+
+## Payload maps prepare rest joint axes once
+
+The source search found `payloadMap` as the repeated caller of `poseArm`. Build's Payload row and the analysis worker's `payloadMaps` operation use that same map implementation. Standalone pose calls remain independently prepared.
+
+Each map now retains normalized rest axes and joint records for its own lifetime. Each candidate copies only their references before replacing downstream posed records. Rotations never mutate the prepared records or source vectors. No cache survives the map, so later axis and anchor edits are read again. A zero-sample map still does no axis preparation.
+
+For 6 links and 300 candidates, source-axis reads and normalization calls fall from 1,800 to 6. For 12 links and 600 candidates, they fall from 7,200 to 12. At the default 4,096 candidates, a six-link map removes 24,570 normalizations and their returned vector arrays. Each pose still owns its joint list and transformed descendant records. These are operation counts, not latency, heap or complete Checks measurements.
+
+The existing generated pose and map comparisons retain mixed revolute and prismatic joints, zero axes, floor rejection, input preservation and gravity-limit edits. Two added cases compare complete maps with the former implementation while counting source-axis reads, then change axes and anchors and compare again. No UI or workflow changes.
+
+Changed-file validation passed formatting, lint, documentation, site copy for 393 pages and TypeScript. Related tests passed 483 files and 3,629 tests, with one existing skipped file and test, in 59.64 seconds. The final sampler edit also passed a separate formatting and lint check. Output remains in `scratch/refine-check.log`. Copy accounting is net zero.

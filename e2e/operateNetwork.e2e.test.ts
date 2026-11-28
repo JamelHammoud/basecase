@@ -1,20 +1,18 @@
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { once } from 'node:events';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RobotFleet } from '../electron/robot/robotFleet.mjs';
 import type { NetworkRobotAsk } from '../src/robot/networkTypes';
 import { ARM } from './armFixture';
 import { openApp, openPlayTab, partCount, shown, type App } from './harness';
 import { networkEventSnapshot, networkRobotEvents } from './networkRobotEvents';
+import { closeNetworkRobotFixture, type NetworkRobotFixture } from './networkRobotFixture';
 
 let app: App;
-let daemon: ChildProcessWithoutNullStreams;
 let fleet: RobotFleet;
-let directory: string;
-let forwarding: ReturnType<typeof networkRobotEvents>;
+let fixture: NetworkRobotFixture = {};
 const events: Array<Record<string, unknown>> = [];
 const daemonEvents: Array<Record<string, unknown>> = [];
 let daemonErrors = '';
@@ -49,10 +47,14 @@ async function connectNetworkRobot() {
 }
 
 beforeEach(async () => {
+  fixture = {};
   events.length = 0;
   daemonEvents.length = 0;
   daemonErrors = '';
-  directory = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-operate-network-'));
+
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-operate-network-'));
+
+  fixture.directory = directory;
   fs.writeFileSync(
     path.join(directory, 'calibration.json'),
     JSON.stringify({
@@ -66,7 +68,8 @@ beforeEach(async () => {
       })),
     }),
   );
-  daemon = spawn(binary, [
+
+  const daemon = spawn(binary, [
     '--family',
     'feetech',
     '--ids',
@@ -81,6 +84,8 @@ beforeEach(async () => {
     '--pairing-code',
     '482619',
   ]);
+
+  fixture.daemon = daemon;
 
   let pending = '';
 
@@ -106,9 +111,13 @@ beforeEach(async () => {
     { timeout: 10000 },
   );
   app = await openApp();
-  forwarding = networkRobotEvents((event) =>
+  fixture.app = app;
+
+  const forwarding = networkRobotEvents((event) =>
     app.page.evaluate((next) => (window as unknown as StudioWindow).networkLink?.receive(next), event),
   );
+
+  fixture.forwarding = forwarding;
   fleet = new RobotFleet({
     binary,
     hornFor: (id: number) => ({ offsetCounts: 0, direction: 1, drives: id === 1 ? 2 : 1 }),
@@ -120,6 +129,7 @@ beforeEach(async () => {
       forwarding.emit(event);
     },
   });
+  fixture.fleet = fleet;
   await app.page.exposeFunction('networkCall', async (method: string, argument: unknown, unit?: string) => {
     const calls: Record<string, () => unknown> = {
       discover: () => [endpoint],
@@ -167,29 +177,14 @@ afterEach(async () => {
     console.log(
       'e2e network state:',
       JSON.stringify({
-        daemonExit: daemon?.exitCode,
+        daemonExit: fixture.daemon?.exitCode,
         daemonErrors,
         daemonEvents: networkEventSnapshot(daemonEvents),
         linkEvents: networkEventSnapshot(events),
       }),
     );
 
-  try {
-    await forwarding?.close();
-  } finally {
-    fleet?.dispose();
-
-    if (daemon && daemon.exitCode === null) {
-      const exited = once(daemon, 'exit');
-
-      daemon.kill();
-      await exited;
-    }
-
-    await app?.close();
-
-    if (directory) fs.rmSync(directory, { recursive: true, force: true });
-  }
+  await closeNetworkRobotFixture(fixture);
 });
 
 async function checkSwappedPair() {

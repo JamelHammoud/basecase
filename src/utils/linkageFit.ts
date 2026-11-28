@@ -53,7 +53,15 @@ function decodeShape(x: Float64Array): Omit<FitLinkage, 'thetas'> {
 export function encode(l: FitLinkage, direction: 1 | -1): Float64Array {
   const x = new Float64Array(unknownCount(l.thetas.length));
 
-  x.set([l.origin[0], l.origin[1], l.angle, ...[l.ground, l.crank, l.coupler, l.rocker].map(Math.log), ...l.point]);
+  x[0] = l.origin[0];
+  x[1] = l.origin[1];
+  x[2] = l.angle;
+  x[3] = Math.log(l.ground);
+  x[4] = Math.log(l.crank);
+  x[5] = Math.log(l.coupler);
+  x[6] = Math.log(l.rocker);
+  x[7] = l.point[0];
+  x[8] = l.point[1];
   x[9] = l.thetas[0];
 
   for (let i = 1; i < l.thetas.length; i++) {

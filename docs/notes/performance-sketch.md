@@ -2,6 +2,18 @@
 
 Implementation: [Sketch](../guide/inspector-and-selection.md#performance-sketch). Shared requirements: [Performance](../guide/performance.md).
 
+## Four-bar seeds encode directly
+
+Whole-app search found one fit-parameter encoder, `encode` in `utils/linkageFit.ts`. The shared synthesis loop calls it for all 36 starts in each crank direction. Sketch Path and agent synthesis therefore both use the direct writes.
+
+Each encoding removes three ordinary arrays: the four lengths, their mapped logarithms and the combined nine-parameter list passed to `Float64Array.set`. The final typed buffer remains independently owned. A complete 72-start synthesis removes 216 temporary arrays. These are source-derived allocation counts, not heap measurements or interaction timings. Angle-step arithmetic, logarithms and parameter order remain unchanged.
+
+`scratch/linkage-encode-parity.mjs` compares the changed encoder with the preceding implementation loaded from Git. All 6,000 cases matched element by element using `Object.is`, including signed zero and NaN. Cases cover one, five and twelve angles, both crank directions, finite fields, infinities, subnormal lengths and negative lengths. Source records remain unchanged. Raw results are in `scratch/linkage-encode-results.json`. NaN payload bits are not part of this numerical comparison.
+
+Existing `linkageFit.test.ts` covers exact-fit termination, accepted steps and budget stopping. `linkageClosure.test.ts` compares residuals and decoded states, and `linkage.test.ts` retains complete seeded synthesis, repeatability and oversized-path refusal. No timeout, retry or exclusion changes.
+
+The steps and captured states in [Design a linkage from a path](../../site/content/help/design-a-linkage-from-a-path.md) remain accurate. Point authoring, candidate errors, insertion, undo and shared agent fitting retain the same behavior. No user action, label or visible state changes, so the article and screenshots remain unchanged.
+
 ## Sketch support rectangle bounds
 
 The whole-app search found one rectangular support canonicalizer, in `utils/sketch/support.ts`. Initial face capture and saved support resolution both call it. Other Sketch extent paths already use `emptyBounds` and `includePoint`, which this validator now shares.

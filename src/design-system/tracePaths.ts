@@ -52,15 +52,30 @@ export const hasX = (traces: Trace[]) => traces.some((t) => t.x);
 
 export const xRange = (traces: Trace[], extra: number[] = []): Range => rangeOf(traces, 'x', extra);
 
-export const valueX = (value: number, range: Range, box: TraceBox) =>
-  ((value - range[0]) / (range[1] - range[0])) * box.width;
+function prepareValueX(range: Range, box: TraceBox) {
+  const low = range[0];
+  const span = range[1] - low;
+  const width = box.width;
+
+  return (value: number) => ((value - low) / span) * width;
+}
+
+export const valueX = (value: number, range: Range, box: TraceBox) => prepareValueX(range, box)(value);
 
 export const sampleCount = (traces: Trace[]) => traces.reduce((n, t) => Math.max(n, t.values.length), 0);
 
 export const sampleX = (index: number, count: number, box: TraceBox) => (index / Math.max(count - 1, 1)) * box.width;
 
-export const valueY = (value: number, range: Range, box: TraceBox) =>
-  box.inset + (1 - (value - range[0]) / (range[1] - range[0])) * (box.height - 2 * box.inset);
+function prepareValueY(range: Range, box: TraceBox) {
+  const low = range[0];
+  const span = range[1] - low;
+  const inset = box.inset;
+  const height = box.height - 2 * inset;
+
+  return (value: number) => inset + (1 - (value - low) / span) * height;
+}
+
+export const valueY = (value: number, range: Range, box: TraceBox) => prepareValueY(range, box)(value);
 
 export const sampleAt = (fraction: number, count: number) =>
   Math.max(0, Math.min(count - 1, Math.round(fraction * (count - 1))));
@@ -116,8 +131,12 @@ function appendSamples(values: ArrayLike<number>, columns: number, append: Appen
   }
 }
 
-function pathOf(values: ArrayLike<number>, range: Range, box: TraceBox): string {
+type ProjectValue = (value: number) => number;
+
+function pathOf(values: ArrayLike<number>, box: TraceBox, y: ProjectValue): string {
   const parts: string[] = [];
+  const span = Math.max(values.length - 1, 1);
+  const width = box.width;
   let pen = 'M';
 
   appendSamples(values, box.width, (i, v) => {
@@ -127,14 +146,14 @@ function pathOf(values: ArrayLike<number>, range: Range, box: TraceBox): string 
       return;
     }
 
-    parts.push(`${pen}${sampleX(i, values.length, box).toFixed(1)} ${valueY(v, range, box).toFixed(1)}`);
+    parts.push(`${pen}${((i / span) * width).toFixed(1)} ${y(v).toFixed(1)}`);
     pen = 'L';
   });
 
   return parts.join('');
 }
 
-function placedPath(t: Trace, ranges: { x: Range; y: Range }, box: TraceBox): string {
+function placedPath(t: Trace, project: { x: ProjectValue; y: ProjectValue }): string {
   const parts: string[] = [];
   let pen = 'M';
 
@@ -148,7 +167,7 @@ function placedPath(t: Trace, ranges: { x: Range; y: Range }, box: TraceBox): st
       continue;
     }
 
-    const at = `${valueX(x, ranges.x, box).toFixed(1)} ${valueY(v, ranges.y, box).toFixed(1)}`;
+    const at = `${project.x(x).toFixed(1)} ${project.y(v).toFixed(1)}`;
 
     parts.push(t.points ? `M${at}h0` : `${pen}${at}`);
     pen = 'L';
@@ -165,10 +184,13 @@ export interface TracePath {
 }
 
 export function tracePaths(traces: Trace[], box: TraceBox, range: Range = traceRange(traces), x?: Range): TracePath[] {
+  const y = prepareValueY(range, box);
+  const project = x ? { x: prepareValueX(x, box), y } : undefined;
+
   return traces.map((t) => ({
     id: t.id,
     tone: t.tone,
-    d: t.x && x ? placedPath(t, { x, y: range }, box) : pathOf(t.values, range, box),
+    d: t.x && project ? placedPath(t, project) : pathOf(t.values, box, y),
     ...(t.points ? { points: true } : {}),
   }));
 }

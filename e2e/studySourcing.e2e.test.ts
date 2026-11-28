@@ -150,7 +150,7 @@ it(
 
     await row.hover();
     await row.getByRole('button', { name: 'Apply', exact: true }).click();
-    await page.getByText('Run Study again to apply a design.', { exact: true }).waitFor();
+    await page.getByRole('status').getByText('Run Study again to apply a design.', { exact: true }).waitFor();
 
     const after = await page.evaluate(() => (window as unknown as { __studio: SourcingHook }).__studio.sceneRecord());
 

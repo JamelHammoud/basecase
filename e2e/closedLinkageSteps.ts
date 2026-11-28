@@ -1,3 +1,4 @@
+import { contactCommand as command } from './selfContactScene';
 import { expect } from 'vitest';
 import type { ScenePart, ProjectSettings } from '../src/types/robotics';
 import { couplerPoint, type PlacedFourBar, type Vec2 } from '../src/utils/linkage';
@@ -16,11 +17,7 @@ interface Studio {
 
 type StudioWindow = { __studio: Studio };
 
-export async function command(app: App, name: string) {
-  await app.page.keyboard.press('Meta+k');
-  await app.page.keyboard.type(name);
-  await app.page.keyboard.press('Enter');
-}
+export { command };
 
 export const state = (app: App) => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.simState());
 export const pins = (app: App) => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.simPins());

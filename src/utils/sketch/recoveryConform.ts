@@ -36,14 +36,15 @@ function edgeData(soup: Float32Array) {
 function splitPoints(edge: Edge, points: Map<string, Vector3>) {
   const direction = edge.b.clone().sub(edge.a);
   const lengthSq = direction.lengthSq();
+  const probe = new Vector3();
   const found: Array<{ t: number; p: Vector3 }> = [];
 
   for (const p of points.values()) {
-    const t = p.clone().sub(edge.a).dot(direction) / lengthSq;
+    const t = probe.copy(p).sub(edge.a).dot(direction) / lengthSq;
 
     if (t <= 1e-7 || t >= 1 - 1e-7) continue;
 
-    if (edge.a.clone().addScaledVector(direction, t).distanceTo(p) <= 0.00005) found.push({ t, p });
+    if (probe.copy(edge.a).addScaledVector(direction, t).distanceTo(p) <= 0.00005) found.push({ t, p });
   }
 
   return found.sort((a, b) => a.t - b.t).map(({ p }) => p);

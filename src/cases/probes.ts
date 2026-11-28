@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { forceProbe } from './gripForce';
 import { simDelta, worldDelta } from '../sim/mjcfFrames';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { V3 } from '../utils/kinematics';
@@ -18,7 +19,12 @@ export interface ProbeWorld {
 }
 
 export interface ProbeReader {
-  sample(poses: Float64Array, out: Record<string, number[]>, contacts?: ArrayLike<number>): void;
+  sample(
+    poses: Float64Array,
+    out: Record<string, number[]>,
+    contacts?: ArrayLike<number>,
+    forces?: Record<string, number>,
+  ): void;
 }
 
 function handAt(effector: EndEffector | null, model: SimModel, poses: Float64Array): THREE.Vector3 {
@@ -53,8 +59,14 @@ export function probeReader(probes: CaseProbe[], world: ProbeWorld): ProbeReader
   const readers = probes.map((probe) => contactProbe(probe, world));
 
   return {
-    sample(poses, out, contacts) {
+    sample(poses, out, contacts, forces) {
       for (const [index, p] of probes.entries()) {
+        if (forceProbe(p)) {
+          appendForce(p.signal, out, forces);
+
+          continue;
+        }
+
         const distance = readers[index]
           ? readers[index](contacts)
           : endPoint(p.from, world, poses).distanceTo(endPoint(p.to, world, poses));
@@ -104,4 +116,15 @@ function contactProbe(probe: CaseProbe, world: ProbeWorld) {
 
     return Number(own.some((body) => touched.has(body)));
   };
+}
+
+function appendForce(signal: string, out: Record<string, number[]>, forces?: Record<string, number>) {
+  const value = forces?.[signal];
+
+  if (!Number.isFinite(value)) return;
+
+  const series = out[signal] ?? [];
+
+  series.push(value!);
+  out[signal] = series;
 }

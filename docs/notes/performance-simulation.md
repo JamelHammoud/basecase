@@ -346,3 +346,42 @@ The first merged fe8b selection reported eight test deadlines and one electrical
 The strengthened realm test adds an unused cutout source to the production arm fixture. Before correction, preparation read that cutout’s triangles. The direct model builder does not request them. The test also retains exact complete-model and physical-hash parity and the existing no-nested-worker assertion. It failed before correction, with four other tests passing. After correction all five tests passed in 135 ms. Logs are `scratch/check-fe8b-realm-acceptance.log` and `scratch/check-fe8b-realm-current.log`.
 
 Renderer preparation still dispatches through the existing contact worker. Existing worker and headless callers use direct calibrated MJCF preparation for ordinary models, checking cancellation before and after. Contact-enabled and replacement-finger models retain contact preparation and native validation in their existing realm. No seed count, physics setting, Check deadline or restoration condition changed. The [workspace comparison](performance-workspace.md#final-merged-workflow-comparison-on-fe8b) retains the pre-correction source and final characterization separately.
+
+## Grip-force observations
+
+`gripForceMeasurements.test.ts` uses ten generated box and cylinder Cases. It first obtains each ordinary reference's control trace, then replays exactly the same sampled controls through the worker engine with and without force extraction. Both runs use the same XML, state, timestep, recorder and control hook. Feedback is absent from this comparison so changed behavior cannot masquerade as observer overhead. End states and contact channels must match exactly.
+
+The measurement retains elapsed physics and recording time, encoded recording bytes, model/data/arena reserved native bytes and the native arena high-water mark. It also reports the observer's numeric buffers and the retained force-array bytes. Each of four channels adds two Float64 values per frame, totaling 64 bytes per retained frame, plus metadata and alignment. The observer owns a six-double native query buffer, a body-index array and sampled/peak arrays. JavaScript Map and object overhead is not included in the numeric-buffer count.
+
+Individual observations are written beneath `scratch/grip-force-measurements/`. These local paired measurements are observations rather than performance gates. Hosted timing and physical accuracy are not inferred from them.
+
+The prior attempt’s ten paired observations on macOS arm64 with Node 26.13.0 recorded median baseline physics/recording time of 157.274104 ms and observed time of 259.8577295 ms. The median paired difference was 83.431959 ms. Each encoded recording added 45,488 bytes, including 44,864 numeric bytes for 701 frames. Each observer retained 160 numeric bytes outside those recording rows. Reserved native model/data/arena memory stayed identical within every pair, at 14,758,178 or 14,758,558 bytes according to shape. Native arena high-water values also matched in the retained rows.
+
+Process RSS and JavaScript heap were sampled every 100 retained frames inside the physics test worker. Sampled peak RSS ranged from 201,883,648 to 285,147,136 bytes for baseline rows and 202,391,552 to 283,213,824 bytes for observed rows. These are process measurements with allocation history and garbage collection, not isolated observer heap costs. The host also ran other work. They cannot establish a memory reduction or a stable timing rate. The native and retained-array byte counts are the direct allocation evidence. Detailed rows are in `scratch/grip-force-measurements/` and the summary is `scratch/force-measurement-summary.json`. The test compares complete final qpos and every recorded touching pair and offset exactly between each pair.
+
+The final-source observations on pinned Node 26.13.1 recorded a 219.6135625 ms median baseline and a 402.35075 ms median with force extraction and retention. The median paired difference was 183.09075 ms. Every recording still added exactly 45,488 encoded bytes, including 44,864 force-array bytes. Each collector’s numeric buffers remained 160 bytes. Reserved native bytes and native arena high-water use matched within each pair. The state, touching pairs and offsets matched exactly in all ten pairs.
+
+Sampled peak RSS ranged from 189,267,968 to 274,857,984 bytes without observations and from 191,643,648 to 275,726,336 bytes with them. These process measurements include garbage collection and neighboring tests during the required related selection, so they do not isolate collector object overhead or establish a stable rate. The historical summary is `scratch/force-resume-measurement-summary.json`, with `scratch/force-resume-all-check.log` recording this run. Later checks replace the working per-case rows in `scratch/grip-force-measurements/`.
+
+
+### Force collector native reads
+
+The multi-contact fixture reproduced 48 reads of MuJoCo’s `geom_bodyid` array in one solved sample. Each native property access creates a JavaScript typed-array view. The collector previously read it twice per contact and built a string pair key for each candidate. The new direct-query regression failed with 48 reads against an expected one before the correction.
+
+The collector now obtains that view once per sample, caches the sample’s contact count and creates one shared traversal input. Unordered body-pair keys are numeric, with the native body count as their stride. Unknown bodies are excluded before lookup. The view is not retained across simulation steps or native allocation. Existing numeric buffers, channel summation order, force queries and recorded bytes remain unchanged.
+
+The candidate’s named two-file check passed 2,691 related tests across 358 files, with one existing skipped test/file, in 53.09 seconds on macOS arm64 with Node 26.13.1. This includes the one-read assertion and the independent direct MuJoCo sums. Evidence is `scratch/force-fast-acceptance.log` and `scratch/force-fast-candidate.log`. The operation count establishes less native view construction, not a deadline failure’s cause or an isolated timing improvement. The required complete changed-file selection is recorded separately.
+
+
+### Control views within an update
+
+After the observer traversal correction, the complete 55-file check passed 5,509 tests but the existing stationary-rover body-motion callback still exceeded 5,000 ms. Its replay uses ordinary Hold controls without force observations. The same engine wrote one actuator at a time through repeated native `ctrl` getters. The new four-actuator regression reproduced five native control-array reads in one step: four writes and the separate fault stage. Evidence is `scratch/force-control-views-acceptance.log`.
+
+Hold, arm, Drive and policy writes now obtain one view per update, and force feedback obtains its control and position views once per update. Views are local, not cached across simulation steps, native allocation or policy evaluation. The independent-engine regression retains exact control, qpos, qvel and touching-pair equality. This removes repeated binding reads without changing commands, limits or the number of physics steps. It does not establish the source of the body-motion deadline.
+
+
+### Final paired force observations with four local workers
+
+The final-source ten-pair selection on macOS arm64 and Node 26.13.1 recorded a 117.18824949999976 ms baseline median and 175.84645849999993 ms observed median. The median paired difference was 55.06756250000012 ms. Every recording added 45,488 encoded bytes, including 44,864 numeric bytes for 701 frames. Observer numeric buffers remained 160 bytes. Reserved native bytes and native arena high-water use matched within each pair, as did complete qpos and every touching pair and offset.
+
+Sampled peak process RSS ranged from 275,136,512 to 312,197,120 bytes without observations and from 276,119,552 to 313,098,240 bytes with them. These process observations include allocation history and neighboring tests. They neither isolate JavaScript observer memory nor establish a speedup against the earlier unrestricted run. Four workers avoided the earlier callback failures in this one completed local selection, whose test phase took 163.72 seconds. No CI concurrency or wait gate changed. Archived raw rows are `scratch/grip-force-measurements-bounded/`, with summary `scratch/force-bounded-measurement-summary.json` and complete check `scratch/force-bounded-all-changed.log`.

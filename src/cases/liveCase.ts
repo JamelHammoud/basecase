@@ -8,6 +8,7 @@ import type { Plan } from '../routines/planTypes';
 import type { RobotJoint } from '../types/robotics';
 import { caseFactReader, caseSignalNames, sampleSignals, type CaseFactReader, type CaseFacts } from './caseFacts';
 import { CaseLogicRun, judgeSoFar, usesBodySkills } from './caseLogic';
+import { observeCaseForces, driveGrippers, forceProbe } from './gripForce';
 import { caseSlots, type Case } from './schema';
 
 export interface LiveCaseInput {
@@ -42,11 +43,13 @@ export class LiveCase {
     this.logic = logic;
     engine.world.startPeople();
     this.reader = caseFactReader(kase, engine.sim);
-    this.names = caseSignalNames(kase);
+    this.names = new Set([...caseSignalNames(kase), ...kase.task.probes.filter(forceProbe).map((p) => p.signal)]);
   }
 
   static async start(engine: SimEngine, input: LiveCaseInput, drive: () => Controller): Promise<LiveCase> {
     const { kase, plan, kit } = input;
+
+    observeCaseForces(engine, kase, driveGrippers(kase, drive()));
 
     if (!plan) return new LiveCase(engine, kase, null);
 
@@ -126,7 +129,10 @@ export class LiveCase {
 
       beforeStep?.();
 
-      const read = this.reader.read(this.engine.poses(), this.t, torqueShare(this.engine));
+      const read = {
+        ...this.reader.read(this.engine.poses(), this.t, torqueShare(this.engine)),
+        ...this.engine.forces?.signals(),
+      };
 
       sampleSignals({ ...read, ...this.logic?.cameraFacts() }, this.names, this.signals);
       this.logic?.advance(this.t * 1000, read);

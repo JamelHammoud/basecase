@@ -1,4 +1,5 @@
 export type ParamKey =
+  | 'gripForceN'
   | 'dots'
   | 'distanceMm'
   | 'heightMm'

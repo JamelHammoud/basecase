@@ -26,9 +26,11 @@ You can make a Case where an arm lifts a block off the floor and sets it down on
 
 ![The arm carrying the block toward the blue spot](/help/pick-up-a-block-with-a-gripper/carry.png)
 
-8. Click **Stop Try**, or wait for the time to run out. The try passes if the block leaves the floor at some point and its center ends up within Radius of the spot. Pushing the block onto the spot doesn't count.
+8. Click **Stop Try**, or wait for the time to run out. Without a force ceiling, the try passes if the block leaves the floor at some point and its center ends up within Radius of the spot. Pushing the block onto the spot doesn't count.
 
 ![Results with a passed try](/help/pick-up-a-block-with-a-gripper/results.png)
+
+To add a modeled squeeze limit and keep its force trace, see [Limit grip force in a Case](/help/limit-grip-force). It also requires holding until placement and a released finish.
 
 To share passed tries, click **Make Dataset** under **Results**, then export or publish the dataset. The dataset uses the Case's brief as its task. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
 

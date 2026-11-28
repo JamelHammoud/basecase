@@ -61,7 +61,7 @@ Every goal and world the Case builder offers, the numbers each goal takes, and e
 | **Follow a Path** | Wheels or legs | **Spots**, **Spacing**, **Radius**, **Time**. In a room, a **Spot** for each | The base reaches each spot in order, within **Radius** for 0.2 s |
 | **Walk Without Falling** | Legs | **Distance**, **Time** | The base gets more than **Distance** from where it started |
 | **Touch a Point** | An arm | **Dots**, **Distance**, **Height**, **Radius**, **Time** | The end effector stays within **Radius** of the point for 0.2 s |
-| **Pick Up a Block** | An arm with a gripper | **Distance**, **Spacing**, **Radius**, **Time** | The block lifts by half its size, then ends within **Radius** of the spot for 0.3 s |
+| **Pick Up a Block** | An arm with a gripper | **Distance**, **Spacing**, **Radius**, **Time**, optional **Grip force ceiling** | Without a ceiling, the block lifts by half its size, then ends within **Radius** for 0.3 s. A ceiling also requires holding until placement, release and force within the limit |
 | **Hand Off to a Spot** | Two arms with grippers | **Distance**, **Height**, **Radius**, **Time** | The donor grips the raised block alone for 0.2 s, both grip it for 0.2 s, then the recipient grips alone for 0.2 s. The block ends placed and released within **Radius** for the final 0.3 s |
 | **Open a Lid** | An arm with a gripper | **Distance**, **Height**, **Width**, **Depth**, **Travel**, **Weight**, **Joint friction**, **Damping**, **Time** | Signed hinge travel exceeds 80% of **Travel** while the arm touches the handle for 0.2 s |
 | **Pull a Drawer** | An arm with a gripper | The same fixture fields, with **Travel** in millimeters | Signed slide travel exceeds 80% of **Travel** while the arm touches the handle for 0.2 s |
@@ -88,6 +88,7 @@ The builder starts each number at a default sized to the robot. Its limits:
 | **Spots** | 2 to 8 |
 | **Spacing** | 200 to 3,000 mm. From 50 mm for Pick Up a Block |
 | **Time** | 2 to 120 s |
+| **Grip force ceiling** | 0.01 to 1,000,000 N when enabled |
 | **Width**, **Depth** | 10 to 500 mm |
 | **Travel** | 1 to 150° for a lid, or 1 to 150 mm for a drawer |
 | **Weight** | 1 to 10,000 g for the plate, plus its separate 5 g handle |
@@ -127,7 +128,7 @@ A Case is named after its goal and world, such as "Push a Box in a Corridor", an
 ## How a try is judged
 
 1. Each Case reads probes, such as a distance in millimeters from the base to the spot, or whether a gripper touches a block.
-2. Basecase reads every probe at every frame of the recorded try, 50 times a second.
+2. Basecase reads recorded probes at 50 Hz. A force ceiling also reads the retained maximum across physics steps.
 3. The contract's success rule and failure rules read those readings.
 4. The try passes when the success rule holds and no failure rule fires.
 
@@ -138,6 +139,8 @@ For Hand Off, the block must rise by more than its height before transfer. It mu
 A [selected-object pickup](/help/design-gripper-fingers) requires 0.2 s of contact with both jaws while raised above its lift threshold. That threshold is half the object’s height, with a 4 mm minimum. It must stay gripped until placed, then finish released within **Radius** for 0.3 s. Its final lift reading must be within 4 mm of its initial value. Pushing, palm contact and dropping before placement fail.
 
 With generated replacement fingers, the reference eases the loaded lift within the scheduled movement time.
+
+For force observations and the additional holding requirement, see [Limit grip force in a Case](/help/limit-grip-force).
 
 A Case made by **Replay in Sim** reads torque instead: each frame's highest joint torque, as a share of the most its servo can push.
 
@@ -163,7 +166,7 @@ The contract never passes by default. A reading that isn't a number counts again
 
 ## Scaling to another arm
 
-A Case with generated targets scales its world to another arm’s reach, measured from its shoulder. Every distance in the contract scales with it. Angles and 0-or-1 contact readings don't. A position the Case's code gives a movable object scales the same way, so a lit spot lands on the scaled spot. Skills are judged by the same contract code, in [Arena](/help/arena).
+A Case with generated targets scales its world to another arm’s reach, measured from its shoulder. Every distance in the contract scales with it. Angles, 0-or-1 contact readings and forces in newtons don't. A position the Case's code gives a movable object scales the same way, so a lit spot lands on the scaled spot. Skills are judged by the same contract code, in [Arena](/help/arena).
 
 For [training images](/help/make-training-images), named object points, object pose variation, distractors and camera mount tolerance in millimeters scale too. Color classes and angular tolerances stay the same.
 

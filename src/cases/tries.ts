@@ -9,6 +9,7 @@ import { fixtureSignals } from './fixtureTravel';
 import { probeReader, type ProbeWorld } from './probes';
 import { robotFacts, type EndEffector } from './robotFit';
 import { CASE_FORMAT_VERSION, caseSlots, type Case } from './schema';
+import { recordedForceReader } from './gripForce';
 import { slotKeys } from './slots';
 import type { TryBranch } from './tryBranch';
 
@@ -86,8 +87,13 @@ export function caseProbeReader(scoring: Omit<TryScoring, 'recording'>) {
   const names = new Set(fixtureSignals(scoring.kase.world.objects));
 
   return {
-    sample(poses: Float64Array, out: Record<string, number[]>, contacts?: ArrayLike<number>) {
-      reader.sample(poses, out, contacts);
+    sample(
+      poses: Float64Array,
+      out: Record<string, number[]>,
+      contacts?: ArrayLike<number>,
+      forces?: Record<string, number>,
+    ) {
+      reader.sample(poses, out, contacts, forces);
 
       if (names.size) sampleSignals(facts.read(poses, 0), names, out);
     },
@@ -100,11 +106,12 @@ export function trySignals({ recording, ...scoring }: TryScoring): Trace {
 
   const facts = caseFactReader(scoring.kase, scoring.model);
   const names = caseSignalNames(scoring.kase);
+  const forces = recordedForceReader({ recording, ...scoring });
 
   for (let i = 0; i < recording.frames; i++) {
     const poses = framePoses(recording, i);
 
-    reader.sample(poses, signals, frameContacts(recording, i));
+    reader.sample(poses, signals, frameContacts(recording, i), forces(i));
     sampleSignals(facts.read(poses, i * recording.dt, recording.torque?.[i]), names, signals);
   }
 

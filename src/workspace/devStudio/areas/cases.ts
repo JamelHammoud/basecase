@@ -22,6 +22,17 @@ export default function casesStudio(studio: Studio) {
       );
     },
     caseRunSpeed: (speed: number) => studio().core.simTraining.sim.setSpeed(speed),
+    gripForceEvidence: () => {
+      const timeline = cases().timeline;
+      const signals = timeline.scene?.trace.signals;
+
+      return {
+        passed: timeline.record?.passed ?? null,
+        force: signals?.gripForce ?? [],
+        peaks: signals?.gripForcePeak ?? [],
+        evidence: timeline.recording?.forceEvidence ?? null,
+      };
+    },
     fixtureTravel: () => cases().timeline.scene?.trace.signals['fixture-travel'] ?? [],
     referenceTry: () => cases().attempt.reference(),
     passTries: async () => {

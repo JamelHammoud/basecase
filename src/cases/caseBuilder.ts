@@ -30,6 +30,7 @@ import { topOf } from './terrain';
 import { CASE_FORMAT_VERSION, parseCase, type Case, type ReferenceCommand, type WorldObject } from './schema';
 import { dotSpots } from './dotSpots';
 import { CaseFileError } from './validate';
+import { pickConsoleValue } from './pickForce';
 import { selectedPickProblem } from './selectedPick';
 import {
   importedPlacement,
@@ -327,7 +328,7 @@ function caseJson(draft: Draft): unknown {
       ...(spec.score !== undefined ? { score: spec.score } : {}),
     },
     ...(spec.logic !== undefined ? { logic: spec.logic } : {}),
-    ...(spec.console !== undefined ? { console: spec.console } : {}),
+    ...pickConsoleValue({ given: spec.console, goal: goal.kind, ceilingN: values.gripForceN }),
     ...(spec.gestures !== undefined ? { gestures: spec.gestures } : {}),
     ...(spec.faults !== undefined ? { faults: spec.faults } : {}),
     imageRandomization: spec.imageRandomization,

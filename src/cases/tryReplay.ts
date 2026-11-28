@@ -9,7 +9,8 @@ import type { V3 } from '../utils/kinematics';
 import { jitteredWorld, worldRandom } from './caseRandom';
 import { startEngine } from './runCase';
 import type { Case } from './schema';
-import { scoreTry, type TryScoring } from './tries';
+import { observeCaseForces } from './gripForce';
+import { scoreTry, caseProbeWorld, type TryScoring } from './tries';
 
 export interface Offset {
   move: V3;
@@ -211,6 +212,8 @@ export async function replayTry(mj: MainModule, source: TryScoring, seed: number
 
   try {
     placeStart(mj, engine, { recording, offsets });
+
+    observeCaseForces(engine, source.kase, caseProbeWorld(source).grippers ?? {});
 
     const recorder = new Recorder(engine, controller);
     const world = engine.world;

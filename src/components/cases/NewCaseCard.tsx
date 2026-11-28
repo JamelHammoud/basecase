@@ -9,6 +9,7 @@ import { useRoomTargetPick } from './useRoomTargetPick';
 import { fixtureFitsGoal } from '../../cases/householdKinds';
 import { fixtureValueTitle } from '../../cases/fixtureValueSource';
 import { useCaseDraft } from './useCaseDraft';
+import { CaseGripForceField } from './CaseGripForceField';
 import { CaseFixtureChoice } from './CaseFixtureChoice';
 
 const MAX_WORLD_COLUMNS = 3;
@@ -100,6 +101,15 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
           <RoomTargetPicker count={spots.count} targets={spots.targets} picked={chosen} onPick={spots.pick} />
         )}
         {fields.map((key) => {
+          if (key === 'gripForceN')
+            return (
+              <CaseGripForceField
+                key={key}
+                value={values[key]}
+                onChange={(v) => setGiven((g) => ({ ...g, [key]: v }))}
+              />
+            );
+
           const param = goalParam(goal, key);
           const title = fixtureValueTitle(fixture, key, given, param.label);
 

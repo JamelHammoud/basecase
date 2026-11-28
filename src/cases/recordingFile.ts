@@ -3,6 +3,7 @@ import { readEvaluationReplay } from './evaluationReplayValidation';
 import { keepTyped, restoreTyped } from './recordingValues';
 import { CONTINUATION_MAX_BYTES } from '../sim/continuationLimits';
 import type { RecordedInput, Recording } from '../sim/recorder';
+import { forceArraysFit, forceEvidenceFits } from './gripForceRecording';
 import { isTeachingRecording, teachingArraysFit, teachingLengths } from '../sim/teachingRecording';
 
 const MAGIC = 0x52544342;
@@ -27,6 +28,8 @@ const ARRAYS = {
   scan: 'f32',
   topics: 'u8',
   contacts: 'i32',
+  contactForce: 'f64',
+  contactForcePeak: 'f64',
   contactOffsets: 'i32',
   continuation: 'u8',
   actionTime: 'f64',
@@ -125,6 +128,8 @@ function sizesFit(header: Header) {
 
   if (!(typeof header.dt === 'number' && header.dt > 0 && Number.isFinite(header.dt))) return false;
 
+  if (!forceEvidenceFits(header.forceEvidence, nbody)) return false;
+
   if (header.teaching !== undefined && !isTeachingRecording(header.teaching)) return false;
 
   return header.scanWidth === undefined || isCount(header.scanWidth, 100_000);
@@ -140,6 +145,8 @@ function expectedLength(key: ArrayKey, h: Header): number | null {
     torque: h.frames,
     scan: h.frames * (h.scanWidth ?? 0),
     contactOffsets: h.frames + 1,
+    contactForce: h.frames * (h.forceEvidence?.channels.length ?? 0),
+    contactForcePeak: h.frames * (h.forceEvidence?.channels.length ?? 0),
     ...teachingLengths(h),
   };
 
@@ -254,5 +261,5 @@ export function decodeRecording(bytes: Uint8Array): Recording | null {
 
   const recording = { ...rest, ...arrays, ...(inputs ? { inputs } : {}) } as Recording;
 
-  return teachingArraysFit(recording) ? recording : null;
+  return teachingArraysFit(recording) && forceArraysFit(recording) ? recording : null;
 }

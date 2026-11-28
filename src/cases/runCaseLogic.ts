@@ -1,3 +1,4 @@
+import { torqueShare } from '../sim/torqueShare';
 import { routineBody, type RoutineBody } from '../routines/physicsBody';
 import type { RoutineKit } from '../routines/physicsKit';
 import type { Plan } from '../routines/planTypes';
@@ -63,15 +64,21 @@ export async function startLogic({ plan, kase, engine, body, handBack, inputs }:
 
 export type Signals = Record<string, number[]>;
 
-type ProbeSample = (poses: Float64Array, out: Signals, contacts?: ArrayLike<number>) => void;
+type ProbeSample = (
+  poses: Float64Array,
+  out: Signals,
+  contacts?: ArrayLike<number>,
+  forces?: Record<string, number>,
+) => void;
 
 export function factSampler(kase: Case, facts: CaseFactReader, reader: { sample: ProbeSample }, signals: Signals) {
   const names = caseSignalNames(kase);
 
-  return (poses: Float64Array, t: number, torque?: number, contacts?: ArrayLike<number>) => {
-    const read = facts.read(poses, t, torque);
+  return (poses: Float64Array, t: number, torque?: number, contact?: ForceMoment) => {
+    const { pairs, forces } = contact ?? {};
+    const read = { ...facts.read(poses, t, torque), ...forces };
 
-    reader.sample(poses, signals, contacts);
+    reader.sample(poses, signals, pairs, forces);
     sampleSignals(read, names, signals);
 
     return read;
@@ -88,4 +95,24 @@ export function configuredEngine<T extends { dispose: () => void }>(started: T, 
 
     throw error;
   }
+}
+
+export interface ForceMoment {
+  pairs?: ArrayLike<number>;
+  forces?: Record<string, number>;
+}
+
+export function assertCaseRunning(options: { cancelled?: () => boolean }) {
+  if (options.cancelled?.()) throw AbortSignal.abort().reason;
+}
+
+export const momentFor = (engine: SimEngine): ForceMoment => ({
+  pairs: engine.contactPairs(),
+  forces: engine.forces?.signals(),
+});
+
+export function finishForceSample(input: { engine: SimEngine; sample: ReturnType<typeof factSampler> }) {
+  const { engine, sample } = input;
+
+  if (engine.forces) sample(engine.poses(), engine.data.time, torqueShare(engine), momentFor(engine));
 }

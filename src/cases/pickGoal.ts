@@ -6,6 +6,7 @@ import type { CaseControl, CaseProbe, ReferenceCommand, WorldObject } from './sc
 import type { Formula } from '../skills/contract';
 import { selectedPickObject, selectedPickSpan } from './selectedPick';
 import { lowerCommands } from './referenceMotion';
+import { forceLimitedPick, forcePickProbes } from './pickForce';
 import { selectedPickContract } from './selectedPickContract';
 
 export const BLOCK_SHARE_OF_OPENING = 0.7;
@@ -38,7 +39,7 @@ export function blockSize({ facts }: BuilderRobot): number {
   return Math.max(10, Math.round((facts.gripper?.openingMm ?? 0) * BLOCK_SHARE_OF_OPENING));
 }
 
-type Placement = Pick<GoalValues, 'distanceMm' | 'spacingMm'>;
+type Placement = Pick<GoalValues, 'distanceMm' | 'spacingMm'> & { gripForceN?: number };
 
 function layoutOf(robot: BuilderRobot, v: Placement): Layout {
   if (robot.pickTarget) {
@@ -79,15 +80,19 @@ interface Step {
   lower?: boolean;
 }
 
-function closingSteps(layout: Layout): Step[] {
+function closingSteps(layout: Layout, gripSeconds: number): Step[] {
   const target: V3 = [layout.block[0], layout.gripY, layout.block[2]];
 
-  if (!layout.selected) return [{ target, aux: SHUT, wait: GRIP_S }];
+  if (!layout.selected) return [{ target, aux: SHUT, wait: gripSeconds }];
 
-  return [0.25, 0.5, 0.75, 1].map((share) => ({ target, aux: [0, share], wait: share === 1 ? GRIP_S : GRIP_S / 4 }));
+  return [0.25, 0.5, 0.75, 1].map((share) => ({
+    target,
+    aux: [0, share],
+    wait: share === 1 ? gripSeconds : gripSeconds / 4,
+  }));
 }
 
-function steps(layout: Layout, approach?: V3): Step[] {
+function steps(layout: Layout, approach?: V3, gripSeconds = GRIP_S): Step[] {
   const { block, spot, gripY, hoverY } = layout;
   const at = (p: V3, y: number): V3 => [p[0], y, p[2]];
 
@@ -95,7 +100,7 @@ function steps(layout: Layout, approach?: V3): Step[] {
     ...(approach ? [{ target: at(approach, hoverY), aux: OPEN }] : []),
     { target: at(block, hoverY), aux: OPEN },
     { target: at(block, gripY), aux: OPEN },
-    ...closingSteps(layout),
+    ...closingSteps(layout, gripSeconds),
     { target: at(block, hoverY), aux: SHUT },
     { target: at(spot, hoverY), aux: SHUT },
     { target: at(spot, gripY), aux: SHUT, lower: !!layout.selected },
@@ -106,7 +111,7 @@ function steps(layout: Layout, approach?: V3): Step[] {
 
 const distance = (a: V3, b: V3) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 
-function timeline(robot: BuilderRobot, layout: Layout): ReferenceCommand[] {
+function timeline(robot: BuilderRobot, layout: Layout, ceilingN = 0): ReferenceCommand[] {
   const speed = Math.max(robot.facts.reachMm, 1) * REACH_PER_SECOND;
   const jawJoints = new Set(robot.facts.gripper?.jaws.map((jaw) => jaw.joint));
   const replacement = robot.rig?.parts.some(
@@ -115,27 +120,32 @@ function timeline(robot: BuilderRobot, layout: Layout): ReferenceCommand[] {
   let from = robot.facts.endEffector?.point ?? layout.block;
   let at = START_S;
 
-  return steps(layout, layout.selected ? robot.facts.endEffector?.point : undefined).flatMap((s) => {
-    const command = { at: Math.round(at * 100) / 100, target: s.target, aux: s.aux };
+  return steps(layout, layout.selected ? robot.facts.endEffector?.point : undefined, ceilingN > 0 ? 3 : GRIP_S).flatMap(
+    (s) => {
+      const command = { at: Math.round(at * 100) / 100, target: s.target, aux: s.aux };
 
-    const movement = (distance(from, s.target) / speed) * MOVE_SLACK;
-    const duration = s.lower ? distance(from, s.target) / (speed * 0.2) : movement;
-    const loadedLift = replacement && !!layout.selected && s.aux === SHUT && s.target[1] > from[1];
-    const commands = s.lower || loadedLift ? lowerCommands(command, from, duration) : [command];
+      const movement = (distance(from, s.target) / speed) * (ceilingN > 0 ? 3 : MOVE_SLACK);
+      const duration = s.lower ? distance(from, s.target) / (speed * (ceilingN > 0 ? 0.05 : 0.2)) : movement;
+      const loadedLift = replacement && !!layout.selected && s.aux === SHUT && s.target[1] > from[1];
+      const commands =
+        s.lower || loadedLift || (ceilingN > 0 && s.aux === SHUT && movement > 0)
+          ? lowerCommands(command, from, duration)
+          : [command];
 
-    at += s.wait ?? duration + SETTLE_S;
-    from = s.target;
+      at += s.wait ?? duration + SETTLE_S;
+      from = s.target;
 
-    return commands;
-  });
+      return commands;
+    },
+  );
 }
 
 function pickSeconds(robot: BuilderRobot, v: Placement): number {
   const layout = layoutOf(robot, v);
-  const last = timeline(robot, layout).at(-1)!;
+  const last = timeline(robot, layout, v.gripForceN).at(-1)!;
   const rise = layout.hoverY / (Math.max(robot.facts.reachMm, 1) * REACH_PER_SECOND);
 
-  return Math.ceil(last.at + rise * MOVE_SLACK + SETTLE_S + END_HOLD_S + SPARE_S);
+  return Math.ceil(last.at + rise * (v.gripForceN ? 3 : MOVE_SLACK) + SETTLE_S + END_HOLD_S + SPARE_S);
 }
 
 function success(layout: Layout, radius: number): Formula {
@@ -190,7 +200,7 @@ function objects(layout: Layout, radius: number): WorldObject[] {
   ];
 }
 
-export function pickDefaults(robot: BuilderRobot): Partial<GoalValues> {
+export function pickDefaults(robot: BuilderRobot, chosen: Partial<GoalValues> = {}): Partial<GoalValues> {
   const reach = robot.facts.reachMm;
   const values = {
     distanceMm: Math.round(reach * 0.4),
@@ -198,14 +208,14 @@ export function pickDefaults(robot: BuilderRobot): Partial<GoalValues> {
     radiusMm: Math.max(12, Math.round(blockSize(robot) / 2)),
   };
 
-  return { ...values, seconds: pickSeconds(robot, values) };
+  return { ...values, seconds: pickSeconds(robot, { ...values, gripForceN: chosen.gripForceN }) };
 }
 
 export const pickGoalWith = (controls: CaseControl[]): CaseGoal => ({
   kind: 'pick',
   name: 'Pick Up a Block',
   needs: ['gripper'],
-  params: ['distanceMm', 'spacingMm', 'radiusMm', 'seconds'],
+  params: ['distanceMm', 'spacingMm', 'radiusMm', 'seconds', 'gripForceN'],
   bounds: { spacingMm: { min: MIN_SPACING_MM } },
   plan: (robot, v) => {
     const { facts } = robot;
@@ -215,7 +225,7 @@ export const pickGoalWith = (controls: CaseControl[]): CaseGoal => ({
     const probes: CaseProbe[] = [
       { signal: 'spot', from: { object: block }, to: { object: spotId(layout) } },
       { signal: 'lift', from: { object: block }, to: { point: [x, -FLOOR_PROBE_DEPTH_MM, z] } },
-      ...(layout.selected
+      ...(layout.selected || v.gripForceN > 0
         ? (['grip', 'contact'] as const).map((kind) => ({
             signal: kind,
             kind,
@@ -237,9 +247,14 @@ export const pickGoalWith = (controls: CaseControl[]): CaseGoal => ({
         anchor: facts.anchor,
       },
       objects: objects(layout, v.radiusMm),
-      probes,
-      success: layout.selected ? selectedPickContract(layout.size, v.radiusMm) : success(layout, v.radiusMm),
-      timeline: timeline(robot, layout),
+      probes: [...probes, ...forcePickProbes(block, v.gripForceN)],
+      success: forceLimitedPick(
+        layout.selected || v.gripForceN > 0
+          ? selectedPickContract(layout.size, v.radiusMm)
+          : success(layout, v.radiusMm),
+        v.gripForceN,
+      ),
+      timeline: timeline(robot, layout, v.gripForceN),
       controls,
       route: { from: [x, 0, facts.anchor[2]], to: [x, 0, layout.spot[2]], halfWidth: v.radiusMm },
     };

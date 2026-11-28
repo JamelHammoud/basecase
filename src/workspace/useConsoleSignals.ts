@@ -133,7 +133,7 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
 
       if (!now.running && goal) endGoal();
 
-      goal?.add(now.time, poses, frame.contacts);
+      goal?.add(now.time, poses, frame.contacts, frame.forces);
 
       if (now.time - lastPush < PUSH_EVERY_S && now.time >= lastPush) return;
 
@@ -146,6 +146,7 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
           joints: frame.joints,
           poses,
           contacts: frame.contacts,
+          forces: frame.forces,
           robot: frame.stats.robots[0],
           world,
           reader,

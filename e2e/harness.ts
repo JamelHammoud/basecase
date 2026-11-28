@@ -187,21 +187,23 @@ export async function openApp(
   options: { args?: string[]; roboflowUrl?: string } = {},
 ): Promise<App> {
   const started = Date.now();
-  const browser: Browser = await launchChrome([...SOFTWARE_GL, ...(options.args ?? [])]);
   const errors: string[] = [];
   const posts: App['posts'] = [];
   const requests: string[] = [];
   const libraryDir = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-e2e-library-'));
+  let browser: Browser | undefined;
 
   const close = async () => {
     try {
-      await browser.close();
+      await browser?.close();
     } finally {
       fs.rmSync(libraryDir, { recursive: true, force: true });
     }
   };
 
   try {
+    browser = await launchChrome([...SOFTWARE_GL, ...(options.args ?? [])]);
+
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
     page.on('request', (request) => requests.push(request.url()));
@@ -236,7 +238,7 @@ export async function openApp(
       },
     };
   } catch (error) {
-    await close();
+    await close().catch(() => undefined);
 
     throw error;
   }

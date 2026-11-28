@@ -112,7 +112,7 @@ export async function openInferenceWorker(signal: AbortSignal) {
 
     return { page, close };
   } catch (error) {
-    await close();
+    await close().catch(() => undefined);
 
     throw error;
   }

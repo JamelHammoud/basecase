@@ -80,3 +80,14 @@ it('releases both resources when Chrome has no initial page', async () => {
   expect(close).toHaveBeenCalledTimes(1);
   await expect(fetch(url())).rejects.toThrow();
 });
+
+it('preserves setup failure and closes the server when browser cleanup rejects', async () => {
+  bundle();
+
+  const close = vi.fn().mockRejectedValue(new Error('Chrome cleanup failed'));
+
+  fixture.launch.mockResolvedValue({ pages: () => [], close });
+  await expect(openInferenceWorker(new AbortController().signal)).rejects.toThrow('Expected the inference test page.');
+  expect(close).toHaveBeenCalledTimes(1);
+  await expect(fetch(url())).rejects.toThrow();
+});

@@ -74,11 +74,17 @@ function calloutCell(doc: GuideDoc, entry: GuideStep['callout'][number]): string
   return `<div class="ci"><div class="thumb">${thumb ? imageTag(thumb.dataUrl) : ''}</div><div class="meta"><span class="qty">${entry.qty}×</span>${item ? `<span class="tag">${item.label}</span>` : ''}</div></div>`;
 }
 
-function headerOf(doc: GuideDoc, step: GuideStep, area: Rect) {
+function headerLayout(doc: GuideDoc, step: GuideStep, area: Rect) {
   const tools = step.tools.map((id) => doc.plan.tools.find((t) => t.id === id)).filter((t) => !!t);
   const toolsW = tools.length ? tools.length * (TOOL + TOOL_GAP) : 0;
   const maxW = area.w - NUMBER_W - toolsW - 2;
   const rows = calloutRows(step, maxW);
+
+  return { tools, maxW, rows };
+}
+
+function headerOf(doc: GuideDoc, step: GuideStep, area: Rect) {
+  const { tools, maxW, rows } = headerLayout(doc, step, area);
   const height = step.callout.length ? calloutHeight(step, rows) : 0;
   const widest = Math.max(
     ...rows.map((r) => r.reduce((w, i, k) => w + cellSize(step.callout[i].key).w + (k ? GAP_X : 0), PAD_X * 2)),
@@ -95,7 +101,7 @@ function headerOf(doc: GuideDoc, step: GuideStep, area: Rect) {
     )
     .join('');
 
-  return { html: callout + toolHtml, height: Math.max(16, height), rows: rows.length };
+  return { html: callout + toolHtml, height: Math.max(16, height) };
 }
 
 function mirrorNote(doc: GuideDoc, step: GuideStep, area: Rect): string {
@@ -142,9 +148,13 @@ function panelHtml(doc: GuideDoc, index: number, area: Rect): { html: string; le
 
 function isHalf(doc: GuideDoc, index: number, area: Rect): boolean {
   const d: StepDrawing = doc.drawings.steps[index];
-  const header = headerOf(doc, doc.plan.steps[index], area);
+  const step = doc.plan.steps[index];
 
-  return d.main.width / d.main.height >= HALF_ASPECT && header.rows <= 2 && doc.plan.steps[index].kind !== 'mirror';
+  return (
+    d.main.width / d.main.height >= HALF_ASPECT &&
+    step.kind !== 'mirror' &&
+    headerLayout(doc, step, area).rows.length <= 2
+  );
 }
 
 function packPanels(doc: GuideDoc, indices: number[], area: Rect): Panel[][] {

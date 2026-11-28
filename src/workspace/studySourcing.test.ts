@@ -3,6 +3,7 @@ import type { StudyRequest } from './studyRun';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sourcingEvidence, sourcingMorphologies, sourcingKnob, SOURCING_REQUIREMENTS } from '../study/sourcingFixtures';
 import { sourcingSnapshot } from '../study/sourcing';
+import { refreshStudyGeometry } from '../study/geometry';
 import { createStudyGrader } from '../study/grade';
 import { studyFingerprint, studyScene } from '../study/study';
 import type { StudyRecord } from '../study/types';
@@ -201,4 +202,32 @@ describe('Study sourcing through workspace production paths', () => {
       expect(commitStudy).not.toHaveBeenCalled();
     },
   );
+});
+
+it('rebuilds unchanged geometry before revalidating a saved sourcing choice in a fresh session', async () => {
+  const { study, next, purchases } = await fixture();
+  const unchanged = next.parts.filter((part) => part.kind !== 'component').map((part) => part.id);
+  const prepared = await refreshStudyGeometry(next, unchanged);
+  const grader = createStudyGrader();
+  const row = grader.grade(
+    { ...prepared, sourcing: study.sourcing },
+    { knobs: study.knobs, selection: [1], purchases },
+  );
+
+  grader.dispose();
+
+  const replayed = {
+    ...prepared,
+    measures: {},
+    triangles: Object.fromEntries(Object.entries(prepared.triangles).filter(([id]) => !unchanged.includes(id))),
+  };
+  const saved = structuredClone(study);
+  const originalInput = structuredClone(replayed);
+
+  expect(unchanged.length).toBeGreaterThan(0);
+  expect(await validateStudyPurchasing(study, row, replayed)).toBe(true);
+  purchases['component:feetech-sts3215|c018'].supplierOffers!.offers[0].offer.expiresAt = '2020-01-01T00:00:00Z';
+  expect(await validateStudyPurchasing(study, row, replayed)).toBe(false);
+  expect(study).toEqual(saved);
+  expect(replayed).toEqual(originalInput);
 });

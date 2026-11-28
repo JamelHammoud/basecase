@@ -13,7 +13,8 @@ covers:
   - src/components/operate/FleetRows.tsx
   - src/robot/fleetIncidents.ts
   - src/workspace/useOperateAlerts.ts
-  - src/workspace/WorkspaceSheets.tsx
+  - src/robot/fleetIncidentStore.ts
+  - src/workspace/robotReplay.ts
 ---
 
 Find a robot's fault or Case alert, acknowledge it, and open the try that captured it.

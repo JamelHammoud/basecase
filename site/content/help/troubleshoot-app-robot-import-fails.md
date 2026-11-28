@@ -80,6 +80,6 @@ MJCF tendons and unsupported tendon extensions in URDF can’t become direct-dri
 
 Basecase imports a Hugging Face LeRobot dataset link as tries, and does the same with a folder or zip that holds a LeRobot dataset or a ROS 2 recording. If one of those fails, the message names the dataset's file and what's wrong with it. See [Import robot data as tries](/help/import-robot-data-as-tries).
 
-Roboflow and Hugging Face image dataset links add labeled images to the Library instead of a robot. Roboflow links require the desktop app and a key in **Settings** ▸ **Accounts**. See [Import an image dataset](/help/import-an-image-dataset).
+Roboflow and Hugging Face image dataset links add labeled images to the Library instead of a robot. Roboflow links require the desktop app and a key in **Settings** ▸ **Accounts**. If an export is preparing, click **Continue** in **Import Robot** to check the selected version again. Each click checks once. See [Import an image dataset](/help/import-an-image-dataset).
 
 To import a robot that works, follow [Import a robot](/help/import-a-robot).

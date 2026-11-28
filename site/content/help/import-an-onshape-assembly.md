@@ -18,6 +18,7 @@ covers:
   - src/components/settings/AccountsPane.tsx
   - src/app/settingsPanes.ts
   - src/components/ImportRobotSheet.tsx
+  - src/workspace/useRobotInsert.ts
   - src/onshape/
   - electron/onshape/
   - src/readiness/buildChecks.ts

@@ -95,7 +95,7 @@ describe('Roboflow account and downloads', () => {
 
     const route = roboflowPostRoutes(rf).find(([name]) => name === '/roboflow-import');
 
-    expect(await route[1]({ arg: LINK })).toEqual({ name: 'project-v2.zip', data: 'UEsDBA==' });
+    expect(await route[1]({ arg: LINK })).toEqual({ kind: 'complete', name: 'project-v2.zip', data: 'UEsDBA==' });
   });
 
   it('resolves a project link to its latest generated version', async () => {

@@ -22,7 +22,6 @@ covers:
   - src/workspace/useDatasetExport.ts
   - src/workspace/datasetCommands.tsx
   - src/hub/hubBridge.ts
-  - src/workspace/useDataImport.ts
   - src/vision/imageDatasetBuild.ts
   - electron/hub/
 ---

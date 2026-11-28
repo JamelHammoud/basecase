@@ -8,7 +8,22 @@ export interface RoboflowAccountState {
   saved: boolean;
 }
 
+export interface RoboflowContinuation {
+  workspace: string;
+  project: string;
+  version: number;
+  format: 'coco';
+  signature: string;
+}
+
+export interface RoboflowPending {
+  kind: 'pending';
+  continuation: RoboflowContinuation;
+  progress?: number;
+}
+
 export interface RoboflowArchive {
+  kind: 'complete';
   name: string;
   data: Uint8Array;
 }
@@ -38,5 +53,6 @@ export class RoboflowAccount {
   response(url: URL, redirect?: RequestRedirect): Promise<Response>;
   archive(link: unknown): Promise<Uint8Array>;
   json(requestPath: string, key: string): Promise<unknown>;
-  importProject(link: unknown): Promise<RoboflowArchive>;
+  json(requestPath: string, key: string, withStatus: true): Promise<{ payload: unknown; status: number }>;
+  importProject(link: unknown): Promise<RoboflowArchive | RoboflowPending>;
 }

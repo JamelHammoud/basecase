@@ -28,6 +28,7 @@ covers:
   - src/workspace/useDataImport.ts
   - src/workspace/dataImportSource.ts
   - src/workspace/importRoute.ts
+  - src/components/ImportRobotSheet.tsx
   - src/components/MatchJointsSheet.tsx
   - src/components/tries/TryTile.tsx
   - electron/hub/datasetRepo.mjs

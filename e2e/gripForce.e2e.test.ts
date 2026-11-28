@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, it } from 'vitest';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { openApp, openPlayTab, partCount, shown, type App } from './harness';
+import { expectForceFieldReadable, narrowCaseBuilder } from './gripForceLayout';
 
 interface Studio {
   load: (scene: unknown) => void;
@@ -29,12 +30,26 @@ it('authors a grip ceiling and reopens the retained force trace and verdict', as
   });
   await expect.poll(() => partCount(page)).toBe(robot.parts.length);
   await openPlayTab(page, 'Cases');
+  await narrowCaseBuilder(page);
   await page.locator(shown('button'), { hasText: 'New Case' }).first().click();
 
   const builder = page.locator(shown('[data-testid="new-case"]'));
 
   await builder.getByRole('radio', { name: 'Pick Up a Block', exact: true }).click();
-  await builder.getByRole('switch', { name: 'Limit grip force' }).click();
+
+  const limit = builder.getByRole('switch', { name: 'Limit grip force' });
+
+  expect(await limit.getAttribute('aria-checked')).toBe('false');
+  expect(await builder.getByLabel('Grip force ceiling').count()).toBe(0);
+  await limit.focus();
+  await limit.press('Space');
+  expect(await limit.getAttribute('aria-checked')).toBe('true');
+  await limit.press('Space');
+  expect(await builder.getByLabel('Grip force ceiling').count()).toBe(0);
+  await limit.press('Enter');
+  await builder.getByLabel('Grip force ceiling').fill('1000000');
+  await builder.getByLabel('Grip force ceiling').press('Tab');
+  await expectForceFieldReadable(builder);
   await builder.getByLabel('Grip force ceiling').fill('20');
   await builder.getByLabel('Grip force ceiling').press('Enter');
   await builder.getByRole('button', { name: 'Make Case', exact: true }).click();

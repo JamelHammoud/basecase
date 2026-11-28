@@ -10,7 +10,7 @@ export function CaseGripForceField({ value, onChange }: { value: number; onChang
         onChange={(enabled) => onChange(enabled ? 20 : 0)}
       />
       {value > 0 && (
-        <FieldRow label="Grip force ceiling">
+        <FieldRow label="Grip force ceiling" group>
           <NumberInput
             aria-label="Grip force ceiling"
             value={value}

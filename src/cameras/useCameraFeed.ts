@@ -74,15 +74,15 @@ export function useCameraFeed(input: CameraFeedInput): CameraFeed {
 
   useEffect(() => {
     if (active) void feedRef.current?.scene(parts, world, imported);
-  }, [active, parts, world, imported]);
+  }, [active, connectCameras, simulated, parts, world, imported]);
 
   useEffect(() => {
     if (active) feedRef.current?.model(model);
-  }, [active, model]);
+  }, [active, connectCameras, simulated, model]);
 
   useEffect(() => {
     if (active) feedRef.current?.views(views, input.active ? { enlarged } : null);
-  }, [active, input.active, views, enlarged]);
+  }, [active, connectCameras, simulated, input.active, views, enlarged]);
 
   return {
     canvasRef: (key) => (canvas) => {

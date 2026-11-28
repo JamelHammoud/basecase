@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url';
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, expect, it } from 'vitest';
 import { openInferenceWorker } from '../vision/inferenceWorkerFixture';
 import { inputSensitiveDetectionOnnx } from '../vision/onnxFixture';
 import { simulatedCameraFixture, visionManifest } from '../../e2e/visionFixtures';
@@ -17,6 +17,10 @@ beforeAll(async () => {
   opening = openInferenceWorker(setup.signal, fileURLToPath(new URL('./liveCameraFixture.ts', import.meta.url)));
   app = await opening;
   await app.page.addScriptTag({ url: '/worker.js', type: 'module' });
+});
+
+afterEach(async () => {
+  await app?.page.evaluate(() => (window as unknown as BrowserFixture).camera?.close());
 });
 
 afterAll(async () => {
@@ -50,33 +54,29 @@ it.each(['scene scope', 'simulation link'] as const)(
 
     const state = () => app.page.evaluate(() => (window as unknown as BrowserFixture).camera.state());
 
-    try {
-      await app.page.evaluate(() => (window as unknown as BrowserFixture).camera.wait());
-      expect((await state()).signals['vision.target_camera.block']).toBe(1);
-      await app.page.evaluate(async (change) => {
-        const { camera } = window as unknown as BrowserFixture;
+    await app.page.evaluate(() => (window as unknown as BrowserFixture).camera.wait());
+    expect((await state()).signals['vision.target_camera.block']).toBe(1);
+    await app.page.evaluate(async (change) => {
+      const { camera } = window as unknown as BrowserFixture;
 
-        camera.replace(change);
-        await camera.configure();
-      }, kind);
-      await app.page.evaluate(() => (window as unknown as BrowserFixture).camera.wait());
-      expect((await state()).signals['vision.target_camera.block']).toBe(1);
+      camera.replace(change);
+      await camera.configure();
+    }, kind);
+    await app.page.evaluate(() => (window as unknown as BrowserFixture).camera.wait());
+    expect((await state()).signals['vision.target_camera.block']).toBe(1);
 
-      const result = await state();
+    const result = await state();
 
-      expect(result.frames).toBeGreaterThan(0);
-      expect(result.error).toBeNull();
-      expect(result.assignments).toEqual([expect.objectContaining({ fps: 10, continuous: true })]);
-      expect(result.result!.backend).toBe('wasm');
-      expect(result.result!.width).toBeGreaterThan(0);
-      expect(result.result!.height).toBeGreaterThan(0);
-      expect(result.result!.detections).toHaveLength(1);
-      expect(result.result!.detections[0].label).toBe('block');
-      expect(result.result!.detections[0].score).toBeGreaterThan(0.25);
-      expect(result.result!.detections[0].score).toBeLessThanOrEqual(1);
-      result.result!.detections[0].box.forEach((value, i) => expect(value).toBeCloseTo([0.1, 0.2, 0.3, 0.4][i]));
-    } finally {
-      await app.page.evaluate(() => (window as unknown as BrowserFixture).camera.close());
-    }
+    expect(result.frames).toBeGreaterThan(0);
+    expect(result.error).toBeNull();
+    expect(result.assignments).toEqual([expect.objectContaining({ fps: 10, continuous: true })]);
+    expect(result.result!.backend).toBe('wasm');
+    expect(result.result!.width).toBeGreaterThan(0);
+    expect(result.result!.height).toBeGreaterThan(0);
+    expect(result.result!.detections).toHaveLength(1);
+    expect(result.result!.detections[0].label).toBe('block');
+    expect(result.result!.detections[0].score).toBeGreaterThan(0.25);
+    expect(result.result!.detections[0].score).toBeLessThanOrEqual(1);
+    result.result!.detections[0].box.forEach((value, i) => expect(value).toBeCloseTo([0.1, 0.2, 0.3, 0.4][i]));
   },
 );

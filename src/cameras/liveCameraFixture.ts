@@ -29,6 +29,8 @@ export async function mountCamera(input: {
   const root = createRoot(host);
   let scope = createVisionScope('initial');
   let frames = 0;
+  const waiters = new Set<() => void>();
+  let closed = false;
   const feed: CameraFeedInput = {
     active: true,
     parts: input.parts,
@@ -39,6 +41,7 @@ export async function mountCamera(input: {
     connectCameras: () => undefined,
     onFrames: (count) => {
       frames = count;
+      waiters.forEach((listen) => listen());
     },
   };
   const render = () =>
@@ -53,6 +56,12 @@ export async function mountCamera(input: {
     wait: () =>
       new Promise<void>((resolve, reject) => {
         const ready = () => {
+          if (closed) {
+            reject(new Error('Camera fixture closed.'));
+
+            return true;
+          }
+
           const key = feed.views[0].key;
           const error = scope.simulated.cameraVisionError(key);
 
@@ -62,7 +71,7 @@ export async function mountCamera(input: {
             return true;
           }
 
-          if (scope.simulated.cameraVision(key)) {
+          if (frames > 0 && scope.simulated.cameraVision(key)) {
             resolve();
 
             return true;
@@ -70,11 +79,17 @@ export async function mountCamera(input: {
 
           return false;
         };
-        const stop = scope.simulated.onCameraVision(() => {
+        const changed = () => {
           if (ready()) stop();
-        });
+        };
+        const stopVision = scope.simulated.onCameraVision(changed);
+        const stop = () => {
+          stopVision();
+          waiters.delete(changed);
+        };
 
-        if (ready()) stop();
+        waiters.add(changed);
+        changed();
       }),
     configure: () => scope.simulated.configureVisionCamera(feed.views[0].key, { modelId: input.manifest.id, fps: 10 }),
     replace: (kind: 'scene scope' | 'simulation link') => {
@@ -94,6 +109,10 @@ export async function mountCamera(input: {
       assignments: scope.simulated.visionAssignments(),
     }),
     close: () => {
+      if (closed) return;
+
+      closed = true;
+      waiters.forEach((listen) => listen());
       flushSync(() => root.unmount());
       host.remove();
     },

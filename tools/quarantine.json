@@ -436,6 +436,13 @@
     "reason": "Run 43693830979 failed on both Windows attempts, first with no map points after opening the imported corridor try and then without the Imported 1 try confirmation. The Linux test passed in the same run. The import or playback worker bottleneck is not established."
   },
   {
+    "file": "e2e/vision.e2e.test.ts",
+    "test": "publishes rendered camera detections, boxes and signals in the web studio",
+    "issue": 992,
+    "until": "2026-11-28",
+    "reason": "Run 43687018679 left the rendered camera block signal at 0 instead of 1 after configureVision on both Linux and Windows attempts. Recorded and operator camera tests passed. The cause is not established."
+  },
+  {
     "file": "e2e/dataImport.e2e.test.ts",
     "test": "imports FlatBuffers through Import and reads its nested message, plot and states from Library",
     "issue": 995,

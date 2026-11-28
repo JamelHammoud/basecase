@@ -22,6 +22,7 @@ export type FeedRequest =
   | { type: 'vision'; assignments: VisionAssignment[] };
 
 export type FeedEvent =
+  | { type: 'error'; camera: string; message: string }
   | { type: 'frame'; bitmaps: Record<string, ImageBitmap>; frames: number }
   | { type: 'stream'; id: number; bitmap: ImageBitmap };
 

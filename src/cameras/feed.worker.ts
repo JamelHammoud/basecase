@@ -4,6 +4,7 @@ import { visionBitmapCopier, visionFrameSender, type VisionAssignment } from './
 import { visionCameraPaces } from './visionPace';
 import { LiveStage, type LiveJob, type LiveTarget } from './liveStage';
 import { afterDraw, dueIds, nextDue, startPace, streamSize, type Pace } from './streamPace';
+import { errorMessage } from '../utils/errorMessage';
 
 interface Stream {
   key: string;
@@ -22,6 +23,10 @@ const visionSources = new Map<string, OffscreenCanvas>();
 let assignments: VisionAssignment[] = [];
 let viewKeys = new Set<string>();
 let visionPaces = new Map<string, Pace>();
+const fail = (error: unknown, cameras = [...viewKeys]) => {
+  for (const camera of cameras)
+    scope.postMessage({ type: 'error', camera, message: errorMessage(error) } satisfies FeedEvent);
+};
 const vision = visionFrameSender(async (camera) => {
   const canvas =
     visionSources.get(camera) ??
@@ -105,7 +110,8 @@ async function render(tiles: LiveJob[], due: StreamJob[], visionJobs: LiveJob[])
 
   for (const job of drawn) visionSources.set(job.key, job.target.canvas);
 
-  for (const key of new Set(drawn.map((job) => job.key))) void vision.send(key, drewAt).catch(() => undefined);
+  for (const key of new Set(drawn.map((job) => job.key)))
+    void vision.send(key, drewAt).catch((error: unknown) => fail(error, [key]));
 
   if (tilesDrawn.length) postTiles(tilesDrawn);
 
@@ -160,6 +166,8 @@ async function draw() {
 
   try {
     if (tiles.length || due.length || visionJobs.length) await render(tiles, due, visionJobs);
+  } catch (error) {
+    fail(error, [...new Set([...tiles, ...due, ...visionJobs].map((job) => job.key))]);
   } finally {
     drawing = false;
     plan();
@@ -231,6 +239,10 @@ const handlers: { [K in FeedRequest['type']]: (msg: Extract<FeedRequest, { type:
   },
 };
 
-scope.onmessage = ({ data }: MessageEvent<FeedRequest>) => {
-  void (handlers[data.type] as (msg: FeedRequest) => unknown)(data);
+scope.onmessage = async ({ data }: MessageEvent<FeedRequest>) => {
+  try {
+    await (handlers[data.type] as (msg: FeedRequest) => unknown)(data);
+  } catch (error) {
+    fail(error);
+  }
 };

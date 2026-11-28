@@ -57,6 +57,26 @@ describe('vision camera frame producer', () => {
 });
 
 describe('vision camera backpressure', () => {
+  it('releases a rejected transfer and allows the next scheduled camera frame through', async () => {
+    const made = [bitmap(), bitmap()];
+    let next = 0;
+    const sender = visionFrameSender(async () => made[next++]);
+    const postMessage = vi.fn().mockImplementationOnce(() => {
+      throw new Error('Frame transfer failed.');
+    });
+    const port = { postMessage, close: vi.fn() } as unknown as MessagePort;
+
+    sender.connect(port);
+    sender.configure([{ camera: 'wrist', modelId: 'objects', fps: 10 }]);
+    await expect(sender.send('wrist', 0)).rejects.toThrow('Frame transfer failed.');
+    expect(made[0].close).toHaveBeenCalledOnce();
+    await sender.send('wrist', 100);
+    expect(postMessage).toHaveBeenCalledTimes(2);
+    expect(postMessage).toHaveBeenLastCalledWith(expect.objectContaining({ frame: made[1] }), [made[1]]);
+    expect(made[1].close).not.toHaveBeenCalled();
+    sender.close();
+  });
+
   it('detaches a producer on replacement and close so its queued inference frames are released', () => {
     const port = { postMessage: vi.fn(), close: vi.fn() } as unknown as MessagePort;
     const replacement = { postMessage: vi.fn(), close: vi.fn() } as unknown as MessagePort;

@@ -34,8 +34,18 @@ export function visionFrameSender(capture: (camera: string) => Promise<Picture>)
   const post = (frame: Pending) => {
     if (!port) return frame.frame.close();
 
-    inFlight.add(frameKey(frame.camera, frame.modelId));
-    port.postMessage({ type: 'frame', ...frame }, [frame.frame]);
+    const id = frameKey(frame.camera, frame.modelId);
+
+    inFlight.add(id);
+
+    try {
+      port.postMessage({ type: 'frame', ...frame }, [frame.frame]);
+    } catch (error) {
+      inFlight.delete(id);
+      frame.frame.close();
+
+      throw error;
+    }
   };
 
   const ready = ({ data }: MessageEvent) => {

@@ -27,7 +27,7 @@ export interface CameraFeed {
 
 export function useCameraFeed(input: CameraFeedInput): CameraFeed {
   const { simulated } = useVisionScope();
-  const { ensureVisionCamera, onVisionAssignments, registerVisionCameras, visionNeedsFrames } = simulated;
+  const { cameraFeeds, ensureVisionCamera, onVisionAssignments, registerVisionCameras, visionNeedsFrames } = simulated;
   const canvases = useRef<Canvases>(new Map());
   const streams = useRef(new Set<FeedStream>());
   const feedRef = useRef<LiveFeed | null>(null);
@@ -39,13 +39,25 @@ export function useCameraFeed(input: CameraFeedInput): CameraFeed {
     () => visionNeedsFrames(cameraKeys.split('\n')),
     () => false,
   );
-  const active = input.active || streaming > 0 || visionActive;
+  const covered = useSyncExternalStore(
+    cameraFeeds.subscribe,
+    () => cameraFeeds.covers(cameraKeys.split('\n').filter(Boolean)),
+    () => false,
+  );
+  const presenting = input.active || streaming > 0;
+  const active = presenting || (visionActive && !covered);
   const onFrames = useEffectEvent((frames: number) => input.onFrames(frames));
   const synchronize = useEffectEvent((feed: LiveFeed) => {
     void feed.scene(parts, world, imported);
     feed.model(model);
     feed.views(views, input.active ? { enlarged } : null);
   });
+
+  useEffect(() => {
+    if (!presenting) return;
+
+    return cameraFeeds.register(canvases, cameraKeys.split('\n').filter(Boolean));
+  }, [cameraFeeds, cameraKeys, presenting]);
 
   useEffect(() => {
     const keys = cameraKeys.split('\n').filter(Boolean);
@@ -67,16 +79,17 @@ export function useCameraFeed(input: CameraFeedInput): CameraFeed {
 
     feedRef.current = feed;
     synchronize(feed);
-    connectCameras(() => feed.link());
+
+    const disconnect = cameraFeeds.connect(feed, connectCameras, () => feed.link());
 
     for (const stream of streams.current) feed.stream(stream);
 
     return () => {
-      connectCameras(null);
+      disconnect();
       feed.dispose();
       feedRef.current = null;
     };
-  }, [active, connectCameras, simulated]);
+  }, [active, cameraFeeds, connectCameras, simulated]);
 
   useEffect(() => {
     if (active && feedRef.current) synchronize(feedRef.current);

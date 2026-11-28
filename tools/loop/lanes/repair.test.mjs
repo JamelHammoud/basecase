@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runAgent } from '../lib/agent.mjs';
 import { hasPendingWorktree } from '../lib/deliveryState.mjs';
-import { failedJobs, lastFinishedMainCheck, openPulls } from '../lib/github.mjs';
+import { failedJobs, failedLog, lastFinishedMainCheck, openPulls } from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
 import { expandsTestExclusions } from '../lib/repairCoverage.mjs';
 import { json } from '../lib/sh.mjs';
@@ -60,6 +60,24 @@ beforeEach(() => {
 });
 
 describe('repair dispatch', () => {
+  it('picks up late failures while Check continues, after the previous repair closes', () => {
+    lastFinishedMainCheck.mockReturnValue({ ...failedRun, status: 'in_progress' });
+    state.get.mockReturnValue({ jobs: [jobs[0]] });
+    openPulls.mockReturnValue([{ headRefName: 'loop/repair/first-failure', createdAt: new Date().toISOString() }]);
+    repair({ log: vi.fn() });
+    expect(runAgent).not.toHaveBeenCalled();
+    expect(state.save).not.toHaveBeenCalled();
+    openPulls.mockReturnValue([]);
+    repair({ log: vi.fn() });
+    expect(runAgent).toHaveBeenCalledOnce();
+    expect(runAgent.mock.calls[0][0].prompt).toContain(`An earlier repair already took ${jobs[0]}`);
+    expect(failedLog).toHaveBeenCalledWith(failedRun.databaseId, 80_000, [jobs[1]]);
+    expect(state.save).toHaveBeenLastCalledWith(failedRun.databaseId, { jobs: jobs.slice(0, 2) });
+    state.get.mockReturnValue({ jobs: jobs.slice(0, 2) });
+    repair({ log: vi.fn() });
+    expect(runAgent).toHaveBeenCalledOnce();
+  });
+
   it('inspects an unseen failed run even after a repair for an older run merged', () => {
     repair({ log: vi.fn() });
 

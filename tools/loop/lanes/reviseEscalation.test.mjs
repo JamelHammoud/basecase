@@ -39,6 +39,7 @@ const { default: revise } = await import('./revise.mjs');
 const { entryFor, saveEntry } = await import('../lib/pullState.mjs');
 const { held } = await import('../lib/claim.mjs');
 const { editPullLabels } = await import('../lib/github.mjs');
+const { UsageLimit } = await import('../lib/usage.mjs');
 const pull = {
   number: 2187,
   title: 'Repair: Camera inference',
@@ -50,10 +51,11 @@ const pull = {
 const log = vi.fn();
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   calls.check = 'failure';
   calls.review = 'success';
   calls.comments = [];
+  pull.headRefOid = 'head';
   calls.checkedRun.mockReturnValue({ ok: true, output: { changed: false, notes: 'Inference source unresolved' } });
   saveEntry(pull.number, { heads: [], attempts: 0, lastJamel: '', lastLook: '', rebuilt: false });
 });
@@ -127,3 +129,52 @@ it('releases the pull claim and revising label when escalation fails', () => {
   expect(calls.close).toHaveBeenCalledOnce();
   expect(editPullLabels).toHaveBeenLastCalledWith(pull.number, { remove: ['loop:revising'] });
 });
+
+it.each([
+  ['provider admission', new UsageLimit(Date.now() + 60_000), 0],
+  ['worktree setup on the fourth attempt', new Error('worktree unavailable'), 3],
+])('retains the handoff after failed %s without repeating the revision', (_boundary, error, attempts) => {
+  const notes = `${'Diagnostic evidence '.repeat(100)}Inference source unresolved`;
+
+  saveEntry(pull.number, { heads: [], attempts, rebuilt: false });
+  calls.checkedRun.mockReturnValueOnce({ ok: true, output: { changed: false, notes } });
+  calls.rebuild.mockImplementationOnce(() => {
+    throw error;
+  });
+
+  expect(() => revise({ log })).toThrow(error);
+  expect(held(`pull-${pull.number}`)).toBe(false);
+
+  const original = calls.rebuild.mock.calls[0][1];
+
+  expect(original.comments.at(-1).body).toContain(notes);
+  expect(entryFor(pull.number).revisionHandoff).toMatchObject({ head: 'head', reason: 'check', notes });
+  revise({ log });
+  expect(calls.rebuild).toHaveBeenCalledTimes(2);
+  expect(calls.rebuild.mock.calls[1][1]).toEqual(original);
+  expect(calls.checkedRun).toHaveBeenCalledOnce();
+  expect(entryFor(pull.number)).toMatchObject({ attempts: attempts + 1, revisionHandoff: null });
+});
+
+it.each(['new head', 'passing checks', 'consumed rebuild'])(
+  'does not reuse an interrupted handoff after %s',
+  (change) => {
+    calls.rebuild.mockImplementationOnce(() => {
+      throw new Error('rebuild unavailable');
+    });
+
+    expect(() => revise({ log })).toThrow('rebuild unavailable');
+
+    if (change === 'new head') pull.headRefOid = 'next';
+
+    if (change === 'passing checks') calls.check = 'success';
+
+    if (change === 'consumed rebuild') saveEntry(pull.number, { ...entryFor(pull.number), rebuilt: true });
+
+    calls.checkedRun.mockReturnValueOnce({ ok: true, output: { changed: true, revision: 'Preserve inference' } });
+    revise({ log });
+    expect(calls.rebuild).toHaveBeenCalledOnce();
+    expect(calls.checkedRun).toHaveBeenCalledTimes(change === 'new head' ? 2 : 1);
+    expect(held(`pull-${pull.number}`)).toBe(false);
+  },
+);

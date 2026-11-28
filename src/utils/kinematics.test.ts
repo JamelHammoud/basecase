@@ -130,6 +130,24 @@ describe('solveIK residual reporting', () => {
 });
 
 describe('solveIK', () => {
+  it.each([0.3, 0.30000000000000004, 0, -1, Infinity, NaN])(
+    'keeps the strict multi-target convergence boundary at tolerance %s',
+    (tolerance) => {
+      const { rig } = arm();
+      const targets = [0.1, 0.3, 0.2].map((y) => ({
+        partId: 'fore',
+        point: [200, 0, 0] as V3,
+        target: [200, y, 0] as V3,
+      }));
+      const start = { shoulder: 0, elbow: 0 };
+      const result = solveIK(rig, start, targets, { tolerance, iterations: 1 });
+
+      expect(result.values.shoulder === 0 && result.values.elbow === 0).toBe(0.3 < tolerance);
+      expect(result.maxError).toBe(Math.max(...result.errors));
+      expect(start).toEqual({ shoulder: 0, elbow: 0 });
+    },
+  );
+
   it('reaches a reachable target', () => {
     const { rig } = arm();
     const target: V3 = [120, 90, 0];

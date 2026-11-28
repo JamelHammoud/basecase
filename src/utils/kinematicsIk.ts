@@ -172,9 +172,11 @@ function tryStep(pb: IkProblem, state: IkState, JtJ: Float64Array[], g: Float64A
 }
 
 function iterate(pb: IkProblem, state: IkState, tol: number): boolean {
-  let maxError = -Infinity;
+  let maxSquaredError = -Infinity;
 
-  for (const e of state.cur) maxError = Math.max(maxError, e.r.length());
+  for (const e of state.cur) maxSquaredError = Math.max(maxSquaredError, e.r.lengthSq());
+
+  const maxError = state.cur.length ? Math.sqrt(maxSquaredError) : -Infinity;
 
   if (maxError < tol) return false;
 

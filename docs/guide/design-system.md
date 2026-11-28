@@ -71,6 +71,8 @@ Measurements and limits: [Trace plots performance evidence](../notes/performance
 
 - **Reduced plot buckets retain extrema values.** Each bucket reads every sample once and retains its minimum and maximum values alongside their first indices. Emission uses those retained values in temporal order. Non-finite samples still lift the pen only for wholly missing buckets. `traceSampling.test.ts` compares complete paths across reduction boundaries, ties, gaps, fractional widths and typed-array edits, and checks one read per reduced sample. [Read-count evidence](../notes/performance-plots.md#reduced-plot-buckets-read-each-sample-once).
 
+- **Path projection prepares shared axis dimensions once.** Each `tracePaths` call retains the y range span, inset and drawable height, plus the x range span and width when supplied. Index-spaced traces prepare their sample span once per trace. Both placement paths retain the preceding arithmetic order and one-decimal SVG formatting. `traceProjection.test.ts` compares complete XY line and dot paths across gaps, typed-array views, unequal sample lengths, ranges and changing dimensions. Existing sampling tests cover index-spaced output. [Measurements and limits](../notes/performance-plots.md#path-projection-prepares-axis-dimensions-once).
+
 ## Performance: choice grid sizing
 
 `choiceLayout.ts` measures label code points directly and retains the widest string label during one grid scan. It creates no character arrays, filtered label lists or width lists. Hardware sizes, finishes, drives, brushes and world choices share this estimator. Glyph advances, per-glyph multiplication and addition order, unknown-code-point fallback, padding and wrapping stay unchanged. No measurements persist between calls.

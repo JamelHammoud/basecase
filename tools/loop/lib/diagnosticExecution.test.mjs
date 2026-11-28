@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { runMeasurements } from './diagnosticExecution.mjs';
 import { FILE_LIMIT } from './diagnosticContract.mjs';
 
@@ -16,7 +16,48 @@ const selection = {
   platform: 'windows',
 };
 
-afterEach(() => dirs.splice(0).forEach((dir) => fs.rmSync(dir, { recursive: true, force: true })));
+afterEach(() => {
+  dirs.splice(0).forEach((dir) => fs.rmSync(dir, { recursive: true, force: true }));
+  vi.unstubAllEnvs();
+});
+
+it.each(['windows', 'linux'])(
+  'passes installed native tools to every %s routing measurement without credentials',
+  (platform) => {
+    const output = fs.mkdtempSync(path.join(os.tmpdir(), 'measurement-'));
+    const native = {
+      BASECASE_ROUTING_TOOLS: path.join(output, 'routing tools'),
+      ...(platform === 'windows'
+        ? { BASECASE_KICAD_CLI: path.join(output, 'KiCad', 'bin', 'kicad-cli.exe') }
+        : { BASECASE_KICAD_DOCKER: '1' }),
+    };
+    const calls = [];
+
+    dirs.push(output);
+
+    for (const [name, value] of Object.entries(native)) vi.stubEnv(name, value);
+
+    vi.stubEnv('GH_TOKEN', 'fixture-credential');
+    vi.stubEnv('NODE_OPTIONS', '--require=fixture');
+    vi.stubEnv('BASECASE_UNRELATED_SECRET', 'fixture-credential');
+    runMeasurements(
+      { selection: { ...selection, platform, file: 'e2e/boardRouting.e2e.test.ts' }, output, revision },
+      (_command, _args, options) => {
+        calls.push(options.env);
+
+        return { status: 1 };
+      },
+    );
+    expect(calls).toHaveLength(selection.runs);
+
+    for (const environment of calls) {
+      expect(environment).toMatchObject(native);
+      expect(environment).not.toHaveProperty('GH_TOKEN');
+      expect(environment).not.toHaveProperty('NODE_OPTIONS');
+      expect(environment).not.toHaveProperty('BASECASE_UNRELATED_SECRET');
+    }
+  },
+);
 
 it('runs every independent measurement without retries and retains failures and teardown errors', () => {
   const output = fs.mkdtempSync(path.join(os.tmpdir(), 'measurement-'));

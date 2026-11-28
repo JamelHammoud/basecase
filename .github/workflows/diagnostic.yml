@@ -58,6 +58,12 @@ jobs:
         run: npx vite build
       - if: startsWith(fromJSON(inputs.selection).file, 'e2e/')
         run: npx vite build --mode web --outDir dist-web
+      - name: Prepare KiCad
+        if: ${{ contains(fromJSON('["e2e/boardRouted.e2e.test.ts", "e2e/boardRouting.e2e.test.ts", "e2e/kitElectrical.e2e.test.ts"]'), fromJSON(inputs.selection).file) }}
+        run: node tools/electrical/installCli.mjs
+      - name: Prepare board router
+        if: ${{ fromJSON(inputs.selection).file == 'e2e/boardRouting.e2e.test.ts' }}
+        run: node tools/electrical/installRouter.mjs --directory scratch/routing-tools
       - name: Measure every selected attempt with retries disabled
         run: node ../tools/loop/ci-diagnostic.mjs
       - name: Retain every completed result and cleanup log

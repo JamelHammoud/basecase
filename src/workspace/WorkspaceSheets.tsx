@@ -141,10 +141,11 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
       )}
       <ErrorBoundary region="Import Robot" resetKey={robots.importRobotOpen} onClose={robots.closeImportRobot}>
         <ImportRobotSheet
-          key={robots.robotChoice?.choices.join('\n') ?? 'link'}
+          key={`${core.scene.sceneId}:${robots.importRobotOpen}:${robots.robotChoice?.choices.join('\n') ?? 'link'}`}
           open={robots.importRobotOpen}
           choice={robots.robotChoice}
           onClose={robots.closeImportRobot}
+          prepareRoboflow={data.prepareRoboflow}
           onImport={(src, at) => void data.importOrRobot(src, at)}
         />
       </ErrorBoundary>

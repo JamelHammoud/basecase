@@ -25,7 +25,7 @@ async function importRoboflowLink(app: App) {
   await app.page.keyboard.press('ControlOrMeta+k');
   await app.page.keyboard.type('Import Robot');
   await app.page.keyboard.press('Enter');
-  await app.page.getByLabel('Robot link').fill('https://universe.roboflow.com/workspace/project/dataset/2');
+  await app.page.getByLabel('Robot link').fill('https://universe.roboflow.com/workspace/project');
   await app.page.keyboard.press('Enter');
 }
 
@@ -37,11 +37,13 @@ async function showLibrary(app: App) {
   if ((await library.getAttribute('aria-pressed')) !== 'true') await library.click();
 }
 
-it('imports a COCO folder and a Roboflow version into Library with their image and class counts', async () => {
+it('imports a COCO folder and continues the resolved Roboflow version into Library with their image and class counts', async () => {
   const fake = await startFakeRoboflow({
     key: 'roboflow_e2e_key',
     port: inject('roboflowPort'),
-    archive: zipSync(cocoImportFiles('roboflow-mugs', ['cup', 'plate'])),
+    archive: zipSync(cocoImportFiles('new-version', ['new', 'different'])),
+    versionArchives: { 2: zipSync(cocoImportFiles('roboflow-mugs', ['cup', 'plate'])) },
+    exportReply: { status: 202, body: { progress: 25 } },
   });
   const app = await openApp({}, [], { roboflowUrl: fake.url });
   const root = mkdtempSync(join(tmpdir(), 'image-import-'));
@@ -69,6 +71,15 @@ it('imports a COCO folder and a Roboflow version into Library with their image a
     await expect.poll(() => key.inputValue()).toBe('');
     await app.page.keyboard.press('Escape');
     await importRoboflowLink(app);
+
+    const dialog = app.page.getByRole('dialog', { name: 'Import Robot' });
+
+    await dialog.getByRole('status').filter({ hasText: 'preparing version 2' }).waitFor();
+    expect(fake.requests.filter((request) => request.path === '/archive.zip')).toHaveLength(0);
+    expect(await datasets(app).getByRole('button').count()).toBe(1);
+    fake.advance({ latest: 9, exportReply: undefined });
+    await dialog.getByRole('button', { name: 'Continue', exact: true }).click();
+    await dialog.waitFor({ state: 'hidden' });
     await showLibrary(app);
 
     const roboflow = datasets(app).getByRole('button').filter({ hasText: 'project' });
@@ -78,6 +89,34 @@ it('imports a COCO folder and a Roboflow version into Library with their image a
     expect(fake.requests).toContainEqual({ path: '/workspace/project/2/coco', key: 'roboflow_e2e_key' });
     expect(fake.requests).toContainEqual({ path: '/archive.zip', key: null });
     expect(JSON.stringify(await app.page.evaluate(() => localStorage))).not.toContain('roboflow_e2e_key');
+    await roboflow.click();
+    await expect.poll(() => app.page.getByTestId('dataset-pane').textContent()).toContain('2 classes');
+
+    const imported = await app.page.evaluate(() =>
+      (
+        window as unknown as {
+          __studio: { datasets: () => Array<{ name: string; imageMembers?: Array<{ classes?: string[] }> }> };
+        }
+      ).__studio.datasets(),
+    );
+
+    expect(imported.find((dataset) => dataset.name.includes('project'))?.imageMembers?.[0].classes).toEqual([
+      'cup',
+      'plate',
+    ]);
+    expect(fake.requests.map((request) => request.path)).toEqual([
+      '/',
+      '/workspace/project',
+      '/workspace/project/2/coco',
+      '/workspace/project/2/coco',
+      '/archive.zip',
+    ]);
+    await app.page.keyboard.press('Escape');
+    fake.advance({ latest: 2 });
+    await importRoboflowLink(app);
+    await dialog.waitFor({ state: 'hidden' });
+    await showLibrary(app);
+    await expect.poll(() => datasets(app).getByRole('button').count()).toBe(2);
     expect(app.errors).toEqual([]);
   } finally {
     await app.close();

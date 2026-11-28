@@ -5,19 +5,31 @@ export interface FakeRoboflowOptions {
   key: string;
   port?: number;
   archive?: Uint8Array;
+  versionArchives?: Record<number, Uint8Array>;
   exportLink?: string;
   redirectTo?: string;
+  latest?: number;
+  beforeExport?: () => Promise<void>;
+  exportReply?: { status: number; body: unknown };
+}
+
+function archiveBytes(options: FakeRoboflowOptions, url: URL) {
+  return (
+    options.versionArchives?.[Number(url.searchParams.get('version'))] ??
+    options.archive ??
+    new Uint8Array([80, 75, 3, 4])
+  );
 }
 
 export async function startFakeRoboflow(options: FakeRoboflowOptions) {
   const requests: Array<{ path: string; key: string | null }> = [];
-  const server = http.createServer((req, res) => {
+  const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://fake.invalid');
 
     requests.push({ path: url.pathname, key: url.searchParams.get('api_key') });
 
     if (url.pathname === '/archive.zip') {
-      res.writeHead(200, { 'Content-Type': 'application/zip' }).end(Buffer.from(options.archive ?? [80, 75, 3, 4]));
+      res.writeHead(200, { 'Content-Type': 'application/zip' }).end(Buffer.from(archiveBytes(options, url)));
 
       return;
     }
@@ -34,11 +46,23 @@ export async function startFakeRoboflow(options: FakeRoboflowOptions) {
       return;
     }
 
+    if (url.pathname.endsWith('/coco')) await options.beforeExport?.();
+
     const address = server.address() as AddressInfo;
-    const link = options.exportLink ?? `http://127.0.0.1:${address.port}/archive.zip`;
+    const link =
+      options.exportLink ?? `http://127.0.0.1:${address.port}/archive.zip?version=${url.pathname.split('/')[3]}`;
+
+    if (url.pathname.endsWith('/coco') && options.exportReply) {
+      res
+        .writeHead(options.exportReply.status, { 'Content-Type': 'application/json' })
+        .end(JSON.stringify(options.exportReply.body));
+
+      return;
+    }
+
     const body = url.pathname.endsWith('/coco')
       ? { export: { link } }
-      : { workspace: 'workspace', versions: [{ id: 'workspace/project/2' }] };
+      : { workspace: 'workspace', versions: [{ id: `workspace/project/${options.latest ?? 2}` }] };
 
     res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(body));
   });
@@ -50,6 +74,7 @@ export async function startFakeRoboflow(options: FakeRoboflowOptions) {
   return {
     url: `http://127.0.0.1:${port}`,
     requests,
+    advance: (next: Partial<FakeRoboflowOptions>) => Object.assign(options, next),
     close: () => new Promise<void>((resolve) => server.close(() => resolve())),
   };
 }

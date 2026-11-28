@@ -2,6 +2,12 @@ import { base64ToBytes } from '../utils/base64';
 import { channelCall } from '../utils/platform/channelCall';
 import { electron } from '../utils/platform/transport';
 
+import type { RoboflowContinuation, RoboflowPending } from '../../electron/roboflow/index.mjs';
+
+export type { RoboflowContinuation, RoboflowPending } from '../../electron/roboflow/index.mjs';
+
+type ArchiveReply = { kind: 'complete'; name: string; data: Uint8Array | string };
+
 export interface RoboflowAccountState {
   saved: boolean;
 }
@@ -14,8 +20,11 @@ const asAccount = (value: unknown): RoboflowAccountState => ({
 export const roboflowBridge = {
   account: async () => asAccount(await call('roboflow:account')),
   setKey: async (key: string) => asAccount(await call('roboflow:set-key', key)),
-  importProject: async (link: string) => {
-    const reply = await call<{ name: string; data: Uint8Array | string }>('roboflow:import', link);
+  importProject: async (link: string | RoboflowContinuation) => {
+    const reply = await call<ArchiveReply | RoboflowPending>('roboflow:import', link);
+
+    if (reply.kind === 'pending') return reply;
+
     const bytes = typeof reply.data === 'string' ? base64ToBytes(reply.data) : new Uint8Array(reply.data);
 
     return {
@@ -26,7 +35,7 @@ export const roboflowBridge = {
   },
 };
 
-export async function roboflowImportSource(link: string, openAccounts: () => void) {
+export async function roboflowImportSource(link: string | RoboflowContinuation, openAccounts: () => void) {
   const account = await roboflowBridge.account();
 
   if (!account.saved) {

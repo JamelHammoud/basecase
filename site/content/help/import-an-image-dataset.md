@@ -57,11 +57,17 @@ Roboflow imports require the desktop app and a Roboflow API key. You can use a p
 
 6. Close **Settings** with [[Esc]].
 7. Repeat steps 1 to 3 with the same link.
-8. In **Library**, click the imported dataset under **Datasets**.
+8. If Roboflow is preparing the export, click **Continue** to check the same version again.
+
+![Import Robot preparing version 2 with Continue available](/help/import-an-image-dataset/pending.png)
+
+9. In **Library**, click the imported dataset under **Datasets**.
 
 ![Library with the local COCO dataset and imported Roboflow version, each holding two images and two classes](/help/import-an-image-dataset/roboflow.png)
 
-A project link imports its latest version. A version link imports that version as COCO. Basecase keeps the images and annotations locally, so opening the dataset later doesn't fetch them again.
+A project link selects its latest generated version when you first import. Continue keeps that version, even if a newer one appears. Each click checks once. Cancel closes the import and discards late replies. A version link imports that version as COCO. Basecase keeps the images and annotations locally, so opening the dataset later doesn't fetch them again.
+
+![The completed version 2 dataset open in Library](/help/import-an-image-dataset/continued.png)
 
 ## From Hugging Face
 

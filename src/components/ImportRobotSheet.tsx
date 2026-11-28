@@ -1,8 +1,10 @@
 import React, { useRef, useState } from 'react';
-import { Button, ChoiceGrid, Modal, TextInput, FolderImportIcon } from '../design-system';
+import { Button, ChoiceGrid, Modal, TextInput, FolderImportIcon, ProgressBar } from '../design-system';
 import { canImportLink } from '../workspace/importLink';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { pickedFiles } from '../utils/robotImport';
+import { isRoboflowLink } from '../roboflow/roboflowLink';
+import { useRoboflowPreparation, type PrepareRoboflow } from './useRoboflowPreparation';
 import type { RobotChoice, RobotSource } from '../workspace/useRobotInsert';
 
 type ImportSource = Exclude<RobotSource, { kind: 'simready' }>;
@@ -27,8 +29,10 @@ export const ImportRobotSheet: React.FC<{
   open: boolean;
   choice: RobotChoice | null;
   onClose: () => void;
+  prepareRoboflow: PrepareRoboflow;
   onImport: (source: ImportSource, at?: RobotChoice['at']) => void;
-}> = ({ open, choice, onClose, onImport }) => {
+}> = ({ open, choice, onClose, onImport, prepareRoboflow }) => {
+  const preparation = useRoboflowPreparation(prepareRoboflow, onClose);
   const [url, setUrl] = useState('');
   const [picked, setPicked] = useState<string | undefined>(undefined);
   const folderRef = useRef<HTMLInputElement | null>(null);
@@ -36,7 +40,13 @@ export const ImportRobotSheet: React.FC<{
   const ready = choice ? !!picked && choice.choices.includes(picked) : canImportLink(link, !IS_WEB_DEMO);
 
   const submit = () => {
-    if (!ready) return;
+    if (!ready || preparation.busy) return;
+
+    if (!choice && isRoboflowLink(link)) {
+      void preparation.submit(link);
+
+      return;
+    }
 
     if (choice) onImport({ ...choice.source, entry: picked }, choice.at);
     else onImport({ kind: 'url', url: link });
@@ -47,13 +57,19 @@ export const ImportRobotSheet: React.FC<{
   return (
     <Modal
       isOpen={open}
-      onClose={onClose}
+      onClose={preparation.close}
       title="Import Robot"
       icon={<FolderImportIcon className="w-4 h-4" />}
       maxWidth="max-w-[520px]"
-      action={{ label: 'Import', disabled: !ready, onClick: submit }}
+      action={{
+        label: preparation.pending ? 'Continue' : 'Import',
+        disabled: !ready || preparation.busy,
+        onClick: submit,
+      }}
       footerStart={
-        !choice && (
+        !choice &&
+        !preparation.pending &&
+        !preparation.busy && (
           <Button variant="secondary" onClick={() => folderRef.current?.click()}>
             Choose Folder
           </Button>
@@ -73,11 +89,20 @@ export const ImportRobotSheet: React.FC<{
       {!choice && (
         <TextInput
           autoFocus
+          disabled={preparation.busy || !!preparation.pending}
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           aria-label="Robot link"
           placeholder="e.g. github.com/unitreerobotics/unitree_ros"
         />
+      )}
+      {preparation.pending && (
+        <p role="status" className="mt-[12px] text-[13px] text-white/60">
+          {`Roboflow is preparing version ${preparation.pending.continuation.version}.`}
+        </p>
+      )}
+      {preparation.pending?.progress !== undefined && (
+        <ProgressBar className="mt-[12px]" share={preparation.pending.progress / 100} />
       )}
       <input
         ref={folderRef}

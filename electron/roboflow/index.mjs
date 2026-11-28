@@ -3,6 +3,7 @@ import { AgentKeys } from '../backend/agentKeys.mjs';
 import { MB } from '../fileSize.mjs';
 import { publicFetch, readCapped } from '../publicFetch.mjs';
 import { projectOfLink } from './link.mjs';
+import { ExportIdentity, exportPending, UNREADABLE_REPLY } from './preparation.mjs';
 
 export const NO_KEY = 'Add a Roboflow API key in Settings ▸ Accounts.';
 
@@ -63,6 +64,7 @@ export class RoboflowAccount {
     this.keys = new AgentKeys({ dir: path.join(libraryDir, 'agent-config'), secrets, file: 'roboflow-keys.json' });
     this.endpoint = endpoint;
     this.outbound = outbound;
+    this.identities = new ExportIdentity();
   }
 
   account() {
@@ -107,6 +109,12 @@ export class RoboflowAccount {
     let url = archiveUrl(link, origin);
 
     for (let hop = 0; hop <= REDIRECTS_MAX; hop += 1) {
+      const key = this.keys.get('roboflow');
+      const values = [decodeURIComponent(url.pathname), ...url.searchParams.values()];
+
+      if (url.searchParams.has('api_key') || (key && values.some((value) => value.includes(key))))
+        throw new Error(BAD_DOWNLOAD);
+
       const res = await this.response(url, 'manual');
 
       if (!REDIRECT_CODES.has(res.status)) return readCapped(res, ZIP_LIMIT, 'The Roboflow dataset');
@@ -123,7 +131,7 @@ export class RoboflowAccount {
     throw new Error(BAD_DOWNLOAD);
   }
 
-  async json(requestPath, key) {
+  async json(requestPath, key, withStatus = false) {
     const url = new URL(requestPath, this.endpoint());
 
     url.searchParams.set('api_key', key);
@@ -132,27 +140,33 @@ export class RoboflowAccount {
     const bytes = await readCapped(res, JSON_LIMIT, 'The Roboflow reply');
 
     try {
-      return JSON.parse(bytes.toString('utf8'));
+      const payload = JSON.parse(bytes.toString('utf8'));
+
+      return withStatus ? { payload, status: res.status } : payload;
     } catch {
-      throw new Error('Roboflow returned an unreadable reply. Import the dataset again.');
+      throw new Error(UNREADABLE_REPLY);
     }
   }
 
   async importProject(link) {
-    const source = projectOfLink(link);
+    const source = typeof link === 'string' ? projectOfLink(link) : this.identities.validate(link);
     const key = this.keys.get('roboflow');
 
     if (!key) throw new Error(NO_KEY);
 
     const projectPath = `/${source.workspace}/${source.project}`;
     const version = source.version ?? latestVersion(await this.json(projectPath, key), source);
-    const reply = await this.json(`${projectPath}/${version}/coco`, key);
+    const { payload: reply, status } = await this.json(`${projectPath}/${version}/coco`, key, true);
 
-    if (reply?.ready === false)
-      throw new Error('Roboflow is preparing the export. Import the dataset again when it finishes.');
+    if (exportPending(reply, status))
+      return {
+        kind: 'pending',
+        continuation: this.identities.create({ ...source, version }),
+        ...(reply.progress !== undefined && { progress: reply.progress }),
+      };
 
     const data = new Uint8Array(await this.archive(reply?.export?.link));
 
-    return { name: `${source.project}-v${version}.zip`, data };
+    return { kind: 'complete', name: `${source.project}-v${version}.zip`, data };
   }
 }

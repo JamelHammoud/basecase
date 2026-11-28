@@ -6,7 +6,8 @@ export const ROBOFLOW_CALLS = {
   'roboflow:import': (roboflow, link) => roboflow.importProject(link),
 };
 
-const overHttp = (reply) => ({ name: reply.name, data: Buffer.from(reply.data).toString('base64') });
+const overHttp = (reply) =>
+  reply.kind === 'pending' ? reply : { ...reply, data: Buffer.from(reply.data).toString('base64') };
 
 export const registerRoboflowHandlers = (ipcMain, roboflow) => registerCalls(ipcMain, ROBOFLOW_CALLS, roboflow);
 export const roboflowPostRoutes = (roboflow) => postRoutesOf(ROBOFLOW_CALLS, roboflow, { 'roboflow:import': overHttp });

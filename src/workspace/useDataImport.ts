@@ -17,7 +17,7 @@ import { keepImportedImages } from '../datasets/import/keepImportedImages';
 import { addMembers, type Dataset } from '../datasets/datasetFile';
 import { saveDataset } from '../datasets/datasetStore';
 import { isRoboflowLink } from '../roboflow/roboflowLink';
-import { roboflowImportSource } from '../roboflow/roboflowBridge';
+import { roboflowImportSource, type RoboflowContinuation } from '../roboflow/roboflowBridge';
 import type { SimModel } from '../sim/mjcfTypes';
 import { errorMessage } from '../utils/errorMessage';
 import { indexedDbStore } from '../utils/keyValueStore';
@@ -59,13 +59,15 @@ const importedMessage = (built: BuiltTries, added: number) =>
     ? `Imported ${plural(added, 'try', 'tries')}. Skipped ${plural(built.refused, 'episode')} out of range.`
     : `Imported ${plural(added, 'try', 'tries')}`;
 
-async function importImages(core: WorkspaceCore, run: DataImportRun) {
-  const active = core.simTraining.cases.active;
+async function importImages(core: WorkspaceCore, run: DataImportRun, active: () => boolean) {
+  const activeCase = core.simTraining.cases.active;
   const result = await keepImportedImages(run, {
-    caseId: active?.id ?? null,
+    caseId: activeCase?.id ?? null,
     sceneId: SAFE_ID.test(core.scene.sceneId) ? core.scene.sceneId : null,
-    objects: active?.world.objects.map(({ id, name }) => ({ id, name })) ?? [],
+    objects: activeCase?.world.objects.map(({ id, name }) => ({ id, name })) ?? [],
   });
+
+  if (!active()) return result.dataset;
 
   core.toasts.dismissToast();
   core.triesView.openDataset(result.dataset.id);
@@ -73,13 +75,30 @@ async function importImages(core: WorkspaceCore, run: DataImportRun) {
   return result.dataset;
 }
 
-async function loadRoboflow(core: WorkspaceCore, url: string): Promise<Loaded | null> {
-  const source = await roboflowImportSource(url, () => core.studio.openSettings('accounts', 'roboflow'));
+type ImportLoaded = (name: string, load: () => Promise<Loaded | null>, active?: () => boolean) => Promise<boolean>;
 
-  return source && { source };
+async function prepareRoboflow(
+  core: WorkspaceCore,
+  importLoaded: ImportLoaded,
+  input: string | RoboflowContinuation,
+  active: () => boolean,
+) {
+  try {
+    const source = await roboflowImportSource(input, () => {
+      if (active()) core.studio.openSettings('accounts', 'roboflow');
+    });
+
+    if (!active() || !source) return null;
+
+    if (source.kind === 'pending') return source;
+
+    await importLoaded(source.name, async () => ({ source }), active);
+  } catch (e) {
+    if (active()) core.showToast(errorMessage(e), { tone: 'error' });
+  }
+
+  return null;
 }
-
-type ImportLoaded = (name: string, load: () => Promise<Loaded | null>) => Promise<boolean>;
 
 interface ImportWork {
   core: WorkspaceCore;
@@ -87,6 +106,7 @@ interface ImportWork {
   loaded: Loaded;
   summary: SourceSummary;
   build: (model: SimModel | null) => Promise<string[] | undefined>;
+  active: () => boolean;
   offerRobot: (name: string, preset: RobotPreset | null) => void;
 }
 
@@ -103,10 +123,10 @@ async function targetOf(core: WorkspaceCore, loaded: Loaded, summary: SourceSumm
   };
 }
 
-async function finishImport({ core, run, loaded, summary, build, offerRobot }: ImportWork) {
-  const images: Dataset | null = summary.images ? await importImages(core, run) : null;
+async function finishImport({ core, run, loaded, summary, build, offerRobot, active }: ImportWork) {
+  const images: Dataset | null = summary.images ? await importImages(core, run, active) : null;
 
-  if (images && summary.episodes === 0) return;
+  if (!active() || (images && summary.episodes === 0)) return;
 
   if (summary.names.length === 0) {
     const ids = await build(null);
@@ -132,6 +152,18 @@ function importPickedFiles(importLoaded: ImportLoaded, files: File[]) {
   void importLoaded(name, async () => ({
     source: { kind: 'files', name, files: files.map((blob) => ({ path: blob.name, blob })) },
   }));
+}
+
+async function keep(showToast: WorkspaceCore['showToast'], built: BuiltTries) {
+  const added = await keepImportedTries(built.kept, {
+    manifests: loadManifests,
+    keep: keepTries,
+    update: updateManifests,
+  });
+
+  showToast(importedMessage(built, added));
+
+  return built.kept.map((item) => item.stored.id);
 }
 
 export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
@@ -198,18 +230,6 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
     return { joints: pairs, unit: input.unit, spans: input.spans };
   };
 
-  const keep = async (built: BuiltTries) => {
-    const added = await keepImportedTries(built.kept, {
-      manifests: loadManifests,
-      keep: keepTries,
-      update: updateManifests,
-    });
-
-    showToast(importedMessage(built, added));
-
-    return built.kept.map((item) => item.stored.id);
-  };
-
   const build = async (run: DataImportRun, loaded: Loaded, summary: SourceSummary, model: SimModel | null) => {
     const plan = model
       ? await planFor(loaded.source.name, summary, model)
@@ -225,17 +245,23 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
       target: await targetOf(core, loaded, summary, model),
     });
 
-    return keep(built);
+    return keep(showToast, built);
   };
 
-  const importLoaded = async (name: string, load: () => Promise<Loaded | null>): Promise<boolean> => {
+  const importLoaded = async (
+    name: string,
+    load: () => Promise<Loaded | null>,
+    active = () => true,
+  ): Promise<boolean> => {
     const run = openDataImport();
 
     showToast(importing(name), { tone: 'progress' });
 
     try {
       const loaded = await load();
-      const summary = loaded && (await run.read(loaded.source));
+      const summary = loaded && active() && (await run.read(loaded.source));
+
+      if (!active()) return false;
 
       if (!loaded || !summary) {
         toasts.dismissToast();
@@ -250,9 +276,10 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
         summary,
         build: (model) => build(run, loaded, summary, model),
         offerRobot,
+        active,
       });
     } catch (e) {
-      showToast(errorMessage(e), { tone: 'error' });
+      if (active()) showToast(errorMessage(e), { tone: 'error' });
     } finally {
       run.close();
     }
@@ -275,7 +302,7 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
 
   const importOrRobot = async (source: RobotSource, at?: Vec3) => {
     if (source.kind === 'url' && !IS_WEB_DEMO && isRoboflowLink(source.url)) {
-      await importLoaded(source.url, () => loadRoboflow(core, source.url));
+      await prepareRoboflow(core, importLoaded, source.url, () => true);
 
       return;
     }
@@ -288,7 +315,14 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
     if (!done) await robots.importRobotFrom(source, at);
   };
 
-  return { sheet, settle, importOrRobot, importFiles: (files: File[]) => importPickedFiles(importLoaded, files) };
+  return {
+    sheet,
+    settle,
+    importOrRobot,
+    prepareRoboflow: (input: string | RoboflowContinuation, active: () => boolean) =>
+      prepareRoboflow(core, importLoaded, input, active),
+    importFiles: (files: File[]) => importPickedFiles(importLoaded, files),
+  };
 }
 
 export type DataImport = ReturnType<typeof useDataImport>;

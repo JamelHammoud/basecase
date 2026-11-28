@@ -199,6 +199,8 @@ The review lane sees the diff, the pull request body, the titles of the other pu
 
 The repair lane recognizes an active repair by its `loop:repair` label as well as the legacy `loop/repair/` branch prefix. A repair published from another loop branch receives the same six-hour coordination window. Unrelated branches do not reserve repair work. `lanes/repair.test.mjs` covers both branch forms, unrelated work and expiry.
 
+After that repair closes, the lane can inspect newly failed jobs while other jobs in the same Check still run. Per-run handled-job records keep earlier jobs out of the new session and its log digest. The aggregate `check` job alone never starts a follow-up repair. Open repairs retain the same coordination window for initial and follow-up sessions. `lib/repairPlan.test.mjs` and `lanes/repair.test.mjs` cover incremental selection, open-repair coordination, selected log evidence and deduplication before the run completes. [Dispatch evidence](../notes/node.md#repair-deferral-after-an-unrelated-merge) records the observed delay and remaining hosted failures.
+
 A red `check` on `main` is the first thing any lane fixes. Classify it before touching code:
 
 1. **Broke at a commit.** Find the commit; if one merge caused it, revert it, then fix forward.

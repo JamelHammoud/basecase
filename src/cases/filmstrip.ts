@@ -52,12 +52,11 @@ export interface FilmFrame {
 
 const CORNERS: V3[] = [-0.5, 0.5].flatMap((x) => [-0.5, 0.5].flatMap((y) => [-0.5, 0.5].map((z) => [x, y, z] as V3)));
 const VIEW = new THREE.Vector3(0.9, 0.7, 1.2).normalize();
+const RIGHT = new THREE.Vector3(0, 1, 0).cross(VIEW).normalize();
+const UP = VIEW.clone().cross(RIGHT);
 
 function project(p: THREE.Vector3): [number, number] {
-  const right = new THREE.Vector3(0, 1, 0).cross(VIEW).normalize();
-  const up = VIEW.clone().cross(right);
-
-  return [p.dot(right), -p.dot(up)];
+  return [p.dot(RIGHT), -p.dot(UP)];
 }
 
 function boxPolygon(box: FilmBox, delta: THREE.Matrix4 | undefined): Polygon {

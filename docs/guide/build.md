@@ -500,6 +500,8 @@ The board browser file is quarantined only on Windows through 28 November 2026 u
 
 ## Testing coverage
 
+The desktop and web Kit export fixture starts with a current guide record made by its existing controlled planner. Automatic guide updates therefore have no missing or stale guide to render while Export prepares its own fresh document. The exact single-render, transferred source, assembly coverage, archive HTML, packing, servo map and real 3MF assertions remain. This fixture does not establish automatic-update timing or full rendered-guide latency. [Windows ownership evidence](../notes/testing-manufacturing.md#kit-guide-fixture-ownership-on-check-46160172750) records the failure and candidate limits.
+
 `guide/guideModules.test.ts` covers nested ordering after small-module folding, reparenting on the next call and unchanged source data, alongside its existing geometry and repeat-detection cases. [Module ordering evidence](../notes/performance-assembly.md#build-guide-module-ordering-indexes-children) records the operation counts and limits.
 
 Detailed evidence follows implementation ownership: [electrical boards and native routing](../notes/testing-electrical.md), [manufacturing exports](../notes/testing-manufacturing.md), [purchasing](../notes/testing-purchasing.md), [frozen builds and repair](../notes/performance-assembly.md#frozen-individual-builds), and [cable editing and Current replay](../notes/performance-wiring.md#editable-cable-route-work). Add later observations beside the feature in its owning note. [Build evidence navigation](../notes/testing-build.md) covers the remaining owners.

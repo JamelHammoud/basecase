@@ -13,6 +13,7 @@ import type { ScenePart } from '../types/robotics';
 import { describeKey, hardwareKey } from '../utils/bom';
 import { hashText } from '../utils/geometryHash';
 import { sheetOf } from '../sheet/materials';
+import { appendGroup } from './guideGroups';
 import type { GuideItem, GuideItemKind, GuideStep, GuideTool, ToolIcon } from './guideTypes';
 
 const FASTENER_TYPES = new Set<HardwareSpec['type']>([
@@ -145,7 +146,7 @@ export function buildItems(parts: ScenePart[], order: string[], boardPartId?: st
   for (const p of parts) {
     const key = itemKeyOf(p);
 
-    groups.set(key, [...(groups.get(key) ?? []), p]);
+    appendGroup(groups, key, p);
   }
 
   let letters = 0;

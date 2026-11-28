@@ -273,6 +273,8 @@ Measurements and limits: [Viewport rendering performance evidence](../notes/perf
 
 - **Earth attribution retains its formatted text.** `earthLayer.ts` invalidates the cached string when visible-tile credit counts change and clears it when replacing the tile renderer. Event comparisons, state reads and hide or show share that string. Frequency ranking, insertion-order ties and notification suppression stay unchanged. `earthAttribution.test.ts` checks ordering, duplicate names, removals, hidden updates, renderer replacement, independent layers and rebuild counts. [Evidence](../notes/performance-mapping.md#earth-attribution-retains-its-formatted-text).
 
+- **Earth prepares its fixed ground probe once.** `earthLayer.ts` sets the probe's position, up direction, orientation and world matrices in the layer constructor. Viewport updates retain altitude-dependent camera registration without repeating that preparation. Moving the origin changes the tile frame, while renderer replacement reuses the same probe. `earthLayer.test.ts` checks exact camera matrices, repeated redraws, automatic and explicit altitude, location changes and renderer replacement. Existing fixture tests retain surface sampling and tile-detail coverage. [Evidence](../notes/performance-mapping.md#earth-prepares-its-fixed-ground-probe-once).
+
 - **No canvas reallocation during panel animations.** `CanvasSizer` keeps the canvas centred in its card, grows the drawing buffer once and shrinks it only after the size settles, and redraws synchronously after a resize so there's never a blank frame.
 
 ### Fleet globe and facility views

@@ -21,11 +21,12 @@ Set a modeled squeeze limit and save the simulated jaw forces with each try.
 2. Choose **Pick Up a Block**.
 3. Turn on **Limit grip force**.
 4. In **Grip force ceiling**, enter the maximum total force in newtons.
+
+![The Pick Up a Block builder with its grip-force ceiling enabled](/help/limit-grip-force/ceiling.png)
+
 5. Click **Make Case**.
 6. Click **Try Reference**.
 7. Open the saved try.
-
-![The Pick Up a Block builder with its grip-force ceiling enabled](/help/limit-grip-force/ceiling.png)
 
 In the **Grip force** plot, you can inspect the saved normal force for each jaw, their total and the highest total across all physics steps. Floor contacts and other objects don't contribute to these forces. You can see a brief overload in the peak trace after the sampled force falls.
 

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { purchasing } from './buildAllocationScene';
 import { labelFixture } from '../src/print/labels/label.fixtures';
+import type { ProjectSettings } from '../src/types/robotics';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
@@ -13,7 +14,7 @@ interface Studio {
   load: (record: { parts: unknown[]; project: unknown }) => void;
   sceneRecord: () => {
     parts: Array<{ id: string; kind: string; position: number[]; rotation: number[]; print?: unknown }>;
-    project: unknown;
+    project: ProjectSettings;
   };
   printPlates: () => { open: boolean; fitTest: boolean; plates: string[][] };
   plateFiles: () => Promise<Record<string, string>>;
@@ -396,7 +397,7 @@ describe('printing in build order on every printer', () => {
     await app.page.evaluate((parts) => {
       const studio = (window as unknown as { __studio: Studio }).__studio;
 
-      studio.load({ parts, project: studio.sceneRecord().project });
+      studio.load({ parts, project: { ...studio.sceneRecord().project, labelParts: false } });
     }, ROBOT);
     await expect.poll(() => partCount(app.page)).toBe(ROBOT.length);
     await addFoundPrinters();

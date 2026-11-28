@@ -84,3 +84,9 @@ Measurements and limits: [Trace plots performance evidence](../notes/performance
 `menuOrder.test.ts` compares all 4,096 six-entry combinations of ordinary actions, destructive actions, headings and dividers against the preceding algorithm. It also checks entry identity, frozen input arrays, later edits, independent results and empty menus. [Evidence and limits](../notes/performance-layout.md#context-menu-ordering-partitions-in-one-source-pass).
 
 `Select` options accept an optional `disabled` flag. Appearance uses it for display-only Custom and Mixed values, so choosing a named finish remains an explicit edit.
+
+## Number field unit layout
+
+`NumberInput` places the scrub label, editable input and unit in separate flex slots. The unit keeps its intrinsic width and never wraps. The input shrinks and scrolls long drafts within its own bounds, with 8px between its text and the unit. Clicking the unit or unused field space focuses the input. This applies to every caller, including compound tendon units and frame intervals.
+
+`e2e/numberInput.e2e.test.ts` bundles the production primitive and stylesheet without starting the studio. It measures label and unit text bounds against the editable input at 88px, 160px and 272px field widths, including multi-character labels, tooltip-wrapped scrub labels, compound units and long drafts. External labels use the production `FieldRow` within 266px, the content width of a 290px panel with 12px insets. It also checks unit clicks focus the input, Escape recovery, changed-value expression commits through Enter and Tab, arrow stepping, mixed values and disabled fields. Refocusing after commits verifies the saved value. Browser execution belongs to CI. [Failure evidence and limits](../notes/ui.md#number-field-unit-overlap).

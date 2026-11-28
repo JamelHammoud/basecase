@@ -44,7 +44,7 @@ export function feedReceiver(
   canvases: Canvases,
   streams: Map<number, FeedStream>,
   onFrames: (frames: number) => void,
-): (event: FeedEvent) => void {
+): (event: Exclude<FeedEvent, { type: 'error' }>) => void {
   return (event) => {
     if (event.type === 'stream') {
       const stream = streams.get(event.id);
@@ -67,6 +67,10 @@ export class LiveFeed {
   private streamId = 0;
 
   private stopped = false;
+
+  private failure: string | null = null;
+
+  private readonly reportError: (camera: string, message: string) => void;
 
   private readonly stopVision: () => void;
 
@@ -98,7 +102,17 @@ export class LiveFeed {
     const { connectVisionFrames, onVisionAssignments, visionAssignments, setCameraVisionError } = vision;
     const receive = feedReceiver(canvases, this.streams, onFrames);
 
-    this.worker.onmessage = ({ data }: MessageEvent<FeedEvent>) => receive(data);
+    this.reportError = setCameraVisionError;
+    this.worker.onmessage = ({ data }: MessageEvent<FeedEvent>) => {
+      if (data.type === 'error') return setCameraVisionError(data.camera, data.message);
+
+      receive(data);
+    };
+    this.worker.onerror = (event) => {
+      this.failure = event.message || 'The camera stopped. Reopen the scene.';
+      this.dispose();
+      this.reportFailure(this.failure);
+    };
     this.stopVision = onVisionAssignments(() => this.post({ type: 'vision', assignments: visionAssignments() }));
     void connectVisionFrames()
       .then(({ port, disconnect }) => {
@@ -119,7 +133,7 @@ export class LiveFeed {
         this.disconnectVision?.();
         this.disconnectVision = null;
 
-        for (const key of this.viewKeys) setCameraVisionError(key, errorMessage(error));
+        this.reportFailure(error);
       });
   }
 
@@ -133,21 +147,27 @@ export class LiveFeed {
 
   async scene(parts: ScenePart[], world: ScenePart[], imported?: ImportedWorldView | null): Promise<void> {
     if (
-      this.sceneTicket &&
-      same(this.sent.parts, parts) &&
-      same(this.sent.world, world) &&
-      this.sent.imported?.hash === imported?.hash &&
-      String(this.sent.imported?.position) === String(imported?.position)
+      this.stopped ||
+      (this.sceneTicket &&
+        same(this.sent.parts, parts) &&
+        same(this.sent.world, world) &&
+        this.sent.imported?.hash === imported?.hash &&
+        String(this.sent.imported?.position) === String(imported?.position))
     )
       return;
 
     this.sent = { ...this.sent, parts, world, imported };
 
     const ticket = ++this.sceneTicket;
-    const meshes = await renderMeshFiles([...parts, ...world]);
 
-    if (ticket === this.sceneTicket)
-      this.post({ type: 'scene', parts: packParts(parts), world: packParts(world), meshes, imported });
+    try {
+      const meshes = await renderMeshFiles([...parts, ...world]);
+
+      if (ticket === this.sceneTicket)
+        this.post({ type: 'scene', parts: packParts(parts), world: packParts(world), meshes, imported });
+    } catch (error) {
+      if (ticket === this.sceneTicket && !this.stopped) this.reportFailure(error);
+    }
   }
 
   model(model: SimModel | null): void {
@@ -159,6 +179,8 @@ export class LiveFeed {
 
   views(views: CameraView[], tiles: { enlarged: string | null } | null): void {
     this.viewKeys = views.map((view) => view.key);
+
+    if (this.failure) return this.reportFailure(this.failure);
 
     const sizes = tiles
       ? Object.fromEntries(views.map((v) => [v.key, v.key === tiles.enlarged ? LARGE_SIZE : TILE_SIZE]))
@@ -190,6 +212,8 @@ export class LiveFeed {
   }
 
   dispose(): void {
+    if (this.stopped) return;
+
     this.stopped = true;
     this.stopVision();
     this.disconnectVision?.();
@@ -200,6 +224,10 @@ export class LiveFeed {
   }
 
   private post(message: FeedRequest, transfer: Transferable[] = []): void {
-    this.worker.postMessage(message, transfer);
+    if (!this.stopped) this.worker.postMessage(message, transfer);
+  }
+
+  private reportFailure(error: unknown): void {
+    for (const key of this.viewKeys) this.reportError(key, errorMessage(error));
   }
 }

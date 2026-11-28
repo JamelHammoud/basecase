@@ -25,7 +25,12 @@ const worldTriangleSoup = (group: THREE.Group) => {
       return;
     }
 
-    const geometry = child.geometry.index ? child.geometry.toNonIndexed() : child.geometry.clone();
+    const source = new THREE.BufferGeometry();
+
+    source.setAttribute('position', child.geometry.getAttribute('position'));
+    source.setIndex(child.geometry.index);
+
+    const geometry = source.index ? source.toNonIndexed() : source.clone();
 
     geometry.applyMatrix4(child.matrixWorld);
 

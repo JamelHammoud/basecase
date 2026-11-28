@@ -95,7 +95,7 @@ it('publishes rendered camera detections, boxes and signals in the web studio', 
     },
     { model: manifest(bytes, 'block'), data: [...bytes] },
   );
-  await expect.poll(async () => (await state(page)).signals['vision.target_camera.block']).toBe(1);
+  await expect.poll(() => state(page)).toMatchObject({ signals: { 'vision.target_camera.block': 1 } });
 
   const box = page.locator(shown('[data-camera="target_camera"]')).first().getByTestId('vision-box');
 

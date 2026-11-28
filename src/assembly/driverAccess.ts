@@ -21,6 +21,12 @@ const KEY_HEIGHTS = [19, 21, 23];
 const KEY_ARM_FROM_MM = 8;
 const KEY_ARM_TO_MM = 56;
 const KEY_SECTORS = 6;
+const BALL_SECTORS = 8;
+const DRIVER_TOOLS: DriverTool[] = [
+  'straight',
+  ...Array<DriverTool>(KEY_SECTORS).fill('L-key'),
+  ...Array<DriverTool>(BALL_SECTORS).fill('ball-end'),
+];
 
 export interface DriverCylinder {
   from: [number, number, number];
@@ -126,7 +132,7 @@ function lKeys(path: Path): DriverOption[] {
 function ballEnds(path: Path): DriverOption[] {
   const [u, w] = perpendicularBasis(path.axis);
 
-  return Array.from({ length: 8 }, (_, k) => {
+  return Array.from({ length: BALL_SECTORS }, (_, k) => {
     const az = (k * Math.PI) / 4;
     const tilt = path.axis
       .clone()
@@ -147,6 +153,9 @@ export function driverOptions(chain: FastenerChain, solids: Placed[], skip: Set<
     .setFromPoints([top, top.clone().addScaledVector(axis, STRAIGHT_MM + 20)])
     .expandByScalar(60);
   const near = solids.filter((m) => m.id !== chain.id && !skip.has(m.id) && m.box.intersectsBox(reach));
+
+  if (!near.length) return DRIVER_TOOLS.map((tool) => ({ tool, blockers: [] }));
+
   const path = { top, axis, near };
 
   return [straight(path), ...lKeys(path), ...ballEnds(path)];

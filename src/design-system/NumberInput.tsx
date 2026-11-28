@@ -124,6 +124,9 @@ export const NumberInput: React.FC<NumberInputProps> = ({
 
   return (
     <div
+      onClick={(event) => {
+        if (event.target === event.currentTarget) inputRef.current?.focus();
+      }}
       className={`group relative flex items-center h-[32px] rounded-lg bg-white/[0.05] hover:bg-white/[0.07] ring-1 ring-inset ring-transparent focus-within:ring-[#0d99ff] focus-within:bg-black/20 transition-colors ${
         disabled ? 'opacity-40 pointer-events-none' : ''
       } ${scrubbing ? 'ring-white/[0.12]' : ''} ${className}`}

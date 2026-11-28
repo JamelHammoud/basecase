@@ -138,7 +138,7 @@ export function useAutosave({ draft, active, pristine, unsaved }: AutosaveOption
 
     if (isPristine || discardedRef.current) return;
 
-    if (!unsavedRef.current && !draftChanged(savedRef.current, next)) return;
+    if (!unsavedRef.current && !draftChanged(pendingRef.current ?? savedRef.current, next)) return;
 
     unsavedRef.current = false;
     pendingRef.current = next;
